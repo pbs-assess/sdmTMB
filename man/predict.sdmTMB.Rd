@@ -28,11 +28,11 @@ Can predict on the original data locations or onto new data.
 \examples{
 # We'll only use a small number of knots so this example runs quickly
 # but you will likely want to use many more (depending on your data).
-pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 30)
+
+pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 50)
 m <- sdmTMB(
  pcod, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
- time = "year", spde = pcod_spde, family = tweedie(link = "log"),
- silent = TRUE
+ time = "year", spde = pcod_spde, family = tweedie(link = "log")
 )
 predictions <- predict(m)
 cols <- c("year", "X", "Y", "prediction", "prediction_fe",
@@ -40,6 +40,8 @@ cols <- c("year", "X", "Y", "prediction", "prediction_fe",
 head(predictions[,cols])
 
 predictions <- predict(m, newdata = qcs_grid)
+
+# A short function for plotting our predictions:
 library(ggplot2)
 plot_map <- function(dat, column = "prediction") {
   ggplot(dat, aes_string("X", "Y", fill = column)) +
@@ -47,6 +49,7 @@ plot_map <- function(dat, column = "prediction") {
     facet_wrap(~year) +
     coord_fixed()
 }
+
 plot_map(predictions, "exp(prediction)") +
   scale_fill_viridis_c(trans = "sqrt") +
   ggtitle("Prediction (fixed effects + random effects)")
