@@ -1,0 +1,5 @@
+^data-raw$
+^.*\.Rproj$
+^\.Rproj\.user$
+^Session.vim$
+^\.travis\.yml$

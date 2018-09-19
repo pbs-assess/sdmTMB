@@ -1,0 +1,22 @@
+Package: sdmTMB
+Type: Package
+Title: sdmTMB
+Version: 0.0.0.9000
+Authors@R: c(
+    person(c("Sean", "C."), "Anderson", email = "sean.anderson@dfo-mpo.gc.ca",
+      role = c("aut", "cre")))
+Description: sdmTMB.
+License: GPL (>=3)
+Encoding: UTF-8
+LazyData: true
+ByteCompile: true
+Depends: R (>= 3.2.0), TMB 
+LinkingTo: TMB, RcppEigen
+Suggests:
+    testthat,
+    dplyr,
+    knitr
+URL: https://github.com/seananderson/sdmTMB
+BugReports: https://github.com/seananderson/sdmTMB/issues
+RoxygenNote: 6.1.0
+Roxygen: list(markdown = TRUE)
