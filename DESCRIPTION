@@ -12,6 +12,8 @@ LazyData: true
 ByteCompile: true
 Depends: R (>= 3.2.0), TMB 
 LinkingTo: TMB, RcppEigen
+Imports:
+    assertthat
 Suggests:
     testthat,
     dplyr,

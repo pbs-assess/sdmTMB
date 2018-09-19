@@ -66,23 +66,23 @@ Type objective_function<Type>::operator()() {
   DATA_FACTOR(year_i);
 
   // Prediction?
-  // DATA_INTEGER(do_predict);
+  DATA_INTEGER(do_predict);
 
   DATA_INTEGER(family);
   DATA_INTEGER(link);
 
   // vectors of real data
   DATA_VECTOR(y_i);   // response
-  DATA_MATRIX(x_ij);  // model matrix
-  // DATA_MATRIX(x_ij_phi);  // model matrix for phi
+  DATA_MATRIX(X_ij);  // model matrix
+  // DATA_MATRIX(X_ij_phi);  // model matrix for phi
 
   // SPDE objects from R-INLA
   DATA_STRUCT(spde,spde_aniso_t);
   PARAMETER_VECTOR(ln_H_input);
 
   // Projections:
-  DATA_SPARSE_MATRIX(proj_matrix);
-  DATA_MATRIX(proj_x_ij);
+  DATA_SPARSE_MATRIX(proj_mesh);
+  DATA_MATRIX(proj_X_ij);
   // DATA_IVECTOR(which_predict);
 
   // Parameters
@@ -117,13 +117,13 @@ Type objective_function<Type>::operator()() {
   H(0,0) = exp(ln_H_input(0));
   H(1,0) = ln_H_input(1);
   H(0,1) = ln_H_input(1);
-  H(1,1) = (1+ln_H_input(1)*ln_H_input(1)) / exp(ln_H_input(0));
-  Eigen::SparseMatrix<Type> Q = R_inla::Q_spde(spde,exp(ln_kappa),H);
+  H(1,1) = (1 + ln_H_input(1) * ln_H_input(1)) / exp(ln_H_input(0));
+  Eigen::SparseMatrix<Type> Q = R_inla::Q_spde(spde, exp(ln_kappa), H);
 
   // Linear predictor
-  vector<Type> linear_predictor_i = x_ij * b_j;
+  vector<Type> linear_predictor_i = X_ij * b_j;
   // Linear predictor on dispersion:
-  // vector<Type> log_phi = x_ij_phi * b_j_phi;
+  // vector<Type> log_phi = X_ij_phi * b_j_phi;
   vector<Type> mu_i(n_i), eta_i(n_i);
   for (int i = 0; i < n_i; i++) {
     eta_i(i) = linear_predictor_i(i) + epsilon_st(s_i(i), year_i(i));
@@ -162,30 +162,33 @@ Type objective_function<Type>::operator()() {
   Type jnll = nll_likelihood + nll_epsilon;
 
   // Projections
-  vector<Type> proj_fe = proj_x_ij * b_j;
-  array<Type> proj_re_st(proj_matrix.rows(), n_t);
-  for (int i = 0; i < n_t; i++) {
-    proj_re_st.col(i) = proj_matrix * ArrayToVector(epsilon_st.col(i));
+  if (do_predict) {
+    vector<Type> proj_fe = proj_X_ij * b_j;
+    array<Type> proj_re_st(proj_mesh.rows(), n_t);
+    for (int i = 0; i < n_t; i++) {
+      proj_re_st.col(i) = proj_mesh * ArrayToVector(epsilon_st.col(i));
+    }
+    vector<Type> proj_re_st_vector = AsVector(proj_re_st);
+    vector<Type> proj_eta = proj_fe + proj_re_st_vector;
+    REPORT(proj_fe);
+    REPORT(proj_re_st_vector);
+    REPORT(proj_eta);
   }
-  vector<Type> proj_re_st_vector = AsVector(proj_re_st);
-  vector<Type> proj_eta = proj_fe + proj_re_st_vector;
 
   // Reporting
   REPORT(b_j)  // fixed effect parameters
-  REPORT(b_j_phi)    // fixed effect parameters
+  // REPORT(b_j_phi)    // fixed effect parameters
   REPORT(ln_tau_E);  // spatio-temporal process
   REPORT(ln_kappa);  // decorrelation distance (kind of)
   REPORT(log_phi);   // Observation dispersion
   // REPORT(logit_p);   // Observation Tweedie mixing parameter
 
   REPORT(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
-  REPORT(proj_re_st_vector);
-  REPORT(proj_fe);
 
   // vector<Type> proj_mu_select = proj_mu(which_predict);
-  REPORT(proj_eta);
 
   REPORT(eta_i);
+  REPORT(linear_predictor_i);
   REPORT(H);
   REPORT(Range);
 
