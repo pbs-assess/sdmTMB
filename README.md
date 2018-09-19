@@ -3,6 +3,8 @@
 
 # sdmTMB
 
+<!-- [![Travis build status](https://travis-ci.org/seananderson/sdmTMB.svg?branch=master)](https://travis-ci.org/seananderson/sdmTMB) -->
+
 The goal of sdmTMB is to …
 
 ## Installation
