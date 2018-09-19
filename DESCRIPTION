@@ -13,12 +13,17 @@ ByteCompile: true
 Depends: R (>= 3.2.0), TMB 
 LinkingTo: TMB, RcppEigen
 Imports:
-    assertthat
+    assertthat,
+    INLA,
+    stats,
+    methods,
+    graphics
 Suggests:
     testthat,
     dplyr,
-    knitr
+    ggplot2
 URL: https://github.com/seananderson/sdmTMB
 BugReports: https://github.com/seananderson/sdmTMB/issues
 RoxygenNote: 6.1.0
 Roxygen: list(markdown = TRUE)
+Additional_repositories: https://www.math.ntnu.no/inla/R/stable/

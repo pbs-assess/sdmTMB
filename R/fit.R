@@ -9,6 +9,8 @@ NULL
 #' @param n_knots The number of knots.
 #' @param plot Logical: should a plot be made?
 #'
+#' @importFrom graphics points
+#' @export
 #' @examples
 #' make_spde(pcod$X, pcod$Y, n_knots = 25)
 make_spde <- function(x, y, n_knots, plot = FALSE) {
@@ -87,6 +89,10 @@ check_family <- function(family) {
 #' @param family The family and link.
 #' @param silent Silent or optimization details?
 #' @param multiphase Estimate the fixed and random effects in phases for speed?
+#'
+#' @importFrom methods as
+#' @importFrom stats gaussian model.frame model.matrix
+#'   model.response terms
 #'
 #' @export
 #'
