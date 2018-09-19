@@ -27,19 +27,32 @@ include \code{0 + as.factor(your_time_column)}.}
 sdmTMB
 }
 \examples{
-pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 30)
+d <- subset(pcod, year >= 2011) # subset for example speed
+pcod_spde <- make_spde(d$X, d$Y, n_knots = 100) # only 100 knots for example speed
+
+# Tweedie:
 m <- sdmTMB(
-  pcod, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+  d, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   time = "year", spde = pcod_spde, family = tweedie(link = "log"))
 
-pcod_binom <- pcod
+# Contents of the output object:
+names(m)
+m$model
+TMB::sdreport(m$tmb_obj)
+m$tmb_obj$report()
+
+# Binomial:
+pcod_binom <- d
 pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
 m_bin <- sdmTMB(pcod_binom,
   present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  time = "year", spde = pcod_spde, family = binomial(link = "logit"))
+  time = "year", spde = pcod_spde, family = binomial(link = "logit"),
+  silent = TRUE)
 
-pcod_gaus <- subset(pcod, density > 0)
+# Gaussian:
+pcod_gaus <- subset(d, density > 0)
+pcod_spde_gaus <- make_spde(pcod_gaus$X, pcod_gaus$Y, n_knots = 100)
 m_pos <- sdmTMB(pcod_gaus,
   log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  time = "year", spde = pcod_spde)
+  time = "year", spde = pcod_spde_gaus, silent = TRUE)
 }

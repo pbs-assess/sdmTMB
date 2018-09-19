@@ -18,11 +18,12 @@ Imports:
     stats,
     methods,
     graphics,
-    Matrix
+    ggplot2,
+    Matrix,
+    grid
 Suggests:
     testthat,
-    dplyr,
-    ggplot2
+    dplyr
 URL: https://github.com/seananderson/sdmTMB
 BugReports: https://github.com/seananderson/sdmTMB/issues
 RoxygenNote: 6.1.0
