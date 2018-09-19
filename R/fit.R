@@ -100,8 +100,18 @@ check_family <- function(family) {
 #' pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 30)
 #' m <- sdmTMB(
 #'   pcod, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'   time = "year", spde = pcod_spde, family = tweedie(link = "log")
-#' )
+#'   time = "year", spde = pcod_spde, family = tweedie(link = "log"))
+#'
+#' pcod_binom <- pcod
+#' pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
+#' m_bin <- sdmTMB(pcod_binom,
+#'   present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+#'   time = "year", spde = pcod_spde, family = binomial(link = "logit"))
+#'
+#' pcod_gaus <- subset(pcod, density > 0)
+#' m_pos <- sdmTMB(pcod_gaus,
+#'   log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+#'   time = "year", spde = pcod_spde)
 
 sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
   silent = FALSE, multiphase = TRUE) {
@@ -110,7 +120,7 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
   mf   <- model.frame(formula, data)
   y_i  <- model.response(mf, "numeric")
 
-  proj_mesh <- m <- Matrix::Matrix(0, 1, 1) # dummy
+  proj_mesh <- Matrix::Matrix(0, 1, 1) # dummy
   proj_X_ij <- matrix(0, ncol = 1, nrow = 1) # dummy
 
   family <- check_family(family)

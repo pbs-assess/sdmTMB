@@ -43,7 +43,7 @@ Type InverseLink(Type eta, int link) {
       out = exp(eta);
       break;
     case 3:  // logit
-      out = invlogit(eta);
+      out = eta; // don't touch it since we're using dbinom_robust() in logit space
       break;
     default:
       error("Link not implemented.");
