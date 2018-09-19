@@ -17,7 +17,8 @@ Imports:
     INLA,
     stats,
     methods,
-    graphics
+    graphics,
+    Matrix
 Suggests:
     testthat,
     dplyr,
