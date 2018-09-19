@@ -15,6 +15,7 @@
 #' @param ... Not implemented.
 #'
 #' @return
+#' A data frame. TODO details.
 #' @export
 #'
 #' @examples

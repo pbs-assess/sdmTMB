@@ -1,0 +1,32 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# sdmTMB
+
+The goal of sdmTMB is to ...
+
+## Installation
+
+You can install sdmTMB with:
+
+``` r
+devtools::install_github("seananderson/sdmTMB")
+```
+
+## Example
+
+The main function is `sdmTMB()`.
+
+See `?predict.sdmTMB` for the most complete example.

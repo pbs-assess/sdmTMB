@@ -19,6 +19,9 @@ the x and y coordinates in \code{newdata}.}
 
 \item{...}{Not implemented.}
 }
+\value{
+A data frame. TODO details.
+}
 \description{
 Can predict on the original data locations or onto new data.
 }
