@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 
 **This package is not ready for use yet! I have not simulation tested the model and there's no guarantee I haven't made a mistake.**
 
-<!-- [![Travis build status](https://travis-ci.org/seananderson/sdmTMB.svg?branch=master)](https://travis-ci.org/seananderson/sdmTMB) -->
+[![Travis build status](https://travis-ci.org/seananderson/sdmTMB.svg?branch=master)](https://travis-ci.org/seananderson/sdmTMB)
 
 The goal of sdmTMB is to
 
