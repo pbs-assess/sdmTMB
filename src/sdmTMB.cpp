@@ -48,15 +48,19 @@ vector<Type> RepeatVector(vector<Type> x, int times) {
 }
 
 enum valid_family {
-  gaussian_family = 100,
-  binomial_family = 200,
-  tweedie_family  = 300
+  gaussian_family = 0,
+  binomial_family = 1,
+  tweedie_family  = 2,
+  poisson_family  = 3,
+  Gamma_family    = 4,
+  nbinom2_family  = 5
 };
 
 enum valid_link {
-  identity_link = 100,
-  log_link      = 200,
-  logit_link    = 300
+  identity_link = 0,
+  log_link      = 1,
+  logit_link    = 2,
+  inverse_link  = 3
 };
 
 template <class Type>
@@ -71,6 +75,9 @@ Type InverseLink(Type eta, int link) {
       break;
     case logit_link:
       out = eta;  // don't touch: we're using dbinom_robust() in logit space
+      break; // FIXME make this more robust
+    case inverse_link:
+      out = Type(1.0) / eta;
       break;
     default:
       error("Link not implemented.");
@@ -182,23 +189,37 @@ Type objective_function<Type>::operator()() {
     nll_epsilon +=
         SCALE(density::GMRF(Q), 1.0 / exp(ln_tau_E))(epsilon_st.col(t));
 
-  // ------------------ Probability data given random effects ------------------
+  // ------------------ Probability of data given random effects ---------------
 
+  Type shape, s1, s2;
   for (int i = 0; i < n_i; i++) {
     if (!isNA(y_i(i))) {
       switch (family) {
         case gaussian_family:
           nll_likelihood -=
-              dnorm(y_i(i), mu_i(i), exp(ln_phi), true /* log */);
+              dnorm(y_i(i), mu_i(i), exp(ln_phi), true);
           break;
         case tweedie_family:
           nll_likelihood -=
               dtweedie(y_i(i), mu_i(i), exp(ln_phi),
-                       InverseLogitPlus1(thetaf), true /* log */);
+                       InverseLogitPlus1(thetaf), true);
           break;
-        case binomial_family:
+        case binomial_family: // in logit space not inverse logit
           nll_likelihood -= dbinom_robust(y_i(i), Type(1.0) /* size */, mu_i(i),
-                                          true /* log */);
+                                          true);
+          break;
+        case poisson_family:
+          nll_likelihood -= dpois(y_i(i), mu_i(i), true);
+          break;
+        case Gamma_family:
+          shape = 1.0 / (pow(exp(ln_phi), 2.0)); // ln_phi=CV, shape=1/CV^2:
+          nll_likelihood -= dgamma(y_i(i), shape, mu_i(i) / shape, true);
+          break;
+        case nbinom2_family:
+          s1 = eta_i(i); // log(mu_i)
+          // As in glmmTMB... FIXME honestly I'm not sure what's going on here:
+          s2 = 2. * s1 - log(pow(exp(ln_phi), 2.));     // log(var^2 - mu)
+          nll_likelihood -= dnbinom_robust(y_i(i), s1, s2, true);
           break;
         default:
           error("Family not implemented.");

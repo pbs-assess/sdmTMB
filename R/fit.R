@@ -57,41 +57,19 @@ make_anisotropy_spde <- function(spde) {
     G0_inv   = as(Matrix::diag(1/Matrix::diag(spde$spde$param.inla$M0)), "dgTMatrix"))
 }
 
-#' Tweedie family
-#'
-#' @param link The link (must be log)
-#' @export
-#' @importFrom assertthat assert_that
-#' @examples
-#' tweedie(link = "log")
-tweedie <- function(link = "log") {
-  # assert_that(identical("log", as.character(substitute(link))),
-  #   msg = "Link must be 'log' for the tweedie family.")
-
-  linktemp <- substitute(link)
-  if (!is.character(linktemp))
-    linktemp <- deparse(linktemp)
-  okLinks <- c("inverse", "log", "identity")
-  if (linktemp %in% okLinks)
-    stats <- stats::make.link(linktemp)
-  else if (is.character(link))
-    stats <- stats::make.link(link)
-
-  list(family = "tweedie", link = linktemp, linkfun = stats$linkfun,
-    linkinv = stats$linkinv)
-}
-
-#' sdmTMB
+#' A fit a spatiotemporal species distribution model with TMB
 #'
 #' @param data A data frame.
 #' @param formula Model formula. For index standardization you will want to
 #'   include `0 + as.factor(your_time_column)`.
 #' @param time The time column (as character).
 #' @param spde An object from [make_spde()].
-#' @param family The family and link.
+#' @param family The family and link. Supports [gaussian()], [Gamma()],
+#'   [binomial()], [poisson()], [nbinom2()], and [tweedie()].
 #' @param silent Silent or optimization details?
 #' @param multiphase Estimate the fixed and random effects in phases for speed?
 #' @param anisotropy Logical: allow for anisotropy?
+#' @param control Optimization control options. See [sdmTMBcontrol()].
 #'
 #' @importFrom methods as
 #' @importFrom stats gaussian model.frame model.matrix
@@ -157,7 +135,7 @@ tweedie <- function(link = "log") {
 #' }
 
 sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity"),
-  silent = TRUE, multiphase = TRUE, anisotropy = FALSE) {
+  silent = TRUE, multiphase = TRUE, anisotropy = FALSE, control = sdmTMBcontrol()) {
 
   X_ij <- model.matrix(formula, data)
   mf   <- model.frame(formula, data)
@@ -219,16 +197,14 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
 
     tmb_opt1 <- stats::nlminb(
       start = tmb_obj1$par, objective = tmb_obj1$fn,
-      gradient = tmb_obj1$gr, control = list(eval.max = 1e3, iter.max = 1e3))
+      gradient = tmb_obj1$gr, control = control)
 
     # Set starting values based on phase 1:
-    tmb_params$b_j <- as.numeric(tmb_opt1$par["b_j" == names(tmb_opt1$par)])
+    tmb_params$b_j <- set_par_value(tmb_opt1, "b_j")
     if (family$family == "tweedie")
-      tmb_params$thetaf <-
-      as.numeric(tmb_opt1$par["thetaf" == names(tmb_opt1$par)])
-    if (family$family != "binomial")
-      tmb_params$ln_phi <-
-      as.numeric(tmb_opt1$par["ln_phi" == names(tmb_opt1$par)])
+      tmb_params$thetaf <- set_par_value(tmb_opt1, "thetaf")
+    if (!family$family %in% c("binomial", "poisson"))  # no dispersion param
+      tmb_params$ln_phi <- set_par_value(tmb_opt1, "ln_phi")
   }
 
   tmb_random <- c("omega_s", "epsilon_st")
@@ -238,7 +214,7 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
 
   tmb_opt <- stats::nlminb(
     start = tmb_obj$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
-    control = list(eval.max = 1e3, iter.max = 1e3))
+    control = control)
 
   structure(list(
       model      = tmb_opt,
@@ -255,3 +231,73 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
       tmb_obj    = tmb_obj),
     class      = "sdmTMB")
 }
+
+set_par_value <- function(opt, par) {
+  as.numeric(opt$par[par == names(opt$par)])
+}
+
+#' Optimization control options
+#'
+#' Any arguments to pass to [stats::nlminb()].
+#'
+#' @param eval.max Maximum number of evaluations of the objective function
+#'   allowed.
+#' @param iter.max Maximum number of iterations allowed.
+#' @param ... Anything else. See the 'Control parameters' section of
+#'   [stats::nlminb()].
+#'
+#' @export
+sdmTMBcontrol <- function(eval.max = 1e4, iter.max = 1e4, ...) {
+  list(eval.max = eval.max, iter.max = iter.max, ...)
+}
+
+#' Tweedie family
+#'
+#' @param link The link.
+#' @export
+#' @importFrom assertthat assert_that
+#' @examples
+#' tweedie(link = "log")
+tweedie <- function(link = "log") {
+  # assert_that(identical("log", as.character(substitute(link))),
+  #   msg = "Link must be 'log' for the tweedie family.")
+
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("inverse", "log", "identity")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+
+  list(family = "tweedie", link = linktemp, linkfun = stats$linkfun,
+    linkinv = stats$linkinv)
+}
+
+#' Negative binomial family
+#'
+#' Specifically the NB2 parameterization where the variance grows quadratically
+#' with the mean.
+#'
+#' @param link The link. Must be `"log"`.
+#' @export
+#' @examples
+#' nbinom2(link = "log")
+nbinom2 <- function(link = "log") {
+  assert_that(identical("log", as.character(substitute(link))),
+    msg = "Link must be 'log' for this implementation of the nbinom2 family.")
+
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("log")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+
+  list(family = "nbinom2", link = linktemp, linkfun = stats$linkfun,
+    linkinv = stats$linkinv)
+}
+

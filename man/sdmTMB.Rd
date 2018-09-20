@@ -2,10 +2,11 @@
 % Please edit documentation in R/fit.R
 \name{sdmTMB}
 \alias{sdmTMB}
-\title{sdmTMB}
+\title{A fit a spatiotemporal species distribution model with TMB}
 \usage{
 sdmTMB(data, formula, time, spde, family = gaussian(link = "identity"),
-  silent = TRUE, multiphase = TRUE, anisotropy = FALSE)
+  silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
+  control = sdmTMBcontrol())
 }
 \arguments{
 \item{data}{A data frame.}
@@ -17,16 +18,19 @@ include \code{0 + as.factor(your_time_column)}.}
 
 \item{spde}{An object from \code{\link[=make_spde]{make_spde()}}.}
 
-\item{family}{The family and link.}
+\item{family}{The family and link. Supports \code{\link[=gaussian]{gaussian()}}, \code{\link[=Gamma]{Gamma()}},
+\code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, and \code{\link[=tweedie]{tweedie()}}.}
 
 \item{silent}{Silent or optimization details?}
 
 \item{multiphase}{Estimate the fixed and random effects in phases for speed?}
 
 \item{anisotropy}{Logical: allow for anisotropy?}
+
+\item{control}{Optimization control options. See \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}.}
 }
 \description{
-sdmTMB
+A fit a spatiotemporal species distribution model with TMB
 }
 \examples{
 d <- subset(pcod, year >= 2011) # subset for example speed

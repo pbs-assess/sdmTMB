@@ -7,7 +7,7 @@
 tweedie(link = "log")
 }
 \arguments{
-\item{link}{The link (must be log)}
+\item{link}{The link.}
 }
 \description{
 Tweedie family
