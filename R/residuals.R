@@ -27,10 +27,9 @@ qres_gamma <- function (object, y, mu) {
 }
 
 qres_gaussian <- function (object, y, mu) {
-  w <- 1
   dispersion <- exp(object$model$par[["ln_phi"]])
-  logp <- stats::pnorm((w * y)/mu/dispersion, w/dispersion, log.p = TRUE)
-  stats::qnorm(logp, log.p = TRUE)
+  u <- stats::pnorm(q = y, mean = mu, sd = dispersion)
+  stats::qnorm(u)
 }
 
 #' @export
