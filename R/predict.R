@@ -94,7 +94,7 @@ predict.sdmTMB <- function(object, newdata = NULL, xy_cols = c("X", "Y"), ...) {
       data = tmb_data,
       parameters = object$tmb_params,
       map = object$tmb_map,
-      random = object$random,
+      random = object$tmb_random,
       DLL = "sdmTMB",
       silent = TRUE
     )
