@@ -40,9 +40,10 @@ m <- sdmTMB(
 names(m)
 m$model
 TMB::sdreport(m$tmb_obj)
-m$tmb_obj$report()
+r <- m$tmb_obj$report()
+names(r)
 
-Binomial:
+# Binomial:
 pcod_binom <- d
 pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
 m_bin <- sdmTMB(pcod_binom,
