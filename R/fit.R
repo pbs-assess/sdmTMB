@@ -134,20 +134,22 @@ check_family <- function(family) {
 #' # namespace (rstan)`
 #' # Restart R session, then:
 #' library(tmbstan)
-#' options(mc.cores = parallel::detectCores()) # parallel processing
 #'
 #' # Then:
 #' library(sdmTMB)
 #'
 #' # Then:
-#' set.seed(1)
-#' pcod_gaus <- subset(pcod, density > 0 & year >= 2013)
-#' pcod_spde_gaus <- make_spde(pcod_gaus$X, pcod_gaus$Y, n_knots = 40)
-#' m_pos <- sdmTMB(pcod_gaus,
-#'  log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'  time = "year", spde = pcod_spde_gaus)
-#' m_stan <- tmbstan(m_pos$tmb_obj, chains = 4, iter = 500,
-#'   init = "last.par.best", control = list(adapt_delta = 0.98))
+#' set.seed(42)
+#' pcod_bin <- subset(pcod, year > 2013)
+#' pcod_bin$present <- ifelse(pcod_bin$density > 0, 1L, 0L)
+#' pcod_bin_spde <- make_spde(pcod_bin$X/10, pcod_bin$Y/10, n_knots = 30) # scale UTMs for Stan
+#' m <- sdmTMB(pcod_bin,
+#'  present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+#'  time = "year", spde = pcod_bin_spde, family = binomial(link = "logit"))
+#' m_stan <- tmbstan(m$tmb_obj, chains = 1, iter = 600,
+#'   init = "last.par.best", control = list(adapt_delta = 0.95, max_treedepth = 20),
+#'   seed = 123)
+#' m_stan
 #' }
 
 sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
