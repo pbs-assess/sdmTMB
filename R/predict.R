@@ -22,11 +22,11 @@
 #' # We'll only use a small number of knots so this example runs quickly
 #' # but you will likely want to use many more (depending on your data).
 #'
-#' pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 50)
+#' pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 100)
 #' m <- sdmTMB(
 #'  pcod, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-#'  silent = FALSE
+#'  silent = FALSE, anisotropy = TRUE
 #' )
 #'
 #' # Predictions at original data locations:
@@ -35,6 +35,7 @@
 #'   "est_re_s", "est_re_st", "s_i")
 #' head(predictions[,cols])
 #'
+#' # Predictions onto new data:
 #' predictions <- predict(m, newdata = qcs_grid)
 #'
 #' # A short function for plotting our predictions:

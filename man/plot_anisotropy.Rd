@@ -19,6 +19,6 @@ set.seed(1) # affects INLA mesh
 m <- sdmTMB(subset(pcod, year >= 2013),
   density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   time = "year", spde = make_spde(pcod$X, pcod$Y, n_knots = 100, plot = TRUE),
-  family = tweedie(link = "log"))
+  family = tweedie(link = "log"), anisotropy = TRUE)
 plot_anisotropy(m)
 }
