@@ -14,7 +14,7 @@
 #'   family = tweedie(link = "log"), anisotropy = TRUE)
 #' plot_anisotropy(m)
 plot_anisotropy <- function(object, arrow_length = 10) {
-  assertthat::are_equal(class(object), "sdmTMB")
+  stopifnot(identical(class(object), "sdmTMB"))
   report <- object$tmb_obj$report()
   eig = eigen(report$H)
   dat <- data.frame(

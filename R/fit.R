@@ -261,13 +261,9 @@ sdmTMBcontrol <- function(eval.max = 1e4, iter.max = 1e4, ...) {
 #'
 #' @param link The link.
 #' @export
-#' @importFrom assertthat assert_that
 #' @examples
 #' tweedie(link = "log")
 tweedie <- function(link = "log") {
-  # assert_that(identical("log", as.character(substitute(link))),
-  #   msg = "Link must be 'log' for the tweedie family.")
-
   linktemp <- substitute(link)
   if (!is.character(linktemp))
     linktemp <- deparse(linktemp)
@@ -291,8 +287,9 @@ tweedie <- function(link = "log") {
 #' @examples
 #' nbinom2(link = "log")
 nbinom2 <- function(link = "log") {
-  assert_that(identical("log", as.character(substitute(link))),
-    msg = "Link must be 'log' for this implementation of the nbinom2 family.")
+  if (!identical("log", as.character(substitute(link))))
+    stop("Link must be 'log' for this implementation of the nbinom2 family.",
+      call. = FALSE)
 
   linktemp <- substitute(link)
   if (!is.character(linktemp))
