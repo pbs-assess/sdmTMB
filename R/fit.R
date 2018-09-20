@@ -153,7 +153,7 @@ check_family <- function(family) {
 #' }
 
 sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
-  silent = TRUE, multiphase = TRUE, anisotropy = FALSE) {
+  silent = TRUE, multiphase = TRUE, anisotropy = TRUE) {
 
   X_ij <- model.matrix(formula, data)
   mf   <- model.frame(formula, data)
@@ -196,10 +196,12 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
   tmb_params <- list(
     ln_H_input = c(-0.5, -0.5),
     b_j        = rep(0, ncol(X_ij)),
-    ln_tau_E   = 0.5,
+    ln_tau_O   = 0,
+    ln_tau_E   = 0,
     ln_kappa   = -1,
     logit_p    = 0,
     log_phi    = 2,
+    omega_s    = rep(0, tmb_data$n_s),
     epsilon_st = matrix(0, nrow = tmb_data$n_s, ncol = tmb_data$n_t)
   )
 
@@ -209,14 +211,16 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
     tmb_map <- c(tmb_map, list(ln_H_input = factor(rep(NA, 2))))
   if (check_family(family)$family == "binomial")
     tmb_map <- c(tmb_map, list(log_phi = as.factor(NA)))
-  if (!check_family(family)$family == "tweedie")
+  if (check_family(family)$family != "tweedie")
     tmb_map <- c(tmb_map, list(logit_p = as.factor(NA)))
 
   if (multiphase) {
     not_phase1 <- c(tmb_map, list(
+      ln_tau_O   = as.factor(NA),
       ln_tau_E   = as.factor(NA),
       ln_kappa   = as.factor(NA),
       ln_H_input = factor(rep(NA, 2)),
+      omega_s    = factor(rep(NA, length(tmb_params$omega_s))),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
     tmb_obj1 <- TMB::MakeADFun(
@@ -234,11 +238,11 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
     if (check_family(family)$family == "tweedie")
       tmb_params$logit_p <- as.numeric(tmb_opt1$par["logit_p" == names(tmb_opt1$par)])
 
-    if (!check_family(family)$family == "binomial")
+    if (check_family(family)$family != "binomial")
       tmb_params$log_phi <- as.numeric(tmb_opt1$par["log_phi" == names(tmb_opt1$par)])
   }
 
-  tmb_random <- c("epsilon_st")
+  tmb_random <- c("omega_s", "epsilon_st")
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     random = tmb_random, DLL = "sdmTMB", silent = silent

@@ -28,30 +28,38 @@
 #'  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
 #'  silent = FALSE
 #' )
+#'
+#' # Predictions at original data locations:
 #' predictions <- predict(m)
-#' cols <- c("year", "X", "Y", "prediction", "prediction_fe",
-#'   "prediction_re", "s_i")
+#' cols <- c("year", "X", "Y", "est", "est_fe",
+#'   "est_re_s", "est_re_st", "s_i")
 #' head(predictions[,cols])
 #'
 #' predictions <- predict(m, newdata = qcs_grid)
 #'
 #' # A short function for plotting our predictions:
 #' library(ggplot2)
-#' plot_map <- function(dat, column = "prediction") {
+#' plot_map <- function(dat, column = "est") {
 #'   ggplot(dat, aes_string("X", "Y", fill = column)) +
 #'     geom_raster() +
 #'     facet_wrap(~year) +
 #'     coord_fixed()
 #' }
 #'
-#' plot_map(predictions, "exp(prediction)") +
+#' plot_map(predictions, "exp(est)") +
 #'   scale_fill_viridis_c(trans = "sqrt") +
-#'   ggtitle("Prediction (fixed effects + random effects)")
-#' plot_map(predictions, "exp(prediction_fe)") +
+#'   ggtitle("Prediction (fixed effects + all random effects)")
+#'
+#' plot_map(predictions, "exp(est_fe)") +
 #'   ggtitle("Prediction (fixed effects only)") +
 #'   scale_fill_viridis_c(trans = "sqrt")
-#' plot_map(predictions, "prediction_re") +
-#'   ggtitle("Random effects only") +
+#'
+#' plot_map(predictions, "est_re_s") +
+#'   ggtitle("Spatial random effects only") +
+#'   scale_fill_gradient2()
+#'
+#' plot_map(predictions, "est_re_st") +
+#'   ggtitle("Spatiotemporal random effects only") +
 #'   scale_fill_gradient2()
 
 predict.sdmTMB <- function(object, newdata = NULL, xy_cols = c("X", "Y"), ...) {
@@ -88,20 +96,30 @@ predict.sdmTMB <- function(object, newdata = NULL, xy_cols = c("X", "Y"), ...) {
     new_tmb_obj$fn(old_par)
     lp <- new_tmb_obj$env$last.par
 
-    nd$prediction <- new_tmb_obj$report(lp)$proj_eta
-    nd$prediction_fe <- new_tmb_obj$report(lp)$proj_fe
-    nd$prediction_re <- new_tmb_obj$report(lp)$proj_re_st_vector
+    r <- new_tmb_obj$report(lp)
+    nd$est <- r$proj_eta
+    nd$est_fe <- r$proj_fe
+    nd$est_re_s <- r$proj_re_sp
+    nd$est_re_st <- r$proj_re_st_vector
   } else {
     nd <- object$data
     lp <- object$tmb_obj$env$last.par
-    nd$prediction <- object$tmb_obj$report(lp)$eta_i
-    nd$prediction_fe <- object$tmb_obj$report(lp)$linear_predictor_i
+    r <- object$tmb_obj$report(lp)
+    nd$est <- r$eta_i
+    nd$est_fe <- r$linear_predictor_i
+
+    # Spatial REs:
+    get_omegas <- function(x) r$omega_s[x]
+    nd$est_re_s <- mapply(get_omegas, x = object$tmb_data$s_i + 1)
+
+    # Sp-temp REs:
     epsilon_st_mat <- object$tmb_obj$report(lp)$epsilon_st
     get_eps <- function(x, y) epsilon_st_mat[x, y]
     eps <- mapply(get_eps,
       x = object$tmb_data$s_i + 1,
       y = object$tmb_data$year_i + 1)
-    nd$prediction_re <- eps
+    nd$est_re_st <- eps
+
     nd$s_i <- object$tmb_data$s_i + 1
   }
   nd

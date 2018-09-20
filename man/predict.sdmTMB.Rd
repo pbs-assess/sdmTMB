@@ -35,29 +35,37 @@ m <- sdmTMB(
  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
  silent = FALSE
 )
+
+# Predictions at original data locations:
 predictions <- predict(m)
-cols <- c("year", "X", "Y", "prediction", "prediction_fe",
-  "prediction_re", "s_i")
+cols <- c("year", "X", "Y", "est", "est_fe",
+  "est_re_s", "est_re_st", "s_i")
 head(predictions[,cols])
 
 predictions <- predict(m, newdata = qcs_grid)
 
 # A short function for plotting our predictions:
 library(ggplot2)
-plot_map <- function(dat, column = "prediction") {
+plot_map <- function(dat, column = "est") {
   ggplot(dat, aes_string("X", "Y", fill = column)) +
     geom_raster() +
     facet_wrap(~year) +
     coord_fixed()
 }
 
-plot_map(predictions, "exp(prediction)") +
+plot_map(predictions, "exp(est)") +
   scale_fill_viridis_c(trans = "sqrt") +
-  ggtitle("Prediction (fixed effects + random effects)")
-plot_map(predictions, "exp(prediction_fe)") +
+  ggtitle("Prediction (fixed effects + all random effects)")
+
+plot_map(predictions, "exp(est_fe)") +
   ggtitle("Prediction (fixed effects only)") +
   scale_fill_viridis_c(trans = "sqrt")
-plot_map(predictions, "prediction_re") +
-  ggtitle("Random effects only") +
+
+plot_map(predictions, "est_re_s") +
+  ggtitle("Spatial random effects only") +
+  scale_fill_gradient2()
+
+plot_map(predictions, "est_re_st") +
+  ggtitle("Spatiotemporal random effects only") +
   scale_fill_gradient2()
 }

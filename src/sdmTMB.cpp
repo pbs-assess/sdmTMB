@@ -12,7 +12,7 @@ Type InverseLogitPlus1(Type x) {
 }
 
 template <class Type>
-vector<Type> AsVector(array<Type> x) {
+vector<Type> Array2DToVector(array<Type> x) {
   x = x.transpose();
   int nr = x.rows();
   int nc = x.cols();
@@ -25,10 +25,24 @@ vector<Type> AsVector(array<Type> x) {
 }
 
 template <class Type>
-vector<Type> ArrayToVector(array<Type> x) {
+vector<Type> Array1DToVector(array<Type> x) {
   int n = x.size();
   vector<Type> res(n);
   for (int i = 0; i < n; i++) res[i] = x(i);
+  return res;
+}
+
+template <class Type>
+vector<Type> RepeatVector(vector<Type> x, int times) {
+  int n = x.size() * times;
+  vector<Type> res(n);
+  int k = 0;
+  for (int i = 0; i < times; i++) {
+    for (int j = 0; j < x.size(); j++) {
+      res[k] = x(j);
+      k++;
+    }
+  }
   return res;
 }
 
@@ -91,6 +105,7 @@ Type objective_function<Type>::operator()() {
   // Fixed effects
   PARAMETER_VECTOR(b_j);  // fixed effect parameters
   // PARAMETER_VECTOR(b_j_phi);  // fixed effect parameters
+  PARAMETER(ln_tau_O);  // spatial process
   PARAMETER(ln_tau_E);  // spatio-temporal process
   PARAMETER(ln_kappa);  // decorrelation distance (kind of)
   // PARAMETER(ln_obs);        // Observation variance
@@ -100,20 +115,21 @@ Type objective_function<Type>::operator()() {
 
   // Random effects
   // This is a matrix of (centers by years)
+  PARAMETER_VECTOR(omega_s);  // spatio-temporal effects; n_s by n_t matrix
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
 
   // Objective function is sum of negative log likelihood components
   int n_i = y_i.size();     // number of observations
   Type nll_likelihood = 0;  // likelihood of data
+  Type nll_omega = 0;		    // spatial effects
   Type nll_epsilon = 0;     // spatio-temporal effects
 
   // Derived quantities, given parameters
 
   // Geospatial (Matern)
   Type Range = sqrt(8.0) / exp(ln_kappa);
-  Type SigmaE =
-      1.0 / sqrt(4.0 * M_PI * exp(2.0 * ln_tau_E) * exp(2.0 * ln_kappa));
-
+  Type SigmaO = 1 / sqrt(4 * M_PI * exp(2 * ln_tau_O) * exp(2 * ln_kappa));
+  Type SigmaE = 1 / sqrt(4 * M_PI * exp(2 * ln_tau_E) * exp(2 * ln_kappa));
 
   Eigen::SparseMatrix<Type> Q;
   if (anisotropy) {
@@ -136,12 +152,17 @@ Type objective_function<Type>::operator()() {
   // vector<Type> log_phi = X_ij_phi * b_j_phi;
   vector<Type> mu_i(n_i), eta_i(n_i);
   for (int i = 0; i < n_i; i++) {
-    eta_i(i) = linear_predictor_i(i) + epsilon_st(s_i(i), year_i(i));
+    eta_i(i) = linear_predictor_i(i) +
+               omega_s(s_i(i)) +  // spatial
+               epsilon_st(s_i(i), year_i(i)); // spatiotemporal
     mu_i(i) = InverseLink(eta_i(i), link);
   }
 
   // Probability of random effects
-  // Spatio-temporal effects:
+  // Spatial effects;
+  nll_omega += SCALE(density::GMRF(Q), 1.0 / exp(ln_tau_O))(omega_s);
+
+  // Spatiotemporal effects:
   for (int t = 0; t < n_t; t++)
     nll_epsilon += SCALE(density::GMRF(Q), 1.0 / exp(ln_tau_E))(epsilon_st.col(t));
 
@@ -169,18 +190,23 @@ Type objective_function<Type>::operator()() {
   }
 
   // Calculate joint negative log likelihood
-  Type jnll = nll_likelihood + nll_epsilon;
+  Type jnll = nll_likelihood + nll_omega + nll_epsilon;
 
   // Projections
   if (do_predict) {
     vector<Type> proj_fe = proj_X_ij * b_j;
+    vector<Type> proj_re_sp = proj_mesh * omega_s;
+    vector<Type> proj_re_sp_st = RepeatVector(proj_re_sp, n_t);
+
     array<Type> proj_re_st(proj_mesh.rows(), n_t);
     for (int i = 0; i < n_t; i++) {
-      proj_re_st.col(i) = proj_mesh * ArrayToVector(epsilon_st.col(i));
+      proj_re_st.col(i) = proj_mesh * Array1DToVector(epsilon_st.col(i));
     }
-    vector<Type> proj_re_st_vector = AsVector(proj_re_st);
-    vector<Type> proj_eta = proj_fe + proj_re_st_vector;
+    vector<Type> proj_re_st_vector = Array2DToVector(proj_re_st);
+
+    vector<Type> proj_eta = proj_fe + proj_re_sp_st + proj_re_st_vector;
     REPORT(proj_fe);
+    REPORT(proj_re_sp);
     REPORT(proj_re_st_vector);
     REPORT(proj_eta);
   }
@@ -188,12 +214,14 @@ Type objective_function<Type>::operator()() {
   // Reporting
   REPORT(b_j)  // fixed effect parameters
   // REPORT(b_j_phi)    // fixed effect parameters
+  REPORT(ln_tau_O);  // spatial process
   REPORT(ln_tau_E);  // spatio-temporal process
   REPORT(ln_kappa);  // decorrelation distance (kind of)
   REPORT(log_phi);   // Observation dispersion
   // REPORT(logit_p);   // Observation Tweedie mixing parameter
 
   REPORT(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
+  REPORT(omega_s);  // spatio-temporal effects; n_s by n_t matrix
 
   // vector<Type> proj_mu_select = proj_mu(which_predict);
 
