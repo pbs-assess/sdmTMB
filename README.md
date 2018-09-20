@@ -19,4 +19,4 @@ devtools::install_github("seananderson/sdmTMB")
 
 The main function is `sdmTMB()`.
 
-See `?predict.sdmTMB` for the most complete example.
+See `?sdmTMB` and `?predict.sdmTMB` for the most complete examples.
