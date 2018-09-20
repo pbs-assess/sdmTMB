@@ -17,8 +17,6 @@ plot_spde(object)
 \item{n_knots}{The number of knots.}
 
 \item{object}{Output from \code{\link[=make_spde]{make_spde()}}.}
-
-\item{plot}{Logical: should a plot be made?}
 }
 \description{
 Construct an SPDE mesh

@@ -6,7 +6,6 @@ NULL
 #' @param x X numeric vector.
 #' @param y Y numeric vector.
 #' @param n_knots The number of knots.
-#' @param plot Logical: should a plot be made?
 #'
 #' @importFrom graphics points
 #' @export
