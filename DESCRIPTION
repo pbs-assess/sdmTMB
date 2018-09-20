@@ -22,8 +22,7 @@ Imports:
     ggplot2,
     Matrix,
     grid,
-    tweedie,
-    graphics
+    tweedie
 Suggests:
     testthat,
     dplyr,
