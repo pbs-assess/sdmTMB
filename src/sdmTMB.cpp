@@ -110,8 +110,8 @@ Type objective_function<Type>::operator()() {
   PARAMETER(ln_tau_E);    // spatio-temporal process
   PARAMETER(ln_kappa);    // decorrelation distance (kind of)
 
-  PARAMETER(logit_p);  // tweedie only
-  PARAMETER(log_phi);  // sigma / dispersion / etc.
+  PARAMETER(thetaf);  // tweedie only
+  PARAMETER(ln_phi);  // sigma / dispersion / etc.
 
   // Random effects
   // This is a matrix of spatial centers by years
@@ -176,12 +176,12 @@ Type objective_function<Type>::operator()() {
       switch (family) {
         case 1:  // Gaussian
           nll_likelihood -=
-              dnorm(y_i(i), mu_i(i), exp(log_phi), true /* log */);
+              dnorm(y_i(i), mu_i(i), exp(ln_phi), true /* log */);
           break;
         case 2:  // Tweedie
           nll_likelihood -=
-              dtweedie(y_i(i), mu_i(i), exp(log_phi),
-                       InverseLogitPlus1(logit_p), true /* log */);
+              dtweedie(y_i(i), mu_i(i), exp(ln_phi),
+                       InverseLogitPlus1(thetaf), true /* log */);
           break;
         case 3:  // binomial
           nll_likelihood -= dbinom_robust(y_i(i), Type(1.0) /* size */, mu_i(i),
@@ -219,8 +219,8 @@ Type objective_function<Type>::operator()() {
   REPORT(ln_tau_O);    // spatial process
   REPORT(ln_tau_E);    // spatio-temporal process
   REPORT(ln_kappa);    // decorrelation distance (kind of)
-  REPORT(log_phi);     // Observation dispersion
-  REPORT(logit_p);     // Observation Tweedie mixing parameter
+  REPORT(ln_phi);      // observation dispersion
+  REPORT(thetaf);      // observation Tweedie mixing parameter
   REPORT(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
   REPORT(omega_s);     // spatio-temporal effects; n_s by n_t matrix
   REPORT(eta_i);

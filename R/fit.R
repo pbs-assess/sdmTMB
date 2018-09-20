@@ -1,5 +1,4 @@
 #' @useDynLib sdmTMB
-#' @importFrom TMB MakeADFun
 NULL
 
 #' Construct an SPDE mesh
@@ -66,18 +65,21 @@ make_anisotropy_spde <- function(spde) {
 #' @examples
 #' tweedie(link = "log")
 tweedie <- function(link = "log") {
-  assert_that(identical("log", as.character(substitute(link))),
-    msg = "Link must be 'log' for the tweedie family.")
-  list(family = "tweedie", link = "log")
-}
+  # assert_that(identical("log", as.character(substitute(link))),
+  #   msg = "Link must be 'log' for the tweedie family.")
 
-# Check a family object
-#
-# @param family The family
-check_family <- function(family) {
-  list(family = family$family, link = family$link)
-}
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("inverse", "log", "identity")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
 
+  list(family = "tweedie", link = linktemp, linkfun = stats$linkfun,
+    linkinv = stats$linkinv)
+}
 
 #' sdmTMB
 #'
@@ -154,7 +156,7 @@ check_family <- function(family) {
 #' m_stan
 #' }
 
-sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
+sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity"),
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE) {
 
   X_ij <- model.matrix(formula, data)
@@ -164,7 +166,6 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
   proj_mesh <- Matrix::Matrix(0, 1, 1) # dummy
   proj_X_ij <- matrix(0, ncol = 1, nrow = 1) # dummy
 
-  family <- check_family(family)
   family_integer <- switch(family$family,
     gaussian   = 1L,
     tweedie    = 2L,
@@ -196,13 +197,13 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
   )
 
   tmb_params <- list(
-    ln_H_input = c(-0.5, -0.5),
+    ln_H_input = c(0, 0),
     b_j        = rep(0, ncol(X_ij)),
     ln_tau_O   = 0,
     ln_tau_E   = 0,
-    ln_kappa   = -1,
-    logit_p    = 0,
-    log_phi    = 2,
+    ln_kappa   = 0,
+    thetaf     = 0,
+    ln_phi     = 0,
     omega_s    = rep(0, tmb_data$n_s),
     epsilon_st = matrix(0, nrow = tmb_data$n_s, ncol = tmb_data$n_t)
   )
@@ -211,10 +212,10 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
   tmb_map <- list()
   if (!anisotropy)
     tmb_map <- c(tmb_map, list(ln_H_input = factor(rep(NA, 2))))
-  if (check_family(family)$family == "binomial")
-    tmb_map <- c(tmb_map, list(log_phi = as.factor(NA)))
-  if (check_family(family)$family != "tweedie")
-    tmb_map <- c(tmb_map, list(logit_p = as.factor(NA)))
+  if (family$family == "binomial")
+    tmb_map <- c(tmb_map, list(ln_phi = as.factor(NA)))
+  if (family$family != "tweedie")
+    tmb_map <- c(tmb_map, list(thetaf = as.factor(NA)))
 
   if (multiphase) {
     not_phase1 <- c(tmb_map, list(
@@ -235,12 +236,10 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
 
     # Set starting values based on phase 1:
     tmb_params$b_j <- as.numeric(tmb_opt1$par["b_j" == names(tmb_opt1$par)])
-
-    if (check_family(family)$family == "tweedie")
-      tmb_params$logit_p <- as.numeric(tmb_opt1$par["logit_p" == names(tmb_opt1$par)])
-
-    if (check_family(family)$family != "binomial")
-      tmb_params$log_phi <- as.numeric(tmb_opt1$par["log_phi" == names(tmb_opt1$par)])
+    if (family$family == "tweedie")
+      tmb_params$thetaf <- as.numeric(tmb_opt1$par["thetaf" == names(tmb_opt1$par)])
+    if (family$family != "binomial")
+      tmb_params$ln_phi <- as.numeric(tmb_opt1$par["ln_phi" == names(tmb_opt1$par)])
   }
 
   tmb_random <- c("omega_s", "epsilon_st")

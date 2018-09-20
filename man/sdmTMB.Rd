@@ -4,7 +4,7 @@
 \alias{sdmTMB}
 \title{sdmTMB}
 \usage{
-sdmTMB(data, formula, time, spde, family = gaussian(link = "log"),
+sdmTMB(data, formula, time, spde, family = gaussian(link = "identity"),
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE)
 }
 \arguments{
