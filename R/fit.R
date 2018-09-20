@@ -166,19 +166,6 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
   proj_mesh <- Matrix::Matrix(0, 1, 1) # dummy
   proj_X_ij <- matrix(0, ncol = 1, nrow = 1) # dummy
 
-  family_integer <- switch(family$family,
-    gaussian   = 1L,
-    tweedie    = 2L,
-    binomial   = 3L,
-    stop("Family not implemented.")
-  )
-  link_integer <- switch(family$link,
-    identity   = 1L,
-    log        = 2L,
-    logit      = 3L,
-    stop("Link not implemented.")
-  )
-
   tmb_data <- list(
     y_i        = y_i,
     n_t        = length(unique(data[[time]])),
@@ -192,8 +179,8 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     spde_aniso = make_anisotropy_spde(spde),
     spde       = spde$spde$param.inla[c("M0","M1","M2")],
     anisotropy = as.integer(anisotropy),
-    family     = family_integer,
-    link       = link_integer
+    family     = .valid_family[family$family],
+    link       = .valid_link[family$link]
   )
 
   tmb_params <- list(
@@ -237,9 +224,11 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     # Set starting values based on phase 1:
     tmb_params$b_j <- as.numeric(tmb_opt1$par["b_j" == names(tmb_opt1$par)])
     if (family$family == "tweedie")
-      tmb_params$thetaf <- as.numeric(tmb_opt1$par["thetaf" == names(tmb_opt1$par)])
+      tmb_params$thetaf <-
+      as.numeric(tmb_opt1$par["thetaf" == names(tmb_opt1$par)])
     if (family$family != "binomial")
-      tmb_params$ln_phi <- as.numeric(tmb_opt1$par["ln_phi" == names(tmb_opt1$par)])
+      tmb_params$ln_phi <-
+      as.numeric(tmb_opt1$par["ln_phi" == names(tmb_opt1$par)])
   }
 
   tmb_random <- c("omega_s", "epsilon_st")

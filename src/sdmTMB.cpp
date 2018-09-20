@@ -47,17 +47,29 @@ vector<Type> RepeatVector(vector<Type> x, int times) {
   return res;
 }
 
+enum valid_family {
+  gaussian_family = 100,
+  binomial_family = 200,
+  tweedie_family  = 300
+};
+
+enum valid_link {
+  identity_link = 100,
+  log_link      = 200,
+  logit_link    = 300
+};
+
 template <class Type>
 Type InverseLink(Type eta, int link) {
   Type out;
   switch (link) {
-    case 1:  // identity
+    case identity_link:
       out = eta;
       break;
-    case 2:  // log
+    case log_link:
       out = exp(eta);
       break;
-    case 3:       // logit
+    case logit_link:
       out = eta;  // don't touch: we're using dbinom_robust() in logit space
       break;
     default:
@@ -175,16 +187,16 @@ Type objective_function<Type>::operator()() {
   for (int i = 0; i < n_i; i++) {
     if (!isNA(y_i(i))) {
       switch (family) {
-        case 1:  // Gaussian
+        case gaussian_family:
           nll_likelihood -=
               dnorm(y_i(i), mu_i(i), exp(ln_phi), true /* log */);
           break;
-        case 2:  // Tweedie
+        case tweedie_family:
           nll_likelihood -=
               dtweedie(y_i(i), mu_i(i), exp(ln_phi),
                        InverseLogitPlus1(thetaf), true /* log */);
           break;
-        case 3:  // binomial
+        case binomial_family:
           nll_likelihood -= dbinom_robust(y_i(i), Type(1.0) /* size */, mu_i(i),
                                           true /* log */);
           break;
