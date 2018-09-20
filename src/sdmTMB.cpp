@@ -77,8 +77,10 @@ Type objective_function<Type>::operator()() {
   // DATA_MATRIX(X_ij_phi);  // model matrix for phi
 
   // SPDE objects from R-INLA
-  DATA_STRUCT(spde,spde_aniso_t);
+  DATA_STRUCT(spde_aniso,spde_aniso_t);
+  DATA_STRUCT(spde,spde_t);
   PARAMETER_VECTOR(ln_H_input);
+  DATA_INTEGER(anisotropy);
 
   // Projections:
   DATA_SPARSE_MATRIX(proj_mesh);
@@ -112,13 +114,21 @@ Type objective_function<Type>::operator()() {
   Type SigmaE =
       1.0 / sqrt(4.0 * M_PI * exp(2.0 * ln_tau_E) * exp(2.0 * ln_kappa));
 
-  // Anisotropic Q SPDE:
-  matrix<Type> H(2,2);
-  H(0,0) = exp(ln_H_input(0));
-  H(1,0) = ln_H_input(1);
-  H(0,1) = ln_H_input(1);
-  H(1,1) = (1 + ln_H_input(1) * ln_H_input(1)) / exp(ln_H_input(0));
-  Eigen::SparseMatrix<Type> Q = R_inla::Q_spde(spde, exp(ln_kappa), H);
+
+  Eigen::SparseMatrix<Type> Q;
+  if (anisotropy) {
+    // Anisotropic Q SPDE:
+    matrix<Type> H(2,2);
+    H(0,0) = exp(ln_H_input(0));
+    H(1,0) = ln_H_input(1);
+    H(0,1) = ln_H_input(1);
+    H(1,1) = (1 + ln_H_input(1) * ln_H_input(1)) / exp(ln_H_input(0));
+    Q = R_inla::Q_spde(spde_aniso, exp(ln_kappa), H);
+    REPORT(H);
+  }
+  if (!anisotropy) {
+    Q = R_inla::Q_spde(spde, exp(ln_kappa));
+  }
 
   // Linear predictor
   vector<Type> linear_predictor_i = X_ij * b_j;
@@ -189,7 +199,6 @@ Type objective_function<Type>::operator()() {
 
   REPORT(eta_i);
   REPORT(linear_predictor_i);
-  REPORT(H);
   REPORT(Range);
 
   // ADREPORT(proj_mu);

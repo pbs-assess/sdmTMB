@@ -25,7 +25,8 @@
 #' pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 50)
 #' m <- sdmTMB(
 #'  pcod, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'  time = "year", spde = pcod_spde, family = tweedie(link = "log")
+#'  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+#'  silent = FALSE
 #' )
 #' predictions <- predict(m)
 #' cols <- c("year", "X", "Y", "prediction", "prediction_fe",

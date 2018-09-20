@@ -28,6 +28,7 @@ make_spde <- function(x, y, n_knots, plot = FALSE) {
   list(mesh = mesh, spde = spde, cluster = knots$cluster, loc_centers = loc_centers)
 }
 
+# from TMB examples repository:
 make_anisotropy_spde <- function(spde) {
   inla_mesh <- spde$mesh
   Dset <- 1:2
@@ -54,8 +55,7 @@ make_anisotropy_spde <- function(spde) {
     E2       = E2,
     TV       = TV - 1,
     G0       = spde$spde$param.inla$M0,
-    G0_inv   = as(Matrix::diag(1/Matrix::diag(spde$spde$param.inla$M0)),
-      "dgTMatrix"))
+    G0_inv   = as(Matrix::diag(1/Matrix::diag(spde$spde$param.inla$M0)), "dgTMatrix"))
 }
 
 #' Tweedie family
@@ -103,7 +103,8 @@ check_family <- function(family) {
 #' # Tweedie:
 #' m <- sdmTMB(
 #'   d, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'   time = "year", spde = pcod_spde, family = tweedie(link = "log"))
+#'   time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+#'   silent = FALSE)
 #'
 #' # Contents of the output object:
 #' names(m)
@@ -111,22 +112,46 @@ check_family <- function(family) {
 #' TMB::sdreport(m$tmb_obj)
 #' m$tmb_obj$report()
 #'
-#' # Binomial:
+#' Binomial:
 #' pcod_binom <- d
 #' pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
 #' m_bin <- sdmTMB(pcod_binom,
 #'   present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'   time = "year", spde = pcod_spde, family = binomial(link = "logit"),
-#'   silent = TRUE)
+#'   time = "year", spde = pcod_spde, family = binomial(link = "logit"))
 #'
 #' # Gaussian:
-#' pcod_gaus <- subset(d, density > 0)
-#' pcod_spde_gaus <- make_spde(pcod_gaus$X, pcod_gaus$Y, n_knots = 100)
+#' pcod_gaus <- subset(d, density > 0 & year >= 2013)
+#' pcod_spde_gaus <- make_spde(pcod_gaus$X, pcod_gaus$Y, n_knots = 50)
 #' m_pos <- sdmTMB(pcod_gaus,
 #'   log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'   time = "year", spde = pcod_spde_gaus, silent = TRUE)
+#'   time = "year", spde = pcod_spde_gaus)
+#'
+#' \dontrun{
+#' # Stan sampling (warning: slow going and priors are flat).
+#'
+#' # Must load tmbstan first and then TMB and/or sdmTMB
+#' # or you will get the error `"is_Null_NS" not resolved from current
+#' # namespace (rstan)`
+#' # Restart R session, then:
+#' library(tmbstan)
+#' options(mc.cores = parallel::detectCores()) # parallel processing
+#'
+#' # Then:
+#' library(sdmTMB)
+#'
+#' # Then:
+#' set.seed(1)
+#' pcod_gaus <- subset(pcod, density > 0 & year >= 2013)
+#' pcod_spde_gaus <- make_spde(pcod_gaus$X, pcod_gaus$Y, n_knots = 40)
+#' m_pos <- sdmTMB(pcod_gaus,
+#'  log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+#'  time = "year", spde = pcod_spde_gaus)
+#' m_stan <- tmbstan(m_pos$tmb_obj, chains = 4, iter = 500,
+#'   init = "last.par.best", control = list(adapt_delta = 0.98))
+#' }
+
 sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
-  silent = FALSE, multiphase = TRUE) {
+  silent = TRUE, multiphase = TRUE, anisotropy = FALSE) {
 
   X_ij <- model.matrix(formula, data)
   mf   <- model.frame(formula, data)
@@ -159,7 +184,9 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
     do_predict = 0L,
     proj_mesh = proj_mesh,
     proj_X_ij = proj_X_ij,
-    spde = make_anisotropy_spde(spde),
+    spde_aniso = make_anisotropy_spde(spde),
+    spde = spde$spde$param.inla[c("M0","M1","M2")],
+    anisotropy = as.integer(anisotropy),
     family = family_integer,
     link = link_integer
   )
@@ -174,12 +201,21 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
     epsilon_st = matrix(0, nrow = tmb_data$n_s, ncol = tmb_data$n_t)
   )
 
+  # Mapping off params as needed:
+  tmb_map <- list()
+  if (!anisotropy)
+    tmb_map <- c(tmb_map, list(ln_H_input = factor(rep(NA, 2))))
+  if (check_family(family)$family == "binomial")
+    tmb_map <- c(tmb_map, list(log_phi = as.factor(NA)))
+  if (!check_family(family)$family == "tweedie")
+    tmb_map <- c(tmb_map, list(logit_p = as.factor(NA)))
+
   if (multiphase) {
-    not_phase1 <- list(
+    not_phase1 <- c(tmb_map, list(
       ln_tau_E   = as.factor(NA),
       ln_kappa   = as.factor(NA),
       ln_H_input = factor(rep(NA, 2)),
-      epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st))) )
+      epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
     tmb_obj1 <- TMB::MakeADFun(
       data = tmb_data, parameters = tmb_params, map = not_phase1, DLL = "sdmTMB",
@@ -190,14 +226,19 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
       control = list(eval.max = 1e4, iter.max = 1e4)
     )
 
+    # Set starting values based on phase 1:
     tmb_params$b_j     <- as.numeric(tmb_opt1$par["b_j"     == names(tmb_opt1$par)])
-    tmb_params$logit_p <- as.numeric(tmb_opt1$par["logit_p" == names(tmb_opt1$par)])
-    tmb_params$log_phi <- as.numeric(tmb_opt1$par["log_phi" == names(tmb_opt1$par)])
+
+    if (check_family(family)$family == "tweedie")
+      tmb_params$logit_p <- as.numeric(tmb_opt1$par["logit_p" == names(tmb_opt1$par)])
+
+    if (!check_family(family)$family == "binomial")
+      tmb_params$log_phi <- as.numeric(tmb_opt1$par["log_phi" == names(tmb_opt1$par)])
   }
 
   tmb_random <- c("epsilon_st")
   tmb_obj <- TMB::MakeADFun(
-    data = tmb_data, parameters = tmb_params,
+    data = tmb_data, parameters = tmb_params, map = tmb_map,
     random = tmb_random, DLL = "sdmTMB", silent = silent
   )
 

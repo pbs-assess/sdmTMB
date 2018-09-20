@@ -23,7 +23,8 @@ Imports:
     grid
 Suggests:
     testthat,
-    dplyr
+    dplyr,
+    tmbstan
 URL: https://github.com/seananderson/sdmTMB
 BugReports: https://github.com/seananderson/sdmTMB/issues
 RoxygenNote: 6.1.0

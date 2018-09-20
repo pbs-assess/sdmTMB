@@ -5,7 +5,7 @@
 \title{sdmTMB}
 \usage{
 sdmTMB(data, formula, time, spde, family = gaussian(link = "log"),
-  silent = FALSE, multiphase = TRUE)
+  silent = TRUE, multiphase = TRUE, anisotropy = FALSE)
 }
 \arguments{
 \item{data}{A data frame.}
@@ -33,7 +33,8 @@ pcod_spde <- make_spde(d$X, d$Y, n_knots = 100) # only 100 knots for example spe
 # Tweedie:
 m <- sdmTMB(
   d, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  time = "year", spde = pcod_spde, family = tweedie(link = "log"))
+  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+  silent = FALSE)
 
 # Contents of the output object:
 names(m)
@@ -41,18 +42,41 @@ m$model
 TMB::sdreport(m$tmb_obj)
 m$tmb_obj$report()
 
-# Binomial:
+Binomial:
 pcod_binom <- d
 pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
 m_bin <- sdmTMB(pcod_binom,
   present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  time = "year", spde = pcod_spde, family = binomial(link = "logit"),
-  silent = TRUE)
+  time = "year", spde = pcod_spde, family = binomial(link = "logit"))
 
 # Gaussian:
-pcod_gaus <- subset(d, density > 0)
-pcod_spde_gaus <- make_spde(pcod_gaus$X, pcod_gaus$Y, n_knots = 100)
+pcod_gaus <- subset(d, density > 0 & year >= 2013)
+pcod_spde_gaus <- make_spde(pcod_gaus$X, pcod_gaus$Y, n_knots = 50)
 m_pos <- sdmTMB(pcod_gaus,
   log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  time = "year", spde = pcod_spde_gaus, silent = TRUE)
+  time = "year", spde = pcod_spde_gaus)
+
+\dontrun{
+# Stan sampling (warning: slow going and priors are flat).
+
+# Must load tmbstan first and then TMB and/or sdmTMB
+# or you will get the error `"is_Null_NS" not resolved from current
+# namespace (rstan)`
+# Restart R session, then:
+library(tmbstan)
+options(mc.cores = parallel::detectCores()) # parallel processing
+
+# Then:
+library(sdmTMB)
+
+# Then:
+set.seed(1)
+pcod_gaus <- subset(pcod, density > 0 & year >= 2013)
+pcod_spde_gaus <- make_spde(pcod_gaus$X, pcod_gaus$Y, n_knots = 40)
+m_pos <- sdmTMB(pcod_gaus,
+ log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+ time = "year", spde = pcod_spde_gaus)
+m_stan <- tmbstan(m_pos$tmb_obj, chains = 4, iter = 500,
+  init = "last.par.best", control = list(adapt_delta = 0.98))
+}
 }
