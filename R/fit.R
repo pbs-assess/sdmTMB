@@ -166,33 +166,33 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
 
   family <- check_family(family)
   family_integer <- switch(family$family,
-    gaussian = 1L,
-    tweedie  = 2L,
-    binomial = 3L,
+    gaussian   = 1L,
+    tweedie    = 2L,
+    binomial   = 3L,
     stop("Family not implemented.")
   )
   link_integer <- switch(family$link,
-    identity = 1L,
-    log      = 2L,
-    logit    = 3L,
+    identity   = 1L,
+    log        = 2L,
+    logit      = 3L,
     stop("Link not implemented.")
   )
 
   tmb_data <- list(
-    y_i = y_i,
-    n_t = length(unique(data[[time]])),
-    n_s = nrow(spde$mesh$loc),
-    s_i = spde$cluster - 1L,
-    year_i = as.numeric(as.factor(as.character(data[[time]]))) - 1L,
-    X_ij = X_ij,
+    y_i        = y_i,
+    n_t        = length(unique(data[[time]])),
+    n_s        = nrow(spde$mesh$loc),
+    s_i        = spde$cluster - 1L,
+    year_i     = as.numeric(as.factor(as.character(data[[time]]))) - 1L,
+    X_ij       = X_ij,
     do_predict = 0L,
-    proj_mesh = proj_mesh,
-    proj_X_ij = proj_X_ij,
+    proj_mesh  = proj_mesh,
+    proj_X_ij  = proj_X_ij,
     spde_aniso = make_anisotropy_spde(spde),
-    spde = spde$spde$param.inla[c("M0","M1","M2")],
+    spde       = spde$spde$param.inla[c("M0","M1","M2")],
     anisotropy = as.integer(anisotropy),
-    family = family_integer,
-    link = link_integer
+    family     = family_integer,
+    link       = link_integer
   )
 
   tmb_params <- list(
@@ -226,16 +226,15 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
     tmb_obj1 <- TMB::MakeADFun(
-      data = tmb_data, parameters = tmb_params, map = not_phase1, DLL = "sdmTMB",
-      silent = silent)
+      data = tmb_data, parameters = tmb_params,
+      map = not_phase1, DLL = "sdmTMB", silent = silent)
 
     tmb_opt1 <- stats::nlminb(
-      start = tmb_obj1$par, objective = tmb_obj1$fn, gradient = tmb_obj1$gr,
-      control = list(eval.max = 1e4, iter.max = 1e4)
-    )
+      start = tmb_obj1$par, objective = tmb_obj1$fn,
+      gradient = tmb_obj1$gr, control = list(eval.max = 1e3, iter.max = 1e3))
 
     # Set starting values based on phase 1:
-    tmb_params$b_j     <- as.numeric(tmb_opt1$par["b_j"     == names(tmb_opt1$par)])
+    tmb_params$b_j <- as.numeric(tmb_opt1$par["b_j" == names(tmb_opt1$par)])
 
     if (check_family(family)$family == "tweedie")
       tmb_params$logit_p <- as.numeric(tmb_opt1$par["logit_p" == names(tmb_opt1$par)])
@@ -247,26 +246,24 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
   tmb_random <- c("omega_s", "epsilon_st")
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
-    random = tmb_random, DLL = "sdmTMB", silent = silent
-  )
+    random = tmb_random, DLL = "sdmTMB", silent = silent)
 
   tmb_opt <- stats::nlminb(
     start = tmb_obj$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
-    control = list(eval.max = 1e4, iter.max = 1e4)
-  )
+    control = list(eval.max = 1e3, iter.max = 1e3))
 
   structure(list(
-    model = tmb_opt,
-    data = data,
-    spde = spde,
-    formula = formula,
-    time = time,
-    family = family,
-    tmb_data = tmb_data,
-    tmb_params = tmb_params,
-    tmb_map = tmb_map,
-    response = y_i,
-    random = tmb_random,
-    tmb_obj = tmb_obj),
-    class = "sdmTMB")
+      model      = tmb_opt,
+      data       = data,
+      spde       = spde,
+      formula    = formula,
+      time       = time,
+      family     = family,
+      response   = y_i,
+      tmb_data   = tmb_data,
+      tmb_params = tmb_params,
+      tmb_map    = tmb_map,
+      tmb_random = tmb_random,
+      tmb_obj    = tmb_obj),
+    class      = "sdmTMB")
 }
