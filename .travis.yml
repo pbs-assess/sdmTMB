@@ -5,4 +5,4 @@ sudo: false
 cache: packages
 warnings_are_errors: false
 install:
-  - Rscript -e 'install.packages("INLA", repos = c("http://www.math.ntnu.no/inla/R/stable", "http://cran.rstudio.com"))'
+  - Rscript -e 'install.packages("INLA", repos=c(getOption("repos"), INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)))'
