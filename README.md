@@ -3,6 +3,10 @@
 
 # sdmTMB
 
+**This package is not ready for use yet\! I have not simulation tested
+the model and there’s no guarantee I haven’t made a
+mistake.**
+
 <!-- [![Travis build status](https://travis-ci.org/seananderson/sdmTMB.svg?branch=master)](https://travis-ci.org/seananderson/sdmTMB) -->
 
 The goal of sdmTMB is to
@@ -16,17 +20,16 @@ The goal of sdmTMB is to
     `predict()` method, and present options as clear named arguments.
   - Not fit the kitchen sink, but do what it does elegantly. I.e. be
     opinionated in what it does.
-  - Wherever possible use modular C++ code.
-  - Maintain clearly documented model code.
+  - Maintain clearly documented model code split out into functions as
+    much as possible.
   - Adhere to tidyverse package standards where possible.
 
 ## Installation
 
-You can install sdmTMB
-with:
+You can install sdmTMB with:
 
 ``` r
-devtools::install_github("seananderson/sdmTMB") # won't work; still private
+devtools::install_github("seananderson/sdmTMB")
 ```
 
 ## Example
