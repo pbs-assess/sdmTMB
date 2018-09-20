@@ -89,6 +89,7 @@ check_family <- function(family) {
 #' @param family The family and link.
 #' @param silent Silent or optimization details?
 #' @param multiphase Estimate the fixed and random effects in phases for speed?
+#' @param anisotropy Logical: allow for anisotropy?
 #'
 #' @importFrom methods as
 #' @importFrom stats gaussian model.frame model.matrix

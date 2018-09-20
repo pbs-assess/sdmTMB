@@ -22,6 +22,8 @@ include \code{0 + as.factor(your_time_column)}.}
 \item{silent}{Silent or optimization details?}
 
 \item{multiphase}{Estimate the fixed and random effects in phases for speed?}
+
+\item{anisotropy}{Logical: allow for anisotropy?}
 }
 \description{
 sdmTMB
