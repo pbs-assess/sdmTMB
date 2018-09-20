@@ -216,10 +216,11 @@ Type objective_function<Type>::operator()() {
           nll_likelihood -= dgamma(y_i(i), shape, mu_i(i) / shape, true);
           break;
         case nbinom2_family:
-          s1 = eta_i(i); // log(mu_i)
+          error("Family not implemented.");
+          // s1 = eta_i(i); // log(mu_i)
           // As in glmmTMB... FIXME honestly I'm not sure what's going on here:
-          s2 = 2. * s1 - log(pow(exp(ln_phi), 2.));     // log(var^2 - mu)
-          nll_likelihood -= dnbinom_robust(y_i(i), s1, s2, true);
+          // s2 = 2. * s1 - log(pow(exp(ln_phi), 2.));     // log(var^2 - mu)
+          // nll_likelihood -= dnbinom_robust(y_i(i), s1, s2, true);
           break;
         default:
           error("Family not implemented.");
