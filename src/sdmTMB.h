@@ -1,3 +1,6 @@
+#ifndef _sdmTMB_H
+#define _sdmTMB_H
+
 template <class Type>
 bool isNA(Type x);
 
@@ -15,3 +18,5 @@ vector<Type> RepeatVector(vector<Type> x, int times);
 
 template <class Type>
 Type InverseLink(Type eta, int link);
+
+#endif
