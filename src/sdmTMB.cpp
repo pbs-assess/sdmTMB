@@ -56,8 +56,8 @@ Type InverseLink(Type eta, int link) {
     case 2:  // log
       out = exp(eta);
       break;
-    case 3:  // logit
-      out = eta; // don't touch it since we're using dbinom_robust() in logit space
+    case 3:       // logit
+      out = eta;  // don't touch: we're using dbinom_robust() in logit space
       break;
     default:
       error("Link not implemented.");
@@ -92,8 +92,8 @@ Type objective_function<Type>::operator()() {
   DATA_INTEGER(link);
 
   // SPDE objects from R-INLA
-  DATA_STRUCT(spde_aniso,spde_aniso_t);
-  DATA_STRUCT(spde,spde_t);
+  DATA_STRUCT(spde_aniso, spde_aniso_t);
+  DATA_STRUCT(spde, spde_t);
   PARAMETER_VECTOR(ln_H_input);
   DATA_INTEGER(anisotropy);
 
@@ -106,9 +106,9 @@ Type objective_function<Type>::operator()() {
   // Parameters
   // Fixed effects
   PARAMETER_VECTOR(b_j);  // fixed effect parameters
-  PARAMETER(ln_tau_O);  // spatial process
-  PARAMETER(ln_tau_E);  // spatio-temporal process
-  PARAMETER(ln_kappa);  // decorrelation distance (kind of)
+  PARAMETER(ln_tau_O);    // spatial process
+  PARAMETER(ln_tau_E);    // spatio-temporal process
+  PARAMETER(ln_kappa);    // decorrelation distance (kind of)
 
   PARAMETER(logit_p);  // tweedie only
   PARAMETER(log_phi);  // sigma / dispersion / etc.
@@ -120,11 +120,11 @@ Type objective_function<Type>::operator()() {
 
   // ------------------ End of parameters --------------------------------------
 
-  int n_i = y_i.size();     // number of observations
+  int n_i = y_i.size();  // number of observations
 
   // Objective function is sum of negative log likelihood components
   Type nll_likelihood = 0;  // likelihood of data
-  Type nll_omega = 0;		    // spatial effects
+  Type nll_omega = 0;       // spatial effects
   Type nll_epsilon = 0;     // spatio-temporal effects
 
   // ------------------ Geospatial ---------------------------------------------
@@ -137,11 +137,11 @@ Type objective_function<Type>::operator()() {
   // Precision matrix
   Eigen::SparseMatrix<Type> Q;
   if (anisotropy) {
-    matrix<Type> H(2,2);
-    H(0,0) = exp(ln_H_input(0));
-    H(1,0) = ln_H_input(1);
-    H(0,1) = ln_H_input(1);
-    H(1,1) = (1 + ln_H_input(1) * ln_H_input(1)) / exp(ln_H_input(0));
+    matrix<Type> H(2, 2);
+    H(0, 0) = exp(ln_H_input(0));
+    H(1, 0) = ln_H_input(1);
+    H(0, 1) = ln_H_input(1);
+    H(1, 1) = (1 + ln_H_input(1) * ln_H_input(1)) / exp(ln_H_input(0));
     Q = R_inla::Q_spde(spde_aniso, exp(ln_kappa), H);
     REPORT(H);
   }
@@ -154,9 +154,8 @@ Type objective_function<Type>::operator()() {
   vector<Type> linear_predictor_i = X_ij * b_j;
   vector<Type> mu_i(n_i), eta_i(n_i);
   for (int i = 0; i < n_i; i++) {
-    eta_i(i) = linear_predictor_i(i) +
-               omega_s(s_i(i)) +  // spatial
-               epsilon_st(s_i(i), year_i(i)); // spatiotemporal
+    eta_i(i) = linear_predictor_i(i) + omega_s(s_i(i)) +  // spatial
+               epsilon_st(s_i(i), year_i(i));             // spatiotemporal
     mu_i(i) = InverseLink(eta_i(i), link);
   }
 
@@ -167,7 +166,8 @@ Type objective_function<Type>::operator()() {
 
   // Spatiotemporal effects:
   for (int t = 0; t < n_t; t++)
-    nll_epsilon += SCALE(density::GMRF(Q), 1.0 / exp(ln_tau_E))(epsilon_st.col(t));
+    nll_epsilon +=
+        SCALE(density::GMRF(Q), 1.0 / exp(ln_tau_E))(epsilon_st.col(t));
 
   // ------------------ Probability data given random effects ------------------
 
@@ -215,14 +215,14 @@ Type objective_function<Type>::operator()() {
 
   // ------------------ Reporting ----------------------------------------------
 
-  REPORT(b_j)  // fixed effect parameters
-  REPORT(ln_tau_O);  // spatial process
-  REPORT(ln_tau_E);  // spatio-temporal process
-  REPORT(ln_kappa);  // decorrelation distance (kind of)
-  REPORT(log_phi);   // Observation dispersion
-  REPORT(logit_p);   // Observation Tweedie mixing parameter
+  REPORT(b_j)          // fixed effect parameters
+  REPORT(ln_tau_O);    // spatial process
+  REPORT(ln_tau_E);    // spatio-temporal process
+  REPORT(ln_kappa);    // decorrelation distance (kind of)
+  REPORT(log_phi);     // Observation dispersion
+  REPORT(logit_p);     // Observation Tweedie mixing parameter
   REPORT(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
-  REPORT(omega_s);  // spatio-temporal effects; n_s by n_t matrix
+  REPORT(omega_s);     // spatio-temporal effects; n_s by n_t matrix
   REPORT(eta_i);
   REPORT(linear_predictor_i);
   REPORT(Range);
