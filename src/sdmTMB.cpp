@@ -115,7 +115,7 @@ Type objective_function<Type>::operator()() {
 
   // Random effects
   // This is a matrix of spatial centers by years
-  PARAMETER_VECTOR(omega_s);    // spatio-temporal effects; n_s by n_t matrix
+  PARAMETER_VECTOR(omega_s);    // spatial effects; n_s length
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
 
   // ------------------ End of parameters --------------------------------------
