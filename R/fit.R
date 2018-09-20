@@ -153,7 +153,7 @@ check_family <- function(family) {
 #' }
 
 sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
-  silent = TRUE, multiphase = TRUE, anisotropy = TRUE) {
+  silent = TRUE, multiphase = TRUE, anisotropy = FALSE) {
 
   X_ij <- model.matrix(formula, data)
   mf   <- model.frame(formula, data)
@@ -262,6 +262,7 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "log"),
     family = family,
     tmb_data = tmb_data,
     tmb_params = tmb_params,
+    tmb_map = tmb_map,
     response = y_i,
     random = tmb_random,
     tmb_obj = tmb_obj),

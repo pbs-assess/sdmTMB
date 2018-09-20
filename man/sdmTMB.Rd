@@ -5,7 +5,7 @@
 \title{sdmTMB}
 \usage{
 sdmTMB(data, formula, time, spde, family = gaussian(link = "log"),
-  silent = TRUE, multiphase = TRUE, anisotropy = FALSE)
+  silent = TRUE, multiphase = TRUE, anisotropy = TRUE)
 }
 \arguments{
 \item{data}{A data frame.}
