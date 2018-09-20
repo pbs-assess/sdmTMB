@@ -114,7 +114,7 @@ predict.sdmTMB <- function(object, newdata = NULL, xy_cols = c("X", "Y"), ...) {
     lp <- object$tmb_obj$env$last.par
     r <- object$tmb_obj$report(lp)
     nd$est <- r$eta_i
-    nd$est_fe <- r$linear_predictor_i
+    nd$est_fe <- r$eta_fixed_i
 
     # Spatial REs:
     get_omegas <- function(x) r$omega_s[x]

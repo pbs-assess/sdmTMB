@@ -11,20 +11,25 @@ NULL
 #' @importFrom graphics points
 #' @export
 #' @examples
-#' make_spde(pcod$X, pcod$Y, n_knots = 25)
-make_spde <- function(x, y, n_knots, plot = FALSE) {
+#' sp <- make_spde(pcod$X, pcod$Y, n_knots = 25)
+#' plot_spde(sp)
+make_spde <- function(x, y, n_knots) {
   loc_xy <- data.frame(x, y)
   knots <- stats::kmeans(x = loc_xy, centers = n_knots)
   loc_centers <- knots$centers
   # loc_xy <- cbind(loc_xy, cluster = knots$cluster, time = as.numeric(time))
   mesh <- INLA::inla.mesh.create(loc_centers, refine = TRUE)
   spde <- INLA::inla.spde2.matern(mesh)
-  if (plot) {
-    plot(mesh, main = NA, edge.color = "grey60")
-    points(x, y, pch = 21, col = "#00000070")
-    points(loc_centers, pch = 20, col = "red")
-  }
-  list(mesh = mesh, spde = spde, cluster = knots$cluster, loc_centers = loc_centers)
+  list(x = x, y = y, mesh = mesh, spde = spde, cluster = knots$cluster, loc_centers = loc_centers)
+}
+
+#' @param object Output from [make_spde()].
+#' @rdname make_spde
+#' @export
+plot_spde <- function(object) {
+  plot(object$mesh, main = NA, edge.color = "grey60")
+  points(object$x, object$y, pch = 21, col = "#00000070")
+  points(object$loc_centers, pch = 20, col = "red")
 }
 
 # from TMB examples repository:
@@ -80,6 +85,7 @@ make_anisotropy_spde <- function(spde) {
 #' @examples
 #' d <- subset(pcod, year >= 2011) # subset for example speed
 #' pcod_spde <- make_spde(d$X, d$Y, n_knots = 100) # only 100 knots for example speed
+#' plot_spde(pcod_spde)
 #'
 #' # Tweedie:
 #' m <- sdmTMB(

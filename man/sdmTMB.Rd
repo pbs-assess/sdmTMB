@@ -19,7 +19,7 @@ include \code{0 + as.factor(your_time_column)}.}
 \item{spde}{An object from \code{\link[=make_spde]{make_spde()}}.}
 
 \item{family}{The family and link. Supports \code{\link[=gaussian]{gaussian()}}, \code{\link[=Gamma]{Gamma()}},
-\code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, and \code{\link[=tweedie]{tweedie()}}.}
+\code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, \code{\link[=nbinom2]{nbinom2()}}, and \code{\link[=tweedie]{tweedie()}}.}
 
 \item{silent}{Silent or optimization details?}
 
@@ -35,6 +35,7 @@ A fit a spatiotemporal species distribution model with TMB
 \examples{
 d <- subset(pcod, year >= 2011) # subset for example speed
 pcod_spde <- make_spde(d$X, d$Y, n_knots = 100) # only 100 knots for example speed
+plot_spde(pcod_spde)
 
 # Tweedie:
 m <- sdmTMB(

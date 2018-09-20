@@ -2,9 +2,12 @@
 % Please edit documentation in R/fit.R
 \name{make_spde}
 \alias{make_spde}
+\alias{plot_spde}
 \title{Construct an SPDE mesh}
 \usage{
-make_spde(x, y, n_knots, plot = FALSE)
+make_spde(x, y, n_knots)
+
+plot_spde(object)
 }
 \arguments{
 \item{x}{X numeric vector.}
@@ -13,11 +16,14 @@ make_spde(x, y, n_knots, plot = FALSE)
 
 \item{n_knots}{The number of knots.}
 
+\item{object}{Output from \code{\link[=make_spde]{make_spde()}}.}
+
 \item{plot}{Logical: should a plot be made?}
 }
 \description{
 Construct an SPDE mesh
 }
 \examples{
-make_spde(pcod$X, pcod$Y, n_knots = 25)
+sp <- make_spde(pcod$X, pcod$Y, n_knots = 25)
+plot_spde(sp)
 }

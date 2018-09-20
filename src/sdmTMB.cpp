@@ -21,6 +21,16 @@ vector<Type> Array2DToVector(array<Type> x) {
 }
 
 template <class Type>
+matrix<Type> MakeH(vector<Type> x) {
+  matrix<Type> H(2, 2);
+  H(0, 0) = exp(x(0));
+  H(1, 0) = x(1);
+  H(0, 1) = x(1);
+  H(1, 1) = (1 + x(1) * x(1)) / exp(x(0));
+  return H;
+}
+
+template <class Type>
 vector<Type> Array1DToVector(array<Type> x) {
   int n = x.size();
   vector<Type> res(n);
@@ -145,18 +155,14 @@ Type objective_function<Type>::operator()() {
   // ------------------ Geospatial ---------------------------------------------
 
   // Matern:
-  Type Range = sqrt(8.0) / exp(ln_kappa);
+  Type range = sqrt(8.0) / exp(ln_kappa);
   Type SigmaO = 1 / sqrt(4 * M_PI * exp(2 * ln_tau_O) * exp(2 * ln_kappa));
   Type SigmaE = 1 / sqrt(4 * M_PI * exp(2 * ln_tau_E) * exp(2 * ln_kappa));
 
   // Precision matrix
   Eigen::SparseMatrix<Type> Q;
   if (anisotropy) {
-    matrix<Type> H(2, 2);
-    H(0, 0) = exp(ln_H_input(0));
-    H(1, 0) = ln_H_input(1);
-    H(0, 1) = ln_H_input(1);
-    H(1, 1) = (1 + ln_H_input(1) * ln_H_input(1)) / exp(ln_H_input(0));
+    matrix<Type> H = MakeH(ln_H_input);
     Q = R_inla::Q_spde(spde_aniso, exp(ln_kappa), H);
     REPORT(H);
   }
@@ -166,10 +172,10 @@ Type objective_function<Type>::operator()() {
 
   // ------------------ Linear predictor----------------------------------------
 
-  vector<Type> linear_predictor_i = X_ij * b_j;
+  vector<Type> eta_fixed_i = X_ij * b_j;
   vector<Type> mu_i(n_i), eta_i(n_i);
   for (int i = 0; i < n_i; i++) {
-    eta_i(i) = linear_predictor_i(i) + omega_s(s_i(i)) +  // spatial
+    eta_i(i) = eta_fixed_i(i) + omega_s(s_i(i)) +  // spatial
                epsilon_st(s_i(i), year_i(i));             // spatiotemporal
     mu_i(i) = InverseLink(eta_i(i), link);
   }
@@ -177,12 +183,11 @@ Type objective_function<Type>::operator()() {
   // ------------------ Probability of random effects --------------------------
 
   // Spatial effects;
-  nll_omega += SCALE(density::GMRF(Q), 1.0 / exp(ln_tau_O))(omega_s);
+  nll_omega += SCALE(GMRF(Q), 1.0 / exp(ln_tau_O))(omega_s);
 
   // Spatiotemporal effects:
   for (int t = 0; t < n_t; t++)
-    nll_epsilon +=
-        SCALE(density::GMRF(Q), 1.0 / exp(ln_tau_E))(epsilon_st.col(t));
+    nll_epsilon += SCALE(GMRF(Q), 1.0 / exp(ln_tau_E))(epsilon_st.col(t));
 
   // ------------------ Probability of data given random effects ---------------
 
@@ -226,18 +231,16 @@ Type objective_function<Type>::operator()() {
     vector<Type> proj_fe = proj_X_ij * b_j;
     vector<Type> proj_re_sp = proj_mesh * omega_s;
     vector<Type> proj_re_sp_st = RepeatVector(proj_re_sp, n_t);
-
     array<Type> proj_re_st(proj_mesh.rows(), n_t);
     for (int i = 0; i < n_t; i++) {
       proj_re_st.col(i) = proj_mesh * Array1DToVector(epsilon_st.col(i));
     }
     vector<Type> proj_re_st_vector = Array2DToVector(proj_re_st);
-
     vector<Type> proj_eta = proj_fe + proj_re_sp_st + proj_re_st_vector;
-    REPORT(proj_fe);
-    REPORT(proj_re_sp);
-    REPORT(proj_re_st_vector);
-    REPORT(proj_eta);
+    REPORT(proj_fe);           // fixed effect projections
+    REPORT(proj_re_sp);        // spatial random effect projections
+    REPORT(proj_re_st_vector); // spatiotemporal random effect projections
+    REPORT(proj_eta);          // combined projections (in link space)
   }
 
   // ------------------ Reporting ----------------------------------------------
@@ -250,9 +253,9 @@ Type objective_function<Type>::operator()() {
   REPORT(thetaf);      // observation Tweedie mixing parameter
   REPORT(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
   REPORT(omega_s);     // spatio-temporal effects; n_s by n_t matrix
-  REPORT(eta_i);
-  REPORT(linear_predictor_i);
-  REPORT(Range);
+  REPORT(eta_fixed_i); // fixed effect predictions in the link space
+  REPORT(eta_i);       // fixed and random effect predictions in link space
+  REPORT(range);       // Matern range parameter
 
   // if (do_predict) ADREPORT(mu_i);
 

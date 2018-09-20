@@ -4,7 +4,7 @@
 \alias{sdmTMBcontrol}
 \title{Optimization control options}
 \usage{
-sdmTMBcontrol(eval.max = 1000, iter.max = 1000, ...)
+sdmTMBcontrol(eval.max = 10000, iter.max = 10000, ...)
 }
 \arguments{
 \item{eval.max}{Maximum number of evaluations of the objective function
