@@ -33,6 +33,7 @@ qres_gaussian <- function (object, y, mu) {
 }
 
 #' @export
+#' @importFrom stats predict
 residuals.sdmTMB <- function(object, ...) {
   res_func <- switch(object$family$family,
     gaussian = qres_gaussian,

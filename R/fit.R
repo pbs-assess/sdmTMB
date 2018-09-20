@@ -24,6 +24,7 @@ make_spde <- function(x, y, n_knots) {
 
 #' @param object Output from [make_spde()].
 #' @rdname make_spde
+#' @importFrom graphics plot
 #' @export
 plot_spde <- function(object) {
   plot(object$mesh, main = NA, edge.color = "grey60")
