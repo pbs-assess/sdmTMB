@@ -2,9 +2,6 @@ template <class Type>
 bool isNA(Type x);
 
 template <class Type>
-Type InverseLogitPlus1(Type x);
-
-template <class Type>
 vector<Type> Array2DToVector(array<Type> x);
 
 template <class Type>

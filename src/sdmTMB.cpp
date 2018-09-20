@@ -8,11 +8,6 @@ bool isNA(Type x) {
 }
 
 template <class Type>
-Type InverseLogitPlus1(Type x) {
-  return invlogit(x) + 1.0;
-}
-
-template <class Type>
 vector<Type> Array2DToVector(array<Type> x) {
   x = x.transpose();
   int nr = x.rows();
@@ -143,7 +138,7 @@ Type objective_function<Type>::operator()() {
   int n_i = y_i.size();  // number of observations
 
   // Objective function is sum of negative log likelihood components
-  Type nll_likelihood = 0;  // likelihood of data
+  Type nll_data = 0;  // likelihood of data
   Type nll_omega = 0;       // spatial effects
   Type nll_epsilon = 0;     // spatio-temporal effects
 
@@ -191,36 +186,33 @@ Type objective_function<Type>::operator()() {
 
   // ------------------ Probability of data given random effects ---------------
 
-  Type shape, s1, s2;
+  Type s1, s2;
   for (int i = 0; i < n_i; i++) {
     if (!isNA(y_i(i))) {
       switch (family) {
         case gaussian_family:
-          nll_likelihood -=
-              dnorm(y_i(i), mu_i(i), exp(ln_phi), true);
+          nll_data -= dnorm(y_i(i), mu_i(i), exp(ln_phi), true);
           break;
         case tweedie_family:
-          nll_likelihood -=
-              dtweedie(y_i(i), mu_i(i), exp(ln_phi),
-                       InverseLogitPlus1(thetaf), true);
+          s1 = invlogit(thetaf) + Type(1.0);
+          nll_data -= dtweedie(y_i(i), mu_i(i), exp(ln_phi), s1, true);
           break;
         case binomial_family: // in logit space not inverse logit
-          nll_likelihood -= dbinom_robust(y_i(i), Type(1.0) /* size */, mu_i(i),
-                                          true);
+          nll_data -= dbinom_robust(y_i(i), Type(1.0) /*size*/, mu_i(i), true);
           break;
         case poisson_family:
-          nll_likelihood -= dpois(y_i(i), mu_i(i), true);
+          nll_data -= dpois(y_i(i), mu_i(i), true);
           break;
         case Gamma_family:
-          shape = 1.0 / (pow(exp(ln_phi), 2.0)); // ln_phi=CV, shape=1/CV^2:
-          nll_likelihood -= dgamma(y_i(i), shape, mu_i(i) / shape, true);
+          s1 = 1. / (pow(exp(ln_phi), 2.)); // s1=shape,ln_phi=CV,shape=1/CV^2
+          nll_data -= dgamma(y_i(i), s1, mu_i(i) / s1, true);
           break;
         case nbinom2_family:
           error("Family not implemented.");
           // s1 = eta_i(i); // log(mu_i)
           // As in glmmTMB... FIXME honestly I'm not sure what's going on here:
           // s2 = 2. * s1 - log(pow(exp(ln_phi), 2.));     // log(var^2 - mu)
-          // nll_likelihood -= dnbinom_robust(y_i(i), s1, s2, true);
+          // nll_data -= dnbinom_robust(y_i(i), s1, s2, true);
           break;
         default:
           error("Family not implemented.");
@@ -266,6 +258,6 @@ Type objective_function<Type>::operator()() {
 
   // ------------------ Joint negative log likelihood --------------------------
 
-  Type jnll = nll_likelihood + nll_omega + nll_epsilon;
+  Type jnll = nll_data + nll_omega + nll_epsilon;
   return jnll;
 }
