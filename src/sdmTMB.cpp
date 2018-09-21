@@ -133,7 +133,7 @@ Type objective_function<Type>::operator()() {
   PARAMETER_VECTOR(b_j);  // fixed effect parameters
   PARAMETER(ln_tau_O);    // spatial process
   PARAMETER(ln_tau_E);    // spatio-temporal process
-  PARAMETER(ln_kappa);    // decorrelation distance (kind of)
+  PARAMETER(ln_kappa);    // Matern parameter
 
   PARAMETER(thetaf);  // tweedie only
   PARAMETER(ln_phi);  // sigma / dispersion / etc.
@@ -175,16 +175,16 @@ Type objective_function<Type>::operator()() {
   vector<Type> eta_fixed_i = X_ij * b_j;
   vector<Type> mu_i(n_i), eta_i(n_i);
   for (int i = 0; i < n_i; i++) {
-    eta_i(i) = eta_fixed_i(i) + omega_s(s_i(i)) +  // spatial
-               epsilon_st(s_i(i), year_i(i));             // spatiotemporal
+    eta_i(i) = eta_fixed_i(i) +                // fixed effects
+               omega_s(s_i(i)) +               // spatial
+               epsilon_st(s_i(i), year_i(i));  // spatio-temporal
     mu_i(i) = InverseLink(eta_i(i), link);
   }
 
   // ------------------ Probability of random effects --------------------------
 
-  // Spatial effects;
+  // Spatial effects:
   nll_omega += SCALE(GMRF(Q), 1.0 / exp(ln_tau_O))(omega_s);
-
   // Spatiotemporal effects:
   for (int t = 0; t < n_t; t++)
     nll_epsilon += SCALE(GMRF(Q), 1.0 / exp(ln_tau_E))(epsilon_st.col(t));
@@ -232,9 +232,8 @@ Type objective_function<Type>::operator()() {
     vector<Type> proj_re_sp = proj_mesh * omega_s;
     vector<Type> proj_re_sp_st = RepeatVector(proj_re_sp, n_t);
     array<Type> proj_re_st(proj_mesh.rows(), n_t);
-    for (int i = 0; i < n_t; i++) {
+    for (int i = 0; i < n_t; i++)
       proj_re_st.col(i) = proj_mesh * Array1DToVector(epsilon_st.col(i));
-    }
     vector<Type> proj_re_st_vector = Array2DToVector(proj_re_st);
     vector<Type> proj_eta = proj_fe + proj_re_sp_st + proj_re_st_vector;
     REPORT(proj_fe);           // fixed effect projections
@@ -246,16 +245,16 @@ Type objective_function<Type>::operator()() {
   // ------------------ Reporting ----------------------------------------------
 
   REPORT(b_j)          // fixed effect parameters
-  REPORT(ln_tau_O);    // spatial process
-  REPORT(ln_tau_E);    // spatio-temporal process
-  REPORT(ln_kappa);    // decorrelation distance (kind of)
-  REPORT(ln_phi);      // observation dispersion
+  REPORT(ln_tau_O);    // spatial process ln SD
+  REPORT(ln_tau_E);    // spatio-temporal process ln SD
+  REPORT(ln_phi);      // observation dispersion (depends on the distribution)
   REPORT(thetaf);      // observation Tweedie mixing parameter
   REPORT(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
-  REPORT(omega_s);     // spatio-temporal effects; n_s by n_t matrix
+  REPORT(omega_s);     // spatial effects; n_s length vector
   REPORT(eta_fixed_i); // fixed effect predictions in the link space
   REPORT(eta_i);       // fixed and random effect predictions in link space
-  REPORT(range);       // Matern range parameter
+  REPORT(ln_kappa);    // Matern parameter
+  REPORT(range);       // Matern approximate distance at 10% correlation
 
   // if (do_predict) ADREPORT(mu_i);
 
