@@ -30,4 +30,4 @@ URL: https://github.com/seananderson/sdmTMB
 BugReports: https://github.com/seananderson/sdmTMB/issues
 RoxygenNote: 6.1.0
 Roxygen: list(markdown = TRUE)
-Additional_repositories: https://www.math.ntnu.no/inla/R/stable/
+Additional_repositories: https://inla.r-inla-download.org/R/stable
