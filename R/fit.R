@@ -75,7 +75,7 @@ make_spde <- function(x, y, n_knots, seed = 42) {
 #' @importFrom graphics plot
 #' @export
 plot_spde <- function(object) {
-  plot(object$mesh, main = NA, edge.color = "grey60")
+  plot(object$mesh, main = NA, edge.color = "grey60", asp = 1)
   points(object$x, object$y, pch = 21, col = "#00000070")
   points(object$loc_centers, pch = 20, col = "red")
 }
