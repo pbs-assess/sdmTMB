@@ -1,3 +1,45 @@
+# library(INLA)
+# set.seed(1)
+# n = 20
+# x_loc = cbind(runif(n), runif(n))
+# mesh1 = inla.mesh.2d(loc = x_loc, max.edge = 0.1)
+# mesh2 = inla.mesh.2d(loc = x_loc, max.edge = c(0.1, 0.4))
+# mesh3 = inla.mesh.2d(loc.domain = x_loc, max.edge = c(0.1, 0.4), )
+# plot(mesh3)
+# points(x_loc, col = "red", pch = 20, cex = 2)
+#
+# loc_xy <- data.frame(pcod$X, pcod$Y)
+# bnd = inla.nonconvex.hull(as.matrix(loc_xy), convex = -0.05)
+# mesh = inla.mesh.2d(
+#   boundary = bnd,
+#   max.edge = c(20, 50),
+#   offset = -0.05,
+#   cutoff = c(2, 5),
+#   min.angle = 10
+# )
+# plot(mesh)
+# points(loc_xy, col = "red", pch = 20, cex = 1)
+#
+# n_knots <- 300
+# knots <- stats::kmeans(x = loc_xy, centers = n_knots)
+# loc_centers <- knots$centers
+# # loc_xy <- cbind(loc_xy, cluster = knots$cluster, time = as.numeric(time))
+# mesh <- INLA::inla.mesh.create(loc_centers, refine = TRUE)
+# bnd = inla.nonconvex.hull(as.matrix(loc_centers), convex = -0.10)
+#
+# mesh = inla.mesh.2d(
+#   boundary = bnd,
+#   max.edge = c(5, 20),
+#   offset = c(-0.1, -0.1),
+#   cutoff = c(10, 20),
+#   min.angle = c(10, 10)
+# )
+#
+# plot(mesh, main = NA, edge.color = "grey60")
+# # points(pcod$X, pcod$Y, pch = 21, col = "#00000070")
+# points(loc_centers, pch = 20, col = "red")
+
+
 #' @useDynLib sdmTMB
 NULL
 
@@ -6,17 +48,23 @@ NULL
 #' @param x X numeric vector.
 #' @param y Y numeric vector.
 #' @param n_knots The number of knots.
+#' @param seed Random seed. Affects [stats::kmeans()] determination of knot locations.
 #'
 #' @importFrom graphics points
 #' @export
 #' @examples
 #' sp <- make_spde(pcod$X, pcod$Y, n_knots = 25)
 #' plot_spde(sp)
-make_spde <- function(x, y, n_knots) {
-  loc_xy <- data.frame(x, y)
+make_spde <- function(x, y, n_knots, seed = 42) {
+  loc_xy <- cbind(x, y)
+  if (n_knots >= nrow(loc_xy)) {
+    warning("Reducing `n_knots` to be one less than the ",
+      "number of data points.")
+    n_knots <- nrow(loc_xy) - 1
+  }
+  set.seed(seed)
   knots <- stats::kmeans(x = loc_xy, centers = n_knots)
   loc_centers <- knots$centers
-  # loc_xy <- cbind(loc_xy, cluster = knots$cluster, time = as.numeric(time))
   mesh <- INLA::inla.mesh.create(loc_centers, refine = TRUE)
   spde <- INLA::inla.spde2.matern(mesh)
   list(x = x, y = y, mesh = mesh, spde = spde, cluster = knots$cluster, loc_centers = loc_centers)
@@ -128,15 +176,20 @@ make_anisotropy_spde <- function(spde) {
 #'
 #' # Then:
 #' set.seed(42)
-#' pcod_bin <- subset(pcod, year > 2013)
-#' pcod_bin$present <- ifelse(pcod_bin$density > 0, 1L, 0L)
-#' pcod_bin_spde <- make_spde(pcod_bin$X/10, pcod_bin$Y/10, n_knots = 30) # scale UTMs for Stan
-#' m <- sdmTMB(pcod_bin,
-#'  present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'  time = "year", spde = pcod_bin_spde, family = binomial(link = "logit"))
-#' m_stan <- tmbstan(m$tmb_obj, chains = 1, iter = 600,
-#'   init = "last.par.best", control = list(adapt_delta = 0.95, max_treedepth = 20),
-#'   seed = 123)
+#' pcod_pos <- subset(pcod, year > 2013 & density > 0)
+#' pcod_pos_spde <- make_spde(pcod_pos$X/10, pcod_pos$Y/10, n_knots = 200) # scale UTMs for #' Stan
+#' m <- sdmTMB(pcod_pos,
+#'  log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+#'  time = "year", spde = pcod_pos_spde)
+#' m_stan <- tmbstan(m$tmb_obj, chains = 1, iter = 200, cores=1,
+#'   init = "last.par.best", control = list(adapt_delta = 0.80, max_treedepth = 20),
+#'   seed = 123, laplace = T)
+#'
+#' pars <- c('b_j', 'ln_tau_O', 'ln_tau_E', 'ln_kappa', 'ln_phi')
+#' m_stan2 <- tmbstan(m$tmb_obj, chains = 1, iter = 200, cores=1,
+#'   init = "last.par.best", control = list(adapt_delta = 0.80, max_treedepth = 20),
+#'   seed = 123, laplace = F, pars = pars)
+#'
 #' m_stan
 #' }
 
@@ -147,9 +200,6 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
   mf   <- model.frame(formula, data)
   y_i  <- model.response(mf, "numeric")
 
-  proj_mesh <- Matrix::Matrix(0, 1, 1) # dummy
-  proj_X_ij <- matrix(0, ncol = 1, nrow = 1) # dummy
-
   tmb_data <- list(
     y_i        = y_i,
     n_t        = length(unique(data[[time]])),
@@ -158,8 +208,9 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     year_i     = as.numeric(as.factor(as.character(data[[time]]))) - 1L,
     X_ij       = X_ij,
     do_predict = 0L,
-    proj_mesh  = proj_mesh,
-    proj_X_ij  = proj_X_ij,
+    proj_mesh  = Matrix::Matrix(0, 1, 1), # dummy
+    proj_X_ij  = matrix(0, ncol = 1, nrow = 1), # dummy
+    proj_year  = 0, # dummy
     spde_aniso = make_anisotropy_spde(spde),
     spde       = spde$spde$param.inla[c("M0","M1","M2")],
     anisotropy = as.integer(anisotropy),

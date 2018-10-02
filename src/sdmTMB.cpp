@@ -147,11 +147,22 @@ Type objective_function<Type>::operator()() {
   // ------------------ End of parameters --------------------------------------
 
   int n_i = y_i.size();  // number of observations
+  int n_j = X_ij.cols();  // number of observations
 
   // Objective function is sum of negative log likelihood components
   Type nll_data = 0;  // likelihood of data
   Type nll_omega = 0;       // spatial effects
   Type nll_epsilon = 0;     // spatio-temporal effects
+  Type nll_priors = 0;     // priors
+
+  // ------------------ Priors -------------------------------------------------
+
+  // nll_priors -= dnorm(ln_tau_O, Type(0.0), Type(10.0), true);
+  // nll_priors -= dnorm(ln_tau_E, Type(0.0), Type(10.0), true);
+  // nll_priors -= dnorm(ln_kappa, Type(0.0), Type(10.0), true);
+  // nll_priors -= dnorm(ln_phi,   Type(0.0), Type(3.0), true);
+  // for (int j = 0; j < n_j; j++)
+  //   nll_priors -= dnorm(b_j(j), Type(0.0), Type(10.0), true);
 
   // ------------------ Geospatial ---------------------------------------------
 
@@ -270,6 +281,6 @@ Type objective_function<Type>::operator()() {
 
   // ------------------ Joint negative log likelihood --------------------------
 
-  Type jnll = nll_data + nll_omega + nll_epsilon;
+  Type jnll = nll_data + nll_omega + nll_epsilon + nll_priors;
   return jnll;
 }
