@@ -30,7 +30,7 @@
 #' )
 #'
 #' # Predictions at original data locations:
-#' predictions <- predict(m)
+#' predictions <- predict(m)$data
 #' cols <- c("year", "X", "Y", "est", "est_fe",
 #'   "est_re_s", "est_re_st", "s_i")
 #' head(predictions[,cols])
@@ -43,7 +43,7 @@
 #' qqnorm(predictions$resids);abline(a = 0, b = 1)
 #'
 #' # Predictions onto new data:
-#' predictions <- predict(m, newdata = qcs_grid)
+#' predictions <- predict(m, newdata = qcs_grid)$data
 #'
 #' # A short function for plotting our predictions:
 #' plot_map <- function(dat, column = "est") {
@@ -89,6 +89,7 @@ predict.sdmTMB <- function(object, newdata = NULL, xy_cols = c("X", "Y"), ...) {
 
     tmb_data$proj_mesh <- proj_mesh
     tmb_data$proj_X_ij <- proj_X_ij
+    tmb_data$proj_year <- as.integer(as.factor(as.character(nd$year))) - 1L
 
     new_tmb_obj <- TMB::MakeADFun(
       data = tmb_data,
@@ -103,12 +104,14 @@ predict.sdmTMB <- function(object, newdata = NULL, xy_cols = c("X", "Y"), ...) {
     # need to initialize the new TMB object once:
     new_tmb_obj$fn(old_par)
     lp <- new_tmb_obj$env$last.par
+    # new_tmb_obj$env$parList()
 
     r <- new_tmb_obj$report(lp)
     nd$est <- r$proj_eta
     nd$est_fe <- r$proj_fe
     nd$est_re_s <- r$proj_re_sp
     nd$est_re_st <- r$proj_re_st_vector
+    obj <- new_tmb_obj
   } else {
     nd <- object$data
     lp <- object$tmb_obj$env$last.par
@@ -129,8 +132,10 @@ predict.sdmTMB <- function(object, newdata = NULL, xy_cols = c("X", "Y"), ...) {
     nd$est_re_st <- eps
 
     nd$s_i <- object$tmb_data$s_i + 1
+    obj <- object
   }
-  nd
+
+  list(data = nd, report = r, obj = obj)
 }
 
 # https://stackoverflow.com/questions/13217322/how-to-reliably-get-dependent-variable-name-from-formula-object

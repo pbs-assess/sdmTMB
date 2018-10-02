@@ -125,6 +125,7 @@ Type objective_function<Type>::operator()() {
   // Projections
   DATA_SPARSE_MATRIX(proj_mesh);
   DATA_MATRIX(proj_X_ij);
+  DATA_FACTOR(proj_year);
 
   // ------------------ Parameters ---------------------------------------------
 
@@ -240,6 +241,15 @@ Type objective_function<Type>::operator()() {
     REPORT(proj_re_sp);        // spatial random effect projections
     REPORT(proj_re_st_vector); // spatiotemporal random effect projections
     REPORT(proj_eta);          // combined projections (in link space)
+
+  // ------------------ Derived quantities -------------------------------------
+    vector<Type> total(n_t);
+    for (int i = 0; i < proj_eta.size(); i++)  {
+      total(proj_year(i)) += InverseLink(proj_eta(i), link);
+    }
+    vector<Type> log_total = log(total);
+    REPORT(log_total);
+    ADREPORT(log_total);
   }
 
   // ------------------ Reporting ----------------------------------------------
