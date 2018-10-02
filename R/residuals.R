@@ -41,6 +41,6 @@ residuals.sdmTMB <- function(object, ...) {
     tweedie  = qres_tweedie
   )
   y <- object$response
-  mu <- object$family$linkinv(predict(object)$est)
+  mu <- object$family$linkinv(predict(object)$data$est)
   res_func(object, y, mu)
 }
