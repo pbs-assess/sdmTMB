@@ -17,7 +17,7 @@ dat <- select(dat, -X10, -Y10)
 pcod <- dat
 usethis::use_data(pcod, internal = FALSE, overwrite = TRUE)
 
-grid_locs <- gfplot:::make_prediction_grid(filter(dat, year == 2003), survey = "SYN QCS", cell_width = 3)$grid
+grid_locs <- gfplot:::make_prediction_grid(filter(dat, year == 2003), survey = "SYN QCS", cell_width = 2)$grid
 grid_locs <- rename(grid_locs, depth = akima_depth)
 grid_locs$year <- NULL
 qcs_grid <- grid_locs

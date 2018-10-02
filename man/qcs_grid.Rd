@@ -3,12 +3,12 @@
 \docType{data}
 \name{qcs_grid}
 \alias{qcs_grid}
-\title{Example prediction grid for Queen Charlotte Sound}
+\title{Example 2x2km prediction grid for Queen Charlotte Sound}
 \format{A data frame.}
 \usage{
 qcs_grid
 }
 \description{
-Example prediction grid for Queen Charlotte Sound
+Example 2x2km prediction grid for Queen Charlotte Sound
 }
 \keyword{datasets}
