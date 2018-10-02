@@ -78,15 +78,20 @@ library(sdmTMB)
 
 # Then:
 set.seed(42)
-pcod_bin <- subset(pcod, year > 2013)
-pcod_bin$present <- ifelse(pcod_bin$density > 0, 1L, 0L)
-pcod_bin_spde <- make_spde(pcod_bin$X/10, pcod_bin$Y/10, n_knots = 30) # scale UTMs for Stan
-m <- sdmTMB(pcod_bin,
- present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
- time = "year", spde = pcod_bin_spde, family = binomial(link = "logit"))
-m_stan <- tmbstan(m$tmb_obj, chains = 1, iter = 600,
-  init = "last.par.best", control = list(adapt_delta = 0.95, max_treedepth = 20),
-  seed = 123)
+pcod_pos <- subset(pcod, year > 2013 & density > 0)
+pcod_pos_spde <- make_spde(pcod_pos$X/10, pcod_pos$Y/10, n_knots = 200) # scale UTMs for #' Stan
+m <- sdmTMB(pcod_pos,
+ log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+ time = "year", spde = pcod_pos_spde)
+m_stan <- tmbstan(m$tmb_obj, chains = 1, iter = 200, cores=1,
+  init = "last.par.best", control = list(adapt_delta = 0.80, max_treedepth = 20),
+  seed = 123, laplace = T)
+
+pars <- c('b_j', 'ln_tau_O', 'ln_tau_E', 'ln_kappa', 'ln_phi')
+m_stan2 <- tmbstan(m$tmb_obj, chains = 1, iter = 200, cores=1,
+  init = "last.par.best", control = list(adapt_delta = 0.80, max_treedepth = 20),
+  seed = 123, laplace = F, pars = pars)
+
 m_stan
 }
 }

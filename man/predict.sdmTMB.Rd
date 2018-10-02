@@ -37,7 +37,7 @@ m <- sdmTMB(
 )
 
 # Predictions at original data locations:
-predictions <- predict(m)
+predictions <- predict(m)$data
 cols <- c("year", "X", "Y", "est", "est_fe",
   "est_re_s", "est_re_st", "s_i")
 head(predictions[,cols])
@@ -50,7 +50,7 @@ hist(predictions$resids)
 qqnorm(predictions$resids);abline(a = 0, b = 1)
 
 # Predictions onto new data:
-predictions <- predict(m, newdata = qcs_grid)
+predictions <- predict(m, newdata = qcs_grid)$data
 
 # A short function for plotting our predictions:
 plot_map <- function(dat, column = "est") {

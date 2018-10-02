@@ -5,7 +5,7 @@
 \alias{plot_spde}
 \title{Construct an SPDE mesh}
 \usage{
-make_spde(x, y, n_knots)
+make_spde(x, y, n_knots, seed = 42)
 
 plot_spde(object)
 }
@@ -15,6 +15,8 @@ plot_spde(object)
 \item{y}{Y numeric vector.}
 
 \item{n_knots}{The number of knots.}
+
+\item{seed}{Random seed. Affects \code{\link[stats:kmeans]{stats::kmeans()}} determination of knot locations.}
 
 \item{object}{Output from \code{\link[=make_spde]{make_spde()}}.}
 }
