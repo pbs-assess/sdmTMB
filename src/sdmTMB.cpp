@@ -127,6 +127,9 @@ Type objective_function<Type>::operator()() {
   DATA_MATRIX(proj_X_ij);
   DATA_FACTOR(proj_year);
 
+  // Spatial versus spatiotemporal
+  DATA_INTEGER(spatial_only); //
+
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -198,8 +201,10 @@ Type objective_function<Type>::operator()() {
   // Spatial effects:
   nll_omega += SCALE(GMRF(Q), 1.0 / exp(ln_tau_O))(omega_s);
   // Spatiotemporal effects:
-  for (int t = 0; t < n_t; t++)
-    nll_epsilon += SCALE(GMRF(Q), 1.0 / exp(ln_tau_E))(epsilon_st.col(t));
+  if (!spatial_only) {
+    for (int t = 0; t < n_t; t++)
+      nll_epsilon += SCALE(GMRF(Q), 1.0 / exp(ln_tau_E))(epsilon_st.col(t));
+  }
 
   // ------------------ Probability of data given random effects ---------------
 

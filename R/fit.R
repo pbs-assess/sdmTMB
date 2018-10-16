@@ -200,6 +200,8 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
   mf   <- model.frame(formula, data)
   y_i  <- model.response(mf, "numeric")
 
+  spatial_only <- identical(length(unique(data[[time]])), 1L)
+
   tmb_data <- list(
     y_i        = y_i,
     n_t        = length(unique(data[[time]])),
@@ -215,7 +217,8 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     spde       = spde$spde$param.inla[c("M0","M1","M2")],
     anisotropy = as.integer(anisotropy),
     family     = .valid_family[family$family],
-    link       = .valid_link[family$link]
+    link       = .valid_link[family$link],
+    spatial_only = as.integer(spatial_only)
   )
 
   tmb_params <- list(
@@ -230,6 +233,7 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     epsilon_st = matrix(0, nrow = tmb_data$n_s, ncol = tmb_data$n_t)
   )
 
+
   # Mapping off params as needed:
   tmb_map <- list()
   if (!anisotropy)
@@ -238,6 +242,10 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     tmb_map <- c(tmb_map, list(ln_phi = as.factor(NA)))
   if (family$family != "tweedie")
     tmb_map <- c(tmb_map, list(thetaf = as.factor(NA)))
+  if (spatial_only)
+    tmb_map <- c(tmb_map, list(
+      ln_tau_E   = as.factor(NA),
+      epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
   if (multiphase) {
     not_phase1 <- c(tmb_map, list(
@@ -264,7 +272,7 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
       tmb_params$ln_phi <- set_par_value(tmb_opt1, "ln_phi")
   }
 
-  tmb_random <- c("omega_s", "epsilon_st")
+  tmb_random <- if (spatial_only) "omega_s" else c("omega_s", "epsilon_st")
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     random = tmb_random, DLL = "sdmTMB", silent = silent)
