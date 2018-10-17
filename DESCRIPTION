@@ -1,7 +1,7 @@
 Package: sdmTMB
 Type: Fit Spatio-temporal Species Distribution Models with 'TMB'
 Title: sdmTMB
-Version: 0.0.0.9000
+Version: 0.0.0.9001
 Authors@R: c(
     person(c("Sean", "C."), "Anderson", email = "sean.anderson@dfo-mpo.gc.ca",
       role = c("aut", "cre")))

@@ -4,3 +4,5 @@ inst/doc
 *.so
 .Rhistory
 prediction-grids/*
+*.rds
+*.pdf
