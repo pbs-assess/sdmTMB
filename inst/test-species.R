@@ -2,40 +2,70 @@ library(dplyr)
 library(sdmTMB)
 d <- readRDS("~/src/gfsynopsis/report/data-cache/buffalo-sculpin.rds")
 d <- readRDS("~/src/gfsynopsis/report/data-cache/canary-rockfish.rds")
+d <- readRDS("~/src/gfsynopsis/report/data-cache/petrale-sole.rds")
 d <- d$survey_sets
 
-dat <- gfplot:::tidy_survey_sets(d, "SYN QCS", years = 2017)
+dat <- gfplot:::tidy_survey_sets(d, "SYN HS", years = 2017)
 
 dat <- mutate(dat, density = density*1000*1000)
 dat <- filter(dat, !is.na(depth))
 dat <- gfplot:::scale_survey_predictors(dat)
 dat <- select(dat, -X10, -Y10)
 
-grid_locs <- gfplot:::make_prediction_grid(filter(dat, year == 2017), survey = "SYN QCS", cell_width = 2)$grid
+grid_locs <- gfplot:::make_prediction_grid(filter(dat, year == 2017), survey = "SYN HS", cell_width = 2)$grid
 grid_locs <- rename(grid_locs, depth = akima_depth)
 grid_locs$year <- NULL
 
-spde <- make_spde(dat$X, dat$Y, n_knots = 200)
+# -----------------------
+
+# library(glmmfields)
+# m1 <- glmmfields(formula = present ~ depth_scaled + depth_scaled2, lon = "X", lat = "Y", nknots = 25,
+#   family = binomial(link = "logit"), data = dat, chains = 1, iter = 800,
+#   cores = 2)
+# m2 <- glmmfields(formula = density ~ depth_scaled + depth_scaled2, lon = "X", lat = "Y", nknots = 25,
+#   family = lognormal(link = "log"), data = subset(dat, present == 1), chains = 1, iter = 800,
+#   cores = 2)
+#
+# p1 <- predict(m1, newdata = grid_locs, return_mcmc = T)
+# p2 <- predict(m2, newdata = grid_locs, return_mcmc = T)
+#
+# grid_locs$est <- apply(plogis(p1) * exp(p2), 2, median)
+
+library(ggplot2)
+plot_map <- function(dat, column) {
+  ggplot(dat, aes_string("X", "Y", fill = column)) +
+    geom_raster() +
+    # facet_wrap(~year) +
+    coord_fixed()
+}
+# plot_map(grid_locs, "est") + scale_fill_viridis_c(trans = "sqrt")
+
+
+# -----------------------
+library(sdmTMB)
+spde <- make_spde(dat$X, dat$Y, n_knots = 25)
 plot_spde(spde)
 
-xmat <- poly(log(dat$depth), 3)
+xmat <- poly(log(dat$depth), 2)
 coefs <- attr(xmat, "coefs")
 dat$dp <- xmat[,1]
 dat$dp2 <- xmat[,2]
-dat$dp3 <- xmat[,3]
+# dat$dp3 <- xmat[,3]
 
+ani <- F
 m <- sdmTMB(
- data = dat, formula = density ~ dp + dp2 + dp3,
+ data = dat, formula = density ~ dp + dp2 ,
  time = "year", spde = spde, family = tweedie(link = "log"), silent = FALSE,
- anisotropy = FALSE
+ anisotropy = ani
 )
 # plot_anisotropy(m)
 
 x <- dat$dp
 x2 <- dat$dp2
-x3 <- dat$dp3
+# x3 <- dat$dp3
 idx <- order(x)
-y <- m$model$par[[1]] + x * m$model$par[[2]] + x2 * m$model$par[[3]] + x3 * m$model$par[[4]]
+if (ani) i <- 3:5 else i <- 1:3
+y <- m$model$par[[i[1]]] + x * m$model$par[[i[2]]] + x2 * m$model$par[[i[3]]]
 plot(dat$depth[idx], exp(y[idx]), type = "o", log = "x")
 
 dat$resids <- residuals(m) # randomized quantile residuals
@@ -46,16 +76,16 @@ library(ggplot2)
 ggplot(dat, aes(X, Y, col = resids)) + scale_colour_gradient2() +
   geom_point() + facet_wrap(~year)
 
-new_poly <- poly(log(grid_locs$depth), 3, coefs = coefs)
+new_poly <- poly(log(grid_locs$depth), 2, coefs = coefs)
 grid_locs$dp <- new_poly[,1]
 grid_locs$dp2 <- new_poly[,2]
-grid_locs$dp3 <- new_poly[,3]
+# grid_locs$dp3 <- new_poly[,3]
 
 x <- grid_locs$dp
 x2 <- grid_locs$dp2
-x3 <- grid_locs$dp3
+# x3 <- grid_locs$dp3
 idx <- order(x)
-y <- m$model$par[[1]] + x * m$model$par[[2]] + x2 * m$model$par[[3]] + x3 * m$model$par[[4]]
+y <- m$model$par[[i[1]]] + x * m$model$par[[i[2]]] + x2 * m$model$par[[i[3]]]
 plot(grid_locs$depth[idx], exp(y[idx]), type = "l", log = "x")
 abline(v = min(dat$depth[dat$present == 1]), col = "red")
 abline(v = max(dat$depth[dat$present == 1]), col = "red")
