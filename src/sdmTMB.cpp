@@ -171,8 +171,8 @@ Type objective_function<Type>::operator()() {
 
   // Matern:
   Type range = sqrt(8.0) / exp(ln_kappa);
-  Type SigmaO = 1 / sqrt(4 * M_PI * exp(2 * ln_tau_O) * exp(2 * ln_kappa));
-  Type SigmaE = 1 / sqrt(4 * M_PI * exp(2 * ln_tau_E) * exp(2 * ln_kappa));
+  Type sigma_O = 1 / sqrt(4 * M_PI * exp(2 * ln_tau_O) * exp(2 * ln_kappa));
+  Type sigma_E = 1 / sqrt(4 * M_PI * exp(2 * ln_tau_E) * exp(2 * ln_kappa));
 
   // Precision matrix
   Eigen::SparseMatrix<Type> Q;
@@ -273,6 +273,8 @@ Type objective_function<Type>::operator()() {
   REPORT(b_j)          // fixed effect parameters
   REPORT(ln_tau_O);    // spatial process ln SD
   REPORT(ln_tau_E);    // spatio-temporal process ln SD
+  REPORT(sigma_O);
+  REPORT(sigma_E);
   REPORT(ln_phi);      // observation dispersion (depends on the distribution)
   REPORT(thetaf);      // observation Tweedie mixing parameter
   REPORT(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
