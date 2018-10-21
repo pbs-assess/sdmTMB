@@ -6,10 +6,9 @@ Authors@R: c(
     person(c("Sean", "C."), "Anderson", email = "sean.anderson@dfo-mpo.gc.ca",
       role = c("aut", "cre")))
 Description: The 'sdmTMB' package implements spatiotemporal GLMM predictive
-    process species distribution models using 'TMB', 'INLA', and Gaussian Markov
-    random fields.
+    process species distribution models using 'TMB', 'INLA', and Gaussian
+    Markov random fields.
 License: GPL (>=3)
-Encoding: UTF-8
 LazyData: true
 ByteCompile: true
 Depends: R (>= 3.2.0)
@@ -23,7 +22,8 @@ Imports:
     ggplot2,
     Matrix,
     grid,
-    tweedie
+    tweedie,
+    RandomFields
 Suggests:
     testthat,
     dplyr,
