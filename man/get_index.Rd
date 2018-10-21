@@ -4,26 +4,29 @@
 \alias{get_index}
 \title{Extract a relative biomass or abundance index}
 \usage{
-get_index(obj)
+get_index(obj, bias_correct = TRUE)
 }
 \arguments{
 \item{obj}{Output from \code{\link[=predict.sdmTMB]{predict.sdmTMB()}}.}
+
+\item{bias_correct}{Should bias correction be implemented in
+\code{\link[TMB:sdreport]{TMB::sdreport()}}?}
 }
 \description{
 Extract a relative biomass or abundance index
 }
 \examples{
-pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 150)
+# Use a small number of knots for this example to make it fast:
+pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 60)
 m <- sdmTMB(
  pcod, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
- time = "year", spde = pcod_spde, family = tweedie(link = "log"),
- silent = FALSE, anisotropy = TRUE
+ time = "year", spde = pcod_spde, family = tweedie(link = "log")
 )
 predictions <- predict(m, newdata = qcs_grid)
-ind <- get_index(predictions)
+ind <- get_index(predictions, bias_correct = FALSE) # not bias correcting for speed
 
 library(ggplot2)
 ggplot(ind, aes(year, est)) + geom_line() +
   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4)
-
+#'
 }
