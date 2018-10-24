@@ -3,11 +3,9 @@
 
 # sdmTMB
 
-**This package is not ready for use yet\! I have not simulation tested
-the model and there’s no guarantee I haven’t made a mistake.**
-
 [![Travis build
 status](https://travis-ci.org/seananderson/sdmTMB.svg?branch=master)](https://travis-ci.org/seananderson/sdmTMB)
+[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 
 The goal of sdmTMB is to
 
@@ -35,4 +33,4 @@ devtools::install_github("seananderson/sdmTMB")
 ## Example
 
 The main function is `sdmTMB()`. See `?sdmTMB` and `?predict.sdmTMB` for
-the most complete examples.
+the most complete examples or the vignette.
