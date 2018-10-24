@@ -4,7 +4,7 @@
 # sdmTMB
 
 [![Travis build
-status](https://travis-ci.org/seananderson/sdmTMB.svg?branch=master)](https://travis-ci.org/seananderson/sdmTMB)
+status](https://travis-ci.org/pbs-assess/sdmTMB.svg?branch=master)](https://travis-ci.org/pbs-assess/sdmTMB)
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 
 The goal of sdmTMB is to
