@@ -4,9 +4,9 @@
 \alias{sim}
 \title{Simulate from a spatial Matern Random Field}
 \usage{
-sim(x = runif(400, 0, 10), y = runif(400, 0, 10), sigma_O = 0.4,
-  kappa = 1.3, phi = 0.2, seed = sample.int(1e+06, 1),
-  plot = FALSE)
+sim(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
+  sigma_O = 0.4, kappa = 1.3, phi = 0.2, seed = sample.int(1e+06,
+  1), plot = FALSE)
 }
 \arguments{
 \item{x}{A vector of x coordinates.}
