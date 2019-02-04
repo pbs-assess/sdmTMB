@@ -16,7 +16,7 @@
 #' library(ggplot2)
 #' ggplot(ind, aes(year, est)) + geom_line() +
 #'   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4)
-#' #'
+#'
 #' @export
 get_index <- function(obj, bias_correct = TRUE)  {
   sr <- TMB::sdreport(obj$obj, bias.correct = bias_correct)
@@ -28,8 +28,8 @@ get_index <- function(obj, bias_correct = TRUE)  {
     d <- d[,3:2,drop=FALSE]
   names(d) <- c("log_est", "se")
   d$est <- exp(d$log_est)
-  d$lwr <- exp(d$log_est + qnorm(0.025) * d$se)
-  d$upr <- exp(d$log_est + qnorm(0.975) * d$se)
+  d$lwr <- exp(d$log_est + stats::qnorm(0.025) * d$se)
+  d$upr <- exp(d$log_est + stats::qnorm(0.975) * d$se)
   d$year <- sort(unique(obj$data$year))
   d[,c('year', 'est', 'lwr', 'upr', 'log_est', 'se'), drop = FALSE]
 }

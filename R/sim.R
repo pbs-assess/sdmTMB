@@ -24,7 +24,7 @@
 #' exp(r$ln_phi)
 #' s <- TMB::sdreport(m$tmb_obj)
 #' head(summary(s))
-sim <- function(x = runif(400, 0, 10), y = runif(400, 0, 10),
+sim <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
                 sigma_O = 0.4, kappa = 1.3, phi = 0.2,
                 seed = sample.int(1e6, 1), plot = FALSE) {
   set.seed(seed)
