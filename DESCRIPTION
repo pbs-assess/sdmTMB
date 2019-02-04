@@ -1,13 +1,14 @@
 Package: sdmTMB
-Type: Fit Spatio-temporal Species Distribution Models with 'TMB'
-Title: sdmTMB
-Version: 0.0.1
+Type: Package
+Title: Fit Spatio-temporal Species Distribution Models with 'TMB'
+Version: 0.0.1.9000
 Authors@R: c(
     person(c("Sean", "C."), "Anderson", email = "sean.anderson@dfo-mpo.gc.ca",
       role = c("aut", "cre")))
 Description: The 'sdmTMB' package implements spatiotemporal GLMM predictive
-    process species distribution models using 'TMB', 'INLA', and Gaussian
-    Markov random fields.
+    process models using 'TMB', 'INLA', and Gaussian Markov random fields.
+    One common application is for spatial or spatiotemporal species 
+    distribution models (SDMs).
 License: GPL (>=3)
 Encoding: UTF-8
 LazyData: true
@@ -33,7 +34,7 @@ Suggests:
     rmarkdown
 URL: https://github.com/seananderson/sdmTMB
 BugReports: https://github.com/seananderson/sdmTMB/issues
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 Roxygen: list(markdown = TRUE)
 Additional_repositories: https://inla.r-inla-download.org/R/stable
 VignetteBuilder: knitr
