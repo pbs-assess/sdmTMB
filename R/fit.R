@@ -210,6 +210,8 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     year_i     = as.numeric(as.factor(as.character(data[[time]]))) - 1L,
     X_ij       = X_ij,
     do_predict = 0L,
+    calc_se    = 0L,
+    calc_time_totals = 0L,
     proj_mesh  = Matrix::Matrix(0, 1, 1), # dummy
     proj_X_ij  = matrix(0, ncol = 1, nrow = 1), # dummy
     proj_year  = 0, # dummy

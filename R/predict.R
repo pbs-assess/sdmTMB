@@ -10,6 +10,9 @@
 #' @param newdata An optional new data frame. This should be a single set of
 #'   spatial locations. These locations will be expanded to cover all the years
 #'   in the original data set. Eventually `newdata` will be more flexible.
+#' @param se_fit Should standard errors on predictions at the new locations given by
+#'   `newdata` be calculated? Warning: the current implementation can be slow for
+#'   large data sets or high-resolution projections.
 #' @param xy_cols A character vector of length 2 that gives the column names of
 #'   the x and y coordinates in `newdata`.
 #' @param ... Not implemented.
@@ -26,7 +29,7 @@
 #' m <- sdmTMB(
 #'  pcod, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-#'  silent = FALSE, anisotropy = TRUE
+#'  silent = FALSE
 #' )
 #'
 #' # Predictions at original data locations:
@@ -68,8 +71,41 @@
 #' plot_map(predictions, "est_re_st") +
 #'   ggtitle("Spatiotemporal random effects only") +
 #'   scale_fill_gradient2()
+#'
+#' \donttest{
+#' # Example with standard errors on new location predictions.
+#' # Note this example models presence/absence.
+#' pcod_2017 <- pcod[pcod$year == 2017, ]
+#' pcod_spde <- make_spde(pcod_2017$X, pcod_2017$Y, n_knots = 75)
+#' m2017 <- sdmTMB(
+#'   pcod_2017, present ~ 0 + depth_scaled + depth_scaled2,
+#'   time = "year", spde = pcod_spde, family = binomial(link = "logit"),
+#'   silent = FALSE
+#' )
+#'
+#' # Predictions at new data locations with standard errors.
+#' # Note that this can currently be quite slow on large data sets.
+#' predictions <- predict(m2017, newdata = qcs_grid, se_fit = TRUE)$data
+#'
+#' plot_map(predictions, "plogis(est)") +
+#'   scale_fill_gradient2(midpoint = 0.5) +
+#'   ggtitle("Predictions")
+#'
+#' plot_map(predictions, "est_se") +
+#'   scale_fill_viridis_c() +
+#'   ggtitle("Prediction standard error")
+#'
+#' plot_map(predictions, "plogis(est + 2 * est_se)") +
+#'   scale_fill_gradient2(midpoint = 0.5) +
+#'   ggtitle("Prediction upper 95% CI")
+#'
+#' plot_map(predictions, "plogis(est - 2 * est_se)") +
+#'   scale_fill_gradient2(midpoint = 0.5) +
+#'   ggtitle("Prediction lower 95% CI")
+#' }
 
-predict.sdmTMB <- function(object, newdata = NULL, xy_cols = c("X", "Y"), ...) {
+predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
+  xy_cols = c("X", "Y"), ...) {
 
   tmb_data <- object$tmb_data
   tmb_data$do_predict <- 1L
@@ -90,6 +126,8 @@ predict.sdmTMB <- function(object, newdata = NULL, xy_cols = c("X", "Y"), ...) {
     tmb_data$proj_mesh <- proj_mesh
     tmb_data$proj_X_ij <- proj_X_ij
     tmb_data$proj_year <- as.integer(as.factor(as.character(nd$year))) - 1L
+    tmb_data$calc_se <- as.integer(se_fit)
+    tmb_data$calc_time_totals <- 1L # for now
 
     new_tmb_obj <- TMB::MakeADFun(
       data = tmb_data,
@@ -107,12 +145,28 @@ predict.sdmTMB <- function(object, newdata = NULL, xy_cols = c("X", "Y"), ...) {
     # new_tmb_obj$env$parList()
 
     r <- new_tmb_obj$report(lp)
+
     nd$est <- r$proj_eta
     nd$est_fe <- r$proj_fe
     nd$est_re_s <- r$proj_re_sp
     nd$est_re_st <- r$proj_re_st_vector
     obj <- new_tmb_obj
+
+    if (se_fit) {
+      sr <- TMB::sdreport(new_tmb_obj, bias.correct = FALSE)
+      ssr <- summary(sr, "report")
+      proj_eta <- ssr[row.names(ssr) == "proj_eta", , drop = FALSE]
+      row.names(proj_eta) <- NULL
+      d <- as.data.frame(proj_eta)
+      names(d) <- c("est", "se")
+      nd$est_se <- d$se
+    }
   } else {
+    if (se_fit) {
+      warning("Standard errors have not been implemented yet unless you ",
+        "supply `newdata`. In the meantime you could supply your original data frame ",
+        "to the `newdata` argument.", call. = FALSE)
+    }
     nd <- object$data
     lp <- object$tmb_obj$env$last.par
     r <- object$tmb_obj$report(lp)
