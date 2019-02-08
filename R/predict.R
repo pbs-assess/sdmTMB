@@ -125,7 +125,7 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
 
     tmb_data$proj_mesh <- proj_mesh
     tmb_data$proj_X_ij <- proj_X_ij
-    tmb_data$proj_year <- as.integer(as.factor(as.character(nd$year))) - 1L
+    tmb_data$proj_year <- as.integer(as.factor(as.character(nd[[object$time]]))) - 1L
     tmb_data$calc_se <- as.integer(se_fit)
     tmb_data$calc_time_totals <- 1L # for now
 
