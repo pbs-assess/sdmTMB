@@ -22,7 +22,8 @@ vector<Type> Array2DToVector(array<Type> x) {
 
 template <class Type>
 matrix<Type> MakeH(vector<Type> x) {
-  matrix<Type> H(2, 2);
+
+    matrix<Type> H(2, 2);
   H(0, 0) = exp(x(0));
   H(1, 0) = x(1);
   H(0, 1) = x(1);
@@ -111,6 +112,12 @@ Type objective_function<Type>::operator()() {
 
   // Prediction?
   DATA_INTEGER(do_predict);
+  // With standard errors on the full projections?
+  DATA_INTEGER(calc_se);
+  // Calculate total summed by year (e.g. biomass)?
+  DATA_INTEGER(calc_time_totals);
+
+  DATA_INTEGER(enable_priors);
 
   // Distribution
   DATA_INTEGER(family);
@@ -160,19 +167,23 @@ Type objective_function<Type>::operator()() {
 
   // ------------------ Priors -------------------------------------------------
 
-  // nll_priors -= dnorm(ln_tau_O, Type(0.0), Type(10.0), true);
-  // nll_priors -= dnorm(ln_tau_E, Type(0.0), Type(10.0), true);
-  // nll_priors -= dnorm(ln_kappa, Type(0.0), Type(10.0), true);
-  // nll_priors -= dnorm(ln_phi,   Type(0.0), Type(3.0), true);
-  // for (int j = 0; j < n_j; j++)
-  //   nll_priors -= dnorm(b_j(j), Type(0.0), Type(10.0), true);
+  if (enable_priors) {
+    nll_priors -= dnorm(ln_tau_O, Type(0.0), Type(1.0), true);
+    nll_priors -= dnorm(ln_tau_E, Type(0.0), Type(1.0), true);
+    nll_priors -= dnorm(ln_kappa, Type(0.0), Type(2.0), true);
+    nll_priors -= dnorm(ln_phi,   Type(0.0), Type(1.0), true);
+    for (int j = 0; j < n_j; j++)
+      nll_priors -= dnorm(b_j(j), Type(0.0), Type(5.0), true);
+  }
 
   // ------------------ Geospatial ---------------------------------------------
 
   // Matern:
-  Type range = sqrt(8.0) / exp(ln_kappa);
-  Type sigma_O = 1 / sqrt(4 * M_PI * exp(2 * ln_tau_O) * exp(2 * ln_kappa));
-  Type sigma_E = 1 / sqrt(4 * M_PI * exp(2 * ln_tau_E) * exp(2 * ln_kappa));
+  Type range = sqrt(Type(8.0)) / exp(ln_kappa);
+  Type sigma_O = 1 / sqrt(Type(4.0) * M_PI *
+    exp(Type(2.0) * ln_tau_O) * exp(Type(2.0) * ln_kappa));
+  Type sigma_E = 1 / sqrt(Type(4.0) * M_PI *
+    exp(Type(2.0) * ln_tau_E) * exp(Type(2.0) * ln_kappa));
 
   // Precision matrix
   Eigen::SparseMatrix<Type> Q;
@@ -258,14 +269,18 @@ Type objective_function<Type>::operator()() {
     REPORT(proj_re_st_vector); // spatiotemporal random effect projections
     REPORT(proj_eta);          // combined projections (in link space)
 
-  // ------------------ Derived quantities -------------------------------------
-    vector<Type> total(n_t);
-    for (int i = 0; i < proj_eta.size(); i++)  {
-      total(proj_year(i)) += InverseLink(proj_eta(i), link);
+    if (calc_se) ADREPORT(proj_eta);
+
+    if (calc_time_totals) {
+      // ------------------ Derived quantities -------------------------------------
+      vector<Type> total(n_t);
+      for (int i = 0; i < proj_eta.size(); i++)  {
+        total(proj_year(i)) += InverseLink(proj_eta(i), link);
+      }
+      vector<Type> log_total = log(total);
+      REPORT(log_total);
+      ADREPORT(log_total);
     }
-    vector<Type> log_total = log(total);
-    REPORT(log_total);
-    ADREPORT(log_total);
   }
 
   // ------------------ Reporting ----------------------------------------------
@@ -283,8 +298,6 @@ Type objective_function<Type>::operator()() {
   REPORT(eta_i);       // fixed and random effect predictions in link space
   REPORT(ln_kappa);    // Matern parameter
   REPORT(range);       // Matern approximate distance at 10% correlation
-
-  // if (do_predict) ADREPORT(mu_i);
 
   // ------------------ Joint negative log likelihood --------------------------
 

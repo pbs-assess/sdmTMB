@@ -4,9 +4,9 @@
 \alias{sim}
 \title{Simulate from a spatial Matern Random Field}
 \usage{
-sim(x = runif(400, 0, 10), y = runif(400, 0, 10), sigma_O = 0.4,
-  kappa = 1.3, phi = 0.2, seed = sample.int(1e+06, 1),
-  plot = FALSE)
+sim(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
+  time_steps = 1L, sigma_O = 0.4, sigma_E = 0.3, kappa = 1.3,
+  phi = 0.2, seed = sample.int(1e+06, 1), plot = FALSE)
 }
 \arguments{
 \item{x}{A vector of x coordinates.}
@@ -31,15 +31,14 @@ Simulate from a spatial Matern Random Field
 }
 \examples{
 set.seed(2957278)
-dat <- sim()
-spde <- make_spde(x = dat$x, y = dat$y, n_knots = 150)
+dat <- sim(time_steps = 9, plot = TRUE)
+spde <- make_spde(x = dat$x, y = dat$y, n_knots = 200)
 plot_spde(spde)
 m <- sdmTMB(data = dat, formula = z ~ 1, time = "time",
   family = gaussian(link = "identity"), spde = spde)
 r <- m$tmb_obj$report()
 r$sigma_O
-exp(r$ln_kappa)
-exp(r$ln_phi)
+r$sigma_E
 s <- TMB::sdreport(m$tmb_obj)
 head(summary(s))
 }

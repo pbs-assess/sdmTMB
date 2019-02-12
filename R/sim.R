@@ -13,32 +13,56 @@
 #'
 #' @examples
 #' set.seed(2957278)
-#' dat <- sim()
-#' spde <- make_spde(x = dat$x, y = dat$y, n_knots = 150)
+#' dat <- sim(time_steps = 9, plot = TRUE)
+#' spde <- make_spde(x = dat$x, y = dat$y, n_knots = 200)
 #' plot_spde(spde)
 #' m <- sdmTMB(data = dat, formula = z ~ 1, time = "time",
 #'   family = gaussian(link = "identity"), spde = spde)
 #' r <- m$tmb_obj$report()
 #' r$sigma_O
-#' exp(r$ln_kappa)
-#' exp(r$ln_phi)
+#' r$sigma_E
 #' s <- TMB::sdreport(m$tmb_obj)
 #' head(summary(s))
-sim <- function(x = runif(400, 0, 10), y = runif(400, 0, 10),
-                sigma_O = 0.4, kappa = 1.3, phi = 0.2,
+
+sim <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
+                time_steps = 1L,
+                sigma_O = 0.4, sigma_E = 0.3, kappa = 1.3, phi = 0.2,
                 seed = sample.int(1e6, 1), plot = FALSE) {
+
+  if (!identical(length(x), length((y))))
+    stop("`x` and `y` must be of the same length.")
+
   set.seed(seed)
+
+  # spatial random effects:
   rf_omega <- RandomFields::RMmatern(nu = 1, var = sigma_O^2, scale = 1 / kappa)
   omega_s <- suppressMessages(
     RandomFields::RFsimulate(model = rf_omega, x = x, y = y)$variable1)
-  d <- data.frame(x, y)
-  d$z <- stats::rnorm(nrow(d), mean = omega_s, sd = phi)
+
+  # spatiotemporal random effects:
+  epsilon_st <- list()
+  if (time_steps > 1L) {
+    rf_epsilon <- RandomFields::RMmatern(nu = 1, var = sigma_E^2, scale = 1 / kappa)
+    for (i in seq_len(time_steps)) {
+      epsilon_st[[i]] <- suppressMessages(
+        RandomFields::RFsimulate(model = rf_epsilon, x = x, y = y)$variable1)
+    }
+  } else {
+    epsilon_st <- list(rep(0, length(x)))
+  }
+
+  epsilon_st <- do.call("c", epsilon_st)
+  d <- data.frame(x, y, time = rep(seq_len(time_steps), each = length(x)),
+    omega_s = rep(omega_s, time_steps), epsilon_st = epsilon_st)
+  d$real_z <- d$omega_s + d$epsilon_st
+  d$z <- stats::rnorm(nrow(d), mean = d$real_z, sd = phi)
+
   if (plot) {
     g <- ggplot2::ggplot(d, ggplot2::aes_string("x", "y", colour = "z")) +
       ggplot2::geom_point() +
+      ggplot2::facet_wrap(~time) +
       ggplot2::scale_color_gradient2()
     print(g)
   }
-  d$time <- 1
   d
 }

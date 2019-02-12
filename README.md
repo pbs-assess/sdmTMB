@@ -27,7 +27,7 @@ The goal of sdmTMB is to
 You can install sdmTMB with:
 
 ``` r
-devtools::install_github("seananderson/sdmTMB")
+devtools::install_github("pbs-assess/sdmTMB")
 ```
 
 ## Example

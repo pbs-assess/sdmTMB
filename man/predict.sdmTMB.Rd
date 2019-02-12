@@ -4,8 +4,8 @@
 \alias{predict.sdmTMB}
 \title{Predict from an sdmTMB model}
 \usage{
-\method{predict}{sdmTMB}(object, newdata = NULL, xy_cols = c("X", "Y"),
-  ...)
+\method{predict}{sdmTMB}(object, newdata = NULL, se_fit = FALSE,
+  xy_cols = c("X", "Y"), ...)
 }
 \arguments{
 \item{object}{An object from \code{\link[=sdmTMB]{sdmTMB()}}.}
@@ -13,6 +13,10 @@
 \item{newdata}{An optional new data frame. This should be a single set of
 spatial locations. These locations will be expanded to cover all the years
 in the original data set. Eventually \code{newdata} will be more flexible.}
+
+\item{se_fit}{Should standard errors on predictions at the new locations given by
+\code{newdata} be calculated? Warning: the current implementation can be slow for
+large data sets or high-resolution projections.}
 
 \item{xy_cols}{A character vector of length 2 that gives the column names of
 the x and y coordinates in \code{newdata}.}
@@ -33,7 +37,7 @@ pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 100)
 m <- sdmTMB(
  pcod, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
- silent = FALSE, anisotropy = TRUE
+ silent = FALSE
 )
 
 # Predictions at original data locations:
@@ -75,4 +79,36 @@ plot_map(predictions, "est_re_s") +
 plot_map(predictions, "est_re_st") +
   ggtitle("Spatiotemporal random effects only") +
   scale_fill_gradient2()
+
+\donttest{
+# Example with standard errors on new location predictions.
+# Note this example models presence/absence.
+pcod_2017 <- pcod[pcod$year == 2017, ]
+pcod_spde <- make_spde(pcod_2017$X, pcod_2017$Y, n_knots = 75)
+m2017 <- sdmTMB(
+  pcod_2017, present ~ 0 + depth_scaled + depth_scaled2,
+  time = "year", spde = pcod_spde, family = binomial(link = "logit"),
+  silent = FALSE
+)
+
+# Predictions at new data locations with standard errors.
+# Note that this can currently be quite slow on large data sets.
+predictions <- predict(m2017, newdata = qcs_grid, se_fit = TRUE)$data
+
+plot_map(predictions, "plogis(est)") +
+  scale_fill_gradient2(midpoint = 0.5) +
+  ggtitle("Predictions")
+
+plot_map(predictions, "est_se") +
+  scale_fill_viridis_c() +
+  ggtitle("Prediction standard error")
+
+plot_map(predictions, "plogis(est + 2 * est_se)") +
+  scale_fill_gradient2(midpoint = 0.5) +
+  ggtitle("Prediction upper 95\% CI")
+
+plot_map(predictions, "plogis(est - 2 * est_se)") +
+  scale_fill_gradient2(midpoint = 0.5) +
+  ggtitle("Prediction lower 95\% CI")
+}
 }

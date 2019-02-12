@@ -28,5 +28,5 @@ ind <- get_index(predictions, bias_correct = FALSE) # not bias correcting for sp
 library(ggplot2)
 ggplot(ind, aes(year, est)) + geom_line() +
   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4)
-#'
+
 }
