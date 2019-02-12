@@ -197,7 +197,7 @@ make_anisotropy_spde <- function(spde) {
 
 sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity"),
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE, control = sdmTMBcontrol(),
-  enable_priors = FALSE) {
+  enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE) {
 
   X_ij <- model.matrix(formula, data)
   mf   <- model.frame(formula, data)
@@ -211,11 +211,14 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     n_s        = nrow(spde$mesh$loc),
     s_i        = spde$cluster - 1L,
     year_i     = as.numeric(as.factor(as.character(data[[time]]))) - 1L,
+    year_prev_i= as.numeric(as.factor(as.character(data[[time]]))) - 2L,
+    ar1_fields = as.integer(ar1_fields),
     X_ij       = X_ij,
     do_predict = 0L,
     calc_se    = 0L,
     calc_time_totals = 0L,
     enable_priors = as.integer(enable_priors),
+    include_spatial = as.integer(include_spatial),
     proj_mesh  = Matrix::Matrix(0, 1, 1), # dummy
     proj_X_ij  = matrix(0, ncol = 1, nrow = 1), # dummy
     proj_year  = 0, # dummy
@@ -235,6 +238,7 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     ln_kappa   = 0,
     thetaf     = 0,
     ln_phi     = 0,
+    ar1_phi    = 0,
     omega_s    = rep(0, tmb_data$n_s),
     epsilon_st = matrix(0, nrow = tmb_data$n_s, ncol = tmb_data$n_t)
   )
@@ -244,6 +248,8 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
   tmb_map <- list()
   if (!anisotropy)
     tmb_map <- c(tmb_map, list(ln_H_input = factor(rep(NA, 2))))
+  if (!ar1_fields)
+    tmb_map <- c(tmb_map, list(ar1_phi = as.factor(NA)))
   if (family$family == "binomial")
     tmb_map <- c(tmb_map, list(ln_phi = as.factor(NA)))
   if (family$family != "tweedie")
@@ -278,7 +284,23 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
       tmb_params$ln_phi <- set_par_value(tmb_opt1, "ln_phi")
   }
 
-  tmb_random <- if (spatial_only) "omega_s" else c("omega_s", "epsilon_st")
+  if (spatial_only) {
+    tmb_random <- "omega_s"
+  } else {
+    if (include_spatial) {
+      tmb_random <- c("omega_s", "epsilon_st")
+    } else {
+      tmb_random <- "epsilon_st"
+    }
+  }
+
+  if (!include_spatial) {
+    tmb_map <- c(tmb_map, list(
+      ln_tau_O = as.factor(NA),
+      omega_s  = factor(rep(NA, length(tmb_params$omega_s)))))
+  }
+
+  browser()
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     random = tmb_random, DLL = "sdmTMB", silent = silent)

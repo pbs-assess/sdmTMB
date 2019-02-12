@@ -8,6 +8,11 @@ bool isNA(Type x) {
 }
 
 template <class Type>
+Type minus_one_to_one(Type x){
+  return Type(2)*invlogit(x)-Type(1);
+}
+
+template <class Type>
 vector<Type> Array2DToVector(array<Type> x) {
   x = x.transpose();
   int nr = x.rows();
@@ -17,13 +22,13 @@ vector<Type> Array2DToVector(array<Type> x) {
     for (int j = 0; j < nc; j++) {
       res[i * nc + j] = x(i, j);
     }
-  return res;
+    return res;
 }
 
 template <class Type>
 matrix<Type> MakeH(vector<Type> x) {
 
-    matrix<Type> H(2, 2);
+  matrix<Type> H(2, 2);
   H(0, 0) = exp(x(0));
   H(1, 0) = x(1);
   H(0, 1) = x(1);
@@ -109,6 +114,7 @@ Type objective_function<Type>::operator()() {
 
   // Indices for factors
   DATA_FACTOR(year_i);
+  DATA_FACTOR(year_prev_i);
 
   // Prediction?
   DATA_INTEGER(do_predict);
@@ -118,6 +124,7 @@ Type objective_function<Type>::operator()() {
   DATA_INTEGER(calc_time_totals);
 
   DATA_INTEGER(enable_priors);
+  DATA_INTEGER(ar1_fields);
 
   // Distribution
   DATA_INTEGER(family);
@@ -148,6 +155,8 @@ Type objective_function<Type>::operator()() {
 
   PARAMETER(thetaf);  // tweedie only
   PARAMETER(ln_phi);  // sigma / dispersion / etc.
+
+  PARAMETER(ar1_phi);  // AR1 fields correlation
 
   // Random effects
   // This is a matrix of spatial centers by years
@@ -202,8 +211,14 @@ Type objective_function<Type>::operator()() {
   vector<Type> mu_i(n_i), eta_i(n_i);
   for (int i = 0; i < n_i; i++) {
     eta_i(i) = eta_fixed_i(i) +                // fixed effects
-               omega_s(s_i(i)) +               // spatial
-               epsilon_st(s_i(i), year_i(i));  // spatio-temporal
+               omega_s(s_i(i));                // spatial
+    if (year_i(i) == Type(0) || !ar1_fields) {
+      eta_i(i) = eta_i(i) + epsilon_st(s_i(i), year_i(i));  // spatio-temporal
+    } else { // AR1 and not first time slice:
+      eta_i(i) = eta_i(i) +
+        minus_one_to_one(ar1_phi) * epsilon_st(s_i(i), year_prev_i(i)) +
+        epsilon_st(s_i(i), year_i(i));
+    }
     mu_i(i) = InverseLink(eta_i(i), link);
   }
 
