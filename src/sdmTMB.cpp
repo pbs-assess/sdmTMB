@@ -125,6 +125,7 @@ Type objective_function<Type>::operator()() {
 
   DATA_INTEGER(enable_priors);
   DATA_INTEGER(ar1_fields);
+  DATA_INTEGER(include_spatial);
 
   // Distribution
   DATA_INTEGER(family);
@@ -189,8 +190,12 @@ Type objective_function<Type>::operator()() {
 
   // Matern:
   Type range = sqrt(Type(8.0)) / exp(ln_kappa);
-  Type sigma_O = 1 / sqrt(Type(4.0) * M_PI *
+
+  if (include_spatial) {
+    Type sigma_O = 1 / sqrt(Type(4.0) * M_PI *
     exp(Type(2.0) * ln_tau_O) * exp(Type(2.0) * ln_kappa));
+    REPORT(sigma_O);
+  }
   Type sigma_E = 1 / sqrt(Type(4.0) * M_PI *
     exp(Type(2.0) * ln_tau_E) * exp(Type(2.0) * ln_kappa));
 
@@ -210,12 +215,13 @@ Type objective_function<Type>::operator()() {
   vector<Type> eta_fixed_i = X_ij * b_j;
   vector<Type> mu_i(n_i), eta_i(n_i);
   for (int i = 0; i < n_i; i++) {
-    eta_i(i) = eta_fixed_i(i) +                // fixed effects
-               omega_s(s_i(i));                // spatial
+    eta_i(i) = eta_fixed_i(i);
+    if (include_spatial)
+      eta_i(i) += omega_s(s_i(i)); // spatial
     if (year_i(i) == Type(0) || !ar1_fields) {
-      eta_i(i) = eta_i(i) + epsilon_st(s_i(i), year_i(i));  // spatio-temporal
+      eta_i(i) += epsilon_st(s_i(i), year_i(i));  // spatio-temporal
     } else { // AR1 and not first time slice:
-      eta_i(i) = eta_i(i) +
+      eta_i(i) +=
         minus_one_to_one(ar1_phi) * epsilon_st(s_i(i), year_prev_i(i)) +
         epsilon_st(s_i(i), year_i(i));
     }
@@ -225,7 +231,8 @@ Type objective_function<Type>::operator()() {
   // ------------------ Probability of random effects --------------------------
 
   // Spatial effects:
-  nll_omega += SCALE(GMRF(Q), 1.0 / exp(ln_tau_O))(omega_s);
+    if (include_spatial)
+      nll_omega += SCALE(GMRF(Q), 1.0 / exp(ln_tau_O))(omega_s);
   // Spatiotemporal effects:
   if (!spatial_only) {
     for (int t = 0; t < n_t; t++)
@@ -303,7 +310,6 @@ Type objective_function<Type>::operator()() {
   REPORT(b_j)          // fixed effect parameters
   REPORT(ln_tau_O);    // spatial process ln SD
   REPORT(ln_tau_E);    // spatio-temporal process ln SD
-  REPORT(sigma_O);
   REPORT(sigma_E);
   REPORT(ln_phi);      // observation dispersion (depends on the distribution)
   REPORT(thetaf);      // observation Tweedie mixing parameter

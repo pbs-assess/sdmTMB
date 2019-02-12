@@ -124,7 +124,14 @@ make_anisotropy_spde <- function(spde) {
 #' @param anisotropy Logical: allow for anisotropy?
 #' @param control Optimization control options. See [sdmTMBcontrol()].
 #' @param enable_priors Should weakly informative priors be enabled?
-#'   (experimental)
+#'   (experimental and likely for use with the \pkg{tmbstan} package)
+#' @param ar1_fields Estimate the spatiotemporal random fields as an AR1
+#'   process? Note that the parameter `ar1_phi` has been internally bounded
+#'   between -1 and 1 with:  `2 * invlogit(ar1_phi) - 1` i.e. in R ` 2 *
+#'   plogis(ar_phi) - 1`.
+#' @param include_spatial Should a separate spatial random field the estimated?
+#'   If enabled then there will be a separate spatial field and spatiotemporal
+#'   fields.
 #'
 #' @importFrom methods as
 #' @importFrom stats gaussian model.frame model.matrix
@@ -300,7 +307,7 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
       omega_s  = factor(rep(NA, length(tmb_params$omega_s)))))
   }
 
-  browser()
+  # browser()
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     random = tmb_random, DLL = "sdmTMB", silent = silent)

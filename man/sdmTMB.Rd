@@ -6,7 +6,8 @@
 \usage{
 sdmTMB(data, formula, time, spde, family = gaussian(link = "identity"),
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
-  control = sdmTMBcontrol(), enable_priors = FALSE)
+  control = sdmTMBcontrol(), enable_priors = FALSE,
+  ar1_fields = FALSE, include_spatial = TRUE)
 }
 \arguments{
 \item{data}{A data frame.}
@@ -30,7 +31,15 @@ include \code{0 + as.factor(your_time_column)}.}
 \item{control}{Optimization control options. See \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}.}
 
 \item{enable_priors}{Should weakly informative priors be enabled?
-(experimental)}
+(experimental and likely for use with the \pkg{tmbstan} package)}
+
+\item{ar1_fields}{Estimate the spatiotemporal random fields as an AR1
+process? Note that the parameter \code{ar1_phi} has been internally bounded
+between -1 and 1 with:  \code{2 * invlogit(ar1_phi) - 1} i.e. in R \code{ 2 * plogis(ar_phi) - 1}.}
+
+\item{include_spatial}{Should a separate spatial random field the estimated?
+If enabled then there will be a separate spatial field and spatiotemporal
+fields.}
 }
 \description{
 Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.
