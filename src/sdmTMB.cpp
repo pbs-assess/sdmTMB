@@ -117,6 +117,8 @@ Type objective_function<Type>::operator()() {
   // Calculate total summed by year (e.g. biomass)?
   DATA_INTEGER(calc_time_totals);
 
+  DATA_INTEGER(enable_priors);
+
   // Distribution
   DATA_INTEGER(family);
   DATA_INTEGER(link);
@@ -165,12 +167,14 @@ Type objective_function<Type>::operator()() {
 
   // ------------------ Priors -------------------------------------------------
 
-  // nll_priors -= dnorm(ln_tau_O, Type(0.0), Type(10.0), true);
-  // nll_priors -= dnorm(ln_tau_E, Type(0.0), Type(10.0), true);
-  // nll_priors -= dnorm(ln_kappa, Type(0.0), Type(10.0), true);
-  // nll_priors -= dnorm(ln_phi,   Type(0.0), Type(3.0), true);
-  // for (int j = 0; j < n_j; j++)
-  //   nll_priors -= dnorm(b_j(j), Type(0.0), Type(10.0), true);
+  if (enable_priors) {
+    nll_priors -= dnorm(ln_tau_O, Type(0.0), Type(1.0), true);
+    nll_priors -= dnorm(ln_tau_E, Type(0.0), Type(1.0), true);
+    nll_priors -= dnorm(ln_kappa, Type(0.0), Type(2.0), true);
+    nll_priors -= dnorm(ln_phi,   Type(0.0), Type(1.0), true);
+    for (int j = 0; j < n_j; j++)
+      nll_priors -= dnorm(b_j(j), Type(0.0), Type(5.0), true);
+  }
 
   // ------------------ Geospatial ---------------------------------------------
 

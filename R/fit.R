@@ -123,6 +123,8 @@ make_anisotropy_spde <- function(spde) {
 #' @param multiphase Estimate the fixed and random effects in phases for speed?
 #' @param anisotropy Logical: allow for anisotropy?
 #' @param control Optimization control options. See [sdmTMBcontrol()].
+#' @param enable_priors Should weakly informative priors be enabled?
+#'   (experimental)
 #'
 #' @importFrom methods as
 #' @importFrom stats gaussian model.frame model.matrix
@@ -194,7 +196,8 @@ make_anisotropy_spde <- function(spde) {
 #' }
 
 sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity"),
-  silent = TRUE, multiphase = TRUE, anisotropy = FALSE, control = sdmTMBcontrol()) {
+  silent = TRUE, multiphase = TRUE, anisotropy = FALSE, control = sdmTMBcontrol(),
+  enable_priors = FALSE) {
 
   X_ij <- model.matrix(formula, data)
   mf   <- model.frame(formula, data)
@@ -212,6 +215,7 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     do_predict = 0L,
     calc_se    = 0L,
     calc_time_totals = 0L,
+    enable_priors = as.integer(enable_priors),
     proj_mesh  = Matrix::Matrix(0, 1, 1), # dummy
     proj_X_ij  = matrix(0, ncol = 1, nrow = 1), # dummy
     proj_year  = 0, # dummy
