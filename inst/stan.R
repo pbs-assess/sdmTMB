@@ -9,7 +9,7 @@ ggplot(d, aes(X, Y, size = density)) + geom_point() +
   facet_wrap(~year)
 
 # d <- subset(d, density > 0)
-# d$log_density <- log(d$density)
+d$log_density <- log(d$density)
 nrow(d)
 
 ggplot(d, aes(X, Y, size = density)) + geom_point() +
@@ -28,6 +28,8 @@ chains <- 4L
 inits <- lapply(seq_len(chains), function(x) m$model$par)
 
 fit <- tmbstan(m$tmb_obj, chains = chains, iter = 200,
+  lower = c(-1, rep(-5, length(m$model$par)-1)),
+  upper = c(10, rep(5, length(m$model$par)-1)),
   init = inits, laplace = TRUE)
 
 e <- rstan::extract(fit)
