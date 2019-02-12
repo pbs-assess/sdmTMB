@@ -2,7 +2,7 @@
 % Please edit documentation in R/fit.R
 \name{sdmTMB}
 \alias{sdmTMB}
-\title{A fit a spatiotemporal species distribution model with TMB}
+\title{Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.}
 \usage{
 sdmTMB(data, formula, time, spde, family = gaussian(link = "identity"),
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
@@ -30,7 +30,7 @@ include \code{0 + as.factor(your_time_column)}.}
 \item{control}{Optimization control options. See \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}.}
 }
 \description{
-A fit a spatiotemporal species distribution model with TMB
+Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.
 }
 \examples{
 d <- subset(pcod, year >= 2011) # subset for example speed
