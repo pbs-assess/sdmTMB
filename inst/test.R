@@ -112,27 +112,70 @@ ggplot(filter(out, i %in% 1:3, time %in% 1:3),
 
 # FIXME: CRASH!
 
-# out <- plyr::ldply(seq_len(1), function(i) {
-#   dat <- sim(
-#     time_steps = 6,
-#     plot = FALSE, seed = i*1,
-#     sigma_O = 0.2,
-#     sigma_E = 0.3,
-#     phi = 0.4, kappa = 1.3)
-#   dat$X <- dat$x
-#   dat$Y <- dat$y
-#   spde <- make_spde(x = dat$X, y = dat$Y, n_knots = 100)
-#   m <- sdmTMB(data = dat, formula = z ~ 1, time = "time",
-#     family = gaussian(link = "identity"), spde = spde)
-#   r <- m$tmb_obj$report()
-#   nd <- expand.grid(X = seq(0.1, 9.5, length.out = 10),
-#     Y = seq(0.1, 9.5, length.out = 10))
-#   nd$time <- 1
-#   browser()
-#   predict(m, newdata = nd)$data %>% mutate(i = i)
-# }, .parallel = FALSE)
-#
-# ggplot(filter(out, i %in% 1:3), aes(X, Y, fill = est)) +
-#   geom_raster() +
-#   facet_grid(time~i) +
-#   coord_equal()
+
+out <- plyr::llply(seq_len(1), function(i) {
+  dat <- sim(
+    time_steps = 6,
+    plot = FALSE, seed = i*1,
+    sigma_O = 0.2,
+    sigma_E = 0.3,
+    phi = 0.4, kappa = 1.3)
+  dat$X <- dat$x
+  dat$Y <- dat$y
+  spde <- make_spde(x = dat$X, y = dat$Y, n_knots = 200)
+  m <- sdmTMB(data = dat, formula = z ~ 1, time = "time",
+    family = gaussian(link = "identity"), spde = spde)
+  r <- m$tmb_obj$report()
+  nd <- expand.grid(X = seq(0, 10, 0.05),
+    Y = seq(0, 10, 0.05))
+  nd$time <- 1
+  list(
+    data = dat,
+    pred = predict(m, newdata = nd)$data %>% mutate(i = i))
+}, .parallel = FALSE)
+
+g <- ggplot(out[[1]]$pred, aes(X, Y, fill = est)) +
+  geom_raster() +
+  facet_grid(~time) +
+  coord_equal() +
+  scale_fill_viridis_c()
+
+g1 <- ggplot(out[[1]]$data, aes(X, Y, colour = real_z)) +
+  geom_point(cex = 1.2) +
+  facet_grid(~time) +
+  coord_equal() +
+  scale_colour_viridis_c()
+
+gridExtra::grid.arrange(g, g1, nrow = 2)
+
+# -----------------------------------------------------------------
+# SE
+
+dat <- sim(
+  x = runif(100),
+  y = runif(100),
+  time_steps = 1,
+  plot = FALSE, seed = sample.int(1000, 1),
+  sigma_O = 0.8,
+  sigma_E = 0.3,
+  phi = 0.2, kappa = 1.2)
+dat$X <- dat$x
+dat$Y <- dat$y
+spde <- make_spde(x = dat$X, y = dat$Y, n_knots = 95)
+plot_spde(spde)
+m <- sdmTMB(data = dat, formula = z ~ 1, time = "time",
+  family = gaussian(link = "identity"), spde = spde)
+# nd <- expand.grid(X = seq(0, 1, 0.2),
+#   Y = seq(0, 1, 0.2))
+# nd$time <- 1
+pred <- predict(m, newdata = dat, se_fit = TRUE)$data
+
+pred$i <- seq_len(nrow(pred))
+library(ggplot2)
+ggplot(pred, aes(i, est, ymin = est - 2 * est_se, ymax = est + 2 * est_se)) +
+  geom_linerange() +
+  geom_point(aes(y = real_z)) +
+  coord_flip()
+
+mean((pred$real_z < pred$est - 1.96 * pred$est_se) |
+    (pred$real_z > pred$est + 1.96 * pred$est_se))
