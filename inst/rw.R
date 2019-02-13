@@ -1,48 +1,40 @@
 d <- pcod
-pcod_spde <- make_spde(d$X, d$Y, n_knots = 50)
+pcod_spde <- make_spde(d$X, d$Y, n_knots = 75)
 plot_spde(pcod_spde)
 
 # Tweedie:
-m_rw1 <- sdmTMB(
-  d, density ~ 0 + as.factor(year) + depth_scaled,
-  time = "year", time_varying = "depth_scaled2",
+m_rw1 <- sdmTMB(d, density ~ 0 + as.factor(year),
+  time = "year", time_varying = ~ 0 + depth_scaled + depth_scaled2,
   spde = pcod_spde, family = tweedie(link = "log"),
   silent = FALSE, ar1_fields = FALSE, include_spatial = TRUE)
 
-# set.seed(28331)
-#
-# gp_sigma <- 0.2
-# sigma <- 0.1
-# df <- 1000
-# gp_theta <- 1.8
-# n_draws <- 12
-# nknots <- 5
-# year_sigma <- 0.5
-# B <- vector(mode = "double", length = n_draws)
-# B[1] <- 0
-# for (i in 2:length(B)) {
-#   B[i] <- B[i - 1] + rnorm(1, 0, year_sigma) # random walk
-# }
-#
-# cov_vec = rnorm(n_draws*100,0,1)
-# model_matrix = model.matrix(~a - 1 + cov + cov2,
-#   data.frame(a = gl(n_draws, 100), cov=cov_vec, cov2=cov_vec^2))
-#
-# s <- glmmfields::sim_glmmfields(
-#   df = df, n_draws = n_draws, gp_theta = gp_theta,
-#   gp_sigma = gp_sigma, sd_obs = sigma, n_knots = nknots,
-#   B = c(B, 3, -0.1),
-#   X = model_matrix)
-# s$dat$cov = model_matrix[,"cov"]
-# s$dat$cov2 = model_matrix[,"cov2"]
-#
-# print(s$plot)
-# spde <- make_spde(s$dat$lon, s$dat$lat, n_knots = 60)
-# plot_spde(spde)
-#
-# m_rw <- sdmTMB(
-#   s$dat, y ~ -1 + cov1 + cov2, time = "time", spde = spde,
-#   silent = FALSE, ar1_fields = TRUE, include_spatial = FALSE)
-#
-# m_ar1_sim$model$par
-# minus_one_to_one(m_ar1_sim$model$par[["ar1_phi"]])
+m_rw1$tmb_obj$report()$ln_tau_V
+r <- m_rw1$tmb_obj$report()
+r$b_j
+r$b_rw_t
+
+
+get_y_hat <- function(b0, b1, b2, year) {
+  x_pred <- seq(min(d$depth_scaled), max(d$depth_scaled), length.out = 300)
+  data.frame(
+    x = -exp((x_pred * d$depth_sd[1] + d$depth_mean[1])),
+    y_hat = exp(b0 + b1 * x_pred + b2 * x_pred^2),
+    year = year)
+}
+
+n_t <- nrow(r$b_rw_t)
+yrs <- sort(unique(d$year))
+pred <- purrr::map_df(seq_len(n_t), function(.t) {
+  get_y_hat(r$b_j[.t], r$b_rw_t[.t,1], r$b_rw_t[.t,2], yrs[.t])
+})
+
+library(ggplot2)
+ggplot(pred, aes(x = x, ymax = y_hat + year * 5, ymin = year * 5,
+  group = year, fill = year)) +
+  geom_ribbon(lwd = 0.3, alpha = 0.5, col = "grey50") +
+  xlab("Depth (m)") +
+  scale_color_viridis_c(option = "C") +
+  scale_fill_viridis_c(option = "C") +
+  ylab("Predicted density in some units") +
+  gfplot::theme_pbs() +
+  coord_flip(xlim = c(0, -350))

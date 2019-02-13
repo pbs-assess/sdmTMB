@@ -107,7 +107,7 @@ Type objective_function<Type>::operator()() {
   // Vectors of real data
   DATA_VECTOR(y_i);   // response
   DATA_MATRIX(X_ij);  // model matrix
-  DATA_VECTOR(X_rw_i);  // model matrix for random walk covariate(s) (just one for now)
+  DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
   DATA_FACTOR(s_i);   // Random effect index for observation i
   DATA_INTEGER(n_t);  // number of years
@@ -162,7 +162,7 @@ Type objective_function<Type>::operator()() {
   PARAMETER(ar1_phi);  // AR1 fields correlation
 
   // Random effects
-  PARAMETER_VECTOR(b_rw_t);    // random walk effects (one for now)
+  PARAMETER_ARRAY(b_rw_t);    // random walk effects
   // This is a matrix of spatial centers by years
   PARAMETER_VECTOR(omega_s);    // spatial effects; n_s length
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
@@ -216,16 +216,14 @@ Type objective_function<Type>::operator()() {
 
   // ------------------ Linear predictor----------------------------------------
 
-  // for (int t = 1; i < n_t; i++)
-  //   ans+=-dnorm(lam(i),lam(i-1),sdRw,true);
-
   vector<Type> eta_fixed_i = X_ij * b_j;
   vector<Type> mu_i(n_i), eta_i(n_i);
   for (int i = 0; i < n_i; i++) {
     eta_i(i) = eta_fixed_i(i);
 
     if (random_walk)
-      eta_i(i) += X_rw_i(i) * b_rw_t(year_i(i));
+      for (int k = 0; k < X_rw_ik.cols(); k++)
+        eta_i(i) += X_rw_ik(i,k) * b_rw_t(year_i(i), k);
 
     if (include_spatial)
       eta_i(i) += omega_s(s_i(i)); // spatial
@@ -243,8 +241,11 @@ Type objective_function<Type>::operator()() {
 
   // Random walk effects (dynamic regression):
   if (random_walk) {
-    for (int t = 1; t < n_t; t++)
-      nll_varphi += -dnorm(b_rw_t(t), b_rw_t(t - 1), exp(ln_tau_V), true);
+    for (int t = 1; t < n_t; t++) {
+      for (int k = 0; k < X_rw_ik.cols(); k++) {
+        nll_varphi += -dnorm(b_rw_t(t,k), b_rw_t(t - 1,k), exp(ln_tau_V), true);
+      }
+    }
   }
 
   // Spatial effects:
@@ -328,6 +329,7 @@ Type objective_function<Type>::operator()() {
   REPORT(b_rw_t)          // fixed effect parameters
   REPORT(ln_tau_O);    // spatial process ln SD
   REPORT(ln_tau_E);    // spatio-temporal process ln SD
+  REPORT(ln_tau_V);    // spatio-temporal process ln SD
   REPORT(sigma_E);
   REPORT(ln_phi);      // observation dispersion (depends on the distribution)
   REPORT(thetaf);      // observation Tweedie mixing parameter

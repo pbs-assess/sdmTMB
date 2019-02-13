@@ -210,7 +210,11 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
   X_ij <- model.matrix(formula, data)
   mf   <- model.frame(formula, data)
   y_i  <- model.response(mf, "numeric")
-  X_rw_i <- data[[time_varying]]
+
+  if (!is.null(time_varying))
+    X_rw_ik <- model.matrix(time_varying, data)
+  else
+    X_rw_ik <- matrix(0, nrow = nrow(data), ncol = 1)
 
   spatial_only <- identical(length(unique(data[[time]])), 1L)
 
@@ -223,7 +227,7 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     year_prev_i= as.numeric(as.factor(as.character(data[[time]]))) - 2L,
     ar1_fields = as.integer(ar1_fields),
     X_ij       = X_ij,
-    X_rw_i     = X_rw_i,
+    X_rw_ik     = X_rw_ik,
     do_predict = 0L,
     calc_se    = 0L,
     calc_time_totals = 0L,
@@ -244,7 +248,7 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
   tmb_params <- list(
     ln_H_input = c(0, 0),
     b_j        = rep(0, ncol(X_ij)),
-    b_rw_t     = rep(0, tmb_data$n_t),
+    b_rw_t     = matrix(0, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)),
     ln_tau_O   = 0,
     ln_tau_E   = 0,
     ln_tau_V   = 0,
@@ -255,7 +259,6 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     omega_s    = rep(0, tmb_data$n_s),
     epsilon_st = matrix(0, nrow = tmb_data$n_s, ncol = tmb_data$n_t)
   )
-
 
   # Mapping off params as needed:
   tmb_map <- list()
