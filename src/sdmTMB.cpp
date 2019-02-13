@@ -107,6 +107,7 @@ Type objective_function<Type>::operator()() {
   // Vectors of real data
   DATA_VECTOR(y_i);   // response
   DATA_MATRIX(X_ij);  // model matrix
+  DATA_VECTOR(X_rw_i);  // model matrix for random walk covariate(s) (just one for now)
 
   DATA_FACTOR(s_i);   // Random effect index for observation i
   DATA_INTEGER(n_t);  // number of years
@@ -126,6 +127,7 @@ Type objective_function<Type>::operator()() {
   DATA_INTEGER(enable_priors);
   DATA_INTEGER(ar1_fields);
   DATA_INTEGER(include_spatial);
+  DATA_INTEGER(random_walk);
 
   // Distribution
   DATA_INTEGER(family);
@@ -156,10 +158,11 @@ Type objective_function<Type>::operator()() {
 
   PARAMETER(thetaf);  // tweedie only
   PARAMETER(ln_phi);  // sigma / dispersion / etc.
-
+  PARAMETER(ln_tau_V);  // random walk sigma
   PARAMETER(ar1_phi);  // AR1 fields correlation
 
   // Random effects
+  PARAMETER_VECTOR(b_rw_t);    // random walk effects (one for now)
   // This is a matrix of spatial centers by years
   PARAMETER_VECTOR(omega_s);    // spatial effects; n_s length
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
@@ -171,6 +174,7 @@ Type objective_function<Type>::operator()() {
 
   // Objective function is sum of negative log likelihood components
   Type nll_data = 0;  // likelihood of data
+  Type nll_varphi = 0;      // random walk effects
   Type nll_omega = 0;       // spatial effects
   Type nll_epsilon = 0;     // spatio-temporal effects
   Type nll_priors = 0;     // priors
@@ -212,10 +216,17 @@ Type objective_function<Type>::operator()() {
 
   // ------------------ Linear predictor----------------------------------------
 
+  // for (int t = 1; i < n_t; i++)
+  //   ans+=-dnorm(lam(i),lam(i-1),sdRw,true);
+
   vector<Type> eta_fixed_i = X_ij * b_j;
   vector<Type> mu_i(n_i), eta_i(n_i);
   for (int i = 0; i < n_i; i++) {
     eta_i(i) = eta_fixed_i(i);
+
+    if (random_walk)
+      eta_i(i) += X_rw_i(i) * b_rw_t(year_i(i));
+
     if (include_spatial)
       eta_i(i) += omega_s(s_i(i)); // spatial
     if (year_i(i) == Type(0) || !ar1_fields) {
@@ -229,6 +240,12 @@ Type objective_function<Type>::operator()() {
   }
 
   // ------------------ Probability of random effects --------------------------
+
+  // Random walk effects (dynamic regression):
+  if (random_walk) {
+    for (int t = 1; t < n_t; t++)
+      nll_varphi += -dnorm(b_rw_t(t), b_rw_t(t - 1), exp(ln_tau_V), true);
+  }
 
   // Spatial effects:
     if (include_spatial)
@@ -308,6 +325,7 @@ Type objective_function<Type>::operator()() {
   // ------------------ Reporting ----------------------------------------------
 
   REPORT(b_j)          // fixed effect parameters
+  REPORT(b_rw_t)          // fixed effect parameters
   REPORT(ln_tau_O);    // spatial process ln SD
   REPORT(ln_tau_E);    // spatio-temporal process ln SD
   REPORT(sigma_E);
@@ -322,6 +340,6 @@ Type objective_function<Type>::operator()() {
 
   // ------------------ Joint negative log likelihood --------------------------
 
-  Type jnll = nll_data + nll_omega + nll_epsilon + nll_priors;
+  Type jnll = nll_data + nll_omega + nll_varphi + nll_epsilon + nll_priors;
   return jnll;
 }
