@@ -100,6 +100,6 @@ out <- purrr::map_df(seq_along(unique(d$year)), get_quants)
 ggplot(out, aes(x = year, ymax = upr, ymin = lwr, y = mid)) +
   geom_ribbon(fill = "grey50", alpha = 0.4) +
   geom_line() +
-  xlab("Depth (m)") +
-  ylab("Predicted density in some units") +
+  xlab("Year") +
+  ylab("Depth (m)") +
   gfplot::theme_pbs()
