@@ -158,7 +158,7 @@ Type objective_function<Type>::operator()() {
 
   PARAMETER(thetaf);  // tweedie only
   PARAMETER(ln_phi);  // sigma / dispersion / etc.
-  PARAMETER(ln_tau_V);  // random walk sigma
+  PARAMETER_VECTOR(ln_tau_V);  // random walk sigma
   PARAMETER(ar1_phi);  // AR1 fields correlation
 
   // Random effects
@@ -243,7 +243,7 @@ Type objective_function<Type>::operator()() {
   if (random_walk) {
     for (int t = 1; t < n_t; t++) {
       for (int k = 0; k < X_rw_ik.cols(); k++) {
-        nll_varphi += -dnorm(b_rw_t(t,k), b_rw_t(t - 1,k), exp(ln_tau_V), true);
+        nll_varphi += -dnorm(b_rw_t(t,k), b_rw_t(t - 1,k), exp(ln_tau_V(k)), true);
       }
     }
   }

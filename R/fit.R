@@ -251,7 +251,7 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     b_rw_t     = matrix(0, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)),
     ln_tau_O   = 0,
     ln_tau_E   = 0,
-    ln_tau_V   = 0,
+    ln_tau_V   = rep(0, ncol(X_rw_ik)),
     ln_kappa   = 0,
     thetaf     = 0,
     ln_phi     = 0,
@@ -279,7 +279,7 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     not_phase1 <- c(tmb_map, list(
       ln_tau_O   = as.factor(NA),
       ln_tau_E   = as.factor(NA),
-      ln_tau_V   = as.factor(NA),
+      ln_tau_V   = factor(rep(NA, ncol(X_rw_ik))),
       ln_kappa   = as.factor(NA),
       ln_H_input = factor(rep(NA, 2)),
       b_rw_t     = factor(rep(NA, length(tmb_params$b_rw_t))),
