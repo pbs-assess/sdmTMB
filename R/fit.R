@@ -248,14 +248,14 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
   tmb_params <- list(
     ln_H_input = c(0, 0),
     b_j        = rep(0, ncol(X_ij)),
-    b_rw_t     = matrix(0, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)),
     ln_tau_O   = 0,
     ln_tau_E   = 0,
-    ln_tau_V   = rep(0, ncol(X_rw_ik)),
     ln_kappa   = 0,
     thetaf     = 0,
     ln_phi     = 0,
+    ln_tau_V   = rep(0, ncol(X_rw_ik)),
     ar1_phi    = 0,
+    b_rw_t     = matrix(0, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)),
     omega_s    = rep(0, tmb_data$n_s),
     epsilon_st = matrix(0, nrow = tmb_data$n_s, ncol = tmb_data$n_t)
   )
