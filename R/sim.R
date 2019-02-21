@@ -28,6 +28,11 @@
 #' r$sigma_E
 #' s <- TMB::sdreport(m$tmb_obj)
 #' head(summary(s))
+#'
+#' dat2 <- sim(
+#'   time_steps = 9, ar1_fields = TRUE, ar1_phi = 0.7,
+#'   plot = TRUE, sigma_O = 0.01, sigma_E = 0.3, phi = 0.01
+#' )
 sim <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
                 time_steps = 1L, ar1_fields = FALSE, ar1_phi = 0.5,
                 sigma_O = 0.4, sigma_E = 0.3, kappa = 1.3, phi = 0.2,
