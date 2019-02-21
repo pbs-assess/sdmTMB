@@ -142,6 +142,7 @@ Type objective_function<Type>::operator()() {
   // Projections
   DATA_SPARSE_MATRIX(proj_mesh);
   DATA_MATRIX(proj_X_ij);
+  DATA_MATRIX(proj_X_rw_ik);
   DATA_FACTOR(proj_year);
 
   // Spatial versus spatiotemporal
@@ -297,11 +298,27 @@ Type objective_function<Type>::operator()() {
 
   if (do_predict) {
     vector<Type> proj_fe = proj_X_ij * b_j;
+    if (random_walk) {
+      for (int i = 0; i < proj_X_rw_ik.rows(); i++) {
+        for (int k = 0; k < proj_X_rw_ik.cols(); k++) {
+          proj_fe(i) += proj_X_rw_ik(i,k) * b_rw_t(k);
+        }
+      }
+    }
     vector<Type> proj_re_sp = proj_mesh * omega_s;
     vector<Type> proj_re_sp_st = RepeatVector(proj_re_sp, n_t);
+    array<Type> proj_re_st_temp(proj_mesh.rows(), n_t);
     array<Type> proj_re_st(proj_mesh.rows(), n_t);
     for (int i = 0; i < n_t; i++)
-      proj_re_st.col(i) = proj_mesh * Array1DToVector(epsilon_st.col(i));
+      proj_re_st_temp.col(i) = proj_mesh * Array1DToVector(epsilon_st.col(i));
+    for (int i = 0; i < n_t; i++) {
+      if (year_i(i) == Type(0) || !ar1_fields) {
+        proj_re_st.col(i) = proj_re_st_temp.col(i);
+      } else { // AR1 and not first time slice:
+        proj_re_st.col(i) = minus_one_to_one(ar1_phi) * proj_re_st_temp.col(i - 1) +
+          proj_re_st_temp.col(i);
+      }
+    }
     vector<Type> proj_re_st_vector = Array2DToVector(proj_re_st);
     vector<Type> proj_eta = proj_fe + proj_re_sp_st + proj_re_st_vector;
     REPORT(proj_fe);           // fixed effect projections

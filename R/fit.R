@@ -236,6 +236,7 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     include_spatial = as.integer(include_spatial),
     proj_mesh  = Matrix::Matrix(0, 1, 1), # dummy
     proj_X_ij  = matrix(0, ncol = 1, nrow = 1), # dummy
+    proj_X_rw_ik = matrix(0, ncol = 1, nrow = 1), # dummy
     proj_year  = 0, # dummy
     spde_aniso = make_anisotropy_spde(spde),
     spde       = spde$spde$param.inla[c("M0","M1","M2")],
@@ -332,6 +333,7 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
       data       = data,
       spde       = spde,
       formula    = formula,
+      time_varying = time_varying,
       time       = time,
       family     = family,
       response   = y_i,

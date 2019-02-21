@@ -7,9 +7,10 @@
 #' Can predict on the original data locations or onto new data.
 #'
 #' @param object An object from [sdmTMB()].
-#' @param newdata An optional new data frame. This should be a single set of
-#'   spatial locations. These locations will be expanded to cover all the years
-#'   in the original data set. Eventually `newdata` will be more flexible.
+#' @param newdata An optional new data frame. This should be a data frame with
+#'   the same predictor columns as in the fitted data and a time column (if this
+#'   is a spatiotemporal model) with the same name as in the fitted data. There
+#'   should be predictor data for each year in the original data set.
 #' @param se_fit Should standard errors on predictions at the new locations given by
 #'   `newdata` be calculated? Warning: the current implementation can be slow for
 #'   large data sets or high-resolution projections.
@@ -111,20 +112,22 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
   tmb_data$do_predict <- 1L
 
   if (!is.null(newdata)) {
+    newdata_one_slice <- newdata[newdata[[object$time]] ==
+        min(newdata[[object$time]]), xy_cols, drop = FALSE]
     proj_mesh <- INLA::inla.spde.make.A(object$spde$mesh,
-      loc = as.matrix(newdata[, xy_cols]))
+      loc = as.matrix(newdata_one_slice))
 
-    # expand for time units:
-    original_time <- sort(unique(object$data[[object$time]]))
-    nd <- do.call("rbind",
-      replicate(length(original_time), newdata, simplify = FALSE))
-    nd[[object$time]] <- rep(original_time, each = nrow(newdata))
-
+    nd <- newdata
     nd[[get_response(object$formula)]] <- 0 # fake for model.matrix
     proj_X_ij <- model.matrix(object$formula, data = nd)
+    if (!is.null(object$time_varying))
+      proj_X_rw_ik <- model.matrix(object$time_varying, data = nd)
+    else
+      proj_X_rw_ik <- matrix(0, ncol = 1, nrow = 1) # dummy
 
     tmb_data$proj_mesh <- proj_mesh
     tmb_data$proj_X_ij <- proj_X_ij
+    tmb_data$proj_X_rw_ik <- proj_X_rw_ik
     tmb_data$proj_year <- as.integer(as.factor(as.character(nd[[object$time]]))) - 1L
     tmb_data$calc_se <- as.integer(se_fit)
     tmb_data$calc_time_totals <- 1L # for now
