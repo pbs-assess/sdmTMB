@@ -2,8 +2,9 @@
 #'
 #' @param x A vector of x coordinates.
 #' @param y A vector of y coordinates.
-#' @param ar1_fields should random field draws be dependent on the previous year (TRUE) or not (FALSE).
-#' @param ar1_phi correlation between years, must be between -1 and 1, default set to 0.5.
+#' @param ar1_fields Should random field draws be dependent on the previous year
+#'   (`TRUE`) or not (`FALSE`).
+#' @param ar1_phi Correlation between years; should be between -1 and 1.
 #' @param sigma_O SD of spatial process (Omega).
 #' @param kappa Parameter that controls the decay of spatial correlation.
 #' @param phi Observation error scale parameter.
@@ -37,33 +38,25 @@ sim <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
 
   set.seed(seed)
 
-  # spatial random effects: = omega
-  rf_omega <- RandomFields::RMmatern(nu = 1, var = sigma_O^2, scale = 1 / kappa) # defines correlation matrix
-  omega_s <- suppressMessages(
-    RandomFields::RFsimulate(model = rf_omega, x = x, y = y)$variable1
-  )
+  # spatial random effects: omega
+  rf_omega <- RandomFields::RMmatern(nu = 1, var = sigma_O^2, scale = 1 / kappa)
+  omega_s <- rf_sim(rf_omega, x, y)
 
-  # spatiotemporal random effects: = epsilon
+  # spatiotemporal random effects: epsilon
   epsilon_st <- list()
   if (time_steps > 1L) {
     rf_epsilon <- RandomFields::RMmatern(nu = 1, var = sigma_E^2, scale = 1 / kappa)
     for (i in seq_len(time_steps)) {
       if (i == 1 || !ar1_fields) {
-        epsilon_st[[i]] <- suppressMessages(
-          RandomFields::RFsimulate(model = rf_epsilon, x = x, y = y)$variable1
-        )
+        epsilon_st[[i]] <- rf_sim(rf_epsilon, x, y)
       } else { # AR1 and not first time slice:
-        epsilon_st[[i]] <- ar1_phi * epsilon_st[[i - 1]] + suppressMessages(
-          RandomFields::RFsimulate(model = rf_epsilon, x = x, y = y)$variable1
-        )
+        epsilon_st[[i]] <- ar1_phi * epsilon_st[[i - 1]] + rf_sim(rf_epsilon, x, y)
       }
     }
   } else {
     epsilon_st <- list(rep(0, length(x)))
   }
-
   epsilon_st <- do.call("c", epsilon_st)
-
 
   d <- data.frame(x, y,
     time = rep(seq_len(time_steps), each = length(x)),
@@ -80,4 +73,11 @@ sim <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
     print(g)
   }
   d
+}
+
+rf_sim <- function(model, x, y) {
+  set.seed(sample.int(1e5L, 1L))
+  suppressMessages(
+    RandomFields::RFsimulate(model = model, x = x, y = y)$variable1
+  )
 }
