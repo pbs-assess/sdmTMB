@@ -29,10 +29,21 @@
 #' s <- TMB::sdreport(m$tmb_obj)
 #' head(summary(s))
 #'
-#' dat2 <- sim(
-#'   time_steps = 9, ar1_fields = TRUE, ar1_phi = 0.7,
+#' set.seed(1838)
+#' dat <- sim(
+#'   time_steps = 9, ar1_fields = TRUE, ar1_phi = 0.5,
 #'   plot = TRUE, sigma_O = 0.01, sigma_E = 0.3, phi = 0.01
 #' )
+#' spde <- make_spde(x = dat$x, y = dat$y, n_knots = 120)
+#' m <- sdmTMB(silent = FALSE, ar1_fields = TRUE, include_spatial = FALSE,
+#'   data = dat, formula = z ~ 1, time = "time",
+#'   family = gaussian(link = "identity"), spde = spde
+#' )
+#' r <- m$tmb_obj$report()
+#' r$sigma_E
+#' exp(r$ln_kappa)
+#' 2 * plogis(m$model$par[['ar1_phi']]) - 1
+
 sim <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
                 time_steps = 1L, ar1_fields = FALSE, ar1_phi = 0.5,
                 sigma_O = 0.4, sigma_E = 0.3, kappa = 1.3, phi = 0.2,
