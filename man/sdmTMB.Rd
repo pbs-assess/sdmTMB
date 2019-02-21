@@ -5,9 +5,9 @@
 \title{Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.}
 \usage{
 sdmTMB(data, formula, time, spde, family = gaussian(link = "identity"),
-  silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
-  control = sdmTMBcontrol(), enable_priors = FALSE,
-  ar1_fields = FALSE, include_spatial = TRUE)
+  time_varying = NULL, silent = TRUE, multiphase = TRUE,
+  anisotropy = FALSE, control = sdmTMBcontrol(),
+  enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE)
 }
 \arguments{
 \item{data}{A data frame.}
