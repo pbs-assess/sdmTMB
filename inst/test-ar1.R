@@ -24,8 +24,9 @@ ggplot(cog, aes(year, est, ymin = lwr, ymax = upr)) +
 
 # get_index(p, value_name = "log_total", bias_correct = FALSE)
 
+library(dplyr)
 data.frame(X = p$data$X, est = exp(p$data$est), year = p$data$year) %>%
-  group_by(year) %>% summarize(cog = mean(X * est))
+  group_by(year) %>% summarize(cog = sum(X * est) / sum(est))
 
 predictions <- p$data
 # A short function for plotting our predictions:
