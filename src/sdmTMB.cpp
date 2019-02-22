@@ -350,13 +350,9 @@ Type objective_function<Type>::operator()() {
         cog_x(proj_year(i)) += proj_lon(i) * InverseLink(proj_eta(i), link);
         cog_y(proj_year(i)) += proj_lat(i) * InverseLink(proj_eta(i), link);
       }
-      vector<Type> weights(n_t);
-      for (int i = 0; i < proj_eta.size(); i++)  {
-        weights(proj_year(i)) += InverseLink(proj_eta(i), link);
-      }
       for (int i = 0; i < n_t; i++)  {
-        cog_x(i) = cog_x(i) / weights(i);
-        cog_y(i) = cog_y(i) / weights(i);
+        cog_x(i) = cog_x(i) / total(i);
+        cog_y(i) = cog_y(i) / total(i);
       }
       REPORT(cog_x);
       ADREPORT(cog_x);
