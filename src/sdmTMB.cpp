@@ -129,6 +129,9 @@ Type objective_function<Type>::operator()() {
   DATA_INTEGER(include_spatial);
   DATA_INTEGER(random_walk);
 
+  DATA_VECTOR(proj_lon);
+  DATA_VECTOR(proj_lat);
+
   // Distribution
   DATA_INTEGER(family);
   DATA_INTEGER(link);
@@ -330,6 +333,8 @@ Type objective_function<Type>::operator()() {
 
     if (calc_time_totals) {
       // ------------------ Derived quantities -------------------------------------
+
+      // Total biomass:
       vector<Type> total(n_t);
       for (int i = 0; i < proj_eta.size(); i++)  {
         total(proj_year(i)) += InverseLink(proj_eta(i), link);
@@ -337,6 +342,26 @@ Type objective_function<Type>::operator()() {
       vector<Type> log_total = log(total);
       REPORT(log_total);
       ADREPORT(log_total);
+
+      // CoG:
+      vector<Type> cog_x(n_t);
+      vector<Type> cog_y(n_t);
+      for (int i = 0; i < proj_eta.size(); i++)  {
+        cog_x(proj_year(i)) += proj_lon(i) * InverseLink(proj_eta(i), link);
+        cog_y(proj_year(i)) += proj_lat(i) * InverseLink(proj_eta(i), link);
+      }
+      vector<Type> weights(n_t);
+      for (int i = 0; i < proj_eta.size(); i++)  {
+        weights(proj_year(i)) += InverseLink(proj_eta(i), link);
+      }
+      for (int i = 0; i < n_t; i++)  {
+        cog_x(i) = cog_x(i) / weights(i);
+        cog_y(i) = cog_y(i) / weights(i);
+      }
+      REPORT(cog_x);
+      ADREPORT(cog_x);
+      REPORT(cog_y);
+      ADREPORT(cog_y);
     }
   }
 

@@ -129,8 +129,10 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     tmb_data$proj_X_ij <- proj_X_ij
     tmb_data$proj_X_rw_ik <- proj_X_rw_ik
     tmb_data$proj_year <- as.integer(as.factor(as.character(nd[[object$time]]))) - 1L
+    tmb_data$proj_lon <- newdata[[xy_cols[[1]]]]
+    tmb_data$proj_lat <- newdata[[xy_cols[[2]]]]
     tmb_data$calc_se <- as.integer(se_fit)
-    tmb_data$calc_time_totals <- 1L # for now
+    tmb_data$calc_time_totals <- 1L # for now (always on)
 
     new_tmb_obj <- TMB::MakeADFun(
       data = tmb_data,
