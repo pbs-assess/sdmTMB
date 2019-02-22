@@ -5,19 +5,6 @@ m <- sdmTMB(
  silent = FALSE
 )
 
-# Predictions at original data locations:
-predictions <- predict(m)$data
-cols <- c("year", "X", "Y", "est", "est_fe",
-  "est_re_s", "est_re_st", "s_i")
-head(predictions[,cols])
-
-predictions$resids <- residuals(m) # randomized quantile residuals
-library(ggplot2)
-ggplot(predictions, aes(X, Y, col = resids)) + scale_colour_gradient2() +
-  geom_point() + facet_wrap(~year)
-hist(predictions$resids)
-qqnorm(predictions$resids);abline(a = 0, b = 1)
-
 # Predictions onto new data:
     # expand for time units:
 newdata <- qcs_grid
@@ -25,8 +12,22 @@ original_time <- sort(unique(m$data[[m$time]]))
 nd <- do.call("rbind",
   replicate(length(original_time), newdata, simplify = FALSE))
 nd[[m$time]] <- rep(original_time, each = nrow(newdata))
-predictions <- predict(m, newdata = nd)$data
 
+p <- predict(m, newdata = nd)
+cog <- get_cog(p)
+cog
+
+library(ggplot2)
+ggplot(cog, aes(year, est, ymin = lwr, ymax = upr)) +
+  geom_ribbon(alpha = 0.5) + geom_line() + facet_wrap(~coord, scales = "free_y")
+
+
+# get_index(p, value_name = "log_total", bias_correct = FALSE)
+
+data.frame(X = p$data$X, est = exp(p$data$est), year = p$data$year) %>%
+  group_by(year) %>% summarize(cog = mean(X * est))
+
+predictions <- p$data
 # A short function for plotting our predictions:
 plot_map <- function(dat, column = "est") {
   ggplot(dat, aes_string("X", "Y", fill = column)) +

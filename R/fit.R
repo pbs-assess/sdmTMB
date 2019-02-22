@@ -227,7 +227,9 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     year_prev_i= as.numeric(as.factor(as.character(data[[time]]))) - 2L,
     ar1_fields = as.integer(ar1_fields),
     X_ij       = X_ij,
-    X_rw_ik     = X_rw_ik,
+    X_rw_ik    = X_rw_ik,
+    proj_lon    = 0,
+    proj_lat    = 0,
     do_predict = 0L,
     calc_se    = 0L,
     calc_time_totals = 0L,
@@ -319,6 +321,12 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
       ln_tau_O = as.factor(NA),
       omega_s  = factor(rep(NA, length(tmb_params$omega_s)))))
   }
+
+  if (is.null(time_varying))
+    tmb_map <- c(tmb_map,
+      list(b_rw_t = as.factor(matrix(NA, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)))),
+      list(ln_tau_V = as.factor(NA))
+    )
 
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,

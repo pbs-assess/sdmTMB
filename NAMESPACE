@@ -2,6 +2,7 @@
 
 S3method(predict,sdmTMB)
 S3method(residuals,sdmTMB)
+export(get_cog)
 export(get_index)
 export(make_spde)
 export(nbinom2)
