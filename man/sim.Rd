@@ -14,12 +14,16 @@ sim(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
 
 \item{y}{A vector of y coordinates.}
 
+\item{time_steps}{The number of time steps.}
+
 \item{ar1_fields}{Should random field draws be dependent on the previous year
 (\code{TRUE}) or not (\code{FALSE}).}
 
 \item{ar1_phi}{Correlation between years; should be between -1 and 1.}
 
 \item{sigma_O}{SD of spatial process (Omega).}
+
+\item{sigma_E}{SD of spatiotemporal process (Epsilon).}
 
 \item{kappa}{Parameter that controls the decay of spatial correlation.}
 

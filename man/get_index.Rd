@@ -12,6 +12,8 @@ get_cog(obj, bias_correct = FALSE)
 \arguments{
 \item{obj}{Output from \code{\link[=predict.sdmTMB]{predict.sdmTMB()}}.}
 
+\item{value_name}{Name of value to extract.}
+
 \item{bias_correct}{Should bias correction be implemented in
 \code{\link[TMB:sdreport]{TMB::sdreport()}}?}
 }

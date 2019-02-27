@@ -176,6 +176,8 @@ make_anisotropy_spde <- function(spde) {
 #' @param spde An object from [make_spde()].
 #' @param family The family and link. Supports [gaussian()], [Gamma()],
 #'   [binomial()], [poisson()], [nbinom2()], and [tweedie()].
+#' @param time_varying An optional formula describing covariates that should be
+#'   modelled as a random walk through time.
 #' @param silent Silent or optimization details?
 #' @param multiphase Estimate the fixed and random effects in phases for speed?
 #' @param anisotropy Logical: allow for anisotropy?

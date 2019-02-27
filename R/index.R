@@ -1,6 +1,7 @@
 #' Extract a relative biomass or abundance index
 #'
 #' @param obj Output from [predict.sdmTMB()].
+#' @param value_name Name of value to extract.
 #' @param bias_correct Should bias correction be implemented in
 #'   [TMB::sdreport()]?
 #' @examples
