@@ -22,6 +22,9 @@ include \code{0 + as.factor(your_time_column)}.}
 \item{family}{The family and link. Supports \code{\link[=gaussian]{gaussian()}}, \code{\link[=Gamma]{Gamma()}},
 \code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, \code{\link[=nbinom2]{nbinom2()}}, and \code{\link[=tweedie]{tweedie()}}.}
 
+\item{time_varying}{An optional formula describing covariates that should be
+modelled as a random walk through time.}
+
 \item{silent}{Silent or optimization details?}
 
 \item{multiphase}{Estimate the fixed and random effects in phases for speed?}

@@ -2,10 +2,12 @@
 #'
 #' @param x A vector of x coordinates.
 #' @param y A vector of y coordinates.
+#' @param time_steps The number of time steps.
 #' @param ar1_fields Should random field draws be dependent on the previous year
 #'   (`TRUE`) or not (`FALSE`).
 #' @param ar1_phi Correlation between years; should be between -1 and 1.
 #' @param sigma_O SD of spatial process (Omega).
+#' @param sigma_E SD of spatiotemporal process (Epsilon).
 #' @param kappa Parameter that controls the decay of spatial correlation.
 #' @param phi Observation error scale parameter.
 #' @param seed A random seed.
@@ -93,55 +95,54 @@ sim <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
    # sigma_O=sigma_O, sigma_E=sigma_E, kappa=kappa, phi=phi)
 }
 
-
-sim_args1 <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
-  time_steps = 1L, ar1_fields = FALSE, ar1_phi = 0.5,
-  sigma_O = 0.4, sigma_E = 0.3, kappa = 1.3, phi = 0.2,
-  seed = sample.int(1e6, 1), plot = FALSE) {
-
-  d = sim(x, y, time_steps, ar1_fields, ar1_phi, sigma_O, sigma_E, kappa, phi, seed, plot )
-
-  j = as.list(args("sim"))
-  j = j[!unlist(lapply(j,is.null))]
-  list(d,j)
-}
-
-
-# sim_args_list <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
-#   time_steps = 1L, ar1_fields = FALSE, ar1_phi = 0.5,
-#   sigma_O = 0.4, sigma_E = 0.3, kappa = 1.3, phi = 0.2,
-#   seed = sample.int(1e6, 1), plot = FALSE) {
-#
-#   d = sim(x  , y ,
-#     time_steps , ar1_fields , ar1_phi ,
-#     sigma_O , sigma_E , kappa , phi,
-#     seed , plot )
-#
-#   list(d, inputs = list(ar1_phi = ar1_phi,
-#                         sigma_O =sigma_O,
-#                         sigma_E = sigma_E,
-#                         kappa = kappa,
-#                         phi = phi,
-#                         seed = seed))
-# }
-
-sim_args_vec <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
-  time_steps = 1L, ar1_fields = FALSE, ar1_phi = 0.5,
-  sigma_O = 0.4, sigma_E = 0.3, kappa = 1.3, phi = 0.2,
-  seed = sample.int(1e6, 1), plot = FALSE) {
-
-  d = sim(x, y,
-    time_steps, ar1_fields, ar1_phi,
-    sigma_O, sigma_E, kappa , phi,
-    seed, plot )
-
-  list(d, inputs = c(ar1_phi = ar1_phi,
-    sigma_O =sigma_O,
-    sigma_E = sigma_E,
-    kappa = kappa,
-    phi = phi,
-    seed = seed))
-}
+## sim_args1 <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
+##   time_steps = 1L, ar1_fields = FALSE, ar1_phi = 0.5,
+##   sigma_O = 0.4, sigma_E = 0.3, kappa = 1.3, phi = 0.2,
+##   seed = sample.int(1e6, 1), plot = FALSE) {
+##
+##   d = sim(x, y, time_steps, ar1_fields, ar1_phi, sigma_O, sigma_E, kappa, phi, seed, plot )
+##
+##   j = as.list(args("sim"))
+##   j = j[!unlist(lapply(j,is.null))]
+##   list(d,j)
+## }
+##
+##
+## # sim_args_list <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
+## #   time_steps = 1L, ar1_fields = FALSE, ar1_phi = 0.5,
+## #   sigma_O = 0.4, sigma_E = 0.3, kappa = 1.3, phi = 0.2,
+## #   seed = sample.int(1e6, 1), plot = FALSE) {
+## #
+## #   d = sim(x  , y ,
+## #     time_steps , ar1_fields , ar1_phi ,
+## #     sigma_O , sigma_E , kappa , phi,
+## #     seed , plot )
+## #
+## #   list(d, inputs = list(ar1_phi = ar1_phi,
+## #                         sigma_O =sigma_O,
+## #                         sigma_E = sigma_E,
+## #                         kappa = kappa,
+## #                         phi = phi,
+## #                         seed = seed))
+## # }
+##
+## sim_args_vec <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
+##   time_steps = 1L, ar1_fields = FALSE, ar1_phi = 0.5,
+##   sigma_O = 0.4, sigma_E = 0.3, kappa = 1.3, phi = 0.2,
+##   seed = sample.int(1e6, 1), plot = FALSE) {
+##
+##   d = sim(x, y,
+##     time_steps, ar1_fields, ar1_phi,
+##     sigma_O, sigma_E, kappa , phi,
+##     seed, plot )
+##
+##   list(d, inputs = c(ar1_phi = ar1_phi,
+##     sigma_O =sigma_O,
+##     sigma_E = sigma_E,
+##     kappa = kappa,
+##     phi = phi,
+##     seed = seed))
+## }
 
 
 rf_sim <- function(model, x, y) {
