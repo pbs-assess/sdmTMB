@@ -26,6 +26,15 @@ grid_locs <- gfplot:::make_prediction_grid(filter(dat, year == 2003), survey = "
 grid_locs <- rename(grid_locs, depth = akima_depth)
 grid_locs$year <- NULL
 qcs_grid <- grid_locs
+
+
+# Expand the prediction grid to create a slice for each time:
+original_time <- sort(unique(dat$year))
+nd <- do.call("rbind",
+  replicate(length(original_time), qcs_grid, simplify = FALSE))
+nd[["year"]] <- rep(original_time, each = nrow(qcs_grid))
+
+qcs_grid <- nd
 usethis::use_data(qcs_grid, internal = FALSE, overwrite = TRUE)
 
 # pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 140)
@@ -36,48 +45,48 @@ usethis::use_data(qcs_grid, internal = FALSE, overwrite = TRUE)
 #   anisotropy = TRUE
 # )
 # plot_anisotropy(m)
-# 
+#
 # pcod$resids <- residuals(m) # randomized quantile residuals
 # hist(pcod$resids)
 # qqnorm(pcod$resids);abline(a = 0, b = 1)
-# 
+#
 # library(ggplot2)
 # ggplot(pcod, aes(X, Y, col = resids)) + scale_colour_gradient2() +
 #   geom_point() + facet_wrap(~year)
-# 
-# 
+#
+#
 # predictions <- predict(m, newdata = grid_locs)
-# 
+#
 # plot_map <- function(dat, column) {
 #   ggplot(dat, aes_string("X", "Y", fill = column)) +
 #     geom_raster() +
 #     facet_wrap(~year) +
 #     coord_fixed()
 # }
-# 
+#
 # plot_map(predictions$data, "exp(est)") +
 #   scale_fill_viridis_c(trans = "sqrt") +
 #   ggtitle("Prediction (fixed effects + all random effects)")
-# 
+#
 # plot_map(predictions$data, "exp(est_fe)") +
 #   ggtitle("Prediction (fixed effects only)") +
 #   scale_fill_viridis_c(trans = "sqrt")
-# 
+#
 # plot_map(predictions$data, "est_re_s") +
 #   ggtitle("Spatial random effects only") +
 #   scale_fill_gradient2()
-# 
+#
 # plot_map(predictions$data, "est_re_st") +
 #   ggtitle("Spatiotemporal random effects only") +
 #   scale_fill_gradient2()
-# 
+#
 # ind <- get_index(predictions, bias_correct = FALSE) # not bias correcting for speed
-# 
+#
 # library(ggplot2)
 # scale <- 2*2/(1000*1000)
 # ggplot(ind, aes(year, est*scale)) + geom_line() +
 #   geom_ribbon(aes(ymin = lwr*scale, ymax = upr*scale), alpha = 0.4)
-# 
+#
 # knitr::kable(ind, format = "pandoc")
-# 
-# 
+#
+#
