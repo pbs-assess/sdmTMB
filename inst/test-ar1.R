@@ -10,14 +10,14 @@ library(dplyr)
 pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 100)
 
 m <- sdmTMB(
- pcod, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
- time = "year", spde = pcod_spde, family = tweedie(link = "log"),
- silent = FALSE
+  pcod, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+  silent = FALSE
 )
 
 
 # Predictions onto new data:
-    # expand for time units:
+# expand for time units:
 
 newdata <- qcs_grid # use bathymetry grid of Queen Charlotte Sound
 # ggplot(qcs_grid, aes(X, Y, colour=log(depth))) + geom_point() + scale_color_viridis_c(direction= -1)
@@ -77,7 +77,7 @@ library(sdmTMB)
 library(ggplot2)
 library(dplyr)
 
-set.seed(183228)
+#set.seed(183228)
 
 
 # simulate 'true' data
@@ -90,13 +90,13 @@ grid <- expand.grid(X = seq(1:100), Y= seq(1:100))
 # grid <- qcs_grid
 
 simdat <- sim_args_vec( x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
-              ar1_fields = TRUE,
-              ar1_phi = 0.5,
-              sigma_O = 0.3,
-              sigma_E = 0.3,
-              kappa = 0.05,
-              phi = 0.05
-              )
+  ar1_fields = TRUE,
+  ar1_phi = 0.5,
+  sigma_O = 0.3,
+  sigma_E = 0.3,
+  kappa = 0.05,
+  phi = 0.05
+)
 
 
 # sub-sample from 'true' data
@@ -220,40 +220,43 @@ grid <- expand.grid(X = seq(1:100), Y= seq(1:100))
 # grid <- qcs_grid
 
 model_sim <- function(x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
-                    ar1_fields = TRUE,
-                    ar1_phi = 0.5,
-                    sigma_O = 0.3,
-                    sigma_E = 0.3,
-                    kappa = 0.05,
-                    phi = 0.05,
-                    N = 500, n_knots = 200,
-                    formula = z ~ 1, family = gaussian(link = "identity")) {
+  ar1_fields = TRUE,
+  ar1_phi = 0.5,
+  sigma_O = 0.3,
+  sigma_E = 0.3,
+  kappa = 0.05,
+  phi = 0.05,
+  N = 500, n_knots = 200,
+  formula = z ~ 1, family = gaussian(link = "identity")) {
 
-    simdat <- sim(x = x, y = y, time_steps = time_steps, plot = plot, ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi)
-    dat <- simdat %>% group_by(time) %>% sample_n(N) %>% ungroup() # sub-sample from 'true' data
-    spde <- make_spde(x, y, n_knots)
-    m <- sdmTMB(silent = FALSE,
-                ar1_fields = ar1_fields,
-                include_spatial = TRUE,
-                data = dat, formula = formula, time = "time",
-                family = family, spde = spde
-                )
-    r <- m$tmb_obj$report()
-    estimates <- c( ar1_phi = (2 * plogis(m$model$par[['ar1_phi']]) - 1), # back transformed temporal correlation coefficent
-                    sigma_O = r$sigma_O,
-                    sigma_E = r$sigma_E, # spatio-temporal random field SD
-                    kappa = exp(r$ln_kappa), # Matern for both space and space-time where distance at which ~%10 correlation = sqrt(Type(8.0)) / exp(ln_kappa)
-                    phi = exp(r$ln_phi) # SD of observation error (aka sigma)
-                    )
-    inputs <- c(ar1_phi = ar1_phi,
-                sigma_O = sigma_O,
-                sigma_E = sigma_E,
-                kappa = kappa,
-                phi = phi
-                )
-    diff <- estimates - inputs
-    list(inputs=inputs, estimates=estimates, diff=diff)
+  simdat <- sim(x = x, y = y, time_steps = time_steps, plot = plot,
+    ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi)
+  dat <- simdat %>% group_by(time) %>% sample_n(N) %>% ungroup() # sub-sample from 'true' data
+  spde <- make_spde(x, y, n_knots)
+  m <- sdmTMB(silent = FALSE,
+    ar1_fields = ar1_fields,
+    include_spatial = TRUE,
+    data = dat, formula = formula, time = "time",
+    family = family, spde = spde
+  )
+  r <- m$tmb_obj$report()
+  estimates <- c( ar1_phi = (2 * plogis(m$model$par[['ar1_phi']]) - 1), # back transformed temporal correlation coefficent
+    sigma_O = r$sigma_O,
+    sigma_E = r$sigma_E, # spatio-temporal random field SD
+    kappa = exp(r$ln_kappa), # Matern for both space and space-time where distance at which ~%10 correlation = sqrt(Type(8.0)) / exp(ln_kappa)
+    phi = exp(r$ln_phi) # SD of observation error (aka sigma)
+  )
+  inputs <- c(ar1_phi = ar1_phi,
+    sigma_O = sigma_O,
+    sigma_E = sigma_E,
+    kappa = kappa,
+    phi = phi
+  )
+  diff <- estimates - inputs
+  list(inputs=inputs, estimates=estimates, diff=diff)
 }
+
+
 
 run_simulations <- function(iterations = 2, x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
   ar1_fields = TRUE,
@@ -264,27 +267,28 @@ run_simulations <- function(iterations = 2, x=grid$X, y=grid$Y, time_steps = 9, 
   phi = 0.05,
   N = 500, n_knots = 200,
   formula = z ~ 1, family = gaussian(link = "identity")){
-    all_iter <- list()
-    for (i in 1:iterations){
-          all_iter[[i]] <- model_sim(x = x, y = y, time_steps = time_steps, plot = plot, ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi,
-                           N = N, n_knots = n_knots, formula = formula, family = family)
-          }
-    # all_iter <- replicate(iterations, sim_run(x = x, y = y, time_steps = time_steps, plot = plot, ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi,
-    #                N = N, n_knots = n_knots, formula = formula, family = family))
-    #all_iter
-    #browser()
-    inputs <- sapply(all_iter, "[[", "inputs" ) # second argument is a function in "", in this case list extraction using [[
-    estimates <- sapply(all_iter, "[[", "estimates" )
-    diff <- sapply(all_iter, "[[", "diff" )
-    list(inputs=inputs, estimates=estimates, diff=diff)
-    }
+
+  all_iter <- replicate(iterations, sim_run(x = x, y = y, time_steps = time_steps, plot = plot,
+    ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi,
+    N = N, n_knots = n_knots, formula = formula, family = family))
+  inputs <- as_tibble(do.call(rbind, all_iter[1,]))
+  estimates <- as_tibble(do.call(rbind, all_iter[2,]))
+  differences <- as_tibble(do.call(rbind, all_iter[3,]))
+  list(inputs, estimates, differences)
+  out <- list(inputs=inputs, estimates=estimates, diff=diff)
+  out
+}
 
 sim_results <- run_simulations()
+hist(sim_results$diff$phi)
 
 
 
 
-# sim_results <- replicate(3, sim_runs(x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
+# SAME CODE, BUT USING A LOOP INSTEAD OF "replicate" function
+###########################
+
+# run_simulation_loop <- function(iterations = 2, x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
 #   ar1_fields = TRUE,
 #   ar1_phi = 0.5,
 #   sigma_O = 0.3,
@@ -292,56 +296,61 @@ sim_results <- run_simulations()
 #   kappa = 0.05,
 #   phi = 0.05,
 #   N = 500, n_knots = 200,
-#   formula = z ~ 1, family = gaussian(link = "identity")))
-# inputs <- as_tibble(do.call(rbind, all_iter[[1,]]))
-# estimates <- as_tibble(do.call(rbind, all_iter[2,]))
-# differences <- as_tibble(do.call(rbind, all_iter[3,]))
-# list(inputs, estimates, differences)
+#   formula = z ~ 1, family = gaussian(link = "identity")){
+#   all_iter <- list()
+#   for (i in 1:iterations){
+#     all_iter[[i]] <- model_sim(x = x, y = y, time_steps = time_steps, plot = plot,
+#       ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi,
+#       N = N, n_knots = n_knots, formula = formula, family = family)
+#   }
+#   inputs <- sapply(all_iter, "[[", "inputs") %>% # second argument in sapply is a function in "", in this case list extraction using [[
+#     t(.) %>% # t() transposes df
+#     as_tibble(.)
+#   estimates <- sapply(all_iter, "[[", "estimates") %>% t(.) %>% as_tibble(.)
+#   diff <- sapply(all_iter, "[[", "diff") %>% t(.) %>% as_tibble(.)
+#   out <- list(inputs=inputs, estimates=estimates, diff=diff)
+#   out
+# }
+# sim_results <- run_simulation_loop()
 
-head(inputs)
-estimates
-differences
 
-hist(estimates$phi)
-hist(differences$phi)
 
-#t(sim_results) # transpose data
+
 
 ############ work in progress ##################
+# next step:
+# predict for all points in simulated data
+######################
 
+# replicate for each time period
+original_time <- sort(unique(m$data[[m$time]]))
+nd <- do.call("rbind",
+  replicate(length(original_time), grid, simplify = FALSE))
+nd[[m$time]] <- rep(original_time, each = nrow(grid))
+# attributes(nd)
 
-   # predict for all points in simulated data
-   ######################
-
-   # replicate for each time period
-   original_time <- sort(unique(m$data[[m$time]]))
-   nd <- do.call("rbind",
-     replicate(length(original_time), grid, simplify = FALSE))
-   nd[[m$time]] <- rep(original_time, each = nrow(grid))
-   # attributes(nd)
-
-   # run TMB with prediction turned on but replace sample 'dat' with new grid 'nd'
-   predictions <- predict(m, newdata = nd, xy_cols = c("X", "Y"))$data
-   head(predictions)
-
-
-
-   # combine true and predicted values for each point in space and time
-
-   spatial_bias_dat <- full_join(simdat, predictions, by=c("x"="X", "y"="Y", "time"="time"), suffix = c("", "_est")) %>% mutate (diff = est - real_z)
-   head(spatial_bias_dat)
-
-   hist(spatial_bias_dat$diff, breaks = 40)
+# run TMB with prediction turned on but replace sample 'dat' with new grid 'nd'
+predictions <- predict(m, newdata = nd, xy_cols = c("X", "Y"))$data
+head(predictions)
 
 
 
+# combine true and predicted values for each point in space and time
+
+spatial_bias_dat <- full_join(simdat, predictions, by=c("x"="X", "y"="Y", "time"="time"), suffix = c("", "_est")) %>% mutate (diff = est - real_z)
+head(spatial_bias_dat)
+
+hist(spatial_bias_dat$diff, breaks = 40)
 
 
-     )
 
-   ######################
-   ######################
-   ######################
-   ######################
+
+
+)
+
+######################
+######################
+######################
+######################
 
 
