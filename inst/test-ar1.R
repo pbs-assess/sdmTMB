@@ -268,7 +268,7 @@ run_simulations <- function(iterations = 2, x=grid$X, y=grid$Y, time_steps = 9, 
   N = 500, n_knots = 200,
   formula = z ~ 1, family = gaussian(link = "identity")){
 
-  all_iter <- replicate(iterations, sim_run(x = x, y = y, time_steps = time_steps, plot = plot,
+  all_iter <- replicate(iterations, model_sim(x = x, y = y, time_steps = time_steps, plot = plot,
     ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi,
     N = N, n_knots = n_knots, formula = formula, family = family))
   inputs <- as_tibble(do.call(rbind, all_iter[1,]))
