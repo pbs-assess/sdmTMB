@@ -219,7 +219,7 @@ grid <- expand.grid(X = seq(1:100), Y= seq(1:100))
 ## or use the boundaries of the Queen Charlotte Sound
 # grid <- qcs_grid
 
-sim_runs <- function(x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
+model_sim <- function(x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
                     ar1_fields = TRUE,
                     ar1_phi = 0.5,
                     sigma_O = 0.3,
@@ -229,7 +229,7 @@ sim_runs <- function(x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
                     N = 500, n_knots = 200,
                     formula = z ~ 1, family = gaussian(link = "identity")) {
 
-    simdat <- sim(x = x, y = y, time_steps = time_steps, plot = plot, ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi, seed = sample.int(1e6, 1))
+    simdat <- sim(x = x, y = y, time_steps = time_steps, plot = plot, ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi)
     dat <- simdat %>% group_by(time) %>% sample_n(N) %>% ungroup() # sub-sample from 'true' data
     spde <- make_spde(x, y, n_knots)
     m <- sdmTMB(silent = FALSE,
@@ -252,10 +252,10 @@ sim_runs <- function(x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
                 phi = phi
                 )
     diff <- estimates - inputs
-    diff
+    list(inputs=inputs, estimates=estimates, diff=diff)
 }
 
-sim_results <- replicate(2, sim_runs(x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
+run_simulations <- function(iterations = 2, x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
   ar1_fields = TRUE,
   ar1_phi = 0.5,
   sigma_O = 0.3,
@@ -263,13 +263,49 @@ sim_results <- replicate(2, sim_runs(x=grid$X, y=grid$Y, time_steps = 9, plot = 
   kappa = 0.05,
   phi = 0.05,
   N = 500, n_knots = 200,
-  formula = z ~ 1, family = gaussian(link = "identity")))
+  formula = z ~ 1, family = gaussian(link = "identity")){
+    all_iter <- list()
+    for (i in 1:iterations){
+          all_iter[[i]] <- model_sim(x = x, y = y, time_steps = time_steps, plot = plot, ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi,
+                           N = N, n_knots = n_knots, formula = formula, family = family)
+          }
+    # all_iter <- replicate(iterations, sim_run(x = x, y = y, time_steps = time_steps, plot = plot, ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi,
+    #                N = N, n_knots = n_knots, formula = formula, family = family))
+    #all_iter
+    #browser()
+    inputs <- sapply(all_iter, "[[", "inputs" ) # second argument is a function in "", in this case list extraction using [[
+    estimates <- sapply(all_iter, "[[", "estimates" )
+    diff <- sapply(all_iter, "[[", "diff" )
+    list(inputs=inputs, estimates=estimates, diff=diff)
+    }
+
+sim_results <- run_simulations()
 
 
-t(sim_results) # transpose data
 
-# PROBLEM: exact same data and draw seem to be being used each time, why?
 
+# sim_results <- replicate(3, sim_runs(x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
+#   ar1_fields = TRUE,
+#   ar1_phi = 0.5,
+#   sigma_O = 0.3,
+#   sigma_E = 0.3,
+#   kappa = 0.05,
+#   phi = 0.05,
+#   N = 500, n_knots = 200,
+#   formula = z ~ 1, family = gaussian(link = "identity")))
+# inputs <- as_tibble(do.call(rbind, all_iter[[1,]]))
+# estimates <- as_tibble(do.call(rbind, all_iter[2,]))
+# differences <- as_tibble(do.call(rbind, all_iter[3,]))
+# list(inputs, estimates, differences)
+
+head(inputs)
+estimates
+differences
+
+hist(estimates$phi)
+hist(differences$phi)
+
+#t(sim_results) # transpose data
 
 ############ work in progress ##################
 
