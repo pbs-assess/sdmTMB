@@ -79,14 +79,11 @@ estimates <- c( ar1_phi = (2 * plogis(m$model$par[['ar1_phi']]) - 1), # back tra
 )
 estimates <- as.data.frame(reshape::melt(estimates))
 
-
 parameter <- row.names(inputs)[1:5]
 true <- inputs[1:5,]
 par_diff <- cbind(parameter, true, estimates) %>% mutate (diff = value - true)
 
 par_diff
-
-
 
 # predict for all points in simulated data
 ######################
@@ -101,8 +98,6 @@ nd[[m$time]] <- rep(original_time, each = nrow(grid))
 # run TMB with prediction turned on but replace sample 'dat' with new grid 'nd'
 predictions <- predict(m, newdata = nd, xy_cols = c("X", "Y"))$data
 head(predictions)
-
-
 
 # combine true and predicted values for each point in space and time
 
@@ -162,7 +157,7 @@ grid <- expand.grid(X = seq(1:100), Y= seq(1:100))
 ## or use the boundaries of the Queen Charlotte Sound
 # grid <- qcs_grid
 
-model_sim <- function(iter = sample.int(1e3, 1), x=grid$X, y=grid$Y, time_steps = 3, plot = TRUE,
+model_sim <- function(iter = sample.int(1e3, 1), grid = grid, x = grid$X, y = grid$Y, time_steps = 3, plot = TRUE,
   ar1_fields = TRUE,
   ar1_phi = 0.5,
   sigma_O = 0.3,
@@ -221,28 +216,19 @@ arguments$count <- 30L
 arguments <- arguments[rep(seq_len(nrow(arguments)), arguments$count), ]
 arguments_apply <- dplyr::select(arguments,-count)
 nrow(arguments_apply)
-arguments$iter <- 1:nrow(arguments_apply)
+arguments_apply$iter <- 1:nrow(arguments_apply)
 
 all_iter <- purrr::pmap_dfr(arguments_apply,
-                            model_sim, x=grid$X, y=grid$Y,
+                            model_sim, grid = grid, x=grid$X, y=grid$Y,
                                        ar1_fields = TRUE, time_steps = 3, plot = TRUE,
                                        formula = z ~ 1, family = gaussian(link = "identity"))
-
-# Paralell process attempt
-# (doesn't work on my computer)
-# library(future)
-# plan(multisession)
-# all_iter <- purrr::pmap_dfr(arguments_apply,
-#                             ~future({model_sim},
-#                                       x=grid$X, y=grid$Y,
-#                                       ar1_fields = TRUE, time_steps = 9, plot = TRUE,
-#                                       formula = z ~ 1, family = gaussian(link = "identity")))
 
 
 # Explore and plot simulation results
 #######################
 
-all_iter$diff <- all_iter$inputs - all_iter$estimates
+all_iter <- all_iter %>% group_by(iter, parameter) %>% mutate( diff = inputs - estimates) %>% ungroup()
+
 ggplot(data=all_iter, aes(x=diff)) + geom_histogram(bins=50) + facet_wrap(~parameter)
 
 kappa <- all_iter %>% filter(parameter=="kappa")
@@ -250,8 +236,10 @@ ggplot(data=kappa, aes(x=estimates)) + geom_histogram(bins=50) #+ xlim(-0.5,0.5)
 ggplot(data=kappa, aes(x=diff)) + geom_histogram(bins=50) #+ xlim(-0.5,0.5)
 
 phi <- all_iter %>% filter(parameter=="phi")
-ggplot(data=phi, aes(x=diff)) + geom_histogram(bins=50) #+ xlim(-0.5,0.5)
+ggplot(data=phi, aes(x=estimates)) + geom_histogram(bins=50) #+ xlim(-0.5,0.5)
 
+sigma_E <- all_iter %>% filter(parameter=="sigma_E")
+ggplot(data=sigma_E, aes(x=diff)) + geom_histogram(bins=50) #+ xlim(-0.5,0.5)
 
 
 # USING A LOOP
@@ -283,39 +271,107 @@ ggplot(data=phi, aes(x=diff)) + geom_histogram(bins=50) #+ xlim(-0.5,0.5)
 # sim_results <- run_simulation_loop()
 
 
-
-
-
 ############ work in progress ##################
 # next step:
 # predict for all points in simulated data
 ######################
+sim_predictions <- function(iter = sample.int(1e3, 1), grid = grid, x=grid$X, y=grid$Y, time_steps = 3, plot = TRUE,
+  ar1_fields = TRUE,
+  ar1_phi = 0.5,
+  sigma_O = 0.3,
+  sigma_E = 0.3,
+  kappa = 0.05,
+  phi = 0.05,
+  N = 50, n_knots = 100,
+  formula = z ~ 1, family = gaussian(link = "identity")) {
 
-# replicate for each time period
-original_time <- sort(unique(m$data[[m$time]]))
-nd <- do.call("rbind",
-  replicate(length(original_time), grid, simplify = FALSE))
-nd[[m$time]] <- rep(original_time, each = nrow(grid))
-# attributes(nd)
+  set.seed(iter * 581267)
+  simdat <- sim(x = x, y = y, time_steps = time_steps, plot = plot,
+    ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi)
 
-# run TMB with prediction turned on but replace sample 'dat' with new grid 'nd'
-predictions <- predict(m, newdata = nd, xy_cols = c("X", "Y"))$data
-head(predictions)
+  dat <- simdat %>% group_by(time) %>% sample_n(N) %>% ungroup() # sub-sample from 'true' data
+  spde <- make_spde(x, y, n_knots)
+
+  m <- sdmTMB(silent = FALSE,
+    ar1_fields = ar1_fields,
+    include_spatial = TRUE,
+    data = dat, formula = formula, time = "time",
+    family = family, spde = spde
+  )
+  r <- m$tmb_obj$report()
+
+  estimates <- c( ar1_phi = (2 * plogis(m$model$par[['ar1_phi']]) - 1), # back transformed temporal correlation coefficent
+    sigma_O = r$sigma_O,
+    sigma_E = r$sigma_E, # spatio-temporal random field SD
+    kappa = exp(r$ln_kappa), # Matern for space and space-time = distance at which ~%10 cor = sqrt(Type(8.0)) / exp(ln_kappa)
+    phi = exp(r$ln_phi) # SD of observation error (aka sigma)
+  )
+
+  inputs <- c(ar1_phi = ar1_phi,
+    sigma_O = sigma_O,
+    sigma_E = sigma_E,
+    kappa = kappa,
+    phi = phi
+  )
+  parameter <- names(inputs)
+
+  # replicate grid for each time period
+  original_time <- sort(unique(m$data[[m$time]]))
+  nd <- do.call("rbind",
+    replicate(length(original_time), grid, simplify = FALSE))
+  nd[[m$time]] <- rep(original_time, each = nrow(grid))
+
+  # run TMB with prediction turned on but replace sample 'dat' with new grid 'nd'
+  predictions <- predict(m, newdata = nd, xy_cols = c("X", "Y"))$data
+  head(predictions)
+
+  # combine true and predicted values for each point in space and time
+
+  spatial_bias <- full_join(simdat, predictions, by=c("x"="X", "y"="Y", "time"="time"), suffix = c("", "_est")) %>% mutate (diff = est - real_z)
+
+  run <-list(par = data_frame(parameter=parameter, inputs=inputs, estimates=estimates, iter=iter), predicted = as_tibble(spatial_bias))
+  #browser()
+   run
+}
+
+# model_sim()
+
+arguments <- expand.grid(
+  ar1_phi = 0.2, # c(-0.85, 0.1, 0.85),
+  sigma_O = 0.3,
+  sigma_E = 0.3,
+  kappa = 0.1, # c(0.005, 0.1, 1),
+  phi = 0.05, #c(0.01, 0.1),
+  N = 100,
+  n_knots = 100)
+
+nrow(arguments)
+arguments$count <- 2L
+arguments <- arguments[rep(seq_len(nrow(arguments)), arguments$count), ]
+arguments_apply <- dplyr::select(arguments,-count)
+nrow(arguments_apply)
+arguments_apply$iter <- 1:nrow(arguments_apply)
+
+all_iter <- purrr::pmap(arguments_apply,
+                            sim_predictions, grid = grid, x=grid$X, y=grid$Y,
+                            ar1_fields = TRUE, time_steps = 2, plot = TRUE,
+                            formula = z ~ 1, family = gaussian(link = "identity"))
+
+# Paralell process attempt
+# (doesn't work on my computer)
+# library(future)
+# plan(multisession)
+# all_iter <- purrr::pmap_dfr(arguments_apply,
+#                             ~future({model_sim},
+#                                       x=grid$X, y=grid$Y,
+#                                       ar1_fields = TRUE, time_steps = 9, plot = TRUE,
+#                                       formula = z ~ 1, family = gaussian(link = "identity")))
+
+params <- all_iter %>% map(~.x[["par"]]) %>% bind_rows()
+predictions <- all_iter %>% map(~.x[["predicted"]]) # %>% bind_rows(.id = "iter")
 
 
-
-# combine true and predicted values for each point in space and time
-
-spatial_bias_dat <- full_join(simdat, predictions, by=c("x"="X", "y"="Y", "time"="time"), suffix = c("", "_est")) %>% mutate (diff = est - real_z)
-head(spatial_bias_dat)
-
-hist(spatial_bias_dat$diff, breaks = 40)
-
-
-
-
-
-)
+#params <- do.call(rbind, sapply(all_iter, "[", "par"))
 
 ######################
 ######################
