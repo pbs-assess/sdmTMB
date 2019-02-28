@@ -5,6 +5,8 @@
 library(sdmTMB)
 library(ggplot2)
 library(dplyr)
+library(purrr)
+library(future)
 
 #set.seed(183228)
 
@@ -198,8 +200,8 @@ model_sim <- function(iter = sample.int(1e3, 1), x=grid$X, y=grid$Y, time_steps 
     phi = phi
   )
   parameter <- names(inputs)
-  diff <- estimates - inputs
-  run <- data_frame(parameter=parameter, inputs=inputs, estimates=estimates)
+  # diff <- estimates - inputs
+  run <- data_frame(parameter=parameter, inputs=inputs, estimates=estimates, iter=iter)
   run
 }
 
@@ -209,33 +211,47 @@ arguments <- expand.grid(
   ar1_phi = 0.2, # c(-0.85, 0.1, 0.85),
   sigma_O = 0.3,
   sigma_E = 0.3,
-  kappa = c(0.005, 0.1, 1),
+  kappa = 0.1, # c(0.005, 0.1, 1),
   phi = 0.05, #c(0.01, 0.1),
   N = 100,
-  n_knots = 100)
+  n_knots = 200)
 
 nrow(arguments)
-arguments$count <- 10L
+arguments$count <- 30L
 arguments <- arguments[rep(seq_len(nrow(arguments)), arguments$count), ]
 arguments_apply <- dplyr::select(arguments,-count)
 nrow(arguments_apply)
 arguments$iter <- 1:nrow(arguments_apply)
 
-# futures package
-library(purrr)
-library(future)
-#library(furrr)
-
-plan(multisession)
-
 all_iter <- purrr::pmap_dfr(arguments_apply,
-                           model_sim,
-                           x=grid$X, y=grid$Y,
-                           ar1_fields = TRUE, time_steps = 3, plot = TRUE,
-                           formula = z ~ 1, family = gaussian(link = "identity"))
+                            model_sim, x=grid$X, y=grid$Y,
+                                       ar1_fields = TRUE, time_steps = 3, plot = TRUE,
+                                       formula = z ~ 1, family = gaussian(link = "identity"))
+
+# Paralell process attempt
+# (doesn't work on my computer)
+# library(future)
+# plan(multisession)
+# all_iter <- purrr::pmap_dfr(arguments_apply,
+#                             ~future({model_sim},
+#                                       x=grid$X, y=grid$Y,
+#                                       ar1_fields = TRUE, time_steps = 9, plot = TRUE,
+#                                       formula = z ~ 1, family = gaussian(link = "identity")))
+
+
+# Explore and plot simulation results
+#######################
 
 all_iter$diff <- all_iter$inputs - all_iter$estimates
-ggplot(all_iter, aes(x=diff)) + geom_histogram(bins=50) + facet_wrap(~parameter)
+ggplot(data=all_iter, aes(x=diff)) + geom_histogram(bins=50) + facet_wrap(~parameter)
+
+kappa <- all_iter %>% filter(parameter=="kappa")
+ggplot(data=kappa, aes(x=estimates)) + geom_histogram(bins=50) #+ xlim(-0.5,0.5)
+ggplot(data=kappa, aes(x=diff)) + geom_histogram(bins=50) #+ xlim(-0.5,0.5)
+
+phi <- all_iter %>% filter(parameter=="phi")
+ggplot(data=phi, aes(x=diff)) + geom_histogram(bins=50) #+ xlim(-0.5,0.5)
+
 
 
 # USING A LOOP
