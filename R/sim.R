@@ -49,7 +49,7 @@
 sim <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
                 time_steps = 1L, ar1_fields = FALSE, ar1_phi = 0.5,
                 sigma_O = 0.4, sigma_E = 0.3, kappa = 1.3, phi = 0.2,
-                # seed = NULL,
+                seed = sample.int(1e6, 1),
                 plot = FALSE) {
   if (!identical(length(x), length((y)))) {
     stop("`x` and `y` must be of the same length.")
