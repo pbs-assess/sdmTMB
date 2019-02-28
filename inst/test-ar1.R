@@ -253,19 +253,21 @@ model_sim <- function(x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
     phi = phi
   )
   diff <- estimates - inputs
-  list(inputs=inputs, estimates=estimates, diff=diff)
+  run <- list(inputs=inputs, estimates=estimates, diff=diff)
+  browser()
+  run
 }
 
 
 
-run_simulations <- function(iterations = 2, x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
+run_simulations <- function(iterations = 2, x=grid$X, y=grid$Y, time_steps = 3, plot = TRUE,
   ar1_fields = TRUE,
   ar1_phi = 0.5,
   sigma_O = 0.3,
   sigma_E = 0.3,
   kappa = 0.05,
   phi = 0.05,
-  N = 500, n_knots = 200,
+  N = 100, n_knots = 100,
   formula = z ~ 1, family = gaussian(link = "identity")){
 
   all_iter <- replicate(iterations, model_sim(x = x, y = y, time_steps = time_steps, plot = plot,
@@ -273,14 +275,14 @@ run_simulations <- function(iterations = 2, x=grid$X, y=grid$Y, time_steps = 9, 
     N = N, n_knots = n_knots, formula = formula, family = family))
   inputs <- as_tibble(do.call(rbind, all_iter[1,]))
   estimates <- as_tibble(do.call(rbind, all_iter[2,]))
-  differences <- as_tibble(do.call(rbind, all_iter[3,]))
-  list(inputs, estimates, differences)
+  diff <- as_tibble(do.call(rbind, all_iter[3,]))
   out <- list(inputs=inputs, estimates=estimates, diff=diff)
   out
 }
 
 sim_results <- run_simulations()
-hist(sim_results$diff$phi)
+
+# hist(sim_results$diff$phi)
 
 
 
