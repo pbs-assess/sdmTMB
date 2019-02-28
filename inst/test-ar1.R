@@ -1,75 +1,4 @@
 ######################
-# Estimate Centre of Gravity
-######################
-
-library(sdmTMB)
-library(ggplot2)
-library(dplyr)
-
-
-pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 100)
-
-m <- sdmTMB(
-  pcod, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-  silent = FALSE
-)
-
-
-# Predictions onto new data:
-# expand for time units:
-
-newdata <- qcs_grid # use bathymetry grid of Queen Charlotte Sound
-# ggplot(qcs_grid, aes(X, Y, colour=log(depth))) + geom_point() + scale_color_viridis_c(direction= -1)
-
-original_time <- sort(unique(m$data[[m$time]])) # select and order all unique time periods
-
-nd <- do.call("rbind",
-  replicate(length(original_time), newdata, simplify = FALSE)) # repeat all rows of 'newdata' (grid of points in bathymetry layer) once for each year
-nd[[m$time]] <- rep(original_time, each = nrow(newdata)) # label rows of newdata (now 'nd') with year ('time')
-
-p <- predict(m, newdata = nd) # use model 'm' to predict values for each point
-
-
-
-# get_index(p, value_name = "log_total", bias_correct = FALSE)
-
-
-predictions <- p$data
-# A short function for plotting our predictions:
-plot_map <- function(dat, column = "est") {
-  ggplot(dat, aes_string("X", "Y", fill = column)) +
-    geom_raster() +
-    facet_wrap(~year) +
-    coord_fixed()
-}
-
-plot_map(predictions, "exp(est)") +
-  scale_fill_viridis_c(trans = "sqrt") +
-  ggtitle("Prediction (fixed effects + all random effects)")
-
-
-
-# Calculate centre of gravity for latitude and longitude
-
-cog <- get_cog(p) # calculate centre of gravity for each data point
-cog
-
-ggplot(cog, aes(year, est, ymin = lwr, ymax = upr)) +
-  geom_ribbon(alpha = 0.5) + geom_line() + facet_wrap(~coord, scales = "free_y") # what is free_y?
-
-
-# table of COG by latitude
-data.frame(Y = p$data$Y, est = exp(p$data$est), year = p$data$year) %>%
-  group_by(year) %>% summarize(cog = sum(Y * est) / sum(est))
-
-
-
-
-
-
-
-######################
 # Simulation test of "real" vs. predicted values
 ######################
 
@@ -195,20 +124,32 @@ plot_map_diff <- function(dat, id = c("x", "y", "time"), values = c("real_z","es
 }
 
 plot_map_diff(spatial_bias_dat)
-######################
-######################
 
 
+
+######################
+######################
+######################
+######################
+######################
 
 
 ######################
 # Save results of repeated simulations
 ######################
 
+
+######################
+######################
+######################
+######################
+######################
+
+
 library(sdmTMB)
 library(ggplot2)
 library(dplyr)
-
+library(tibble)
 
 # simulate 'true' data
 ######################
@@ -219,79 +160,7 @@ grid <- expand.grid(X = seq(1:100), Y= seq(1:100))
 ## or use the boundaries of the Queen Charlotte Sound
 # grid <- qcs_grid
 
-model_sim <- function(x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
-  ar1_fields = TRUE,
-  ar1_phi = 0.5,
-  sigma_O = 0.3,
-  sigma_E = 0.3,
-  kappa = 0.05,
-  phi = 0.05,
-  N = 500, n_knots = 200, iter = sample.int(1e6, 1),
-  formula = z ~ 1, family = gaussian(link = "identity")) {
-
-  set.seed(iter * 581267)
-  simdat <- sim(x = x, y = y, time_steps = time_steps, plot = plot,
-    ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi)
-  dat <- simdat %>% group_by(time) %>% sample_n(N) %>% ungroup() # sub-sample from 'true' data
-  spde <- make_spde(x, y, n_knots)
-  m <- sdmTMB(silent = FALSE,
-    ar1_fields = ar1_fields,
-    include_spatial = TRUE,
-    data = dat, formula = formula, time = "time",
-    family = family, spde = spde
-  )
-  r <- m$tmb_obj$report()
-  estimates <- c( ar1_phi = (2 * plogis(m$model$par[['ar1_phi']]) - 1), # back transformed temporal correlation coefficent
-    sigma_O = r$sigma_O,
-    sigma_E = r$sigma_E, # spatio-temporal random field SD
-    kappa = exp(r$ln_kappa), # Matern for space and space-time = distance at which ~%10 cor = sqrt(Type(8.0)) / exp(ln_kappa)
-    phi = exp(r$ln_phi) # SD of observation error (aka sigma)
-  )
-  inputs <- c(ar1_phi = ar1_phi,
-    sigma_O = sigma_O,
-    sigma_E = sigma_E,
-    kappa = kappa,
-    phi = phi
-  )
-  diff <- estimates - inputs
-  run <- list(inputs=inputs, estimates=estimates, diff=diff)
-  #browser()
-  run
-}
-
-build data_frame()
-
-ar1_fields = TRUE,
-ar1_phi = 0.5,
-sigma_O = 0.3,
-sigma_E = 0.3,
-kappa = 0.05,
-phi = 0.05,
-iter = 1:N
-
-# purrr::map_df
-# futures package
-library(purrr)
-library(futures)
-library(furrr)
-
-plan(multisession)
-
-purrr::map(data_frame of arguments, future(model_sim), x=grid$X, y=grid$Y, ar1_fields = TRUE, time_steps = 3, plot = TRUE, N = 100, n_knots = 100, formula = z ~ 1, family = gaussian(link = "identity", .paralell))
-
-
-library(doParallel)
-
-plyr::mdply(data_frame of arguments, function, x=grid$X, y=grid$Y, time_steps = 3, plot = TRUE, N = 100, n_knots = 100, formula = z ~ 1, family = gaussian(link = "identity", .paralell))
-
-
-#plyr on sean's blog'
-
-
-
-
-
-run_simulations <- function(iterations = 3, x=grid$X, y=grid$Y, time_steps = 3, plot = TRUE,
+model_sim <- function(iter = sample.int(1e3, 1), x=grid$X, y=grid$Y, time_steps = 3, plot = TRUE,
   ar1_fields = TRUE,
   ar1_phi = 0.5,
   sigma_O = 0.3,
@@ -299,26 +168,77 @@ run_simulations <- function(iterations = 3, x=grid$X, y=grid$Y, time_steps = 3, 
   kappa = 0.05,
   phi = 0.05,
   N = 100, n_knots = 100,
-  formula = z ~ 1, family = gaussian(link = "identity")){
-#
-#   all_iter <- lapply(1:iterations, function(i) model_sim(x = x, y = y, time_steps = time_steps, plot = plot,
-#     ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi,
-#     N = N, n_knots = n_knots, formula = formula, family = family, i = i))
-#   inputs <- as_tibble(do.call(rbind, all_iter[1,]))
-#   estimates <- as_tibble(do.call(rbind, all_iter[2,]))
-#   diff <- as_tibble(do.call(rbind, all_iter[3,]))
-#   out <- list(inputs=inputs, estimates=estimates, diff=diff)
-#   out
-# }
+  formula = z ~ 1, family = gaussian(link = "identity")) {
 
-sim_results <- run_simulations()
+  set.seed(iter * 581267)
+  simdat <- sim(x = x, y = y, time_steps = time_steps, plot = plot,
+    ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi)
+  dat <- simdat %>% group_by(time) %>% sample_n(N) %>% ungroup() # sub-sample from 'true' data
+  spde <- make_spde(x, y, n_knots)
 
-# hist(sim_results$diff$phi)
+  m <- sdmTMB(silent = FALSE,
+              ar1_fields = ar1_fields,
+              include_spatial = TRUE,
+              data = dat, formula = formula, time = "time",
+              family = family, spde = spde
+  )
+  r <- m$tmb_obj$report()
+
+  estimates <- c( ar1_phi = (2 * plogis(m$model$par[['ar1_phi']]) - 1), # back transformed temporal correlation coefficent
+    sigma_O = r$sigma_O,
+    sigma_E = r$sigma_E, # spatio-temporal random field SD
+    kappa = exp(r$ln_kappa), # Matern for space and space-time = distance at which ~%10 cor = sqrt(Type(8.0)) / exp(ln_kappa)
+    phi = exp(r$ln_phi) # SD of observation error (aka sigma)
+  )
+
+  inputs <- c(ar1_phi = ar1_phi,
+    sigma_O = sigma_O,
+    sigma_E = sigma_E,
+    kappa = kappa,
+    phi = phi
+  )
+  parameter <- names(inputs)
+  diff <- estimates - inputs
+  run <- data_frame(parameter=parameter, inputs=inputs, estimates=estimates)
+  run
+}
+
+# model_sim()
+
+arguments <- expand.grid(
+  ar1_phi = 0.2, # c(-0.85, 0.1, 0.85),
+  sigma_O = 0.3,
+  sigma_E = 0.3,
+  kappa = c(0.005, 0.1, 1),
+  phi = 0.05, #c(0.01, 0.1),
+  N = 100,
+  n_knots = 100)
+
+nrow(arguments)
+arguments$count <- 10L
+arguments <- arguments[rep(seq_len(nrow(arguments)), arguments$count), ]
+arguments_apply <- dplyr::select(arguments,-count)
+nrow(arguments_apply)
+arguments$iter <- 1:nrow(arguments_apply)
+
+# futures package
+library(purrr)
+library(future)
+#library(furrr)
+
+plan(multisession)
+
+all_iter <- purrr::pmap_dfr(arguments_apply,
+                           model_sim,
+                           x=grid$X, y=grid$Y,
+                           ar1_fields = TRUE, time_steps = 3, plot = TRUE,
+                           formula = z ~ 1, family = gaussian(link = "identity"))
+
+all_iter$diff <- all_iter$inputs - all_iter$estimates
+ggplot(all_iter, aes(x=diff)) + geom_histogram(bins=50) + facet_wrap(~parameter)
 
 
-
-
-# USING A LOOP INSTEAD OF "replicate" function
+# USING A LOOP
 ###########################
 
 # run_simulation_loop <- function(iterations = 2, x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
