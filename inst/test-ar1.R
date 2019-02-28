@@ -226,9 +226,10 @@ model_sim <- function(x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
   sigma_E = 0.3,
   kappa = 0.05,
   phi = 0.05,
-  N = 500, n_knots = 200,
+  N = 500, n_knots = 200, iter = 1,
   formula = z ~ 1, family = gaussian(link = "identity")) {
 
+  set.seed(iter * 581267)
   simdat <- sim(x = x, y = y, time_steps = time_steps, plot = plot,
     ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi)
   dat <- simdat %>% group_by(time) %>% sample_n(N) %>% ungroup() # sub-sample from 'true' data
@@ -270,7 +271,6 @@ run_simulations <- function(iterations = 3, x=grid$X, y=grid$Y, time_steps = 3, 
   N = 100, n_knots = 100,
   formula = z ~ 1, family = gaussian(link = "identity")){
 
-  all_iter <- replicate(iterations, model_sim(x = x, y = y, time_steps = time_steps, plot = plot,
   all_iter <- lapply(1:iterations, function(i) model_sim(x = x, y = y, time_steps = time_steps, plot = plot,
     ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi,
     N = N, n_knots = n_knots, formula = formula, family = family, i = i))
