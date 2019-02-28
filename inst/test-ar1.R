@@ -226,7 +226,7 @@ model_sim <- function(x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
   sigma_E = 0.3,
   kappa = 0.05,
   phi = 0.05,
-  N = 500, n_knots = 200, iter = 1,
+  N = 500, n_knots = 200, iter = sample.int(1e6, 1),
   formula = z ~ 1, family = gaussian(link = "identity")) {
 
   set.seed(iter * 581267)
@@ -244,7 +244,7 @@ model_sim <- function(x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
   estimates <- c( ar1_phi = (2 * plogis(m$model$par[['ar1_phi']]) - 1), # back transformed temporal correlation coefficent
     sigma_O = r$sigma_O,
     sigma_E = r$sigma_E, # spatio-temporal random field SD
-    kappa = exp(r$ln_kappa), # Matern for both space and space-time where distance at which ~%10 correlation = sqrt(Type(8.0)) / exp(ln_kappa)
+    kappa = exp(r$ln_kappa), # Matern for space and space-time = distance at which ~%10 cor = sqrt(Type(8.0)) / exp(ln_kappa)
     phi = exp(r$ln_phi) # SD of observation error (aka sigma)
   )
   inputs <- c(ar1_phi = ar1_phi,
@@ -259,6 +259,36 @@ model_sim <- function(x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
   run
 }
 
+build data_frame()
+
+ar1_fields = TRUE,
+ar1_phi = 0.5,
+sigma_O = 0.3,
+sigma_E = 0.3,
+kappa = 0.05,
+phi = 0.05,
+iter = 1:N
+
+# purrr::map_df
+# futures package
+library(purrr)
+library(futures)
+library(furrr)
+
+plan(multisession)
+
+purrr::map(data_frame of arguments, future(model_sim), x=grid$X, y=grid$Y, ar1_fields = TRUE, time_steps = 3, plot = TRUE, N = 100, n_knots = 100, formula = z ~ 1, family = gaussian(link = "identity", .paralell))
+
+
+library(doParallel)
+
+plyr::mdply(data_frame of arguments, function, x=grid$X, y=grid$Y, time_steps = 3, plot = TRUE, N = 100, n_knots = 100, formula = z ~ 1, family = gaussian(link = "identity", .paralell))
+
+
+#plyr on sean's blog'
+
+
+
 
 
 run_simulations <- function(iterations = 3, x=grid$X, y=grid$Y, time_steps = 3, plot = TRUE,
@@ -270,16 +300,16 @@ run_simulations <- function(iterations = 3, x=grid$X, y=grid$Y, time_steps = 3, 
   phi = 0.05,
   N = 100, n_knots = 100,
   formula = z ~ 1, family = gaussian(link = "identity")){
-
-  all_iter <- lapply(1:iterations, function(i) model_sim(x = x, y = y, time_steps = time_steps, plot = plot,
-    ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi,
-    N = N, n_knots = n_knots, formula = formula, family = family, i = i))
-  inputs <- as_tibble(do.call(rbind, all_iter[1,]))
-  estimates <- as_tibble(do.call(rbind, all_iter[2,]))
-  diff <- as_tibble(do.call(rbind, all_iter[3,]))
-  out <- list(inputs=inputs, estimates=estimates, diff=diff)
-  out
-}
+#
+#   all_iter <- lapply(1:iterations, function(i) model_sim(x = x, y = y, time_steps = time_steps, plot = plot,
+#     ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi,
+#     N = N, n_knots = n_knots, formula = formula, family = family, i = i))
+#   inputs <- as_tibble(do.call(rbind, all_iter[1,]))
+#   estimates <- as_tibble(do.call(rbind, all_iter[2,]))
+#   diff <- as_tibble(do.call(rbind, all_iter[3,]))
+#   out <- list(inputs=inputs, estimates=estimates, diff=diff)
+#   out
+# }
 
 sim_results <- run_simulations()
 
@@ -288,7 +318,7 @@ sim_results <- run_simulations()
 
 
 
-# SAME CODE, BUT USING A LOOP INSTEAD OF "replicate" function
+# USING A LOOP INSTEAD OF "replicate" function
 ###########################
 
 # run_simulation_loop <- function(iterations = 2, x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
