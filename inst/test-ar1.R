@@ -271,8 +271,9 @@ run_simulations <- function(iterations = 3, x=grid$X, y=grid$Y, time_steps = 3, 
   formula = z ~ 1, family = gaussian(link = "identity")){
 
   all_iter <- replicate(iterations, model_sim(x = x, y = y, time_steps = time_steps, plot = plot,
+  all_iter <- lapply(1:iterations, function(i) model_sim(x = x, y = y, time_steps = time_steps, plot = plot,
     ar1_fields = ar1_fields, ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi,
-    N = N, n_knots = n_knots, formula = formula, family = family))
+    N = N, n_knots = n_knots, formula = formula, family = family, i = i))
   inputs <- as_tibble(do.call(rbind, all_iter[1,]))
   estimates <- as_tibble(do.call(rbind, all_iter[2,]))
   diff <- as_tibble(do.call(rbind, all_iter[3,]))
