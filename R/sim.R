@@ -60,7 +60,6 @@ sim <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
   # } else {
      set.seed(seed)
   # }
-
   # spatial random effects: omega
   rf_omega <- RandomFields::RMmatern(nu = 1, var = sigma_O^2, scale = 1 / kappa)
   omega_s <- rf_sim(rf_omega, x, y)
@@ -153,6 +152,6 @@ sim <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
 rf_sim <- function(model, x, y) {
   #set.seed(sample.int(1e5L, 1L))
   suppressMessages(
-    RandomFields::RFsimulate(model = model, x = x, y = y, seed=NA)$variable1
+    RandomFields::RFsimulate(model = model, x = x, y = y)$variable1
   )
 }

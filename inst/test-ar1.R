@@ -254,13 +254,13 @@ model_sim <- function(x=grid$X, y=grid$Y, time_steps = 9, plot = TRUE,
   )
   diff <- estimates - inputs
   run <- list(inputs=inputs, estimates=estimates, diff=diff)
-  browser()
+  #browser()
   run
 }
 
 
 
-run_simulations <- function(iterations = 2, x=grid$X, y=grid$Y, time_steps = 3, plot = TRUE,
+run_simulations <- function(iterations = 3, x=grid$X, y=grid$Y, time_steps = 3, plot = TRUE,
   ar1_fields = TRUE,
   ar1_phi = 0.5,
   sigma_O = 0.3,
