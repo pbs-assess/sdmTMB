@@ -149,9 +149,8 @@ sim <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
 ##     seed = seed))
 ## }
 
-
 rf_sim <- function(model, x, y) {
-  #set.seed(sample.int(1e5L, 1L))
+  set.seed(sample.int(1e5L, 1L))
   suppressMessages(
     RandomFields::RFsimulate(model = model, x = x, y = y, seed=NA)$variable1
   )
