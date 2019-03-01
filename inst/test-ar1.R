@@ -1,6 +1,9 @@
-######################
 # Simulation test for bias in AR1 sdmTMB models
+
 ######################
+######################
+
+# Steps first executed independently and then in functions that repeat simulation and compile results
 
 library(sdmTMB)
 library(ggplot2)
@@ -8,9 +11,8 @@ library(dplyr)
 library(purrr)
 library(future)
 
-# Steps first executed independently and then in functions that repeat simulation and compile results
 
-# 1. Set spatial grid ( also run this section before running functions)
+# Set spatial grid (also run this section before running functions)
 ######################
 
 ## create fine-scale square 100 x 100 grid to predict on
@@ -20,7 +22,7 @@ grid <- expand.grid(X = seq(1:40), Y = seq(1:40))
 # grid <- qcs_grid
 
 
-# 2. Simulate 'true' data
+# 1. Simulate 'true' data
 ######################
 
 
@@ -71,14 +73,14 @@ simdat <- sim_args_vec(
   phi = 0.05
 )
 
-# 3. Sub-sample from 'true' data
+# 2. Sub-sample from 'true' data
 ######################
 
 dat <- simdat[[1]] %>% group_by(time) %>% sample_n(1500) %>% ungroup()
 # dat <- simdat %>% filter((x <25|x>50) & (y<25|y>50)) # try removing whole chunks of data
 
 
-# 4. Model from sub-sample
+# 3. Model from sub-sample
 ######################
 
 spde <- make_spde(x = dat$x, y = dat$y, n_knots = 150)
@@ -96,7 +98,7 @@ r <- m$tmb_obj$report()
 # r$range # distance at which ~%10 correlation
 
 
-# 5. Compare parameter estimates with input values
+# 4. Compare parameter estimates with input values
 ######################
 
 # Input values (from vectorized simdat list element)
@@ -116,7 +118,7 @@ estimates <- as.data.frame(reshape::melt(estimates))
 inputs
 estimates
 
-# 6. Use model to predict for all grid points in simulated data
+# 5. Use model to predict for all grid points in simulated data
 ######################
 
 # replicate for each time period
@@ -129,7 +131,7 @@ predictions <- predict(m, newdata = nd, xy_cols = c("X", "Y"))$data
 head(predictions)
 
 
-# 7. Contrast true and predicted values for each point in space and time
+# 6. Contrast true and predicted values for each point in space and time
 ######################
 
 spatial_bias_dat <- full_join(simdat[[1]], predictions, by = c("x" = "X", "y" = "Y", "time" = "time"), suffix = c("", "_est")) %>% mutate(diff = est - real_z)
@@ -151,12 +153,18 @@ hist(spatial_bias_dat$diff, breaks = 40)
 #' simdat <- sim_args_vec()
 #' dat <- simdat[[1]] %>% group_by(time) %>% sample_n(1500) %>% ungroup()
 #' spde <- make_spde(x = dat$x, y = dat$y, n_knots = 150)
-#' m <- sdmTMB(data = dat, formula = z ~ 1, time = "time", family = gaussian(link = "identity"), spde = spde)
+#' m <- sdmTMB(data = dat,
+#'             formula = z ~ 1,
+#'             time = "time",
+#'             family = gaussian(link = "identity"),
+#'             spde = spde)
 #' original_time <- sort(unique(m$data[[m$time]]))
 #' nd <- do.call("rbind", replicate(length(original_time), grid, simplify = FALSE))
 #' nd[[m$time]] <- rep(original_time, each = nrow(grid))
 #' predictions <- predict(m, newdata = nd, xy_cols = c("X", "Y"))$data
-#' spatial_bias_dat <- full_join(simdat[[1]], predictions, by = c("x" = "X", "y" = "Y", "time" = "time"), suffix = c("", "_est")) %>%
+#' spatial_bias_dat <- full_join(simdat[[1]], predictions,
+#'                               by = c("x" = "X", "y" = "Y", "time" = "time"),
+#'                               suffix = c("", "_est")) %>%
 #'                     mutate(diff = est - real_z)
 #' plot_map_diff(spatial_bias_dat)
 
@@ -182,14 +190,9 @@ plot_map_diff(spatial_bias_dat)
 ######################
 ######################
 
-######################
 # Save parameter estimates of repeated simulations
-######################
 
 ######################
-######################
-
-# simulate 'true' data
 ######################
 
 #' Function that saves a tibble of parameter inputs and estimates for a single iteration
@@ -289,14 +292,16 @@ single_run
 ######################
 ######################
 
-######################
-# Add predictions for all points in simulated data
-######################
+# Repeat simulations
+#           j times for each set of parameter combinations
+#           save lists of tibbles
 
 ######################
 ######################
 
-#' Function that saves a list of tibble of parameter inputs and estimates for a single iteration
+#' Function that saves a list of tibbles of:
+#'          [[1]] parameter inputs and estimates &
+#'          [[2]] real values and predicted values
 #'
 #' @param iter Iteration id number; default is a random number; used to set.seed
 #' @param grid Dataframe of spatial coordinates eg. c(X, Y)
@@ -318,6 +323,7 @@ single_run
 #' @export
 #'
 #' @examples
+#'
 sim_predictions <- function(iter = sample.int(1e3, 1), plot = TRUE,
                             grid = grid, x = grid$X, y = grid$Y,
                             time_steps = 3,
@@ -398,12 +404,23 @@ sim_predictions <- function(iter = sample.int(1e3, 1), plot = TRUE,
 #' @param time_steps The number of time steps.
 #' @param N Sub-sample size = number of observations included in the sdmTMB model
 #' @param n_knots Number of knots for spatial process
-#' @param repeats Number of runs to be conducted for each unique combination of parameter values
+#' @param j Number of runs to be conducted for each unique combination of parameter values
 #'
 #' @return
 #' @export
 #'
 #' @examples
+#' grid <- expand.grid(X = seq(1:40), Y = seq(1:40))
+#' args <- generate_arg(kappa = c(0.005, 0.1, 1), time_steps = 3, repeats = 3L)
+#' all_iter <- purrr::pmap(args, sim_predictions,
+#'                         grid = grid, x = grid$X, y = grid$Y,
+#'                         formula = z ~ 1, family = gaussian(link = "identity"))
+#' predictions <- all_iter %>% map(~ .x[["predicted"]]) # %>% bind_rows(.id = "iter")
+#' spatial_bias_plots <- purrr::map(predictions, plot_map_diff, time_periods = c(1,2,3))
+#' params <- all_iter %>% map(~ .x[["par"]]) %>% bind_rows()
+#' par_diff <- params %>% group_by(iter, parameter) %>% mutate(diff = inputs - estimates) %>% ungroup()
+#'
+#'
 generate_arg <- function(ar1_phi = 0.4, # c(-0.85, 0.1, 0.85),
                          sigma_O = 0.3,
                          sigma_E = 0.3,
@@ -412,7 +429,7 @@ generate_arg <- function(ar1_phi = 0.4, # c(-0.85, 0.1, 0.85),
                          time_steps = 3,
                          N = 1000,
                          n_knots = 250,
-                         repeats = 20L) {
+                         j = 20L) {
   arguments <- expand.grid(
     ar1_phi = ar1_phi,
     sigma_O = sigma_O,
@@ -424,7 +441,7 @@ generate_arg <- function(ar1_phi = 0.4, # c(-0.85, 0.1, 0.85),
   )
   # browser()
   nrow(arguments)
-  arguments$count <- repeats
+  arguments$count <- j
   arguments <- arguments[rep(seq_len(nrow(arguments)), arguments$count), ]
   arguments_apply <- dplyr::select(arguments, -count)
   nrow(arguments_apply)
@@ -447,12 +464,11 @@ all_iter <- purrr::pmap(args, sim_predictions,
 #   plot = TRUE, formula = z ~ 1, family = gaussian(link = "identity")
 # )))
 
+
 ######################
 ######################
 
-######################
 # Explore and plot simulation results
-######################
 
 ######################
 ######################
@@ -462,9 +478,10 @@ all_iter <- purrr::pmap(args, sim_predictions,
 predictions <- all_iter %>% map(~ .x[["predicted"]]) # %>% bind_rows(.id = "iter")
 
 # each run can be plotted
-plot_map_diff(predictions[[1]], time_periods = c(1,2,3))
-
-
+spatial_bias_plots <- purrr::map(predictions, plot_map_diff, time_periods = c(1,2,3))
+pdf("spatial_bias_plots.pdf")
+spatial_bias_plots
+dev.off()
 # result tibble of parameter estimates
 params <- all_iter %>% map(~ .x[["par"]]) %>% bind_rows()
 
