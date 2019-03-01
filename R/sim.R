@@ -55,11 +55,8 @@ sim <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
     stop("`x` and `y` must be of the same length.")
   }
 
-  # if (seed == "NULL") {
-  #set.seed(sample.int(1e6, 1))
-  # } else {
-     set.seed(seed)
-  # }
+    set.seed(seed)
+
   # spatial random effects: omega
   rf_omega <- RandomFields::RMmatern(nu = 1, var = sigma_O^2, scale = 1 / kappa)
   omega_s <- rf_sim(rf_omega, x, y)
