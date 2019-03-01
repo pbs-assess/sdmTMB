@@ -415,11 +415,13 @@ sim_predictions <- function(iter = sample.int(1e3, 1), plot = TRUE,
 #' all_iter <- purrr::pmap(args, sim_predictions,
 #'                         grid = grid, x = grid$X, y = grid$Y,
 #'                         formula = z ~ 1, family = gaussian(link = "identity"))
-#' predictions <- all_iter %>% map(~ .x[["predicted"]]) # %>% bind_rows(.id = "iter")
+#' predictions <- all_iter %>% map(~ .x[["predicted"]])
 #' spatial_bias_plots <- purrr::map(predictions, plot_map_diff, time_periods = c(1,2,3))
-#' params <- all_iter %>% map(~ .x[["par"]]) %>% bind_rows()
-#' par_diff <- params %>% group_by(iter, parameter) %>% mutate(diff = inputs - estimates) %>% ungroup()
-#'
+#' params <- all_iter %>% map(~ .x[["par"]]) %>%
+#'                        bind_rows()
+#' par_diff <- params %>% group_by(iter, parameter) %>%
+#'                        mutate(diff = inputs - estimates) %>%
+#'                        ungroup()
 #'
 generate_arg <- function(ar1_phi = 0.4, # c(-0.85, 0.1, 0.85),
                          sigma_O = 0.3,
@@ -482,28 +484,55 @@ spatial_bias_plots <- purrr::map(predictions, plot_map_diff, time_periods = c(1,
 pdf("spatial_bias_plots.pdf")
 spatial_bias_plots
 dev.off()
+
 # result tibble of parameter estimates
-params <- all_iter %>% map(~ .x[["par"]]) %>% bind_rows()
+params <- all_iter %>% map(~ .x[["par"]]) %>%
+                       bind_rows()
 
 # Calculate difference between parameter value input into simulation and estimate based on sdmTMB model
-par_diff <- params %>% group_by(iter, parameter) %>% mutate(diff = inputs - estimates) %>% ungroup()
-# past_run <- par_diff
+par_diff <- params %>% group_by(parameter) %>%
+                       mutate(sd_est = sd(estimates), n = n()) %>%
+                       group_by(iter, parameter) %>%
+                       mutate(std_diff = (inputs - estimates)/sd_est) %>%
+                       ungroup()
 
-# par_diff_converged <- par_diff %>% filter(converg == 0) %>% ungroup()
-# par_diff_fail <- par_diff %>% filter(converg == 1) %>% ungroup()
+#' Plot histograms of parameter estimates from n simulations
+#'
+#' @param data Dataframe containing all simulated parameter estimates
+#' @param x Varible to be plotted (Default = data$std_diff)
+#' @param xlabel Description of variable to be plotted for use on x axis label
+#' @param fill Varible used to colour bars to indicate if some estimates should be trusted more than others (Default = data$converg)
+#' @param notes Description of fill choice or other caveats
+#' @param bins Number of bins in histogram (Default = n/4)
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' params <- all_iter %>% map(~ .x[["par"]]) %>%
+#'                        bind_rows()
+#' par_diff <- params %>% group_by(parameter) %>%
+#'                        mutate(sd_est = sd(estimates), n = n()) %>%
+#'                        group_by(iter, parameter) %>%
+#'                        mutate(std_diff = (inputs - estimates)/sd_est) %>%
+#'                        ungroup()
+#' par_error_hist(par_diff)
+#'
+par_error_hist <- function(data = par_diff,
+                           x = data$std_diff,
+                           xlabel = "Relative difference from input value",
+                           fill = data$converg,
+                           notes = "Note: if 2 colours, than some models did not converg",
+                           bins = n/4){
+  n <- data$n[1]
+  fill <- as.factor(fill)
+  ggplot(data, aes(x = x, fill = fill)) +
+    geom_histogram(bins = n/4)  +
+    #scale_fill_viridis_d() +
+    geom_vline(xintercept = 0, linetype="dashed") +
+    labs(title = "Simulated parameter estimates", x = xlabel, caption = notes) +
+    facet_wrap(~parameter, scales = "free_x") +
+    theme(legend.position="none", plot.caption=element_text(size=12))
+}
 
-ggplot(par_diff, aes(x = diff, fill = as.factor(converg))) + geom_histogram() + xlim(-0.25, 0.25) + facet_wrap(~parameter) # , scales = "free_x")
-
-kappa <- par_diff %>% filter(parameter == "kappa")
-ggplot(data = kappa, aes(x = estimates)) + geom_histogram(bins = 50) + xlim(-0.5, 0.5)
-ggplot(data = kappa, aes(x = diff)) + geom_histogram(bins = 50) #+ xlim(-0.5,0.5)
-
-phi <- par_diff %>% filter(parameter == "phi")
-ggplot(data = phi, aes(x = estimates)) + geom_histogram(bins = 50) #+ xlim(-0.5,0.5)
-
-sigma_E <- par_diff %>% filter(parameter == "sigma_E")
-ggplot(data = sigma_E, aes(x = diff)) + geom_histogram(bins = 50) #+ xlim(-0.5,0.5)
-
-# make sure enough time steps are included if this is to be estimated?
-ar1_phi <- par_diff %>% filter(parameter == "ar1_phi")
-ggplot(data = ar1_phi, aes(x = diff)) + geom_histogram(bins = 50) #+ xlim(-0.5,0.5)
+par_error_hist(par_diff)
