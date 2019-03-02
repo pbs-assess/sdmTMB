@@ -16,7 +16,7 @@ library(cowplot)
 ######################
 
 ## create fine-scale square 100 x 100 grid to predict on
-grid <- expand.grid(X = seq(1:20), Y = seq(1:20))
+grid <- expand.grid(X = seq(1:50), Y = seq(1:50))
 
 ## or use the boundaries of the Queen Charlotte Sound
 # grid <- qcs_grid
@@ -275,16 +275,7 @@ sim_parameters <- function(iter = sample.int(1e3, 1), plot = TRUE,
   run
 }
 
-single_run <- sim_parameters(
-  iter = sample.int(1e3, 1), grid = grid, x = grid$X, y = grid$Y, time_steps = 4, plot = TRUE,
-  ar1_fields = TRUE,
-  ar1_phi = 0.7,
-  sigma_O = 0.2,
-  sigma_E = 0.2,
-  kappa = 0.05,
-  phi = 0.01,
-  formula = z ~ 1, family = gaussian(link = "identity")
-)
+single_run <- sim_parameters()
 
 single_run
 
@@ -324,13 +315,13 @@ single_run
 #'
 sim_predictions <- function(iter = sample.int(1e3, 1), plot = TRUE,
                             grid = grid, x = grid$X, y = grid$Y,
-                            time_steps = 3,
+                            time_steps = 4,
                             ar1_fields = TRUE,
                             ar1_phi = 0.5,
                             sigma_O = 0.3,
                             sigma_E = 0.3,
                             kappa = 0.05,
-                            phi = 0.05,
+                            phi = 0.1,
                             N = 1000, n_knots = 150, # iter.max=1e4, eval.max=1e4,
                             formula = z ~ 1, family = gaussian(link = "identity")) {
   set.seed(iter * 581267)
@@ -386,7 +377,12 @@ sim_predictions <- function(iter = sample.int(1e3, 1), plot = TRUE,
   # combine true and predicted values for each point in space and time
   spatial_bias <- full_join(simdat, predictions, by = c("x" = "X", "y" = "Y", "time" = "time"), suffix = c("", "_est")) %>% mutate(diff = est - real_z)
   spatial_bias$converg <- converg
-  run <- list(par = tibble(parameter = parameter, inputs = inputs, estimates = estimates, iter = iter, converg = converg), predicted = as_tibble(spatial_bias))
+
+  unsampled <- anti_join(spatial_bias, dat)
+
+  run <- list(par = tibble(parameter = parameter, inputs = inputs, estimates = estimates, iter = iter, converg = converg),
+              allpredicted = as_tibble(spatial_bias),
+              unsampled = as_tibble(unsampled))
   run
 }
 
@@ -421,15 +417,15 @@ sim_predictions <- function(iter = sample.int(1e3, 1), plot = TRUE,
 #'                        mutate(diff = inputs - estimates) %>%
 #'                        ungroup()
 #'
-generate_arg <- function(ar1_phi = 0.4, # c(-0.85, 0.1, 0.85),
+generate_arg <- function(time_steps = 4,
+                         ar1_phi = 0.5, # c(-0.85, 0.1, 0.85),
                          sigma_O = 0.3,
                          sigma_E = 0.3,
-                         kappa = 0.1, # c(0.005, 0.1, 1),
-                         phi = 0.05, # c(0.01, 0.1),
-                         time_steps = 3,
-                         N = 1000,
-                         n_knots = 250,
-                         j = 20L) {
+                         kappa = 0.2, # c(0.005, 0.1, 1),
+                         phi = 0.1, # c(0.01, 0.1),
+                         N = 300,
+                         n_knots = 150,
+                         j = 2L) {
   arguments <- expand.grid(
     ar1_phi = ar1_phi,
     sigma_O = sigma_O,
@@ -437,7 +433,8 @@ generate_arg <- function(ar1_phi = 0.4, # c(-0.85, 0.1, 0.85),
     kappa = kappa,
     phi = phi,
     N = N,
-    n_knots = n_knots
+    n_knots = n_knots,
+    time_steps = time_steps
   )
   # browser()
   nrow(arguments)
@@ -449,7 +446,7 @@ generate_arg <- function(ar1_phi = 0.4, # c(-0.85, 0.1, 0.85),
   arguments_apply
 }
 
-args <- generate_arg()
+args <- generate_arg(j=8L)
 glimpse(args)
 
 all_iter <- purrr::pmap(args, sim_predictions,
@@ -475,20 +472,30 @@ all_iter <- purrr::pmap(args, sim_predictions,
 
 
 # result list of tibbles of predictions or remove # and combine to one tibble
-predictions <- all_iter %>% map(~ .x[["predicted"]]) # %>% bind_rows(.id = "iter")
+predictions <- all_iter %>% map(~ .x[["allpredicted"]]) # %>% bind_rows(.id = "iter")
+allunsampled <- all_iter %>% map(~ .x[["unsampled"]]) %>% bind_rows(.id = "iter")
 
-allpredictions <- all_iter %>% map(~ .x[["predicted"]]) %>% bind_rows(.id = "iter")
+allpredictions <- all_iter %>% map(~ .x[["allpredicted"]]) %>% bind_rows(.id = "iter")
 
-ggplot(data = allpredictions, aes(x = diff)) +
-  geom_histogram()  +
+pred.hist <- ggplot(data = allunsampled, aes(x = diff)) +
+  geom_histogram(bins=40)  +
+  geom_histogram(data = allpredictions, bins=40, alpha = 0.4)  +
   scale_fill_viridis_d() +
   geom_vline(xintercept = 0, linetype="dashed") +
-  labs(title = "Prediction error", x = "(real - predicted)")
+  labs(title = "Prediction error for unsampled locations in darker colour", x = "(real - predicted)")
+pred.hist
+
+pdf("prediction_hist.pdf")
+pred.hist
+dev.off()
+
 
 # each run can be plotted
-spatial_bias_plots <- purrr::map(predictions, plot_map_diff, time_periods = c(1,2,3))
+
+spatial.bias.plots <- purrr::map(predictions, plot_map_diff, time_periods = c(1,2,3))
+spatial.bias.plots
 pdf("spatial_bias_plots.pdf")
-spatial_bias_plots
+spatial.bias.plots
 dev.off()
 
 # result tibble of parameter estimates
@@ -503,6 +510,7 @@ par_diff <- params %>% group_by(parameter) %>%
                        ungroup()
 
 #' Plot histograms of parameter estimates from n simulations
+#'        Note: that n must
 #'
 #' @param dataframe Dataframe containing all simulated parameter estimates
 #' @param x Varible to be plotted (Default = data$std_diff)
@@ -538,7 +546,7 @@ par_error_hist <- function(dataframe = params,
 
   fill <- as.factor(fill)
   p <- ggplot(data = dataframe, aes(x = x)) +
-    geom_histogram(aes(fill = fill), bins = n/4)  +
+    geom_histogram(aes(fill = fill), bins = bins)  +
     scale_fill_viridis_d() +
     geom_vline(xintercept = 0, linetype="dashed") +
     labs(title = "Simulated parameter estimates", x = xlabel) + #, caption = notes) +
@@ -551,5 +559,10 @@ par_error_hist <- function(dataframe = params,
 
 }
 
-par_error_hist(params)
+par.hist <- par_error_hist(params)
+par.hist
+
+pdf("par_error_hist.pdf")
+par.hist
+dev.off()
 
