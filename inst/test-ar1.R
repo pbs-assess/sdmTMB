@@ -474,7 +474,6 @@ all_iter <- purrr::pmap(args, sim_predictions,
 # result list of tibbles of predictions or remove # and combine to one tibble
 predictions <- all_iter %>% map(~ .x[["allpredicted"]]) # %>% bind_rows(.id = "iter")
 allunsampled <- all_iter %>% map(~ .x[["unsampled"]]) %>% bind_rows(.id = "iter")
-
 allpredictions <- all_iter %>% map(~ .x[["allpredicted"]]) %>% bind_rows(.id = "iter")
 
 pred.hist <- ggplot(data = allunsampled, aes(x = diff)) +
@@ -490,8 +489,7 @@ pred.hist
 dev.off()
 
 
-# each run can be plotted
-
+# each run can be plotted spatio-temporally
 spatial.bias.plots <- purrr::map(predictions, plot_map_diff, time_periods = c(1,2,3))
 spatial.bias.plots
 pdf("spatial_bias_plots.pdf")
@@ -530,9 +528,9 @@ par_diff <- params %>% group_by(parameter) %>%
 par_error_hist <- function(dataframe = params,
                            x = dataframe$std_diff,
                            xlabel = "Relative difference from input value",
-                           fill = data$converg,
-                           notes = "Note: if 2 colours, than some models did not converg",
-                           bins = n/4){
+                           fill = dataframe$converg,
+                           notes = "if 2 colours, than some models did not converg",
+                           bin_number = n/2){
 
   dataframe <- dataframe %>% group_by(parameter) %>%
     mutate(sd_est = sd(estimates), n = n()) %>%
@@ -541,21 +539,23 @@ par_error_hist <- function(dataframe = params,
     ungroup()
 
   n <- dataframe$n[1]
+  binn <- bin_number
   initial <- dataframe %>% group_by(parameter) %>% summarize(initial = mean(inputs), sd = round(mean(sd_est), 3))
-  t <- gridExtra::tableGrob(initial, rows = NULL)
+  table <- gridExtra::tableGrob(initial, rows = NULL)
 
   fill <- as.factor(fill)
-  p <- ggplot(data = dataframe, aes(x = x)) +
-    geom_histogram(aes(fill = fill), bins = bins)  +
+  plot <- ggplot(data = dataframe, aes(x = x)) +
+    geom_histogram(aes(fill = fill), bins = binn)  +
     scale_fill_viridis_d() +
     geom_vline(xintercept = 0, linetype="dashed") +
     labs(title = "Simulated parameter estimates", x = xlabel) + #, caption = notes) +
     facet_wrap(~parameter, scales = "free_x") +
     theme(legend.position="none", plot.caption=element_text(size=12))
-  note <- RGraphics::splitTextGrob(notes)
-  ggdraw() + draw_plot(p, x = 0, y = 0, width = 1, height = 1) +
-    draw_plot(t, x = .7, y = 0.1, width = .3, height = .5) +
-    draw_plot(note, x = .7, y = -.3, width = .3, height = .5)
+
+  text <- RGraphics::splitTextGrob(notes)
+  ggdraw() + draw_plot(plot, x = 0, y = 0, width = 1, height = 1) +
+    draw_plot(table, x = .7, y = 0.1, width = .3, height = .5) +
+    draw_plot(text, x = .7, y = -.3, width = .3, height = .5)
 
 }
 
