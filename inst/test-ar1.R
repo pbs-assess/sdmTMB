@@ -15,7 +15,7 @@ library(cowplot)
 # Set spatial grid (also run this section before running functions)
 ######################
 
-## create fine-scale square 100 x 100 grid to predict on
+## create fine-scale square 50 x 50 grid to predict on
 grid <- expand.grid(X = seq(1:50), Y = seq(1:50))
 
 ## or use the boundaries of the Queen Charlotte Sound
@@ -446,7 +446,7 @@ generate_arg <- function(time_steps = 4,
   arguments_apply
 }
 
-args <- generate_arg(j=8L)
+args <- generate_arg(j = 2L, ar1_phi = c(0.01, 0.7))
 glimpse(args)
 
 all_iter <- purrr::pmap(args, sim_predictions,
@@ -470,11 +470,12 @@ all_iter <- purrr::pmap(args, sim_predictions,
 ######################
 ######################
 
+# if input parameter values varied, merge parameter and predicted dataframes
+inputs_spread <- all_iter %>% map(~ .x[["par"]]) %>% bind_rows() %>% select( iter, parameter, inputs) %>% tidyr::spread(., key = parameter, value = c(inputs))
+inputs_spread$iter <- as.factor(inputs_spread$iter)
 
-# result list of tibbles of predictions or remove # and combine to one tibble
-predictions <- all_iter %>% map(~ .x[["allpredicted"]]) # %>% bind_rows(.id = "iter")
-allunsampled <- all_iter %>% map(~ .x[["unsampled"]]) %>% bind_rows(.id = "iter")
-allpredictions <- all_iter %>% map(~ .x[["allpredicted"]]) %>% bind_rows(.id = "iter")
+allpredictions <- all_iter %>% map(~ .x[["allpredicted"]]) %>% bind_rows(.id = "iter") %>% left_join(., inputs_spread, by = "iter")
+allunsampled <- all_iter %>% map(~ .x[["unsampled"]]) %>% bind_rows(.id = "iter") %>% left_join(., inputs_spread, by = "iter")
 
 pred.hist <- ggplot(data = allunsampled, aes(x = diff)) +
   geom_histogram(bins=40)  +
@@ -484,17 +485,21 @@ pred.hist <- ggplot(data = allunsampled, aes(x = diff)) +
   labs(title = "Prediction error for unsampled locations in darker colour", x = "(real - predicted)")
 pred.hist
 
-pdf("prediction_hist.pdf")
-pred.hist
-dev.off()
+# pdf("prediction_hist.pdf")
+# pred.hist
+# dev.off()
 
 
 # each run can be plotted spatio-temporally
-spatial.bias.plots <- purrr::map(predictions, plot_map_diff, time_periods = c(1,2,3))
+
+predictions_by_iter <- all_iter %>% map(~ .x[["allpredicted"]]) %>% bind_rows(.id = "iter") %>% left_join(., inputs_spread, by = "iter") %>% split(., list(iter))
+
+spatial.bias.plots <- purrr::map(predictions_by_iter, plot_map_diff, time_periods = c(1,2,3))
 spatial.bias.plots
-pdf("spatial_bias_plots.pdf")
-spatial.bias.plots
-dev.off()
+
+# pdf("spatial_bias_plots.pdf")
+# spatial.bias.plots
+# dev.off()
 
 # result tibble of parameter estimates
 params <- all_iter %>% map(~ .x[["par"]]) %>%
@@ -556,13 +561,12 @@ par_error_hist <- function(dataframe = params,
   ggdraw() + draw_plot(plot, x = 0, y = 0, width = 1, height = 1) +
     draw_plot(table, x = .7, y = 0.1, width = .3, height = .5) +
     draw_plot(text, x = .7, y = -.3, width = .3, height = .5)
-
 }
 
 par.hist <- par_error_hist(params)
 par.hist
 
-pdf("par_error_hist.pdf")
-par.hist
-dev.off()
+# pdf("par_error_hist.pdf")
+# par.hist
+# dev.off()
 
