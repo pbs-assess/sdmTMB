@@ -492,7 +492,8 @@ pred.hist
 
 # each run can be plotted spatio-temporally
 
-predictions_by_iter <- all_iter %>% map(~ .x[["allpredicted"]]) %>% bind_rows(.id = "iter") %>% left_join(., inputs_spread, by = "iter") %>% split(., list(iter))
+predictions_by_iter <- all_iter %>% map(~ .x[["allpredicted"]]) #%>% bind_rows(.id = "iter") %>% left_join(., inputs_spread, by = "iter") %>% split(., list("iter"))
+
 
 spatial.bias.plots <- purrr::map(predictions_by_iter, plot_map_diff, time_periods = c(1,2,3))
 spatial.bias.plots

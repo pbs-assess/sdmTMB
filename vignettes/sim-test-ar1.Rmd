@@ -1,0 +1,464 @@
+---
+title: "Simulation test for bias in AR1 sdmTMB models"
+output: html_notebook
+---
+
+Steps first executed independently and then in functions that repeat simulation and compile results
+```{r setup}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file()) 
+library(sdmTMB)
+library(ggplot2)
+library(dplyr)
+library(purrr)
+library(future)
+library(cowplot)
+```
+
+### Set spatial grid 
+Required prior to running functions as well as in step-by-step approach
+
+#### Create fine-scale square 50 x 50 grid to predict on
+```{r}
+grid <- expand.grid(X = seq(1:50), Y = seq(1:50))
+```
+### --OR-- 
+#### Use existing spatial grid
+e.g. Queen Charlotte Sound
+```{r, eval=FALSE}
+grid <- qcs_grid
+```
+
+## 1. Simulate 'true' data
+
+### Output in list format along with a vector of input values
+### Data parameter aguments include:
+**x** A vector of x coordinates\
+**y** A vector of y coordinates\
+**time_steps** The number of time steps\
+**ar1_fields** Logical for whether or not to include AR1 structure\
+**ar1_phi** Correlation between years; should be between -1 and 1\
+**sigma_O** SD of spatial process (Omega)\
+**sigma_E** SD of spatiotemporal process (Epsilon)\
+**kappa** Parameter that controls the decay of spatial correlation (3/kappa is roughly the distance at which points are %10 correlated)\
+**phi** Observation error scale parameter\
+**plot** Logical for whether or not to produce a plot\
+
+```{r sim_args_vec}
+sim_args_vec <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
+                         time_steps = 1L, ar1_fields = FALSE, ar1_phi = 0.5,
+                         sigma_O = 0.4, sigma_E = 0.3, kappa = 1.3, phi = 0.2,
+                         plot = FALSE) {
+  d <- sim(
+    x = x, y = y, time_steps = time_steps, ar1_fields = ar1_fields, plot = plot,
+    ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi
+  )
+  list(d, inputs = c(
+    ar1_phi = ar1_phi,
+    sigma_O = sigma_O,
+    sigma_E = sigma_E,
+    kappa = kappa,
+    phi = phi
+  ))
+}
+```
+
+```{r}
+simdat <- sim_args_vec( x = grid$X, y = grid$Y,
+                        time_steps = 9,
+                        plot = FALSE,
+                        ar1_fields = TRUE,
+                        ar1_phi = 0.5,
+                        sigma_O = 0.3,
+                        sigma_E = 0.3,
+                        kappa = 0.05,
+                        phi = 0.05
+                      )
+```
+
+```{r, echo=FALSE}
+g <- ggplot(simdat[[1]], aes_string("x", "y", fill = "z")) +
+              geom_raster() +
+              facet_wrap(~time) +
+              scale_fill_viridis_c() +
+              coord_fixed()
+g
+```
+
+## 2. Sub-sample from 'true' data
+
+#### Select a random sample, evenly distributed across time periods
+Total grid cells are `r nrow(simdat[[1]])` / `r length(unique(simdat[[1]]$time))` time periods = `r nrow(simdat[[1]])/length(unique(simdat[[1]]$time))`
+```{r }
+dat <- simdat[[1]] %>% group_by(time) %>% sample_n(500) %>% ungroup()
+```
+
+```{r, echo = FALSE}
+g <- ggplot(dat, aes_string("x", "y", fill = "z")) +
+              geom_raster() +
+              facet_wrap(~time) +
+              scale_fill_viridis_c() +
+              coord_fixed()
+g
+```
+
+
+### --OR-- 
+#### Systematically drop a chunck of data
+```{r, eval = TRUE}
+dat <- simdat[[1]] %>% filter((x <15|x>20) & (y<15|y>20))
+```
+
+```{r, echo = FALSE}
+g <- ggplot(dat, aes_string("x", "y", fill = "z")) +
+              geom_raster() +
+              facet_wrap(~time) +
+              scale_fill_viridis_c() +
+              coord_fixed()
+g
+```
+
+## 3. Model from sub-sample
+
+### Design mesh 
+```{r}
+spde <- make_spde(x = dat$x, y = dat$y, n_knots = 150)
+plot_spde(spde)
+```
+
+Use sdmTMB to estimate the input parameters in our simulation.\
+This model includes a spatiotemporal random field, but no fixed spatial random field.
+```{r}
+m <- sdmTMB(formula = z ~ 1, 
+            ar1_fields = TRUE,
+            include_spatial = TRUE, 
+            silent = TRUE,
+            data = dat, 
+            time = "time",
+            family = gaussian(link = "identity"), 
+            spde = spde
+           )
+r <- m$tmb_obj$report()
+```
+
+## 4. Compare parameter estimates with input values
+
+Input values (from vectorized simdat list element)
+```{r}
+inputs <- as.data.frame(reshape::melt(simdat[[2]]))
+inputs
+```
+
+Back transform parameter estimates from model report() for comparison with input values
+```{r}
+estimates <- c( ar1_phi = (2 * plogis(m$model$par[["ar1_phi"]]) - 1),
+                sigma_O = r$sigma_O,
+                sigma_E = r$sigma_E,
+                kappa = exp(r$ln_kappa),
+                phi = exp(r$ln_phi)
+              )
+estimates <- as.data.frame(reshape::melt(estimates))
+estimates
+```
+
+## 5. Use model to predict for all grid points in simulated data
+
+Replicate list of all grid points for each time period
+```{r}
+original_time <- sort(unique(m$data[[m$time]]))
+nd <- do.call("rbind", replicate(length(original_time), grid, simplify = FALSE))
+nd[[m$time]] <- rep(original_time, each = nrow(grid))
+```
+
+Run TMB with prediction turned on, and replace sample 'dat' with new grid 'nd'
+```{r}
+predictions <- predict(m, newdata = nd, xy_cols = c("X", "Y"))$data
+glimpse(predictions)
+```
+
+## 6. Contrast true and predicted values for each point in space and time
+```{r}
+spatial_bias_dat <- full_join(simdat[[1]], predictions, by = c("x" = "X", "y" = "Y", "time" = "time"), suffix = c("", "_est")) %>% mutate(diff = est - real_z)
+glimpse(spatial_bias_dat)
+```
+
+```{r}
+hist(spatial_bias_dat$diff, breaks = 40)
+```
+
+
+### Plot spatial distribution of model estimates beside simulated true values, and the difference between them
+**dataframe** Dataframe containing all simulated and predicted values to be plotted spatially\
+**id** List of columns in dataframe that together identify unique observations (Default = c("x", "y", "time"))\
+**values** List of values to be shown in plotted on separate panels (Default = c("real_z", "est", "diff"))\
+**time_periods** List of time periods to be shown in plot (Default = c("1", "5", "9"))\
+
+```{r}
+plot_map_diff <- function(dataframe,
+                          id = c("x", "y", "time"),
+                          values = c("real_z", "est", "diff"),
+                          time_periods = c("1", "5", "9")) {
+
+  melted <- reshape2::melt(dataframe, id) %>% # could be replace with tidyr::gather(spatial_bias_dat, "variable", "value",... )?
+    filter(variable %in% values) %>%
+    filter(time %in% time_periods)
+
+  ggplot(melted, aes_string("x", "y", fill = "value")) +
+    geom_raster() +
+    facet_grid(time ~ variable) +
+    scale_fill_viridis_c() +
+    coord_fixed()
+}
+plot_map_diff(spatial_bias_dat)
+```
+
+# Run simulations 'j' times for each set of parameter values
+
+## 1. Generate dataframe with parameter arguments for multiple simulation runs
+Note: This function creates a dataframe of all possible combinations,
+therefore these parameters can be fixed to a single value, or vary using c(value1, value2, value3, ...)\
+**ar1_phi** Correlation between years; should be between -1 and 1\
+**sigma_O** SD of spatial process (Omega)\
+**sigma_E** SD of spatiotemporal process (Epsilon)\
+**kappa** Parameter that controls the decay of spatial correlation (3/kappa is roughly the distance at which points are %10 correlated)\
+**phi** Observation error scale parameter\
+**time_steps** The number of time steps\
+**N** Sub-sample size = number of observations included in the sdmTMB model\
+**n_knots** Number of knots for spatial process\
+**j** Number of runs to be conducted for each unique combination of parameter values\
+
+```{r}
+generate_arg <- function(time_steps = 4,
+                         ar1_phi = 0.5, # c(-0.85, 0.1, 0.85),
+                         sigma_O = 0.3,
+                         sigma_E = 0.3,
+                         kappa = 0.2, # c(0.005, 0.1, 1),
+                         phi = 0.1, # c(0.01, 0.1),
+                         N = 300,
+                         n_knots = 150,
+                         j = 2L) {
+  arguments <- expand.grid(
+    ar1_phi = ar1_phi,
+    sigma_O = sigma_O,
+    sigma_E = sigma_E,
+    kappa = kappa,
+    phi = phi,
+    N = N,
+    n_knots = n_knots,
+    time_steps = time_steps
+  )
+  nrow(arguments)
+  arguments$count <- j
+  arguments <- arguments[rep(seq_len(nrow(arguments)), arguments$count), ]
+  arguments_apply <- dplyr::select(arguments, -count)
+  nrow(arguments_apply)
+  arguments_apply$iter <- 1:nrow(arguments_apply)
+  arguments_apply
+}
+```
+
+```{r}
+args <- generate_arg(j = 10L, 
+                     ar1_phi = c(0.01, 0.7))
+glimpse(args)
+```
+
+## 2. Requires a function that saves a list of tibbles of:
+####  [[1]] parameter inputs and estimates &
+####  [[2]] real values and predicted values
+
+**iter** Iteration id number; default is a random number; used to set.seed\
+**grid** Dataframe of spatial coordinates eg. c(X, Y)\
+**x** A vector of x coordinates\
+**y** A vector of y coordinates\
+**time_steps** The number of time steps\
+**plot** Logical for whether or not to produce a plot\
+**ar1_phi** Correlation between years; should be between -1 and 1\
+**sigma_O** SD of spatial process (Omega)\
+**sigma_E** SD of spatiotemporal process (Epsilon)\
+**kappa** Parameter that controls the decay of spatial correlation (3/kappa is roughly the distance at which points are %10 correlated)\
+**phi** Observation error scale parameter\
+**N** Sub-sample size = number of observations included in the sdmTMB model\
+**n_knots** Number of knots for spatial process#' @param formula\
+**formula** Define model to be assessed with the simulated data\
+**family** Set family of model to be assessed\
+
+```{r}
+sim_predictions <- function(iter = sample.int(1e3, 1), plot = FALSE,
+                            grid = grid, x = grid$X, y = grid$Y,
+                            time_steps = 9,
+                            ar1_fields = TRUE,
+                            ar1_phi = 0.5,
+                            sigma_O = 0.3,
+                            sigma_E = 0.3,
+                            kappa = 0.05,
+                            phi = 0.1,
+                            N = 1000, n_knots = 150, # iter.max=1e4, eval.max=1e4,
+                            formula = z ~ 1, family = gaussian(link = "identity")) {
+  set.seed(iter * 581267)
+
+  simdat <- sim(
+    plot = plot, x = x, y = y,
+    time_steps = time_steps, ar1_fields = ar1_fields,
+    ar1_phi = ar1_phi, sigma_O = sigma_O, sigma_E = sigma_E, kappa = kappa, phi = phi
+  )
+
+  dat <- simdat %>% group_by(time) %>% sample_n(N) %>% ungroup() # sub-sample from 'true' data
+  spde <- make_spde(dat$x, dat$y, n_knots)
+  plot_spde(spde)
+  # browser()
+
+  m <- sdmTMB(
+    silent = TRUE,
+    ar1_fields = ar1_fields,
+    include_spatial = TRUE,
+    data = dat, formula = formula, time = "time",
+    family = family, spde = spde
+  )
+
+  r <- m$tmb_obj$report()
+
+  estimates <- c(
+    ar1_phi = (2 * plogis(m$model$par[["ar1_phi"]]) - 1),
+    sigma_O = r$sigma_O,
+    sigma_E = r$sigma_E,
+    kappa = exp(r$ln_kappa),
+    phi = exp(r$ln_phi)
+  )
+
+  inputs <- c(
+    ar1_phi = ar1_phi,
+    sigma_O = sigma_O,
+    sigma_E = sigma_E,
+    kappa = kappa,
+    phi = phi
+  )
+  parameter <- names(inputs)
+  converg <- m$model$convergence
+
+  # replicate grid for each time period
+  original_time <- sort(unique(m$data[[m$time]]))
+  nd <- do.call("rbind", replicate(length(original_time), grid, simplify = FALSE))
+  nd[[m$time]] <- rep(original_time, each = nrow(grid))
+
+  # run TMB with prediction turned on but replace sample 'dat' with new grid 'nd'
+  predictions <- predict(m, newdata = nd, xy_cols = c("X", "Y"))$data
+  head(predictions)
+
+  # combine true and predicted values for each point in space and time
+  spatial_bias <- full_join(simdat, predictions, by = c("x" = "X", "y" = "Y", "time" = "time"), suffix = c("", "_est")) %>% mutate(diff = est - real_z)
+  spatial_bias$converg <- converg
+
+  unsampled <- anti_join(spatial_bias, dat)
+
+  run <- list(par = tibble(parameter = parameter, inputs = inputs, estimates = estimates, iter = iter, converg = converg),
+              allpredicted = as_tibble(spatial_bias),
+              unsampled = as_tibble(unsampled))
+  run
+}
+```
+
+## 3. Use purrr:::pmap to loop the arguments through sim_preditions
+```{r}
+all_iter <- purrr::pmap(args, sim_predictions,
+  grid = grid, x = grid$X, y = grid$Y,
+  formula = z ~ 1, family = gaussian(link = "identity")
+)
+```
+
+# Explore and plot simulation results
+
+
+If input parameter values varied, parameter and predicted dataframes need to be combined
+```{r, warning= FALSE}
+inputs_spread <- all_iter %>% map(~ .x[["par"]]) %>% bind_rows() %>% select( iter, parameter, inputs) %>% tidyr::spread(., key = parameter, value = c(inputs))
+#inputs_spread$iter <- as.factor(inputs_spread$iter)
+allpredictions <- all_iter %>% map(~ .x[["allpredicted"]]) %>% bind_rows(.id = "iter") %>% left_join(., inputs_spread, by = "iter")
+allunsampled <- all_iter %>% map(~ .x[["unsampled"]]) %>% bind_rows(.id = "iter") %>% left_join(., inputs_spread, by = "iter")
+```
+
+
+```{r}
+pred.hist <- ggplot(data = allunsampled, aes(x = diff)) +
+  geom_histogram(bins=40)  +
+  geom_histogram(data = allpredictions, bins=40, alpha = 0.4)  +
+  scale_fill_viridis_d() +
+  geom_vline(xintercept = 0, linetype="dashed") +
+  labs(title = "Prediction error for unsampled locations in darker colour", x = "(real - predicted)")
+pred.hist
+```
+
+
+### Each run can be plotted spatio-temporally
+```{r}
+predictions_by_iter <- all_iter %>% map(~ .x[["allpredicted"]]) # %>% bind_rows(.id = "iter") %>% left_join(., inputs_spread, by = "iter") %>% split(., list("iter")) this code changes iter to character so breaks plot code below
+#glimpse(predictions_by_iter)
+```
+
+```{r , eval =FALSE}
+spatial.bias.plots <- purrr::map(predictions_by_iter, plot_map_diff, time_periods = c(1,2,3))
+spatial.bias.plots
+```
+
+
+### Parameter estimates from n simulations
+
+Create tibble of parameter estimates
+```{r}
+params <- all_iter %>% map(~ .x[["par"]]) %>%
+                       bind_rows()
+```
+
+Calculate difference between parameter value input into simulation and estimate based on sdmTMB model
+```{r}
+par_diff <- params %>% group_by(parameter) %>%
+                       mutate(sd_est = sd(estimates), n = n()) %>%
+                       group_by(iter, parameter) %>%
+                       mutate(diff = (inputs - estimates), std_diff = (inputs - estimates)/sd_est) %>%
+                       ungroup()
+```
+
+Histogram plotting function for error in parameter estimates\
+**dataframe** Dataframe containing all simulated parameter estimates\
+**x** Varible to be plotted (Default = data$std_diff)\
+**xlabel** Description of variable to be plotted for use on x axis label\
+**fill ** Varible used to colour bars to indicate if some estimates should be trusted more than others (Default = data$converg)\
+**notes**  Description of fill choice or other caveats\
+**bins ** Number of bins in histogram (Default = n/4)\
+
+```{r}
+par_error_hist <- function(dataframe = params,
+                           x = dataframe$std_diff,
+                           xlabel = "Relative difference from input value",
+                           fill = dataframe$converg,
+                           notes = "if 2 colours, than some models did not converg",
+                           bin_number = n/2){
+
+  dataframe <- dataframe %>% group_by(parameter) %>%
+    mutate(sd_est = sd(estimates), n = n()) %>%
+    group_by(iter, parameter) %>%
+    mutate(diff = (inputs - estimates), std_diff = (inputs - estimates)/sd_est) %>%
+    ungroup()
+
+  n <- dataframe$n[1]
+  binn <- bin_number
+  initial <- dataframe %>% group_by(parameter) %>% summarize(initial = mean(inputs), sd = round(mean(sd_est), 3))
+  table <- gridExtra::tableGrob(initial, rows = NULL)
+
+  fill <- as.factor(fill)
+  plot <- ggplot(data = dataframe, aes(x = x)) +
+    geom_histogram(aes(fill = fill), bins = binn)  +
+    scale_fill_viridis_d() +
+    geom_vline(xintercept = 0, linetype="dashed") +
+    labs(title = "Simulated parameter estimates", x = xlabel) + #, caption = notes) +
+    facet_wrap(~parameter, scales = "free_x") +
+    theme(legend.position="none", plot.caption=element_text(size=12))
+
+  text <- RGraphics::splitTextGrob(notes)
+  ggdraw() + draw_plot(plot, x = 0, y = 0, width = 1, height = 1) +
+    draw_plot(table, x = .7, y = 0.1, width = .3, height = .3) +
+    draw_plot(text, x = .7, y = -.3, width = .3, height = .3)
+}
+par.hist <- par_error_hist(params)
+par.hist
+```
+
