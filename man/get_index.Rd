@@ -2,12 +2,17 @@
 % Please edit documentation in R/index.R
 \name{get_index}
 \alias{get_index}
+\alias{get_cog}
 \title{Extract a relative biomass or abundance index}
 \usage{
-get_index(obj, bias_correct = TRUE)
+get_index(obj, value_name = "log_total", bias_correct = FALSE)
+
+get_cog(obj, bias_correct = FALSE)
 }
 \arguments{
 \item{obj}{Output from \code{\link[=predict.sdmTMB]{predict.sdmTMB()}}.}
+
+\item{value_name}{Name of value to extract.}
 
 \item{bias_correct}{Should bias correction be implemented in
 \code{\link[TMB:sdreport]{TMB::sdreport()}}?}

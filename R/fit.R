@@ -9,8 +9,8 @@
 # points(x_loc, col = "red", pch = 20, cex = 2)
 #
 # loc_xy <- data.frame(pcod$X, pcod$Y)
-# bnd = inla.nonconvex.hull(as.matrix(loc_xy), convex = -0.05)
-# mesh = inla.mesh.2d(
+# bnd = INLA::inla.nonconvex.hull(as.matrix(loc_xy), convex = -0.05)
+# mesh = INLA::inla.mesh.2d(
 #   boundary = bnd,
 #   max.edge = c(20, 50),
 #   offset = -0.05,
@@ -20,6 +20,29 @@
 # plot(mesh)
 # points(loc_xy, col = "red", pch = 20, cex = 1)
 #
+# # n_knots = 7
+# knots <- stats::kmeans(x = loc_xy, centers = n_knots)
+# loc_centers <- knots$centers
+# mesh <- INLA::inla.mesh.create(loc_centers, refine = TRUE)
+
+### bnd = INLA::inla.nonconvex.hull(as.matrix(loc_xy), convex = -0.05)
+### mesh = INLA::inla.mesh.2d(
+###   boundary = bnd,
+###   max.edge = c(20, 50),
+###   offset = -0.05,
+###   cutoff = c(2, 5),
+###   min.angle = 10
+### )
+###
+### s_i <- vapply(seq_len(nrow(loc_xy)), function(i)
+###   RANN::nn2(mesh$loc[,1:2], loc_xy[i,], k = 1)$nn.idx, FUN.VALUE = 1L)
+###
+### spde <- INLA::inla.spde2.matern(mesh)
+### plot(mesh, main = NA, edge.color = "grey60", asp = 1)
+### points(loc_xy[,1], loc_xy[,2], pch = 21, col = s_i)
+
+# points(loc_centers, pch = 20, col = "red")
+
 # n_knots <- 300
 # knots <- stats::kmeans(x = loc_xy, centers = n_knots)
 # loc_centers <- knots$centers
@@ -49,25 +72,59 @@ NULL
 #' @param y Y numeric vector.
 #' @param n_knots The number of knots.
 #' @param seed Random seed. Affects [stats::kmeans()] determination of knot locations.
+#' @param mesh An optional mesh created via INLA. If supplied, this mesh will be
+#'   used instead of creating one with [stats::kmeans()] and the `n_knots`
+#'   argument.
 #'
 #' @importFrom graphics points
 #' @export
 #' @examples
 #' sp <- make_spde(pcod$X, pcod$Y, n_knots = 25)
 #' plot_spde(sp)
-make_spde <- function(x, y, n_knots, seed = 42) {
+#'
+#' loc_xy <- cbind(pcod$X, pcod$Y)
+#' bnd <- INLA::inla.nonconvex.hull(as.matrix(loc_xy), convex = -0.05)
+#' mesh <- INLA::inla.mesh.2d(
+#'   boundary = bnd,
+#'   max.edge = c(20, 50),
+#'   offset = -0.05,
+#'   cutoff = c(2, 5),
+#'   min.angle = 10
+#' )
+#' sp2 <- make_spde(pcod$X, pcod$Y, mesh = mesh)
+#' plot_spde(sp2)
+
+make_spde <- function(x, y, n_knots, seed = 42, mesh = NULL) {
   loc_xy <- cbind(x, y)
-  if (n_knots >= nrow(loc_xy)) {
-    warning("Reducing `n_knots` to be one less than the ",
-      "number of data points.")
-    n_knots <- nrow(loc_xy) - 1
+
+  if (is.null(mesh)) {
+    if (n_knots >= nrow(loc_xy)) {
+      warning(
+        "Reducing `n_knots` to be one less than the ",
+        "number of data points."
+      )
+      n_knots <- nrow(loc_xy) - 1
+    }
+    set.seed(seed)
+    knots <- stats::kmeans(x = loc_xy, centers = n_knots)
+    loc_centers <- knots$centers
+    mesh <- INLA::inla.mesh.create(loc_centers, refine = TRUE)
+  } else {
+    knots <- list()
+    knots$cluster <- vapply(seq_len(nrow(loc_xy)), function(i)
+      RANN::nn2(mesh$loc[, 1:2, drop = FALSE],
+        t(as.numeric(loc_xy[i, , drop = FALSE])),
+        k = 1L
+      )$nn.idx,
+    FUN.VALUE = 1L
+    )
+    loc_centers <- NA
   }
-  set.seed(seed)
-  knots <- stats::kmeans(x = loc_xy, centers = n_knots)
-  loc_centers <- knots$centers
-  mesh <- INLA::inla.mesh.create(loc_centers, refine = TRUE)
   spde <- INLA::inla.spde2.matern(mesh)
-  list(x = x, y = y, mesh = mesh, spde = spde, cluster = knots$cluster, loc_centers = loc_centers)
+  list(
+    x = x, y = y, mesh = mesh, spde = spde, cluster = knots$cluster,
+    loc_centers = loc_centers
+  )
 }
 
 #' @param object Output from [make_spde()].
@@ -119,12 +176,21 @@ make_anisotropy_spde <- function(spde) {
 #' @param spde An object from [make_spde()].
 #' @param family The family and link. Supports [gaussian()], [Gamma()],
 #'   [binomial()], [poisson()], [nbinom2()], and [tweedie()].
+#' @param time_varying An optional formula describing covariates that should be
+#'   modelled as a random walk through time.
 #' @param silent Silent or optimization details?
 #' @param multiphase Estimate the fixed and random effects in phases for speed?
 #' @param anisotropy Logical: allow for anisotropy?
 #' @param control Optimization control options. See [sdmTMBcontrol()].
 #' @param enable_priors Should weakly informative priors be enabled?
-#'   (experimental)
+#'   (experimental and likely for use with the \pkg{tmbstan} package)
+#' @param ar1_fields Estimate the spatiotemporal random fields as an AR1
+#'   process? Note that the parameter `ar1_phi` has been internally bounded
+#'   between -1 and 1 with:  `2 * invlogit(ar1_phi) - 1` i.e. in R ` 2 *
+#'   plogis(ar_phi) - 1`.
+#' @param include_spatial Should a separate spatial random field the estimated?
+#'   If enabled then there will be a separate spatial field and spatiotemporal
+#'   fields.
 #'
 #' @importFrom methods as
 #' @importFrom stats gaussian model.frame model.matrix
@@ -196,12 +262,18 @@ make_anisotropy_spde <- function(spde) {
 #' }
 
 sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity"),
+  time_varying = NULL,
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE, control = sdmTMBcontrol(),
-  enable_priors = FALSE) {
+  enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE) {
 
   X_ij <- model.matrix(formula, data)
   mf   <- model.frame(formula, data)
   y_i  <- model.response(mf, "numeric")
+
+  if (!is.null(time_varying))
+    X_rw_ik <- model.matrix(time_varying, data)
+  else
+    X_rw_ik <- matrix(0, nrow = nrow(data), ncol = 1)
 
   spatial_only <- identical(length(unique(data[[time]])), 1L)
 
@@ -211,14 +283,23 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     n_s        = nrow(spde$mesh$loc),
     s_i        = spde$cluster - 1L,
     year_i     = as.numeric(as.factor(as.character(data[[time]]))) - 1L,
+    year_prev_i= as.numeric(as.factor(as.character(data[[time]]))) - 2L,
+    ar1_fields = as.integer(ar1_fields),
     X_ij       = X_ij,
+    X_rw_ik    = X_rw_ik,
+    proj_lon    = 0,
+    proj_lat    = 0,
     do_predict = 0L,
     calc_se    = 0L,
     calc_time_totals = 0L,
+    random_walk = !is.null(time_varying),
     enable_priors = as.integer(enable_priors),
+    include_spatial = as.integer(include_spatial),
     proj_mesh  = Matrix::Matrix(0, 1, 1), # dummy
     proj_X_ij  = matrix(0, ncol = 1, nrow = 1), # dummy
+    proj_X_rw_ik = matrix(0, ncol = 1, nrow = 1), # dummy
     proj_year  = 0, # dummy
+    proj_spatial_index = 0, # dummy
     spde_aniso = make_anisotropy_spde(spde),
     spde       = spde$spde$param.inla[c("M0","M1","M2")],
     anisotropy = as.integer(anisotropy),
@@ -235,15 +316,19 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     ln_kappa   = 0,
     thetaf     = 0,
     ln_phi     = 0,
+    ln_tau_V   = rep(0, ncol(X_rw_ik)),
+    ar1_phi    = 0,
+    b_rw_t     = matrix(0, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)),
     omega_s    = rep(0, tmb_data$n_s),
     epsilon_st = matrix(0, nrow = tmb_data$n_s, ncol = tmb_data$n_t)
   )
-
 
   # Mapping off params as needed:
   tmb_map <- list()
   if (!anisotropy)
     tmb_map <- c(tmb_map, list(ln_H_input = factor(rep(NA, 2))))
+  if (!ar1_fields)
+    tmb_map <- c(tmb_map, list(ar1_phi = as.factor(NA)))
   if (family$family == "binomial")
     tmb_map <- c(tmb_map, list(ln_phi = as.factor(NA)))
   if (family$family != "tweedie")
@@ -257,8 +342,10 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     not_phase1 <- c(tmb_map, list(
       ln_tau_O   = as.factor(NA),
       ln_tau_E   = as.factor(NA),
+      ln_tau_V   = factor(rep(NA, ncol(X_rw_ik))),
       ln_kappa   = as.factor(NA),
       ln_H_input = factor(rep(NA, 2)),
+      b_rw_t     = factor(rep(NA, length(tmb_params$b_rw_t))),
       omega_s    = factor(rep(NA, length(tmb_params$omega_s))),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
@@ -278,7 +365,29 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
       tmb_params$ln_phi <- set_par_value(tmb_opt1, "ln_phi")
   }
 
-  tmb_random <- if (spatial_only) "omega_s" else c("omega_s", "epsilon_st")
+  if (spatial_only) {
+    tmb_random <- "omega_s"
+  } else {
+    if (include_spatial) {
+      tmb_random <- c("omega_s", "epsilon_st")
+    } else {
+      tmb_random <- "epsilon_st"
+    }
+  }
+  if (!is.null(time_varying)) tmb_random <- c(tmb_random, "b_rw_t")
+
+  if (!include_spatial) {
+    tmb_map <- c(tmb_map, list(
+      ln_tau_O = as.factor(NA),
+      omega_s  = factor(rep(NA, length(tmb_params$omega_s)))))
+  }
+
+  if (is.null(time_varying))
+    tmb_map <- c(tmb_map,
+      list(b_rw_t = as.factor(matrix(NA, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)))),
+      list(ln_tau_V = as.factor(NA))
+    )
+
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     random = tmb_random, DLL = "sdmTMB", silent = silent)
@@ -292,6 +401,7 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
       data       = data,
       spde       = spde,
       formula    = formula,
+      time_varying = time_varying,
       time       = time,
       family     = family,
       response   = y_i,

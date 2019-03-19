@@ -6,3 +6,4 @@ inst/doc
 prediction-grids/*
 *.rds
 *.pdf
+.DS_Store

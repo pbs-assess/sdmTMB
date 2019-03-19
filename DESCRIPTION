@@ -25,7 +25,8 @@ Imports:
     Matrix,
     grid,
     tweedie,
-    RandomFields
+    RandomFields,
+    RANN
 Suggests:
     testthat,
     dplyr,

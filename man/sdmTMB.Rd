@@ -5,8 +5,9 @@
 \title{Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.}
 \usage{
 sdmTMB(data, formula, time, spde, family = gaussian(link = "identity"),
-  silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
-  control = sdmTMBcontrol(), enable_priors = FALSE)
+  time_varying = NULL, silent = TRUE, multiphase = TRUE,
+  anisotropy = FALSE, control = sdmTMBcontrol(),
+  enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE)
 }
 \arguments{
 \item{data}{A data frame.}
@@ -21,6 +22,9 @@ include \code{0 + as.factor(your_time_column)}.}
 \item{family}{The family and link. Supports \code{\link[=gaussian]{gaussian()}}, \code{\link[=Gamma]{Gamma()}},
 \code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, \code{\link[=nbinom2]{nbinom2()}}, and \code{\link[=tweedie]{tweedie()}}.}
 
+\item{time_varying}{An optional formula describing covariates that should be
+modelled as a random walk through time.}
+
 \item{silent}{Silent or optimization details?}
 
 \item{multiphase}{Estimate the fixed and random effects in phases for speed?}
@@ -30,7 +34,15 @@ include \code{0 + as.factor(your_time_column)}.}
 \item{control}{Optimization control options. See \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}.}
 
 \item{enable_priors}{Should weakly informative priors be enabled?
-(experimental)}
+(experimental and likely for use with the \pkg{tmbstan} package)}
+
+\item{ar1_fields}{Estimate the spatiotemporal random fields as an AR1
+process? Note that the parameter \code{ar1_phi} has been internally bounded
+between -1 and 1 with:  \code{2 * invlogit(ar1_phi) - 1} i.e. in R \code{ 2 * plogis(ar_phi) - 1}.}
+
+\item{include_spatial}{Should a separate spatial random field the estimated?
+If enabled then there will be a separate spatial field and spatiotemporal
+fields.}
 }
 \description{
 Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.

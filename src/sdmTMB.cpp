@@ -22,22 +22,14 @@ Type dlnorm(Type x, Type meanlog, Type sdlog, int give_log = 0){
 }
 
 template <class Type>
-vector<Type> Array2DToVector(array<Type> x) {
-  x = x.transpose();
-  int nr = x.rows();
-  int nc = x.cols();
-  vector<Type> res(nr * nc);
-  for (int i = 0; i < nr; i++)
-    for (int j = 0; j < nc; j++) {
-      res[i * nc + j] = x(i, j);
-    }
-  return res;
+Type minus_one_to_one(Type x){
+  return Type(2)*invlogit(x)-Type(1);
 }
 
 template <class Type>
 matrix<Type> MakeH(vector<Type> x) {
 
-    matrix<Type> H(2, 2);
+  matrix<Type> H(2, 2);
   H(0, 0) = exp(x(0));
   H(1, 0) = x(1);
   H(0, 1) = x(1);
@@ -116,6 +108,7 @@ Type objective_function<Type>::operator()() {
   // Vectors of real data
   DATA_VECTOR(y_i);   // response
   DATA_MATRIX(X_ij);  // model matrix
+  DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
   DATA_FACTOR(s_i);   // Random effect index for observation i
   DATA_INTEGER(n_t);  // number of years
@@ -123,6 +116,7 @@ Type objective_function<Type>::operator()() {
 
   // Indices for factors
   DATA_FACTOR(year_i);
+  DATA_FACTOR(year_prev_i);
 
   // Prediction?
   DATA_INTEGER(do_predict);
@@ -132,6 +126,12 @@ Type objective_function<Type>::operator()() {
   DATA_INTEGER(calc_time_totals);
 
   DATA_INTEGER(enable_priors);
+  DATA_INTEGER(ar1_fields);
+  DATA_INTEGER(include_spatial);
+  DATA_INTEGER(random_walk);
+
+  DATA_VECTOR(proj_lon);
+  DATA_VECTOR(proj_lat);
 
   // Distribution
   DATA_INTEGER(family);
@@ -146,7 +146,10 @@ Type objective_function<Type>::operator()() {
   // Projections
   DATA_SPARSE_MATRIX(proj_mesh);
   DATA_MATRIX(proj_X_ij);
+  DATA_MATRIX(proj_X_rw_ik);
   DATA_FACTOR(proj_year);
+
+  DATA_IVECTOR(proj_spatial_index);
 
   // Spatial versus spatiotemporal
   DATA_INTEGER(spatial_only); //
@@ -162,8 +165,11 @@ Type objective_function<Type>::operator()() {
 
   PARAMETER(thetaf);  // tweedie only
   PARAMETER(ln_phi);  // sigma / dispersion / etc.
+  PARAMETER_VECTOR(ln_tau_V);  // random walk sigma
+  PARAMETER(ar1_phi);  // AR1 fields correlation
 
   // Random effects
+  PARAMETER_ARRAY(b_rw_t);    // random walk effects
   // This is a matrix of spatial centers by years
   PARAMETER_VECTOR(omega_s);    // spatial effects; n_s length
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
@@ -175,6 +181,7 @@ Type objective_function<Type>::operator()() {
 
   // Objective function is sum of negative log likelihood components
   Type nll_data = 0;  // likelihood of data
+  Type nll_varphi = 0;      // random walk effects
   Type nll_omega = 0;       // spatial effects
   Type nll_epsilon = 0;     // spatio-temporal effects
   Type nll_priors = 0;     // priors
@@ -194,8 +201,12 @@ Type objective_function<Type>::operator()() {
 
   // Matern:
   Type range = sqrt(Type(8.0)) / exp(ln_kappa);
-  Type sigma_O = 1 / sqrt(Type(4.0) * M_PI *
+
+  if (include_spatial) {
+    Type sigma_O = 1 / sqrt(Type(4.0) * M_PI *
     exp(Type(2.0) * ln_tau_O) * exp(Type(2.0) * ln_kappa));
+    REPORT(sigma_O);
+  }
   Type sigma_E = 1 / sqrt(Type(4.0) * M_PI *
     exp(Type(2.0) * ln_tau_E) * exp(Type(2.0) * ln_kappa));
 
@@ -215,16 +226,38 @@ Type objective_function<Type>::operator()() {
   vector<Type> eta_fixed_i = X_ij * b_j;
   vector<Type> mu_i(n_i), eta_i(n_i);
   for (int i = 0; i < n_i; i++) {
-    eta_i(i) = eta_fixed_i(i) +                // fixed effects
-               omega_s(s_i(i)) +               // spatial
-               epsilon_st(s_i(i), year_i(i));  // spatio-temporal
+    eta_i(i) = eta_fixed_i(i);
+
+    if (random_walk)
+      for (int k = 0; k < X_rw_ik.cols(); k++)
+        eta_i(i) += X_rw_ik(i,k) * b_rw_t(year_i(i), k);
+
+    if (include_spatial)
+      eta_i(i) += omega_s(s_i(i)); // spatial
+    if (year_i(i) == Type(0) || !ar1_fields) {
+      eta_i(i) += epsilon_st(s_i(i), year_i(i));  // spatio-temporal
+    } else { // AR1 and not first time slice:
+      eta_i(i) +=
+        minus_one_to_one(ar1_phi) * epsilon_st(s_i(i), year_prev_i(i)) +
+        epsilon_st(s_i(i), year_i(i));
+    }
     mu_i(i) = InverseLink(eta_i(i), link);
   }
 
   // ------------------ Probability of random effects --------------------------
 
+  // Random walk effects (dynamic regression):
+  if (random_walk) {
+    for (int t = 1; t < n_t; t++) {
+      for (int k = 0; k < X_rw_ik.cols(); k++) {
+        nll_varphi += -dnorm(b_rw_t(t,k), b_rw_t(t - 1,k), exp(ln_tau_V(k)), true);
+      }
+    }
+  }
+
   // Spatial effects:
-  nll_omega += SCALE(GMRF(Q), 1.0 / exp(ln_tau_O))(omega_s);
+    if (include_spatial)
+      nll_omega += SCALE(GMRF(Q), 1.0 / exp(ln_tau_O))(omega_s);
   // Spatiotemporal effects:
   if (!spatial_only) {
     for (int t = 0; t < n_t; t++)
@@ -271,15 +304,39 @@ Type objective_function<Type>::operator()() {
 
   if (do_predict) {
     vector<Type> proj_fe = proj_X_ij * b_j;
+    if (random_walk) {
+      for (int i = 0; i < proj_X_rw_ik.rows(); i++) {
+        for (int k = 0; k < proj_X_rw_ik.cols(); k++) {
+          proj_fe(i) += proj_X_rw_ik(i,k) * b_rw_t(k);
+        }
+      }
+    }
     vector<Type> proj_re_sp = proj_mesh * omega_s;
-    vector<Type> proj_re_sp_st = RepeatVector(proj_re_sp, n_t);
+    vector<Type> proj_re_sp_st_all = RepeatVector(proj_re_sp, n_t);
+    array<Type> proj_re_st_temp(proj_mesh.rows(), n_t);
     array<Type> proj_re_st(proj_mesh.rows(), n_t);
     for (int i = 0; i < n_t; i++)
-      proj_re_st.col(i) = proj_mesh * Array1DToVector(epsilon_st.col(i));
-    vector<Type> proj_re_st_vector = Array2DToVector(proj_re_st);
+      proj_re_st_temp.col(i) = proj_mesh * Array1DToVector(epsilon_st.col(i));
+    for (int i = 0; i < n_t; i++) {
+      if (year_i(i) == Type(0) || !ar1_fields) {
+        proj_re_st.col(i) = proj_re_st_temp.col(i);
+      } else { // AR1 and not first time slice:
+        proj_re_st.col(i) = minus_one_to_one(ar1_phi) * proj_re_st_temp.col(i - 1) +
+          proj_re_st_temp.col(i);
+      }
+    }
+
+    // Pick out the appropriate spatial and/or or spatiotemporal values:
+    vector<Type> proj_re_st_vector(proj_X_ij.rows());
+    vector<Type> proj_re_sp_st(proj_X_ij.rows());
+    for (int i = 0; i < proj_X_ij.rows(); i++) {
+      proj_re_sp_st(i) = proj_re_sp_st_all(proj_spatial_index(i));
+      proj_re_st_vector(i) = proj_re_st(proj_spatial_index(i), proj_year(i));
+    }
+
     vector<Type> proj_eta = proj_fe + proj_re_sp_st + proj_re_st_vector;
     REPORT(proj_fe);           // fixed effect projections
-    REPORT(proj_re_sp);        // spatial random effect projections
+    REPORT(proj_re_sp_st);        // spatial random effect projections
     REPORT(proj_re_st_vector); // spatiotemporal random effect projections
     REPORT(proj_eta);          // combined projections (in link space)
 
@@ -287,6 +344,8 @@ Type objective_function<Type>::operator()() {
 
     if (calc_time_totals) {
       // ------------------ Derived quantities -------------------------------------
+
+      // Total biomass:
       vector<Type> total(n_t);
       for (int i = 0; i < proj_eta.size(); i++)  {
         total(proj_year(i)) += InverseLink(proj_eta(i), link);
@@ -294,15 +353,32 @@ Type objective_function<Type>::operator()() {
       vector<Type> log_total = log(total);
       REPORT(log_total);
       ADREPORT(log_total);
+
+      // CoG:
+      vector<Type> cog_x(n_t);
+      vector<Type> cog_y(n_t);
+      for (int i = 0; i < proj_eta.size(); i++)  {
+        cog_x(proj_year(i)) += proj_lon(i) * InverseLink(proj_eta(i), link);
+        cog_y(proj_year(i)) += proj_lat(i) * InverseLink(proj_eta(i), link);
+      }
+      for (int i = 0; i < n_t; i++)  {
+        cog_x(i) = cog_x(i) / total(i);
+        cog_y(i) = cog_y(i) / total(i);
+      }
+      REPORT(cog_x);
+      ADREPORT(cog_x);
+      REPORT(cog_y);
+      ADREPORT(cog_y);
     }
   }
 
   // ------------------ Reporting ----------------------------------------------
 
   REPORT(b_j)          // fixed effect parameters
+  REPORT(b_rw_t)          // fixed effect parameters
   REPORT(ln_tau_O);    // spatial process ln SD
   REPORT(ln_tau_E);    // spatio-temporal process ln SD
-  REPORT(sigma_O);
+  REPORT(ln_tau_V);    // spatio-temporal process ln SD
   REPORT(sigma_E);
   REPORT(ln_phi);      // observation dispersion (depends on the distribution)
   REPORT(thetaf);      // observation Tweedie mixing parameter
@@ -315,6 +391,6 @@ Type objective_function<Type>::operator()() {
 
   // ------------------ Joint negative log likelihood --------------------------
 
-  Type jnll = nll_data + nll_omega + nll_epsilon + nll_priors;
+  Type jnll = nll_data + nll_omega + nll_varphi + nll_epsilon + nll_priors;
   return jnll;
 }

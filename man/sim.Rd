@@ -5,15 +5,25 @@
 \title{Simulate from a spatial Matern Random Field}
 \usage{
 sim(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
-  time_steps = 1L, sigma_O = 0.4, sigma_E = 0.3, kappa = 1.3,
-  phi = 0.2, seed = sample.int(1e+06, 1), plot = FALSE)
+  time_steps = 1L, ar1_fields = FALSE, ar1_phi = 0.5,
+  sigma_O = 0.4, sigma_E = 0.3, kappa = 1.3, phi = 0.2,
+  seed = sample.int(1e+06, 1), plot = FALSE)
 }
 \arguments{
 \item{x}{A vector of x coordinates.}
 
 \item{y}{A vector of y coordinates.}
 
+\item{time_steps}{The number of time steps.}
+
+\item{ar1_fields}{Should random field draws be dependent on the previous year
+(\code{TRUE}) or not (\code{FALSE}).}
+
+\item{ar1_phi}{Correlation between years; should be between -1 and 1.}
+
 \item{sigma_O}{SD of spatial process (Omega).}
+
+\item{sigma_E}{SD of spatiotemporal process (Epsilon).}
 
 \item{kappa}{Parameter that controls the decay of spatial correlation.}
 
@@ -34,11 +44,28 @@ set.seed(2957278)
 dat <- sim(time_steps = 9, plot = TRUE)
 spde <- make_spde(x = dat$x, y = dat$y, n_knots = 200)
 plot_spde(spde)
-m <- sdmTMB(data = dat, formula = z ~ 1, time = "time",
-  family = gaussian(link = "identity"), spde = spde)
+m <- sdmTMB(
+  data = dat, formula = z ~ 1, time = "time",
+  family = gaussian(link = "identity"), spde = spde
+)
 r <- m$tmb_obj$report()
 r$sigma_O
 r$sigma_E
 s <- TMB::sdreport(m$tmb_obj)
 head(summary(s))
+
+set.seed(1838)
+dat <- sim(
+  time_steps = 9, ar1_fields = TRUE, ar1_phi = 0.5,
+  plot = TRUE, sigma_O = 0.01, sigma_E = 0.3, phi = 0.01
+)
+spde <- make_spde(x = dat$x, y = dat$y, n_knots = 120)
+m <- sdmTMB(silent = FALSE, ar1_fields = TRUE, include_spatial = FALSE,
+  data = dat, formula = z ~ 1, time = "time",
+  family = gaussian(link = "identity"), spde = spde
+)
+r <- m$tmb_obj$report()
+r$sigma_E
+exp(r$ln_kappa)
+2 * plogis(m$model$par[['ar1_phi']]) - 1
 }
