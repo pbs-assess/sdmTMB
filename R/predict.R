@@ -112,10 +112,17 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
   tmb_data$do_predict <- 1L
 
   if (!is.null(newdata)) {
-    newdata_one_slice <- newdata[newdata[[object$time]] ==
-        min(newdata[[object$time]]), xy_cols, drop = FALSE]
+
+    newdata$sdm_orig_id <- seq(1, nrow(newdata))
+    fake_newdata <- unique(newdata[,xy_cols])
+    fake_newdata[["sdm_spatial_id"]] <- seq(1, nrow(fake_newdata)) - 1L
+
+    newdata <- base::merge(newdata, fake_newdata, by = xy_cols,
+      all.x = TRUE, all.y = FALSE)
+    newdata <- newdata[order(newdata$sdm_orig_id),, drop=FALSE]
+
     proj_mesh <- INLA::inla.spde.make.A(object$spde$mesh,
-      loc = as.matrix(newdata_one_slice))
+      loc = as.matrix(fake_newdata[,xy_cols, drop = FALSE]))
 
     nd <- newdata
     nd[[get_response(object$formula)]] <- 0 # fake for model.matrix
@@ -133,6 +140,8 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     tmb_data$proj_lat <- newdata[[xy_cols[[2]]]]
     tmb_data$calc_se <- as.integer(se_fit)
     tmb_data$calc_time_totals <- 1L # for now (always on)
+    tmb_data$proj_spatial_index <- newdata$sdm_spatial_id
+
 
     new_tmb_obj <- TMB::MakeADFun(
       data = tmb_data,
@@ -153,8 +162,11 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
 
     nd$est <- r$proj_eta
     nd$est_fe <- r$proj_fe
-    nd$est_re_s <- r$proj_re_sp
+    nd$est_re_s <- r$proj_re_sp_st
     nd$est_re_st <- r$proj_re_st_vector
+    nd$sdm_spatial_id <- NULL
+    nd$sdm_orig_id <- NULL
+
     obj <- new_tmb_obj
 
     if (se_fit) {

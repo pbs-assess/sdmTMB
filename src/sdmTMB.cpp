@@ -13,19 +13,6 @@ Type minus_one_to_one(Type x){
 }
 
 template <class Type>
-vector<Type> Array2DToVector(array<Type> x) {
-  x = x.transpose();
-  int nr = x.rows();
-  int nc = x.cols();
-  vector<Type> res(nr * nc);
-  for (int i = 0; i < nr; i++)
-    for (int j = 0; j < nc; j++) {
-      res[i * nc + j] = x(i, j);
-    }
-    return res;
-}
-
-template <class Type>
 matrix<Type> MakeH(vector<Type> x) {
 
   matrix<Type> H(2, 2);
@@ -147,6 +134,8 @@ Type objective_function<Type>::operator()() {
   DATA_MATRIX(proj_X_ij);
   DATA_MATRIX(proj_X_rw_ik);
   DATA_FACTOR(proj_year);
+
+  DATA_IVECTOR(proj_spatial_index);
 
   // Spatial versus spatiotemporal
   DATA_INTEGER(spatial_only); //
@@ -309,7 +298,7 @@ Type objective_function<Type>::operator()() {
       }
     }
     vector<Type> proj_re_sp = proj_mesh * omega_s;
-    vector<Type> proj_re_sp_st = RepeatVector(proj_re_sp, n_t);
+    vector<Type> proj_re_sp_st_all = RepeatVector(proj_re_sp, n_t);
     array<Type> proj_re_st_temp(proj_mesh.rows(), n_t);
     array<Type> proj_re_st(proj_mesh.rows(), n_t);
     for (int i = 0; i < n_t; i++)
@@ -322,10 +311,18 @@ Type objective_function<Type>::operator()() {
           proj_re_st_temp.col(i);
       }
     }
-    vector<Type> proj_re_st_vector = Array2DToVector(proj_re_st);
+
+    // Pick out the appropriate spatial and/or or spatiotemporal values:
+    vector<Type> proj_re_st_vector(proj_X_ij.rows());
+    vector<Type> proj_re_sp_st(proj_X_ij.rows());
+    for (int i = 0; i < proj_X_ij.rows(); i++) {
+      proj_re_sp_st(i) = proj_re_sp_st_all(proj_spatial_index(i));
+      proj_re_st_vector(i) = proj_re_st(proj_spatial_index(i), proj_year(i));
+    }
+
     vector<Type> proj_eta = proj_fe + proj_re_sp_st + proj_re_st_vector;
     REPORT(proj_fe);           // fixed effect projections
-    REPORT(proj_re_sp);        // spatial random effect projections
+    REPORT(proj_re_sp_st);        // spatial random effect projections
     REPORT(proj_re_st_vector); // spatiotemporal random effect projections
     REPORT(proj_eta);          // combined projections (in link space)
 
