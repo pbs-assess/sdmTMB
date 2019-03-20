@@ -371,7 +371,7 @@ all_iter <- purrr::pmap(args, sim_predictions,
 If input parameter values varied, parameter and predicted dataframes need to be combined
 ```{r, warning= FALSE}
 inputs_spread <- all_iter %>% map(~ .x[["par"]]) %>% bind_rows() %>% select( iter, parameter, inputs) %>% tidyr::spread(., key = parameter, value = c(inputs))
-#inputs_spread$iter <- as.factor(inputs_spread$iter)
+inputs_spread$iter <- as.factor(inputs_spread$iter)
 allpredictions <- all_iter %>% map(~ .x[["allpredicted"]]) %>% bind_rows(.id = "iter") %>% left_join(., inputs_spread, by = "iter")
 allunsampled <- all_iter %>% map(~ .x[["unsampled"]]) %>% bind_rows(.id = "iter") %>% left_join(., inputs_spread, by = "iter")
 ```
@@ -396,7 +396,9 @@ predictions_by_iter <- all_iter %>% map(~ .x[["allpredicted"]]) # %>% bind_rows(
 
 ```{r , eval =FALSE}
 spatial.bias.plots <- purrr::map(predictions_by_iter, plot_map_diff, time_periods = c(1,2,3))
+# pdf("spatial-bias-plots.pdf")
 spatial.bias.plots
+# dev.off()
 ```
 
 
@@ -427,8 +429,8 @@ Histogram plotting function for error in parameter estimates\
 
 ```{r}
 par_error_hist <- function(dataframe = params,
-                           x = dataframe$std_diff,
-                           xlabel = "Relative difference from input value",
+                           standardize = TRUE,
+                           xlabel = "Difference from input value",
                            fill = dataframe$converg,
                            notes = "if 2 colours, than some models did not converg",
                            bin_number = n/2){
@@ -436,7 +438,7 @@ par_error_hist <- function(dataframe = params,
   dataframe <- dataframe %>% group_by(parameter) %>%
     mutate(sd_est = sd(estimates), n = n()) %>%
     group_by(iter, parameter) %>%
-    mutate(diff = (inputs - estimates), std_diff = (inputs - estimates)/sd_est) %>%
+    mutate(diff = (estimates - inputs), std_diff = (estimates - inputs)/sd_est) %>%
     ungroup()
 
   n <- dataframe$n[1]
@@ -444,6 +446,8 @@ par_error_hist <- function(dataframe = params,
   initial <- dataframe %>% group_by(parameter) %>% summarize(initial = mean(inputs), sd = round(mean(sd_est), 3))
   table <- gridExtra::tableGrob(initial, rows = NULL)
 
+  if (standardize == TRUE) { x = dataframe$std_diff } else { x = dataframe$diff }
+  
   fill <- as.factor(fill)
   plot <- ggplot(data = dataframe, aes(x = x)) +
     geom_histogram(aes(fill = fill), bins = binn)  +
@@ -458,7 +462,7 @@ par_error_hist <- function(dataframe = params,
     draw_plot(table, x = .7, y = 0.1, width = .3, height = .3) +
     draw_plot(text, x = .7, y = -.3, width = .3, height = .3)
 }
-par.hist <- par_error_hist(params)
+par.hist <- par_error_hist(params, standardize = FALSE, xlabel = "Difference from input value")
 par.hist
 ```
 
