@@ -82,6 +82,7 @@ NULL
 #' sp <- make_spde(pcod$X, pcod$Y, n_knots = 25)
 #' plot_spde(sp)
 #'
+#' \donttest{
 #' loc_xy <- cbind(pcod$X, pcod$Y)
 #' bnd <- INLA::inla.nonconvex.hull(as.matrix(loc_xy), convex = -0.05)
 #' mesh <- INLA::inla.mesh.2d(
@@ -93,6 +94,7 @@ NULL
 #' )
 #' sp2 <- make_spde(pcod$X, pcod$Y, mesh = mesh)
 #' plot_spde(sp2)
+#' }
 
 make_spde <- function(x, y, n_knots, seed = 42, mesh = NULL) {
   loc_xy <- cbind(x, y)
