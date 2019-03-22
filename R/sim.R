@@ -2,6 +2,8 @@
 #'
 #' @param x A vector of x coordinates.
 #' @param y A vector of y coordinates.
+#' @param X An optional covariate design matrix formatted as a list with each
+#'   element of the list representing a slice in time.
 #' @param time_steps The number of time steps.
 #' @param ar1_fields Should random field draws be dependent on the previous year
 #'   (`TRUE`) or not (`FALSE`).
@@ -11,14 +13,14 @@
 #' @param kappa Parameter that controls the decay of spatial correlation.
 #' @param phi Observation error scale parameter.
 #' @param initial_betas Provide initial beta values, if model will include covariates.
-#' @param timevarying Logical for if beta changes through time via a random walk.
-#' @param year_sigma Correlation between beta for time t and t-1.
+#' @param year_sigma Standard deviation of time-varying random walk on
+#'   parameters. Set to 0 for parameters that should not vary through time.
 #' @param seed A random seed.
 #' @param plot Logical for whether or not to produce a plot.
 #' @param list Logical for whether output is in list format:
 #'    data in list element [1] and input values in [2].
 #'
-#' @return A data frame. The column `z` represents the simulated process.
+#' @return A data fram36e. The column `z` represents the simulated process.
 #' @export
 #'
 #' @examples
