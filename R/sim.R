@@ -53,8 +53,8 @@
 #' 2 * plogis(m$model$par[["ar1_phi"]]) - 1
 sim <- function(x = stats::runif(400, 0, 10),
                 y = stats::runif(400, 0, 10),
+                X = NULL,
                 initial_betas = NULL,
-                timevarying = FALSE,
                 year_sigma = 0,
                 time_steps = 1L,
                 ar1_fields = FALSE,
@@ -93,74 +93,56 @@ sim <- function(x = stats::runif(400, 0, 10),
   }
   epsilon_st <- do.call("c", epsilon_st)
 
-  # create betas for each covariate j
+  # create betas for each covariate k
   if (n_covariates > 0) {
     B <- matrix(ncol = n_covariates, nrow = time_steps)
-    B[1,] <- initial_betas
-    if (timevarying && year_sigma > 0) {
-      for (j in seq_len(n_covariates)) {
-        for (i in 2:time_steps) {
-          B[i,j] <- B[i-1,j] + rnorm(1, 0, year_sigma)
+    B[1, ] <- initial_betas
+    if (time_steps > 1) {
+      for (k in seq_len(n_covariates)) {
+        for (i in seq(2, time_steps)) {
+          B[i, k] <- B[i - 1, k] + stats::rnorm(1, 0, year_sigma[k])
         }
       }
-    } else {
-      B <- initial_betas
     }
+
+    # creat covariate matrix
+    eta <- list()
+    cov_mat <- list()
+    for (i in seq_len(time_steps)) {
+      if (is.null(X)) {
+        cov_mat[[i]] <- matrix(stats::rnorm(length(x)),
+          ncol = n_covariates, nrow = length(x)
+        )
+      } else {
+        cov_mat[[i]] <- X[[i]]
+      }
+      eta[[i]] <- cov_mat[[i]] %*% B[i, ]
+    }
+    cov_mat <- do.call("rbind", cov_mat)
+    eta <- do.call("c", eta)
   } else {
-    eta <- 0
+    eta <- vector("numeric", length = length(x) * time_steps)
   }
 
-  # creat covariate matrix
-
-  if (timevarying && year_sigma > 0) {
-    time_matrix <- model.matrix( ~ t - 1, data.frame( t = gl(time_steps, length(x))))
-    matrix_per_covariate <- list()
-    for (j in seq_len(n_covariates)) {
-      matrix_per_covariate[[j]] <- matrix(1, ncol = time_steps, nrow = length(x)*time_steps)
-      for (i in seq_len(time_steps)) {
-        matrix_per_covariate[[j]][,i] <- rnorm(length(x)*time_steps, 0, 1)
-      }
-    }
-    matrix_list <- list()
-    cov_eta_matrix <- list()
-    for (j in seq_len(n_covariates)) {
-      matrix_list[[j]] <- matrix_per_covariate[[j]]*time_matrix
-      old_name <- colnames(matrix_list[[j]])
-      cov_eta_matrix[[j]] <- t(apply(matrix_list[[j]],1,function (x) {x*t(B[,j])})) #*time_matrix
-      colnames(cov_eta_matrix[[j]]) <- paste0("V", j, old_name)
-      cov_eta_matrix[[j]] <- dplyr::as_tibble(cov_eta_matrix[[j]])
-      }
-    eta_matrix <- dplyr::bind_cols(cov_eta_matrix)
-   # No fixed year effect so next line not needed
-    #model_matrix <- cbind(dplyr::as_tibble(time_matrix),dplyr::bind_cols(eta_matrix))
-  } else { # for none time-varying...
-    #time_matrix <- model.matrix( ~ t - 1, data.frame( t = gl(time_steps, length(x))))
-    covariates <- matrix(1, ncol = n_covariates, nrow = length(x)*time_steps)
-    raw_eta_matrix <- matrix(1, ncol = n_covariates, nrow = length(x)*time_steps)
-    for (j in seq_len(n_covariates)) {
-      covariates[,j] <- rnorm(length(x)*time_steps, 0, 1)
-      raw_eta_matrix[,j] <- covariates[,j]*B[j]
-      eta_matrix <- dplyr::as_tibble(raw_eta_matrix, names = paste0("V", j))
-    }
-    # No fixed year effect so next line not needed
-    #model_matrix <- cbind(dplyr::as_tibble(time_matrix),dplyr::as_tibble(covariates))
-  }
-
-  if (n_covariates>0){
-  eta <- rowSums(eta_matrix)
-  }
-
-  d <- data.frame(x, y, eta = as.vector(eta, mode = "double"),
+  d <- data.frame(
     time = rep(seq_len(time_steps), each = length(x)),
-    omega_s = rep(omega_s, time_steps), epsilon_st = epsilon_st
+    x, y,
+    omega_s = rep(omega_s, time_steps), epsilon_st = epsilon_st,
+    eta = eta
   )
-  d$real_z <- d$eta + d$omega_s + d$epsilon_st
+  d$real <- d$eta + d$omega_s + d$epsilon_st
+  d$observed <- stats::rnorm(nrow(d), mean = d$real, sd = phi)
 
-  # adds in observation error
-  d$z <- stats::rnorm(nrow(d), mean = d$real_z, sd = phi)
+  B <- as.data.frame(B[rep(seq_len(time_steps), each = length(x)),])
+  names(B) <- gsub("V", "b", names(B))
+  d <- cbind(d, B)
+
+  cov_mat <- as.data.frame(cov_mat)
+  names(cov_mat) <- gsub("V", "cov_", names(cov_mat))
+  d <- cbind(d, cov_mat)
 
   if (plot) {
-    g <- ggplot2::ggplot(d, ggplot2::aes_string("x", "y", colour = "z")) +
+    g <- ggplot2::ggplot(d, ggplot2::aes_string("x", "y", colour = "observed")) +
       ggplot2::geom_point() +
       ggplot2::facet_wrap(~time) +
       ggplot2::scale_color_gradient2()
@@ -168,18 +150,19 @@ sim <- function(x = stats::runif(400, 0, 10),
   }
 
   if (list) {
-  sim_out <-list (d, inputs = list(ar1_phi=ar1_phi,
-                       sigma_O = sigma_O,
-                       sigma_E = sigma_E,
-                       kappa = kappa,
-                       phi = phi,
-                       initial_betas = initial_betas,
-                       timevarying = timevarying,
-                       year_sigma = year_sigma))
-  sim_out
+    sim_out <- list(d, inputs = list(
+      ar1_phi = ar1_phi,
+      sigma_O = sigma_O,
+      sigma_E = sigma_E,
+      kappa = kappa,
+      phi = phi,
+      initial_betas = initial_betas,
+      year_sigma = year_sigma
+    ))
+    sim_out
   } else {
-  d
-}
+    d
+  }
 }
 ## sim_args1 <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
 ##   time_steps = 1L, ar1_fields = FALSE, ar1_phi = 0.5,
