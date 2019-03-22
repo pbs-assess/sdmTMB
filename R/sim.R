@@ -10,8 +10,13 @@
 #' @param sigma_E SD of spatiotemporal process (Epsilon).
 #' @param kappa Parameter that controls the decay of spatial correlation.
 #' @param phi Observation error scale parameter.
+#' @param initial_betas Provide initial beta values, if model will include covariates.
+#' @param timevarying Logical for if beta changes through time via a random walk.
+#' @param year_sigma Correlation between beta for time t and t-1.
 #' @param seed A random seed.
 #' @param plot Logical for whether or not to produce a plot.
+#' @param list Logical for whether output is in list format:
+#'    data in list element [1] and input values in [2].
 #'
 #' @return A data frame. The column `z` represents the simulated process.
 #' @export
@@ -48,13 +53,10 @@
 #' 2 * plogis(m$model$par[["ar1_phi"]]) - 1
 sim <- function(x = stats::runif(400, 0, 10),
                 y = stats::runif(400, 0, 10),
-
-                n_covariates = 2,
-                timevarying = TRUE,
-                B_initial = 0.2,
-                year_sigma = 0.5,
-
-                time_steps = 3L,
+                initial_betas = NULL,
+                timevarying = FALSE,
+                year_sigma = 0,
+                time_steps = 1L,
                 ar1_fields = FALSE,
                 ar1_phi = 0.5,
                 sigma_O = 0.4,
@@ -62,13 +64,14 @@ sim <- function(x = stats::runif(400, 0, 10),
                 kappa = 1.3,
                 phi = 0.2,
                 seed = sample.int(1e6, 1),
-                plot = FALSE) {
+                plot = FALSE,
+                list = FALSE) {
   if (!identical(length(x), length((y)))) {
     stop("`x` and `y` must be of the same length.")
   }
 
   set.seed(seed)
-
+  n_covariates <- length(initial_betas)
   # spatial random effects: omega
   rf_omega <- RandomFields::RMmatern(nu = 1, var = sigma_O^2, scale = 1 / kappa)
   omega_s <- rf_sim(model = rf_omega, x, y)
@@ -90,23 +93,26 @@ sim <- function(x = stats::runif(400, 0, 10),
   }
   epsilon_st <- do.call("c", epsilon_st)
 
-
   # create betas for each covariate j
   if (n_covariates > 0) {
     B <- matrix(ncol = n_covariates, nrow = time_steps)
-    B[1,] <- B_initial
-    if (timevarying) {
+    B[1,] <- initial_betas
+    if (timevarying && year_sigma > 0) {
       for (j in seq_len(n_covariates)) {
         for (i in 2:time_steps) {
           B[i,j] <- B[i-1,j] + rnorm(1, 0, year_sigma)
         }
       }
+    } else {
+      B <- initial_betas
     }
+  } else {
+    eta <- 0
   }
 
   # creat covariate matrix
 
-  if (timevarying) {
+  if (timevarying && year_sigma > 0) {
     time_matrix <- model.matrix( ~ t - 1, data.frame( t = gl(time_steps, length(x))))
     matrix_per_covariate <- list()
     for (j in seq_len(n_covariates)) {
@@ -118,12 +124,6 @@ sim <- function(x = stats::runif(400, 0, 10),
     matrix_list <- list()
     cov_eta_matrix <- list()
     for (j in seq_len(n_covariates)) {
-      #matrix_list[[j]] <- matrix_per_covariate[[j]]*time_matrix
-      #   eta <- as.vector((t(B)) %*% t(matrix_list[[j]]), mode = "double")
-      #   eta_mat <- matrix(eta, nrow = length(x)*time_steps, byrow = TRUE)
-      #
-      # }
-      #
       matrix_list[[j]] <- matrix_per_covariate[[j]]*time_matrix
       old_name <- colnames(matrix_list[[j]])
       cov_eta_matrix[[j]] <- t(apply(matrix_list[[j]],1,function (x) {x*t(B[,j])})) #*time_matrix
@@ -134,26 +134,29 @@ sim <- function(x = stats::runif(400, 0, 10),
    # No fixed year effect so next line not needed
     #model_matrix <- cbind(dplyr::as_tibble(time_matrix),dplyr::bind_cols(eta_matrix))
   } else { # for none time-varying...
-    time_matrix <- model.matrix( ~ t - 1, data.frame( t = gl(time_steps, length(x))))
+    #time_matrix <- model.matrix( ~ t - 1, data.frame( t = gl(time_steps, length(x))))
     covariates <- matrix(1, ncol = n_covariates, nrow = length(x)*time_steps)
+    raw_eta_matrix <- matrix(1, ncol = n_covariates, nrow = length(x)*time_steps)
     for (j in seq_len(n_covariates)) {
       covariates[,j] <- rnorm(length(x)*time_steps, 0, 1)
-      raw_eta_matrix[,j] <- t(apply(covariates[,j],1,function (x) {x*t(B[,j])}))
+      raw_eta_matrix[,j] <- covariates[,j]*B[j]
       eta_matrix <- dplyr::as_tibble(raw_eta_matrix, names = paste0("V", j))
     }
     # No fixed year effect so next line not needed
     #model_matrix <- cbind(dplyr::as_tibble(time_matrix),dplyr::as_tibble(covariates))
   }
 
-# STILL NEED TO MERGE IN FIXED EFFECTS
+  if (n_covariates>0){
   eta <- rowSums(eta_matrix)
+  }
+
   d <- data.frame(x, y, eta = as.vector(eta, mode = "double"),
     time = rep(seq_len(time_steps), each = length(x)),
     omega_s = rep(omega_s, time_steps), epsilon_st = epsilon_st
   )
   d$real_z <- d$eta + d$omega_s + d$epsilon_st
 
-  # adds in observation error?
+  # adds in observation error
   d$z <- stats::rnorm(nrow(d), mean = d$real_z, sd = phi)
 
   if (plot) {
@@ -163,11 +166,21 @@ sim <- function(x = stats::runif(400, 0, 10),
       ggplot2::scale_color_gradient2()
     print(g)
   }
-  d
-  # list (d, inputs = c(ar1_phi=ar1_phi,
-  # sigma_O=sigma_O, sigma_E=sigma_E, kappa=kappa, phi=phi)
-}
 
+  if (list) {
+  sim_out <-list (d, inputs = list(ar1_phi=ar1_phi,
+                       sigma_O = sigma_O,
+                       sigma_E = sigma_E,
+                       kappa = kappa,
+                       phi = phi,
+                       initial_betas = initial_betas,
+                       timevarying = timevarying,
+                       year_sigma = year_sigma))
+  sim_out
+  } else {
+  d
+}
+}
 ## sim_args1 <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
 ##   time_steps = 1L, ar1_fields = FALSE, ar1_phi = 0.5,
 ##   sigma_O = 0.4, sigma_E = 0.3, kappa = 1.3, phi = 0.2,
