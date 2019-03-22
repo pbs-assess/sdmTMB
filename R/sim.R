@@ -49,12 +49,12 @@
 sim <- function(x = stats::runif(400, 0, 10),
                 y = stats::runif(400, 0, 10),
 
-                n_covariates = 0,
+                n_covariates = 2,
                 timevarying = TRUE,
                 B_initial = 0.2,
                 year_sigma = 0.5,
 
-                time_steps = 1L,
+                time_steps = 3L,
                 ar1_fields = FALSE,
                 ar1_phi = 0.5,
                 sigma_O = 0.4,
@@ -104,23 +104,6 @@ sim <- function(x = stats::runif(400, 0, 10),
     }
   }
 
-  # # create covariate matrix per time period
-  # if (timevarying) {
-  #   matrix_per_time <- list()
-  #   for (i in 1:time_steps) {
-  #     matrix_per_time[i] <- matrix(ncol = n_covariates, nrow = length(x))
-  #     for (j in seq_len(n_covariates)) {
-  #       matrix_per_time[[i]][[,j]] <- rnorm(length(x), 0, 1)
-  #     }
-  #   }
-  # }
-  #
-
-
-
- #
-
-
   # creat covariate matrix
 
   if (timevarying) {
@@ -133,34 +116,42 @@ sim <- function(x = stats::runif(400, 0, 10),
       }
     }
     matrix_list <- list()
+    cov_eta_matrix <- list()
     for (j in seq_len(n_covariates)) {
-      #Bj <- t(B[,j])
-      matrix_list[[j]] <- t(apply(matrix_per_covariate[[j]],1,function (x) {x*t(B[,j])}))*time_matrix
+      #matrix_list[[j]] <- matrix_per_covariate[[j]]*time_matrix
+      #   eta <- as.vector((t(B)) %*% t(matrix_list[[j]]), mode = "double")
+      #   eta_mat <- matrix(eta, nrow = length(x)*time_steps, byrow = TRUE)
+      #
+      # }
+      #
+      matrix_list[[j]] <- matrix_per_covariate[[j]]*time_matrix
       old_name <- colnames(matrix_list[[j]])
-      colnames(matrix_list[[j]]) <- paste0("B", j, old_name)
-      matrix_list[[j]] <- as_tibble(matrix_list[[j]])
-    }
-    model_matrix <- cbind(as_tibble(time_matrix),bind_cols(matrix_list))
-
+      cov_eta_matrix[[j]] <- t(apply(matrix_list[[j]],1,function (x) {x*t(B[,j])})) #*time_matrix
+      colnames(cov_eta_matrix[[j]]) <- paste0("V", j, old_name)
+      cov_eta_matrix[[j]] <- dplyr::as_tibble(cov_eta_matrix[[j]])
+      }
+    eta_matrix <- dplyr::bind_cols(cov_eta_matrix)
+   # No fixed year effect so next line not needed
+    #model_matrix <- cbind(dplyr::as_tibble(time_matrix),dplyr::bind_cols(eta_matrix))
   } else { # for none time-varying...
-    # time_matrix <- model.matrix( ~ t - 1, data.frame( t = gl(time_steps, length(x))))
-    # covariates <- list()
-    # for (j in seq_len(n_covariates)) {
-    #   matrix_per_covariate[[j]] <- matrix(1, ncol = time_steps, nrow = length(x)*time_steps)
-    #   for (i in seq_len(time_steps)) {
-    #     matrix_per_covariate[[j]][,i] <- rnorm(length(x)*time_steps, 0, 1)
-    # }
-    #   model_matrix <- cbind(as_tibble(time_matrix),bind_cols(matrix_list))
-
+    time_matrix <- model.matrix( ~ t - 1, data.frame( t = gl(time_steps, length(x))))
+    covariates <- matrix(1, ncol = n_covariates, nrow = length(x)*time_steps)
+    for (j in seq_len(n_covariates)) {
+      covariates[,j] <- rnorm(length(x)*time_steps, 0, 1)
+      raw_eta_matrix[,j] <- t(apply(covariates[,j],1,function (x) {x*t(B[,j])}))
+      eta_matrix <- dplyr::as_tibble(raw_eta_matrix, names = paste0("V", j))
+    }
+    # No fixed year effect so next line not needed
+    #model_matrix <- cbind(dplyr::as_tibble(time_matrix),dplyr::as_tibble(covariates))
   }
 
 # STILL NEED TO MERGE IN FIXED EFFECTS
-
-  d <- data.frame(x, y, eta = as.vector(model_matrix, mode = "double"),
+  eta <- rowSums(eta_matrix)
+  d <- data.frame(x, y, eta = as.vector(eta, mode = "double"),
     time = rep(seq_len(time_steps), each = length(x)),
     omega_s = rep(omega_s, time_steps), epsilon_st = epsilon_st
   )
-  d$real_z <- model_matrix + d$omega_s + d$epsilon_st
+  d$real_z <- d$eta + d$omega_s + d$epsilon_st
 
   # adds in observation error?
   d$z <- stats::rnorm(nrow(d), mean = d$real_z, sd = phi)
