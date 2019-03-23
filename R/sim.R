@@ -53,6 +53,21 @@
 #' r$sigma_E
 #' exp(r$ln_kappa)
 #' 2 * plogis(m$model$par[["ar1_phi"]]) - 1
+#'
+#' d <- sim(x = runif(100), y = runif(100), initial_betas = c(-0.2, 0.2),
+#'   year_sigma = c(0.1, 0.1), time_steps = 10, phi = 0.1, ar1_fields = TRUE,
+#'   ar1_phi = 0.5, plot = TRUE, sigma_O = 0.001, sigma_E = 0.3)
+#' spde <- make_spde(d$x, d$y, n_knots = 50)
+#' m <- sdmTMB(data = d, formula = observed ~ 1, time = "time",
+#'   time_varying = ~ 0 + cov_1 + cov_2,
+#'   silent = FALSE, ar1_fields = TRUE,
+#'   include_spatial = FALSE, spde = spde)
+#' m$model$par
+#' r <- m$tmb_obj$report()
+#' r$b_rw_t
+#' unique(d[,c("b1", "b2")])
+#' exp(r$ln_tau_V)
+
 sim <- function(x = stats::runif(400, 0, 10),
                 y = stats::runif(400, 0, 10),
                 X = NULL,
