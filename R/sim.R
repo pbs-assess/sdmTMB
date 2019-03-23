@@ -107,21 +107,19 @@ sim <- function(x = stats::runif(400, 0, 10),
       }
     }
 
-    # creat covariate matrix
-    eta <- list()
-    cov_mat <- list()
-    for (i in seq_len(time_steps)) {
-      if (is.null(X)) {
-        cov_mat[[i]] <- matrix(stats::rnorm(length(x)),
-          ncol = n_covariates, nrow = length(x)
-        )
-      } else {
-        cov_mat[[i]] <- X[[i]]
-      }
-      eta[[i]] <- cov_mat[[i]] %*% B[i, ]
+    if (is.null(X)) {
+      cov_mat <-  matrix(stats::rnorm(length(x) * n_covariates * time_steps),
+        ncol = n_covariates, nrow = length(x) * time_steps)
+      cov_mat <- as.data.frame(cov_mat)
+      names(cov_mat) <- gsub("V", "cov_", names(cov_mat))
+    } else {
+      cov_mat <- X
     }
-    cov_mat <- do.call("rbind", cov_mat)
-    eta <- do.call("c", eta)
+
+    B <- as.data.frame(B[rep(seq_len(time_steps), each = length(x)),])
+    names(B) <- gsub("V", "b", names(B))
+
+    eta <- rowSums(B * cov_mat)
   } else {
     eta <- vector("numeric", length = length(x) * time_steps)
   }
@@ -135,13 +133,10 @@ sim <- function(x = stats::runif(400, 0, 10),
   d$real <- d$eta + d$omega_s + d$epsilon_st
   d$observed <- stats::rnorm(nrow(d), mean = d$real, sd = phi)
 
-  B <- as.data.frame(B[rep(seq_len(time_steps), each = length(x)),])
-  names(B) <- gsub("V", "b", names(B))
-  d <- cbind(d, B)
-
-  cov_mat <- as.data.frame(cov_mat)
-  names(cov_mat) <- gsub("V", "cov_", names(cov_mat))
-  d <- cbind(d, cov_mat)
+  if (n_covariates > 0) {
+    d <- cbind(d, B)
+    d <- cbind(d, cov_mat)
+  }
 
   if (plot) {
     g <- ggplot2::ggplot(d, ggplot2::aes_string("x", "y", colour = "observed")) +
@@ -152,7 +147,7 @@ sim <- function(x = stats::runif(400, 0, 10),
   }
 
   if (list) {
-    sim_out <- list(d, inputs = list(
+    sim_out <- list(data = d, inputs = list(
       ar1_phi = ar1_phi,
       sigma_O = sigma_O,
       sigma_E = sigma_E,
