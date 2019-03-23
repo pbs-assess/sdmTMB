@@ -13,12 +13,12 @@
 #' @param kappa Parameter that controls the decay of spatial correlation.
 #' @param phi Observation error scale parameter.
 #' @param initial_betas Provide initial beta values, if model will include covariates.
-#' @param year_sigma Standard deviation of time-varying random walk on
+#' @param sigma_V Standard deviation of time-varying random walk on
 #'   parameters. Set to 0 for parameters that should not vary through time.
 #' @param seed A random seed.
 #' @param plot Logical for whether or not to produce a plot.
 #' @param list Logical for whether output is in list format:
-#'    data in list element [1] and input values in [2].
+#'    data in list element 1 and input values in element 2.
 #'
 #' @return A data fram36e. The column `z` represents the simulated process.
 #' @export
@@ -29,7 +29,7 @@
 #' spde <- make_spde(x = dat$x, y = dat$y, n_knots = 200)
 #' plot_spde(spde)
 #' m <- sdmTMB(
-#'   data = dat, formula = z ~ 1, time = "time",
+#'   data = dat, formula = observed ~ 1, time = "time",
 #'   family = gaussian(link = "identity"), spde = spde
 #' )
 #' r <- m$tmb_obj$report()
@@ -46,7 +46,7 @@
 #' spde <- make_spde(x = dat$x, y = dat$y, n_knots = 120)
 #' m <- sdmTMB(
 #'   silent = FALSE, ar1_fields = TRUE, include_spatial = FALSE,
-#'   data = dat, formula = z ~ 1, time = "time",
+#'   data = dat, formula = observed ~ 1, time = "time",
 #'   family = gaussian(link = "identity"), spde = spde
 #' )
 #' r <- m$tmb_obj$report()
@@ -55,7 +55,7 @@
 #' 2 * plogis(m$model$par[["ar1_phi"]]) - 1
 #'
 #' d <- sim(x = runif(100), y = runif(100), initial_betas = c(-0.2, 0.2),
-#'   year_sigma = c(0.1, 0.1), time_steps = 10, phi = 0.1, ar1_fields = TRUE,
+#'   sigma_V = c(0.1, 0.1), time_steps = 10, phi = 0.1, ar1_fields = TRUE,
 #'   ar1_phi = 0.5, plot = TRUE, sigma_O = 0.001, sigma_E = 0.3)
 #' spde <- make_spde(d$x, d$y, n_knots = 50)
 #' m <- sdmTMB(data = d, formula = observed ~ 1, time = "time",
@@ -72,7 +72,7 @@ sim <- function(x = stats::runif(400, 0, 10),
                 y = stats::runif(400, 0, 10),
                 X = NULL,
                 initial_betas = NULL,
-                year_sigma = 0,
+                sigma_V = 0,
                 time_steps = 1L,
                 ar1_fields = FALSE,
                 ar1_phi = 0.5,
@@ -117,7 +117,7 @@ sim <- function(x = stats::runif(400, 0, 10),
     if (time_steps > 1) {
       for (k in seq_len(n_covariates)) {
         for (i in seq(2, time_steps)) {
-          B[i, k] <- B[i - 1, k] + stats::rnorm(1, 0, year_sigma[k])
+          B[i, k] <- B[i - 1, k] + stats::rnorm(1, 0, sigma_V[k])
         }
       }
     }
@@ -169,7 +169,7 @@ sim <- function(x = stats::runif(400, 0, 10),
       kappa = kappa,
       phi = phi,
       initial_betas = initial_betas,
-      year_sigma = year_sigma
+      sigma_V = sigma_V
     ))
     sim_out
   } else {

@@ -5,7 +5,7 @@
 \title{Simulate from a spatial Matern Random Field}
 \usage{
 sim(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
-  X = NULL, initial_betas = NULL, year_sigma = 0, time_steps = 1L,
+  X = NULL, initial_betas = NULL, sigma_V = 0, time_steps = 1L,
   ar1_fields = FALSE, ar1_phi = 0.5, sigma_O = 0.4, sigma_E = 0.3,
   kappa = 1.3, phi = 0.2, seed = sample.int(1e+06, 1),
   plot = FALSE, list = FALSE)
@@ -20,7 +20,7 @@ element of the list representing a slice in time.}
 
 \item{initial_betas}{Provide initial beta values, if model will include covariates.}
 
-\item{year_sigma}{Standard deviation of time-varying random walk on
+\item{sigma_V}{Standard deviation of time-varying random walk on
 parameters. Set to 0 for parameters that should not vary through time.}
 
 \item{time_steps}{The number of time steps.}
@@ -43,7 +43,7 @@ parameters. Set to 0 for parameters that should not vary through time.}
 \item{plot}{Logical for whether or not to produce a plot.}
 
 \item{list}{Logical for whether output is in list format:
-data in list element \link{1} and input values in \link{2}.}
+data in list element 1 and input values in element 2.}
 }
 \value{
 A data fram36e. The column \code{z} represents the simulated process.
@@ -57,7 +57,7 @@ dat <- sim(time_steps = 9, plot = TRUE)
 spde <- make_spde(x = dat$x, y = dat$y, n_knots = 200)
 plot_spde(spde)
 m <- sdmTMB(
-  data = dat, formula = z ~ 1, time = "time",
+  data = dat, formula = observed ~ 1, time = "time",
   family = gaussian(link = "identity"), spde = spde
 )
 r <- m$tmb_obj$report()
@@ -74,7 +74,7 @@ dat <- sim(
 spde <- make_spde(x = dat$x, y = dat$y, n_knots = 120)
 m <- sdmTMB(
   silent = FALSE, ar1_fields = TRUE, include_spatial = FALSE,
-  data = dat, formula = z ~ 1, time = "time",
+  data = dat, formula = observed ~ 1, time = "time",
   family = gaussian(link = "identity"), spde = spde
 )
 r <- m$tmb_obj$report()
@@ -83,7 +83,7 @@ exp(r$ln_kappa)
 2 * plogis(m$model$par[["ar1_phi"]]) - 1
 
 d <- sim(x = runif(100), y = runif(100), initial_betas = c(-0.2, 0.2),
-  year_sigma = c(0.1, 0.1), time_steps = 10, phi = 0.1, ar1_fields = TRUE,
+  sigma_V = c(0.1, 0.1), time_steps = 10, phi = 0.1, ar1_fields = TRUE,
   ar1_phi = 0.5, plot = TRUE, sigma_O = 0.001, sigma_E = 0.3)
 spde <- make_spde(d$x, d$y, n_knots = 50)
 m <- sdmTMB(data = d, formula = observed ~ 1, time = "time",
