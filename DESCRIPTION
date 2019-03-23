@@ -4,7 +4,8 @@ Title: Fit Spatio-temporal Species Distribution Models with 'TMB'
 Version: 0.0.1.9000
 Authors@R: c(
     person(c("Sean", "C."), "Anderson", email = "sean.anderson@dfo-mpo.gc.ca",
-      role = c("aut", "cre")))
+      role = c("aut", "cre")),
+    person(c("Philina", "A."), "English", role = "ctb"))
 Description: The 'sdmTMB' package implements spatiotemporal GLMM predictive
     process models using 'TMB', 'INLA', and Gaussian Markov random fields.
     One common application is for spatial or spatiotemporal species 
