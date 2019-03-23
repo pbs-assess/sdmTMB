@@ -20,7 +20,15 @@
 #' @param list Logical for whether output is in list format:
 #'    data in list element 1 and input values in element 2.
 #'
-#' @return A data fram36e. The column `z` represents the simulated process.
+#' @return A data frame where:
+#'    `omega_s` represents the simulated spatial random effects.
+#'    `epsilon_st` represents the simulated spatiotemporal random effects.
+#'    `eta` is the estimate based on fixed effects for each point in space and time.
+#'    `real` represents the simulated process without observation error.
+#'    `observed` represents the simulated process with random observation error.
+#'    `b*` contain the beta values for each covariate used to simulate each time slice.
+#'    `cov_*` covariate residuals for each observation.
+
 #' @export
 #'
 #' @examples
