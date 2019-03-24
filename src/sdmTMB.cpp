@@ -8,7 +8,7 @@ bool isNA(Type x)
 }
 
 template <class Type>
-Type dstudent(Type x, Type mean, Type sigma, int give_log = 0)
+Type dstudent(Type x, Type mean, Type sigma, Type df, int give_log = 0)
 {
   // from metRology::dt.scaled()
   // dt((x - mean)/sd, df, ncp = ncp, log = TRUE) - log(sd)
@@ -76,7 +76,9 @@ enum valid_family {
   tweedie_family  = 2,
   poisson_family  = 3,
   Gamma_family    = 4,
-  nbinom2_family  = 5
+  nbinom2_family  = 5,
+  lognormal       = 6,
+  student         = 7
 };
 
 enum valid_link {
@@ -295,7 +297,7 @@ Type objective_function<Type>::operator()()
           nll_data -= dpois(y_i(i), mu_i(i), true);
           break;
         case Gamma_family:
-          s1 = 1. / (pow(exp(ln_phi), 2.));  // s1=shape,ln_phi=CV,shape=1/CV^2
+          s1 = Type(1) / (pow(exp(ln_phi), Type(2)));  // s1=shape,ln_phi=CV,shape=1/CV^2
           nll_data -= dgamma(y_i(i), s1, mu_i(i) / s1, true);
           break;
         case nbinom2_family:
@@ -304,6 +306,12 @@ Type objective_function<Type>::operator()()
           // As in glmmTMB... FIXME honestly I'm not sure what's going on here:
           // s2 = 2. * s1 - log(pow(exp(ln_phi), 2.));     // log(var^2 - mu)
           // nll_data -= dnbinom_robust(y_i(i), s1, s2, true);
+          break;
+        case lognormal:
+          nll_data -= dlnorm(y_i(i), mu_i(i) - pow(exp(ln_phi), Type(2)) / Type(2), exp(ln_phi), true);
+          break;
+        case student:
+          nll_data -= dstudent(y_i(i), mu_i(i), exp(ln_phi), Type(3) /*df*/, true);
           break;
         default:
           error("Family not implemented.");

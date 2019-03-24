@@ -46,7 +46,14 @@ parameters. Set to 0 for parameters that should not vary through time.}
 data in list element 1 and input values in element 2.}
 }
 \value{
-A data fram36e. The column \code{z} represents the simulated process.
+A data frame where:
+\code{omega_s} represents the simulated spatial random effects.
+\code{epsilon_st} represents the simulated spatiotemporal random effects.
+\code{eta} is the estimate based on fixed effects for each point in space and time.
+\code{real} represents the simulated process without observation error.
+\code{observed} represents the simulated process with random observation error.
+\code{b*} contain the beta values for each covariate used to simulate each time slice.
+\code{cov_*} covariate residuals for each observation.
 }
 \description{
 Simulate from a spatial Matern Random Field
