@@ -318,7 +318,7 @@ Type objective_function<Type>::operator()()
     if (random_walk) {
       for (int i = 0; i < proj_X_rw_ik.rows(); i++) {
         for (int k = 0; k < proj_X_rw_ik.cols(); k++) {
-          proj_fe(i) += proj_X_rw_ik(i, k) * b_rw_t(k);
+          proj_fe(i) += proj_X_rw_ik(i, k) * b_rw_t(year_i(i), k);
         }
       }
     }
