@@ -5,15 +5,34 @@
 \title{Simulate from a spatial Matern Random Field}
 \usage{
 sim(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
-  time_steps = 1L, sigma_O = 0.4, sigma_E = 0.3, kappa = 1.3,
-  phi = 0.2, seed = sample.int(1e+06, 1), plot = FALSE)
+  X = NULL, initial_betas = NULL, sigma_V = 0, time_steps = 1L,
+  ar1_fields = FALSE, ar1_phi = 0.5, sigma_O = 0.4, sigma_E = 0.3,
+  kappa = 1.3, phi = 0.2, seed = sample.int(1e+06, 1),
+  plot = FALSE, list = FALSE)
 }
 \arguments{
 \item{x}{A vector of x coordinates.}
 
 \item{y}{A vector of y coordinates.}
 
+\item{X}{An optional covariate design matrix formatted as a list with each
+element of the list representing a slice in time.}
+
+\item{initial_betas}{Provide initial beta values, if model will include covariates.}
+
+\item{sigma_V}{Standard deviation of time-varying random walk on
+parameters. Set to 0 for parameters that should not vary through time.}
+
+\item{time_steps}{The number of time steps.}
+
+\item{ar1_fields}{Should random field draws be dependent on the previous year
+(\code{TRUE}) or not (\code{FALSE}).}
+
+\item{ar1_phi}{Correlation between years; should be between -1 and 1.}
+
 \item{sigma_O}{SD of spatial process (Omega).}
+
+\item{sigma_E}{SD of spatiotemporal process (Epsilon).}
 
 \item{kappa}{Parameter that controls the decay of spatial correlation.}
 
@@ -22,9 +41,19 @@ sim(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
 \item{seed}{A random seed.}
 
 \item{plot}{Logical for whether or not to produce a plot.}
+
+\item{list}{Logical for whether output is in list format:
+data in list element 1 and input values in element 2.}
 }
 \value{
-A data frame. The column \code{z} represents the simulated process.
+A data frame where:
+\code{omega_s} represents the simulated spatial random effects.
+\code{epsilon_st} represents the simulated spatiotemporal random effects.
+\code{eta} is the estimate based on fixed effects for each point in space and time.
+\code{real} represents the simulated process without observation error.
+\code{observed} represents the simulated process with random observation error.
+\code{b*} contain the beta values for each covariate used to simulate each time slice.
+\code{cov_*} covariate residuals for each observation.
 }
 \description{
 Simulate from a spatial Matern Random Field
@@ -34,11 +63,43 @@ set.seed(2957278)
 dat <- sim(time_steps = 9, plot = TRUE)
 spde <- make_spde(x = dat$x, y = dat$y, n_knots = 200)
 plot_spde(spde)
-m <- sdmTMB(data = dat, formula = z ~ 1, time = "time",
-  family = gaussian(link = "identity"), spde = spde)
+m <- sdmTMB(
+  data = dat, formula = observed ~ 1, time = "time",
+  family = gaussian(link = "identity"), spde = spde
+)
 r <- m$tmb_obj$report()
 r$sigma_O
 r$sigma_E
 s <- TMB::sdreport(m$tmb_obj)
 head(summary(s))
+
+set.seed(1838)
+dat <- sim(
+  time_steps = 9, ar1_fields = TRUE, ar1_phi = 0.5,
+  plot = TRUE, sigma_O = 0.01, sigma_E = 0.3, phi = 0.01
+)
+spde <- make_spde(x = dat$x, y = dat$y, n_knots = 120)
+m <- sdmTMB(
+  silent = FALSE, ar1_fields = TRUE, include_spatial = FALSE,
+  data = dat, formula = observed ~ 1, time = "time",
+  family = gaussian(link = "identity"), spde = spde
+)
+r <- m$tmb_obj$report()
+r$sigma_E
+exp(r$ln_kappa)
+2 * plogis(m$model$par[["ar1_phi"]]) - 1
+
+d <- sim(x = runif(100), y = runif(100), initial_betas = c(-0.2, 0.2),
+  sigma_V = c(0.1, 0.1), time_steps = 10, phi = 0.1, ar1_fields = TRUE,
+  ar1_phi = 0.5, plot = TRUE, sigma_O = 0.001, sigma_E = 0.3)
+spde <- make_spde(d$x, d$y, n_knots = 50)
+m <- sdmTMB(data = d, formula = observed ~ 1, time = "time",
+  time_varying = ~ 0 + cov_1 + cov_2,
+  silent = FALSE, ar1_fields = TRUE,
+  include_spatial = FALSE, spde = spde)
+m$model$par
+r <- m$tmb_obj$report()
+r$b_rw_t
+unique(d[,c("b1", "b2")])
+exp(r$ln_tau_V)
 }

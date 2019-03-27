@@ -6,7 +6,9 @@
   tweedie  = 2,
   poisson  = 3,
   Gamma    = 4,
-  nbinom2  = 5
+  nbinom2  = 5,
+  lognormal       = 6,
+  student         = 7
 )
 .valid_link <- c(
   identity = 0,

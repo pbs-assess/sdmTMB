@@ -7,9 +7,10 @@
 #' Can predict on the original data locations or onto new data.
 #'
 #' @param object An object from [sdmTMB()].
-#' @param newdata An optional new data frame. This should be a single set of
-#'   spatial locations. These locations will be expanded to cover all the years
-#'   in the original data set. Eventually `newdata` will be more flexible.
+#' @param newdata An optional new data frame. This should be a data frame with
+#'   the same predictor columns as in the fitted data and a time column (if this
+#'   is a spatiotemporal model) with the same name as in the fitted data. There
+#'   should be predictor data for each year in the original data set.
 #' @param se_fit Should standard errors on predictions at the new locations given by
 #'   `newdata` be calculated? Warning: the current implementation can be slow for
 #'   large data sets or high-resolution projections.
@@ -25,7 +26,7 @@
 #' # We'll only use a small number of knots so this example runs quickly
 #' # but you will likely want to use many more (depending on your data).
 #'
-#' pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 100)
+#' pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 80)
 #' m <- sdmTMB(
 #'  pcod, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
@@ -111,23 +112,36 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
   tmb_data$do_predict <- 1L
 
   if (!is.null(newdata)) {
+
+    newdata$sdm_orig_id <- seq(1, nrow(newdata))
+    fake_newdata <- unique(newdata[,xy_cols])
+    fake_newdata[["sdm_spatial_id"]] <- seq(1, nrow(fake_newdata)) - 1L
+
+    newdata <- base::merge(newdata, fake_newdata, by = xy_cols,
+      all.x = TRUE, all.y = FALSE)
+    newdata <- newdata[order(newdata$sdm_orig_id),, drop=FALSE]
+
     proj_mesh <- INLA::inla.spde.make.A(object$spde$mesh,
-      loc = as.matrix(newdata[, xy_cols]))
+      loc = as.matrix(fake_newdata[,xy_cols, drop = FALSE]))
 
-    # expand for time units:
-    original_time <- sort(unique(object$data[[object$time]]))
-    nd <- do.call("rbind",
-      replicate(length(original_time), newdata, simplify = FALSE))
-    nd[[object$time]] <- rep(original_time, each = nrow(newdata))
-
+    nd <- newdata
     nd[[get_response(object$formula)]] <- 0 # fake for model.matrix
     proj_X_ij <- model.matrix(object$formula, data = nd)
+    if (!is.null(object$time_varying))
+      proj_X_rw_ik <- model.matrix(object$time_varying, data = nd)
+    else
+      proj_X_rw_ik <- matrix(0, ncol = 1, nrow = 1) # dummy
 
     tmb_data$proj_mesh <- proj_mesh
     tmb_data$proj_X_ij <- proj_X_ij
+    tmb_data$proj_X_rw_ik <- proj_X_rw_ik
     tmb_data$proj_year <- as.integer(as.factor(as.character(nd[[object$time]]))) - 1L
+    tmb_data$proj_lon <- newdata[[xy_cols[[1]]]]
+    tmb_data$proj_lat <- newdata[[xy_cols[[2]]]]
     tmb_data$calc_se <- as.integer(se_fit)
-    tmb_data$calc_time_totals <- 1L # for now
+    tmb_data$calc_time_totals <- 1L # for now (always on)
+    tmb_data$proj_spatial_index <- newdata$sdm_spatial_id
+
 
     new_tmb_obj <- TMB::MakeADFun(
       data = tmb_data,
@@ -148,8 +162,11 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
 
     nd$est <- r$proj_eta
     nd$est_fe <- r$proj_fe
-    nd$est_re_s <- r$proj_re_sp
+    nd$est_re_s <- r$proj_re_sp_st
     nd$est_re_st <- r$proj_re_st_vector
+    nd$sdm_spatial_id <- NULL
+    nd$sdm_orig_id <- NULL
+
     obj <- new_tmb_obj
 
     if (se_fit) {

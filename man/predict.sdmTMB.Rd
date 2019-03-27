@@ -10,9 +10,10 @@
 \arguments{
 \item{object}{An object from \code{\link[=sdmTMB]{sdmTMB()}}.}
 
-\item{newdata}{An optional new data frame. This should be a single set of
-spatial locations. These locations will be expanded to cover all the years
-in the original data set. Eventually \code{newdata} will be more flexible.}
+\item{newdata}{An optional new data frame. This should be a data frame with
+the same predictor columns as in the fitted data and a time column (if this
+is a spatiotemporal model) with the same name as in the fitted data. There
+should be predictor data for each year in the original data set.}
 
 \item{se_fit}{Should standard errors on predictions at the new locations given by
 \code{newdata} be calculated? Warning: the current implementation can be slow for
@@ -33,7 +34,7 @@ Can predict on the original data locations or onto new data.
 # We'll only use a small number of knots so this example runs quickly
 # but you will likely want to use many more (depending on your data).
 
-pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 100)
+pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 80)
 m <- sdmTMB(
  pcod, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
  time = "year", spde = pcod_spde, family = tweedie(link = "log"),

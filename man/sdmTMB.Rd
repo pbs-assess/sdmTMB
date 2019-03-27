@@ -5,8 +5,9 @@
 \title{Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.}
 \usage{
 sdmTMB(data, formula, time, spde, family = gaussian(link = "identity"),
-  silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
-  control = sdmTMBcontrol(), enable_priors = FALSE)
+  time_varying = NULL, silent = TRUE, multiphase = TRUE,
+  anisotropy = FALSE, control = sdmTMBcontrol(),
+  enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE)
 }
 \arguments{
 \item{data}{A data frame.}
@@ -21,6 +22,9 @@ include \code{0 + as.factor(your_time_column)}.}
 \item{family}{The family and link. Supports \code{\link[=gaussian]{gaussian()}}, \code{\link[=Gamma]{Gamma()}},
 \code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, \code{\link[=nbinom2]{nbinom2()}}, and \code{\link[=tweedie]{tweedie()}}.}
 
+\item{time_varying}{An optional formula describing covariates that should be
+modelled as a random walk through time.}
+
 \item{silent}{Silent or optimization details?}
 
 \item{multiphase}{Estimate the fixed and random effects in phases for speed?}
@@ -30,7 +34,15 @@ include \code{0 + as.factor(your_time_column)}.}
 \item{control}{Optimization control options. See \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}.}
 
 \item{enable_priors}{Should weakly informative priors be enabled?
-(experimental)}
+(experimental and likely for use with the \pkg{tmbstan} package)}
+
+\item{ar1_fields}{Estimate the spatiotemporal random fields as an AR1
+process? Note that the parameter \code{ar1_phi} has been internally bounded
+between -1 and 1 with:  \code{2 * invlogit(ar1_phi) - 1} i.e. in R \code{ 2 * plogis(ar_phi) - 1}.}
+
+\item{include_spatial}{Should a separate spatial random field the estimated?
+If enabled then there will be a separate spatial field and spatiotemporal
+fields.}
 }
 \description{
 Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.
@@ -67,34 +79,4 @@ m_pos <- sdmTMB(pcod_gaus,
   log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   time = "year", spde = pcod_spde_gaus)
 
-\dontrun{
-# Stan sampling (warning: slow going and priors are flat).
-
-# Must load tmbstan first and then TMB and/or sdmTMB
-# or you will get the error `"is_Null_NS" not resolved from current
-# namespace (rstan)`
-# Restart R session, then:
-library(tmbstan)
-
-# Then:
-library(sdmTMB)
-
-# Then:
-set.seed(42)
-pcod_pos <- subset(pcod, year > 2013 & density > 0)
-pcod_pos_spde <- make_spde(pcod_pos$X/10, pcod_pos$Y/10, n_knots = 200) # scale UTMs for #' Stan
-m <- sdmTMB(pcod_pos,
- log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
- time = "year", spde = pcod_pos_spde)
-m_stan <- tmbstan(m$tmb_obj, chains = 1, iter = 200, cores=1,
-  init = "last.par.best", control = list(adapt_delta = 0.80, max_treedepth = 20),
-  seed = 123, laplace = T)
-
-pars <- c('b_j', 'ln_tau_O', 'ln_tau_E', 'ln_kappa', 'ln_phi')
-m_stan2 <- tmbstan(m$tmb_obj, chains = 1, iter = 200, cores=1,
-  init = "last.par.best", control = list(adapt_delta = 0.80, max_treedepth = 20),
-  seed = 123, laplace = F, pars = pars)
-
-m_stan
-}
 }
