@@ -7,7 +7,8 @@
 sdmTMB(data, formula, time, spde, family = gaussian(link = "identity"),
   time_varying = NULL, silent = TRUE, multiphase = TRUE,
   anisotropy = FALSE, control = sdmTMBcontrol(),
-  enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE)
+  enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE,
+  spatial_trend = FALSE, numeric_time = NULL)
 }
 \arguments{
 \item{data}{A data frame.}
@@ -43,6 +44,14 @@ between -1 and 1 with:  \code{2 * invlogit(ar1_phi) - 1} i.e. in R \code{ 2 * pl
 \item{include_spatial}{Should a separate spatial random field the estimated?
 If enabled then there will be a separate spatial field and spatiotemporal
 fields.}
+
+\item{spatial_trend}{Should a separate spatial field be included in the trend? This
+works if hauls can be viewed as replicates of grid cell observations, and generally
+only when the spatiotemporal component is not estimated.}
+
+\item{numeric_time}{If the spatial trend is included, the 'time' column will be the same
+for all observations (to turn the spatiotemporal model off). Thus the user needs to specify
+the time as a numeric predictor -- not in the covariate matrix X}
 }
 \description{
 Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.
@@ -54,9 +63,9 @@ plot_spde(pcod_spde)
 
 # Tweedie:
 m <- sdmTMB(
-  d, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-  silent = FALSE)
+d, density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+silent = FALSE)
 
 # Contents of the output object:
 names(m)
@@ -78,5 +87,12 @@ pcod_spde_gaus <- make_spde(pcod_gaus$X, pcod_gaus$Y, n_knots = 50)
 m_pos <- sdmTMB(pcod_gaus,
   log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   time = "year", spde = pcod_spde_gaus)
+
+# Spatial-trend example
+d$dummy_year = 2000
+m <- sdmTMB(
+d, density ~ 0 + depth_scaled + depth_scaled2,
+time = "dummy_year", spde = pcod_spde, family = tweedie(link = "log"),
+silent = FALSE, spatial_trend = TRUE, numeric_time = "year")
 
 }
