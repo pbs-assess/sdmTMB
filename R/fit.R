@@ -132,12 +132,15 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
   if(is.null(numeric_time)) {
     numeric_time = time
   }
+  t_i = as.numeric(as.character(data[[numeric_time]]))
+  t_i = t_i - min(t_i,na.rm=T) # first year = intercept
+
   tmb_data <- list(
     y_i        = y_i,
     n_t        = length(unique(data[[time]])),
     n_s        = nrow(spde$mesh$loc),
     s_i        = spde$cluster - 1L,
-    t_i     = as.numeric(as.character(data[[numeric_time]])) - 1L,
+    t_i     = t_i,
     year_i     = as.numeric(as.factor(as.character(data[[time]]))) - 1L,
     year_prev_i= as.numeric(as.factor(as.character(data[[time]]))) - 2L,
     ar1_fields = as.integer(ar1_fields),
