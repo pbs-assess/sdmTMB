@@ -88,11 +88,13 @@ m_pos <- sdmTMB(pcod_gaus,
   log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   time = "year", spde = pcod_spde_gaus)
 
+
 # Spatial-trend example
 d$dummy_year = 2000
-m <- sdmTMB(
-d, density ~ 0 + depth_scaled + depth_scaled2,
-time = "dummy_year", spde = pcod_spde, family = tweedie(link = "log"),
-silent = FALSE, spatial_trend = TRUE, numeric_time = "year")
+
+m <- sdmTMB(d, density ~ depth_scaled,
+  time = "dummy_year", spde = pcod_spde,
+  family = tweedie(link = "log"),
+  silent=FALSE, spatial_trend=TRUE, numeric_time="year")
 
 }
