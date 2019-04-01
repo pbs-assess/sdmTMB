@@ -110,14 +110,19 @@ NULL
 # m_stan
 # }
 sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "identity"),
-  time_varying = NULL,
-  silent = TRUE, multiphase = TRUE, anisotropy = FALSE, control = sdmTMBcontrol(),
-  enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE,
-  spatial_trend = FALSE, numeric_time = NULL) {
+  time_varying = NULL, silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
+  control = sdmTMBcontrol(), enable_priors = FALSE, ar1_fields = FALSE,
+  include_spatial = TRUE, spatial_trend = FALSE) {
 
-  if (is.null(time)) {
-    data[["null_time_"]] <- 1L
-    time <- "null_time_"
+  spatial_only <- identical(length(unique(data[[time]])), 1L)
+
+  if (spatial_trend) {
+    numeric_time <- time
+    spatial_only <- TRUE
+    t_i <- as.numeric(as.character(data[[numeric_time]]))
+    t_i <- t_i - min(t_i, na.rm = TRUE) # first year = intercept
+  } else {
+    t_i <- rep(0L, nrow(data))
   }
 
   X_ij <- model.matrix(formula, data)
@@ -128,17 +133,6 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     X_rw_ik <- model.matrix(time_varying, data)
   else
     X_rw_ik <- matrix(0, nrow = nrow(data), ncol = 1)
-
-  spatial_only <- identical(length(unique(data[[time]])), 1L)
-
-  # this is only used for the spatial_trend = TRUE model, where the
-  # 'time' variable has to be the same for all rows. The numeric_time
-  # column specifies t_i in the tmb_data list below
-  if (is.null(numeric_time)) {
-    numeric_time <- time
-  }
-  t_i = as.numeric(as.character(data[[numeric_time]]))
-  t_i = t_i - min(t_i,na.rm=T) # first year = intercept
 
   tmb_data <- list(
     y_i        = y_i,
@@ -210,6 +204,8 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
       ln_tau_O   = as.factor(NA),
       ln_tau_E   = as.factor(NA),
       ln_tau_V   = factor(rep(NA, ncol(X_rw_ik))),
+      ln_tau_O_trend = as.factor(NA),
+      omega_s_trend  = factor(rep(NA, length(tmb_params$omega_s_trend))),
       ln_kappa   = as.factor(NA),
       ln_H_input = factor(rep(NA, 2)),
       b_rw_t     = factor(rep(NA, length(tmb_params$b_rw_t))),
@@ -241,21 +237,19 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
       tmb_random <- "epsilon_st"
     }
   }
-  if(spatial_trend) tmb_random = c(tmb_random, "omega_s_trend")
+  if (spatial_trend) tmb_random <- c(tmb_random, "omega_s_trend")
   if (!is.null(time_varying)) tmb_random <- c(tmb_random, "b_rw_t")
 
   if (!include_spatial) {
     tmb_map <- c(tmb_map, list(
       ln_tau_O = as.factor(NA),
       omega_s  = factor(rep(NA, length(tmb_params$omega_s)))))
-    if(spatial_trend) {
-      tmb_map <- c(tmb_map,
-        list(
-          ln_tau_O_trend = as.factor(NA),
-          omega_s_trend  = factor(rep(NA, length(tmb_params$omega_s_trend)))))
-    }
   }
-
+  if (!spatial_trend) {
+    tmb_map <- c(tmb_map, list(
+      ln_tau_O_trend = as.factor(NA),
+      omega_s_trend = factor(rep(NA, length(tmb_params$omega_s_trend)))))
+  }
   if (is.null(time_varying))
     tmb_map <- c(tmb_map,
       list(b_rw_t = as.factor(matrix(NA, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)))),
