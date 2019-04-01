@@ -38,8 +38,7 @@ Suggests:
     dplyr,
     tmbstan,
     knitr,
-    rmarkdown,
-    covr
+    rmarkdown
 LinkingTo: 
     TMB,
     RcppEigen
