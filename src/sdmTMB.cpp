@@ -213,7 +213,7 @@ Type objective_function<Type>::operator()()
     nll_priors -= dnorm(ln_phi, Type(0.0), Type(1.0), true);
     for (int j = 0; j < n_j; j++)
       nll_priors -= dnorm(b_j(j), Type(0.0), Type(5.0), true);
-    if(spatial_trend) {
+    if (spatial_trend) {
       nll_priors -= dnorm(ln_tau_O_trend, Type(0.0), Type(1.0), true);
     }
   }
@@ -260,7 +260,7 @@ Type objective_function<Type>::operator()()
     if (include_spatial) {
     eta_i(i) += omega_s(s_i(i));  // spatial
       // add spatial trend (optional)
-      if(spatial_trend) {
+      if (spatial_trend) {
         eta_i(i) += omega_s_trend(s_i(i))*t_i(i);
       }
     }
