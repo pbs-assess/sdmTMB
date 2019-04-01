@@ -4,7 +4,7 @@
 \alias{sim}
 \title{Simulate from a spatial Matern Random Field}
 \usage{
-sim(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 10),
+sim(x = stats::runif(100, 0, 10), y = stats::runif(100, 0, 10),
   X = NULL, initial_betas = NULL, sigma_V = 0, time_steps = 1L,
   ar1_fields = FALSE, ar1_phi = 0.5, sigma_O = 0.4, sigma_E = 0.3,
   kappa = 1.3, phi = 0.2, seed = sample.int(1e+06, 1),
@@ -61,7 +61,7 @@ Simulate from a spatial Matern Random Field
 \examples{
 set.seed(2957278)
 dat <- sim(time_steps = 9, plot = TRUE)
-spde <- make_spde(x = dat$x, y = dat$y, n_knots = 200)
+spde <- make_spde(x = dat$x, y = dat$y, n_knots = 50)
 plot_spde(spde)
 m <- sdmTMB(
   data = dat, formula = observed ~ 1, time = "time",
@@ -78,7 +78,7 @@ dat <- sim(
   time_steps = 9, ar1_fields = TRUE, ar1_phi = 0.5,
   plot = TRUE, sigma_O = 0.01, sigma_E = 0.3, phi = 0.01
 )
-spde <- make_spde(x = dat$x, y = dat$y, n_knots = 120)
+spde <- make_spde(x = dat$x, y = dat$y, n_knots = 80)
 m <- sdmTMB(
   silent = FALSE, ar1_fields = TRUE, include_spatial = FALSE,
   data = dat, formula = observed ~ 1, time = "time",
@@ -89,7 +89,7 @@ r$sigma_E
 exp(r$ln_kappa)
 2 * plogis(m$model$par[["ar1_phi"]]) - 1
 
-d <- sim(x = runif(100), y = runif(100), initial_betas = c(-0.2, 0.2),
+d <- sim(x = runif(90), y = runif(90), initial_betas = c(-0.2, 0.2),
   sigma_V = c(0.1, 0.1), time_steps = 10, phi = 0.1, ar1_fields = TRUE,
   ar1_phi = 0.5, plot = TRUE, sigma_O = 0.001, sigma_E = 0.3)
 spde <- make_spde(d$x, d$y, n_knots = 50)

@@ -123,6 +123,7 @@ Type objective_function<Type>::operator()()
   // Vectors of real data
   DATA_VECTOR(y_i);      // response
   DATA_MATRIX(X_ij);     // model matrix
+  DATA_VECTOR(t_i);      // numeric year vector -- only for spatial_trend==1
   DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
   DATA_FACTOR(s_i);   // Random effect index for observation i
@@ -163,11 +164,13 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(proj_X_ij);
   DATA_MATRIX(proj_X_rw_ik);
   DATA_FACTOR(proj_year);
+  DATA_VECTOR(proj_t_i);
 
   DATA_IVECTOR(proj_spatial_index);
 
   // Spatial versus spatiotemporal
   DATA_INTEGER(spatial_only);  //
+  DATA_INTEGER(spatial_trend);  // only used if spatial_only == 1
 
   // ------------------ Parameters ---------------------------------------------
 
@@ -175,6 +178,7 @@ Type objective_function<Type>::operator()()
   // Fixed effects
   PARAMETER_VECTOR(b_j);  // fixed effect parameters
   PARAMETER(ln_tau_O);    // spatial process
+  PARAMETER(ln_tau_O_trend);    // optional spatial process on the trend
   PARAMETER(ln_tau_E);    // spatio-temporal process
   PARAMETER(ln_kappa);    // Matern parameter
 
@@ -186,6 +190,7 @@ Type objective_function<Type>::operator()()
   // Random effects
   PARAMETER_ARRAY(b_rw_t);  // random walk effects
   PARAMETER_VECTOR(omega_s);    // spatial effects; n_s length
+  PARAMETER_VECTOR(omega_s_trend);    // spatial effects on trend; n_s length
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
 
   // ------------------ End of parameters --------------------------------------
@@ -196,6 +201,7 @@ Type objective_function<Type>::operator()()
   Type nll_data = 0;     // likelihood of data
   Type nll_varphi = 0;   // random walk effects
   Type nll_omega = 0;    // spatial effects
+  Type nll_omega_trend = 0;    // spatial trend effects
   Type nll_epsilon = 0;  // spatio-temporal effects
   Type nll_priors = 0;   // priors
 
@@ -208,6 +214,9 @@ Type objective_function<Type>::operator()()
     nll_priors -= dnorm(ln_phi, Type(0.0), Type(1.0), true);
     for (int j = 0; j < n_j; j++)
       nll_priors -= dnorm(b_j(j), Type(0.0), Type(5.0), true);
+    if (spatial_trend) {
+      nll_priors -= dnorm(ln_tau_O_trend, Type(0.0), Type(1.0), true);
+    }
   }
 
   // ------------------ Geospatial ---------------------------------------------
@@ -219,6 +228,10 @@ Type objective_function<Type>::operator()()
     Type sigma_O = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O) *
                             exp(Type(2.0) * ln_kappa));
     REPORT(sigma_O);
+
+    Type sigma_O_trend = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O_trend) *
+      exp(Type(2.0) * ln_kappa));
+    REPORT(sigma_O_trend);
   }
   Type sigma_E = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E) *
                           exp(Type(2.0) * ln_kappa));
@@ -245,7 +258,14 @@ Type objective_function<Type>::operator()()
       for (int k = 0; k < X_rw_ik.cols(); k++)
         eta_i(i) += X_rw_ik(i, k) * b_rw_t(year_i(i), k);
 
-    if (include_spatial) eta_i(i) += omega_s(s_i(i));  // spatial
+    if (include_spatial) {
+    eta_i(i) += omega_s(s_i(i));  // spatial
+      // add spatial trend (optional)
+      if (spatial_trend) {
+        eta_i(i) += omega_s_trend(s_i(i))*t_i(i);
+      }
+    }
+
     if (year_i(i) == Type(0) || !ar1_fields) {
       eta_i(i) += epsilon_st(s_i(i), year_i(i));  // spatio-temporal
     } else {  // AR1 and not first time slice:
@@ -271,6 +291,8 @@ Type objective_function<Type>::operator()()
   // Spatial effects:
   if (include_spatial)
     nll_omega += SCALE(GMRF(Q), 1.0 / exp(ln_tau_O))(omega_s);
+  if (spatial_trend)
+    nll_omega_trend += SCALE(GMRF(Q), 1.0 / exp(ln_tau_O_trend))(omega_s_trend);
   // Spatiotemporal effects:
   if (!spatial_only) {
     for (int t = 0; t < n_t; t++)
@@ -346,6 +368,16 @@ Type objective_function<Type>::operator()()
       }
     }
 
+    vector<Type> proj_re_sp_trend(proj_X_ij.rows());
+    vector<Type> proj_re_sp_slopes(proj_X_ij.rows());
+    if (spatial_trend) {
+      vector<Type> proj_re_sp_slopes_all = proj_mesh * omega_s_trend;
+      for (int i = 0; i < proj_X_ij.rows(); i++) {
+        proj_re_sp_trend(i) = proj_re_sp_slopes_all(proj_spatial_index(i)) * proj_t_i(i);
+        proj_re_sp_slopes(i) = proj_re_sp_slopes_all(proj_spatial_index(i));
+      }
+    }
+
     // Pick out the appropriate spatial and/or or spatiotemporal values:
     vector<Type> proj_re_st_vector(proj_X_ij.rows());
     vector<Type> proj_re_sp_st(proj_X_ij.rows());
@@ -354,10 +386,13 @@ Type objective_function<Type>::operator()()
       proj_re_st_vector(i) = proj_re_st(proj_spatial_index(i), proj_year(i));
     }
 
-    vector<Type> proj_eta = proj_fe + proj_re_sp_st + proj_re_st_vector;
+    vector<Type> proj_eta = proj_fe + proj_re_sp_st +
+      proj_re_st_vector + proj_re_sp_trend;
     REPORT(proj_fe);            // fixed effect projections
     REPORT(proj_re_sp_st);      // spatial random effect projections
     REPORT(proj_re_st_vector);  // spatiotemporal random effect projections
+    REPORT(proj_re_sp_slopes); // spatial slope projections
+    REPORT(proj_re_sp_trend);  // spatial trend projections (slope * time)
     REPORT(proj_eta);           // combined projections (in link space)
 
     if (calc_se) ADREPORT(proj_eta);
@@ -397,6 +432,7 @@ Type objective_function<Type>::operator()()
   REPORT(b_j)        // fixed effect parameters
   REPORT(b_rw_t)     // fixed effect parameters
   REPORT(ln_tau_O);  // spatial process ln SD
+  REPORT(ln_tau_O_trend);  // spatial process ln SD
   REPORT(ln_tau_E);  // spatio-temporal process ln SD
   REPORT(ln_tau_V);  // spatio-temporal process ln SD
   REPORT(sigma_E);
@@ -404,6 +440,7 @@ Type objective_function<Type>::operator()()
   REPORT(thetaf);       // observation Tweedie mixing parameter
   REPORT(epsilon_st);   // spatio-temporal effects; n_s by n_t matrix
   REPORT(omega_s);      // spatial effects; n_s length vector
+  REPORT(omega_s_trend);      // spatial effects; n_s length vector
   REPORT(eta_fixed_i);  // fixed effect predictions in the link space
   REPORT(eta_i);        // fixed and random effect predictions in link space
   REPORT(ln_kappa);     // Matern parameter
@@ -411,6 +448,6 @@ Type objective_function<Type>::operator()()
 
   // ------------------ Joint negative log likelihood --------------------------
 
-  Type jnll = nll_data + nll_omega + nll_varphi + nll_epsilon + nll_priors;
+  Type jnll = nll_data + nll_omega + nll_omega_trend + nll_varphi + nll_epsilon + nll_priors;
   return jnll;
 }

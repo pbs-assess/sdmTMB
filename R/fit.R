@@ -25,6 +25,10 @@ NULL
 #' @param include_spatial Should a separate spatial random field the estimated?
 #'   If enabled then there will be a separate spatial field and spatiotemporal
 #'   fields.
+#' @param spatial_trend Should a separate spatial field be included in the
+#'   trend? This works if hauls can be viewed as replicates of grid cell
+#'   observations, and only when other spatiotemporal components are not
+#'   estimated.
 #'
 #' @importFrom methods as
 #' @importFrom stats gaussian model.frame model.matrix
@@ -34,14 +38,14 @@ NULL
 #'
 #' @examples
 #' d <- subset(pcod, year >= 2011) # subset for example speed
-#' pcod_spde <- make_spde(d$X, d$Y, n_knots = 100) # only 100 knots for example speed
+#' pcod_spde <- make_spde(d$X, d$Y, n_knots = 50) # only 50 knots for example speed
 #' plot_spde(pcod_spde)
 #'
 #' # Tweedie:
 #' m <- sdmTMB(
-#'   d, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'   time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-#'   silent = FALSE)
+#' d, density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+#' time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+#' silent = FALSE)
 #'
 #' # Contents of the output object:
 #' names(m)
@@ -64,41 +68,31 @@ NULL
 #'   log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'   time = "year", spde = pcod_spde_gaus)
 #'
-# \dontrun{
-# # Stan sampling (warning: slow going and priors are flat).
-#
-# # Must load tmbstan first and then TMB and/or sdmTMB
-# # or you will get the error `"is_Null_NS" not resolved from current
-# # namespace (rstan)`
-# # Restart R session, then:
-# library(tmbstan)
-#
-# # Then:
-# library(sdmTMB)
-#
-# # Then:
-# set.seed(42)
-# pcod_pos <- subset(pcod, year > 2013 & density > 0)
-# pcod_pos_spde <- make_spde(pcod_pos$X/10, pcod_pos$Y/10, n_knots = 200) # scale UTMs for Stan
-# m <- sdmTMB(pcod_pos,
-#  log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#  time = "year", spde = pcod_pos_spde)
-# m_stan <- tmbstan(m$tmb_obj, chains = 1, iter = 200, cores=1,
-#   init = "last.par.best", control = list(adapt_delta = 0.80, max_treedepth = 20),
-#   seed = 123, laplace = T)
-#
-# pars <- c('b_j', 'ln_tau_O', 'ln_tau_E', 'ln_kappa', 'ln_phi')
-# m_stan2 <- tmbstan(m$tmb_obj, chains = 1, iter = 200, cores=1,
-#   init = "last.par.best", control = list(adapt_delta = 0.80, max_treedepth = 20),
-#   seed = 123, laplace = F, pars = pars)
-#
-# m_stan
-# }
+#'
+#' # Spatial-trend example
+#' m <- sdmTMB(d, density ~ depth_scaled,
+#'   spde = pcod_spde, family = tweedie(link = "log"),
+#'   silent = FALSE, spatial_trend = TRUE, time = "year")
+#'
+#' r <- m$tmb_obj$report()
+#' r$ln_tau_O_trend
+#' r$omega_s_trend
 
-sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity"),
-  time_varying = NULL,
-  silent = TRUE, multiphase = TRUE, anisotropy = FALSE, control = sdmTMBcontrol(),
-  enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE) {
+sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "identity"),
+  time_varying = NULL, silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
+  control = sdmTMBcontrol(), enable_priors = FALSE, ar1_fields = FALSE,
+  include_spatial = TRUE, spatial_trend = FALSE) {
+
+  spatial_only <- identical(length(unique(data[[time]])), 1L)
+
+  if (spatial_trend) {
+    numeric_time <- time
+    spatial_only <- TRUE
+    t_i <- as.numeric(as.character(data[[numeric_time]]))
+    t_i <- t_i - min(t_i, na.rm = TRUE) # first year = intercept
+  } else {
+    t_i <- rep(0L, nrow(data))
+  }
 
   X_ij <- model.matrix(formula, data)
   mf   <- model.frame(formula, data)
@@ -109,13 +103,12 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
   else
     X_rw_ik <- matrix(0, nrow = nrow(data), ncol = 1)
 
-  spatial_only <- identical(length(unique(data[[time]])), 1L)
-
   tmb_data <- list(
     y_i        = y_i,
     n_t        = length(unique(data[[time]])),
     n_s        = nrow(spde$mesh$loc),
     s_i        = spde$cluster - 1L,
+    t_i     = t_i,
     year_i     = as.numeric(as.factor(as.character(data[[time]]))) - 1L,
     year_prev_i= as.numeric(as.factor(as.character(data[[time]]))) - 2L,
     ar1_fields = as.integer(ar1_fields),
@@ -134,18 +127,21 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     proj_X_rw_ik = matrix(0, ncol = 1, nrow = 1), # dummy
     proj_year  = 0, # dummy
     proj_spatial_index = 0, # dummy
+    proj_t_i = 0, # dummy
     spde_aniso = make_anisotropy_spde(spde),
     spde       = spde$spde$param.inla[c("M0","M1","M2")],
     anisotropy = as.integer(anisotropy),
     family     = .valid_family[family$family],
     link       = .valid_link[family$link],
-    spatial_only = as.integer(spatial_only)
+    spatial_only = as.integer(spatial_only),
+    spatial_trend = as.integer(spatial_trend)
   )
 
   tmb_params <- list(
     ln_H_input = c(0, 0),
     b_j        = rep(0, ncol(X_ij)),
     ln_tau_O   = 0,
+    ln_tau_O_trend = 0,
     ln_tau_E   = 0,
     ln_kappa   = 0,
     thetaf     = 0,
@@ -154,6 +150,7 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
     ar1_phi    = 0,
     b_rw_t     = matrix(0, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)),
     omega_s    = rep(0, tmb_data$n_s),
+    omega_s_trend    = rep(0, tmb_data$n_s),
     epsilon_st = matrix(0, nrow = tmb_data$n_s, ncol = tmb_data$n_t)
   )
 
@@ -177,6 +174,8 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
       ln_tau_O   = as.factor(NA),
       ln_tau_E   = as.factor(NA),
       ln_tau_V   = factor(rep(NA, ncol(X_rw_ik))),
+      ln_tau_O_trend = as.factor(NA),
+      omega_s_trend  = factor(rep(NA, length(tmb_params$omega_s_trend))),
       ln_kappa   = as.factor(NA),
       ln_H_input = factor(rep(NA, 2)),
       b_rw_t     = factor(rep(NA, length(tmb_params$b_rw_t))),
@@ -208,6 +207,7 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
       tmb_random <- "epsilon_st"
     }
   }
+  if (spatial_trend) tmb_random <- c(tmb_random, "omega_s_trend")
   if (!is.null(time_varying)) tmb_random <- c(tmb_random, "b_rw_t")
 
   if (!include_spatial) {
@@ -215,7 +215,11 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
       ln_tau_O = as.factor(NA),
       omega_s  = factor(rep(NA, length(tmb_params$omega_s)))))
   }
-
+  if (!spatial_trend) {
+    tmb_map <- c(tmb_map, list(
+      ln_tau_O_trend = as.factor(NA),
+      omega_s_trend = factor(rep(NA, length(tmb_params$omega_s_trend)))))
+  }
   if (is.null(time_varying))
     tmb_map <- c(tmb_map,
       list(b_rw_t = as.factor(matrix(NA, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)))),

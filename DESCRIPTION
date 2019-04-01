@@ -1,21 +1,26 @@
-Package: sdmTMB
 Type: Package
-Title: Fit Spatio-temporal Species Distribution Models with 'TMB'
+Package: sdmTMB
+Title: Fit Spatiotemporal GLMM Species Distribution Models with 'TMB'
 Version: 0.0.1.9000
-Authors@R: c(
-    person(c("Sean", "C."), "Anderson", email = "sean.anderson@dfo-mpo.gc.ca",
-      role = c("aut", "cre")),
-    person(c("Philina", "A."), "English", role = "ctb"))
-Description: The 'sdmTMB' package implements spatiotemporal GLMM predictive
-    process models using 'TMB', 'INLA', and Gaussian Markov random fields.
-    One common application is for spatial or spatiotemporal species 
-    distribution models (SDMs).
+Authors@R: 
+    c(person(given = c("Sean", "C."),
+             family = "Anderson",
+             role = c("aut", "cre"),
+             email = "sean.anderson@dfo-mpo.gc.ca"),
+      person(given = c("Philina", "A."),
+             family = "English",
+             role = "aut"),
+      person(given = c("Eric", "J."),
+             family = "Ward",
+             role = "aut"))
+Description: The 'sdmTMB' package implements spatiotemporal GLMM
+    predictive process models using 'TMB', 'INLA', and Gaussian Markov
+    random fields. One common application is for spatial or
+    spatiotemporal species distribution models (SDMs).
 License: GPL (>=3)
-Encoding: UTF-8
-LazyData: true
-ByteCompile: true
+URL: https://github.com/seananderson/sdmTMB
+BugReports: https://github.com/seananderson/sdmTMB/issues
 Depends: R (>= 3.2.0)
-LinkingTo: TMB, RcppEigen
 Imports:
     TMB (>= 1.7.13),
     INLA,
@@ -34,9 +39,14 @@ Suggests:
     tmbstan,
     knitr,
     rmarkdown
-URL: https://github.com/seananderson/sdmTMB
-BugReports: https://github.com/seananderson/sdmTMB/issues
-RoxygenNote: 6.1.1
-Roxygen: list(markdown = TRUE)
-Additional_repositories: https://inla.r-inla-download.org/R/stable
+LinkingTo: 
+    TMB,
+    RcppEigen
 VignetteBuilder: knitr
+Additional_repositories: 
+    https://inla.r-inla-download.org/R/stable
+ByteCompile: true
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 6.1.1

@@ -4,10 +4,11 @@
 \alias{sdmTMB}
 \title{Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.}
 \usage{
-sdmTMB(data, formula, time, spde, family = gaussian(link = "identity"),
-  time_varying = NULL, silent = TRUE, multiphase = TRUE,
+sdmTMB(data, formula, time = NULL, spde, family = gaussian(link =
+  "identity"), time_varying = NULL, silent = TRUE, multiphase = TRUE,
   anisotropy = FALSE, control = sdmTMBcontrol(),
-  enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE)
+  enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE,
+  spatial_trend = FALSE)
 }
 \arguments{
 \item{data}{A data frame.}
@@ -43,20 +44,25 @@ between -1 and 1 with:  \code{2 * invlogit(ar1_phi) - 1} i.e. in R \code{ 2 * pl
 \item{include_spatial}{Should a separate spatial random field the estimated?
 If enabled then there will be a separate spatial field and spatiotemporal
 fields.}
+
+\item{spatial_trend}{Should a separate spatial field be included in the
+trend? This works if hauls can be viewed as replicates of grid cell
+observations, and only when other spatiotemporal components are not
+estimated.}
 }
 \description{
 Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.
 }
 \examples{
 d <- subset(pcod, year >= 2011) # subset for example speed
-pcod_spde <- make_spde(d$X, d$Y, n_knots = 100) # only 100 knots for example speed
+pcod_spde <- make_spde(d$X, d$Y, n_knots = 50) # only 50 knots for example speed
 plot_spde(pcod_spde)
 
 # Tweedie:
 m <- sdmTMB(
-  d, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-  silent = FALSE)
+d, density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+silent = FALSE)
 
 # Contents of the output object:
 names(m)
@@ -79,4 +85,13 @@ m_pos <- sdmTMB(pcod_gaus,
   log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   time = "year", spde = pcod_spde_gaus)
 
+
+# Spatial-trend example
+m <- sdmTMB(d, density ~ depth_scaled,
+  spde = pcod_spde, family = tweedie(link = "log"),
+  silent = FALSE, spatial_trend = TRUE, time = "year")
+
+r <- m$tmb_obj$report()
+r$ln_tau_O_trend
+r$omega_s_trend
 }
