@@ -9,9 +9,9 @@ status](https://travis-ci.org/pbs-assess/sdmTMB.svg?branch=master)](https://trav
 has not yet been a stable, usable release suitable for the
 public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 
-The sdmTMB package implements spatiotemporal GLMM (Generalized Linear
-Mixed Effects Model) predictive process models using Template Model
-Builder ([TMB](https://github.com/kaskr/adcomp)),
+The sdmTMB package implements spatiotemporal predictive-process GLMMs
+(Generalized Linear Mixed Effects Models) using Template Model Builder
+([TMB](https://github.com/kaskr/adcomp)),
 [R-INLA](http://www.r-inla.org/), and Gaussian Markov random fields. One
 common application is for spatial or spatiotemporal species distribution
 models (SDMs).
