@@ -71,14 +71,14 @@ NULL
 #'   time = "year", spde = pcod_spde_gaus)
 #'
 #'
-# \dontrun{
+#' \dontrun{
 #' # Spatial-trend example
-#' d$dummy_year = 2000
 #'
 #' m <- sdmTMB(d, density ~ depth_scaled,
-#'   time = "dummy_year", spde = pcod_spde,
+#'   spde = pcod_spde,
 #'   family = tweedie(link = "log"),
 #'   silent=FALSE, spatial_trend=TRUE, numeric_time="year")
+#' }
 #'
 # # Stan sampling (warning: slow going and priors are flat).
 #
@@ -109,11 +109,16 @@ NULL
 #
 # m_stan
 # }
-sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity"),
+sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "identity"),
   time_varying = NULL,
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE, control = sdmTMBcontrol(),
   enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE,
   spatial_trend = FALSE, numeric_time = NULL) {
+
+  if (is.null(time)) {
+    data[["null_time_"]] <- 1L
+    time <- "null_time_"
+  }
 
   X_ij <- model.matrix(formula, data)
   mf   <- model.frame(formula, data)
@@ -126,11 +131,11 @@ sdmTMB <- function(data, formula, time, spde, family = gaussian(link = "identity
 
   spatial_only <- identical(length(unique(data[[time]])), 1L)
 
-  # this is really only used for the spatial_trend = TRUE model, where the
+  # this is only used for the spatial_trend = TRUE model, where the
   # 'time' variable has to be the same for all rows. The numeric_time
   # column specifies t_i in the tmb_data list below
-  if(is.null(numeric_time)) {
-    numeric_time = time
+  if (is.null(numeric_time)) {
+    numeric_time <- time
   }
   t_i = as.numeric(as.character(data[[numeric_time]]))
   t_i = t_i - min(t_i,na.rm=T) # first year = intercept

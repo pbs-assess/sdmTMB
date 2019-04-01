@@ -4,8 +4,8 @@
 \alias{sdmTMB}
 \title{Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.}
 \usage{
-sdmTMB(data, formula, time, spde, family = gaussian(link = "identity"),
-  time_varying = NULL, silent = TRUE, multiphase = TRUE,
+sdmTMB(data, formula, time = NULL, spde, family = gaussian(link =
+  "identity"), time_varying = NULL, silent = TRUE, multiphase = TRUE,
   anisotropy = FALSE, control = sdmTMBcontrol(),
   enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE,
   spatial_trend = FALSE, numeric_time = NULL)
@@ -89,12 +89,13 @@ m_pos <- sdmTMB(pcod_gaus,
   time = "year", spde = pcod_spde_gaus)
 
 
+\dontrun{
 # Spatial-trend example
-d$dummy_year = 2000
 
 m <- sdmTMB(d, density ~ depth_scaled,
-  time = "dummy_year", spde = pcod_spde,
+  spde = pcod_spde,
   family = tweedie(link = "log"),
   silent=FALSE, spatial_trend=TRUE, numeric_time="year")
+}
 
 }
