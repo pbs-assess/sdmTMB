@@ -25,12 +25,10 @@ NULL
 #' @param include_spatial Should a separate spatial random field the estimated?
 #'   If enabled then there will be a separate spatial field and spatiotemporal
 #'   fields.
-#' @param spatial_trend Should a separate spatial field be included in the trend? This
-#'   works if hauls can be viewed as replicates of grid cell observations, and generally
-#'   only when the spatiotemporal component is not estimated.
-#' @param numeric_time If the spatial trend is included, the 'time' column will be the same
-#' for all observations (to turn the spatiotemporal model off). Thus the user needs to specify
-#' the time as a numeric predictor -- not in the covariate matrix X
+#' @param spatial_trend Should a separate spatial field be included in the
+#'   trend? This works if hauls can be viewed as replicates of grid cell
+#'   observations, and only when other spatiotemporal components are not
+#'   estimated.
 #'
 #' @importFrom methods as
 #' @importFrom stats gaussian model.frame model.matrix
@@ -40,7 +38,7 @@ NULL
 #'
 #' @examples
 #' d <- subset(pcod, year >= 2011) # subset for example speed
-#' pcod_spde <- make_spde(d$X, d$Y, n_knots = 100) # only 100 knots for example speed
+#' pcod_spde <- make_spde(d$X, d$Y, n_knots = 50) # only 50 knots for example speed
 #' plot_spde(pcod_spde)
 #'
 #' # Tweedie:
@@ -71,44 +69,15 @@ NULL
 #'   time = "year", spde = pcod_spde_gaus)
 #'
 #'
-#' \dontrun{
 #' # Spatial-trend example
-#'
 #' m <- sdmTMB(d, density ~ depth_scaled,
-#'   spde = pcod_spde,
-#'   family = tweedie(link = "log"),
-#'   silent=FALSE, spatial_trend=TRUE, numeric_time="year")
-#' }
+#'   spde = pcod_spde, family = tweedie(link = "log"),
+#'   silent = FALSE, spatial_trend = TRUE, time = "year")
 #'
-# # Stan sampling (warning: slow going and priors are flat).
-#
-# # Must load tmbstan first and then TMB and/or sdmTMB
-# # or you will get the error `"is_Null_NS" not resolved from current
-# # namespace (rstan)`
-# # Restart R session, then:
-# library(tmbstan)
-#
-# # Then:
-# library(sdmTMB)
-#
-# # Then:
-# set.seed(42)
-# pcod_pos <- subset(pcod, year > 2013 & density > 0)
-# pcod_pos_spde <- make_spde(pcod_pos$X/10, pcod_pos$Y/10, n_knots = 200) # scale UTMs for Stan
-# m <- sdmTMB(pcod_pos,
-#  log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#  time = "year", spde = pcod_pos_spde)
-# m_stan <- tmbstan(m$tmb_obj, chains = 1, iter = 200, cores=1,
-#   init = "last.par.best", control = list(adapt_delta = 0.80, max_treedepth = 20),
-#   seed = 123, laplace = T)
-#
-# pars <- c('b_j', 'ln_tau_O', 'ln_tau_E', 'ln_kappa', 'ln_phi')
-# m_stan2 <- tmbstan(m$tmb_obj, chains = 1, iter = 200, cores=1,
-#   init = "last.par.best", control = list(adapt_delta = 0.80, max_treedepth = 20),
-#   seed = 123, laplace = F, pars = pars)
-#
-# m_stan
-# }
+#' r <- m$tmb_obj$report()
+#' r$ln_tau_O_trend
+#' r$omega_s_trend
+
 sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "identity"),
   time_varying = NULL, silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
   control = sdmTMBcontrol(), enable_priors = FALSE, ar1_fields = FALSE,

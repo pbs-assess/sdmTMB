@@ -8,7 +8,7 @@ sdmTMB(data, formula, time = NULL, spde, family = gaussian(link =
   "identity"), time_varying = NULL, silent = TRUE, multiphase = TRUE,
   anisotropy = FALSE, control = sdmTMBcontrol(),
   enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE,
-  spatial_trend = FALSE, numeric_time = NULL)
+  spatial_trend = FALSE)
 }
 \arguments{
 \item{data}{A data frame.}
@@ -45,20 +45,17 @@ between -1 and 1 with:  \code{2 * invlogit(ar1_phi) - 1} i.e. in R \code{ 2 * pl
 If enabled then there will be a separate spatial field and spatiotemporal
 fields.}
 
-\item{spatial_trend}{Should a separate spatial field be included in the trend? This
-works if hauls can be viewed as replicates of grid cell observations, and generally
-only when the spatiotemporal component is not estimated.}
-
-\item{numeric_time}{If the spatial trend is included, the 'time' column will be the same
-for all observations (to turn the spatiotemporal model off). Thus the user needs to specify
-the time as a numeric predictor -- not in the covariate matrix X}
+\item{spatial_trend}{Should a separate spatial field be included in the
+trend? This works if hauls can be viewed as replicates of grid cell
+observations, and only when other spatiotemporal components are not
+estimated.}
 }
 \description{
 Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.
 }
 \examples{
 d <- subset(pcod, year >= 2011) # subset for example speed
-pcod_spde <- make_spde(d$X, d$Y, n_knots = 100) # only 100 knots for example speed
+pcod_spde <- make_spde(d$X, d$Y, n_knots = 50) # only 50 knots for example speed
 plot_spde(pcod_spde)
 
 # Tweedie:
@@ -89,13 +86,12 @@ m_pos <- sdmTMB(pcod_gaus,
   time = "year", spde = pcod_spde_gaus)
 
 
-\dontrun{
 # Spatial-trend example
-
 m <- sdmTMB(d, density ~ depth_scaled,
-  spde = pcod_spde,
-  family = tweedie(link = "log"),
-  silent=FALSE, spatial_trend=TRUE, numeric_time="year")
-}
+  spde = pcod_spde, family = tweedie(link = "log"),
+  silent = FALSE, spatial_trend = TRUE, time = "year")
 
+r <- m$tmb_obj$report()
+r$ln_tau_O_trend
+r$omega_s_trend
 }

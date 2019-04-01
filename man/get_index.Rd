@@ -22,7 +22,7 @@ Extract a relative biomass or abundance index
 }
 \examples{
 # Use a small number of knots for this example to make it fast:
-pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 60)
+pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 50)
 m <- sdmTMB(
  pcod, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
  time = "year", spde = pcod_spde, family = tweedie(link = "log")

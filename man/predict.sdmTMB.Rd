@@ -34,9 +34,10 @@ Can predict on the original data locations or onto new data.
 # We'll only use a small number of knots so this example runs quickly
 # but you will likely want to use many more (depending on your data).
 
-pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 80)
+d <- pcod
+pcod_spde <- make_spde(d$X, d$Y, n_knots = 50) # just 50 for example speed
 m <- sdmTMB(
- pcod, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+ d, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
  silent = FALSE
 )
@@ -84,7 +85,7 @@ plot_map(predictions, "est_re_st") +
 \donttest{
 # Example with standard errors on new location predictions.
 # Note this example models presence/absence.
-pcod_2017 <- pcod[pcod$year == 2017, ]
+pcod_2017 <- d[d$year == 2017, ]
 pcod_spde <- make_spde(pcod_2017$X, pcod_2017$Y, n_knots = 75)
 m2017 <- sdmTMB(
   pcod_2017, present ~ 0 + depth_scaled + depth_scaled2,
