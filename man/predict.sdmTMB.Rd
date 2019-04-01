@@ -34,7 +34,9 @@ Can predict on the original data locations or onto new data.
 # We'll only use a small number of knots so this example runs quickly
 # but you will likely want to use many more (depending on your data).
 
+library(ggplot2)
 d <- pcod
+
 pcod_spde <- make_spde(d$X, d$Y, n_knots = 50) # just 50 for example speed
 m <- sdmTMB(
  d, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
@@ -49,7 +51,6 @@ cols <- c("year", "X", "Y", "est", "est_fe",
 head(predictions[,cols])
 
 predictions$resids <- residuals(m) # randomized quantile residuals
-library(ggplot2)
 ggplot(predictions, aes(X, Y, col = resids)) + scale_colour_gradient2() +
   geom_point() + facet_wrap(~year)
 hist(predictions$resids)
@@ -81,6 +82,33 @@ plot_map(predictions, "est_re_s") +
 plot_map(predictions, "est_re_st") +
   ggtitle("Spatiotemporal random effects only") +
   scale_fill_gradient2()
+
+# Spatial trend example:
+pcod_spde <- make_spde(d$X, d$Y, n_knots = 100)
+m <- sdmTMB(pcod, density ~ depth_scaled + depth_scaled2,
+  spde = pcod_spde, family = tweedie(link = "log"),
+  silent = FALSE, spatial_trend = TRUE, time = "year")
+p <- predict(m, newdata = qcs_grid)
+
+plot_map(p$data, "re_s_trend") +
+  ggtitle("Spatial slopes") +
+  scale_fill_gradient2()
+
+plot_map(p$data, "est_re_s_trend") +
+  ggtitle("Spatial slope random effect predictions") +
+  scale_fill_gradient2()
+
+plot_map(p$data, "est_re_s + est_re_s_trend") +
+  ggtitle("Spatial intercept + slope random effect predictions") +
+  scale_fill_gradient2()
+
+plot_map(predictions, "exp(est_fe)") +
+  ggtitle("Prediction (fixed effects only)") +
+  scale_fill_viridis_c(trans = "sqrt")
+
+plot_map(p$data, "exp(est)") +
+  ggtitle("Prediction (fixed effects + all random effects)") +
+  scale_fill_viridis_c(trans = "sqrt")
 
 \donttest{
 # Example with standard errors on new location predictions.

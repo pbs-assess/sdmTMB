@@ -26,7 +26,9 @@
 #' # We'll only use a small number of knots so this example runs quickly
 #' # but you will likely want to use many more (depending on your data).
 #'
+#' library(ggplot2)
 #' d <- pcod
+#'
 #' pcod_spde <- make_spde(d$X, d$Y, n_knots = 50) # just 50 for example speed
 #' m <- sdmTMB(
 #'  d, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
@@ -41,7 +43,6 @@
 #' head(predictions[,cols])
 #'
 #' predictions$resids <- residuals(m) # randomized quantile residuals
-#' library(ggplot2)
 #' ggplot(predictions, aes(X, Y, col = resids)) + scale_colour_gradient2() +
 #'   geom_point() + facet_wrap(~year)
 #' hist(predictions$resids)
@@ -73,6 +74,33 @@
 #' plot_map(predictions, "est_re_st") +
 #'   ggtitle("Spatiotemporal random effects only") +
 #'   scale_fill_gradient2()
+#'
+#' # Spatial trend example:
+#' pcod_spde <- make_spde(d$X, d$Y, n_knots = 100)
+#' m <- sdmTMB(pcod, density ~ depth_scaled + depth_scaled2,
+#'   spde = pcod_spde, family = tweedie(link = "log"),
+#'   silent = FALSE, spatial_trend = TRUE, time = "year")
+#' p <- predict(m, newdata = qcs_grid)
+#'
+#' plot_map(p$data, "re_s_trend") +
+#'   ggtitle("Spatial slopes") +
+#'   scale_fill_gradient2()
+#'
+#' plot_map(p$data, "est_re_s_trend") +
+#'   ggtitle("Spatial slope random effect predictions") +
+#'   scale_fill_gradient2()
+#'
+#' plot_map(p$data, "est_re_s + est_re_s_trend") +
+#'   ggtitle("Spatial intercept + slope random effect predictions") +
+#'   scale_fill_gradient2()
+#'
+#' plot_map(predictions, "exp(est_fe)") +
+#'   ggtitle("Prediction (fixed effects only)") +
+#'   scale_fill_viridis_c(trans = "sqrt")
+#'
+#' plot_map(p$data, "exp(est)") +
+#'   ggtitle("Prediction (fixed effects + all random effects)") +
+#'   scale_fill_viridis_c(trans = "sqrt")
 #'
 #' \donttest{
 #' # Example with standard errors on new location predictions.
@@ -113,6 +141,12 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
   tmb_data$do_predict <- 1L
 
   if (!is.null(newdata)) {
+    original_time <- sort(unique(object$data[[object$time]]))
+    new_data_time <- sort(unique(newdata[[object$time]]))
+    if (!identical(original_time, new_data_time))
+      stop("For now, all of the time elements in the original data set must ",
+      "be identical to the time elements in the `newdata` data set ",
+      "but they are not.", call. = FALSE)
 
     newdata$sdm_orig_id <- seq(1, nrow(newdata))
     fake_newdata <- unique(newdata[,xy_cols])
@@ -142,7 +176,8 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     tmb_data$calc_se <- as.integer(se_fit)
     tmb_data$calc_time_totals <- 1L # for now (always on)
     tmb_data$proj_spatial_index <- newdata$sdm_spatial_id
-
+    tmb_data$proj_t_i <- as.numeric(as.character(newdata[[object$time]]))
+    tmb_data$proj_t_i <- tmb_data$proj_t_i - min(tmb_data$proj_t_i, na.rm = TRUE) # start at 0
     new_tmb_obj <- TMB::MakeADFun(
       data = tmb_data,
       parameters = object$tmb_params,
@@ -163,7 +198,9 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     nd$est <- r$proj_eta
     nd$est_fe <- r$proj_fe
     nd$est_re_s <- r$proj_re_sp_st
+    nd$est_re_s_trend <- r$proj_re_sp_trend
     nd$est_re_st <- r$proj_re_st_vector
+    nd$re_s_trend <- r$proj_re_sp_slopes
     nd$sdm_spatial_id <- NULL
     nd$sdm_orig_id <- NULL
 

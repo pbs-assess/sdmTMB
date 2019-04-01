@@ -164,6 +164,7 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(proj_X_ij);
   DATA_MATRIX(proj_X_rw_ik);
   DATA_FACTOR(proj_year);
+  DATA_VECTOR(proj_t_i);
 
   DATA_IVECTOR(proj_spatial_index);
 
@@ -367,6 +368,16 @@ Type objective_function<Type>::operator()()
       }
     }
 
+    vector<Type> proj_re_sp_trend(proj_X_ij.rows());
+    vector<Type> proj_re_sp_slopes(proj_X_ij.rows());
+    if (spatial_trend) {
+      vector<Type> proj_re_sp_slopes_all = proj_mesh * omega_s_trend;
+      for (int i = 0; i < proj_X_ij.rows(); i++) {
+        proj_re_sp_trend(i) = proj_re_sp_slopes_all(proj_spatial_index(i)) * proj_t_i(i);
+        proj_re_sp_slopes(i) = proj_re_sp_slopes_all(proj_spatial_index(i));
+      }
+    }
+
     // Pick out the appropriate spatial and/or or spatiotemporal values:
     vector<Type> proj_re_st_vector(proj_X_ij.rows());
     vector<Type> proj_re_sp_st(proj_X_ij.rows());
@@ -375,10 +386,13 @@ Type objective_function<Type>::operator()()
       proj_re_st_vector(i) = proj_re_st(proj_spatial_index(i), proj_year(i));
     }
 
-    vector<Type> proj_eta = proj_fe + proj_re_sp_st + proj_re_st_vector;
+    vector<Type> proj_eta = proj_fe + proj_re_sp_st +
+      proj_re_st_vector + proj_re_sp_trend;
     REPORT(proj_fe);            // fixed effect projections
     REPORT(proj_re_sp_st);      // spatial random effect projections
     REPORT(proj_re_st_vector);  // spatiotemporal random effect projections
+    REPORT(proj_re_sp_slopes); // spatial slope projections
+    REPORT(proj_re_sp_trend);  // spatial trend projections (slope * time)
     REPORT(proj_eta);           // combined projections (in link space)
 
     if (calc_se) ADREPORT(proj_eta);
