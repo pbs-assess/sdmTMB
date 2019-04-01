@@ -102,7 +102,7 @@ plot_map(p$data, "est_re_s + est_re_s_trend") +
   ggtitle("Spatial intercept + slope random effect predictions") +
   scale_fill_gradient2()
 
-plot_map(predictions, "exp(est_fe)") +
+plot_map(p$data, "exp(est_fe)") +
   ggtitle("Prediction (fixed effects only)") +
   scale_fill_viridis_c(trans = "sqrt")
 
