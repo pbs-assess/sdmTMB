@@ -40,7 +40,8 @@ Suggests:
     dplyr,
     tmbstan,
     knitr,
-    rmarkdown
+    rmarkdown,
+    ROCR
 LinkingTo: 
     TMB,
     RcppEigen
