@@ -1,3 +1,5 @@
+^Meta$
+^doc$
 ^codecov\.yml$
 ^README\.Rmd$
 ^data-raw$
