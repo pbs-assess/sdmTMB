@@ -34,10 +34,10 @@ Let's perform index standardization with the built-in data for Pacific cod.
 glimpse(pcod)
 ```
 
-First we will create our SPDE mesh. We will use 200 knots for a balance between speed and accuracy in this vignette. You may want to use for applied scenarios. You will want to make sure that increasing the number of knots does not change the conclusions.
+First we will create our SPDE mesh. We will use 100 knots for a balance between speed and accuracy in this vignette. You will likely want to use more for applied scenarios. You will want to make sure that increasing the number of knots does not change the conclusions.
 
 ```{r spde, fig.asp=0.8}
-pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 200)
+pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 100)
 plot_spde(pcod_spde)
 ```
 
@@ -46,15 +46,8 @@ Let's fit a GLMM. Note that if we want to use this model for index standardizati
 ```{r model}
 m <- sdmTMB(
  pcod, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
- time = "year", spde = pcod_spde, family = tweedie(link = "log"), 
- anisotropy = TRUE
+ time = "year", spde = pcod_spde, family = tweedie(link = "log")
 )
-```
-
-We can plot the anisotropy component:
-
-```{r anisotropy}
-plot_anisotropy(m)
 ```
 
 We can inspect randomized quantile residuals::
@@ -68,7 +61,7 @@ ggplot(pcod, aes(X, Y, col = resids)) + scale_colour_gradient2() +
   geom_point() + facet_wrap(~year) + coord_fixed()
 ```
 
-Now we want to predict on a fine scale grid on the entire survey domain. There is a grid built into the package for Queen Charlotte Sound named `qcs_grid`. Our prediction grid also needs to have all the covariates that we used in the model above.
+Now we want to predict on a fine-scale grid on the entire survey domain. There is a grid built into the package for Queen Charlotte Sound named `qcs_grid`. Our prediction grid also needs to have all the covariates that we used in the model above.
 
 ```{r glimpse-grid}
 glimpse(qcs_grid)
@@ -80,7 +73,7 @@ Now make the predictions on new data:
 predictions <- predict(m, newdata = qcs_grid)
 ```
 
-Let's make a small function to make maps. Perhaps this could be integrated into the package but it's so simple that I'm not sure if it's worth it:
+Let's make a small function to make maps.
 
 ```{r plot-map}
 plot_map <- function(dat, column) {
@@ -132,7 +125,6 @@ ind <- get_index(predictions, bias_correct = FALSE)
 
 ```{r plot-index}
 # scale the biomass by the area and adjust units;
-# this will be cleaned up and integrated
 scale <- 2 * 2 / 1000 # 2 x 2 km grid and converted from kg to tonnes
 ggplot(ind, aes(year, est*scale)) + geom_line() +
   geom_ribbon(aes(ymin = lwr*scale, ymax = upr*scale), alpha = 0.4) +

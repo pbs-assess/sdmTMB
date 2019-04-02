@@ -1,0 +1,152 @@
+---
+title: "Identifying spatial complexity in sdmTMB models"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE, cache=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.asp = 0.618
+)
+```
+
+```{r packages, message=FALSE, warning=TRUE}
+library(ggplot2)
+library(dplyr)
+library(sdmTMB)
+library(ROCR)
+```
+
+Using the same Pacific cod dataset as in the index standardization example, we might be intererest in figuring out how many knots to select when constructing the spatial field with the `make_spde()` function. 
+
+Increasing the number of knots (or random effects estimated for each slice of time) will better approximate the species' distribution---up to a point. If the number of knots is too large, the model may be overfit and have little predictive ability. 
+
+As with the index-standardization example using Pacific cod, the data are as follows:
+
+- I've included columns for depth and depth squared. 
+- Depth was centred and scaled by its standard deviation and I've included those in the data frame so that they could be used to similarly scale the prediction grid.
+- The density units should be kg/km^2^.
+- Here, X and Y are coordinates in UTM zone 9.
+
+As a measure of performance, we'll evaluate the predictive ability of the model using 10% of the data as a 'test set', and the remaining 90% of the data as a 'training set'. Instead of dropping points spatially at random, we'll drop them in blocks. For this example we'll hold out the middle 10% by latitude. 
+
+```{r}
+ggplot(pcod, aes(Y)) + geom_histogram() +
+  xlab("Latitude")
+```
+
+Here we split the data into training and testing sets. 
+
+```{r}
+lat_breaks <- quantile(pcod$Y, c(0.45, 0.55))
+
+pcod <- mutate(pcod,
+  set = ifelse(Y > lat_breaks[1] & Y < lat_breaks[2], "test", "train")
+)
+```
+
+Because we can't include the number of knots as an explict parameter, we can identify the best supported knots by iterating over a range of values and checking cross validation performance. 
+
+We can use any of the GLMM models in sdmTMB as part of this exercise. We'll start with the same model used in the index-standardization example, but focus on a presence-absence model (binomial model). Note that if we want to use this model for index standardization then we need to include `0 + as.factor(year)` or `-1 + as.factor(year)` so that we have a factor predictor that represents the mean estimate for each time slice.
+
+```{r}
+pcod <- mutate(pcod, present = ifelse(density > 0, 1, 0))
+```
+
+Next, we'll iterate through the number of knots. We'll use the ROCR package to calculate area under the curve (AUC) as a scoring measure for the binomial GLMM. 
+
+```{r, results="hide", message=FALSE, warning=FALSE}
+performance_01 <- data.frame(
+  knots = seq(50, 200, 50),
+  auc = NA
+)
+
+for (k in seq_len(nrow(performance_01))) {
+  message("Testing ", performance_01$knots[k], " knots.")
+
+  # make spde for this model
+  pcod_spde <- make_spde(pcod[pcod$set != "test", "X"],
+    pcod[pcod$set != "test", "Y"],
+    n_knots = performance_01$knots[k]
+  )
+
+  # fit the model to the training set
+  m <- sdmTMB(
+    data = pcod[pcod$set != "test", ],
+    formula = present ~ 0 + as.factor(year),
+    time = "year", spde = pcod_spde, family = binomial(link = "logit"),
+    silent = TRUE
+  )
+
+  # validate against the test set
+  p <- predict(m, newdata = pcod[pcod$set == "test", ])
+
+  # use rmse to measure performance
+  pred <- plogis(p$data$est) # inverse logit
+  obs <- pcod[pcod$set == "test", "present", drop = FALSE]
+
+  rocr_pred <- ROCR::prediction(pred, labels = obs$present)
+  auc <- ROCR::performance(rocr_pred, "auc")@y.values[[1]]
+  performance_01[k, "auc"] <- auc
+}
+```
+
+We can plot AUC as a function of knots. Here we see a peak in AUC around 100-150 knots.
+
+```{r}
+ggplot(performance_01, aes(knots, auc)) + geom_point() +
+  geom_line() + ylab("AUC") + xlab("Knots")
+```
+
+As a second example with continuous data, let's fit a model two biomass density with depth and depth squared as predictors along with a spatial intercept random field and a random field representing spatially-varying trends in density through time. We'll model density with the Tweedie distribution.
+
+To quantify model performance, we're using RMSE (root mean squared error) because most people are familiar with it. A better option might be to use a metric that penalizes according to the Tweedie likelihood of the left-out data. 
+
+We will not evaluate the next code chunk so that this vignette builds quickly, but you could try running it yourself.
+
+```{r, results="hide", message=FALSE, warning=FALSE, eval=FALSE}
+performance <- data.frame(
+  knots = seq(80, 220, 20),
+  rmse = NA
+)
+
+for (k in seq_len(nrow(performance))) {
+  message("Testing ", performance$knots[k], " knots.")
+
+  # make spde for this model
+  pcod_spde <- make_spde(pcod[pcod$set != "test", "X"],
+    pcod[pcod$set != "test", "Y"],
+    n_knots = performance$knots[k]
+  )
+
+  # fit the model to the training set
+  m <- sdmTMB(
+    data = pcod[pcod$set != "test", ],
+    formula = density ~ depth_scaled + depth_scaled2,
+    spde = pcod_spde, family = tweedie(link = "log"),
+    silent = TRUE, spatial_trend = TRUE, time = "year"
+  )
+
+  # validate against the test set
+  p <- predict(m, newdata = pcod[pcod$set == "test", ])
+
+  # use rmse to measure performance
+  pred <- exp(p$data$est) # inverse link
+  obs <- pcod[pcod$set == "test", "density", drop = FALSE]
+  performance[k, "rmse"] <- sqrt(mean((pred - obs$density)^2))
+}
+```
+
+We can plot RMSE as a function of knots. In this case, we'd say using ~180 knots yielded the best predictive performance according to RMSE because it had the lowest value. 
+
+```{r, eval=FALSE}
+ggplot(performance, aes(knots, rmse)) + geom_point() +
+  geom_line() + ylab("RMSE") + xlab("Knots")
+```
