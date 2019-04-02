@@ -29,11 +29,14 @@ devtools::install_github("pbs-assess/sdmTMB")
 sdmTMB:
 
   - Fits GLMMs with spatial, spatiotemporal, spatial and spatiotemporal,
-    or AR1 spatiotemporal Gaussian Markov random fields with TMB.
+    or AR1 spatiotemporal Gaussian Markov random fields with TMB. It can
+    also fit spatially-varying trends through time as a random field.
   - Uses formula interfaces for fixed effects and any time-varying
     effects (dynamic regression) (e.g. `formula = y ~ 1 + x1,
-    time_varying = ~ 0 + x2`).
-  - Uses a `family(link)` format similar to `glm()` or `lme4::lmer()`.
+    time_varying = ~ 0 + x2`), where `y` is the response, `1` represents
+    an intercept, `0` omits an intercept, `x2` is a covariate with a
+    constant effect, and `x2` is a covariate with a time-varying effect.
+  - Uses a `family(link)` format similar to `glm()`, lme4, or glmmTMB.
     This includes Gaussian, Poisson, negative binomial, gamma, binomial,
     lognormal, Student-t, and Tweedie distributions with identity, log,
     inverse, and logit links. E.g. `family = tweedie(link = "log")`.
@@ -52,7 +55,11 @@ sdmTMB:
     algorithm and R-INLA or can take any standard R-INLA mesh created
     externally as input.
 
-## Example
+## Examples
 
 The main function is `sdmTMB()`. See `?sdmTMB` and `?predict.sdmTMB` for
-the most complete examples. There is also a simulation function `?sim`.
+the most complete examples. There is also a simulation function `?sim`
+with some examples. There are some vignettes you can see if you build
+with `devtools::install_github("pbs-assess/sdmTMB", build_vignettes =
+TRUE)` or look
+[here](https://github.com/pbs-assess/sdmTMB/tree/master/vignettes).
