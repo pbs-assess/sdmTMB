@@ -50,6 +50,11 @@ fields.}
 trend? This works if hauls can be viewed as replicates of grid cell
 observations, and only when other spatiotemporal components are not
 estimated.}
+
+\item{spatial_only}{Logical: should only a spatial model be fit (i.e. do not
+include spatiotemporal random effects)? By default a spatial-only model
+will be fit if there is only one unique value in the time column or the
+\code{time} argument is left at its default value of \code{NULL}.}
 }
 \description{
 Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.
