@@ -6,9 +6,9 @@
 \usage{
 sim(x = stats::runif(100, 0, 10), y = stats::runif(100, 0, 10),
   X = NULL, initial_betas = NULL, sigma_V = 0, time_steps = 1L,
-  ar1_fields = FALSE, ar1_phi = 0.5, sigma_O = 0.4, sigma_E = 0.3,
-  kappa = 1.3, phi = 0.2, seed = sample.int(1e+06, 1),
-  plot = FALSE, list = FALSE)
+  ar1_fields = FALSE, ar1_phi = 0.5, sigma_O = 0.01,
+  sigma_E = 0.01, kappa = 0.01, phi = 0.01,
+  seed = sample.int(1e+06, 1), plot = FALSE, list = FALSE)
 }
 \arguments{
 \item{x}{A vector of x coordinates.}
