@@ -8,7 +8,8 @@ sdmTMB(data, formula, time = NULL, spde, family = gaussian(link =
   "identity"), time_varying = NULL, silent = TRUE, multiphase = TRUE,
   anisotropy = FALSE, control = sdmTMBcontrol(),
   enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE,
-  spatial_trend = FALSE)
+  spatial_trend = FALSE,
+  spatial_only = identical(length(unique(data[[time]])), 1L))
 }
 \arguments{
 \item{data}{A data frame.}

@@ -81,13 +81,13 @@ NULL
 sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "identity"),
   time_varying = NULL, silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
   control = sdmTMBcontrol(), enable_priors = FALSE, ar1_fields = FALSE,
-  include_spatial = TRUE, spatial_trend = FALSE) {
+  include_spatial = TRUE, spatial_trend = FALSE,
+  spatial_only = identical(length(unique(data[[time]])), 1L)) {
 
-  spatial_only <- identical(length(unique(data[[time]])), 1L)
+  # spatial_only <- identical(length(unique(data[[time]])), 1L)
 
   if (spatial_trend) {
     numeric_time <- time
-    spatial_only <- TRUE
     t_i <- as.numeric(as.character(data[[numeric_time]]))
     t_i <- t_i - min(t_i, na.rm = TRUE) # first year = intercept
   } else {
