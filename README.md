@@ -34,7 +34,7 @@ sdmTMB:
   - Uses formula interfaces for fixed effects and any time-varying
     effects (dynamic regression) (e.g. `formula = y ~ 1 + x1,
     time_varying = ~ 0 + x2`), where `y` is the response, `1` represents
-    an intercept, `0` omits an intercept, `x2` is a covariate with a
+    an intercept, `0` omits an intercept, `x1` is a covariate with a
     constant effect, and `x2` is a covariate with a time-varying effect.
   - Uses a `family(link)` format similar to `glm()`, lme4, or glmmTMB.
     This includes Gaussian, Poisson, negative binomial, gamma, binomial,
