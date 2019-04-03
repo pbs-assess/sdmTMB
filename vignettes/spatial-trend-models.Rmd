@@ -96,7 +96,7 @@ plot_map_point(d, "residuals2") + scale_color_gradient2()
 plot_map_point(d, "residuals3") + scale_color_gradient2()
 ```
 
-The spatial residuals are a bit more clustered for the first model but look reasonable for the other 2.
+The spatial residuals are a bit more clustered for the first model but look reasonable for the other two.
 
 Let's extract some parameter estimates:
 
@@ -120,7 +120,7 @@ sd3$Estimate[row.names(sd3) == "ar1_phi"] +
   c(-2, 2) * sd3$`Std. Error`[row.names(sd3) == "ar1_phi"]
 ```
 
-So there isn't much evidence of needing the AR1 correlation structure. We can also look at the AIC or cross-validation performance.
+So there isn't much evidence of needing the AR1 correlation structure. We could also look at the AIC or cross-validation performance.
 
 Let's look at the predictions on a grid:
 
@@ -156,4 +156,19 @@ These are the predictions including all fixed and random effects plotted in log 
 plot_map_raster(p1$data, "est")
 plot_map_raster(p2$data, "est")
 plot_map_raster(p3$data, "est")
+```
+
+And we can look at just the spatiotemporal random effects for models 2 and 3:
+
+```{r}
+plot_map_raster(p2$data, "est_re_st") + scale_fill_gradient2()
+plot_map_raster(p3$data, "est_re_st") + scale_fill_gradient2()
+```
+
+And the single spatial random effects for all three models:
+
+```{r}
+plot_map_raster(filter(p1$data, year == 2003), "est_re_s")
+plot_map_raster(filter(p2$data, year == 2003), "est_re_s")
+plot_map_raster(filter(p3$data, year == 2003), "est_re_s")
 ```
