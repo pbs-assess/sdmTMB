@@ -70,13 +70,13 @@ simdat <- sim_args_vec( x = grid$X, y = grid$Y,
                         ar1_phi = 0.5,
                         sigma_O = 0.3,
                         sigma_E = 0.3,
-                        kappa = 0.05,
+                        kappa = 0.15,
                         phi = 0.05
                       )
 ```
 
 ```{r, echo=FALSE}
-g <- ggplot(simdat[[1]], aes_string("x", "y", fill = "z")) +
+g <- ggplot(simdat[[1]], aes_string("x", "y", fill = "observed")) +
               geom_raster() +
               facet_wrap(~time) +
               scale_fill_viridis_c() +
@@ -93,7 +93,7 @@ dat <- simdat[[1]] %>% group_by(time) %>% sample_n(500) %>% ungroup()
 ```
 
 ```{r, echo = FALSE}
-g <- ggplot(dat, aes_string("x", "y", fill = "z")) +
+g <- ggplot(dat, aes_string("x", "y", fill = "observed")) +
               geom_raster() +
               facet_wrap(~time) +
               scale_fill_viridis_c() +
@@ -109,7 +109,7 @@ dat <- simdat[[1]] %>% filter((x <15|x>20) & (y<15|y>20))
 ```
 
 ```{r, echo = FALSE}
-g <- ggplot(dat, aes_string("x", "y", fill = "z")) +
+g <- ggplot(dat, aes_string("x", "y", fill = "observed")) +
               geom_raster() +
               facet_wrap(~time) +
               scale_fill_viridis_c() +
@@ -128,7 +128,7 @@ plot_spde(spde)
 Use sdmTMB to estimate the input parameters in our simulation.\
 This model includes a spatiotemporal random field, but no fixed spatial random field.
 ```{r}
-m <- sdmTMB(formula = z ~ 1, 
+m <- sdmTMB(formula = observed ~ 1, 
             ar1_fields = TRUE,
             include_spatial = TRUE, 
             silent = TRUE,
@@ -177,7 +177,7 @@ glimpse(predictions)
 
 ## 6. Contrast true and predicted values for each point in space and time
 ```{r}
-spatial_bias_dat <- full_join(simdat[[1]], predictions, by = c("x" = "X", "y" = "Y", "time" = "time"), suffix = c("", "_est")) %>% mutate(diff = est - real_z)
+spatial_bias_dat <- full_join(simdat[[1]], predictions, by = c("x" = "X", "y" = "Y", "time" = "time"), suffix = c("", "_est")) %>% mutate(diff = est - real)
 glimpse(spatial_bias_dat)
 ```
 
@@ -189,13 +189,13 @@ hist(spatial_bias_dat$diff, breaks = 40)
 ### Plot spatial distribution of model estimates beside simulated true values, and the difference between them
 **dataframe** Dataframe containing all simulated and predicted values to be plotted spatially\
 **id** List of columns in dataframe that together identify unique observations (Default = c("x", "y", "time"))\
-**values** List of values to be shown in plotted on separate panels (Default = c("real_z", "est", "diff"))\
+**values** List of values to be shown in plotted on separate panels (Default = c("real", "est", "diff"))\
 **time_periods** List of time periods to be shown in plot (Default = c("1", "5", "9"))\
 
 ```{r}
 plot_map_diff <- function(dataframe,
                           id = c("x", "y", "time"),
-                          values = c("real_z", "est", "diff"),
+                          values = c("real", "est", "diff"),
                           time_periods = c("1", "5", "9")) {
 
   melted <- reshape2::melt(dataframe, id) %>% # could be replace with tidyr::gather(spatial_bias_dat, "variable", "value",... )?
@@ -293,7 +293,7 @@ sim_predictions <- function(iter = sample.int(1e3, 1), plot = FALSE,
                             kappa = 0.05,
                             phi = 0.1,
                             N = 1000, n_knots = 150, # iter.max=1e4, eval.max=1e4,
-                            formula = z ~ 1, family = gaussian(link = "identity")) {
+                            formula = observed ~ 1, family = gaussian(link = "identity")) {
   set.seed(iter * 581267)
 
   simdat <- sim(
@@ -345,7 +345,7 @@ sim_predictions <- function(iter = sample.int(1e3, 1), plot = FALSE,
   head(predictions)
 
   # combine true and predicted values for each point in space and time
-  spatial_bias <- full_join(simdat, predictions, by = c("x" = "X", "y" = "Y", "time" = "time"), suffix = c("", "_est")) %>% mutate(diff = est - real_z)
+  spatial_bias <- full_join(simdat, predictions, by = c("x" = "X", "y" = "Y", "time" = "time"), suffix = c("", "_est")) %>% mutate(diff = est - real)
   spatial_bias$converg <- converg
 
   unsampled <- anti_join(spatial_bias, dat)
@@ -361,7 +361,7 @@ sim_predictions <- function(iter = sample.int(1e3, 1), plot = FALSE,
 ```{r}
 all_iter <- purrr::pmap(args, sim_predictions,
   grid = grid, x = grid$X, y = grid$Y,
-  formula = z ~ 1, family = gaussian(link = "identity")
+  formula = observed ~ 1, family = gaussian(link = "identity")
 )
 ```
 
