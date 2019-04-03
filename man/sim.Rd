@@ -53,7 +53,7 @@ A data frame where:
 \code{real} represents the simulated process without observation error.
 \code{observed} represents the simulated process with random observation error.
 \code{b*} contain the beta values for each covariate used to simulate each time slice.
-\code{cov_*} covariate residuals for each observation.
+\code{cov*} covariate residuals for each observation.
 }
 \description{
 Simulate from a spatial Matern Random Field
@@ -94,7 +94,7 @@ d <- sim(x = runif(90), y = runif(90), initial_betas = c(-0.2, 0.2),
   ar1_phi = 0.5, plot = TRUE, sigma_O = 0.001, sigma_E = 0.3)
 spde <- make_spde(d$x, d$y, n_knots = 50)
 m <- sdmTMB(data = d, formula = observed ~ 1, time = "time",
-  time_varying = ~ 0 + cov_1 + cov_2,
+  time_varying = ~ 0 + cov1 + cov2,
   silent = FALSE, ar1_fields = TRUE,
   include_spatial = FALSE, spde = spde)
 m$model$par
