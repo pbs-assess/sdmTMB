@@ -84,10 +84,10 @@ sim <- function(x = stats::runif(100, 0, 10),
                 time_steps = 1L,
                 ar1_fields = FALSE,
                 ar1_phi = 0.5,
-                sigma_O = 0.4,
-                sigma_E = 0.3,
-                kappa = 1.3,
-                phi = 0.2,
+                sigma_O = 0.01,
+                sigma_E = 0.01,
+                kappa = 0.01,
+                phi = 0.01,
                 seed = sample.int(1e6, 1),
                 plot = FALSE,
                 list = FALSE) {
@@ -131,19 +131,17 @@ sim <- function(x = stats::runif(100, 0, 10),
     }
 
     if (is.null(X)) {
-      cov_mat <-  matrix(stats::rnorm(length(x) * n_covariates * time_steps),
+      cov_mat <-  matrix(stats::rnorm(length(x) * n_covariates * time_steps, sd = 1),
         ncol = n_covariates, nrow = length(x) * time_steps)
       cov_mat <- as.data.frame(cov_mat)
-      names(cov_mat) <- gsub("V", "cov_", names(cov_mat))
+      names(cov_mat) <- gsub("V", "cov", names(cov_mat))
     } else {
       cov_mat <- X
     }
 
     V <- b[rep(seq_len(time_steps), each = length(x)),]
     B <- as.data.frame(V)
-    names(B) <- gsub("V", "b", names(B))
     cov_values <- B * cov_mat
-    names(cov_values) <- gsub("b", "cov", names(cov_values))
     eta <- rowSums(cov_values)
 
   } else {
@@ -162,7 +160,7 @@ sim <- function(x = stats::runif(100, 0, 10),
 
   if (n_covariates > 0) {
     d <- cbind(d, B)
-    d <- cbind(d, cov_values)
+    d <- cbind(d, cov_mat)
   }
 
   if (plot) {
