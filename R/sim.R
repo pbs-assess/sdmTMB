@@ -27,7 +27,7 @@
 #'    `real` represents the simulated process without observation error.
 #'    `observed` represents the simulated process with random observation error.
 #'    `b*` contain the beta values for each covariate used to simulate each time slice.
-#'    `cov_*` covariate residuals for each observation.
+#'    `cov*` covariate residuals for each observation.
 
 #' @export
 #'
@@ -67,7 +67,7 @@
 #'   ar1_phi = 0.5, plot = TRUE, sigma_O = 0.001, sigma_E = 0.3)
 #' spde <- make_spde(d$x, d$y, n_knots = 50)
 #' m <- sdmTMB(data = d, formula = observed ~ 1, time = "time",
-#'   time_varying = ~ 0 + cov_1 + cov_2,
+#'   time_varying = ~ 0 + cov1 + cov2,
 #'   silent = FALSE, ar1_fields = TRUE,
 #'   include_spatial = FALSE, spde = spde)
 #' m$model$par
@@ -120,12 +120,12 @@ sim <- function(x = stats::runif(100, 0, 10),
 
   # create betas for each covariate k
   if (n_covariates > 0) {
-    B <- matrix(ncol = n_covariates, nrow = time_steps)
-    B[1, ] <- initial_betas
+    b <- matrix(ncol = n_covariates, nrow = time_steps)
+    b[1, ] <- initial_betas
     if (time_steps > 1) {
       for (k in seq_len(n_covariates)) {
         for (i in seq(2, time_steps)) {
-          B[i, k] <- B[i - 1, k] + stats::rnorm(1, 0, sigma_V[k])
+          b[i, k] <- b[i - 1, k] + stats::rnorm(1, 0, sigma_V[k])
         }
       }
     }
@@ -139,11 +139,15 @@ sim <- function(x = stats::runif(100, 0, 10),
       cov_mat <- X
     }
 
-    B <- as.data.frame(B[rep(seq_len(time_steps), each = length(x)),])
+    V <- b[rep(seq_len(time_steps), each = length(x)),]
+    B <- as.data.frame(V)
     names(B) <- gsub("V", "b", names(B))
+    cov_values <- B * cov_mat
+    names(cov_values) <- gsub("b", "cov", names(cov_values))
+    eta <- rowSums(cov_values)
 
-    eta <- rowSums(B * cov_mat)
   } else {
+    # empty vector for eta in simulations with no fixed effects
     eta <- vector("numeric", length = length(x) * time_steps)
   }
 
@@ -158,7 +162,7 @@ sim <- function(x = stats::runif(100, 0, 10),
 
   if (n_covariates > 0) {
     d <- cbind(d, B)
-    d <- cbind(d, cov_mat)
+    d <- cbind(d, cov_values)
   }
 
   if (plot) {
