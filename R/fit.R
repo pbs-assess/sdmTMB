@@ -72,6 +72,11 @@ NULL
 #'   log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'   time = "year", spde = pcod_spde_gaus)
 #'
+#' # Fit a spatial only model:
+#' m <- sdmTMB(
+#' d, density ~ depth_scaled + depth_scaled2,
+#' spde = pcod_spde, family = tweedie(link = "log"),
+#' silent = FALSE, spatial_only = TRUE)
 #'
 #' # Spatial-trend example
 #' m <- sdmTMB(d, density ~ depth_scaled,
@@ -88,7 +93,10 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
   include_spatial = TRUE, spatial_trend = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L)) {
 
-  # spatial_only <- identical(length(unique(data[[time]])), 1L)
+  if (spatial_only) {
+    time <- "_sdmTMB_time"
+    data[[time]] <- 1L
+  }
 
   if (spatial_trend) {
     numeric_time <- time
