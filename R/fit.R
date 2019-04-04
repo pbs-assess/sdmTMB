@@ -48,8 +48,7 @@ NULL
 #' # Tweedie:
 #' m <- sdmTMB(
 #' d, density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-#' time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-#' silent = FALSE)
+#' time = "year", spde = pcod_spde, family = tweedie(link = "log"))
 #'
 #' # Contents of the output object:
 #' names(m)
@@ -80,7 +79,7 @@ NULL
 #' # Spatial-trend example:
 #' m <- sdmTMB(d, density ~ depth_scaled,
 #'   spde = pcod_spde, family = tweedie(link = "log"),
-#'   silent = FALSE, spatial_trend = TRUE, time = "year")
+#'   spatial_trend = TRUE, time = "year")
 #'
 #' r <- m$tmb_obj$report()
 #' r$ln_tau_O_trend
@@ -119,14 +118,14 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     n_t        = length(unique(data[[time]])),
     n_s        = nrow(spde$mesh$loc),
     s_i        = spde$cluster - 1L,
-    t_i     = t_i,
+    t_i        = t_i,
     year_i     = as.numeric(as.factor(as.character(data[[time]]))) - 1L,
     year_prev_i= as.numeric(as.factor(as.character(data[[time]]))) - 2L,
     ar1_fields = as.integer(ar1_fields),
     X_ij       = X_ij,
     X_rw_ik    = X_rw_ik,
-    proj_lon    = 0,
-    proj_lat    = 0,
+    proj_lon   = 0,
+    proj_lat   = 0,
     do_predict = 0L,
     calc_se    = 0L,
     calc_time_totals = 0L,
@@ -245,6 +244,16 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     start = tmb_obj$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
     control = control)
 
+  final_grads <- tmb_obj$gr(tmb_opt$par)
+  sd_report <- TMB::sdreport(tmb_obj)
+  if (!identical(tmb_opt$convergence, 0L) ||
+      any(final_grads > 0.001) ||  !sd_report$pdHess
+  )
+    warning("The TMB model may not have converged. ",
+    "The maximum gradient was ", round(max(final_grads), 6L), ". ",
+    "The Hessian was ", if (!sd_report$pdHess) "not ", "positive definite.",
+      call. = FALSE)
+
   structure(list(
       model      = tmb_opt,
       data       = data,
@@ -258,7 +267,9 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
       tmb_params = tmb_params,
       tmb_map    = tmb_map,
       tmb_random = tmb_random,
-      tmb_obj    = tmb_obj),
+      tmb_obj    = tmb_obj,
+      gradients  = final_grads,
+      sd_report  = sd_report),
     class      = "sdmTMB")
 }
 
