@@ -82,11 +82,12 @@ plot_map(predictions, "est_re_st") +
   ggtitle("Spatiotemporal random effects only") +
   scale_fill_gradient2()
 
+\donttest{
 # Spatial trend example:
 pcod_spde <- make_spde(d$X, d$Y, n_knots = 100)
 m <- sdmTMB(pcod, density ~ depth_scaled + depth_scaled2,
   spde = pcod_spde, family = tweedie(link = "log"),
-  spatial_trend = TRUE, time = "year")
+  spatial_trend = TRUE, time = "year", spatial_only = TRUE)
 p <- predict(m, newdata = qcs_grid)
 
 plot_map(p$data, "re_s_trend") +
@@ -109,7 +110,6 @@ plot_map(p$data, "exp(est)") +
   ggtitle("Prediction (fixed effects + all random effects)") +
   scale_fill_viridis_c(trans = "sqrt")
 
-\donttest{
 # Example with standard errors on new location predictions.
 # Note this example models presence/absence.
 pcod_2017 <- d[d$year == 2017, ]
