@@ -67,8 +67,7 @@ plot_spde(pcod_spde)
 # Tweedie:
 m <- sdmTMB(
 d, density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-silent = FALSE)
+time = "year", spde = pcod_spde, family = tweedie(link = "log"))
 
 # Contents of the output object:
 names(m)
@@ -99,7 +98,7 @@ spde = pcod_spde, family = tweedie(link = "log"))
 # Spatial-trend example:
 m <- sdmTMB(d, density ~ depth_scaled,
   spde = pcod_spde, family = tweedie(link = "log"),
-  silent = FALSE, spatial_trend = TRUE, time = "year")
+  spatial_trend = TRUE, time = "year")
 
 r <- m$tmb_obj$report()
 r$ln_tau_O_trend
