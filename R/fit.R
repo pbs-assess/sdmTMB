@@ -244,6 +244,16 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     start = tmb_obj$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
     control = control)
 
+  final_grads <- tmb_obj$gr(tmb_opt$par)
+  sd_report <- TMB::sdreport(tmb_obj)
+  if (!identical(tmb_opt$convergence, 0L) ||
+      any(final_grads > 0.001) ||  !sd_report$pdHess
+  )
+    warning("The TMB model may not have converged. ",
+    "The maximum gradient was ", round(max(final_grads), 6L), ". ",
+    "The Hessian was ", if (!sd_report$pdHess) "not ", "positive definite.",
+      call. = FALSE)
+
   structure(list(
       model      = tmb_opt,
       data       = data,
@@ -257,7 +267,9 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
       tmb_params = tmb_params,
       tmb_map    = tmb_map,
       tmb_random = tmb_random,
-      tmb_obj    = tmb_obj),
+      tmb_obj    = tmb_obj,
+      gradients  = final_grads,
+      sd_report  = sd_report),
     class      = "sdmTMB")
 }
 
