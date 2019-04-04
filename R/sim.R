@@ -141,7 +141,9 @@ sim <- function(x = stats::runif(100, 0, 10),
 
     V <- b[rep(seq_len(time_steps), each = length(x)),]
     B <- as.data.frame(V)
+    names(B) <- gsub("V", "b", names(B))
     cov_values <- B * cov_mat
+    names(cov_values) <- gsub("b", "cov", names(cov_values))
     eta <- rowSums(cov_values)
 
   } else {
