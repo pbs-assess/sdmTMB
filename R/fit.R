@@ -244,32 +244,40 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     start = tmb_obj$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
     control = control)
 
-  final_grads <- tmb_obj$gr(tmb_opt$par)
   sd_report <- TMB::sdreport(tmb_obj)
-  if (!identical(tmb_opt$convergence, 0L) ||
-      any(final_grads > 0.001) ||  !sd_report$pdHess
-  )
-    warning("The TMB model may not have converged. ",
-    "The maximum gradient was ", round(max(final_grads), 6L), ". ",
-    "The Hessian was ", if (!sd_report$pdHess) "not ", "positive definite.",
-      call. = FALSE)
+  final_grads <- sd_report$gradient.fixed
+  if (!is.null(sd_report$pdHess)) {
+    if (!sd_report$pdHess) {
+      warning("The model may not have converged: ",
+        "non-positive-definite Hessian matrix.", call. = FALSE)
+    } else {
+      eigval <- try(1 / eigen(sd_report$cov.fixed)$values, silent = TRUE)
+      if (is(eigval, "try-error") || (min(eigval) < .Machine$double.eps * 10)) {
+        warning("The model may not have converged: ",
+          "extreme or very small eigen values detected.", call. = FALSE)
+      }
+    }
+    if (any(final_grads > 0.01))
+      warning("The model may not have converged. ",
+        "Maximum final gradient: ", max(final_grad), ".", call. = FALSE)
+  }
 
   structure(list(
-      model      = tmb_opt,
-      data       = data,
-      spde       = spde,
-      formula    = formula,
-      time_varying = time_varying,
-      time       = time,
-      family     = family,
-      response   = y_i,
-      tmb_data   = tmb_data,
-      tmb_params = tmb_params,
-      tmb_map    = tmb_map,
-      tmb_random = tmb_random,
-      tmb_obj    = tmb_obj,
-      gradients  = final_grads,
-      sd_report  = sd_report),
+    model      = tmb_opt,
+    data       = data,
+    spde       = spde,
+    formula    = formula,
+    time_varying = time_varying,
+    time       = time,
+    family     = family,
+    response   = y_i,
+    tmb_data   = tmb_data,
+    tmb_params = tmb_params,
+    tmb_map    = tmb_map,
+    tmb_random = tmb_random,
+    tmb_obj    = tmb_obj,
+    gradients  = final_grads,
+    sd_report  = sd_report),
     class      = "sdmTMB")
 }
 
