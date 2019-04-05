@@ -41,7 +41,8 @@ Suggests:
     tmbstan,
     knitr,
     rmarkdown,
-    ROCR
+    ROCR,
+    covr
 LinkingTo: 
     TMB,
     RcppEigen
