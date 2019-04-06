@@ -263,7 +263,7 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     }
     if (any(final_grads > 0.01))
       warning("The model may not have converged. ",
-        "Maximum final gradient: ", max(final_grad), ".", call. = FALSE)
+        "Maximum final gradient: ", max(final_grads), ".", call. = FALSE)
   }
 
   structure(list(
