@@ -34,7 +34,7 @@ NULL
 #'   will be fit if there is only one unique value in the time column or the
 #'   `time` argument is left at its default value of `NULL`.
 #'
-#' @importFrom methods as
+#' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
 #'   model.response terms
 #'
