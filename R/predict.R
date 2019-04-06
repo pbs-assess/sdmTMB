@@ -140,12 +140,16 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
   tmb_data$do_predict <- 1L
 
   if (!is.null(newdata)) {
+    if (object$time == "_sdmTMB_time") newdata[[time]] <- 0L
     original_time <- sort(unique(object$data[[object$time]]))
     new_data_time <- sort(unique(newdata[[object$time]]))
     if (!identical(original_time, new_data_time))
       stop("For now, all of the time elements in the original data set must ",
       "be identical to the time elements in the `newdata` data set ",
       "but they are not.", call. = FALSE)
+    if (sum(is.na(new_data_time)) > 1)
+      stop("There is at least one NA value in the time column. ",
+        "Please remove it.", call. = FALSE)
 
     newdata$sdm_orig_id <- seq(1, nrow(newdata))
     fake_newdata <- unique(newdata[,xy_cols])
@@ -175,8 +179,8 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     tmb_data$calc_se <- as.integer(se_fit)
     tmb_data$calc_time_totals <- 1L # for now (always on)
     tmb_data$proj_spatial_index <- newdata$sdm_spatial_id
-    tmb_data$proj_t_i <- as.numeric(as.character(newdata[[object$time]]))
-    tmb_data$proj_t_i <- tmb_data$proj_t_i - min(tmb_data$proj_t_i, na.rm = TRUE) # start at 0
+    tmb_data$proj_t_i <- as.numeric(newdata[[object$time]])
+    tmb_data$proj_t_i <- tmb_data$proj_t_i - mean(unique(tmb_data$proj_t_i)) # start at 0
     new_tmb_obj <- TMB::MakeADFun(
       data = tmb_data,
       parameters = object$tmb_params,

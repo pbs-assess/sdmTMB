@@ -93,12 +93,16 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
 
   if (is.null(time)) {
     time <- "_sdmTMB_time"
-    data[[time]] <- 1L
+    data[[time]] <- 0L
+  } else {
+    if (sum(is.na(data[[time]])) > 1)
+      stop("There is at least one NA value in the time column. ",
+        "Please remove it.", call. = FALSE)
   }
 
   if (spatial_trend) {
     numeric_time <- time
-    t_i <- as.numeric(as.character(data[[numeric_time]]))
+    t_i <- as.numeric(data[[numeric_time]])
     t_i <- t_i - mean(unique(t_i), na.rm = TRUE) # middle year = intercept
   } else {
     t_i <- rep(0L, nrow(data))
