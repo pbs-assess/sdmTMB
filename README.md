@@ -8,6 +8,8 @@ status](https://travis-ci.org/pbs-assess/sdmTMB.svg?branch=master)](https://trav
 [![Project Status: WIP – Initial development is in progress, but there
 has not yet been a stable, usable release suitable for the
 public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
+[![Coverage
+status](https://codecov.io/gh/pbs-assess/sdmTMB/branch/master/graph/badge.svg)](https://codecov.io/github/pbs-assess/sdmTMB?branch=master)
 
 The sdmTMB package implements spatiotemporal predictive-process GLMMs
 (Generalized Linear Mixed Effects Models) using Template Model Builder
@@ -32,7 +34,7 @@ sdmTMB:
     or AR1 spatiotemporal Gaussian Markov random fields with TMB. It can
     also fit spatially-varying trends through time as a random field.
   - Uses formula interfaces for fixed effects and any time-varying
-    effects (dynamic regression) (e.g. `formula = y ~ 1 + x1,
+    effects (dynamic regression) (e.g. `formula = y ~ 1 + x1,
     time_varying = ~ 0 + x2`), where `y` is the response, `1` represents
     an intercept, `0` omits an intercept, `x1` is a covariate with a
     constant effect, and `x2` is a covariate with a time-varying effect.
