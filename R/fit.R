@@ -277,7 +277,6 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     tmb_random = tmb_random,
     tmb_obj    = tmb_obj,
     gradients  = final_grads,
-    eigval     = eigval,
     sd_report  = sd_report),
     class      = "sdmTMB")
 }

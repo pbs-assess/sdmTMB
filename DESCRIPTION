@@ -42,7 +42,8 @@ Suggests:
     knitr,
     rmarkdown,
     ROCR,
-    covr
+    covr,
+    glmmTMB
 LinkingTo: 
     TMB,
     RcppEigen

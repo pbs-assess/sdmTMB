@@ -50,3 +50,17 @@ test_that("sdmTMB model fit with a covariate beta", {
   expect_equal(mean((p$data$est - s$observed)^2), 0, tol = 0.05)
 
   })
+
+test_that("NB2 fits", {
+  d <- pcod[pcod$year == 2017, ]
+  d$density <- round(d$density)
+  spde <- make_spde(d$X, d$Y, n_knots = 45)
+  m <- sdmTMB(data = d, formula = density ~ 1,
+    spde = spde, family = nbinom2(link = "log"))
+  sdmTMBphi <- exp(m$model$par[["ln_phi"]])
+  m2 <- glmmTMB::glmmTMB(density ~ 1, data = d,
+    family = glmmTMB::nbinom2(link = "log"))
+  glmmTMBphi <- exp(m2$fit$par[["betad"]])
+  expect_equal(glmmTMBphi, sdmTMBphi, tol = 0.01)
+})
+
