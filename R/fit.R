@@ -99,7 +99,7 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
   if (spatial_trend) {
     numeric_time <- time
     t_i <- as.numeric(as.character(data[[numeric_time]]))
-    t_i <- t_i - min(t_i, na.rm = TRUE) # first year = intercept
+    t_i <- t_i - mean(unique(t_i), na.rm = TRUE) # middle year = intercept
   } else {
     t_i <- rep(0L, nrow(data))
   }
