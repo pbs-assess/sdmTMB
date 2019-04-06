@@ -140,7 +140,7 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
   tmb_data$do_predict <- 1L
 
   if (!is.null(newdata)) {
-    if (object$time == "_sdmTMB_time") newdata[[time]] <- 0L
+    if (object$time == "_sdmTMB_time") newdata[[object$time]] <- 0L
     original_time <- sort(unique(object$data[[object$time]]))
     new_data_time <- sort(unique(newdata[[object$time]]))
     if (!identical(original_time, new_data_time))
