@@ -31,7 +31,7 @@
 #'
 #' pcod_spde <- make_spde(d$X, d$Y, n_knots = 50) # just 50 for example speed
 #' m <- sdmTMB(
-#'  d, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+#'  data = d, formula = density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'  time = "year", spde = pcod_spde, family = tweedie(link = "log")
 #' )
 #'
@@ -77,7 +77,7 @@
 #' \donttest{
 #' # Spatial trend example:
 #' pcod_spde <- make_spde(d$X, d$Y, n_knots = 100)
-#' m <- sdmTMB(pcod, density ~ depth_scaled + depth_scaled2,
+#' m <- sdmTMB(data = pcod, formula = density ~ depth_scaled + depth_scaled2,
 #'   spde = pcod_spde, family = tweedie(link = "log"),
 #'   spatial_trend = TRUE, time = "year", spatial_only = TRUE)
 #' p <- predict(m, newdata = qcs_grid)

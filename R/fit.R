@@ -3,9 +3,9 @@ NULL
 
 #' Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.
 #'
-#' @param data A data frame.
 #' @param formula Model formula. For index standardization you will want to
 #'   include `0 + as.factor(your_time_column)`.
+#' @param data A data frame.
 #' @param time The time column (as character).
 #' @param spde An object from [make_spde()].
 #' @param family The family and link. Supports [gaussian()], [Gamma()],
@@ -46,9 +46,8 @@ NULL
 #' plot_spde(pcod_spde)
 #'
 #' # Tweedie:
-#' m <- sdmTMB(
-#' d, density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-#' time = "year", spde = pcod_spde, family = tweedie(link = "log"))
+#' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+#' data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
 #'
 #' # Contents of the output object:
 #' names(m)
@@ -60,24 +59,23 @@ NULL
 #' # Binomial:
 #' pcod_binom <- d
 #' pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
-#' m_bin <- sdmTMB(pcod_binom,
-#'   present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'   time = "year", spde = pcod_spde, family = binomial(link = "logit"))
+#' m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+#' data = pcod_binom, time = "year", spde = pcod_spde,
+#' family = binomial(link = "logit"))
 #'
 #' # Gaussian:
 #' pcod_gaus <- subset(d, density > 0 & year >= 2013)
 #' pcod_spde_gaus <- make_spde(pcod_gaus$X, pcod_gaus$Y, n_knots = 50)
-#' m_pos <- sdmTMB(pcod_gaus,
-#'   log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'   time = "year", spde = pcod_spde_gaus)
+#' m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+#' data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
 #'
 #' # Fit a spatial only model:
 #' m <- sdmTMB(
-#' d, density ~ depth_scaled + depth_scaled2,
+#' density ~ depth_scaled + depth_scaled2, data = d,
 #' spde = pcod_spde, family = tweedie(link = "log"))
 #'
 #' # Spatial-trend example:
-#' m <- sdmTMB(d, density ~ depth_scaled,
+#' m <- sdmTMB(density ~ depth_scaled, data = d,
 #'   spde = pcod_spde, family = tweedie(link = "log"),
 #'   spatial_trend = TRUE, time = "year")
 #'
