@@ -55,9 +55,10 @@ make_spde <- function(x, y, n_knots, seed = 42, mesh = NULL) {
     loc_centers <- NA
   }
   spde <- INLA::inla.spde2.matern(mesh)
+  A <- INLA::inla.spde.make.A(mesh, loc = loc_xy)
   list(
     x = x, y = y, mesh = mesh, spde = spde, cluster = knots$cluster,
-    loc_centers = loc_centers
+    loc_centers = loc_centers, A = A
   )
 }
 

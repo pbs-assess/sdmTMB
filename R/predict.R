@@ -38,7 +38,7 @@
 #' # Predictions at original data locations:
 #' predictions <- predict(m)$data
 #' cols <- c("year", "X", "Y", "est", "est_fe",
-#'   "est_re_s", "est_re_st", "s_i")
+#'   "est_re_s", "est_re_st")
 #' head(predictions[,cols])
 #'
 #' predictions$resids <- residuals(m) # randomized quantile residuals
@@ -227,22 +227,11 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     nd <- object$data
     lp <- object$tmb_obj$env$last.par
     r <- object$tmb_obj$report(lp)
+
     nd$est <- r$eta_i
     nd$est_fe <- r$eta_fixed_i
-
-    # Spatial REs:
-    get_omegas <- function(x) r$omega_s[x]
-    nd$est_re_s <- mapply(get_omegas, x = object$tmb_data$s_i + 1)
-
-    # Sp-temp REs:
-    epsilon_st_mat <- object$tmb_obj$report(lp)$epsilon_st
-    get_eps <- function(x, y) epsilon_st_mat[x, y]
-    eps <- mapply(get_eps,
-      x = object$tmb_data$s_i + 1,
-      y = object$tmb_data$year_i + 1)
-    nd$est_re_st <- eps
-
-    nd$s_i <- object$tmb_data$s_i + 1
+    nd$est_re_s <- r$omega_s_A
+    nd$est_re_st <- r$omega_s_trend_A
     obj <- object
   }
 

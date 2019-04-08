@@ -1,45 +1,36 @@
 context("basic model fitting and prediction tests")
 
-
-SEED <- 97999
-
-x <- stats::runif(201, 0, 10)
-y <- stats::runif(201, 0, 10)
-
-# ------------------------------------------------------
-# a sdmTMB model with one covariate
+SEED <- 1
+set.seed(SEED)
+x <- stats::runif(150, -1, 1)
+y <- stats::runif(150, -1, 1)
 
 test_that("sdmTMB model fit with a covariate beta", {
-  set.seed(SEED)
-  initial_betas <- c(-0.5)
-  kappa <- 0.5 # decay of spatial correlation (smaller = slower decay)
+  initial_betas <- 0.5
+  kappa <- 4 # decay of spatial correlation (smaller = slower decay)
   sigma_O <- 0.3 # SD of spatial process
+  sigma_E <- 0.3 # SD of spatial process
   phi <- 0.1 # observation error
   s <- sim(
     x = x, y = y,
-    initial_betas = initial_betas,
-    phi = phi, kappa = kappa, sigma_O = sigma_O, seed = SEED #, plot = TRUE
+    initial_betas = initial_betas, time_steps = 9L,
+    phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E,
+    seed = SEED, plot = TRUE
   )
-
-  spde <- make_spde(x = s$x, y = s$y, n_knots = 200)
+  spde <- make_spde(x = s$x, y = s$y, n_knots = 100)
   plot_spde(spde)
-
-  m <- sdmTMB(
-    data = s, formula = observed ~ 0 + cov1,
-    spde = spde
-  )
+  m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time", spde = spde)
+  p <- as.list(m$model$par)
   r <- m$tmb_obj$report()
   expect_equal(m$model$convergence, 0L)
-  expect_equal((r$b_j - initial_betas)^2, 0, tol = 0.05)
-  expect_equal((exp(r$ln_phi) - phi)^2, 0, tol = 0.05)
-  # expect_equal((r$sigma_O - sigma_O)^2, 0, tol = 0.05)
-  # FIXME: does it make sense that kappa cannot be predicted well in model with one time slice?
-  # expect_equal((exp(r$ln_kappa) - kappa)^2, 0, tol = 0.05)
-  m$model$par
-  m$tmb_obj$gr(m$model$par)
+  expect_equal((p$b_j - initial_betas)^2, 0, tol = 0.05)
+  expect_equal((exp(p$ln_phi) - phi)^2, 0, tol = 0.05)
+  expect_equal((r$sigma_O - sigma_O)^2, 0, tol = 0.05)
+  expect_equal((r$sigma_E - sigma_E)^2, 0, tol = 0.05)
+  expect_equal(exp(p$ln_kappa), kappa, tol = 1.1)
   p <- predict(m)
   r <- residuals(m)
-  expect_equal(mean((p$data$est - s$observed)^2), 0, tol = 0.05)
+  expect_equal(mean((p$data$est - s$observed)^2), 0, tol = 0.02)
 })
 
 test_that("NB2 fits", {
@@ -56,11 +47,11 @@ test_that("NB2 fits", {
 })
 
 test_that("Anisotropy fits and plots", {
-  m <- sdmTMB(data = subset(pcod, year >= 2015),
+  d <- subset(pcod, year >= 2015)
+  m <- sdmTMB(data = d,
     formula = density ~ 0 + as.factor(year),
-    time = "year", spde = make_spde(pcod$X, pcod$Y, n_knots = 40),
-    family = tweedie(link = "log"), anisotropy = TRUE,
-    include_spatial = FALSE)
+    spde = make_spde(d$X, d$Y, n_knots = 40),
+    family = tweedie(link = "log"), anisotropy = TRUE)
   expect_identical(class(m), "sdmTMB")
   g <- plot_anisotropy(m)
   expect_identical(class(g), c("gg", "ggplot"))

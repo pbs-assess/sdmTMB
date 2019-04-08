@@ -46,7 +46,7 @@ m <- sdmTMB(
 # Predictions at original data locations:
 predictions <- predict(m)$data
 cols <- c("year", "X", "Y", "est", "est_fe",
-  "est_re_s", "est_re_st", "s_i")
+  "est_re_s", "est_re_st")
 head(predictions[,cols])
 
 predictions$resids <- residuals(m) # randomized quantile residuals

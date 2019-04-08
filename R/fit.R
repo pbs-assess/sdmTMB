@@ -115,14 +115,27 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
   else
     X_rw_ik <- matrix(0, nrow = nrow(data), ncol = 1)
 
+  # Stuff needed for spatiotemporal A matrix:
+  data$sdm_orig_id <- seq(1, nrow(data))
+  data$sdm_x <- spde$x
+  data$sdm_y <- spde$y
+  fake_data <- unique(data.frame(sdm_x = spde$x, sdm_y = spde$y))
+  fake_data[["sdm_spatial_id"]] <- seq(1, nrow(fake_data))
+  data <- base::merge(data, fake_data, by = c("sdm_x", "sdm_y"),
+    all.x = TRUE, all.y = FALSE)
+  data <- data[order(data$sdm_orig_id),, drop=FALSE]
+  A_st <- INLA::inla.spde.make.A(spde$mesh,
+    loc = as.matrix(fake_data[, c("sdm_x", "sdm_y"), drop = FALSE]))
+
   tmb_data <- list(
     y_i        = y_i,
     n_t        = length(unique(data[[time]])),
     n_s        = nrow(spde$mesh$loc),
-    s_i        = spde$cluster - 1L,
     t_i        = t_i,
+    A          = spde$A,
+    A_st       = A_st,
+    A_spatial_index = data$sdm_spatial_id - 1L,
     year_i     = as.numeric(as.factor(as.character(data[[time]]))) - 1L,
-    year_prev_i= as.numeric(as.factor(as.character(data[[time]]))) - 2L,
     ar1_fields = as.integer(ar1_fields),
     X_ij       = X_ij,
     X_rw_ik    = X_rw_ik,
@@ -263,6 +276,8 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
       warning("The model may not have converged. ",
         "Maximum final gradient: ", max(final_grads), ".", call. = FALSE)
   }
+
+  data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL
 
   structure(list(
     model      = tmb_opt,

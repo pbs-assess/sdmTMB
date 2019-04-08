@@ -126,13 +126,15 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(t_i);      // numeric year vector -- only for spatial_trend==1
   DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
-  DATA_FACTOR(s_i);   // Random effect index for observation i
   DATA_INTEGER(n_t);  // number of years
   DATA_INTEGER(n_s);  // number of sites (grids)
 
+  DATA_SPARSE_MATRIX(A); // INLA 'A' projection matrix for original data
+  DATA_SPARSE_MATRIX(A_st); // INLA 'A' projection matrix for unique stations
+  DATA_IVECTOR(A_spatial_index); // Vector of stations to match up A_st output
+
   // Indices for factors
   DATA_FACTOR(year_i);
-  DATA_FACTOR(year_prev_i);
 
   // Prediction?
   DATA_INTEGER(do_predict);
@@ -165,12 +167,10 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(proj_X_rw_ik);
   DATA_FACTOR(proj_year);
   DATA_VECTOR(proj_t_i);
-
   DATA_IVECTOR(proj_spatial_index);
 
-  // Spatial versus spatiotemporal
-  DATA_INTEGER(spatial_only);  //
-  DATA_INTEGER(spatial_trend);  // only used if spatial_only == 1
+  DATA_INTEGER(spatial_only);
+  DATA_INTEGER(spatial_trend);
 
   // ------------------ Parameters ---------------------------------------------
 
@@ -227,17 +227,17 @@ Type objective_function<Type>::operator()()
   if (include_spatial) {
     Type sigma_O = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O) *
                             exp(Type(2.0) * ln_kappa));
-    REPORT(sigma_O);
-
     Type sigma_O_trend = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O_trend) *
       exp(Type(2.0) * ln_kappa));
+    REPORT(sigma_O);
+    ADREPORT(sigma_O);
     REPORT(sigma_O_trend);
+    ADREPORT(sigma_O_trend);
   }
   Type sigma_E = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E) *
                           exp(Type(2.0) * ln_kappa));
 
-  // Precision matrix
-  Eigen::SparseMatrix<Type> Q;
+  Eigen::SparseMatrix<Type> Q; // Precision matrix
   if (anisotropy) {
     matrix<Type> H = MakeH(ln_H_input);
     Q = R_inla::Q_spde(spde_aniso, exp(ln_kappa), H);
@@ -247,32 +247,39 @@ Type objective_function<Type>::operator()()
     Q = R_inla::Q_spde(spde, exp(ln_kappa));
   }
 
-  // ------------------ Linear predictor----------------------------------------
+  // ------------------ INLA projections ---------------------------------------
+
+  // Here we are projecting the spatiotemporal and spatial random effects to the
+  // locations of the data using the INLA 'A' matrices.
+  array<Type> epsilon_st_A(A_st.rows(), n_t);
+  for (int i = 0; i < n_t; i++)
+    epsilon_st_A.col(i) = A_st * Array1DToVector(epsilon_st.col(i));
+  for (int i = 0; i < n_t; i++) {
+    if (year_i(i) == Type(0) || !ar1_fields) {
+      epsilon_st_A.col(i) = epsilon_st_A.col(i);
+    } else {  // AR1 and not first time slice:
+      epsilon_st_A.col(i) = minus_one_to_one(ar1_phi) * epsilon_st_A.col(i - 1) +
+        epsilon_st_A.col(i);
+    }
+  }
+  vector<Type> omega_s_A = A * omega_s;
+  vector<Type> omega_s_trend_A = A * omega_s_trend;
+
+  // ------------------ Linear predictor ---------------------------------------
 
   vector<Type> eta_fixed_i = X_ij * b_j;
   vector<Type> mu_i(n_i), eta_i(n_i);
   for (int i = 0; i < n_i; i++) {
     eta_i(i) = eta_fixed_i(i);
-
     if (random_walk)
       for (int k = 0; k < X_rw_ik.cols(); k++)
         eta_i(i) += X_rw_ik(i, k) * b_rw_t(year_i(i), k);
-
     if (include_spatial) {
-    eta_i(i) += omega_s(s_i(i));  // spatial
-      // add spatial trend (optional)
-      if (spatial_trend) {
-        eta_i(i) += omega_s_trend(s_i(i))*t_i(i);
-      }
+      eta_i(i) += omega_s_A(i);  // spatial
+      if (spatial_trend)
+        eta_i(i) += omega_s_trend_A(i) * t_i(i); // spatial trend
     }
-
-    if (year_i(i) == Type(0) || !ar1_fields) {
-      eta_i(i) += epsilon_st(s_i(i), year_i(i));  // spatio-temporal
-    } else {  // AR1 and not first time slice:
-      eta_i(i) +=
-          minus_one_to_one(ar1_phi) * epsilon_st(s_i(i), year_prev_i(i)) +
-          epsilon_st(s_i(i), year_i(i));
-    }
+    eta_i(i) += epsilon_st_A(A_spatial_index(i), year_i(i)); // spatiotemporal
     mu_i(i) = InverseLink(eta_i(i), link);
   }
 
@@ -282,8 +289,7 @@ Type objective_function<Type>::operator()()
   if (random_walk) {
     for (int t = 1; t < n_t; t++) {
       for (int k = 0; k < X_rw_ik.cols(); k++) {
-        nll_varphi +=
-            -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
+        nll_varphi += -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
       }
     }
   }
@@ -339,7 +345,7 @@ Type objective_function<Type>::operator()()
     }
   }
 
-  // ------------------ Projections --------------------------------------------
+  // ------------------ Predictions on new data --------------------------------
 
   if (do_predict) {
     vector<Type> proj_fe = proj_X_ij * b_j;
@@ -389,8 +395,8 @@ Type objective_function<Type>::operator()()
     REPORT(proj_fe);            // fixed effect projections
     REPORT(proj_re_sp_st);      // spatial random effect projections
     REPORT(proj_re_st_vector);  // spatiotemporal random effect projections
-    REPORT(proj_re_sp_slopes); // spatial slope projections
-    REPORT(proj_re_sp_trend);  // spatial trend projections (slope * time)
+    REPORT(proj_re_sp_slopes);  // spatial slope projections
+    REPORT(proj_re_sp_trend);   // spatial trend projections (slope * time)
     REPORT(proj_eta);           // combined projections (in link space)
 
     if (calc_se) ADREPORT(proj_eta);
@@ -407,7 +413,7 @@ Type objective_function<Type>::operator()()
       REPORT(log_total);
       ADREPORT(log_total);
 
-      // CoG:
+      // Centre of gravity:
       vector<Type> cog_x(n_t);
       vector<Type> cog_y(n_t);
       for (int i = 0; i < proj_eta.size(); i++) {
@@ -427,22 +433,15 @@ Type objective_function<Type>::operator()()
 
   // ------------------ Reporting ----------------------------------------------
 
-  REPORT(b_j)        // fixed effect parameters
-  REPORT(b_rw_t)     // fixed effect parameters
-  REPORT(ln_tau_O);  // spatial process ln SD
-  REPORT(ln_tau_O_trend);  // spatial process ln SD
-  REPORT(ln_tau_E);  // spatio-temporal process ln SD
-  REPORT(ln_tau_V);  // spatio-temporal process ln SD
-  REPORT(sigma_E);
-  REPORT(ln_phi);       // observation dispersion (depends on the distribution)
-  REPORT(thetaf);       // observation Tweedie mixing parameter
-  REPORT(epsilon_st);   // spatio-temporal effects; n_s by n_t matrix
-  REPORT(omega_s);      // spatial effects; n_s length vector
-  REPORT(omega_s_trend);      // spatial effects; n_s length vector
+  REPORT(sigma_E);      // spatio-temporal process parameter
+  ADREPORT(sigma_E);      // spatio-temporal process parameter
+  REPORT(epsilon_st_A);   // spatio-temporal effects; n_s by n_t matrix
+  REPORT(omega_s_A);      // spatial effects; n_s length vector
+  REPORT(omega_s_trend_A); // spatial trend effects; n_s length vector
   REPORT(eta_fixed_i);  // fixed effect predictions in the link space
   REPORT(eta_i);        // fixed and random effect predictions in link space
-  REPORT(ln_kappa);     // Matern parameter
   REPORT(range);        // Matern approximate distance at 10% correlation
+  ADREPORT(range);      // Matern approximate distance at 10% correlation
 
   // ------------------ Joint negative log likelihood --------------------------
 
