@@ -19,6 +19,6 @@ m <- sdmTMB(data = subset(pcod, year >= 2015),
   formula = density ~ 0 + as.factor(year),
   time = "year", spde = make_spde(pcod$X, pcod$Y, n_knots = 50),
   family = tweedie(link = "log"), anisotropy = TRUE,
-  include_spatial = FALSE))
+  include_spatial = FALSE)
 plot_anisotropy(m)
 }
