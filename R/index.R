@@ -22,6 +22,7 @@
 #' @export
 get_index <- function(obj, value_name = "log_total", bias_correct = FALSE)  {
   sr <- TMB::sdreport(obj$obj, bias.correct = bias_correct)
+  conv <- get_convergence_diagnostics(sr)
   ssr <- summary(sr, "report")
   log_total <- ssr[row.names(ssr) == value_name, , drop = FALSE]
   row.names(log_total) <- NULL
@@ -33,13 +34,16 @@ get_index <- function(obj, value_name = "log_total", bias_correct = FALSE)  {
   d$lwr <- exp(d$log_est + stats::qnorm(0.025) * d$se)
   d$upr <- exp(d$log_est + stats::qnorm(0.975) * d$se)
   d$year <- sort(unique(obj$data$year))
-  d[,c('year', 'est', 'lwr', 'upr', 'log_est', 'se'), drop = FALSE]
+  d$max_gradient <- max(conv$final_grads)
+  d$bad_eig <- conv$bad_eig
+  d[,c('year', 'est', 'lwr', 'upr', 'log_est', 'se', 'max_gradient', 'bad_eig'), drop = FALSE]
 }
 
 #' @rdname get_index
 #' @export
 get_cog <- function(obj, bias_correct = FALSE)  {
   sr <- TMB::sdreport(obj$obj, bias.correct = bias_correct)
+  conv <- get_convergence_diagnostics(sr)
   ssr <- summary(sr, "report")
   cog <- ssr[row.names(ssr) %in% c("cog_x", "cog_y"), , drop = FALSE]
   row.names(cog) <- NULL

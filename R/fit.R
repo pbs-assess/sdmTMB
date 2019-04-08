@@ -260,22 +260,7 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     control = control)
 
   sd_report <- TMB::sdreport(tmb_obj)
-  final_grads <- sd_report$gradient.fixed
-  if (!is.null(sd_report$pdHess)) {
-    if (!sd_report$pdHess) {
-      warning("The model may not have converged: ",
-        "non-positive-definite Hessian matrix.", call. = FALSE)
-    } else {
-      eigval <- try(1 / eigen(sd_report$cov.fixed)$values, silent = TRUE)
-      if (is(eigval, "try-error") || (min(eigval) < .Machine$double.eps * 10)) {
-        warning("The model may not have converged: ",
-          "extreme or very small eigen values detected.", call. = FALSE)
-      }
-    }
-    if (any(final_grads > 0.01))
-      warning("The model may not have converged. ",
-        "Maximum final gradient: ", max(final_grads), ".", call. = FALSE)
-  }
+  conv <- get_convergence_diagnostics(sd_report)
 
   data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL
 
@@ -293,7 +278,8 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     tmb_map    = tmb_map,
     tmb_random = tmb_random,
     tmb_obj    = tmb_obj,
-    gradients  = final_grads,
+    gradients  = conv$final_grads,
+    bad_eig    = conv$bad_eig,
     sd_report  = sd_report),
     class      = "sdmTMB")
 }
@@ -317,3 +303,25 @@ sdmTMBcontrol <- function(eval.max = 1e4, iter.max = 1e4, ...) {
   list(eval.max = eval.max, iter.max = iter.max, ...)
 }
 
+get_convergence_diagnostics <- function(sd_report) {
+  final_grads <- sd_report$gradient.fixed
+  if (!is.null(sd_report$pdHess)) {
+    if (!sd_report$pdHess) {
+      warning("The model may not have converged: ",
+        "non-positive-definite Hessian matrix.", call. = FALSE)
+    } else {
+      eigval <- try(1 / eigen(sd_report$cov.fixed)$values, silent = TRUE)
+      if (is(eigval, "try-error") || (min(eigval) < .Machine$double.eps * 10)) {
+        warning("The model may not have converged: ",
+          "extreme or very small eigen values detected.", call. = FALSE)
+        bad_eig <- TRUE
+      } else {
+        bad_eig <- FALSE
+      }
+    }
+    if (any(final_grads > 0.01))
+      warning("The model may not have converged. ",
+        "Maximum final gradient: ", max(final_grads), ".", call. = FALSE)
+  }
+  invisible(list(final_grads = final_grads, bad_eig = bad_eig))
+}
