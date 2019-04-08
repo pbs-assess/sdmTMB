@@ -15,3 +15,8 @@ before_install:
 
 # after_success:
 #   - Rscript -e 'covr::codecov()'
+
+env:
+  global:
+  - TRAVIS_CXXFLAGS="-Wall -Wextra -pedantic -Werror"
+  - R_REMOTES_NO_ERRORS_FROM_WARNINGS=true
