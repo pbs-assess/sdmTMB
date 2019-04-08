@@ -6,7 +6,6 @@ cache: packages
 warnings_are_errors: true
 r_github_packages:
   - andrewzm/INLA
-  - r-lib/covr
 r_check_args: "--as-cran --no-build-vignettes --no-manual"
 
 before_install:
