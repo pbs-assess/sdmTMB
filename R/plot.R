@@ -7,12 +7,15 @@
 #' @export
 #' @rdname plot_anisotropy
 #' @examples
-#' m <- sdmTMB(data = subset(pcod, year >= 2015),
+#' \donttest{
+#' d <- pcod
+#' m <- sdmTMB(data = d,
 #'   formula = density ~ 0 + as.factor(year),
-#'   time = "year", spde = make_spde(pcod$X, pcod$Y, n_knots = 50),
+#'   time = "year", spde = make_spde(d$X, d$Y, n_knots = 80),
 #'   family = tweedie(link = "log"), anisotropy = TRUE,
 #'   include_spatial = FALSE)
 #' plot_anisotropy(m)
+#' }
 plot_anisotropy <- function(object, arrow_length = 10) {
   stopifnot(identical(class(object), "sdmTMB"))
   report <- object$tmb_obj$report()
