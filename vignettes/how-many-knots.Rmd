@@ -72,8 +72,8 @@ for (k in seq_len(nrow(performance_01))) {
   message("Testing ", performance_01$knots[k], " knots.")
 
   # make spde for this model
-  pcod_spde <- make_spde(pcod[pcod$set != "test", "X"],
-    pcod[pcod$set != "test", "Y"],
+  pcod_spde <- make_spde(pcod$X[pcod$set != "test"],
+    pcod$Y[pcod$set != "test"],
     n_knots = performance_01$knots[k]
   )
 
@@ -121,8 +121,8 @@ for (k in seq_len(nrow(performance))) {
   message("Testing ", performance$knots[k], " knots.")
 
   # make spde for this model
-  pcod_spde <- make_spde(pcod[pcod$set != "test", "X"],
-    pcod[pcod$set != "test", "Y"],
+  pcod_spde <- make_spde(pcod$X[pcod$set != "test"],
+    pcod$Y[pcod$set != "test"],
     n_knots = performance$knots[k]
   )
 
