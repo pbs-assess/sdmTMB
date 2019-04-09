@@ -255,7 +255,7 @@ Type objective_function<Type>::operator()()
   for (int i = 0; i < n_t; i++)
     epsilon_st_A.col(i) = A_st * Array1DToVector(epsilon_st.col(i));
   for (int i = 0; i < n_t; i++) {
-    if (year_i(i) == Type(0) || !ar1_fields) {
+    if (i == 0 || !ar1_fields) {
       epsilon_st_A.col(i) = epsilon_st_A.col(i);
     } else {  // AR1 and not first time slice:
       epsilon_st_A.col(i) = minus_one_to_one(ar1_phi) * epsilon_st_A.col(i - 1) +
@@ -365,7 +365,7 @@ Type objective_function<Type>::operator()()
     for (int i = 0; i < n_t; i++)
       proj_re_st_temp.col(i) = proj_mesh * Array1DToVector(epsilon_st.col(i));
     for (int i = 0; i < n_t; i++) {
-      if (year_i(i) == Type(0) || !ar1_fields) {
+      if (i == 0 || !ar1_fields) {
         proj_re_st.col(i) = proj_re_st_temp.col(i);
       } else {  // AR1 and not first time slice:
         proj_re_st.col(i) =
