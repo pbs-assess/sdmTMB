@@ -86,7 +86,6 @@ m <- sdmTMB(
 )
 r <- m$tmb_obj$report()
 r$sigma_E
-exp(r$ln_kappa)
 2 * plogis(m$model$par[["ar1_phi"]]) - 1
 
 d <- sim(x = runif(90), y = runif(90), initial_betas = c(-0.2, 0.2),
