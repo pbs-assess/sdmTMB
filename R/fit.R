@@ -29,6 +29,10 @@ NULL
 #'   trend? This works if hauls can be viewed as replicates of grid cell
 #'   observations, and only when other spatiotemporal components are not
 #'   estimated.
+#' @param normalize Logical: should the normalization of the random effects
+#'   be done in R during the outer-optimization step? For some cases,
+#'   especially with many knots, this may be faster. In others, it may be slower
+#'   or suffer from convergence problems.
 #' @param spatial_only Logical: should only a spatial model be fit (i.e. do not
 #'   include spatiotemporal random effects)? By default a spatial-only model
 #'   will be fit if there is only one unique value in the time column or the
@@ -86,7 +90,7 @@ NULL
 sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "identity"),
   time_varying = NULL, silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
   control = sdmTMBcontrol(), enable_priors = FALSE, ar1_fields = FALSE,
-  include_spatial = TRUE, spatial_trend = FALSE,
+  include_spatial = TRUE, spatial_trend = FALSE, normalize = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L)) {
 
   if (is.null(time)) {
@@ -127,10 +131,10 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
   A_st <- INLA::inla.spde.make.A(spde$mesh,
     loc = as.matrix(fake_data[, c("sdm_x", "sdm_y"), drop = FALSE]))
 
+  n_s <- nrow(spde$mesh$loc)
   tmb_data <- list(
     y_i        = y_i,
     n_t        = length(unique(data[[time]])),
-    n_s        = nrow(spde$mesh$loc),
     t_i        = t_i,
     A          = spde$A,
     A_st       = A_st,
@@ -143,6 +147,7 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     proj_lat   = 0,
     do_predict = 0L,
     calc_se    = 0L,
+    normalize_in_r = as.integer(normalize),
     calc_time_totals = 0L,
     random_walk = !is.null(time_varying),
     enable_priors = as.integer(enable_priors),
@@ -161,6 +166,7 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     spatial_only = as.integer(spatial_only),
     spatial_trend = as.integer(spatial_trend)
   )
+  tmb_data$flag <- 1L # Include data
 
   tmb_params <- list(
     ln_H_input = c(0, 0),
@@ -174,9 +180,9 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     ln_tau_V   = rep(0, ncol(X_rw_ik)),
     ar1_phi    = 0,
     b_rw_t     = matrix(0, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)),
-    omega_s    = rep(0, tmb_data$n_s),
-    omega_s_trend    = rep(0, tmb_data$n_s),
-    epsilon_st = matrix(0, nrow = tmb_data$n_s, ncol = tmb_data$n_t)
+    omega_s    = rep(0, n_s),
+    omega_s_trend    = rep(0, n_s),
+    epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t)
   )
 
   # Mapping off params as needed:
@@ -254,6 +260,8 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     random = tmb_random, DLL = "sdmTMB", silent = silent)
+  if (tmb_data$normalize_in_r == 1L)
+    tmb_obj <- TMB::normalize(tmb_obj, flag = "flag")
 
   tmb_opt <- stats::nlminb(
     start = tmb_obj$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,

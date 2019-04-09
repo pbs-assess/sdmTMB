@@ -81,3 +81,67 @@ test_that("A spatiotemporal version works with predictions on new data points", 
   predictions <- predict(m, newdata = subset(qcs_grid, year >= 2015))
   expect_identical(class(predictions$data), "data.frame")
 })
+
+test_that("AR1 models fit with and without R normalization", {
+  set.seed(1)
+  x <- stats::runif(70, -1, 1)
+  y <- stats::runif(70, -1, 1)
+  dat <- sim(x = x, y = y,
+    time_steps = 9, ar1_fields = TRUE, ar1_phi = 0.0,
+    plot = TRUE, sigma_O = 1e-6, sigma_E = 0.3, phi = 0.1,
+    seed = 1
+  )
+  spde <- make_spde(x = dat$x, y = dat$y, n_knots = 40)
+  m <- sdmTMB(
+    ar1_fields = TRUE, include_spatial = FALSE,
+    data = dat, formula = observed ~ 1, time = "time",
+    family = gaussian(link = "identity"), spde = spde, normalize = FALSE
+  )
+  m_normalize <- sdmTMB(
+    ar1_fields = TRUE, include_spatial = FALSE,
+    data = dat, formula = observed ~ 1, time = "time",
+    family = gaussian(link = "identity"), spde = spde, normalize = TRUE
+  )
+  expect_equal(m$model$objective, m_normalize$model$objective, tolerance = 1e-5)
+  expect_equal(m$model$par, m_normalize$model$par, tolerance = 1e-5)
+
+  p <- predict(m)
+  p_normalize <- predict(m_normalize)
+  expect_equal(p$data, p_normalize$data)
+
+  p_nd <- predict(m, newdata = dat, xy_cols = c("x", "y"))
+  p_normalize <- predict(m_normalize, newdata = dat, xy_cols = c("x", "y"))
+  expect_equal(p_nd$data, p_normalize$data, tolerance = 1e-4)
+})
+
+test_that("Predictions on the original data set as `newdata`` return the same predictions", {
+  set.seed(1)
+  x <- stats::runif(70, -1, 1)
+  y <- stats::runif(70, -1, 1)
+  dat <- sim(x = x, y = y,
+    time_steps = 9, ar1_fields = TRUE, ar1_phi = 0.0,
+    plot = TRUE, sigma_O = 1e-6, sigma_E = 0.3, phi = 0.1,
+    seed = 1
+  )
+  spde <- make_spde(x = dat$x, y = dat$y, n_knots = 40)
+  m <- sdmTMB(
+    ar1_fields = FALSE, include_spatial = FALSE,
+    data = dat, formula = observed ~ 1, time = "time",
+    family = gaussian(link = "identity"), spde = spde, normalize = FALSE
+  )
+  p <- predict(m)
+  p_nd <- predict(m, newdata = dat, xy_cols = c("x", "y"))
+
+  cols <- c("est", "est_re_s", "est_re_st", "est_re_s_trend")
+  expect_equal(p$data[,cols], p_nd$data[,cols], tolerance = 1e-4)
+
+  m <- sdmTMB(
+    ar1_fields = TRUE, include_spatial = FALSE,
+    data = dat, formula = observed ~ 1, time = "time",
+    family = gaussian(link = "identity"), spde = spde, normalize = FALSE
+  )
+
+  p <- predict(m)
+  p_nd <- predict(m, newdata = dat, xy_cols = c("x", "y"))
+  expect_equal(p$data[,cols], p_nd$data[,cols], tolerance = 1e-4)
+})

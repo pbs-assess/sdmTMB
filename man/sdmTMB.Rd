@@ -8,7 +8,7 @@ sdmTMB(data, formula, time = NULL, spde, family = gaussian(link =
   "identity"), time_varying = NULL, silent = TRUE, multiphase = TRUE,
   anisotropy = FALSE, control = sdmTMBcontrol(),
   enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE,
-  spatial_trend = FALSE,
+  spatial_trend = FALSE, normalize = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L))
 }
 \arguments{
@@ -50,6 +50,11 @@ fields.}
 trend? This works if hauls can be viewed as replicates of grid cell
 observations, and only when other spatiotemporal components are not
 estimated.}
+
+\item{normalize}{Logical: should the normalization of the random effects
+be done in R during the outer-optimization step? For some cases,
+especially with many knots, this may be faster. In others, it may be slower
+or suffer from convergence problems.}
 
 \item{spatial_only}{Logical: should only a spatial model be fit (i.e. do not
 include spatiotemporal random effects)? By default a spatial-only model

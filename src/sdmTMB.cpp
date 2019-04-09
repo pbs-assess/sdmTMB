@@ -118,7 +118,6 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
   DATA_INTEGER(n_t);  // number of years
-  DATA_INTEGER(n_s);  // number of sites (grids)
 
   DATA_SPARSE_MATRIX(A); // INLA 'A' projection matrix for original data
   DATA_SPARSE_MATRIX(A_st); // INLA 'A' projection matrix for unique stations
@@ -126,6 +125,9 @@ Type objective_function<Type>::operator()()
 
   // Indices for factors
   DATA_FACTOR(year_i);
+
+  DATA_INTEGER(flag); // flag=0 => only prior returned; used when normalizing in R
+  DATA_INTEGER(normalize_in_r);
 
   // Prediction?
   DATA_INTEGER(do_predict);
@@ -245,14 +247,6 @@ Type objective_function<Type>::operator()()
   array<Type> epsilon_st_A(A_st.rows(), n_t);
   for (int i = 0; i < n_t; i++)
     epsilon_st_A.col(i) = A_st * vector<Type>(epsilon_st.col(i));
-  for (int i = 0; i < n_t; i++) {
-    if (i == 0 || !ar1_fields) {
-      epsilon_st_A.col(i) = epsilon_st_A.col(i);
-    } else {  // AR1 and not first time slice:
-      epsilon_st_A.col(i) = minus_one_to_one(ar1_phi) * epsilon_st_A.col(i - 1) +
-        epsilon_st_A.col(i);
-    }
-  }
   vector<Type> omega_s_A = A * omega_s;
   vector<Type> omega_s_trend_A = A * omega_s_trend;
   vector<Type> epsilon_st_A_vec(n_i);
@@ -287,15 +281,34 @@ Type objective_function<Type>::operator()()
     }
   }
 
-  // Spatial effects:
+  Type rho = minus_one_to_one(ar1_phi);
+  bool s = true;
+  if (normalize_in_r) s = false;
+
+  // Spatial (intercept) random effects:
   if (include_spatial)
-    nll_omega += SCALE(GMRF(Q), 1.0 / exp(ln_tau_O))(omega_s);
+    nll_omega += SCALE(GMRF(Q, s), 1.0 / exp(ln_tau_O))(omega_s);
+  // Spatial trend random effects:
   if (spatial_trend)
-    nll_omega_trend += SCALE(GMRF(Q), 1.0 / exp(ln_tau_O_trend))(omega_s_trend);
-  // Spatiotemporal effects:
+    nll_omega_trend += SCALE(GMRF(Q, s), 1.0 / exp(ln_tau_O_trend))(omega_s_trend);
+  // Spatiotemporal random effects:
   if (!spatial_only) {
-    for (int t = 0; t < n_t; t++)
-      nll_epsilon += SCALE(GMRF(Q), 1.0 / exp(ln_tau_E))(epsilon_st.col(t));
+    if (!ar1_fields) {
+      for (int t = 0; t < n_t; t++)
+        nll_epsilon += SCALE(GMRF(Q, s), 1. / exp(ln_tau_E))(epsilon_st.col(t));
+    } else {
+      nll_epsilon += SCALE(GMRF(Q, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
+      for (int t = 1; t < n_t; t++){
+        nll_epsilon += SCALE(GMRF(Q, s), 1./exp(ln_tau_E))(epsilon_st.col(t) -
+          rho * epsilon_st.col(t - 1));
+      }
+    }
+  }
+
+  // Normalization of GMRFs during outer-optimization step in R:
+  if (normalize_in_r) {
+    Type nll_gmrf = nll_epsilon + nll_omega + nll_omega_trend;
+    if (flag == 0) return(nll_gmrf);
   }
 
   // ------------------ Probability of data given random effects ---------------
@@ -356,17 +369,22 @@ Type objective_function<Type>::operator()()
     for (int i = 0; i < n_t; i++)
       proj_re_st_temp.col(i) = proj_mesh * vector<Type>(epsilon_st.col(i));
     for (int i = 0; i < n_t; i++) {
-      if (i == 0 || !ar1_fields) {
+      // if (i == 0 || !ar1_fields) {
         proj_re_st.col(i) = proj_re_st_temp.col(i);
-      } else {  // AR1 and not first time slice:
-        proj_re_st.col(i) =
-            minus_one_to_one(ar1_phi) * proj_re_st_temp.col(i - 1) +
-            proj_re_st_temp.col(i);
-      }
+      // } else {  // AR1 and not first time slice:
+      //   proj_re_st.col(i) =
+      //       minus_one_to_one(ar1_phi) * proj_re_st_temp.col(i - 1) +
+      //       proj_re_st_temp.col(i);
+      // }
     }
 
     vector<Type> proj_re_sp_trend(proj_X_ij.rows());
     vector<Type> proj_re_sp_slopes(proj_X_ij.rows());
+    for (int i = 0; i < proj_X_ij.rows(); i++) {
+      proj_re_sp_trend(i) = Type(0);
+      proj_re_sp_slopes(i) = Type(0);
+    }
+
     if (spatial_trend) {
       vector<Type> proj_re_sp_slopes_all = proj_mesh * omega_s_trend;
       for (int i = 0; i < proj_X_ij.rows(); i++) {
@@ -378,6 +396,10 @@ Type objective_function<Type>::operator()()
     // Pick out the appropriate spatial and/or or spatiotemporal values:
     vector<Type> proj_re_st_vector(proj_X_ij.rows());
     vector<Type> proj_re_sp_st(proj_X_ij.rows());
+    for (int i = 0; i < proj_X_ij.rows(); i++) {
+      proj_re_st_vector(i) = Type(0);
+      proj_re_sp_st(i) = Type(0);
+    }
     for (int i = 0; i < proj_X_ij.rows(); i++) {
       proj_re_sp_st(i) = proj_re_sp_st_all(proj_spatial_index(i));
       proj_re_st_vector(i) = proj_re_st(proj_spatial_index(i), proj_year(i));
@@ -433,6 +455,7 @@ Type objective_function<Type>::operator()()
   REPORT(omega_s_trend_A); // spatial trend effects; n_s length vector
   REPORT(eta_fixed_i);  // fixed effect predictions in the link space
   REPORT(eta_i);        // fixed and random effect predictions in link space
+  REPORT(rho);          // AR1 correlation in -1 to 1 space
   REPORT(range);        // Matern approximate distance at 10% correlation
   ADREPORT(range);      // Matern approximate distance at 10% correlation
 
