@@ -163,7 +163,8 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
       loc = as.matrix(fake_newdata[,xy_cols, drop = FALSE]))
 
     nd <- newdata
-    nd[[get_response(object$formula)]] <- 0 # fake for model.matrix
+    response <- get_response(object$formula)
+    if (!response %in% names(nd)) nd[[response]] <- 0 # fake for model.matrix
     proj_X_ij <- model.matrix(object$formula, data = nd)
     if (!is.null(object$time_varying))
       proj_X_rw_ik <- model.matrix(object$time_varying, data = nd)
