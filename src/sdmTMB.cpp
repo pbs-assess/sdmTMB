@@ -47,15 +47,6 @@ matrix<Type> MakeH(vector<Type> x)
 }
 
 template <class Type>
-vector<Type> Array1DToVector(array<Type> x)
-{
-  int n = x.size();
-  vector<Type> res(n);
-  for (int i = 0; i < n; i++) res[i] = x(i);
-  return res;
-}
-
-template <class Type>
 vector<Type> RepeatVector(vector<Type> x, int times)
 {
   int n = x.size() * times;
@@ -253,7 +244,7 @@ Type objective_function<Type>::operator()()
   // locations of the data using the INLA 'A' matrices.
   array<Type> epsilon_st_A(A_st.rows(), n_t);
   for (int i = 0; i < n_t; i++)
-    epsilon_st_A.col(i) = A_st * Array1DToVector(epsilon_st.col(i));
+    epsilon_st_A.col(i) = A_st * vector<Type>(epsilon_st.col(i));
   for (int i = 0; i < n_t; i++) {
     if (i == 0 || !ar1_fields) {
       epsilon_st_A.col(i) = epsilon_st_A.col(i);
@@ -363,7 +354,7 @@ Type objective_function<Type>::operator()()
     array<Type> proj_re_st_temp(proj_mesh.rows(), n_t);
     array<Type> proj_re_st(proj_mesh.rows(), n_t);
     for (int i = 0; i < n_t; i++)
-      proj_re_st_temp.col(i) = proj_mesh * Array1DToVector(epsilon_st.col(i));
+      proj_re_st_temp.col(i) = proj_mesh * vector<Type>(epsilon_st.col(i));
     for (int i = 0; i < n_t; i++) {
       if (i == 0 || !ar1_fields) {
         proj_re_st.col(i) = proj_re_st_temp.col(i);
