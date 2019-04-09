@@ -231,7 +231,7 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     nd$est <- r$eta_i
     nd$est_fe <- r$eta_fixed_i
     nd$est_re_s <- r$omega_s_A
-    nd$est_re_st <- r$epsilon_st_A
+    nd$est_re_st <- r$epsilon_st_A_vec
     nd$est_re_s_trend <- r$omega_s_trend_A
     obj <- object
   }

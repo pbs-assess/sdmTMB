@@ -264,6 +264,7 @@ Type objective_function<Type>::operator()()
   }
   vector<Type> omega_s_A = A * omega_s;
   vector<Type> omega_s_trend_A = A * omega_s_trend;
+  vector<Type> epsilon_st_A_vec(n_i);
 
   // ------------------ Linear predictor ---------------------------------------
 
@@ -279,7 +280,8 @@ Type objective_function<Type>::operator()()
       if (spatial_trend)
         eta_i(i) += omega_s_trend_A(i) * t_i(i); // spatial trend
     }
-    eta_i(i) += epsilon_st_A(A_spatial_index(i), year_i(i)); // spatiotemporal
+    epsilon_st_A_vec(i) = epsilon_st_A(A_spatial_index(i), year_i(i)); // record it
+    eta_i(i) += epsilon_st_A_vec(i); // spatiotemporal
     mu_i(i) = InverseLink(eta_i(i), link);
   }
 
@@ -435,7 +437,7 @@ Type objective_function<Type>::operator()()
 
   REPORT(sigma_E);      // spatio-temporal process parameter
   ADREPORT(sigma_E);      // spatio-temporal process parameter
-  REPORT(epsilon_st_A);   // spatio-temporal effects; n_s by n_t matrix
+  REPORT(epsilon_st_A_vec);   // spatio-temporal effects; vector
   REPORT(omega_s_A);      // spatial effects; n_s length vector
   REPORT(omega_s_trend_A); // spatial trend effects; n_s length vector
   REPORT(eta_fixed_i);  // fixed effect predictions in the link space
