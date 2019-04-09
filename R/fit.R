@@ -316,10 +316,11 @@ get_convergence_diagnostics <- function(sd_report) {
         warning("The model may not have converged: ",
           "extreme or very small eigen values detected.", call. = FALSE)
         bad_eig <- TRUE
+      }
+      if (any(final_grads > 0.01))
+        warning("The model may not have converged. ",
+          "Maximum final gradient: ", max(final_grads), ".", call. = FALSE)
     }
-    if (any(final_grads > 0.01))
-      warning("The model may not have converged. ",
-        "Maximum final gradient: ", max(final_grads), ".", call. = FALSE)
   }
   invisible(list(final_grads = final_grads, bad_eig = bad_eig))
 }
