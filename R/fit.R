@@ -305,6 +305,7 @@ sdmTMBcontrol <- function(eval.max = 1e4, iter.max = 1e4, ...) {
 
 get_convergence_diagnostics <- function(sd_report) {
   final_grads <- sd_report$gradient.fixed
+  bad_eig <- FALSE
   if (!is.null(sd_report$pdHess)) {
     if (!sd_report$pdHess) {
       warning("The model may not have converged: ",
@@ -315,9 +316,6 @@ get_convergence_diagnostics <- function(sd_report) {
         warning("The model may not have converged: ",
           "extreme or very small eigen values detected.", call. = FALSE)
         bad_eig <- TRUE
-      } else {
-        bad_eig <- FALSE
-      }
     }
     if (any(final_grads > 0.01))
       warning("The model may not have converged. ",
