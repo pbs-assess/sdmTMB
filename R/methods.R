@@ -10,8 +10,7 @@
 #' @export
 #' @import methods
 print.sdmTMB <- function(x, ...) {
-  if (m$args$spatial_only == "identical(length(unique(data[[time]])), 1L)" ||
-      isTRUE(m$args$spatial_only)) {
+  if (isTRUE(m$args$spatial_only)) {
     title <- "Spatial model fit by ML ['sdmTMB']\n"
   } else {
     title <- "Spatiotemporal model fit by ML ['sdmTMB']\n"
