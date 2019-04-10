@@ -139,7 +139,7 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     A          = spde$A,
     A_st       = A_st,
     A_spatial_index = data$sdm_spatial_id - 1L,
-    year_i     = as.numeric(as.factor(as.character(data[[time]]))) - 1L,
+    year_i     = make_year_i(data[[time]]),
     ar1_fields = as.integer(ar1_fields),
     X_ij       = X_ij,
     X_rw_ik    = X_rw_ik,
@@ -350,4 +350,9 @@ get_args <- function(){
   out <- def
   out[inds] <- act
   out
+}
+
+make_year_i <- function(x) {
+  x <- as.integer(as.factor(x))
+  x - min(x)
 }

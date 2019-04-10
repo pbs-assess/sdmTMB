@@ -124,3 +124,50 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   p_nd <- predict(m, newdata = dat, xy_cols = c("x", "y"))
   expect_equal(p$data[,cols], p_nd$data[,cols], tolerance = 1e-4)
 })
+
+test_that("A time-varying model fits and predicts appropriately", {
+  SEED <- 42
+  set.seed(SEED)
+  x <- stats::runif(60, -1, 1)
+  y <- stats::runif(60, -1, 1)
+  initial_betas <- 0.5
+  kappa <- 4
+  sigma_O <- 1e-6
+  sigma_E <- 0.1
+  phi <- 0.1
+  sigma_V <- 0.3
+  s <- sim(
+    x = x, y = y,
+    initial_betas = initial_betas, time_steps = 12L, sigma_V = sigma_V,
+    phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E,
+    seed = SEED, plot = TRUE
+  )
+  spde <- make_spde(x = s$x, y = s$y, n_knots = 25)
+  plot_spde(spde)
+  system.time({
+  m <- sdmTMB(data = s, formula = observed ~ 0, include_spatial = FALSE,
+    time_varying = ~ 0 + cov1, time = "time", spde = spde)})
+  expect_equal(exp(m$model$par["ln_tau_V"])[[1]], sigma_V, tolerance = 0.1)
+  b_t <- dplyr::group_by(s, time) %>%
+    dplyr::summarize(b_t = unique(b)) %>%
+    dplyr::pull(b_t)
+  r <- m$tmb_obj$report()
+  b_t_fit <- r$b_rw_t
+  plot(b_t, b_t_fit, asp = 1);abline(a = 0, b = 1)
+  expect_equal(mean((b_t- b_t_fit)^2), 0, tolerance = 1e-3)
+  p <- predict(m)
+  plot(p$data$est, s$observed, asp = 1);abline(a = 0, b = 1)
+  expect_equal(mean((p$data$est - s$observed)^2), 0, tolerance = 1e-2)
+
+  cols <- c("est", "est_re_s", "est_re_st", "est_re_s_trend")
+  p_nd <- predict(m, newdata = s, xy_cols = c("x", "y"))
+  expect_equal(p$data[,cols], p_nd$data[,cols], tolerance = 1e-5)
+})
+
+test_that("Year indexes get created correctly", {
+  expect_identical(make_year_i(c(1, 2, 3)),    c(0L, 1L, 2L))
+  expect_identical(make_year_i(c(1L, 2L, 3L)), c(0L, 1L, 2L))
+  expect_identical(make_year_i(c(1L, 2L, 4L)), c(0L, 1L, 2L))
+  expect_identical(make_year_i(c(1, 2, 4, 2)), c(0L, 1L, 2L, 1L))
+  expect_identical(make_year_i(c(1, 4, 2)),    c(0L, 2L, 1L))
+})
