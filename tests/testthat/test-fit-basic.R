@@ -2,8 +2,8 @@ context("basic model fitting and prediction tests")
 
 SEED <- 1
 set.seed(SEED)
-x <- stats::runif(150, -1, 1)
-y <- stats::runif(150, -1, 1)
+x <- stats::runif(100, -1, 1)
+y <- stats::runif(100, -1, 1)
 
 test_that("sdmTMB model fit with a covariate beta", {
   initial_betas <- 0.5
@@ -13,13 +13,14 @@ test_that("sdmTMB model fit with a covariate beta", {
   phi <- 0.1 # observation error
   s <- sim(
     x = x, y = y,
-    initial_betas = initial_betas, time_steps = 9L,
+    initial_betas = initial_betas, time_steps = 6L,
     phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E,
     seed = SEED, plot = TRUE
   )
-  spde <- make_spde(x = s$x, y = s$y, n_knots = 100)
+  spde <- make_spde(x = s$x, y = s$y, n_knots = 80)
   plot_spde(spde)
   m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time", spde = spde)
+  expect_output(print(m), "fit by")
   p <- as.list(m$model$par)
   r <- m$tmb_obj$report()
   expect_equal(m$model$convergence, 0L)

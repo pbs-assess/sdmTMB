@@ -1,57 +1,82 @@
-# dat <- sim(time_steps = 5, plot = TRUE)
+# dat <- sim(time_steps = 10, plot = TRUE, initial_betas = c(0.1, 0.2, -0.1), sigma_V = c(0,  0.2, 0.2))
 # spde <- make_spde(x = dat$x, y = dat$y, n_knots = 50)
 # plot_spde(spde)
 # m <- sdmTMB(
-#   data = dat, formula = observed ~ 1, time = "time", include_spatial = F,
+#   data = dat, formula = observed ~ cov1, time = "time", include_spatial = T,
+#   time_varying = ~ 0 + cov2 + cov2,
 #   family = gaussian(link = "identity"), spde = spde
 # )
-#
-# title <- "Spatiotemporal model fit by ML ['sdmTMB']\n"
-#
-# formula <- paste0("Formula: ", deparse(m$formula), "\n")
-#
-# data <- paste0("Data: ", m$args$data, "\n")
-#
-# family <- paste0("Family: ", deparse(m$args$family), "\n")
-#
-# criterion <- paste0("ML criterion at convergence: ", round(m$model$objective, 3), "\n")
-#
-# fe_names <- colnames(model.matrix(m$formula, m$data))
-#
-# r <- m$tmb_obj$report()
-# pars <- as.list(m$model$par)
-# b_j <- setNames(round(pars[[grep("b_j", names(pars))]], 3L), fe_names)
-# phi <- setNames(round(exp(pars$ln_phi), 3L), "phi")
-# range <- setNames(round(r$range, 3L), "range")
-#
-# if (!is.null(r$sigma_O)) {
-#   sigma_O <- setNames(round(r$sigma_O, 3L), "range")
-# } else {
-#   sigma_O <- ""
-# }
-#
-# if (!is.null(r$sigma_E)) {
-#   sigma_E <- setNames(round(r$sigma_E, 3L), "sigma_E")
-# } else {
-#   sigma_E <- ""
-# }
-#
-# if (!is.null(r$rho)) {
-#   rho <- setNames(round(r$rho, 3L), "rho")
-# } else {
-#   rho <- ""
-# }
-#
-# cat(title,
-#   formula,
-#   data,
-#   family,
-#   criterion
-# )
-#
-# sr <- m$sd_report
-# sr_se <- summary(sr)[,"Std. Error"]
-#
-# b_j_se <- setNames(round(sr_se[[grep("b_j", names(sr_se))]], 3L), fe_names)
-#
-# # Error terms:
+
+#' @export
+#' @import methods
+print.sdmTMB <- function(x, ...) {
+  if (m$args$spatial_only == "identical(length(unique(data[[time]])), 1L)" ||
+      isTRUE(m$args$spatial_only)) {
+    title <- "Spatial model fit by ML ['sdmTMB']\n"
+  } else {
+    title <- "Spatiotemporal model fit by ML ['sdmTMB']\n"
+  }
+  formula <- paste0("Formula: ", deparse(m$formula), "\n")
+  data <- paste0("Data: ", m$args$data, "\n")
+  family <- paste0("Family: ", deparse(m$args$family), "\n")
+  criterion <- paste0("ML criterion at convergence: ", round(m$model$objective, 3), "\n")
+  fe_names <- colnames(model.matrix(m$formula, m$data))
+
+  r <- m$tmb_obj$report()
+  pars <- m$model$par
+  b_j <- round(unname(pars[grep("b_j", names(pars))]), 2L)
+
+  phi <- round(exp(as.list(pars)$ln_phi), 2L)
+  range <- round(r$range, 2L)
+
+  pre <- "Spatial SD (sigma_O): "
+  if (!is.null(r$sigma_O)) {
+    sigma_O <- paste0(pre, round(r$sigma_O, 2L), "\n")
+  } else {
+    sigma_O <- paste0(pre, "not estimated\n")
+  }
+
+  pre <- "Spatiotemporal SD (sigma_E): "
+  if (!is.null(r$sigma_E)) {
+    sigma_E <- paste0(pre, round(r$sigma_E, 2L), "\n")
+  } else {
+    sigma_E <- paste0(pre, "not estimated\n")
+  }
+
+  pre <- "Spatiotemporal AR1 correlation (rho): "
+  if (!is.null(r$rho) && r$rho != 0L) {
+    rho <- paste0(pre, round(r$rho, 2L), "\n")
+  } else {
+    rho <- paste0(pre, "not estimated\n")
+  }
+
+  sr <- m$sd_report
+  sr_se <- summary(sr)[,"Std. Error"]
+  sr_est <- summary(sr)[,"Std. Error"]
+
+  b_j_se <- unname(round(sr_se[grep("b_j", names(sr_se))], 2L))
+  b_j <- unname(round(sr_se[grep("b_j", names(sr_est))], 2L))
+
+  mm <- cbind(b_j, b_j_se)
+  colnames(mm) <- c("coef.est", "coef.se")
+  row.names(mm) <- fe_names
+  mm
+
+  cat(title,
+    formula,
+    data,
+    family,
+    sep = "")
+
+  print(mm)
+
+  cat("\n",
+    paste0("Matern range parameter: ", range, "\n"),
+    paste0("Dispersion parameter: ", phi, "\n"),
+    sigma_O,
+    sigma_E,
+    rho,
+    criterion,
+    sep = ""
+  )
+}
