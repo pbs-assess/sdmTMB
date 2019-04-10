@@ -191,7 +191,7 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     tmb_map <- c(tmb_map, list(ln_H_input = factor(rep(NA, 2))))
   if (!ar1_fields)
     tmb_map <- c(tmb_map, list(ar1_phi = as.factor(NA)))
-  if (family$family == "binomial")
+  if (family$family %in% c("binomial", "poisson"))
     tmb_map <- c(tmb_map, list(ln_phi = as.factor(NA)))
   if (family$family != "tweedie")
     tmb_map <- c(tmb_map, list(thetaf = as.factor(NA)))

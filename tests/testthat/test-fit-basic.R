@@ -33,19 +33,6 @@ test_that("sdmTMB model fit with a covariate beta", {
   expect_equal(mean((p$data$est - s$observed)^2), 0, tol = 0.02)
 })
 
-test_that("NB2 fits", {
-  d <- pcod[pcod$year == 2017, ]
-  d$density <- round(d$density)
-  spde <- make_spde(d$X, d$Y, n_knots = 45)
-  m <- sdmTMB(data = d, formula = density ~ 1,
-    spde = spde, family = nbinom2(link = "log"))
-  sdmTMBphi <- exp(m$model$par[["ln_phi"]])
-  m2 <- glmmTMB::glmmTMB(density ~ 1, data = d,
-    family = glmmTMB::nbinom2(link = "log"))
-  glmmTMBphi <- exp(m2$fit$par[["betad"]])
-  expect_equal(glmmTMBphi, sdmTMBphi, tol = 0.01)
-})
-
 test_that("Anisotropy fits and plots", {
   d <- subset(pcod, year >= 2015)
   m <- sdmTMB(data = d,
@@ -55,14 +42,6 @@ test_that("Anisotropy fits and plots", {
   expect_identical(class(m), "sdmTMB")
   g <- plot_anisotropy(m)
   expect_identical(class(g), c("gg", "ggplot"))
-})
-
-test_that("Families work", {
-  .names <- c("family", "link", "linkfun", "linkinv")
-  expect_named(student(link = "identity"), .names)
-  expect_named(lognormal(link = "log"), .names)
-  expect_named(tweedie(link = "log"), .names)
-  expect_named(nbinom2(link = "log"), .names)
 })
 
 test_that("A spatiotemporal version works with predictions on new data points", {

@@ -1,3 +1,4 @@
+# nocov start
 make_enum_list <- function(type = "family", file = "src/sdmTMB.cpp") {
   x <- readLines(file)
   valid_start <- grep(paste0("valid_", type), x)
@@ -23,3 +24,4 @@ make_enum <- function(output = "R/enum.R") {
   out <- paste(out, collapse = "\n")
   writeLines(out, con = output)
 }
+# nocov end
