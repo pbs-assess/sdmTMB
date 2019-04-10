@@ -46,11 +46,7 @@ test_that("Student and lognormal families fit", {
   spde <- make_spde(s$x, s$y, n_knots = 50)
   m <- sdmTMB(data = s, formula = observed ~ 1, spde = spde,
     family = student(link = "identity"))
-
-  # FIXME:
-  # s$exp_observed <- exp(s$observed)
-  # m <- sdmTMB(data = s, formula = exp_observed ~ 1, spde = spde,
-  #   family = lognormal(link = "log"))
+  expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
 })
 
 test_that("NB2 fits", {
@@ -72,6 +68,7 @@ test_that("Poisson fits", {
   spde <- make_spde(d$X, d$Y, n_knots = 30)
   m <- sdmTMB(data = d, formula = density ~ 1,
     spde = spde, family = poisson(link = "log"))
+  expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
 })
 
 
@@ -82,5 +79,6 @@ test_that("Binomial fits", {
   d$present <- ifelse(d$density > 0, 1, 0)
   m <- sdmTMB(data = d, formula = present ~ 1,
     spde = spde, family = binomial(link = "logit"))
+  expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
 })
 
