@@ -171,3 +171,36 @@ test_that("Year indexes get created correctly", {
   expect_identical(make_year_i(c(1, 2, 4, 2)), c(0L, 1L, 2L, 1L))
   expect_identical(make_year_i(c(1, 4, 2)),    c(0L, 2L, 1L))
 })
+
+test_that("Priors are working and regularize", {
+  set.seed(1)
+  initial_betas <- 5 # Large to check regularization or priors
+  kappa <- 2
+  sigma_O <- 0.2
+  sigma_E <- 0.3
+  phi <- 0.01
+  x <- stats::runif(100, -1, 1)
+  y <- stats::runif(100, -1, 1)
+  s <- sim(
+    initial_betas = initial_betas, time = 4L,
+    phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E,
+    seed = 1
+  )
+  spde <- make_spde(s$x, s$y, n_knots = 30)
+  m <- sdmTMB(data = s, formula = observed ~ 0 + cov1,
+    spde = spde, time = "time",
+    include_spatial = FALSE, enable_priors = FALSE)
+  m_priors <- sdmTMB(data = s, formula = observed ~ 0 + cov1,
+    spde = spde, time = "time",
+    include_spatial = FALSE, enable_priors = TRUE)
+  expect_true(m$model$par[["b_j"]] > m_priors$model$par[["b_j"]])
+})
+
+test_that("A spatial trend model fits", {
+  d <- subset(pcod, year >= 2011) # subset for speed
+  pcod_spde <- make_spde(d$X, d$Y, n_knots = 50)
+  m <- sdmTMB(density ~ depth_scaled, data = d,
+    spde = pcod_spde, family = tweedie(link = "log"),
+    spatial_trend = TRUE, time = "year")
+  expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
+})

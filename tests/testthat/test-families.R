@@ -82,3 +82,11 @@ test_that("Binomial fits", {
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
 })
 
+test_that("Gamma fits", {
+  d <- pcod[pcod$year == 2017 & pcod$density > 0, ]
+  # d$density <- d$density / 100
+  spde <- make_spde(d$X, d$Y, n_knots = 30)
+  m <- sdmTMB(data = d, formula = density ~ 1,
+    spde = spde, family = Gamma(link = "log"))
+  expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
+})
