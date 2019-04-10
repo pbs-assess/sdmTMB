@@ -10,19 +10,19 @@
 #' @export
 #' @import methods
 print.sdmTMB <- function(x, ...) {
-  if (isTRUE(m$args$spatial_only)) {
+  if (isTRUE(x$args$spatial_only)) {
     title <- "Spatial model fit by ML ['sdmTMB']\n"
   } else {
     title <- "Spatiotemporal model fit by ML ['sdmTMB']\n"
   }
-  formula <- paste0("Formula: ", deparse(m$formula), "\n")
-  data <- paste0("Data: ", m$args$data, "\n")
-  family <- paste0("Family: ", deparse(m$args$family), "\n")
-  criterion <- paste0("ML criterion at convergence: ", round(m$model$objective, 3), "\n")
-  fe_names <- colnames(model.matrix(m$formula, m$data))
+  formula <- paste0("Formula: ", deparse(x$formula), "\n")
+  data <- paste0("Data: ", x$args$data, "\n")
+  family <- paste0("Family: ", deparse(x$args$family), "\n")
+  criterion <- paste0("ML criterion at convergence: ", round(x$model$objective, 3), "\n")
+  fe_names <- colnames(model.matrix(x$formula, x$data))
 
-  r <- m$tmb_obj$report()
-  pars <- m$model$par
+  r <- x$tmb_obj$report()
+  pars <- x$model$par
   b_j <- round(unname(pars[grep("b_j", names(pars))]), 2L)
 
   phi <- round(exp(as.list(pars)$ln_phi), 2L)
@@ -49,7 +49,7 @@ print.sdmTMB <- function(x, ...) {
     rho <- paste0(pre, "not estimated\n")
   }
 
-  sr <- m$sd_report
+  sr <- x$sd_report
   sr_se <- summary(sr)[,"Std. Error"]
   sr_est <- summary(sr)[,"Std. Error"]
 
@@ -62,7 +62,7 @@ print.sdmTMB <- function(x, ...) {
   mm
 
   cat(title,
-    formula,
+    # formula,
     data,
     family,
     sep = "")
