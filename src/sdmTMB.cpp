@@ -451,6 +451,7 @@ Type objective_function<Type>::operator()()
   REPORT(sigma_E);      // spatio-temporal process parameter
   ADREPORT(sigma_E);      // spatio-temporal process parameter
   REPORT(epsilon_st_A_vec);   // spatio-temporal effects; vector
+  REPORT(b_rw_t);   // time-varying effects
   REPORT(omega_s_A);      // spatial effects; n_s length vector
   REPORT(omega_s_trend_A); // spatial trend effects; n_s length vector
   REPORT(eta_fixed_i);  // fixed effect predictions in the link space

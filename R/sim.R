@@ -53,7 +53,7 @@
 #' )
 #' spde <- make_spde(x = dat$x, y = dat$y, n_knots = 80)
 #' m <- sdmTMB(
-#'   silent = FALSE, ar1_fields = TRUE, include_spatial = FALSE,
+#'   ar1_fields = TRUE, include_spatial = FALSE,
 #'   data = dat, formula = observed ~ 1, time = "time",
 #'   family = gaussian(link = "identity"), spde = spde
 #' )
@@ -61,19 +61,17 @@
 #' r$sigma_E
 #' 2 * plogis(m$model$par[["ar1_phi"]]) - 1
 #'
-#' d <- sim(x = runif(90), y = runif(90), initial_betas = c(-0.2, 0.2),
-#'   sigma_V = c(0.1, 0.1), time_steps = 10, phi = 0.1, ar1_fields = TRUE,
-#'   ar1_phi = 0.5, plot = TRUE, sigma_O = 0.001, sigma_E = 0.3)
-#' spde <- make_spde(d$x, d$y, n_knots = 50)
-#' m <- sdmTMB(data = d, formula = observed ~ 1, time = "time",
-#'   time_varying = ~ 0 + cov1 + cov2,
-#'   silent = FALSE, ar1_fields = TRUE,
+#' # Time-varying effects:
+#' d <- sim(x = runif(200), y = runif(200), initial_betas = c(0.2, -0.2),
+#'   sigma_V = c(0.2, 0.1), time_steps = 12, phi = 0.05,
+#'   plot = TRUE, sigma_O = 1e-5, sigma_E = 0.2)
+#' spde <- make_spde(d$x, d$y, n_knots = 65)
+#' m <- sdmTMB(data = d, formula = observed ~ 0, time = "time",
+#'   time_varying = ~ 0 + cov1 + cov2, silent = FALSE,
 #'   include_spatial = FALSE, spde = spde)
-#' m$model$par
 #' r <- m$tmb_obj$report()
 #' r$b_rw_t
-#' unique(d[,c("b1", "b2")])
-#' exp(r$ln_tau_V)
+#' exp(m$model$par[grep("ln_tau_V", names(m$model$par))])
 
 sim <- function(x = stats::runif(100, 0, 10),
                 y = stats::runif(100, 0, 10),
