@@ -88,15 +88,4 @@ r <- m$tmb_obj$report()
 r$sigma_E
 2 * plogis(m$model$par[["ar1_phi"]]) - 1
 
-# Time-varying effects:
-d <- sim(x = runif(200), y = runif(200), initial_betas = c(0.2, -0.2),
-  sigma_V = c(0.2, 0.1), time_steps = 12, phi = 0.05,
-  plot = TRUE, sigma_O = 1e-5, sigma_E = 0.2)
-spde <- make_spde(d$x, d$y, n_knots = 65)
-m <- sdmTMB(data = d, formula = observed ~ 0, time = "time",
-  time_varying = ~ 0 + cov1 + cov2, silent = FALSE,
-  include_spatial = FALSE, spde = spde)
-r <- m$tmb_obj$report()
-r$b_rw_t
-exp(m$model$par[grep("ln_tau_V", names(m$model$par))])
 }
