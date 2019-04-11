@@ -1,7 +1,7 @@
 # pcod <- load("~/github/dfo/sdmTMB/data/pcod.rda")
-d_trawl <- readRDS("~/github/dfo/gfranges/analysis/tmb-sensor-explore/sensor-data-processed.rds")
+# d_trawl <- readRDS("~/github/dfo/gfranges/analysis/tmb-sensor-explore/sensor-data-processed.rds")
 # NOTE: input data must have coordinate data labeled as capital X and capital Y
-library(sdmTMB)
+#library(sdmTMB)
 
 loglik_cv <- function(all_data, time = "year", k_folds = 10, fold_id = NULL, n_knots = NULL, ...) {
   #browser()
@@ -35,13 +35,13 @@ loglik_cv <- function(all_data, time = "year", k_folds = 10, fold_id = NULL, n_k
     if (is.null(n_knots)) {
       n_time <- length(unique(split_time))
       auto_knots <- nrow(data)/n_time/2
-      d_fit_spde <- sdmTMB::make_spde(d_fit$X, d_fit$Y, n_knots = auto_knots)
+      d_fit_spde <- make_spde(d_fit$X, d_fit$Y, n_knots = auto_knots)
       } else {
-      d_fit_spde <- sdmTMB::make_spde(d_fit$X, d_fit$Y, n_knots = n_knots)
+      d_fit_spde <- make_spde(d_fit$X, d_fit$Y, n_knots = n_knots)
       }
     #browser()
     # run model
-    m_fold <- sdmTMB::sdmTMB(data = d_fit, spde = d_fit_spde, time = time, ...)
+    m_fold <- sdmTMB(data = d_fit, spde = d_fit_spde, time = time, ...)
 
 #FIXME: Error in match.call(definition = def, call = def.call) :
 #  ... used in a situation where it does not exist
@@ -53,5 +53,5 @@ loglik_cv <- function(all_data, time = "year", k_folds = 10, fold_id = NULL, n_k
 }
 
 
-loglik_cv(d_trawl, n_knots = 30,
-  formula = temperature_c ~ 1)
+# loglik_cv(d_trawl, n_knots = 30, k_folds = 2, formula = temperature_c ~ 1)
+# loglik_cv(d_trawl, n_knots = 30, formula = temperature_c ~ 1, k_folds = 2)
