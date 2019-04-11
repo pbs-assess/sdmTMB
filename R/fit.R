@@ -274,7 +274,7 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
 
   data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL
 
-  args <- get_args()
+  args <- "missing" # get_args() # removed due to error when ... used in function
   structure(list(
     model      = tmb_opt,
     data       = data,
@@ -341,7 +341,7 @@ get_convergence_diagnostics <- function(sd_report) {
 get_args <- function(){
   def.call <- sys.call(-1)
   def <- get(as.character(def.call[[1]]), mode="function", sys.frame(-2))
-  act.call <- match.call(definition = def, call = def.call)
+  act.call <- match.call(definition = def, call = def.call) # causing error in loglik_cv() where ... used
   def <- as.list(def)
   def <- def[-length(def)]
   act <- as.list(act.call)[-1]
