@@ -18,33 +18,33 @@ print.sdmTMB <- function(x, ...) {
   formula <- paste0("Formula: ", deparse(x$formula), "\n")
   data <- paste0("Data: ", x$args$data, "\n")
   family <- paste0("Family: ", deparse(x$args$family), "\n")
-  criterion <- paste0("ML criterion at convergence: ", round(x$model$objective, 3), "\n")
+  criterion <- paste0("ML criterion at convergence: ", mround(x$model$objective, 3), "\n")
   fe_names <- colnames(model.matrix(x$formula, x$data))
 
   r <- x$tmb_obj$report()
   pars <- x$model$par
-  b_j <- round(unname(pars[grep("b_j", names(pars))]), 2L)
+  b_j <- mround(unname(pars[grep("b_j", names(pars))]), 2L)
 
-  phi <- round(exp(as.list(pars)$ln_phi), 2L)
-  range <- round(r$range, 2L)
+  phi <- mround(exp(as.list(pars)$ln_phi), 2L)
+  range <- mround(r$range, 2L)
 
   pre <- "Spatial SD (sigma_O): "
   if (!is.null(r$sigma_O)) {
-    sigma_O <- paste0(pre, round(r$sigma_O, 2L), "\n")
+    sigma_O <- paste0(pre, mround(r$sigma_O, 2L), "\n")
   } else {
     sigma_O <- paste0(pre, "not estimated\n")
   }
 
   pre <- "Spatiotemporal SD (sigma_E): "
   if (!is.null(r$sigma_E)) {
-    sigma_E <- paste0(pre, round(r$sigma_E, 2L), "\n")
+    sigma_E <- paste0(pre, mround(r$sigma_E, 2L), "\n")
   } else {
     sigma_E <- paste0(pre, "not estimated\n")
   }
 
   pre <- "Spatiotemporal AR1 correlation (rho): "
   if (!is.null(r$rho) && r$rho != 0L) {
-    rho <- paste0(pre, round(r$rho, 2L), "\n")
+    rho <- paste0(pre, mround(r$rho, 2L), "\n")
   } else {
     rho <- paste0(pre, "not estimated\n")
   }
@@ -78,4 +78,8 @@ print.sdmTMB <- function(x, ...) {
     criterion,
     sep = ""
   )
+}
+
+mround <- function(x, digits) {
+  sprintf(paste0("%.", digits, "f"), round(x, digits))
 }
