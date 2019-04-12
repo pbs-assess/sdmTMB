@@ -1,23 +1,28 @@
 # NOTE: dataframe must have coordinate data labeled as capital X and capital Y
 
-ll_gaussian <- function(object, residuals) {
+ll_gaussian <- function(object, withheld_y, withheld_est) {
   dispersion <- exp(object$model$par[["ln_phi"]])
   # FIXME: This shouldn't be the residuals. The testing data
   # should be x, and the prediction should be mean.
-  dnorm(x = residuals, mean = mean(residuals), sd = dispersion, log = TRUE)
+  dnorm(x = withheld_y, mean = withheld_est, sd = dispersion, log = TRUE)
 }
 
-ll_sdmTMB <- function(object, residuals, ...) {
+ll_sdmTMB <- function(object, withheld_y, withheld_est, ...) {
   family_func <- switch(object$family$family,
     gaussian = ll_gaussian
     # binomial = nll_binomial,
     # tweedie  = nll_tweedie
   )
-  family_func(object, residuals)
+  family_func(object, withheld_y, withheld_est)
 }
 
 # FIXME: Make sure to add Roxygen documentation above for this function.
-loglik_cv <- function(all_data, time = "year", k_folds = 10, fold_id = NULL, n_knots = NULL, ...) {
+loglik_cv <- function(all_data, time = "year", x_coord = "X", y_coord = "Y", k_folds = 10, fold_id = NULL, n_knots = NULL, ...) {
+
+  all_data <- as.data.frame(all_data)
+
+  all_data$X <- all_data[[x_coord]]
+  all_data$Y <- all_data[[y_coord]]
 
   # split data by 'time' from sdmTMB model arguments
   split_time <- all_data[[time]]
@@ -36,9 +41,7 @@ loglik_cv <- function(all_data, time = "year", k_folds = 10, fold_id = NULL, n_k
     x$fold_ids <- group[r]
     x
   })
-  # FIXME: Do we need the as.data.frame here?
-  # If we do then we should adjust the code above so that we do not need it.
-  d <- as.data.frame(do.call(rbind, dd))
+  d <- do.call(rbind, dd)
 
   # model data k times for for k-1 folds
   out <- lapply(seq_len(k_folds), function(k) {
@@ -46,8 +49,7 @@ loglik_cv <- function(all_data, time = "year", k_folds = 10, fold_id = NULL, n_k
     d_withheld <- d[d$fold_ids == k, , drop = FALSE]
 
     # build mesh for training data
-    # FIXME: we should have the user pass the x and y column names so this can work with
-    # any column names. Also, we should let the user pass a custom inla mesh.
+    # FIXME: should we let the user set more parameters for the inla mesh?
     d_fit_spde <- make_spde(d_fit$X, d_fit$Y, n_knots = n_knots)
 
     # run model
@@ -66,11 +68,11 @@ loglik_cv <- function(all_data, time = "year", k_folds = 10, fold_id = NULL, n_k
     # FIXME: We don't need to calculate the residuals.
     # calculate residuals
     response <- object$formula[[2]]
-    residuals <- predicted$data[[response]] - predicted$data$est
+    withheld_y <- predicted$data[[response]]
+    withheld_est <- predicted$data$est
 
     # calculate log likelihood for each withheld observation
-    cv_data$cv_loglik <- ll_sdmTMB(object, residuals)
-    cv_data
+    cv_data$cv_loglik <- ll_sdmTMB(object, withheld_y, withheld_est)
 
     list(data = cv_data, model = object)
   })
