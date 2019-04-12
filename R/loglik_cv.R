@@ -1,14 +1,13 @@
 # NOTE: dataframe must have coordinate data labeled as capital X and capital Y
 
-nll_gaussian <- function(object, residuals) {
+ll_gaussian <- function(object, residuals) {
   dispersion <- exp(object$model$par[["ln_phi"]])
-  nll <- -(dnorm(x = residuals, mean = mean(residuals), sd = dispersion, log = TRUE))
-  nll
+  dnorm(x = residuals, mean = mean(residuals), sd = dispersion, log = TRUE)
 }
 
-nll_sdmTMB <- function(object, residuals, ...) {
+ll_sdmTMB <- function(object, residuals, ...) {
   family_func <- switch(object$family$family,
-    gaussian = nll_gaussian
+    gaussian = ll_gaussian
     # binomial = nll_binomial,
     # tweedie  = nll_tweedie
   )
@@ -63,7 +62,7 @@ loglik_cv <- function(all_data, time = "year", k_folds = 10, fold_id = NULL, n_k
     residuals <- predicted$data[[response]] - predicted$data$est
 
     # calculate negative loglikelihood for each withheld observation
-    cv_data$nll <- nll_sdmTMB(object, residuals)
+    cv_data$cv_loglik <- ll_sdmTMB(object, residuals)
     cv_data
 
     # would be nice to save model object too, but not sure how to
