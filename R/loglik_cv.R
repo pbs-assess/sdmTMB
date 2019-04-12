@@ -24,6 +24,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_est, ...) {
 #' @param k_folds Number of folds.
 #' @param fold_ids Optional input name of column containing user chosen fold ids.
 #' @param n_knots The number of knots.
+#' @param plot_spde Logical for whether or not to produce a plot of each mesh.
 #' @param ... All other arguments required to run sdmTMB model with the exception of:
 #'            [data] and [spde] which are redefined for each fold within the function.
 #'
@@ -35,12 +36,12 @@ ll_sdmTMB <- function(object, withheld_y, withheld_est, ...) {
 #'
 #' # Gaussian
 #' pcod_gaus <- subset(d, density > 0)
-#' out <- loglik_cv(pcod_gaus, formula = log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+#' kfold <- loglik_cv(pcod_gaus, formula = log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'                  time = "year", x_coord = "X", y_coord = "Y",
 #'                  n_knots = 30, k_folds = 3)
-#' sum(out$data$cv_loglik)
+#' sum(kfold$data$cv_loglik)
 
-loglik_cv <- function(all_data, formula, family, time = "year", x_coord = "X", y_coord = "Y", k_folds = 10, fold_ids = NULL, n_knots = NULL, ...) {
+loglik_cv <- function(all_data, formula, family, time = "year", x_coord = "X", y_coord = "Y", k_folds = 10, fold_ids = NULL, n_knots = NULL, plot_spde = TRUE, ...) {
 
   all_data <- as.data.frame(all_data)
   all_data$X <- all_data[[x_coord]]
@@ -78,6 +79,9 @@ loglik_cv <- function(all_data, formula, family, time = "year", x_coord = "X", y
     # build mesh for training data
     # FIXME: should we let the user set more parameters for the inla mesh?
     d_fit_spde <- make_spde(d_fit$X, d_fit$Y, n_knots = n_knots)
+
+    if (plot_spde)
+      plot_spde(d_fit_spde)
 
     # run model
     object <- sdmTMB(data = d_fit, formula = formula, time = time, spde = d_fit_spde, ...)
