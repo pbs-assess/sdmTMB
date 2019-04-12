@@ -72,15 +72,16 @@ loglik_cv <- function(all_data, time = "year", k_folds = 10, fold_id = NULL, n_k
     cv_data$cv_loglik <- ll_sdmTMB(object, residuals)
     cv_data
 
-    # FIXME: The model object is `object` as defined above.
-    # would be nice to save model object too, but not sure how to
-    # list(cv_data, object)
+    list(data = cv_data, model = object)
   })
-  data <- do.call(rbind, out)
+  data <- lapply (out, function(x) x$data)
+  data <- do.call(rbind, data)
+  models <- lapply (out, function(x) x$model)
+  list(data = data, models = models)
 }
 
 # d_trawl <- readRDS("~/github/dfo/gfranges/analysis/tmb-sensor-explore/sensor-data-processed.rds")
 # out <- loglik_cv(d_trawl, n_knots = 30, k_folds = 3, formula = temperature_c ~ 0 + as.factor(year))
-# sum(out$nll)
+# sum(out$data$nll)
 
 # pcod <- load("~/github/dfo/sdmTMB/data/pcod.rda")
