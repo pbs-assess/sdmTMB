@@ -65,9 +65,7 @@ loglik_cv <- function(all_data, time = "year", x_coord = "X", y_coord = "Y", k_f
     cv_data <- d_withheld
     cv_data$cv_est <- predicted$data$est
 
-    # FIXME: We don't need to calculate the residuals.
-    # calculate residuals
-    response <- object$formula[[2]]
+    response <- get_response(object$formula)
     withheld_y <- predicted$data[[response]]
     withheld_est <- predicted$data$est
 
