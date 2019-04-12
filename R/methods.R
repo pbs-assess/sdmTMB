@@ -85,3 +85,8 @@ print.sdmTMB <- function(x, ...) {
     sep = ""
   )
 }
+
+#' @export
+summary.sdmTMB <- function(object, ..., digits) {
+  print(object, ...)
+}

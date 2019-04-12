@@ -3,6 +3,7 @@
 S3method(predict,sdmTMB)
 S3method(print,sdmTMB)
 S3method(residuals,sdmTMB)
+S3method(summary,sdmTMB)
 export(get_cog)
 export(get_index)
 export(lognormal)
