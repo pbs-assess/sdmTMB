@@ -10,18 +10,22 @@
 #' @export
 #' @import methods
 print.sdmTMB <- function(x, ...) {
-  # if (isTRUE(x$args$spatial_only)) {
-  #   title <- "Spatial model fit by ML ['sdmTMB']\n"
-  # } else {
-  title <- "Spatiotemporal/spatial model fit by ML ['sdmTMB']\n"
-  # }
-  formula <- paste0("Formula: ", deparse(x$formula), "\n")
-  # data <- paste0("Data: ", x$args$data, "\n")
+  r <- x$tmb_obj$report()
+  spatial_only <- !is.null(r$r$sigma_E) && !is.null(r$r$sigma_O_trend)
+
+  if (isTRUE(spatial_only)) {
+    title <- "Spatial model fit by ML ['sdmTMB']\n"
+  } else {
+    title <- "Spatiotemporal model fit by ML ['sdmTMB']\n"
+  }
+  formula <- paste0("Formula: ", deparse(x$call$formula), "\n")
+  # time <- paste0("Time column: ", deparse(x$call$time), "\n")
+  spde <- paste0("SPDE: ", deparse(x$call$spde), "\n")
+  data <- paste0("Data: ", deparse(x$call$data), "\n")
   family <- paste0("Family: ", paste0(x$family$family, "(link = '", x$family$link, "')"), "\n")
   criterion <- paste0("ML criterion at convergence: ", round(x$model$objective, 3), "\n")
   fe_names <- colnames(model.matrix(x$formula, x$data))
 
-  r <- x$tmb_obj$report()
   pars <- x$model$par
   b_j <- round(unname(pars[grep("b_j", names(pars))]), 2L)
 
@@ -62,7 +66,9 @@ print.sdmTMB <- function(x, ...) {
   mm
 
   cat(title,
-    # formula,
+    formula,
+    # time,
+    spde,
     # data,
     family,
     sep = "")

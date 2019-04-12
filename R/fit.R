@@ -274,7 +274,6 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
 
   data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL
 
-  args <- "missing" # get_args() # removed due to error when ... used in function
   structure(list(
     model      = tmb_opt,
     data       = data,
@@ -291,6 +290,7 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     tmb_obj    = tmb_obj,
     gradients  = conv$final_grads,
     bad_eig    = conv$bad_eig,
+    call       = match.call(expand.dots = TRUE),
     sd_report  = sd_report),
     class      = "sdmTMB")
 }
