@@ -274,7 +274,6 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
 
   data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL
 
-  args <- "missing" # get_args() # removed due to error when ... used in function
   structure(list(
     model      = tmb_opt,
     data       = data,
@@ -291,8 +290,8 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     tmb_obj    = tmb_obj,
     gradients  = conv$final_grads,
     bad_eig    = conv$bad_eig,
-    sd_report  = sd_report,
-    args       = args),
+    call       = match.call(expand.dots = TRUE),
+    sd_report  = sd_report),
     class      = "sdmTMB")
 }
 
@@ -335,23 +334,6 @@ get_convergence_diagnostics <- function(sd_report) {
     }
   }
   invisible(list(final_grads = final_grads, bad_eig = bad_eig))
-}
-
-# Get a list of the arguments used within any function call
-get_args <- function(){
-  def.call <- sys.call(-1)
-  def <- get(as.character(def.call[[1]]), mode="function", sys.frame(-2))
-  act.call <- match.call(definition = def, call = def.call) # causing error in loglik_cv() where ... used
-  def <- as.list(def)
-  def <- def[-length(def)]
-  act <- as.list(act.call)[-1]
-
-  def.nm <- names(def)
-  act.nm <- names(act)
-  inds <- def.nm %in% act.nm
-  out <- def
-  out[inds] <- act
-  out
 }
 
 make_year_i <- function(x) {
