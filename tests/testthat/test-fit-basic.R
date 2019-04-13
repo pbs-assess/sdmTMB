@@ -21,6 +21,7 @@ test_that("sdmTMB model fit with a covariate beta", {
   plot_spde(spde)
   m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time", spde = spde)
   expect_output(print(m), "fit by")
+  expect_output(summary(m), "fit by")
   p <- as.list(m$model$par)
   r <- m$tmb_obj$report()
   expect_equal(m$model$convergence, 0L)
