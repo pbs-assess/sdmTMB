@@ -91,6 +91,7 @@ sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
 
   # model data k times for k-1 folds
   out <- future.apply::future_lapply(seq_len(k_folds), function(k) {
+  # out <- lapply(seq_len(k_folds), function(k) {
     d_fit <- data[data[[fold_ids]] != k, , drop = FALSE]
     d_withheld <- data[data[[fold_ids]] == k, , drop = FALSE]
 
@@ -102,7 +103,7 @@ sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
     object <- sdmTMB(data = d_fit, formula = formula, time = time, spde = d_fit_spde, ...)
 
     # predict for withheld data
-    predicted <- predict(object, newdata = d_withheld)
+    predicted <- predict(object, newdata = d_withheld, xy_cols = c(x, y))
     cv_data <- d_withheld
     cv_data$cv_predicted <- object$family$linkinv(predicted$data$est)
     response <- get_response(object$formula)
