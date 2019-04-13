@@ -34,7 +34,8 @@ Imports:
     grid,
     tweedie,
     RandomFields,
-    RANN
+    RANN,
+    future.apply
 Suggests:
     testthat,
     dplyr,
@@ -43,7 +44,8 @@ Suggests:
     rmarkdown,
     ROCR,
     covr,
-    glmmTMB
+    glmmTMB,
+    future
 LinkingTo: 
     TMB,
     RcppEigen
