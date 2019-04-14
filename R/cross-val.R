@@ -81,6 +81,14 @@ sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
     fold_ids <- "cv_fold"
   }
 
+  if (plot_spde) {
+    op <- graphics::par(
+      mfrow = c(ceiling(sqrt(k_folds)), ceiling(sqrt(k_folds))),
+      mar = c(1, 1, 1, 1)
+    )
+    on.exit(graphics::par(op))
+  }
+
   # model data k times for k-1 folds
   out <- future.apply::future_lapply(seq_len(k_folds), function(k) {
   # out <- lapply(seq_len(k_folds), function(k) {
@@ -89,6 +97,7 @@ sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
 
     # build mesh for training data
     d_fit_spde <- spde_function(d_fit[[x]], d_fit[[y]], n_knots = n_knots)
+    if (plot_spde) plot_spde(d_fit_spde)
 
     # run model
     object <- sdmTMB(data = d_fit, formula = formula, time = time, spde = d_fit_spde, ...)
@@ -103,25 +112,13 @@ sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
 
     # calculate log likelihood for each withheld observationn
     cv_data$cv_loglik <- ll_sdmTMB(object, withheld_y, withheld_mu)
-    list(data = cv_data, object = object)
+    list(data = cv_data, model = object)
   })
-  models <- lapply(out, `[[`, "object")
+  models <- lapply(out, `[[`, "model")
   data <- lapply(out, `[[`, "data")
   data <- do.call(rbind, data)
   data <- data[order(data[["_sdm_order_"]]), , drop = FALSE]
   data[["_sdm_order_"]] <- NULL
   row.names(data) <- NULL
-
-  if (plot_spde) {
-    op <- graphics::par(
-      mfrow = c(ceiling(sqrt(k_folds)), ceiling(sqrt(k_folds))),
-      mar = c(1, 1, 1, 1)
-    )
-    for (i in seq_len(k_folds)){
-      plot_spde(models[[i]]$spde)
-    }
-    graphics::par(op)
-  }
-
   list(data = data, models = models, sum_loglik = sum(data$cv_loglik))
 }
