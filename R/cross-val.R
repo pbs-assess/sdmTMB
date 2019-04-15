@@ -30,7 +30,6 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' @param n_knots The number of knots.
 #' @param spde_function A function that takes 3 arguments (x, y, n_knots) and
 #'   returns a list structure that matches output of [make_spde()].
-#' @param plot_spde Logical for whether or not to produce a plot of each mesh.
 #' @param seed Provide seed to ensure fold pattern is the same for comparison purposes.
 #' @param ... All other arguments required to run sdmTMB model with the
 #'   exception of `data` and `spde` which are redefined for each fold within the
@@ -61,7 +60,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' }
 sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
                       k_folds = 10, fold_ids = NULL, n_knots = NULL,
-                      spde_function = make_spde, plot_spde = FALSE, seed = 999, ...) {
+                      spde_function = make_spde, seed = 999, ...) {
   data[["_sdm_order_"]] <- seq_len(nrow(data))
 
   # add column of fold_ids stratified across time steps
@@ -81,15 +80,6 @@ sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
     })
     data <- do.call(rbind, dd)
     fold_ids <- "cv_fold"
-  }
-
-#FIXME: with future_lapply, plots do not appear.
-  if (plot_spde) {
-    op <- graphics::par(
-      mfrow = c(ceiling(sqrt(k_folds)), ceiling(sqrt(k_folds))),
-      mar = c(1, 1, 1, 1)
-    )
-    on.exit(graphics::par(op))
   }
 
   # model data k times for k-1 folds
@@ -127,7 +117,8 @@ sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
   data <- data[order(data[["_sdm_order_"]]), , drop = FALSE]
   data[["_sdm_order_"]] <- NULL
   row.names(data) <- NULL
-#FIXME: Check that this warning makes sense...
+#FIXME: Probably need to add final gradient warning still...
+  # see: https://github.com/pbs-assess/sdmTMB/blob/2bc103fbebaca5a28083af99d07c612a1b03ce9f/R/fit.R#L291-L292
   no_bad_eig <- !any(out[["bad_eig"]])
   converg <- no_bad_eig & all(out[["pdHess"]])
   list(data = data, models = models, sum_loglik = sum(data$cv_loglik), converg = converg)
