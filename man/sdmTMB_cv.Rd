@@ -6,7 +6,7 @@
 \usage{
 sdmTMB_cv(formula, data, time = "year", x = "X", y = "Y",
   k_folds = 10, fold_ids = NULL, n_knots = NULL,
-  spde_function = make_spde, plot_spde = FALSE, seed = 999, ...)
+  spde_function = make_spde, seed = 999, ...)
 }
 \arguments{
 \item{formula}{Model formula.}
@@ -28,8 +28,6 @@ ids.}
 
 \item{spde_function}{A function that takes 3 arguments (x, y, n_knots) and
 returns a list structure that matches output of \code{\link[=make_spde]{make_spde()}}.}
-
-\item{plot_spde}{Logical for whether or not to produce a plot of each mesh.}
 
 \item{seed}{Provide seed to ensure fold pattern is the same for comparison purposes.}
 
