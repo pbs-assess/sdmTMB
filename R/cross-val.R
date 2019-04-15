@@ -118,7 +118,9 @@ sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
   row.names(data) <- NULL
 #FIXME: Probably need to add final gradient warning still...
   # see: https://github.com/pbs-assess/sdmTMB/blob/2bc103fbebaca5a28083af99d07c612a1b03ce9f/R/fit.R#L291-L292
-  no_bad_eig <- !any(out[["bad_eig"]])
-  converg <- no_bad_eig & all(out[["pdHess"]])
-  list(data = data, models = models, sum_loglik = sum(data$cv_loglik), converg = converg)
+  bad_eig <- vapply(out, `[[`, "bad_eig", FUN.VALUE = TRUE)
+  pdHess <- vapply(out, `[[`, "pdHess", FUN.VALUE = TRUE)
+  converg <- all(!bad_eig) && all(pdHess)
+  list(data = data, models = models, sum_loglik = sum(data$cv_loglik),
+    converg = converg)
 }
