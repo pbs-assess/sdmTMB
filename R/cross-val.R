@@ -90,7 +90,6 @@ sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
 
     # build mesh for training data
     d_fit_spde <- spde_function(d_fit[[x]], d_fit[[y]], n_knots = n_knots)
-    if (plot_spde) plot_spde(d_fit_spde)
 
     # run model
     object <- sdmTMB(data = d_fit, formula = formula, time = time, spde = d_fit_spde, ...)
