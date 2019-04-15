@@ -114,5 +114,8 @@ sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
   data[["_sdm_order_"]] <- NULL
   row.names(data) <- NULL
 #FIXME: Should models that do not converge be treated differently? Should we still calculate ll for them? Can we at least add a column to data or this list that saves the warning?
+  # see: https://github.com/pbs-assess/sdmTMB/blob/2bc103fbebaca5a28083af99d07c612a1b03ce9f/R/fit.R#L291-L292
+  # and: https://github.com/pbs-assess/sdmTMB/blob/2bc103fbebaca5a28083af99d07c612a1b03ce9f/R/fit.R#L321
+  # in: https://github.com/pbs-assess/sdmTMB/blob/2bc103fbebaca5a28083af99d07c612a1b03ce9f/R/fit.R#L294
   list(data = data, models = models, sum_loglik = sum(data$cv_loglik))
 }
