@@ -115,7 +115,11 @@ sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
 
     # calculate log likelihood for each withheld observationn
     cv_data$cv_loglik <- ll_sdmTMB(object, withheld_y, withheld_mu)
-    list(data = cv_data, model = object)
+
+    list(data = cv_data,
+         model = object,
+         pdHess = object$sd_report$pdHess,
+         bad_eig = object$bad_eig)
   })
   models <- lapply(out, `[[`, "model")
   data <- lapply(out, `[[`, "data")
@@ -123,6 +127,8 @@ sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
   data <- data[order(data[["_sdm_order_"]]), , drop = FALSE]
   data[["_sdm_order_"]] <- NULL
   row.names(data) <- NULL
-#FIXME: Should models that do not converge be treated differently? Should we still calculate ll for them? Can we at least add a column to data or this list that saves the warning?
-  list(data = data, models = models, sum_loglik = sum(data$cv_loglik))
+#FIXME: Check that this warning makes sense...
+  no_bad_eig <- !any(out[["bad_eig"]])
+  converg <- no_bad_eig & all(out[["pdHess"]])
+  list(data = data, models = models, sum_loglik = sum(data$cv_loglik), converg = converg)
 }
