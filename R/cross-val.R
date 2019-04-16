@@ -118,9 +118,9 @@ sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
   data <- data[order(data[["_sdm_order_"]]), , drop = FALSE]
   data[["_sdm_order_"]] <- NULL
   row.names(data) <- NULL
-  bad_eig <- vapply(out, `[[`, "bad_eig", FUN.VALUE = TRUE)
-  pdHess <- vapply(out, `[[`, "pdHess", FUN.VALUE = TRUE)
-  max_grad <- sapply(out, `[[`, "max_gradient")
+  bad_eig <- vapply(out, `[[`, "bad_eig", FUN.VALUE = logical(1L))
+  pdHess <- vapply(out, `[[`, "pdHess", FUN.VALUE = logical(1L))
+  max_grad <- vapply(out, `[[`, "max_gradient", FUN.VALUE = numeric(1L))
   converged <- all(!bad_eig) && all(pdHess)
   list(
     data = data,
