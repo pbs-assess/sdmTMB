@@ -72,6 +72,8 @@ sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
     })
     data <- do.call(rbind, dd)
     fold_ids <- "cv_fold"
+  } else {
+    data$cv_fold <- fold_ids
   }
 
   out <- future.apply::future_lapply(seq_len(k_folds), function(k) {
