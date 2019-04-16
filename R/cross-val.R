@@ -21,6 +21,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'
 #' @param formula Model formula.
 #' @param data A data frame.
+#' @param time The name of the time column. Leave as `NULL` if this is only spatial data.
 #' @param x Name of the column with X coordinates.
 #' @param y Name of the column with Y coordinates.
 #' @param k_folds Number of folds.
@@ -57,7 +58,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'   n_knots = 30, k_folds = 4
 #' )
 #' }
-sdmTMB_cv <- function(formula, data, x, y,
+sdmTMB_cv <- function(formula, data, x, y, time = NULL,
                       k_folds = 10, fold_ids = NULL, n_knots = NULL,
                       spde_function = make_spde, seed = 999, ...) {
   set.seed(seed)
