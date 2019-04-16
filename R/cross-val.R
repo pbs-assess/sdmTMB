@@ -61,28 +61,19 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
                       k_folds = 10, fold_ids = NULL, n_knots = NULL,
                       spde_function = make_spde, seed = 999, ...) {
+  set.seed(seed)
   data[["_sdm_order_"]] <- seq_len(nrow(data))
 
   # add column of fold_ids stratified across time steps
   if (is.null(fold_ids)) {
     dd <- lapply(split(data, data[[time]]), function(x) {
-      obs <- nrow(x)
-      i <- obs / k_folds
-      i <- round(c(0, i * seq(1, (k_folds - 1)), obs))
-      times <- i[-1] - i[-length(i)]
-      group <- c()
-      for (j in seq_along(times))
-        group <- c(group, rep(j, times = times[j]))
-      set.seed(seed)
-      r <- order(stats::runif(obs))
-      x$cv_fold <- group[r]
+      x$cv_fold <- sample(rep(seq(1L, k_folds), nrow(x)), size = nrow(x))
       x
     })
     data <- do.call(rbind, dd)
     fold_ids <- "cv_fold"
   }
 
-  # model data k times for k-1 folds
   out <- future.apply::future_lapply(seq_len(k_folds), function(k) {
     d_fit <- data[data[[fold_ids]] != k, , drop = FALSE]
     d_withheld <- data[data[[fold_ids]] == k, , drop = FALSE]
