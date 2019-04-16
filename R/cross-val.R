@@ -21,7 +21,6 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'
 #' @param formula Model formula.
 #' @param data A data frame.
-#' @param time Name of the time column.
 #' @param x Name of the column with X coordinates.
 #' @param y Name of the column with Y coordinates.
 #' @param k_folds Number of folds.
@@ -58,11 +57,16 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'   n_knots = 30, k_folds = 4
 #' )
 #' }
-sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
+sdmTMB_cv <- function(formula, data, x, y,
                       k_folds = 10, fold_ids = NULL, n_knots = NULL,
                       spde_function = make_spde, seed = 999, ...) {
   set.seed(seed)
   data[["_sdm_order_"]] <- seq_len(nrow(data))
+
+  if (is.null(time)) {
+    time <- "_sdmTMB_time"
+    data[[time]] <- 0L
+  }
 
   # add column of fold_ids stratified across time steps
   if (is.null(fold_ids)) {
@@ -110,6 +114,7 @@ sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
   data <- do.call(rbind, data)
   data <- data[order(data[["_sdm_order_"]]), , drop = FALSE]
   data[["_sdm_order_"]] <- NULL
+  data[["_sdmTMB_time"]] <- NULL
   row.names(data) <- NULL
   bad_eig <- vapply(out, `[[`, "bad_eig", FUN.VALUE = logical(1L))
   pdHess <- vapply(out, `[[`, "pdHess", FUN.VALUE = logical(1L))
