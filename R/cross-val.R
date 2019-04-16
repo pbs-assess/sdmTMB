@@ -84,7 +84,6 @@ sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
 
   # model data k times for k-1 folds
   out <- future.apply::future_lapply(seq_len(k_folds), function(k) {
-  # out <- lapply(seq_len(k_folds), function(k) {
     d_fit <- data[data[[fold_ids]] != k, , drop = FALSE]
     d_withheld <- data[data[[fold_ids]] == k, , drop = FALSE]
 
@@ -105,11 +104,13 @@ sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
     # calculate log likelihood for each withheld observationn
     cv_data$cv_loglik <- ll_sdmTMB(object, withheld_y, withheld_mu)
 
-    list(data = cv_data,
-         model = object,
-         pdHess = object$sd_report$pdHess,
-         max_gradient = max(abs(object$gradients)),
-         bad_eig = object$bad_eig)
+    list(
+      data = cv_data,
+      model = object,
+      pdHess = object$sd_report$pdHess,
+      max_gradient = max(abs(object$gradients)),
+      bad_eig = object$bad_eig
+    )
   })
   models <- lapply(out, `[[`, "model")
   data <- lapply(out, `[[`, "data")
@@ -120,12 +121,12 @@ sdmTMB_cv <- function(formula, data, time = "year", x = "X", y = "Y",
   bad_eig <- vapply(out, `[[`, "bad_eig", FUN.VALUE = TRUE)
   pdHess <- vapply(out, `[[`, "pdHess", FUN.VALUE = TRUE)
   max_grad <- sapply(out, `[[`, "max_gradient")
-  converg <- all(!bad_eig) && all(pdHess)
+  converged <- all(!bad_eig) && all(pdHess)
   list(
     data = data,
     models = models,
     sum_loglik = sum(data$cv_loglik),
-    converg = converg,
+    converged = converged,
     max_grad = max(max_grad)
-    )
+  )
 }
