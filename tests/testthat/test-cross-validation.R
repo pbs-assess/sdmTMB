@@ -12,7 +12,7 @@ expect_true("data.frame" %in% class(x$data))
 expect_equal(class(x$models[[1]]), "sdmTMB")
 })
 
-test_that("Cross validation works with Gaussian and no time element" {
+test_that("Cross validation works with Gaussian and no time element", {
   s <- sim(time_steps = 1, sigma_O = 1e-6, sigma_E = 0.1)
   x <- sdmTMB_cv(formula = observed ~ 0, data = s, x = "x", y = "y",
     family = gaussian(link = "identity"), n_knots = 40, k_folds = 2)
