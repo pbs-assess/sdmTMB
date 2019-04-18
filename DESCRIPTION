@@ -32,7 +32,7 @@ Imports:
     ggplot2,
     Matrix,
     grid,
-    tweedie,
+    fishMod,
     RandomFields,
     RANN,
     future.apply
