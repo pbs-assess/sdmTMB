@@ -6,7 +6,7 @@ ll_gaussian <- function(object, withheld_y, withheld_mu) {
 ll_tweedie <- function(object, withheld_y, withheld_mu) {
   p <- stats::plogis(object$model$par[["thetaf"]]) + 1
   phi <- exp(object$model$par[["ln_phi"]])
-  log(tweedie::dtweedie(y = withheld_y, power = p, mu = withheld_mu, phi = phi))
+  fishMod::dTweedie(y = withheld_y, mu = withheld_mu, p = p, phi = phi, LOG = TRUE)
 }
 
 ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
