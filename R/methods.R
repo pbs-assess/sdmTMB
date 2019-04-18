@@ -55,10 +55,9 @@ print.sdmTMB <- function(x, ...) {
 
   sr <- x$sd_report
   sr_se <- summary(sr)[,"Std. Error"]
-  sr_est <- summary(sr)[,"Std. Error"]
-
+  sr_est <- summary(sr)[,"Estimate"]
   b_j_se <- unname(round(sr_se[grep("b_j", names(sr_se))], 2L))
-  b_j <- unname(round(sr_se[grep("b_j", names(sr_est))], 2L))
+  b_j <- unname(round(sr_est[grep("b_j", names(sr_est))], 2L))
 
   mm <- cbind(b_j, b_j_se)
   colnames(mm) <- c("coef.est", "coef.se")
