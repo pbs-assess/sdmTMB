@@ -29,7 +29,12 @@ print.sdmTMB <- function(x, ...) {
   pars <- x$model$par
   b_j <- round(unname(pars[grep("b_j", names(pars))]), 2L)
 
-  phi <- mround(exp(as.list(pars)$ln_phi), 2L)
+  if ("ln_phi" %in% names(as.list(pars))) {
+    phi <- mround(exp(as.list(pars)$ln_phi), 2L)
+    phi <- paste0("Dispersion parameter: ", phi, "\n")
+  } else {
+    phi <- ""
+  }
   range <- mround(r$range, 2L)
 
   pre <- "Spatial SD (sigma_O): "
@@ -76,7 +81,7 @@ print.sdmTMB <- function(x, ...) {
 
   cat("\n",
     paste0("Matern range parameter: ", range, "\n"),
-    paste0("Dispersion parameter: ", phi, "\n"),
+    phi,
     sigma_O,
     sigma_E,
     rho,
