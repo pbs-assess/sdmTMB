@@ -7,8 +7,9 @@
   poisson  = 3,
   Gamma    = 4,
   nbinom2  = 5,
-  lognormal       = 6,
-  student         = 7
+  lognormal= 6,
+  student  = 7,
+  Beta     = 8
 )
 .valid_link <- c(
   identity = 0,

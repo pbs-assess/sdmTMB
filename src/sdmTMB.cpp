@@ -68,8 +68,9 @@ enum valid_family {
   poisson_family  = 3,
   Gamma_family    = 4,
   nbinom2_family  = 5,
-  lognormal       = 6,
-  student         = 7
+  lognormal_family= 6,
+  student_family  = 7,
+  Beta_family     = 8
 };
 
 enum valid_link {
@@ -91,8 +92,8 @@ Type InverseLink(Type eta, int link)
       out = exp(eta);
       break;
     case logit_link:
-      out = eta;  // don't touch: we're using dbinom_robust() in logit space
-      break;      // FIXME make this more robust
+      out = invlogit(eta);
+      break;
     case inverse_link:
       out = Type(1.0) / eta;
       break;
@@ -268,7 +269,13 @@ Type objective_function<Type>::operator()()
     }
     epsilon_st_A_vec(i) = epsilon_st_A(A_spatial_index(i), year_i(i)); // record it
     eta_i(i) += epsilon_st_A_vec(i); // spatiotemporal
-    mu_i(i) = InverseLink(eta_i(i), link);
+
+    if (family == 1 && link == 2) {
+      // binomial(link = "logit"); don't touch (using robust density function in logit space)
+      mu_i(i) = eta_i(i);
+    } else {
+      mu_i(i) = InverseLink(eta_i(i), link);
+    }
   }
 
   // ------------------ Probability of random effects --------------------------
@@ -345,11 +352,16 @@ Type objective_function<Type>::operator()()
           s2 = 2. * s1 - ln_phi; // log(var - mu)
           nll_data -= dnbinom_robust(y_i(i), s1, s2, true);
           break;
-        case lognormal:
+        case lognormal_family:
           nll_data -= dlnorm(y_i(i), mu_i(i) - pow(exp(ln_phi), Type(2)) / Type(2), exp(ln_phi), true);
           break;
-        case student:
+        case student_family:
           nll_data -= dstudent(y_i(i), mu_i(i), exp(ln_phi), Type(3) /*df*/, true);
+          break;
+        case Beta_family: // Ferrari and Cribari-Neto 2004; betareg package
+          s1 = mu_i(i) * exp(ln_phi);
+          s2 = (Type(1) - mu_i(i)) * exp(ln_phi);
+          nll_data -= dbeta(y_i(i), s1, s2, true);
           break;
         default:
           error("Family not implemented.");

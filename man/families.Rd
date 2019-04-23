@@ -5,6 +5,7 @@
 \alias{nbinom2}
 \alias{lognormal}
 \alias{student}
+\alias{Beta}
 \title{Additional families}
 \usage{
 tweedie(link = "log")
@@ -14,6 +15,8 @@ nbinom2(link = "log")
 lognormal(link = "log")
 
 student(link = "identity")
+
+Beta(link = "logit")
 }
 \arguments{
 \item{link}{The link.}
@@ -33,6 +36,7 @@ tweedie(link = "log")
 nbinom2(link = "log")
 lognormal(link = "log")
 student(link = "identity")
+Beta(link = "logit")
 }
 \references{
 Hilbe, J. M. (2011). Negative binomial regression. Cambridge University Press.

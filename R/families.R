@@ -82,3 +82,21 @@ student <- function(link = "identity") {
   list(family = "student", link = linktemp, linkfun = stats$linkfun,
     linkinv = stats$linkinv)
 }
+
+#' @export
+#' @rdname families
+#' @examples
+#' Beta(link = "logit")
+Beta <- function(link = "logit") {
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("logit")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+  list(family = "Beta", link = linktemp, linkfun = stats$linkfun,
+    linkinv = stats$linkinv)
+}
+

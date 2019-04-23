@@ -71,7 +71,6 @@ test_that("Poisson fits", {
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
 })
 
-
 test_that("Binomial fits", {
   d <- pcod[pcod$year == 2017, ]
   d$density <- round(d$density)
@@ -89,4 +88,19 @@ test_that("Gamma fits", {
   m <- sdmTMB(data = d, formula = density ~ 1,
     spde = spde, family = Gamma(link = "log"))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
+})
+
+test_that("Beta fits", {
+  s <- sim(sigma_O = 0.02)
+  s$observed <- stats::plogis(s$observed * 7)
+  spde <- make_spde(s$x, s$y, n_knots = 30)
+  m <- sdmTMB(data = s, formula = observed ~ 1,
+    spde = spde, family = Beta(link = "logit"))
+  expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
+
+  m2 <- glmmTMB::glmmTMB(observed ~ 1, data = s,
+    family = glmmTMB::beta_family(link = "logit"))
+  glmmTMBphi <- exp(m2$fit$par[["betad"]])
+
+  expect_equal(m$model$par[["ln_phi"]], log(glmmTMBphi), tol = 0.0001)
 })
