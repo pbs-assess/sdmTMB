@@ -138,6 +138,7 @@ Type objective_function<Type>::operator()()
 
   DATA_INTEGER(enable_priors);
   DATA_INTEGER(ar1_fields);
+  // DATA_INTEGER(separable_ar1);
   DATA_INTEGER(include_spatial);
   DATA_INTEGER(random_walk);
 
@@ -298,11 +299,15 @@ Type objective_function<Type>::operator()()
       for (int t = 0; t < n_t; t++)
         nll_epsilon += SCALE(GMRF(Q, s), 1. / exp(ln_tau_E))(epsilon_st.col(t));
     } else {
-      nll_epsilon += SCALE(GMRF(Q, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
-      for (int t = 1; t < n_t; t++){
-        nll_epsilon += SCALE(GMRF(Q, s), 1./exp(ln_tau_E))(epsilon_st.col(t) -
-          rho * epsilon_st.col(t - 1));
-      }
+      // if (!separable_ar1) {
+      //   nll_epsilon += SCALE(GMRF(Q, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
+      //   for (int t = 1; t < n_t; t++) {
+      //     nll_epsilon += SCALE(GMRF(Q, s), 1./exp(ln_tau_E))(epsilon_st.col(t) -
+      //       rho * epsilon_st.col(t - 1));
+      //   }
+      // } else {
+        nll_epsilon += SCALE(SEPARABLE(AR1(rho), GMRF(Q, s)), 1./exp(ln_tau_E))(epsilon_st);
+      // }
     }
   }
 

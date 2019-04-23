@@ -95,6 +95,8 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
   include_spatial = TRUE, spatial_trend = FALSE, normalize = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L)) {
 
+  # separable_ar1 <- TRUE # hard code
+
   if (is.null(time)) {
     time <- "_sdmTMB_time"
     data[[time]] <- 0L
@@ -143,6 +145,7 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     A_spatial_index = data$sdm_spatial_id - 1L,
     year_i     = make_year_i(data[[time]]),
     ar1_fields = as.integer(ar1_fields),
+    # separable_ar1 = as.integer(separable_ar1),
     X_ij       = X_ij,
     X_rw_ik    = X_rw_ik,
     proj_lon   = 0,
