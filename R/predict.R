@@ -140,6 +140,11 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
   tmb_data$do_predict <- 1L
 
   if (!is.null(newdata)) {
+    if (any(!xy_cols %in% names(newdata)))
+      stop("`xy_cols` (the column names for the x and y coordinates) ",
+        "are not in `newdata`. Did you miss specifying the argument ",
+        "to match your data?", call. = FALSE)
+
     if (object$time == "_sdmTMB_time") newdata[[object$time]] <- 0L
     original_time <- sort(unique(object$data[[object$time]]))
     new_data_time <- sort(unique(newdata[[object$time]]))

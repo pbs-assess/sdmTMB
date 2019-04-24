@@ -125,6 +125,8 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   p <- predict(m)
   p_nd <- predict(m, newdata = dat, xy_cols = c("x", "y"))
   expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-4)
+
+  expect_error(predict(m, newdata = dat, xy_cols = c("a", "y")), regexp = "xy_cols")
 })
 
 test_that("A time-varying model fits and predicts appropriately", {
