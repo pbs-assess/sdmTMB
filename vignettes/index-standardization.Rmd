@@ -96,7 +96,7 @@ plot_map(predictions, "exp(est)") +
 We can also look at just the fixed effects, here depth:
 
 ```{r plot-fix-defects, fig.width = 8}
-plot_map(predictions, "exp(est_fe)") +
+plot_map(predictions, "exp(est_non_rf)") +
   ggtitle("Prediction (fixed effects only)") +
   scale_fill_viridis_c(trans = "sqrt")
 ```
@@ -104,7 +104,7 @@ plot_map(predictions, "exp(est_fe)") +
 We can look at the spatial random effects but represent consistent deviations in space through time that are not accounted for by our fixed effects of depth. In other words, these deviations represent consistent biotic and abiotic factors that are affecting biomass density but are not accounted for in the model.
 
 ```{r plot-spatial-effects, fig.width = 8}
-plot_map(predictions, "est_re_s") +
+plot_map(predictions, "omega_s") +
   ggtitle("Spatial random effects only") +
   scale_fill_gradient2()
 ```
@@ -112,7 +112,7 @@ plot_map(predictions, "est_re_s") +
 And finally we can look at the spatiotemporal random effects that represent deviation from the fixed effect predictions and the spatial random effect deviations. These represent biotic and abiotic factors that are changing through time and are not accounted for in the model.
 
 ```{r plot-spatiotemporal-effects, fig.width = 8}
-plot_map(predictions, "est_re_st") +
+plot_map(predictions, "epsilon_st") +
   ggtitle("Spatiotemporal random effects only") +
   scale_fill_gradient2()
 ```
