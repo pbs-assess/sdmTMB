@@ -5,7 +5,7 @@
 \title{Predict from an sdmTMB model}
 \usage{
 \method{predict}{sdmTMB}(object, newdata = NULL, se_fit = FALSE,
-  xy_cols = c("X", "Y"), ...)
+  xy_cols = c("X", "Y"), return_tmb_object = FALSE, ...)
 }
 \arguments{
 \item{object}{An object from \code{\link[=sdmTMB]{sdmTMB()}}.}
@@ -21,6 +21,9 @@ large data sets or high-resolution projections.}
 
 \item{xy_cols}{A character vector of length 2 that gives the column names of
 the x and y coordinates in \code{newdata}.}
+
+\item{return_tmb_object}{Logical. If true, will include the TMB object in
+a list format output. Necessary for the \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}} functions.}
 
 \item{...}{Not implemented.}
 }
@@ -44,10 +47,8 @@ m <- sdmTMB(
 )
 
 # Predictions at original data locations:
-predictions <- predict(m)$data
-cols <- c("year", "X", "Y", "est", "est_fe",
-  "est_re_s", "est_re_st")
-head(predictions[,cols])
+predictions <- predict(m)
+head(predictions)
 
 predictions$resids <- residuals(m) # randomized quantile residuals
 ggplot(predictions, aes(X, Y, col = resids)) + scale_colour_gradient2() +
@@ -56,7 +57,7 @@ hist(predictions$resids)
 qqnorm(predictions$resids);abline(a = 0, b = 1)
 
 # Predictions onto new data:
-predictions <- predict(m, newdata = qcs_grid)$data
+predictions <- predict(m, newdata = qcs_grid)
 
 # A short function for plotting our predictions:
 plot_map <- function(dat, column = "est") {
@@ -70,15 +71,19 @@ plot_map(predictions, "exp(est)") +
   scale_fill_viridis_c(trans = "sqrt") +
   ggtitle("Prediction (fixed effects + all random effects)")
 
-plot_map(predictions, "exp(est_fe)") +
-  ggtitle("Prediction (fixed effects only)") +
+plot_map(predictions, "exp(est_non_rf)") +
+  ggtitle("Prediction (fixed effects and any time-varying effects)") +
   scale_fill_viridis_c(trans = "sqrt")
 
-plot_map(predictions, "est_re_s") +
+plot_map(predictions, "est_rf") +
+  ggtitle("All random field estimates") +
+  scale_fill_viridis_c(trans = "sqrt")
+
+plot_map(predictions, "omega_s") +
   ggtitle("Spatial random effects only") +
   scale_fill_gradient2()
 
-plot_map(predictions, "est_re_st") +
+plot_map(predictions, "epsilon_st") +
   ggtitle("Spatiotemporal random effects only") +
   scale_fill_gradient2()
 
@@ -90,23 +95,19 @@ m <- sdmTMB(data = pcod, formula = density ~ depth_scaled + depth_scaled2,
   spatial_trend = TRUE, time = "year", spatial_only = TRUE)
 p <- predict(m, newdata = qcs_grid)
 
-plot_map(p$data, "re_s_trend") +
+plot_map(p, "zeta_s") +
   ggtitle("Spatial slopes") +
   scale_fill_gradient2()
 
-plot_map(p$data, "est_re_s_trend") +
-  ggtitle("Spatial slope random effect predictions") +
+plot_map(p, "est_rf") +
+  ggtitle("Random field estimates") +
   scale_fill_gradient2()
 
-plot_map(p$data, "est_re_s + est_re_s_trend") +
-  ggtitle("Spatial intercept + slope random effect predictions") +
-  scale_fill_gradient2()
-
-plot_map(p$data, "exp(est_fe)") +
+plot_map(p, "exp(est_non_rf)") +
   ggtitle("Prediction (fixed effects only)") +
   scale_fill_viridis_c(trans = "sqrt")
 
-plot_map(p$data, "exp(est)") +
+plot_map(p, "exp(est)") +
   ggtitle("Prediction (fixed effects + all random effects)") +
   scale_fill_viridis_c(trans = "sqrt")
 
@@ -122,7 +123,7 @@ m2017 <- sdmTMB(
 
 # Predictions at new data locations with standard errors.
 # Note that this can currently be quite slow on large data sets.
-predictions <- predict(m2017, newdata = qcs_grid, se_fit = TRUE)$data
+predictions <- predict(m2017, newdata = qcs_grid, se_fit = TRUE)
 
 plot_map(predictions, "plogis(est)") +
   scale_fill_gradient2(midpoint = 0.5) +

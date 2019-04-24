@@ -41,7 +41,7 @@ print.sdmTMB <- function(x, ...) {
   if (!is.null(r$sigma_O)) {
     sigma_O <- paste0(pre, mround(r$sigma_O, 2L), "\n")
   } else {
-    sigma_O <- paste0(pre, "not estimated\n")
+    sigma_O <- ""
   }
 
   pre <- "Spatiotemporal SD (sigma_E): "

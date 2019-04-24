@@ -16,6 +16,8 @@
 #'   large data sets or high-resolution projections.
 #' @param xy_cols A character vector of length 2 that gives the column names of
 #'   the x and y coordinates in `newdata`.
+#' @param return_tmb_object Logical. If true, will include the TMB object in
+#'   a list format output. Necessary for the [get_index()] or [get_cog()] functions.
 #' @param ... Not implemented.
 #'
 #' @return
@@ -36,10 +38,8 @@
 #' )
 #'
 #' # Predictions at original data locations:
-#' predictions <- predict(m)$data
-#' cols <- c("year", "X", "Y", "est", "est_fe",
-#'   "est_re_s", "est_re_st")
-#' head(predictions[,cols])
+#' predictions <- predict(m)
+#' head(predictions)
 #'
 #' predictions$resids <- residuals(m) # randomized quantile residuals
 #' ggplot(predictions, aes(X, Y, col = resids)) + scale_colour_gradient2() +
@@ -48,7 +48,7 @@
 #' qqnorm(predictions$resids);abline(a = 0, b = 1)
 #'
 #' # Predictions onto new data:
-#' predictions <- predict(m, newdata = qcs_grid)$data
+#' predictions <- predict(m, newdata = qcs_grid)
 #'
 #' # A short function for plotting our predictions:
 #' plot_map <- function(dat, column = "est") {
@@ -62,15 +62,19 @@
 #'   scale_fill_viridis_c(trans = "sqrt") +
 #'   ggtitle("Prediction (fixed effects + all random effects)")
 #'
-#' plot_map(predictions, "exp(est_fe)") +
-#'   ggtitle("Prediction (fixed effects only)") +
+#' plot_map(predictions, "exp(est_non_rf)") +
+#'   ggtitle("Prediction (fixed effects and any time-varying effects)") +
 #'   scale_fill_viridis_c(trans = "sqrt")
 #'
-#' plot_map(predictions, "est_re_s") +
+#' plot_map(predictions, "est_rf") +
+#'   ggtitle("All random field estimates") +
+#'   scale_fill_viridis_c(trans = "sqrt")
+#'
+#' plot_map(predictions, "omega_s") +
 #'   ggtitle("Spatial random effects only") +
 #'   scale_fill_gradient2()
 #'
-#' plot_map(predictions, "est_re_st") +
+#' plot_map(predictions, "epsilon_st") +
 #'   ggtitle("Spatiotemporal random effects only") +
 #'   scale_fill_gradient2()
 #'
@@ -82,23 +86,19 @@
 #'   spatial_trend = TRUE, time = "year", spatial_only = TRUE)
 #' p <- predict(m, newdata = qcs_grid)
 #'
-#' plot_map(p$data, "re_s_trend") +
+#' plot_map(p, "zeta_s") +
 #'   ggtitle("Spatial slopes") +
 #'   scale_fill_gradient2()
 #'
-#' plot_map(p$data, "est_re_s_trend") +
-#'   ggtitle("Spatial slope random effect predictions") +
+#' plot_map(p, "est_rf") +
+#'   ggtitle("Random field estimates") +
 #'   scale_fill_gradient2()
 #'
-#' plot_map(p$data, "est_re_s + est_re_s_trend") +
-#'   ggtitle("Spatial intercept + slope random effect predictions") +
-#'   scale_fill_gradient2()
-#'
-#' plot_map(p$data, "exp(est_fe)") +
+#' plot_map(p, "exp(est_non_rf)") +
 #'   ggtitle("Prediction (fixed effects only)") +
 #'   scale_fill_viridis_c(trans = "sqrt")
 #'
-#' plot_map(p$data, "exp(est)") +
+#' plot_map(p, "exp(est)") +
 #'   ggtitle("Prediction (fixed effects + all random effects)") +
 #'   scale_fill_viridis_c(trans = "sqrt")
 #'
@@ -114,7 +114,7 @@
 #'
 #' # Predictions at new data locations with standard errors.
 #' # Note that this can currently be quite slow on large data sets.
-#' predictions <- predict(m2017, newdata = qcs_grid, se_fit = TRUE)$data
+#' predictions <- predict(m2017, newdata = qcs_grid, se_fit = TRUE)
 #'
 #' plot_map(predictions, "plogis(est)") +
 #'   scale_fill_gradient2(midpoint = 0.5) +
@@ -134,7 +134,7 @@
 #' }
 
 predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
-  xy_cols = c("X", "Y"), ...) {
+  xy_cols = c("X", "Y"), return_tmb_object = FALSE, ...) {
 
   tmb_data <- object$tmb_data
   tmb_data$do_predict <- 1L
@@ -195,16 +195,16 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     # need to initialize the new TMB object once:
     new_tmb_obj$fn(old_par)
     lp <- new_tmb_obj$env$last.par
-    # new_tmb_obj$env$parList()
 
     r <- new_tmb_obj$report(lp)
 
     nd$est <- r$proj_eta
-    nd$est_fe <- r$proj_fe
-    nd$est_re_s <- r$proj_re_sp_st
-    nd$est_re_s_trend <- r$proj_re_sp_trend
-    nd$est_re_st <- r$proj_re_st_vector
-    nd$re_s_trend <- r$proj_re_sp_slopes
+    nd$est_non_rf <- r$proj_fe
+    nd$est_rf <- r$proj_rf
+    nd$omega_s <- r$proj_re_sp_st
+    nd$zeta_s <- r$proj_re_sp_slopes
+    nd$epsilon_st <- r$proj_re_st_vector
+
     nd$sdm_spatial_id <- NULL
     nd$sdm_orig_id <- NULL
 
@@ -230,14 +230,18 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     r <- object$tmb_obj$report(lp)
 
     nd$est <- r$eta_i
-    nd$est_fe <- r$eta_fixed_i
-    nd$est_re_s <- r$omega_s_A
-    nd$est_re_st <- r$epsilon_st_A_vec
-    nd$est_re_s_trend <- r$omega_s_trend_A
+    nd$est_non_rf <- r$eta_fixed_i + r$eta_rw_i
+    nd$est_rf <- r$omega_s_A + r$epsilon_st_A_vec + r$omega_s_trend_A
+    nd$omega_s <- r$omega_s_A
+    nd$zeta_s <- r$omega_s_trend_A
+    nd$epsilon_st <- r$epsilon_st_A_vec
     obj <- object
   }
 
-  list(data = nd, report = r, obj = obj)
+  if (return_tmb_object)
+    return(list(data = nd, report = r, obj = obj))
+  else
+    return(nd)
 }
 
 # https://stackoverflow.com/questions/13217322/how-to-reliably-get-dependent-variable-name-from-formula-object

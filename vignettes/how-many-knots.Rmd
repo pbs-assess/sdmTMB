@@ -89,7 +89,7 @@ for (k in seq_len(nrow(performance_01))) {
   p <- predict(m, newdata = pcod[pcod$set == "test", ])
 
   # use rmse to measure performance
-  pred <- plogis(p$data$est) # inverse logit
+  pred <- plogis(p$est) # inverse logit
   obs <- pcod[pcod$set == "test", "present", drop = FALSE]
 
   rocr_pred <- ROCR::prediction(pred, labels = obs$present)
@@ -138,7 +138,7 @@ for (k in seq_len(nrow(performance))) {
   p <- predict(m, newdata = pcod[pcod$set == "test", ])
 
   # use rmse to measure performance
-  pred <- exp(p$data$est) # inverse link
+  pred <- exp(p$est) # inverse link
   obs <- pcod[pcod$set == "test", "density", drop = FALSE]
   performance[k, "rmse"] <- sqrt(mean((pred - obs$density)^2))
 }

@@ -1,6 +1,6 @@
 #' Extract a relative biomass or abundance index
 #'
-#' @param obj Output from [predict.sdmTMB()].
+#' @param obj Output from [predict.sdmTMB()] with `return_tmb_object = TRUE`.
 #' @param value_name Name of value to extract.
 #' @param bias_correct Should bias correction be implemented in
 #'   [TMB::sdreport()]?
@@ -12,7 +12,7 @@
 #'  formula = density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'  time = "year", spde = pcod_spde, family = tweedie(link = "log")
 #' )
-#' predictions <- predict(m, newdata = qcs_grid)
+#' predictions <- predict(m, newdata = qcs_grid, return_tmb_object = TRUE)
 #' ind <- get_index(predictions, bias_correct = FALSE) # not bias correcting for speed
 #'
 #' library(ggplot2)

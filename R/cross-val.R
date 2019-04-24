@@ -94,9 +94,9 @@ sdmTMB_cv <- function(formula, data, x, y, time = NULL,
     # predict for withheld data
     predicted <- predict(object, newdata = d_withheld, xy_cols = c(x, y))
     cv_data <- d_withheld
-    cv_data$cv_predicted <- object$family$linkinv(predicted$data$est)
+    cv_data$cv_predicted <- object$family$linkinv(predicted$est)
     response <- get_response(object$formula)
-    withheld_y <- predicted$data[[response]]
+    withheld_y <- predicted[[response]]
     withheld_mu <- cv_data$cv_predicted
 
     # calculate log likelihood for each withheld observationn

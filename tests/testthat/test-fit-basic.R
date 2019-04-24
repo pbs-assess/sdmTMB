@@ -32,7 +32,7 @@ test_that("sdmTMB model fit with a covariate beta", {
   expect_equal(exp(p$ln_kappa), kappa, tol = 1.1)
   p <- predict(m)
   r <- residuals(m)
-  expect_equal(mean((p$data$est - s$observed)^2), 0, tol = 0.02)
+  expect_equal(mean((p$est - s$observed)^2), 0, tol = 0.02)
 })
 
 test_that("Anisotropy fits and plots", {
@@ -56,11 +56,11 @@ test_that("A spatiotemporal version works with predictions on new data points", 
     include_spatial = FALSE
   )
   # Predictions at original data locations:
-  predictions <- predict(m)$data
+  predictions <- predict(m)
   predictions$resids <- residuals(m) # randomized quantile residuals
   # Predictions onto new data:
   predictions <- predict(m, newdata = subset(qcs_grid, year >= 2015))
-  expect_identical(class(predictions$data), "data.frame")
+  expect_identical(class(predictions), "data.frame")
 })
 
 test_that("AR1 models fit with and without R normalization", {
@@ -88,11 +88,11 @@ test_that("AR1 models fit with and without R normalization", {
 
   p <- predict(m)
   p_normalize <- predict(m_normalize)
-  expect_equal(p$data, p_normalize$data)
+  expect_equal(p, p_normalize)
 
   p_nd <- predict(m, newdata = dat, xy_cols = c("x", "y"))
   p_normalize <- predict(m_normalize, newdata = dat, xy_cols = c("x", "y"))
-  expect_equal(p_nd$data, p_normalize$data, tolerance = 1e-4)
+  expect_equal(p_nd, p_normalize, tolerance = 1e-3)
 })
 
 test_that("Predictions on the original data set as `newdata`` return the same predictions", {
@@ -113,8 +113,8 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   p <- predict(m)
   p_nd <- predict(m, newdata = dat, xy_cols = c("x", "y"))
 
-  cols <- c("est", "est_re_s", "est_re_st", "est_re_s_trend")
-  expect_equal(p$data[,cols], p_nd$data[,cols], tolerance = 1e-4)
+  cols <- c("est", "est_non_rf", "est_rf", "omega_s", "epsilon_st")
+  expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-4)
 
   m <- sdmTMB(
     ar1_fields = TRUE, include_spatial = FALSE,
@@ -124,7 +124,7 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
 
   p <- predict(m)
   p_nd <- predict(m, newdata = dat, xy_cols = c("x", "y"))
-  expect_equal(p$data[,cols], p_nd$data[,cols], tolerance = 1e-4)
+  expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-4)
 })
 
 test_that("A time-varying model fits and predicts appropriately", {
@@ -158,12 +158,12 @@ test_that("A time-varying model fits and predicts appropriately", {
   plot(b_t, b_t_fit, asp = 1);abline(a = 0, b = 1)
   expect_equal(mean((b_t- b_t_fit)^2), 0, tolerance = 1e-3)
   p <- predict(m)
-  plot(p$data$est, s$observed, asp = 1);abline(a = 0, b = 1)
-  expect_equal(mean((p$data$est - s$observed)^2), 0, tolerance = 1e-2)
+  plot(p$est, s$observed, asp = 1);abline(a = 0, b = 1)
+  expect_equal(mean((p$est - s$observed)^2), 0, tolerance = 1e-2)
 
-  cols <- c("est", "est_re_s", "est_re_st", "est_re_s_trend")
+  cols <- c("est", "est_non_rf", "est_rf", "omega_s", "epsilon_st")
   p_nd <- predict(m, newdata = s, xy_cols = c("x", "y"))
-  expect_equal(p$data[,cols], p_nd$data[,cols], tolerance = 1e-5)
+  expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-5)
 })
 
 test_that("Year indexes get created correctly", {

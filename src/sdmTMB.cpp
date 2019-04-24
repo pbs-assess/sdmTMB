@@ -257,25 +257,32 @@ Type objective_function<Type>::operator()()
 
   vector<Type> eta_fixed_i = X_ij * b_j;
   vector<Type> mu_i(n_i), eta_i(n_i);
+  vector<Type> eta_rw_i(n_i);
+  for (int i = 0; i < n_i; i++) {
+    eta_i(i) = Type(0);
+    eta_rw_i(i) = Type(0);
+  }
   for (int i = 0; i < n_i; i++) {
     eta_i(i) = eta_fixed_i(i);
     if (random_walk)
-      for (int k = 0; k < X_rw_ik.cols(); k++)
-        eta_i(i) += X_rw_ik(i, k) * b_rw_t(year_i(i), k);
-    if (include_spatial) {
-      eta_i(i) += omega_s_A(i);  // spatial
-      if (spatial_trend)
-        eta_i(i) += omega_s_trend_A(i) * t_i(i); // spatial trend
-    }
-    epsilon_st_A_vec(i) = epsilon_st_A(A_spatial_index(i), year_i(i)); // record it
-    eta_i(i) += epsilon_st_A_vec(i); // spatiotemporal
+      for (int k = 0; k < X_rw_ik.cols(); k++) {
+        eta_rw_i(i) += X_rw_ik(i, k) * b_rw_t(year_i(i), k); // record it
+        eta_i(i) += eta_rw_i(i);
+      }
+      if (include_spatial) {
+        eta_i(i) += omega_s_A(i);  // spatial
+        if (spatial_trend)
+          eta_i(i) += omega_s_trend_A(i) * t_i(i); // spatial trend
+      }
+      epsilon_st_A_vec(i) = epsilon_st_A(A_spatial_index(i), year_i(i)); // record it
+      eta_i(i) += epsilon_st_A_vec(i); // spatiotemporal
 
-    if (family == 1 && link == 2) {
-      // binomial(link = "logit"); don't touch (using robust density function in logit space)
-      mu_i(i) = eta_i(i);
-    } else {
-      mu_i(i) = InverseLink(eta_i(i), link);
-    }
+      if (family == 1 && link == 2) {
+        // binomial(link = "logit"); don't touch (using robust density function in logit space)
+        mu_i(i) = eta_i(i);
+      } else {
+        mu_i(i) = InverseLink(eta_i(i), link);
+      }
   }
 
   // ------------------ Probability of random effects --------------------------
@@ -418,12 +425,14 @@ Type objective_function<Type>::operator()()
 
     vector<Type> proj_eta = proj_fe + proj_re_sp_st +
       proj_re_st_vector + proj_re_sp_trend;
+    vector<Type> proj_rf = proj_re_sp_st + proj_re_st_vector + proj_re_sp_trend;
     REPORT(proj_fe);            // fixed effect projections
     REPORT(proj_re_sp_st);      // spatial random effect projections
     REPORT(proj_re_st_vector);  // spatiotemporal random effect projections
     REPORT(proj_re_sp_slopes);  // spatial slope projections
     REPORT(proj_re_sp_trend);   // spatial trend projections (slope * time)
     REPORT(proj_eta);           // combined projections (in link space)
+    REPORT(proj_rf);            // combined random field projections
 
     if (calc_se) ADREPORT(proj_eta);
 
@@ -467,6 +476,7 @@ Type objective_function<Type>::operator()()
   REPORT(omega_s_trend_A); // spatial trend effects; n_s length vector
   REPORT(eta_fixed_i);  // fixed effect predictions in the link space
   REPORT(eta_i);        // fixed and random effect predictions in link space
+  REPORT(eta_rw_i);     // time-varying predictions in link space
   REPORT(rho);          // AR1 correlation in -1 to 1 space
   REPORT(range);        // Matern approximate distance at 10% correlation
   ADREPORT(range);      // Matern approximate distance at 10% correlation

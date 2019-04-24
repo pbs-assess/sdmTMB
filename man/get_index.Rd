@@ -10,7 +10,7 @@ get_index(obj, value_name = "log_total", bias_correct = FALSE)
 get_cog(obj, bias_correct = FALSE)
 }
 \arguments{
-\item{obj}{Output from \code{\link[=predict.sdmTMB]{predict.sdmTMB()}}.}
+\item{obj}{Output from \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} with \code{return_tmb_object = TRUE}.}
 
 \item{value_name}{Name of value to extract.}
 
@@ -28,7 +28,7 @@ m <- sdmTMB(
  formula = density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
  time = "year", spde = pcod_spde, family = tweedie(link = "log")
 )
-predictions <- predict(m, newdata = qcs_grid)
+predictions <- predict(m, newdata = qcs_grid, return_tmb_object = TRUE)
 ind <- get_index(predictions, bias_correct = FALSE) # not bias correcting for speed
 
 library(ggplot2)

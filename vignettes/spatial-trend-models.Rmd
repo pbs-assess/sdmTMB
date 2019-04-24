@@ -145,30 +145,30 @@ First let's look at the spatial trends.
 We will just pick out a single year to plot since they should all be the same for the slopes. Note that these are in log space.
 
 ```{r}
-plot_map_raster(filter(p1$data, year == 2003), "re_s_trend")
-plot_map_raster(filter(p2$data, year == 2003), "re_s_trend")
-plot_map_raster(filter(p3$data, year == 2003), "re_s_trend")
+plot_map_raster(filter(p1, year == 2003), "re_s_trend")
+plot_map_raster(filter(p2, year == 2003), "re_s_trend")
+plot_map_raster(filter(p3, year == 2003), "re_s_trend")
 ```
 
 These are the predictions including all fixed and random effects plotted in log space.
 
 ```{r}
-plot_map_raster(p1$data, "est")
-plot_map_raster(p2$data, "est")
-plot_map_raster(p3$data, "est")
+plot_map_raster(p1, "est")
+plot_map_raster(p2, "est")
+plot_map_raster(p3, "est")
 ```
 
 And we can look at just the spatiotemporal random effects for models 2 and 3:
 
 ```{r}
-plot_map_raster(p2$data, "est_re_st") + scale_fill_gradient2()
-plot_map_raster(p3$data, "est_re_st") + scale_fill_gradient2()
+plot_map_raster(p2, "est_re_st") + scale_fill_gradient2()
+plot_map_raster(p3, "est_re_st") + scale_fill_gradient2()
 ```
 
 And the single spatial random effects for all three models:
 
 ```{r}
-plot_map_raster(filter(p1$data, year == 2003), "est_re_s")
-plot_map_raster(filter(p2$data, year == 2003), "est_re_s")
-plot_map_raster(filter(p3$data, year == 2003), "est_re_s")
+plot_map_raster(filter(p1, year == 2003), "est_re_s")
+plot_map_raster(filter(p2, year == 2003), "est_re_s")
+plot_map_raster(filter(p3, year == 2003), "est_re_s")
 ```
