@@ -28,10 +28,19 @@ a list format output. Necessary for the \code{\link[=get_index]{get_index()}} or
 \item{...}{Not implemented.}
 }
 \value{
-A data frame. TODO details.
+A data frame:
+\itemize{
+\item \code{est}: Estimate in link space (everything is in link space)
+\item \code{est_non_rf}: Estimate from everything that isn't a random field
+\item \code{est_rf}: Estimate from all random fields combined
+\item \code{omega_s}: Spatial (intercept) random field that is constant through time
+\item \code{zeta_s}: Spatial slope random field
+\item \code{epsilon_st}: Spatiotemporal (intercept) random fields (could be
+independent draws each year or AR1)
+}
 }
 \description{
-Can predict on the original data locations or onto new data.
+Can predict on the original data locations or on new data.
 }
 \examples{
 # We'll only use a small number of knots so this example runs quickly

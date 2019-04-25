@@ -4,7 +4,7 @@
 
 #' Predict from an sdmTMB model
 #'
-#' Can predict on the original data locations or onto new data.
+#' Can predict on the original data locations or on new data.
 #'
 #' @param object An object from [sdmTMB()].
 #' @param newdata An optional new data frame. This should be a data frame with
@@ -21,7 +21,15 @@
 #' @param ... Not implemented.
 #'
 #' @return
-#' A data frame. TODO details.
+#' A data frame:
+#' * `est`: Estimate in link space (everything is in link space)
+#' * `est_non_rf`: Estimate from everything that isn't a random field
+#' * `est_rf`: Estimate from all random fields combined
+#' * `omega_s`: Spatial (intercept) random field that is constant through time
+#' * `zeta_s`: Spatial slope random field
+#' * `epsilon_st`: Spatiotemporal (intercept) random fields (could be
+#'    independent draws each year or AR1)
+#'
 #' @export
 #'
 #' @examples
