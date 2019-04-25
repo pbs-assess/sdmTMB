@@ -1,4 +1,4 @@
-qres_tweedie <- function (object, y, mu) {
+qres_tweedie <- function(object, y, mu) {
   p <- stats::plogis(object$model$par[["thetaf"]]) + 1
   dispersion <- exp(object$model$par[["ln_phi"]])
   u <- fishMod::pTweedie(q = y, p = p, mu = mu, phi = dispersion)
@@ -7,7 +7,7 @@ qres_tweedie <- function (object, y, mu) {
   stats::qnorm(u)
 }
 
-qres_binomial <- function (object, y, mu) {
+qres_binomial <- function(object, y, mu) {
   n <- rep(1, length(y))
   a <- stats::pbinom(y - 1, n, mu)
   b <- stats::pbinom(y, n, mu)
@@ -15,19 +15,45 @@ qres_binomial <- function (object, y, mu) {
   stats::qnorm(u)
 }
 
-qres_gamma <- function (object, y, mu) {
-  stop("Not finished.")
-  # df <- stats::df.residual(object)
-  # w <- 1
-  # # dispersion <- sum(w * ((y - mu)/mu)^2)/df
-  # dispersion <- 1/exp(object$fit$par[["betad"]])
-  # logp <- stats::pgamma((w * y)/mu/dispersion, w/dispersion, log.p = TRUE)
-  # stats::qnorm(logp, log.p = TRUE)
+qres_nbinom2 <- function(object, y, mu) {
+  stop("Not finished!", call. = FALSE)
 }
 
-qres_gaussian <- function (object, y, mu) {
+qres_pois <- function(object, y, mu) {
+  a <- stats::ppois(y - 1, mu)
+  b <- stats::ppois(y, mu)
+  u <- stats::runif(n = length(y), min = a, max = b)
+  stats::qnorm(u)
+}
+
+qres_gamma <- function(object, y, mu) {
+  phi <- exp(object$model$par[["ln_phi"]])
+  s1 <- 1 / phi^2
+  s2 <- mu / s1
+  u <- stats::pgamma(q = y, shape = s1, scale = s2)
+  stats::qnorm(u)
+}
+
+qres_gaussian <- function(object, y, mu) {
   dispersion <- exp(object$model$par[["ln_phi"]])
   u <- stats::pnorm(q = y, mean = mu, sd = dispersion)
+  stats::qnorm(u)
+}
+
+# https://en.wikipedia.org/wiki/Location%E2%80%93scale_family
+pt_ls <- function(q, df, mu, sigma) stats::pt((q - mu)/sigma, df)
+
+qres_student <- function(object, y, mu) {
+  dispersion <- exp(object$model$par[["ln_phi"]])
+  u <- pt_ls(q = y, df = 3, mu = mu, sigma = dispersion)
+  stats::qnorm(u)
+}
+
+qres_beta <- function(object, y, mu) {
+  phi <- exp(object$model$par[["ln_phi"]])
+  s1 <- mu * phi
+  s2 <- (1 - mu) * phi
+  u <- stats::pbeta(q = y, shape1 = s1, shape2 = s2)
   stats::qnorm(u)
 }
 
@@ -37,7 +63,12 @@ residuals.sdmTMB <- function(object, ...) {
   res_func <- switch(object$family$family,
     gaussian = qres_gaussian,
     binomial = qres_binomial,
-    tweedie  = qres_tweedie
+    tweedie  = qres_tweedie,
+    Beta     = qres_beta,
+    Gamma    = qres_gamma,
+    nbinom2  = qres_nbinom2,
+    poisson  = qres_pois,
+    student  = qres_student
   )
   y <- object$response
   mu <- object$family$linkinv(predict(object)$est)

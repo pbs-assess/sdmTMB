@@ -47,6 +47,7 @@ test_that("Student and lognormal families fit", {
   m <- sdmTMB(data = s, formula = observed ~ 1, spde = spde,
     family = student(link = "identity"))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
+  expect_length(residuals(m), nrow(s))
 })
 
 test_that("NB2 fits", {
@@ -64,11 +65,12 @@ test_that("NB2 fits", {
 
 test_that("Poisson fits", {
   d <- pcod[pcod$year == 2017, ]
-  d$density <- round(d$density)
   spde <- make_spde(d$X, d$Y, n_knots = 30)
+  d$density <- rpois(nrow(d), 3)
   m <- sdmTMB(data = d, formula = density ~ 1,
     spde = spde, family = poisson(link = "log"))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
+  expect_length(residuals(m), nrow(d))
 })
 
 test_that("Binomial fits", {
@@ -79,6 +81,7 @@ test_that("Binomial fits", {
   m <- sdmTMB(data = d, formula = present ~ 1,
     spde = spde, family = binomial(link = "logit"))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
+  expect_length(residuals(m), nrow(d))
 })
 
 test_that("Gamma fits", {
@@ -88,6 +91,7 @@ test_that("Gamma fits", {
   m <- sdmTMB(data = d, formula = density ~ 1,
     spde = spde, family = Gamma(link = "log"))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
+  expect_length(residuals(m), nrow(d))
 })
 
 test_that("Beta fits", {
@@ -103,4 +107,5 @@ test_that("Beta fits", {
   glmmTMBphi <- exp(m2$fit$par[["betad"]])
 
   expect_equal(m$model$par[["ln_phi"]], log(glmmTMBphi), tol = 0.0001)
+  expect_length(residuals(m), nrow(s))
 })
