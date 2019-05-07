@@ -82,8 +82,13 @@ sdmTMB_cv <- function(formula, data, x, y, time = NULL,
   }
 
   out <- future.apply::future_lapply(seq_len(k_folds), function(k) {
-    d_fit <- data[data[[fold_ids]] != k, , drop = FALSE]
-    d_withheld <- data[data[[fold_ids]] == k, , drop = FALSE]
+    if (k_folds > 1) {
+      d_fit <- data[data[[fold_ids]] != k, , drop = FALSE]
+      d_withheld <- data[data[[fold_ids]] == k, , drop = FALSE]
+    } else {
+      d_fit <- data
+      d_withheld <- data
+    }
 
     # build mesh for training data
     d_fit_spde <- spde_function(d_fit[[x]], d_fit[[y]], n_knots = n_knots)
