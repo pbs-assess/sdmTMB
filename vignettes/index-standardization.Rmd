@@ -117,10 +117,10 @@ plot_map(predictions$data, "epsilon_st") +
   scale_fill_gradient2()
 ```
 
-When we ran our `predict.sdmTBM()` function, it also returned a report from TMB in the output. We can then run our `get_index()` function to extract the total biomass calculations and standard errors:
+When we ran our `predict.sdmTBM()` function, it also returned a report from TMB in the output because we included `return_tmb_object = TRUE`. We can then run our `get_index()` function to extract the total biomass calculations and standard errors:
 
 ```{r get-index}
- # not bias correcting for speed:
+ # not bias correcting for vignette-building speed:
 ind <- get_index(predictions, bias_correct = FALSE)
 ```
 
