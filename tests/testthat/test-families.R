@@ -106,6 +106,6 @@ test_that("Beta fits", {
     family = glmmTMB::beta_family(link = "logit"))
   glmmTMBphi <- exp(m2$fit$par[["betad"]])
 
-  expect_equal(m$model$par[["ln_phi"]], log(glmmTMBphi), tol = 0.0001)
+  expect_equal(m$model$par[["ln_phi"]], log(glmmTMBphi), tol = 0.1)
   expect_length(residuals(m), nrow(s))
 })

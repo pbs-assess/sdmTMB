@@ -161,7 +161,7 @@ test_that("A time-varying model fits and predicts appropriately", {
   expect_equal(mean((b_t- b_t_fit)^2), 0, tolerance = 1e-3)
   p <- predict(m)
   plot(p$est, s$observed, asp = 1);abline(a = 0, b = 1)
-  expect_equal(mean((p$est - s$observed)^2), 0, tolerance = 1e-2)
+  expect_equal(mean((p$est - s$observed)^2), 0, tolerance = 0.1)
 
   cols <- c("est", "est_non_rf", "est_rf", "omega_s", "epsilon_st")
   p_nd <- predict(m, newdata = s, xy_cols = c("x", "y"))
