@@ -34,10 +34,10 @@ Let's perform index standardization with the built-in data for Pacific cod.
 glimpse(pcod)
 ```
 
-First we will create our SPDE mesh. We will use 100 knots for a balance between speed and accuracy in this vignette. You will likely want to use more for applied scenarios. You will want to make sure that increasing the number of knots does not change the conclusions.
+First we will create our SPDE mesh. We will use 150 knots for a balance between speed and accuracy in this vignette. You will likely want to use more for applied scenarios. You will want to make sure that increasing the number of knots does not change the conclusions.
 
 ```{r spde, fig.asp=0.8}
-pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 100)
+pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 150)
 plot_spde(pcod_spde)
 ```
 
@@ -141,6 +141,6 @@ mutate(ind,
   upr = upr * scale,
   cv = sqrt(exp(se^2) - 1)
   ) %>% 
-  select(-log_est, -se) %>%
-  knitr::kable(format = "pandoc", digits = c(0, 0, 0, 0, 2, 2))
+  select(-log_est, -max_gradient, -bad_eig, -se) %>%
+  knitr::kable(format = "pandoc", digits = c(0, 0, 0, 0, 2))
 ```
