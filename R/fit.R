@@ -37,6 +37,8 @@ NULL
 #'   include spatiotemporal random effects)? By default a spatial-only model
 #'   will be fit if there is only one unique value in the time column or the
 #'   `time` argument is left at its default value of `NULL`.
+#' @param quadratic_roots Logical: should quadratic roots be calculated?
+#'   Experimental future for internal use right now.
 #'
 #' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
@@ -88,12 +90,30 @@ NULL
 #' r <- m$tmb_obj$report()
 #' r$ln_tau_O_trend
 #' r$omega_s_trend
+#'
+#' # Time-varying effects of depth and depth squared:
+#' m <- sdmTMB(density ~ 0 + as.factor(year),
+#'   time_varying = ~ 0 + depth_scaled + depth_scaled2,
+#'   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
+#'
+#' # See the b_rw_t estimates; these are the time-varying (random walk) effects.
+#' # First we have the first parameter for each time step and on the second parameter.
+#' summary(m$sd_report)[1:19,]
+#'
+#' # Experimental calculation of quadratic roots:
+#' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+#'   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+#'   quadratic_roots = TRUE)
+#' .sd_report <- summary(m$sd_report)
+#' params <- row.names(.sd_report)
+#' .sd_report[grep("quadratic", params), ]
 
 sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "identity"),
   time_varying = NULL, silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
   control = sdmTMBcontrol(), enable_priors = FALSE, ar1_fields = FALSE,
   include_spatial = TRUE, spatial_trend = FALSE, normalize = FALSE,
-  spatial_only = identical(length(unique(data[[time]])), 1L)) {
+  spatial_only = identical(length(unique(data[[time]])), 1L),
+  quadratic_roots = FALSE) {
 
   # separable_ar1 <- TRUE # hard code
 
@@ -169,7 +189,8 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     family     = .valid_family[family$family],
     link       = .valid_link[family$link],
     spatial_only = as.integer(spatial_only),
-    spatial_trend = as.integer(spatial_trend)
+    spatial_trend = as.integer(spatial_trend),
+    calc_quadratic_range = as.integer(quadratic_roots)
   )
   tmb_data$flag <- 1L # Include data
 

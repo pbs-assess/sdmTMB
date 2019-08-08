@@ -9,7 +9,8 @@ sdmTMB(data, formula, time = NULL, spde, family = gaussian(link =
   anisotropy = FALSE, control = sdmTMBcontrol(),
   enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE,
   spatial_trend = FALSE, normalize = FALSE,
-  spatial_only = identical(length(unique(data[[time]])), 1L))
+  spatial_only = identical(length(unique(data[[time]])), 1L),
+  quadratic_roots = FALSE)
 }
 \arguments{
 \item{data}{A data frame.}
@@ -60,6 +61,9 @@ or suffer from convergence problems.}
 include spatiotemporal random effects)? By default a spatial-only model
 will be fit if there is only one unique value in the time column or the
 \code{time} argument is left at its default value of \code{NULL}.}
+
+\item{quadratic_roots}{Logical: should quadratic roots be calculated?
+Experimental future for internal use right now.}
 }
 \description{
 Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.
@@ -108,4 +112,21 @@ m <- sdmTMB(density ~ depth_scaled, data = d,
 r <- m$tmb_obj$report()
 r$ln_tau_O_trend
 r$omega_s_trend
+
+# Time-varying effects of depth and depth squared:
+m <- sdmTMB(density ~ 0 + as.factor(year),
+  time_varying = ~ 0 + depth_scaled + depth_scaled2,
+  data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
+
+# See the b_rw_t estimates; these are the time-varying (random walk) effects.
+# First we have the first parameter for each time step and on the second parameter.
+summary(m$sd_report)[1:19,]
+
+# Experimental calculation of quadratic roots:
+m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+  data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+  quadratic_roots = TRUE)
+.sd_report <- summary(m$sd_report)
+params <- row.names(.sd_report)
+.sd_report[grep("quadratic", params), ]
 }

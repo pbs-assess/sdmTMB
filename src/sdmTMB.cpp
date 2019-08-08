@@ -69,8 +69,8 @@ vector<Type> GetQuadraticRoots(Type a, Type b, Type threshold)
   Type crit_y = (a * pow(-b / (2. * a), 2.) + b * (-b / (2. * a)) + c) + log(threshold);
   // solve for 0 = ax2 + bx + (c - crit_y)
   c = c - crit_y;
-  res(0) = (b - sqrt(b^2 - 4 * c * a))/(2*a);
-  res(1) = (b + sqrt(b^2 - 4 * c * a))/(2*a);
+  res(0) = (b - sqrt(pow(b, 2.) - 4. * c * a))/(2.*a);
+  res(1) = (b + sqrt(pow(b, 2.) - 4. * c * a))/(2.*a);
   return res;
 }
 
@@ -149,6 +149,7 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(calc_se);
   // Calculate total summed by year (e.g. biomass)?
   DATA_INTEGER(calc_time_totals);
+  DATA_INTEGER(calc_quadratic_range);
 
   DATA_INTEGER(enable_priors);
   DATA_INTEGER(ar1_fields);
@@ -479,10 +480,10 @@ Type objective_function<Type>::operator()()
     }
   }
 
-  Type calc_quadratic_range = 1;
-  if (calc_quadratic_range && b_j.size() >= 2 && b_j(1) > Type(0)) {
+  if (calc_quadratic_range && b_j(1) < Type(0)) {
     vector<Type> quadratic_roots = GetQuadraticRoots(b_j(0), b_j(1), Type(0.05));
-    Type quadratic_range = abs(quadratic_roots(1) - quadratic_roots(0));
+    Type quadratic_range = quadratic_roots(1) - quadratic_roots(0);
+    if (quadratic_range < 0) quadratic_range = quadratic_range * -1.;
     REPORT(quadratic_roots);
     REPORT(quadratic_range);
     ADREPORT(quadratic_roots);
