@@ -69,8 +69,8 @@ vector<Type> GetQuadraticRoots(Type a, Type b, Type threshold)
   Type crit_y = (a * pow(-b / (2. * a), 2.) + b * (-b / (2. * a)) + c) + log(threshold);
   // solve for 0 = ax2 + bx + (c - crit_y)
   c = c - crit_y;
-  res(0) = (b - sqrt(pow(b, 2.) - 4. * c * a))/(2.*a);
-  res(1) = (b + sqrt(pow(b, 2.) - 4. * c * a))/(2.*a);
+  res(0) = -1. * (b - sqrt(pow(b, 2.) - 4. * c * a))/(2.*a);
+  res(1) = -1. * (b + sqrt(pow(b, 2.) - 4. * c * a))/(2.*a);
   return res;
 }
 
