@@ -34,7 +34,7 @@ sdmTMB:
     or AR1 spatiotemporal Gaussian Markov random fields with TMB. It can
     also fit spatially-varying trends through time as a random field.
   - Uses formula interfaces for fixed effects and any time-varying
-    effects (dynamic regression) (e.g. `formula = y ~ 1 + x1,
+    effects (dynamic regression) (e.g. `formula = y ~ 1 + x1,
     time_varying = ~ 0 + x2`), where `y` is the response, `1` represents
     an intercept, `0` omits an intercept, `x1` is a covariate with a
     constant effect, and `x2` is a covariate with a time-varying effect.
@@ -46,8 +46,8 @@ sdmTMB:
     randomized-quantile residuals similar to those implemented in the
     [DHARMa](https://cran.r-project.org/package=DHARMa) package. The
     `predict()` function can take a `newdata` argument similar to `lm()`
-    or `glm()` etc. The predictions are bilinear interpolated predictive-process
-    predictions (i.e. they make smooth pretty maps).
+    or `glm()` etc. The predictions are bilinear interpolated
+    predictive-process predictions (i.e. they make smooth pretty maps).
   - Includes functionality for estimating the centre of gravity or total
     biomass by time step for index standardization.
   - Implements multi-phase estimation for speed.
