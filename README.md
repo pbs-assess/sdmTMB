@@ -46,7 +46,7 @@ sdmTMB:
     randomized-quantile residuals similar to those implemented in the
     [DHARMa](https://cran.r-project.org/package=DHARMa) package. The
     `predict()` function can take a `newdata` argument similar to `lm()`
-    or `glm()` etc. The predictions are full predictive-process
+    or `glm()` etc. The predictions are bilinear interpolated predictive-process
     predictions (i.e. they make smooth pretty maps).
   - Includes functionality for estimating the centre of gravity or total
     biomass by time step for index standardization.
