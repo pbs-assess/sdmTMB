@@ -61,6 +61,19 @@ vector<Type> RepeatVector(vector<Type> x, int times)
   return res;
 }
 
+template <class Type>
+vector<Type> GetQuadraticRoots(Type a, Type b, Type threshold)
+{
+  vector<Type> res(2);
+  Type c = 1.; // doesn't matter; setting to an arbitrary value
+  Type crit_y = (a * pow(-b / (2. * a), 2.) + b * (-b / (2. * a)) + c) + log(threshold);
+  // solve for 0 = ax2 + bx + (c - crit_y)
+  c = c - crit_y;
+  res(0) = (b - sqrt(b^2 - 4 * c * a))/(2*a);
+  res(1) = (b + sqrt(b^2 - 4 * c * a))/(2*a);
+  return res;
+}
+
 enum valid_family {
   gaussian_family = 0,
   binomial_family = 1,
@@ -464,6 +477,16 @@ Type objective_function<Type>::operator()()
       REPORT(cog_y);
       ADREPORT(cog_y);
     }
+  }
+
+  Type calc_quadratic_range = 1;
+  if (calc_quadratic_range && b_j.size() >= 2 && b_j(1) > Type(0)) {
+    vector<Type> quadratic_roots = GetQuadraticRoots(b_j(0), b_j(1), Type(0.05));
+    Type quadratic_range = abs(quadratic_roots(1) - quadratic_roots(0));
+    REPORT(quadratic_roots);
+    REPORT(quadratic_range);
+    ADREPORT(quadratic_roots);
+    ADREPORT(quadratic_range);
   }
 
   // ------------------ Reporting ----------------------------------------------
