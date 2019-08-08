@@ -481,7 +481,7 @@ Type objective_function<Type>::operator()()
   }
 
   if (calc_quadratic_range && b_j(1) < Type(0)) {
-    vector<Type> quadratic_roots = GetQuadraticRoots(b_j(0), b_j(1), Type(0.05));
+    vector<Type> quadratic_roots = GetQuadraticRoots(b_j(1), b_j(0), Type(0.05));
     Type quadratic_range = quadratic_roots(1) - quadratic_roots(0);
     if (quadratic_range < 0) quadratic_range = quadratic_range * -1.;
     REPORT(quadratic_roots);
