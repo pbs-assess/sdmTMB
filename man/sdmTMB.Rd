@@ -129,4 +129,8 @@ m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
 .sd_report <- summary(m$sd_report)
 params <- row.names(.sd_report)
 .sd_report[grep("quadratic", params), ]
+b <- m$model$par[1:2]
+x <- seq(min(d$depth_scaled), max(d$depth_scaled), length.out = 300)
+y <- exp(1 + x * b[1] + x^2 * b[2])
+abline(h = y[which(y == max(y))] * 0.05)
 }
