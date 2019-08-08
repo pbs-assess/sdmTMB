@@ -380,10 +380,13 @@ Type objective_function<Type>::operator()()
 
   if (do_predict) {
     vector<Type> proj_fe = proj_X_ij * b_j;
+    vector<Type> proj_rw_i()proj_X_ij.rows());
+    REPORT(proj_rw_i);
     if (random_walk) {
       for (int i = 0; i < proj_X_rw_ik.rows(); i++) {
         for (int k = 0; k < proj_X_rw_ik.cols(); k++) {
-          proj_fe(i) += proj_X_rw_ik(i, k) * b_rw_t(proj_year(i), k);
+          proj_rw_i(i) = proj_X_rw_ik(i, k) * b_rw_t(proj_year(i), k);
+          proj_fe(i) += proj_rw_i(i);
         }
       }
     }
