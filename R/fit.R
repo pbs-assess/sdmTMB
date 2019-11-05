@@ -157,7 +157,7 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
   contains_offset <- any(grepl("^offset$",
     gsub(" ", "", unlist(strsplit(as.character(formula), "\\+")))))
   X_ij <- model.matrix(formula, data)
-  offset_pos <- grep("^offset$", X_ij)
+  offset_pos <- grep("^offset$", colnames(X_ij))
   mf   <- model.frame(formula, data)
   y_i  <- model.response(mf, "numeric")
 
