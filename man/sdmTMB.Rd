@@ -8,7 +8,7 @@ sdmTMB(data, formula, time = NULL, spde, family = gaussian(link =
   "identity"), time_varying = NULL, silent = TRUE, multiphase = TRUE,
   anisotropy = FALSE, control = sdmTMBcontrol(),
   enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE,
-  spatial_trend = FALSE, normalize = FALSE,
+  spatial_trend = FALSE, offset = NULL, normalize = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
   quadratic_roots = FALSE)
 }
@@ -51,6 +51,8 @@ fields.}
 trend? This works if hauls can be viewed as replicates of grid cell
 observations, and only when other spatiotemporal components are not
 estimated.}
+
+\item{offset}{Offset vector.}
 
 \item{normalize}{Logical: should the normalization of the random effects
 be done in R during the outer-optimization step? For some cases,

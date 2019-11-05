@@ -29,6 +29,7 @@ NULL
 #'   trend? This works if hauls can be viewed as replicates of grid cell
 #'   observations, and only when other spatiotemporal components are not
 #'   estimated.
+#' @param offset Offset vector.
 #' @param normalize Logical: should the normalization of the random effects
 #'   be done in R during the outer-optimization step? For some cases,
 #'   especially with many knots, this may be faster. In others, it may be slower
@@ -118,7 +119,8 @@ NULL
 sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "identity"),
   time_varying = NULL, silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
   control = sdmTMBcontrol(), enable_priors = FALSE, ar1_fields = FALSE,
-  include_spatial = TRUE, spatial_trend = FALSE, normalize = FALSE,
+  include_spatial = TRUE, spatial_trend = FALSE,
+  offset = NULL, normalize = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
   quadratic_roots = FALSE) {
 
@@ -142,6 +144,7 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
   }
 
   X_ij <- model.matrix(formula, data)
+  if (!is.null(offset)) X_ij <- cbind(offset, X_ij)
   mf   <- model.frame(formula, data)
   y_i  <- model.response(mf, "numeric")
 
@@ -217,6 +220,7 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     omega_s_trend    = rep(0, n_s),
     epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t)
   )
+  if (!is.null(offset)) tmb_params$b_j[1] <- 1
 
   # Mapping off params as needed:
   tmb_map <- list()
@@ -232,6 +236,12 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     tmb_map <- c(tmb_map, list(
       ln_tau_E   = as.factor(NA),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
+
+  if (!is.null(offset)) { # fix first (offset) param to 1 to be an offset:
+    b_j_map <- seq_along(tmb_params$b_j)
+    b_j_map[1] <- NA
+    tmb_map <- c(tmb_map, list(b_j = as.factor(b_j_map)))
+  }
 
   if (multiphase) {
     not_phase1 <- c(tmb_map, list(
@@ -255,7 +265,10 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
       gradient = tmb_obj1$gr, control = control)
 
     # Set starting values based on phase 1:
-    tmb_params$b_j <- set_par_value(tmb_opt1, "b_j")
+    if (is.null(offset))
+      tmb_params$b_j <- set_par_value(tmb_opt1, "b_j")
+    else
+      tmb_params$b_j[-1] <- set_par_value(tmb_opt1, "b_j")
     if (family$family == "tweedie")
       tmb_params$thetaf <- set_par_value(tmb_opt1, "thetaf")
     if (!family$family %in% c("binomial", "poisson"))  # no dispersion param
