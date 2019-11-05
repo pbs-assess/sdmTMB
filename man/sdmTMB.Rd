@@ -5,10 +5,11 @@
 \title{Fit a spatial or spatiotemporal GLMM with TMB}
 \usage{
 sdmTMB(data, formula, time = NULL, spde, family = gaussian(link =
-  "identity"), time_varying = NULL, weights = NULL, silent = TRUE,
-  multiphase = TRUE, anisotropy = FALSE, control = sdmTMBcontrol(),
-  enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE,
-  spatial_trend = FALSE, normalize = FALSE,
+  "identity"), time_varying = NULL, weights = NULL, reml = FALSE,
+  silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
+  control = sdmTMBcontrol(), enable_priors = FALSE,
+  ar1_fields = FALSE, include_spatial = TRUE, spatial_trend = FALSE,
+  normalize = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
   quadratic_roots = FALSE)
 }
@@ -34,6 +35,8 @@ modelled as a random walk through time.}
 \item{weights}{Optional likelihood weights for the conditional model.
 Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
 to one and are not internally modified.}
+
+\item{reml}{Logical: use REML estimation rather than maximum likelihood.}
 
 \item{silent}{Silent or include optimization details?}
 

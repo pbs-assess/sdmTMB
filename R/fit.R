@@ -22,6 +22,7 @@ NULL
 #' @param weights Optional likelihood weights for the conditional model.
 #'   Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
 #'   to one and are not internally modified.
+#' @param reml Logical: use REML estimation rather than maximum likelihood.
 #' @param silent Silent or include optimization details?
 #' @param multiphase Logical: estimate the fixed and random effects in phases?
 #'   Usually faster and more stable.
@@ -127,7 +128,7 @@ NULL
 #' abline(v = params[1:2, 1])
 
 sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "identity"),
-  time_varying = NULL, weights = NULL,
+  time_varying = NULL, weights = NULL, reml = FALSE,
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
   control = sdmTMBcontrol(), enable_priors = FALSE, ar1_fields = FALSE,
   include_spatial = TRUE, spatial_trend = FALSE,
@@ -316,6 +317,7 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
       list(b_rw_t = as.factor(matrix(NA, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)))),
       list(ln_tau_V = as.factor(NA))
     )
+  if (reml) tmb_random <- c(tmb_random, "b_j")
 
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
@@ -346,6 +348,7 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     tmb_map    = tmb_map,
     tmb_random = tmb_random,
     tmb_obj    = tmb_obj,
+    reml       = reml,
     gradients  = conv$final_grads,
     bad_eig    = conv$bad_eig,
     call       = match.call(expand.dots = TRUE),

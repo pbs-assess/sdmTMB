@@ -13,18 +13,25 @@ print.sdmTMB <- function(x, ...) {
   r <- x$tmb_obj$report()
   spatial_only <- !is.null(r$r$sigma_E) && !is.null(r$r$sigma_O_trend)
 
-  if (isTRUE(spatial_only)) {
-    title <- "Spatial model fit by ML ['sdmTMB']\n"
+  if ("reml" %in% names(x)) { # for backwards compatibility
+    if (isTRUE(x$reml)) fit_by <- "REML" else "ML"
   } else {
-    title <- "Spatiotemporal model fit by ML ['sdmTMB']\n"
+    fit_by <- "ML"
+  }
+  if (isTRUE(spatial_only)) {
+    title <- paste0("Spatial model fit by ", fit_by, " ['sdmTMB']\n")
+  } else {
+    title <- paste0("Spatiotemporal model fit by ", fit_by, " ['sdmTMB']\n")
   }
   formula <- paste0("Formula: ", deparse(x$call$formula), "\n")
   # time <- paste0("Time column: ", deparse(x$call$time), "\n")
   spde <- paste0("SPDE: ", deparse(x$call$spde), "\n")
   data <- paste0("Data: ", deparse(x$call$data), "\n")
   family <- paste0("Family: ", paste0(x$family$family, "(link = '", x$family$link, "')"), "\n")
-  criterion <- paste0("ML criterion at convergence: ", mround(x$model$objective, 3), "\n")
+  criterion <- paste0(fit_by, " criterion at convergence: ", mround(x$model$objective, 3), "\n")
+
   fe_names <- colnames(model.matrix(x$formula, x$data))
+  fe_names <- fe_names[!fe_names == "offset"]
 
   pars <- x$model$par
   b_j <- round(unname(pars[grep("b_j", names(pars))]), 2L)
