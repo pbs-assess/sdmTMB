@@ -2,13 +2,13 @@
 % Please edit documentation in R/fit.R
 \name{sdmTMB}
 \alias{sdmTMB}
-\title{Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.}
+\title{Fit a spatial or spatiotemporal GLMM with TMB}
 \usage{
 sdmTMB(data, formula, time = NULL, spde, family = gaussian(link =
-  "identity"), time_varying = NULL, silent = TRUE, multiphase = TRUE,
-  anisotropy = FALSE, control = sdmTMBcontrol(),
+  "identity"), time_varying = NULL, weights = NULL, silent = TRUE,
+  multiphase = TRUE, anisotropy = FALSE, control = sdmTMBcontrol(),
   enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE,
-  spatial_trend = FALSE, offset = NULL, normalize = FALSE,
+  spatial_trend = FALSE, normalize = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
   quadratic_roots = FALSE)
 }
@@ -16,7 +16,10 @@ sdmTMB(data, formula, time = NULL, spde, family = gaussian(link =
 \item{data}{A data frame.}
 
 \item{formula}{Model formula. For index standardization you will want to
-include \code{0 + as.factor(your_time_column)}.}
+include \code{0 + as.factor(year)} as the first part of the formula. For now,
+time must be called \code{year} if you want to use the index standardization
+functions. An offset can be included by including \code{offset} in the model
+formula. This can be anywhere in the formula but should be after \code{0 + as.factor(year)} if you want to use the index standardization functions.}
 
 \item{time}{The time column (as character).}
 
@@ -28,9 +31,14 @@ include \code{0 + as.factor(your_time_column)}.}
 \item{time_varying}{An optional formula describing covariates that should be
 modelled as a random walk through time.}
 
-\item{silent}{Silent or optimization details?}
+\item{weights}{Optional likelihood weights for the conditional model.
+Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
+to one and are not internally modified.}
 
-\item{multiphase}{Estimate the fixed and random effects in phases for speed?}
+\item{silent}{Silent or include optimization details?}
+
+\item{multiphase}{Logical: estimate the fixed and random effects in phases?
+Usually faster and more stable.}
 
 \item{anisotropy}{Logical: allow for anisotropy?}
 
@@ -41,7 +49,8 @@ modelled as a random walk through time.}
 
 \item{ar1_fields}{Estimate the spatiotemporal random fields as an AR1
 process? Note that the parameter \code{ar1_phi} has been internally bounded
-between -1 and 1 with:  \code{2 * invlogit(ar1_phi) - 1} i.e. in R \code{ 2 * plogis(ar_phi) - 1}.}
+between \code{-1} and \code{1} with:  \code{2 * invlogit(ar1_phi) - 1} i.e. in R
+\code{2 * plogis(ar_phi) - 1}.}
 
 \item{include_spatial}{Should a separate spatial random field the estimated?
 If enabled then there will be a separate spatial field and spatiotemporal
@@ -52,12 +61,10 @@ trend? This works if hauls can be viewed as replicates of grid cell
 observations, and only when other spatiotemporal components are not
 estimated.}
 
-\item{offset}{Offset vector.}
-
-\item{normalize}{Logical: should the normalization of the random effects
-be done in R during the outer-optimization step? For some cases,
-especially with many knots, this may be faster. In others, it may be slower
-or suffer from convergence problems.}
+\item{normalize}{Logical: should the normalization of the random effects be
+done in R during the outer-optimization step? For some cases, especially
+with many knots, this may be faster. In others, it may be slower or suffer
+from convergence problems.}
 
 \item{spatial_only}{Logical: should only a spatial model be fit (i.e. do not
 include spatiotemporal random effects)? By default a spatial-only model
@@ -68,7 +75,8 @@ will be fit if there is only one unique value in the time column or the
 Experimental future for internal use right now.}
 }
 \description{
-Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.
+Fit a spatial or spatiotemporal GLMM with TMB. Particularly useful for
+species distribution models and relative abundance index standardization.
 }
 \examples{
 d <- subset(pcod, year >= 2011) # subset for example speed

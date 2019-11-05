@@ -1,10 +1,17 @@
 #' @useDynLib sdmTMB
 NULL
 
-#' Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.
+#' Fit a spatial or spatiotemporal GLMM with TMB
+#'
+#' Fit a spatial or spatiotemporal GLMM with TMB. Particularly useful for
+#' species distribution models and relative abundance index standardization.
 #'
 #' @param formula Model formula. For index standardization you will want to
-#'   include `0 + as.factor(your_time_column)`.
+#'   include `0 + as.factor(year)` as the first part of the formula. For now,
+#'   time must be called `year` if you want to use the index standardization
+#'   functions. An offset can be included by including `offset` in the model
+#'   formula. This can be anywhere in the formula but should be after `0 +
+#'   as.factor(year)` if you want to use the index standardization functions.
 #' @param data A data frame.
 #' @param time The time column (as character).
 #' @param spde An object from [make_spde()].
@@ -12,16 +19,20 @@ NULL
 #'   [binomial()], [poisson()], [nbinom2()], and [tweedie()].
 #' @param time_varying An optional formula describing covariates that should be
 #'   modelled as a random walk through time.
-#' @param silent Silent or optimization details?
-#' @param multiphase Estimate the fixed and random effects in phases for speed?
+#' @param weights Optional likelihood weights for the conditional model.
+#'   Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
+#'   to one and are not internally modified.
+#' @param silent Silent or include optimization details?
+#' @param multiphase Logical: estimate the fixed and random effects in phases?
+#'   Usually faster and more stable.
 #' @param anisotropy Logical: allow for anisotropy?
 #' @param control Optimization control options. See [sdmTMBcontrol()].
 #' @param enable_priors Should weakly informative priors be enabled?
 #'   (experimental and likely for use with the \pkg{tmbstan} package)
 #' @param ar1_fields Estimate the spatiotemporal random fields as an AR1
 #'   process? Note that the parameter `ar1_phi` has been internally bounded
-#'   between -1 and 1 with:  `2 * invlogit(ar1_phi) - 1` i.e. in R ` 2 *
-#'   plogis(ar_phi) - 1`.
+#'   between `-1` and `1` with:  `2 * invlogit(ar1_phi) - 1` i.e. in R
+#'   `2 * plogis(ar_phi) - 1`.
 #' @param include_spatial Should a separate spatial random field the estimated?
 #'   If enabled then there will be a separate spatial field and spatiotemporal
 #'   fields.
@@ -29,11 +40,10 @@ NULL
 #'   trend? This works if hauls can be viewed as replicates of grid cell
 #'   observations, and only when other spatiotemporal components are not
 #'   estimated.
-#' @param offset Offset vector.
-#' @param normalize Logical: should the normalization of the random effects
-#'   be done in R during the outer-optimization step? For some cases,
-#'   especially with many knots, this may be faster. In others, it may be slower
-#'   or suffer from convergence problems.
+#' @param normalize Logical: should the normalization of the random effects be
+#'   done in R during the outer-optimization step? For some cases, especially
+#'   with many knots, this may be faster. In others, it may be slower or suffer
+#'   from convergence problems.
 #' @param spatial_only Logical: should only a spatial model be fit (i.e. do not
 #'   include spatiotemporal random effects)? By default a spatial-only model
 #'   will be fit if there is only one unique value in the time column or the
@@ -117,10 +127,11 @@ NULL
 #' abline(v = params[1:2, 1])
 
 sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "identity"),
-  time_varying = NULL, silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
+  time_varying = NULL, weights = NULL,
+  silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
   control = sdmTMBcontrol(), enable_priors = FALSE, ar1_fields = FALSE,
   include_spatial = TRUE, spatial_trend = FALSE,
-  offset = NULL, normalize = FALSE,
+  normalize = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
   quadratic_roots = FALSE) {
 
@@ -143,8 +154,10 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     t_i <- rep(0L, nrow(data))
   }
 
+  contains_offset <- any(grepl("^offset$",
+    gsub(" ", "", unlist(strsplit(as.character(formula), "\\+")))))
   X_ij <- model.matrix(formula, data)
-  if (!is.null(offset)) X_ij <- cbind(offset, X_ij)
+  offset_pos <- grep("^offset$", X_ij)
   mf   <- model.frame(formula, data)
   y_i  <- model.response(mf, "numeric")
 
@@ -182,6 +195,7 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     proj_lat   = 0,
     do_predict = 0L,
     calc_se    = 0L,
+    weights_i  = if (!is.null(weights)) weights else rep(1, length(y_i)),
     normalize_in_r = as.integer(normalize),
     calc_time_totals = 0L,
     random_walk = !is.null(time_varying),
@@ -220,7 +234,7 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     omega_s_trend    = rep(0, n_s),
     epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t)
   )
-  if (!is.null(offset)) tmb_params$b_j[1] <- 1
+  if (contains_offset) tmb_params$b_j[offset_pos] <- 1
 
   # Mapping off params as needed:
   tmb_map <- list()
@@ -237,9 +251,9 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
       ln_tau_E   = as.factor(NA),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
-  if (!is.null(offset)) { # fix first (offset) param to 1 to be an offset:
+  if (contains_offset) { # fix offset param to 1 to be an offset:
     b_j_map <- seq_along(tmb_params$b_j)
-    b_j_map[1] <- NA
+    b_j_map[offset_pos] <- NA
     tmb_map <- c(tmb_map, list(b_j = as.factor(b_j_map)))
   }
 
@@ -265,10 +279,10 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
       gradient = tmb_obj1$gr, control = control)
 
     # Set starting values based on phase 1:
-    if (is.null(offset))
+    if (isFALSE(contains_offset))
       tmb_params$b_j <- set_par_value(tmb_opt1, "b_j")
     else
-      tmb_params$b_j[-1] <- set_par_value(tmb_opt1, "b_j")
+      tmb_params$b_j[-offset_pos] <- set_par_value(tmb_opt1, "b_j")
     if (family$family == "tweedie")
       tmb_params$thetaf <- set_par_value(tmb_opt1, "thetaf")
     if (!family$family %in% c("binomial", "poisson"))  # no dispersion param

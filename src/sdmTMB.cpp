@@ -131,6 +131,8 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(t_i);      // numeric year vector -- only for spatial_trend==1
   DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
+  DATA_VECTOR(weights_i); // optional weights
+
   DATA_INTEGER(n_t);  // number of years
 
   DATA_SPARSE_MATRIX(A); // INLA 'A' projection matrix for original data
@@ -352,37 +354,37 @@ Type objective_function<Type>::operator()()
     if (!isNA(y_i(i))) {
       switch (family) {
         case gaussian_family:
-          nll_data -= dnorm(y_i(i), mu_i(i), exp(ln_phi), true);
+          nll_data -= dnorm(y_i(i), mu_i(i), exp(ln_phi), true) * weights_i(i);
           break;
         case tweedie_family:
           s1 = invlogit(thetaf) + Type(1.0);
-          nll_data -= dtweedie(y_i(i), mu_i(i), exp(ln_phi), s1, true);
+          nll_data -= dtweedie(y_i(i), mu_i(i), exp(ln_phi), s1, true) * weights_i(i);
           break;
         case binomial_family:  // in logit space not inverse logit
-          nll_data -= dbinom_robust(y_i(i), Type(1.0) /*size*/, mu_i(i), true);
+          nll_data -= dbinom_robust(y_i(i), Type(1.0) /*size*/, mu_i(i), true) * weights_i(i);
           break;
         case poisson_family:
-          nll_data -= dpois(y_i(i), mu_i(i), true);
+          nll_data -= dpois(y_i(i), mu_i(i), true) * weights_i(i);
           break;
         case Gamma_family:
           s1 = Type(1) / (pow(exp(ln_phi), Type(2)));  // s1=shape,ln_phi=CV,shape=1/CV^2
-          nll_data -= dgamma(y_i(i), s1, mu_i(i) / s1, true);
+          nll_data -= dgamma(y_i(i), s1, mu_i(i) / s1, true) * weights_i(i);
           break;
         case nbinom2_family:
           s1 = log(mu_i(i)); // log(mu_i)
           s2 = 2. * s1 - ln_phi; // log(var - mu)
-          nll_data -= dnbinom_robust(y_i(i), s1, s2, true);
+          nll_data -= dnbinom_robust(y_i(i), s1, s2, true) * weights_i(i);
           break;
         case lognormal_family:
-          nll_data -= dlnorm(y_i(i), mu_i(i) - pow(exp(ln_phi), Type(2)) / Type(2), exp(ln_phi), true);
+          nll_data -= dlnorm(y_i(i), mu_i(i) - pow(exp(ln_phi), Type(2)) / Type(2), exp(ln_phi), true) * weights_i(i);
           break;
         case student_family:
-          nll_data -= dstudent(y_i(i), mu_i(i), exp(ln_phi), Type(3) /*df*/, true);
+          nll_data -= dstudent(y_i(i), mu_i(i), exp(ln_phi), Type(3) /*df*/, true) * weights_i(i);
           break;
         case Beta_family: // Ferrari and Cribari-Neto 2004; betareg package
           s1 = mu_i(i) * exp(ln_phi);
           s2 = (Type(1) - mu_i(i)) * exp(ln_phi);
-          nll_data -= dbeta(y_i(i), s1, s2, true);
+          nll_data -= dbeta(y_i(i), s1, s2, true) * weights_i(i);
           break;
         default:
           error("Family not implemented.");
