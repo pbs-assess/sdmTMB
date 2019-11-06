@@ -197,6 +197,7 @@ sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "i
     do_predict = 0L,
     calc_se    = 0L,
     weights_i  = if (!is.null(weights)) weights else rep(1, length(y_i)),
+    area_i     = rep(1, length(y_i)),
     normalize_in_r = as.integer(normalize),
     calc_time_totals = 0L,
     random_walk = !is.null(time_varying),

@@ -5,7 +5,7 @@
 \title{Predict from an sdmTMB model}
 \usage{
 \method{predict}{sdmTMB}(object, newdata = NULL, se_fit = FALSE,
-  xy_cols = c("X", "Y"), return_tmb_object = FALSE, ...)
+  xy_cols = c("X", "Y"), return_tmb_object = FALSE, area = 1, ...)
 }
 \arguments{
 \item{object}{An object from \code{\link[=sdmTMB]{sdmTMB()}}.}
@@ -22,8 +22,12 @@ large data sets or high-resolution projections.}
 \item{xy_cols}{A character vector of length 2 that gives the column names of
 the x and y coordinates in \code{newdata}.}
 
-\item{return_tmb_object}{Logical. If true, will include the TMB object in
+\item{return_tmb_object}{Logical. If \code{TRUE}, will include the TMB object in
 a list format output. Necessary for the \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}} functions.}
+
+\item{area}{A vector of areas for survey grid cells. Only necessary if the
+output will be past to \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}}. Should be the same length
+as the number of rows of \code{newdata}. Defaults to a sequence of 1s.}
 
 \item{...}{Not implemented.}
 }

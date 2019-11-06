@@ -152,10 +152,10 @@ Type objective_function<Type>::operator()()
   // Calculate total summed by year (e.g. biomass)?
   DATA_INTEGER(calc_time_totals);
   DATA_INTEGER(calc_quadratic_range);
+  DATA_VECTOR(area_i); // area per prediction grid cell for index standardization
 
   DATA_INTEGER(enable_priors);
   DATA_INTEGER(ar1_fields);
-  // DATA_INTEGER(separable_ar1);
   DATA_INTEGER(include_spatial);
   DATA_INTEGER(random_walk);
 
@@ -397,7 +397,6 @@ Type objective_function<Type>::operator()()
   if (do_predict) {
     vector<Type> proj_fe = proj_X_ij * b_j;
     vector<Type> proj_rw_i(proj_X_ij.rows());
-    REPORT(proj_rw_i);
     if (random_walk) {
       for (int i = 0; i < proj_X_rw_ik.rows(); i++) {
         for (int k = 0; k < proj_X_rw_ik.cols(); k++) {
@@ -406,6 +405,7 @@ Type objective_function<Type>::operator()()
         }
       }
     }
+    REPORT(proj_rw_i);
     vector<Type> proj_re_sp = proj_mesh * omega_s;
     vector<Type> proj_re_sp_st_all = RepeatVector(proj_re_sp, n_t);
     array<Type> proj_re_st_temp(proj_mesh.rows(), n_t);
@@ -461,7 +461,7 @@ Type objective_function<Type>::operator()()
       // Total biomass:
       vector<Type> total(n_t);
       for (int i = 0; i < proj_eta.size(); i++) {
-        total(proj_year(i)) += InverseLink(proj_eta(i), link);
+        total(proj_year(i)) += InverseLink(proj_eta(i), link) * area_i(i);
       }
       vector<Type> log_total = log(total);
       REPORT(log_total);

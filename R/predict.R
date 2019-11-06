@@ -16,8 +16,11 @@
 #'   large data sets or high-resolution projections.
 #' @param xy_cols A character vector of length 2 that gives the column names of
 #'   the x and y coordinates in `newdata`.
-#' @param return_tmb_object Logical. If true, will include the TMB object in
+#' @param return_tmb_object Logical. If `TRUE`, will include the TMB object in
 #'   a list format output. Necessary for the [get_index()] or [get_cog()] functions.
+#' @param area A vector of areas for survey grid cells. Only necessary if the
+#'   output will be past to [get_index()] or [get_cog()]. Should be the same length
+#'   as the number of rows of `newdata`. Defaults to a sequence of 1s.
 #' @param ... Not implemented.
 #'
 #' @return
@@ -142,7 +145,8 @@
 #' }
 
 predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
-  xy_cols = c("X", "Y"), return_tmb_object = FALSE, ...) {
+  xy_cols = c("X", "Y"), return_tmb_object = FALSE,
+  area = 1, ...) {
 
   tmb_data <- object$tmb_data
   tmb_data$do_predict <- 1L
@@ -184,6 +188,7 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     else
       proj_X_rw_ik <- matrix(0, ncol = 1, nrow = 1) # dummy
 
+    tmb_data$area_i <- if (area == 1) rep(1, nrow(proj_X_ij)) else area
     tmb_data$proj_mesh <- proj_mesh
     tmb_data$proj_X_ij <- proj_X_ij
     tmb_data$proj_X_rw_ik <- proj_X_rw_ik
@@ -252,7 +257,7 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
   }
 
   if (return_tmb_object)
-    return(list(data = nd, report = r, obj = obj))
+    return(list(data = nd, report = r, obj = obj, fit_obj = object))
   else
     return(nd)
 }
