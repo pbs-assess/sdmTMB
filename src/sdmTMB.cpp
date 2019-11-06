@@ -380,7 +380,7 @@ Type objective_function<Type>::operator()()
 
   if (do_predict) {
     vector<Type> proj_fe = proj_X_ij * b_j;
-    vector<Type> proj_rw_i()proj_X_ij.rows());
+    vector<Type> proj_rw_i(proj_X_ij.rows());
     REPORT(proj_rw_i);
     if (random_walk) {
       for (int i = 0; i < proj_X_rw_ik.rows(); i++) {
