@@ -381,7 +381,6 @@ Type objective_function<Type>::operator()()
   if (do_predict) {
     vector<Type> proj_fe = proj_X_ij * b_j;
     vector<Type> proj_rw_i(proj_X_ij.rows());
-    REPORT(proj_rw_i);
     if (random_walk) {
       for (int i = 0; i < proj_X_rw_ik.rows(); i++) {
         for (int k = 0; k < proj_X_rw_ik.cols(); k++) {
@@ -436,6 +435,7 @@ Type objective_function<Type>::operator()()
     REPORT(proj_re_sp_trend);   // spatial trend projections (slope * time)
     REPORT(proj_eta);           // combined projections (in link space)
     REPORT(proj_rf);            // combined random field projections
+    REPORT(proj_rw_i);          // random walk projections
 
     if (calc_se) ADREPORT(proj_eta);
 
