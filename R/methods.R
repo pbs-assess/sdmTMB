@@ -51,7 +51,7 @@ print.sdmTMB <- function(x, ...) {
   }
 
   pre <- "Spatiotemporal SD (sigma_E): "
-  if (!is.null(r$sigma_E)) {
+  if (x$tmb_data$spatial_only == 0) {
     sigma_E <- paste0(pre, mround(r$sigma_E, 2L), "\n")
   } else {
     sigma_E <- paste0(pre, "not estimated\n")
