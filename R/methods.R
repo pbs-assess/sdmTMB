@@ -104,3 +104,41 @@ summary.sdmTMB <- function(object, ..., digits) {
 mround <- function(x, digits) {
   sprintf(paste0("%.", digits, "f"), round(x, digits))
 }
+
+# Extract the number of observations of a sdmTMB model
+#' @param object The fitted sdmTMB model object
+#' @importFrom stats nobs
+#' @export
+nobs.sdmTMB <- function(object, ...) sum(!is.na(object$data[all.vars(object$formula)[1]]))
+
+# Extract the log likelihood of a sdmTMB model
+#' @param object The fitted sdmTMB model object
+#' @importFrom stats logLik
+#' @export
+logLik.sdmTMB <- function(object, ...) {
+  val <- -object$model$objective
+
+  nobs <- nobs.sdmTMB(object)
+  df <- length(which(object$tmb_params$b_j != 0)) +
+    length(which(object$tmb_params$b_j != 0)) +
+    length(which(object$tmb_params$ln_tau_O != 0)) +
+    length(which(object$tmb_params$ln_tau_O_trend != 0)) +
+    length(which(object$tmb_params$ln_tau_E != 0)) +
+    length(which(object$tmb_params$ln_kappa != 0)) +
+    length(which(object$tmb_params$thetaf != 0)) +
+    length(which(object$tmb_params$ln_phi != 0)) +
+    length(which(object$tmb_params$ln_tau_V != 0)) +
+    length(which(object$tmb_params$ar1_phi != 0))
+  structure(val, nobs = nobs, nall = nobs, df = df,
+            class = "logLik")
+}
+
+# Extract the AIC of a sdmTMB model. Similar to structure of glmmTMB, without 'scale'
+#' @param fit The fitted sdmTMB model
+#' @param k penalization parameter, defaults to 2
+#' @export
+extractAIC.sdmTMB <- function(fit, k = 2, ...) {
+  L <- logLik(fit)
+  edf <- attr(L,"df")
+  return(c(edf,c(-2*L + k*edf)))
+}
