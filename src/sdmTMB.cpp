@@ -471,8 +471,8 @@ Type objective_function<Type>::operator()()
       vector<Type> cog_x(n_t);
       vector<Type> cog_y(n_t);
       for (int i = 0; i < proj_eta.size(); i++) {
-        cog_x(proj_year(i)) += proj_lon(i) * InverseLink(proj_eta(i), link);
-        cog_y(proj_year(i)) += proj_lat(i) * InverseLink(proj_eta(i), link);
+        cog_x(proj_year(i)) += proj_lon(i) * InverseLink(proj_eta(i), link) * area_i(i);
+        cog_y(proj_year(i)) += proj_lat(i) * InverseLink(proj_eta(i), link) * area_i(i);
       }
       for (int i = 0; i < n_t; i++) {
         cog_x(i) = cog_x(i) / total(i);
