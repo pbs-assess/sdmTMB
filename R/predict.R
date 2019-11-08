@@ -19,11 +19,12 @@
 #' @param return_tmb_object Logical. If `TRUE`, will include the TMB object in
 #'   a list format output. Necessary for the [get_index()] or [get_cog()] functions.
 #' @param area A vector of areas for survey grid cells. Only necessary if the
-#'   output will be past to [get_index()] or [get_cog()]. Should be the same length
+#'   output will be passed to [get_index()] or [get_cog()]. Should be the same length
 #'   as the number of rows of `newdata`. Defaults to a sequence of 1s.
 #' @param ... Not implemented.
 #'
 #' @return
+#' If `return_tmb_object = FALSE`:
 #' A data frame:
 #' * `est`: Estimate in link space (everything is in link space)
 #' * `est_non_rf`: Estimate from everything that isn't a random field
@@ -33,11 +34,21 @@
 #' * `epsilon_st`: Spatiotemporal (intercept) random fields (could be
 #'    independent draws each year or AR1)
 #'
+#' If `return_tmb_object = TRUE`:
+#' A list:
+#' * `data`: The data frame described above
+#' * `report`: The TMB report on parameter values
+#' * `obj`: The TMB object returned from the prediction run.
+#' * `fit_obj`: The original TMB model object.
+#'
+#' You likely only need the `data` element as an end user. The other elements
+#' are included for other functions.
+#'
 #' @export
 #'
 #' @examples
 #' # We'll only use a small number of knots so this example runs quickly
-#' # but you will likely want to use many more (depending on your data).
+#' # but you will likely want to use many more in applied situations.
 #'
 #' library(ggplot2)
 #' d <- pcod

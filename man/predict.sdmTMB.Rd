@@ -26,12 +26,13 @@ the x and y coordinates in \code{newdata}.}
 a list format output. Necessary for the \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}} functions.}
 
 \item{area}{A vector of areas for survey grid cells. Only necessary if the
-output will be past to \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}}. Should be the same length
+output will be passed to \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}}. Should be the same length
 as the number of rows of \code{newdata}. Defaults to a sequence of 1s.}
 
 \item{...}{Not implemented.}
 }
 \value{
+If \code{return_tmb_object = FALSE}:
 A data frame:
 \itemize{
 \item \code{est}: Estimate in link space (everything is in link space)
@@ -42,13 +43,25 @@ A data frame:
 \item \code{epsilon_st}: Spatiotemporal (intercept) random fields (could be
 independent draws each year or AR1)
 }
+
+If \code{return_tmb_object = TRUE}:
+A list:
+\itemize{
+\item \code{data}: The data frame described above
+\item \code{report}: The TMB report on parameter values
+\item \code{obj}: The TMB object returned from the prediction run.
+\item \code{fit_obj}: The original TMB model object.
+}
+
+You likely only need the \code{data} element as an end user. The other elements
+are included for other functions.
 }
 \description{
 Can predict on the original data locations or on new data.
 }
 \examples{
 # We'll only use a small number of knots so this example runs quickly
-# but you will likely want to use many more (depending on your data).
+# but you will likely want to use many more in applied situations.
 
 library(ggplot2)
 d <- pcod
