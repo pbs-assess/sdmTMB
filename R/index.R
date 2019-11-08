@@ -1,9 +1,9 @@
 #' Extract a relative biomass/abundance index or a center of gravity
 #'
 #' @param obj Output from [predict.sdmTMB()] with `return_tmb_object = TRUE`.
-#' @param bias_correct Should bias correction be implemented in
+#' @param bias_correct Should bias correction be implemented [TMB::sdreport()]?
 #' @param level The confidence level.
-#'   [TMB::sdreport()]?
+#'
 #' @examples
 #' # Use a small number of knots for this example to make it fast:
 #' pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 50)
@@ -18,6 +18,9 @@
 #' library(ggplot2)
 #' ggplot(ind, aes(year, est)) + geom_line() +
 #'   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4)
+#'
+#' cog <- get_cog(predictions)
+#' cog
 #'
 #' @export
 get_index <- function(obj, bias_correct = FALSE, level = 0.95)  {

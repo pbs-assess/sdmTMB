@@ -12,10 +12,9 @@ get_cog(obj, bias_correct = FALSE, level = 0.95)
 \arguments{
 \item{obj}{Output from \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} with \code{return_tmb_object = TRUE}.}
 
-\item{bias_correct}{Should bias correction be implemented in}
+\item{bias_correct}{Should bias correction be implemented \code{\link[TMB:sdreport]{TMB::sdreport()}}?}
 
-\item{level}{The confidence level.
-\code{\link[TMB:sdreport]{TMB::sdreport()}}?}
+\item{level}{The confidence level.}
 }
 \description{
 Extract a relative biomass/abundance index or a center of gravity
@@ -34,5 +33,8 @@ ind <- get_index(predictions, bias_correct = FALSE) # not bias correcting for sp
 library(ggplot2)
 ggplot(ind, aes(year, est)) + geom_line() +
   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4)
+
+cog <- get_cog(predictions)
+cog
 
 }

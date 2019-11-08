@@ -105,16 +105,21 @@ mround <- function(x, digits) {
   sprintf(paste0("%.", digits, "f"), round(x, digits))
 }
 
-# Extract the number of observations of a sdmTMB model
+#' Extract the number of observations of a sdmTMB model
+#'
 #' @param object The fitted sdmTMB model object
 #' @importFrom stats nobs
 #' @export
-nobs.sdmTMB <- function(object, ...) sum(!is.na(object$data[all.vars(object$formula)[1]]))
+#' @noRd
+nobs.sdmTMB <- function(object, ...)
+  sum(!is.na(object$data[all.vars(object$formula)[1]]))
 
-# Extract the log likelihood of a sdmTMB model
+#' Extract the log likelihood of a sdmTMB model
+#'
 #' @param object The fitted sdmTMB model object
 #' @importFrom stats logLik
 #' @export
+#' @noRd
 logLik.sdmTMB <- function(object, ...) {
   val <- -object$model$objective
 
@@ -124,9 +129,12 @@ logLik.sdmTMB <- function(object, ...) {
             class = "logLik")
 }
 
-# Extract the AIC of a sdmTMB model. Similar to structure of glmmTMB, without 'scale'
+#' Extract the AIC of a sdmTMB model
+#'
+#' Similar to structure of glmmTMB, without 'scale'.
+#'
 #' @param fit The fitted sdmTMB model
-#' @param k penalization parameter, defaults to 2
+#' @param k Penalization parameter, defaults to 2
 #' @export
 extractAIC.sdmTMB <- function(fit, k = 2, ...) {
   L <- logLik(fit)
