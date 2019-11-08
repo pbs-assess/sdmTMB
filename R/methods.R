@@ -119,16 +119,7 @@ logLik.sdmTMB <- function(object, ...) {
   val <- -object$model$objective
 
   nobs <- nobs.sdmTMB(object)
-  df <- length(which(object$tmb_params$b_j != 0)) +
-    length(which(object$tmb_params$b_j != 0)) +
-    length(which(object$tmb_params$ln_tau_O != 0)) +
-    length(which(object$tmb_params$ln_tau_O_trend != 0)) +
-    length(which(object$tmb_params$ln_tau_E != 0)) +
-    length(which(object$tmb_params$ln_kappa != 0)) +
-    length(which(object$tmb_params$thetaf != 0)) +
-    length(which(object$tmb_params$ln_phi != 0)) +
-    length(which(object$tmb_params$ln_tau_V != 0)) +
-    length(which(object$tmb_params$ar1_phi != 0))
+  df <- length(m$model$par) # fixed effects only
   structure(val, nobs = nobs, nall = nobs, df = df,
             class = "logLik")
 }
