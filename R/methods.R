@@ -124,7 +124,7 @@ logLik.sdmTMB <- function(object, ...) {
   val <- -object$model$objective
 
   nobs <- nobs.sdmTMB(object)
-  df <- length(m$model$par) # fixed effects only
+  df <- length(object$model$par) # fixed effects only
   structure(val, nobs = nobs, nall = nobs, df = df,
             class = "logLik")
 }
