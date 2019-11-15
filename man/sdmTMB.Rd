@@ -88,7 +88,7 @@ will be fit if there is only one unique value in the time column or the
 \code{time} argument is left at its default value of \code{NULL}.}
 
 \item{quadratic_roots}{Logical: should quadratic roots be calculated?
-Experimental future for internal use right now.}
+Experimental feature for internal use right now.}
 
 \item{cores}{Number of parallel cores; requires OpenMP. On macOS, see
 the \code{Makevars} example at \url{https://stackoverflow.com/a/53563783}.

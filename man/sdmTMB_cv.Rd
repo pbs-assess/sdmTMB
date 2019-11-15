@@ -53,20 +53,10 @@ d <- subset(pcod, year >= 2011) # subset for example speed
 x <- sdmTMB_cv(
   formula = density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
   d, family = tweedie(link = "log"), time = "year", x = "X", y = "Y",
-  n_knots = 30, k_folds = 3
+  n_knots = 30, k_folds = 2
 )
 x$sum_loglik
 str(x$data)
 x$models[[1]]
 x$models[[2]]
-\donttest{
-# Parallel:
-library(future)
-plan(multiprocess)
-x <- sdmTMB_cv(
-  formula = density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-  d, family = tweedie(link = "log"), time = "year", x = "X", y = "Y",
-  n_knots = 30, k_folds = 4
-)
-}
 }

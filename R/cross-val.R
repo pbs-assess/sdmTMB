@@ -42,22 +42,13 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' x <- sdmTMB_cv(
 #'   formula = density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
 #'   d, family = tweedie(link = "log"), time = "year", x = "X", y = "Y",
-#'   n_knots = 30, k_folds = 3
+#'   n_knots = 30, k_folds = 2
 #' )
 #' x$sum_loglik
 #' str(x$data)
 #' x$models[[1]]
 #' x$models[[2]]
-#' \donttest{
-#' # Parallel:
-#' library(future)
-#' plan(multiprocess)
-#' x <- sdmTMB_cv(
-#'   formula = density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-#'   d, family = tweedie(link = "log"), time = "year", x = "X", y = "Y",
-#'   n_knots = 30, k_folds = 4
-#' )
-#' }
+
 sdmTMB_cv <- function(formula, data, x, y, time = NULL,
                       k_folds = 10, fold_ids = NULL, n_knots = NULL,
                       spde_function = make_spde, seed = 999, ...) {
@@ -81,7 +72,7 @@ sdmTMB_cv <- function(formula, data, x, y, time = NULL,
     data$cv_fold <- fold_ids
   }
 
-  out <- future.apply::future_lapply(seq_len(k_folds), function(k) {
+  out <- lapply(seq_len(k_folds), function(k) {
     if (k_folds > 1) {
       d_fit <- data[data[[fold_ids]] != k, , drop = FALSE]
       d_withheld <- data[data[[fold_ids]] == k, , drop = FALSE]

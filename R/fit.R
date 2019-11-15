@@ -48,7 +48,7 @@ NULL
 #'   will be fit if there is only one unique value in the time column or the
 #'   `time` argument is left at its default value of `NULL`.
 #' @param quadratic_roots Logical: should quadratic roots be calculated?
-#'   Experimental future for internal use right now.
+#'   Experimental feature for internal use right now.
 #' @param cores Number of parallel cores; requires OpenMP. On macOS, see
 #'   the `Makevars` example at <https://stackoverflow.com/a/53563783>.
 #'   You may wish to use `usethis::edit_r_makevars()`.
