@@ -4,14 +4,27 @@
 \alias{sdmTMB}
 \title{Fit a spatial or spatiotemporal GLMM with TMB}
 \usage{
-sdmTMB(data, formula, time = NULL, spde, family = gaussian(link =
-  "identity"), time_varying = NULL, weights = NULL, reml = FALSE,
-  silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
-  control = sdmTMBcontrol(), enable_priors = FALSE,
-  ar1_fields = FALSE, include_spatial = TRUE, spatial_trend = FALSE,
+sdmTMB(
+  data,
+  formula,
+  time = NULL,
+  spde,
+  family = gaussian(link = "identity"),
+  time_varying = NULL,
+  weights = NULL,
+  reml = FALSE,
+  silent = TRUE,
+  multiphase = TRUE,
+  anisotropy = FALSE,
+  control = sdmTMBcontrol(),
+  enable_priors = FALSE,
+  ar1_fields = FALSE,
+  include_spatial = TRUE,
+  spatial_trend = FALSE,
   normalize = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
-  quadratic_roots = FALSE)
+  quadratic_roots = FALSE
+)
 }
 \arguments{
 \item{data}{A data frame.}

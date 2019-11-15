@@ -4,9 +4,19 @@
 \alias{sdmTMB_cv}
 \title{Save log likelihoods of k-fold cross-validation for sdmTMB models}
 \usage{
-sdmTMB_cv(formula, data, x, y, time = NULL, k_folds = 10,
-  fold_ids = NULL, n_knots = NULL, spde_function = make_spde,
-  seed = 999, ...)
+sdmTMB_cv(
+  formula,
+  data,
+  x,
+  y,
+  time = NULL,
+  k_folds = 10,
+  fold_ids = NULL,
+  n_knots = NULL,
+  spde_function = make_spde,
+  seed = 999,
+  ...
+)
 }
 \arguments{
 \item{formula}{Model formula.}

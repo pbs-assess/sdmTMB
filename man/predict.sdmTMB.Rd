@@ -4,8 +4,15 @@
 \alias{predict.sdmTMB}
 \title{Predict from an sdmTMB model}
 \usage{
-\method{predict}{sdmTMB}(object, newdata = NULL, se_fit = FALSE,
-  xy_cols = c("X", "Y"), return_tmb_object = FALSE, area = 1, ...)
+\method{predict}{sdmTMB}(
+  object,
+  newdata = NULL,
+  se_fit = FALSE,
+  xy_cols = c("X", "Y"),
+  return_tmb_object = FALSE,
+  area = 1,
+  ...
+)
 }
 \arguments{
 \item{object}{An object from \code{\link[=sdmTMB]{sdmTMB()}}.}
@@ -161,10 +168,10 @@ plot_map(predictions, "est_se") +
 
 plot_map(predictions, "plogis(est + 2 * est_se)") +
   scale_fill_gradient2(midpoint = 0.5) +
-  ggtitle("Prediction upper 95\% CI")
+  ggtitle("Prediction upper 95% CI")
 
 plot_map(predictions, "plogis(est - 2 * est_se)") +
   scale_fill_gradient2(midpoint = 0.5) +
-  ggtitle("Prediction lower 95\% CI")
+  ggtitle("Prediction lower 95% CI")
 }
 }
