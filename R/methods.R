@@ -14,8 +14,9 @@ print.sdmTMB <- function(x, ...) {
   spatial_only <- !is.null(r$r$sigma_E) && !is.null(r$r$sigma_O_trend)
 
   fit_by <- "ML"
-  if ("reml" %in% names(x)) # for backwards compatibility
+  if ("reml" %in% names(x)) { # for backwards compatibility
     if (isTRUE(x$reml)) fit_by <- "REML" else "ML"
+  }
 
   if (isTRUE(spatial_only)) {
     title <- paste0("Spatial model fit by ", fit_by, " ['sdmTMB']\n")
@@ -65,8 +66,8 @@ print.sdmTMB <- function(x, ...) {
   }
 
   sr <- x$sd_report
-  sr_se <- summary(sr)[,"Std. Error"]
-  sr_est <- summary(sr)[,"Estimate"]
+  sr_se <- summary(sr)[, "Std. Error"]
+  sr_est <- summary(sr)[, "Estimate"]
   b_j_se <- unname(round(sr_se[grep("b_j", names(sr_se))], 2L))
   b_j <- unname(round(sr_est[grep("b_j", names(sr_est))], 2L))
 
@@ -81,7 +82,8 @@ print.sdmTMB <- function(x, ...) {
     spde,
     # data,
     family,
-    sep = "")
+    sep = ""
+  )
 
   print(mm)
 
@@ -125,8 +127,10 @@ logLik.sdmTMB <- function(object, ...) {
 
   nobs <- nobs.sdmTMB(object)
   df <- length(object$model$par) # fixed effects only
-  structure(val, nobs = nobs, nall = nobs, df = df,
-            class = "logLik")
+  structure(val,
+    nobs = nobs, nall = nobs, df = df,
+    class = "logLik"
+  )
 }
 
 #' Extract the AIC of a sdmTMB model
@@ -138,6 +142,6 @@ logLik.sdmTMB <- function(object, ...) {
 #' @export
 extractAIC.sdmTMB <- function(fit, k = 2, ...) {
   L <- logLik(fit)
-  edf <- attr(L,"df")
-  return(c(edf,c(-2*L + k*edf)))
+  edf <- attr(L, "df")
+  return(c(edf, c(-2 * L + k * edf)))
 }
