@@ -199,6 +199,12 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     else
       proj_X_rw_ik <- matrix(0, ncol = 1, nrow = 1) # dummy
 
+
+    mf   <- model.frame(object$formula, data = nd)
+    offset <- as.vector(model.offset(mf))
+    if (is.null(offset)) offset <- rep(0, nrow(nd))
+
+    tmb_data$offset_i <- offset
     tmb_data$area_i <- if (length(area) == 1L && area[[1]] == 1) rep(1, nrow(proj_X_ij)) else area
     tmb_data$proj_mesh <- proj_mesh
     tmb_data$proj_X_ij <- proj_X_ij

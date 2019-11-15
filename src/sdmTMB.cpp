@@ -1,5 +1,6 @@
 #define TMB_LIB_INIT R_init_sdmTMB
 #include <TMB.hpp>
+#include <omp.h>
 
 template <class Type>
 bool isNA(Type x)
@@ -125,6 +126,9 @@ Type objective_function<Type>::operator()()
   using namespace density;
   using namespace Eigen;
 
+  // Set max number of OpenMP threads to help us optimize faster (as in glmmTMB)
+  max_parallel_regions = omp_get_max_threads();
+
   // Vectors of real data
   DATA_VECTOR(y_i);      // response
   DATA_MATRIX(X_ij);     // model matrix
@@ -132,6 +136,7 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
   DATA_VECTOR(weights_i); // optional weights
+  DATA_VECTOR(offset_i); // optional offset
 
   DATA_INTEGER(n_t);  // number of years
 
@@ -204,29 +209,32 @@ Type objective_function<Type>::operator()()
   PARAMETER_VECTOR(omega_s_trend);    // spatial effects on trend; n_s length
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
 
+  // Joint negative log-likelihood
+  parallel_accumulator<Type> jnll(this);
+
   // ------------------ End of parameters --------------------------------------
 
   int n_i = y_i.size();   // number of observations
   int n_j = X_ij.cols();  // number of observations
 
-  Type nll_data = 0;     // likelihood of data
-  Type nll_varphi = 0;   // random walk effects
-  Type nll_omega = 0;    // spatial effects
-  Type nll_omega_trend = 0;    // spatial trend effects
-  Type nll_epsilon = 0;  // spatio-temporal effects
-  Type nll_priors = 0;   // priors
+  // Type nll_data = 0;     // likelihood of data
+  // Type nll_varphi = 0;   // random walk effects
+  // Type nll_omega = 0;    // spatial effects
+  // Type nll_omega_trend = 0;    // spatial trend effects
+  // Type nll_epsilon = 0;  // spatio-temporal effects
+  // Type nll_priors = 0;   // priors
 
   // ------------------ Priors -------------------------------------------------
 
   if (enable_priors) {
-    nll_priors -= dnorm(ln_tau_O, Type(0.0), Type(1.0), true);
-    nll_priors -= dnorm(ln_tau_E, Type(0.0), Type(1.0), true);
-    nll_priors -= dnorm(ln_kappa, Type(0.0), Type(2.0), true);
-    nll_priors -= dnorm(ln_phi, Type(0.0), Type(1.0), true);
+    jnll -= dnorm(ln_tau_O, Type(0.0), Type(1.0), true);
+    jnll -= dnorm(ln_tau_E, Type(0.0), Type(1.0), true);
+    jnll -= dnorm(ln_kappa, Type(0.0), Type(2.0), true);
+    jnll -= dnorm(ln_phi, Type(0.0), Type(1.0), true);
     for (int j = 0; j < n_j; j++)
-      nll_priors -= dnorm(b_j(j), Type(0.0), Type(5.0), true);
+      jnll -= dnorm(b_j(j), Type(0.0), Type(5.0), true);
     if (spatial_trend) {
-      nll_priors -= dnorm(ln_tau_O_trend, Type(0.0), Type(1.0), true);
+      jnll -= dnorm(ln_tau_O_trend, Type(0.0), Type(1.0), true);
     }
   }
 
@@ -279,7 +287,7 @@ Type objective_function<Type>::operator()()
     eta_rw_i(i) = Type(0);
   }
   for (int i = 0; i < n_i; i++) {
-    eta_i(i) = eta_fixed_i(i);
+    eta_i(i) = eta_fixed_i(i) + offset_i(i);
     if (random_walk)
       for (int k = 0; k < X_rw_ik.cols(); k++) {
         eta_rw_i(i) += X_rw_ik(i, k) * b_rw_t(year_i(i), k); // record it
@@ -308,7 +316,7 @@ Type objective_function<Type>::operator()()
     for (int k = 0; k < X_rw_ik.cols(); k++) {
       // flat prior on the initial value... then:
       for (int t = 1; t < n_t; t++) {
-        nll_varphi += -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
+        jnll += -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
       }
     }
   }
@@ -319,15 +327,15 @@ Type objective_function<Type>::operator()()
 
   // Spatial (intercept) random effects:
   if (include_spatial)
-    nll_omega += SCALE(GMRF(Q, s), 1.0 / exp(ln_tau_O))(omega_s);
+    jnll += SCALE(GMRF(Q, s), 1.0 / exp(ln_tau_O))(omega_s);
   // Spatial trend random effects:
   if (spatial_trend)
-    nll_omega_trend += SCALE(GMRF(Q, s), 1.0 / exp(ln_tau_O_trend))(omega_s_trend);
+    jnll += SCALE(GMRF(Q, s), 1.0 / exp(ln_tau_O_trend))(omega_s_trend);
   // Spatiotemporal random effects:
   if (!spatial_only) {
     if (!ar1_fields) {
       for (int t = 0; t < n_t; t++)
-        nll_epsilon += SCALE(GMRF(Q, s), 1. / exp(ln_tau_E))(epsilon_st.col(t));
+        jnll += SCALE(GMRF(Q, s), 1. / exp(ln_tau_E))(epsilon_st.col(t));
     } else {
       // if (!separable_ar1) {
       //   nll_epsilon += SCALE(GMRF(Q, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
@@ -336,15 +344,15 @@ Type objective_function<Type>::operator()()
       //       rho * epsilon_st.col(t - 1));
       //   }
       // } else {
-        nll_epsilon += SCALE(SEPARABLE(AR1(rho), GMRF(Q, s)), 1./exp(ln_tau_E))(epsilon_st);
+      jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q, s)), 1./exp(ln_tau_E))(epsilon_st);
       // }
     }
   }
 
   // Normalization of GMRFs during outer-optimization step in R:
   if (normalize_in_r) {
-    Type nll_gmrf = nll_epsilon + nll_omega + nll_omega_trend;
-    if (flag == 0) return(nll_gmrf);
+    // Type nll_gmrf = nll_epsilon + nll_omega + nll_omega_trend;
+    // if (flag == 0) return(jnll);
   }
 
   // ------------------ Probability of data given random effects ---------------
@@ -354,37 +362,37 @@ Type objective_function<Type>::operator()()
     if (!isNA(y_i(i))) {
       switch (family) {
         case gaussian_family:
-          nll_data -= dnorm(y_i(i), mu_i(i), exp(ln_phi), true) * weights_i(i);
+          jnll -= dnorm(y_i(i), mu_i(i), exp(ln_phi), true) * weights_i(i);
           break;
         case tweedie_family:
           s1 = invlogit(thetaf) + Type(1.0);
-          nll_data -= dtweedie(y_i(i), mu_i(i), exp(ln_phi), s1, true) * weights_i(i);
+          jnll -= dtweedie(y_i(i), mu_i(i), exp(ln_phi), s1, true) * weights_i(i);
           break;
         case binomial_family:  // in logit space not inverse logit
-          nll_data -= dbinom_robust(y_i(i), Type(1.0) /*size*/, mu_i(i), true) * weights_i(i);
+          jnll -= dbinom_robust(y_i(i), Type(1.0) /*size*/, mu_i(i), true) * weights_i(i);
           break;
         case poisson_family:
-          nll_data -= dpois(y_i(i), mu_i(i), true) * weights_i(i);
+          jnll -= dpois(y_i(i), mu_i(i), true) * weights_i(i);
           break;
         case Gamma_family:
           s1 = Type(1) / (pow(exp(ln_phi), Type(2)));  // s1=shape,ln_phi=CV,shape=1/CV^2
-          nll_data -= dgamma(y_i(i), s1, mu_i(i) / s1, true) * weights_i(i);
+          jnll -= dgamma(y_i(i), s1, mu_i(i) / s1, true) * weights_i(i);
           break;
         case nbinom2_family:
           s1 = log(mu_i(i)); // log(mu_i)
           s2 = 2. * s1 - ln_phi; // log(var - mu)
-          nll_data -= dnbinom_robust(y_i(i), s1, s2, true) * weights_i(i);
+          jnll -= dnbinom_robust(y_i(i), s1, s2, true) * weights_i(i);
           break;
         case lognormal_family:
-          nll_data -= dlnorm(y_i(i), mu_i(i) - pow(exp(ln_phi), Type(2)) / Type(2), exp(ln_phi), true) * weights_i(i);
+          jnll -= dlnorm(y_i(i), mu_i(i) - pow(exp(ln_phi), Type(2)) / Type(2), exp(ln_phi), true) * weights_i(i);
           break;
         case student_family:
-          nll_data -= dstudent(y_i(i), mu_i(i), exp(ln_phi), Type(3) /*df*/, true) * weights_i(i);
+          jnll -= dstudent(y_i(i), mu_i(i), exp(ln_phi), Type(3) /*df*/, true) * weights_i(i);
           break;
         case Beta_family: // Ferrari and Cribari-Neto 2004; betareg package
           s1 = mu_i(i) * exp(ln_phi);
           s2 = (Type(1) - mu_i(i)) * exp(ln_phi);
-          nll_data -= dbeta(y_i(i), s1, s2, true) * weights_i(i);
+          jnll -= dbeta(y_i(i), s1, s2, true) * weights_i(i);
           break;
         default:
           error("Family not implemented.");
@@ -512,6 +520,6 @@ Type objective_function<Type>::operator()()
 
   // ------------------ Joint negative log likelihood --------------------------
 
-  Type jnll = nll_data + nll_omega + nll_omega_trend + nll_varphi + nll_epsilon + nll_priors;
+  // jnll += nll_data + nll_omega + nll_omega_trend + nll_varphi + nll_epsilon + nll_priors;
   return jnll;
 }

@@ -23,17 +23,17 @@ sdmTMB(
   spatial_trend = FALSE,
   normalize = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
-  quadratic_roots = FALSE
+  quadratic_roots = FALSE,
+  cores = 1L
 )
 }
 \arguments{
 \item{data}{A data frame.}
 
-\item{formula}{Model formula. For index standardization you will want to
-include \code{0 + as.factor(year)} as the first part of the formula. For now,
-time must be called \code{year} if you want to use the index standardization
-functions. An offset can be included by including \code{offset} in the model
-formula. This can be anywhere in the formula but should be after \code{0 + as.factor(year)} if you want to use the index standardization functions.}
+\item{formula}{Model formula. An offset can be included by including
+\code{offset()} in the model formula. The offset will be included in any
+prediction. For index standardization, include \code{0 + as.factor(year)} (or
+whatever the time column is called) in the formula.}
 
 \item{time}{The time column (as character).}
 
@@ -80,7 +80,7 @@ estimated.}
 \item{normalize}{Logical: should the normalization of the random effects be
 done in R during the outer-optimization step? For some cases, especially
 with many knots, this may be faster. In others, it may be slower or suffer
-from convergence problems.}
+from convergence problems. Currently disabled!}
 
 \item{spatial_only}{Logical: should only a spatial model be fit (i.e. do not
 include spatiotemporal random effects)? By default a spatial-only model
@@ -89,6 +89,8 @@ will be fit if there is only one unique value in the time column or the
 
 \item{quadratic_roots}{Logical: should quadratic roots be calculated?
 Experimental future for internal use right now.}
+
+\item{cores}{Number of parallel cores. Requires OpenMP.}
 }
 \description{
 Fit a spatial or spatiotemporal GLMM with TMB. Particularly useful for
