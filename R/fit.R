@@ -51,11 +51,11 @@ NULL
 #'   Experimental future for internal use right now.
 #' @param cores Number of parallel cores; requires OpenMP. On macOS, see
 #'   the `Makevars` example at <https://stackoverflow.com/a/53563783>.
-#'   You may wish to use [usethis::edit_r_makevars()].
+#'   You may wish to use `usethis::edit_r_makevars()`.
 #'
 #' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
-#'   model.response terms
+#'   model.response terms model.offset
 #'
 #' @export
 #'

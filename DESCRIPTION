@@ -24,36 +24,38 @@ BugReports: https://github.com/seananderson/sdmTMB/issues
 Depends: 
     R (>= 3.2.0)
 Imports:
-    TMB (>= 1.7.13),
-    INLA,
-    stats,
-    methods,
-    graphics,
-    ggplot2,
-    Matrix,
-    grid,
     fishMod,
+    future.apply,
+    ggplot2,
+    graphics,
+    grid,
+    INLA,
+    Matrix,
+    methods,
     RandomFields,
     RANN,
-    future.apply
+    stats,
+    TMB (>= 1.7.13)
 Suggests:
-    testthat,
+    covr,
     dplyr,
-    tmbstan,
+    future,
+    glmmTMB,
     knitr,
     rmarkdown,
     ROCR,
-    covr,
-    glmmTMB,
-    future
+    testthat,
+    tmbstan
 LinkingTo: 
-    TMB,
-    RcppEigen
+    RcppEigen,
+    TMB
 VignetteBuilder: 
     knitr
-Additional_repositories: https://inla.r-inla-download.org/R/stable
+Additional_repositories: 
+    https://inla.r-inla-download.org/R/stable
 ByteCompile: true
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.0.0
+SystemRequirements: GNU make

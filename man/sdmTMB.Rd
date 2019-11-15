@@ -92,7 +92,7 @@ Experimental future for internal use right now.}
 
 \item{cores}{Number of parallel cores; requires OpenMP. On macOS, see
 the \code{Makevars} example at \url{https://stackoverflow.com/a/53563783}.
-You may wish to use \code{\link[usethis:edit_r_makevars]{usethis::edit_r_makevars()}}.}
+You may wish to use \code{usethis::edit_r_makevars()}.}
 }
 \description{
 Fit a spatial or spatiotemporal GLMM with TMB. Particularly useful for

@@ -135,10 +135,12 @@ logLik.sdmTMB <- function(object, ...) {
 
 #' Extract the AIC of a sdmTMB model
 #'
-#' Similar to structure of glmmTMB, without 'scale'.
-#'
 #' @param fit The fitted sdmTMB model
+#' @param scale The scale (note used)
 #' @param k Penalization parameter, defaults to 2
+#' @param ... Anything else
+#' @noRd
+#'
 #' @export
 extractAIC.sdmTMB <- function(fit, k = 2, ...) {
   L <- logLik(fit)
