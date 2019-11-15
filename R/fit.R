@@ -49,7 +49,9 @@ NULL
 #'   `time` argument is left at its default value of `NULL`.
 #' @param quadratic_roots Logical: should quadratic roots be calculated?
 #'   Experimental future for internal use right now.
-#' @param cores Number of parallel cores. Requires OpenMP.
+#' @param cores Number of parallel cores; requires OpenMP. On macOS, see
+#'   the `Makevars` example at <https://stackoverflow.com/a/53563783>.
+#'   You may wish to use [usethis::edit_r_makevars()].
 #'
 #' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
@@ -108,7 +110,6 @@ NULL
 #'   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
 #'
 #' # See the b_rw_t estimates; these are the time-varying (random walk) effects.
-#' # First we have the first parameter for each time step and on the second parameter.
 #' summary(m$sd_report)[1:19,]
 #'
 #' # Experimental calculation of quadratic roots:

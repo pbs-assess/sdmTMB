@@ -90,7 +90,9 @@ will be fit if there is only one unique value in the time column or the
 \item{quadratic_roots}{Logical: should quadratic roots be calculated?
 Experimental future for internal use right now.}
 
-\item{cores}{Number of parallel cores. Requires OpenMP.}
+\item{cores}{Number of parallel cores; requires OpenMP. On macOS, see
+the \code{Makevars} example at \url{https://stackoverflow.com/a/53563783}.
+You may wish to use \code{\link[usethis:edit_r_makevars]{usethis::edit_r_makevars()}}.}
 }
 \description{
 Fit a spatial or spatiotemporal GLMM with TMB. Particularly useful for
@@ -147,7 +149,6 @@ m <- sdmTMB(density ~ 0 + as.factor(year),
   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
 
 # See the b_rw_t estimates; these are the time-varying (random walk) effects.
-# First we have the first parameter for each time step and on the second parameter.
 summary(m$sd_report)[1:19,]
 
 # Experimental calculation of quadratic roots:
