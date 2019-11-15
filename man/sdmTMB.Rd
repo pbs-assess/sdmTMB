@@ -5,8 +5,8 @@
 \title{Fit a spatial or spatiotemporal GLMM with TMB}
 \usage{
 sdmTMB(
-  data,
   formula,
+  data,
   time = NULL,
   spde,
   family = gaussian(link = "identity"),
@@ -28,12 +28,12 @@ sdmTMB(
 )
 }
 \arguments{
-\item{data}{A data frame.}
-
 \item{formula}{Model formula. An offset can be included by including
 \code{offset()} in the model formula. The offset will be included in any
 prediction. For index standardization, include \code{0 + as.factor(year)} (or
 whatever the time column is called) in the formula.}
+
+\item{data}{A data frame.}
 
 \item{time}{The time column (as character).}
 

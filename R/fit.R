@@ -127,7 +127,7 @@ NULL
 #' abline(h = y[which(y == max(y))] * 0.05)
 #' abline(v = params[1:2, 1])
 
-sdmTMB <- function(data, formula, time = NULL, spde, family = gaussian(link = "identity"),
+sdmTMB <- function(formula, data, time = NULL, spde, family = gaussian(link = "identity"),
   time_varying = NULL, weights = NULL, reml = FALSE,
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
   control = sdmTMBcontrol(), enable_priors = FALSE, ar1_fields = FALSE,

@@ -142,7 +142,7 @@ logLik.sdmTMB <- function(object, ...) {
 #' @noRd
 #'
 #' @export
-extractAIC.sdmTMB <- function(fit, k = 2, ...) {
+extractAIC.sdmTMB <- function(fit, scale, k = 2, ...) {
   L <- logLik(fit)
   edf <- attr(L, "df")
   return(c(edf, c(-2 * L + k * edf)))

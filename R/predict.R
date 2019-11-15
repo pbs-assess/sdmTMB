@@ -133,26 +133,6 @@
 #'   time = "year", spde = pcod_spde, family = binomial(link = "logit"),
 #'   silent = FALSE
 #' )
-#'
-#' # Predictions at new data locations with standard errors.
-#' # Note that this can currently be quite slow on large data sets.
-#' predictions <- predict(m2017, newdata = qcs_grid, se_fit = TRUE)
-#'
-#' plot_map(predictions, "stats::plogis(est)") +
-#'   scale_fill_gradient2(midpoint = 0.5) +
-#'   ggtitle("Predictions")
-#'
-#' plot_map(predictions, "est_se") +
-#'   scale_fill_viridis_c() +
-#'   ggtitle("Prediction standard error")
-#'
-#' plot_map(predictions, "stats::plogis(est + 2 * est_se)") +
-#'   scale_fill_gradient2(midpoint = 0.5) +
-#'   ggtitle("Prediction upper 95% CI")
-#'
-#' plot_map(predictions, "stats::plogis(est - 2 * est_se)") +
-#'   scale_fill_gradient2(midpoint = 0.5) +
-#'   ggtitle("Prediction lower 95% CI")
 #' }
 
 predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
