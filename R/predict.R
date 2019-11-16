@@ -243,6 +243,7 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     }
     nd <- object$data
     lp <- object$tmb_obj$env$last.par
+    # object$tmb_obj$fn(lp) # call once to update internal structures?
     r <- object$tmb_obj$report(lp)
 
     nd$est <- r$eta_i

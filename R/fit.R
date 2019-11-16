@@ -67,7 +67,6 @@ NULL
 #' # Tweedie:
 #' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
 #' data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
-#'
 #' m
 #'
 #' # Contents of the output object:
@@ -161,8 +160,7 @@ sdmTMB <- function(formula, data, time = NULL, spde, family = gaussian(link = "i
   } else {
     t_i <- rep(0L, nrow(data))
   }
-  contains_offset <- any(grepl("^offset$",
-    gsub(" ", "", unlist(strsplit(as.character(formula), "\\+")))))
+  contains_offset <- check_offset(formula)
   X_ij <- model.matrix(formula, data)
   offset_pos <- grep("^offset$", colnames(X_ij))
   mf   <- model.frame(formula, data)
@@ -410,4 +408,9 @@ get_convergence_diagnostics <- function(sd_report) {
 make_year_i <- function(x) {
   x <- as.integer(as.factor(x))
   x - min(x)
+}
+
+check_offset <- function(formula) {
+  any(grepl("^offset$",
+    gsub(" ", "", unlist(strsplit(as.character(formula), "\\+")))))
 }
