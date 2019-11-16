@@ -450,7 +450,7 @@ Type objective_function<Type>::operator()()
     }
 
     vector<Type> proj_eta = proj_fe + proj_re_sp_st +
-      proj_re_st_vector + proj_re_sp_trend;
+      proj_re_st_vector + proj_re_sp_trend + offset_i;
     vector<Type> proj_rf = proj_re_sp_st + proj_re_st_vector + proj_re_sp_trend;
     REPORT(proj_fe);            // fixed effect projections
     REPORT(proj_re_sp_st);      // spatial random effect projections
