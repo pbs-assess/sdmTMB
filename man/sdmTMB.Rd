@@ -29,7 +29,7 @@ sdmTMB(
 }
 \arguments{
 \item{formula}{Model formula. An offset can be included by including
-\code{offset()} in the model formula. The offset will be included in any
+\code{offset} in the model formula (reserved word). The offset will be included in any
 prediction. For index standardization, include \code{0 + as.factor(year)} (or
 whatever the time column is called) in the formula.}
 

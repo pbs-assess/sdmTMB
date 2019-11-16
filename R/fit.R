@@ -7,7 +7,7 @@ NULL
 #' species distribution models and relative abundance index standardization.
 #'
 #' @param formula Model formula. An offset can be included by including
-#'   `offset()` in the model formula. The offset will be included in any
+#'   `offset` in the model formula (reserved word). The offset will be included in any
 #'   prediction. For index standardization, include `0 + as.factor(year)` (or
 #'   whatever the time column is called) in the formula.
 #' @param data A data frame.
@@ -161,8 +161,10 @@ sdmTMB <- function(formula, data, time = NULL, spde, family = gaussian(link = "i
   } else {
     t_i <- rep(0L, nrow(data))
   }
-
+  contains_offset <- any(grepl("^offset$",
+    gsub(" ", "", unlist(strsplit(as.character(formula), "\\+")))))
   X_ij <- model.matrix(formula, data)
+  offset_pos <- grep("^offset$", colnames(X_ij))
   mf   <- model.frame(formula, data)
   y_i  <- model.response(mf, "numeric")
   offset <- as.vector(model.offset(mf))
@@ -242,6 +244,7 @@ sdmTMB <- function(formula, data, time = NULL, spde, family = gaussian(link = "i
     omega_s_trend    = rep(0, n_s),
     epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t)
   )
+  if (contains_offset) tmb_params$b_j[offset_pos] <- 1
 
   # Mapping off params as needed:
   tmb_map <- list()
@@ -257,6 +260,12 @@ sdmTMB <- function(formula, data, time = NULL, spde, family = gaussian(link = "i
     tmb_map <- c(tmb_map, list(
       ln_tau_E   = as.factor(NA),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
+
+  if (contains_offset) { # fix offset param to 1 to be an offset:
+    b_j_map <- seq_along(tmb_params$b_j)
+    b_j_map[offset_pos] <- NA
+    tmb_map <- c(tmb_map, list(b_j = as.factor(b_j_map)))
+  }
 
   if (multiphase) {
     not_phase1 <- c(tmb_map, list(
@@ -280,7 +289,11 @@ sdmTMB <- function(formula, data, time = NULL, spde, family = gaussian(link = "i
       gradient = tmb_obj1$gr, control = control)
 
     # Set starting values based on phase 1:
-    tmb_params$b_j <- set_par_value(tmb_opt1, "b_j")
+    if (isFALSE(contains_offset))
+      tmb_params$b_j <- set_par_value(tmb_opt1, "b_j")
+    else
+      tmb_params$b_j[-offset_pos] <- set_par_value(tmb_opt1, "b_j")
+
     if (family$family == "tweedie")
       tmb_params$thetaf <- set_par_value(tmb_opt1, "thetaf")
     if (!family$family %in% c("binomial", "poisson"))  # no dispersion param

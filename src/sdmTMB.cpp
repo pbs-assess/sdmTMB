@@ -135,7 +135,7 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
   DATA_VECTOR(weights_i); // optional weights
-  DATA_VECTOR(offset_i); // optional offset
+  // DATA_VECTOR(offset_i); // optional offset
 
   DATA_INTEGER(n_t);  // number of years
 
@@ -286,7 +286,7 @@ Type objective_function<Type>::operator()()
     eta_rw_i(i) = Type(0);
   }
   for (int i = 0; i < n_i; i++) {
-    eta_i(i) = eta_fixed_i(i) + offset_i(i);
+    eta_i(i) = eta_fixed_i(i); // + offset_i(i);
     if (random_walk)
       for (int k = 0; k < X_rw_ik.cols(); k++) {
         eta_rw_i(i) += X_rw_ik(i, k) * b_rw_t(year_i(i), k); // record it
@@ -450,7 +450,7 @@ Type objective_function<Type>::operator()()
     }
 
     vector<Type> proj_eta = proj_fe + proj_re_sp_st +
-      proj_re_st_vector + proj_re_sp_trend + offset_i;
+      proj_re_st_vector + proj_re_sp_trend;
     vector<Type> proj_rf = proj_re_sp_st + proj_re_st_vector + proj_re_sp_trend;
     REPORT(proj_fe);            // fixed effect projections
     REPORT(proj_re_sp_st);      // spatial random effect projections
