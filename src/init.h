@@ -17,21 +17,21 @@
   {"TMBconfig",           (DL_FUNC) &TMBconfig,           2}
 #endif
 
-#define CALLDEF(name, n)  {#name, (DL_FUNC) &name, n}
+// #define CALLDEF(name, n)  {#name, (DL_FUNC) &name, n}
 
 extern "C" {
 
-  SEXP compois_calc_var(SEXP mean, SEXP nu);
+  //SEXP compois_calc_var(SEXP mean, SEXP nu);
 
-  const static R_CallMethodDef R_CallDef[] = {
-    TMB_CALLDEFS,
-    CALLDEF(compois_calc_var, 2),
-    {NULL, NULL, 0}
-  };
+  // const static R_CallMethodDef R_CallDef[] = {
+  //   TMB_CALLDEFS,
+  //   CALLDEF(compois_calc_var, 2),
+  //   {NULL, NULL, 0}
+  // };
 
-  void R_init_sdmTMB(DllInfo *dll)
+  void R_init_glmmTMB(DllInfo *dll)
   {
-    R_registerRoutines(dll, NULL, R_CallDef, NULL, NULL);
+    R_registerRoutines(dll, NULL, NULL, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 #ifdef TMB_CCALLABLES
     TMB_CCALLABLES("sdmTMB");
