@@ -414,3 +414,4 @@ check_offset <- function(formula) {
   any(grepl("^offset$",
     gsub(" ", "", unlist(strsplit(as.character(formula), "\\+")))))
 }
+
