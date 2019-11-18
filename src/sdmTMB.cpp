@@ -1,4 +1,5 @@
 #include <TMB.hpp>
+#include "init.h"
 #include <omp.h>
 
 template <class Type>
