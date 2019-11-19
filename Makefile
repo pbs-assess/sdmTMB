@@ -1,0 +1,33 @@
+PACKAGE=sdmTMB
+VERSION := $(shell sed -n '/^Version: /s///p' DESCRIPTION)
+DATE := $(shell sed -n '/^Date: /s///p' DESCRIPTION)
+TARBALL=${PACKAGE}_${VERSION}.tar.gz
+ZIPFILE=${PACKAGE}_${VERSION}.zip
+
+# Allow e.g. "make R=R-devel install"
+R=R
+
+all:
+	make doc-update
+	make build-package
+	make install
+
+doc-update:
+	echo "roxygen2::roxygenize(\".\")" | $(R) --slave
+
+build-package:
+	$(R) CMD build --no-build-vignettes --no-manual .
+
+install:
+	$(R) CMD INSTALL --install-tests --no-docs --no-multiarch --no-demo .
+
+cran-check:
+	$(R) CMD check --as-cran $(TARBALL)
+
+install-parallel:
+	rsync -av --exclude='build' --exclude='.git' --exclude='*.tar.gz' --exclude='*.o' --exclude='*.so' --exclude='inst/*.rds' --exclude='.Rproj.user' . build
+	echo "SHLIB_OPENMP_CFLAGS=-Xpreprocessor -fopenmp" >> build/src/Makevars
+	echo "SHLIB_OPENMP_CXXFLAGS=-Xpreprocessor -fopenmp" >> build/src/Makevars
+	sed -i "" "s/Type jnll = 0;/parallel_accumulator<Type> jnll(this);/g" build/src/sdmTMB.cpp
+	$(R) CMD INSTALL --install-tests --no-docs --no-multiarch --no-demo .
+	rm -rf build
