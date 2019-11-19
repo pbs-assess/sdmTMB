@@ -1,6 +1,4 @@
 #include <TMB.hpp>
-#include "init.h"
-#include <omp.h>
 
 template <class Type>
 bool isNA(Type x)
@@ -127,7 +125,7 @@ Type objective_function<Type>::operator()()
   using namespace Eigen;
 
   // Set max number of OpenMP threads to help us optimize faster (as in glmmTMB)
-  max_parallel_regions = omp_get_max_threads();
+//  max_parallel_regions = omp_get_max_threads();
 
   // Vectors of real data
   DATA_VECTOR(y_i);      // response
@@ -211,7 +209,8 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
 
   // Joint negative log-likelihood
-  parallel_accumulator<Type> jnll(this);
+  // parallel_accumulator<Type> jnll(this);
+  Type jnll = 0;
 
   // ------------------ End of parameters --------------------------------------
 
