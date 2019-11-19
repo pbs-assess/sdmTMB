@@ -19,15 +19,23 @@ build-package:
 	$(R) CMD build --no-build-vignettes --no-manual .
 
 install:
-	$(R) CMD INSTALL --install-tests --no-docs --no-multiarch --no-demo .
+	$(R) CMD INSTALL --preclean --no-multiarch --with-keep.source .
 
 cran-check:
 	$(R) CMD check --as-cran $(TARBALL)
 
-install-parallel:
+build-parallel:
 	rsync -av --exclude='build' --exclude='.git' --exclude='*.tar.gz' --exclude='*.o' --exclude='*.so' --exclude='inst/*.rds' --exclude='.Rproj.user' . build
 	echo "SHLIB_OPENMP_CFLAGS=-Xpreprocessor -fopenmp" >> build/src/Makevars
 	echo "SHLIB_OPENMP_CXXFLAGS=-Xpreprocessor -fopenmp" >> build/src/Makevars
 	sed -i "" "s/Type jnll = 0;/parallel_accumulator<Type> jnll(this);/g" build/src/sdmTMB.cpp
+
+install-parallel:
+	make build-parallel
+	$(R) CMD INSTALL --preclean --no-multiarch --with-keep.source .
+	rm -rf build
+
+install-parallel-quick:
+	make build-parallel
 	$(R) CMD INSTALL --install-tests --no-docs --no-multiarch --no-demo .
 	rm -rf build
