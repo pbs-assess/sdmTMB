@@ -7,5 +7,5 @@
 ## linking an OpenMP-using program: on some platforms the runtime library
 ## is optional and on others that library depends on other optional libraries.
 ## > Packages which include C++ code should use SHLIB_OPENMP_CXXFLAGS in PKG_LIBS
-## PKG_CXXFLAGS += $(SHLIB_OPENMP_CXXFLAGS)
-## PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS)
+PKG_CXXFLAGS += $(SHLIB_OPENMP_CXXFLAGS)
+PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS)
