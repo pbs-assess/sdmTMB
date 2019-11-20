@@ -40,7 +40,6 @@ Suggests:
     glmmTMB,
     knitr,
     rmarkdown,
-    ROCR,
     testthat
 LinkingTo: 
     RcppEigen,
