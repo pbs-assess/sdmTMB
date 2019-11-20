@@ -1,62 +1,14 @@
-language: r
-dist: xenial
+# R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
 
+language: R
 sudo: false
-r:
-  - release
 cache: packages
-
-latex: true
-r_build_args: '--no-build-vignettes --no-manual'
-r_check_args: '--ignore-vignettes --no-manual'
-
-# Compilation dependencies
-addons:
-  apt:
-    sources:
-      - llvm-toolchain-xenial-7
-    packages:
-      - libgomp1
-      - clang-5.0
-      - root-system-bin
-      - libroot-tree-dev
-      - libroot-tree-treeplayer-dev
-      - libroot-io-dev
-      - libllvm7
-      - libstdc++6
-      - libclang-common-7-dev
-      - clang-7
-
-# r_github_packages:
-#  - jimhester/covr
-
-env:
-  matrix:
-    - CXX_OLEVEL=2 CXX=clang++ CC=clang
-  global:
-    - OMP_NUM_THREADS=1
+warnings_are_errors: false
+r_github_packages:
+  - andrewzm/INLA
+r_check_args: "--as-cran --no-build-vignettes --no-manual"
 
 before_install:
-  - mkdir -p ~/.R/
-  - echo "CXX = `R CMD config CXX`" >> ~/.R/Makevars
-  - echo "SHLIB_OPENMP_CXXFLAGS= -fopenmp" >> ~/.R/Makevars
-  - echo "CXXFLAGS= -fopenmp `R CMD config CXXFLAGS` -pedantic -g0" >> ~/.R/Makevars
-  - export CLANG_EXTRA_ARG=""
-  - if [[ $CXX = "clang++" ]] ;  then export CLANG_EXTRA_ARG=" -fopenmp -Qunused-arguments -fcolor-diagnostics" ; fi
-  - sed -i.bak "s/ g++/ ${CXX} ${CLANG_EXTRA_ARG} ${SHLIB_OPENMP_CXXFLAGS}/" ~/.R/Makevars
-  - sed -i.bak "s/O[0-3]/O$CXX_OLEVEL/" ~/.R/Makevars
-  - tlmgr install chicago
-# Link to OpenMP library for clang (https://github.com/jobovy/extreme-deconvolution/blob/master/.travis.yml)
-  - export LD_LIBRARY_PATH=$(if [[ $CC == "clang" ]]; then echo -n '/usr/local/clang/lib'; fi)
-
-script:
-  - R CMD build .
-  - R CMD check sdmTMB*tar.gz
-
-# after_script:
-#  - tar -ztvf sdmTMB*.tar.gz
-#  - echo ${NOT_CRAN}
-
-# after_success:
-#  - tar -C .. -xf $PKG_TARBALL
-##  - travis_wait 40 Rscript -e 'covr::coveralls()'
+  - mkdir -p ~/.R
+  - echo "CXX14FLAGS=-O3 -mtune=native -march=native -Wno-unused-variable -Wno-unused-function  -Wno-macro-redefined" >> ~/.R/Makevars
+  - echo "CXX14=g++ -std=c++1y -fPIC" >> ~/.R/Makevars
