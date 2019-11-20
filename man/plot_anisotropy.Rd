@@ -4,12 +4,10 @@
 \alias{plot_anisotropy}
 \title{Plot anisotropy}
 \usage{
-plot_anisotropy(object, arrow_length = 10)
+plot_anisotropy(object)
 }
 \arguments{
 \item{object}{An object from \code{\link[=sdmTMB]{sdmTMB()}}.}
-
-\item{arrow_length}{Arrow head length.}
 }
 \description{
 Plot anisotropy

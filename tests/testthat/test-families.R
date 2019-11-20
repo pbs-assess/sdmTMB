@@ -41,7 +41,7 @@ test_that("Student and lognormal families fit", {
   s <- sim(
     initial_betas = initial_betas, time = 1L,
     phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E,
-    seed = 1, plot = TRUE
+    seed = 1
   )
   spde <- make_spde(s$x, s$y, n_knots = 50)
   m <- sdmTMB(data = s, formula = observed ~ 1, spde = spde,

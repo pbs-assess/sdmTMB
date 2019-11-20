@@ -64,7 +64,6 @@ sim_args_vec <- function(x = stats::runif(400, 0, 10), y = stats::runif(400, 0, 
 simdat <- sim_args_vec(
   x = grid$X, y = grid$Y,
   time_steps = 9,
-  plot = TRUE,
   ar1_fields = TRUE,
   ar1_phi = 0.5,
   sigma_O = 0.3,

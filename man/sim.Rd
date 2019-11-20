@@ -18,7 +18,6 @@ sim(
   kappa = 0.01,
   phi = 0.01,
   seed = sample.int(1e+06, 1),
-  plot = FALSE,
   list = FALSE
 )
 }
@@ -52,8 +51,6 @@ parameters. Set to 0 for parameters that should not vary through time.}
 
 \item{seed}{A random seed.}
 
-\item{plot}{Logical for whether or not to produce a plot.}
-
 \item{list}{Logical for whether output is in list format:
 data in list element 1 and input values in element 2.}
 }
@@ -72,7 +69,7 @@ Simulate from a spatial Matern Random Field
 }
 \examples{
 set.seed(2957278)
-dat <- sim(time_steps = 9, plot = TRUE)
+dat <- sim(time_steps = 9)
 spde <- make_spde(x = dat$x, y = dat$y, n_knots = 50)
 plot_spde(spde)
 m <- sdmTMB(
@@ -88,7 +85,7 @@ head(summary(s))
 set.seed(1838)
 dat <- sim(
   time_steps = 9, ar1_fields = TRUE, ar1_phi = 0.5,
-  plot = TRUE, sigma_O = 0.01, sigma_E = 0.3, phi = 0.01
+  sigma_O = 0.01, sigma_E = 0.3, phi = 0.01
 )
 spde <- make_spde(x = dat$x, y = dat$y, n_knots = 80)
 m <- sdmTMB(

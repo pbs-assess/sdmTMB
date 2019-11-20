@@ -49,7 +49,7 @@ set.seed(183228)
 # simulate data
 dat <- sim(
   time_steps = 9, ar1_fields = TRUE, ar1_phi = 0.5,
-  plot = TRUE, sigma_O = 0.001, sigma_E = 0.3, phi = 0.05
+  sigma_O = 0.001, sigma_E = 0.3, phi = 0.05
 )
 
 
@@ -99,7 +99,7 @@ plot_map(predictions, "est_re_st") +
 set.seed(1838)
 dat <- sim(
   time_steps = 9, ar1_fields = TRUE, ar1_phi = 0.5,
-  plot = TRUE, sigma_O = 0.01, sigma_E = 0.3, phi = 0.01
+  sigma_O = 0.01, sigma_E = 0.3, phi = 0.01
 )
 
 # create subset to fit to

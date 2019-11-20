@@ -25,9 +25,7 @@ Depends:
     R (>= 3.2.0)
 Imports:
     fishMod,
-    ggplot2,
     graphics,
-    grid,
     INLA,
     Matrix,
     methods,
@@ -37,6 +35,7 @@ Imports:
     TMB (>= 1.7.13)
 Suggests:
     dplyr,
+    ggplot2,
     glmmTMB,
     knitr,
     rmarkdown,

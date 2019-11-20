@@ -16,7 +16,6 @@
 #' @param sigma_V Standard deviation of time-varying random walk on
 #'   parameters. Set to 0 for parameters that should not vary through time.
 #' @param seed A random seed.
-#' @param plot Logical for whether or not to produce a plot.
 #' @param list Logical for whether output is in list format:
 #'    data in list element 1 and input values in element 2.
 #'
@@ -33,7 +32,7 @@
 #'
 #' @examples
 #' set.seed(2957278)
-#' dat <- sim(time_steps = 9, plot = TRUE)
+#' dat <- sim(time_steps = 9)
 #' spde <- make_spde(x = dat$x, y = dat$y, n_knots = 50)
 #' plot_spde(spde)
 #' m <- sdmTMB(
@@ -49,7 +48,7 @@
 #' set.seed(1838)
 #' dat <- sim(
 #'   time_steps = 9, ar1_fields = TRUE, ar1_phi = 0.5,
-#'   plot = TRUE, sigma_O = 0.01, sigma_E = 0.3, phi = 0.01
+#'   sigma_O = 0.01, sigma_E = 0.3, phi = 0.01
 #' )
 #' spde <- make_spde(x = dat$x, y = dat$y, n_knots = 80)
 #' m <- sdmTMB(
@@ -64,7 +63,7 @@
 # # Time-varying effects:
 # d <- sim(x = runif(200), y = runif(200), initial_betas = c(0.2, -0.2),
 #   sigma_V = c(0.2, 0.1), time_steps = 12, phi = 0.05,
-#   plot = TRUE, sigma_O = 1e-5, sigma_E = 0.2)
+#   sigma_O = 1e-5, sigma_E = 0.2)
 # spde <- make_spde(d$x, d$y, n_knots = 65)
 # m <- sdmTMB(data = d, formula = observed ~ 0, time = "time",
 #   time_varying = ~ 0 + cov1 + cov2, silent = FALSE,
@@ -86,7 +85,6 @@ sim <- function(x = stats::runif(100, 0, 10),
                 kappa = 0.01,
                 phi = 0.01,
                 seed = sample.int(1e6, 1),
-                plot = FALSE,
                 list = FALSE) {
   if (!identical(length(x), length((y)))) {
     stop("`x` and `y` must be of the same length.")
@@ -160,14 +158,6 @@ sim <- function(x = stats::runif(100, 0, 10),
   if (n_covariates > 0) {
     d <- cbind(d, B)
     d <- cbind(d, cov_mat)
-  }
-
-  if (plot) {
-    g <- ggplot2::ggplot(d, ggplot2::aes_string("x", "y", colour = "observed")) +
-      ggplot2::geom_point() +
-      ggplot2::facet_wrap(~time) +
-      ggplot2::scale_color_gradient2()
-    print(g)
   }
 
   if (list) {

@@ -1,9 +1,7 @@
 #' Plot anisotropy
 #'
 #' @param object An object from [sdmTMB()].
-#' @param arrow_length Arrow head length.
 #'
-#' @importFrom ggplot2 ggplot aes_string geom_segment coord_equal
 #' @export
 #' @rdname plot_anisotropy
 #' @examples
@@ -16,18 +14,19 @@
 #'   include_spatial = FALSE)
 #' plot_anisotropy(m)
 #' }
-plot_anisotropy <- function(object, arrow_length = 10) {
+plot_anisotropy <- function(object) {
   stopifnot(identical(class(object), "sdmTMB"))
   report <- object$tmb_obj$report()
-  eig = eigen(report$H)
+  eig <- eigen(report$H)
   dat <- data.frame(
     x0 = c(0, 0),
     y0 = c(0, 0),
     x1 = eig$vectors[1, , drop = TRUE] * eig$values,
     y1 = eig$vectors[2, , drop = TRUE] * eig$values
   )
-  ggplot(dat, aes_string(x = "x0", y = "y0", xend = "x1", yend = "y1")) +
-    geom_segment(arrow = grid::arrow(length = grid::unit(arrow_length, "points"))) +
-    coord_equal()
+  plot(0, xlim = range(c(dat$x0, dat$x1)),
+    ylim = range(c(dat$y0, dat$y1)), type = "n", asp = 1, xlab = "", ylab = "")
+  graphics::arrows(dat$x0, dat$y0, dat$x1, dat$y1)
+  invisible(list(eig = eig, dat = dat, H = report$H))
 }
 
