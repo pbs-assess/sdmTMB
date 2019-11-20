@@ -16,7 +16,11 @@ qres_binomial <- function(object, y, mu) {
 }
 
 qres_nbinom2 <- function(object, y, mu) {
-  stop("Not finished!", call. = FALSE)
+  phi <- exp(object$model$par[["ln_phi"]])
+  a <- stats::pnbinom(y - 1, size = phi, mu = mu)
+  b <- stats::pnbinom(y, size = phi, mu = mu)
+  u <- stats::runif(n = length(y), min = a, max = b)
+  stats::qnorm(u)
 }
 
 qres_pois <- function(object, y, mu) {

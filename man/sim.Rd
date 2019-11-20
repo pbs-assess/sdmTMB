@@ -4,11 +4,23 @@
 \alias{sim}
 \title{Simulate from a spatial Matern Random Field}
 \usage{
-sim(x = stats::runif(100, 0, 10), y = stats::runif(100, 0, 10),
-  X = NULL, initial_betas = NULL, sigma_V = 0, time_steps = 1L,
-  ar1_fields = FALSE, ar1_phi = 0.5, sigma_O = 0.01,
-  sigma_E = 0.01, kappa = 0.01, phi = 0.01,
-  seed = sample.int(1e+06, 1), plot = FALSE, list = FALSE)
+sim(
+  x = stats::runif(100, 0, 10),
+  y = stats::runif(100, 0, 10),
+  X = NULL,
+  initial_betas = NULL,
+  sigma_V = 0,
+  time_steps = 1L,
+  ar1_fields = FALSE,
+  ar1_phi = 0.5,
+  sigma_O = 0.01,
+  sigma_E = 0.01,
+  kappa = 0.01,
+  phi = 0.01,
+  seed = sample.int(1e+06, 1),
+  plot = FALSE,
+  list = FALSE
+)
 }
 \arguments{
 \item{x}{A vector of x coordinates.}
@@ -52,8 +64,8 @@ A data frame where:
 \code{eta} is the estimate based on fixed effects for each point in space and time.
 \code{real} represents the simulated process without observation error.
 \code{observed} represents the simulated process with random observation error.
-\code{b*} contain the beta values for each covariate used to simulate each time slice.
-\code{cov*} covariate residuals for each observation.
+\verb{b*} contain the beta values for each covariate used to simulate each time slice.
+\verb{cov*} covariate residuals for each observation.
 }
 \description{
 Simulate from a spatial Matern Random Field

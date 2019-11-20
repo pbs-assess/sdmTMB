@@ -4,9 +4,19 @@
 \alias{sdmTMB_cv}
 \title{Save log likelihoods of k-fold cross-validation for sdmTMB models}
 \usage{
-sdmTMB_cv(formula, data, x, y, time = NULL, k_folds = 10,
-  fold_ids = NULL, n_knots = NULL, spde_function = make_spde,
-  seed = 999, ...)
+sdmTMB_cv(
+  formula,
+  data,
+  x,
+  y,
+  time = NULL,
+  k_folds = 10,
+  fold_ids = NULL,
+  n_knots = NULL,
+  spde_function = make_spde,
+  seed = 999,
+  ...
+)
 }
 \arguments{
 \item{formula}{Model formula.}
@@ -43,20 +53,10 @@ d <- subset(pcod, year >= 2011) # subset for example speed
 x <- sdmTMB_cv(
   formula = density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
   d, family = tweedie(link = "log"), time = "year", x = "X", y = "Y",
-  n_knots = 30, k_folds = 3
+  n_knots = 30, k_folds = 2
 )
 x$sum_loglik
 str(x$data)
 x$models[[1]]
 x$models[[2]]
-\donttest{
-# Parallel:
-library(future)
-plan(multiprocess)
-x <- sdmTMB_cv(
-  formula = density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-  d, family = tweedie(link = "log"), time = "year", x = "X", y = "Y",
-  n_knots = 30, k_folds = 4
-)
-}
 }

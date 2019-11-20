@@ -4,8 +4,15 @@
 \alias{predict.sdmTMB}
 \title{Predict from an sdmTMB model}
 \usage{
-\method{predict}{sdmTMB}(object, newdata = NULL, se_fit = FALSE,
-  xy_cols = c("X", "Y"), return_tmb_object = FALSE, ...)
+\method{predict}{sdmTMB}(
+  object,
+  newdata = NULL,
+  se_fit = FALSE,
+  xy_cols = c("X", "Y"),
+  return_tmb_object = FALSE,
+  area = 1,
+  ...
+)
 }
 \arguments{
 \item{object}{An object from \code{\link[=sdmTMB]{sdmTMB()}}.}
@@ -22,12 +29,17 @@ large data sets or high-resolution projections.}
 \item{xy_cols}{A character vector of length 2 that gives the column names of
 the x and y coordinates in \code{newdata}.}
 
-\item{return_tmb_object}{Logical. If true, will include the TMB object in
+\item{return_tmb_object}{Logical. If \code{TRUE}, will include the TMB object in
 a list format output. Necessary for the \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}} functions.}
+
+\item{area}{A vector of areas for survey grid cells. Only necessary if the
+output will be passed to \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}}. Should be the same length
+as the number of rows of \code{newdata}. Defaults to a sequence of 1s.}
 
 \item{...}{Not implemented.}
 }
 \value{
+If \code{return_tmb_object = FALSE}:
 A data frame:
 \itemize{
 \item \code{est}: Estimate in link space (everything is in link space)
@@ -38,13 +50,25 @@ A data frame:
 \item \code{epsilon_st}: Spatiotemporal (intercept) random fields (could be
 independent draws each year or AR1)
 }
+
+If \code{return_tmb_object = TRUE}:
+A list:
+\itemize{
+\item \code{data}: The data frame described above
+\item \code{report}: The TMB report on parameter values
+\item \code{obj}: The TMB object returned from the prediction run.
+\item \code{fit_obj}: The original TMB model object.
+}
+
+You likely only need the \code{data} element as an end user. The other elements
+are included for other functions.
 }
 \description{
 Can predict on the original data locations or on new data.
 }
 \examples{
 # We'll only use a small number of knots so this example runs quickly
-# but you will likely want to use many more (depending on your data).
+# but you will likely want to use many more in applied situations.
 
 library(ggplot2)
 d <- pcod
@@ -129,25 +153,5 @@ m2017 <- sdmTMB(
   time = "year", spde = pcod_spde, family = binomial(link = "logit"),
   silent = FALSE
 )
-
-# Predictions at new data locations with standard errors.
-# Note that this can currently be quite slow on large data sets.
-predictions <- predict(m2017, newdata = qcs_grid, se_fit = TRUE)
-
-plot_map(predictions, "plogis(est)") +
-  scale_fill_gradient2(midpoint = 0.5) +
-  ggtitle("Predictions")
-
-plot_map(predictions, "est_se") +
-  scale_fill_viridis_c() +
-  ggtitle("Prediction standard error")
-
-plot_map(predictions, "plogis(est + 2 * est_se)") +
-  scale_fill_gradient2(midpoint = 0.5) +
-  ggtitle("Prediction upper 95\% CI")
-
-plot_map(predictions, "plogis(est - 2 * est_se)") +
-  scale_fill_gradient2(midpoint = 0.5) +
-  ggtitle("Prediction lower 95\% CI")
 }
 }

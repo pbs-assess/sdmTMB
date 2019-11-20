@@ -13,18 +13,25 @@ print.sdmTMB <- function(x, ...) {
   r <- x$tmb_obj$report()
   spatial_only <- !is.null(r$r$sigma_E) && !is.null(r$r$sigma_O_trend)
 
+  fit_by <- "ML"
+  if ("reml" %in% names(x)) { # for backwards compatibility
+    if (isTRUE(x$reml)) fit_by <- "REML" else "ML"
+  }
+
   if (isTRUE(spatial_only)) {
-    title <- "Spatial model fit by ML ['sdmTMB']\n"
+    title <- paste0("Spatial model fit by ", fit_by, " ['sdmTMB']\n")
   } else {
-    title <- "Spatiotemporal model fit by ML ['sdmTMB']\n"
+    title <- paste0("Spatiotemporal model fit by ", fit_by, " ['sdmTMB']\n")
   }
   formula <- paste0("Formula: ", deparse(x$call$formula), "\n")
   # time <- paste0("Time column: ", deparse(x$call$time), "\n")
   spde <- paste0("SPDE: ", deparse(x$call$spde), "\n")
   data <- paste0("Data: ", deparse(x$call$data), "\n")
   family <- paste0("Family: ", paste0(x$family$family, "(link = '", x$family$link, "')"), "\n")
-  criterion <- paste0("ML criterion at convergence: ", mround(x$model$objective, 3), "\n")
+  criterion <- paste0(fit_by, " criterion at convergence: ", mround(x$model$objective, 3), "\n")
+
   fe_names <- colnames(model.matrix(x$formula, x$data))
+  fe_names <- fe_names[!fe_names == "offset"]
 
   pars <- x$model$par
   b_j <- round(unname(pars[grep("b_j", names(pars))]), 2L)
@@ -45,7 +52,7 @@ print.sdmTMB <- function(x, ...) {
   }
 
   pre <- "Spatiotemporal SD (sigma_E): "
-  if (!is.null(r$sigma_E)) {
+  if (x$tmb_data$spatial_only == 0) {
     sigma_E <- paste0(pre, mround(r$sigma_E, 2L), "\n")
   } else {
     sigma_E <- paste0(pre, "not estimated\n")
@@ -59,8 +66,8 @@ print.sdmTMB <- function(x, ...) {
   }
 
   sr <- x$sd_report
-  sr_se <- summary(sr)[,"Std. Error"]
-  sr_est <- summary(sr)[,"Estimate"]
+  sr_se <- summary(sr)[, "Std. Error"]
+  sr_est <- summary(sr)[, "Estimate"]
   b_j_se <- unname(round(sr_se[grep("b_j", names(sr_se))], 2L))
   b_j <- unname(round(sr_est[grep("b_j", names(sr_est))], 2L))
 
@@ -75,7 +82,8 @@ print.sdmTMB <- function(x, ...) {
     spde,
     # data,
     family,
-    sep = "")
+    sep = ""
+  )
 
   print(mm)
 
@@ -97,4 +105,45 @@ summary.sdmTMB <- function(object, ..., digits) {
 
 mround <- function(x, digits) {
   sprintf(paste0("%.", digits, "f"), round(x, digits))
+}
+
+#' Extract the number of observations of a sdmTMB model
+#'
+#' @param object The fitted sdmTMB model object
+#' @importFrom stats nobs
+#' @export
+#' @noRd
+nobs.sdmTMB <- function(object, ...)
+  sum(!is.na(object$data[all.vars(object$formula)[1]]))
+
+#' Extract the log likelihood of a sdmTMB model
+#'
+#' @param object The fitted sdmTMB model object
+#' @importFrom stats logLik
+#' @export
+#' @noRd
+logLik.sdmTMB <- function(object, ...) {
+  val <- -object$model$objective
+
+  nobs <- nobs.sdmTMB(object)
+  df <- length(object$model$par) # fixed effects only
+  structure(val,
+    nobs = nobs, nall = nobs, df = df,
+    class = "logLik"
+  )
+}
+
+#' Extract the AIC of a sdmTMB model
+#'
+#' @param fit The fitted sdmTMB model
+#' @param scale The scale (note used)
+#' @param k Penalization parameter, defaults to 2
+#' @param ... Anything else
+#' @noRd
+#'
+#' @export
+extractAIC.sdmTMB <- function(fit, scale, k = 2, ...) {
+  L <- logLik(fit)
+  edf <- attr(L, "df")
+  return(c(edf, c(-2 * L + k * edf)))
 }

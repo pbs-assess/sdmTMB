@@ -2,20 +2,37 @@
 % Please edit documentation in R/fit.R
 \name{sdmTMB}
 \alias{sdmTMB}
-\title{Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.}
+\title{Fit a spatial or spatiotemporal GLMM with TMB}
 \usage{
-sdmTMB(data, formula, time = NULL, spde, family = gaussian(link =
-  "identity"), time_varying = NULL, silent = TRUE, multiphase = TRUE,
-  anisotropy = FALSE, control = sdmTMBcontrol(),
-  enable_priors = FALSE, ar1_fields = FALSE, include_spatial = TRUE,
-  spatial_trend = FALSE, normalize = FALSE,
-  spatial_only = identical(length(unique(data[[time]])), 1L))
+sdmTMB(
+  formula,
+  data,
+  time = NULL,
+  spde,
+  family = gaussian(link = "identity"),
+  time_varying = NULL,
+  weights = NULL,
+  reml = FALSE,
+  silent = TRUE,
+  multiphase = TRUE,
+  anisotropy = FALSE,
+  control = sdmTMBcontrol(),
+  enable_priors = FALSE,
+  ar1_fields = FALSE,
+  include_spatial = TRUE,
+  spatial_trend = FALSE,
+  normalize = FALSE,
+  spatial_only = identical(length(unique(data[[time]])), 1L),
+  quadratic_roots = FALSE
+)
 }
 \arguments{
-\item{data}{A data frame.}
+\item{formula}{Model formula. An offset can be included by including
+\code{offset} in the model formula (reserved word). The offset will be included in any
+prediction. For index standardization, include \code{0 + as.factor(year)} (or
+whatever the time column is called) in the formula.}
 
-\item{formula}{Model formula. For index standardization you will want to
-include \code{0 + as.factor(your_time_column)}.}
+\item{data}{A data frame.}
 
 \item{time}{The time column (as character).}
 
@@ -27,9 +44,16 @@ include \code{0 + as.factor(your_time_column)}.}
 \item{time_varying}{An optional formula describing covariates that should be
 modelled as a random walk through time.}
 
-\item{silent}{Silent or optimization details?}
+\item{weights}{Optional likelihood weights for the conditional model.
+Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
+to one and are not internally modified.}
 
-\item{multiphase}{Estimate the fixed and random effects in phases for speed?}
+\item{reml}{Logical: use REML estimation rather than maximum likelihood.}
+
+\item{silent}{Silent or include optimization details?}
+
+\item{multiphase}{Logical: estimate the fixed and random effects in phases?
+Usually faster and more stable.}
 
 \item{anisotropy}{Logical: allow for anisotropy?}
 
@@ -40,7 +64,8 @@ modelled as a random walk through time.}
 
 \item{ar1_fields}{Estimate the spatiotemporal random fields as an AR1
 process? Note that the parameter \code{ar1_phi} has been internally bounded
-between -1 and 1 with:  \code{2 * invlogit(ar1_phi) - 1} i.e. in R \code{ 2 * plogis(ar_phi) - 1}.}
+between \code{-1} and \code{1} with:  \code{2 * invlogit(ar1_phi) - 1} i.e. in R
+\code{2 * plogis(ar_phi) - 1}.}
 
 \item{include_spatial}{Should a separate spatial random field the estimated?
 If enabled then there will be a separate spatial field and spatiotemporal
@@ -51,18 +76,22 @@ trend? This works if hauls can be viewed as replicates of grid cell
 observations, and only when other spatiotemporal components are not
 estimated.}
 
-\item{normalize}{Logical: should the normalization of the random effects
-be done in R during the outer-optimization step? For some cases,
-especially with many knots, this may be faster. In others, it may be slower
-or suffer from convergence problems.}
+\item{normalize}{Logical: should the normalization of the random effects be
+done in R during the outer-optimization step? For some cases, especially
+with many knots, this may be faster. In others, it may be slower or suffer
+from convergence problems. Currently disabled!}
 
 \item{spatial_only}{Logical: should only a spatial model be fit (i.e. do not
 include spatiotemporal random effects)? By default a spatial-only model
 will be fit if there is only one unique value in the time column or the
 \code{time} argument is left at its default value of \code{NULL}.}
+
+\item{quadratic_roots}{Logical: should quadratic roots be calculated?
+Experimental feature for internal use right now.}
 }
 \description{
-Fit a spatiotemporal GLMM with TMB, e.g. for a species distribution model.
+Fit a spatial or spatiotemporal GLMM with TMB. Particularly useful for
+species distribution models and relative abundance index standardization.
 }
 \examples{
 d <- subset(pcod, year >= 2011) # subset for example speed
@@ -72,7 +101,6 @@ plot_spde(pcod_spde)
 # Tweedie:
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
 data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
-
 m
 
 # Contents of the output object:
@@ -108,4 +136,27 @@ m <- sdmTMB(density ~ depth_scaled, data = d,
 r <- m$tmb_obj$report()
 r$ln_tau_O_trend
 r$omega_s_trend
+
+# Time-varying effects of depth and depth squared:
+m <- sdmTMB(density ~ 0 + as.factor(year),
+  time_varying = ~ 0 + depth_scaled + depth_scaled2,
+  data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
+
+# See the b_rw_t estimates; these are the time-varying (random walk) effects.
+summary(m$sd_report)[1:19,]
+
+# Experimental calculation of quadratic roots:
+m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+  data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+  quadratic_roots = TRUE)
+.sd_report <- summary(m$sd_report)
+params <- row.names(.sd_report)
+params <- .sd_report[grep("quadratic", params), ]
+params
+b <- m$model$par[1:2]
+x <- seq(min(d$depth_scaled), max(d$depth_scaled), length.out = 300)
+y <- exp(1 + x * b[1] + x^2 * b[2])
+plot(x, y, type = "l")
+abline(h = y[which(y == max(y))] * 0.05)
+abline(v = params[1:2, 1])
 }
