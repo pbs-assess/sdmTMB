@@ -49,9 +49,6 @@ NULL
 #'   `time` argument is left at its default value of `NULL`.
 #' @param quadratic_roots Logical: should quadratic roots be calculated?
 #'   Experimental feature for internal use right now.
-#' @param cores Number of parallel cores; requires OpenMP. On macOS, see
-#'   the `Makevars` example at <https://stackoverflow.com/a/53563783>.
-#'   You may wish to use `usethis::edit_r_makevars()`.
 #'
 #' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
@@ -133,16 +130,12 @@ sdmTMB <- function(formula, data, time = NULL, spde, family = gaussian(link = "i
   include_spatial = TRUE, spatial_trend = FALSE,
   normalize = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
-  quadratic_roots = FALSE, cores = 1L) {
+  quadratic_roots = FALSE) {
 
   if (isTRUE(normalize)) {
     warning("`normalize` is currently disabled and doesn't do anything.")
     normalize <- FALSE
   }
-
-  cores <- as.integer(cores)
-  if (cores < 1L) cores <- 1L
-  TMB::openmp(cores)
 
   if (is.null(time)) {
     time <- "_sdmTMB_time"

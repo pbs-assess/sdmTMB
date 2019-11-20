@@ -141,7 +141,6 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
 
   tmb_data <- object$tmb_data
   tmb_data$do_predict <- 1L
-  TMB::openmp(1L)
 
   if (!is.null(newdata)) {
     if (any(!xy_cols %in% names(newdata)))

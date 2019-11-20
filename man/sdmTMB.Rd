@@ -23,8 +23,7 @@ sdmTMB(
   spatial_trend = FALSE,
   normalize = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
-  quadratic_roots = FALSE,
-  cores = 1L
+  quadratic_roots = FALSE
 )
 }
 \arguments{
@@ -89,10 +88,6 @@ will be fit if there is only one unique value in the time column or the
 
 \item{quadratic_roots}{Logical: should quadratic roots be calculated?
 Experimental feature for internal use right now.}
-
-\item{cores}{Number of parallel cores; requires OpenMP. On macOS, see
-the \code{Makevars} example at \url{https://stackoverflow.com/a/53563783}.
-You may wish to use \code{usethis::edit_r_makevars()}.}
 }
 \description{
 Fit a spatial or spatiotemporal GLMM with TMB. Particularly useful for
