@@ -20,7 +20,9 @@ models (SDMs).
 
 ## Installation
 
-You can install sdmTMB with:
+Assuming you have a [C++
+compiler](https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites)
+installed, you can install sdmTMB with:
 
 ``` r
 devtools::install_github("pbs-assess/sdmTMB")
