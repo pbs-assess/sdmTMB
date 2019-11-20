@@ -1,4 +1,4 @@
-#' @useDynLib sdmTMB
+#' @useDynLib sdmTMB, .registration = TRUE
 NULL
 
 #' Fit a spatial or spatiotemporal GLMM with TMB
