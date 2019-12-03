@@ -406,7 +406,6 @@ Type objective_function<Type>::operator()()
     vector<Type> proj_fe = proj_X_ij * b_j;
     vector<Type> proj_rw_i(proj_X_ij.rows());
     for (int i = 0; i < proj_X_ij.rows(); i++) {
-      proj_fe(i) = Type(0);
       proj_rw_i(i) = Type(0);
     }
     if (random_walk) {
