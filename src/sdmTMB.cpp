@@ -405,6 +405,10 @@ Type objective_function<Type>::operator()()
   if (do_predict) {
     vector<Type> proj_fe = proj_X_ij * b_j;
     vector<Type> proj_rw_i(proj_X_ij.rows());
+    for (int i = 0; i < proj_X_ij.rows(); i++) {
+      proj_fe(i) = Type(0);
+      proj_rw_i(i) = Type(0);
+    }
     if (random_walk) {
       for (int i = 0; i < proj_X_rw_ik.rows(); i++) {
         for (int k = 0; k < proj_X_rw_ik.cols(); k++) {
