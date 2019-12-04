@@ -43,8 +43,12 @@ get_cog <- function(obj, bias_correct = FALSE, level = 0.95)  {
 get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   trans = I) {
 
-  test <- suppressWarnings(tryCatch(obj$tmb_obj$report(), error = function(e) NA))
-  if (all(is.na(test))) obj <- update_model(obj)
+  test <- suppressWarnings(tryCatch(obj$obj$report(), error = function(e) NA))
+  if (all(is.na(test)))
+    stop("It looks like the model was built with an older version of sdmTMB. ",
+      "Please update the model with ",
+      "`your_model <- sdmTMB:::update_model(your_model)` ",
+      "first before running this function.", call. = FALSE)
 
   sr <- TMB::sdreport(obj$obj, bias.correct = bias_correct)
   conv <- get_convergence_diagnostics(sr)

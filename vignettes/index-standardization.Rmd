@@ -46,7 +46,7 @@ Let's fit a GLMM. Note that if we want to use this model for index standardizati
 ```{r model}
 m <- sdmTMB(
   data = pcod, 
-  formula = density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+  formula = density ~ 0 + as.factor(year),
   time = "year", spde = pcod_spde, family = tweedie(link = "log")
 )
 ```
