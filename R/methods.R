@@ -10,7 +10,12 @@
 #' @export
 #' @import methods
 print.sdmTMB <- function(x, ...) {
-  r <- x$tmb_obj$report()
+  r <- suppressWarnings(tryCatch(x$tmb_obj$report(), error = function(e) NA))
+  if (all(is.na(r))) {
+    x <- update_model(x)
+    r <- x$tmb_obj$report()
+  }
+
   spatial_only <- !is.null(r$r$sigma_E) && !is.null(r$r$sigma_O_trend)
 
   fit_by <- "ML"

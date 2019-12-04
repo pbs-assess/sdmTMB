@@ -408,3 +408,13 @@ check_offset <- function(formula) {
     gsub(" ", "", unlist(strsplit(as.character(formula), "\\+")))))
 }
 
+update_model <- function(object, silent = FALSE) {
+  object$tmb_data$weights_i <- rep(1, length(object$tmb_data$y_i))
+  object$tmb_data$calc_quadratic_range <- 0L
+  object$tmb_data$area_i <- rep(1, length(object$tmb_data$y_i))
+  object$tmb_obj <- TMB::MakeADFun(
+    data = object$tmb_data, parameters = object$tmb_params,
+    map = object$tmb_map, random = object$tmb_random, DLL = "sdmTMB", silent = silent)
+  object
+}
+

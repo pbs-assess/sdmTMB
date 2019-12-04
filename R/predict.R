@@ -139,6 +139,9 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
   xy_cols = c("X", "Y"), return_tmb_object = FALSE,
   area = 1, ...) {
 
+  test <- suppressWarnings(tryCatch(object$tmb_obj$report(), error = function(e) NA))
+  if (all(is.na(test))) object <- update_model(object)
+
   tmb_data <- object$tmb_data
   tmb_data$do_predict <- 1L
 
