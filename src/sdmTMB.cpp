@@ -73,10 +73,12 @@ vector<Type> GetQuadraticRoots(Type a, Type b, Type threshold)
   res(1) = -1. * (b + sqrt(pow(b, 2.) - 4. * c * a))/(2.*a);
 
   // calculate vertex of parabola
-  res(2) = -b / (2.*a);
+  Type xpeak = -b / (2.*a);
+  // res(2) is the hi/lowpoint of parabola evaluated at xpeak
+  res(2) = (a * (pow(xpeak, 2.)) + b * (xpeak) + c);
 
   // calculate reduction of changing from mean to +/- 1 SD
-  res(3) = (a * (pow(res(2)+1, 2.)) + b * (res(2)+1) + c) / res(2);
+  res(3) = (a * (pow(xpeak+1, 2.)) + b * (xpeak+1) + c) / res(2);
   return res;
 }
 
