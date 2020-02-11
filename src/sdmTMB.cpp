@@ -505,16 +505,21 @@ Type objective_function<Type>::operator()()
 
   if (calc_quadratic_range && b_j(1) < Type(0)) {
     vector<Type> quadratic_roots = GetQuadraticRoots(b_j(1), b_j(0), Type(0.05));
+    Type quadratic_low = quadratic_roots(0);
+    Type quadratic_hi = quadratic_roots(1);
     Type quadratic_range = quadratic_roots(1) - quadratic_roots(0);
     if (quadratic_range < 0) quadratic_range = quadratic_range * -1.;
     Type quadratic_peak = quadratic_roots(2);
     Type quadratic_reduction = quadratic_roots(3);
 
-    REPORT(quadratic_roots);
+    REPORT(quadratic_low);
+    REPORT(quadratic_hi);
     REPORT(quadratic_range);
     REPORT(quadratic_peak);
     REPORT(quadratic_reduction);
-    ADREPORT(quadratic_roots);
+
+    ADREPORT(quadratic_low);
+    ADREPORT(quadratic_hi);
     ADREPORT(quadratic_range);
     ADREPORT(quadratic_peak);
     ADREPORT(quadratic_reduction);
