@@ -48,7 +48,11 @@ NULL
 #'   will be fit if there is only one unique value in the time column or the
 #'   `time` argument is left at its default value of `NULL`.
 #' @param quadratic_roots Logical: should quadratic roots be calculated?
-#'   Experimental feature for internal use right now.
+#'   Experimental feature for internal use right now. Note: on the sdmTMB side,
+#'   the first two coefficients are used to generate the quadratic parameters. This
+#'   means that if you want to generate a quadratic profile for depth, and depth and depth^2
+#'   are part of your formula, you need to make sure these are listed first -- and that
+#'   an intercept isn't included. For example, formula = cpue ~ -1 + depth + depth2 + as.factor(year)
 #'
 #' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
