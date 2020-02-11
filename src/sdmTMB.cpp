@@ -64,13 +64,19 @@ vector<Type> RepeatVector(vector<Type> x, int times)
 template <class Type>
 vector<Type> GetQuadraticRoots(Type a, Type b, Type threshold)
 {
-  vector<Type> res(2);
+  vector<Type> res(4);
   Type c = 1.; // doesn't matter; setting to an arbitrary value
   Type crit_y = (a * pow(-b / (2. * a), 2.) + b * (-b / (2. * a)) + c) + log(threshold);
   // solve for 0 = ax2 + bx + (c - crit_y)
   c = c - crit_y;
   res(0) = -1. * (b - sqrt(pow(b, 2.) - 4. * c * a))/(2.*a);
   res(1) = -1. * (b + sqrt(pow(b, 2.) - 4. * c * a))/(2.*a);
+
+  // calculate vertex of parabola
+  res(2) = -b / (2.*a);
+
+  // calculate reduction of changing from mean to +/- 1 SD
+  res(3) = (a * (pow(res(2)+1, 2.)) + b * (res(2)+1) + c) / res(2);
   return res;
 }
 
@@ -501,10 +507,17 @@ Type objective_function<Type>::operator()()
     vector<Type> quadratic_roots = GetQuadraticRoots(b_j(1), b_j(0), Type(0.05));
     Type quadratic_range = quadratic_roots(1) - quadratic_roots(0);
     if (quadratic_range < 0) quadratic_range = quadratic_range * -1.;
+    Type quadratic_peak = quadratic_roots(2);
+    Type quadratic_reduction = quadratic_roots(3);
+
     REPORT(quadratic_roots);
     REPORT(quadratic_range);
+    REPORT(quadratic_peak);
+    REPORT(quadratic_reduction);
     ADREPORT(quadratic_roots);
     ADREPORT(quadratic_range);
+    ADREPORT(quadratic_peak);
+    ADREPORT(quadratic_reduction);
   }
 
   // ------------------ Reporting ----------------------------------------------
