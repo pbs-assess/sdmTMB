@@ -12,8 +12,8 @@
 #'  formula = density ~ 0 + as.factor(year),
 #'  time = "year", spde = pcod_spde, family = tweedie(link = "log")
 #' )
-#' predictions <- predict(m, newdata = qcs_grid, return_tmb_object = FALSE)
-#' ind <- get_index(predictions, bias_correct = FALSE) # not bias correcting for speed
+#' predictions <- predict(m, newdata = qcs_grid, return_tmb_object = TRUE)
+#' ind <- get_index(predictions)
 #'
 #' library(ggplot2)
 #' ggplot(ind, aes(year, est)) + geom_line() +
