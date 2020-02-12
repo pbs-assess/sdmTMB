@@ -6,8 +6,8 @@ NULL
 #' Fit a spatial or spatiotemporal GLMM with TMB. Particularly useful for
 #' species distribution models and relative abundance index standardization.
 #'
-#' @param formula Model formula. An offset can be included by including
-#'   `offset` in the model formula (reserved word). The offset will be included in any
+#' @param formula Model formula. An offset can be included by including `offset`
+#'   in the model formula (a reserved word). The offset will be included in any
 #'   prediction. For index standardization, include `0 + as.factor(year)` (or
 #'   whatever the time column is called) in the formula.
 #' @param data A data frame.
@@ -20,39 +20,39 @@ NULL
 #' @param weights Optional likelihood weights for the conditional model.
 #'   Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
 #'   to one and are not internally modified.
-#' @param reml Logical: use REML estimation rather than maximum likelihood.
+#' @param reml Logical: use REML estimation rather than maximum likelihood?
 #' @param silent Silent or include optimization details?
 #' @param multiphase Logical: estimate the fixed and random effects in phases?
-#'   Usually faster and more stable.
-#' @param anisotropy Logical: allow for anisotropy?
+#'   Phases are usually faster and more stable.
+#' @param anisotropy Logical: allow for anisotropy? See [plot_anisotropy()].
 #' @param control Optimization control options. See [sdmTMBcontrol()].
 #' @param enable_priors Should weakly informative priors be enabled?
-#'   (experimental and likely for use with the \pkg{tmbstan} package)
+#'   Experimental and likely for use with the \pkg{tmbstan} package. Note that
+#'   the priors are not yet sensible.
 #' @param ar1_fields Estimate the spatiotemporal random fields as an AR1
 #'   process? Note that the parameter `ar1_phi` has been internally bounded
-#'   between `-1` and `1` with:  `2 * invlogit(ar1_phi) - 1` i.e. in R
-#'   `2 * plogis(ar_phi) - 1`.
-#' @param include_spatial Should a separate spatial random field the estimated?
+#'   between `-1` and `1` with:  `2 * invlogit(ar1_phi) - 1` i.e. in R `2 *
+#'   plogis(ar_phi) - 1`.
+#' @param include_spatial Should a separate spatial random field be estimated?
 #'   If enabled then there will be a separate spatial field and spatiotemporal
 #'   fields.
 #' @param spatial_trend Should a separate spatial field be included in the
-#'   trend? This works if hauls can be viewed as replicates of grid cell
-#'   observations, and only when other spatiotemporal components are not
-#'   estimated.
+#'   trend? Requires spatiotemporal data.
 #' @param normalize Logical: should the normalization of the random effects be
 #'   done in R during the outer-optimization step? For some cases, especially
 #'   with many knots, this may be faster. In others, it may be slower or suffer
-#'   from convergence problems. Currently disabled!
+#'   from convergence problems. *Currently disabled!*
 #' @param spatial_only Logical: should only a spatial model be fit (i.e. do not
 #'   include spatiotemporal random effects)? By default a spatial-only model
 #'   will be fit if there is only one unique value in the time column or the
 #'   `time` argument is left at its default value of `NULL`.
 #' @param quadratic_roots Logical: should quadratic roots be calculated?
 #'   Experimental feature for internal use right now. Note: on the sdmTMB side,
-#'   the first two coefficients are used to generate the quadratic parameters. This
-#'   means that if you want to generate a quadratic profile for depth, and depth and depth^2
-#'   are part of your formula, you need to make sure these are listed first -- and that
-#'   an intercept isn't included. For example, formula = cpue ~ -1 + depth + depth2 + as.factor(year)
+#'   the first two coefficients are used to generate the quadratic parameters.
+#'   This means that if you want to generate a quadratic profile for depth, and
+#'   depth and depth^2 are part of your formula, you need to make sure these are
+#'   listed first and that an intercept isn't included. For example, `formula
+#'   = cpue ~ 0 + depth + depth2 + as.factor(year)`.
 #'
 #' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
@@ -127,7 +127,8 @@ NULL
 #' abline(h = y[which(y == max(y))] * 0.05)
 #' abline(v = params[1:2, 1])
 
-sdmTMB <- function(formula, data, time = NULL, spde, family = gaussian(link = "identity"),
+sdmTMB <- function(formula, data, time = NULL, spde,
+  family = gaussian(link = "identity"),
   time_varying = NULL, weights = NULL, reml = FALSE,
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
   control = sdmTMBcontrol(), enable_priors = FALSE, ar1_fields = FALSE,

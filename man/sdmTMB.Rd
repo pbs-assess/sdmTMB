@@ -27,8 +27,8 @@ sdmTMB(
 )
 }
 \arguments{
-\item{formula}{Model formula. An offset can be included by including
-\code{offset} in the model formula (reserved word). The offset will be included in any
+\item{formula}{Model formula. An offset can be included by including \code{offset}
+in the model formula (reserved word). The offset will be included in any
 prediction. For index standardization, include \code{0 + as.factor(year)} (or
 whatever the time column is called) in the formula.}
 
@@ -48,38 +48,36 @@ modelled as a random walk through time.}
 Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
 to one and are not internally modified.}
 
-\item{reml}{Logical: use REML estimation rather than maximum likelihood.}
+\item{reml}{Logical: use REML estimation rather than maximum likelihood?}
 
 \item{silent}{Silent or include optimization details?}
 
 \item{multiphase}{Logical: estimate the fixed and random effects in phases?
-Usually faster and more stable.}
+Phases are usually faster and more stable.}
 
-\item{anisotropy}{Logical: allow for anisotropy?}
+\item{anisotropy}{Logical: allow for anisotropy? See \code{\link[=plot_anisotropy]{plot_anisotropy()}}.}
 
 \item{control}{Optimization control options. See \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}.}
 
 \item{enable_priors}{Should weakly informative priors be enabled?
-(experimental and likely for use with the \pkg{tmbstan} package)}
+Experimental and likely for use with the \pkg{tmbstan} package. Note that
+the priors are not yet sensible.}
 
 \item{ar1_fields}{Estimate the spatiotemporal random fields as an AR1
 process? Note that the parameter \code{ar1_phi} has been internally bounded
-between \code{-1} and \code{1} with:  \code{2 * invlogit(ar1_phi) - 1} i.e. in R
-\code{2 * plogis(ar_phi) - 1}.}
+between \code{-1} and \code{1} with:  \code{2 * invlogit(ar1_phi) - 1} i.e. in R \code{2 * plogis(ar_phi) - 1}.}
 
-\item{include_spatial}{Should a separate spatial random field the estimated?
+\item{include_spatial}{Should a separate spatial random field be estimated?
 If enabled then there will be a separate spatial field and spatiotemporal
 fields.}
 
 \item{spatial_trend}{Should a separate spatial field be included in the
-trend? This works if hauls can be viewed as replicates of grid cell
-observations, and only when other spatiotemporal components are not
-estimated.}
+trend? Requires spatiotemporal data.}
 
 \item{normalize}{Logical: should the normalization of the random effects be
 done in R during the outer-optimization step? For some cases, especially
 with many knots, this may be faster. In others, it may be slower or suffer
-from convergence problems. Currently disabled!}
+from convergence problems. \emph{Currently disabled!}}
 
 \item{spatial_only}{Logical: should only a spatial model be fit (i.e. do not
 include spatiotemporal random effects)? By default a spatial-only model
@@ -88,10 +86,10 @@ will be fit if there is only one unique value in the time column or the
 
 \item{quadratic_roots}{Logical: should quadratic roots be calculated?
 Experimental feature for internal use right now. Note: on the sdmTMB side,
-the first two coefficients are used to generate the quadratic parameters. This
-means that if you want to generate a quadratic profile for depth, and depth and depth^2
-are part of your formula, you need to make sure these are listed first -- and that
-an intercept isn't included. For example, formula = cpue ~ -1 + depth + depth2 + as.factor(year)}
+the first two coefficients are used to generate the quadratic parameters.
+This means that if you want to generate a quadratic profile for depth, and
+depth and depth^2 are part of your formula, you need to make sure these are
+listed first and that an intercept isn't included. For example, \code{formula = cpue ~ 0 + depth + depth2 + as.factor(year)}.}
 }
 \description{
 Fit a spatial or spatiotemporal GLMM with TMB. Particularly useful for
