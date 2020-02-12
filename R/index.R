@@ -12,7 +12,7 @@
 #'  formula = density ~ 0 + as.factor(year),
 #'  time = "year", spde = pcod_spde, family = tweedie(link = "log")
 #' )
-#' predictions <- predict(m, newdata = qcs_grid, return_tmb_object = TRUE)
+#' predictions <- predict(m, newdata = qcs_grid, return_tmb_object = FALSE)
 #' ind <- get_index(predictions, bias_correct = FALSE) # not bias correcting for speed
 #'
 #' library(ggplot2)
@@ -42,7 +42,10 @@ get_cog <- function(obj, bias_correct = FALSE, level = 0.95)  {
 
 get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   trans = I) {
-
+  if (is.null(obj[["obj"]])) {
+    stop("`obj` needs to be created with ",
+      "`sdmTMB(..., return_tmb_object = TRUE).`", call. = FALSE)
+  }
   test <- suppressWarnings(tryCatch(obj$obj$report(), error = function(e) NA))
   if (all(is.na(test)))
     stop("It looks like the model was built with an older version of sdmTMB. ",
