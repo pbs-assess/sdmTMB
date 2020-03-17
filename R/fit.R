@@ -186,19 +186,19 @@ sdmTMB <- function(formula, data, time = NULL, spde,
     X_ij <- model.matrix(formula, data[,-which(names(data) == threshold_parameter)])
     mf   <- model.frame(formula, data[,-which(names(data) == threshold_parameter)])
     X_threshold = data[,which(names(data) == threshold_parameter)]
-    # add 1 because 0 will tell TMB not to estimate this
-    threshold_func = 1 + as.numeric(match(threshold_function,c("linear","logistic")))
+    # indexed 1-2 because 0 will tell TMB not to estimate this
+    threshold_func = as.numeric(match(threshold_function,c("linear","logistic")))
   }
   offset_pos <- grep("^offset$", colnames(X_ij))
   y_i  <- model.response(mf, "numeric")
   offset <- as.vector(model.offset(mf))
   if (is.null(offset)) offset <- rep(0, length(y_i))
 
-  if (!is.null(time_varying))
+  if (!is.null(time_varying)) {
     X_rw_ik <- model.matrix(time_varying, data)
-  else
+  } else {
     X_rw_ik <- matrix(0, nrow = nrow(data), ncol = 1)
-
+  }
   # Stuff needed for spatiotemporal A matrix:
   data$sdm_orig_id <- seq(1, nrow(data))
   data$sdm_x <- spde$x
@@ -251,7 +251,7 @@ sdmTMB <- function(formula, data, time = NULL, spde,
     calc_quadratic_range = as.integer(quadratic_roots),
     X_threshold = X_threshold,
     proj_X_threshold = 0, # dummy
-    threshold_func = as.integer(threshold_function)
+    threshold_func = as.integer(threshold_func)
   )
   tmb_data$flag <- 1L # Include data
 
