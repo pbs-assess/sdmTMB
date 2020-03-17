@@ -98,10 +98,13 @@ Type linear_threshold(Type x, Type slope, Type cutpoint, Type scale)
 }
 
 template <class Type>
-Type logistic_threshold(Type x, Type s50, Type s95, Type scale)
+Type logistic_threshold(Type x, Type s50, Type soffset, Type scale)
 {
   // logistic threshold model. similar to length or size based selectvitiy
   // in fisheries, parameterized by the points at which f(x) = 0.5, or 0.95
+  // s50 and scale are unconstrained. s95 has to be > s50 though, so modeled as
+  // s95 =
+  Type s95 = s50 + exp(soffset);
   Type pred = scale * Type(1.0)/(Type(1.0) + exp(-log(Type(19.0)) * (x - s50) / (s95 - s50)));
 
   return pred;
