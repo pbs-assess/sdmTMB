@@ -47,8 +47,7 @@ Let's fit a GLMM. Note that if we want to use this model for index standardizati
 m <- sdmTMB(
   data = pcod, 
   formula = density ~ 0 + as.factor(year),
-  time = "year", spde = pcod_spde, family = tweedie(link = "log")
-)
+  time = "year", spde = pcod_spde, family = tweedie(link = "log"))
 ```
 
 We can inspect randomized quantile residuals::

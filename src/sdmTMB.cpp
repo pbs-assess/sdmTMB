@@ -102,7 +102,7 @@ Type logistic_threshold(Type x, Type s50, Type s95, Type scale)
 {
   // logistic threshold model. similar to length or size based selectvitiy
   // in fisheries, parameterized by the points at which f(x) = 0.5, or 0.95
-  Type pred = scale * 1/(1 + exp(-log(19) * (x - s50) / (s95 - s50)));
+  Type pred = scale * Type(1.0)/(Type(1.0) + exp(-log(Type(19.0)) * (x - s50) / (s95 - s50)));
 
   return pred;
 }
