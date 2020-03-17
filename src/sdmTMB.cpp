@@ -86,6 +86,8 @@ template <class Type>
 Type linear_threshold(Type x, Type slope, Type cutpoint, Type scale)
 {
   // linear threshold model. relationship linear up to a point then constant
+  // keep all parameters unconstrained - slope and scale can be neg/pos,
+  // as can cutpoint if covariate is scaled ~ N(0,1)
   Type pred;
   if(x < cutpoint) {
     pred = x * slope * scale;

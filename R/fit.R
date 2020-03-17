@@ -57,7 +57,7 @@ NULL
 #'   relationship. Form can be linear or logistic, and is passed in as a character string,
 #'   e.g. "temperature" that is a name of a variable in the data frame
 #' @param threshold_function Optional name to include of the threshold function. Defaults to
-#'   "linear", in which case a linear breakpoint model is used. Other option is logistic,
+#'   "linear", in which case a linear breakpoint model is used. Other option is "logistic",
 #'   which models the relationship as a function of the 50% and 95% values
 #'
 #' @importFrom methods as is
@@ -141,7 +141,7 @@ sdmTMB <- function(formula, data, time = NULL, spde,
   include_spatial = TRUE, spatial_trend = FALSE,
   normalize = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
-  quadratic_roots = FALSE, threshold_parameter = NULL, threshold_function="logistic") {
+  quadratic_roots = FALSE, threshold_parameter = NULL, threshold_function="linear") {
 
   if (isTRUE(normalize)) {
     warning("`normalize` is currently disabled and doesn't do anything.")
