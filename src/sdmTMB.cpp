@@ -219,6 +219,9 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(spatial_only);
   DATA_INTEGER(spatial_trend);
 
+  DATA_VECTOR(X_threshold);
+  DATA_VECTOR(proj_X_threshold);
+  DATA_INTEGER(threshold_func);
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -239,6 +242,8 @@ Type objective_function<Type>::operator()()
   PARAMETER_VECTOR(omega_s);    // spatial effects; n_s length
   PARAMETER_VECTOR(omega_s_trend);    // spatial effects on trend; n_s length
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
+
+  PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3)
 
   // Joint negative log-likelihood
   Type jnll = 0;
@@ -311,6 +316,21 @@ Type objective_function<Type>::operator()()
   // ------------------ Linear predictor ---------------------------------------
 
   vector<Type> eta_fixed_i = X_ij * b_j;
+  // add threshold effect if specified
+  if(threshold_func > 0) {
+    if(threshold_func == 1) {
+      // linear
+      for (int i = 0; i < n_i; i++) {
+        eta_fixed_i(i) = eta_fixed_i(i) + linear_threshold(X_threshold(i), b_threshold(0), b_threshold(1), b_threshold(2));
+      }
+    } else {
+      // logistic
+      for (int i = 0; i < n_i; i++) {
+        eta_fixed_i(i) = eta_fixed_i(i) + logistic_threshold(X_threshold(i), b_threshold(0), b_threshold(1), b_threshold(2));
+      }
+    }
+  }
+
   vector<Type> mu_i(n_i), eta_i(n_i);
   vector<Type> eta_rw_i(n_i);
   for (int i = 0; i < n_i; i++) {
@@ -435,6 +455,21 @@ Type objective_function<Type>::operator()()
 
   if (do_predict) {
     vector<Type> proj_fe = proj_X_ij * b_j;
+    // add threshold effect if specified
+    if(threshold_func > 0) {
+      if(threshold_func == 1) {
+        // linear
+        for (int i = 0; i < proj_X_ij.rows(); i++) {
+          proj_fe(i) = proj_fe(i) + linear_threshold(proj_X_threshold(i), b_threshold(0), b_threshold(1), b_threshold(2));
+        }
+      } else {
+        // logistic
+        for (int i = 0; i < proj_X_ij.rows(); i++) {
+          proj_fe(i) = proj_fe(i) + logistic_threshold(proj_X_threshold(i), b_threshold(0), b_threshold(1), b_threshold(2));
+        }
+      }
+    }
+
     vector<Type> proj_rw_i(proj_X_ij.rows());
     for (int i = 0; i < proj_X_ij.rows(); i++) {
       proj_rw_i(i) = Type(0);
@@ -528,6 +563,10 @@ Type objective_function<Type>::operator()()
     }
   }
 
+  if(threshold_func > 0) {
+    REPORT(b_threshold);
+    //SDREPORT(b_threshold);
+  }
   if (calc_quadratic_range && b_j(1) < Type(0)) {
     vector<Type> quadratic_roots = GetQuadraticRoots(b_j(1), b_j(0), Type(0.05));
     Type quadratic_low = quadratic_roots(0);
