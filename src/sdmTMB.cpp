@@ -82,6 +82,29 @@ vector<Type> GetQuadraticRoots(Type a, Type b, Type threshold)
   return res;
 }
 
+template <class Type>
+Type linear_threshold(Type x, Type slope, Type cutpoint, Type scale)
+{
+  // linear threshold model. relationship linear up to a point then constant
+  Type pred;
+  if(x < cutpoint) {
+    pred = x * slope * scale;
+  } else {
+    pred = scale;
+  }
+  return pred;
+}
+
+template <class Type>
+Type logistic_threshold(Type x, Type s50, Type s95, Type scale)
+{
+  // logistic threshold model. similar to length or size based selectvitiy
+  // in fisheries, parameterized by the points at which f(x) = 0.5, or 0.95
+  Type pred = scale * 1/(1 + exp(-log(19) * (x - s50) / (s95 - s50)));
+
+  return pred;
+}
+
 enum valid_family {
   gaussian_family = 0,
   binomial_family = 1,
