@@ -571,7 +571,7 @@ Type objective_function<Type>::operator()()
     }
   }
 
-  //if(threshold_func == 2) {
+  if(threshold_func == 2) {
     // report s50 and s95 for logistic function model
     REPORT(s50);
     ADREPORT(s50);
@@ -579,7 +579,7 @@ Type objective_function<Type>::operator()()
     ADREPORT(s95);
     REPORT(b_threshold(2));
     ADREPORT(b_threshold(2));
-  //}
+  }
   if (calc_quadratic_range && b_j(1) < Type(0)) {
     vector<Type> quadratic_roots = GetQuadraticRoots(b_j(1), b_j(0), Type(0.05));
     Type quadratic_low = quadratic_roots(0);
