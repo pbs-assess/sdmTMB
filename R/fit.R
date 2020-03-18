@@ -212,6 +212,7 @@ sdmTMB <- function(formula, data, time = NULL, spde,
     loc = as.matrix(fake_data[, c("sdm_x", "sdm_y"), drop = FALSE]))
 
   n_s <- nrow(spde$mesh$loc)
+
   tmb_data <- list(
     y_i        = y_i,
     n_t        = length(unique(data[[time]])),
@@ -249,7 +250,7 @@ sdmTMB <- function(formula, data, time = NULL, spde,
     spatial_only = as.integer(spatial_only),
     spatial_trend = as.integer(spatial_trend),
     calc_quadratic_range = as.integer(quadratic_roots),
-    X_threshold = X_threshold,
+    X_threshold = as.numeric(unlist(X_threshold)),
     proj_X_threshold = 0, # dummy
     threshold_func = as.integer(threshold_func)
   )
@@ -268,7 +269,7 @@ sdmTMB <- function(formula, data, time = NULL, spde,
     ar1_phi    = 0,
     b_rw_t     = matrix(0, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)),
     omega_s    = rep(0, n_s),
-    omega_s_trend    = rep(0, n_s),
+    omega_s_trend = rep(0, n_s),
     epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t),
     b_threshold = rep(0,3)
   )
