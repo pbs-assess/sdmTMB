@@ -98,15 +98,14 @@ Type linear_threshold(Type x, Type slope, Type cutpoint, Type scale)
 }
 
 template <class Type>
-Type logistic_threshold(Type x, Type s50, Type soffset, Type scale)
+Type logistic_threshold(Type x, Type s50, Type s95, Type scale)
 {
   // logistic threshold model. similar to length or size based selectvitiy
   // in fisheries, parameterized by the points at which f(x) = 0.5, or 0.95
   // s50 and scale are unconstrained. s95 has to be > s50 though, so modeled as
-  // s95 =
-  Type s95 = s50 + exp(soffset);
+  // s95 = s50 + exp(b(1))
+  //Type s95 = s50 + exp(soffset); // this done outside function
   Type pred = scale * Type(1.0)/(Type(1.0) + exp(-log(Type(19.0)) * (x - s50) / (s95 - s50)));
-
   return pred;
 }
 
@@ -265,6 +264,10 @@ Type objective_function<Type>::operator()()
   // Type nll_epsilon = 0;  // spatio-temporal effects
   // Type nll_priors = 0;   // priors
 
+  // ------------------ Derived variables -------------------------------------------------
+  Type s50 = b_threshold(0); // threshold at which function is 50% of max
+  Type s95 = b_threshold(0) + exp(b_threshold(1)); // threshold at which function is 95% of max
+
   // ------------------ Priors -------------------------------------------------
 
   if (enable_priors) {
@@ -331,7 +334,7 @@ Type objective_function<Type>::operator()()
     } else {
       // logistic
       for (int i = 0; i < n_i; i++) {
-        eta_fixed_i(i) = eta_fixed_i(i) + logistic_threshold(X_threshold(i), b_threshold(0), b_threshold(1), b_threshold(2));
+        eta_fixed_i(i) = eta_fixed_i(i) + logistic_threshold(X_threshold(i), s50, s95, b_threshold(2));
       }
     }
   }
@@ -568,9 +571,14 @@ Type objective_function<Type>::operator()()
     }
   }
 
-  if(threshold_func > 0) {
-    REPORT(b_threshold);
-    //SDREPORT(b_threshold);
+  if(threshold_func == 2) {
+    // report s50 and s95 for logistic function model
+    REPORT(s50);
+    ADREPORT(s50);
+    REPORT(s95);
+    ADREPORT(s95);
+    REPORT(b_threshold(2));
+    ADREPORT(b_threshold(2));
   }
   if (calc_quadratic_range && b_j(1) < Type(0)) {
     vector<Type> quadratic_roots = GetQuadraticRoots(b_j(1), b_j(0), Type(0.05));
