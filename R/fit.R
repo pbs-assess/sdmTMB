@@ -271,7 +271,7 @@ sdmTMB <- function(formula, data, time = NULL, spde,
     omega_s    = rep(0, n_s),
     omega_s_trend = rep(0, n_s),
     epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t),
-    b_threshold = rep(0,3)
+    b_threshold = rep(0,4)
   )
   if (contains_offset) tmb_params$b_j[offset_pos] <- 1
 

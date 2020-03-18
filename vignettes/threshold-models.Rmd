@@ -45,8 +45,8 @@ We will extend the simple GLMM used in the index standardization vignette to inc
 
 This first example uses the 'depth_scaled' covariate (depth, standardized ~ N(0,1)) and the logistic function, similar to selectivity curves used in fisheries models. The form is 
 
-$$f(x)=\psi \quad *\quad { \left[ 1+{ exp }^{ -ln\left( 19 \right) \quad *\quad \left( x-s50 \right) \quad /\quad \left( s95\quad -\quad s50 \right)  } \right]  }^{ -1 }$$
-where $\psi$ is a scaling parameter (controlling the height of the y-axis for the response, and is unconstrained), $s50$ is a parameter controlling the point at which the function reaches 50% of the maximum ($\psi$), and $s95$ is a parameter controlling the point at which the function reaches 95%. The parameter $s50$ is unconsrtrained, and $s95$ is constrained to be larger than $s50$.
+$$f(x)=\tau + \psi *\quad { \left[ 1+{ exp }^{ -ln\left( 19 \right) \quad *\quad \left( x-s50 \right) \quad /\quad \left( s95\quad -\quad s50 \right)  } \right]  }^{ -1 }$$
+where $\psi$ is a scaling parameter (controlling the height of the y-axis for the response, and is unconstrained), $\tau$ is an intercept, $s50$ is a parameter controlling the point at which the function reaches 50% of the maximum ($\psi$), and $s95$ is a parameter controlling the point at which the function reaches 95%. The parameter $s50$ is unconsrtrained, and $s95$ is constrained to be larger than $s50$.
 
 ```{r model}
 m <- sdmTMB(

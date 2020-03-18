@@ -83,30 +83,30 @@ vector<Type> GetQuadraticRoots(Type a, Type b, Type threshold)
 }
 
 template <class Type>
-Type linear_threshold(Type x, Type slope, Type cutpoint, Type scale)
+Type linear_threshold(Type x, Type intcpt, Type slope, Type cutpoint, Type scale)
 {
   // linear threshold model. relationship linear up to a point then constant
   // keep all parameters unconstrained - slope and scale can be neg/pos,
   // as can cutpoint if covariate is scaled ~ N(0,1)
-  Type pred;
+  Type pred = intcpt;
 
   if(x < cutpoint) {
-    pred = x * slope;
+    pred = pred + x * slope;
   } else {
-    pred = scale;
+    pred = pred + (scale);
   }
   return pred;
 }
 
 template <class Type>
-Type logistic_threshold(Type x, Type s50, Type s95, Type scale)
+Type logistic_threshold(Type x, Type intcpt, Type s50, Type s95, Type scale)
 {
   // logistic threshold model. similar to length or size based selectvitiy
   // in fisheries, parameterized by the points at which f(x) = 0.5, or 0.95
   // s50 and scale are unconstrained. s95 has to be > s50 though, so modeled as
   // s95 = s50 + exp(b(1))
   //Type s95 = s50 + exp(soffset); // this done outside function
-  Type pred = scale * Type(1.0)/(Type(1.0) + exp(-log(Type(19.0)) * (x - s50) / (s95 - s50)));
+  Type pred = intcpt + (scale) * Type(1.0)/(Type(1.0) + exp(-log(Type(19.0)) * (x - s50) / (s95 - s50)));
   return pred;
 }
 
@@ -268,7 +268,8 @@ Type objective_function<Type>::operator()()
   // ------------------ Derived variables -------------------------------------------------
   Type s50 = b_threshold(0); // threshold at which function is 50% of max
   Type s95 = b_threshold(0) + exp(b_threshold(1)); // threshold at which function is 95% of max
-
+  Type s_intcpt = b_threshold(2);
+  Type s_max = b_threshold(3);
   // ------------------ Priors -------------------------------------------------
 
   if (enable_priors) {
@@ -330,12 +331,12 @@ Type objective_function<Type>::operator()()
     if(threshold_func == 1) {
       // linear
       for (int i = 0; i < n_i; i++) {
-        eta_fixed_i(i) = eta_fixed_i(i) + linear_threshold(X_threshold(i), b_threshold(0), b_threshold(1), b_threshold(2));
+        eta_fixed_i(i) = eta_fixed_i(i) + linear_threshold(X_threshold(i), b_threshold(0), b_threshold(1), b_threshold(2), b_threshold(3));
       }
     } else {
       // logistic
       for (int i = 0; i < n_i; i++) {
-        eta_fixed_i(i) = eta_fixed_i(i) + logistic_threshold(X_threshold(i), s50, s95, b_threshold(2));
+        eta_fixed_i(i) = eta_fixed_i(i) + logistic_threshold(X_threshold(i), s_intcpt, s50, s95, s_max);
       }
     }
   }
@@ -469,12 +470,12 @@ Type objective_function<Type>::operator()()
       if(threshold_func == 1) {
         // linear
         for (int i = 0; i < proj_X_ij.rows(); i++) {
-          proj_fe(i) = proj_fe(i) + linear_threshold(proj_X_threshold(i), b_threshold(0), b_threshold(1), b_threshold(2));
+          proj_fe(i) = proj_fe(i) + linear_threshold(proj_X_threshold(i), b_threshold(0), b_threshold(1), b_threshold(2), b_threshold(3));
         }
       } else {
         // logistic
         for (int i = 0; i < proj_X_ij.rows(); i++) {
-          proj_fe(i) = proj_fe(i) + logistic_threshold(proj_X_threshold(i), b_threshold(0), b_threshold(1), b_threshold(2));
+          proj_fe(i) = proj_fe(i) + logistic_threshold(proj_X_threshold(i), s_intcpt, s50, s95, s_max);
         }
       }
     }
@@ -572,14 +573,20 @@ Type objective_function<Type>::operator()()
     }
   }
 
+  if(threshold_func == 1) {
+    REPORT(b_threshold);
+    ADREPORT(b_threshold);
+  }
   if(threshold_func == 2) {
     // report s50 and s95 for logistic function model
     REPORT(s50);
     ADREPORT(s50);
     REPORT(s95);
     ADREPORT(s95);
-    REPORT(b_threshold(2));
-    ADREPORT(b_threshold(2));
+    REPORT(s_intcpt);
+    ADREPORT(s_intcpt);
+    REPORT(s_max);
+    ADREPORT(s_max);
   }
   if (calc_quadratic_range && b_j(1) < Type(0)) {
     vector<Type> quadratic_roots = GetQuadraticRoots(b_j(1), b_j(0), Type(0.05));
