@@ -89,8 +89,9 @@ Type linear_threshold(Type x, Type slope, Type cutpoint, Type scale)
   // keep all parameters unconstrained - slope and scale can be neg/pos,
   // as can cutpoint if covariate is scaled ~ N(0,1)
   Type pred;
+
   if(x < cutpoint) {
-    pred = x * slope * scale;
+    pred = x * slope;
   } else {
     pred = scale;
   }

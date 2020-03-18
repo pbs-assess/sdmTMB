@@ -66,3 +66,15 @@ df = data.frame("par"=names(m$sd_report$value), "value"=as.numeric(m$sd_report$v
 df
 ```
 
+Next, we can try to fit the same model but use a linear breakpoint / cutpoint model. We just have to change the 'threshold_function' parameter to 'linear'.
+
+```{r}
+m <- sdmTMB(
+  data = pcod, 
+  formula = density ~ 0 + as.factor(year),
+  time = "year", spde = pcod_spde, 
+  family = tweedie(link = "log"),
+  threshold_parameter = "depth_scaled",
+  threshold_function = "linear")
+```
+
