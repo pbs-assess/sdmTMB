@@ -256,6 +256,8 @@ sdmTMB <- function(formula, data, time = NULL, spde,
   )
   tmb_data$flag <- 1L # Include data
 
+  b_thresh = rep(0,2)
+  if(threshold_func==2) b_thresh = c(0, b_thresh)
   tmb_params <- list(
     ln_H_input = c(0, 0),
     b_j        = rep(0, ncol(X_ij)),
@@ -271,7 +273,7 @@ sdmTMB <- function(formula, data, time = NULL, spde,
     omega_s    = rep(0, n_s),
     omega_s_trend = rep(0, n_s),
     epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t),
-    b_threshold = rep(0,4)
+    b_threshold = b_thresh
   )
   if (contains_offset) tmb_params$b_j[offset_pos] <- 1
 
