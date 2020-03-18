@@ -43,7 +43,10 @@ pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 100)
 
 We will extend the simple GLMM used in the index standardization vignette to include a threshold effect. For real applications, the threshold effect might be a function of habitat covariates, environmental variables, etc. Because 'depth' is the only external variable in the pcod data frame, we'll use that. For any threshold model, note that you only need to specify (1) the name of the variable that is modeled with the threshold relationships, and (2) the function used for the threshold model ('linear', 'logistic'). Note: as before, if we want to use this model for index standardization then we need to include `0 + as.factor(year)` or `-1 + as.factor(year)` so that we have a factor predictor that represents the mean estimate for each time slice.
 
-This first example uses the 'depth_scaled' covariate (depth, standardized ~ N(0,1)) and the logistic function, similar to selectivity curves used in fisheries models. 
+This first example uses the 'depth_scaled' covariate (depth, standardized ~ N(0,1)) and the logistic function, similar to selectivity curves used in fisheries models. The form is 
+
+$$f(x)=\psi \quad *\quad { \left[ 1+{ exp }^{ -ln\left( 19 \right) \quad *\quad \left( x-s50 \right) \quad /\quad \left( s95\quad -\quad s50 \right)  } \right]  }^{ -1 }$$
+where $\psi$ is a scaling parameter (controlling the height of the y-axis for the response, and is unconstrained), $s50$ is a parameter controlling the point at which the function reaches 50% of the maximum ($\psi$), and $s95$ is a parameter controlling the point at which the function reaches 95%. The parameter $s50$ is unconsrtrained, and $s95$ is constrained to be larger than $s50$.
 
 ```{r model}
 m <- sdmTMB(
@@ -54,3 +57,12 @@ m <- sdmTMB(
   threshold_parameter = "depth_scaled",
   threshold_function = "logistic")
 ```
+
+We can then look at the important coefficients from the model.
+
+```{r output}
+df = data.frame("par"=names(m$sd_report$value), "value"=as.numeric(m$sd_report$value),
+  "sd"=as.numeric(m$sd_report$sd))
+df
+```
+
