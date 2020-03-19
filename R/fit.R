@@ -299,7 +299,7 @@ sdmTMB <- function(formula, data, time = NULL, spde,
   }
 
   if(is.null(threshold_parameter)) {
-    tmb_map <- c(tmb_map, list(b_threshold = factor(rep(NA, 3))))
+    tmb_map <- c(tmb_map, list(b_threshold = factor(rep(NA, 2))))
   }
   if (multiphase) {
     not_phase1 <- c(tmb_map, list(

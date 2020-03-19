@@ -265,12 +265,15 @@ Type objective_function<Type>::operator()()
   // Type nll_priors = 0;   // priors
 
   // ------------------ Derived variables -------------------------------------------------
-  Type s50 = b_threshold(0); // threshold at which function is 50% of max
-  Type s95 = b_threshold(0) + exp(b_threshold(1)); // threshold at which function is 95% of max
-  Type s_max = b_threshold(2);
+  Type s_slope, s_cut, s50, s95, s_max;
   // these are for linear model
-  Type s_slope = b_threshold(0);
-  Type s_cut = b_threshold(1);
+  s_slope = b_threshold(0);
+  s_cut = b_threshold(1);
+  if(threshold_func == 2) {
+    s50 = b_threshold(0); // threshold at which function is 50% of max
+    s95 = b_threshold(0) + exp(b_threshold(1)); // threshold at which function is 95% of max
+    s_max = b_threshold(2);
+  }
   // ------------------ Priors -------------------------------------------------
 
   if (enable_priors) {
