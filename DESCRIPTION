@@ -1,6 +1,6 @@
 Type: Package
 Package: sdmTMB
-Title: Fit Spatiotemporal Species Distribution GLMMs with 'TMB'
+Title: Spatiotemporal Species Distribution GLMMs with 'TMB'
 Version: 0.0.3.9000
 Authors@R: 
     c(person(given = c("Sean", "C."),
