@@ -22,6 +22,8 @@ sdmTMB(
   include_spatial = TRUE,
   spatial_trend = FALSE,
   normalize = FALSE,
+  nlminb_loops = 2,
+  newton_steps = 0,
   spatial_only = identical(length(unique(data[[time]])), 1L),
   quadratic_roots = FALSE
 )
@@ -78,6 +80,14 @@ trend? Requires spatiotemporal data.}
 done in R during the outer-optimization step? For some cases, especially
 with many knots, this may be faster. In others, it may be slower or suffer
 from convergence problems. \emph{Currently disabled!}}
+
+\item{nlminb_loops}{How many times to run \code{\link[stats:nlminb]{stats::nlminb()}} optimization.
+Sometimes restarting the optimizer at the previous best values aids
+convergence.}
+
+\item{newton_steps}{How many Newton optimization steps to try with
+\code{\link[stats:optimHess]{stats::optimHess()}} after running \code{\link[stats:nlminb]{stats::nlminb()}}. Sometimes aids
+convergence.}
 
 \item{spatial_only}{Logical: should only a spatial model be fit (i.e. do not
 include spatiotemporal random effects)? By default a spatial-only model

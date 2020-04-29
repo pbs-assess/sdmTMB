@@ -46,6 +46,12 @@ NULL
 #'   include spatiotemporal random effects)? By default a spatial-only model
 #'   will be fit if there is only one unique value in the time column or the
 #'   `time` argument is left at its default value of `NULL`.
+#' @param nlminb_loops How many times to run [stats::nlminb()] optimization.
+#'   Sometimes restarting the optimizer at the previous best values aids
+#'   convergence.
+#' @param newton_steps How many Newton optimization steps to try with
+#'   [stats::optimHess()] after running [stats::nlminb()]. Sometimes aids
+#'   convergence.
 #' @param quadratic_roots Logical: should quadratic roots be calculated?
 #'   Experimental feature for internal use right now. Note: on the sdmTMB side,
 #'   the first two coefficients are used to generate the quadratic parameters.
@@ -134,7 +140,10 @@ sdmTMB <- function(formula, data, time = NULL, spde,
   control = sdmTMBcontrol(), enable_priors = FALSE, ar1_fields = FALSE,
   include_spatial = TRUE, spatial_trend = FALSE,
   normalize = FALSE,
+  nlminb_loops = 2,
+  newton_steps = 0,
   spatial_only = identical(length(unique(data[[time]])), 1L),
+
   quadratic_roots = FALSE) {
 
   if (isTRUE(normalize)) {
@@ -334,6 +343,27 @@ sdmTMB <- function(formula, data, time = NULL, spde,
   tmb_opt <- stats::nlminb(
     start = tmb_obj$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
     control = control)
+
+  if (nlminb_loops > 1) {
+    if(!silent) cat("running extra nlminb loops\n")
+    for (i in seq(2, nlminb_loops, length = max(0, nlminb_loops - 1))) {
+      temp <- tmb_opt[c("iterations", "evaluations")]
+      tmb_opt <- stats::nlminb(
+        start = tmb_opt$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
+        control = control)
+      tmb_opt[["iterations"]] <- tmb_opt[["iterations"]] + temp[["iterations"]]
+      tmb_opt[["evaluations"]] <- tmb_opt[["evaluations"]] + temp[["evaluations"]]
+    }
+  }
+  if (newton_steps > 0) {
+    if(!silent) cat("running newtonsteps\n")
+    for (i in seq_len(newton_steps)) {
+      g <- as.numeric(tmb_obj$gr(tmb_opt$par))
+      h <- optimHess(tmb_opt$par, fn = tmb_obj$fn, gr = tmb_obj$gr)
+      tmb_opt$par <- tmb_opt$par - solve(h, g)
+      tmb_opt$objective <- tmb_obj$fn(tmb_opt$par)
+    }
+  }
 
   sd_report <- TMB::sdreport(tmb_obj)
   conv <- get_convergence_diagnostics(sd_report)
