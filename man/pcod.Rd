@@ -4,7 +4,9 @@
 \name{pcod}
 \alias{pcod}
 \title{Example data for Pacific Cod}
-\format{A data frame.}
+\format{
+A data frame.
+}
 \usage{
 pcod
 }
