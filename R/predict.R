@@ -212,7 +212,7 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     old_par <- object$model$par
     # need to initialize the new TMB object once:
     new_tmb_obj$fn(old_par)
-    lp <- new_tmb_obj$env$last.par
+    lp <- new_tmb_obj$env$last.par.best
 
     r <- new_tmb_obj$report(lp)
 
