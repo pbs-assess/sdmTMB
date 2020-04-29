@@ -95,6 +95,7 @@ sim <- function(x = stats::runif(100, 0, 10),
   # spatial random effects: omega
   rf_omega <- RandomFields::RMmatern(nu = 1, var = sigma_O^2, scale = 1 / kappa)
   omega_s <- rf_sim(model = rf_omega, x, y)
+  omega_s <- omega_s - mean(omega_s)
 
   # spatiotemporal random effects: epsilon
   epsilon_st <- list()
@@ -104,6 +105,7 @@ sim <- function(x = stats::runif(100, 0, 10),
     for (i in seq_len(time_steps)) {
       if (i == 1 || !ar1_fields) {
         epsilon_st[[i]] <- rf_sim(rf_epsilon, x, y)
+        epsilon_st[[i]] <- epsilon_st[[i]] - mean(epsilon_st[[i]])
       } else { # AR1 and not first time slice:
         epsilon_st[[i]] <- ar1_phi * epsilon_st[[i - 1]] + rf_sim(rf_epsilon, x, y)
       }
