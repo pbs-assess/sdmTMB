@@ -24,7 +24,7 @@ library(sdmTMB)
 library(ROCR)
 ```
 
-Using the same Pacific cod dataset as in the index standardization example, we might be intererest in figuring out how many knots to select when constructing the spatial field with the `make_spde()` function. 
+Using the same Pacific cod dataset as in the index standardization example, we might be interested in figuring out how many knots to select when constructing the spatial field with the `make_spde()` function. 
 
 Increasing the number of knots (or random effects estimated for each slice of time) will better approximate the species' distribution---up to a point. If the number of knots is too large, the model may be overfit and have little predictive ability. 
 
