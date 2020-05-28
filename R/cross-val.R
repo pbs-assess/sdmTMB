@@ -10,7 +10,7 @@ ll_tweedie <- function(object, withheld_y, withheld_mu) {
 }
 
 ll_binomial <- function(object, withheld_y, withheld_mu) {
-  stats::dbinom(y = withheld_y, size = 1, prob = withheld_mu, log = TRUE)
+  stats::dbinom(x = withheld_y, size = 1, prob = withheld_mu, log = TRUE)
 }
 
 ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
