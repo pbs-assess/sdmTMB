@@ -9,10 +9,15 @@ ll_tweedie <- function(object, withheld_y, withheld_mu) {
   fishMod::dTweedie(y = withheld_y, mu = withheld_mu, p = p, phi = phi, LOG = TRUE)
 }
 
+ll_binomial <- function(object, withheld_y, withheld_mu) {
+  stats::dbinom(y = withheld_y, size = 1, prob = withheld_mu, log = TRUE)
+}
+
 ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
   family_func <- switch(object$family$family,
     gaussian = ll_gaussian,
-    tweedie = ll_tweedie
+    tweedie = ll_tweedie,
+    binomial = ll_binomial
   )
   family_func(object, withheld_y, withheld_mu)
 }
