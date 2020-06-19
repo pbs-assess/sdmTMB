@@ -83,6 +83,11 @@ NULL
 #' r <- m$tmb_obj$report()
 #' names(r)
 #'
+#' # Run extra optimization steps to help convergence:
+#' m1 <- run_extra_optimization(m, nlminb_loops = 0, newton_steps = 1)
+#' max(m$gradients)
+#' max(m1$gradients)
+#'
 #' # Binomial:
 #' pcod_binom <- d
 #' pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
