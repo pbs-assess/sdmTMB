@@ -14,9 +14,9 @@ run_extra_optimization(
 \arguments{
 \item{object}{An object from \code{\link[=sdmTMB]{sdmTMB()}}.}
 
-\item{nlminb_loops}{How many extra times to run \code{\link[stats:nlminb]{stats::nlminb()}} optimization.
-Sometimes restarting the optimizer at the previous best values aids
-convergence.}
+\item{nlminb_loops}{How many extra times to run \code{\link[stats:nlminb]{stats::nlminb()}}
+optimization. Sometimes restarting the optimizer at the previous best
+values aids convergence.}
 
 \item{newton_steps}{How many extra Newton optimization steps to try with
 \code{\link[stats:optimHess]{stats::optimHess()}}. Sometimes aids convergence.}
