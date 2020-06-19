@@ -364,7 +364,7 @@ sdmTMB <- function(formula, data, time = NULL, spde,
     if(!silent) cat("running newtonsteps\n")
     for (i in seq_len(newton_steps)) {
       g <- as.numeric(tmb_obj$gr(tmb_opt$par))
-      h <- optimHess(tmb_opt$par, fn = tmb_obj$fn, gr = tmb_obj$gr)
+      h <- stats::optimHess(tmb_opt$par, fn = tmb_obj$fn, gr = tmb_obj$gr)
       tmb_opt$par <- tmb_opt$par - solve(h, g)
       tmb_opt$objective <- tmb_obj$fn(tmb_opt$par)
     }
