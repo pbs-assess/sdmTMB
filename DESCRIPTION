@@ -39,6 +39,7 @@ Suggests:
     glmmTMB,
     knitr,
     rmarkdown,
+    splancs,
     testthat
 LinkingTo: 
     RcppEigen,
