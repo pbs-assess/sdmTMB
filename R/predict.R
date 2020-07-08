@@ -129,7 +129,8 @@
 #' pcod_2017 <- d[d$year == 2017, ]
 #' pcod_spde <- make_spde(pcod_2017$X, pcod_2017$Y, n_knots = 75)
 #' m2017 <- sdmTMB(
-#'   pcod_2017, present ~ 0 + depth_scaled + depth_scaled2,
+#'   present ~ 0 + depth_scaled + depth_scaled2,
+#'   data = pcod_2017,
 #'   time = "year", spde = pcod_spde, family = binomial(link = "logit"),
 #'   silent = FALSE
 #' )
