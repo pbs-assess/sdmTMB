@@ -162,6 +162,14 @@ sdmTMB <- function(formula, data, time = NULL, spde,
   offset_pos <- grep("^offset$", colnames(X_ij))
   mf   <- model.frame(formula, data)
   y_i  <- model.response(mf, "numeric")
+
+  if (identical(family$link, "log") && min(y_i, na.rm = TRUE) < 0) {
+    stop("`link = 'log'` but the reponse data include values < 0.", call. = FALSE)
+  }
+  if (identical(family$family, "binomial") && !all(y_i %in% c(0, 1))) {
+    stop("`family = 'binomial'` but the reponse data include values other than 0 and 1.", call. = FALSE)
+  }
+
   offset <- as.vector(model.offset(mf))
   if (is.null(offset)) offset <- rep(0, length(y_i))
 
