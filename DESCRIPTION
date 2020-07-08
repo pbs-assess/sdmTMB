@@ -46,8 +46,6 @@ LinkingTo:
     TMB
 VignetteBuilder: 
     knitr
-Additional_repositories:
-    https://inla.r-inla-download.org/R/stable/src/contrib/
 ByteCompile: true
 Encoding: UTF-8
 LazyData: true

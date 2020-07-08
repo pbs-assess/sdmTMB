@@ -24,7 +24,16 @@ The sdmTMB package implements spatiotemporal predictive-process GLMMs (Generaliz
     
 ## Installation
 
-Assuming you have a [C++ compiler](https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites) installed, you can install sdmTMB with:
+Assuming you have a [C++ compiler](https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites) installed, you can install sdmTMB as follows.
+
+First, install INLA:
+
+```r
+install.packages("INLA", repos = c(getOption("repos"), 
+  INLA = "https://inla.r-inla-download.org/R/stable"), dep = TRUE)
+```
+
+Then install sdmTMB:
 
 ``` r
 devtools::install_github("pbs-assess/sdmTMB")
