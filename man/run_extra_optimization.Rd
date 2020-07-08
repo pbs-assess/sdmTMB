@@ -19,7 +19,7 @@ optimization. Sometimes restarting the optimizer at the previous best
 values aids convergence.}
 
 \item{newton_steps}{How many extra Newton optimization steps to try with
-\code{\link[stats:optimHess]{stats::optimHess()}}. Sometimes aids convergence.}
+\code{\link[stats:optim]{stats::optimHess()}}. Sometimes aids convergence.}
 
 \item{control}{Optimization control options. See \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}.}
 }

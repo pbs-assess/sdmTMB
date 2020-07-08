@@ -86,7 +86,7 @@ Sometimes restarting the optimizer at the previous best values aids
 convergence.}
 
 \item{newton_steps}{How many Newton optimization steps to try with
-\code{\link[stats:optimHess]{stats::optimHess()}} after running \code{\link[stats:nlminb]{stats::nlminb()}}. Sometimes aids
+\code{\link[stats:optim]{stats::optimHess()}} after running \code{\link[stats:nlminb]{stats::nlminb()}}. Sometimes aids
 convergence.}
 
 \item{spatial_only}{Logical: should only a spatial model be fit (i.e. do not
