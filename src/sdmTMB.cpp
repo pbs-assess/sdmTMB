@@ -162,6 +162,8 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(do_predict);
   // With standard errors on the full projections?
   DATA_INTEGER(calc_se);
+  // Should predictions be population (vs. individual-level) predictions?
+  DATA_INTEGER(pop_pred);
   // Calculate total summed by year (e.g. biomass)?
   DATA_INTEGER(calc_time_totals);
   DATA_INTEGER(calc_quadratic_range);
@@ -473,7 +475,13 @@ Type objective_function<Type>::operator()()
     REPORT(proj_rf);            // combined random field projections
     REPORT(proj_rw_i);          // random walk projections
 
-    if (calc_se) ADREPORT(proj_eta);
+    if (calc_se) {
+      if (pop_pred) {
+        ADREPORT(proj_fe);
+      } else {
+        ADREPORT(proj_eta);
+      }
+    }
 
     if (calc_time_totals) {
       // ------------------ Derived quantities ---------------------------------

@@ -11,6 +11,7 @@
   xy_cols = c("X", "Y"),
   return_tmb_object = FALSE,
   area = 1,
+  re_form = NULL,
   ...
 )
 }
@@ -35,6 +36,11 @@ a list format output. Necessary for the \code{\link[=get_index]{get_index()}} or
 \item{area}{A vector of areas for survey grid cells. Only necessary if the
 output will be passed to \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}}. Should be the same length
 as the number of rows of \code{newdata}. Defaults to a sequence of 1s.}
+
+\item{re_form}{\code{NULL} to specify individual-level predictions. \code{~0} or \code{NA}
+for population-level predictions. Note that unlike lme4 or glmmTMB, this
+only affects what the standard errors are calculated on if \code{se_fit = TRUE}.
+Otherwise, predictions at various levels are returned in all cases.}
 
 \item{...}{Not implemented.}
 }
@@ -76,7 +82,8 @@ d <- pcod
 pcod_spde <- make_spde(d$X, d$Y, n_knots = 50) # just 50 for example speed
 m <- sdmTMB(
  data = d, formula = density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
- time = "year", spde = pcod_spde, family = tweedie(link = "log")
+ time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+ silent = FALSE
 )
 
 # Predictions at original data locations:
@@ -119,6 +126,20 @@ plot_map(predictions, "omega_s") +
 plot_map(predictions, "epsilon_st") +
   ggtitle("Spatiotemporal random effects only") +
   scale_fill_gradient2()
+
+# Visualizing the marginal effect of a covariate with confidence intervals:
+# (Also demonstrates getting standard errors on population-level predictions.)
+nd <- data.frame(depth_scaled =
+  seq(min(d$depth_scaled), max(d$depth_scaled), length.out = 100))
+nd$depth_scaled2 <- nd$depth_scaled^2
+
+# You'll need at least one time element. If time isn't also a fixed effect
+# then it doesn't matter what you pick:
+nd$year <- 2003L
+p <- predict(m, newdata = nd, se_fit = TRUE, re_form = NA)
+ggplot(p, aes(depth_scaled, exp(est),
+  ymin = exp(est - 1.96 * est_se), ymax = exp(est + 1.96 * est_se))) +
+  geom_line() + geom_ribbon(alpha = 0.4)
 
 \donttest{
 # Spatial trend example:

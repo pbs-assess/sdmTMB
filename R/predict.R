@@ -21,6 +21,10 @@
 #' @param area A vector of areas for survey grid cells. Only necessary if the
 #'   output will be passed to [get_index()] or [get_cog()]. Should be the same length
 #'   as the number of rows of `newdata`. Defaults to a sequence of 1s.
+#' @param re_form `NULL` to specify individual-level predictions. `~0` or `NA`
+#'   for population-level predictions. Note that unlike lme4 or glmmTMB, this
+#'   only affects what the standard errors are calculated on if `se_fit = TRUE`.
+#'   Otherwise, predictions at various levels are returned in all cases.
 #' @param ... Not implemented.
 #'
 #' @return
@@ -56,7 +60,8 @@
 #' pcod_spde <- make_spde(d$X, d$Y, n_knots = 50) # just 50 for example speed
 #' m <- sdmTMB(
 #'  data = d, formula = density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'  time = "year", spde = pcod_spde, family = tweedie(link = "log")
+#'  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+#'  silent = FALSE
 #' )
 #'
 #' # Predictions at original data locations:
@@ -100,6 +105,20 @@
 #'   ggtitle("Spatiotemporal random effects only") +
 #'   scale_fill_gradient2()
 #'
+#' # Visualizing the marginal effect of a covariate with confidence intervals:
+#' # (Also demonstrates getting standard errors on population-level predictions.)
+#' nd <- data.frame(depth_scaled =
+#'   seq(min(d$depth_scaled), max(d$depth_scaled), length.out = 100))
+#' nd$depth_scaled2 <- nd$depth_scaled^2
+#'
+#' # You'll need at least one time element. If time isn't also a fixed effect
+#' # then it doesn't matter what you pick:
+#' nd$year <- 2003L
+#' p <- predict(m, newdata = nd, se_fit = TRUE, re_form = NA)
+#' ggplot(p, aes(depth_scaled, exp(est),
+#'   ymin = exp(est - 1.96 * est_se), ymax = exp(est + 1.96 * est_se))) +
+#'   geom_line() + geom_ribbon(alpha = 0.4)
+#'
 #' \donttest{
 #' # Spatial trend example:
 #' pcod_spde <- make_spde(d$X, d$Y, n_knots = 100)
@@ -138,27 +157,57 @@
 
 predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
   xy_cols = c("X", "Y"), return_tmb_object = FALSE,
-  area = 1, ...) {
+  area = 1, re_form = NULL, ...) {
 
   test <- suppressWarnings(tryCatch(object$tmb_obj$report(), error = function(e) NA))
   if (all(is.na(test))) object <- update_model(object)
+
+  # from glmmTMB:
+  pop_pred <- (!is.null(re_form) && ((re_form == ~0) || identical(re_form, NA)))
 
   tmb_data <- object$tmb_data
   tmb_data$do_predict <- 1L
 
   if (!is.null(newdata)) {
-    if (any(!xy_cols %in% names(newdata)))
+    if (any(!xy_cols %in% names(newdata)) && isFALSE(pop_pred))
       stop("`xy_cols` (the column names for the x and y coordinates) ",
         "are not in `newdata`. Did you miss specifying the argument ",
         "to match your data?", call. = FALSE)
 
     if (object$time == "_sdmTMB_time") newdata[[object$time]] <- 0L
+    if (!identical(class(object$data[[object$time]]), class(newdata[[object$time]])))
+      stop("Class of fitted time column does not match class of `newdata` time column.",
+        call. = FALSE)
     original_time <- sort(unique(object$data[[object$time]]))
     new_data_time <- sort(unique(newdata[[object$time]]))
-    if (!identical(original_time, new_data_time))
-      stop("For now, all of the time elements in the original data set must ",
-      "be identical to the time elements in the `newdata` data set ",
-      "but they are not.", call. = FALSE)
+
+    if (!all(new_data_time %in% original_time))
+      stop("Some new time elements were found in `newdata`. ",
+      "For now, make sure only time elements from the original dataset are present.",
+        call. = FALSE)
+
+    if (!all(original_time %in% new_data_time)) {
+      newdata[["sdmTMB_fake_year"]] <- FALSE
+      missing_time_elements <- original_time[!original_time %in% new_data_time]
+      nd2 <- do.call("rbind",
+        replicate(length(missing_time_elements), newdata[1L,,drop=FALSE], simplify = FALSE))
+      nd2[[object$time]] <- rep(missing_time_elements, each = 1L)
+      nd2$sdmTMB_fake_year <- TRUE
+      newdata <- rbind(newdata, nd2)
+    }
+
+    # If making population predictions (with standard errors), we don't need
+    # to worry about space, so fill in dummy values if the user hasn't made any:
+    fake_spatial_added <- FALSE
+    if (pop_pred) {
+      for (i in 1:2) {
+        if (!xy_cols[[i]] %in% names(newdata)) {
+          newdata[[xy_cols[[i]]]] <- mean(object$data[[xy_cols[[i]]]], na.rm = TRUE)
+          fake_spatial_added <- TRUE
+        }
+      }
+    }
+
     if (sum(is.na(new_data_time)) > 1)
       stop("There is at least one NA value in the time column. ",
         "Please remove it.", call. = FALSE)
@@ -176,19 +225,17 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
 
     nd <- newdata
     response <- get_response(object$formula)
-    if (!response %in% names(nd)) nd[[response]] <- 0 # fake for model.matrix
+    sdmTMB_fake_response <- FALSE
+    if (!response %in% names(nd)) {
+      nd[[response]] <- 0 # fake for model.matrix
+      sdmTMB_fake_response <- TRUE
+    }
     proj_X_ij <- model.matrix(object$formula, data = nd)
     if (!is.null(object$time_varying))
       proj_X_rw_ik <- model.matrix(object$time_varying, data = nd)
     else
       proj_X_rw_ik <- matrix(0, ncol = 1, nrow = 1) # dummy
 
-
-    # mf   <- model.frame(object$formula, data = nd)
-    # offset <- as.vector(model.offset(mf))
-    # if (is.null(offset)) offset <- rep(0, nrow(nd))
-
-    # tmb_data$offset_i <- offset
     tmb_data$area_i <- if (length(area) == 1L && area[[1]] == 1) rep(1, nrow(proj_X_ij)) else area
     tmb_data$proj_mesh <- proj_mesh
     tmb_data$proj_X_ij <- proj_X_ij
@@ -197,7 +244,8 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     tmb_data$proj_lon <- newdata[[xy_cols[[1]]]]
     tmb_data$proj_lat <- newdata[[xy_cols[[2]]]]
     tmb_data$calc_se <- as.integer(se_fit)
-    tmb_data$calc_time_totals <- 1L # for now (always on)
+    tmb_data$pop_pred <- as.integer(pop_pred)
+    tmb_data$calc_time_totals <- as.integer(!se_fit)
     tmb_data$proj_spatial_index <- newdata$sdm_spatial_id
     tmb_data$proj_t_i <- as.numeric(newdata[[object$time]])
     tmb_data$proj_t_i <- tmb_data$proj_t_i - mean(unique(tmb_data$proj_t_i)) # center on mean
@@ -217,12 +265,14 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
 
     r <- new_tmb_obj$report(lp)
 
-    nd$est <- r$proj_eta
-    nd$est_non_rf <- r$proj_fe
-    nd$est_rf <- r$proj_rf
-    nd$omega_s <- r$proj_re_sp_st
-    nd$zeta_s <- r$proj_re_sp_slopes
-    nd$epsilon_st <- r$proj_re_st_vector
+    if (isFALSE(pop_pred)) {
+      nd$est <- r$proj_eta
+      nd$est_non_rf <- r$proj_fe
+      nd$est_rf <- r$proj_rf
+      nd$omega_s <- r$proj_re_sp_st
+      nd$zeta_s <- r$proj_re_sp_slopes
+      nd$epsilon_st <- r$proj_re_st_vector
+    }
 
     nd$sdm_spatial_id <- NULL
     nd$sdm_orig_id <- NULL
@@ -232,13 +282,30 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     if (se_fit) {
       sr <- TMB::sdreport(new_tmb_obj, bias.correct = FALSE)
       ssr <- summary(sr, "report")
-      proj_eta <- ssr[row.names(ssr) == "proj_eta", , drop = FALSE]
+      if (pop_pred) {
+        proj_eta <- ssr[row.names(ssr) == "proj_fe", , drop = FALSE]
+      } else {
+        proj_eta <- ssr[row.names(ssr) == "proj_eta", , drop = FALSE]
+      }
       row.names(proj_eta) <- NULL
       d <- as.data.frame(proj_eta)
       names(d) <- c("est", "se")
+      nd$est <- d$est
       nd$est_se <- d$se
     }
-  } else {
+
+    if ("sdmTMB_fake_year" %in% names(nd)) {
+      nd <- nd[!nd$sdmTMB_fake_year,,drop=FALSE]
+      nd$sdmTMB_fake_year <- NULL
+    }
+    if (fake_spatial_added) {
+      for (i in 1:2) nd[[xy_cols[[i]]]] <- NULL
+    }
+    if (sdmTMB_fake_response) {
+      nd[[response]] <- NULL
+    }
+
+  } else { # We are not dealing with new data:
     if (se_fit) {
       warning("Standard errors have not been implemented yet unless you ",
         "supply `newdata`. In the meantime you could supply your original data frame ",
@@ -250,6 +317,7 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     r <- object$tmb_obj$report(lp)
 
     nd$est <- r$eta_i
+    # Following is not an error: rw effects baked into fixed effects for new data in above code:
     nd$est_non_rf <- r$eta_fixed_i + r$eta_rw_i
     nd$est_rf <- r$omega_s_A + r$epsilon_st_A_vec + r$omega_s_trend_A
     nd$omega_s <- r$omega_s_A
