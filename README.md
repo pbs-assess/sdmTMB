@@ -20,11 +20,13 @@ models (SDMs).
 
 ## Installation
 
-Assuming you have a [C++ compiler](https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites) installed, you can install sdmTMB as follows.
+Assuming you have a [C++
+compiler](https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites)
+installed, you can install sdmTMB as follows.
 
 First, install INLA:
 
-```r
+``` r
 install.packages("INLA", repos = c(getOption("repos"), 
   INLA = "https://inla.r-inla-download.org/R/stable"), dep = TRUE)
 ```
@@ -32,7 +34,8 @@ install.packages("INLA", repos = c(getOption("repos"),
 Then install sdmTMB:
 
 ``` r
-devtools::install_github("pbs-assess/sdmTMB")
+# install.packages("remotes")
+remotes::install_github("pbs-assess/sdmTMB")
 ```
 
 ## Functionality
@@ -41,22 +44,24 @@ sdmTMB:
 
   - Fits GLMMs with spatial, spatiotemporal, spatial and spatiotemporal,
     or AR1 spatiotemporal Gaussian Markov random fields with TMB. It can
-    also fit spatially-varying trends through time as a random field.
+    also fit spatially varying local trends through time as a random
+    field.
   - Uses formula interfaces for fixed effects and any time-varying
     effects (dynamic regression) (e.g. `formula = y ~ 1 + x1,
     time_varying = ~ 0 + x2`), where `y` is the response, `1` represents
     an intercept, `0` omits an intercept, `x1` is a covariate with a
     constant effect, and `x2` is a covariate with a time-varying effect.
+  - Can handle formulas with splines from mgcv. E.g., `y ~ s(x, k = 4)`.
   - Uses a `family(link)` format similar to `glm()`, lme4, or glmmTMB.
     This includes Gaussian, Poisson, negative binomial, gamma, binomial,
     lognormal, Student-t, and Tweedie distributions with identity, log,
-    inverse, and logit links. E.g. `family = tweedie(link = "log")`.
+    inverse, and logit links. E.g., `family = tweedie(link = "log")`.
   - Has `predict()` and `residuals()` methods. The residuals are
     randomized-quantile residuals similar to those implemented in the
     [DHARMa](https://cran.r-project.org/package=DHARMa) package. The
     `predict()` function can take a `newdata` argument similar to `lm()`
     or `glm()` etc. The predictions are bilinear interpolated
-    predictive-process predictions (i.e. they make smooth pretty maps).
+    predictive-process predictions (i.e., they make smooth pretty maps).
   - Includes functionality for estimating the centre of gravity or total
     biomass by time step for index standardization.
   - Implements multi-phase estimation for speed.
