@@ -35,7 +35,12 @@ print.sdmTMB <- function(x, ...) {
   family <- paste0("Family: ", paste0(x$family$family, "(link = '", x$family$link, "')"), "\n")
   criterion <- paste0(fit_by, " criterion at convergence: ", mround(x$model$objective, 3), "\n")
 
-  fe_names <- colnames(model.matrix(x$formula, x$data))
+  if (!"mgcv" %in% names(x)) x[["mgcv"]] <- FALSE
+  if (isFALSE(x$mgcv)) {
+    fe_names <- colnames(model.matrix(x$formula, x$data))
+  } else {
+    fe_names <- colnames(model.matrix(mgcv::gam(x$formula, data = x$data)))
+  }
   fe_names <- fe_names[!fe_names == "offset"]
 
   pars <- x$model$par

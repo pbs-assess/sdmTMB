@@ -28,7 +28,8 @@ NULL
 #' @param control Optimization control options. See [sdmTMBcontrol()].
 #' @param enable_priors Should weakly informative priors be enabled?
 #'   Experimental and likely for use with the \pkg{tmbstan} package. Note that
-#'   the priors are not yet sensible.
+#'   the priors are not yet sensible and Jacobian adjustments are not made. If you
+#'   are interested in this functionality, please contact the developers.
 #' @param ar1_fields Estimate the spatiotemporal random fields as an AR1
 #'   process? Note that the parameter `ar1_phi` has been internally bounded
 #'   between `-1` and `1` with:  `2 * invlogit(ar1_phi) - 1` i.e. in R `2 *
@@ -48,10 +49,12 @@ NULL
 #'   `time` argument is left at its default value of `NULL`.
 #' @param nlminb_loops How many times to run [stats::nlminb()] optimization.
 #'   Sometimes restarting the optimizer at the previous best values aids
-#'   convergence.
+#'   convergence. If the maximum gradient is still too large,
+#'   try increasing this to `2`.
 #' @param newton_steps How many Newton optimization steps to try with
 #'   [stats::optimHess()] after running [stats::nlminb()]. Sometimes aids
 #'   convergence.
+#' @param mgcv Parse the formula with [mgcv::gam()].
 #' @param quadratic_roots Logical: should quadratic roots be calculated?
 #'   Experimental feature for internal use right now. Note: on the sdmTMB side,
 #'   the first two coefficients are used to generate the quadratic parameters.
@@ -100,6 +103,13 @@ NULL
 #' m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #' data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
 #'
+#' # With splines via mgcv.
+#' # Make sure to pre-specify an appropriate basis dimension (`k`) since
+#' # the smoothers are not penalized in the current implementation.
+#' # See ?mgcv::choose.k
+#' m_gam <- sdmTMB(log(density) ~ 0 + as.factor(year) + s(depth_scaled, k = 4),
+#'   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
+#'
 #' # Fit a spatial only model:
 #' m <- sdmTMB(
 #' density ~ depth_scaled + depth_scaled2, data = d,
@@ -130,10 +140,10 @@ sdmTMB <- function(formula, data, time = NULL, spde,
   control = sdmTMBcontrol(), enable_priors = FALSE, ar1_fields = FALSE,
   include_spatial = TRUE, spatial_trend = FALSE,
   normalize = FALSE,
-  nlminb_loops = 2,
-  newton_steps = 0,
   spatial_only = identical(length(unique(data[[time]])), 1L),
-
+  nlminb_loops = 1,
+  newton_steps = 0,
+  mgcv = TRUE,
   quadratic_roots = FALSE) {
 
   if (isTRUE(normalize)) {
@@ -158,9 +168,15 @@ sdmTMB <- function(formula, data, time = NULL, spde,
     t_i <- rep(0L, nrow(data))
   }
   contains_offset <- check_offset(formula)
-  X_ij <- model.matrix(formula, data)
+
+  if (isFALSE(mgcv)) {
+    X_ij <- model.matrix(formula, data)
+    mf <- model.frame(formula, data)
+  } else {
+    X_ij <- model.matrix(mgcv::gam(formula, data = data)) # should be fast enough to not worry
+    mf <- model.frame(mgcv::interpret.gam(formula)$fake.formula, data)
+  }
   offset_pos <- grep("^offset$", colnames(X_ij))
-  mf   <- model.frame(formula, data)
   y_i  <- model.response(mf, "numeric")
 
   if (identical(family$link, "log") && min(y_i, na.rm = TRUE) < 0) {
@@ -384,6 +400,7 @@ sdmTMB <- function(formula, data, time = NULL, spde,
     tmb_random = tmb_random,
     tmb_obj    = tmb_obj,
     reml       = reml,
+    mgcv       = mgcv,
     gradients  = conv$final_grads,
     bad_eig    = conv$bad_eig,
     call       = match.call(expand.dots = TRUE),

@@ -45,6 +45,15 @@ test_that("Anisotropy fits and plots", {
   plot_anisotropy(m)
 })
 
+test_that("A model with splines works", {
+  d <- subset(pcod, year >= 2015)
+  m <- sdmTMB(data = d,
+    formula = density ~ 1 + s(depth_scaled),
+    spde = make_spde(d$X, d$Y, n_knots = 50),
+    family = tweedie(link = "log"))
+  expect_identical(class(m), "sdmTMB")
+})
+
 test_that("A spatiotemporal version works with predictions on new data points", {
   d <- subset(pcod, year >= 2015)
   pcod_spde <- make_spde(d$X, d$Y, n_knots = 40)
@@ -146,10 +155,8 @@ test_that("A time-varying model fits and predicts appropriately", {
     seed = SEED
   )
   spde <- make_spde(x = s$x, y = s$y, n_knots = 25)
-  plot_spde(spde)
-  system.time({
   m <- sdmTMB(data = s, formula = observed ~ 0, include_spatial = FALSE,
-    time_varying = ~ 0 + cov1, time = "time", spde = spde)})
+    time_varying = ~ 0 + cov1, time = "time", spde = spde, mgcv = FALSE)
   expect_equal(exp(m$model$par["ln_tau_V"])[[1]], sigma_V, tolerance = 0.1)
   b_t <- dplyr::group_by(s, time) %>%
     dplyr::summarize(b_t = unique(b)) %>%

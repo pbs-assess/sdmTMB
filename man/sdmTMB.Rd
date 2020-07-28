@@ -22,9 +22,10 @@ sdmTMB(
   include_spatial = TRUE,
   spatial_trend = FALSE,
   normalize = FALSE,
-  nlminb_loops = 2,
-  newton_steps = 0,
   spatial_only = identical(length(unique(data[[time]])), 1L),
+  nlminb_loops = 1,
+  newton_steps = 0,
+  mgcv = TRUE,
   quadratic_roots = FALSE
 )
 }
@@ -63,7 +64,8 @@ Phases are usually faster and more stable.}
 
 \item{enable_priors}{Should weakly informative priors be enabled?
 Experimental and likely for use with the \pkg{tmbstan} package. Note that
-the priors are not yet sensible.}
+the priors are not yet sensible and Jacobian adjustments are not made. If you
+are interested in this functionality, please contact the developers.}
 
 \item{ar1_fields}{Estimate the spatiotemporal random fields as an AR1
 process? Note that the parameter \code{ar1_phi} has been internally bounded
@@ -81,18 +83,21 @@ done in R during the outer-optimization step? For some cases, especially
 with many knots, this may be faster. In others, it may be slower or suffer
 from convergence problems. \emph{Currently disabled!}}
 
+\item{spatial_only}{Logical: should only a spatial model be fit (i.e. do not
+include spatiotemporal random effects)? By default a spatial-only model
+will be fit if there is only one unique value in the time column or the
+\code{time} argument is left at its default value of \code{NULL}.}
+
 \item{nlminb_loops}{How many times to run \code{\link[stats:nlminb]{stats::nlminb()}} optimization.
 Sometimes restarting the optimizer at the previous best values aids
-convergence.}
+convergence. If the maximum gradient is still too large,
+try increasing this to \code{2}.}
 
 \item{newton_steps}{How many Newton optimization steps to try with
 \code{\link[stats:optim]{stats::optimHess()}} after running \code{\link[stats:nlminb]{stats::nlminb()}}. Sometimes aids
 convergence.}
 
-\item{spatial_only}{Logical: should only a spatial model be fit (i.e. do not
-include spatiotemporal random effects)? By default a spatial-only model
-will be fit if there is only one unique value in the time column or the
-\code{time} argument is left at its default value of \code{NULL}.}
+\item{mgcv}{Parse the formula with \code{\link[mgcv:gam]{mgcv::gam()}}.}
 
 \item{quadratic_roots}{Logical: should quadratic roots be calculated?
 Experimental feature for internal use right now. Note: on the sdmTMB side,
@@ -138,6 +143,13 @@ pcod_gaus <- subset(d, density > 0 & year >= 2013)
 pcod_spde_gaus <- make_spde(pcod_gaus$X, pcod_gaus$Y, n_knots = 50)
 m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
+
+# With splines via mgcv.
+# Make sure to pre-specify an appropriate basis dimension (`k`) since
+# the smoothers are not penalized in the current implementation.
+# See ?mgcv::choose.k
+m_gam <- sdmTMB(log(density) ~ 0 + as.factor(year) + s(depth_scaled, k = 4),
+  data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
 
 # Fit a spatial only model:
 m <- sdmTMB(

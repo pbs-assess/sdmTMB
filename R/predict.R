@@ -119,6 +119,20 @@
 #'   ymin = exp(est - 1.96 * est_se), ymax = exp(est + 1.96 * est_se))) +
 #'   geom_line() + geom_ribbon(alpha = 0.4)
 #'
+#' # Using a spline instead:
+#' m_gam <- sdmTMB(
+#'  data = d, formula = density ~ 0 + as.factor(year) + s(depth_scaled, k = 3),
+#'  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+#'  silent = FALSE
+#' )
+#' nd <- data.frame(depth_scaled =
+#'   seq(min(d$depth_scaled), max(d$depth_scaled), length.out = 100))
+#' nd$year <- 2003L
+#' p <- predict(m_gam, newdata = nd, se_fit = TRUE, re_form = NA)
+#' ggplot(p, aes(depth_scaled, exp(est),
+#'   ymin = exp(est - 1.96 * est_se), ymax = exp(est + 1.96 * est_se))) +
+#'   geom_line() + geom_ribbon(alpha = 0.4)
+#'
 #' \donttest{
 #' # Spatial trend example:
 #' pcod_spde <- make_spde(d$X, d$Y, n_knots = 100)
@@ -230,7 +244,13 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
       nd[[response]] <- 0 # fake for model.matrix
       sdmTMB_fake_response <- TRUE
     }
-    proj_X_ij <- model.matrix(object$formula, data = nd)
+
+    if (!"mgcv" %in% names(object)) object[["mgcv"]] <- FALSE
+    if (isFALSE(object$mgcv)) {
+      proj_X_ij <- model.matrix(object$formula, data = nd)
+    } else {
+      proj_X_ij <- model.matrix(mgcv::gam(object$formula, data = nd))
+    }
     if (!is.null(object$time_varying))
       proj_X_rw_ik <- model.matrix(object$time_varying, data = nd)
     else
