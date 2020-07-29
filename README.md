@@ -14,7 +14,7 @@ status](https://codecov.io/gh/pbs-assess/sdmTMB/branch/master/graph/badge.svg)](
 sdmTMB is an R package that implements spatial or spatiotemporal
 predictive-process GLMMs (Generalized Linear Mixed Effects Models) using
 Template Model Builder ([TMB](https://github.com/kaskr/adcomp)),
-[R-INLA](http://www.r-inla.org/) and Gaussian Markov random fields. One
+[R-INLA](http://www.r-inla.org/), and Gaussian Markov random fields. One
 common application is for species distribution models (SDMs).
 
 ## Installation
