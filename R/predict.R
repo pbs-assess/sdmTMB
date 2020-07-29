@@ -246,9 +246,12 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     }
 
     if (!"mgcv" %in% names(object)) object[["mgcv"]] <- FALSE
+    proj_X_ij <- matrix(999)
     if (isFALSE(object$mgcv)) {
-      proj_X_ij <- model.matrix(object$formula, data = nd)
-    } else {
+      proj_X_ij <- tryCatch({model.matrix(object$formula, data = nd)},
+        error = function(e) NA)
+    }
+    if (isTRUE(object$mgcv) || is.na(proj_X_ij)) {
       proj_X_ij <- model.matrix(mgcv::gam(object$formula, data = nd))
     }
     if (!is.null(object$time_varying))
