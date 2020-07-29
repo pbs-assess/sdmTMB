@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# sdmTMB <a href='https://github.com/pbs-assess/sdmTMB'><img src='man/figures/logo.png' align="right" height="139" /></a>
+# sdmTMB <a href='https://github.com/pbs-assess/sdmTMB'><img src='man/figures/logo-sdmTMB.png' align="right" height="139" /></a>
 
 [![Travis build
 status](https://travis-ci.org/pbs-assess/sdmTMB.svg?branch=master)](https://travis-ci.org/pbs-assess/sdmTMB)
