@@ -53,12 +53,13 @@ NULL
 #'   depth and depth^2 are part of your formula, you need to make sure these are
 #'   listed first and that an intercept isn't included. For example, `formula
 #'   = cpue ~ 0 + depth + depth2 + as.factor(year)`.
-#' @param threshold_parameter Optional parameter to include as a non-linear threshold
-#'   relationship. Form can be linear or logistic, and is passed in as a character string,
-#'   e.g. "temperature" that is a name of a variable in the data frame
-#' @param threshold_function Optional name to include of the threshold function. Defaults to
-#'   "linear", in which case a linear breakpoint model is used. Other option is "logistic",
-#'   which models the relationship as a function of the 50% and 95% values
+#' @param threshold_parameter Optional parameter to include as a non-linear
+#'   threshold relationship. Form can be linear or logistic, and is passed in as
+#'   a character string, e.g. `"temperature"`, that is column name in `data`.
+#' @param threshold_function Optional name to include of the threshold function.
+#'   Defaults to "linear", in which case a linear breakpoint model is used.
+#'   Other option is "logistic", which models the relationship as a function of
+#'   the 50% and 95% values
 #'
 #' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
@@ -141,7 +142,9 @@ sdmTMB <- function(formula, data, time = NULL, spde,
   include_spatial = TRUE, spatial_trend = FALSE,
   normalize = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
-  quadratic_roots = FALSE, threshold_parameter = NULL, threshold_function="linear") {
+  quadratic_roots = FALSE,
+  threshold_parameter = NULL,
+  threshold_function = c("linear", "logistic")) {
 
   if (isTRUE(normalize)) {
     warning("`normalize` is currently disabled and doesn't do anything.")
@@ -157,12 +160,13 @@ sdmTMB <- function(formula, data, time = NULL, spde,
         "Please remove it.", call. = FALSE)
   }
 
+  threshold_function <- match.arg(threshold_function)
   if(!is.null(threshold_parameter)) {
-    if(threshold_function %in% c("linear","logistic") == FALSE) {
-      stop("If you're trying to specify a threshold model, please specify the function type as 'linear' or 'logistic'.", call. = FALSE)
+    if (length(threshold_parameter) > 1) {
+      stop("`threshold_parameter` must be a single variable name.", call. = FALSE)
     }
-    if(threshold_parameter %in% names(data) == FALSE) {
-      stop("If you're trying to specify a threshold model, make sure the name of the variable is in the data frame.", call. = FALSE)
+    if (!threshold_parameter %in% names(data)) {
+      stop("`threshold_parameter` is not a column in the `data` data frame.", call. = FALSE)
     }
   }
 
@@ -176,19 +180,20 @@ sdmTMB <- function(formula, data, time = NULL, spde,
   contains_offset <- check_offset(formula)
   # X_ij contains linear fixed effects. Don't include non-linear threshold parameter
   # in it if it's passed in
-  if(is.null(threshold_parameter)) {
+  if (is.null(threshold_parameter)) {
     X_ij <- model.matrix(formula, data)
-    mf   <- model.frame(formula, data)
-    X_threshold = rep(0, nrow(X_ij)) # just placeholder
-    threshold_func = 0
+    mf <- model.frame(formula, data)
+    X_threshold <- rep(0, nrow(X_ij)) # just placeholder
+    threshold_func <- 0L
   } else {
     # omit threshold_parameter from linear fixed effects model matrix / frame
-    X_ij <- model.matrix(formula, data[,-which(names(data) == threshold_parameter)])
-    mf   <- model.frame(formula, data[,-which(names(data) == threshold_parameter)])
-    X_threshold = data[,which(names(data) == threshold_parameter)]
+    temp_dat <- data[, names(data) != threshold_parameter, drop = FALSE]
+    X_ij <- model.matrix(formula, temp_dat)
+    mf <- model.frame(formula, temp_dat)
+    X_threshold <- data[, names(data) == threshold_parameter, drop = TRUE]
     # indexed 1-2 because 0 will tell TMB not to estimate this
-    threshold_func = as.numeric(match(threshold_function,c("linear","logistic")))
-  }
+    threshold_func <- match(threshold_function, c("linear", "logistic"))
+}
   offset_pos <- grep("^offset$", colnames(X_ij))
   y_i  <- model.response(mf, "numeric")
   offset <- as.vector(model.offset(mf))
@@ -252,12 +257,13 @@ sdmTMB <- function(formula, data, time = NULL, spde,
     calc_quadratic_range = as.integer(quadratic_roots),
     X_threshold = as.numeric(unlist(X_threshold)),
     proj_X_threshold = 0, # dummy
-    threshold_func = as.integer(threshold_func)
+    threshold_func = threshold_func
   )
   tmb_data$flag <- 1L # Include data
 
-  b_thresh = rep(0,2)
-  if(threshold_func==2) b_thresh = c(0, b_thresh)
+  b_thresh <- rep(0, 2)
+  if (threshold_func == 2L) b_thresh <- c(0, b_thresh) # logistic
+
   tmb_params <- list(
     ln_H_input = c(0, 0),
     b_j        = rep(0, ncol(X_ij)),
