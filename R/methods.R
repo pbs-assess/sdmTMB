@@ -87,6 +87,22 @@ print.sdmTMB <- function(x, ...) {
 
   # Add pretty-printing of threshold parameters FIXME
 
+  if (x$threshold_function > 0) {
+    sr_se <- as.list(sr, "Std. Error")
+    sr_est <- as.list(sr, "Estimate")
+    mm_thresh <- cbind(sr_est$b_threshold, sr_se$b_threshold)
+    if (x$threshold_function == 1L) {
+      row.names(mm_thresh) <- paste0(x$threshold_parameter, c("-slope", "-breakpt"))
+    } else {
+      row.names(mm_thresh) <- paste0(x$threshold_parameter, c("-s50", "-s95", "-smax"))
+    }
+    colnames(mm_thresh) <- c("coef.est", "coef.se")
+    mm_thresh[,1] <- round(mm_thresh[,1], 2)
+    mm_thresh[,2] <- round(mm_thresh[,2], 2)
+
+    mm <- rbind(mm, mm_thresh)
+  }
+
   cat(title,
     formula,
     # time,

@@ -26,16 +26,12 @@ sdmTMB(
   nlminb_loops = 1,
   newton_steps = 0,
   mgcv = TRUE,
-  quadratic_roots = FALSE,
-  threshold_parameter = NULL,
-  threshold_function = c("linear", "logistic")
+  quadratic_roots = FALSE
 )
 }
 \arguments{
-\item{formula}{Model formula. An offset can be included by including \code{offset}
-in the model formula (a reserved word). The offset will be included in any
-prediction. For index standardization, include \code{0 + as.factor(year)} (or
-whatever the time column is called) in the formula.}
+\item{formula}{Model formula. See the Details section below for how to specify
+offsets and threshold parameters. For index standardization, include \code{0 + as.factor(year)} (or whatever the time column is called) in the formula.}
 
 \item{data}{A data frame.}
 
@@ -99,7 +95,7 @@ try increasing this to \code{2}.}
 \code{\link[stats:optim]{stats::optimHess()}} after running \code{\link[stats:nlminb]{stats::nlminb()}}. Sometimes aids
 convergence.}
 
-\item{mgcv}{Parse the formula with \code{\link[mgcv:gam]{mgcv::gam()}}.}
+\item{mgcv}{Parse the formula with \code{\link[mgcv:gam]{mgcv::gam()}}?}
 
 \item{quadratic_roots}{Logical: should quadratic roots be calculated?
 Experimental feature for internal use right now. Note: on the sdmTMB side,
@@ -107,19 +103,28 @@ the first two coefficients are used to generate the quadratic parameters.
 This means that if you want to generate a quadratic profile for depth, and
 depth and depth^2 are part of your formula, you need to make sure these are
 listed first and that an intercept isn't included. For example, \code{formula = cpue ~ 0 + depth + depth2 + as.factor(year)}.}
-
-\item{threshold_parameter}{Optional parameter to include as a non-linear
-threshold relationship. Form can be linear or logistic, and is passed in as
-a character string, e.g. \code{"temperature"}, that is column name in \code{data}.}
-
-\item{threshold_function}{Optional name to include of the threshold function.
-Defaults to \code{"linear"}, in which case a linear breakpoint model is used.
-Other option is \code{"logistic"}, which models the relationship as a function of
-the 50\% and 95\% values}
 }
 \description{
 Fit a spatial or spatiotemporal GLMM with TMB. Particularly useful for
 species distribution models and relative abundance index standardization.
+}
+\details{
+\bold{Formula syntax for offsets and threshold models}
+
+In the model formula, an offset can be included by including \code{+ offset} in
+the model formula (a reserved word). The offset will be included in any
+prediction. \code{offset} must be a column in \code{data}.
+
+A linear break-point relationship for a covariate can be included via \code{+ breakpt(variable)} in the formula, where \code{variable} is a single covariate
+corresponding to a column in \code{data}. In this case the relationship is linear
+up to a point then constant.
+
+Similarly, a logistic-function threshold model can be included via \code{+ logistic(variable)}. This option models the relationship as a logistic
+function of the 50\% and 95\% values. This is similar to length- or size-based
+selectivity in fisheries, and is parameterized by the points at which f(x) =
+0.5 or 0.95.
+
+Note that only a single threshold covariate can be included.
 }
 \examples{
 d <- subset(pcod, year >= 2011) # subset for example speed
@@ -183,4 +188,9 @@ m <- sdmTMB(density ~ 0 + as.factor(year),
 
 # See the b_rw_t estimates; these are the time-varying (random walk) effects.
 summary(m$sd_report)[1:19,]
+
+# Linear breakpoint model on depth:
+m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) +
+    breakpt(depth_scaled) + depth_scaled2, data = pcod_gaus,
+  time = "year", spde = pcod_spde_gaus)
 }

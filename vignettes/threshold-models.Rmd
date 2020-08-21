@@ -35,10 +35,10 @@ As a summary,
 glimpse(pcod)
 ```
 
-As before, the SPDE mesh is created using 100 knots for a balance between speed and accuracy. You will likely want to use more for applied scenarios. You will want to make sure that increasing the number of knots does not change the conclusions.
+As before, the SPDE mesh is created using 75 knots for a balance between speed and accuracy. You will likely want to use more for applied scenarios. You will want to make sure that increasing the number of knots does not change the conclusions.
 
 ```{r spde, fig.asp=0.8}
-pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 100)
+pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 75)
 ```
 
 We will extend the simple GLMM used in the index standardization vignette to include a threshold effect. For real applications, the threshold effect might be a function of habitat covariates, environmental variables, etc. Because 'depth' is the only external variable in the `pcod` data frame, we'll use that. For any threshold model, note that you only need to specify (1) the name of the variable that is modeled with the threshold relationships, and (2) the function used for the threshold model ('linear', 'logistic'). Note: as before, if we want to use this model for index standardization then we need to include `0 + as.factor(year)` or `-1 + as.factor(year)` so that we have a factor predictor that represents the mean estimate for each time slice.
@@ -51,22 +51,20 @@ where $\psi$ is a scaling parameter (controlling the height of the y-axis for th
 ```{r fitlogistic}
 m <- sdmTMB(
   data = pcod,
-  formula = density ~ 0 + as.factor(year),
+  formula = density ~ 0 + logistic(depth_scaled) + as.factor(year),
   time = "year", spde = pcod_spde,
-  family = tweedie(link = "log"),
-  threshold_parameter = "depth_scaled",
-  threshold_function = "logistic"
+  family = tweedie(link = "log")
 )
 ```
 
 We can then look at the important coefficients from the model. Here we're looking at 's50', 's95', and 's_max'.
 
 ```{r outputlogistic}
-df <- data.frame(
-  "par" = names(m$sd_report$value), "value" = as.numeric(m$sd_report$value),
-  "sd" = as.numeric(m$sd_report$sd)
-)
-df
+# df <- data.frame(
+#   "par" = names(m$sd_report$value), "value" = as.numeric(m$sd_report$value),
+#   "sd" = as.numeric(m$sd_report$sd)
+# )
+# df
 ```
 
 Next, we can try to fit the same model but use a linear breakpoint / cutpoint model. We just have to change the 'threshold_function' parameter to 'linear'.
@@ -74,20 +72,18 @@ Next, we can try to fit the same model but use a linear breakpoint / cutpoint mo
 ```{r fitlinear}
 m <- sdmTMB(
   data = pcod,
-  formula = density ~ 0 + as.factor(year),
+  formula = density ~ 0 + breakpt(depth_scaled) + as.factor(year),
   time = "year", spde = pcod_spde,
-  family = tweedie(link = "log"),
-  threshold_parameter = "depth_scaled",
-  threshold_function = "linear"
+  family = tweedie(link = "log")
 )
 ```
 
 For this model, the important parameters are the slope, 's_slope', and breakpoint, 's_cut'.
 
 ```{r outputlinear}
-df <- data.frame(
-  "par" = names(m$sd_report$value), "value" = as.numeric(m$sd_report$value),
-  "sd" = as.numeric(m$sd_report$sd)
-)
-df
+# df <- data.frame(
+#   "par" = names(m$sd_report$value), "value" = as.numeric(m$sd_report$value),
+#   "sd" = as.numeric(m$sd_report$sd)
+# )
+# df
 ```

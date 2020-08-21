@@ -218,21 +218,17 @@ test_that("A spatial trend model fits", {
 test_that("A logistic threshold model fits", {
   d <- subset(pcod, year >= 2011) # subset for speed
   pcod_spde <- make_spde(d$X, d$Y, n_knots = 50)
-  m <- sdmTMB(density ~ 0 + as.factor(year), data = d,
+  m <- sdmTMB(density ~ 0 + as.factor(year) + logistic(depth_scaled), data = d,
     spde = pcod_spde, family = tweedie(link = "log"),
-    spatial_trend = FALSE, time = "year",
-    threshold_parameter = "depth_scaled",
-    threshold_function = "logistic")
+    spatial_trend = FALSE, time = "year")
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
 })
 
 test_that("A linear threshold model fits", {
   d <- subset(pcod, year >= 2011) # subset for speed
   pcod_spde <- make_spde(d$X, d$Y, n_knots = 50)
-  m <- sdmTMB(density ~ 0 + as.factor(year), data = d,
+  m <- sdmTMB(density ~ 0 + as.factor(year) + breakpt(depth_scaled), data = d,
     spde = pcod_spde, family = tweedie(link = "log"),
-    spatial_trend = FALSE, time = "year",
-    threshold_parameter = "depth_scaled",
-    threshold_function = "linear")
+    spatial_trend = FALSE, time = "year")
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
 })
