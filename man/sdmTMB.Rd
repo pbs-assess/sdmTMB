@@ -113,8 +113,8 @@ threshold relationship. Form can be linear or logistic, and is passed in as
 a character string, e.g. \code{"temperature"}, that is column name in \code{data}.}
 
 \item{threshold_function}{Optional name to include of the threshold function.
-Defaults to "linear", in which case a linear breakpoint model is used.
-Other option is "logistic", which models the relationship as a function of
+Defaults to \code{"linear"}, in which case a linear breakpoint model is used.
+Other option is \code{"logistic"}, which models the relationship as a function of
 the 50\% and 95\% values}
 }
 \description{
@@ -128,7 +128,7 @@ plot_spde(pcod_spde)
 
 # Tweedie:
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
+  data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
 m
 
 # Contents of the output object:
@@ -146,14 +146,14 @@ max(m1$gradients)
 pcod_binom <- d
 pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
 m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-data = pcod_binom, time = "year", spde = pcod_spde,
-family = binomial(link = "logit"))
+  data = pcod_binom, time = "year", spde = pcod_spde,
+  family = binomial(link = "logit"))
 
 # Gaussian:
 pcod_gaus <- subset(d, density > 0 & year >= 2013)
 pcod_spde_gaus <- make_spde(pcod_gaus$X, pcod_gaus$Y, n_knots = 50)
 m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
+  data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
 
 # With splines via mgcv.
 # Make sure to pre-specify an appropriate basis dimension (`k`) since
@@ -164,8 +164,8 @@ m_gam <- sdmTMB(log(density) ~ 0 + as.factor(year) + s(depth_scaled, k = 4),
 
 # Fit a spatial only model:
 m <- sdmTMB(
-density ~ depth_scaled + depth_scaled2, data = d,
-spde = pcod_spde, family = tweedie(link = "log"))
+  density ~ depth_scaled + depth_scaled2, data = d,
+  spde = pcod_spde, family = tweedie(link = "log"))
 
 # Spatial-trend example:
 m <- sdmTMB(density ~ depth_scaled, data = d,

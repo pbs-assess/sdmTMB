@@ -1,5 +1,9 @@
 # sdmTMB
 
+# sdmTMB 0.0.6.9000
+
+* Add linear and logistic threshold models. #17
+
 # sdmTMB 0.0.5.9000
 
 * Added parsing of mgcv formulas for splines. #16

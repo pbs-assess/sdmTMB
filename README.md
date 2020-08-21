@@ -51,6 +51,7 @@ sdmTMB:
     an intercept, `0` omits an intercept, `x1` is a covariate with a
     constant effect, and `x2` is a covariate with a time-varying effect.
   - Can handle formulas with splines from mgcv. E.g., `y ~ s(x, k = 4)`.
+  - Can handle linear breakpoint or logistic threshold fixed effects.
   - Uses a `family(link)` format similar to `glm()`, lme4, or glmmTMB.
     This includes Gaussian, Poisson, negative binomial, gamma, binomial,
     lognormal, Student-t, and Tweedie distributions with identity, log,
