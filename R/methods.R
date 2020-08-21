@@ -100,6 +100,8 @@ print.sdmTMB <- function(x, ...) {
     mm_thresh[,2] <- round(mm_thresh[,2], 2)
 
     mm <- rbind(mm, mm_thresh)
+  } else {
+    mm_thresh <- NULL
   }
 
   if (!is.null(x$time_varying)) {
@@ -108,6 +110,8 @@ print.sdmTMB <- function(x, ...) {
     colnames(mm_tv) <- c("coef.est", "coef.se")
     time_slices <- sort(unique(x$data[[x$time]]))
     row.names(mm_tv) <- paste(rep(tv_names, each = length(time_slices)), time_slices, sep = "-")
+  } else {
+    mm_tv <- NULL
   }
 
   cat(title,
@@ -135,6 +139,8 @@ print.sdmTMB <- function(x, ...) {
     criterion,
     sep = ""
   )
+
+  invisible(list(fe = mm, tv = mm_tv, thresh = mm_thresh))
 }
 
 #' @export
