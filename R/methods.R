@@ -85,11 +85,10 @@ print.sdmTMB <- function(x, ...) {
   colnames(mm) <- c("coef.est", "coef.se")
   row.names(mm) <- fe_names
 
-  # Add pretty-printing of threshold parameters FIXME
+  sr_se <- as.list(sr, "Std. Error")
+  sr_est <- as.list(sr, "Estimate")
 
   if (x$threshold_function > 0) {
-    sr_se <- as.list(sr, "Std. Error")
-    sr_est <- as.list(sr, "Estimate")
     mm_thresh <- cbind(sr_est$b_threshold, sr_se$b_threshold)
     if (x$threshold_function == 1L) {
       row.names(mm_thresh) <- paste0(x$threshold_parameter, c("-slope", "-breakpt"))
@@ -103,6 +102,14 @@ print.sdmTMB <- function(x, ...) {
     mm <- rbind(mm, mm_thresh)
   }
 
+  if (!is.null(x$time_varying)) {
+    tv_names <- colnames(model.matrix(x$time_varying, x$data))
+    mm_tv <- cbind(round(as.numeric(sr_est$b_rw_t), 2), round(as.numeric(sr_se$b_rw_t), 2))
+    colnames(mm_tv) <- c("coef.est", "coef.se")
+    time_slices <- sort(unique(x$data[[x$time]]))
+    row.names(mm_tv) <- paste(rep(tv_names, each = length(time_slices)), time_slices, sep = "-")
+  }
+
   cat(title,
     formula,
     # time,
@@ -113,6 +120,11 @@ print.sdmTMB <- function(x, ...) {
   )
 
   print(mm)
+
+  if (!is.null(x$time_varying)) {
+    cat("\nTime-varying parameters:\n" )
+    print(mm_tv)
+  }
 
   cat("\n",
     paste0("Matern range parameter: ", range, "\n"),
