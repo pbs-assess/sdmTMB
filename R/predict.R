@@ -123,16 +123,6 @@
 #' plot_map(p, "exp(est)") +
 #'   ggtitle("Prediction (fixed effects + all random effects)") +
 #'   scale_fill_viridis_c(trans = "sqrt")
-#'
-#' # Example with standard errors on new location predictions.
-#' # Note this example models presence/absence.
-#' pcod_2017 <- d[d$year == 2017, ]
-#' pcod_spde <- make_spde(pcod_2017$X, pcod_2017$Y, n_knots = 75)
-#' m2017 <- sdmTMB(
-#'   pcod_2017, present ~ 0 + depth_scaled + depth_scaled2,
-#'   time = "year", spde = pcod_spde, family = binomial(link = "logit"),
-#'   silent = FALSE
-#' )
 #' }
 
 predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
