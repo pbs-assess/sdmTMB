@@ -48,7 +48,7 @@ This first example uses the 'depth_scaled' covariate (depth, standardized ~ N(0,
 $$s(x)=\tau + \psi *\quad { \left[ 1+{ \exp }^{ -ln\left( 19 \right) \quad *\quad \left( x-s50 \right) \quad /\quad \left( s95\quad -\quad s50 \right)  } \right]  }^{ -1 }$$
 where $\psi$ is a scaling parameter (controlling the height of the y-axis for the response, and is unconstrained), $\tau$ is an intercept, $s50$ is a parameter controlling the point at which the function reaches 50% of the maximum ($\psi$), and $s95$ is a parameter controlling the point at which the function reaches 95%. The parameter $s50$ is unconstrained, and $s95$ is constrained to be larger than $s50$.
 
-```{r model}
+```{r fitlogistic}
 m <- sdmTMB(
   data = pcod,
   formula = density ~ 0 + as.factor(year),
@@ -61,7 +61,7 @@ m <- sdmTMB(
 
 We can then look at the important coefficients from the model. Here we're looking at 's50', 's95', and 's_max'.
 
-```{r output}
+```{r outputlogistic}
 df <- data.frame(
   "par" = names(m$sd_report$value), "value" = as.numeric(m$sd_report$value),
   "sd" = as.numeric(m$sd_report$sd)
@@ -71,7 +71,7 @@ df
 
 Next, we can try to fit the same model but use a linear breakpoint / cutpoint model. We just have to change the 'threshold_function' parameter to 'linear'.
 
-```{r}
+```{r fitlinear}
 m <- sdmTMB(
   data = pcod,
   formula = density ~ 0 + as.factor(year),
@@ -84,7 +84,7 @@ m <- sdmTMB(
 
 For this model, the important parameters are the slope, 's_slope', and breakpoint, 's_cut'.
 
-```{r output}
+```{r outputlinear}
 df <- data.frame(
   "par" = names(m$sd_report$value), "value" = as.numeric(m$sd_report$value),
   "sd" = as.numeric(m$sd_report$sd)
