@@ -57,14 +57,10 @@ m <- sdmTMB(
 )
 ```
 
-We can then look at the important coefficients from the model. Here we're looking at 's50', 's95', and 's_max'.
+We can then look at the important coefficients from the model. Here we're looking at 's50', 's95', and 'smax'.
 
 ```{r outputlogistic}
-# df <- data.frame(
-#   "par" = names(m$sd_report$value), "value" = as.numeric(m$sd_report$value),
-#   "sd" = as.numeric(m$sd_report$sd)
-# )
-# df
+print(m)
 ```
 
 Next, we can try to fit the same model but use a linear breakpoint / cutpoint model. We just have to change the 'threshold_function' parameter to 'linear'.
@@ -78,12 +74,8 @@ m <- sdmTMB(
 )
 ```
 
-For this model, the important parameters are the slope, 's_slope', and breakpoint, 's_cut'.
+For this model, the important parameters are the slope, 'depth_scaled-slope', and breakpoint, 'depth_scaled-breakpt'.
 
 ```{r outputlinear}
-# df <- data.frame(
-#   "par" = names(m$sd_report$value), "value" = as.numeric(m$sd_report$value),
-#   "sd" = as.numeric(m$sd_report$sd)
-# )
-# df
+print(m)
 ```
