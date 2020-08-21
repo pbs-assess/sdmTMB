@@ -82,6 +82,33 @@ vector<Type> GetQuadraticRoots(Type a, Type b, Type threshold)
   return res;
 }
 
+template <class Type>
+Type linear_threshold(Type x, Type slope, Type cutpoint)
+{
+  // linear threshold model. relationship linear up to a point then constant
+  // keep all parameters unconstrained - slope and scale can be neg/pos,
+  // as can cutpoint if covariate is scaled ~ N(0,1).
+  Type pred;
+  if(x < cutpoint) {
+    pred = x * slope;
+  } else {
+    pred = x * cutpoint;
+  }
+  return pred;
+}
+
+template <class Type>
+Type logistic_threshold(Type x, Type s50, Type s95, Type scale)
+{
+  // logistic threshold model. similar to length or size based selectvitiy
+  // in fisheries, parameterized by the points at which f(x) = 0.5, or 0.95
+  // s50 and scale are unconstrained. s95 has to be > s50 though, so modeled as
+  // s95 = s50 + exp(b(1))
+  //Type s95 = s50 + exp(soffset); // this done outside function
+  Type pred = (scale) * Type(1.0)/(Type(1.0) + exp(-log(Type(19.0)) * (x - s50) / (s95 - s50)));
+  return pred;
+}
+
 enum valid_family {
   gaussian_family = 0,
   binomial_family = 1,
@@ -198,6 +225,9 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(spatial_only);
   DATA_INTEGER(spatial_trend);
 
+  DATA_VECTOR(X_threshold);
+  DATA_VECTOR(proj_X_threshold);
+  DATA_INTEGER(threshold_func);
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -219,6 +249,8 @@ Type objective_function<Type>::operator()()
   PARAMETER_VECTOR(omega_s_trend);    // spatial effects on trend; n_s length
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
 
+  PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3)
+
   // Joint negative log-likelihood
   Type jnll = 0;
 
@@ -234,6 +266,16 @@ Type objective_function<Type>::operator()()
   // Type nll_epsilon = 0;  // spatio-temporal effects
   // Type nll_priors = 0;   // priors
 
+  // ------------------ Derived variables -------------------------------------------------
+  Type s_slope, s_cut, s50, s95, s_max;
+  // these are for linear model
+  s_slope = b_threshold(0);
+  s_cut = b_threshold(1);
+  if(threshold_func == 2) {
+    s50 = b_threshold(0); // threshold at which function is 50% of max
+    s95 = b_threshold(0) + exp(b_threshold(1)); // threshold at which function is 95% of max
+    s_max = b_threshold(2);
+  }
   // ------------------ Priors -------------------------------------------------
 
   if (enable_priors) {
@@ -290,6 +332,21 @@ Type objective_function<Type>::operator()()
   // ------------------ Linear predictor ---------------------------------------
 
   vector<Type> eta_fixed_i = X_ij * b_j;
+  // add threshold effect if specified
+  if (threshold_func > 0) {
+    if (threshold_func == 1) {
+      // linear
+      for (int i = 0; i < n_i; i++) {
+        eta_fixed_i(i) += linear_threshold(X_threshold(i), s_slope, s_cut);
+      }
+    } else {
+      // logistic
+      for (int i = 0; i < n_i; i++) {
+        eta_fixed_i(i) += logistic_threshold(X_threshold(i), s50, s95, s_max);
+      }
+    }
+  }
+
   vector<Type> mu_i(n_i), eta_i(n_i);
   vector<Type> eta_rw_i(n_i);
   for (int i = 0; i < n_i; i++) {
@@ -414,6 +471,21 @@ Type objective_function<Type>::operator()()
 
   if (do_predict) {
     vector<Type> proj_fe = proj_X_ij * b_j;
+    // add threshold effect if specified
+    if(threshold_func > 0) {
+      if(threshold_func == 1) {
+        // linear
+        for (int i = 0; i < proj_X_ij.rows(); i++) {
+          proj_fe(i) = proj_fe(i) + linear_threshold(proj_X_threshold(i), s_slope, s_cut);
+        }
+      } else {
+        // logistic
+        for (int i = 0; i < proj_X_ij.rows(); i++) {
+          proj_fe(i) = proj_fe(i) + logistic_threshold(proj_X_threshold(i), s50, s95, s_max);
+        }
+      }
+    }
+
     vector<Type> proj_rw_i(proj_X_ij.rows());
     for (int i = 0; i < proj_X_ij.rows(); i++) {
       proj_rw_i(i) = Type(0);
@@ -513,6 +585,21 @@ Type objective_function<Type>::operator()()
     }
   }
 
+  if(threshold_func == 1) {
+    REPORT(s_slope);
+    ADREPORT(s_slope);
+    REPORT(s_cut);
+    ADREPORT(s_cut);
+  }
+  if(threshold_func == 2) {
+    // report s50 and s95 for logistic function model
+    REPORT(s50);
+    ADREPORT(s50);
+    REPORT(s95);
+    ADREPORT(s95);
+    REPORT(s_max);
+    ADREPORT(s_max);
+  }
   if (calc_quadratic_range && b_j(1) < Type(0)) {
     vector<Type> quadratic_roots = GetQuadraticRoots(b_j(1), b_j(0), Type(0.05));
     Type quadratic_low = quadratic_roots(0);

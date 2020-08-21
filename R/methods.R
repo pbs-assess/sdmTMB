@@ -84,7 +84,8 @@ print.sdmTMB <- function(x, ...) {
   mm <- cbind(b_j, b_j_se)
   colnames(mm) <- c("coef.est", "coef.se")
   row.names(mm) <- fe_names
-  mm
+
+  # Add pretty-printing of threshold parameters FIXME
 
   cat(title,
     formula,
