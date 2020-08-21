@@ -331,16 +331,16 @@ Type objective_function<Type>::operator()()
 
   vector<Type> eta_fixed_i = X_ij * b_j;
   // add threshold effect if specified
-  if(threshold_func > 0) {
-    if(threshold_func == 1) {
+  if (threshold_func > 0) {
+    if (threshold_func == 1) {
       // linear
       for (int i = 0; i < n_i; i++) {
-        eta_fixed_i(i) = eta_fixed_i(i) + linear_threshold(X_threshold(i), s_slope, s_cut);
+        eta_fixed_i(i) += linear_threshold(X_threshold(i), s_slope, s_cut);
       }
     } else {
       // logistic
       for (int i = 0; i < n_i; i++) {
-        eta_fixed_i(i) = eta_fixed_i(i) + logistic_threshold(X_threshold(i), s50, s95, s_max);
+        eta_fixed_i(i) += logistic_threshold(X_threshold(i), s50, s95, s_max);
       }
     }
   }
