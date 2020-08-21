@@ -25,7 +25,7 @@ sdmTMB(
   spatial_only = identical(length(unique(data[[time]])), 1L),
   quadratic_roots = FALSE,
   threshold_parameter = NULL,
-  threshold_function = "linear"
+  threshold_function = c("linear", "logistic")
 )
 }
 \arguments{
@@ -93,13 +93,14 @@ This means that if you want to generate a quadratic profile for depth, and
 depth and depth^2 are part of your formula, you need to make sure these are
 listed first and that an intercept isn't included. For example, \code{formula = cpue ~ 0 + depth + depth2 + as.factor(year)}.}
 
-\item{threshold_parameter}{Optional parameter to include as a non-linear threshold
-relationship. Form can be linear or logistic, and is passed in as a character string,
-e.g. "temperature" that is a name of a variable in the data frame}
+\item{threshold_parameter}{Optional parameter to include as a non-linear
+threshold relationship. Form can be linear or logistic, and is passed in as
+a character string, e.g. \code{"temperature"}, that is column name in \code{data}.}
 
-\item{threshold_function}{Optional name to include of the threshold function. Defaults to
-"linear", in which case a linear breakpoint model is used. Other option is "logistic",
-which models the relationship as a function of the 50\% and 95\% values}
+\item{threshold_function}{Optional name to include of the threshold function.
+Defaults to "linear", in which case a linear breakpoint model is used.
+Other option is "logistic", which models the relationship as a function of
+the 50\% and 95\% values}
 }
 \description{
 Fit a spatial or spatiotemporal GLMM with TMB. Particularly useful for
