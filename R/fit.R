@@ -200,7 +200,7 @@ sdmTMB <- function(formula, data, time = NULL, spde,
     X_threshold <- rep(0, nrow(X_ij)) # just placeholder
     threshold_func <- 0L
   } else {
-    if (any(grepl(paste0(" ", threshold_parameter, " "), formula))) {
+    if (threshold_parameter %in% colnames(X_ij)) {
       stop("`threshold_parameter` must not be part of `formula`.", call. = FALSE)
     }
     X_threshold <- data[, names(data) == threshold_parameter, drop = TRUE]
