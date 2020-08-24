@@ -196,10 +196,12 @@ sdmTMB <- function(formula, data, time = NULL, spde,
   contains_offset <- check_offset(formula)
 
   if (isFALSE(mgcv)) {
+    mgcv_mod <- NULL
     X_ij <- model.matrix(formula, data)
     mf <- model.frame(formula, data)
   } else {
-    X_ij <- model.matrix(mgcv::gam(formula, data = data)) # should be fast enough to not worry
+    mgcv_mod <- mgcv::gam(formula, data = data) # should be fast enough to not worry
+    X_ij <- model.matrix(mgcv_mod)
     mf <- model.frame(mgcv::interpret.gam(formula)$fake.formula, data)
   }
 
@@ -432,6 +434,7 @@ sdmTMB <- function(formula, data, time = NULL, spde,
     time_varying = time_varying,
     threshold_parameter = thresh$threshold_parameter,
     threshold_function = thresh$threshold_func,
+    mgcv_mod   = mgcv_mod,
     time       = time,
     family     = family,
     response   = y_i,

@@ -1,6 +1,8 @@
 # sdmTMB
 
-# sdmTMB 0.0.6.9000
+# sdmTMB 0.0.6.9002
+
+* Fix GAM predictions with all 0s in newdata.
 
 * Add linear and logistic threshold models. #17
 

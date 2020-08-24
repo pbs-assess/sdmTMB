@@ -241,7 +241,7 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
         error = function(e) NA)
     }
     if (object$mgcv || identical(proj_X_ij, NA)) {
-      proj_X_ij <- model.matrix(mgcv::gam(object$formula, data = nd))
+      proj_X_ij <- mgcv::predict.gam(object$mgcv_mod, type = "lpmatrix", newdata = nd)
     }
     if (!is.null(object$time_varying))
       proj_X_rw_ik <- model.matrix(object$time_varying, data = nd)
