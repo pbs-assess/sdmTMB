@@ -12,8 +12,11 @@
 print.sdmTMB <- function(x, ...) {
   r <- suppressWarnings(tryCatch(x$tmb_obj$report(), error = function(e) NA))
   if (all(is.na(r))) {
-    x <- update_model(x)
-    r <- x$tmb_obj$report()
+    stop("It looks like the model was built with an older version of sdmTMB. ",
+      "Please update the model with ",
+      "`your_model <- sdmTMB:::update_model(your_model)`", call. = FALSE)
+    # x <- update_model(x)
+    # r <- x$tmb_obj$report()
   }
 
   spatial_only <- !is.null(r$r$sigma_E) && !is.null(r$r$sigma_O_trend)
@@ -88,7 +91,7 @@ print.sdmTMB <- function(x, ...) {
   sr_se <- as.list(sr, "Std. Error")
   sr_est <- as.list(sr, "Estimate")
 
-  if (x$threshold_function > 0) {
+  if (x$tmb_data$threshold_func > 0) {
     mm_thresh <- cbind(sr_est$b_threshold, sr_se$b_threshold)
     if (x$threshold_function == 1L) {
       row.names(mm_thresh) <- paste0(x$threshold_parameter, c("-slope", "-breakpt"))

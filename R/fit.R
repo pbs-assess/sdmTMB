@@ -501,11 +501,17 @@ check_offset <- function(formula) {
 }
 
 update_model <- function(object, silent = FALSE) {
-  object$tmb_data$pop_pred <- 0L
-  object$mgcv <- FALSE
+  if (!"pop_pred" %in% names(object$tmb_data)) object$tmb_data$pop_pred <- 0L
+  if (!"mgcv" %in% names(object)) object$mgcv <- FALSE
   object$tmb_data$weights_i <- rep(1, length(object$tmb_data$y_i))
   object$tmb_data$calc_quadratic_range <- 0L
   object$tmb_data$area_i <- rep(1, length(object$tmb_data$y_i))
+  if (!"X_threshold" %in% names(object$tmb_data)) {
+    object$tmb_data$X_threshold <- rep(0, nrow(object$data)) # just placeholder
+    object$tmb_data$threshold_func <- 0L
+    object$tmb_data$proj_X_threshold <- 0 # dummy
+    object$tmb_params$b_threshold <- rep(0, 2)
+  }
   object$tmb_obj <- TMB::MakeADFun(
     data = object$tmb_data, parameters = object$tmb_params,
     map = object$tmb_map, random = object$tmb_random, DLL = "sdmTMB", silent = silent)
