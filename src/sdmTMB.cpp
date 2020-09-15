@@ -92,7 +92,7 @@ Type linear_threshold(Type x, Type slope, Type cutpoint)
   if(x < cutpoint) {
     pred = x * slope;
   } else {
-    pred = x * cutpoint;
+    pred = cutpoint * slope;
   }
   return pred;
 }
