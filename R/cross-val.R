@@ -59,8 +59,8 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' x$models[[2]]
 #'
 #' # proof the knots are the same but the data change if `knot_type = "fixed"`:
-#' plot_spde(m$models[[1]]$spde)
-#' plot_spde(m$models[[2]]$spde)
+#' plot_spde(x$models[[1]]$spde)
+#' plot_spde(x$models[[2]]$spde)
 
 sdmTMB_cv <- function(formula, data, x, y, time = NULL,
                       k_folds = 10, fold_ids = NULL, n_knots = NULL,

@@ -67,6 +67,6 @@ x$models[[1]]
 x$models[[2]]
 
 # proof the knots are the same but the data change if `knot_type = "fixed"`:
-plot_spde(m$models[[1]]$spde)
-plot_spde(m$models[[2]]$spde)
+plot_spde(x$models[[1]]$spde)
+plot_spde(x$models[[2]]$spde)
 }
