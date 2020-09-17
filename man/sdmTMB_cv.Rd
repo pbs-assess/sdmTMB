@@ -14,6 +14,7 @@ sdmTMB_cv(
   fold_ids = NULL,
   n_knots = NULL,
   spde_function = make_spde,
+  knot_type = c("fixed", "unique"),
   seed = 999,
   ...
 )
@@ -36,10 +37,15 @@ ids.}
 
 \item{n_knots}{The number of knots.}
 
-\item{spde_function}{A function that takes 3 arguments (x, y, n_knots) and
-returns a list structure that matches output of \code{\link[=make_spde]{make_spde()}}.}
+\item{spde_function}{A function that takes 3 arguments (\code{x}, \code{y}, \code{n_knots})
+(and \code{mesh} if \code{knot_type = "fixed"}) and returns a list structure that
+matches output of \code{\link[=make_spde]{make_spde()}}.}
 
-\item{seed}{Provide seed to ensure fold pattern is the same for comparison purposes.}
+\item{knot_type}{Should the mesh knots be fixed across each fold (\code{"fixed"})
+or generated separately for each fold (\code{"unique"})?}
+
+\item{seed}{A seed to ensure the fold pattern is the same for comparison
+purposes.}
 
 \item{...}{All other arguments required to run sdmTMB model with the
 exception of \code{data} and \code{spde} which are redefined for each fold within the
@@ -59,4 +65,8 @@ x$sum_loglik
 str(x$data)
 x$models[[1]]
 x$models[[2]]
+
+# proof the knots are the same but the data change if `knot_type = "fixed"`:
+plot_spde(m$models[[1]]$spde)
+plot_spde(m$models[[2]]$spde)
 }

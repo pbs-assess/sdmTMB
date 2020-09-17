@@ -33,9 +33,13 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' @param fold_ids Optional input name of column containing user chosen fold
 #'   ids.
 #' @param n_knots The number of knots.
-#' @param spde_function A function that takes 3 arguments (x, y, n_knots) and
-#'   returns a list structure that matches output of [make_spde()].
-#' @param seed Provide seed to ensure fold pattern is the same for comparison purposes.
+#' @param spde_function A function that takes 3 arguments (`x`, `y`, `n_knots`)
+#'   (and `mesh` if `knot_type = "fixed"`) and returns a list structure that
+#'   matches output of [make_spde()].
+#' @param knot_type Should the mesh knots be fixed across each fold (`"fixed"`)
+#'   or generated separately for each fold (`"unique"`)?
+#' @param seed A seed to ensure the fold pattern is the same for comparison
+#'   purposes.
 #' @param ... All other arguments required to run sdmTMB model with the
 #'   exception of `data` and `spde` which are redefined for each fold within the
 #'   function.
@@ -53,12 +57,19 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' str(x$data)
 #' x$models[[1]]
 #' x$models[[2]]
+#'
+#' # proof the knots are the same but the data change if `knot_type = "fixed"`:
+#' plot_spde(m$models[[1]]$spde)
+#' plot_spde(m$models[[2]]$spde)
 
 sdmTMB_cv <- function(formula, data, x, y, time = NULL,
                       k_folds = 10, fold_ids = NULL, n_knots = NULL,
-                      spde_function = make_spde, seed = 999, ...) {
+                      spde_function = make_spde,
+                      knot_type = c("fixed", "unique"),
+                      seed = 999, ...) {
   set.seed(seed)
   data[["_sdm_order_"]] <- seq_len(nrow(data))
+  knot_type <- match.arg(knot_type)
 
   if (is.null(time)) {
     time <- "_sdmTMB_time"
@@ -77,6 +88,10 @@ sdmTMB_cv <- function(formula, data, x, y, time = NULL,
     data$cv_fold <- fold_ids
   }
 
+  if (identical(knot_type, "fixed")) {
+    spde_global <- spde_function(data[[x]], data[[y]], n_knots = n_knots)
+  }
+
   out <- lapply(seq_len(k_folds), function(k) {
     if (k_folds > 1) {
       d_fit <- data[data[[fold_ids]] != k, , drop = FALSE]
@@ -87,7 +102,12 @@ sdmTMB_cv <- function(formula, data, x, y, time = NULL,
     }
 
     # build mesh for training data
-    d_fit_spde <- spde_function(d_fit[[x]], d_fit[[y]], n_knots = n_knots)
+    if (identical(knot_type, "fixed")) {
+      d_fit_spde <- spde_function(d_fit[[x]], d_fit[[y]], n_knots = n_knots,
+        mesh = spde_global$mesh)
+    } else {
+      d_fit_spde <- spde_function(d_fit[[x]], d_fit[[y]], n_knots = n_knots)
+    }
 
     # run model
     object <- sdmTMB(data = d_fit, formula = formula, time = time, spde = d_fit_spde, ...)
