@@ -94,27 +94,32 @@ sdmTMB_cv <- function(formula, data, x, y, time = NULL,
 
   out <- lapply(seq_len(k_folds), function(k) {
     if (k_folds > 1) {
-      d_fit <- data[data[[fold_ids]] != k, , drop = FALSE]
-      d_withheld <- data[data[[fold_ids]] == k, , drop = FALSE]
+      #d_fit <- data[data[[fold_ids]] != k, , drop = FALSE]
+      #d_withheld <- data[data[[fold_ids]] == k, , drop = FALSE]
+      # data in kth fold get weight of 0 -- note this is a vector, not element of dataframe
+      weights = rep(ifelse(data$cv_fold == k, 0, 1), nrow(data))
     } else {
-      d_fit <- data
-      d_withheld <- data
+      #d_fit <- data
+      #d_withheld <- data
+      weights = rep(1, nrow(data))
     }
 
     # build mesh for training data
     if (identical(knot_type, "fixed")) {
-      d_fit_spde <- spde_function(d_fit[[x]], d_fit[[y]], n_knots = n_knots,
+      d_fit_spde <- spde_function(data[[x]], data[[y]], n_knots = n_knots,
         mesh = spde_global$mesh)
     } else {
-      d_fit_spde <- spde_function(d_fit[[x]], d_fit[[y]], n_knots = n_knots)
+      d_fit_spde <- spde_function(data[[x]], data[[y]], n_knots = n_knots)
     }
 
-    # run model
-    object <- sdmTMB(data = d_fit, formula = formula, time = time, spde = d_fit_spde, ...)
+    # run model with weights argument
+    object <- sdmTMB(data = data, formula = formula, time = time,
+      spde = d_fit_spde, weights = weights, ...)
 
     # predict for withheld data
-    predicted <- predict(object, newdata = d_withheld, xy_cols = c(x, y))
-    cv_data <- d_withheld
+    predicted <- predict(object)[which(weights==0),]
+    cv_data <- data[which(weights==0),]
+
     cv_data$cv_predicted <- object$family$linkinv(predicted$est)
     response <- get_response(object$formula)
     withheld_y <- predicted[[response]]
@@ -131,6 +136,7 @@ sdmTMB_cv <- function(formula, data, x, y, time = NULL,
       bad_eig = object$bad_eig
     )
   })
+
   models <- lapply(out, `[[`, "model")
   data <- lapply(out, `[[`, "data")
   data <- do.call(rbind, data)

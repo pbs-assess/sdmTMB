@@ -161,18 +161,20 @@ ggplot(p, aes(depth_scaled, exp(est),
 
 # Forecasting ----------------------------------------------------------
 
-# Forecasting using Eric Ward's hack with the `weights` argument:
+# Forecasting using Eric Ward's hack with the `weights` argument.
 
 # Add on a fake year of data with the year to forecast:
 dfake <- rbind(d, d[nrow(d), ])
 dfake[nrow(dfake), "year"] <- max(d$year) + 1
 tail(dfake) # last row is fake!
+
 weights <- rep(1, nrow(dfake))
 weights[length(weights)] <- 0 # set last row weight to 0
 dfake$year_factor <- dfake$year
 dfake$year_factor[nrow(dfake)] <- max(d$year) # share fixed effect for last 2 years
 
 pcod_spde <- make_spde(dfake$X, dfake$Y, n_knots = 50)
+
 m <- sdmTMB(
   data = dfake, formula = density ~ 0 + as.factor(year_factor),
   ar1_fields = TRUE, # using an AR1 to have something to forecast with
@@ -183,6 +185,7 @@ m <- sdmTMB(
 )
 
 # Add a year to our grid:
+qcs_grid$year_factor <- qcs_grid$year
 grid2018 <- qcs_grid[qcs_grid$year == 2017L, ]
 grid2018$year <- 2018L # `L` because `year` is an integer in the data
 qcsgrid_forecast <- rbind(qcs_grid, grid2018)
