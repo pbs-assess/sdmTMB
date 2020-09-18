@@ -147,10 +147,12 @@
 #' tail(dfake) # last row is fake!
 #' weights <- rep(1, nrow(dfake))
 #' weights[length(weights)] <- 0 # set last row weight to 0
+#' dfake$year_factor <- dfake$year
+#' dfake$year_factor[nrow(dfake)] <- max(d$year) # share fixed effect for last 2 years
 #'
 #' pcod_spde <- make_spde(dfake$X, dfake$Y, n_knots = 50)
 #' m <- sdmTMB(
-#'   data = d, formula = density ~ 0 + as.factor(year),
+#'   data = dfake, formula = density ~ 0 + as.factor(year_factor),
 #'   ar1_fields = TRUE, # using an AR1 to have something to forecast with
 #'   weights = weights,
 #'   include_spatial = TRUE, # could also be `FALSE`
