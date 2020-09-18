@@ -78,7 +78,6 @@ Can predict on the original data locations or on new data.
 
 library(ggplot2)
 d <- pcod
-
 pcod_spde <- make_spde(d$X, d$Y, n_knots = 50) # just 50 for example speed
 m <- sdmTMB(
  data = d, formula = density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
@@ -86,7 +85,8 @@ m <- sdmTMB(
  silent = FALSE
 )
 
-# Predictions at original data locations:
+# Predictions at original data locations -------------------------------
+
 predictions <- predict(m)
 head(predictions)
 
@@ -96,7 +96,8 @@ ggplot(predictions, aes(X, Y, col = resids)) + scale_colour_gradient2() +
 hist(predictions$resids)
 qqnorm(predictions$resids);abline(a = 0, b = 1)
 
-# Predictions onto new data:
+# Predictions onto new data --------------------------------------------
+
 predictions <- predict(m, newdata = qcs_grid)
 
 # A short function for plotting our predictions:
@@ -127,8 +128,10 @@ plot_map(predictions, "epsilon_st") +
   ggtitle("Spatiotemporal random effects only") +
   scale_fill_gradient2()
 
-# Visualizing the marginal effect of a covariate with confidence intervals:
-# (Also demonstrates getting standard errors on population-level predictions.)
+\donttest{
+# Visualizing a marginal effect ----------------------------------------
+# Also demonstrates getting standard errors on population-level predictions
+
 nd <- data.frame(depth_scaled =
   seq(min(d$depth_scaled), max(d$depth_scaled), length.out = 100))
 nd$depth_scaled2 <- nd$depth_scaled^2
@@ -141,7 +144,8 @@ ggplot(p, aes(depth_scaled, exp(est),
   ymin = exp(est - 1.96 * est_se), ymax = exp(est + 1.96 * est_se))) +
   geom_line() + geom_ribbon(alpha = 0.4)
 
-# Using a spline instead:
+# Plotting marginal effect of a spline ---------------------------------
+
 m_gam <- sdmTMB(
  data = d, formula = density ~ 0 + as.factor(year) + s(depth_scaled, k = 3),
  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
@@ -155,8 +159,40 @@ ggplot(p, aes(depth_scaled, exp(est),
   ymin = exp(est - 1.96 * est_se), ymax = exp(est + 1.96 * est_se))) +
   geom_line() + geom_ribbon(alpha = 0.4)
 
-\donttest{
-# Spatial trend example:
+# Forecasting ----------------------------------------------------------
+
+# Forecasting using Eric Ward's hack with the `weights` argument:
+
+# Add on a fake year of data with the year to forecast:
+dfake <- rbind(d, d[nrow(d), ])
+dfake[nrow(dfake), "year"] <- max(d$year) + 1
+tail(dfake) # last row is fake!
+weights <- rep(1, nrow(dfake))
+weights[length(weights)] <- 0 # set last row weight to 0
+
+pcod_spde <- make_spde(dfake$X, dfake$Y, n_knots = 50)
+m <- sdmTMB(
+  data = d, formula = density ~ 0 + as.factor(year),
+  ar1_fields = TRUE, # using an AR1 to have something to forecast with
+  weights = weights,
+  include_spatial = TRUE, # could also be `FALSE`
+  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+  silent = FALSE
+)
+
+# Add a year to our grid:
+grid2018 <- qcs_grid[qcs_grid$year == 2017L, ]
+grid2018$year <- 2018L # `L` because `year` is an integer in the data
+qcsgrid_forecast <- rbind(qcs_grid, grid2018)
+
+predictions <- predict(m, newdata = qcsgrid_forecast)
+plot_map(predictions, "exp(est)") +
+  scale_fill_viridis_c(trans = "log10")
+plot_map(predictions, "epsilon_st") +
+  scale_fill_gradient2()
+
+# Estimating local trends ----------------------------------------------
+
 pcod_spde <- make_spde(d$X, d$Y, n_knots = 100)
 m <- sdmTMB(data = pcod, formula = density ~ depth_scaled + depth_scaled2,
   spde = pcod_spde, family = tweedie(link = "log"),
