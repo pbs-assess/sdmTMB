@@ -94,13 +94,9 @@ sdmTMB_cv <- function(formula, data, x, y, time = NULL,
 
   out <- lapply(seq_len(k_folds), function(k) {
     if (k_folds > 1) {
-      #d_fit <- data[data[[fold_ids]] != k, , drop = FALSE]
-      #d_withheld <- data[data[[fold_ids]] == k, , drop = FALSE]
       # data in kth fold get weight of 0 -- note this is a vector, not element of dataframe
       weights = rep(ifelse(data$cv_fold == k, 0, 1), nrow(data))
     } else {
-      #d_fit <- data
-      #d_withheld <- data
       weights = rep(1, nrow(data))
     }
 
