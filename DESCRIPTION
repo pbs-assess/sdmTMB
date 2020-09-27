@@ -25,6 +25,7 @@ Depends:
     R (>= 3.2.0)
 Imports:
     fishMod,
+    future.apply,
     graphics,
     INLA,
     Matrix,

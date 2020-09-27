@@ -4,69 +4,41 @@
 \alias{sdmTMB_cv}
 \title{Save log likelihoods of k-fold cross-validation for sdmTMB models}
 \usage{
-sdmTMB_cv(
-  formula,
-  data,
-  x,
-  y,
-  time = NULL,
-  k_folds = 10,
-  fold_ids = NULL,
-  n_knots = NULL,
-  spde_function = make_spde,
-  knot_type = c("fixed", "unique"),
-  seed = 999,
-  ...
-)
+sdmTMB_cv(formula, data, spde, time = NULL, k_folds = 10, fold_ids = NULL, ...)
 }
 \arguments{
 \item{formula}{Model formula.}
 
 \item{data}{A data frame.}
 
-\item{x}{Name of the column with X coordinates.}
-
-\item{y}{Name of the column with Y coordinates.}
+\item{spde}{Output from \code{\link[=make_spde]{make_spde()}}.}
 
 \item{time}{The name of the time column. Leave as \code{NULL} if this is only spatial data.}
 
 \item{k_folds}{Number of folds.}
 
-\item{fold_ids}{Optional input name of column containing user chosen fold
-ids.}
+\item{fold_ids}{Optional input name of column containing user fold ids.}
 
-\item{n_knots}{The number of knots.}
-
-\item{spde_function}{A function that takes 3 arguments (\code{x}, \code{y}, \code{n_knots})
-(and \code{mesh} if \code{knot_type = "fixed"}) and returns a list structure that
-matches output of \code{\link[=make_spde]{make_spde()}}.}
-
-\item{knot_type}{Should the mesh knots be fixed across each fold (\code{"fixed"})
-or generated separately for each fold (\code{"unique"})?}
-
-\item{seed}{A seed to ensure the fold pattern is the same for comparison
-purposes.}
-
-\item{...}{All other arguments required to run sdmTMB model with the
-exception of \code{data} and \code{spde} which are redefined for each fold within the
-function.}
+\item{...}{All other arguments required to run \code{\link[=sdmTMB]{sdmTMB()}} model with the
+exception of \code{weights}, which are used to define the folds.}
 }
 \description{
 Save log likelihoods of k-fold cross-validation for sdmTMB models
 }
 \examples{
 d <- subset(pcod, year >= 2011) # subset for example speed
-x <- sdmTMB_cv(
-  formula = density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-  d, family = tweedie(link = "log"), time = "year", x = "X", y = "Y",
-  n_knots = 30, k_folds = 2
-)
-x$sum_loglik
-str(x$data)
-x$models[[1]]
-x$models[[2]]
+spde <- make_spde(d$X, d$Y, n_knots = 30)
 
-# proof the knots are the same but the data change if `knot_type = "fixed"`:
-plot_spde(x$models[[1]]$spde)
-plot_spde(x$models[[2]]$spde)
+# library(future) # for parallel processing
+# plan(multisession) # for parallel processing
+m_cv <- sdmTMB_cv(
+  density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+  data = d, spde = spde,
+  family = tweedie(link = "log"), time = "year", k_folds = 3
+)
+m_cv$fold_loglik
+m_cv$sum_loglik
+head(m_cv$data)
+m_cv$models[[1]]
+m_cv$max_gradients
 }

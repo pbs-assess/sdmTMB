@@ -10,8 +10,8 @@ NULL
 #'   offsets and threshold parameters. For index standardization, include `0 +
 #'   as.factor(year)` (or whatever the time column is called) in the formula.
 #' @param data A data frame.
-#' @param time The time column (as character).
 #' @param spde An object from [make_spde()].
+#' @param time The time column (as character).
 #' @param family The family and link. Supports [gaussian()], [Gamma()],
 #'   [binomial()], [poisson()], [nbinom2()], and [tweedie()].
 #' @param time_varying An optional formula describing covariates that should be
@@ -54,6 +54,10 @@ NULL
 #'   [stats::optimHess()] after running [stats::nlminb()]. Sometimes aids
 #'   convergence.
 #' @param mgcv Parse the formula with [mgcv::gam()]?
+#' @param previous_fit A previously fitted sdmTMB model to initialize the
+#'   optimization with. Can greatly speed up fitting. Note that the data and
+#'   model must be set up exactly the same way! However, the `weights` argument
+#'   can change, which can be useful for cross-validation.
 #' @param quadratic_roots Logical: should quadratic roots be calculated?
 #'   Experimental feature for internal use right now. Note: on the sdmTMB side,
 #'   the first two coefficients are used to generate the quadratic parameters.
@@ -156,7 +160,7 @@ NULL
 #'     breakpt(depth_scaled) + depth_scaled2, data = pcod_gaus,
 #'   time = "year", spde = pcod_spde_gaus)
 
-sdmTMB <- function(formula, data, time = NULL, spde,
+sdmTMB <- function(formula, data, spde, time = NULL,
   family = gaussian(link = "identity"),
   time_varying = NULL, weights = NULL, reml = FALSE,
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
@@ -167,6 +171,7 @@ sdmTMB <- function(formula, data, time = NULL, spde,
   nlminb_loops = 1,
   newton_steps = 0,
   mgcv = TRUE,
+  previous_fit = NULL,
   quadratic_roots = FALSE) {
 
   if (isTRUE(normalize)) {
@@ -328,7 +333,7 @@ sdmTMB <- function(formula, data, time = NULL, spde,
   if (is.null(thresh$threshold_parameter)) {
     tmb_map <- c(tmb_map, list(b_threshold = factor(rep(NA, 2))))
   }
-  if (multiphase) {
+  if (multiphase && is.null(previous_fit)) {
     not_phase1 <- c(tmb_map, list(
       ln_tau_O   = as.factor(NA),
       ln_tau_E   = as.factor(NA),
@@ -390,14 +395,24 @@ sdmTMB <- function(formula, data, time = NULL, spde,
     )
   if (reml) tmb_random <- c(tmb_random, "b_j")
 
+  if (!is.null(previous_fit)) {
+    tmb_params <- previous_fit$tmb_obj$env$parList()
+  }
+
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     random = tmb_random, DLL = "sdmTMB", silent = silent)
   if (tmb_data$normalize_in_r == 1L)
     tmb_obj <- TMB::normalize(tmb_obj, flag = "flag")
 
+  if (!is.null(previous_fit)) {
+    start <- previous_fit$model$par
+  } else {
+    start <- tmb_obj$par
+  }
+
   tmb_opt <- stats::nlminb(
-    start = tmb_obj$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
+    start = start, objective = tmb_obj$fn, gradient = tmb_obj$gr,
     control = control)
 
   if (nlminb_loops > 1) {

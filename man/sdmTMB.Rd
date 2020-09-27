@@ -7,8 +7,8 @@
 sdmTMB(
   formula,
   data,
-  time = NULL,
   spde,
+  time = NULL,
   family = gaussian(link = "identity"),
   time_varying = NULL,
   weights = NULL,
@@ -26,6 +26,7 @@ sdmTMB(
   nlminb_loops = 1,
   newton_steps = 0,
   mgcv = TRUE,
+  previous_fit = NULL,
   quadratic_roots = FALSE
 )
 }
@@ -35,9 +36,9 @@ offsets and threshold parameters. For index standardization, include \code{0 + a
 
 \item{data}{A data frame.}
 
-\item{time}{The time column (as character).}
-
 \item{spde}{An object from \code{\link[=make_spde]{make_spde()}}.}
+
+\item{time}{The time column (as character).}
 
 \item{family}{The family and link. Supports \code{\link[=gaussian]{gaussian()}}, \code{\link[=Gamma]{Gamma()}},
 \code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, \code{\link[=nbinom2]{nbinom2()}}, and \code{\link[=tweedie]{tweedie()}}.}
@@ -96,6 +97,11 @@ try increasing this to \code{2}.}
 convergence.}
 
 \item{mgcv}{Parse the formula with \code{\link[mgcv:gam]{mgcv::gam()}}?}
+
+\item{previous_fit}{A previously fitted sdmTMB model to initialize the
+optimization with. Can greatly speed up fitting. Note that the data and
+model must be set up exactly the same way! However, the \code{weights} argument
+can change, which can be useful for cross-validation.}
 
 \item{quadratic_roots}{Logical: should quadratic roots be calculated?
 Experimental feature for internal use right now. Note: on the sdmTMB side,

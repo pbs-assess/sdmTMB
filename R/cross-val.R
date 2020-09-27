@@ -17,7 +17,11 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
   family_func <- switch(object$family$family,
     gaussian = ll_gaussian,
     tweedie = ll_tweedie,
-    binomial = ll_binomial
+    binomial = ll_binomial,
+    stop(object$family$family, " not yet implemented. ",
+      "Please file an issue on GitHub.",
+      call. = FALSE
+    )
   )
   family_func(object, withheld_y, withheld_mu)
 }
@@ -26,57 +30,43 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'
 #' @param formula Model formula.
 #' @param data A data frame.
+#' @param spde Output from [make_spde()].
 #' @param time The name of the time column. Leave as `NULL` if this is only spatial data.
-#' @param x Name of the column with X coordinates.
-#' @param y Name of the column with Y coordinates.
 #' @param k_folds Number of folds.
-#' @param fold_ids Optional input name of column containing user chosen fold
-#'   ids.
-#' @param n_knots The number of knots.
-#' @param spde_function A function that takes 3 arguments (`x`, `y`, `n_knots`)
-#'   (and `mesh` if `knot_type = "fixed"`) and returns a list structure that
-#'   matches output of [make_spde()].
-#' @param knot_type Should the mesh knots be fixed across each fold (`"fixed"`)
-#'   or generated separately for each fold (`"unique"`)?
-#' @param seed A seed to ensure the fold pattern is the same for comparison
-#'   purposes.
-#' @param ... All other arguments required to run sdmTMB model with the
-#'   exception of `data` and `spde` which are redefined for each fold within the
-#'   function.
+#' @param fold_ids Optional input name of column containing user fold ids.
+#' @param ... All other arguments required to run [sdmTMB()] model with the
+#'   exception of `weights`, which are used to define the folds.
 #'
 #' @export
 #'
 #' @examples
 #' d <- subset(pcod, year >= 2011) # subset for example speed
-#' x <- sdmTMB_cv(
-#'   formula = density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-#'   d, family = tweedie(link = "log"), time = "year", x = "X", y = "Y",
-#'   n_knots = 30, k_folds = 2
-#' )
-#' x$sum_loglik
-#' str(x$data)
-#' x$models[[1]]
-#' x$models[[2]]
+#' spde <- make_spde(d$X, d$Y, n_knots = 30)
 #'
-#' # proof the knots are the same but the data change if `knot_type = "fixed"`:
-#' plot_spde(x$models[[1]]$spde)
-#' plot_spde(x$models[[2]]$spde)
+#' # library(future) # for parallel processing
+#' # plan(multisession) # for parallel processing
+#' m_cv <- sdmTMB_cv(
+#'   density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+#'   data = d, spde = spde,
+#'   family = tweedie(link = "log"), time = "year", k_folds = 3
+#' )
+#' m_cv$fold_loglik
+#' m_cv$sum_loglik
+#' head(m_cv$data)
+#' m_cv$models[[1]]
+#' m_cv$max_gradients
+sdmTMB_cv <- function(formula, data, spde, time = NULL,
+                      k_folds = 10, fold_ids = NULL,
+                      ...) {
+  if (k_folds < 1) stop("`k_folds` must be >= 1.", call. = FALSE)
 
-sdmTMB_cv <- function(formula, data, x, y, time = NULL,
-                      k_folds = 10, fold_ids = NULL, n_knots = NULL,
-                      spde_function = make_spde,
-                      knot_type = c("fixed", "unique"),
-                      seed = 999, ...) {
-  set.seed(seed)
   data[["_sdm_order_"]] <- seq_len(nrow(data))
-  knot_type <- match.arg(knot_type)
 
+  # add column of fold_ids stratified across time steps
   if (is.null(time)) {
     time <- "_sdmTMB_time"
     data[[time]] <- 0L
   }
-
-  # add column of fold_ids stratified across time steps
   if (is.null(fold_ids)) {
     dd <- lapply(split(data, data[[time]]), function(x) {
       x$cv_fold <- sample(rep(seq(1L, k_folds), nrow(x)), size = nrow(x))
@@ -88,40 +78,47 @@ sdmTMB_cv <- function(formula, data, x, y, time = NULL,
     data$cv_fold <- fold_ids
   }
 
-  if (identical(knot_type, "fixed")) {
-    spde_global <- spde_function(data[[x]], data[[y]], n_knots = n_knots)
+  dot_args <- as.list(substitute(list(...)))[-1L]
+  if ("weights" %in% names(dot_args)) {
+    stop("`weights` cannot be specified within sdmTMB_cv().", call. = FALSE)
   }
 
-  out <- lapply(seq_len(k_folds), function(k) {
-    if (k_folds > 1) {
-      # data in kth fold get weight of 0 -- note this is a vector, not element of dataframe
-      weights = rep(ifelse(data$cv_fold == k, 0, 1), nrow(data))
+  if (k_folds > 1) {
+    # data in kth fold get weight of 0:
+    weights <- ifelse(data$cv_fold == 1L, 1, 0)
+  } else {
+    weights <- rep(1, nrow(data))
+  }
+
+  # run model on first fold to get starting values:
+  fit1 <- sdmTMB(
+    data = data, formula = formula, time = time, spde = spde,
+    weights = weights, ...
+  )
+
+  out <- future.apply::future_lapply(seq_len(k_folds), function(k) {
+    # out <- lapply(seq_len(k_folds), function(k) {
+    # data in kth fold get weight of 0:
+    weights <- ifelse(data$cv_fold == k, 1, 0)
+    args <- c(list(
+      data = data, formula = formula, time = time,
+      spde = spde, weights = weights, previous_fit = fit1
+    ), dot_args)
+    if (k == 1L) {
+      object <- fit1
     } else {
-      weights = rep(1, nrow(data))
+      object <- do.call(sdmTMB, args)
     }
 
-    # build mesh for training data
-    if (identical(knot_type, "fixed")) {
-      d_fit_spde <- spde_function(data[[x]], data[[y]], n_knots = n_knots,
-        mesh = spde_global$mesh)
-    } else {
-      d_fit_spde <- spde_function(data[[x]], data[[y]], n_knots = n_knots)
-    }
-
-    # run model with weights argument
-    object <- sdmTMB(data = data, formula = formula, time = time,
-      spde = d_fit_spde, weights = weights, ...)
-
-    # predict for withheld data
-    predicted <- predict(object)[which(weights==0),]
-    cv_data <- data[which(weights==0),]
-
+    # predict for withheld data:
+    predicted <- predict(object)[weights == 0, , drop = FALSE]
+    cv_data <- data[weights == 0, , drop = FALSE]
     cv_data$cv_predicted <- object$family$linkinv(predicted$est)
     response <- get_response(object$formula)
     withheld_y <- predicted[[response]]
     withheld_mu <- cv_data$cv_predicted
 
-    # calculate log likelihood for each withheld observationn
+    # calculate log likelihood for each withheld observation:
     cv_data$cv_loglik <- ll_sdmTMB(object, withheld_y, withheld_mu)
 
     list(
@@ -135,6 +132,7 @@ sdmTMB_cv <- function(formula, data, x, y, time = NULL,
 
   models <- lapply(out, `[[`, "model")
   data <- lapply(out, `[[`, "data")
+  fold_cv_ll <- vapply(data, function(.x) sum(.x$cv_loglik), FUN.VALUE = numeric(1L))
   data <- do.call(rbind, data)
   data <- data[order(data[["_sdm_order_"]]), , drop = FALSE]
   data[["_sdm_order_"]] <- NULL
@@ -147,8 +145,10 @@ sdmTMB_cv <- function(formula, data, x, y, time = NULL,
   list(
     data = data,
     models = models,
+    fold_loglik = fold_cv_ll,
     sum_loglik = sum(data$cv_loglik),
     converged = converged,
-    max_grad = max(max_grad)
+    pdHess = pdHess,
+    max_gradients = max_grad
   )
 }
