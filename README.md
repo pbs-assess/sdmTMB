@@ -3,6 +3,8 @@
 
 # sdmTMB <a href='https://github.com/pbs-assess/sdmTMB'><img src='man/figures/logo-sdmTMB.png' align="right" height="139" /></a>
 
+> Spatial and spatiotemporal GLMMs with TMB
+
 [![Travis build
 status](https://travis-ci.org/pbs-assess/sdmTMB.svg?branch=master)](https://travis-ci.org/pbs-assess/sdmTMB)
 [![Project Status: WIP – Initial development is in progress, but there
