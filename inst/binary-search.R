@@ -35,7 +35,7 @@ binary_search_knots <- function(x, y,
                                 max = 1e4,
                                 length = 1e6) {
   vec <- exp(seq(log(min), log(max), length.out = length))
-  loc <- cbind(x, y)
+  loc_xy <- cbind(x, y)
   L <- 0
   R <- length(vec)
   realized_knots <- Inf
@@ -61,11 +61,12 @@ binary_search_knots <- function(x, y,
 }
 
 library(sdmTMB)
-loc_xy <- cbind(pcod$X, pcod$Y)
-s <- binary_search_knots(loc_xy, 500)
+x <- pcod$X
+y <- pcod$Y
+s <- binary_search_knots(x, y, 500)
 plot(s)
-points(loc_xy, col = "#FF000090", pch = 20, cex = 0.5)
-s <- binary_search_knots(loc_xy, 178)
-s <- binary_search_knots(loc_xy, 200)
+points(x, y, col = "#FF000090", pch = 20, cex = 0.5)
+s <- binary_search_knots(x, y, 178)
+s <- binary_search_knots(x, y, 200)
 # an example that gets close but will fail:
-s <- binary_search_knots(loc_xy, 500, length = 1e3)
+s <- binary_search_knots(x, y, 500, length = 1e3)
