@@ -1,3 +1,5 @@
+# https://en.wikipedia.org/wiki/Binary_search_algorithm
+
 binary_search <- function(x, vec) {
   L <- 0
   R <- length(vec)
@@ -16,8 +18,24 @@ binary_search <- function(x, vec) {
 
 binary_search(500, seq(1, 10000))
 
-binary_search_knots <- function(loc_xy, n_knots, min = 1e-4, max = 1e4, length = 1e6) {
+#' Binary search for an INLA mesh with a cutoff that matches the desired knots
+#'
+#' @param x A vector of x coordinates.
+#' @param y A vector of y coordinates.
+#' @param n_knots The desired number of knots.
+#' @param min The minimum cutoff evaluated.
+#' @param max The maximum cutoff evaluated.
+#' @param length The number of cutoffs evaluated between `min` and `max` where the increments are log distributed.
+#'
+#' @return A mesh from [INLA::inla.mesh.create()].
+
+binary_search_knots <- function(x, y,
+                                n_knots,
+                                min = 1e-4,
+                                max = 1e4,
+                                length = 1e6) {
   vec <- exp(seq(log(min), log(max), length.out = length))
+  loc <- cbind(x, y)
   L <- 0
   R <- length(vec)
   realized_knots <- Inf
@@ -42,9 +60,12 @@ binary_search_knots <- function(loc_xy, n_knots, min = 1e-4, max = 1e4, length =
   mesh
 }
 
+library(sdmTMB)
+loc_xy <- cbind(pcod$X, pcod$Y)
 s <- binary_search_knots(loc_xy, 500)
 plot(s)
-points(loc_xy, col = "#FF000030")
+points(loc_xy, col = "#FF000090", pch = 20, cex = 0.5)
 s <- binary_search_knots(loc_xy, 178)
 s <- binary_search_knots(loc_xy, 200)
+# an example that gets close but will fail:
 s <- binary_search_knots(loc_xy, 500, length = 1e3)
