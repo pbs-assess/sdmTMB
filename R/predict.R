@@ -267,6 +267,10 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     proj_mesh <- INLA::inla.spde.make.A(object$spde$mesh,
       loc = as.matrix(fake_newdata[,xy_cols, drop = FALSE]))
 
+    # this formula has breakpt() etc. in it:
+    thresh <- check_and_parse_thresh_params(object$formula, newdata)
+    formula <- thresh$formula # this one does not
+
     nd <- newdata
     response <- get_response(object$formula)
     sdmTMB_fake_response <- FALSE
@@ -289,7 +293,6 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     else
       proj_X_rw_ik <- matrix(0, ncol = 1, nrow = 1) # dummy
 
-    thresh <- check_and_parse_thresh_params(object$formula, newdata)
     tmb_data$proj_X_threshold <- thresh$X_threshold
     tmb_data$area_i <- if (length(area) == 1L && area[[1]] == 1) rep(1, nrow(proj_X_ij)) else area
     tmb_data$proj_mesh <- proj_mesh

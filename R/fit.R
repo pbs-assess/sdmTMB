@@ -189,6 +189,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   }
 
   thresh <- check_and_parse_thresh_params(formula, data)
+  original_formula <- formula
   formula <- thresh$formula
 
   if (spatial_trend) {
@@ -445,7 +446,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     model      = tmb_opt,
     data       = data,
     spde       = spde,
-    formula    = formula,
+    formula    = original_formula,
     time_varying = time_varying,
     threshold_parameter = thresh$threshold_parameter,
     threshold_function = thresh$threshold_func,
