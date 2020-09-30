@@ -216,7 +216,7 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     if (any(!xy_cols %in% names(newdata)) && isFALSE(pop_pred))
       stop("`xy_cols` (the column names for the x and y coordinates) ",
         "are not in `newdata`. Did you miss specifying the argument ",
-        "to match your data?", call. = FALSE)
+        "`xy_cols` to match your data?", call. = FALSE)
 
     if (object$time == "_sdmTMB_time") newdata[[object$time]] <- 0L
     if (!identical(class(object$data[[object$time]]), class(newdata[[object$time]])))
@@ -227,7 +227,7 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
 
     if (!all(new_data_time %in% original_time))
       stop("Some new time elements were found in `newdata`. ",
-      "For now, make sure only time elements from the original dataset are present.",
+      "For now, make sure only time elements from the original dataset are present. If you would like to predict on new time elements, see the example hack with the `weights` argument in the help for `?predict.sdmTMB`.",
         call. = FALSE)
 
     if (!all(original_time %in% new_data_time)) {
