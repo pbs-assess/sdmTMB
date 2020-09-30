@@ -1,8 +1,23 @@
 # sdmTMB
 
-# sdmTMB 0.0.6.9002
+# sdmTMB 0.0.6.9003
 
-* Fix GAM predictions with all 0s in newdata.
+* Fixed bug with predictions on new data in models with break points
+
+* Overhauled cross validation function. The function now:
+    * uses Eric's weights hack so it can also be used for forecasting
+    * initializes subsequent folds at the MLE of the first fold for considerable speed increases
+    * works in parallel if a future plan initialized; see examples
+    
+* Added threshold parameters to the print method
+
+* Added forecasting example with the weights hack
+
+* Fixed bug in linear break point models
+
+#  sdmTMB 0.0.6.9002
+
+* Fixed GAM predictions with all 0s in new data.
 
 * Add linear and logistic threshold models. #17
 
