@@ -19,8 +19,9 @@ Description: The 'sdmTMB' package implements spatiotemporal
     application is for spatial or spatiotemporal species distribution
     models (SDMs).
 License: GPL (>=3)
-URL: https://github.com/seananderson/sdmTMB
+URL: https://pbs-assess.github.io/sdmTMB/index.html
 BugReports: https://github.com/seananderson/sdmTMB/issues
+Additional_repositories: https://inla.r-inla-download.org/R/stable
 Depends: 
     R (>= 3.2.0)
 Imports:

@@ -26,16 +26,7 @@ sdmTMB is an R package that implements spatial or spatiotemporal predictive-proc
     
 ## Installation
 
-Assuming you have a [C++ compiler](https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites) installed, you can install sdmTMB as follows.
-
-First, install INLA:
-
-```{r, eval=FALSE}
-install.packages("INLA", repos = c(getOption("repos"), 
-  INLA = "https://inla.r-inla-download.org/R/stable"), dep = TRUE)
-```
-
-Then install sdmTMB:
+Assuming you have a [C++ compiler](https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites) installed, you can install sdmTMB:
 
 ```{r, eval=FALSE}
 # install.packages("remotes")
