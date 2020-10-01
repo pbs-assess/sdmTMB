@@ -6,13 +6,20 @@ Authors@R:
     c(person(given = c("Sean", "C."),
              family = "Anderson",
              role = c("aut", "cre"),
-             email = "sean.anderson@dfo-mpo.gc.ca"),
-      person(given = c("Philina", "A."),
-             family = "English",
-             role = "aut"),
+             email = "sean.anderson@dfo-mpo.gc.ca",
+            comment = c(ORCID = "0000-0001-9563-1937")),
       person(given = c("Eric", "J."),
              family = "Ward",
-             role = "aut"))
+             role = "aut",
+             comment = c(ORCID = "0000-0002-4359-0296")),
+      person(given = c("Lewis", "A.", "K."),
+             family = "Barnett",
+             role = "aut",
+             comment = c(ORCID = "0000-0002-9381-8375")),
+      person(given = c("Philina", "A."),
+             family = "English",
+             role = "aut",
+             comment = c(ORCID = "0000-0003-2992-6782"))
 Description: The 'sdmTMB' package implements spatiotemporal
     predictive-process GLMMs (Generalized Linear Mixed Effect Models)
     using 'TMB', 'INLA', and Gaussian Markov random fields. One common
@@ -22,6 +29,14 @@ License: GPL (>=3)
 URL: https://pbs-assess.github.io/sdmTMB/index.html
 BugReports: https://github.com/seananderson/sdmTMB/issues
 Additional_repositories: https://inla.r-inla-download.org/R/stable
+VignetteBuilder: 
+    knitr
+ByteCompile: true
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1.9000
+SystemRequirements: GNU make
 Depends: 
     R (>= 3.2.0)
 Imports:
@@ -35,6 +50,9 @@ Imports:
     RandomFields,
     stats,
     TMB (>= 1.7.13)
+LinkingTo: 
+    RcppEigen,
+    TMB
 Suggests:
     dplyr,
     ggplot2,
@@ -43,14 +61,3 @@ Suggests:
     rmarkdown,
     splancs,
     testthat
-LinkingTo: 
-    RcppEigen,
-    TMB
-VignetteBuilder: 
-    knitr
-ByteCompile: true
-Encoding: UTF-8
-LazyData: true
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.1.9000
-SystemRequirements: GNU make
