@@ -63,10 +63,54 @@ binary_search_knots <- function(x, y,
 library(sdmTMB)
 x <- pcod$X
 y <- pcod$Y
-s <- binary_search_knots(x, y, 500)
-plot(s)
-points(x, y, col = "#FF000090", pch = 20, cex = 0.5)
-s <- binary_search_knots(x, y, 178)
+
+
 s <- binary_search_knots(x, y, 200)
-# an example that gets close but will fail:
-s <- binary_search_knots(x, y, 500, length = 1e3)
+d <- pcod
+pcod_spde <- make_spde(d$X, d$Y, n_knots = 125) # only 50 knots for example speed
+plot_spde(pcod_spde)
+
+# Tweedie:
+m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+  data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
+m
+
+
+library(INLA)
+library(inlabru)
+library(ggplot2)
+
+ggplot() + coord_equal() +
+  geom_point(aes(x, y), data.frame(x = x, y = y), alpha = 0.5) +
+  gg(m$spde$mesh)
+
+out <- inla.mesh.assessment(m$spde$mesh,
+  spatial.range = m$tmb_obj$report()$range,
+  alpha = 2,
+  dims = c(200, 200))
+quantile(out$sd.dev, na.rm = TRUE)
+
+# ggplot() + gg(out, aes(color = edge.len)) + coord_equal() +
+#   scale_colour_viridis_c()
+
+ggplot() + gg(out, aes(color = sd.dev)) + coord_equal() +
+  scale_colour_viridis_c(limits = range(out$sd.dev, na.rm = TRUE)) +
+  gg(m$spde$mesh)
+
+s <- binary_search_knots(x, y, 125)
+mesh <- make_spde(x, y, mesh = s)
+
+m2 <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+  data = d, time = "year", spde = mesh, family = tweedie(link = "log"),
+  silent = FALSE)
+m2
+
+out2<- inla.mesh.assessment(m2$spde$mesh,
+  spatial.range = m2$tmb_obj$report()$range,
+  alpha = 2,
+  dims = c(200, 200))
+ggplot() + gg(out2, aes(color = sd.dev)) + coord_equal() +
+  scale_colour_viridis_c(limits = range(out2$sd.dev, na.rm = TRUE)) +
+  gg(m2$spde$mesh)
+
+quantile(out2$sd.dev, na.rm = TRUE)
