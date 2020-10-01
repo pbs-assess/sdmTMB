@@ -6,6 +6,7 @@
 \alias{nbinom2}
 \alias{student}
 \alias{tweedie}
+\alias{Gamma}
 \title{Additional families}
 \usage{
 Beta(link = "logit")
@@ -17,6 +18,8 @@ nbinom2(link = "log")
 student(link = "identity")
 
 tweedie(link = "log")
+
+Gamma(link = "log")
 }
 \arguments{
 \item{link}{The link.}
@@ -37,6 +40,7 @@ lognormal(link = "log")
 nbinom2(link = "log")
 student(link = "identity")
 tweedie(link = "log")
+Gamma(link = "log")
 }
 \references{
 Hilbe, J. M. (2011). Negative binomial regression. Cambridge University Press.
