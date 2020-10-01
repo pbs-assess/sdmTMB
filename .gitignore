@@ -10,3 +10,5 @@ prediction-grids/*
 sdmTMB.Rproj
 docs
 _pkgdown.yml
+*.html
+doc
