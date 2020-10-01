@@ -12,3 +12,4 @@ prediction-grids/
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+^\.github$
