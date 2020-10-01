@@ -7,7 +7,7 @@ Authors@R:
              family = "Anderson",
              role = c("aut", "cre"),
              email = "sean.anderson@dfo-mpo.gc.ca",
-            comment = c(ORCID = "0000-0001-9563-1937")),
+             comment = c(ORCID = "0000-0001-9563-1937")),
       person(given = c("Eric", "J."),
              family = "Ward",
              role = "aut",
@@ -28,15 +28,6 @@ Description: The 'sdmTMB' package implements spatiotemporal
 License: GPL (>=3)
 URL: https://pbs-assess.github.io/sdmTMB/index.html
 BugReports: https://github.com/seananderson/sdmTMB/issues
-Additional_repositories: https://inla.r-inla-download.org/R/stable
-VignetteBuilder: 
-    knitr
-ByteCompile: true
-Encoding: UTF-8
-LazyData: true
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.1.9000
-SystemRequirements: GNU make
 Depends: 
     R (>= 3.2.0)
 Imports:
@@ -50,9 +41,6 @@ Imports:
     RandomFields,
     stats,
     TMB (>= 1.7.13)
-LinkingTo: 
-    RcppEigen,
-    TMB
 Suggests:
     dplyr,
     ggplot2,
@@ -61,3 +49,16 @@ Suggests:
     rmarkdown,
     splancs,
     testthat
+LinkingTo: 
+    RcppEigen,
+    TMB
+VignetteBuilder: 
+    knitr
+Additional_repositories: 
+    https://inla.r-inla-download.org/R/stable
+ByteCompile: true
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1.9000
+SystemRequirements: GNU make
