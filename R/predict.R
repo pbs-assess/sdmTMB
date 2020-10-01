@@ -59,8 +59,7 @@
 #' pcod_spde <- make_spde(d$X, d$Y, n_knots = 50) # just 50 for example speed
 #' m <- sdmTMB(
 #'  data = d, formula = density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-#'  silent = FALSE
+#'  time = "year", spde = pcod_spde, family = tweedie(link = "log")
 #' )
 #'
 #' # Predictions at original data locations -------------------------------
@@ -96,7 +95,7 @@
 #'
 #' plot_map(predictions, "est_rf") +
 #'   ggtitle("All random field estimates") +
-#'   scale_fill_viridis_c(trans = "sqrt")
+#'   scale_fill_gradient2()
 #'
 #' plot_map(predictions, "omega_s") +
 #'   ggtitle("Spatial random effects only") +
@@ -126,8 +125,7 @@
 #'
 #' m_gam <- sdmTMB(
 #'  data = d, formula = density ~ 0 + as.factor(year) + s(depth_scaled, k = 3),
-#'  time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-#'  silent = FALSE
+#'  time = "year", spde = pcod_spde, family = tweedie(link = "log")
 #' )
 #' nd <- data.frame(depth_scaled =
 #'   seq(min(d$depth_scaled), max(d$depth_scaled), length.out = 100))
@@ -158,8 +156,7 @@
 #'   ar1_fields = TRUE, # using an AR1 to have something to forecast with
 #'   weights = weights,
 #'   include_spatial = TRUE, # could also be `FALSE`
-#'   time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-#'   silent = FALSE
+#'   time = "year", spde = pcod_spde, family = tweedie(link = "log")
 #' )
 #'
 #' # Add a year to our grid:
