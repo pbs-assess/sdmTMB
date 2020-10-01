@@ -1,5 +1,3 @@
-Meta
-doc
 inst/doc
 .Rproj.user
 *.o
@@ -10,3 +8,5 @@ prediction-grids/*
 *.pdf
 .DS_Store
 sdmTMB.Rproj
+docs
+_pkgdown.yml

@@ -9,3 +9,6 @@
 ^\.travis\.yml$
 prediction-grids/
 ^Makefile$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
