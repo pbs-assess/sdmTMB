@@ -309,7 +309,7 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     tmb_data$proj_t_i <- tmb_data$proj_t_i - mean(unique(tmb_data$proj_t_i)) # center on mean
     new_tmb_obj <- TMB::MakeADFun(
       data = tmb_data,
-      parameters = object$tmb_params,
+      parameters = object$tmb_obj$env$parList(),
       map = object$tmb_map,
       random = object$tmb_random,
       DLL = "sdmTMB",
