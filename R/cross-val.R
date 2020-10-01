@@ -15,7 +15,7 @@ ll_binomial <- function(object, withheld_y, withheld_mu) {
 
 ll_gamma <- function(object, withheld_y, withheld_mu) {
   .shape <- 1.0 / (exp(object$model$par[["ln_phi"]])^2)
-  stats::dgamma(x = withheld_y, shape = .shape, scale = withheld_mu, log = TRUE)
+  stats::dgamma(x = withheld_y, shape = .shape, scale = withheld_mu / .shape, log = TRUE)
 }
 
 ll_lognormal <- function(object, withheld_y, withheld_mu) {
