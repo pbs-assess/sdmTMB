@@ -4,20 +4,37 @@
 #'
 #' @param link The link.
 #' @export
-#' @examples
-#' tweedie(link = "log")
 #' @rdname families
-tweedie <- function(link = "log") {
+#' @examples
+#' Beta(link = "logit")
+Beta <- function(link = "logit") {
   linktemp <- substitute(link)
   if (!is.character(linktemp))
     linktemp <- deparse(linktemp)
-  okLinks <- c("inverse", "log", "identity")
+  okLinks <- c("logit")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+  list(family = "Beta", link = linktemp, linkfun = stats$linkfun,
+    linkinv = stats$linkinv)
+}
+
+#' @export
+#' @rdname families
+#' @examples
+#' lognormal(link = "log")
+lognormal <- function(link = "log") {
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("identity", "log", "inverse")
   if (linktemp %in% okLinks)
     stats <- stats::make.link(linktemp)
   else if (is.character(link))
     stats <- stats::make.link(link)
 
-  list(family = "tweedie", link = linktemp, linkfun = stats$linkfun,
+  list(family = "lognormal", link = linktemp, linkfun = stats$linkfun,
     linkinv = stats$linkinv)
 }
 
@@ -45,24 +62,6 @@ nbinom2 <- function(link = "log") {
 }
 
 #' @export
-#' @rdname families
-#' @examples
-#' lognormal(link = "log")
-lognormal <- function(link = "log") {
-  linktemp <- substitute(link)
-  if (!is.character(linktemp))
-    linktemp <- deparse(linktemp)
-  okLinks <- c("identity", "log", "inverse")
-  if (linktemp %in% okLinks)
-    stats <- stats::make.link(linktemp)
-  else if (is.character(link))
-    stats <- stats::make.link(link)
-
-  list(family = "lognormal", link = linktemp, linkfun = stats$linkfun,
-    linkinv = stats$linkinv)
-}
-
-#' @export
 #' @details
 #' The degrees of freedom parameter for the Student-t distribution is currently
 #' fixed at 3.
@@ -84,19 +83,19 @@ student <- function(link = "identity") {
 }
 
 #' @export
-#' @rdname families
 #' @examples
-#' Beta(link = "logit")
-Beta <- function(link = "logit") {
+#' tweedie(link = "log")
+#' @rdname families
+tweedie <- function(link = "log") {
   linktemp <- substitute(link)
   if (!is.character(linktemp))
     linktemp <- deparse(linktemp)
-  okLinks <- c("logit")
+  okLinks <- c("inverse", "log", "identity")
   if (linktemp %in% okLinks)
     stats <- stats::make.link(linktemp)
   else if (is.character(link))
     stats <- stats::make.link(link)
-  list(family = "Beta", link = linktemp, linkfun = stats$linkfun,
+
+  list(family = "tweedie", link = linktemp, linkfun = stats$linkfun,
     linkinv = stats$linkinv)
 }
-
