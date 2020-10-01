@@ -1,12 +1,12 @@
 # sdmTMB
 
-# sdmTMB 0.0.6.9004
+# sdmTMB 0.0.6.9005
 
 * Fixed bug in predictions with standard errors where one(?)
   parameter (a breakpoint parameter) would be passed in at its initial
   instead of MLE value.
 
-# sdmTMB 0.0.6.9003
+# sdmTMB 0.0.6.9004
 
 * Fixed bug with predictions on new data in models with break points
 
