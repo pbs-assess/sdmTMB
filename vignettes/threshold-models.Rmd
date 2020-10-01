@@ -41,7 +41,7 @@ As before, the SPDE mesh is created using 75 knots for a balance between speed a
 pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 75)
 ```
 
-We will extend the simple GLMM used in the index standardization vignette to include a threshold effect. For real applications, the threshold effect might be a function of habitat covariates, environmental variables, etc. Because 'depth' is the only external variable in the `pcod` data frame, we'll use that. For any threshold model, note that you only need to specify (1) the name of the variable that is modeled with the threshold relationships, and (2) the function used for the threshold model ('linear', 'logistic'). Note: as before, if we want to use this model for index standardization then we need to include `0 + as.factor(year)` or `-1 + as.factor(year)` so that we have a factor predictor that represents the mean estimate for each time slice.
+We will extend the simple GLMM used in the index standardization vignette to include a threshold effect. For real applications, the threshold effect might be a function of habitat covariates, environmental variables, etc. Because 'depth' is the only external variable in the `pcod` data frame, we'll use that. For any threshold model, you can specify the model as a linear threshold (`breakpt()`) or logistic (`logistic()`) as part of the formula. Note: as before, if we want to use this model for index standardization then we need to include `0 + as.factor(year)` or `-1 + as.factor(year)` so that we have a factor predictor that represents the mean estimate for each time slice.
 
 This first example uses the 'depth_scaled' covariate (depth, standardized ~ N(0,1)) and the logistic function, similar to selectivity curves used in fisheries models. The form is 
 
@@ -63,7 +63,22 @@ We can then look at the important coefficients from the model. Here we're lookin
 print(m)
 ```
 
-Next, we can try to fit the same model but use a linear breakpoint / cutpoint model. We just have to change the 'threshold_function' parameter to 'linear'.
+We can visualize the effect:
+
+```{r logistic-eff}
+nd <- data.frame(
+  depth_scaled = seq(min(pcod$depth_scaled) + 0.2, 
+    max(pcod$depth_scaled) - 0.2, length.out = 100), 
+  year = 2015L # a chosen year
+)
+p <- predict(m, newdata = nd, se_fit = TRUE, re_form = NA, xy_cols = c("X", "Y"))
+ggplot(p, aes(depth_scaled, exp(est), 
+  ymin = exp(est - 1.96 * est_se), 
+  ymax = exp(est + 1.96 * est_se))) +
+  geom_line() + geom_ribbon(alpha = 0.4)
+```
+
+Next, we can try to fit the same model but use a linear breakpoint / cutpoint model:
 
 ```{r fitlinear}
 m <- sdmTMB(
@@ -78,4 +93,14 @@ For this model, the important parameters are the slope, 'depth_scaled-slope', an
 
 ```{r outputlinear}
 print(m)
+```
+
+We can visualize the linear breakpoint effect:
+
+```{r brkpt-eff, warning=FALSE}
+p <- predict(m, newdata = nd, se_fit = TRUE, re_form = NA, xy_cols = c("X", "Y"))
+ggplot(p, aes(depth_scaled, exp(est), 
+  ymin = exp(est - 1.96 * est_se), 
+  ymax = exp(est + 1.96 * est_se))) +
+  geom_line() + geom_ribbon(alpha = 0.4)
 ```
