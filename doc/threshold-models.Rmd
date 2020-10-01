@@ -1,0 +1,68 @@
+---
+title: "Threshold modeling with sdmTMB"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Threshold modeling with sdmTMB}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE, cache=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.asp = 0.618
+)
+```
+
+```{r packages, message=FALSE, warning=TRUE}
+library(ggplot2)
+library(dplyr)
+library(sdmTMB)
+```
+
+We'll repeat the same models used for the index standardization vignette, using the built-in data for Pacific cod. 
+
+As a summary, 
+- I've included columns for depth and depth squared. 
+- Depth was centred and scaled by its standard deviation and I've included those in the data frame so that they could be used to similarly scale the prediction grid.
+- The density units should be kg/km^2^.
+- Here, X and Y are coordinates in UTM zone 9.
+
+```{r glimpse-pcod}
+glimpse(pcod)
+```
+
+As before, the SPDE mesh is created using 100 knots for a balance between speed and accuracy. You will likely want to use more for applied scenarios. You will want to make sure that increasing the number of knots does not change the conclusions.
+
+```{r spde, fig.asp=0.8}
+pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 100)
+```
+
+We will extend the simple GLMM used in the index standardization vignette to include a threshold effect. For real applications, the threshold effect might be a function of habitat covariates, environmental variables, etc. Because 'depth' is the only external variable in the pcod data frame, we'll use that. For any threshold model, note that you only need to specify (1) the name of the variable that is modeled with the threshold relationships, and (2) the function used for the threshold model ('linear', 'logistic'). Note: as before, if we want to use this model for index standardization then we need to include `0 + as.factor(year)` or `-1 + as.factor(year)` so that we have a factor predictor that represents the mean estimate for each time slice.
+
+This first example uses the 'depth_scaled' covariate (depth, standardized ~ N(0,1)) and the logistic function, similar to selectivity curves used in fisheries models. The form is 
+
+$$f(x)=\psi \quad *\quad { \left[ 1+{ exp }^{ -ln\left( 19 \right) \quad *\quad \left( x-s50 \right) \quad /\quad \left( s95\quad -\quad s50 \right)  } \right]  }^{ -1 }$$
+where $\psi$ is a scaling parameter (controlling the height of the y-axis for the response, and is unconstrained), $s50$ is a parameter controlling the point at which the function reaches 50% of the maximum ($\psi$), and $s95$ is a parameter controlling the point at which the function reaches 95%. The parameter $s50$ is unconsrtrained, and $s95$ is constrained to be larger than $s50$.
+
+```{r model}
+m <- sdmTMB(
+  data = pcod, 
+  formula = density ~ 0 + as.factor(year),
+  time = "year", spde = pcod_spde, 
+  family = tweedie(link = "log"),
+  threshold_parameter = "depth_scaled",
+  threshold_function = "logistic")
+```
+
+We can then look at the important coefficients from the model.
+
+```{r output}
+df = data.frame("par"=names(m$sd_report$value), "value"=as.numeric(m$sd_report$value),
+  "sd"=as.numeric(m$sd_report$sd))
+df
+```
+

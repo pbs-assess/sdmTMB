@@ -24,12 +24,13 @@ ll_lognormal <- function(object, withheld_y, withheld_mu) {
 }
 
 ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
+
   family_func <- switch(object$family$family,
     gaussian = ll_gaussian,
     tweedie = ll_tweedie,
     binomial = ll_binomial,
     lognormal = ll_lognormal,
-    gamma = ll_gamma,
+    Gamma = ll_gamma,
     stop(object$family$family, " not yet implemented. ",
       "Please file an issue on GitHub.",
       call. = FALSE

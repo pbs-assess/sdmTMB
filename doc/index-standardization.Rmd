@@ -1,0 +1,145 @@
+---
+title: "Index standardization with sdmTMB"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Index standardization with sdmTMB}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE, cache=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.asp = 0.618
+)
+```
+
+```{r packages, message=FALSE, warning=TRUE}
+library(ggplot2)
+library(dplyr)
+library(sdmTMB)
+```
+
+Let's perform index standardization with the built-in data for Pacific cod. 
+
+- I've included columns for depth and depth squared. 
+- Depth was centred and scaled by its standard deviation and I've included those in the data frame so that they could be used to similarly scale the prediction grid.
+- The density units should be kg/km^2^.
+- Here, X and Y are coordinates in UTM zone 9.
+
+```{r glimpse-pcod}
+glimpse(pcod)
+```
+
+First we will create our SPDE mesh. We will use 100 knots for a balance between speed and accuracy in this vignette. You will likely want to use more for applied scenarios. You will want to make sure that increasing the number of knots does not change the conclusions.
+
+```{r spde, fig.asp=0.8}
+pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 100)
+plot_spde(pcod_spde)
+```
+
+Let's fit a GLMM. Note that if we want to use this model for index standardization then we need to include `0 + as.factor(year)` or `-1 + as.factor(year)` so that we have a factor predictor that represents the mean estimate for each time slice.
+
+```{r model}
+m <- sdmTMB(
+  data = pcod, 
+  formula = density ~ 0 + as.factor(year),
+  time = "year", spde = pcod_spde, family = tweedie(link = "log"))
+```
+
+We can inspect randomized quantile residuals::
+
+```{r residuals, fig.width = 8}
+pcod$resids <- residuals(m) # randomized quantile residuals
+hist(pcod$resids)
+qqnorm(pcod$resids)
+abline(a = 0, b = 1)
+ggplot(pcod, aes(X, Y, col = resids)) + scale_colour_gradient2() +
+  geom_point() + facet_wrap(~year) + coord_fixed()
+```
+
+Now we want to predict on a fine-scale grid on the entire survey domain. There is a grid built into the package for Queen Charlotte Sound named `qcs_grid`. Our prediction grid also needs to have all the covariates that we used in the model above.
+
+```{r glimpse-grid}
+glimpse(qcs_grid)
+```
+
+Now make the predictions on new data:
+
+```{r predictions}
+predictions <- predict(m, newdata = qcs_grid, return_tmb_object = TRUE)
+```
+
+Let's make a small function to make maps.
+
+```{r plot-map}
+plot_map <- function(dat, column) {
+  ggplot(dat, aes_string("X", "Y", fill = column)) +
+    geom_raster() +
+    facet_wrap(~year) +
+    coord_fixed()
+}
+```
+
+There are four kinds of predictions that we get out of the model. First we will show the predictions that incorporate all fixed effects and random effects:
+
+```{r plot-all-effects, fig.width = 8}
+plot_map(predictions$data, "exp(est)") +
+  scale_fill_viridis_c(trans = "sqrt") +
+  ggtitle("Prediction (fixed effects + all random effects)")
+```
+
+We can also look at just the fixed effects, here depth:
+
+```{r plot-fix-defects, fig.width = 8}
+plot_map(predictions$data, "exp(est_non_rf)") +
+  ggtitle("Prediction (fixed effects only)") +
+  scale_fill_viridis_c(trans = "sqrt")
+```
+
+We can look at the spatial random effects but represent consistent deviations in space through time that are not accounted for by our fixed effects of depth. In other words, these deviations represent consistent biotic and abiotic factors that are affecting biomass density but are not accounted for in the model.
+
+```{r plot-spatial-effects, fig.width = 8}
+plot_map(predictions$data, "omega_s") +
+  ggtitle("Spatial random effects only") +
+  scale_fill_gradient2()
+```
+
+And finally we can look at the spatiotemporal random effects that represent deviation from the fixed effect predictions and the spatial random effect deviations. These represent biotic and abiotic factors that are changing through time and are not accounted for in the model.
+
+```{r plot-spatiotemporal-effects, fig.width = 8}
+plot_map(predictions$data, "epsilon_st") +
+  ggtitle("Spatiotemporal random effects only") +
+  scale_fill_gradient2()
+```
+
+When we ran our `predict.sdmTBM()` function, it also returned a report from TMB in the output because we included `return_tmb_object = TRUE`. We can then run our `get_index()` function to extract the total biomass calculations and standard errors:
+
+```{r get-index}
+ # not bias correcting for vignette-building speed:
+ind <- get_index(predictions, bias_correct = FALSE)
+```
+
+```{r plot-index}
+# scale the biomass by the area and adjust units;
+scale <- 2 * 2 / 1000 # 2 x 2 km grid and converted from kg to tonnes
+ggplot(ind, aes(year, est*scale)) + geom_line() +
+  geom_ribbon(aes(ymin = lwr*scale, ymax = upr*scale), alpha = 0.4) +
+  xlab('Year') + ylab('Biomass estimate (metric tonnes)')
+```
+
+These are our biomass estimates:
+
+```{r index-table, results='asis'}
+mutate(ind, 
+  est = est * scale,
+  lwr = lwr * scale,
+  upr = upr * scale,
+  cv = sqrt(exp(se^2) - 1)
+  ) %>% 
+  select(-log_est, -max_gradient, -bad_eig, -se) %>%
+  knitr::kable(format = "pandoc", digits = c(0, 0, 0, 0, 2))
+```
