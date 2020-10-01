@@ -68,8 +68,5 @@ sdmTMB:
 ## Examples
 
 The main function is `sdmTMB()`. See `?sdmTMB` and `?predict.sdmTMB` for
-the most complete examples. There is also a simulation function `?sim`
-with some examples. There are some vignettes you can see if you build
-with `devtools::install_github("pbs-assess/sdmTMB", build_vignettes =
-TRUE)` or look
-[here](https://github.com/pbs-assess/sdmTMB/tree/master/vignettes).
+the most complete examples. Also see the vignettes (‘Articles’) on the
+[documentation site](https://pbs-assess.github.io/sdmTMB/index.html).
