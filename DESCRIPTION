@@ -19,7 +19,7 @@ Authors@R:
       person(given = c("Philina", "A."),
              family = "English",
              role = "aut",
-             comment = c(ORCID = "0000-0003-2992-6782"))
+             comment = c(ORCID = "0000-0003-2992-6782")))
 Description: The 'sdmTMB' package implements spatiotemporal
     predictive-process GLMMs (Generalized Linear Mixed Effect Models)
     using 'TMB', 'INLA', and Gaussian Markov random fields. One common
