@@ -5,13 +5,16 @@
 
 > Spatial and spatiotemporal GLMMs with TMB
 
-[![Travis build
-status](https://travis-ci.org/pbs-assess/sdmTMB.svg?branch=master)](https://travis-ci.org/pbs-assess/sdmTMB)
+<!-- badges: start -->
+
+[![R build
+status](https://github.com/pbs-assess/sdmTMB/workflows/R-CMD-check/badge.svg)](https://github.com/pbs-assess/sdmTMB/actions)
 [![Project Status: WIP – Initial development is in progress, but there
 has not yet been a stable, usable release suitable for the
 public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 [![Coverage
 status](https://codecov.io/gh/pbs-assess/sdmTMB/branch/master/graph/badge.svg)](https://codecov.io/github/pbs-assess/sdmTMB?branch=master)
+<!-- badges: end -->
 
 sdmTMB is an R package that implements spatial or spatiotemporal
 predictive-process GLMMs (Generalized Linear Mixed Effects Models) using
