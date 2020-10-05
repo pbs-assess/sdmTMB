@@ -38,14 +38,14 @@ offsets and threshold parameters. For index standardization, include \code{0 + a
 
 \item{spde}{An object from \code{\link[=make_spde]{make_spde()}}.}
 
-\item{time}{The time column (as character).}
+\item{time}{The time column (as character). Leave as \code{NULL} for a spatial-only
+model.}
 
 \item{family}{The family and link. Supports \code{\link[=gaussian]{gaussian()}}, \code{\link[=Gamma]{Gamma()}},
 \code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, \code{\link[=Beta]{Beta()}}, \code{\link[=nbinom2]{nbinom2()}}, and \code{\link[=tweedie]{tweedie()}}.}
 
 \item{time_varying}{An optional formula describing covariates that should be
-modelled as a random walk through time. Leave as \code{NULL} for a spatial-only
-model.}
+modelled as a random walk through time.}
 
 \item{weights}{Optional likelihood weights for the conditional model.
 Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum

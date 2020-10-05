@@ -158,34 +158,21 @@ ggplot(p, aes(depth_scaled, exp(est),
   geom_line() + geom_ribbon(alpha = 0.4)
 
 # Forecasting ----------------------------------------------------------
+pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 15)
 
-# Forecasting using Eric Ward's hack with the `weights` argument.
-
-# Add on a fake year of data with the year to forecast:
-dfake <- rbind(d, d[nrow(d), ])
-dfake[nrow(dfake), "year"] <- max(d$year) + 1
-tail(dfake) # last row is fake!
-
-weights <- rep(1, nrow(dfake))
-weights[length(weights)] <- 0 # set last row weight to 0
-dfake$year_factor <- dfake$year
-dfake$year_factor[nrow(dfake)] <- max(d$year) # share fixed effect for last 2 years
-
-pcod_spde <- make_spde(dfake, c("X", "Y"), cutoff = 30)
-
+unique(d$year)
 m <- sdmTMB(
-  data = dfake, formula = density ~ 0 + as.factor(year_factor),
+  data = d, formula = density ~ 1,
   ar1_fields = TRUE, # using an AR1 to have something to forecast with
-  weights = weights,
-  include_spatial = TRUE, # could also be `FALSE`
+  extra_time = 2019L,
+  include_spatial = FALSE,
   time = "year", spde = pcod_spde, family = tweedie(link = "log")
 )
 
 # Add a year to our grid:
-qcs_grid$year_factor <- qcs_grid$year
-grid2018 <- qcs_grid[qcs_grid$year == 2017L, ]
-grid2018$year <- 2018L # `L` because `year` is an integer in the data
-qcsgrid_forecast <- rbind(qcs_grid, grid2018)
+grid2019 <- qcs_grid[qcs_grid$year == max(qcs_grid$year), ]
+grid2019$year <- 2019L # `L` because `year` is an integer in the data
+qcsgrid_forecast <- rbind(qcs_grid, grid2019)
 
 predictions <- predict(m, newdata = qcsgrid_forecast)
 plot_map(predictions, "exp(est)") +

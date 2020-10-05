@@ -11,12 +11,12 @@ NULL
 #'   as.factor(year)` (or whatever the time column is called) in the formula.
 #' @param data A data frame.
 #' @param spde An object from [make_spde()].
-#' @param time The time column (as character).
+#' @param time The time column (as character). Leave as `NULL` for a spatial-only
+#'   model.
 #' @param family The family and link. Supports [gaussian()], [Gamma()],
 #'   [binomial()], [poisson()], [sdmTMB::Beta()], [nbinom2()], and [tweedie()].
 #' @param time_varying An optional formula describing covariates that should be
-#'   modelled as a random walk through time. Leave as `NULL` for a spatial-only
-#'   model.
+#'   modelled as a random walk through time.
 #' @param weights Optional likelihood weights for the conditional model.
 #'   Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
 #'   to one and are not internally modified.
@@ -209,6 +209,13 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   original_formula <- formula
   formula <- thresh$formula
 
+  if (!is.null(extra_time)) { # for forecasting or interpolating
+    data <- expand_time(df = data, time_slices = extra_time, time_column = time)
+    weights <- data$weight_sdmTMB
+    spde$A <- INLA::inla.spde.make.A(spde$mesh, loc = as.matrix(data[, spde$xy_cols, drop = FALSE]))
+    spde$loc_xy <- as.matrix(data[,spde$xy_cols,drop=FALSE])
+  }
+
   if (spatial_trend) {
     numeric_time <- time
     t_i <- as.numeric(data[[numeric_time]])
@@ -248,11 +255,6 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     X_rw_ik <- matrix(0, nrow = nrow(data), ncol = 1)
   }
 
-  if (!is.null(extra_time)) { # for forecasting or interpolating
-    data <- expand_time(df = data, time_slices = extra_time, time_column = time)
-    weights <- data$weight_sdmTMB
-    spde$A <- INLA::inla.spde.make.A(spde$mesh, loc = as.matrix(data[, spde$xy_cols, drop = FALSE]))
-  }
   # Stuff needed for spatiotemporal A matrix:
   data$sdm_orig_id <- seq(1, nrow(data))
   data$sdm_x <- spde$loc_xy[,1,drop=TRUE]
