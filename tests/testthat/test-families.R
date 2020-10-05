@@ -30,7 +30,7 @@ test_that("The supplementary families work with appropriate links", {
   expect_error(class(student(link = banana)))
 })
 
-test_that("Student and lognormal families fit", {
+test_that("Student and family fits", {
   set.seed(1)
   initial_betas <- 0.5
   kappa <- 2
@@ -38,9 +38,9 @@ test_that("Student and lognormal families fit", {
   phi <- 0.01
   x <- stats::runif(100, -1, 1)
   y <- stats::runif(100, -1, 1)
-  s <- sim(
+  s <- sim(x = x, y = y,
     initial_betas = initial_betas, time = 1L,
-    phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E,
+    phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = 0.0001,
     seed = 1
   )
   spde <- make_spde(s, c("x", "y"), n_knots = 50, type = "kmeans")
@@ -48,6 +48,25 @@ test_that("Student and lognormal families fit", {
     family = student(link = "identity"))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
   expect_length(residuals(m), nrow(s))
+})
+
+test_that("Lognormal fits with a mean matching the Gamma roughly", {
+  kappa <- .5
+  x <- stats::runif(500, -1, 1)
+  y <- stats::runif(500, -1, 1)
+  sigma_O <- 0.3
+  sigma_E <- 0.0001
+  phi <- 0.2
+  s <- sim(x = x, y = y, time = 1L,
+    phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E, seed = 1
+  )
+  spde <- make_spde(s, c("x", "y"), n_knots = 70, type = "kmeans")
+  s$observed <- stats::rlnorm(nrow(s), mean = log(exp(s$real)), sd = 0.2)
+  mlog <- sdmTMB(data = s, formula = observed ~ 1, spde = spde,
+    family = lognormal(link = "log"))
+  mgamma <- sdmTMB(data = s, formula = observed ~ 1, spde = spde,
+    family = Gamma(link = "log"))
+  expect_equal(mlog$model$par, mgamma$model$par, tolerance = 0.01)
 })
 
 test_that("NB2 fits", {
