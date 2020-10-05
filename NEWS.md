@@ -1,5 +1,9 @@
 # sdmTMB
 
+# sdmTMB 0.0.6.9009
+
+* Fixed bug in dlnorm
+
 # sdmTMB 0.0.6.9005
 
 * Fixed bug in predictions with standard errors where one(?)
