@@ -1,13 +1,13 @@
 context("Forecasting")
 
-spde <- make_spde(d, c("X", "Y"), n_knots = 50, type = "kmeans")
+spde <- make_spde(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
 grid2019 <- qcs_grid[qcs_grid$year == max(qcs_grid$year), ]
 grid2019$year <- 2019L
 qcsgrid_forecast <- rbind(qcs_grid, grid2019)
 
 test_that("Forecasting works with a time-varying parameter", {
   m <- sdmTMB(
-    data = d, formula = density ~ 0,
+    data = pcod, formula = density ~ 0,
     time_varying = ~ 1,
     ar1_fields = TRUE,
     extra_time = c(2016L, 2018L, 2019L),
