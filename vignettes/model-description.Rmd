@@ -23,7 +23,7 @@ knitr::opts_chunk$set(
 
 * Bold lowercase for vectors
 
-* Subscript $\s$ since x, y
+* Bold subscript $\s$ since x, y
 
 * Bold uppercase for matrices
 
@@ -46,6 +46,12 @@ $$
 $$
 where $g$ is a link function and $g^{-1}$ is the inverse link.
 
+* $\boldsymbol{X} \boldsymbol{\beta}$ is defined by the `formula` argument
+
+* $\omega_s$ are included if `include_spatial = TRUE`
+
+* $\epsilon_{\s,t}$ are included if there are multiple time elements and `spatial_only = FALSE` (the default if there are multiple time elements)
+
 ## Time-varying regression parameters
 
 $$
@@ -66,7 +72,7 @@ $$
 
 ## AR1 spatiotemporal random fields
 
-Dropping the $\omega_s$ for simplicity:
+Dropping the optional $\omega_s$ for simplicity:
 
 $$
 \begin{align}
@@ -77,22 +83,58 @@ $$
 \end{align}
 $$
 
+## Offset terms
+
+Offset terms can be included with the reserved word `offset` in the formula. E.g., `y ~ x + offset`.
+
+These are included in the linear predictor as
+
+$$
+\begin{align}
+  \mu_{\s,t} &= g^{-1} \left( \ldots + O_{\s,t} + \ldots \right),
+\end{align}
+$$
+where $O_{\s,t}$ is an offset term---a **log transformed** variable without a coefficient. Offsets only make sense if the link is log.
+
+## Threshold models
+
+### Linear breakpoint threshold models
+
+TODO
+
+These models can be fit by including `+ breakpt(x)` in the model formula, where `x` is a covariate.
+
+### Logistic threshold models
+
+The form is 
+
+$$
+s(x)=\tau + \psi\ { \left[ 1+{ e }^{ -\ln\ \left(19\right) \cdot \left( x-s50 \right) 
+     / \left(s95 - s50 \right) } \right] }^{-1},
+$$
+where $\psi$ is a scaling parameter (controlling the height of the y-axis for the response, and is unconstrained), $\tau$ is an intercept, $s50$ is a parameter controlling the point at which the function reaches 50% of the maximum ($\psi$), and $s95$ is a parameter controlling the point at which the function reaches 95%. The parameter $s50$ is unconstrained, and $s95$ is constrained to be larger than $s50$.
+
+These models can be fit by including `+ logistic(x)` in the model formula, where `x` is a covariate.
+
 ## Observation model families
 
-### [Gaussian](https://kaskr.github.io/adcomp/dnorm_8hpp.html)
+### [Binomial](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaee11f805f02bc1febc6d7bf0487671be)
+
+Internally parameterized as the [robust version](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaecb5a18095a320b42e2d20c4b120f5f5).
+
+### [Beta](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga5324c83759d5211c7c2fbbad37fa8e59)
 
 $$
-\operatorname{Normal} \left( \mu, \phi \right)
+\operatorname{Beta} \left(\mu \phi, 1 - \mu \phi \right)
 $$
-where $\phi$ is the standard deviation (following Stan convention of SD not variance).
 
-### [Tweedie](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga262f3c2d1cf36f322a62d902a608aae0)
-
-[Source code](https://kaskr.github.io/adcomp/tweedie_8cpp_source.html) as in [cplm](https://CRAN.R-project.org/package=cplm) package. <https://link.springer.com/article/10.1007/s11222-012-9343-7>
+where $\phi$ is variance.
 
 $$
-\operatorname{Tweedie} \left(\mu, p, \phi \right), \: 1 < p < 2
+\operatorname{Binomial} \left( N, \mu \right)
 $$
+
+$N = 1$ (i.e., 'size' currently fixed) and $\mu$ is probability
 
 ### [Gamma](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gab0e2205710a698ad6a0ed39e0652c9a3)
 
@@ -104,21 +146,19 @@ $$
 
 where $\phi$ represents the CV.
 
-### [Binomial](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaee11f805f02bc1febc6d7bf0487671be)
-
-Internally parameterized as the [robust version](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaecb5a18095a320b42e2d20c4b120f5f5).
+### [Gaussian](https://kaskr.github.io/adcomp/dnorm_8hpp.html)
 
 $$
-\operatorname{Binomial} \left( N, \mu \right)
+\operatorname{Normal} \left( \mu, \phi \right)
+$$
+where $\phi$ is the standard deviation (following Stan convention of SD not variance).
+
+### [Lognormal](https://github.com/pbs-assess/sdmTMB/blob/28a93496a93b12e5a2f73f703bc96afbf14d86c1/src/sdmTMB.cpp#L22-L30)
+
+$$
+\operatorname{Lognormal} \left( \log \mu - \frac{\phi^2}{2}, \phi \right)
 $$
 
-$N = 1$ (i.e., 'size' currently fixed) and $\mu$ is probability
-
-### [Poisson](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa1ed15503e1441a381102a8c4c9baaf1)
-
-$$
-\operatorname{Poisson} \left( \mu \right)
-$$
 
 ### [Negative Binomial](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga76266c19046e04b651fce93aa0810351)
 
@@ -130,10 +170,10 @@ $$
 
 Variance scales quadratically with mean $\mathrm{Var}[y] = \mu + \mu^2 / \phi$.
 
-### [Lognormal](https://github.com/pbs-assess/sdmTMB/blob/28a93496a93b12e5a2f73f703bc96afbf14d86c1/src/sdmTMB.cpp#L22-L30)
+### [Poisson](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa1ed15503e1441a381102a8c4c9baaf1)
 
 $$
-\operatorname{Lognormal} \left( \log \mu - \frac{\phi^2}{2}, \phi \right)
+\operatorname{Poisson} \left( \mu \right)
 $$
 
 ### [Student-t](https://github.com/pbs-assess/sdmTMB/blob/28a93496a93b12e5a2f73f703bc96afbf14d86c1/src/sdmTMB.cpp#L11-L20)
@@ -144,10 +184,12 @@ $$
 
 where $\nu$, the degrees of freedom, is currently fixed at 3.
 
-### [Beta](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga5324c83759d5211c7c2fbbad37fa8e59)
+### [Tweedie](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga262f3c2d1cf36f322a62d902a608aae0)
+
+[Source code](https://kaskr.github.io/adcomp/tweedie_8cpp_source.html) as in [cplm](https://CRAN.R-project.org/package=cplm) package. <https://link.springer.com/article/10.1007/s11222-012-9343-7>
 
 $$
-\operatorname{Beta} \left(\mu \phi, 1 - \mu \phi \right)
+\operatorname{Tweedie} \left(\mu, p, \phi \right), \: 1 < p < 2
 $$
 
-where $\phi$ is variance.
+
