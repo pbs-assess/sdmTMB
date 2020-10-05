@@ -451,7 +451,7 @@ Type objective_function<Type>::operator()()
           jnll -= keep(i) * dnbinom_robust(y_i(i), s1, s2, true) * weights_i(i);
           break;
         case lognormal_family:
-          jnll -= keep(i) * dlnorm(y_i(i), mu_i(i) - pow(exp(ln_phi), Type(2)) / Type(2), exp(ln_phi), true) * weights_i(i);
+          jnll -= keep(i) * dlnorm(y_i(i), log(mu_i(i)) - pow(exp(ln_phi), Type(2)) / Type(2), exp(ln_phi), true) * weights_i(i);
           break;
         case student_family:
           jnll -= keep(i) * dstudent(y_i(i), mu_i(i), exp(ln_phi), Type(3) /*df*/, true) * weights_i(i);
