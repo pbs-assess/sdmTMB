@@ -105,7 +105,7 @@
 #' }
 #'
 make_spde <- function(data, xy_cols,
-                      type = c("cutoff", "cutoff-search", "kmeans"),
+                      type = c("kmeans", "cutoff", "cutoff_search"),
                       cutoff, n_knots,
                       seed = 42,
                       refine = list(min.angle = 21, max.edge = Inf, max.n.strict = -1, max.n = 1000),
@@ -114,10 +114,7 @@ make_spde <- function(data, xy_cols,
     stop("It looks like you are using an old format of make_spde(). ",
       "The function now uses `data` and `xy_cols` arguments ",
       "to enable carrying through the x and y column names ",
-      "to the predict function. Please update your code. ",
-      "Also note that the default mesh type now uses a `cutoff` ",
-      "intead of the number of knots. You can obtain the previous default ",
-      "mesh type with `type = 'kmeans'`.",
+      "to the predict function. Please update your code.",
       call. = FALSE
     )
   }
@@ -127,6 +124,10 @@ make_spde <- function(data, xy_cols,
       "The default mesh type now uses a `cutoff` ",
       "intead of the number of knots. You can obtain the previous default ",
       "mesh type with `type = 'kmeans'`.", call. = FALSE)
+  }
+
+  if (!missing(cutoff) && missing(n_knots)) {
+    type <- "cutoff"
   }
   if (missing(cutoff) && type == "cutoff" && is.null(mesh)) {
     stop("You need to specify the `cutoff` argument.", call. = FALSE)

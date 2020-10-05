@@ -8,7 +8,7 @@
 make_spde(
   data,
   xy_cols,
-  type = c("cutoff", "cutoff-search", "kmeans"),
+  type = c("kmeans", "cutoff", "cutoff_search"),
   cutoff,
   n_knots,
   seed = 42,
