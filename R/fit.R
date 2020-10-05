@@ -247,6 +247,12 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
     X_rw_ik <- matrix(0, nrow = nrow(data), ncol = 1)
   }
+
+  if (!is.null(extra_time)) { # for forecasting or interpolating
+    data <- expand_time(df = data, time_slices = extra_time, time_column = time)
+    weights <- data$weight_sdmTMB
+    spde$A <- INLA::inla.spde.make.A(spde$mesh, loc = as.matrix(data[, spde$xy_cols, drop = FALSE]))
+  }
   # Stuff needed for spatiotemporal A matrix:
   data$sdm_orig_id <- seq(1, nrow(data))
   data$sdm_x <- spde$loc_xy[,1,drop=TRUE]
@@ -608,3 +614,12 @@ parse_threshold_formula <- function(formula, thresh_type_short = "lin_thresh",
   list(formula = formula, threshold_parameter = threshold_parameter)
 }
 
+expand_time <- function(df, time_slices, time_column) {
+  df[["weight_sdmTMB"]] <- 1
+  fake_df <- df[1L, , drop = FALSE]
+  fake_df[["weight_sdmTMB"]] <- 0
+  missing_years <- time_slices[!time_slices %in% df[[time_column]]]
+  fake_df <- do.call("rbind", replicate(length(missing_years), fake_df, simplify = FALSE))
+  fake_df[[time_column]] <- missing_years
+  rbind(df, fake_df)
+}
