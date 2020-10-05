@@ -41,7 +41,10 @@ NULL
 #'   fields.
 #' @param spatial_trend Should a separate spatial field be included in the
 #'   trend? Requires spatiotemporal data.
-#' @param spatial_only Deprecated; please use `time = NULL` to fit a spatial model.
+#' @param spatial_only Logical: should only a spatial model be fit (i.e. do not
+#'   include spatiotemporal random effects)? By default a spatial-only model
+#'   will be fit if there is only one unique value in the time column or the
+#'   `time` argument is left at its default value of `NULL`.
 #' @param nlminb_loops How many times to run [stats::nlminb()] optimization.
 #'   Sometimes restarting the optimizer at the previous best values aids
 #'   convergence. If the maximum gradient is still too large,
@@ -188,35 +191,26 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
   control = sdmTMBcontrol(), enable_priors = FALSE, ar1_fields = FALSE,
   include_spatial = TRUE, spatial_trend = FALSE,
-  spatial_only = "Depreciated",
+  spatial_only = identical(length(unique(data[[time]])), 1L),
   nlminb_loops = 1,
   newton_steps = 0,
   mgcv = TRUE,
   previous_fit = NULL,
   quadratic_roots = FALSE) {
 
-  assert_that(is.logical(reml), is.logical(anisotropy), is.logical(silent),
+  assert_that(
+    is.logical(reml), is.logical(anisotropy), is.logical(silent),
     is.logical(silent), is.logical(spatial_trend), is.logical(mgcv),
     is.logical(multiphase), is.logical(enable_priors), is.logical(ar1_fields),
-    is.logical(include_spatial))
-  if (!is.null(formula)) assert_that(identical(class(time_varying), "formula"))
+    is.logical(include_spatial), is.logical(spatial_only)
+  )
+  if (!is.null(time_varying)) assert_that(identical(class(time_varying), "formula"))
   assert_that(is.list(control))
   if (!is.null(previous_fit)) assert_that(identical(class(previous_fit), "sdmTMB"))
   if (!is.null(time)) assert_that(is.character(time))
   assert_that(identical(class(spde), "sdmTMBmesh"))
   assert_that(identical(class(formula), "formula"))
   assert_that("data.frame" %in% class(data))
-
-  if (!missing(spatial_only)) {
-    warning("The argument `spatial_only` is deprecated; please use `time = NULL` instead.",
-      call. = FALSE)
-    spatial_only <- TRUE
-  }
-  if (isTRUE(spatial_only) || is.null(time) || identical(length(unique(data[[time]])), 1L)) {
-    spatial_only <- TRUE
-  } else {
-    spatial_only <- FALSE
-  }
 
   if (is.null(time)) {
     time <- "_sdmTMB_time"

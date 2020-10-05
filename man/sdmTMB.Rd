@@ -22,7 +22,7 @@ sdmTMB(
   ar1_fields = FALSE,
   include_spatial = TRUE,
   spatial_trend = FALSE,
-  spatial_only = "Depreciated",
+  spatial_only = identical(length(unique(data[[time]])), 1L),
   nlminb_loops = 1,
   newton_steps = 0,
   mgcv = TRUE,
@@ -81,7 +81,10 @@ fields.}
 \item{spatial_trend}{Should a separate spatial field be included in the
 trend? Requires spatiotemporal data.}
 
-\item{spatial_only}{Deprecated; please use \code{time = NULL} to fit a spatial model.}
+\item{spatial_only}{Logical: should only a spatial model be fit (i.e. do not
+include spatiotemporal random effects)? By default a spatial-only model
+will be fit if there is only one unique value in the time column or the
+\code{time} argument is left at its default value of \code{NULL}.}
 
 \item{nlminb_loops}{How many times to run \code{\link[stats:nlminb]{stats::nlminb()}} optimization.
 Sometimes restarting the optimizer at the previous best values aids
