@@ -11,20 +11,25 @@
 #' @param ... Extra arguments (not used).
 #'
 #' @return A data frame
+#' @details
+#' Follows the conventions of the \pkg{broom} and \pkg{broom.mixed} packages.
 #' @export
 #'
+#' @importFrom assertthat assert_that
 #' @examples
 #' # See ?sdmTMB
-tidy <- function(x, effects = c("fixed", "ran_pars"),
+tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
                  conf.int = FALSE, conf.level = 0.95, exponentiate = FALSE, ...) {
-  if (!identical(class(x), "sdmTMB")) {
-    stop("sdmTMB::tidy() is for use with objects of class sdmTMB ",
-      "and is modelled after broom::tidy() and broom.mixed.",
-      call. = FALSE
-    )
+  effects <- match.arg(effects)
+  assert_that(is.logical(exponentiate))
+  assert_that(is.logical(conf.int))
+  if (conf.int) {
+    assert_that(is.numeric(conf.level),
+      conf.level > 0, conf.level < 1,
+      length(conf.level) == 1,
+      msg = "`conf.level` must be length 1 and between 0 and 1")
   }
 
-  effects <- match.arg(effects)
   .formula <- check_and_parse_thresh_params(x$formula, x$data)$formula
   if (!"mgcv" %in% names(x)) x[["mgcv"]] <- FALSE
   if (isFALSE(x$mgcv)) {
@@ -59,8 +64,8 @@ tidy <- function(x, effects = c("fixed", "ran_pars"),
   }
 
   if (conf.int) {
-    out$conf.low <- trans(out$estimate - crit * out$estimate)
-    out$conf.high <- trans(out$estimate + crit * out$estimate)
+    out$conf.low <- as.numeric(trans(out$estimate - crit * out$estimate))
+    out$conf.high <- as.numeric(trans(out$estimate + crit * out$estimate))
   }
 
 
@@ -73,7 +78,7 @@ tidy <- function(x, effects = c("fixed", "ran_pars"),
     if (i %in% names(est)) {
       out_re[[i]] <- data.frame(
         term = i, estimate = est[[i]], std.error = se[[i]],
-        conf.low = NA, conf.high = NA, stringsAsFactors = FALSE
+        conf.low = NA_real_, conf.high = NA_real_, stringsAsFactors = FALSE
       )
       if (i == "sigma_O_trend") out_re[[i]]$term <- "sigma_Z"
       ii <- ii + 1
@@ -88,7 +93,7 @@ tidy <- function(x, effects = c("fixed", "ran_pars"),
     ar_phi_lwr <- 2 * stats::plogis(ar_phi - crit * ar_phi_se) - 1
     ar_phi_upr <- 2 * stats::plogis(ar_phi + crit * ar_phi_se) - 1
     out_re[[ii]] <- data.frame(
-      term = "ar1_phi", estimate = ar_phi_est, std.error = NA,
+      term = "ar1_phi", estimate = ar_phi_est, std.error = NA_real_,
       conf.low = ar_phi_lwr, conf.high = ar_phi_upr, stringsAsFactors = FALSE
     )
     ii <- ii + 1
@@ -108,3 +113,7 @@ tidy <- function(x, effects = c("fixed", "ran_pars"),
     return(out_re)
   }
 }
+
+#' @importFrom generics tidy
+#' @export
+generics::tidy
