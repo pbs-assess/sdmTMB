@@ -51,7 +51,7 @@ A list of class sdmTMBmesh.
 Construct an SPDE mesh
 }
 \examples{
-sp <- make_spde(pcod, c("X", "Y"), n_knots = 50, type = "cutoff-search")
+sp <- make_spde(pcod, c("X", "Y"), n_knots = 50, type = "cutoff_search")
 plot(sp)
 
 sp <- make_spde(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
