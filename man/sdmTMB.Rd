@@ -152,7 +152,9 @@ plot(pcod_spde)
 # Tweedie:
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
-m
+print(m)
+tidy(m, conf.int = TRUE)
+tidy(m, effects = "ran_par")
 
 # Contents of the output object:
 names(m)

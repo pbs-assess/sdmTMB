@@ -70,37 +70,24 @@ test_that("A spatiotemporal version works with predictions on new data points", 
   expect_identical(class(predictions), "data.frame")
 })
 
-# test_that("AR1 models fit with and without R normalization", {
-#   set.seed(1)
-#   x <- stats::runif(70, -1, 1)
-#   y <- stats::runif(70, -1, 1)
-#   dat <- sim(x = x, y = y,
-#     time_steps = 9, ar1_fields = TRUE, ar1_phi = 0.0,
-#     sigma_O = 1e-6, sigma_E = 0.3, phi = 0.1,
-#     seed = 1
-#   )
-#   spde <- make_spde(x = dat$x, y = dat$y, n_knots = 40)
-#   m <- sdmTMB(
-#     ar1_fields = TRUE, include_spatial = FALSE,
-#     data = dat, formula = observed ~ 1, time = "time",
-#     family = gaussian(link = "identity"), spde = spde, normalize = FALSE
-#   )
-#   m_normalize <- sdmTMB(
-#     ar1_fields = TRUE, include_spatial = FALSE,
-#     data = dat, formula = observed ~ 1, time = "time",
-#     family = gaussian(link = "identity"), spde = spde, normalize = TRUE
-#   )
-#   expect_equal(m$model$objective, m_normalize$model$objective, tolerance = 1e-5)
-#   expect_equal(m$model$par, m_normalize$model$par, tolerance = 1e-5)
-#
-#   p <- predict(m)
-#   p_normalize <- predict(m_normalize)
-#   expect_equal(p, p_normalize)
-#
-#   p_nd <- predict(m, newdata = dat)
-#   p_normalize <- predict(m_normalize, newdata = dat)
-#   expect_equal(p_nd, p_normalize, tolerance = 1e-3)
-# })
+test_that("AR1 models fit with and without R normalization", {
+  set.seed(1)
+  x <- stats::runif(80, -1, 1)
+  y <- stats::runif(80, -1, 1)
+  dat <- sim(x = x, y = y,
+    time_steps = 15, ar1_fields = TRUE, ar1_phi = 0.5,
+    sigma_O = 1e-6, sigma_E = 0.3, phi = 0.1,
+    seed = 1
+  )
+  spde <- make_spde(dat, c("x", "y"), n_knots = 60, type = "kmeans")
+  m <- sdmTMB(
+    ar1_fields = TRUE, include_spatial = FALSE,
+    data = dat, formula = observed ~ 1, time = "time",
+    family = gaussian(link = "identity"), spde = spde
+  )
+  b <- tidy(m, effects = "ran_par", conf.int = TRUE)
+  expect_equal(b$estimate[b$term == "ar1_phi"], 0.5, tolerance = 0.05)
+})
 
 test_that("Predictions on the original data set as `newdata`` return the same predictions", {
   set.seed(1)
@@ -119,6 +106,10 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   )
   p <- predict(m)
   p_nd <- predict(m, newdata = dat)
+  tidy(m)
+  tidy(m, conf.int = TRUE)
+  tidy(m, effects = "ran_par")
+  tidy(m, effects = "ran_par", conf.int = TRUE)
 
   cols <- c("est", "est_non_rf", "est_rf", "omega_s", "epsilon_st")
   expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-4)
@@ -155,6 +146,7 @@ test_that("A time-varying model fits and predicts appropriately", {
   m <- sdmTMB(data = s, formula = observed ~ 0, include_spatial = FALSE,
     time_varying = ~ 0 + cov1, time = "time", spde = spde, mgcv = FALSE)
   expect_equal(exp(m$model$par["ln_tau_V"])[[1]], sigma_V, tolerance = 0.1)
+  tidy(m, effects = "ran_par")
   b_t <- dplyr::group_by(s, time) %>%
     dplyr::summarize(b_t = unique(b)) %>%
     dplyr::pull(b_t)

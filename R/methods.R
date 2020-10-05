@@ -32,7 +32,7 @@ print.sdmTMB <- function(x, ...) {
     title <- paste0("Spatiotemporal model fit by ", fit_by, " ['sdmTMB']\n")
   }
   formula <- paste0("Formula: ", deparse(x$call$formula), "\n")
-  # time <- paste0("Time column: ", deparse(x$call$time), "\n")
+  time <- paste0("Time column: ", deparse(x$call$time), "\n")
   spde <- paste0("SPDE: ", deparse(x$call$spde), "\n")
   data <- paste0("Data: ", deparse(x$call$data), "\n")
   family <- paste0("Family: ", paste0(x$family$family, "(link = '", x$family$link, "')"), "\n")
@@ -48,7 +48,8 @@ print.sdmTMB <- function(x, ...) {
   fe_names <- fe_names[!fe_names == "offset"]
 
   pars <- x$model$par
-  b_j <- round(unname(pars[grep("b_j", names(pars))]), 2L)
+  b_j_exact <- unname(pars[grep("b_j", names(pars))])
+  b_j <- round(b_j_exact, 2L)
 
   if ("ln_phi" %in% names(as.list(pars))) {
     phi <- mround(exp(as.list(pars)$ln_phi), 2L)
@@ -120,9 +121,9 @@ print.sdmTMB <- function(x, ...) {
 
   cat(title,
     formula,
-    # time,
+    time,
     spde,
-    # data,
+    data,
     family,
     sep = ""
   )
