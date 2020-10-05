@@ -4,10 +4,12 @@
 \alias{plot.sdmTMBmesh}
 \title{Plot SPDE mesh object}
 \usage{
-\method{plot}{sdmTMBmesh}(object)
+\method{plot}{sdmTMBmesh}(x, ...)
 }
 \arguments{
-\item{object}{Output from \code{\link[=make_spde2]{make_spde2()}}.}
+\item{x}{Output from \code{\link[=make_spde]{make_spde()}}.}
+
+\item{...}{Passed to \code{\link[graphics:plot.default]{graphics::plot()}}.}
 }
 \value{
 A plot

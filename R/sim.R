@@ -33,7 +33,7 @@
 #' @examples
 #' set.seed(2957278)
 #' dat <- sim(time_steps = 9)
-#' spde <- make_spde(dat, c("X", "Y"), cutoff = 30)
+#' spde <- make_spde(dat, c("x", "y"), n_knots = 40, type = "kmeans")
 #' plot(spde)
 #' m <- sdmTMB(
 #'   data = dat, formula = observed ~ 1, time = "time",
@@ -50,7 +50,7 @@
 #'   time_steps = 9, ar1_fields = TRUE, ar1_phi = 0.5,
 #'   sigma_O = 0.01, sigma_E = 0.3, phi = 0.01
 #' )
-#' spde <- make_spde(dat, c("X", "Y"), cutoff = 30)
+#' spde <- make_spde(dat, c("x", "y"), n_knots = 40, type = "kmeans")
 #' m <- sdmTMB(
 #'   ar1_fields = TRUE, include_spatial = FALSE,
 #'   data = dat, formula = observed ~ 1, time = "time",
@@ -64,7 +64,7 @@
 # d <- sim(x = runif(200), y = runif(200), initial_betas = c(0.2, -0.2),
 #   sigma_V = c(0.2, 0.1), time_steps = 12, phi = 0.05,
 #   sigma_O = 1e-5, sigma_E = 0.2)
-#' spde <- make_spde(dat, c("X", "Y"), cutoff = 30)
+#' spde <- make_spde(dat, c("x", "y"),  n_knots = 40, type = "kmeans")
 # m <- sdmTMB(data = d, formula = observed ~ 0, time = "time",
 #   time_varying = ~ 0 + cov1 + cov2, silent = FALSE,
 #   include_spatial = FALSE, spde = spde)

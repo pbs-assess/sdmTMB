@@ -70,7 +70,7 @@ Simulate from a spatial Matern Random Field
 \examples{
 set.seed(2957278)
 dat <- sim(time_steps = 9)
-spde <- make_spde(dat, c("X", "Y"), cutoff = 30)
+spde <- make_spde(dat, c("x", "y"), n_knots = 40, type = "kmeans")
 plot(spde)
 m <- sdmTMB(
   data = dat, formula = observed ~ 1, time = "time",
@@ -87,7 +87,7 @@ dat <- sim(
   time_steps = 9, ar1_fields = TRUE, ar1_phi = 0.5,
   sigma_O = 0.01, sigma_E = 0.3, phi = 0.01
 )
-spde <- make_spde(dat, c("X", "Y"), cutoff = 30)
+spde <- make_spde(dat, c("x", "y"), n_knots = 40, type = "kmeans")
 m <- sdmTMB(
   ar1_fields = TRUE, include_spatial = FALSE,
   data = dat, formula = observed ~ 1, time = "time",
@@ -97,5 +97,5 @@ r <- m$tmb_obj$report()
 r$sigma_E
 2 * plogis(m$model$par[["ar1_phi"]]) - 1
 
-spde <- make_spde(dat, c("X", "Y"), cutoff = 30)
+spde <- make_spde(dat, c("x", "y"),  n_knots = 40, type = "kmeans")
 }

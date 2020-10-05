@@ -1,58 +1,58 @@
-#' Construct an SPDE mesh
-#'
-#' @param x X numeric vector.
-#' @param y Y numeric vector.
-#' @param n_knots The number of knots.
-#' @param seed Random seed. Affects [stats::kmeans()] determination of knot locations.
-#' @param mesh An optional mesh created via INLA. If supplied, this mesh will be
-#'   used instead of creating one with [stats::kmeans()] and the `n_knots`
-#'   argument.
-#'
-#' @importFrom graphics points
-#' @export
-#' @examples
-#' sp <- make_spde(pcod$X, pcod$Y, n_knots = 25)
-#' plot_spde(sp)
-#' \donttest{
-#' loc_xy <- cbind(pcod$X, pcod$Y)
-#' bnd <- INLA::inla.nonconvex.hull(as.matrix(loc_xy), convex = -0.05)
-#' mesh <- INLA::inla.mesh.2d(
-#'   boundary = bnd,
-#'   max.edge = c(20, 50),
-#'   offset = -0.05,
-#'   cutoff = c(2, 5),
-#'   min.angle = 10
-#' )
-#' sp2 <- make_spde(pcod$X, pcod$Y, mesh = mesh)
-#' plot_spde(sp2)
-#' }
-#'
-#' # make_spde <- function(x, y, n_knots, seed = 42, mesh = NULL) {
-#' #   loc_xy <- cbind(x, y)
-#' #
-#' #   if (is.null(mesh)) {
-#' #     if (n_knots >= nrow(loc_xy)) {
-#' #       warning(
-#' #         "Reducing `n_knots` to be one less than the ",
-#' #         "number of data points."
-#' #       )
-#' #       n_knots <- nrow(loc_xy) - 1
-#' #     }
-#' #     set.seed(seed)
-#' #     knots <- stats::kmeans(x = loc_xy, centers = n_knots)
-#' #     loc_centers <- knots$centers
-#' #     mesh <- INLA::inla.mesh.create(loc_centers, refine = TRUE)
-#' #   } else {
-#' #     knots <- list()
-#' #     loc_centers <- NA
-#' #   }
-#' #   spde <- INLA::inla.spde2.matern(mesh)
-#' #   A <- INLA::inla.spde.make.A(mesh, loc = loc_xy)
-#' #   list(
-#' #     x = x, y = y, mesh = mesh, spde = spde,
-#' #     loc_centers = loc_centers, A = A
-#' #   )
-#' # }
+# Construct an SPDE mesh
+#
+# @param x X numeric vector.
+# @param y Y numeric vector.
+# @param n_knots The number of knots.
+# @param seed Random seed. Affects [stats::kmeans()] determination of knot locations.
+# @param mesh An optional mesh created via INLA. If supplied, this mesh will be
+#   used instead of creating one with [stats::kmeans()] and the `n_knots`
+#   argument.
+#
+# @importFrom graphics points
+# @export
+# @examples
+# sp <- make_spde(pcod$X, pcod$Y, n_knots = 25)
+# plot_spde(sp)
+# \donttest{
+# loc_xy <- cbind(pcod$X, pcod$Y)
+# bnd <- INLA::inla.nonconvex.hull(as.matrix(loc_xy), convex = -0.05)
+# mesh <- INLA::inla.mesh.2d(
+#   boundary = bnd,
+#   max.edge = c(20, 50),
+#   offset = -0.05,
+#   cutoff = c(2, 5),
+#   min.angle = 10
+# )
+# sp2 <- make_spde(pcod$X, pcod$Y, mesh = mesh)
+# plot_spde(sp2)
+# }
+#
+# # make_spde <- function(x, y, n_knots, seed = 42, mesh = NULL) {
+# #   loc_xy <- cbind(x, y)
+# #
+# #   if (is.null(mesh)) {
+# #     if (n_knots >= nrow(loc_xy)) {
+# #       warning(
+# #         "Reducing `n_knots` to be one less than the ",
+# #         "number of data points."
+# #       )
+# #       n_knots <- nrow(loc_xy) - 1
+# #     }
+# #     set.seed(seed)
+# #     knots <- stats::kmeans(x = loc_xy, centers = n_knots)
+# #     loc_centers <- knots$centers
+# #     mesh <- INLA::inla.mesh.create(loc_centers, refine = TRUE)
+# #   } else {
+# #     knots <- list()
+# #     loc_centers <- NA
+# #   }
+# #   spde <- INLA::inla.spde2.matern(mesh)
+# #   A <- INLA::inla.spde.make.A(mesh, loc = loc_xy)
+# #   list(
+# #     x = x, y = y, mesh = mesh, spde = spde,
+# #     loc_centers = loc_centers, A = A
+# #   )
+# # }
 
 
 #' Construct an SPDE mesh
@@ -128,10 +128,10 @@ make_spde <- function(data, xy_cols,
       "intead of the number of knots. You can obtain the previous default ",
       "mesh type with `type = 'kmeans'`.", call. = FALSE)
   }
-  if (missing(cutoff) && type == "cutoff") {
+  if (missing(cutoff) && type == "cutoff" && is.null(mesh)) {
     stop("You need to specify the `cutoff` argument.", call. = FALSE)
   }
-  if (missing(n_knots) && type != "cutoff") {
+  if (missing(n_knots) && type != "cutoff" && is.null(mesh)) {
     stop("You need to specify the `n_knots` argument.", call. = FALSE)
   }
   loc_xy <- as.matrix(data[, xy_cols, drop = FALSE])
@@ -194,7 +194,7 @@ binary_search_knots <- function(loc_xy,
       return(mesh)
     }
   }
-  cat("cutoff =", pretty_cutoff, "| knots =", mesh$n, "¯\\_(ツ)_/¯\n")
+  cat("cutoff =", pretty_cutoff, "| knots =", mesh$n, "\n")
   mesh
 }
 
@@ -216,14 +216,16 @@ plot_spde <- function(object) {
 
 #' Plot SPDE mesh object
 #'
-#' @param object Output from [make_spde2()].
+#' @param x Output from [make_spde()].
+#' @param ... Passed to [graphics::plot()].
 #'
+#' @importFrom graphics points
 #' @return A plot
 #' @export
-plot.sdmTMBmesh <- function(object) {
-  plot(object$mesh, main = NA, edge.color = "grey60", asp = 1)
-  points(object$loc_xy, pch = 21, col = "#00000070")
-  points(object$loc_centers, pch = 20, col = "red")
+plot.sdmTMBmesh <- function(x, ...) {
+  plot(x$mesh, main = NA, edge.color = "grey60", asp = 1, ...)
+  points(x$loc_xy, pch = 21, col = "#00000070")
+  points(x$loc_centers, pch = 20, col = "red")
 }
 
 # from TMB examples repository:

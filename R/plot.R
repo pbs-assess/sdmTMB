@@ -9,7 +9,7 @@
 #' d <- pcod
 #' m <- sdmTMB(data = d,
 #'   formula = density ~ 0 + as.factor(year),
-#'   time = "year", spde = make_spde(d$X, d$Y, n_knots = 80),
+#'   time = "year", spde = make_spde(d, c("X", "Y"), n_knots = 80, type = "kmeans"),
 #'   family = tweedie(link = "log"), anisotropy = TRUE,
 #'   include_spatial = FALSE)
 #' plot_anisotropy(m)

@@ -21,7 +21,7 @@ Extract a relative biomass/abundance index or a center of gravity
 }
 \examples{
 # Use a small number of knots for this example to make it fast:
-pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 50)
+pcod_spde <- make_spde(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
 m <- sdmTMB(
  data = pcod,
  formula = density ~ 0 + as.factor(year),
