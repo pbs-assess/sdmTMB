@@ -202,7 +202,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     is.logical(reml), is.logical(anisotropy), is.logical(silent),
     is.logical(silent), is.logical(spatial_trend), is.logical(mgcv),
     is.logical(multiphase), is.logical(enable_priors), is.logical(ar1_fields),
-    is.logical(include_spatial), is.logical(spatial_only)
+    is.logical(include_spatial)
   )
   if (!is.null(time_varying)) assert_that(identical(class(time_varying), "formula"))
   assert_that(is.list(control))
