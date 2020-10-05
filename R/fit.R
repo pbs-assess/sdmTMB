@@ -133,12 +133,14 @@ NULL
 #' m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'   data = pcod_binom, time = "year", spde = pcod_spde,
 #'   family = binomial(link = "logit"))
+#' print(m_bin)
 #'
 #' # Gaussian:
 #' pcod_gaus <- subset(d, density > 0 & year >= 2013)
 #' pcod_spde_gaus <- make_spde(pcod_gaus, c("X", "Y"), cutoff = 30)
 #' m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
+#' print(m_pos)
 #'
 #' # With splines via mgcv.
 #' # Make sure to pre-specify an appropriate basis dimension (`k`) since
@@ -146,16 +148,20 @@ NULL
 #' # See ?mgcv::choose.k
 #' m_gam <- sdmTMB(log(density) ~ 0 + as.factor(year) + s(depth_scaled, k = 4),
 #'   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
+#' print(m_gam)
 #'
+#' \donttest{
 #' # Fit a spatial only model:
 #' m <- sdmTMB(
 #'   density ~ depth_scaled + depth_scaled2, data = d,
 #'   spde = pcod_spde, family = tweedie(link = "log"))
+#' print(m)
 #'
 #' # Spatial-trend example:
 #' m <- sdmTMB(density ~ depth_scaled, data = d,
 #'   spde = pcod_spde, family = tweedie(link = "log"),
 #'   spatial_trend = TRUE, time = "year")
+#' print(m)
 #'
 #' r <- m$tmb_obj$report()
 #' r$ln_tau_O_trend
@@ -165,6 +171,7 @@ NULL
 #' m <- sdmTMB(density ~ 0 + as.factor(year),
 #'   time_varying = ~ 0 + depth_scaled + depth_scaled2,
 #'   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
+#' print(m)
 #'
 #' # See the b_rw_t estimates; these are the time-varying (random walk) effects.
 #' summary(m$sd_report)[1:19,]
@@ -173,6 +180,7 @@ NULL
 #' m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) +
 #'     breakpt(depth_scaled) + depth_scaled2, data = pcod_gaus,
 #'   time = "year", spde = pcod_spde_gaus)
+#' }
 
 sdmTMB <- function(formula, data, spde, time = NULL,
   family = gaussian(link = "identity"),

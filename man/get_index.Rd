@@ -20,6 +20,7 @@ get_cog(obj, bias_correct = FALSE, level = 0.95)
 Extract a relative biomass/abundance index or a center of gravity
 }
 \examples{
+\donttest{
 # Use a small number of knots for this example to make it fast:
 pcod_spde <- make_spde(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
 m <- sdmTMB(
@@ -36,5 +37,6 @@ ggplot(ind, aes(year, est)) + geom_line() +
 
 cog <- get_cog(predictions)
 cog
+}
 
 }

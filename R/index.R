@@ -5,6 +5,7 @@
 #' @param level The confidence level.
 #'
 #' @examples
+#' \donttest{
 #' # Use a small number of knots for this example to make it fast:
 #' pcod_spde <- make_spde(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
 #' m <- sdmTMB(
@@ -21,6 +22,7 @@
 #'
 #' cog <- get_cog(predictions)
 #' cog
+#' }
 #'
 #' @export
 get_index <- function(obj, bias_correct = FALSE, level = 0.95)  {
