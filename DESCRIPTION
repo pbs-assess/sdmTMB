@@ -45,7 +45,6 @@ Imports:
     stats,
     TMB (>= 1.7.13)
 Suggests:
-    broom,
     dplyr,
     ggplot2,
     glmmTMB,
