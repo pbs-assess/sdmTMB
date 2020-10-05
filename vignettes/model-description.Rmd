@@ -17,13 +17,29 @@ knitr::opts_chunk$set(
 )
 ```
 
+\newcommand{\s}{\boldsymbol{s}}
+
+## Notation conventions
+
+* Bold lowercase for vectors
+
+* Subscript $\s$ since x, y
+
+* Bold uppercase for matrices
+
+* $\phi$ for all 'dispersion' parameters for consistency with code
+
+* Family titles link to TMB or sdmTMB source code
+
+* Attempt to link math symbols to argument options in model and code symbols
+
 ## Basic model structure
 
 $$
 \begin{align}
-  \mathbb{E}(y_{s,t}) &= \mu_{s,t},\\
-  \mu_{s,t} &= g^{-1} 
-  \left( \boldsymbol{X} \boldsymbol{\beta} + \omega_s + \epsilon_{s,t} \right),\\
+  \mathbb{E}(y_{\s,t}) &= \mu_{\s,t},\\
+  \mu_{\s,t} &= g^{-1} 
+  \left( \boldsymbol{X} \boldsymbol{\beta} + \omega_s + \epsilon_{\s,t} \right),\\
   \boldsymbol{\omega} &\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_\omega \right),\\
   \boldsymbol{\epsilon}_t &\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right).
 \end{align}
@@ -34,7 +50,7 @@ where $g$ is a link function and $g^{-1}$ is the inverse link.
 
 $$
 \begin{align}
-  \mu_{s,t} &= g^{-1} \left( \ldots + \gamma_{t} x_{s,t} + \ldots \right),\\
+  \mu_{\s,t} &= g^{-1} \left( \ldots + \gamma_{t} x_{\s,t} + \ldots \right),\\
   \gamma_{t} &\sim \operatorname{Normal} \left(\gamma_{t-1}, \sigma^2_{\gamma} \right).
 \end{align}
 $$
@@ -43,7 +59,7 @@ $$
 
 $$
 \begin{align}
-  \mu_{s,t} &= g^{-1} \left( \ldots + \zeta_s x_t + \ldots \right),\\
+  \mu_{\s,t} &= g^{-1} \left( \ldots + \zeta_s x_t + \ldots \right),\\
   \boldsymbol{\zeta} &\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_\zeta \right).
 \end{align}
 $$
@@ -54,10 +70,10 @@ Dropping the $\omega_s$ for simplicity:
 
 $$
 \begin{align}
-\mu_{s,t} &= g^{-1} \left( \boldsymbol{X} \boldsymbol{\beta} + \delta_{s,t} \right),\\
+\mu_{\s,t} &= g^{-1} \left( \boldsymbol{X} \boldsymbol{\beta} + \delta_{\s,t} \right),\\
 \boldsymbol{\delta}_{t=1} &\sim \operatorname{MVNormal} (\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon}),\\
 \boldsymbol{\delta}_{t>1} &= \phi \boldsymbol{\delta}_{t-1} + \sqrt{1 - \phi^2} \boldsymbol{\epsilon}_t,  \:
-\boldsymbol{\epsilon_t} \sim \operatorname{MVNormal} \left(\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right).
+\boldsymbol{\epsilon}_t \sim \operatorname{MVNormal} \left(\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right).
 \end{align}
 $$
 
@@ -66,8 +82,13 @@ $$
 ### [Gaussian](https://kaskr.github.io/adcomp/dnorm_8hpp.html)
 
 $$
-\operatorname{Normal} \left( \mu, \sigma \right)
+\operatorname{Normal} \left( \mu, \phi \right)
 $$
+where $\phi$ is the standard deviation (following Stan convention of SD not variance).
+
+### [Tweedie](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga262f3c2d1cf36f322a62d902a608aae0)
+
+[Source code](https://kaskr.github.io/adcomp/tweedie_8cpp_source.html) as in [cplm](https://CRAN.R-project.org/package=cplm) package. <https://link.springer.com/article/10.1007/s11222-012-9343-7>
 
 $$
 \operatorname{Tweedie} \left(\mu, p, \phi \right), \: 1 < p < 2
@@ -85,7 +106,7 @@ where $\phi$ represents the CV.
 
 ### [Binomial](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaee11f805f02bc1febc6d7bf0487671be)
 
-Actually uses [robust version](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaecb5a18095a320b42e2d20c4b120f5f5).
+Internally parameterized as the [robust version](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaecb5a18095a320b42e2d20c4b120f5f5).
 
 $$
 \operatorname{Binomial} \left( N, \mu \right)
@@ -107,19 +128,18 @@ $$
 \operatorname{NB2} \left( \mu, \phi \right)
 $$
 
-Variance scales quadratically with mean: TODO
+Variance scales quadratically with mean $\mathrm{Var}[y] = \mu + \mu^2 / \phi$.
 
 ### [Lognormal](https://github.com/pbs-assess/sdmTMB/blob/28a93496a93b12e5a2f73f703bc96afbf14d86c1/src/sdmTMB.cpp#L22-L30)
 
 $$
-\operatorname{Lognormal} \left( \mu - \frac{\sigma^2}{2}, \sigma \right)
+\operatorname{Lognormal} \left( \log \mu - \frac{\phi^2}{2}, \phi \right)
 $$
-TODO make sure correct in code and shouldn't be log(mu - sigma^2/2)
 
 ### [Student-t](https://github.com/pbs-assess/sdmTMB/blob/28a93496a93b12e5a2f73f703bc96afbf14d86c1/src/sdmTMB.cpp#L11-L20)
 
 $$
-\operatorname{Student-t} \left( \mu, \sigma, \nu \right)
+\operatorname{Student-t} \left( \mu, \phi, \nu \right)
 $$
 
 where $\nu$, the degrees of freedom, is currently fixed at 3.
@@ -130,4 +150,4 @@ $$
 \operatorname{Beta} \left(\mu \phi, 1 - \mu \phi \right)
 $$
 
-where $\phi$ is variance. TODO make as SD?
+where $\phi$ is variance.
