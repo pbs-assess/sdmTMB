@@ -3,6 +3,7 @@
 S3method(extractAIC,sdmTMB)
 S3method(logLik,sdmTMB)
 S3method(nobs,sdmTMB)
+S3method(plot,sdmTMBmesh)
 S3method(predict,sdmTMB)
 S3method(print,sdmTMB)
 S3method(residuals,sdmTMB)

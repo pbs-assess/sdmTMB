@@ -13,12 +13,15 @@ NULL
 #' @param spde An object from [make_spde()].
 #' @param time The time column (as character).
 #' @param family The family and link. Supports [gaussian()], [Gamma()],
-#'   [binomial()], [poisson()], [nbinom2()], and [tweedie()].
+#'   [binomial()], [poisson()], [sdmTMB::Beta()], [nbinom2()], and [tweedie()].
 #' @param time_varying An optional formula describing covariates that should be
-#'   modelled as a random walk through time.
+#'   modelled as a random walk through time. Leave as `NULL` for a spatial-only
+#'   model.
 #' @param weights Optional likelihood weights for the conditional model.
 #'   Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
 #'   to one and are not internally modified.
+#' @param extra_time Optional extra time slices (e.g., years) to include for
+#'   interpolation or forecasting with the predict function. See details section.
 #' @param reml Logical: use REML estimation rather than maximum likelihood?
 #' @param silent Silent or include optimization details?
 #' @param multiphase Logical: estimate the fixed and random effects in phases?
@@ -34,18 +37,11 @@ NULL
 #'   between `-1` and `1` with:  `2 * invlogit(ar1_phi) - 1` i.e. in R `2 *
 #'   plogis(ar_phi) - 1`.
 #' @param include_spatial Should a separate spatial random field be estimated?
-#'   If enabled then there will be a separate spatial field and spatiotemporal
+#'   If enabled then there will be separate spatial and spatiotemporal
 #'   fields.
 #' @param spatial_trend Should a separate spatial field be included in the
 #'   trend? Requires spatiotemporal data.
-#' @param normalize Logical: should the normalization of the random effects be
-#'   done in R during the outer-optimization step? For some cases, especially
-#'   with many knots, this may be faster. In others, it may be slower or suffer
-#'   from convergence problems. *Currently disabled!*
-#' @param spatial_only Logical: should only a spatial model be fit (i.e. do not
-#'   include spatiotemporal random effects)? By default a spatial-only model
-#'   will be fit if there is only one unique value in the time column or the
-#'   `time` argument is left at its default value of `NULL`.
+#' @param spatial_only Deprecated; please use `time = NULL` to fit a spatial model.
 #' @param nlminb_loops How many times to run [stats::nlminb()] optimization.
 #'   Sometimes restarting the optimizer at the previous best values aids
 #'   convergence. If the maximum gradient is still too large,
@@ -58,44 +54,60 @@ NULL
 #'   optimization with. Can greatly speed up fitting. Note that the data and
 #'   model must be set up exactly the same way! However, the `weights` argument
 #'   can change, which can be useful for cross-validation.
-#' @param quadratic_roots Logical: should quadratic roots be calculated?
-#'   Experimental feature for internal use right now. Note: on the sdmTMB side,
-#'   the first two coefficients are used to generate the quadratic parameters.
-#'   This means that if you want to generate a quadratic profile for depth, and
-#'   depth and depth^2 are part of your formula, you need to make sure these are
-#'   listed first and that an intercept isn't included. For example, `formula
-#'   = cpue ~ 0 + depth + depth2 + as.factor(year)`.
+#' @param quadratic_roots Experimental feature for internal use right now; may
+#'   be moved to a branch. Logical: should quadratic roots be calculated? Note:
+#'   on the sdmTMB side, the first two coefficients are used to generate the
+#'   quadratic parameters. This means that if you want to generate a quadratic
+#'   profile for depth, and depth and depth^2 are part of your formula, you need
+#'   to make sure these are listed first and that an intercept isn't included.
+#'   For example, `formula = cpue ~ 0 + depth + depth2 + as.factor(year)`.
 #'
 #' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
 #'   model.response terms model.offset
 #'
 #' @details
-#' \bold{Formula syntax for offsets and threshold models}
+#'
+#' **Offsets**
 #'
 #' In the model formula, an offset can be included by including `+ offset` in
 #' the model formula (a reserved word). The offset will be included in any
 #' prediction. `offset` must be a column in `data`.
 #'
+#' **Threshold models**
+#'
 #' A linear break-point relationship for a covariate can be included via `+
 #' breakpt(variable)` in the formula, where `variable` is a single covariate
 #' corresponding to a column in `data`. In this case the relationship is linear
-#' up to a point then constant.
+#' up to a point and then constant.
 #'
 #' Similarly, a logistic-function threshold model can be included via `+
 #' logistic(variable)`. This option models the relationship as a logistic
 #' function of the 50% and 95% values. This is similar to length- or size-based
 #' selectivity in fisheries, and is parameterized by the points at which f(x) =
-#' 0.5 or 0.95.
+#' 0.5 or 0.95. See the vignette.
 #'
 #' Note that only a single threshold covariate can be included.
+#'
+#' **Forecasting or interpolating**
+#'
+#' Extra time slices (e.g., years) can be included for interpolation or
+#' forecasting with the predict function via the `extra_time` argument. The
+#' predict function requires all time slices to be defined when fitting the
+#' model to ensure the various time indices are set up correctly. Be careful if
+#' including extra time slices that the model remains identifiable. For example,
+#' including `+ as.factor(year)` in `formula` will render a model with no data
+#' to inform the expected value in the missing year. [sdmTMB()] makes no attempt
+#' to determine if the model makes sense for forecasting or interpolation. The
+#' options `time_varying`, `include_spatial`, `ar1_fields`, `time = NULL`
+#' provide mechanisms to predict over missing time slices.
 #'
 #' @export
 #'
 #' @examples
 #' d <- subset(pcod, year >= 2011) # subset for example speed
-#' pcod_spde <- make_spde(d$X, d$Y, n_knots = 50) # only 50 knots for example speed
-#' plot_spde(pcod_spde)
+#' pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
+#' plot(pcod_spde)
 #'
 #' # Tweedie:
 #' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
@@ -122,7 +134,7 @@ NULL
 #'
 #' # Gaussian:
 #' pcod_gaus <- subset(d, density > 0 & year >= 2013)
-#' pcod_spde_gaus <- make_spde(pcod_gaus$X, pcod_gaus$Y, n_knots = 50)
+#' pcod_spde_gaus <- make_spde(pcod_gaus, c("X", "Y"), cutoff = 30)
 #' m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
 #'
@@ -162,21 +174,26 @@ NULL
 
 sdmTMB <- function(formula, data, spde, time = NULL,
   family = gaussian(link = "identity"),
-  time_varying = NULL, weights = NULL, reml = FALSE,
+  time_varying = NULL, weights = NULL, extra_time = NULL, reml = FALSE,
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
   control = sdmTMBcontrol(), enable_priors = FALSE, ar1_fields = FALSE,
   include_spatial = TRUE, spatial_trend = FALSE,
-  normalize = FALSE,
-  spatial_only = identical(length(unique(data[[time]])), 1L),
+  spatial_only = "Depreciated",
   nlminb_loops = 1,
   newton_steps = 0,
   mgcv = TRUE,
   previous_fit = NULL,
   quadratic_roots = FALSE) {
 
-  if (isTRUE(normalize)) {
-    warning("`normalize` is currently disabled and doesn't do anything.")
-    normalize <- FALSE
+  if (!missing(spatial_only)) {
+    warning("The argument `spatial_only` is deprecated; please use `time = NULL` instead.",
+      call. = FALSE)
+    spatial_only <- TRUE
+  }
+  if (isTRUE(spatial_only) || is.null(time) || identical(length(unique(data[[time]])), 1L)) {
+    spatial_only <- TRUE
+  } else {
+    spatial_only <- FALSE
   }
 
   if (is.null(time)) {
@@ -232,9 +249,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   }
   # Stuff needed for spatiotemporal A matrix:
   data$sdm_orig_id <- seq(1, nrow(data))
-  data$sdm_x <- spde$x
-  data$sdm_y <- spde$y
-  fake_data <- unique(data.frame(sdm_x = spde$x, sdm_y = spde$y))
+  data$sdm_x <- spde$loc_xy[,1,drop=TRUE]
+  data$sdm_y <- spde$loc_xy[,2,drop=TRUE]
+  fake_data <- unique(data.frame(sdm_x = data$sdm_x, sdm_y = data$sdm_y))
   fake_data[["sdm_spatial_id"]] <- seq(1, nrow(fake_data))
   data <- base::merge(data, fake_data, by = c("sdm_x", "sdm_y"),
     all.x = TRUE, all.y = FALSE)
@@ -263,7 +280,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     pop_pred   = 0L,
     weights_i  = if (!is.null(weights)) weights else rep(1, length(y_i)),
     area_i     = rep(1, length(y_i)),
-    normalize_in_r = as.integer(normalize),
+    normalize_in_r = 0L, # not used
     calc_time_totals = 0L,
     random_walk = !is.null(time_varying),
     enable_priors = as.integer(enable_priors),
@@ -403,8 +420,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     random = tmb_random, DLL = "sdmTMB", silent = silent)
-  if (tmb_data$normalize_in_r == 1L)
-    tmb_obj <- TMB::normalize(tmb_obj, flag = "flag")
+  # if (tmb_data$normalize_in_r == 1L)
+  #   tmb_obj <- TMB::normalize(tmb_obj, flag = "flag")
 
   if (!is.null(previous_fit)) {
     start <- previous_fit$model$par

@@ -56,7 +56,7 @@
 #'
 #' library(ggplot2)
 #' d <- pcod
-#' pcod_spde <- make_spde(d$X, d$Y, n_knots = 50) # just 50 for example speed
+#' pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
 #' m <- sdmTMB(
 #'  data = d, formula = density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'  time = "year", spde = pcod_spde, family = tweedie(link = "log")
@@ -149,7 +149,7 @@
 #' dfake$year_factor <- dfake$year
 #' dfake$year_factor[nrow(dfake)] <- max(d$year) # share fixed effect for last 2 years
 #'
-#' pcod_spde <- make_spde(dfake$X, dfake$Y, n_knots = 50)
+#' pcod_spde <- make_spde(dfake, c("X", "Y"), cutoff = 30)
 #'
 #' m <- sdmTMB(
 #'   data = dfake, formula = density ~ 0 + as.factor(year_factor),
@@ -173,7 +173,7 @@
 #'
 #' # Estimating local trends ----------------------------------------------
 #'
-#' pcod_spde <- make_spde(d$X, d$Y, n_knots = 100)
+#' pcod_spde <- make_spde(pcod, c("X", "Y"), cutoff = 25)
 #' m <- sdmTMB(data = pcod, formula = density ~ depth_scaled + depth_scaled2,
 #'   spde = pcod_spde, family = tweedie(link = "log"),
 #'   spatial_trend = TRUE, time = "year", spatial_only = TRUE)
@@ -199,6 +199,18 @@
 predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
   xy_cols = c("X", "Y"), return_tmb_object = FALSE,
   area = 1, re_form = NULL, ...) {
+
+  if (!missing(xy_cols)) {
+    warning("argument `xy_cols` is deprecated; this information is already ",
+    "in the output of the new `make_spde().", call. = FALSE)
+  }
+  if (!"xy_cols" %in% names(object$spde)) {
+    warning("It looks like this model was fit with an older version of make_spde(). ",
+    "Using `xy_cols`, but future versions of sdmTMB may not be compatible with this ",
+    "model. Please update the make_spde() object and model fit.", call. = FALSE)
+  } else {
+    xy_cols <- object$spde$xy_cols
+  }
 
   test <- suppressWarnings(tryCatch(object$tmb_obj$report(), error = function(e) NA))
   if (all(is.na(test))) object <- update_model(object)

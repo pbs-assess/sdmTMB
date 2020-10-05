@@ -17,8 +17,8 @@ test_that("sdmTMB model fit with a covariate beta", {
     phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E,
     seed = SEED
   )
-  spde <- make_spde(x = s$x, y = s$y, n_knots = 80)
-  plot_spde(spde)
+  spde <- make_spde(s, c("x", "y"), cutoff = 0.02)
+  plot(spde)
   m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time", spde = spde)
   expect_output(print(m), "fit by")
   expect_output(summary(m), "fit by")
@@ -36,10 +36,9 @@ test_that("sdmTMB model fit with a covariate beta", {
 })
 
 test_that("Anisotropy fits and plots", {
-  d <- subset(pcod, year >= 2015)
-  m <- sdmTMB(data = d,
+  m <- sdmTMB(data = pcod,
     formula = density ~ 0 + as.factor(year),
-    spde = make_spde(d$X, d$Y, n_knots = 80),
+    spde = make_spde(pcod, c("X", "Y"), n_knots = 50, type = "kmeans"),
     family = tweedie(link = "log"), anisotropy = TRUE)
   expect_identical(class(m), "sdmTMB")
   plot_anisotropy(m)
@@ -49,14 +48,14 @@ test_that("A model with splines works", {
   d <- subset(pcod, year >= 2015)
   m <- sdmTMB(data = d,
     formula = density ~ 1 + s(depth_scaled),
-    spde = make_spde(d$X, d$Y, n_knots = 50),
+    spde = make_spde(d, c("X", "Y"), n_knots = 50, type = "kmeans"),
     family = tweedie(link = "log"))
   expect_identical(class(m), "sdmTMB")
 })
 
 test_that("A spatiotemporal version works with predictions on new data points", {
   d <- subset(pcod, year >= 2015)
-  pcod_spde <- make_spde(d$X, d$Y, n_knots = 40)
+  pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(
     data = d,
     formula = density ~ 0 + as.factor(year),
@@ -98,8 +97,8 @@ test_that("A spatiotemporal version works with predictions on new data points", 
 #   p_normalize <- predict(m_normalize)
 #   expect_equal(p, p_normalize)
 #
-#   p_nd <- predict(m, newdata = dat, xy_cols = c("x", "y"))
-#   p_normalize <- predict(m_normalize, newdata = dat, xy_cols = c("x", "y"))
+#   p_nd <- predict(m, newdata = dat)
+#   p_normalize <- predict(m_normalize, newdata = dat)
 #   expect_equal(p_nd, p_normalize, tolerance = 1e-3)
 # })
 
@@ -112,14 +111,14 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
     sigma_O = 1e-6, sigma_E = 0.3, phi = 0.1,
     seed = 1
   )
-  spde <- make_spde(x = dat$x, y = dat$y, n_knots = 40)
+  spde <- make_spde(dat, c("x", "y"), n_knots = 40, type = "kmeans")
   m <- sdmTMB(
     ar1_fields = FALSE, include_spatial = FALSE,
     data = dat, formula = observed ~ 1, time = "time",
-    family = gaussian(link = "identity"), spde = spde, normalize = FALSE
+    family = gaussian(link = "identity"), spde = spde
   )
   p <- predict(m)
-  p_nd <- predict(m, newdata = dat, xy_cols = c("x", "y"))
+  p_nd <- predict(m, newdata = dat)
 
   cols <- c("est", "est_non_rf", "est_rf", "omega_s", "epsilon_st")
   expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-4)
@@ -127,14 +126,12 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   m <- sdmTMB(
     ar1_fields = TRUE, include_spatial = FALSE,
     data = dat, formula = observed ~ 1, time = "time",
-    family = gaussian(link = "identity"), spde = spde, normalize = FALSE
+    family = gaussian(link = "identity"), spde = spde
   )
 
   p <- predict(m)
-  p_nd <- predict(m, newdata = dat, xy_cols = c("x", "y"))
+  p_nd <- predict(m, newdata = dat)
   expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-4)
-
-  expect_error(predict(m, newdata = dat, xy_cols = c("a", "y")), regexp = "xy_cols")
 })
 
 test_that("A time-varying model fits and predicts appropriately", {
@@ -154,7 +151,7 @@ test_that("A time-varying model fits and predicts appropriately", {
     phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E,
     seed = SEED
   )
-  spde <- make_spde(x = s$x, y = s$y, n_knots = 25)
+  spde <- make_spde(s, c("x", "y"), cutoff = 0.02)
   m <- sdmTMB(data = s, formula = observed ~ 0, include_spatial = FALSE,
     time_varying = ~ 0 + cov1, time = "time", spde = spde, mgcv = FALSE)
   expect_equal(exp(m$model$par["ln_tau_V"])[[1]], sigma_V, tolerance = 0.1)
@@ -170,7 +167,7 @@ test_that("A time-varying model fits and predicts appropriately", {
   expect_equal(mean((p$est - s$observed)^2), 0, tolerance = 0.1)
 
   cols <- c("est", "est_non_rf", "est_rf", "omega_s", "epsilon_st")
-  p_nd <- predict(m, newdata = s, xy_cols = c("x", "y"))
+  p_nd <- predict(m, newdata = s)
   expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-5)
 })
 
@@ -196,7 +193,7 @@ test_that("Priors are working and regularize", {
     phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E,
     seed = 1
   )
-  spde <- make_spde(s$x, s$y, n_knots = 30)
+  spde <- make_spde(s, c("x", "y"), cutoff = 0.02)
   m <- sdmTMB(data = s, formula = observed ~ 0 + cov1,
     spde = spde, time = "time",
     include_spatial = FALSE, enable_priors = FALSE)
@@ -208,7 +205,7 @@ test_that("Priors are working and regularize", {
 
 test_that("A spatial trend model fits", {
   d <- subset(pcod, year >= 2011) # subset for speed
-  pcod_spde <- make_spde(d$X, d$Y, n_knots = 50)
+  pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ depth_scaled, data = d,
     spde = pcod_spde, family = tweedie(link = "log"),
     spatial_trend = TRUE, time = "year")
@@ -217,7 +214,7 @@ test_that("A spatial trend model fits", {
 
 test_that("A logistic threshold model fits", {
   d <- subset(pcod, year >= 2011) # subset for speed
-  pcod_spde <- make_spde(d$X, d$Y, n_knots = 50)
+  pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ 0 + as.factor(year) + logistic(depth_scaled), data = d,
     spde = pcod_spde, family = tweedie(link = "log"),
     spatial_trend = FALSE, time = "year")
@@ -226,7 +223,7 @@ test_that("A logistic threshold model fits", {
 
 test_that("A linear threshold model fits", {
   d <- subset(pcod, year >= 2011) # subset for speed
-  pcod_spde <- make_spde(d$X, d$Y, n_knots = 50)
+  pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ 0 + as.factor(year) + breakpt(depth_scaled), data = d,
     spde = pcod_spde, family = tweedie(link = "log"),
     spatial_trend = FALSE, time = "year")

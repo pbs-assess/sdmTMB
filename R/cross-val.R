@@ -54,7 +54,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'
 #' @examples
 #' d <- subset(pcod, year >= 2011) # subset for example speed
-#' spde <- make_spde(d$X, d$Y, n_knots = 30)
+#' spde <- make_spde(d, c("X", "Y"), cutoff = 30)
 #'
 #' # library(future) # for parallel processing
 #' # plan(multisession) # for parallel processing

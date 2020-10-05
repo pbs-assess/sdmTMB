@@ -5,24 +5,51 @@
 \alias{plot_spde}
 \title{Construct an SPDE mesh}
 \usage{
-make_spde(x, y, n_knots, seed = 42, mesh = NULL)
+make_spde(
+  data,
+  xy_cols,
+  type = c("cutoff", "cutoff-search", "kmeans"),
+  cutoff,
+  n_knots,
+  seed = 42,
+  refine = list(min.angle = 21, max.edge = Inf, max.n.strict = -1, max.n = 1000),
+  mesh = NULL
+)
 
 plot_spde(object)
 }
 \arguments{
+\item{data}{A data frame.}
+
+\item{xy_cols}{A character vector of x and y column names contained in
+\code{data}.}
+
+\item{type}{Method to create the mesh. Also see \code{mesh} argument to supply
+your own mesh.}
+
+\item{cutoff}{An optional cutoff if type is \code{"cutoff"}. "The minimum allowed
+distance between points in the mesh". See \code{\link[INLA:inla.mesh.create]{INLA::inla.mesh.create()}}.
+Smaller values create meshes with more knots. Points further apart than this
+value will receive a separate vertex in the mesh before any mesh refinement.}
+
+\item{n_knots}{The number of desired knots if \code{type} is not \code{"cutoff"}.}
+
+\item{seed}{Random seed. Affects \code{\link[stats:kmeans]{stats::kmeans()}} determination of knot
+locations if \code{type = "kmeans"}.}
+
+\item{refine}{Logical or list to pass to \code{\link[INLA:inla.mesh.create]{INLA::inla.mesh.create()}}.}
+
+\item{mesh}{An optional mesh created via INLA instead of using the above
+convenience options.}
+
+\item{object}{Output from \code{\link[=make_spde]{make_spde()}}.}
+
 \item{x}{X numeric vector.}
 
 \item{y}{Y numeric vector.}
-
-\item{n_knots}{The number of knots.}
-
-\item{seed}{Random seed. Affects \code{\link[stats:kmeans]{stats::kmeans()}} determination of knot locations.}
-
-\item{mesh}{An optional mesh created via INLA. If supplied, this mesh will be
-used instead of creating one with \code{\link[stats:kmeans]{stats::kmeans()}} and the \code{n_knots}
-argument.}
-
-\item{object}{Output from \code{\link[=make_spde]{make_spde()}}.}
+}
+\value{
+A list of class sdmTMBmesh.
 }
 \description{
 Construct an SPDE mesh
@@ -30,7 +57,6 @@ Construct an SPDE mesh
 \examples{
 sp <- make_spde(pcod$X, pcod$Y, n_knots = 25)
 plot_spde(sp)
-
 \donttest{
 loc_xy <- cbind(pcod$X, pcod$Y)
 bnd <- INLA::inla.nonconvex.hull(as.matrix(loc_xy), convex = -0.05)
@@ -44,4 +70,60 @@ mesh <- INLA::inla.mesh.2d(
 sp2 <- make_spde(pcod$X, pcod$Y, mesh = mesh)
 plot_spde(sp2)
 }
+
+# make_spde <- function(x, y, n_knots, seed = 42, mesh = NULL) {
+#   loc_xy <- cbind(x, y)
+#
+#   if (is.null(mesh)) {
+#     if (n_knots >= nrow(loc_xy)) {
+#       warning(
+#         "Reducing `n_knots` to be one less than the ",
+#         "number of data points."
+#       )
+#       n_knots <- nrow(loc_xy) - 1
+#     }
+#     set.seed(seed)
+#     knots <- stats::kmeans(x = loc_xy, centers = n_knots)
+#     loc_centers <- knots$centers
+#     mesh <- INLA::inla.mesh.create(loc_centers, refine = TRUE)
+#   } else {
+#     knots <- list()
+#     loc_centers <- NA
+#   }
+#   spde <- INLA::inla.spde2.matern(mesh)
+#   A <- INLA::inla.spde.make.A(mesh, loc = loc_xy)
+#   list(
+#     x = x, y = y, mesh = mesh, spde = spde,
+#     loc_centers = loc_centers, A = A
+#   )
+# }
+Construct an SPDE mesh
+
+sp <- make_spde(pcod, c("X", "Y"), n_knots = 50, type = "cutoff-search")
+plot(sp)
+
+sp <- make_spde(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
+plot(sp)
+
+sp <- make_spde(pcod, c("X", "Y"), cutoff = 30, type = "cutoff")
+plot(sp)
+
+sp <- make_spde(pcod, c("X", "Y"), cutoff = 5, type = "cutoff")
+plot(sp)
+
+\donttest{
+# Defining a mesh directly with INLA:
+loc_xy <- cbind(pcod$X, pcod$Y)
+bnd <- INLA::inla.nonconvex.hull(loc_xy, convex = -0.05)
+mesh <- INLA::inla.mesh.2d(
+  boundary = bnd,
+  max.edge = c(20, 50),
+  offset = -0.05,
+  cutoff = c(2, 5),
+  min.angle = 10
+)
+sp2 <- make_spde(pcod, c("X", "Y"), mesh = mesh)
+plot(sp2)
+}
+
 }

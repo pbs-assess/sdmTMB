@@ -43,7 +43,7 @@ test_that("Student and lognormal families fit", {
     phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E,
     seed = 1
   )
-  spde <- make_spde(s$x, s$y, n_knots = 50)
+  spde <- make_spde(s, c("x", "y"), n_knots = 50, type = "kmeans")
   m <- sdmTMB(data = s, formula = observed ~ 1, spde = spde,
     family = student(link = "identity"))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
@@ -53,7 +53,7 @@ test_that("Student and lognormal families fit", {
 test_that("NB2 fits", {
   d <- pcod[pcod$year == 2017, ]
   d$density <- round(d$density)
-  spde <- make_spde(d$X, d$Y, n_knots = 30)
+  spde <- make_spde(d, c("X", "Y"), cutoff = 10)
   m <- sdmTMB(data = d, formula = density ~ 1,
     spde = spde, family = nbinom2(link = "log"))
   sdmTMBphi <- exp(m$model$par[["ln_phi"]])
@@ -64,19 +64,20 @@ test_that("NB2 fits", {
 })
 
 test_that("Poisson fits", {
-  d <- pcod[pcod$year == 2017, ]
-  spde <- make_spde(d$X, d$Y, n_knots = 30)
-  d$density <- rpois(nrow(d), 3)
+  d <- pcod
+  spde <- make_spde(pcod, c("X", "Y"), cutoff = 20)
+  set.seed(3)
+  d$density <- rpois(nrow(pcod), 3)
   m <- sdmTMB(data = d, formula = density ~ 1,
     spde = spde, family = poisson(link = "log"))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
-  expect_length(residuals(m), nrow(d))
+  expect_length(residuals(m), nrow(pcod))
 })
 
 test_that("Binomial fits", {
   d <- pcod[pcod$year == 2017, ]
   d$density <- round(d$density)
-  spde <- make_spde(d$X, d$Y, n_knots = 30)
+  spde <- make_spde(d, c("X", "Y"), cutoff = 10)
   d$present <- ifelse(d$density > 0, 1, 0)
   m <- sdmTMB(data = d, formula = present ~ 1,
     spde = spde, family = binomial(link = "logit"))
@@ -87,7 +88,7 @@ test_that("Binomial fits", {
 test_that("Gamma fits", {
   d <- pcod[pcod$year == 2017 & pcod$density > 0, ]
   # d$density <- d$density / 100
-  spde <- make_spde(d$X, d$Y, n_knots = 30)
+  spde <- make_spde(d, c("X", "Y"), cutoff = 10)
   m <- sdmTMB(data = d, formula = density ~ 1,
     spde = spde, family = Gamma(link = "log"))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
@@ -97,7 +98,7 @@ test_that("Gamma fits", {
 test_that("Beta fits", {
   s <- sim(sigma_O = 0.02)
   s$observed <- stats::plogis(s$observed * 7)
-  spde <- make_spde(s$x, s$y, n_knots = 30)
+  spde <- make_spde(s, c("x", "y"), cutoff = 0.02)
   m <- sdmTMB(data = s, formula = observed ~ 1,
     spde = spde, family = Beta(link = "logit"))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))

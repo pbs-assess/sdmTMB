@@ -33,8 +33,8 @@ Using the built-in British Columbia Queen Charlotte Sound Pacific Cod dataset, w
 We will set up our SPDE mesh with only 100 knots so that this vignette builds quickly. In reality you would likely want to use more.
 
 ```{r}
-pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 100)
-plot_spde(pcod_spde)
+pcod_spde <- make_spde(pcod, c("X", "Y"), cutoff = 12)
+plot(pcod_spde)
 ```
 
 Let's fit three models. First we will fit a model that includes a single intercept spatial random field and another random field for spatially varying slopes the represent trends over time in space. Our model just estimates and intercept and accounts for all other variation through the random effects.

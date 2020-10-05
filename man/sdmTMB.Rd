@@ -12,6 +12,7 @@ sdmTMB(
   family = gaussian(link = "identity"),
   time_varying = NULL,
   weights = NULL,
+  extra_time = NULL,
   reml = FALSE,
   silent = TRUE,
   multiphase = TRUE,
@@ -21,8 +22,7 @@ sdmTMB(
   ar1_fields = FALSE,
   include_spatial = TRUE,
   spatial_trend = FALSE,
-  normalize = FALSE,
-  spatial_only = identical(length(unique(data[[time]])), 1L),
+  spatial_only = "Depreciated",
   nlminb_loops = 1,
   newton_steps = 0,
   mgcv = TRUE,
@@ -41,14 +41,18 @@ offsets and threshold parameters. For index standardization, include \code{0 + a
 \item{time}{The time column (as character).}
 
 \item{family}{The family and link. Supports \code{\link[=gaussian]{gaussian()}}, \code{\link[=Gamma]{Gamma()}},
-\code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, \code{\link[=nbinom2]{nbinom2()}}, and \code{\link[=tweedie]{tweedie()}}.}
+\code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, \code{\link[=Beta]{Beta()}}, \code{\link[=nbinom2]{nbinom2()}}, and \code{\link[=tweedie]{tweedie()}}.}
 
 \item{time_varying}{An optional formula describing covariates that should be
-modelled as a random walk through time.}
+modelled as a random walk through time. Leave as \code{NULL} for a spatial-only
+model.}
 
 \item{weights}{Optional likelihood weights for the conditional model.
 Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
 to one and are not internally modified.}
+
+\item{extra_time}{Optional extra time slices (e.g., years) to include for
+interpolation or forecasting with the predict function. See details section.}
 
 \item{reml}{Logical: use REML estimation rather than maximum likelihood?}
 
@@ -71,21 +75,13 @@ process? Note that the parameter \code{ar1_phi} has been internally bounded
 between \code{-1} and \code{1} with:  \code{2 * invlogit(ar1_phi) - 1} i.e. in R \code{2 * plogis(ar_phi) - 1}.}
 
 \item{include_spatial}{Should a separate spatial random field be estimated?
-If enabled then there will be a separate spatial field and spatiotemporal
+If enabled then there will be separate spatial and spatiotemporal
 fields.}
 
 \item{spatial_trend}{Should a separate spatial field be included in the
 trend? Requires spatiotemporal data.}
 
-\item{normalize}{Logical: should the normalization of the random effects be
-done in R during the outer-optimization step? For some cases, especially
-with many knots, this may be faster. In others, it may be slower or suffer
-from convergence problems. \emph{Currently disabled!}}
-
-\item{spatial_only}{Logical: should only a spatial model be fit (i.e. do not
-include spatiotemporal random effects)? By default a spatial-only model
-will be fit if there is only one unique value in the time column or the
-\code{time} argument is left at its default value of \code{NULL}.}
+\item{spatial_only}{Deprecated; please use \code{time = NULL} to fit a spatial model.}
 
 \item{nlminb_loops}{How many times to run \code{\link[stats:nlminb]{stats::nlminb()}} optimization.
 Sometimes restarting the optimizer at the previous best values aids
@@ -103,39 +99,55 @@ optimization with. Can greatly speed up fitting. Note that the data and
 model must be set up exactly the same way! However, the \code{weights} argument
 can change, which can be useful for cross-validation.}
 
-\item{quadratic_roots}{Logical: should quadratic roots be calculated?
-Experimental feature for internal use right now. Note: on the sdmTMB side,
-the first two coefficients are used to generate the quadratic parameters.
-This means that if you want to generate a quadratic profile for depth, and
-depth and depth^2 are part of your formula, you need to make sure these are
-listed first and that an intercept isn't included. For example, \code{formula = cpue ~ 0 + depth + depth2 + as.factor(year)}.}
+\item{quadratic_roots}{Experimental feature for internal use right now; may
+be moved to a branch. Logical: should quadratic roots be calculated? Note:
+on the sdmTMB side, the first two coefficients are used to generate the
+quadratic parameters. This means that if you want to generate a quadratic
+profile for depth, and depth and depth^2 are part of your formula, you need
+to make sure these are listed first and that an intercept isn't included.
+For example, \code{formula = cpue ~ 0 + depth + depth2 + as.factor(year)}.}
 }
 \description{
 Fit a spatial or spatiotemporal GLMM with TMB. Particularly useful for
 species distribution models and relative abundance index standardization.
 }
 \details{
-\bold{Formula syntax for offsets and threshold models}
+\strong{Offsets}
 
 In the model formula, an offset can be included by including \code{+ offset} in
 the model formula (a reserved word). The offset will be included in any
 prediction. \code{offset} must be a column in \code{data}.
 
+\strong{Threshold models}
+
 A linear break-point relationship for a covariate can be included via \code{+ breakpt(variable)} in the formula, where \code{variable} is a single covariate
 corresponding to a column in \code{data}. In this case the relationship is linear
-up to a point then constant.
+up to a point and then constant.
 
 Similarly, a logistic-function threshold model can be included via \code{+ logistic(variable)}. This option models the relationship as a logistic
 function of the 50\% and 95\% values. This is similar to length- or size-based
 selectivity in fisheries, and is parameterized by the points at which f(x) =
-0.5 or 0.95.
+0.5 or 0.95. See the vignette.
 
 Note that only a single threshold covariate can be included.
+
+\strong{Forecasting or interpolating}
+
+Extra time slices (e.g., years) can be included for interpolation or
+forecasting with the predict function via the \code{extra_time} argument. The
+predict function requires all time slices to be defined when fitting the
+model to ensure the various time indices are set up correctly. Be careful if
+including extra time slices that the model remains identifiable. For example,
+including \code{+ as.factor(year)} in \code{formula} will render a model with no data
+to inform the expected value in the missing year. \code{\link[=sdmTMB]{sdmTMB()}} makes no attempt
+to determine if the model makes sense for forecasting or interpolation. The
+options \code{time_varying}, \code{include_spatial}, \code{ar1_fields}, \code{time = NULL}
+provide mechanisms to predict over missing time slices.
 }
 \examples{
 d <- subset(pcod, year >= 2011) # subset for example speed
-pcod_spde <- make_spde(d$X, d$Y, n_knots = 50) # only 50 knots for example speed
-plot_spde(pcod_spde)
+pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
+plot(pcod_spde)
 
 # Tweedie:
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
@@ -162,7 +174,7 @@ m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 
 # Gaussian:
 pcod_gaus <- subset(d, density > 0 & year >= 2013)
-pcod_spde_gaus <- make_spde(pcod_gaus$X, pcod_gaus$Y, n_knots = 50)
+pcod_spde_gaus <- make_spde(pcod_gaus, c("X", "Y"), cutoff = 30)
 m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
 

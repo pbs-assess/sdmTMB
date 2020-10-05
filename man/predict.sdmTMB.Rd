@@ -78,7 +78,7 @@ Can predict on the original data locations or on new data.
 
 library(ggplot2)
 d <- pcod
-pcod_spde <- make_spde(d$X, d$Y, n_knots = 50) # just 50 for example speed
+pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
 m <- sdmTMB(
  data = d, formula = density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
  time = "year", spde = pcod_spde, family = tweedie(link = "log")
@@ -171,7 +171,7 @@ weights[length(weights)] <- 0 # set last row weight to 0
 dfake$year_factor <- dfake$year
 dfake$year_factor[nrow(dfake)] <- max(d$year) # share fixed effect for last 2 years
 
-pcod_spde <- make_spde(dfake$X, dfake$Y, n_knots = 50)
+pcod_spde <- make_spde(dfake, c("X", "Y"), cutoff = 30)
 
 m <- sdmTMB(
   data = dfake, formula = density ~ 0 + as.factor(year_factor),
@@ -195,7 +195,7 @@ plot_map(predictions, "epsilon_st") +
 
 # Estimating local trends ----------------------------------------------
 
-pcod_spde <- make_spde(d$X, d$Y, n_knots = 100)
+pcod_spde <- make_spde(pcod, c("X", "Y"), cutoff = 25)
 m <- sdmTMB(data = pcod, formula = density ~ depth_scaled + depth_scaled2,
   spde = pcod_spde, family = tweedie(link = "log"),
   spatial_trend = TRUE, time = "year", spatial_only = TRUE)

@@ -1,9 +1,9 @@
 context("Index and COG calculations work")
 
-pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 40)
+pcod_spde <- make_spde(pcod, c("X", "Y"), cutoff = 20)
 m <- sdmTMB(
   data = pcod,
-  formula = density ~ 0 + as.factor(year), spatial_only = TRUE,
+  formula = density ~ 0 + as.factor(year),
   time = "year", spde = pcod_spde, family = tweedie(link = "log")
 )
 predictions <- predict(m, newdata = qcs_grid, return_tmb_object = TRUE)

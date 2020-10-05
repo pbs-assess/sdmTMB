@@ -37,8 +37,8 @@ glimpse(pcod)
 First we will create our SPDE mesh. We will use 100 knots for a balance between speed and accuracy in this vignette. You will likely want to use more for applied scenarios. You will want to make sure that increasing the number of knots does not change the conclusions.
 
 ```{r spde, fig.asp=0.8}
-pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 100)
-plot_spde(pcod_spde)
+pcod_spde <- make_spde(pcod, c("X", "Y"), cutoff = 10)
+plot(pcod_spde)
 ```
 
 Let's fit a GLMM. Note that if we want to use this model for index standardization then we need to include `0 + as.factor(year)` or `-1 + as.factor(year)` so that we have a factor predictor that represents the mean estimate for each time slice.
