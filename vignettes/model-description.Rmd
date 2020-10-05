@@ -1,8 +1,11 @@
 ---
 title: "Model description"
-output: rmarkdown::html_vignette
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
 vignette: >
-  %\VignetteIndexEntry{model-description}
+  %\VignetteIndexEntry{Model description}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,10 +17,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Basic model structure:
-
-<!-- y_{s,t} &\sim \operatorname{Family} \left(\mu_{s,t}, \phi \right),\\ -->
-<!-- \mu_{s,t} &= g^{-1} -->
+## Basic model structure
 
 $$
 \begin{align}
@@ -28,13 +28,13 @@ $$
   \boldsymbol{\epsilon}_t &\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right).
 \end{align}
 $$
-where $g$ is the link function and $g^{-1}$ is the inverse link.
+where $g$ is a link function and $g^{-1}$ is the inverse link.
 
 ## Time-varying regression parameters
 
 $$
 \begin{align}
-  \mu_{s,t} &= \operatorname{link} \left( \ldots + \gamma_{t} x_{s,t} + \ldots \right),\\
+  \mu_{s,t} &= g^{-1} \left( \ldots + \gamma_{t} x_{s,t} + \ldots \right),\\
   \gamma_{t} &\sim \operatorname{Normal} \left(\gamma_{t-1}, \sigma^2_{\gamma} \right).
 \end{align}
 $$
@@ -43,7 +43,7 @@ $$
 
 $$
 \begin{align}
-  \mu_{s,t} &= \operatorname{link} \left( \ldots + \zeta_s x_t + \ldots \right),\\
+  \mu_{s,t} &= g^{-1} \left( \ldots + \zeta_s x_t + \ldots \right),\\
   \boldsymbol{\zeta} &\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_\zeta \right).
 \end{align}
 $$
@@ -63,7 +63,7 @@ $$
 
 ## Observation model families
 
-[Gaussian](https://kaskr.github.io/adcomp/dnorm_8hpp.html):
+### [Gaussian](https://kaskr.github.io/adcomp/dnorm_8hpp.html)
 
 $$
 \operatorname{Normal} \left( \mu, \sigma \right)
@@ -73,7 +73,9 @@ $$
 \operatorname{Tweedie} \left(\mu, p, \phi \right), \: 1 < p < 2
 $$
 
-Gamma as shape, scale:
+### [Gamma](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gab0e2205710a698ad6a0ed39e0652c9a3)
+
+As shape, scale:
 
 $$
 \operatorname{Gamma} \left( \frac{1}{\phi^2}, \mu\ \phi^2  \right)
@@ -81,15 +83,25 @@ $$
 
 where $\phi$ represents the CV.
 
+### [Binomial](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaee11f805f02bc1febc6d7bf0487671be)
+
+Actually uses [robust version](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaecb5a18095a320b42e2d20c4b120f5f5).
+
 $$
 \operatorname{Binomial} \left( N, \mu \right)
 $$
 
-$N = 1$ and $\mu$ is probability
+$N = 1$ (i.e., 'size' currently fixed) and $\mu$ is probability
 
-[Negative Binomial](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga76266c19046e04b651fce93aa0810351)
+### [Poisson](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa1ed15503e1441a381102a8c4c9baaf1)
 
-internally parameterized as the [robust version](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa23e3ede4669d941b0b54314ed42a75c)
+$$
+\operatorname{Poisson} \left( \mu \right)
+$$
+
+### [Negative Binomial](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga76266c19046e04b651fce93aa0810351)
+
+Internally parameterized as the [robust version](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa23e3ede4669d941b0b54314ed42a75c)
 
 $$
 \operatorname{NB2} \left( \mu, \phi \right)
@@ -97,19 +109,14 @@ $$
 
 Variance scales quadratically with mean: TODO
 
-
-[Poisson](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa1ed15503e1441a381102a8c4c9baaf1)
-
-$$
-\operatorname{Poisson} \left( \mu \right)
-$$
-
-[LogNormal](https://github.com/pbs-assess/sdmTMB/blob/28a93496a93b12e5a2f73f703bc96afbf14d86c1/src/sdmTMB.cpp#L22-L30):
+### [Lognormal](https://github.com/pbs-assess/sdmTMB/blob/28a93496a93b12e5a2f73f703bc96afbf14d86c1/src/sdmTMB.cpp#L22-L30)
 
 $$
-\operatorname{LogNormal} \left( \mu - \frac{\sigma^2}{2}, \sigma \right)
+\operatorname{Lognormal} \left( \mu - \frac{\sigma^2}{2}, \sigma \right)
 $$
-[Student-t](https://github.com/pbs-assess/sdmTMB/blob/28a93496a93b12e5a2f73f703bc96afbf14d86c1/src/sdmTMB.cpp#L11-L20):
+TODO make sure correct in code and shouldn't be log(mu - sigma^2/2)
+
+### [Student-t](https://github.com/pbs-assess/sdmTMB/blob/28a93496a93b12e5a2f73f703bc96afbf14d86c1/src/sdmTMB.cpp#L11-L20)
 
 $$
 \operatorname{Student-t} \left( \mu, \sigma, \nu \right)
@@ -117,7 +124,7 @@ $$
 
 where $\nu$, the degrees of freedom, is currently fixed at 3.
 
-[Beta](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga5324c83759d5211c7c2fbbad37fa8e59)
+### [Beta](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga5324c83759d5211c7c2fbbad37fa8e59)
 
 $$
 \operatorname{Beta} \left(\mu \phi, 1 - \mu \phi \right)
