@@ -167,8 +167,7 @@ make_mesh <- function(data, xy_cols,
   structure(list(
     loc_xy = loc_xy, xy_cols = xy_cols, mesh = mesh, spde = spde,
     loc_centers = loc_centers, A = A
-  ), class = "sdmTMBmesh")
-}
+  ), class = "sdmTMBmesh")}
 
 binary_search_knots <- function(loc_xy,
                                 n_knots,
@@ -259,4 +258,21 @@ make_anisotropy_spde <- function(spde) {
     G0 = spde$spde$param.inla$M0,
     G0_inv = as(Matrix::diag(1 / Matrix::diag(spde$spde$param.inla$M0)), "dgTMatrix")
   )
+}
+
+make_barrier_spde <- function(spde) {
+  if ("D" %in% names(spde)) {
+    C0 <- spde$C[[1]]
+    C1 <- spde$C[[2]]
+    D0 <- spde$D[[1]]
+    D1 <- spde$D[[2]]
+    .I <- spde$I
+  } else {
+    C0 <- rep(1, 2)
+    C1 <- rep(1, 2)
+    D0 <- Matrix::Matrix(0, 1, 1)
+    D1 <- Matrix::Matrix(0, 1, 1)
+    .I <- Matrix::Matrix(0, 1, 1)
+  }
+  list(C0 = C0, C1 = C1, D0 = D0, D1 = D1, I = .I)
 }

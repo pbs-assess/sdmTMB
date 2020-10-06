@@ -29,6 +29,50 @@ Type dlnorm(Type x, Type meanlog, Type sdlog, int give_log = 0)
     return exp(logres);
 }
 
+// Function to important barrier-SPDE code
+// From Olav Nikolai Breivik and Hans Skaug via VAST
+template<class Type>
+struct spde_barrier_t{
+  vector<Type> C0;
+  vector<Type> C1;
+  Eigen::SparseMatrix<Type> D0;
+  Eigen::SparseMatrix<Type> D1;
+  Eigen::SparseMatrix<Type> I;
+  spde_barrier_t(SEXP x){  /* x = List passed from R */
+    C0 = asVector<Type>(getListElement(x,"C0"));
+    C1 = asVector<Type>(getListElement(x,"C1"));
+    D0 = tmbutils::asSparseMatrix<Type>(getListElement(x,"D0"));
+    D1 = tmbutils::asSparseMatrix<Type>(getListElement(x,"D1"));
+    I = tmbutils::asSparseMatrix<Type>(getListElement(x,"I"));
+  }
+};
+
+// Function to calculate Q (precision) matrix using barrier-SPDE
+// From Olav Nikolai Breivik and Hans Skaug via VAST
+template<class Type>
+Eigen::SparseMatrix<Type> Q_spde(spde_barrier_t<Type> spde, Type kappa, vector<Type> c){
+  //using namespace Eigen;
+  vector <Type> range(2);
+  range(0) = sqrt(8)/kappa*c(0);
+  range(1) = range(0)*c(1);
+
+  int dimLatent = spde.D0.row(0).size();
+  vector<Type> Cdiag(dimLatent);
+  Eigen::SparseMatrix<Type > Cinv(dimLatent,dimLatent);
+
+  Cdiag = spde.C0*pow(range(0),2) + spde.C1*pow(range(1),2);
+  for(int i =0; i<dimLatent; ++i){
+    Cinv.coeffRef(i,i) = 1/Cdiag(i);
+  }
+
+  Eigen::SparseMatrix<Type>A = spde.I;
+  A = A + (pow(range(0),2)/8) * spde.D0 + (pow(range(1),2)/8) * spde.D1;
+
+  Eigen::SparseMatrix<Type> Q = A.transpose() * Cinv * A/M_PI *2 * 3;
+
+  return Q;
+}
+
 template <class Type>
 Type minus_one_to_one(Type x)
 {
@@ -214,6 +258,11 @@ Type objective_function<Type>::operator()()
   PARAMETER_VECTOR(ln_H_input);
   DATA_INTEGER(anisotropy);
 
+  // Barrier
+  DATA_INTEGER(barrier);
+  DATA_STRUCT(spde_barrier, spde_barrier_t);
+  DATA_VECTOR(barrier_scaling); // scaling of range
+
   // Projections
   DATA_SPARSE_MATRIX(proj_mesh);
   DATA_MATRIX(proj_X_ij);
@@ -309,13 +358,17 @@ Type objective_function<Type>::operator()()
                           exp(Type(2.0) * ln_kappa));
 
   Eigen::SparseMatrix<Type> Q; // Precision matrix
-  if (anisotropy) {
-    matrix<Type> H = MakeH(ln_H_input);
-    Q = R_inla::Q_spde(spde_aniso, exp(ln_kappa), H);
-    REPORT(H);
-  }
-  if (!anisotropy) {
-    Q = R_inla::Q_spde(spde, exp(ln_kappa));
+  if (barrier) {
+    Q = Q_spde(spde_barrier, exp(ln_kappa), barrier_scaling);
+  } else {
+    if (anisotropy) {
+      matrix<Type> H = MakeH(ln_H_input);
+      Q = R_inla::Q_spde(spde_aniso, exp(ln_kappa), H);
+      REPORT(H);
+    }
+    if (!anisotropy) {
+      Q = R_inla::Q_spde(spde, exp(ln_kappa));
+    }
   }
 
   // ------------------ INLA projections ---------------------------------------
