@@ -17,6 +17,10 @@ ind <- inSide(fsb,x=v,y=w) ## remove outsiders
 beta <- 0
 covariate <- runif(n)
 y <- y + beta * covariate + rnorm(n)*.1 ## add noise
+
+extra_remove <- !(v>2.5 & w < 0)
+ind <- ind & extra_remove
+
 y <- y[ind];v <- v[ind]; w <- w[ind]; covariate <- covariate[ind]
 n <- length(y)
 
@@ -117,7 +121,7 @@ mb
 # pb$diff <- scale(pred$omega_s, scale = FALSE) - scale(pb$omega_s, scale = FALSE)
 # pb$diff <- pred$est - pb$est
 #
-# theme_set(theme_void())
+theme_set(theme_void())
 # ggplot(pb, aes(x, y, fill = diff)) + geom_raster() +
 #   scale_fill_gradient2() +
 #   geom_point(data = dat, aes(x, y, size = z), inherit.aes = FALSE, pch = 21) +
@@ -128,14 +132,17 @@ cols <- RColorBrewer::brewer.pal(3, "BrBG")
 g1 <- ggplot(pred, aes(x, y, fill = est)) + geom_raster() +
   geom_point(data = dat, aes(x, y, size = z), inherit.aes = FALSE, pch = 21) +
   scale_fill_gradient2(high = cols[1], low = cols[3], mid = cols[2]) +
-  # theme(legend.position = "none") +
-  geom_path(data = as.data.frame(xym), aes(V1, V2), inherit.aes = FALSE)
+  theme(legend.position = "none") +
+  geom_path(data = as.data.frame(xym), aes(V1, V2), inherit.aes = FALSE) +
+  ggtitle("Regular isotropic mesh")
 
 g2 <- ggplot(pb, aes(x, y, fill = est)) +
   geom_raster() +
   geom_point(data = dat, aes(x, y, size = z), inherit.aes = FALSE, pch = 21) +
   scale_fill_gradient2(high = cols[1], low = cols[3], mid = cols[2]) +
-  # theme(legend.position = "none") +
-  geom_path(data = as.data.frame(xym), aes(V1, V2), inherit.aes = FALSE)
+  theme(legend.position = "none") +
+  geom_path(data = as.data.frame(xym), aes(V1, V2), inherit.aes = FALSE) +
+  ggtitle("Barrier mesh")
 
-cowplot::plot_grid(g1, g2)
+cowplot::plot_grid(g1, g2, ncol = 1)
+
