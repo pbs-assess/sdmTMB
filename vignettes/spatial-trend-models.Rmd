@@ -33,7 +33,7 @@ Using the built-in British Columbia Queen Charlotte Sound Pacific Cod dataset, w
 We will set up our SPDE mesh with only 100 knots so that this vignette builds quickly. In reality you would likely want to use more.
 
 ```{r}
-pcod_spde <- make_spde(pcod, c("X", "Y"), cutoff = 12)
+pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 12)
 plot(pcod_spde)
 ```
 

@@ -11,7 +11,7 @@ sdmTMB_cv(formula, data, spde, time = NULL, k_folds = 10, fold_ids = NULL, ...)
 
 \item{data}{A data frame.}
 
-\item{spde}{Output from \code{\link[=make_spde]{make_spde()}}.}
+\item{spde}{Output from \code{\link[=make_mesh]{make_mesh()}}.}
 
 \item{time}{The name of the time column. Leave as \code{NULL} if this is only spatial data.}
 
@@ -27,7 +27,7 @@ Save log likelihoods of k-fold cross-validation for sdmTMB models
 }
 \examples{
 d <- subset(pcod, year >= 2011) # subset for example speed
-spde <- make_spde(d, c("X", "Y"), cutoff = 30)
+spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
 
 # library(future) # for parallel processing
 # plan(multisession) # for parallel processing

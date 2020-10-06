@@ -43,7 +43,7 @@ test_that("Student and family fits", {
     phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = 0.0001,
     seed = 1
   )
-  spde <- make_spde(s, c("x", "y"), n_knots = 50, type = "kmeans")
+  spde <- make_mesh(s, c("x", "y"), n_knots = 50, type = "kmeans")
   m <- sdmTMB(data = s, formula = observed ~ 1, spde = spde,
     family = student(link = "identity"))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
@@ -60,7 +60,7 @@ test_that("Lognormal fits with a mean matching the Gamma roughly", {
   s <- sim(x = x, y = y, time = 1L,
     phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E, seed = 1
   )
-  spde <- make_spde(s, c("x", "y"), n_knots = 70, type = "kmeans")
+  spde <- make_mesh(s, c("x", "y"), n_knots = 70, type = "kmeans")
   s$observed <- stats::rlnorm(nrow(s), mean = log(exp(s$real)), sd = 0.2)
   mlog <- sdmTMB(data = s, formula = observed ~ 1, spde = spde,
     family = lognormal(link = "log"))
@@ -72,7 +72,7 @@ test_that("Lognormal fits with a mean matching the Gamma roughly", {
 test_that("NB2 fits", {
   d <- pcod[pcod$year == 2017, ]
   d$density <- round(d$density)
-  spde <- make_spde(d, c("X", "Y"), cutoff = 10)
+  spde <- make_mesh(d, c("X", "Y"), cutoff = 10)
   m <- sdmTMB(data = d, formula = density ~ 1,
     spde = spde, family = nbinom2(link = "log"))
   sdmTMBphi <- exp(m$model$par[["ln_phi"]])
@@ -84,7 +84,7 @@ test_that("NB2 fits", {
 
 test_that("Poisson fits", {
   d <- pcod
-  spde <- make_spde(pcod, c("X", "Y"), cutoff = 20)
+  spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
   set.seed(3)
   d$density <- rpois(nrow(pcod), 3)
   m <- sdmTMB(data = d, formula = density ~ 1,
@@ -96,7 +96,7 @@ test_that("Poisson fits", {
 test_that("Binomial fits", {
   d <- pcod[pcod$year == 2017, ]
   d$density <- round(d$density)
-  spde <- make_spde(d, c("X", "Y"), cutoff = 10)
+  spde <- make_mesh(d, c("X", "Y"), cutoff = 10)
   d$present <- ifelse(d$density > 0, 1, 0)
   m <- sdmTMB(data = d, formula = present ~ 1,
     spde = spde, family = binomial(link = "logit"))
@@ -107,7 +107,7 @@ test_that("Binomial fits", {
 test_that("Gamma fits", {
   d <- pcod[pcod$year == 2017 & pcod$density > 0, ]
   # d$density <- d$density / 100
-  spde <- make_spde(d, c("X", "Y"), cutoff = 10)
+  spde <- make_mesh(d, c("X", "Y"), cutoff = 10)
   m <- sdmTMB(data = d, formula = density ~ 1,
     spde = spde, family = Gamma(link = "log"))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
@@ -117,7 +117,7 @@ test_that("Gamma fits", {
 test_that("Beta fits", {
   s <- sim(sigma_O = 0.02)
   s$observed <- stats::plogis(s$observed * 7)
-  spde <- make_spde(s, c("x", "y"), cutoff = 0.02)
+  spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
   m <- sdmTMB(data = s, formula = observed ~ 1,
     spde = spde, family = Beta(link = "logit"))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))

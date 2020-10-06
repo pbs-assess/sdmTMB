@@ -1,6 +1,6 @@
 context("Forecasting")
 
-spde <- make_spde(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
+spde <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
 grid2019 <- qcs_grid[qcs_grid$year == max(qcs_grid$year), ]
 grid2019$year <- 2019L
 qcsgrid_forecast <- rbind(qcs_grid, grid2019)

@@ -10,7 +10,7 @@ NULL
 #'   offsets and threshold parameters. For index standardization, include `0 +
 #'   as.factor(year)` (or whatever the time column is called) in the formula.
 #' @param data A data frame.
-#' @param spde An object from [make_spde()].
+#' @param spde An object from [make_mesh()].
 #' @param time The time column (as character). Leave as `NULL` for a spatial-only
 #'   model.
 #' @param family The family and link. Supports [gaussian()], [Gamma()],
@@ -109,7 +109,7 @@ NULL
 #'
 #' @examples
 #' d <- subset(pcod, year >= 2011) # subset for example speed
-#' pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
+#' pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
 #' plot(pcod_spde)
 #'
 #' # Tweedie:
@@ -140,7 +140,7 @@ NULL
 #'
 #' # Gaussian:
 #' pcod_gaus <- subset(d, density > 0 & year >= 2013)
-#' pcod_spde_gaus <- make_spde(pcod_gaus, c("X", "Y"), cutoff = 30)
+#' pcod_spde_gaus <- make_mesh(pcod_gaus, c("X", "Y"), cutoff = 30)
 #' m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
 #' print(m_pos)
@@ -226,6 +226,10 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   formula <- thresh$formula
 
   if (!is.null(extra_time)) { # for forecasting or interpolating
+    if (!"xy_cols" %in% names(spde)) {
+      stop("Please use make_mesh() instead of the depreciated make_spde() to use `extra_time`.",
+        call. = FALSE)
+    }
     data <- expand_time(df = data, time_slices = extra_time, time_column = time)
     weights <- data$weight_sdmTMB
     spde$A <- INLA::inla.spde.make.A(spde$mesh, loc = as.matrix(data[, spde$xy_cols, drop = FALSE]))

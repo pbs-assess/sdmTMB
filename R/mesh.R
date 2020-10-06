@@ -1,4 +1,66 @@
-#' Construct an SPDE mesh
+#' Construct an SPDE mesh (depreciated)
+#'
+#' **Depreciated; please use [make_mesh()] instead.**
+#'
+#' @param x X numeric vector.
+#' @param y Y numeric vector.
+#' @param n_knots The number of knots.
+#' @param seed Random seed. Affects [stats::kmeans()] determination of knot locations.
+#' @param mesh An optional mesh created via INLA. If supplied, this mesh will be
+#'   used instead of creating one with [stats::kmeans()] and the `n_knots`
+#'   argument.
+#'up
+#' @importFrom graphics points
+#' @export
+#' @examples
+#' # **Depreciated; please use `make_mesh()` instead.**
+#' \donttest{
+#' sp <- make_spde(pcod$X, pcod$Y, n_knots = 25)
+#' plot_spde(sp)
+#'
+#' loc_xy <- cbind(pcod$X, pcod$Y)
+#' bnd <- INLA::inla.nonconvex.hull(as.matrix(loc_xy), convex = -0.05)
+#' mesh <- INLA::inla.mesh.2d(
+#'   boundary = bnd,
+#'   max.edge = c(20, 50),
+#'   offset = -0.05,
+#'   cutoff = c(2, 5),
+#'   min.angle = 10
+#' )
+#' sp2 <- make_spde(pcod$X, pcod$Y, mesh = mesh)
+#' plot_spde(sp2)
+#' }
+
+make_spde <- function(x, y, n_knots, seed = 42, mesh = NULL) {
+  loc_xy <- cbind(x, y)
+  .Deprecated("make_mesh", msg = "make_spde() is depreciated. Please use make_mesh() instead.")
+  if (is.null(mesh)) {
+    if (n_knots >= nrow(loc_xy)) {
+      warning(
+        "Reducing `n_knots` to be one less than the ",
+        "number of data points."
+      )
+      n_knots <- nrow(loc_xy) - 1
+    }
+    set.seed(seed)
+    knots <- stats::kmeans(x = loc_xy, centers = n_knots)
+    loc_centers <- knots$centers
+    mesh <- INLA::inla.mesh.create(loc_centers, refine = TRUE)
+  } else {
+    knots <- list()
+    loc_centers <- NA
+  }
+  spde <- INLA::inla.spde2.matern(mesh)
+  A <- INLA::inla.spde.make.A(mesh, loc = loc_xy)
+  list(
+    x = x, y = y, mesh = mesh, spde = spde,
+    loc_centers = loc_centers, A = A
+  )
+}
+
+#' Construct an SPDE mesh for sdmTMB
+#'
+#' Construct an SPDE mesh for use with sdmTMB.
 #'
 #' @param data A data frame.
 #' @param xy_cols A character vector of x and y column names contained in
@@ -16,26 +78,24 @@
 #' @param mesh An optional mesh created via INLA instead of using the above
 #'   convenience options.
 #'
-#' @return A list of class sdmTMBmesh.
+#' @return `make_mesh()`: A list of class sdmTMBmesh
 #' @export
 #'
 #' @examples
-#' sp <- make_spde(pcod, c("X", "Y"), n_knots = 50, type = "cutoff_search")
+#' sp <- make_mesh(pcod, c("X", "Y"), cutoff = 30, type = "cutoff")
 #' plot(sp)
 #'
-#' sp <- make_spde(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
+#' sp <- make_mesh(pcod, c("X", "Y"), cutoff = 5, type = "cutoff")
 #' plot(sp)
 #'
-#' sp <- make_spde(pcod, c("X", "Y"), cutoff = 30, type = "cutoff")
+#' sp <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "cutoff_search")
 #' plot(sp)
 #'
-#' sp <- make_spde(pcod, c("X", "Y"), cutoff = 5, type = "cutoff")
+#' sp <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
 #' plot(sp)
-#'
 #' \donttest{
 #' # Defining a mesh directly with INLA:
-#' loc_xy <- cbind(pcod$X, pcod$Y)
-#' bnd <- INLA::inla.nonconvex.hull(loc_xy, convex = -0.05)
+#' bnd <- INLA::inla.nonconvex.hull(cbind(pcod$X, pcod$Y), convex = -0.05)
 #' mesh <- INLA::inla.mesh.2d(
 #'   boundary = bnd,
 #'   max.edge = c(20, 50),
@@ -43,11 +103,10 @@
 #'   cutoff = c(2, 5),
 #'   min.angle = 10
 #' )
-#' sp2 <- make_spde(pcod, c("X", "Y"), mesh = mesh)
+#' sp2 <- make_mesh(pcod, c("X", "Y"), mesh = mesh)
 #' plot(sp2)
 #' }
-#'
-make_spde <- function(data, xy_cols,
+make_mesh <- function(data, xy_cols,
                       type = c("kmeans", "cutoff", "cutoff_search"),
                       cutoff, n_knots,
                       seed = 42,
@@ -148,7 +207,7 @@ binary_search_knots <- function(loc_xy,
 #' @importFrom graphics plot
 #' @export
 plot_spde <- function(object) {
-  .Deprecated("plot")
+  .Deprecated("plot", msg = "plot_spde() is depreciated. Please use make_mesh() and plot()")
   plot(object$mesh, main = NA, edge.color = "grey60", asp = 1)
   if ("x" %in% names(object)) {
     points(object$x, object$y, pch = 21, col = "#00000070")
@@ -158,13 +217,12 @@ plot_spde <- function(object) {
   points(object$loc_centers, pch = 20, col = "red")
 }
 
-#' Plot SPDE mesh object
-#'
-#' @param x Output from [make_spde()].
+#' @param x Output from [make_mesh()].
 #' @param ... Passed to [graphics::plot()].
 #'
 #' @importFrom graphics points
-#' @return A plot
+#' @return `plot.sdmTMB()`: A plot
+#' @rdname make_mesh
 #' @export
 plot.sdmTMBmesh <- function(x, ...) {
   plot(x$mesh, main = NA, edge.color = "grey60", asp = 1, ...)

@@ -1,6 +1,7 @@
 context("Index and COG calculations work")
 
-pcod_spde <- make_spde(pcod, c("X", "Y"), cutoff = 20)
+pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 30)
+pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 m <- sdmTMB(
   data = pcod,
   formula = density ~ 0 + as.factor(year),

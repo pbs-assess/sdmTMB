@@ -3,70 +3,39 @@
 \name{make_spde}
 \alias{make_spde}
 \alias{plot_spde}
-\title{Construct an SPDE mesh}
+\title{Construct an SPDE mesh (depreciated)}
 \usage{
-make_spde(
-  data,
-  xy_cols,
-  type = c("kmeans", "cutoff", "cutoff_search"),
-  cutoff,
-  n_knots,
-  seed = 42,
-  refine = list(min.angle = 21, max.edge = Inf, max.n.strict = -1, max.n = 1000),
-  mesh = NULL
-)
+make_spde(x, y, n_knots, seed = 42, mesh = NULL)
 
 plot_spde(object)
 }
 \arguments{
-\item{data}{A data frame.}
+\item{x}{X numeric vector.}
 
-\item{xy_cols}{A character vector of x and y column names contained in
-\code{data}.}
+\item{y}{Y numeric vector.}
 
-\item{type}{Method to create the mesh. Also see \code{mesh} argument to supply
-your own mesh.}
+\item{n_knots}{The number of knots.}
 
-\item{cutoff}{An optional cutoff if type is \code{"cutoff"}. "The minimum allowed
-distance between points in the mesh". See \code{\link[INLA:inla.mesh.create]{INLA::inla.mesh.create()}}.
-Smaller values create meshes with more knots. Points further apart than this
-value will receive a separate vertex in the mesh before any mesh refinement.}
+\item{seed}{Random seed. Affects \code{\link[stats:kmeans]{stats::kmeans()}} determination of knot locations.}
 
-\item{n_knots}{The number of desired knots if \code{type} is not \code{"cutoff"}.}
-
-\item{seed}{Random seed. Affects \code{\link[stats:kmeans]{stats::kmeans()}} determination of knot
-locations if \code{type = "kmeans"}.}
-
-\item{refine}{Logical or list to pass to \code{\link[INLA:inla.mesh.create]{INLA::inla.mesh.create()}}.}
-
-\item{mesh}{An optional mesh created via INLA instead of using the above
-convenience options.}
+\item{mesh}{An optional mesh created via INLA. If supplied, this mesh will be
+used instead of creating one with \code{\link[stats:kmeans]{stats::kmeans()}} and the \code{n_knots}
+argument.
+up}
 
 \item{object}{Output from \code{\link[=make_spde]{make_spde()}}.}
 }
-\value{
-A list of class sdmTMBmesh.
-}
 \description{
-Construct an SPDE mesh
+\strong{Depreciated; please use \code{\link[=make_mesh]{make_mesh()}} instead.}
 }
 \examples{
-sp <- make_spde(pcod, c("X", "Y"), n_knots = 50, type = "cutoff_search")
-plot(sp)
-
-sp <- make_spde(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
-plot(sp)
-
-sp <- make_spde(pcod, c("X", "Y"), cutoff = 30, type = "cutoff")
-plot(sp)
-
-sp <- make_spde(pcod, c("X", "Y"), cutoff = 5, type = "cutoff")
-plot(sp)
-
+# **Depreciated; please use `make_mesh()` instead.**
 \donttest{
-# Defining a mesh directly with INLA:
+sp <- make_spde(pcod$X, pcod$Y, n_knots = 25)
+plot_spde(sp)
+
 loc_xy <- cbind(pcod$X, pcod$Y)
-bnd <- INLA::inla.nonconvex.hull(loc_xy, convex = -0.05)
+bnd <- INLA::inla.nonconvex.hull(as.matrix(loc_xy), convex = -0.05)
 mesh <- INLA::inla.mesh.2d(
   boundary = bnd,
   max.edge = c(20, 50),
@@ -74,8 +43,7 @@ mesh <- INLA::inla.mesh.2d(
   cutoff = c(2, 5),
   min.angle = 10
 )
-sp2 <- make_spde(pcod, c("X", "Y"), mesh = mesh)
-plot(sp2)
+sp2 <- make_spde(pcod$X, pcod$Y, mesh = mesh)
+plot_spde(sp2)
 }
-
 }

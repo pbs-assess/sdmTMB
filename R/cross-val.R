@@ -43,7 +43,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'
 #' @param formula Model formula.
 #' @param data A data frame.
-#' @param spde Output from [make_spde()].
+#' @param spde Output from [make_mesh()].
 #' @param time The name of the time column. Leave as `NULL` if this is only spatial data.
 #' @param k_folds Number of folds.
 #' @param fold_ids Optional input name of column containing user fold ids.
@@ -54,7 +54,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'
 #' @examples
 #' d <- subset(pcod, year >= 2011) # subset for example speed
-#' spde <- make_spde(d, c("X", "Y"), cutoff = 30)
+#' spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
 #'
 #' # library(future) # for parallel processing
 #' # plan(multisession) # for parallel processing

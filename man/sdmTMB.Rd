@@ -36,7 +36,7 @@ offsets and threshold parameters. For index standardization, include \code{0 + a
 
 \item{data}{A data frame.}
 
-\item{spde}{An object from \code{\link[=make_spde]{make_spde()}}.}
+\item{spde}{An object from \code{\link[=make_mesh]{make_mesh()}}.}
 
 \item{time}{The time column (as character). Leave as \code{NULL} for a spatial-only
 model.}
@@ -149,7 +149,7 @@ provide mechanisms to predict over missing time slices.
 }
 \examples{
 d <- subset(pcod, year >= 2011) # subset for example speed
-pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
+pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
 plot(pcod_spde)
 
 # Tweedie:
@@ -180,7 +180,7 @@ print(m_bin)
 
 # Gaussian:
 pcod_gaus <- subset(d, density > 0 & year >= 2013)
-pcod_spde_gaus <- make_spde(pcod_gaus, c("X", "Y"), cutoff = 30)
+pcod_spde_gaus <- make_mesh(pcod_gaus, c("X", "Y"), cutoff = 30)
 m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
 print(m_pos)

@@ -78,7 +78,7 @@ Can predict on the original data locations or on new data.
 
 library(ggplot2)
 d <- pcod
-pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
+pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
 m <- sdmTMB(
  data = d, formula = density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
  time = "year", spde = pcod_spde, family = tweedie(link = "log")
@@ -90,6 +90,7 @@ predictions <- predict(m)
 head(predictions)
 
 predictions$resids <- residuals(m) # randomized quantile residuals
+\donttest{
 ggplot(predictions, aes(X, Y, col = resids)) + scale_colour_gradient2() +
   geom_point() + facet_wrap(~year)
 hist(predictions$resids)
@@ -127,7 +128,6 @@ plot_map(predictions, "epsilon_st") +
   ggtitle("Spatiotemporal random effects only") +
   scale_fill_gradient2()
 
-\donttest{
 # Visualizing a marginal effect ----------------------------------------
 # Also demonstrates getting standard errors on population-level predictions
 
@@ -158,7 +158,7 @@ ggplot(p, aes(depth_scaled, exp(est),
   geom_line() + geom_ribbon(alpha = 0.4)
 
 # Forecasting ----------------------------------------------------------
-pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 15)
+pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 15)
 
 unique(d$year)
 m <- sdmTMB(
@@ -182,7 +182,7 @@ plot_map(predictions, "epsilon_st") +
 
 # Estimating local trends ----------------------------------------------
 
-pcod_spde <- make_spde(pcod, c("X", "Y"), cutoff = 25)
+pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 m <- sdmTMB(data = pcod, formula = density ~ depth_scaled + depth_scaled2,
   spde = pcod_spde, family = tweedie(link = "log"),
   spatial_trend = TRUE, time = "year", spatial_only = TRUE)

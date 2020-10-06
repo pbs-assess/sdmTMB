@@ -56,7 +56,7 @@
 #'
 #' library(ggplot2)
 #' d <- pcod
-#' pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
+#' pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
 #' m <- sdmTMB(
 #'  data = d, formula = density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'  time = "year", spde = pcod_spde, family = tweedie(link = "log")
@@ -68,6 +68,7 @@
 #' head(predictions)
 #'
 #' predictions$resids <- residuals(m) # randomized quantile residuals
+#' \donttest{
 #' ggplot(predictions, aes(X, Y, col = resids)) + scale_colour_gradient2() +
 #'   geom_point() + facet_wrap(~year)
 #' hist(predictions$resids)
@@ -105,7 +106,6 @@
 #'   ggtitle("Spatiotemporal random effects only") +
 #'   scale_fill_gradient2()
 #'
-#' \donttest{
 #' # Visualizing a marginal effect ----------------------------------------
 #' # Also demonstrates getting standard errors on population-level predictions
 #'
@@ -136,7 +136,7 @@
 #'   geom_line() + geom_ribbon(alpha = 0.4)
 #'
 #' # Forecasting ----------------------------------------------------------
-#' pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 15)
+#' pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 15)
 #'
 #' unique(d$year)
 #' m <- sdmTMB(
@@ -160,7 +160,7 @@
 #'
 #' # Estimating local trends ----------------------------------------------
 #'
-#' pcod_spde <- make_spde(pcod, c("X", "Y"), cutoff = 25)
+#' pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 #' m <- sdmTMB(data = pcod, formula = density ~ depth_scaled + depth_scaled2,
 #'   spde = pcod_spde, family = tweedie(link = "log"),
 #'   spatial_trend = TRUE, time = "year", spatial_only = TRUE)
@@ -189,12 +189,12 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
 
   if (!missing(xy_cols)) {
     warning("argument `xy_cols` is deprecated; this information is already ",
-    "in the output of the new `make_spde().", call. = FALSE)
+    "in the output of the `make_mesh(). Did you use `make_spde()`?", call. = FALSE)
   }
   if (!"xy_cols" %in% names(object$spde)) {
-    warning("It looks like this model was fit with an older version of make_spde(). ",
-    "Using `xy_cols`, but future versions of sdmTMB may not be compatible with this ",
-    "model. Please update the make_spde() object and model fit.", call. = FALSE)
+    warning("It looks like this model was fit with make_spde(). ",
+    "Using `xy_cols`, but future versions of sdmTMB may not be compatible with this.",
+    "Please replace make_spde() with make_mesh().", call. = FALSE)
   } else {
     xy_cols <- object$spde$xy_cols
   }
@@ -212,7 +212,9 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     if (any(!xy_cols %in% names(newdata)) && isFALSE(pop_pred))
       stop("`xy_cols` (the column names for the x and y coordinates) ",
         "are not in `newdata`. Did you miss specifying the argument ",
-        "`xy_cols` to match your data?", call. = FALSE)
+        "`xy_cols` to match your data? The newer `make_mesh()` ",
+        "(vs. `make_spde()`) takes care of this for you.", call. = FALSE
+      )
 
     if (object$time == "_sdmTMB_time") newdata[[object$time]] <- 0L
     if (!identical(class(object$data[[object$time]]), class(newdata[[object$time]])))
@@ -223,8 +225,11 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
 
     if (!all(new_data_time %in% original_time))
       stop("Some new time elements were found in `newdata`. ",
-      "For now, make sure only time elements from the original dataset are present. If you would like to predict on new time elements, see the example hack with the `weights` argument in the help for `?predict.sdmTMB`.",
-        call. = FALSE)
+        "For now, make sure only time elements from the original dataset ",
+        "are present. If you would like to predict on new time elements, see ",
+        "the example hack with the `weights` argument in the help for `?predict.sdmTMB`.",
+        call. = FALSE
+      )
 
     if (!all(original_time %in% new_data_time)) {
       newdata[["sdmTMB_fake_year"]] <- FALSE

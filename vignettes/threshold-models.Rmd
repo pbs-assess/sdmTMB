@@ -38,7 +38,7 @@ glimpse(pcod)
 As before, the SPDE mesh is created using 75 knots for a balance between speed and accuracy. You will likely want to use more for applied scenarios. You will want to make sure that increasing the number of knots does not change the conclusions.
 
 ```{r spde, fig.asp=0.8}
-pcod_spde <- make_spde(pcod, c("X", "Y"), cutoff = 12)
+pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 12)
 ```
 
 We will extend the simple GLMM used in the index standardization vignette to include a threshold effect. For real applications, the threshold effect might be a function of habitat covariates, environmental variables, etc. Because 'depth' is the only external variable in the `pcod` data frame, we'll use that. For any threshold model, you can specify the model as a linear threshold (`breakpt()`) or logistic (`logistic()`) as part of the formula. Note: as before, if we want to use this model for index standardization then we need to include `0 + as.factor(year)` or `-1 + as.factor(year)` so that we have a factor predictor that represents the mean estimate for each time slice.

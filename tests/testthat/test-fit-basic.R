@@ -17,7 +17,7 @@ test_that("sdmTMB model fit with a covariate beta", {
     phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E,
     seed = SEED
   )
-  spde <- make_spde(s, c("x", "y"), cutoff = 0.02)
+  spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
   plot(spde)
   m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time", spde = spde)
   expect_output(print(m), "fit by")
@@ -38,7 +38,7 @@ test_that("sdmTMB model fit with a covariate beta", {
 test_that("Anisotropy fits and plots", {
   m <- sdmTMB(data = pcod,
     formula = density ~ 0 + as.factor(year),
-    spde = make_spde(pcod, c("X", "Y"), n_knots = 50, type = "kmeans"),
+    spde = make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans"),
     family = tweedie(link = "log"), anisotropy = TRUE)
   expect_identical(class(m), "sdmTMB")
   plot_anisotropy(m)
@@ -48,14 +48,14 @@ test_that("A model with splines works", {
   d <- subset(pcod, year >= 2015)
   m <- sdmTMB(data = d,
     formula = density ~ 1 + s(depth_scaled),
-    spde = make_spde(d, c("X", "Y"), n_knots = 50, type = "kmeans"),
+    spde = make_mesh(d, c("X", "Y"), n_knots = 50, type = "kmeans"),
     family = tweedie(link = "log"))
   expect_identical(class(m), "sdmTMB")
 })
 
 test_that("A spatiotemporal version works with predictions on new data points", {
   d <- subset(pcod, year >= 2015)
-  pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 30)
+  pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(
     data = d,
     formula = density ~ 0 + as.factor(year),
@@ -79,7 +79,7 @@ test_that("AR1 models fit with and without R normalization", {
     sigma_O = 1e-6, sigma_E = 0.3, phi = 0.1,
     seed = 1
   )
-  spde <- make_spde(dat, c("x", "y"), n_knots = 60, type = "kmeans")
+  spde <- make_mesh(dat, c("x", "y"), n_knots = 60, type = "kmeans")
   m <- sdmTMB(
     ar1_fields = TRUE, include_spatial = FALSE,
     data = dat, formula = observed ~ 1, time = "time",
@@ -98,7 +98,7 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
     sigma_O = 1e-6, sigma_E = 0.3, phi = 0.1,
     seed = 1
   )
-  spde <- make_spde(dat, c("x", "y"), n_knots = 40, type = "kmeans")
+  spde <- make_mesh(dat, c("x", "y"), n_knots = 40, type = "kmeans")
   m <- sdmTMB(
     ar1_fields = FALSE, include_spatial = FALSE,
     data = dat, formula = observed ~ 1, time = "time",
@@ -142,7 +142,7 @@ test_that("A time-varying model fits and predicts appropriately", {
     phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E,
     seed = SEED
   )
-  spde <- make_spde(s, c("x", "y"), cutoff = 0.02)
+  spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
   m <- sdmTMB(data = s, formula = observed ~ 0, include_spatial = FALSE,
     time_varying = ~ 0 + cov1, time = "time", spde = spde, mgcv = FALSE)
   expect_equal(exp(m$model$par["ln_tau_V"])[[1]], sigma_V, tolerance = 0.1)
@@ -185,7 +185,7 @@ test_that("Priors are working and regularize", {
     phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E,
     seed = 1
   )
-  spde <- make_spde(s, c("x", "y"), cutoff = 0.02)
+  spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
   m <- sdmTMB(data = s, formula = observed ~ 0 + cov1,
     spde = spde, time = "time",
     include_spatial = FALSE, enable_priors = FALSE)
@@ -197,7 +197,7 @@ test_that("Priors are working and regularize", {
 
 test_that("A spatial trend model fits", {
   d <- subset(pcod, year >= 2011) # subset for speed
-  pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 30)
+  pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ depth_scaled, data = d,
     spde = pcod_spde, family = tweedie(link = "log"),
     spatial_trend = TRUE, time = "year")
@@ -206,7 +206,7 @@ test_that("A spatial trend model fits", {
 
 test_that("A logistic threshold model fits", {
   d <- subset(pcod, year >= 2011) # subset for speed
-  pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 30)
+  pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ 0 + as.factor(year) + logistic(depth_scaled), data = d,
     spde = pcod_spde, family = tweedie(link = "log"),
     spatial_trend = FALSE, time = "year")
@@ -215,7 +215,7 @@ test_that("A logistic threshold model fits", {
 
 test_that("A linear threshold model fits", {
   d <- subset(pcod, year >= 2011) # subset for speed
-  pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 30)
+  pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ 0 + as.factor(year) + breakpt(depth_scaled), data = d,
     spde = pcod_spde, family = tweedie(link = "log"),
     spatial_trend = FALSE, time = "year")

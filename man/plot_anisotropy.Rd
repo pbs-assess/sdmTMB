@@ -17,7 +17,7 @@ Plot anisotropy
 d <- pcod
 m <- sdmTMB(data = d,
   formula = density ~ 0 + as.factor(year),
-  time = "year", spde = make_spde(d, c("X", "Y"), n_knots = 80, type = "kmeans"),
+  time = "year", spde = make_mesh(d, c("X", "Y"), n_knots = 80, type = "kmeans"),
   family = tweedie(link = "log"), anisotropy = TRUE,
   include_spatial = FALSE)
 plot_anisotropy(m)

@@ -1,7 +1,7 @@
 context("Extra optimization")
 
 d <- subset(pcod, year >= 2013)
-pcod_spde <- make_spde(d, c("X", "Y"), cutoff = 30)
+pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
   nlminb_loops = 1)
