@@ -1,5 +1,38 @@
 # sdmTMB
 
+# sdmTMB 0.0.7.9000
+
+* Added a `tidy()` method (from broom and broom.mixed) to return a data frame
+  of parameter estimates. The function can extract the fixed effects or the
+  random effect parameters (variances, AR1 correlation, spatial range).
+
+* Added an argument `extra_time` to `sdmTMB()`. This introduces additional time
+  slices that you can then predict on if you want to interpolate or forecast.
+  Internally, it uses Eric Ward's 'weights hack'. This is also useful if you
+  have data unevenly spaced in time and you want the gaps evenly spaced for a
+  random walk or AR1 process (add any missing years to `extra_time`).
+
+* `make_spde()` is now replaced with `make_mesh()` and `make_spde()` has been
+  soft depreciated. `make_mesh()` carries through the x and y column names to
+  the predict function and is more in line with the tidyverse style of taking a
+  data frame first.
+
+* `make_mesh()` can accept `cutoff` as an argument (as in INLA), which is
+  likely a better default way to specify the mesh since it scales across
+  regions better and is line with the literature on INLA.
+
+* `make_mesh()` can use a binary search algorithm to find a cutoff that best
+  matches a desired number of knots (thanks to Kelli Johnson for the idea).
+
+* Barrier meshes are now possible. See `add_barrier_mesh()` for an example.
+
+* There is a pkgdown website now that gets auto generated with GitHub actions:
+  <https://pbs-assess.github.io/sdmTMB/index.html>
+
+* There is the start of a model description vignette:
+  <https://github.com/pbs-assess/sdmTMB/blob/devel/vignettes/model-description.Rmd>
+  It is very much a work in progress.
+
 # sdmTMB 0.0.6.9009
 
 * Fixed bug in dlnorm
@@ -16,9 +49,10 @@
 
 * Overhauled cross validation function. The function now:
     * uses Eric's weights hack so it can also be used for forecasting
-    * initializes subsequent folds at the MLE of the first fold for considerable speed increases
+    * initializes subsequent folds at the MLE of the first fold for
+      considerable speed increases
     * works in parallel if a future plan initialized; see examples
-    
+
 * Added threshold parameters to the print method
 
 * Added forecasting example with the weights hack
@@ -39,8 +73,8 @@
   helps with making marginal-effect plots. #15
 
 * Added optimization options to aid convergence. Also added
-  `run_extra_optimization()` to run these on already fit models. Default is
-  for no extra optimization.
+  `run_extra_optimization()` to run these on already fit models. Default is for
+  no extra optimization.
 
 * Added binomial likelihood to cross validation. Git hash `ee3f3ba`.
 
