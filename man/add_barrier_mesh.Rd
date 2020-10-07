@@ -31,11 +31,11 @@ this scaling factor before applying the projection from \code{barrier_sf}.}
 \item{plot}{Logical.}
 }
 \value{
-A list similar to \code{\link[=make_mesh]{make_mesh()}} but with \code{spde_barrier} and
-\code{range_fraction} elements added.
+A list similar to \code{\link[=make_mesh]{make_mesh()}} but with \code{spde_barrier} and a
+couple other helper list elements added.
 
 If \code{plot = TRUE}, then a basic plot will be created as a side effect. Each
-grey dot represents the center of a "normal" mesh triange. Each red cross
+grey dot represents the center of a "normal" mesh triangle. Each red cross
 represents the center of a "barrier" mesh triangle.
 }
 \description{
@@ -77,8 +77,11 @@ ggplot(bc_coast) +
   geom_sf() +
   geom_sf(data = survey, size = 0.5)
 
+# Note that a barrier mesh won't don't much here for this
+# example data set, but we nonetheless use it as an example.
+
 # Prepare for making the mesh
-# First or will extract the coordinates:
+# First, we will extract the coordinates:
 surv_utm_coords <- st_coordinates(survey)
 
 # Then we will scale coordinates to km so the range parameter

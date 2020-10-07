@@ -14,7 +14,9 @@ NULL
 #' @param time The time column (as character). Leave as `NULL` for a spatial-only
 #'   model.
 #' @param family The family and link. Supports [gaussian()], [Gamma()],
-#'   [binomial()], [poisson()], [sdmTMB::Beta()], [nbinom2()], and [tweedie()].
+#'   [binomial()], [poisson()], \code{\link[sdmTMB:families]{Beta()}},
+#'   \code{\link[sdmTMB:families]{nbinom2()}}, and
+#'   \code{\link[sdmTMB:families]{tweedie()}}].
 #' @param time_varying An optional formula describing covariates that should be
 #'   modelled as a random walk through time.
 #' @param weights Optional likelihood weights for the conditional model.
@@ -119,12 +121,6 @@ NULL
 #' tidy(m, conf.int = TRUE)
 #' tidy(m, effects = "ran_par")
 #'
-#' # Contents of the output object:
-#' names(m)
-#' m$model
-#' r <- m$tmb_obj$report()
-#' names(r)
-#'
 #' # Run extra optimization steps to help convergence:
 #' m1 <- run_extra_optimization(m, nlminb_loops = 0, newton_steps = 1)
 #' max(m$gradients)
@@ -164,11 +160,7 @@ NULL
 #' m <- sdmTMB(density ~ depth_scaled, data = d,
 #'   spde = pcod_spde, family = tweedie(link = "log"),
 #'   spatial_trend = TRUE, time = "year")
-#' print(m)
-#'
-#' r <- m$tmb_obj$report()
-#' r$ln_tau_O_trend
-#' r$omega_s_trend
+#' tidy(m, effects = "ran_par")
 #'
 #' # Time-varying effects of depth and depth squared:
 #' m <- sdmTMB(density ~ 0 + as.factor(year),
@@ -177,12 +169,14 @@ NULL
 #' print(m)
 #'
 #' # See the b_rw_t estimates; these are the time-varying (random walk) effects.
+#' # These could be added to tidy.sdmTMB() eventually.
 #' summary(m$sd_report)[1:19,]
 #'
 #' # Linear breakpoint model on depth:
 #' m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) +
 #'     breakpt(depth_scaled) + depth_scaled2, data = pcod_gaus,
 #'   time = "year", spde = pcod_spde_gaus)
+#' print(m_pos)
 #' }
 
 sdmTMB <- function(formula, data, spde, time = NULL,

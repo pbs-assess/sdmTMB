@@ -22,12 +22,13 @@ Extract a relative biomass/abundance index or a center of gravity
 \examples{
 \donttest{
 # Use a small number of knots for this example to make it fast:
-pcod_spde <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
+pcod_spde <- make_mesh(pcod, c("X", "Y"), n_knots = 60, type = "kmeans")
 m <- sdmTMB(
  data = pcod,
  formula = density ~ 0 + as.factor(year),
  time = "year", spde = pcod_spde, family = tweedie(link = "log")
 )
+# Note `return_tmb_object = TRUE` and the prediction grid:
 predictions <- predict(m, newdata = qcs_grid, return_tmb_object = TRUE)
 ind <- get_index(predictions)
 

@@ -53,15 +53,14 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' @export
 #'
 #' @examples
-#' d <- subset(pcod, year >= 2011) # subset for example speed
-#' spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
+#' spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 #'
 #' # library(future) # for parallel processing
 #' # plan(multisession) # for parallel processing
 #' m_cv <- sdmTMB_cv(
-#'   density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-#'   data = d, spde = spde,
-#'   family = tweedie(link = "log"), time = "year", k_folds = 3
+#'   density ~ 0 + depth_scaled + depth_scaled2,
+#'   data = pcod, spde = spde,
+#'   family = tweedie(link = "log"), k_folds = 2
 #' )
 #' m_cv$fold_loglik
 #' m_cv$sum_loglik

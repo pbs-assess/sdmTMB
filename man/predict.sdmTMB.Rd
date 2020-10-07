@@ -129,7 +129,6 @@ plot_map(predictions, "epsilon_st") +
   scale_fill_gradient2()
 
 # Visualizing a marginal effect ----------------------------------------
-# Also demonstrates getting standard errors on population-level predictions
 
 nd <- data.frame(depth_scaled =
   seq(min(d$depth_scaled), max(d$depth_scaled), length.out = 100))

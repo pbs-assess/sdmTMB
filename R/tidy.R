@@ -13,6 +13,9 @@
 #' @return A data frame
 #' @details
 #' Follows the conventions of the \pkg{broom} and \pkg{broom.mixed} packages.
+#'
+#' Note that the standard errors for variance terms are not in natural
+#' and not log space and so are a very rough approximation.
 #' @export
 #'
 #' @importFrom assertthat assert_that
@@ -75,7 +78,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
 
   out_re <- list()
   for (i in c("sigma_O", "sigma_E", "sigma_O_trend", "ln_tau_V", "range", "ln_phi")) {
-    if (i %in% names(est)) {
+    if (i %in% names(est) && est[[i]] != 0) {
       out_re[[i]] <- data.frame(
         term = i, estimate = est[[i]], std.error = se[[i]],
         conf.low = NA_real_, conf.high = NA_real_, stringsAsFactors = FALSE

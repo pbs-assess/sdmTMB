@@ -5,6 +5,7 @@
 #' @param link The link.
 #' @export
 #' @rdname families
+#' @name Families
 #' @examples
 #' Beta(link = "logit")
 Beta <- function(link = "logit") {
@@ -97,23 +98,5 @@ tweedie <- function(link = "log") {
     stats <- stats::make.link(link)
 
   list(family = "tweedie", link = linktemp, linkfun = stats$linkfun,
-    linkinv = stats$linkinv)
-}
-
-#' @export
-#' @rdname families
-#' @examples
-#' Gamma(link = "log")
-Gamma <- function(link = "log") {
-  linktemp <- substitute(link)
-  if (!is.character(linktemp))
-    linktemp <- deparse(linktemp)
-  okLinks <- c("log")
-  if (linktemp %in% okLinks)
-    stats <- stats::make.link(linktemp)
-  else if (is.character(link))
-    stats <- stats::make.link(link)
-
-  list(family = "Gamma", link = linktemp, linkfun = stats$linkfun,
     linkinv = stats$linkinv)
 }

@@ -293,11 +293,11 @@ make_barrier_spde <- function(spde) {
 #'   this scaling factor before applying the projection from `barrier_sf`.
 #' @param plot Logical.
 #'
-#' @return A list similar to [make_mesh()] but with `spde_barrier` and
-#' `range_fraction` elements added.
+#' @return A list similar to [make_mesh()] but with `spde_barrier` and a
+#' couple other helper list elements added.
 #'
 #' If `plot = TRUE`, then a basic plot will be created as a side effect. Each
-#' grey dot represents the center of a "normal" mesh triange. Each red cross
+#' grey dot represents the center of a "normal" mesh triangle. Each red cross
 #' represents the center of a "barrier" mesh triangle.
 #' @export
 #' @references
@@ -344,8 +344,11 @@ make_barrier_spde <- function(spde) {
 #'   geom_sf() +
 #'   geom_sf(data = survey, size = 0.5)
 #'
+#' # Note that a barrier mesh won't don't much here for this
+#' # example data set, but we nonetheless use it as an example.
+#'
 #' # Prepare for making the mesh
-#' # First or will extract the coordinates:
+#' # First, we will extract the coordinates:
 #' surv_utm_coords <- st_coordinates(survey)
 #'
 #' # Then we will scale coordinates to km so the range parameter
@@ -414,7 +417,7 @@ add_barrier_mesh <- function(spde_obj, barrier_sf, range_fraction = 0.2,
 
   if (plot) {
     plot(pos_tri[water.triangles, ],
-      col = "grey40",
+      col = "grey40", asp = 1,
       xlab = spde_obj$xy_cols[1], ylab = spde_obj$xy_cols[2]
     )
     points(pos_tri[land.triangles, ], col = "red", pch = 4)

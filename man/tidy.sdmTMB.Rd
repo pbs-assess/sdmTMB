@@ -37,6 +37,9 @@ Turn sdmTMB model output into a tidy data frame
 }
 \details{
 Follows the conventions of the \pkg{broom} and \pkg{broom.mixed} packages.
+
+Note that the standard errors for variance terms are not in natural
+and not log space and so are a very rough approximation.
 }
 \examples{
 # See ?sdmTMB
