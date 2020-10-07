@@ -574,6 +574,16 @@ check_offset <- function(formula) {
 }
 
 update_model <- function(object, silent = FALSE) {
+  if (!"barrier" %in% names(object$tmb_data)) {
+    object$tmb_data$barrier_scaling <- c(1, 1)
+    object$tmb_data$barrier <- 0L
+    C0 <- rep(1, 2)
+    C1 <- rep(1, 2)
+    D0 <- Matrix::Matrix(0, 1, 1)
+    D1 <- Matrix::Matrix(0, 1, 1)
+    .I <- Matrix::Matrix(0, 1, 1)
+    object$tmb_data$spde_barrier <- make_barrier_spde(object$spde)
+  }
   if (!"pop_pred" %in% names(object$tmb_data)) object$tmb_data$pop_pred <- 0L
   if (!"mgcv" %in% names(object)) object$mgcv <- FALSE
   object$tmb_data$weights_i <- rep(1, length(object$tmb_data$y_i))
