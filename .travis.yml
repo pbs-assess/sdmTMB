@@ -7,6 +7,11 @@ warnings_are_errors: false
 r_check_args: "--as-cran --no-build-vignettes --no-manual"
 r_build_args: "--no-manual"
 
+addons:
+  apt:
+    packages:
+      - libudunits2-dev
+
 # before_cache: Rscript -e 'remotes::install_cran("pkgdown")'
 # deploy:
 #   provider: script
