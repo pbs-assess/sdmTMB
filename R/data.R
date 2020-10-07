@@ -7,3 +7,8 @@
 #'
 #' @format A data frame.
 "qcs_grid"
+
+#' BC coastline data from ropensci/rnaturalearthhires
+#'
+#' @format An sf data frame.
+"bc_coast"

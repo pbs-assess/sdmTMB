@@ -20,12 +20,13 @@ example, a coastline dataset for ocean data. \strong{Note that this object must
 have the same projection as the data used to generate the x and y columns
 in \code{spde_obj}.}}
 
-\item{range_fraction}{The fraction of the spatial range that barrier triangles
-have.}
+\item{range_fraction}{The fraction of the spatial range that barrier
+triangles have.}
 
 \item{proj_scaling}{If \code{spde_obj} was created with scaling of the coordinates
 after the projection (e.g., dividing UTMs by 1000 so the spatial range is
-on a reasonable scale) the x and y values in \code{spde_obj} are multiplied by this scaling factor before applying the projection from \code{barrier_sf}.}
+on a reasonable scale) the x and y values in \code{spde_obj} are multiplied by
+this scaling factor before applying the projection from \code{barrier_sf}.}
 
 \item{plot}{Logical.}
 }
@@ -33,9 +34,9 @@ on a reasonable scale) the x and y values in \code{spde_obj} are multiplied by t
 A list similar to \code{\link[=make_mesh]{make_mesh()}} but with \code{spde_barrier} and
 \code{range_fraction} elements added.
 
-If \code{plot = TRUE}, then a basic plot will be created as a side effect. Each grey
-dot represents the center of a "normal" mesh triange. Each red cross represents
-the center of a "barrier" mesh triangle.
+If \code{plot = TRUE}, then a basic plot will be created as a side effect. Each
+grey dot represents the center of a "normal" mesh triange. Each red cross
+represents the center of a "barrier" mesh triangle.
 }
 \description{
 Transform a mesh object into a barrier mesh object
@@ -46,17 +47,21 @@ library(dplyr)
 library(ggplot2)
 
 # First, download coastline data for our region.
+# We will use `bc_coast` from the package data,
+# but you can recreate it with the following.
+
 # For applied situations on finer scales, you may with to use scale = "small".
 # For that, first: remotes::install_github("ropensci/rnaturalearthhires")
-map_data <- rnaturalearth::ne_countries(
-  scale = "medium",
-  returnclass = "sf", country = "canada")
+# map_data <- rnaturalearth::ne_countries(
+#   scale = "medium",
+#   returnclass = "sf", country = "canada")
+#
+# # Crop the polygon for plotting and efficiency:
+# st_bbox(map_data)
+# bc_coast <- suppressWarnings(suppressMessages(
+#   st_crop(map_data,
+#     c(xmin = -134, ymin = 46, xmax = -120, ymax = 57))))
 
-# Crop the polygon for plotting and efficiency:
-st_bbox(map_data)
-bc_coast <- suppressWarnings(suppressMessages(
-  st_crop(map_data,
-    c(xmin = -134, ymin = 46, xmax = -120, ymax = 57))))
 crs_utm9 <- 3156 # Pick a projection, here UTM9
 bc_coast <- st_transform(bc_coast, crs_utm9)
 
@@ -79,7 +84,7 @@ surv_utm_coords <- st_coordinates(survey)
 pcod$X1000 <- surv_utm_coords[,1] / 1000
 pcod$Y1000 <- surv_utm_coords[,2] / 1000
 
-spde <- make_spde(pcod, xy_cols = c("X1000", "Y1000"),
+spde <- make_mesh(pcod, xy_cols = c("X1000", "Y1000"),
   n_knots = 200, type = "kmeans")
 plot(spde)
 

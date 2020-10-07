@@ -285,25 +285,27 @@ make_barrier_spde <- function(spde) {
 #'   example, a coastline dataset for ocean data. **Note that this object must
 #'   have the same projection as the data used to generate the x and y columns
 #'   in `spde_obj`.**
-#' @param range_fraction The fraction of the spatial range that barrier triangles
-#'   have.
+#' @param range_fraction The fraction of the spatial range that barrier
+#'   triangles have.
 #' @param proj_scaling If `spde_obj` was created with scaling of the coordinates
 #'   after the projection (e.g., dividing UTMs by 1000 so the spatial range is
-#'   on a reasonable scale) the x and y values in `spde_obj` are multiplied by this scaling factor before applying the projection from `barrier_sf`.
+#'   on a reasonable scale) the x and y values in `spde_obj` are multiplied by
+#'   this scaling factor before applying the projection from `barrier_sf`.
 #' @param plot Logical.
 #'
-#' @return
-#' A list similar to [make_mesh()] but with `spde_barrier` and
+#' @return A list similar to [make_mesh()] but with `spde_barrier` and
 #' `range_fraction` elements added.
 #'
-#' If `plot = TRUE`, then a basic plot will be created as a side effect. Each grey
-#' dot represents the center of a "normal" mesh triange. Each red cross represents
-#' the center of a "barrier" mesh triangle.
+#' If `plot = TRUE`, then a basic plot will be created as a side effect. Each
+#' grey dot represents the center of a "normal" mesh triange. Each red cross
+#' represents the center of a "barrier" mesh triangle.
 #' @export
 #' @references
 #' Bakka, H., Vanhatalo, J., Illian, J., Simpson, D., and Rue, H. 2019.
 #' Non-stationary Gaussian models with physical barriers.
 #' <http://arxiv.org/abs/1608.03787>
+#'
+#' <http://www.r-inla.org/barrier-model>
 #'
 #' <https://haakonbakkagit.github.io/btopic107.html>
 #' @examples
@@ -312,17 +314,21 @@ make_barrier_spde <- function(spde) {
 #' library(ggplot2)
 #'
 #' # First, download coastline data for our region.
+#' # We will use `bc_coast` from the package data,
+#' # but you can recreate it with the following.
+#'
 #' # For applied situations on finer scales, you may with to use scale = "small".
 #' # For that, first: remotes::install_github("ropensci/rnaturalearthhires")
-#' map_data <- rnaturalearth::ne_countries(
-#'   scale = "medium",
-#'   returnclass = "sf", country = "canada")
+#' # map_data <- rnaturalearth::ne_countries(
+#' #   scale = "medium",
+#' #   returnclass = "sf", country = "canada")
+#' #
+#' # # Crop the polygon for plotting and efficiency:
+#' # st_bbox(map_data)
+#' # bc_coast <- suppressWarnings(suppressMessages(
+#' #   st_crop(map_data,
+#' #     c(xmin = -134, ymin = 46, xmax = -120, ymax = 57))))
 #'
-#' # Crop the polygon for plotting and efficiency:
-#' st_bbox(map_data)
-#' bc_coast <- suppressWarnings(suppressMessages(
-#'   st_crop(map_data,
-#'     c(xmin = -134, ymin = 46, xmax = -120, ymax = 57))))
 #' crs_utm9 <- 3156 # Pick a projection, here UTM9
 #' bc_coast <- st_transform(bc_coast, crs_utm9)
 #'
@@ -346,7 +352,7 @@ make_barrier_spde <- function(spde) {
 #' pcod$Y1000 <- surv_utm_coords[,2] / 1000
 #'
 # # Construct our mesh:
-#' spde <- make_spde(pcod, xy_cols = c("X1000", "Y1000"),
+#' spde <- make_mesh(pcod, xy_cols = c("X1000", "Y1000"),
 #'   n_knots = 200, type = "kmeans")
 #' plot(spde)
 #'
