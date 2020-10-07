@@ -330,6 +330,8 @@ make_barrier_spde <- function(spde) {
 #' #     c(xmin = -134, ymin = 46, xmax = -120, ymax = 57))))
 #'
 #' crs_utm9 <- 3156 # Pick a projection, here UTM9
+#'
+#' st_crs(bc_coast) <- 4326 # 'WGS84'; necessary on some installs
 #' bc_coast <- st_transform(bc_coast, crs_utm9)
 #'
 #' # Project our survey data coordinates:

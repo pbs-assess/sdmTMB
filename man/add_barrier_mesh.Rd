@@ -63,6 +63,8 @@ library(ggplot2)
 #     c(xmin = -134, ymin = 46, xmax = -120, ymax = 57))))
 
 crs_utm9 <- 3156 # Pick a projection, here UTM9
+
+st_crs(bc_coast) <- 4326 # 'WGS84'; necessary on some installs
 bc_coast <- st_transform(bc_coast, crs_utm9)
 
 # Project our survey data coordinates:
@@ -117,6 +119,8 @@ fit
 Bakka, H., Vanhatalo, J., Illian, J., Simpson, D., and Rue, H. 2019.
 Non-stationary Gaussian models with physical barriers.
 \url{http://arxiv.org/abs/1608.03787}
+
+\url{http://www.r-inla.org/barrier-model}
 
 \url{https://haakonbakkagit.github.io/btopic107.html}
 }
