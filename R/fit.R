@@ -194,8 +194,6 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   spatial_only = identical(length(unique(data[[time]])), 1L),
   nlminb_loops = 1,
   newton_steps = 0,
-  barrier = FALSE,
-  barrier_scaling = c(1, 0.2),
   mgcv = TRUE,
   previous_fit = NULL,
   quadratic_roots = FALSE) {
@@ -291,6 +289,12 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
   n_s <- nrow(spde$mesh$loc)
 
+  barrier <- "spde_barrier" %in% names(spde)
+  if (barrier && anisotropy) {
+    warning("Using a barrier mesh; therefore, anistropy will be disabled.", call. = FALSE)
+    anisotropy <- FALSE
+  }
+
   tmb_data <- list(
     y_i        = y_i,
     n_t        = length(unique(data[[time]])),
@@ -324,8 +328,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     spde_aniso = make_anisotropy_spde(spde),
     spde       = spde$spde$param.inla[c("M0","M1","M2")],
     barrier = as.integer(barrier),
-    spde_barrier = make_barrier_spde(spde$spde_barrier),
-    barrier_scaling = barrier_scaling,
+    spde_barrier = make_barrier_spde(spde),
+    barrier_scaling = if (barrier) spde$barrier_scaling else c(1, 1),
     anisotropy = as.integer(anisotropy),
     family     = .valid_family[family$family],
     link       = .valid_link[family$link],

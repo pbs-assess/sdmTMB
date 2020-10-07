@@ -6,7 +6,7 @@ library(sdmTMB)
 theme_set(theme_minimal())
 
 map_data <- rnaturalearth::ne_countries(
-  scale = 10,
+  scale = "small",
   returnclass = "sf", country = "canada"
 )
 
@@ -31,7 +31,6 @@ crs_utm9 <- 3156
 bc_coast <- st_transform(bc_coast, crs_utm9)
 ggplot(bc_coast) + geom_sf()
 
-
 surv <- dat %>% select(lon, lat, density) %>%
   st_as_sf(crs = 4326, coords = c("lon", "lat")) %>%
   st_transform(crs_utm9)
@@ -53,48 +52,14 @@ spde <- sdmTMB::make_spde(dat, xy_cols = c("X1000", "Y1000"), n_knots = 700, typ
 plot(spde)
 
 
-add_barrier_mesh <- function(spde_obj, barrier_sf,
-                             scale_factor = 1000, plot = FALSE) {
-  mesh <- spde_obj$mesh
-  tl <- length(mesh$graph$tv[, 1]) # the number of triangles in the mesh
-  posTri <- matrix(0, tl, 2)
-  for (i in seq_len(tl)) {
-    temp <- mesh$loc[mesh$graph$tv[i, ], ]
-    posTri[i, ] <- colMeans(temp)[c(1, 2)]
-  }
-  mesh_sf <- as.data.frame(posTri) %>%
-    mutate(X = V1 * scale_factor, Y = V2 * scale_factor) %>%
-    sf::st_as_sf(crs = sf::st_crs(barrier_sf), coords = c("X", "Y"))
-  intersected <- sf::st_intersects(mesh_sf, bc_coast)
-  mesh_df_water <- mesh_sf[lengths(intersected) == 0, ]
-  mesh_df_land <- mesh_sf[lengths(intersected) > 0, ]
-
-  if (plot) {
-    g <- ggplot2::ggplot(barrier_sf) +
-      ggplot2::geom_sf() +
-      ggplot2::geom_sf(data = mesh_df_water, size = 1, colour = "blue") +
-      ggplot2::geom_sf(data = mesh_df_land, size = 1, colour = "green")
-    print(g)
-  }
-
-  water.triangles <- which(lengths(intersected) == 0)
-  land.triangles <- which(lengths(intersected) > 0)
-  # plot(posTri[water.triangles,])
-  # plot(posTri[land.triangles,])
-  barrier_spde <- INLA::inla.barrier.fem(mesh,
-    barrier.triangles = land.triangles)
-  spde_obj$spde_barrier <- barrier_spde
-  spde_obj
-}
-
-
-bspde <- add_barrier_mesh(spde, bc_coast, scale_factor = 1000, plot = TRUE)
+bspde <- add_barrier_mesh(spde, bc_coast, range_fraction = 0.2,
+  proj_scaling = 1000, plot = TRUE)
 
 dat$density1000 <- dat$density * 1000
 
 mb <- sdmTMB(density1000 ~ 0 + as.factor(year),
   data = dat, spde = bspde, silent = FALSE, barrier = TRUE,
-  barrier_scaling = c(1, 0.1))
+  barrier_scaling = c(1, 0.1), family = tweedie(link = "log"))
 
 mb
 
