@@ -226,19 +226,19 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
       stop("Some new time elements were found in `newdata`. ",
         "For now, make sure only time elements from the original dataset ",
         "are present. If you would like to predict on new time elements, see ",
-        "the example hack with the `weights` argument in the help for `?predict.sdmTMB`.",
+        "the `extra_time` argument in `?sdmTMB:::predict.sdmTMB`.",
         call. = FALSE
       )
 
-    if (!all(original_time %in% new_data_time)) {
-      newdata[["sdmTMB_fake_year"]] <- FALSE
-      missing_time_elements <- original_time[!original_time %in% new_data_time]
-      nd2 <- do.call("rbind",
-        replicate(length(missing_time_elements), newdata[1L,,drop=FALSE], simplify = FALSE))
-      nd2[[object$time]] <- rep(missing_time_elements, each = 1L)
-      nd2$sdmTMB_fake_year <- TRUE
-      newdata <- rbind(newdata, nd2)
-    }
+    # if (!all(original_time %in% new_data_time)) {
+    #   newdata[["sdmTMB_fake_year"]] <- FALSE
+    #   missing_time_elements <- original_time[!original_time %in% new_data_time]
+    #   nd2 <- do.call("rbind",
+    #     replicate(length(missing_time_elements), newdata[1L,,drop=FALSE], simplify = FALSE))
+    #   nd2[[object$time]] <- rep(missing_time_elements, each = 1L)
+    #   nd2$sdmTMB_fake_year <- TRUE
+    #   newdata <- rbind(newdata, nd2)
+    # }
 
     # If making population predictions (with standard errors), we don't need
     # to worry about space, so fill in dummy values if the user hasn't made any:
