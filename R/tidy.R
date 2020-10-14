@@ -67,10 +67,8 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   }
 
   if (conf.int) {
-    conf.int = c(as.numeric(trans(out$estimate - crit * out$estimate)),
-      as.numeric(trans(out$estimate + crit * out$estimate)))
-    out$conf.low <- min(conf.int)
-    out$conf.high <- max(conf.int)
+    out$conf.low <- as.numeric(trans(out$estimate - crit * out$estimate))
+    out$conf.high <- as.numeric(trans(out$estimate + crit * out$estimate))
   }
 
 
