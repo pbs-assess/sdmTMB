@@ -1,3 +1,4 @@
+#define TMB_LIB_INIT R_init_sdmTMB
 #include <TMB.hpp>
 // #include <omp.h>
 
