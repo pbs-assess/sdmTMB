@@ -5,9 +5,9 @@
 \alias{get_cog}
 \title{Extract a relative biomass/abundance index or a center of gravity}
 \usage{
-get_index(obj, bias_correct = FALSE, level = 0.95)
+get_index(obj, bias_correct = FALSE, level = 0.95, ...)
 
-get_cog(obj, bias_correct = FALSE, level = 0.95)
+get_cog(obj, bias_correct = FALSE, level = 0.95, ...)
 }
 \arguments{
 \item{obj}{Output from \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} with \code{return_tmb_object = TRUE}.}
@@ -15,6 +15,8 @@ get_cog(obj, bias_correct = FALSE, level = 0.95)
 \item{bias_correct}{Should bias correction be implemented \code{\link[TMB:sdreport]{TMB::sdreport()}}?}
 
 \item{level}{The confidence level.}
+
+\item{...}{Passed to \code{\link[TMB:sdreport]{TMB::sdreport()}}.}
 }
 \description{
 Extract a relative biomass/abundance index or a center of gravity

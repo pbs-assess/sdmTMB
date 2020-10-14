@@ -3,6 +3,7 @@
 #' @param obj Output from [predict.sdmTMB()] with `return_tmb_object = TRUE`.
 #' @param bias_correct Should bias correction be implemented [TMB::sdreport()]?
 #' @param level The confidence level.
+#' @param ... Passed to [TMB::sdreport()].
 #'
 #' @examples
 #' \donttest{
@@ -26,25 +27,25 @@
 #' }
 #'
 #' @export
-get_index <- function(obj, bias_correct = FALSE, level = 0.95)  {
+get_index <- function(obj, bias_correct = FALSE, level = 0.95, ...)  {
   d <- get_generic(obj, value_name = "log_total",
-    bias_correct = bias_correct, level = level, trans = exp)
+    bias_correct = bias_correct, level = level, trans = exp, ...)
   names(d)[names(d) == "trans_est"] <- "log_est"
   d
 }
 
 #' @rdname get_index
 #' @export
-get_cog <- function(obj, bias_correct = FALSE, level = 0.95)  {
+get_cog <- function(obj, bias_correct = FALSE, level = 0.95, ...)  {
   d <- get_generic(obj, value_name = c("cog_x", "cog_y"),
-    bias_correct = bias_correct, level = level, trans = I)
+    bias_correct = bias_correct, level = level, trans = I, ...)
   d <- d[, names(d) != "trans_est", drop = FALSE]
   d$coord <- c(rep("X", each = nrow(d)/2), rep("Y", each = nrow(d)/2))
   d
 }
 
 get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
-  trans = I) {
+  trans = I, ...) {
   if (is.null(obj[["obj"]])) {
     stop("`obj` needs to be created with ",
       "`sdmTMB(..., return_tmb_object = TRUE).`", call. = FALSE)
@@ -56,7 +57,7 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
       "`your_model <- sdmTMB:::update_model(your_model)` ",
       "first before running this function.", call. = FALSE)
 
-  sr <- TMB::sdreport(obj$obj, bias.correct = bias_correct)
+  sr <- TMB::sdreport(obj$obj, bias.correct = bias_correct, ...)
   conv <- get_convergence_diagnostics(sr)
   ssr <- summary(sr, "report")
   log_total <- ssr[row.names(ssr) %in% value_name, , drop = FALSE]
@@ -69,7 +70,7 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   d$est <- as.numeric(trans(d$trans_est))
   d$lwr <- as.numeric(trans(d$trans_est + stats::qnorm((1-level)/2) * d$se))
   d$upr <- as.numeric(trans(d$trans_est + stats::qnorm(1-(1-level)/2) * d$se))
-  d[[time_name]] <- sort(unique(obj$data[[time_name]]))
+  d[[time_name]] <- sort(unique(obj$fit_obj$data[[time_name]]))
   d$max_gradient <- max(conv$final_grads)
   d$bad_eig <- conv$bad_eig
   d[,c(time_name, 'est', 'lwr', 'upr', 'trans_est', 'se', 'max_gradient', 'bad_eig'),
