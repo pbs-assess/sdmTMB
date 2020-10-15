@@ -25,8 +25,6 @@ library(sdmTMB)
 
 Let's perform index standardization with the built-in data for Pacific cod. 
 
-- I've included columns for depth and depth squared. 
-- Depth was centred and scaled by its standard deviation and I've included those in the data frame so that they could be used to similarly scale the prediction grid.
 - The density units should be kg/km^2^.
 - Here, X and Y are coordinates in UTM zone 9.
 
@@ -92,7 +90,7 @@ plot_map(predictions$data, "exp(est)") +
   ggtitle("Prediction (fixed effects + all random effects)")
 ```
 
-We can also look at just the fixed effects, here depth:
+We can also look at just the fixed effects, here year:
 
 ```{r plot-fix-defects, fig.width = 8}
 plot_map(predictions$data, "exp(est_non_rf)") +
@@ -100,7 +98,7 @@ plot_map(predictions$data, "exp(est_non_rf)") +
   scale_fill_viridis_c(trans = "sqrt")
 ```
 
-We can look at the spatial random effects but represent consistent deviations in space through time that are not accounted for by our fixed effects of depth. In other words, these deviations represent consistent biotic and abiotic factors that are affecting biomass density but are not accounted for in the model.
+We can look at the spatial random effects that represent consistent deviations in space through time that are not accounted for by our fixed effects. In other words, these deviations represent consistent biotic and abiotic factors that are affecting biomass density but are not accounted for in the model.
 
 ```{r plot-spatial-effects, fig.width = 8}
 plot_map(predictions$data, "omega_s") +
