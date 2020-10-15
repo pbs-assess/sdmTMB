@@ -20,11 +20,22 @@ output: html_document
   - test predictions and index against INLA, VAST, (mgcv?), ...?
   - ?
 * Distinguish from VAST etc.
-  - interface
+  - interface (inspired by glmmTMB etc.)
   - focus; simplified code base; less fully featured by design
   - speed??
   - univariate
   - breakpoints
+  - compartmentalized/modular (fit, predict, newdata, index, residuals, etc.)
+  - not a replacement
+  - ?
+* vs. INLA
+  - interface
+  - ML/REML vs. Bayes
+  - Tweedie
+  - speed??
+  - anisotropy
+  - added flexibility for this kind of model (spatially varying trend, breakpoints)
+  - not a replacement
   - ?
 * Timings against VAST, INLA, etc?
 * Good demos of novel components
@@ -40,4 +51,6 @@ output: html_document
   - tensor splines
   - marginal effects
   - bias correction
+  - barrier mesh?
+  - tmbstan? likely too slow?
   - ?
