@@ -85,7 +85,7 @@ sdmTMB_sim <- function(mesh,
                        ar1_phi = 0,
                        sigma_O = 0.1,
                        sigma_E = 0,
-                       sigma_V = 0,
+                       sigma_V = rep(0, length(betas)),
                        phi = 0.01,
                        thetaf = 1.5,
                        df = 3,
@@ -100,10 +100,11 @@ sdmTMB_sim <- function(mesh,
   assert_that(time_steps >= 1)
   assert_that(range > 0)
   assert_that(ar1_phi >= -1, ar1_phi <= 1)
-  assert_that(sigma_O >= 0, sigma_E >= 0, sigma_V >= 0, phi > 0)
+  assert_that(sigma_O >= 0, sigma_E >= 0, all(sigma_V >= 0), phi > 0)
   if (!is.null(X)) assert_that(!is.null(betas))
   if (!is.null(betas) && !is.null(X)) assert_that(ncol(X) == length(betas))
-  if (sigma_V > 0) assert_that(length(betas) == length(sigma_V))
+  assert_that(length(betas) == length(sigma_V))
+  if (!is.null(X)) assert_that(time_steps * length(x) == nrow(X))
 
   if (class(mesh) == "sdmTMBmesh") {
     mesh <- mesh$mesh
@@ -158,7 +159,6 @@ sdmTMB_sim <- function(mesh,
     B <- as.data.frame(V)
     names(B) <- gsub("V", "b", names(B))
     cov_values <- B * cov_mat
-    names(cov_values) <- gsub("b", "cov", names(cov_values))
     eta <- rowSums(cov_values)
   } else {
     # empty vector for eta in simulations with no fixed effects

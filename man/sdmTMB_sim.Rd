@@ -16,7 +16,7 @@ sdmTMB_sim(
   ar1_phi = 0,
   sigma_O = 0.1,
   sigma_E = 0,
-  sigma_V = 0,
+  sigma_V = rep(0, length(betas)),
   phi = 0.01,
   thetaf = 1.5,
   df = 3,
