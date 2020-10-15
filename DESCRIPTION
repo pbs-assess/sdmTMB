@@ -41,7 +41,6 @@ Imports:
     Matrix,
     methods,
     mgcv,
-    RandomFields,
     sf,
     stats,
     TMB (>= 1.7.13)
