@@ -101,7 +101,6 @@ sdmTMB_sim <- function(mesh,
   assert_that(range > 0)
   assert_that(ar1_phi >= -1, ar1_phi <= 1)
   assert_that(sigma_O >= 0, sigma_E >= 0, sigma_V >= 0, phi > 0)
-  assert_that("family" %in% class(family))
   if (!is.null(X)) assert_that(!is.null(betas))
   if (!is.null(betas) && !is.null(X)) assert_that(ncol(X) == length(betas))
   if (sigma_V > 0) assert_that(length(betas) == length(sigma_V))
