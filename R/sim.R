@@ -63,17 +63,17 @@
 # m <- sdmTMB(observed ~ 1, data = sim_dat, spde = mesh, time = "time",
 #   include_spatial = FALSE)
 
- # # Time-varying effects:
- # d <- sdmTMB_sim(x = runif(200), y = runif(200), betas = c(0.2, -0.2),
- #   sigma_V = c(0.2, 0.1), time_steps = 12, phi = 0.05,
- #   sigma_O = 1e-5, sigma_E = 0.2)
- # spde <- make_mesh(dat, c("x", "y"), n_knots = 40, type = "kmeans")
- # m <- sdmTMB(data = d, formula = observed ~ 0, time = "time",
- #   time_varying = ~ 0 + cov1 + cov2, silent = FALSE,
- #   include_spatial = FALSE, spde = spde)
- # r <- m$tmb_obj$report()
- # r$b_rw_t
- # exp(m$model$par[grep("ln_tau_V", names(m$model$par))])
+# # Time-varying effects:
+# d <- sdmTMB_sim(x = runif(200), y = runif(200), betas = c(0.2, -0.2),
+#   sigma_V = c(0.2, 0.1), time_steps = 12, phi = 0.05,
+#   sigma_O = 1e-5, sigma_E = 0.2)
+# spde <- make_mesh(dat, c("x", "y"), n_knots = 40, type = "kmeans")
+# m <- sdmTMB(data = d, formula = observed ~ 0, time = "time",
+#   time_varying = ~ 0 + cov1 + cov2, silent = FALSE,
+#   include_spatial = FALSE, spde = spde)
+# r <- m$tmb_obj$report()
+# r$b_rw_t
+# exp(m$model$par[grep("ln_tau_V", names(m$model$par))])
 sdmTMB_sim <- function(mesh,
                        x,
                        y,
@@ -125,7 +125,7 @@ sdmTMB_sim <- function(mesh,
       } else { # AR1 and not first time slice:
         epsilon_st[[i]] <- ar1_phi * epsilon_st[[i - 1]] +
           sqrt(1 - ar1_phi^2) *
-          rspde2(coords, sigma = sigma_E, range = range, mesh = mesh, seed = seed * i)
+            rspde2(coords, sigma = sigma_E, range = range, mesh = mesh, seed = seed * i)
       }
     }
   } else {
@@ -154,7 +154,7 @@ sdmTMB_sim <- function(mesh,
       cov_mat <- X
     }
 
-    V <- b[rep(seq_len(time_steps), each = length(x)),]
+    V <- b[rep(seq_len(time_steps), each = length(x)), ]
     B <- as.data.frame(V)
     names(B) <- gsub("V", "b", names(B))
     cov_values <- B * cov_mat
@@ -176,15 +176,15 @@ sdmTMB_sim <- function(mesh,
   d$mu <- do.call(family$linkinv, list(d$eta))
   N <- nrow(d)
   d$observed <- switch(family$family,
-    gaussian = stats::rnorm(N, mean = d$mu, sd = phi),
-    binomial = stats::rbinom(N, size = 1L, prob = d$mu),
-    tweedie  = fishMod::rTweedie(N, mu = d$mu, phi = phi, p = thetaf),
-    Beta     = stats::rbeta(N, d$mu * phi, 1 - d$mu * phi),
-    Gamma    = stats::rgamma(N, shape = 1 / (phi^2), scale = d$mu / (1 / (phi^2))),
-    nbinom2  = stats::rnbinom(N, size = phi, mu = d$mu),
-    poisson  = stats::rpois(N, lambda = d$mu),
-    student  = d$mu + phi * stats::rt(N, df = df, ncp = 1),
-    lognormal  = stats::rlnorm(N, meanlog = log(d$mu) - (phi^2) / 2, sdlog = phi),
+    gaussian  = stats::rnorm(N, mean = d$mu, sd = phi),
+    binomial  = stats::rbinom(N, size = 1L, prob = d$mu),
+    tweedie   = fishMod::rTweedie(N, mu = d$mu, phi = phi, p = thetaf),
+    Beta      = stats::rbeta(N, d$mu * phi, 1 - d$mu * phi),
+    Gamma     = stats::rgamma(N, shape = 1 / (phi^2), scale = d$mu / (1 / (phi^2))),
+    nbinom2   = stats::rnbinom(N, size = phi, mu = d$mu),
+    poisson   = stats::rpois(N, lambda = d$mu),
+    student   = d$mu + phi * stats::rt(N, df = df, ncp = 1),
+    lognormal = stats::rlnorm(N, meanlog = log(d$mu) - (phi^2) / 2, sdlog = phi),
     stop("Family not found.", call. = FALSE)
   )
   if (n_covariates > 0) {
@@ -212,31 +212,17 @@ sdmTMB_sim <- function(mesh,
   }
 }
 
-# from https://becarioprecario.bitbucket.io/spde-gitbook/ch-spacetime.html
+# modified from https://becarioprecario.bitbucket.io/spde-gitbook/ch-spacetime.html
 rspde2 <- function(coords, mesh, sigma = 1, range, variance = sigma^2, alpha = 2,
                    kappa = sqrt(8 * (alpha - 1)) / range, n = 1,
                    seed = 0L, return.attributes = FALSE) {
   theta <- c(-0.5 * log(4 * pi * variance * kappa^2), log(kappa))
   if (missing(mesh)) {
     stop("`mesh` must be specified.", call. = FALSE)
-    # mesh.pars <- c(0.5, 1, 0.1, 0.5, 1) * sqrt(alpha - ncol(coords) / 2) / kappa
-    # attributes <- list(
-    #   mesh = inla.mesh.2d(
-    #     loc = NULL,
-    #     coords[chull(coords), ],
-    #     max.edge = mesh.pars[1:2],
-    #     cutoff = mesh.pars[3], offset = mesh.pars[4:5]
-    #   )
-    # )
   }
   else {
     attributes <- list(mesh = mesh)
   }
-
-  # browser()
-  # proj_mesh <- INLA::inla.spde.make.A(attributes$mesh, loc = coords)
-
-
   attributes$spde <- INLA::inla.spde2.matern(attributes$mesh, alpha = alpha)
   attributes$Q <- INLA::inla.spde2.precision(attributes$spde, theta = theta)
   attributes$A <- INLA::inla.mesh.project(mesh = attributes$mesh, loc = coords)$A
@@ -252,27 +238,9 @@ rspde2 <- function(coords, mesh, sigma = 1, range, variance = sigma^2, alpha = 2
     )
   } else {
     stop("`n` must be 1.", call. = FALSE)
-    # result <- INLA::inla.qsample(n, attributes$Q,
-    #   seed = if (missing(seed)) 0L else seed,
-    #   constr = attributes$spde$f$extraconstr
-    # )
-    # if (nrow(result) < nrow(attributes$A)) {
-    #   result <- rbind(result, matrix(NA, nrow(attributes$A) - nrow(result), ncol(result)))
-    #   dimnames(result)[[1]] <- paste("x", seq_len(nrow(result)), sep = "")
-    #   for (j in seq_len(ncol(result))) {
-    #     result[, j] <- drop(attributes$A %*% result[seq_len(ncol(attributes$A)), j])
-    #   }
-    # } else {
-    #   for (j in seq_len(ncol(result))) {
-    #     result[seq_len(nrow(attributes$A)), j] <- drop(attributes$A %*% result[, j])
-    #   }
-    #   result <- result[seq_len(nrow(attributes$A)), ]
-    # }
   }
-
   result <- drop(result)
   result <- as.matrix(result)
   colnames(result) <- NULL
-  # result <- result - mean(result)
   result
 }
