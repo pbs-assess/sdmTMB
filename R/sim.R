@@ -120,12 +120,12 @@ sdmTMB_sim <- function(mesh,
   if (time_steps > 1L && sigma_E > 0) {
     for (i in seq_len(time_steps)) {
       if (i == 1 || ar1_phi == 0) {
-        epsilon_st[[i]] <- sqrt(1 - ar1_phi^2) * # stationary AR1
+        epsilon_st[[i]] <-
           rspde2(coords, sigma = sigma_E, range = range, mesh = mesh, seed = seed * i)
       } else { # AR1 and not first time slice:
         epsilon_st[[i]] <- ar1_phi * epsilon_st[[i - 1]] +
-          sqrt(1 - ar1_phi^2) *
-            rspde2(coords, sigma = sigma_E, range = range, mesh = mesh, seed = seed * i)
+          sqrt(1 - ar1_phi^2) * # stationary AR1
+          rspde2(coords, sigma = sigma_E, range = range, mesh = mesh, seed = seed * i)
       }
     }
   } else {
