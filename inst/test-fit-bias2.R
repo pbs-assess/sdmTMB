@@ -8,72 +8,103 @@ options(future.rng.onMisuse = "ignore")
 
 SEED <- 1
 set.seed(SEED)
-x <- stats::runif(400, -1, 1)
-y <- stats::runif(400, -1, 1)
-betas <- 0.5
+x <- runif(500, -1, 1)
+y <- runif(500, -1, 1)
+N <- length(x)
+betas <- c(0.5, 0.8)
 sigma_O <- 0.3
 phi <- 0.2
-.range <- 0.5
+.range <- 0.8
+X <- model.matrix(~ x1, data.frame(x1 = rnorm(N)))
 
-true <- tibble(
-  variable = c("sigma_O", "sigma_E", "b.est", "range", "phi"),
-  true_value = c(sigma_O, sigma_E, betas, .range, phi)
+true <- tribble(
+  ~variable, ~true_value,
+  "sigma_O", sigma_O,
+  "b0.est", betas[1],
+  "b1.est", betas[2],
+  "range", .range,
+  "phi", phi,
 )
 
-x <- stats::runif(200, -1, 1)
-y <- stats::runif(200, -1, 1)
 loc <- data.frame(x = x, y = y)
-spde <- make_mesh(loc, xy_cols = c("x", "y"), n_knots = 130)
+spde <- make_mesh(loc, xy_cols = c("x", "y"), n_knots = 100)
+plot(spde)
 
-out <- furrr::future_map(seq(1, 8 * 20), function(i) {
+out <- furrr::future_map(seq_len(100), function(i) {
   s <- sdmTMB_sim(
     x = x, y = y, mesh = spde,
-    betas = betas, time = rep(1L, length(x)),
+    betas = betas, time_steps = 1,
     phi = phi, range = .range, sigma_O = sigma_O, sigma_E = 0,
-    seed = SEED * i * 4
+    seed = SEED * i, X = X,
+    family = gaussian(),
+    # family = binomial(),
+    # family = tweedie(),
+    # family = nbinom2(),
+    # family = lognormal(),
+    # family = student(),
+    # family = Beta(),
+    # family = poisson(),
+    # family = Gamma(link = "log"),
+    thetaf = 1.5
   )
-  m <- tryCatch(
-    {
-      sdmTMB(
-        data = s, formula = observed ~ 0 + cov1,
-        time = "time", spatial_only = TRUE, spde = spde, reml = FALSE
-      )
-    },
-    error = function(e) NA
+  m <- sdmTMB(
+    observed ~ x1, data = s, spde = spde,
+    family = gaussian()
+    # family = binomial()
+    # family = tweedie()
+    # family = nbinom2()
+    # family = lognormal()
+    # family = student()
+    # family = Beta() # FIXME!
+    # family = poisson()
+    # family =  Gamma(link = "log")
   )
-  if (identical(m, NA)) {
-    return(NA)
-  }
+
+  # e <- as.list(m$sd_report, "Estimate")
+  # thetaf <- plogis(e$thetaf) + 1
   est <- tidy(m, conf.int = TRUE)
   p <- as.list(m$model$par)
   r <- m$tmb_obj$report()
   data.frame(
     sigma_O = r$sigma_O,
-    b.est = est[est$term == "cov1", "estimate"],
-    b.lwr = est[est$term == "cov1", "conf.low"],
-    b.upr = est[est$term == "cov1", "conf.high"],
+    b0.est = est[est$term == "(Intercept)", "estimate"],
+    b0.lwr = est[est$term == "(Intercept)", "conf.low"],
+    b0.upr = est[est$term == "(Intercept)", "conf.high"],
+    b1.est = est[est$term == "x1", "estimate"],
+    b1.lwr = est[est$term == "x1", "conf.low"],
+    b1.upr = est[est$term == "x1", "conf.high"],
     range = r$range, phi = exp(p$ln_phi)
   )
 })
 
-d <- bind_rows(out)
-reshape2::melt(d) %>%
-  left_join(true) %>%
+est <- bind_rows(out)
+reshape2::melt(est) %>%
+  right_join(true) %>%
   ggplot(aes(value)) +
   facet_wrap(vars(variable), scales = "free") +
-  geom_histogram(bins = 20) +
+  # geom_density() +
+  geom_histogram(bins = 15) +
+  geom_histogram(aes(y = after_stat(density)), bins = 15) +
   geom_vline(aes(xintercept = true_value), colour = "red")
 
-coverage <- d %>%
-  mutate(covered = b.lwr < betas, b.upr > betas) %>%
+coverage <- est %>%
+  mutate(covered = b1.lwr < betas[2], b1.upr > betas[2]) %>%
   pull(covered) %>%
   mean()
+coverage
 
-expect_equal(median(d$b.est), betas, tol = 0.001)
-expect_equal(median(d$phi), phi, tol = 0.01)
-expect_equal(median(d$sigma_O), sigma_O, tol = 0.01)
-expect_equal(median(d$range), .range, tol = 0.01)
+coverage <- est %>%
+  mutate(covered = b0.lwr < betas[1], b0.upr > betas[1]) %>%
+  pull(covered) %>%
+  mean()
+coverage
+
+expect_equal(median(est$b1.est), betas[2], tol = 0.01)
+expect_equal(median(est$b0.est), betas[1], tol = 0.01)
+expect_equal(median(est$phi), phi, tol = 0.01)
+expect_equal(median(est$sigma_O), sigma_O, tol = 0.01)
+expect_equal(median(est$range), .range, tol = 0.01)
 expect_gt(coverage, 0.92)
-expect_lt(coverage, 0.98)
+expect_lte(coverage, 1)
 
 plan(sequential)
