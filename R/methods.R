@@ -19,7 +19,7 @@ print.sdmTMB <- function(x, ...) {
     # r <- x$tmb_obj$report()
   }
 
-  spatial_only <- !is.null(r$r$sigma_E) && !is.null(r$r$sigma_O_trend)
+  spatial_only <- !is.null(r$sigma_E) && !is.null(r$sigma_O_trend)
 
   fit_by <- "ML"
   if ("reml" %in% names(x)) { # for backwards compatibility
@@ -67,7 +67,7 @@ print.sdmTMB <- function(x, ...) {
   }
 
   pre <- "Spatiotemporal SD (sigma_E): "
-  if (x$tmb_data$spatial_only == 0) {
+  if (x$tmb_data$spatial_only == 0L) {
     sigma_E <- paste0(pre, mround(r$sigma_E, 2L), "\n")
   } else {
     sigma_E <- paste0(pre, "not estimated\n")

@@ -119,7 +119,7 @@ NULL
 #'   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
 #' print(m)
 #' tidy(m, conf.int = TRUE)
-#' tidy(m, effects = "ran_par")
+#' tidy(m, effects = "ran_par", conf.int = TRUE)
 #'
 #' # Run extra optimization steps to help convergence:
 #' m1 <- run_extra_optimization(m, nlminb_loops = 0, newton_steps = 1)
