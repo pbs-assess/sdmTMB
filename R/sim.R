@@ -174,7 +174,7 @@ sdmTMB_sim <- function(mesh,
   )
   d$eta <- d$eta + d$omega_s + d$epsilon_st
 
-  d$mu <- do.call(family$link, list(d$eta))
+  d$mu <- do.call(family$linkinv, list(d$eta))
   N <- nrow(d)
   d$observed <- switch(family$family,
     gaussian = stats::rnorm(N, mean = d$mu, sd = phi),
