@@ -175,18 +175,20 @@ sdmTMB_sim <- function(mesh,
 
   d$mu <- do.call(family$linkinv, list(d$eta))
   N <- nrow(d)
+
   d$observed <- switch(family$family,
     gaussian  = stats::rnorm(N, mean = d$mu, sd = phi),
     binomial  = stats::rbinom(N, size = 1L, prob = d$mu),
     tweedie   = fishMod::rTweedie(N, mu = d$mu, phi = phi, p = thetaf),
-    Beta      = stats::rbeta(N, d$mu * phi, 1 - d$mu * phi),
+    Beta      = stats::rbeta(N, d$mu * phi, (1 - d$mu) * phi),
     Gamma     = stats::rgamma(N, shape = 1 / (phi^2), scale = d$mu / (1 / (phi^2))),
     nbinom2   = stats::rnbinom(N, size = phi, mu = d$mu),
     poisson   = stats::rpois(N, lambda = d$mu),
-    student   = d$mu + phi * stats::rt(N, df = df, ncp = 1),
+    student   = rstudent(N, d$mu, sigma = phi, nu = df),
     lognormal = stats::rlnorm(N, meanlog = log(d$mu) - (phi^2) / 2, sdlog = phi),
     stop("Family not found.", call. = FALSE)
   )
+
   if (n_covariates > 0) {
     d <- cbind(d, B)
     d <- cbind(d, cov_mat)
@@ -243,4 +245,13 @@ rspde2 <- function(coords, mesh, sigma = 1, range, variance = sigma^2, alpha = 2
   result <- as.matrix(result)
   colnames(result) <- NULL
   result
+}
+
+rstudent <- function(n, mu = 0, sigma = 1, nu = 3) {
+  mu <- rep(mu, len = n)
+  sigma <- rep(sigma, len = n)
+  nu <- rep(nu, len = n)
+  y <- stats::rnorm(n)
+  z <- stats::rchisq(n, nu)
+  mu + sigma * y * sqrt(nu / z)
 }
