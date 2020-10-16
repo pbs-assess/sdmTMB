@@ -33,7 +33,7 @@ loc <- data.frame(x = x, y = y)
 spde <- make_mesh(loc, xy_cols = c("x", "y"), cutoff = 0.1)
 plot(spde)
 
-out <- furrr::future_map(seq_len(8*3), function(i) {
+out <- furrr::future_map(seq_len(8*10), function(i) {
   s <- sdmTMB_sim(
     x = x, y = y, mesh = spde, X = X, sigma_V = c(0, 0),
     betas = betas, time_steps = time_steps, ar1_phi = rho,
@@ -47,7 +47,7 @@ out <- furrr::future_map(seq_len(8*3), function(i) {
   mesh <- make_mesh(s, xy_cols = c("x", "y"), cutoff = 0.1)
   m <- sdmTMB(
     data = s, formula = observed ~ x1,
-    time = "time", spde = spde, reml = FALSE,
+    time = "time", spde = mesh, reml = TRUE,
     ar1_fields = TRUE, include_spatial = FALSE
   )
   est <- tidy(m, conf.int = TRUE)
@@ -83,16 +83,26 @@ reshape2::melt(est) %>%
   geom_vline(aes(xintercept = true_value), colour = "red")
 
 coverage <- est %>%
-  mutate(covered = b0.lwr < betas[1], b0.upr > betas[1]) %>%
+  mutate(covered = sigma_E.lwr < sigma_E & sigma_E.upr > sigma_E) %>%
+  pull(covered) %>%
+  mean()
+coverage
+
+coverage <- est %>%
+  mutate(covered = b0.lwr < betas[1] & b0.upr > betas[1]) %>%
   pull(covered) %>%
   mean()
 coverage
 
 worm_plot <- function(dat, lwr, est, upr, true, title) {
-  dat %>% mutate(sim = seq_len(n())) %>%
+  median_est <- pull(dat, {{est}}) %>% median()
+  dat %>%
+    arrange({{est}}) %>%
+    mutate(sim = seq_len(n())) %>%
     mutate(covered = {{lwr}} < true & {{upr}} > true) %>%
     ggplot(aes({{est}}, sim, xmin = {{lwr}}, xmax = {{upr}}, shape = covered)) +
     geom_vline(xintercept = true, col = "red", lty = 2) +
+    geom_vline(xintercept = median_est, col = "grey50", lty = 1) +
     geom_point(size = 1.5) +
     geom_linerange(size = 0.3) +
     scale_shape_manual(values = c("TRUE" = 19, "FALSE" = 21)) +
@@ -112,7 +122,7 @@ g5 <- worm_plot(est, range.lwr, range.est, range.upr, .range, expression(range))
 cowplot::plot_grid(g1, g2, g3, g4, g5, ncol = 3)
 
 coverage <- est %>%
-  mutate(covered = b1.lwr < betas[2], b1.upr > betas[2]) %>%
+  mutate(covered = b1.lwr < betas[2] & b1.upr > betas[2]) %>%
   pull(covered) %>%
   mean()
 coverage
