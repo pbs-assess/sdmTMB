@@ -46,9 +46,9 @@ families <- list(
 
 est <- purrr::map_dfr(families, function(.fam) {
   cat(.fam$family, "\n")
- test <-  furrr::future_map_dfr(seq_len(80), function(i) {
+  furrr::future_map_dfr(seq_len(80), function(i) {
    if (.fam$family == "Beta") {
-     phi <- phi * 5
+     phi <- phi * 5 # small phi's can cause ~0.0 and ~1.0
    }
     s <- sdmTMB_sim(
       x = x, y = y, mesh = spde, X = X, sigma_V = c(0, 0),
@@ -60,7 +60,6 @@ est <- purrr::map_dfr(families, function(.fam) {
     #   geom_point() +
     #   scale_colour_gradient2() +
     #   facet_wrap(vars(time))
-    # m(esh <- make_mesh(s, xy_cols = c("x", "y"), cutoff = 0.1)
     if (.fam$family == "Beta") { # small phi's can cause ~0.0 and ~1.0
       s$observed[s$observed > 0.9999] <- 0.9999
       s$observed[s$observed < 0.0001] <- 0.0001
@@ -105,21 +104,23 @@ est <- purrr::map_dfr(families, function(.fam) {
   })
 })
 
+saveRDS(est, "inst/sim-test-family.rds")
+est <- readRDS("inst/sim-test-family.rds")
+est <- est %>% mutate(
+  phi.lwr = if_else(family == "Beta", phi.lwr / 5, phi.lwr),
+  phi.est = if_else(family == "Beta", phi.est / 5, phi.est),
+  phi.upr = if_else(family == "Beta", phi.upr / 5, phi.upr)
+)
+
 est %>% filter(max_gradient > 0.002)
-est %>% filter(sigma_O.est > 400)
+est %>% filter(sigma_O.est > 2)
 
 est <- est %>% filter(max_gradient < 0.002) %>%
-  filter(sigma_O.est < 400)
-
-est <- est %>% mutate(
-  phi.lwr = ifelse(family == "Beta", phi.lwr / 5, phi.lwr),
-  phi.est = ifelse(family == "Beta", phi.est / 5, phi.est),
-  phi.upr = ifelse(family == "Beta", phi.upr / 5, phi.upr)
-)
+  filter(sigma_O.est < 2)
 
 est %>%
   reshape2::melt() %>%
-  right_join(true) %>%
+  right_join(true, by = "variable") %>%
   filter(!(family == "binomial" & variable == "phi.est")) %>%
   filter(!(family == "poisson" & variable == "phi.est")) %>%
   ggplot(aes(value)) +
