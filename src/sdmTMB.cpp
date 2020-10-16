@@ -394,7 +394,7 @@ Type objective_function<Type>::operator()()
     sigma_E(0) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E) *
       exp(Type(2.0) * ln_kappa));
     Type log_sigma0 = log(sigma_E(0));
-    Type pred;
+
     ln_tau_E_vec(0) = ln_tau_E;
     //std::cout << "par: "<< epsilon_slope << std::endl;
     for(int i = 1; i < n_t; i++) {

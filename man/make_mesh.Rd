@@ -44,7 +44,7 @@ convenience options.}
 
 \item{x}{Output from \code{\link[=make_mesh]{make_mesh()}}.}
 
-\item{...}{Passed to \code{\link[graphics:plot.default]{graphics::plot()}}.}
+\item{...}{Passed to \code{\link[graphics:plot]{graphics::plot()}}.}
 }
 \value{
 \code{make_mesh()}: A list of class sdmTMBmesh
