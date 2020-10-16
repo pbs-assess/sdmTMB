@@ -66,6 +66,9 @@ NULL
 #'   profile for depth, and depth and depth^2 are part of your formula, you need
 #'   to make sure these are listed first and that an intercept isn't included.
 #'   For example, `formula = cpue ~ 0 + depth + depth2 + as.factor(year)`.
+#' @param epsilon_model Whether to include an optional non-stationary model for
+#' epsilon (sd of spatiotemporal process). Defaults to NULL, but can also be
+#' 'loglinear' or 'ar1'
 #'
 #' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
@@ -177,6 +180,11 @@ NULL
 #'     breakpt(depth_scaled) + depth_scaled2, data = pcod_gaus,
 #'   time = "year", spde = pcod_spde_gaus)
 #' print(m_pos)
+#'
+#' #' Non-stationary model on spatiotemporal variance:
+#' m_pos <- sdmTMB(log(density) ~ depth_scaled + depth_scaled2 + as.factor(year),
+#'    data = pcod_gaus, time = "year", spde = pcod_spde_gaus, epsilon_model="loglinear")
+#' print(m_pos)
 #' }
 
 sdmTMB <- function(formula, data, spde, time = NULL,
@@ -190,7 +198,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   newton_steps = 0,
   mgcv = TRUE,
   previous_fit = NULL,
-  quadratic_roots = FALSE) {
+  quadratic_roots = FALSE,
+  epsilon_model = NULL) {
 
   assert_that(
     is.logical(reml), is.logical(anisotropy), is.logical(silent),
@@ -289,6 +298,15 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     anisotropy <- FALSE
   }
 
+  est_epsilon_model <- 0
+  if(!is.null(epsilon_model)) {
+    est_epsilon_model <- match(epsilon_model, c("loglinear","ar1"))
+    if(is.na(est_epsilon_model)) {
+      warning("epsilon_model not recognized, assuming constant epsilon instead")
+      est_epsilon_model <- 0
+    }
+  }
+
   tmb_data <- list(
     y_i        = y_i,
     n_t        = length(unique(data[[time]])),
@@ -332,7 +350,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     calc_quadratic_range = as.integer(quadratic_roots),
     X_threshold = thresh$X_threshold,
     proj_X_threshold = 0, # dummy
-    threshold_func = thresh$threshold_func
+    threshold_func = thresh$threshold_func,
+    est_epsilon_model = as.integer(est_epsilon_model)
   )
   tmb_data$flag <- 1L # Include data
 
@@ -354,7 +373,10 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     omega_s    = rep(0, n_s),
     omega_s_trend = rep(0, n_s),
     epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t),
-    b_threshold = b_thresh
+    b_threshold = b_thresh,
+    b_epsilon = 0,
+    ln_sigma_epsilon = 0,
+    epsilon_rw = rep(0, tmb_data$n_t-1)
   )
   if (contains_offset) tmb_params$b_j[offset_pos] <- 1
 
@@ -394,6 +416,21 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       b_rw_t     = factor(rep(NA, length(tmb_params$b_rw_t))),
       omega_s    = factor(rep(NA, length(tmb_params$omega_s))),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
+
+    # optional models on st sd parameter
+    if(est_epsilon_model == 0) {
+       tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA),
+         ln_sigma_epsilon  = as.factor(NA),
+         epsilon_rw = factor(rep(NA, tmb_data$n_t-1))))
+    }
+    if(est_epsilon_model == 1) {
+      tmb_map <- c(tmb_map, list(
+      ln_sigma_epsilon  = as.factor(NA),
+      epsilon_rw = factor(rep(NA, tmb_data$n_t-1))))
+    }
+    if(est_epsilon_model == 2) {
+      tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
+    }
 
     tmb_obj1 <- TMB::MakeADFun(
       data = tmb_data, parameters = tmb_params,
