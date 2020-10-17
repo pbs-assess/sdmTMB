@@ -27,8 +27,7 @@ sdmTMB(
   newton_steps = 0,
   mgcv = TRUE,
   previous_fit = NULL,
-  quadratic_roots = FALSE,
-  epsilon_model = NULL
+  quadratic_roots = FALSE
 )
 }
 \arguments{
@@ -112,10 +111,6 @@ quadratic parameters. This means that if you want to generate a quadratic
 profile for depth, and depth and depth^2 are part of your formula, you need
 to make sure these are listed first and that an intercept isn't included.
 For example, \code{formula = cpue ~ 0 + depth + depth2 + as.factor(year)}.}
-
-\item{epsilon_model}{Whether to include an optional non-stationary model for
-epsilon (sd of spatiotemporal process). Defaults to NULL, but can also be
-'loglinear' or 'ar1'}
 }
 \description{
 Fit a spatial or spatiotemporal GLMM with TMB. Particularly useful for
@@ -221,11 +216,6 @@ summary(m$sd_report)[1:19,]
 m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) +
     breakpt(depth_scaled) + depth_scaled2, data = pcod_gaus,
   time = "year", spde = pcod_spde_gaus)
-print(m_pos)
-
-#' Non-stationary model on spatiotemporal variance:
-m_pos <- sdmTMB(log(density) ~ depth_scaled + depth_scaled2 + as.factor(year),
-   data = pcod_gaus, time = "year", spde = pcod_spde_gaus, epsilon_model="loglinear")
 print(m_pos)
 }
 }

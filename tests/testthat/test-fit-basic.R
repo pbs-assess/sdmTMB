@@ -28,7 +28,7 @@ test_that("sdmTMB model fit with a covariate beta", {
   expect_equal((p$b_j - initial_betas)^2, 0, tol = 0.05)
   expect_equal((exp(p$ln_phi) - phi)^2, 0, tol = 0.05)
   expect_equal((r$sigma_O - sigma_O)^2, 0, tol = 0.05)
-  expect_equal((r$sigma_E[1] - sigma_E)^2, 0, tol = 0.05)
+  expect_equal((r$sigma_E - sigma_E)^2, 0, tol = 0.05)
   expect_equal(exp(p$ln_kappa), kappa, tol = 1.1)
   p <- predict(m)
   r <- residuals(m)
