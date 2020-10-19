@@ -2,7 +2,7 @@ context("Families")
 
 test_that("Families return a name to list with the correct names", {
   .names <- c("family", "link", "linkfun", "linkinv")
-  expect_named(student(link = "identity"), .names)
+  expect_named(student(link = "identity"), c(.names, "df"))
   expect_named(lognormal(link = "log"), .names)
   expect_named(tweedie(link = "log"), .names)
   expect_named(nbinom2(link = "log"), .names)
@@ -45,7 +45,7 @@ test_that("Student and family fits", {
   )
   spde <- make_mesh(s, c("x", "y"), n_knots = 50, type = "kmeans")
   m <- sdmTMB(data = s, formula = observed ~ 1, spde = spde,
-    family = student(link = "identity"))
+    family = student(link = "identity", df = 7))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
   expect_length(residuals(m), nrow(s))
 })
