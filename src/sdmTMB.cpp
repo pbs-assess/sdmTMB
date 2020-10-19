@@ -252,6 +252,7 @@ Type objective_function<Type>::operator()()
   // Distribution
   DATA_INTEGER(family);
   DATA_INTEGER(link);
+  DATA_SCALAR(df);  // Student-t DF
 
   // SPDE objects from R-INLA
   DATA_STRUCT(spde_aniso, spde_aniso_t);
@@ -508,7 +509,7 @@ Type objective_function<Type>::operator()()
           jnll -= keep(i) * dlnorm(y_i(i), log(mu_i(i)) - pow(exp(ln_phi), Type(2)) / Type(2), exp(ln_phi), true) * weights_i(i);
           break;
         case student_family:
-          jnll -= keep(i) * dstudent(y_i(i), mu_i(i), exp(ln_phi), Type(3) /*df*/, true) * weights_i(i);
+          jnll -= keep(i) * dstudent(y_i(i), mu_i(i), exp(ln_phi), df, true) * weights_i(i);
           break;
         case Beta_family: // Ferrari and Cribari-Neto 2004; betareg package
           s1 = mu_i(i) * exp(ln_phi);

@@ -1,5 +1,9 @@
 # sdmTMB
 
+# sdmTMB 0.0.7.9001
+
+* Allow specifying degrees of freedom in the Student-t family #29
+
 # sdmTMB 0.0.7.9000
 
 * Added a `tidy()` method (from broom and broom.mixed) to return a data frame

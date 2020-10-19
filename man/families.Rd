@@ -15,12 +15,14 @@ lognormal(link = "log")
 
 nbinom2(link = "log")
 
-student(link = "identity")
+student(link = "identity", df = 3)
 
 tweedie(link = "log")
 }
 \arguments{
 \item{link}{The link.}
+
+\item{df}{Student-t degrees of freedom fixed value parameter.}
 }
 \description{
 Additional families compatible with \code{\link[=sdmTMB]{sdmTMB()}}.
@@ -29,8 +31,7 @@ Additional families compatible with \code{\link[=sdmTMB]{sdmTMB()}}.
 The negative binomial parameterization is the NB2 where the variance grows
 quadratically with the mean (Hilbe 2011).
 
-The degrees of freedom parameter for the Student-t distribution is currently
-fixed at 3.
+The degrees of freedom parameter is currently not estimated and is fixed at \code{df}.
 }
 \examples{
 Beta(link = "logit")

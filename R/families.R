@@ -62,14 +62,14 @@ nbinom2 <- function(link = "log") {
     linkinv = stats$linkinv)
 }
 
+#' @param df Student-t degrees of freedom fixed value parameter.
 #' @export
 #' @details
-#' The degrees of freedom parameter for the Student-t distribution is currently
-#' fixed at 3.
+#' The degrees of freedom parameter is currently not estimated and is fixed at `df`.
 #' @rdname families
 #' @examples
 #' student(link = "identity")
-student <- function(link = "identity") {
+student <- function(link = "identity", df = 3) {
   linktemp <- substitute(link)
   if (!is.character(linktemp))
     linktemp <- deparse(linktemp)
@@ -80,7 +80,7 @@ student <- function(link = "identity") {
     stats <- stats::make.link(link)
 
   list(family = "student", link = linktemp, linkfun = stats$linkfun,
-    linkinv = stats$linkinv)
+    linkinv = stats$linkinv, df = df)
 }
 
 #' @export

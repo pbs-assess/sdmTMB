@@ -288,6 +288,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     warning("Using a barrier mesh; therefore, anistropy will be disabled.", call. = FALSE)
     anisotropy <- FALSE
   }
+  df <- if (family$family == "student" && "df" %in% names(family)) family$df else 3
 
   tmb_data <- list(
     y_i        = y_i,
@@ -327,6 +328,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     anisotropy = as.integer(anisotropy),
     family     = .valid_family[family$family],
     link       = .valid_link[family$link],
+    df         = df,
     spatial_only = as.integer(spatial_only),
     spatial_trend = as.integer(spatial_trend),
     calc_quadratic_range = as.integer(quadratic_roots),
@@ -589,6 +591,7 @@ update_model <- function(object, silent = FALSE) {
     object$tmb_data$proj_X_threshold <- 0 # dummy
     object$tmb_params$b_threshold <- rep(0, 2)
   }
+  if (!"df" %in% names(object$tmb_data)) object$tmb_data$df <- 3
   object$tmb_obj <- TMB::MakeADFun(
     data = object$tmb_data, parameters = object$tmb_params,
     map = object$tmb_map, random = object$tmb_random, DLL = "sdmTMB", silent = silent)
