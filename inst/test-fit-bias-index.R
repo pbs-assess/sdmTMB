@@ -54,6 +54,7 @@ sim_test_index <- function(i) {
     formula = observed ~ 0 + as.factor(year),
     time = "time",
     spde = mesh,
+    reml = TRUE,
     family = tweedie(),
   )}, error = function(e) return(NULL))
 
@@ -75,7 +76,8 @@ sim_test_index <- function(i) {
     ggplot(index_bc, aes(time, est, ymin = lwr, ymax = upr)) +
       geom_ribbon(fill = "grey70") +
       geom_line() +
-      geom_line(aes(year, true), true_index, colour = "red", inherit.aes = FALSE)
+      geom_line(aes(year, true), true_index, colour = "red",
+        inherit.aes = FALSE)
   }
 
   index_bc <- bind_cols(select(true_index, true), index_bc)
@@ -92,12 +94,17 @@ ggplot(est, aes(time, est, ymin = lwr, ymax = upr)) +
   geom_ribbon(fill = "grey70") +
   geom_line() +
   geom_line(aes(y = true), colour = "red") +
-  facet_wrap(vars(iter), scales = "free_y") +
-  scale_y_log10()
+  facet_wrap(vars(iter), scales = "free_y") #+
+  # scale_y_log10()
 
 coverage <- est %>%
   mutate(covered = lwr < true & upr > true) %>%
   summarise(coverage = mean(covered))
 coverage
+
+error <- est %>%
+  mutate(error = (true - est)/true) %>%
+  summarise(error = median(error))
+error
 
 plan(sequential)
