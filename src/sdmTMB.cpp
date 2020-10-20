@@ -388,18 +388,24 @@ Type objective_function<Type>::operator()()
     }
     REPORT(b_epsilon);
     ADREPORT(b_epsilon);
+    REPORT(epsilon_slope);
+    ADREPORT(epsilon_slope);
   }
   if(est_epsilon_model==2) { // ar1 model
 
     sigma_E(0) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E) *
       exp(Type(2.0) * ln_kappa));
     Type log_sigma0 = log(sigma_E(0));
-
+    Type sigma_epsilon = exp(ln_sigma_epsilon)/(1+exp(ln_sigma_epsilon));
     ln_tau_E_vec(0) = ln_tau_E;
-    //std::cout << "par: "<< epsilon_slope << std::endl;
+    //std::cout << "sigma_E(0): "<< sigma_E(0) << std::endl;
+    //std::cout << "log_sigma0: "<< log_sigma0 << std::endl;
+    //std::cout << "sigma_epsilon: "<< sigma_epsilon << std::endl;
+    //std::cout << "ln_tau_E: "<< ln_tau_E << std::endl;
     for(int i = 1; i < n_t; i++) {
-      // random walk in log space. this needs to be constrained -- one option here is forcing sd < 1
-      jnll -= dnorm(epsilon_rw(i-1), Type(0.0), exp(ln_sigma_epsilon)/(1+exp(ln_sigma_epsilon)), true);
+      // random walk in log space. this might need to be constrained -- one option here is forcing sd < 1
+      jnll -= dnorm(epsilon_rw(i-1), Type(0.0), sigma_epsilon, true);
+      //std::cout << "epsilon_rw(i-1): "<< epsilon_rw(i-1) << std::endl;
       sigma_E(i) = exp(log(sigma_E(i-1)) + epsilon_rw(i-1));
       ln_tau_E_vec(i) = (log(Type(1.0) / (Type(4.0) * M_PI * sigma_E(i)*sigma_E(i))) - Type(2.0) * ln_kappa)/Type(2.0);
     }
@@ -508,13 +514,13 @@ Type objective_function<Type>::operator()()
         jnll += SCALE(GMRF(Q, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
     } else {
       // if (!separable_ar1) {
-      //   nll_epsilon += SCALE(GMRF(Q, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
-      //   for (int t = 1; t < n_t; t++) {
-      //     nll_epsilon += SCALE(GMRF(Q, s), 1./exp(ln_tau_E))(epsilon_st.col(t) -
-      //       rho * epsilon_st.col(t - 1));
-      //   }
+         jnll += SCALE(GMRF(Q, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
+         for (int t = 1; t < n_t; t++) {
+           jnll += SCALE(GMRF(Q, s), 1./exp(ln_tau_E_vec(t)))(epsilon_st.col(t) -
+             rho * epsilon_st.col(t - 1));
+         }
       // } else {
-      jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q, s)), 1./exp(ln_tau_E))(epsilon_st);
+      //jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q, s)), 1./exp(ln_tau_E))(epsilon_st);
       // }
     }
   }
