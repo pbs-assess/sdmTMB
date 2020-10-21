@@ -384,29 +384,31 @@ Type objective_function<Type>::operator()()
     //std::cout << "par: "<< epsilon_slope << std::endl;
     for(int i = 1; i < n_t; i++) {
       sigma_E(i) = exp(log_sigma0 + b_epsilon * Type(i)); // log-linear model
-      ln_tau_E_vec(i) = (log(Type(1.0) / (Type(4.0) * M_PI * sigma_E(i)*sigma_E(i))) - Type(2.0) * ln_kappa)/Type(2.0);
+      //ln_tau_E_vec(i) = (log(Type(1.0) / (Type(4.0) * M_PI * sigma_E(i)*sigma_E(i))) - Type(2.0) * ln_kappa)/Type(2.0);
+      ln_tau_E_vec(i) = -log(sigma_E(i)) - log(Type(4.0) * M_PI) / Type(2.0) - ln_kappa;
     }
   }
-  if(est_epsilon_model==2) { // ar1 model
-    vector<Type> log_sigma_E(n_t);
-    //Type rho_epsilon = Type(2.0) * exp(logit_rho_epsilon) / (1+exp(logit_rho_epsilon)) - Type(1.0);
-    //if(ln_sigma_epsilon < -20) ln_sigma_epsilon = -20;
-    //if(ln_sigma_epsilon > 20) ln_sigma_epsilon = 20;
-    Type sigma_epsilon = Type(0.1) * exp(ln_sigma_epsilon)/(1+exp(ln_sigma_epsilon));
-
-    sigma_E(0) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E) *
-      exp(Type(2.0) * ln_kappa));
-    log_sigma_E(0) = log(sigma_E(0));
-    ln_tau_E_vec(0) = ln_tau_E;
-
-    for(int i = 0; i < (n_t-1); i++) {
-      jnll -= dnorm(epsilon_rw(i), Type(0.0), sigma_epsilon, true);
-    }
-    for(int i = 0; i < (n_t-1); i++) {
-      log_sigma_E(i+1) = log_sigma_E(i) + epsilon_rw(i);// random walk
-      ln_tau_E_vec(i+1) = (log(Type(1.0) / (Type(4.0) * M_PI * sigma_E(i+1)*sigma_E(i+1))) - Type(2.0) * ln_kappa)/Type(2.0);
-    }
-  }
+  // if(est_epsilon_model==2) { // ar1 model
+  //   vector<Type> log_sigma_E(n_t);
+  //   //Type rho_epsilon = Type(2.0) * exp(logit_rho_epsilon) / (1+exp(logit_rho_epsilon)) - Type(1.0);
+  //   //if(ln_sigma_epsilon < -20) ln_sigma_epsilon = -20;
+  //   //if(ln_sigma_epsilon > 20) ln_sigma_epsilon = 20;
+  //   Type sigma_epsilon = Type(0.1) * exp(ln_sigma_epsilon)/(1+exp(ln_sigma_epsilon));
+  //
+  //   sigma_E(0) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E) *
+  //     exp(Type(2.0) * ln_kappa));
+  //   log_sigma_E(0) = log(sigma_E(0));
+  //   ln_tau_E_vec(0) = ln_tau_E;
+  //
+  //   for(int i = 0; i < (n_t-1); i++) {
+  //     jnll -= dnorm(epsilon_rw(i), Type(0.0), sigma_epsilon, true);
+  //   }
+  //   for(int i = 0; i < (n_t-1); i++) {
+  //     log_sigma_E(i+1) = log_sigma_E(i) + epsilon_rw(i);// random walk
+  //     //ln_tau_E_vec(i+1) = (log(Type(1.0) / (Type(4.0) * M_PI * sigma_E(i+1)*sigma_E(i+1))) - Type(2.0) * ln_kappa)/Type(2.0);
+  //     ln_tau_E_vec(i+1) = -log(sigma_E(i+1)) - log(Type(4.0) * M_PI) / Type(2.0) - ln_kappa;
+  //   }
+  // }
 
   Eigen::SparseMatrix<Type> Q; // Precision matrix
   if (barrier) {
@@ -732,10 +734,10 @@ Type objective_function<Type>::operator()()
     REPORT(b_epsilon);
     ADREPORT(b_epsilon);
   }
-  if(est_epsilon_model == 2) {
-    REPORT(ln_sigma_epsilon);
-    ADREPORT(ln_sigma_epsilon);
-  }
+  // if(est_epsilon_model == 2) {
+  //   REPORT(ln_sigma_epsilon);
+  //   ADREPORT(ln_sigma_epsilon);
+  // }
 
   // ------------------ Reporting ----------------------------------------------
   REPORT(sigma_E);      // spatio-temporal process parameter

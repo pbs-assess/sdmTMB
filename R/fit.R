@@ -68,7 +68,7 @@ NULL
 #'   For example, `formula = cpue ~ 0 + depth + depth2 + as.factor(year)`.
 #' @param epsilon_model Whether to include an optional non-stationary model for
 #' epsilon (sd of spatiotemporal process). Defaults to NULL, but can also be
-#' 'loglinear' or 'ar1'
+#' 'loglinear'
 #'
 #' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
@@ -300,7 +300,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
   est_epsilon_model <- 0
   if(!is.null(epsilon_model)) {
-    est_epsilon_model <- match(epsilon_model, c("loglinear","ar1"))
+    est_epsilon_model <- match(epsilon_model, c("loglinear"))
     if(is.na(est_epsilon_model)) {
       warning("epsilon_model not recognized, assuming constant epsilon instead")
       est_epsilon_model <- 0
@@ -428,9 +428,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       ln_sigma_epsilon  = as.factor(NA),
       epsilon_rw = factor(rep(NA, tmb_data$n_t-1))))
     }
-    if(est_epsilon_model == 2) {
-      tmb_map <- c(tmb_map, list(b_epsilon_logit = as.factor(NA)))
-    }
+    #if(est_epsilon_model == 2) {
+    #  tmb_map <- c(tmb_map, list(b_epsilon_logit = as.factor(NA)))
+    #}
 
     tmb_obj1 <- TMB::MakeADFun(
       data = tmb_data, parameters = tmb_params,

@@ -115,7 +115,7 @@ For example, \code{formula = cpue ~ 0 + depth + depth2 + as.factor(year)}.}
 
 \item{epsilon_model}{Whether to include an optional non-stationary model for
 epsilon (sd of spatiotemporal process). Defaults to NULL, but can also be
-'loglinear' or 'ar1'}
+'loglinear'}
 }
 \description{
 Fit a spatial or spatiotemporal GLMM with TMB. Particularly useful for
