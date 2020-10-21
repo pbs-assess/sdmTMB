@@ -7,10 +7,6 @@ warnings_are_errors: false
 r_check_args: "--as-cran --no-build-vignettes --no-manual"
 r_build_args: "--no-manual"
 
-branches:
-  except:
-  - sim-testing
-
 addons:
   apt:
     packages:

@@ -35,7 +35,8 @@ a list format output. Necessary for the \code{\link[=get_index]{get_index()}} or
 
 \item{area}{A vector of areas for survey grid cells. Only necessary if the
 output will be passed to \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}}. Should be the same length
-as the number of rows of \code{newdata}. Defaults to a sequence of 1s.}
+as the number of rows of \code{newdata}. If length 1, will be repeated to match the
+rows of data.}
 
 \item{re_form}{\code{NULL} to specify individual-level predictions. \code{~0} or \code{NA}
 for population-level predictions. Note that unlike lme4 or glmmTMB, this

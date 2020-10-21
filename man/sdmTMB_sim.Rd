@@ -89,7 +89,7 @@ loc <- data.frame(x = x, y = y)
 mesh <- make_mesh(loc, xy_cols = c("x", "y"), cutoff = 0.1)
 s <- sdmTMB_sim(
   x = x, y = y, mesh = mesh, X = X,
-  betas = c(0.5, 0.7), time_steps = time_steps, ar1_phi = 0.5,
+  betas = c(0.5, 0.7), time_steps = time_steps, rho = 0.5,
   phi = 0.2, range = 0.8, sigma_O = 0, sigma_E = 0.3,
   seed = 123, family = gaussian()
 )
