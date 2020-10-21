@@ -60,6 +60,8 @@ parameters. Set to 0 for parameters that should not vary through time.}
 
 \item{df}{Student-t degrees of freedom.}
 
+\item{seed}{A value with which to set the random seed.}
+
 \item{list}{Logical for whether output is in list format. If \code{TRUE},
 data is in list element 1 and input values in element 2.}
 }
