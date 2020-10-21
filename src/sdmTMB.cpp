@@ -1,7 +1,6 @@
 #define TMB_LIB_INIT R_init_sdmTMB
 #include <TMB.hpp>
 // #include <omp.h>
-
 template <class Type>
 bool isNA(Type x)
 {
@@ -353,10 +352,8 @@ Type objective_function<Type>::operator()()
   Type range = sqrt(Type(8.0)) / exp(ln_kappa);
 
   if (include_spatial) {
-    Type sigma_O = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O) *
-                            exp(Type(2.0) * ln_kappa));
-    Type sigma_O_trend = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O_trend) *
-      exp(Type(2.0) * ln_kappa));
+    Type sigma_O = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O + Type(2.0) * ln_kappa));
+    Type sigma_O_trend = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O_trend + Type(2.0) * ln_kappa));
     REPORT(sigma_O);
     ADREPORT(sigma_O);
     REPORT(sigma_O_trend);
@@ -369,16 +366,15 @@ Type objective_function<Type>::operator()()
   Type b_epsilon;
   if(est_epsilon_model==0) { // constant model
     for(int i = 0; i < n_t; i++) {
-      sigma_E(i) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E) *
-      exp(Type(2.0) * ln_kappa));
+      sigma_E(i) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa)));
       ln_tau_E_vec(i) = ln_tau_E;
     }
   }
   if(est_epsilon_model==1) { // loglinear model
-    b_epsilon = Type(2.0) * exp(b_epsilon_logit)/(1+exp(b_epsilon_logit)) - 1.0; // constrain to be -1 to 1
+    b_epsilon = minus_one_to_one(b_epsilon_logit);
+    //b_epsilon = Type(2.0) * exp(b_epsilon_logit)/(1+exp(b_epsilon_logit)) - 1.0; // constrain to be -1 to 1
     Type log_sigma0;
-    sigma_E(0) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E) *
-      exp(Type(2.0) * ln_kappa));
+    sigma_E(0) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa));
     log_sigma0 = log(sigma_E(0));
     ln_tau_E_vec(0) = ln_tau_E;
     //std::cout << "par: "<< epsilon_slope << std::endl;
