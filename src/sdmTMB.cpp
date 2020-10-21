@@ -684,24 +684,18 @@ Type objective_function<Type>::operator()()
 
   // ------------------ Reporting ----------------------------------------------
 
-  if (!spatial_only) {
-    Type log_sigma_E = log(sigma_E); // for SE
-    ADREPORT(log_sigma_E);      // log spatio-temporal SD
-    REPORT(sigma_E);      // spatio-temporal SD
-    ADREPORT(sigma_E);      // spatio-temporal SD
-    REPORT(epsilon_st_A_vec);   // spatio-temporal effects; vector
-  }
-  if (random_walk) {
-    REPORT(b_rw_t);   // time-varying effects
-  }
+  Type log_sigma_E = log(sigma_E); // for SE
+  ADREPORT(log_sigma_E);      // log spatio-temporal SD
+  REPORT(sigma_E);      // spatio-temporal SD
+  ADREPORT(sigma_E);      // spatio-temporal SD
+  REPORT(epsilon_st_A_vec);   // spatio-temporal effects; vector
+  REPORT(b_rw_t);   // time-varying effects
   REPORT(omega_s_A);      // spatial effects; n_s length vector
   REPORT(omega_s_trend_A); // spatial trend effects; n_s length vector
   REPORT(eta_fixed_i);  // fixed effect predictions in the link space
   REPORT(eta_i);        // fixed and random effect predictions in link space
   REPORT(eta_rw_i);     // time-varying predictions in link space
-  if (ar1_fields) {
-    REPORT(rho);          // AR1 correlation in -1 to 1 space
-  }
+  REPORT(rho);          // AR1 correlation in -1 to 1 space
   REPORT(range);        // Matern approximate distance at 10% correlation
   ADREPORT(range);      // Matern approximate distance at 10% correlation
   Type log_range = log(range); // for SE

@@ -11,7 +11,8 @@
 #'   values). If a random walk (`sigma_V > 0`), these are the starting values.
 #' @param family Family as in [sdmTMB()].
 #' @param time_steps The number of time steps.
-#' @param ar1_phi Correlation between years; should be between -1 and 1.
+#' @param rho Spatiotemporal correlation between years;
+#'   should be between -1 and 1.
 #' @param sigma_O SD of spatial process (Omega).
 #' @param sigma_E SD of spatiotemporal process (Epsilon).
 #' @param sigma_V A vector of standard deviations of time-varying random walk on
@@ -33,47 +34,31 @@
 
 #' @export
 #'
-# @examples
-#
-# # spatial:
-# set.seed(1)
-# loc <- data.frame(x = runif(200), y = runif(200))
-# mesh <- make_mesh(loc, c("x", "y"), n_knots = 100)
-# time <- rep(1L, each = nrow(loc)) # integers
-# sim_dat <- sdmTMB_sim(x = loc$x, y = loc$y, time = time, mesh = mesh,
-#   range = 5, beta = 0, phi = 0.1, sigma_O = 0.3, seed = 1)
-# library(ggplot2)
-# ggplot(sim_dat, aes(x, y, colour = observed)) +
-#   geom_point() +
-#   scale_colour_gradient2()
-# m <- sdmTMB(observed ~ 1, data = sim_dat, spde = mesh)
-#
-# # spatiotemporal:
-# set.seed(314)
-# loc <- data.frame(x = runif(800), y = runif(800))
-# mesh <- make_mesh(loc, c("x", "y"), n_knots = 200)
-# time <- rep(seq(1L, 8L), each = 100)
-# sim_dat <- sdmTMB_sim(x = loc$x, y = loc$y, time = time, mesh = mesh,
-#   range = 2, beta = 0, phi = 0.05, sigma_O = 0, sigma_E = 0.9,
-#   ar1_phi = 0.6, seed = 123)
-# ggplot(sim_dat, aes(x, y, colour = observed)) +
-#   geom_point() +
-#   scale_colour_gradient2() +
-#   facet_wrap(vars(time))
-# m <- sdmTMB(observed ~ 1, data = sim_dat, spde = mesh, time = "time",
-#   include_spatial = FALSE)
+#' @examples
+#' set.seed(42)
+#' x <- runif(50, -1, 1)
+#' y <- runif(50, -1, 1)
+#' N <- length(x)
+#' time_steps <- 6
+#' X <- model.matrix(~ x1, data.frame(x1 = rnorm(N * time_steps)))
+#' loc <- data.frame(x = x, y = y)
+#' mesh <- make_mesh(loc, xy_cols = c("x", "y"), cutoff = 0.1)
+#' s <- sdmTMB_sim(
+#'   x = x, y = y, mesh = mesh, X = X,
+#'   betas = c(0.5, 0.7), time_steps = time_steps, ar1_phi = 0.5,
+#'   phi = 0.2, range = 0.8, sigma_O = 0, sigma_E = 0.3,
+#'   seed = 123, family = gaussian()
+#' )
+#'
+#' mesh <- make_mesh(s, xy_cols = c("x", "y"), cutoff = 0.1)
+#' m <- sdmTMB(
+#'   data = s, formula = observed ~ x1,
+#'   time = "time", spde = mesh,
+#'   ar1_fields = TRUE, include_spatial = FALSE
+#' )
+#' tidy(m, conf.int = TRUE)
+#' tidy(m, "ran_pars", conf.int = TRUE)
 
-# # Time-varying effects:
-# d <- sdmTMB_sim(x = runif(200), y = runif(200), betas = c(0.2, -0.2),
-#   sigma_V = c(0.2, 0.1), time_steps = 12, phi = 0.05,
-#   sigma_O = 1e-5, sigma_E = 0.2)
-# spde <- make_mesh(dat, c("x", "y"), n_knots = 40, type = "kmeans")
-# m <- sdmTMB(data = d, formula = observed ~ 0, time = "time",
-#   time_varying = ~ 0 + cov1 + cov2, silent = FALSE,
-#   include_spatial = FALSE, spde = spde)
-# r <- m$tmb_obj$report()
-# r$b_rw_t
-# exp(m$model$par[grep("ln_tau_V", names(m$model$par))])
 sdmTMB_sim <- function(mesh,
                        x,
                        y,
@@ -82,7 +67,7 @@ sdmTMB_sim <- function(mesh,
                        X = NULL,
                        betas = NULL,
                        family = gaussian(link = "identity"),
-                       ar1_phi = 0,
+                       rho = 0,
                        sigma_O = 0.1,
                        sigma_E = 0,
                        sigma_V = rep(0, length(betas)),
@@ -99,7 +84,7 @@ sdmTMB_sim <- function(mesh,
   assert_that(df >= 1)
   assert_that(time_steps >= 1)
   assert_that(range > 0)
-  assert_that(ar1_phi >= -1, ar1_phi <= 1)
+  assert_that(rho >= -1, rho <= 1)
   assert_that(sigma_O >= 0, sigma_E >= 0, all(sigma_V >= 0), phi > 0)
   if (!is.null(X)) assert_that(!is.null(betas))
   if (!is.null(betas) && !is.null(X)) assert_that(ncol(X) == length(betas))
@@ -120,12 +105,12 @@ sdmTMB_sim <- function(mesh,
 
   if (time_steps > 1L && sigma_E > 0) {
     for (i in seq_len(time_steps)) {
-      if (i == 1 || ar1_phi == 0) {
+      if (i == 1 || rho == 0) {
         epsilon_st[[i]] <-
           rspde2(coords, sigma = sigma_E, range = range, mesh = mesh, seed = seed * i)
       } else { # AR1 and not first time slice:
-        epsilon_st[[i]] <- ar1_phi * epsilon_st[[i - 1]] +
-          sqrt(1 - ar1_phi^2) * # stationary AR1
+        epsilon_st[[i]] <- rho * epsilon_st[[i - 1]] +
+          sqrt(1 - rho^2) * # stationary AR1
           rspde2(coords, sigma = sigma_E, range = range, mesh = mesh, seed = seed * i)
       }
     }
@@ -203,7 +188,7 @@ sdmTMB_sim <- function(mesh,
       sigma_E = sigma_E,
       sigma_V = sigma_V,
       range = range,
-      ar1_phi = ar1_phi,
+      rho = rho,
       phi = phi,
       df = df,
       thetaf = thetaf

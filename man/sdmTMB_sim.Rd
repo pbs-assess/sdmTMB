@@ -13,7 +13,7 @@ sdmTMB_sim(
   X = NULL,
   betas = NULL,
   family = gaussian(link = "identity"),
-  ar1_phi = 0,
+  rho = 0,
   sigma_O = 0.1,
   sigma_E = 0,
   sigma_V = rep(0, length(betas)),
@@ -44,7 +44,8 @@ values). If a random walk (\code{sigma_V > 0}), these are the starting values.}
 
 \item{family}{Family as in \code{\link[=sdmTMB]{sdmTMB()}}.}
 
-\item{ar1_phi}{Correlation between years; should be between -1 and 1.}
+\item{rho}{Spatiotemporal correlation between years;
+should be between -1 and 1.}
 
 \item{sigma_O}{SD of spatial process (Omega).}
 
@@ -76,4 +77,29 @@ A data frame where:
 }
 \description{
 Simulate from a spatial/spatiotemporal model
+}
+\examples{
+set.seed(42)
+x <- runif(50, -1, 1)
+y <- runif(50, -1, 1)
+N <- length(x)
+time_steps <- 6
+X <- model.matrix(~ x1, data.frame(x1 = rnorm(N * time_steps)))
+loc <- data.frame(x = x, y = y)
+mesh <- make_mesh(loc, xy_cols = c("x", "y"), cutoff = 0.1)
+s <- sdmTMB_sim(
+  x = x, y = y, mesh = mesh, X = X,
+  betas = c(0.5, 0.7), time_steps = time_steps, ar1_phi = 0.5,
+  phi = 0.2, range = 0.8, sigma_O = 0, sigma_E = 0.3,
+  seed = 123, family = gaussian()
+)
+
+mesh <- make_mesh(s, xy_cols = c("x", "y"), cutoff = 0.1)
+m <- sdmTMB(
+  data = s, formula = observed ~ x1,
+  time = "time", spde = mesh,
+  ar1_fields = TRUE, include_spatial = FALSE
+)
+tidy(m, conf.int = TRUE)
+tidy(m, "ran_pars", conf.int = TRUE)
 }

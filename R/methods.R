@@ -1,12 +1,3 @@
-# dat <- sim(time_steps = 10, plot = TRUE, initial_betas = c(0.1, 0.2, -0.1), sigma_V = c(0,  0.2, 0.2))
-# spde <- make_mesh(x = dat$x, y = dat$y, n_knots = 50)
-# plot_spde(spde)
-# m <- sdmTMB(
-#   data = dat, formula = observed ~ cov1, time = "time", include_spatial = T,
-#   time_varying = ~ 0 + cov2 + cov2,
-#   family = gaussian(link = "identity"), spde = spde
-# )
-
 #' @export
 #' @import methods
 print.sdmTMB <- function(x, ...) {

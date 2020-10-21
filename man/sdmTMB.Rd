@@ -72,9 +72,8 @@ Experimental and likely for use with the \pkg{tmbstan} package. Note that
 the priors are not yet sensible and Jacobian adjustments are not made. If you
 are interested in this functionality, please contact the developers.}
 
-\item{ar1_fields}{Estimate the spatiotemporal random fields as an AR1
-process? Note that the parameter \code{ar1_phi} has been internally bounded
-between \code{-1} and \code{1} with:  \code{2 * invlogit(ar1_phi) - 1} i.e. in R \code{2 * plogis(ar_phi) - 1}.}
+\item{ar1_fields}{Estimate the spatiotemporal random fields as a
+stationary AR1 process?}
 
 \item{include_spatial}{Should a separate spatial random field be estimated?
 If enabled then there will be separate spatial and spatiotemporal

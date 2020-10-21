@@ -36,7 +36,7 @@ plot(spde)
 out <- furrr::future_map(seq_len(8*10), function(i) {
   s <- sdmTMB_sim(
     x = x, y = y, mesh = spde, X = X, sigma_V = c(0, 0),
-    betas = betas, time_steps = time_steps, ar1_phi = rho,
+    betas = betas, time_steps = time_steps, rho = rho,
     phi = phi, range = .range, sigma_O = 0, sigma_E = sigma_E,
     seed = SEED * i, family = gaussian()
   )
