@@ -36,6 +36,7 @@
 #' @export
 #'
 #' @examples
+#' \donttest{
 #' set.seed(42)
 #' x <- runif(50, -1, 1)
 #' y <- runif(50, -1, 1)
@@ -59,6 +60,7 @@
 #' )
 #' tidy(m, conf.int = TRUE)
 #' tidy(m, "ran_pars", conf.int = TRUE)
+#' }
 
 sdmTMB_sim <- function(mesh,
                        x,

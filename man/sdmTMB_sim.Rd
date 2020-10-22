@@ -81,6 +81,7 @@ A data frame where:
 Simulate from a spatial/spatiotemporal model
 }
 \examples{
+\donttest{
 set.seed(42)
 x <- runif(50, -1, 1)
 y <- runif(50, -1, 1)
@@ -104,4 +105,5 @@ m <- sdmTMB(
 )
 tidy(m, conf.int = TRUE)
 tidy(m, "ran_pars", conf.int = TRUE)
+}
 }

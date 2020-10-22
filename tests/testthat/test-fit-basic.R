@@ -8,6 +8,7 @@ loc <- data.frame(x = x, y = y)
 spde <- make_mesh(loc, c("x", "y"), cutoff = 0.02)
 
 test_that("sdmTMB model fit with a covariate beta", {
+  skip_on_travis()
   initial_betas <- 0.5
   range <- 0.1
   sigma_O <- 0.3 # SD of spatial process
@@ -74,6 +75,7 @@ test_that("A spatiotemporal version works with predictions on new data points", 
 })
 
 test_that("Predictions on the original data set as `newdata`` return the same predictions", {
+  skip_on_travis()
   set.seed(1)
   x <- stats::runif(70, -1, 1)
   y <- stats::runif(70, -1, 1)
@@ -112,6 +114,7 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
 })
 
 test_that("A time-varying model fits and predicts appropriately", {
+  skip_on_travis()
   SEED <- 42
   set.seed(SEED)
   x <- stats::runif(60, -1, 1)

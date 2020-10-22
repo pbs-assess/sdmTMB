@@ -36,6 +36,7 @@ loc <- data.frame(x = x, y = y)
 spde <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
 
 test_that("Student family fits", {
+  skip_on_travis()
   set.seed(1)
   initial_betas <- 0.5
   range <- 0.5
@@ -54,6 +55,7 @@ test_that("Student family fits", {
 })
 
 test_that("Lognormal fits with a mean matching the Gamma roughly", {
+  skip_on_travis()
   range <- 1
   x <- stats::runif(500, -1, 1)
   y <- stats::runif(500, -1, 1)
@@ -125,6 +127,7 @@ loc <- data.frame(x = x, y = y)
 spde <- make_mesh(loc, c("x", "y"), n_knots = 90, type = "kmeans")
 
 test_that("Beta fits", {
+  skip_on_travis()
   s <- sdmTMB_sim(x = x, y = y, sigma_E = 0, mesh = spde, sigma_O = 0.2, range = 0.8, family = Beta(), phi = 4)
   m <- sdmTMB(data = s, formula = observed ~ 1,
     spde = spde, family = Beta(link = "logit"))
