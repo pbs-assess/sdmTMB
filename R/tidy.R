@@ -77,11 +77,20 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   ii <- 1
 
   out_re <- list()
-  for (i in c("sigma_O", "sigma_E", "sigma_O_trend", "ln_tau_V", "range", "ln_phi")) {
+  log_name <- c("log_sigma_O", "log_sigma_E", "log_sigma_O_trend",
+    "ln_tau_V", "log_range", "ln_phi")
+  j <- 0
+  for (i in c("sigma_O", "sigma_E", "sigma_O_trend",
+    "ln_tau_V", "range", "phi")) {
+    j <- j + 1
     if (i %in% names(est) && est[[i]] != 0) {
+      .e <- est[[log_name[j]]]
+      .se <- se[[log_name[j]]]
       out_re[[i]] <- data.frame(
         term = i, estimate = est[[i]], std.error = se[[i]],
-        conf.low = NA_real_, conf.high = NA_real_, stringsAsFactors = FALSE
+        conf.low = exp(.e - crit * .se),
+        conf.high = exp(.e + crit * .se),
+        stringsAsFactors = FALSE
       )
       if (i == "sigma_O_trend") out_re[[i]]$term <- "sigma_Z"
       ii <- ii + 1
@@ -92,12 +101,12 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   if (!is.null(r$rho) && r$rho != 0L) {
     ar_phi <- est$ar1_phi
     ar_phi_se <- se$ar1_phi
-    ar_phi_est <- 2 * stats::plogis(ar_phi) - 1
-    ar_phi_lwr <- 2 * stats::plogis(ar_phi - crit * ar_phi_se) - 1
-    ar_phi_upr <- 2 * stats::plogis(ar_phi + crit * ar_phi_se) - 1
+    rho_est <- 2 * stats::plogis(ar_phi) - 1
+    rho_lwr <- 2 * stats::plogis(ar_phi - crit * ar_phi_se) - 1
+    rho_upr <- 2 * stats::plogis(ar_phi + crit * ar_phi_se) - 1
     out_re[[ii]] <- data.frame(
-      term = "ar1_phi", estimate = ar_phi_est, std.error = NA_real_,
-      conf.low = ar_phi_lwr, conf.high = ar_phi_upr, stringsAsFactors = FALSE
+      term = "rho", estimate = rho_est, std.error = ar_phi_se,
+      conf.low = rho_lwr, conf.high = rho_upr, stringsAsFactors = FALSE
     )
     ii <- ii + 1
   }

@@ -322,7 +322,7 @@ Type objective_function<Type>::operator()()
   // these are for linear model
   s_slope = b_threshold(0);
   s_cut = b_threshold(1);
-  if(threshold_func == 2) {
+  if (threshold_func == 2) {
     s50 = b_threshold(0); // threshold at which function is 50% of max
     s95 = b_threshold(0) + exp(b_threshold(1)); // threshold at which function is 95% of max
     s_max = b_threshold(2);
@@ -351,8 +351,12 @@ Type objective_function<Type>::operator()()
                             exp(Type(2.0) * ln_kappa));
     Type sigma_O_trend = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O_trend) *
       exp(Type(2.0) * ln_kappa));
+    Type log_sigma_O = log(sigma_O);
+    ADREPORT(log_sigma_O);
     REPORT(sigma_O);
     ADREPORT(sigma_O);
+    Type log_sigma_O_trend = log(sigma_O_trend);
+    ADREPORT(log_sigma_O_trend);
     REPORT(sigma_O_trend);
     ADREPORT(sigma_O_trend);
   }
@@ -480,15 +484,18 @@ Type objective_function<Type>::operator()()
   // ------------------ Probability of data given random effects ---------------
 
   Type s1, s2;
+  Type phi = exp(ln_phi);
+  REPORT(phi);
+  ADREPORT(phi);
   for (int i = 0; i < n_i; i++) {
     if (!isNA(y_i(i))) {
       switch (family) {
         case gaussian_family:
-          jnll -= keep(i) * dnorm(y_i(i), mu_i(i), exp(ln_phi), true) * weights_i(i);
+          jnll -= keep(i) * dnorm(y_i(i), mu_i(i), phi, true) * weights_i(i);
           break;
         case tweedie_family:
           s1 = invlogit(thetaf) + Type(1.0);
-          jnll -= keep(i) * dtweedie(y_i(i), mu_i(i), exp(ln_phi), s1, true) * weights_i(i);
+          jnll -= keep(i) * dtweedie(y_i(i), mu_i(i), phi, s1, true) * weights_i(i);
           break;
         case binomial_family:  // in logit space not inverse logit
           jnll -= keep(i) * dbinom_robust(y_i(i), Type(1.0) /*size*/, mu_i(i), true) * weights_i(i);
@@ -497,7 +504,7 @@ Type objective_function<Type>::operator()()
           jnll -= keep(i) * dpois(y_i(i), mu_i(i), true) * weights_i(i);
           break;
         case Gamma_family:
-          s1 = Type(1) / (pow(exp(ln_phi), Type(2)));  // s1=shape,ln_phi=CV,shape=1/CV^2
+          s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape,ln_phi=CV,shape=1/CV^2
           jnll -= keep(i) * dgamma(y_i(i), s1, mu_i(i) / s1, true) * weights_i(i);
           break;
         case nbinom2_family:
@@ -506,14 +513,14 @@ Type objective_function<Type>::operator()()
           jnll -= keep(i) * dnbinom_robust(y_i(i), s1, s2, true) * weights_i(i);
           break;
         case lognormal_family:
-          jnll -= keep(i) * dlnorm(y_i(i), log(mu_i(i)) - pow(exp(ln_phi), Type(2)) / Type(2), exp(ln_phi), true) * weights_i(i);
+          jnll -= keep(i) * dlnorm(y_i(i), log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi, true) * weights_i(i);
           break;
         case student_family:
           jnll -= keep(i) * dstudent(y_i(i), mu_i(i), exp(ln_phi), df, true) * weights_i(i);
           break;
         case Beta_family: // Ferrari and Cribari-Neto 2004; betareg package
-          s1 = mu_i(i) * exp(ln_phi);
-          s2 = (Type(1) - mu_i(i)) * exp(ln_phi);
+          s1 = mu_i(i) * phi;
+          s2 = (Type(1) - mu_i(i)) * phi;
           jnll -= keep(i) * dbeta(y_i(i), s1, s2, true) * weights_i(i);
           break;
         default:
@@ -640,14 +647,13 @@ Type objective_function<Type>::operator()()
     }
   }
 
-  if(threshold_func == 1) {
+  if (threshold_func == 1) { // linear breakpoint model
     REPORT(s_slope);
     ADREPORT(s_slope);
     REPORT(s_cut);
     ADREPORT(s_cut);
   }
-  if(threshold_func == 2) {
-    // report s50 and s95 for logistic function model
+  if (threshold_func == 2) { // logistic function model
     REPORT(s50);
     ADREPORT(s50);
     REPORT(s95);
@@ -679,8 +685,10 @@ Type objective_function<Type>::operator()()
 
   // ------------------ Reporting ----------------------------------------------
 
-  REPORT(sigma_E);      // spatio-temporal process parameter
-  ADREPORT(sigma_E);      // spatio-temporal process parameter
+  Type log_sigma_E = log(sigma_E); // for SE
+  ADREPORT(log_sigma_E);      // log spatio-temporal SD
+  REPORT(sigma_E);      // spatio-temporal SD
+  ADREPORT(sigma_E);      // spatio-temporal SD
   REPORT(epsilon_st_A_vec);   // spatio-temporal effects; vector
   REPORT(b_rw_t);   // time-varying effects
   REPORT(omega_s_A);      // spatial effects; n_s length vector
@@ -691,6 +699,8 @@ Type objective_function<Type>::operator()()
   REPORT(rho);          // AR1 correlation in -1 to 1 space
   REPORT(range);        // Matern approximate distance at 10% correlation
   ADREPORT(range);      // Matern approximate distance at 10% correlation
+  Type log_range = log(range); // for SE
+  ADREPORT(log_range);  // log Matern approximate distance at 10% correlation
 
   // ------------------ Joint negative log likelihood --------------------------
 

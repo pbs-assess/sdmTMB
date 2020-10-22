@@ -72,9 +72,8 @@ Experimental and likely for use with the \pkg{tmbstan} package. Note that
 the priors are not yet sensible and Jacobian adjustments are not made. If you
 are interested in this functionality, please contact the developers.}
 
-\item{ar1_fields}{Estimate the spatiotemporal random fields as an AR1
-process? Note that the parameter \code{ar1_phi} has been internally bounded
-between \code{-1} and \code{1} with:  \code{2 * invlogit(ar1_phi) - 1} i.e. in R \code{2 * plogis(ar_phi) - 1}.}
+\item{ar1_fields}{Estimate the spatiotemporal random fields as a
+stationary AR1 process?}
 
 \item{include_spatial}{Should a separate spatial random field be estimated?
 If enabled then there will be separate spatial and spatiotemporal
@@ -159,7 +158,7 @@ m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
 print(m)
 tidy(m, conf.int = TRUE)
-tidy(m, effects = "ran_par")
+tidy(m, effects = "ran_par", conf.int = TRUE)
 
 # Run extra optimization steps to help convergence:
 m1 <- run_extra_optimization(m, nlminb_loops = 0, newton_steps = 1)

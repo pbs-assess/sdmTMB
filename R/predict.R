@@ -20,7 +20,8 @@
 #'   a list format output. Necessary for the [get_index()] or [get_cog()] functions.
 #' @param area A vector of areas for survey grid cells. Only necessary if the
 #'   output will be passed to [get_index()] or [get_cog()]. Should be the same length
-#'   as the number of rows of `newdata`. Defaults to a sequence of 1s.
+#'   as the number of rows of `newdata`. If length 1, will be repeated to match the
+#'   rows of data.
 #' @param re_form `NULL` to specify individual-level predictions. `~0` or `NA`
 #'   for population-level predictions. Note that unlike lme4 or glmmTMB, this
 #'   only affects what the standard errors are calculated on if `se_fit = TRUE`.
@@ -293,8 +294,11 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     else
       proj_X_rw_ik <- matrix(0, ncol = 1, nrow = 1) # dummy
 
+    if (length(area) != nrow(proj_X_ij) && length(area) != 1L) {
+      stop("`area` should be of the same length as `nrow(newdata)` or of length 1.", call. = FALSE)
+    }
     tmb_data$proj_X_threshold <- thresh$X_threshold
-    tmb_data$area_i <- if (length(area) == 1L && area[[1]] == 1) rep(1, nrow(proj_X_ij)) else area
+    tmb_data$area_i <- if (length(area) == 1L) rep(area, nrow(proj_X_ij)) else area
     tmb_data$proj_mesh <- proj_mesh
     tmb_data$proj_X_ij <- proj_X_ij
     tmb_data$proj_X_rw_ik <- proj_X_rw_ik

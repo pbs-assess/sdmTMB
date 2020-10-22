@@ -1,12 +1,3 @@
-# dat <- sim(time_steps = 10, plot = TRUE, initial_betas = c(0.1, 0.2, -0.1), sigma_V = c(0,  0.2, 0.2))
-# spde <- make_mesh(x = dat$x, y = dat$y, n_knots = 50)
-# plot_spde(spde)
-# m <- sdmTMB(
-#   data = dat, formula = observed ~ cov1, time = "time", include_spatial = T,
-#   time_varying = ~ 0 + cov2 + cov2,
-#   family = gaussian(link = "identity"), spde = spde
-# )
-
 #' @export
 #' @import methods
 print.sdmTMB <- function(x, ...) {
@@ -19,7 +10,7 @@ print.sdmTMB <- function(x, ...) {
     # r <- x$tmb_obj$report()
   }
 
-  spatial_only <- !is.null(r$r$sigma_E) && !is.null(r$r$sigma_O_trend)
+  spatial_only <- !is.null(r$sigma_E) && !is.null(r$sigma_O_trend)
 
   fit_by <- "ML"
   if ("reml" %in% names(x)) { # for backwards compatibility
@@ -67,7 +58,7 @@ print.sdmTMB <- function(x, ...) {
   }
 
   pre <- "Spatiotemporal SD (sigma_E): "
-  if (x$tmb_data$spatial_only == 0) {
+  if (x$tmb_data$spatial_only == 0L) {
     sigma_E <- paste0(pre, mround(r$sigma_E, 2L), "\n")
   } else {
     sigma_E <- paste0(pre, "not estimated\n")
