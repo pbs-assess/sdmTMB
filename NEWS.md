@@ -1,5 +1,14 @@
 # sdmTMB
 
+# sdmTMB 0.0.8.9000
+
+* Overhauled the simulation function. The function is now called `sdmTMB_sim()`
+  and uses INLA functions instead of RandomFields functions for simulating
+  the random fields.
+
+* The simulation function can now accommodate all families and links and takes
+  an INLA mesh as input.
+
 # sdmTMB 0.0.7.9001
 
 * Allow specifying degrees of freedom in the Student-t family #29
