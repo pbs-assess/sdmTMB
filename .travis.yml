@@ -7,6 +7,12 @@ warnings_are_errors: false
 r_check_args: "--as-cran --no-build-vignettes --no-manual"
 r_build_args: "--no-manual"
 
+# because of INLA on Travis:
+# `/lib/x86_64-linux-gnu/libm.so.6: version `GLIBC_2.27' not found`
+env:
+  global:
+    - _R_CHECK_DONTTEST_EXAMPLES_=FALSE
+
 addons:
   apt:
     packages:
