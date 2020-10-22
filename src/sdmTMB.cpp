@@ -366,7 +366,7 @@ Type objective_function<Type>::operator()()
   Type b_epsilon;
   if(est_epsilon_model==0) { // constant model
     for(int i = 0; i < n_t; i++) {
-      sigma_E(i) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa)));
+      sigma_E(i) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa));
       ln_tau_E_vec(i) = ln_tau_E;
     }
   }
