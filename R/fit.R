@@ -375,7 +375,6 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t),
     b_threshold = b_thresh,
     b_epsilon_logit = 0,
-    ln_sigma_epsilon = 0,
     epsilon_rw = rep(0, tmb_data$n_t-1)
   )
   if (contains_offset) tmb_params$b_j[offset_pos] <- 1
@@ -420,12 +419,10 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     # optional models on spatiotemporal sd parameter
     if(est_epsilon_model == 0) {
        tmb_map <- c(tmb_map, list(b_epsilon_logit = as.factor(NA),
-         ln_sigma_epsilon  = as.factor(NA),
          epsilon_rw = factor(rep(NA, tmb_data$n_t-1))))
     }
     if(est_epsilon_model == 1) {
       tmb_map <- c(tmb_map, list(
-      ln_sigma_epsilon  = as.factor(NA),
       epsilon_rw = factor(rep(NA, tmb_data$n_t-1))))
     }
     #if(est_epsilon_model == 2) {

@@ -305,7 +305,7 @@ Type objective_function<Type>::operator()()
   PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3)
   PARAMETER(b_epsilon_logit); // slope coefficient for log-linear model on epsilon
   PARAMETER_VECTOR(epsilon_rw);    // optional rw model on epsilon, n_t - 1 length for random walk model on epsilon
-  PARAMETER(ln_sigma_epsilon); // variance parameter for random walk model on epsilon
+  //PARAMETER(ln_sigma_epsilon); // variance parameter for random walk model on epsilon
   //PARAMETER(logit_rho_epsilon); // rho parameter used for random walk stationarity
   // Joint negative log-likelihood
   Type jnll = 0;
@@ -354,8 +354,12 @@ Type objective_function<Type>::operator()()
   if (include_spatial) {
     Type sigma_O = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O + Type(2.0) * ln_kappa));
     Type sigma_O_trend = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O_trend + Type(2.0) * ln_kappa));
+    Type log_sigma_O = log(sigma_O);
+    ADREPORT(log_sigma_O);
     REPORT(sigma_O);
     ADREPORT(sigma_O);
+    Type log_sigma_O_trend = log(sigma_O_trend);
+    ADREPORT(log_sigma_O_trend);
     REPORT(sigma_O_trend);
     ADREPORT(sigma_O_trend);
   }
@@ -727,6 +731,8 @@ Type objective_function<Type>::operator()()
     REPORT(b_epsilon_logit);
     ADREPORT(b_epsilon_logit);
     b_epsilon = Type(2.0) * exp(b_epsilon_logit)/(1+exp(b_epsilon_logit)) - 1.0; // constrain to be -1 to 1
+    REPORT(b_epsilon_logit);
+    ADREPORT(b_epsilon_logit);
     REPORT(b_epsilon);
     ADREPORT(b_epsilon);
   }
@@ -736,8 +742,13 @@ Type objective_function<Type>::operator()()
   // }
 
   // ------------------ Reporting ----------------------------------------------
-  REPORT(sigma_E);      // spatio-temporal process parameter
-  ADREPORT(sigma_E);      // spatio-temporal process parameter
+  vector<Type> log_sigma_E(n_t);
+  for (int i = 0; i < n_t; i++) {
+    log_sigma_E(i) = log(sigma_E(i));
+  }
+  ADREPORT(log_sigma_E);      // log spatio-temporal SD
+  REPORT(sigma_E);      // spatio-temporal SD
+  ADREPORT(sigma_E);      // spatio-temporal SD
   REPORT(epsilon_st_A_vec);   // spatio-temporal effects; vector
   REPORT(b_rw_t);   // time-varying effects
   REPORT(omega_s_A);      // spatial effects; n_s length vector
@@ -748,6 +759,8 @@ Type objective_function<Type>::operator()()
   REPORT(rho);          // AR1 correlation in -1 to 1 space
   REPORT(range);        // Matern approximate distance at 10% correlation
   ADREPORT(range);      // Matern approximate distance at 10% correlation
+  Type log_range = log(range); // for SE
+  ADREPORT(log_range);  // log Matern approximate distance at 10% correlation
 
   // ------------------ Joint negative log likelihood --------------------------
 

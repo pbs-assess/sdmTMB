@@ -20,7 +20,8 @@
 #'   a list format output. Necessary for the [get_index()] or [get_cog()] functions.
 #' @param area A vector of areas for survey grid cells. Only necessary if the
 #'   output will be passed to [get_index()] or [get_cog()]. Should be the same length
-#'   as the number of rows of `newdata`. Defaults to a sequence of 1s.
+#'   as the number of rows of `newdata`. If length 1, will be repeated to match the
+#'   rows of data.
 #' @param re_form `NULL` to specify individual-level predictions. `~0` or `NA`
 #'   for population-level predictions. Note that unlike lme4 or glmmTMB, this
 #'   only affects what the standard errors are calculated on if `se_fit = TRUE`.
@@ -188,12 +189,12 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
 
   if (!missing(xy_cols)) {
     warning("argument `xy_cols` is deprecated; this information is already ",
-    "in the output of the `make_mesh(). Did you use `make_spde()`?", call. = FALSE)
+      "in the output of the `make_mesh(). Did you use `make_spde()`?", call. = FALSE)
   }
   if (!"xy_cols" %in% names(object$spde)) {
     warning("It looks like this model was fit with make_spde(). ",
-    "Using `xy_cols`, but future versions of sdmTMB may not be compatible with this.",
-    "Please replace make_spde() with make_mesh().", call. = FALSE)
+      "Using `xy_cols`, but future versions of sdmTMB may not be compatible with this.",
+      "Please replace make_spde() with make_mesh().", call. = FALSE)
   } else {
     xy_cols <- object$spde$xy_cols
   }
@@ -293,8 +294,11 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     else
       proj_X_rw_ik <- matrix(0, ncol = 1, nrow = 1) # dummy
 
+    if (length(area) != nrow(proj_X_ij) && length(area) != 1L) {
+      stop("`area` should be of the same length as `nrow(newdata)` or of length 1.", call. = FALSE)
+    }
     tmb_data$proj_X_threshold <- thresh$X_threshold
-    tmb_data$area_i <- if (length(area) == 1L && area[[1]] == 1) rep(1, nrow(proj_X_ij)) else area
+    tmb_data$area_i <- if (length(area) == 1L) rep(area, nrow(proj_X_ij)) else area
     tmb_data$proj_mesh <- proj_mesh
     tmb_data$proj_X_ij <- proj_X_ij
     tmb_data$proj_X_rw_ik <- proj_X_rw_ik
