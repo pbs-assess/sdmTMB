@@ -4,17 +4,20 @@ SEED <- 1
 set.seed(SEED)
 x <- stats::runif(100, -1, 1)
 y <- stats::runif(100, -1, 1)
+loc <- data.frame(x = x, y = y)
+spde <- make_mesh(loc, c("x", "y"), cutoff = 0.02)
 
 test_that("sdmTMB model fit with a covariate beta", {
+  skip_on_travis()
   initial_betas <- 0.5
-  kappa <- 4 # decay of spatial correlation (smaller = slower decay)
+  range <- 0.1
   sigma_O <- 0.3 # SD of spatial process
   sigma_E <- 0.3 # SD of spatial process
   phi <- 0.1 # observation error
-  s <- sim(
-    x = x, y = y,
-    initial_betas = initial_betas, time_steps = 6L,
-    phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E,
+  s <- sdmTMB_sim(
+    x = x, y = y, mesh = spde,
+    betas = initial_betas, time_steps = 6L,
+    phi = phi, range = range, sigma_O = sigma_O, sigma_E = sigma_E,
     seed = SEED
   )
   spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
@@ -24,15 +27,16 @@ test_that("sdmTMB model fit with a covariate beta", {
   expect_output(summary(m), "fit by")
   p <- as.list(m$model$par)
   r <- m$tmb_obj$report()
+  est <- tidy(m, "ran_pars")
   expect_equal(m$model$convergence, 0L)
-  expect_equal((p$b_j - initial_betas)^2, 0, tol = 0.05)
-  expect_equal((exp(p$ln_phi) - phi)^2, 0, tol = 0.05)
-  expect_equal((r$sigma_O - sigma_O)^2, 0, tol = 0.05)
-  expect_equal((r$sigma_E[1] - sigma_E)^2, 0, tol = 0.05)
-  expect_equal(exp(p$ln_kappa), kappa, tol = 1.1)
+  expect_equal((p$b_j - initial_betas)^2, 0, tol = 0.001)
+  expect_equal((exp(p$ln_phi) - phi)^2, 0, tol = 0.002)
+  expect_equal((r$sigma_O - sigma_O)^2, 0, tol = 0.001)
+  expect_equal((r$sigma_E - sigma_E)^2, 0, tol = 0.001)
+  expect_equal(est$estimate[est$term == "range"], range, tol = 0.01)
   p <- predict(m)
   r <- residuals(m)
-  expect_equal(mean((p$est - s$observed)^2), 0, tol = 0.02)
+  expect_equal(mean((p$est - s$observed)^2), 0, tol = 0.002)
 })
 
 test_that("Anisotropy fits and plots", {
@@ -70,35 +74,19 @@ test_that("A spatiotemporal version works with predictions on new data points", 
   expect_identical(class(predictions), "data.frame")
 })
 
-test_that("AR1 models fit with and without R normalization", {
-  set.seed(1)
-  x <- stats::runif(80, -1, 1)
-  y <- stats::runif(80, -1, 1)
-  dat <- sim(x = x, y = y,
-    time_steps = 15, ar1_fields = TRUE, ar1_phi = 0.5,
-    sigma_O = 1e-6, sigma_E = 0.3, phi = 0.1,
-    seed = 1
-  )
-  spde <- make_mesh(dat, c("x", "y"), n_knots = 60, type = "kmeans")
-  m <- sdmTMB(
-    ar1_fields = TRUE, include_spatial = FALSE,
-    data = dat, formula = observed ~ 1, time = "time",
-    family = gaussian(link = "identity"), spde = spde
-  )
-  b <- tidy(m, effects = "ran_par", conf.int = TRUE)
-  expect_equal(b$estimate[b$term == "ar1_phi"], 0.5, tolerance = 0.05)
-})
-
 test_that("Predictions on the original data set as `newdata`` return the same predictions", {
+  skip_on_travis()
   set.seed(1)
   x <- stats::runif(70, -1, 1)
   y <- stats::runif(70, -1, 1)
-  dat <- sim(x = x, y = y,
-    time_steps = 9, ar1_fields = TRUE, ar1_phi = 0.0,
-    sigma_O = 1e-6, sigma_E = 0.3, phi = 0.1,
+  loc <- data.frame(x = x, y = y)
+  spde <- make_mesh(loc, c("x", "y"), cutoff = 0.02)
+  dat <- sdmTMB_sim(x = x, y = y, mesh = spde,
+    time_steps = 9, rho = 0, range = 0.2,
+    sigma_O = 0, sigma_E = 0.3, phi = 0.1,
     seed = 1
   )
-  spde <- make_mesh(dat, c("x", "y"), n_knots = 40, type = "kmeans")
+  spde <- make_mesh(dat, c("x", "y"), cutoff = 0.02)
   m <- sdmTMB(
     ar1_fields = FALSE, include_spatial = FALSE,
     data = dat, formula = observed ~ 1, time = "time",
@@ -112,7 +100,7 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   tidy(m, effects = "ran_par", conf.int = TRUE)
 
   cols <- c("est", "est_non_rf", "est_rf", "omega_s", "epsilon_st")
-  expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-4)
+  expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-3)
 
   m <- sdmTMB(
     ar1_fields = TRUE, include_spatial = FALSE,
@@ -126,41 +114,45 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
 })
 
 test_that("A time-varying model fits and predicts appropriately", {
+  skip_on_travis()
   SEED <- 42
   set.seed(SEED)
   x <- stats::runif(60, -1, 1)
   y <- stats::runif(60, -1, 1)
   initial_betas <- 0.5
-  kappa <- 4
-  sigma_O <- 1e-6
+  range <- 0.5
+  sigma_O <- 0
   sigma_E <- 0.1
   phi <- 0.1
   sigma_V <- 0.3
-  s <- sim(
-    x = x, y = y,
-    initial_betas = initial_betas, time_steps = 12L, sigma_V = sigma_V,
-    phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E,
+  loc <- data.frame(x = x, y = y)
+  spde <- make_mesh(loc, c("x", "y"), cutoff = 0.02)
+
+  s <- sdmTMB_sim(
+    x = x, y = y, mesh = spde, range = range,
+    betas = initial_betas, time_steps = 12L, sigma_V = sigma_V,
+    phi = phi, sigma_O = sigma_O, sigma_E = sigma_E,
     seed = SEED
   )
   spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
   m <- sdmTMB(data = s, formula = observed ~ 0, include_spatial = FALSE,
     time_varying = ~ 0 + cov1, time = "time", spde = spde, mgcv = FALSE)
-  expect_equal(exp(m$model$par["ln_tau_V"])[[1]], sigma_V, tolerance = 0.1)
+  expect_equal(exp(m$model$par["ln_tau_V"])[[1]], sigma_V, tolerance = 0.05)
   tidy(m, effects = "ran_par")
   b_t <- dplyr::group_by(s, time) %>%
-    dplyr::summarize(b_t = unique(b)) %>%
+    dplyr::summarize(b_t = unique(b), .groups = "drop") %>%
     dplyr::pull(b_t)
   r <- m$tmb_obj$report()
   b_t_fit <- r$b_rw_t
   plot(b_t, b_t_fit, asp = 1);abline(a = 0, b = 1)
-  expect_equal(mean((b_t- b_t_fit)^2), 0, tolerance = 1e-3)
+  expect_equal(mean((b_t- b_t_fit)^2), 0, tolerance = 1e-4)
   p <- predict(m)
   plot(p$est, s$observed, asp = 1);abline(a = 0, b = 1)
-  expect_equal(mean((p$est - s$observed)^2), 0, tolerance = 0.1)
+  expect_equal(mean((p$est - s$observed)^2), 0, tolerance = 0.01)
 
   cols <- c("est", "est_non_rf", "est_rf", "omega_s", "epsilon_st")
   p_nd <- predict(m, newdata = s)
-  expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-5)
+  expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-4)
 })
 
 test_that("Year indexes get created correctly", {
@@ -171,29 +163,32 @@ test_that("Year indexes get created correctly", {
   expect_identical(make_year_i(c(1, 4, 2)),    c(0L, 2L, 1L))
 })
 
-test_that("Priors are working and regularize", {
-  set.seed(1)
-  initial_betas <- 5 # Large to check regularization or priors
-  kappa <- 2
-  sigma_O <- 0.2
-  sigma_E <- 0.3
-  phi <- 0.01
-  x <- stats::runif(100, -1, 1)
-  y <- stats::runif(100, -1, 1)
-  s <- sim(
-    initial_betas = initial_betas, time = 4L,
-    phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E,
-    seed = 1
-  )
-  spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
-  m <- sdmTMB(data = s, formula = observed ~ 0 + cov1,
-    spde = spde, time = "time",
-    include_spatial = FALSE, enable_priors = FALSE)
-  m_priors <- sdmTMB(data = s, formula = observed ~ 0 + cov1,
-    spde = spde, time = "time",
-    include_spatial = FALSE, enable_priors = TRUE)
-  expect_true(m$model$par[["b_j"]] > m_priors$model$par[["b_j"]])
-})
+# test_that("Priors are working and regularize", {
+#   set.seed(1)
+#   initial_betas <- 5 # Large to check regularization or priors
+#   range <- 0.5
+#   sigma_O <- 0.2
+#   sigma_E <- 0.3
+#   phi <- 0.01
+#   x <- stats::runif(100, -1, 1)
+#   y <- stats::runif(100, -1, 1)
+#   loc <- data.frame(x = x, y = y)
+#   spde <- make_mesh(loc, c("x", "y"), cutoff = 0.02)
+#
+#   s <- sdmTMB_sim(
+#     initial_betas = initial_betas, time = 4L, mesh = spde,
+#     phi = phi, range = range, sigma_O = sigma_O, sigma_E = sigma_E,
+#     seed = 1
+#   )
+#   spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
+#   m <- sdmTMB(data = s, formula = observed ~ 0 + cov1,
+#     spde = spde, time = "time",
+#     include_spatial = FALSE, enable_priors = FALSE)
+#   m_priors <- sdmTMB(data = s, formula = observed ~ 0 + cov1,
+#     spde = spde, time = "time",
+#     include_spatial = FALSE, enable_priors = TRUE)
+#   expect_true(m$model$par[["b_j"]] > m_priors$model$par[["b_j"]])
+# })
 
 test_that("A spatial trend model fits", {
   d <- subset(pcod, year >= 2011) # subset for speed

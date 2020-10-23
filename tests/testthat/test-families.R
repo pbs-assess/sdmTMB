@@ -2,7 +2,7 @@ context("Families")
 
 test_that("Families return a name to list with the correct names", {
   .names <- c("family", "link", "linkfun", "linkinv")
-  expect_named(student(link = "identity"), .names)
+  expect_named(student(link = "identity"), c(.names, "df"))
   expect_named(lognormal(link = "log"), .names)
   expect_named(tweedie(link = "log"), .names)
   expect_named(nbinom2(link = "log"), .names)
@@ -30,38 +30,44 @@ test_that("The supplementary families work with appropriate links", {
   expect_error(class(student(link = banana)))
 })
 
-test_that("Student and family fits", {
+x <- stats::runif(100, -1, 1)
+y <- stats::runif(100, -1, 1)
+loc <- data.frame(x = x, y = y)
+spde <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
+
+test_that("Student family fits", {
+  skip_on_travis()
   set.seed(1)
   initial_betas <- 0.5
-  kappa <- 2
+  range <- 0.5
   sigma_O <- 0.3
   phi <- 0.01
-  x <- stats::runif(100, -1, 1)
-  y <- stats::runif(100, -1, 1)
-  s <- sim(x = x, y = y,
-    initial_betas = initial_betas, time = 1L,
-    phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = 0.0001,
-    seed = 1
+  s <- sdmTMB_sim(x = x, y = y,
+    betas = initial_betas, time = 1L,
+    phi = phi, range = range, sigma_O = sigma_O, sigma_E = 0,
+    seed = 1, mesh = spde
   )
   spde <- make_mesh(s, c("x", "y"), n_knots = 50, type = "kmeans")
   m <- sdmTMB(data = s, formula = observed ~ 1, spde = spde,
-    family = student(link = "identity"))
+    family = student(link = "identity", df = 7))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
   expect_length(residuals(m), nrow(s))
 })
 
 test_that("Lognormal fits with a mean matching the Gamma roughly", {
-  kappa <- .5
+  skip_on_travis()
+  range <- 1
   x <- stats::runif(500, -1, 1)
   y <- stats::runif(500, -1, 1)
+  loc <- data.frame(x = x, y = y)
+  spde <- make_mesh(loc, c("x", "y"), n_knots = 70, type = "kmeans")
   sigma_O <- 0.3
-  sigma_E <- 0.0001
+  sigma_E <- 0
   phi <- 0.2
-  s <- sim(x = x, y = y, time = 1L,
-    phi = phi, kappa = kappa, sigma_O = sigma_O, sigma_E = sigma_E, seed = 1
+  s <- sdmTMB_sim(x = x, y = y, time = 1L, mesh = spde, family = lognormal(),
+    phi = phi, range = range, sigma_O = sigma_O, sigma_E = sigma_E, seed = 1
   )
   spde <- make_mesh(s, c("x", "y"), n_knots = 70, type = "kmeans")
-  s$observed <- stats::rlnorm(nrow(s), mean = log(exp(s$real)), sd = 0.2)
   mlog <- sdmTMB(data = s, formula = observed ~ 1, spde = spde,
     family = lognormal(link = "log"))
   mgamma <- sdmTMB(data = s, formula = observed ~ 1, spde = spde,
@@ -114,18 +120,23 @@ test_that("Gamma fits", {
   expect_length(residuals(m), nrow(d))
 })
 
+set.seed(1)
+x <- stats::runif(400, -1, 1)
+y <- stats::runif(400, -1, 1)
+loc <- data.frame(x = x, y = y)
+spde <- make_mesh(loc, c("x", "y"), n_knots = 90, type = "kmeans")
+
 test_that("Beta fits", {
-  s <- sim(sigma_O = 0.02)
-  s$observed <- stats::plogis(s$observed * 7)
-  spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
+  skip_on_travis()
+  s <- sdmTMB_sim(x = x, y = y, sigma_E = 0, mesh = spde, sigma_O = 0.2, range = 0.8, family = Beta(), phi = 4)
   m <- sdmTMB(data = s, formula = observed ~ 1,
     spde = spde, family = Beta(link = "logit"))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
 
-  m2 <- glmmTMB::glmmTMB(observed ~ 1, data = s,
-    family = glmmTMB::beta_family(link = "logit"))
-  glmmTMBphi <- exp(m2$fit$par[["betad"]])
-
-  expect_equal(m$model$par[["ln_phi"]], log(glmmTMBphi), tol = 0.1)
+  # m2 <- glmmTMB::glmmTMB(observed ~ 1, data = s,
+  #   family = glmmTMB::beta_family(link = "logit"))
+  # glmmTMBphi <- exp(m2$fit$par[["betad"]])
+  #
+  # expect_equal(m$model$par[["ln_phi"]], log(glmmTMBphi), tol = 0.1)
   expect_length(residuals(m), nrow(s))
 })
