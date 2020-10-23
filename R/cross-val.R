@@ -143,7 +143,7 @@ sdmTMB_cv <- function(formula, data, spde, time = NULL,
       max_gradient = max(abs(object$gradients)),
       bad_eig = object$bad_eig
     )
-  })
+  }, future.seed = TRUE)
 
   models <- lapply(out, `[[`, "model")
   data <- lapply(out, `[[`, "data")
