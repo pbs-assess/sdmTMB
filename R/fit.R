@@ -64,7 +64,9 @@ NULL
 #'   profile for depth, and depth and depth^2 are part of your formula, you need
 #'   to make sure these are listed first and that an intercept isn't included.
 #'   For example, `formula = cpue ~ 0 + depth + depth2 + as.factor(year)`.
-#'
+#' @param epsilon_model Whether to include a time varying spatiotemporal component
+#'   Defaults to NULL but can be specified as "loglinear", in which a log-linear model is
+#'   applied to the standard deviation of spatiotemporal variation (epsilon)
 #' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
 #'   model.response terms model.offset
@@ -177,12 +179,12 @@ NULL
 #' print(m_pos)
 #'
 #' # Non-stationary model on spatiotemporal variance:
-#' d <- subset(pcod, year >= 2011) # subset for example speed
-#' pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
-#' m_epsilon_trend <- sdmTMB(density ~ depth_scaled + depth_scaled2 + as.factor(year),
-#'    data = d, time = "year", spde = pcod_spde,
-#'    family = tweedie(link = "log"), epsilon_model="loglinear")
-#' print(m_epsilon_trend)
+#' #d <- subset(pcod, year >= 2011) # subset for example speed
+#' #pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
+#' #m_epsilon_trend <- sdmTMB(density ~ depth_scaled + depth_scaled2 + as.factor(year),
+#' #   data = d, time = "year", spde = pcod_spde,
+#' #     family = tweedie(link = "log"), epsilon_model="loglinear")
+#' #print(m_epsilon_trend)
 #' }
 
 sdmTMB <- function(formula, data, spde, time = NULL,
