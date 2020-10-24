@@ -304,7 +304,7 @@ Type objective_function<Type>::operator()()
 
   PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3)
   PARAMETER(b_epsilon_logit); // slope coefficient for log-linear model on epsilon
-  PARAMETER_VECTOR(epsilon_rw);    // optional rw model on epsilon, n_t - 1 length for random walk model on epsilon
+  //PARAMETER_VECTOR(epsilon_rw);    // optional rw model on epsilon, n_t - 1 length for random walk model on epsilon
   //PARAMETER(ln_sigma_epsilon); // variance parameter for random walk model on epsilon
   //PARAMETER(logit_rho_epsilon); // rho parameter used for random walk stationarity
   // Joint negative log-likelihood

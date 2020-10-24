@@ -371,8 +371,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     omega_s_trend = rep(0, n_s),
     epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t),
     b_threshold = b_thresh,
-    b_epsilon_logit = 0,
-    epsilon_rw = rep(0, tmb_data$n_t-1)
+    b_epsilon_logit = 0
   )
   if (contains_offset) tmb_params$b_j[offset_pos] <- 1
 
@@ -415,12 +414,11 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
     # optional models on spatiotemporal sd parameter
     if(est_epsilon_model == 0) {
-      tmb_map <- c(tmb_map, list(b_epsilon_logit = as.factor(NA),
-        epsilon_rw = factor(rep(NA, tmb_data$n_t-1))))
+      tmb_map <- c(tmb_map, list(b_epsilon_logit = as.factor(NA)))
     }
     if(est_epsilon_model == 1) {
-      tmb_map <- c(tmb_map, list(
-        epsilon_rw = factor(rep(NA, tmb_data$n_t-1))))
+      #tmb_map <- c(tmb_map, list(
+      #  epsilon_rw = factor(rep(NA, tmb_data$n_t-1))))
     }
     #if(est_epsilon_model == 2) {
     #  tmb_map <- c(tmb_map, list(b_epsilon_logit = as.factor(NA)))
@@ -486,7 +484,13 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   #   tmb_obj <- TMB::normalize(tmb_obj, flag = "flag")
 
   if (!is.null(previous_fit)) {
-    start <- previous_fit$model$par
+    start <- tmb_obj$par
+
+    # not all parameters will be in previous model. include those that are
+    unique_pars = unique(names(previous_fit$model$par))
+    for(i in 1:length(unique_pars)) {
+      start[which(names(start)==unique_pars[i])] <- previous_fit$model$par[which(names(previous_fit$model$par)==unique_pars[i])]
+    }
   } else {
     start <- tmb_obj$par
   }
