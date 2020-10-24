@@ -15,8 +15,7 @@ test_that("sdmTMB model fit with a covariate beta", {
   sigma_E <- 0.3 # SD of spatial process
   phi <- 0.1 # observation error
   s <- sdmTMB_sim(
-    x = x, y = y, mesh = spde,
-    betas = initial_betas, time_steps = 6L,
+    x = x, y = y, mesh = spde, time_steps = 6L, betas = initial_betas,
     phi = phi, range = range, sigma_O = sigma_O, sigma_E = sigma_E,
     seed = SEED
   )

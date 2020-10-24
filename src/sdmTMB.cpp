@@ -279,6 +279,8 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(X_threshold);
   DATA_VECTOR(proj_X_threshold);
   DATA_INTEGER(threshold_func);
+  // optional model for nonstationary st variance
+  DATA_INTEGER(est_epsilon_model);
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -301,7 +303,10 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
 
   PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3)
-
+  PARAMETER(b_epsilon_logit); // slope coefficient for log-linear model on epsilon
+  PARAMETER_VECTOR(epsilon_rw);    // optional rw model on epsilon, n_t - 1 length for random walk model on epsilon
+  //PARAMETER(ln_sigma_epsilon); // variance parameter for random walk model on epsilon
+  //PARAMETER(logit_rho_epsilon); // rho parameter used for random walk stationarity
   // Joint negative log-likelihood
   Type jnll = 0;
 
@@ -347,10 +352,10 @@ Type objective_function<Type>::operator()()
   Type range = sqrt(Type(8.0)) / exp(ln_kappa);
 
   if (include_spatial) {
-    Type sigma_O = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O) *
-                            exp(Type(2.0) * ln_kappa));
-    Type sigma_O_trend = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O_trend) *
-      exp(Type(2.0) * ln_kappa));
+    Type sigma_O = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O +
+                            Type(2.0) * ln_kappa));
+    Type sigma_O_trend = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O_trend +
+      Type(2.0) * ln_kappa));
     Type log_sigma_O = log(sigma_O);
     ADREPORT(log_sigma_O);
     REPORT(sigma_O);
@@ -360,8 +365,52 @@ Type objective_function<Type>::operator()()
     REPORT(sigma_O_trend);
     ADREPORT(sigma_O_trend);
   }
-  Type sigma_E = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E) *
-                          exp(Type(2.0) * ln_kappa));
+
+  // optional non-stationary model on epsilon
+  vector<Type> sigma_E(n_t);
+  vector<Type> ln_tau_E_vec(n_t);
+  Type b_epsilon;
+  if(est_epsilon_model==0) { // constant model
+    for(int i = 0; i < n_t; i++) {
+      sigma_E(i) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa));
+      ln_tau_E_vec(i) = ln_tau_E;
+    }
+  }
+  if(est_epsilon_model==1) { // loglinear model
+    b_epsilon = minus_one_to_one(b_epsilon_logit);
+    //b_epsilon = Type(2.0) * exp(b_epsilon_logit)/(1+exp(b_epsilon_logit)) - 1.0; // constrain to be -1 to 1
+    Type log_sigma0;
+    sigma_E(0) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa));
+    log_sigma0 = log(sigma_E(0));
+    ln_tau_E_vec(0) = ln_tau_E;
+    //std::cout << "par: "<< epsilon_slope << std::endl;
+    for(int i = 1; i < n_t; i++) {
+      sigma_E(i) = exp(log_sigma0 + b_epsilon * Type(i)); // log-linear model
+      //ln_tau_E_vec(i) = (log(Type(1.0) / (Type(4.0) * M_PI * sigma_E(i)*sigma_E(i))) - Type(2.0) * ln_kappa)/Type(2.0);
+      ln_tau_E_vec(i) = -log(sigma_E(i)) - log(Type(4.0) * M_PI) / Type(2.0) - ln_kappa;
+    }
+  }
+  // if(est_epsilon_model==2) { // ar1 model
+  //   vector<Type> log_sigma_E(n_t);
+  //   //Type rho_epsilon = Type(2.0) * exp(logit_rho_epsilon) / (1+exp(logit_rho_epsilon)) - Type(1.0);
+  //   //if(ln_sigma_epsilon < -20) ln_sigma_epsilon = -20;
+  //   //if(ln_sigma_epsilon > 20) ln_sigma_epsilon = 20;
+  //   Type sigma_epsilon = Type(0.1) * exp(ln_sigma_epsilon)/(1+exp(ln_sigma_epsilon));
+  //
+  //   sigma_E(0) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E) *
+  //     exp(Type(2.0) * ln_kappa));
+  //   log_sigma_E(0) = log(sigma_E(0));
+  //   ln_tau_E_vec(0) = ln_tau_E;
+  //
+  //   for(int i = 0; i < (n_t-1); i++) {
+  //     jnll -= dnorm(epsilon_rw(i), Type(0.0), sigma_epsilon, true);
+  //   }
+  //   for(int i = 0; i < (n_t-1); i++) {
+  //     log_sigma_E(i+1) = log_sigma_E(i) + epsilon_rw(i);// random walk
+  //     //ln_tau_E_vec(i+1) = (log(Type(1.0) / (Type(4.0) * M_PI * sigma_E(i+1)*sigma_E(i+1))) - Type(2.0) * ln_kappa)/Type(2.0);
+  //     ln_tau_E_vec(i+1) = -log(sigma_E(i+1)) - log(Type(4.0) * M_PI) / Type(2.0) - ln_kappa;
+  //   }
+  // }
 
   Eigen::SparseMatrix<Type> Q; // Precision matrix
   if (barrier) {
@@ -461,17 +510,19 @@ Type objective_function<Type>::operator()()
   if (!spatial_only) {
     if (!ar1_fields) {
       for (int t = 0; t < n_t; t++)
-        jnll += SCALE(GMRF(Q, s), 1. / exp(ln_tau_E))(epsilon_st.col(t));
+        jnll += SCALE(GMRF(Q, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
     } else {
-      // if (!separable_ar1) {
-      //   nll_epsilon += SCALE(GMRF(Q, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
-      //   for (int t = 1; t < n_t; t++) {
-      //     nll_epsilon += SCALE(GMRF(Q, s), 1./exp(ln_tau_E))(epsilon_st.col(t) -
-      //       rho * epsilon_st.col(t - 1));
-      //   }
-      // } else {
-      jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q, s)), 1./exp(ln_tau_E))(epsilon_st);
-      // }
+      if (est_epsilon_model > 0) {
+        // time-varying epsilon sd
+        jnll += SCALE(GMRF(Q, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
+        for (int t = 1; t < n_t; t++) {
+          jnll += SCALE(GMRF(Q, s), 1./exp(ln_tau_E_vec(t)))((epsilon_st.col(t) -
+            rho * epsilon_st.col(t - 1))/sqrt(1-rho*rho));
+        }
+      } else {
+        // constant epsilon sd, keep calculations as is
+        jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q, s)), 1./exp(ln_tau_E))(epsilon_st);
+      }
     }
   }
 
@@ -682,10 +733,25 @@ Type objective_function<Type>::operator()()
     ADREPORT(quadratic_peak);
     ADREPORT(quadratic_reduction);
   }
+  if(est_epsilon_model == 1) {
+    REPORT(b_epsilon_logit);
+    ADREPORT(b_epsilon_logit);
+    b_epsilon = Type(2.0) * exp(b_epsilon_logit)/(1+exp(b_epsilon_logit)) - 1.0; // constrain to be -1 to 1
+    REPORT(b_epsilon_logit);
+    ADREPORT(b_epsilon_logit);
+    REPORT(b_epsilon);
+    ADREPORT(b_epsilon);
+  }
+  // if(est_epsilon_model == 2) {
+  //   REPORT(ln_sigma_epsilon);
+  //   ADREPORT(ln_sigma_epsilon);
+  // }
 
   // ------------------ Reporting ----------------------------------------------
-
-  Type log_sigma_E = log(sigma_E); // for SE
+  vector<Type> log_sigma_E(n_t);
+  for (int i = 0; i < n_t; i++) {
+    log_sigma_E(i) = log(sigma_E(i));
+  }
   ADREPORT(log_sigma_E);      // log spatio-temporal SD
   REPORT(sigma_E);      // spatio-temporal SD
   ADREPORT(sigma_E);      // spatio-temporal SD
