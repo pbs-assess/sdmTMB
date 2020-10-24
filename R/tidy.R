@@ -83,7 +83,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   for (i in c("sigma_O", "sigma_E", "sigma_O_trend",
     "ln_tau_V", "range", "phi")) {
     j <- j + 1
-    if (i %in% names(est) && est[[i]] != 0) {
+    if (i %in% names(est) && est[["sigma_E"]][1] > 0) {
       .e <- est[[log_name[j]]]
       .se <- se[[log_name[j]]]
       out_re[[i]] <- data.frame(
