@@ -179,12 +179,12 @@ NULL
 #' print(m_pos)
 #'
 #' # Non-stationary model on spatiotemporal variance:
-#' #d <- subset(pcod, year >= 2011) # subset for example speed
-#' #pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
-#' #m_epsilon_trend <- sdmTMB(density ~ depth_scaled + depth_scaled2 + as.factor(year),
-#' #   data = d, time = "year", spde = pcod_spde,
-#' #     family = tweedie(link = "log"), epsilon_model="loglinear")
-#' #print(m_epsilon_trend)
+#' d <- subset(pcod, year >= 2011) # subset for example speed
+#' pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
+#' m_epsilon_trend <- sdmTMB(density ~ depth_scaled + depth_scaled2 + as.factor(year),
+#'    data = d, time = "year", spde = pcod_spde,
+#'      family = tweedie(link = "log"), epsilon_model="loglinear")
+#' print(m_epsilon_trend)
 #' }
 
 sdmTMB <- function(formula, data, spde, time = NULL,
