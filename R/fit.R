@@ -492,9 +492,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     start <- tmb_obj$par
 
     # not all parameters will be in previous model. include those that are
-    unique_pars = unique(names(previous_fit$model$par))
+    unique_pars = unique(names(previous_fit$tmb_obj$par))
     for(i in 1:length(unique_pars)) {
-      start[which(names(start)==unique_pars[i])] <- previous_fit$model$par[which(names(previous_fit$model$par)==unique_pars[i])]
+      start[which(names(start)==unique_pars[i])] <- previous_fit$tmb_obj$par[which(names(previous_fit$tmb_obj$par)==unique_pars[i])]
     }
   } else {
     start <- tmb_obj$par
