@@ -28,7 +28,7 @@
 #'
 #' @export
 get_index <- function(obj, bias_correct = FALSE, level = 0.95, ...)  {
-  d <- get_generic(obj, value_name = "log_total",
+  d <- get_generic(obj, value_name = "link_total",
     bias_correct = bias_correct, level = level, trans = exp, ...)
   names(d)[names(d) == "trans_est"] <- "log_est"
   d

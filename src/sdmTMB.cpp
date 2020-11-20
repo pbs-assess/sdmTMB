@@ -196,6 +196,29 @@ Type InverseLink(Type eta, int link)
   return out;
 }
 
+template <class Type>
+Type Link(Type eta, int link)
+{
+  Type out;
+  switch (link) {
+    case identity_link:
+      out = eta;
+      break;
+    case log_link:
+      out = log(eta);
+      break;
+    case logit_link:
+      out = logit(eta);
+      break;
+    case inverse_link:
+      out = Type(1.0) / eta;
+      break;
+    default:
+      error("Link not implemented.");
+  }
+  return out;
+}
+
 // ------------------ Main TMB template ----------------------------------------
 
 template <class Type>
@@ -620,14 +643,17 @@ Type objective_function<Type>::operator()()
     if (calc_time_totals) {
       // ------------------ Derived quantities ---------------------------------
 
-      // Total biomass:
+      // Total biomass etc.:
       vector<Type> total(n_t);
       for (int i = 0; i < proj_eta.size(); i++) {
         total(proj_year(i)) += InverseLink(proj_eta(i), link) * area_i(i);
       }
-      vector<Type> log_total = log(total);
-      REPORT(log_total);
-      ADREPORT(log_total);
+      vector<Type> link_total(n_t);
+      for (int i = 0; i < n_t; i++) {
+        link_total(i) = Link(total(i), link);
+      }
+      REPORT(link_total);
+      ADREPORT(link_total);
 
       // Centre of gravity:
       vector<Type> cog_x(n_t);

@@ -32,7 +32,7 @@ p <- predict(m, newdata = nd) # use model 'm' to predict values for each point
 
 
 
-# get_index(p, value_name = "log_total", bias_correct = FALSE)
+# get_index(p, value_name = "link_total", bias_correct = FALSE)
 
 
 predictions <- p$data

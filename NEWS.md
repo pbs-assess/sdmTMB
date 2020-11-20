@@ -1,5 +1,13 @@
 # sdmTMB
 
+# sdmTMB 0.0.9.9000
+
+* Switched the density/abundance index calculation to use the link function as
+  opposed to a hardcoded log() so that the `get_generic()` function can be used
+  to grab things like standardized average values of the response across a grid.
+  What used to be `log_total` in the raw TMB output is now `link_total` but most
+  users you shouldn't notice any difference.
+
 # sdmTMB 0.0.8.9000
 
 * Overhauled the simulation function. The function is now called `sdmTMB_sim()`

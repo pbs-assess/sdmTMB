@@ -22,7 +22,7 @@ ggplot(cog, aes(year, est, ymin = lwr, ymax = upr)) +
   geom_ribbon(alpha = 0.5) + geom_line() + facet_wrap(~coord, scales = "free_y")
 
 
-# get_index(p, value_name = "log_total", bias_correct = FALSE)
+# get_index(p, value_name = "link_total", bias_correct = FALSE)
 
 library(dplyr)
 data.frame(X = p$data$X, est = exp(p$data$est), year = p$data$year) %>%
