@@ -1,6 +1,6 @@
 context("Index and COG calculations work")
 
-text_that("make_spde works but throws a warning", {
+test_that("make_spde works but throws a warning", {
   expect_warning({pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 30)})
 })
 
