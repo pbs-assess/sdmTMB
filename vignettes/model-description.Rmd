@@ -141,10 +141,10 @@ $N = 1$ (i.e., 'size' currently fixed) and $\mu$ is probability
 As shape, scale:
 
 $$
-\operatorname{Gamma} \left( \frac{1}{\phi^2}, \mu\ \phi^2  \right)
+\operatorname{Gamma} \left( \phi, \frac{\mu}{\phi}  \right)
 $$
 
-where $\phi$ represents the CV.
+where $\phi$ represents the shape and $\frac{\mu}{\phi}$ represents the scale.
 
 ### [Gaussian](https://kaskr.github.io/adcomp/dnorm_8hpp.html)
 

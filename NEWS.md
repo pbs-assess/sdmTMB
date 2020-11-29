@@ -1,5 +1,12 @@
 # sdmTMB
 
+# sdmTMB 0.0.10.9000
+
+* Fixed parameter initialization for inverse links #35
+
+* Switched Gamma 'phi' parameter to representing shape instead of CV to
+  match glm(), glmmTMB(), etc.
+
 # sdmTMB 0.0.9.9000
 
 * Switched the density/abundance index calculation to use the link function as

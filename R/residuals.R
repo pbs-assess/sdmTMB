@@ -32,7 +32,7 @@ qres_pois <- function(object, y, mu) {
 
 qres_gamma <- function(object, y, mu) {
   phi <- exp(object$model$par[["ln_phi"]])
-  s1 <- 1 / phi^2
+  s1 <- phi
   s2 <- mu / s1
   u <- stats::pgamma(q = y, shape = s1, scale = s2)
   stats::qnorm(u)

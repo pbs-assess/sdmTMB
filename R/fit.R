@@ -356,6 +356,12 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t),
     b_threshold = b_thresh
   )
+  if (identical(family$link, "inverse") && family$family %in% c("Gamma", "gaussian", "student")) {
+    fam <- family
+    if (family$family == "student") fam$family <- "gaussian"
+    temp <- mgcv::gam(formula = formula, data = data, family = fam)
+    tmb_params$b_j <- stats::coef(temp)
+  }
   if (contains_offset) tmb_params$b_j[offset_pos] <- 1
 
   # Mapping off params as needed:

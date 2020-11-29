@@ -91,7 +91,7 @@ tweedie <- function(link = "log") {
   linktemp <- substitute(link)
   if (!is.character(linktemp))
     linktemp <- deparse(linktemp)
-  okLinks <- c("inverse", "log", "identity")
+  okLinks <- c("log", "identity")
   if (linktemp %in% okLinks)
     stats <- stats::make.link(linktemp)
   else if (is.character(link))

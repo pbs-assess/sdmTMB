@@ -35,6 +35,7 @@ plot(spde)
 families <- list(
   Beta(),
   Gamma(link = "log"),
+  # Gamma(link = "inverse"),
   binomial(),
   gaussian(),
   lognormal(),
@@ -46,10 +47,13 @@ families <- list(
 
 est <- purrr::map_dfr(families, function(.fam) {
   cat(.fam$family, "\n")
-  furrr::future_map_dfr(seq_len(80), function(i) {
+  furrr::future_map_dfr(seq_len(60), function(i) {
    if (.fam$family == "Beta") {
      phi <- phi * 5 # small phi's can cause ~0.0 and ~1.0
    }
+    if (.fam$link == "inverse") {
+      betas[1] <- 5 # needs to keep all mu(i) > 0
+    }
     s <- sdmTMB_sim(
       x = x, y = y, mesh = spde, X = X, sigma_V = c(0, 0),
       betas = betas, time_steps = time_steps,
@@ -83,6 +87,7 @@ est <- purrr::map_dfr(families, function(.fam) {
     data.frame(
       iter = i,
       family = .fam$family,
+      link = .fam$link,
       max_gradient = max(m$gradients),
       b0.est = est[est$term == "(Intercept)", "estimate"],
       b0.lwr = est[est$term == "(Intercept)", "conf.low"],
@@ -124,14 +129,14 @@ est %>%
   filter(!(family == "binomial" & variable == "phi.est")) %>%
   filter(!(family == "poisson" & variable == "phi.est")) %>%
   ggplot(aes(value)) +
-  facet_grid(vars(family), vars(variable), scales = "free") +
+  facet_grid(vars(paste(family, link)), vars(variable), scales = "free") +
   geom_histogram(bins = 15) +
   geom_vline(aes(xintercept = true_value), colour = "red")
 
 coverage <- est %>%
   filter(family != "poisson") %>%
   filter(family != "binomial") %>%
-  group_by(family) %>%
+  group_by(family, link) %>%
   mutate(covered = phi.lwr < phi & phi.upr > phi) %>%
   summarise(coverage = mean(covered))
 coverage
@@ -158,6 +163,6 @@ est %>%
   filter(family != "binomial") %>%
   worm_plot(phi.lwr, phi.est, phi.upr, phi, expression(phi)) +
   coord_cartesian(xlim = c(phi-0.2, phi+0.2)) +
-  facet_wrap(~family, scales = "free")
+  facet_wrap(~paste(family, link), scales = "free")
 
 plan(sequential)

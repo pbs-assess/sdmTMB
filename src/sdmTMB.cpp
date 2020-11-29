@@ -527,8 +527,11 @@ Type objective_function<Type>::operator()()
           jnll -= keep(i) * dpois(y_i(i), mu_i(i), true) * weights_i(i);
           break;
         case Gamma_family:
-          s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape,ln_phi=CV,shape=1/CV^2
-          jnll -= keep(i) * dgamma(y_i(i), s1, mu_i(i) / s1, true) * weights_i(i);
+          s1 = exp(ln_phi);         // shape
+          s2 = mu_i(i) / s1;        // scale
+          jnll -= keep(i) * dgamma(y_i(i), s1, s2, true) * weights_i(i);
+          // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
+          // jnll -= keep(i) * dgamma(y_i(i), s1, mu_i(i) / s1, true) * weights_i(i);
           break;
         case nbinom2_family:
           s1 = log(mu_i(i)); // log(mu_i)

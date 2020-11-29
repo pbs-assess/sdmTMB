@@ -54,7 +54,7 @@ test_that("Student family fits", {
   expect_length(residuals(m), nrow(s))
 })
 
-test_that("Lognormal fits with a mean matching the Gamma roughly", {
+test_that("Lognormal fits", {
   skip_on_travis()
   range <- 1
   x <- stats::runif(500, -1, 1)
@@ -70,9 +70,7 @@ test_that("Lognormal fits with a mean matching the Gamma roughly", {
   spde <- make_mesh(s, c("x", "y"), n_knots = 70, type = "kmeans")
   mlog <- sdmTMB(data = s, formula = observed ~ 1, spde = spde,
     family = lognormal(link = "log"))
-  mgamma <- sdmTMB(data = s, formula = observed ~ 1, spde = spde,
-    family = Gamma(link = "log"))
-  expect_equal(mlog$model$par, mgamma$model$par, tolerance = 0.01)
+  expect_equal(exp(mlog$model$par[["ln_phi"]]), phi, tolerance = 0.05)
 })
 
 test_that("NB2 fits", {
@@ -118,6 +116,12 @@ test_that("Gamma fits", {
     spde = spde, family = Gamma(link = "log"))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
   expect_length(residuals(m), nrow(d))
+
+  set.seed(1)
+  d$test_gamma <- stats::rgamma(nrow(d), shape = 1, scale = 1)
+  m <- sdmTMB(data = d, formula = test_gamma ~ 1,
+    spde = spde, family = Gamma(link = "inverse"), spatial_only = TRUE)
+  expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
 })
 
 set.seed(1)
