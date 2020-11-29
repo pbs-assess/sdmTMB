@@ -117,8 +117,8 @@ test_that("Gamma fits", {
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
   expect_length(residuals(m), nrow(d))
 
-  set.seed(1)
-  d$test_gamma <- stats::rgamma(nrow(d), shape = 1, scale = 1)
+  set.seed(123)
+  d$test_gamma <- stats::rgamma(nrow(d), shape = 0.5, scale = 1 / 0.5)
   m <- sdmTMB(data = d, formula = test_gamma ~ 1,
     spde = spde, family = Gamma(link = "inverse"), spatial_only = TRUE)
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
