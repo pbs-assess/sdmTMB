@@ -1,5 +1,9 @@
 # sdmTMB
 
+# sdmTMB 0.0.10.9001
+
+* Fix Student-t degrees of freedom in the randomized quantile residuals
+
 # sdmTMB 0.0.10.9000
 
 * Fixed parameter initialization for inverse links #35
