@@ -4,7 +4,8 @@
 
 #' Predict from an sdmTMB model
 #'
-#' Can predict on the original data locations or on new data.
+#' Make predictions from an sdmTMB model. The function can predict on the
+#' original or new data.
 #'
 #' @param object An object from [sdmTMB()].
 #' @param newdata An optional new data frame. This should be a data frame with
@@ -12,8 +13,8 @@
 #'   is a spatiotemporal model) with the same name as in the fitted data. There
 #'   should be predictor data for each year in the original data set.
 #' @param se_fit Should standard errors on predictions at the new locations given by
-#'   `newdata` be calculated? Warning: the current implementation can be slow for
-#'   large data sets or high-resolution projections.
+#'   `newdata` be calculated? Warning: the current implementation can be very
+#'   slow for large data sets or high-resolution projections.
 #' @param xy_cols A character vector of length 2 that gives the column names of
 #'   the x and y coordinates in `newdata`.
 #' @param return_tmb_object Logical. If `TRUE`, will include the TMB object in

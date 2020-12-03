@@ -3,12 +3,14 @@ NULL
 
 #' Fit a spatial or spatiotemporal GLMM with TMB
 #'
-#' Fit a spatial or spatiotemporal GLMM with TMB. Particularly useful for
-#' species distribution models and relative abundance index standardization.
+#' Fit a spatial or spatiotemporal predictive-process GLMM with TMB.
+#' Among other uses, this can be useful for (dynamic) species distribution
+#' models and relative abundance index standardization.
 #'
 #' @param formula Model formula. See the Details section below for how to specify
-#'   offsets and threshold parameters. For index standardization, include `0 +
-#'   as.factor(year)` (or whatever the time column is called) in the formula.
+#'   offsets and threshold parameters. For index standardization, you may wish
+#'   to include `0 + as.factor(year)` (or whatever the time column is called)
+#'   in the formula.
 #' @param data A data frame.
 #' @param spde An object from [make_mesh()].
 #' @param time The time column (as character). Leave as `NULL` for a spatial-only
@@ -18,29 +20,36 @@ NULL
 #'   \code{\link[sdmTMB:families]{nbinom2()}}, and
 #'   \code{\link[sdmTMB:families]{tweedie()}}].
 #' @param time_varying An optional formula describing covariates that should be
-#'   modelled as a random walk through time.
+#'   modelled as a random walk through time. Be careul not to include
+#'   covariates (including the intercept) in both the main and time-varying
+#'   formula. I.e., at least one should have `~ 0` or ~ -1`.
 #' @param weights Optional likelihood weights for the conditional model.
 #'   Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
 #'   to one and are not internally modified.
 #' @param extra_time Optional extra time slices (e.g., years) to include for
-#'   interpolation or forecasting with the predict function. See details section.
-#' @param reml Logical: use REML estimation rather than maximum likelihood?
+#'   interpolation or forecasting with the predict function. See Details section.
+#' @param reml Logical: use REML (restricted maximum likelihood) estimation
+#'   rather than maximum likelihood? Internally, this adds the fixed effects
+#'   to the list of random effects to intetgrate over.
 #' @param silent Silent or include optimization details?
 #' @param multiphase Logical: estimate the fixed and random effects in phases?
 #'   Phases are usually faster and more stable.
 #' @param anisotropy Logical: allow for anisotropy? See [plot_anisotropy()].
 #' @param control Optimization control options. See [sdmTMBcontrol()].
-#' @param enable_priors Should weakly informative priors be enabled?
-#'   Experimental and likely for use with the \pkg{tmbstan} package. Note that
-#'   the priors are not yet sensible and Jacobian adjustments are not made. If you
-#'   are interested in this functionality, please contact the developers.
+#' @param enable_priors Do not use yet. Should weakly
+#'   informative priors be enabled? Experimental and likely for use with the
+#'   \pkg{tmbstan} package. Note that the priors are not yet sensible and
+#'   Jacobian adjustments are not made. If you are interested in this
+#'   functionality, please contact the developers.
 #' @param ar1_fields Estimate the spatiotemporal random fields as a
 #'   stationary AR1 process?
 #' @param include_spatial Should a separate spatial random field be estimated?
 #'   If enabled then there will be separate spatial and spatiotemporal
 #'   fields.
 #' @param spatial_trend Should a separate spatial field be included in the
-#'   trend? Requires spatiotemporal data.
+#'   trend that represents local (time) trends? Requires spatiotemporal data.
+#'   See <http://dx.doi.org/10.1111/ecog.05176> and the
+#'   [spatial trends vignette](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html).
 #' @param spatial_only Logical: should only a spatial model be fit (i.e. do not
 #'   include spatiotemporal random effects)? By default a spatial-only model
 #'   will be fit if there is only one unique value in the time column or the
@@ -55,7 +64,7 @@ NULL
 #' @param mgcv Parse the formula with [mgcv::gam()]?
 #' @param previous_fit A previously fitted sdmTMB model to initialize the
 #'   optimization with. Can greatly speed up fitting. Note that the data and
-#'   model must be set up exactly the same way! However, the `weights` argument
+#'   model must be set up *exactly* the same way! However, the `weights` argument
 #'   can change, which can be useful for cross-validation.
 #' @param quadratic_roots Experimental feature for internal use right now; may
 #'   be moved to a branch. Logical: should quadratic roots be calculated? Note:
@@ -70,6 +79,13 @@ NULL
 #'   model.response terms model.offset
 #'
 #' @details
+#'
+#' **Model description**
+#'
+#' For now, see the
+#' [model description](https://pbs-assess.github.io/sdmTMB/articles/model-description.html)
+#' vignette for a start. There are also descriptions of particular models in
+#' Anderson et al. (2019) and Barnett et al. (2020) (see reference list below).
 #'
 #' **Offsets**
 #'
@@ -92,6 +108,9 @@ NULL
 #'
 #' Note that only a single threshold covariate can be included.
 #'
+#' See the
+#' [threshold vignette](https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html).
+#'
 #' **Forecasting or interpolating**
 #'
 #' Extra time slices (e.g., years) can be included for interpolation or
@@ -100,10 +119,33 @@ NULL
 #' model to ensure the various time indices are set up correctly. Be careful if
 #' including extra time slices that the model remains identifiable. For example,
 #' including `+ as.factor(year)` in `formula` will render a model with no data
-#' to inform the expected value in the missing year. [sdmTMB()] makes no attempt
+#' to inform the expected value in a missing year. [sdmTMB()] makes no attempt
 #' to determine if the model makes sense for forecasting or interpolation. The
 #' options `time_varying`, `include_spatial`, `ar1_fields`, `time = NULL`
 #' provide mechanisms to predict over missing time slices.
+#'
+#' **Index standardization**
+#'
+#' For index standardization, you may wish to include `0 + as.factor(year)`
+#' (or whatever the time column is called) in the formula. See a basic
+#' example of index standardization in the relevant
+#' [package vignette](https://pbs-assess.github.io/sdmTMB/articles/model-description.html).
+#'
+#' @references
+#'
+#' Main reference/report introducing the package. We plan to write a paper
+#' to cite in the near future:
+#'
+#' Anderson, S.C., E.A. Keppel, A.M. Edwards, 2019. A reproducible data synopsis
+#' for over 100 species of British Columbia groundfish. DFO Can. Sci. Advis. Sec.
+#' Res. Doc. 2019/041. vii + 321 p.
+#' <https://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2019/2019_041-eng.html>
+#'
+#' Reference for local trends:
+#'
+#' Barnett, L.A.K., E.J. Ward, S.C. Anderson. Improving estimates of species
+#' distribution change by incorporating local trends. In press at Ecography.
+#' <https://doi.org/10.1111/ecog.05176>
 #'
 #' @export
 #'

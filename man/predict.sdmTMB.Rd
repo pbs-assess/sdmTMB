@@ -24,8 +24,8 @@ is a spatiotemporal model) with the same name as in the fitted data. There
 should be predictor data for each year in the original data set.}
 
 \item{se_fit}{Should standard errors on predictions at the new locations given by
-\code{newdata} be calculated? Warning: the current implementation can be slow for
-large data sets or high-resolution projections.}
+\code{newdata} be calculated? Warning: the current implementation can be very
+slow for large data sets or high-resolution projections.}
 
 \item{xy_cols}{A character vector of length 2 that gives the column names of
 the x and y coordinates in \code{newdata}.}
@@ -71,7 +71,8 @@ You likely only need the \code{data} element as an end user. The other elements
 are included for other functions.
 }
 \description{
-Can predict on the original data locations or on new data.
+Make predictions from an sdmTMB model. The function can predict on the
+original or new data.
 }
 \examples{
 # We'll only use a small number of knots so this example runs quickly
