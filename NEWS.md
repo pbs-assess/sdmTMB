@@ -1,5 +1,9 @@
 # sdmTMB
 
+# sdmTMB 0.0.11.9000
+
+* Add `penalties` argument to allow for regularization.
+
 # sdmTMB 0.0.10.9001
 
 * Fix Student-t degrees of freedom in the randomized quantile residuals

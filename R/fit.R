@@ -27,7 +27,8 @@ NULL
 #'   Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
 #'   to one and are not internally modified.
 #' @param extra_time Optional extra time slices (e.g., years) to include for
-#'   interpolation or forecasting with the predict function. See Details section.
+#'   interpolation or forecasting with the predict function. See the
+#'   Details section below.
 #' @param reml Logical: use REML (restricted maximum likelihood) estimation
 #'   rather than maximum likelihood? Internally, this adds the fixed effects
 #'   to the list of random effects to intetgrate over.
@@ -36,11 +37,9 @@ NULL
 #'   Phases are usually faster and more stable.
 #' @param anisotropy Logical: allow for anisotropy? See [plot_anisotropy()].
 #' @param control Optimization control options. See [sdmTMBcontrol()].
-#' @param enable_priors Do not use yet. Should weakly
-#'   informative priors be enabled? Experimental and likely for use with the
-#'   \pkg{tmbstan} package. Note that the priors are not yet sensible and
-#'   Jacobian adjustments are not made. If you are interested in this
-#'   functionality, please contact the developers.
+#' @param penalties Optional vector of penalties (priors) on the fixed effects.
+#'   See the Regularization Details section below.
+#' below.
 #' @param ar1_fields Estimate the spatiotemporal random fields as a
 #'   stationary AR1 process?
 #' @param include_spatial Should a separate spatial random field be estimated?
@@ -130,6 +129,17 @@ NULL
 #' (or whatever the time column is called) in the formula. See a basic
 #' example of index standardization in the relevant
 #' [package vignette](https://pbs-assess.github.io/sdmTMB/articles/model-description.html).
+#'
+#' **Regularization**
+#'
+#' You can achieve regularization via penalties (priors) on the fixed effect
+#' parameters. The vector of values supplied to the `penalties` argument
+#' represents standard deviations of normal distributions centered on zero with
+#' one value per fixed effect. These can be used for regularization, e.g.,
+#' Normal(0, 1) for ridge regression. These shoud not include `offset` terms and
+#' care should be taken if used with splines. You can fit the model once without
+#' penalties and inspect the element `head(your_model$tmb_data$X_ij)` if you want to see how the formula is translated to the fixed effect model matrix.
+#' The `penalties` vector should correspond to the columns of the `X_ij` matrix.
 #'
 #' @references
 #'
@@ -223,7 +233,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   family = gaussian(link = "identity"),
   time_varying = NULL, weights = NULL, extra_time = NULL, reml = FALSE,
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
-  control = sdmTMBcontrol(), enable_priors = FALSE, ar1_fields = FALSE,
+  control = sdmTMBcontrol(), penalties = NULL, ar1_fields = FALSE,
   include_spatial = TRUE, spatial_trend = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
   nlminb_loops = 1,
@@ -235,7 +245,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   assert_that(
     is.logical(reml), is.logical(anisotropy), is.logical(silent),
     is.logical(silent), is.logical(spatial_trend), is.logical(mgcv),
-    is.logical(multiphase), is.logical(enable_priors), is.logical(ar1_fields),
+    is.logical(multiphase), is.logical(ar1_fields),
     is.logical(include_spatial)
   )
   if (!is.null(time_varying)) assert_that(identical(class(time_varying), "formula"))
@@ -291,6 +301,13 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
   offset_pos <- grep("^offset$", colnames(X_ij))
   y_i  <- model.response(mf, "numeric")
+
+  if (!is.null(penalties)) {
+    assert_that(ncol(X_ij) == length(penalties),
+      msg = paste0("The number of fixed effects does not match the number of ",
+        "penalty terms. Ensure that offset terms are not in penalty vector and ",
+        "that any spline terms are properly accounted for."))
+  }
 
   if (identical(family$link, "log") && min(y_i, na.rm = TRUE) < 0) {
     stop("`link = 'log'` but the reponse data include values < 0.", call. = FALSE)
@@ -352,7 +369,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     normalize_in_r = 0L, # not used
     calc_time_totals = 0L,
     random_walk = !is.null(time_varying),
-    enable_priors = as.integer(enable_priors),
+    enable_priors = as.integer(!is.null(penalties)),
+    penalties = if (!is.null(penalties)) penalties else rep(1, ncol(X_ij)),
     include_spatial = as.integer(include_spatial),
     proj_mesh  = Matrix::Matrix(0, 1, 1), # dummy
     proj_X_ij  = matrix(0, ncol = 1, nrow = 1), # dummy
@@ -627,6 +645,7 @@ update_model <- function(object, silent = FALSE) {
     object$tmb_data$spde_barrier <- make_barrier_spde(object$spde)
   }
   if (!"pop_pred" %in% names(object$tmb_data)) object$tmb_data$pop_pred <- 0L
+  if (!"penalties" %in% names(object$tmb_data)) object$tmb_data$penalties <- rep(1, ncol(object$tmb_data$X_ij))
   if (!"mgcv" %in% names(object)) object$mgcv <- FALSE
   object$tmb_data$weights_i <- rep(1, length(object$tmb_data$y_i))
   object$tmb_data$calc_quadratic_range <- 0L

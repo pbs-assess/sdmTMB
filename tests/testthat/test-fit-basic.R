@@ -40,12 +40,42 @@ test_that("sdmTMB model fit with a covariate beta", {
 })
 
 test_that("Anisotropy fits and plots", {
+  skip_on_travis()
   m <- sdmTMB(data = pcod,
     formula = density ~ 0 + as.factor(year),
     spde = make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans"),
     family = tweedie(link = "log"), anisotropy = TRUE)
   expect_identical(class(m), "sdmTMB")
   plot_anisotropy(m)
+})
+
+test_that("Regularization works", {
+  skip_on_travis()
+  d <- subset(pcod, year >= 2015)
+  d$depth_scaled <- as.numeric(scale(d$depth_scaled))
+  m1 <- sdmTMB(data = d,
+    formula = density ~ 0 + depth_scaled + as.factor(year),
+    spde = make_mesh(d, c("X", "Y"), n_knots = 50, type = "kmeans"),
+    family = tweedie(link = "log"))
+
+  # Bypassing via NAs:
+  m2 <- sdmTMB(data = d,
+    formula = density ~ 0 + depth_scaled + as.factor(year),
+    spde = make_mesh(d, c("X", "Y"), n_knots = 50, type = "kmeans"),
+    family = tweedie(link = "log"),
+    penalties = c(NA, NA, NA))
+  expect_equal(m1$sd_report, m2$sd_report)
+
+  # Ridge regression on depth term:
+  m2 <- sdmTMB(data = d,
+    formula = density ~ 0 + depth_scaled + as.factor(year),
+    spde = make_mesh(d, c("X", "Y"), n_knots = 50, type = "kmeans"),
+    family = tweedie(link = "log"),
+    penalties = c(1, NA, NA))
+  b1 <- tidy(m1)
+  b2 <- tidy(m2)
+  expect_lt(b2$estimate[1], b1$estimate[2])
+  expect_lt(b2$std.error[1], b1$std.error[2])
 })
 
 test_that("A model with splines works", {

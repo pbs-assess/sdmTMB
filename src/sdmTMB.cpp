@@ -265,6 +265,7 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(area_i); // area per prediction grid cell for index standardization
 
   DATA_INTEGER(enable_priors);
+  DATA_VECTOR(penalties);
   DATA_INTEGER(ar1_fields);
   DATA_INTEGER(include_spatial);
   DATA_INTEGER(random_walk);
@@ -326,7 +327,7 @@ Type objective_function<Type>::operator()()
   PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3)
 
   // Joint negative log-likelihood
-  Type jnll = 0;
+  Type jnll = 0.0;
 
   // ------------------ End of parameters --------------------------------------
 
@@ -353,15 +354,17 @@ Type objective_function<Type>::operator()()
   // ------------------ Priors -------------------------------------------------
 
   if (enable_priors) {
-    jnll -= dnorm(ln_tau_O, Type(0.0), Type(1.0), true);
-    jnll -= dnorm(ln_tau_E, Type(0.0), Type(1.0), true);
-    jnll -= dnorm(ln_kappa, Type(0.0), Type(2.0), true);
-    jnll -= dnorm(ln_phi, Type(0.0), Type(1.0), true);
-    for (int j = 0; j < n_j; j++)
-      jnll -= dnorm(b_j(j), Type(0.0), Type(5.0), true);
-    if (spatial_trend) {
-      jnll -= dnorm(ln_tau_O_trend, Type(0.0), Type(1.0), true);
+    // jnll -= dnorm(ln_tau_O, Type(0.0), Type(1.0), true);
+    // jnll -= dnorm(ln_tau_E, Type(0.0), Type(1.0), true);
+    // jnll -= dnorm(ln_kappa, Type(0.0), Type(2.0), true);
+    // jnll -= dnorm(ln_phi, Type(0.0), Type(1.0), true);
+    for (int j = 0; j < n_j; j++) {
+      if (!isNA(penalties(j)))
+        jnll -= dnorm(b_j(j), Type(0.0), penalties(j), true);
     }
+    // if (spatial_trend) {
+    //   jnll -= dnorm(ln_tau_O_trend, Type(0.0), Type(1.0), true);
+    // }
   }
 
   // ------------------ Geospatial ---------------------------------------------

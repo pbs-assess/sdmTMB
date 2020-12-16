@@ -18,7 +18,7 @@ sdmTMB(
   multiphase = TRUE,
   anisotropy = FALSE,
   control = sdmTMBcontrol(),
-  enable_priors = FALSE,
+  penalties = NULL,
   ar1_fields = FALSE,
   include_spatial = TRUE,
   spatial_trend = FALSE,
@@ -58,7 +58,8 @@ Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
 to one and are not internally modified.}
 
 \item{extra_time}{Optional extra time slices (e.g., years) to include for
-interpolation or forecasting with the predict function. See Details section.}
+interpolation or forecasting with the predict function. See the
+Details section below.}
 
 \item{reml}{Logical: use REML (restricted maximum likelihood) estimation
 rather than maximum likelihood? Internally, this adds the fixed effects
@@ -73,11 +74,9 @@ Phases are usually faster and more stable.}
 
 \item{control}{Optimization control options. See \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}.}
 
-\item{enable_priors}{Do not use yet. Should weakly
-informative priors be enabled? Experimental and likely for use with the
-\pkg{tmbstan} package. Note that the priors are not yet sensible and
-Jacobian adjustments are not made. If you are interested in this
-functionality, please contact the developers.}
+\item{penalties}{Optional vector of penalties (priors) on the fixed effects.
+See the Regularization Details section below.
+below.}
 
 \item{ar1_fields}{Estimate the spatiotemporal random fields as a
 stationary AR1 process?}
@@ -174,6 +173,17 @@ For index standardization, you may wish to include \code{0 + as.factor(year)}
 (or whatever the time column is called) in the formula. See a basic
 example of index standardization in the relevant
 \href{https://pbs-assess.github.io/sdmTMB/articles/model-description.html}{package vignette}.
+
+\strong{Regularization}
+
+You can achieve regularization via penalties (priors) on the fixed effect
+parameters. The vector of values supplied to the \code{penalties} argument
+represents standard deviations of normal distributions centered on zero with
+one value per fixed effect. These can be used for regularization, e.g.,
+Normal(0, 1) for ridge regression. These shoud not include \code{offset} terms and
+care should be taken if used with splines. You can fit the model once without
+penalties and inspect the element \code{head(your_model$tmb_data$X_ij)} if you want to see how the formula is translated to the fixed effect model matrix.
+The \code{penalties} vector should correspond to the columns of the \code{X_ij} matrix.
 }
 \examples{
 d <- subset(pcod, year >= 2011) # subset for example speed
