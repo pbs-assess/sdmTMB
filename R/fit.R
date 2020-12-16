@@ -138,8 +138,11 @@ NULL
 #' one value per fixed effect. These can be used for regularization, e.g.,
 #' Normal(0, 1) for ridge regression. These shoud not include `offset` terms and
 #' care should be taken if used with splines. You can fit the model once without
-#' penalties and inspect the element `head(your_model$tmb_data$X_ij)` if you want to see how the formula is translated to the fixed effect model matrix.
+#' penalties and inspect the element `head(your_model$tmb_data$X_ij)` if you
+#' want to see how the formula is translated to the fixed effect model matrix.
 #' The `penalties` vector should correspond to the columns of the `X_ij` matrix.
+#' An element can contain `NA` if you wish to avoid a penalty/prior on a specific
+#' term (e.g., the intercept).
 #'
 #' @references
 #'
@@ -370,7 +373,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     calc_time_totals = 0L,
     random_walk = !is.null(time_varying),
     enable_priors = as.integer(!is.null(penalties)),
-    penalties = if (!is.null(penalties)) penalties else rep(1, ncol(X_ij)),
+    penalties = if (!is.null(penalties)) penalties else rep(NA_real_, ncol(X_ij)),
     include_spatial = as.integer(include_spatial),
     proj_mesh  = Matrix::Matrix(0, 1, 1), # dummy
     proj_X_ij  = matrix(0, ncol = 1, nrow = 1), # dummy
