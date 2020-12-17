@@ -509,7 +509,7 @@ Type objective_function<Type>::operator()()
     for (int k = 0; k < X_rw_ik.cols(); k++) {
       // flat prior on the initial value... then:
       for (int t = 1; t < n_t; t++) {
-        jnll += -dnorm(b_rw_t(t, k), (t - 1, k), exp(ln_tau_V(k)), true);
+        jnll += -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
       }
     }
   }
