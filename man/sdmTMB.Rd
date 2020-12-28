@@ -182,8 +182,11 @@ represents standard deviations of normal distributions centered on zero with
 one value per fixed effect. These can be used for regularization, e.g.,
 Normal(0, 1) for ridge regression. These shoud not include \code{offset} terms and
 care should be taken if used with splines. You can fit the model once without
-penalties and inspect the element \code{head(your_model$tmb_data$X_ij)} if you want to see how the formula is translated to the fixed effect model matrix.
+penalties and inspect the element \code{head(your_model$tmb_data$X_ij)} if you
+want to see how the formula is translated to the fixed effect model matrix.
 The \code{penalties} vector should correspond to the columns of the \code{X_ij} matrix.
+An element can contain \code{NA} if you wish to avoid a penalty/prior on a specific
+term (e.g., the intercept).
 }
 \examples{
 d <- subset(pcod, year >= 2011) # subset for example speed
