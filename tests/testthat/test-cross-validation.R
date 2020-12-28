@@ -1,6 +1,8 @@
 context("Cross validation")
 
 test_that("Basic cross validation works", {
+  skip_on_ci()
+  skip_on_cran()
   d <- subset(pcod, year >= 2011) # subset for example speed
   spde <- make_mesh(d, c("X", "Y"), cutoff = 20)
 

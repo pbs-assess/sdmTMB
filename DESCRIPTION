@@ -47,17 +47,16 @@ Imports:
 Suggests:
     dplyr,
     ggplot2,
-    glmmTMB,
     knitr,
     rmarkdown,
     splancs,
     testthat
-LinkingTo: 
+LinkingTo:
     RcppEigen,
     TMB
-VignetteBuilder: 
+VignetteBuilder:
     knitr
-Additional_repositories: 
+Additional_repositories:
     https://inla.r-inla-download.org/R/stable
 ByteCompile: true
 Encoding: UTF-8

@@ -36,7 +36,8 @@ loc <- data.frame(x = x, y = y)
 spde <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
 
 test_that("Student family fits", {
-  skip_on_travis()
+  skip_on_ci()
+  skip_on_cran()
   set.seed(1)
   initial_betas <- 0.5
   range <- 0.5
@@ -55,7 +56,8 @@ test_that("Student family fits", {
 })
 
 test_that("Lognormal fits", {
-  skip_on_travis()
+  skip_on_ci()
+  skip_on_cran()
   range <- 1
   x <- stats::runif(500, -1, 1)
   y <- stats::runif(500, -1, 1)
@@ -74,19 +76,23 @@ test_that("Lognormal fits", {
 })
 
 test_that("NB2 fits", {
-  d <- pcod[pcod$year == 2017, ]
-  d$density <- round(d$density)
-  spde <- make_mesh(d, c("X", "Y"), cutoff = 10)
-  m <- sdmTMB(data = d, formula = density ~ 1,
-    spde = spde, family = nbinom2(link = "log"))
-  sdmTMBphi <- exp(m$model$par[["ln_phi"]])
-  m2 <- glmmTMB::glmmTMB(density ~ 1, data = d,
-    family = glmmTMB::nbinom2(link = "log"))
-  glmmTMBphi <- exp(m2$fit$par[["betad"]])
-  expect_equal(glmmTMBphi, sdmTMBphi, tol = 0.01)
+  skip_on_ci()
+  skip_on_cran()
+  set.seed(1)
+  x <- stats::runif(300, -1, 1)
+  y <- stats::runif(300, -1, 1)
+  loc <- data.frame(x = x, y = y)
+  spde <- make_mesh(loc, c("x", "y"), n_knots = 80, type = "kmeans")
+  s <- sdmTMB_sim(x = x, y = y, betas = 0.4, time = 1L, phi = 1.5, range = 0.8,
+    sigma_O = 0.4, sigma_E = 0, seed = 1, mesh = spde, family = nbinom2())
+  m <- sdmTMB(data = s, formula = observed ~ 1,
+    spde = spde, family = nbinom2())
+  expect_equal(round(tidy(m)[,"estimate"], 6), 0.161482)
 })
 
 test_that("Poisson fits", {
+  skip_on_ci()
+  skip_on_cran()
   d <- pcod
   spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
   set.seed(3)
@@ -98,6 +104,8 @@ test_that("Poisson fits", {
 })
 
 test_that("Binomial fits", {
+  skip_on_ci()
+  skip_on_cran()
   d <- pcod[pcod$year == 2017, ]
   d$density <- round(d$density)
   spde <- make_mesh(d, c("X", "Y"), cutoff = 10)
@@ -109,14 +117,14 @@ test_that("Binomial fits", {
 })
 
 test_that("Gamma fits", {
+  skip_on_ci()
+  skip_on_cran()
   d <- pcod[pcod$year == 2017 & pcod$density > 0, ]
-  # d$density <- d$density / 100
   spde <- make_mesh(d, c("X", "Y"), cutoff = 10)
   m <- sdmTMB(data = d, formula = density ~ 1,
     spde = spde, family = Gamma(link = "log"))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
   expect_length(residuals(m), nrow(d))
-
   set.seed(123)
   d$test_gamma <- stats::rgamma(nrow(d), shape = 0.5, scale = 1 / 0.5)
   m <- sdmTMB(data = d, formula = test_gamma ~ 1,
@@ -124,23 +132,18 @@ test_that("Gamma fits", {
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
 })
 
-set.seed(1)
-x <- stats::runif(400, -1, 1)
-y <- stats::runif(400, -1, 1)
-loc <- data.frame(x = x, y = y)
-spde <- make_mesh(loc, c("x", "y"), n_knots = 90, type = "kmeans")
-
 test_that("Beta fits", {
-  skip_on_travis()
-  s <- sdmTMB_sim(x = x, y = y, sigma_E = 0, mesh = spde, sigma_O = 0.2, range = 0.8, family = Beta(), phi = 4)
+  skip_on_ci()
+  skip_on_cran()
+  set.seed(1)
+  x <- stats::runif(400, -1, 1)
+  y <- stats::runif(400, -1, 1)
+  loc <- data.frame(x = x, y = y)
+  spde <- make_mesh(loc, c("x", "y"), n_knots = 90, type = "kmeans")
+  s <- sdmTMB_sim(x = x, y = y, sigma_E = 0, mesh = spde, sigma_O = 0.2,
+    range = 0.8, family = Beta(), phi = 4)
   m <- sdmTMB(data = s, formula = observed ~ 1,
     spde = spde, family = Beta(link = "logit"))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
-
-  # m2 <- glmmTMB::glmmTMB(observed ~ 1, data = s,
-  #   family = glmmTMB::beta_family(link = "logit"))
-  # glmmTMBphi <- exp(m2$fit$par[["betad"]])
-  #
-  # expect_equal(m$model$par[["ln_phi"]], log(glmmTMBphi), tol = 0.1)
   expect_length(residuals(m), nrow(s))
 })

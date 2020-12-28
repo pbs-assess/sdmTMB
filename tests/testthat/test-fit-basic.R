@@ -8,7 +8,6 @@ loc <- data.frame(x = x, y = y)
 spde <- make_mesh(loc, c("x", "y"), cutoff = 0.02)
 
 test_that("sdmTMB model fit with a covariate beta", {
-  skip_on_travis()
   initial_betas <- 0.5
   range <- 0.1
   sigma_O <- 0.3 # SD of spatial process
@@ -40,7 +39,8 @@ test_that("sdmTMB model fit with a covariate beta", {
 })
 
 test_that("Anisotropy fits and plots", {
-  skip_on_travis()
+  skip_on_ci()
+  skip_on_cran()
   m <- sdmTMB(data = pcod,
     formula = density ~ 0 + as.factor(year),
     spde = make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans"),
@@ -50,7 +50,8 @@ test_that("Anisotropy fits and plots", {
 })
 
 test_that("Regularization works", {
-  skip_on_travis()
+  skip_on_cran()
+  skip_on_ci()
   d <- subset(pcod, year >= 2015)
   d$depth_scaled <- as.numeric(scale(d$depth_scaled))
   m1 <- sdmTMB(data = d,
@@ -79,6 +80,8 @@ test_that("Regularization works", {
 })
 
 test_that("A model with splines works", {
+  skip_on_cran()
+  skip_on_ci()
   d <- subset(pcod, year >= 2015)
   m <- sdmTMB(data = d,
     formula = density ~ 1 + s(depth_scaled),
@@ -105,7 +108,8 @@ test_that("A spatiotemporal version works with predictions on new data points", 
 })
 
 test_that("Predictions on the original data set as `newdata`` return the same predictions", {
-  skip_on_travis()
+  skip_on_cran()
+  skip_on_ci()
   set.seed(1)
   x <- stats::runif(70, -1, 1)
   y <- stats::runif(70, -1, 1)
@@ -144,7 +148,8 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
 })
 
 test_that("A time-varying model fits and predicts appropriately", {
-  skip_on_travis()
+  skip_on_cran()
+  skip_on_ci()
   SEED <- 42
   set.seed(SEED)
   x <- stats::runif(60, -1, 1)
@@ -193,34 +198,9 @@ test_that("Year indexes get created correctly", {
   expect_identical(make_year_i(c(1, 4, 2)),    c(0L, 2L, 1L))
 })
 
-# test_that("Priors are working and regularize", {
-#   set.seed(1)
-#   initial_betas <- 5 # Large to check regularization or priors
-#   range <- 0.5
-#   sigma_O <- 0.2
-#   sigma_E <- 0.3
-#   phi <- 0.01
-#   x <- stats::runif(100, -1, 1)
-#   y <- stats::runif(100, -1, 1)
-#   loc <- data.frame(x = x, y = y)
-#   spde <- make_mesh(loc, c("x", "y"), cutoff = 0.02)
-#
-#   s <- sdmTMB_sim(
-#     initial_betas = initial_betas, time = 4L, mesh = spde,
-#     phi = phi, range = range, sigma_O = sigma_O, sigma_E = sigma_E,
-#     seed = 1
-#   )
-#   spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
-#   m <- sdmTMB(data = s, formula = observed ~ 0 + cov1,
-#     spde = spde, time = "time",
-#     include_spatial = FALSE, enable_priors = FALSE)
-#   m_priors <- sdmTMB(data = s, formula = observed ~ 0 + cov1,
-#     spde = spde, time = "time",
-#     include_spatial = FALSE, enable_priors = TRUE)
-#   expect_true(m$model$par[["b_j"]] > m_priors$model$par[["b_j"]])
-# })
-
 test_that("A spatial trend model fits", {
+  skip_on_cran()
+  skip_on_ci()
   d <- subset(pcod, year >= 2011) # subset for speed
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ depth_scaled, data = d,
@@ -230,6 +210,8 @@ test_that("A spatial trend model fits", {
 })
 
 test_that("A logistic threshold model fits", {
+  skip_on_cran()
+  skip_on_ci()
   d <- subset(pcod, year >= 2011) # subset for speed
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ 0 + as.factor(year) + logistic(depth_scaled), data = d,
@@ -239,6 +221,8 @@ test_that("A logistic threshold model fits", {
 })
 
 test_that("A linear threshold model fits", {
+  skip_on_cran()
+  skip_on_ci()
   d <- subset(pcod, year >= 2011) # subset for speed
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ 0 + as.factor(year) + breakpt(depth_scaled), data = d,
