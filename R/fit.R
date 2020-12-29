@@ -294,6 +294,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
   split_formula <- glmmTMB::splitForm(formula)
   RE_names <- barnames(split_formula$reTrmFormulas)
+  fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
   RE_indexes <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
   nobs_RE <- unname(apply(RE_indexes, 2L, max)) + 1L
   if (length(nobs_RE) == 0L) nobs_RE <- 0L

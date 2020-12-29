@@ -150,3 +150,13 @@ safe_deparse <- function (x, collapse = " ") {
 barnames <- function (bars) {
   vapply(bars, function(x) safe_deparse(x[[3]]), "")
 }
+
+check_valid_factor_levels <- function(x, .name = "") {
+  assert_that(is.factor(x),
+    msg = sprintf("Random effect group column `%s` is not a factor.", .name))
+  lev <- sort(levels(x))
+  uni <- sort(unique(as.character(x)))
+  assert_that(identical(lev, uni),
+    msg = sprintf(
+      "Random effect group column `%s` has extra factor levels. Please remove them.", .name))
+}
