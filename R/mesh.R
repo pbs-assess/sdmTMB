@@ -270,9 +270,9 @@ make_barrier_spde <- function(spde) {
   } else {
     C0 <- rep(1, 2)
     C1 <- rep(1, 2)
-    D0 <- Matrix::Matrix(0, 1, 1)
-    D1 <- Matrix::Matrix(0, 1, 1)
-    .I <- Matrix::Matrix(0, 1, 1)
+    D0 <- Matrix::Matrix(0, 1, 1, doDiag = FALSE)
+    D1 <- Matrix::Matrix(0, 1, 1, doDiag = FALSE)
+    .I <- Matrix::Matrix(0, 1, 1, doDiag = FALSE)
   }
   list(C0 = C0, C1 = C1, D0 = D0, D1 = D1, I = .I)
 }

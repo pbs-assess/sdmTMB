@@ -375,7 +375,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     enable_priors = as.integer(!is.null(penalties)),
     penalties = if (!is.null(penalties)) penalties else rep(NA_real_, ncol(X_ij)),
     include_spatial = as.integer(include_spatial),
-    proj_mesh  = Matrix::Matrix(0, 1, 1), # dummy
+    proj_mesh  = Matrix::Matrix(0, 1, 1, doDiag = FALSE), # dummy
     proj_X_ij  = matrix(0, ncol = 1, nrow = 1), # dummy
     proj_X_rw_ik = matrix(0, ncol = 1, nrow = 1), # dummy
     proj_year  = 0, # dummy
@@ -643,9 +643,9 @@ update_model <- function(object, silent = FALSE) {
     object$tmb_data$barrier <- 0L
     C0 <- rep(1, 2)
     C1 <- rep(1, 2)
-    D0 <- Matrix::Matrix(0, 1, 1)
-    D1 <- Matrix::Matrix(0, 1, 1)
-    .I <- Matrix::Matrix(0, 1, 1)
+    D0 <- Matrix::Matrix(0, 1, 1, doDiag = FALSE)
+    D1 <- Matrix::Matrix(0, 1, 1, doDiag = FALSE)
+    .I <- Matrix::Matrix(0, 1, 1, doDiag = FALSE)
     object$tmb_data$spde_barrier <- make_barrier_spde(object$spde)
   }
   if (!"pop_pred" %in% names(object$tmb_data)) object$tmb_data$pop_pred <- 0L
