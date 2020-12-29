@@ -465,18 +465,10 @@ Type objective_function<Type>::operator()()
     // Random intercepts:
     int temp = 0;
     for (int k = 0; k < n_RE; k++) {
-      if (k == 0) {
-        // std::cout << "index: " << RE_indexes(i, k) << "\n";
-        // std::cout << "k: " << k << "\n";
-        eta_i(i) += RE(RE_indexes(i, k));
-        // std::cout << "RE value: " << RE(RE_indexes(i, k)) << "\n";
-        jnll -= dnorm(RE(RE_indexes(i, k)), Type(0.0), exp(ln_tau_G(k)), true);
-      }
+      if (k == 0) eta_i(i) += RE(RE_indexes(i, k));
       if (k > 0) {
-        // std::cout << "k > 0!" << "\n";
         temp += nobs_RE(k - 1);
         eta_i(i) += RE(RE_indexes(i, k) + temp);
-        jnll -= dnorm(RE(RE_indexes(i, k) + temp), Type(0.0), exp(ln_tau_G(k)), true);
       }
     }
 
@@ -486,6 +478,10 @@ Type objective_function<Type>::operator()()
     } else {
       mu_i(i) = InverseLink(eta_i(i), link);
     }
+  }
+
+  for (int k = 0; k < RE.size(); k++) {
+    jnll -= dnorm(RE(k), Type(0.0), exp(ln_tau_G(0)), true);
   }
 
   // ------------------ Probability of random effects --------------------------
