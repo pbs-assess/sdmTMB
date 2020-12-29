@@ -526,12 +526,6 @@ Type objective_function<Type>::operator()()
     }
   }
 
-  // Normalization of GMRFs during outer-optimization step in R:
-  if (normalize_in_r) {
-    // Type nll_gmrf = nll_epsilon + nll_omega + nll_omega_trend;
-    // if (flag == 0) return(jnll);
-  }
-
   // ------------------ Probability of data given random effects ---------------
 
   Type s1, s2;
@@ -588,8 +582,8 @@ Type objective_function<Type>::operator()()
   if (do_predict) {
     vector<Type> proj_fe = proj_X_ij * b_j;
     // add threshold effect if specified
-    if(threshold_func > 0) {
-      if(threshold_func == 1) {
+    if (threshold_func > 0) {
+      if (threshold_func == 1) {
         // linear
         for (int i = 0; i < proj_X_ij.rows(); i++) {
           proj_fe(i) = proj_fe(i) + linear_threshold(proj_X_threshold(i), s_slope, s_cut);

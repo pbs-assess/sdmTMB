@@ -299,8 +299,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   nobs_RE <- unname(apply(RE_indexes, 2L, max)) + 1L
   if (length(nobs_RE) == 0L) nobs_RE <- 0L
   formula <- split_formula$fixedFormula
-  ln_tau_G_index <- unlist(lapply(seq_along(nobs_RE),
-    function(i) rep(i, each = nobs_RE[i]))) - 1L
+  ln_tau_G_index <- unlist(lapply(seq_along(nobs_RE), function(i) rep(i, each = nobs_RE[i]))) - 1L
 
   if (isFALSE(mgcv)) {
     mgcv_mod <- NULL
@@ -410,7 +409,6 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     nobs_RE = nobs_RE,
     ln_tau_G_index = ln_tau_G_index
   )
-  tmb_data$flag <- 1L # Include data
 
   b_thresh <- rep(0, 2)
   if (thresh$threshold_func == 2L) b_thresh <- c(0, b_thresh) # logistic

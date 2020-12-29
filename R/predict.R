@@ -246,7 +246,7 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     # to worry about space, so fill in dummy values if the user hasn't made any:
     fake_spatial_added <- FALSE
     if (pop_pred) {
-      for (i in 1:2) {
+      for (i in c(1, 2)) {
         if (!xy_cols[[i]] %in% names(newdata)) {
           newdata[[xy_cols[[i]]]] <- mean(object$data[[xy_cols[[i]]]], na.rm = TRUE)
           fake_spatial_added <- TRUE
