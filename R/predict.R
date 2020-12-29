@@ -254,7 +254,7 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
       }
     }
 
-    if (sum(is.na(new_data_time)) > 1)
+    if (sum(is.na(new_data_time)) > 0)
       stop("There is at least one NA value in the time column. ",
         "Please remove it.", call. = FALSE)
 
