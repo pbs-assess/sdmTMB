@@ -28,7 +28,7 @@ Description: The 'sdmTMB' package implements spatiotemporal
 License: GPL (>=3)
 URL: https://pbs-assess.github.io/sdmTMB/index.html
 BugReports: https://github.com/seananderson/sdmTMB/issues
-Depends: 
+Depends:
     R (>= 3.2.0)
 Imports:
     assertthat,
@@ -53,16 +53,16 @@ Suggests:
     rmarkdown,
     splancs,
     testthat
-LinkingTo: 
+LinkingTo:
     RcppEigen,
     TMB
-VignetteBuilder: 
+VignetteBuilder:
     knitr
-Additional_repositories: 
+Additional_repositories:
     https://inla.r-inla-download.org/R/stable
 ByteCompile: true
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.1.9000
+RoxygenNote: 7.1.1
 SystemRequirements: GNU make
