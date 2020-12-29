@@ -1,5 +1,9 @@
 # sdmTMB
 
+# sdmTMB 0.0.12.9000
+
+* Add IID random intercepts interface. E.g. `... + (1 | g)` #34
+
 # sdmTMB 0.0.11.9000
 
 * Add `penalties` argument to allow for regularization.
