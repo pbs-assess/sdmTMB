@@ -143,69 +143,10 @@ expand_time <- function(df, time_slices, time_column) {
   rbind(df, fake_df)
 }
 
-# f <- y ~ x + (1|g)
-# data <- data.frame(x = runif(100), y = rnorm(100), g = gl(10, 10))
-#
 safe_deparse <- function (x, collapse = " ") {
   paste(deparse(x, 500L), collapse = collapse)
 }
+
 barnames <- function (bars) {
   vapply(bars, function(x) safe_deparse(x[[3]]), "")
 }
-# f <- y ~ x + (1|g) + (1|h)
-# ff <- glmmTMB::splitForm(f)
-# ff$fixedFormula
-# ff$reTrmFormulas
-# barnames(ff$reTrmFormulas)
-
-# f <- y ~ x + (1|g) + (1|h)
-# data <- data.frame(x = runif(100), y = rnorm(100),
-#   g = gl(10, 10, labels = sample(LETTERS[1:10], size = 10)),
-#   h = gl(5, 20, labels = sample(LETTERS[1:5], size = 5))
-#   )
-# ff <- glmmTMB::splitForm(f)
-# ff$fixedFormula
-# ff$reTrmFormulas
-#
-# # X_ij <- model.matrix(~ g, data)
-# # mf <- model.frame(formula, data)
-#
-# data <- data[sample(1:nrow(data), nrow(data)),]
-#
-# RE_names <- barnames(ff$reTrmFormulas)
-# RE_indexes <- vapply(RE_names, function(x) as.integer(data[[x]]), rep(1L, nrow(data)))
-#
-# g_index <- RE_indexes[,1]
-# h_index <- RE_indexes[,2]
-#
-# nobs_RE <- apply(RE_indexes, 2, max)
-#
-# RE_g <- rnorm(nobs_RE[1], mean = -10)
-# RE_h <- rnorm(nobs_RE[2], mean = 30)
-# RE <- c(RE_g, RE_h)
-#
-# # ObsinRE <- matrix(g_index, nrow = nrow(data), ncol = 1L)
-# # ObsinRE <- cbind(ObsinRE, h_index)
-# n_RE <- ncol(ObsinRE)
-# mu <- rep(0, nrow(data))
-# temp <- 0
-# N <- nrow(data)
-# sigmas <- c(0.8, 1.2)
-#
-# # for (int i=0; i<Nfish_LA; i++) {
-# for (i in 1:N) {
-#   # for (int k=0; k<n_RE_LA; k++){
-#   for (k in 1:n_RE) {
-#     if (k == 1) mu[i] = mu[i] + RE[RE_indexes[i, k]]
-#     if (k > 1) {
-#       temp = temp + nobs_RE[k - 1]
-#       mu[i] = mu[i] + RE[RE_indexes[i, k] + temp]
-#     }
-#     # nll <- dnorm(RE[RE_indexes[i, k], 0, sigmas[k])
-#   }
-#   temp = 0
-# }
-# mu
-#
-#
-# identical(mu, RE_g[g_index] + RE_h[h_index])
