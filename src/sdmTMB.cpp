@@ -246,6 +246,7 @@ Type objective_function<Type>::operator()()
   // Random intercepts:
   DATA_IMATRIX(RE_indexes);
   DATA_IVECTOR(nobs_RE);
+  DATA_IVECTOR(ln_tau_G_index);
 
   DATA_SPARSE_MATRIX(A); // INLA 'A' projection matrix for original data
   DATA_SPARSE_MATRIX(A_st); // INLA 'A' projection matrix for unique stations
@@ -480,8 +481,8 @@ Type objective_function<Type>::operator()()
     }
   }
 
-  for (int k = 0; k < RE.size(); k++) {
-    jnll -= dnorm(RE(k), Type(0.0), exp(ln_tau_G(0)), true);
+  for (int g = 0; g < RE.size(); g++) {
+    jnll -= dnorm(RE(g), Type(0.0), exp(ln_tau_G(ln_tau_G_index(g))), true);
   }
 
   // ------------------ Probability of random effects --------------------------

@@ -298,6 +298,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   nobs_RE <- unname(apply(RE_indexes, 2L, max)) + 1L
   if (length(nobs_RE) == 0L) nobs_RE <- 0L
   formula <- split_formula$fixedFormula
+  ln_tau_G_index <- unlist(lapply(seq_along(nobs_RE),
+    function(i) rep(i, each = nobs_RE[i]))) - 1L
 
   if (isFALSE(mgcv)) {
     mgcv_mod <- NULL
@@ -332,7 +334,6 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   if (!is.null(time_varying)) {
     X_rw_ik <- model.matrix(time_varying, data)
   } else {
-
     X_rw_ik <- matrix(0, nrow = nrow(data), ncol = 1)
   }
 
@@ -404,7 +405,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     proj_X_threshold = 0, # dummy
     threshold_func = thresh$threshold_func,
     RE_indexes = RE_indexes,
-    nobs_RE = nobs_RE
+    nobs_RE = nobs_RE,
+    ln_tau_G_index = ln_tau_G_index
   )
   tmb_data$flag <- 1L # Include data
 
@@ -467,19 +469,19 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       ln_tau_O   = as.factor(NA),
       ln_tau_E   = as.factor(NA),
       ln_tau_V   = factor(rep(NA, ncol(X_rw_ik))),
-      # ln_tau_G   = factor(rep(NA, length(tmb_params$ln_tau_G))),
+      ln_tau_G   = factor(rep(NA, length(tmb_params$ln_tau_G))),
       ln_tau_O_trend = as.factor(NA),
       omega_s_trend  = factor(rep(NA, length(tmb_params$omega_s_trend))),
       ln_kappa   = as.factor(NA),
       ln_H_input = factor(rep(NA, 2)),
       b_rw_t     = factor(rep(NA, length(tmb_params$b_rw_t))),
-      # RE         = factor(rep(NA, length(tmb_params$RE))),
+      RE         = factor(rep(NA, length(tmb_params$RE))),
       omega_s    = factor(rep(NA, length(tmb_params$omega_s))),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
     tmb_obj1 <- TMB::MakeADFun(
       data = tmb_data, parameters = tmb_params,
-      map = not_phase1, DLL = "sdmTMB", silent = silent, random = "RE")
+      map = not_phase1, DLL = "sdmTMB", silent = silent)
 
     tmb_opt1 <- stats::nlminb(
       start = tmb_obj1$par, objective = tmb_obj1$fn,
@@ -524,20 +526,16 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       list(b_rw_t = as.factor(matrix(NA, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)))),
       list(ln_tau_V = as.factor(NA))
     )
-  if (nobs_RE > 0) tmb_random <- c(tmb_random, "RE")
+  if (nobs_RE[[1]] > 0) tmb_random <- c(tmb_random, "RE")
   if (reml) tmb_random <- c(tmb_random, "b_j")
 
   if (!is.null(previous_fit)) {
     tmb_params <- previous_fit$tmb_obj$env$parList()
   }
 
-  # tmb_map$ln_tau_G <- factor(rep(NA, length(tmb_params$ln_tau_G)))
-
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     random = tmb_random, DLL = "sdmTMB", silent = silent)
-  # if (tmb_data$normalize_in_r == 1L)
-  #   tmb_obj <- TMB::normalize(tmb_obj, flag = "flag")
 
   if (!is.null(previous_fit)) {
     start <- previous_fit$model$par
@@ -580,6 +578,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     data       = data,
     spde       = spde,
     formula    = original_formula,
+    split_formula = split_formula,
     time_varying = time_varying,
     threshold_parameter = thresh$threshold_parameter,
     threshold_function = thresh$threshold_func,

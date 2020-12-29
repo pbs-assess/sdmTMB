@@ -29,7 +29,8 @@ print.sdmTMB <- function(x, ...) {
   family <- paste0("Family: ", paste0(x$family$family, "(link = '", x$family$link, "')"), "\n")
   criterion <- paste0(fit_by, " criterion at convergence: ", mround(x$model$objective, 3), "\n")
 
-  .formula <- check_and_parse_thresh_params(x$formula, x$data)$formula
+  # .formula <- check_and_parse_thresh_params(x$formula, x$data)$formula
+  .formula <- x$split_formula$fixedFormula
   if (!"mgcv" %in% names(x)) x[["mgcv"]] <- FALSE
   if (isFALSE(x$mgcv)) {
     fe_names <- colnames(model.matrix(.formula, x$data))

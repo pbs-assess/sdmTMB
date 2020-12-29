@@ -33,7 +33,8 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
       msg = "`conf.level` must be length 1 and between 0 and 1")
   }
 
-  .formula <- check_and_parse_thresh_params(x$formula, x$data)$formula
+  # .formula <- check_and_parse_thresh_params(x$formula, x$data)$formula
+  .formula <- x$split_formula$fixedFormula
   if (!"mgcv" %in% names(x)) x[["mgcv"]] <- FALSE
   if (isFALSE(x$mgcv)) {
     fe_names <- colnames(model.matrix(.formula, x$data))
@@ -78,10 +79,10 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
 
   out_re <- list()
   log_name <- c("log_sigma_O", "log_sigma_E", "log_sigma_O_trend",
-    "ln_tau_V", "log_range", "ln_phi")
+    "ln_tau_V", "ln_tau_G", "log_range", "ln_phi")
   j <- 0
   for (i in c("sigma_O", "sigma_E", "sigma_O_trend",
-    "ln_tau_V", "range", "phi")) {
+    "ln_tau_V", "ln_tau_G", "range", "phi")) {
     j <- j + 1
     if (i %in% names(est) && est[[i]] != 0) {
       .e <- est[[log_name[j]]]
@@ -95,6 +96,14 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
       if (i == "sigma_O_trend") out_re[[i]]$term <- "sigma_Z"
       ii <- ii + 1
     }
+  }
+
+  for (i in seq_along(out_re)) {
+    if (grepl("^ln", out_re[[i]]$term[[1]])) {
+      out_re[[i]]$estimate <- exp(out_re[[i]]$estimate)
+      out_re[[i]]$term <- gsub("^ln_", "", out_re[[i]]$term)
+    }
+    out_re[[i]]$std.error <- NA
   }
 
   r <- x$tmb_obj$report()
