@@ -245,6 +245,7 @@ Type objective_function<Type>::operator()()
 
   // Random intercepts:
   DATA_IMATRIX(RE_indexes);
+  DATA_IMATRIX(proj_RE_indexes);
   DATA_IVECTOR(nobs_RE);
   DATA_IVECTOR(ln_tau_G_index);
 
@@ -255,7 +256,6 @@ Type objective_function<Type>::operator()()
   // Indices for factors
   DATA_FACTOR(year_i);
 
-  DATA_INTEGER(flag); // flag=0 => only prior returned; used when normalizing in R
   DATA_INTEGER(normalize_in_r);
 
   // Prediction?
@@ -481,11 +481,12 @@ Type objective_function<Type>::operator()()
     }
   }
 
+  // ------------------ Probability of random effects --------------------------
+
+  // IID random intercepts:
   for (int g = 0; g < RE.size(); g++) {
     jnll -= dnorm(RE(g), Type(0.0), exp(ln_tau_G(ln_tau_G_index(g))), true);
   }
-
-  // ------------------ Probability of random effects --------------------------
 
   // Random walk effects (dynamic regression):
   if (random_walk) {
@@ -601,10 +602,24 @@ Type objective_function<Type>::operator()()
       }
     }
 
-    vector<Type> proj_rw_i(proj_X_ij.rows());
+    // IID random intercepts:
+    vector<Type> proj_iid_re_i(proj_X_ij.rows());
+    proj_iid_re_i.setZero();
     for (int i = 0; i < proj_X_ij.rows(); i++) {
-      proj_rw_i(i) = Type(0);
+      int temp = 0;
+      for (int k = 0; k < n_RE; k++) {
+        if (k == 0) eta_i(i) += RE(proj_RE_indexes(i, k));
+        if (k > 0) {
+          temp += nobs_RE(k - 1);
+          proj_iid_re_i(i) += RE(proj_RE_indexes(i, k) + temp);
+          proj_fe(i) += proj_iid_re_i(i);
+        }
+      }
     }
+
+    // Random walk covariates:
+    vector<Type> proj_rw_i(proj_X_ij.rows());
+    proj_rw_i.setZero();
     if (random_walk) {
       for (int i = 0; i < proj_X_rw_ik.rows(); i++) {
         for (int k = 0; k < proj_X_rw_ik.cols(); k++) {
@@ -613,7 +628,8 @@ Type objective_function<Type>::operator()()
         }
       }
     }
-    REPORT(proj_rw_i);
+
+    // Spatial and spatiotemporal random fields:
     vector<Type> proj_re_sp = proj_mesh * omega_s;
     vector<Type> proj_re_sp_st_all = RepeatVector(proj_re_sp, n_t);
     array<Type> proj_re_st_temp(proj_mesh.rows(), n_t);
@@ -623,13 +639,11 @@ Type objective_function<Type>::operator()()
       proj_re_st.col(i) = proj_re_st_temp.col(i);
     }
 
+    // Spatially varying coefficients:
     vector<Type> proj_re_sp_trend(proj_X_ij.rows());
     vector<Type> proj_re_sp_slopes(proj_X_ij.rows());
-    for (int i = 0; i < proj_X_ij.rows(); i++) {
-      proj_re_sp_trend(i) = Type(0);
-      proj_re_sp_slopes(i) = Type(0);
-    }
-
+    proj_re_sp_trend.setZero();
+    proj_re_sp_slopes.setZero();
     if (spatial_trend) {
       vector<Type> proj_re_sp_slopes_all = proj_mesh * omega_s_trend;
       for (int i = 0; i < proj_X_ij.rows(); i++) {
@@ -641,18 +655,16 @@ Type objective_function<Type>::operator()()
     // Pick out the appropriate spatial and/or or spatiotemporal values:
     vector<Type> proj_re_st_vector(proj_X_ij.rows());
     vector<Type> proj_re_sp_st(proj_X_ij.rows());
-    for (int i = 0; i < proj_X_ij.rows(); i++) {
-      proj_re_st_vector(i) = Type(0);
-      proj_re_sp_st(i) = Type(0);
-    }
+    proj_re_st_vector.setZero();
+    proj_re_sp_st.setZero();
     for (int i = 0; i < proj_X_ij.rows(); i++) {
       proj_re_sp_st(i) = proj_re_sp_st_all(proj_spatial_index(i));
       proj_re_st_vector(i) = proj_re_st(proj_spatial_index(i), proj_year(i));
     }
 
-    vector<Type> proj_eta = proj_fe + proj_re_sp_st +
-      proj_re_st_vector + proj_re_sp_trend;
     vector<Type> proj_rf = proj_re_sp_st + proj_re_st_vector + proj_re_sp_trend;
+    vector<Type> proj_eta = proj_fe + proj_rf; // proj_fe includes RW and IID random effects
+
     REPORT(proj_fe);            // fixed effect projections
     REPORT(proj_re_sp_st);      // spatial random effect projections
     REPORT(proj_re_st_vector);  // spatiotemporal random effect projections
@@ -661,6 +673,7 @@ Type objective_function<Type>::operator()()
     REPORT(proj_eta);           // combined projections (in link space)
     REPORT(proj_rf);            // combined random field projections
     REPORT(proj_rw_i);          // random walk projections
+    REPORT(proj_iid_re_i);      // IID random intercept projections
 
     if (calc_se) {
       if (pop_pred) {

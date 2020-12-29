@@ -54,6 +54,7 @@ update_model <- function(object, silent = FALSE) {
     object$tmb_data$nobs_RE <- 0L
     object$tmb_data$ln_tau_G_index <- 0L
     object$tmb_data$RE_indexes <- matrix(ncol = 0L, nrow = nrow(object$tmb_data$X_ij))
+    object$tmb_data$proj_RE_indexes <- matrix(ncol = 0L, nrow = 1L)
     object$tmb_params$ln_tau_G <- 0
     object$tmb_params$RE <- rep(0, 1L)
     object$tmb_map$ln_tau_G <- factor(NA)

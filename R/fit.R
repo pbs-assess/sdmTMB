@@ -406,6 +406,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     proj_X_threshold = 0, # dummy
     threshold_func = thresh$threshold_func,
     RE_indexes = RE_indexes,
+    proj_RE_indexes = matrix(0, ncol = 0, nrow = 1), # dummy
     nobs_RE = nobs_RE,
     ln_tau_G_index = ln_tau_G_index
   )
