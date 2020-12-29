@@ -150,7 +150,7 @@ print.sdmTMB <- function(x, ...) {
     sigma_E,
     rho,
     criterion,
-    "\nSee ?tidy.sdmTMB to extract these values as a data frame.",
+    "\nSee ?tidy.sdmTMB to extract these values as a data frame.\n",
     sep = ""
   )
 
