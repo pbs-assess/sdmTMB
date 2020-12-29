@@ -383,7 +383,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     enable_priors = as.integer(!is.null(penalties)),
     penalties = if (!is.null(penalties)) penalties else rep(NA_real_, ncol(X_ij)),
     include_spatial = as.integer(include_spatial),
-    proj_mesh  = Matrix::Matrix(0, 1, 1), # dummy
+    proj_mesh  = Matrix::Matrix(0, 1, 1, doDiag = FALSE), # dummy
     proj_X_ij  = matrix(0, ncol = 1, nrow = 1), # dummy
     proj_X_rw_ik = matrix(0, ncol = 1, nrow = 1), # dummy
     proj_year  = 0, # dummy

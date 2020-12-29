@@ -263,7 +263,7 @@ make_anisotropy_spde <- function(spde, anistropy = TRUE) {
     ret <- list(
       n_s = 0L, n_tri = 0L, Tri_Area = rep(0, 1), E0 = matrix(0, 1),
       E1 = matrix(0, 1), E2 = matrix(0, 1), TV = matrix(0, 1),
-      G0 = Matrix::Matrix(0, 1, 1), G0_inv = Matrix::Matrix(0, 1, 1)
+      G0 = Matrix::Matrix(0, 1, 1, doDiag = FALSE), G0_inv = Matrix::Matrix(0, 1, 1, doDiag = FALSE)
     )
   }
   ret
@@ -279,9 +279,9 @@ make_barrier_spde <- function(spde) {
   } else {
     C0 <- rep(1, 2)
     C1 <- rep(1, 2)
-    D0 <- Matrix::Matrix(0, 1, 1)
-    D1 <- Matrix::Matrix(0, 1, 1)
-    .I <- Matrix::Matrix(0, 1, 1)
+    D0 <- Matrix::Matrix(0, 1, 1, doDiag = FALSE)
+    D1 <- Matrix::Matrix(0, 1, 1, doDiag = FALSE)
+    .I <- Matrix::Matrix(0, 1, 1, doDiag = FALSE)
   }
   list(C0 = C0, C1 = C1, D0 = D0, D1 = D1, I = .I)
 }
