@@ -101,6 +101,17 @@ print.sdmTMB <- function(x, ...) {
     mm_thresh <- NULL
   }
 
+  .tidy <- tidy(x, "ran_pars")
+  if ("tau_G" %in% .tidy$term) {
+    re_int_names <- barnames(x$split_formula$reTrmFormulas)
+    re_int_mat <- matrix(NA_real_, nrow = length(re_int_names), ncol = 1)
+    re_int_mat[,1] <- round(.tidy$estimate[.tidy$term == "tau_G"], 2)
+    rownames(re_int_mat) <- paste(re_int_names, "(Intercept)")
+    colnames(re_int_mat) <- "Std. Dev."
+  } else {
+    re_int_mat <- NULL
+  }
+
   if (!is.null(x$time_varying)) {
     tv_names <- colnames(model.matrix(x$time_varying, x$data))
     mm_tv <- cbind(round(as.numeric(sr_est$b_rw_t), 2), round(as.numeric(sr_se$b_rw_t), 2))
@@ -122,6 +133,11 @@ print.sdmTMB <- function(x, ...) {
 
   print(mm)
 
+  if (!is.null(re_int_mat)) {
+    cat("\n")
+    print(re_int_mat)
+  }
+
   if (!is.null(x$time_varying)) {
     cat("\nTime-varying parameters:\n" )
     print(mm_tv)
@@ -134,6 +150,7 @@ print.sdmTMB <- function(x, ...) {
     sigma_E,
     rho,
     criterion,
+    "\nSee ?tidy.sdmTMB to extract these values as a data frame.",
     sep = ""
   )
 
