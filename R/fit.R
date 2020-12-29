@@ -531,7 +531,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     tmb_params <- previous_fit$tmb_obj$env$parList()
   }
 
-  tmb_params$RE <- -1 * 1:20
+  # tmb_map$ln_tau_G <- factor(rep(NA, length(tmb_params$ln_tau_G)))
+
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     random = tmb_random, DLL = "sdmTMB", silent = silent)

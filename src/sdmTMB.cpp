@@ -464,17 +464,20 @@ Type objective_function<Type>::operator()()
 
     // Random intercepts:
     int temp = 0;
-    for (int g = 0; g < n_RE; g++) {
-      if (g == 0) {
-        // std::cout << "index: " << RE_indexes(i, g) << "\n";
-        eta_i(i) += RE(RE_indexes(i, g));
-        // std::cout << "RE value: " << RE(RE_indexes(i, g)) << "\n";
+    for (int k = 0; k < n_RE; k++) {
+      if (k == 0) {
+        // std::cout << "index: " << RE_indexes(i, k) << "\n";
+        // std::cout << "k: " << k << "\n";
+        eta_i(i) += RE(RE_indexes(i, k));
+        // std::cout << "RE value: " << RE(RE_indexes(i, k)) << "\n";
+        jnll -= dnorm(RE(RE_indexes(i, k)), Type(0.0), exp(ln_tau_G(k)), true);
       }
-      if (g > 0) {
-        temp += nobs_RE(g - 1);
-        eta_i(i) += RE(RE_indexes(i, g) + temp);
+      if (k > 0) {
+        // std::cout << "k > 0!" << "\n";
+        temp += nobs_RE(k - 1);
+        eta_i(i) += RE(RE_indexes(i, k) + temp);
+        jnll -= dnorm(RE(RE_indexes(i, k) + temp), Type(0.0), exp(ln_tau_G(k)), true);
       }
-      jnll += -dnorm(RE(RE_indexes(i, g)), Type(0.0), exp(ln_tau_G(g)), true);
     }
 
     if (family == 1 && link == 2) {
