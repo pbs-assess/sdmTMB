@@ -581,7 +581,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     gradients  = conv$final_grads,
     bad_eig    = conv$bad_eig,
     call       = match.call(expand.dots = TRUE),
-    sd_report  = sd_report),
+    sd_report  = sd_report,
+    version    = packageVersion("sdmTMB")),
     class      = "sdmTMB")
 }
 
