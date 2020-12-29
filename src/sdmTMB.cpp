@@ -30,7 +30,7 @@ Type dlnorm(Type x, Type meanlog, Type sdlog, int give_log = 0)
     return exp(logres);
 }
 
-// Function to important barrier-SPDE code
+// Function to import barrier-SPDE code
 // From Olav Nikolai Breivik and Hans Skaug via VAST
 template<class Type>
 struct spde_barrier_t{
@@ -243,6 +243,10 @@ Type objective_function<Type>::operator()()
 
   DATA_INTEGER(n_t);  // number of years
 
+  // Random intercepts:
+  DATA_IMATRIX(RE_indexes);
+  DATA_IVECTOR(nobs_RE);
+
   DATA_SPARSE_MATRIX(A); // INLA 'A' projection matrix for original data
   DATA_SPARSE_MATRIX(A_st); // INLA 'A' projection matrix for unique stations
   DATA_IVECTOR(A_spatial_index); // Vector of stations to match up A_st output
@@ -317,6 +321,8 @@ Type objective_function<Type>::operator()()
   PARAMETER(ln_phi);           // sigma / dispersion / etc.
   PARAMETER_VECTOR(ln_tau_V);  // random walk sigma
   PARAMETER(ar1_phi);          // AR1 fields correlation
+  PARAMETER_VECTOR(ln_tau_G);  // random intercept sigmas
+  PARAMETER_VECTOR(RE);        // random intercept deviations
 
   // Random effects
   PARAMETER_ARRAY(b_rw_t);  // random walk effects
@@ -332,7 +338,8 @@ Type objective_function<Type>::operator()()
   // ------------------ End of parameters --------------------------------------
 
   int n_i = y_i.size();   // number of observations
-  int n_j = X_ij.cols();  // number of observations
+  int n_j = X_ij.cols();  // number of fixed-effect params
+  int n_RE = RE_indexes.cols();  // number of random effect intercepts
 
   // Type nll_data = 0;     // likelihood of data
   // Type nll_varphi = 0;   // random walk effects
@@ -438,27 +445,44 @@ Type objective_function<Type>::operator()()
     eta_i(i) = Type(0);
     eta_rw_i(i) = Type(0);
   }
+
   for (int i = 0; i < n_i; i++) {
     eta_i(i) = eta_fixed_i(i); // + offset_i(i);
-    if (random_walk)
+    if (random_walk) {
       for (int k = 0; k < X_rw_ik.cols(); k++) {
         eta_rw_i(i) += X_rw_ik(i, k) * b_rw_t(year_i(i), k); // record it
         eta_i(i) += eta_rw_i(i);
       }
-      if (include_spatial) {
-        eta_i(i) += omega_s_A(i);  // spatial
-        if (spatial_trend)
-          eta_i(i) += omega_s_trend_A(i) * t_i(i); // spatial trend
-      }
-      epsilon_st_A_vec(i) = epsilon_st_A(A_spatial_index(i), year_i(i)); // record it
-      eta_i(i) += epsilon_st_A_vec(i); // spatiotemporal
+    }
+    if (include_spatial) {
+      eta_i(i) += omega_s_A(i);  // spatial
+      if (spatial_trend)
+        eta_i(i) += omega_s_trend_A(i) * t_i(i); // spatial trend
+    }
+    epsilon_st_A_vec(i) = epsilon_st_A(A_spatial_index(i), year_i(i)); // record it
+    eta_i(i) += epsilon_st_A_vec(i); // spatiotemporal
 
-      if (family == 1 && link == 2) {
-        // binomial(link = "logit"); don't touch (using robust density function in logit space)
-        mu_i(i) = eta_i(i);
-      } else {
-        mu_i(i) = InverseLink(eta_i(i), link);
+    // Random intercepts:
+    int temp = 0;
+    for (int g = 0; g < n_RE; g++) {
+      if (g == 0) {
+        // std::cout << "index: " << RE_indexes(i, g) << "\n";
+        eta_i(i) += RE(RE_indexes(i, g));
+        // std::cout << "RE value: " << RE(RE_indexes(i, g)) << "\n";
       }
+      if (g > 0) {
+        temp += nobs_RE(g - 1);
+        eta_i(i) += RE(RE_indexes(i, g) + temp);
+      }
+      jnll += -dnorm(RE(RE_indexes(i, g)), Type(0.0), exp(ln_tau_G(g)), true);
+    }
+
+    if (family == 1 && link == 2) {
+      // binomial(link = "logit"); don't touch (using robust density function in logit space)
+      mu_i(i) = eta_i(i);
+    } else {
+      mu_i(i) = InverseLink(eta_i(i), link);
+    }
   }
 
   // ------------------ Probability of random effects --------------------------

@@ -1,7 +1,7 @@
 Type: Package
 Package: sdmTMB
 Title: Spatiotemporal Species Distribution GLMMs with 'TMB'
-Version: 0.0.11.9000
+Version: 0.0.10.9001
 Authors@R:
     c(person(given = c("Sean", "C."),
              family = "Anderson",
@@ -28,7 +28,7 @@ Description: The 'sdmTMB' package implements spatiotemporal
 License: GPL (>=3)
 URL: https://pbs-assess.github.io/sdmTMB/index.html
 BugReports: https://github.com/seananderson/sdmTMB/issues
-Depends:
+Depends: 
     R (>= 3.2.0)
 Imports:
     assertthat,
@@ -36,6 +36,7 @@ Imports:
     fishMod,
     future.apply,
     generics,
+    glmmTMB,
     graphics,
     INLA,
     Matrix,
@@ -47,16 +48,17 @@ Imports:
 Suggests:
     dplyr,
     ggplot2,
+    glmmTMB,
     knitr,
     rmarkdown,
     splancs,
     testthat
-LinkingTo:
+LinkingTo: 
     RcppEigen,
     TMB
-VignetteBuilder:
+VignetteBuilder: 
     knitr
-Additional_repositories:
+Additional_repositories: 
     https://inla.r-inla-download.org/R/stable
 ByteCompile: true
 Encoding: UTF-8
