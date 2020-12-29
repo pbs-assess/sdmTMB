@@ -50,6 +50,17 @@ check_offset <- function(formula) {
 }
 
 update_model <- function(object, silent = FALSE) {
+  if (!"nobs_RE" %in% names(object$tmb_data)) {
+    object$tmb_data$nobs_RE <- 0L
+    object$tmb_data$ln_tau_G_index <- 0L
+    object$tmb_data$RE_indexes <- matrix(ncol = 0L, nrow = nrow(object$tmb_data$X_ij))
+    object$tmb_params$ln_tau_G <- 0
+    object$tmb_params$RE <- rep(0, 1L)
+    object$tmb_map$ln_tau_G <- factor(NA)
+    object$tmb_map$RE <- factor(NA)
+    object$split_formula <- list()
+    object$split_formula$fixedFormula <- object$formula
+  }
   if (!"barrier" %in% names(object$tmb_data)) {
     object$tmb_data$barrier_scaling <- c(1, 1)
     object$tmb_data$barrier <- 0L
@@ -71,11 +82,13 @@ update_model <- function(object, silent = FALSE) {
     object$tmb_data$threshold_func <- 0L
     object$tmb_data$proj_X_threshold <- 0 # dummy
     object$tmb_params$b_threshold <- rep(0, 2)
+    object$tmb_map$b_threshold <- factor(c(NA, NA))
   }
   if (!"df" %in% names(object$tmb_data)) object$tmb_data$df <- 3
   object$tmb_obj <- TMB::MakeADFun(
     data = object$tmb_data, parameters = object$tmb_params,
-    map = object$tmb_map, random = object$tmb_random, DLL = "sdmTMB", silent = silent)
+    map = object$tmb_map, random = object$tmb_random, DLL = "sdmTMB", silent = silent,
+    checkParameterOrder = FALSE)
   object
 }
 
