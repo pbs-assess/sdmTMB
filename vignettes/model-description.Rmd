@@ -38,37 +38,64 @@ knitr::opts_chunk$set(
 $$
 \begin{align}
   \mathbb{E}(y_{\s,t}) &= \mu_{\s,t},\\
-  \mu_{\s,t} &= g^{-1} 
+  \mu_{\s,t} &= f^{-1}
   \left( \boldsymbol{X} \boldsymbol{\beta} + \omega_s + \epsilon_{\s,t} \right),\\
   \boldsymbol{\omega} &\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_\omega \right),\\
   \boldsymbol{\epsilon}_t &\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right).
 \end{align}
 $$
-where $g$ is a link function and $g^{-1}$ is the inverse link.
+where $f$ is a link function (e.g., log or logit) and $f^{-1}$ is its inverse link.
 
-* $\boldsymbol{X} \boldsymbol{\beta}$ is defined by the `formula` argument
+* $\boldsymbol{X} \boldsymbol{\beta}$ is defined by the `formula` argument and
+  represents the "fixed effect" model matrix and a corresponding vector of
+  coefficients
 
-* $\omega_s$ are included if `include_spatial = TRUE`
+* $\omega_s$ are included if `include_spatial = TRUE` or if there is no
+  spatiotemporal component (`time = NULL`)
 
-* $\epsilon_{\s,t}$ are included if there are multiple time elements and `spatial_only = FALSE` (the default if there are multiple time elements)
+* $\epsilon_{\s,t}$ are included if there are multiple time elements and
+  `spatial_only = FALSE` (the default if there are multiple time elements)
+
+## Random or multi-level intercepts
+
+$$
+\begin{align}
+  \mu_{\s,t} &= f^{-1} \left( \ldots + \alpha_{g} + \ldots \right),\\
+  \alpha_g &\sim \operatorname{Normal} \left(0, \sigma_\alpha^2 \right),\\
+\end{align}
+$$
+
+where $\alpha_g$ is an example optional "random" intercept---an intercept
+centered on zero that varies by level $g$ and is constrained by
+$\sigma_\alpha$. This is defined by the `formula` argument via the `(1 | g)`
+syntax as in lme4 or glmmTMB.
 
 ## Time-varying regression parameters
 
 $$
 \begin{align}
-  \mu_{\s,t} &= g^{-1} \left( \ldots + \gamma_{t} x_{\s,t} + \ldots \right),\\
-  \gamma_{t} &\sim \operatorname{Normal} \left(\gamma_{t-1}, \sigma^2_{\gamma} \right).
+  \mu_{\s,t} &= f^{-1} \left( \ldots + \gamma_{t} x_{\s,t} + \ldots \right),\\
+  \gamma_{t=1} &\sim \operatorname{Uniform} \left(-\infty, \infty \right),\\
+  \gamma_{t>1} &\sim \operatorname{Normal} \left(\gamma_{t-1}, \sigma^2_{\gamma} \right),
 \end{align}
 $$
+
+where $\gamma_t$ is an example optional time-varying regression parameter and
+$x_{\s,t} is the corresponding predictor value. This is defined via the
+`time_varying` argument. E.g., `~ 0 + x`. The first value is given an implicit
+uniform prior. I.e., the same variable should not appear in the fixed effect
+formula since the initial value is estimated as part of the time-varying formula.
 
 ## Spatial regression parameters
 
 $$
 \begin{align}
-  \mu_{\s,t} &= g^{-1} \left( \ldots + \zeta_s x_t + \ldots \right),\\
-  \boldsymbol{\zeta} &\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_\zeta \right).
+  \mu_{\s,t} &= f^{-1} \left( \ldots + \zeta_s x_t + \ldots \right),\\
+  \boldsymbol{\zeta} &\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_\zeta \right),
 \end{align}
 $$
+
+where $\zeta_s$ is a regression parameter that varies spatially and $x_t$ is a predictor that is constant for a given time $t$. Currently, $x_t$ must be the time variable itself. If you are interested in using a different predictor, contact the developers.
 
 ## AR1 spatiotemporal random fields
 
@@ -76,25 +103,31 @@ Dropping the optional $\omega_s$ for simplicity:
 
 $$
 \begin{align}
-\mu_{\s,t} &= g^{-1} \left( \boldsymbol{X} \boldsymbol{\beta} + \delta_{\s,t} \right),\\
+\mu_{\s,t} &= f^{-1} \left( \boldsymbol{X} \boldsymbol{\beta} + \delta_{\s,t} \right),\\
 \boldsymbol{\delta}_{t=1} &\sim \operatorname{MVNormal} (\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon}),\\
-\boldsymbol{\delta}_{t>1} &= \phi \boldsymbol{\delta}_{t-1} + \sqrt{1 - \phi^2} \boldsymbol{\epsilon}_t,  \:
-\boldsymbol{\epsilon}_t \sim \operatorname{MVNormal} \left(\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right).
+\boldsymbol{\delta}_{t>1} &= \rho \boldsymbol{\delta}_{t-1} + \sqrt{1 - \rho^2} \boldsymbol{\epsilon}_t,  \:
+\boldsymbol{\epsilon}_t \sim \operatorname{MVNormal} \left(\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right),
 \end{align}
 $$
 
+where $\rho$ is the correlation between subsequent spatiotemporal random
+fields. The $\rho \boldsymbol{\delta}_{t-1} + \sqrt{1 - \rho^2}$ structure
+ensures a stationary AR1 process.
+
 ## Offset terms
 
-Offset terms can be included with the reserved word `offset` in the formula. E.g., `y ~ x + offset`.
+Offset terms can be included with the reserved word `offset` in the formula.
+E.g., `y ~ x + offset`.
 
 These are included in the linear predictor as
 
 $$
 \begin{align}
-  \mu_{\s,t} &= g^{-1} \left( \ldots + O_{\s,t} + \ldots \right),
+  \mu_{\s,t} &= f^{-1} \left( \ldots + O_{\s,t} + \ldots \right),
 \end{align}
 $$
-where $O_{\s,t}$ is an offset term---a **log transformed** variable without a coefficient. Offsets only make sense if the link is log.
+where $O_{\s,t}$ is an offset term---a **log transformed** variable without
+a coefficient (assuming a log link).
 
 ## Threshold models
 
@@ -102,17 +135,23 @@ where $O_{\s,t}$ is an offset term---a **log transformed** variable without a co
 
 TODO
 
-These models can be fit by including `+ breakpt(x)` in the model formula, where `x` is a covariate.
+These models can be fit by including `+ breakpt(x)` in the model formula, where
+`x` is a covariate.
 
 ### Logistic threshold models
 
-The form is 
+The form is
 
 $$
-s(x)=\tau + \psi\ { \left[ 1+{ e }^{ -\ln\ \left(19\right) \cdot \left( x-s50 \right) 
+s(x)=\tau + \psi\ { \left[ 1+{ e }^{ -\ln\ \left(19\right) \cdot \left( x-s50 \right)
      / \left(s95 - s50 \right) } \right] }^{-1},
 $$
-where $\psi$ is a scaling parameter (controlling the height of the y-axis for the response, and is unconstrained), $\tau$ is an intercept, $s50$ is a parameter controlling the point at which the function reaches 50% of the maximum ($\psi$), and $s95$ is a parameter controlling the point at which the function reaches 95%. The parameter $s50$ is unconstrained, and $s95$ is constrained to be larger than $s50$.
+where $\psi$ is a scaling parameter (controlling the height of the y-axis for
+the response, and is unconstrained), $\tau$ is an intercept, $s50$ is
+a parameter controlling the point at which the function reaches 50% of the
+maximum ($\psi$), and $s95$ is a parameter controlling the point at which the
+function reaches 95%. The parameter $s50$ is unconstrained, and $s95$ is
+constrained to be larger than $s50$.
 
 These models can be fit by including `+ logistic(x)` in the model formula, where `x` is a covariate.
 
@@ -120,7 +159,8 @@ These models can be fit by including `+ logistic(x)` in the model formula, where
 
 ### [Binomial](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaee11f805f02bc1febc6d7bf0487671be)
 
-Internally parameterized as the [robust version](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaecb5a18095a320b42e2d20c4b120f5f5).
+Internally parameterized as the [robust
+version](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaecb5a18095a320b42e2d20c4b120f5f5).
 
 ### [Beta](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga5324c83759d5211c7c2fbbad37fa8e59)
 
