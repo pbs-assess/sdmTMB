@@ -72,7 +72,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
     out$conf.high <- as.numeric(trans(out$estimate + crit * out$std.error))
   }
 
-
   se <- c(se, se_rep)
   est <- c(est, est_rep)
   ii <- 1
@@ -84,17 +83,19 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   for (i in c("sigma_O", "sigma_E", "sigma_O_trend",
     "ln_tau_V", "ln_tau_G", "range", "phi")) {
     j <- j + 1
-    if (i %in% names(est) && est[[i]] != 0) {
-      .e <- est[[log_name[j]]]
-      .se <- se[[log_name[j]]]
-      out_re[[i]] <- data.frame(
-        term = i, estimate = est[[i]], std.error = se[[i]],
-        conf.low = exp(.e - crit * .se),
-        conf.high = exp(.e + crit * .se),
-        stringsAsFactors = FALSE
-      )
-      if (i == "sigma_O_trend") out_re[[i]]$term <- "sigma_Z"
-      ii <- ii + 1
+    if (i %in% names(est)) {
+      if (length(est[[i]] > 0L)) {
+        .e <- est[[log_name[j]]]
+        .se <- se[[log_name[j]]]
+        out_re[[i]] <- data.frame(
+          term = i, estimate = est[[i]], std.error = se[[i]],
+          conf.low = exp(.e - crit * .se),
+          conf.high = exp(.e + crit * .se),
+          stringsAsFactors = FALSE
+        )
+        if (i == "sigma_O_trend") out_re[[i]]$term <- "sigma_Z"
+        ii <- ii + 1
+      }
     }
   }
 
@@ -122,6 +123,11 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
 
   out_re <- do.call("rbind", out_re)
   row.names(out_re) <- NULL
+
+  if (identical(est$ln_tau_E, 0)) out_re <- out_re[out_re$term != "sigma_E", ]
+  if (identical(est$ln_tau_V, 0)) out_re <- out_re[out_re$term != "tau_V", ]
+  if (identical(est$ln_tau_O, 0)) out_re <- out_re[out_re$term != "sigma_O", ]
+  if (identical(est$ln_tau_O_trend, 0)) out_re <- out_re[out_re$term != "sigma_Z", ]
 
   if (!conf.int) {
     out_re[["conf.low"]] <- NULL
