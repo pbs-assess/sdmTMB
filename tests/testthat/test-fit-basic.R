@@ -28,7 +28,7 @@ test_that("sdmTMB model fit with a covariate beta", {
   r <- m$tmb_obj$report()
   est <- tidy(m, "ran_pars")
   expect_identical(round(est[,"estimate", drop = TRUE], 9),
-    c(0.303614773, 0.308394419, 0.010627784, 0.106559617, 0.064617947))
+    c(0.303614773, 0.308394419, 0.106559617, 0.064617947))
   expect_equal(m$model$convergence, 0L)
   expect_equal((p$b_j - initial_betas)^2, 0, tol = 0.001)
   expect_equal((exp(p$ln_phi) - phi)^2, 0, tol = 0.002)
@@ -138,7 +138,7 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   tidy(m, effects = "ran_par", conf.int = TRUE)
 
   cols <- c("est", "est_non_rf", "est_rf", "omega_s", "epsilon_st")
-  expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-3)
+  expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-5)
 
   m <- sdmTMB(
     ar1_fields = TRUE, include_spatial = FALSE,
@@ -148,7 +148,7 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
 
   p <- predict(m)
   p_nd <- predict(m, newdata = dat)
-  expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-4)
+  expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-5)
 })
 
 test_that("A time-varying model fits and predicts appropriately", {
