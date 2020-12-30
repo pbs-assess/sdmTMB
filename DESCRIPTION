@@ -48,7 +48,6 @@ Imports:
 Suggests:
     dplyr,
     ggplot2,
-    glmmTMB,
     knitr,
     rmarkdown,
     splancs,
