@@ -49,14 +49,27 @@ test_that("Model with random intercepts fits appropriately.", {
 
   b <- as.list(m$sd_report, "Estimate")
   .cor <- cor(c(RE_vals, RE_vals2), b$RE)
-  expect_gte(.cor, 0.83)
+  expect_identical(round(.cor, 6), 0.827327)
   expect_identical(round(b$RE[seq_len(5)], 6),
-    c(-0.562533, 1.354826, 0.12255, -0.645389, -1.230321))
+    c(-0.328542, 0.680869, 0.106166, -0.369494, -0.63912))
 
   # missing a factor level:
-  s <- s[s$g != 1, , drop = FALSE]
+  s_drop <- s[s$g != 1, , drop = FALSE]
   expect_error(
-    sdmTMB(data = s, formula = observed ~ 1 + (1 | g) + (1 | h), spde = spde),
+    sdmTMB(data = s_drop,
+      formula = observed ~ 1 + (1 | g) + (1 | h), spde = spde),
     regexp = "levels"
   )
+
+  p <- predict(m)
+  p.nd <- predict(m, newdata = s)
+  expect_equal(p$est, p.nd$est, tolerance = 1e-4)
+  expect_equal(p$est_rf, p.nd$est_rf, tolerance = 1e-4)
+  expect_equal(p$est_non_rf, p.nd$est_non_rf, tolerance = 1e-4)
+
+  # prediction with missing level in `newdata` works:
+  s_drop <- s[s$g != 1, , drop = FALSE]
+  p.nd <- predict(m, newdata = s_drop)
+  p <- p[s$g != 1, , drop = FALSE]
+  expect_equal(p$est, p.nd$est, tolerance = 1e-4)
 })

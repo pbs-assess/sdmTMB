@@ -391,8 +391,9 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     r <- object$tmb_obj$report(lp)
 
     nd$est <- r$eta_i
-    # Following is not an error: rw effects baked into fixed effects for new data in above code:
-    nd$est_non_rf <- r$eta_fixed_i + r$eta_rw_i
+    # The following is not an error,
+    # IID and RW effects are baked into fixed effects for `newdata` in above code:
+    nd$est_non_rf <- r$eta_fixed_i + r$eta_rw_i + r$eta_iid_re_i
     nd$est_rf <- r$omega_s_A + r$epsilon_st_A_vec + r$omega_s_trend_A
     nd$omega_s <- r$omega_s_A
     nd$zeta_s <- r$omega_s_trend_A

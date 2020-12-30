@@ -440,12 +440,11 @@ Type objective_function<Type>::operator()()
     }
   }
 
-  vector<Type> mu_i(n_i), eta_i(n_i);
-  vector<Type> eta_rw_i(n_i);
-  for (int i = 0; i < n_i; i++) {
-    eta_i(i) = Type(0);
-    eta_rw_i(i) = Type(0);
-  }
+  vector<Type> mu_i(n_i), eta_i(n_i), eta_rw_i(n_i), eta_iid_re_i(n_i);
+  eta_rw_i.setZero();
+  eta_iid_re_i.setZero();
+  mu_i.setZero();
+  eta_i.setZero();
 
   for (int i = 0; i < n_i; i++) {
     eta_i(i) = eta_fixed_i(i); // + offset_i(i);
@@ -455,6 +454,8 @@ Type objective_function<Type>::operator()()
         eta_i(i) += eta_rw_i(i);
       }
     }
+
+    // Spatially varying effects:
     if (include_spatial) {
       eta_i(i) += omega_s_A(i);  // spatial
       if (spatial_trend)
@@ -463,15 +464,16 @@ Type objective_function<Type>::operator()()
     epsilon_st_A_vec(i) = epsilon_st_A(A_spatial_index(i), year_i(i)); // record it
     eta_i(i) += epsilon_st_A_vec(i); // spatiotemporal
 
-    // Random intercepts:
+    // IID random intercepts:
     int temp = 0;
     for (int k = 0; k < n_RE; k++) {
-      if (k == 0) eta_i(i) += RE(RE_indexes(i, k));
+      if (k == 0) eta_iid_re_i(i) += RE(RE_indexes(i, k)); // record it
       if (k > 0) {
         temp += nobs_RE(k - 1);
-        eta_i(i) += RE(RE_indexes(i, k) + temp);
+        eta_iid_re_i(i) += RE(RE_indexes(i, k) + temp); // record it
       }
     }
+    eta_i(i) += eta_iid_re_i(i);
 
     if (family == 1 && link == 2) {
       // binomial(link = "logit"); don't touch (using robust density function in logit space)
@@ -602,13 +604,13 @@ Type objective_function<Type>::operator()()
     for (int i = 0; i < proj_X_ij.rows(); i++) {
       int temp = 0;
       for (int k = 0; k < n_RE; k++) {
-        if (k == 0) eta_i(i) += RE(proj_RE_indexes(i, k));
+        if (k == 0) proj_iid_re_i(i) += RE(proj_RE_indexes(i, k));
         if (k > 0) {
           temp += nobs_RE(k - 1);
           proj_iid_re_i(i) += RE(proj_RE_indexes(i, k) + temp);
-          proj_fe(i) += proj_iid_re_i(i);
         }
       }
+      proj_fe(i) += proj_iid_re_i(i);
     }
 
     // Random walk covariates:
@@ -759,6 +761,7 @@ Type objective_function<Type>::operator()()
   REPORT(eta_fixed_i);  // fixed effect predictions in the link space
   REPORT(eta_i);        // fixed and random effect predictions in link space
   REPORT(eta_rw_i);     // time-varying predictions in link space
+  REPORT(eta_iid_re_i); // IID intercept random effect estimates
   REPORT(rho);          // AR1 correlation in -1 to 1 space
   REPORT(range);        // Matern approximate distance at 10% correlation
   ADREPORT(range);      // Matern approximate distance at 10% correlation
