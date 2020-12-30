@@ -138,7 +138,7 @@ NULL
 #' parameters. The vector of values supplied to the `penalties` argument
 #' represents standard deviations of normal distributions centered on zero with
 #' one value per fixed effect. These can be used for regularization, e.g.,
-#' Normal(0, 1) for ridge regression. These shoud not include `offset` terms and
+#' Normal(0, 1) for ridge regression. These should not include `offset` terms and
 #' care should be taken if used with splines. You can fit the model once without
 #' penalties and inspect the element `head(your_model$tmb_data$X_ij)` if you
 #' want to see how the formula is translated to the fixed effect model matrix.
