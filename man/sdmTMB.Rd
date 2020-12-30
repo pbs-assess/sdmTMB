@@ -34,7 +34,9 @@ sdmTMB(
 \item{formula}{Model formula. See the Details section below for how to specify
 offsets and threshold parameters. For index standardization, you may wish
 to include \code{0 + as.factor(year)} (or whatever the time column is called)
-in the formula.}
+in the formula. IID random intercepts are possible using \pkg{lme4}
+syntax, e.g., \code{+ (1 | g)} where \code{g} is a column with factor levels.
+Splines are possible via mgcv. See examples below.}
 
 \item{data}{A data frame.}
 
@@ -227,6 +229,23 @@ print(m_pos)
 m_gam <- sdmTMB(log(density) ~ 0 + as.factor(year) + s(depth_scaled, k = 4),
   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
 print(m_gam)
+
+# With IID random intercepts:
+set.seed(1)
+x <- runif(500, -1, 1)
+y <- runif(500, -1, 1)
+loc <- data.frame(x = x, y = y)
+spde <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
+s <- sdmTMB_sim(x = x, y = y, betas = 0, time = 1L,
+  phi = 0.1, range = 1.4, sigma_O = 0.2, sigma_E = 0, mesh = spde)
+s$g <- gl(50, 10)
+iid_re_vals <- rnorm(50, 0, 0.3)
+s$observed <- s$observed + iid_re_vals[s$g]
+m <- sdmTMB(observed ~ 1 + (1 | g), spde = spde, data = s)
+print(m)
+tidy(m, "ran_pars", conf.int = TRUE) # see tau_G
+theta <- as.list(m$sd_report, "Estimate")
+plot(iid_re_vals, theta$RE)
 
 \donttest{
 # Fit a spatial only model:
