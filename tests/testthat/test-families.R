@@ -87,7 +87,7 @@ test_that("NB2 fits", {
     sigma_O = 0.4, sigma_E = 0, seed = 1, mesh = spde, family = nbinom2())
   m <- sdmTMB(data = s, formula = observed ~ 1,
     spde = spde, family = nbinom2())
-  expect_equal(round(tidy(m)[,"estimate"], 6), 0.161482)
+  expect_equal(round(tidy(m)[,"estimate"], 6), 0.274008)
 })
 
 test_that("Poisson fits", {
