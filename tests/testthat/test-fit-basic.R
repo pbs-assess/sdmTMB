@@ -138,7 +138,7 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   tidy(m, effects = "ran_par", conf.int = TRUE)
 
   cols <- c("est", "est_non_rf", "est_rf", "omega_s", "epsilon_st")
-  expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-5)
+  expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-3)
 
   m <- sdmTMB(
     ar1_fields = TRUE, include_spatial = FALSE,
@@ -148,7 +148,7 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
 
   p <- predict(m)
   p_nd <- predict(m, newdata = dat)
-  expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-5)
+  expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-3)
 })
 
 test_that("A time-varying model fits and predicts appropriately", {
