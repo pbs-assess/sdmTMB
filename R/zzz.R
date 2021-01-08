@@ -1,5 +1,5 @@
 .onAttach <- function(libname, pkgname) {
-  if (packageVersion("Matrix") >= package_version('1.3.0')) {
+  if (utils::packageVersion("Matrix") >= package_version('1.3.0')) {
     packageStartupMessage(
       "There is currently a bug involving versions of the Matrix package >= 1.3-0 ",
       "that results in sdmTMB models eventually failing to fit with errors about ",
