@@ -250,7 +250,7 @@ Type objective_function<Type>::operator()()
   // Indices for factors
   DATA_FACTOR(year_i);
 
-  DATA_INTEGER(flag); // flag=0 => only prior returned; used when normalizing in R
+  // DATA_INTEGER(flag); // flag=0 => only prior returned; used when normalizing in R
   DATA_INTEGER(normalize_in_r);
 
   // Prediction?
