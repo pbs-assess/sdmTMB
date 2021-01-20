@@ -28,7 +28,7 @@ sdmTMB(
   mgcv = TRUE,
   previous_fit = NULL,
   quadratic_roots = FALSE,
-  epsilon_model = NULL
+  epsilon_predictor = NULL
 )
 }
 \arguments{
@@ -112,11 +112,14 @@ profile for depth, and depth and depth^2 are part of your formula, you need
 to make sure these are listed first and that an intercept isn't included.
 For example, \code{formula = cpue ~ 0 + depth + depth2 + as.factor(year)}.}
 
-\item{epsilon_model}{Whether to include a time varying spatiotemporal component
-Defaults to NULL but can be specified as "loglinear", in which a log-linear model is
-applied to the standard deviation of spatiotemporal variation (epsilon). Can also be specified as
-"re", which is a stationary model with added random effects in time, or "loglinear-re" which combines
-the log-linear model with random effects}
+\item{epsilon_predictor}{Whether to include a time varying spatiotemporal
+component. By default, this is NULL and fits a model with a constant spatio-temporal
+variance (epsilon). But this argument can also be a character name in the original
+dataframe (a covariate that ideally has been standardized to have mean 0 and standard
+deviation = 1). Because the spatiotemporal field varies by time step, the standardization
+should be done by time. If the name of a predictor is included, a log-linear model
+is fit where the predictor is used to model effects on the standard deviation, e.g.
+log(sd\link{i}) = B0 + B1 * epsilon_predictor\link{i}}
 }
 \description{
 Fit a spatial or spatiotemporal GLMM with TMB. Particularly useful for
@@ -224,7 +227,5 @@ m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) +
   time = "year", spde = pcod_spde_gaus)
 print(m_pos)
 
-# Non-stationary model on spatiotemporal variance:
-print(m_epsilon_trend)
 }
 }

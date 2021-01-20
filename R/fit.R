@@ -64,11 +64,14 @@ NULL
 #'   profile for depth, and depth and depth^2 are part of your formula, you need
 #'   to make sure these are listed first and that an intercept isn't included.
 #'   For example, `formula = cpue ~ 0 + depth + depth2 + as.factor(year)`.
-#' @param epsilon_model Whether to include a time varying spatiotemporal component
-#'   Defaults to NULL but can be specified as "loglinear", in which a log-linear model is
-#'   applied to the standard deviation of spatiotemporal variation (epsilon). Can also be specified as
-#'   "re", which is a stationary model with added random effects in time, or "loglinear-re" which combines
-#'   the log-linear model with random effects
+#' @param epsilon_predictor Whether to include a time varying spatiotemporal
+#' component. By default, this is NULL and fits a model with a constant spatio-temporal
+#' variance (epsilon). But this argument can also be a character name in the original
+#' dataframe (a covariate that ideally has been standardized to have mean 0 and standard
+#' deviation = 1). Because the spatiotemporal field varies by time step, the standardization
+#' should be done by time. If the name of a predictor is included, a log-linear model
+#' is fit where the predictor is used to model effects on the standard deviation, e.g.
+#' log(sd[i]) = B0 + B1 * epsilon_predictor[i]
 #' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
 #'   model.response terms model.offset
@@ -180,19 +183,18 @@ NULL
 #'   time = "year", spde = pcod_spde_gaus)
 #' print(m_pos)
 #'
-#' # Non-stationary model on spatiotemporal variance:
-# d <- subset(pcod, year <= 2011) # subset for example speed
-# pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
-# m_epsilon_trend <- sdmTMB(density ~ depth_scaled + depth_scaled2 + as.factor(year),
-#    data = d, time = "year", spde = pcod_spde,
-#      family = tweedie(link = "log"), epsilon_model="loglinear")
-# m_epsilon_re <- sdmTMB(density ~ depth_scaled + depth_scaled2 + as.factor(year),
-#   data = d, time = "year", spde = pcod_spde,
-#   family = tweedie(link = "log"), epsilon_model="re")
-# m_epsilon_loglinearre <- sdmTMB(density ~ depth_scaled + depth_scaled2 + as.factor(year),
-#   data = d, time = "year", spde = pcod_spde,
-#   family = tweedie(link = "log"), epsilon_model="loglinear-re")
-#' print(m_epsilon_trend)
+#' # Linear covariate on log(sigma_epsilon) -- note this has convergence problems
+#' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+# data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+# epsilon_predictor = "year")
+#
+#' # 2nd example with linear covariate on log(sigma_epsilon) -- this scales the years to
+#' # start at 1
+#' d$time = d$year - min(d$year) + 1
+#' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+# data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+# epsilon_predictor = "time")
+#'
 #' }
 
 sdmTMB <- function(formula, data, spde, time = NULL,
@@ -207,7 +209,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   mgcv = TRUE,
   previous_fit = NULL,
   quadratic_roots = FALSE,
-  epsilon_model = NULL) {
+  epsilon_predictor = NULL) {
 
   assert_that(
     is.logical(reml), is.logical(anisotropy), is.logical(silent),
@@ -308,12 +310,14 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   df <- if (family$family == "student" && "df" %in% names(family)) family$df else 3
 
   est_epsilon_model <- 0
-  if(!is.null(epsilon_model)) {
-    est_epsilon_model <- match(epsilon_model, c("loglinear","re","loglinear-re"))
-    if(is.na(est_epsilon_model)) {
-      warning("epsilon_model not recognized, assuming constant epsilon instead")
-      est_epsilon_model <- 0
+  epsilon_covariate <- rep(0, length(unique(data[[time]])))
+  if(!is.null(epsilon_predictor)) {
+    # covariate vector dimensioned by number of time steps
+    time_steps <- unique(data[[time]])
+    for(i in 1:length(time_steps)) {
+      epsilon_covariate[i] = data[which(data[[time]]==time_steps[i])[1],epsilon_predictor]
     }
+    est_epsilon_model <- 1
   }
 
   tmb_data <- list(
@@ -361,7 +365,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     X_threshold = thresh$X_threshold,
     proj_X_threshold = 0, # dummy
     threshold_func = thresh$threshold_func,
-    est_epsilon_model = as.integer(est_epsilon_model)
+    est_epsilon_model = as.integer(est_epsilon_model),
+    epsilon_predictor = epsilon_covariate
   )
   tmb_data$flag <- 1L # Include data
 
@@ -384,9 +389,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     omega_s_trend = rep(0, n_s),
     epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t),
     b_threshold = b_thresh,
-    b_epsilon_logit = 0,
-    epsilon_rw = rep(0, tmb_data$n_t),
-    ln_sigma_epsilon = 0
+    b_epsilon_logit = 0
   )
   if (contains_offset) tmb_params$b_j[offset_pos] <- 1
 
@@ -429,16 +432,6 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
     # optional models on spatiotemporal sd parameter
     if(est_epsilon_model == 0) {
-      tmb_map <- c(tmb_map, list(b_epsilon_logit = as.factor(NA),
-        ln_sigma_epsilon = as.factor(NA),
-        epsilon_rw = factor(rep(NA, tmb_data$n_t))))
-    }
-    if(est_epsilon_model == 1) {
-      tmb_map <- c(tmb_map, list(
-        ln_sigma_epsilon = as.factor(NA),
-        epsilon_rw = factor(rep(NA, tmb_data$n_t))))
-    }
-    if(est_epsilon_model == 2) {
       tmb_map <- c(tmb_map, list(b_epsilon_logit = as.factor(NA)))
     }
 
