@@ -40,13 +40,14 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   } else {
     fe_names <- colnames(model.matrix(mgcv::gam(.formula, data = x$data)))
   }
-  fe_names <- fe_names[!fe_names == "offset"]
+
   se_rep <- as.list(x$sd_report, "Std. Error", report = TRUE)
   est_rep <- as.list(x$sd_report, "Estimate", report = TRUE)
   se <- as.list(x$sd_report, "Std. Error", report = FALSE)
   est <- as.list(x$sd_report, "Estimate", report = FALSE)
-  b_j <- est$b_j
-  b_j_se <- se$b_j
+  b_j <- est$b_j[!fe_names == "offset"]
+  b_j_se <- se$b_j[!fe_names == "offset"]
+  fe_names <- fe_names[!fe_names == "offset"]
   out <- data.frame(term = fe_names, estimate = b_j, std.error = b_j_se, stringsAsFactors = FALSE)
   crit <- stats::qnorm(1 - (1 - conf.level) / 2)
   if (exponentiate) trans <- exp else trans <- I
