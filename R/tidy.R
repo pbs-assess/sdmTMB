@@ -97,6 +97,9 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
       ii <- ii + 1
     }
   }
+  if (!x$tmb_data$spatial_trend) {
+    out_re$sigma_O_trend <- NULL
+  }
 
   r <- x$tmb_obj$report()
   if (!is.null(r$rho) && r$rho != 0L) {
