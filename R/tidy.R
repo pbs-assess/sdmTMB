@@ -51,6 +51,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   out <- data.frame(term = fe_names, estimate = b_j, std.error = b_j_se, stringsAsFactors = FALSE)
   crit <- stats::qnorm(1 - (1 - conf.level) / 2)
   if (exponentiate) trans <- exp else trans <- I
+  if (exponentiate) out$estimate <- trans(out$estimate)
 
   if (x$tmb_data$threshold_func > 0) {
     if (x$threshold_function == 1L) {
@@ -71,7 +72,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
     out$conf.low <- as.numeric(trans(out$estimate - crit * out$std.error))
     out$conf.high <- as.numeric(trans(out$estimate + crit * out$std.error))
   }
-
 
   se <- c(se, se_rep)
   est <- c(est, est_rep)
