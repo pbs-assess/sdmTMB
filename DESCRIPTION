@@ -48,6 +48,7 @@ Suggests:
     dplyr,
     ggplot2,
     knitr,
+    rgdal,
     rmarkdown,
     splancs,
     testthat
