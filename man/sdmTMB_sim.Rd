@@ -21,7 +21,8 @@ sdmTMB_sim(
   thetaf = 1.5,
   df = 3,
   seed = sample.int(1e+06, 1),
-  list = FALSE
+  list = FALSE,
+  size = NULL
 )
 }
 \arguments{
@@ -64,6 +65,8 @@ parameters. Set to 0 for parameters that should not vary through time.}
 
 \item{list}{Logical for whether output is in list format. If \code{TRUE},
 data is in list element 1 and input values in element 2.}
+
+\item{size}{Specific for the binomial family, vector representing binomial N. If not included, defaults to 1 (bernoulli)}
 }
 \value{
 A data frame where:

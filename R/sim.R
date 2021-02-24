@@ -23,6 +23,7 @@
 #' @param seed A value with which to set the random seed.
 #' @param list Logical for whether output is in list format. If `TRUE`,
 #'    data is in list element 1 and input values in element 2.
+#' @param size Specific for the binomial family, vector representing binomial N. If not included, defaults to 1 (bernoulli)
 #'
 #' @return A data frame where:
 #' * `omega_s` represents the simulated spatial random effects.
@@ -78,7 +79,8 @@ sdmTMB_sim <- function(mesh,
                        thetaf = 1.5,
                        df = 3,
                        seed = sample.int(1e6, 1),
-                       list = FALSE) {
+                       list = FALSE,
+                       size = NULL) {
   assert_that(is.numeric(x), is.numeric(y))
   assert_that(is.null(dim(x)), is.null(dim(y)))
   assert_that(identical(length(x), length((y))))
@@ -164,9 +166,10 @@ sdmTMB_sim <- function(mesh,
   d$mu <- do.call(family$linkinv, list(d$eta))
   N <- nrow(d)
 
+  if(is.null(size)) size <- rep(1,N)
   d$observed <- switch(family$family,
     gaussian  = stats::rnorm(N, mean = d$mu, sd = phi),
-    binomial  = stats::rbinom(N, size = 1L, prob = d$mu),
+    binomial  = stats::rbinom(N, size = size, prob = d$mu),
     tweedie   = fishMod::rTweedie(N, mu = d$mu, phi = phi, p = thetaf),
     Beta      = stats::rbeta(N, d$mu * phi, (1 - d$mu) * phi),
     Gamma     = stats::rgamma(N, shape = phi, scale = d$mu / phi),

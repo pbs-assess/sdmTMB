@@ -19,6 +19,9 @@ NULL
 #'   [binomial()], [poisson()], \code{\link[sdmTMB:families]{Beta()}},
 #'   \code{\link[sdmTMB:families]{nbinom2()}}, and
 #'   \code{\link[sdmTMB:families]{tweedie()}}].
+#' @param size Specific to binomial family, vector of trials (binomial N) or a single
+#'   value representing the same number of trials for each observation. If absent,
+#'   defaults to 1 (bernoulli)
 #' @param time_varying An optional formula describing covariates that should be
 #'   modelled as a random walk through time. Be careul not to include
 #'   covariates (including the intercept) in both the main and time-varying
@@ -179,11 +182,19 @@ NULL
 #' max(m$gradients)
 #' max(m1$gradients)
 #'
-#' # Binomial:
+#' # Bernoulli:
 #' pcod_binom <- d
 #' pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
 #' m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'   data = pcod_binom, time = "year", spde = pcod_spde,
+#'   family = binomial(link = "logit"))
+#' print(m_bin)
+#'
+#' # Bernoulli (3 trials for all observations):
+#' pcod_binom <- d
+#' pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
+#' m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+#'   data = pcod_binom, time = "year", spde = pcod_spde, size = 3,
 #'   family = binomial(link = "logit"))
 #' print(m_bin)
 #'
@@ -233,7 +244,7 @@ NULL
 #' }
 
 sdmTMB <- function(formula, data, spde, time = NULL,
-  family = gaussian(link = "identity"),
+  family = gaussian(link = "identity"), size = NULL,
   time_varying = NULL, weights = NULL, extra_time = NULL, reml = FALSE,
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
   control = sdmTMBcontrol(), penalties = NULL, ar1_fields = FALSE,
@@ -350,6 +361,13 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   }
   df <- if (family$family == "student" && "df" %in% names(family)) family$df else 3
 
+  if(length(size) %in%c(0,1,length(y_i))==FALSE) {
+    stop("Error: size must be a vector with same length as the observed data, or a single value to be shared across observations", call. = FALSE)
+  }
+  if(length(size)==1) size = rep(size,length(y_i))# binomial
+  if(is.null(size)) size <- rep(1, length(y_i))
+
+
   tmb_data <- list(
     y_i        = y_i,
     n_t        = length(unique(data[[time]])),
@@ -388,6 +406,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     barrier_scaling = if (barrier) spde$barrier_scaling else c(1, 1),
     anisotropy = as.integer(anisotropy),
     family     = .valid_family[family$family],
+    size = size,
     link       = .valid_link[family$link],
     df         = df,
     spatial_only = as.integer(spatial_only),

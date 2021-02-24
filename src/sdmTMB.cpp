@@ -277,6 +277,7 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(family);
   DATA_INTEGER(link);
   DATA_SCALAR(df);  // Student-t DF
+  DATA_VECTOR(size); // binomial, via glmmTMB
 
   // SPDE objects from R-INLA
   DATA_STRUCT(spde_aniso, spde_aniso_t);
@@ -524,7 +525,7 @@ Type objective_function<Type>::operator()()
           jnll -= keep(i) * dtweedie(y_i(i), mu_i(i), phi, s1, true) * weights_i(i);
           break;
         case binomial_family:  // in logit space not inverse logit
-          jnll -= keep(i) * dbinom_robust(y_i(i), Type(1.0) /*size*/, mu_i(i), true) * weights_i(i);
+          jnll -= keep(i) * dbinom_robust(y_i(i), size(i), mu_i(i), true) * weights_i(i);
           break;
         case poisson_family:
           jnll -= keep(i) * dpois(y_i(i), mu_i(i), true) * weights_i(i);

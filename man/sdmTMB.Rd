@@ -10,6 +10,7 @@ sdmTMB(
   spde,
   time = NULL,
   family = gaussian(link = "identity"),
+  size = NULL,
   time_varying = NULL,
   weights = NULL,
   extra_time = NULL,
@@ -47,6 +48,10 @@ model.}
 \code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, \code{\link[sdmTMB:families]{Beta()}},
 \code{\link[sdmTMB:families]{nbinom2()}}, and
 \code{\link[sdmTMB:families]{tweedie()}}].}
+
+\item{size}{Specific to binomial family, vector of trials (binomial N) or a single
+value representing the same number of trials for each observation. If absent,
+defaults to 1 (bernoulli)}
 
 \item{time_varying}{An optional formula describing covariates that should be
 modelled as a random walk through time. Be careul not to include
@@ -205,11 +210,19 @@ m1 <- run_extra_optimization(m, nlminb_loops = 0, newton_steps = 1)
 max(m$gradients)
 max(m1$gradients)
 
-# Binomial:
+# Bernoulli:
 pcod_binom <- d
 pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
 m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   data = pcod_binom, time = "year", spde = pcod_spde,
+  family = binomial(link = "logit"))
+print(m_bin)
+
+# Bernoulli (3 trials for all observations):
+pcod_binom <- d
+pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
+m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+  data = pcod_binom, time = "year", spde = pcod_spde, size = 3,
   family = binomial(link = "logit"))
 print(m_bin)
 

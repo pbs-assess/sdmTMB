@@ -38,7 +38,7 @@ spde <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
 test_that("Student family fits", {
   skip_on_ci()
   skip_on_cran()
-  set.seed(1)
+  set.seed(3)
   initial_betas <- 0.5
   range <- 0.5
   sigma_O <- 0.3
@@ -87,7 +87,7 @@ test_that("NB2 fits", {
     sigma_O = 0.4, sigma_E = 0, seed = 1, mesh = spde, family = nbinom2())
   m <- sdmTMB(data = s, formula = observed ~ 1,
     spde = spde, family = nbinom2())
-  expect_equal(round(tidy(m)[,"estimate"], 6), 0.161482)
+  expect_equal(round(tidy(m)[,"estimate"], 6), 0.274008)
 })
 
 test_that("Poisson fits", {
