@@ -34,8 +34,8 @@ jobs:
         run: |
           remotes::install_deps(dependencies = TRUE)
           install.packages("pkgdown")
-          remotes::install_cran("textshaping")
-          remotes::install_cran("rgdal")
+          install.packages("textshaping", type = "binary")
+          install.packages("rgdal", type = "binary")
         shell: Rscript {0}
 
       - name: Install package
