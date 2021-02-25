@@ -25,7 +25,8 @@ NULL
 #'   formula. I.e., at least one should have `~ 0` or ~ -1`.
 #' @param weights Optional likelihood weights for the conditional model.
 #'   Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
-#'   to one and are not internally modified.
+#'   to one and are not internally modified. Can also be used for trials with
+#'   the binomial family. See Details below.
 #' @param extra_time Optional extra time slices (e.g., years) to include for
 #'   interpolation or forecasting with the predict function. See the
 #'   Details section below.
@@ -91,6 +92,11 @@ NULL
 #' In the model formula, an offset can be included by including `+ offset` in
 #' the model formula (a reserved word). The offset will be included in any
 #' prediction. `offset` must be a column in `data`.
+#'
+#' **Binomial models**
+#' Binomial models with more than one trial be specified as in [stats::glm()]:
+#' `prob ~ ..., weights = N` or with a two-column matrix
+#' `cbind(successes,failures) ~ ...`.
 #'
 #' **Threshold models**
 #'
@@ -313,30 +319,30 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   offset_pos <- grep("^offset$", colnames(X_ij))
   y_i  <- model.response(mf, "numeric")
 
-  ## This is taken from approach in glmmTMB to match how they handle binomial
-  ## yobs could be a factor -> treat as binary following glm
-  ## yobs could be cbind(success, failure)
-  ## yobs could be binary
-  ## (yobs, weights) could be (proportions, size)
-  ## On the C++ side 'yobs' must be the number of successes.
+  # This is taken from approach in glmmTMB to match how they handle binomial
+  # yobs could be a factor -> treat as binary following glm
+  # yobs could be cbind(success, failure)
+  # yobs could be binary
+  # (yobs, weights) could be (proportions, size)
+  # On the C++ side 'yobs' must be the number of successes.
   size <- rep(1, length(y_i)) # for non-binomial case
-  if ( identical(family$family, "binomial") ) {
+  if (identical(family$family, "binomial")) {
     ## call this to catch the factor / matrix cases
-    y_i  <- model.response(mf, type="any")
+    y_i <- model.response(mf, type = "any")
     if (is.factor(y_i)) {
       ## following glm, ‘success’ is interpreted as the factor not
       ## having the first level (and hence usually of having the
       ## second level).
-      y_i <- pmin(as.numeric(y_i)-1,1)
+      y_i <- pmin(as.numeric(y_i) - 1, 1)
       size <- rep(1, length(y_i))
     } else {
-      if(is.matrix(y_i)) { # yobs=cbind(success, failure)
-        size <- y_i[,1] + y_i[,2]
-        yobs <- y_i[,1] #successes
+      if (is.matrix(y_i)) { # yobs=cbind(success, failure)
+        size <- y_i[, 1] + y_i[, 2]
+        yobs <- y_i[, 1] # successes
       } else {
-        if(all(y_i %in% c(0,1))) { #binary
+        if (all(y_i %in% c(0, 1))) { # binary
           size <- rep(1, length(y_i))
-        } else { #proportions
+        } else { # proportions
           y_i <- weights * y_i
           size <- weights
           weights <- rep(1, length(y_i))

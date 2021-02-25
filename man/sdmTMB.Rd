@@ -55,7 +55,8 @@ formula. I.e., at least one should have \code{~ 0} or ~ -1`.}
 
 \item{weights}{Optional likelihood weights for the conditional model.
 Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
-to one and are not internally modified.}
+to one and are not internally modified. Can also be used for trials with
+the binomial family. See Details below.}
 
 \item{extra_time}{Optional extra time slices (e.g., years) to include for
 interpolation or forecasting with the predict function. See the
@@ -137,6 +138,11 @@ Anderson et al. (2019) and Barnett et al. (2020) (see reference list below).
 In the model formula, an offset can be included by including \code{+ offset} in
 the model formula (a reserved word). The offset will be included in any
 prediction. \code{offset} must be a column in \code{data}.
+
+\strong{Binomial models}
+Binomial models with more than one trial be specified as in \code{\link[stats:glm]{stats::glm()}}:
+\verb{prob ~ ..., weights = N} or with a two-column matrix
+\code{cbind(successes,failures) ~ ...}.
 
 \strong{Threshold models}
 
