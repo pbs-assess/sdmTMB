@@ -10,7 +10,6 @@ sdmTMB(
   spde,
   time = NULL,
   family = gaussian(link = "identity"),
-  size = NULL,
   time_varying = NULL,
   weights = NULL,
   extra_time = NULL,
@@ -48,10 +47,6 @@ model.}
 \code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, \code{\link[sdmTMB:families]{Beta()}},
 \code{\link[sdmTMB:families]{nbinom2()}}, and
 \code{\link[sdmTMB:families]{tweedie()}}].}
-
-\item{size}{Specific to binomial family, vector of trials (binomial N) or a single
-value representing the same number of trials for each observation. If absent,
-defaults to 1 (bernoulli)}
 
 \item{time_varying}{An optional formula describing covariates that should be
 modelled as a random walk through time. Be careul not to include

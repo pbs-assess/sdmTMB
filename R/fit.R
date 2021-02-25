@@ -19,9 +19,6 @@ NULL
 #'   [binomial()], [poisson()], \code{\link[sdmTMB:families]{Beta()}},
 #'   \code{\link[sdmTMB:families]{nbinom2()}}, and
 #'   \code{\link[sdmTMB:families]{tweedie()}}].
-#' @param size Specific to binomial family, vector of trials (binomial N) or a single
-#'   value representing the same number of trials for each observation. If absent,
-#'   defaults to 1 (bernoulli)
 #' @param time_varying An optional formula describing covariates that should be
 #'   modelled as a random walk through time. Be careul not to include
 #'   covariates (including the intercept) in both the main and time-varying
@@ -244,7 +241,7 @@ NULL
 #' }
 
 sdmTMB <- function(formula, data, spde, time = NULL,
-  family = gaussian(link = "identity"), size = NULL,
+  family = gaussian(link = "identity"),
   time_varying = NULL, weights = NULL, extra_time = NULL, reml = FALSE,
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
   control = sdmTMBcontrol(), penalties = NULL, ar1_fields = FALSE,
@@ -316,6 +313,38 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   offset_pos <- grep("^offset$", colnames(X_ij))
   y_i  <- model.response(mf, "numeric")
 
+  ## This is taken from approach in glmmTMB to match how they handle binomial
+  ## yobs could be a factor -> treat as binary following glm
+  ## yobs could be cbind(success, failure)
+  ## yobs could be binary
+  ## (yobs, weights) could be (proportions, size)
+  ## On the C++ side 'yobs' must be the number of successes.
+  size <- rep(1, length(y_i)) # for non-binomial case
+  if ( identical(family$family, "binomial") ) {
+    ## call this to catch the factor / matrix cases
+    y_i  <- model.response(mf, type="any")
+    if (is.factor(y_i)) {
+      ## following glm, ‘success’ is interpreted as the factor not
+      ## having the first level (and hence usually of having the
+      ## second level).
+      y_i <- pmin(as.numeric(y_i)-1,1)
+      size <- rep(1, length(y_i))
+    } else {
+      if(is.matrix(y_i)) { # yobs=cbind(success, failure)
+        size <- y_i[,1] + y_i[,2]
+        yobs <- y_i[,1] #successes
+      } else {
+        if(all(y_i %in% c(0,1))) { #binary
+          size <- rep(1, length(y_i))
+        } else { #proportions
+          y_i <- weights * y_i
+          size <- weights
+          weights <- rep(1, length(y_i))
+        }
+      }
+    }
+  }
+
   if (!is.null(penalties)) {
     assert_that(ncol(X_ij) == length(penalties),
       msg = paste0("The number of fixed effects does not match the number of ",
@@ -325,9 +354,6 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
   if (identical(family$link, "log") && min(y_i, na.rm = TRUE) < 0) {
     stop("`link = 'log'` but the reponse data include values < 0.", call. = FALSE)
-  }
-  if (identical(family$family, "binomial") && !all(y_i %in% c(0, 1))) {
-    stop("`family = 'binomial'` but the reponse data include values other than 0 and 1.", call. = FALSE)
   }
 
   offset <- as.vector(model.offset(mf))
@@ -361,15 +387,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   }
   df <- if (family$family == "student" && "df" %in% names(family)) family$df else 3
 
-  if(length(size) %in%c(0,1,length(y_i))==FALSE) {
-    stop("Error: size must be a vector with same length as the observed data, or a single value to be shared across observations", call. = FALSE)
-  }
-  if(length(size)==1) size = rep(size,length(y_i))# binomial
-  if(is.null(size)) size <- rep(1, length(y_i))
-
-
   tmb_data <- list(
-    y_i        = y_i,
+    y_i        = c(y_i),
     n_t        = length(unique(data[[time]])),
     t_i        = t_i,
     offset_i   = offset,
@@ -406,7 +425,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     barrier_scaling = if (barrier) spde$barrier_scaling else c(1, 1),
     anisotropy = as.integer(anisotropy),
     family     = .valid_family[family$family],
-    size = size,
+    size = c(size),
     link       = .valid_link[family$link],
     df         = df,
     spatial_only = as.integer(spatial_only),
