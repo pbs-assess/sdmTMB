@@ -219,14 +219,6 @@ m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   family = binomial(link = "logit"))
 print(m_bin)
 
-# Bernoulli (3 trials for all observations):
-pcod_binom <- d
-pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
-m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  data = pcod_binom, time = "year", spde = pcod_spde, size = 3,
-  family = binomial(link = "logit"))
-print(m_bin)
-
 # Gaussian:
 pcod_gaus <- subset(d, density > 0 & year >= 2013)
 pcod_spde_gaus <- make_mesh(pcod_gaus, c("X", "Y"), cutoff = 30)
