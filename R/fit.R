@@ -19,7 +19,7 @@ NULL
 #'   [binomial()], [poisson()], \code{\link[sdmTMB:families]{Beta()}},
 #'   \code{\link[sdmTMB:families]{nbinom2()}}, and
 #'   \code{\link[sdmTMB:families]{tweedie()}}]. Following the structure of
-#'   [glmmTMB()], a binomial family can be specified in one of 4 ways: (1) the
+#'   \pkg{glmmTMB}, a binomial family can be specified in one of 4 ways: (1) the
 #'   response may be a factor (and the model classifies the first level versus
 #'   all others), (2) the response may be binomial (0/1), (3) the response
 #'   can be a matrix of form cbind(success, failure), and (4) the response may
