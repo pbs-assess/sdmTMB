@@ -46,13 +46,8 @@ model.}
 \item{family}{The family and link. Supports \code{\link[=gaussian]{gaussian()}}, \code{\link[=Gamma]{Gamma()}},
 \code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, \code{\link[sdmTMB:families]{Beta()}},
 \code{\link[sdmTMB:families]{nbinom2()}}, and
-\code{\link[sdmTMB:families]{tweedie()}}]. Following the structure of
-\pkg{glmmTMB}, a binomial family can be specified in one of 4 ways: (1) the
-response may be a factor (and the model classifies the first level versus
-all others), (2) the response may be binomial (0/1), (3) the response
-can be a matrix of form cbind(success, failure), and (4) the response may
-be the observed proportions, and the 'weights' argument is used to specify
-the Binomial size (N) parameter.}
+\code{\link[sdmTMB:families]{tweedie()}}]. For binomial family options,
+see the 'Binomial families' section below.}
 
 \item{time_varying}{An optional formula describing covariates that should be
 modelled as a random walk through time. Be careul not to include
@@ -145,10 +140,14 @@ In the model formula, an offset can be included by including \code{+ offset} in
 the model formula (a reserved word). The offset will be included in any
 prediction. \code{offset} must be a column in \code{data}.
 
-\strong{Binomial models}
-Binomial models with more than one trial be specified as in \code{\link[stats:glm]{stats::glm()}}:
-\verb{prob ~ ..., weights = N} or with a two-column matrix
-\code{cbind(successes,failures) ~ ...}.
+\strong{Binomial families}
+Following the structure of \code{\link[stats:glm]{stats::glm()}} and \pkg{glmmTMB}, a binomial
+family can be specified in one of 4 ways: (1) the response may be a factor
+(and the model classifies the first level versus all others), (2) the
+response may be binomial (0/1), (3) the response can be a matrix of form
+\code{cbind(success, failure)}, and (4) the response may be the observed
+proportions, and the 'weights' argument is used to specify the Binomial size
+(N) parameter (\verb{prob ~ ..., weights = N}).
 
 \strong{Threshold models}
 
