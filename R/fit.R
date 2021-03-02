@@ -313,7 +313,12 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     if(identical(family$family, "binomial") & "factor" %in% class(model.response(model.frame(formula, data)))) {
       stop("Error: with 'mgcv' = TRUE, the response cannot be a factor")
     }
-    mgcv_mod <- mgcv::gam(formula, data = data, family=family) # should be fast enough to not worry
+    if(identical(family$family, "binomial")) {
+      mgcv_mod <- mgcv::gam(formula, data = data, family=family) # family needs to be passed into mgcv
+    } else {
+      mgcv_mod <- mgcv::gam(formula, data = data) # should be fast enough to not worry
+    }
+
     X_ij <- model.matrix(mgcv_mod)
     mf <- model.frame(mgcv::interpret.gam(formula)$fake.formula, data)
   }
