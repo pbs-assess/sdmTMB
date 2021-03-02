@@ -310,7 +310,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     mf <- model.frame(formula, data)
   } else {
     # mgcv::gam will parse a matrix response, but not a factor
-    if(identical(family$family, "binomial") & "factor" %in% class(model.response(model.frame(formula, data)))) {
+    mf <- model.frame(mgcv::interpret.gam(formula)$fake.formula, data)
+    if(identical(family$family, "binomial") & "factor" %in% model.response(mf, "any") == TRUE) {
       stop("Error: with 'mgcv' = TRUE, the response cannot be a factor")
     }
     if(identical(family$family, "binomial")) {
@@ -318,9 +319,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     } else {
       mgcv_mod <- mgcv::gam(formula, data = data) # should be fast enough to not worry
     }
-
     X_ij <- model.matrix(mgcv_mod)
-    mf <- model.frame(mgcv::interpret.gam(formula)$fake.formula, data)
   }
 
   offset_pos <- grep("^offset$", colnames(X_ij))
