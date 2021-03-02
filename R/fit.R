@@ -309,13 +309,17 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     X_ij <- model.matrix(formula, data)
     mf <- model.frame(formula, data)
   } else {
-    mgcv_mod <- mgcv::gam(formula, data = data) # should be fast enough to not worry
+    # mgcv::gam will parse a matrix response, but not a factor
+    if(identical(family$family, "binomial") & "factor" %in% class(model.response(model.frame(formula, data)))) {
+      stop("Error: with 'mgcv' = TRUE, the response cannot be a factor")
+    }
+    mgcv_mod <- mgcv::gam(formula, data = data, family=family) # should be fast enough to not worry
     X_ij <- model.matrix(mgcv_mod)
     mf <- model.frame(mgcv::interpret.gam(formula)$fake.formula, data)
   }
 
   offset_pos <- grep("^offset$", colnames(X_ij))
-  y_i  <- model.response(mf, "numeric")
+  y_i <- model.response(mf, "numeric")
 
   # This is taken from approach in glmmTMB to match how they handle binomial
   # yobs could be a factor -> treat as binary following glm
@@ -323,7 +327,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   # yobs could be binary
   # (yobs, weights) could be (proportions, size)
   # On the C++ side 'yobs' must be the number of successes.
-  size <- rep(1, length(y_i)) # for non-binomial case
+  size <- rep(1, nrow(X_ij)) # for non-binomial case
   if (identical(family$family, "binomial")) {
     ## call this to catch the factor / matrix cases
     y_i <- model.response(mf, type = "any")
@@ -337,6 +341,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       if (is.matrix(y_i)) { # yobs=cbind(success, failure)
         size <- y_i[, 1] + y_i[, 2]
         yobs <- y_i[, 1] # successes
+        y_i <- yobs
       } else {
         if (all(y_i %in% c(0, 1))) { # binary
           size <- rep(1, length(y_i))
