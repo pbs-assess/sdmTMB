@@ -1,5 +1,10 @@
 # sdmTMB
 
+# sdmTMB 0.0.12.9000
+
+* Add `epsilon_predictor` argument in `sdmTMB()` to allow a model of the
+  spatiotemporal variance through time.
+
 # sdmTMB 0.0.11.9000
 
 * Add `penalties` argument to allow for regularization.
