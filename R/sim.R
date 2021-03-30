@@ -14,7 +14,8 @@
 #' @param rho Spatiotemporal correlation between years;
 #'   should be between -1 and 1.
 #' @param sigma_O SD of spatial process (Omega).
-#' @param sigma_E SD of spatiotemporal process (Epsilon). Can be scalar or vector for time-varying model
+#' @param sigma_E SD of spatiotemporal process (Epsilon). Can be scalar or
+#'   vector for time-varying model.
 #' @param sigma_V A vector of standard deviations of time-varying random walk on
 #'   parameters. Set to 0 for parameters that should not vary through time.
 #' @param phi Observation error scale parameter.
@@ -109,11 +110,11 @@ sdmTMB_sim <- function(mesh,
   epsilon_st <- list() # spatiotemporal random effects
 
   # test whether sigma_E_zero
-  if(length(sigma_E) %in% c(1, time_steps)==FALSE) {
-    stop("Error: sigma_E must be a scalar or of length time_steps")
+  if (length(sigma_E) %in% c(1L, time_steps) == FALSE) {
+    stop("Error: sigma_E must be a scalar or of length time_steps", call. = FALSE)
   }
-  if(length(sigma_E)==1) sigma_E = rep(sigma_E,time_steps)
-  sigma_E_zero = ifelse(length(which(sigma_E==0)) == time_steps, TRUE, FALSE)
+  if (length(sigma_E) == 1L) sigma_E <- rep(sigma_E, time_steps)
+  sigma_E_zero <- length(which(sigma_E == 0)) == time_steps
 
   if (time_steps > 1L && sigma_E_zero == FALSE) {
     for (i in seq_len(time_steps)) {

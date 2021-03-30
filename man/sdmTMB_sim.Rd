@@ -50,7 +50,8 @@ should be between -1 and 1.}
 
 \item{sigma_O}{SD of spatial process (Omega).}
 
-\item{sigma_E}{SD of spatiotemporal process (Epsilon). Can be scalar or vector for time-varying model}
+\item{sigma_E}{SD of spatiotemporal process (Epsilon). Can be scalar or
+vector for time-varying model.}
 
 \item{sigma_V}{A vector of standard deviations of time-varying random walk on
 parameters. Set to 0 for parameters that should not vary through time.}

@@ -18,13 +18,13 @@ time_steps <- 10
 sigma_E <- 0.2
 phi <- 0.1
 .range <- 0.5
-b_epsilon_logit = 0.2
-b_epsilon = 2*plogis(b_epsilon_logit) - 1
-sigma_O = 0
-rho = 0
-X <- model.matrix(~ -1+as.factor(x1), data.frame(x1 = sort(rep(1:time_steps,N))))
-betas = runif(10, 0, 2)
-sigma_E_vec = exp(log(sigma_E) + b_epsilon * seq(0, time_steps-1))
+b_epsilon_logit <- 0.2
+b_epsilon <- 2 * plogis(b_epsilon_logit) - 1
+sigma_O <- 0
+rho <- 0
+X <- model.matrix(~ -1 + as.factor(x1), data.frame(x1 = sort(rep(1:time_steps, N))))
+betas <- runif(10, 0, 2)
+sigma_E_vec <- exp(log(sigma_E) + b_epsilon * seq(0, time_steps - 1))
 
 true <- tribble(
   ~variable, ~true_value,
@@ -47,7 +47,6 @@ plot(spde)
 # }
 
 out <- furrr::future_map(seq_len(80), function(i) {
-
   dat <- sdmTMB_sim(
     x = x, y = y, mesh = spde, time_steps = time_steps, rho = rho,
     betas = betas, X = X, phi = phi, range = .range,
@@ -69,17 +68,17 @@ out <- furrr::future_map(seq_len(80), function(i) {
 
   data.frame(
     b_est = m$sd_report$par.fixed["b_epsilon_logit"],
-    b_est.lwr = m$sd_report$par.fixed["b_epsilon_logit"] - 1.96 * sqrt(m$sd_report$cov.fixed["b_epsilon_logit","b_epsilon_logit"]),
-    b_est.upr = m$sd_report$par.fixed["b_epsilon_logit"] + 1.96 * sqrt(m$sd_report$cov.fixed["b_epsilon_logit","b_epsilon_logit"]),
-    sigma_E.est = est_ran[est_ran$term == "sigma_E",][est_ran$term == "sigma_E", "estimate"][1],
-    sigma_E.lwr = est_ran[est_ran$term == "sigma_E",][est_ran$term == "sigma_E", "estimate"][1] -
-       1.96 * est_ran[est_ran$term == "sigma_E",][est_ran$term == "sigma_E", "std.error"][1],
-    sigma_E.upr = est_ran[est_ran$term == "sigma_E",][est_ran$term == "sigma_E", "estimate"][1] +
-       1.96 * est_ran[est_ran$term == "sigma_E",][est_ran$term == "sigma_E", "std.error"][1],
-    range.est = est_ran[est_ran$term == "range","estimate"],
-    range.lwr = est_ran[est_ran$term == "range","estimate"] - 1.96 * est_ran[est_ran$term == "range","std.error"],
-    range.upr = est_ran[est_ran$term == "range","estimate"] + 1.96 * est_ran[est_ran$term == "range","std.error"]
-    )
+    b_est.lwr = m$sd_report$par.fixed["b_epsilon_logit"] - 1.96 * sqrt(m$sd_report$cov.fixed["b_epsilon_logit", "b_epsilon_logit"]),
+    b_est.upr = m$sd_report$par.fixed["b_epsilon_logit"] + 1.96 * sqrt(m$sd_report$cov.fixed["b_epsilon_logit", "b_epsilon_logit"]),
+    sigma_E.est = est_ran[est_ran$term == "sigma_E", ][est_ran$term == "sigma_E", "estimate"][1],
+    sigma_E.lwr = est_ran[est_ran$term == "sigma_E", ][est_ran$term == "sigma_E", "estimate"][1] -
+      1.96 * est_ran[est_ran$term == "sigma_E", ][est_ran$term == "sigma_E", "std.error"][1],
+    sigma_E.upr = est_ran[est_ran$term == "sigma_E", ][est_ran$term == "sigma_E", "estimate"][1] +
+      1.96 * est_ran[est_ran$term == "sigma_E", ][est_ran$term == "sigma_E", "std.error"][1],
+    range.est = est_ran[est_ran$term == "range", "estimate"],
+    range.lwr = est_ran[est_ran$term == "range", "estimate"] - 1.96 * est_ran[est_ran$term == "range", "std.error"],
+    range.upr = est_ran[est_ran$term == "range", "estimate"] + 1.96 * est_ran[est_ran$term == "range", "std.error"]
+  )
 })
 
 est <- bind_rows(out)

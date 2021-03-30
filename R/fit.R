@@ -423,7 +423,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   }
   df <- if (family$family == "student" && "df" %in% names(family)) family$df else 3
 
-  est_epsilon_model <- 0
+  est_epsilon_model <- 0L
   epsilon_covariate <- rep(0, length(unique(data[[time]])))
   if (!is.null(epsilon_predictor)) {
     # covariate vector dimensioned by number of time steps
@@ -431,7 +431,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     for (i in seq(1, length(time_steps))) {
       epsilon_covariate[i] <- data[which(data[[time]] == time_steps[i])[1], epsilon_predictor]
     }
-    est_epsilon_model <- 1
+    est_epsilon_model <- 1L
   }
 
   tmb_data <- list(
@@ -553,7 +553,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
     # optional models on spatiotemporal sd parameter
-    if(est_epsilon_model == 0) {
+    if (est_epsilon_model == 0L) {
       tmb_map <- c(tmb_map, list(b_epsilon_logit = as.factor(NA)))
     }
 
@@ -606,7 +606,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     )
   if (reml) tmb_random <- c(tmb_random, "b_j")
 
-  if(est_epsilon_model >= 2) {
+  if (est_epsilon_model >= 2) {
     # model 2 = re model, model 3 = loglinear-re
     tmb_random <- c(tmb_random, "epsilon_rw")
   }
@@ -623,11 +623,11 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
   if (!is.null(previous_fit)) {
     start <- tmb_obj$par
-
-    # not all parameters will be in previous model. include those that are
-    unique_pars = unique(names(previous_fit$tmb_obj$par))
-    for(i in 1:length(unique_pars)) {
-      start[which(names(start)==unique_pars[i])] <- previous_fit$tmb_obj$par[which(names(previous_fit$tmb_obj$par)==unique_pars[i])]
+    # not all parameters will be in previous model; include those that are
+    unique_pars <- unique(names(previous_fit$tmb_obj$par))
+    for(i in seq_along(unique_pars)) {
+      start[which(names(start) == unique_pars[i])] <-
+        previous_fit$tmb_obj$par[which(names(previous_fit$tmb_obj$par) == unique_pars[i])]
     }
   } else {
     start <- tmb_obj$par
