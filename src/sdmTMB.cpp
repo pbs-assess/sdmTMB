@@ -368,27 +368,23 @@ Type objective_function<Type>::operator()()
   vector<Type> sigma_E(n_t);
   vector<Type> ln_tau_E_vec(n_t);
   Type b_epsilon;
-  if(est_epsilon_model==0) { // constant model
-    for(int i = 0; i < n_t; i++) {
+  if (!est_epsilon_model) { // constant model
+    for (int i = 0; i < n_t; i++) {
       sigma_E(i) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa));
       ln_tau_E_vec(i) = ln_tau_E;
     }
   }
-  if(est_epsilon_model==1) { // loglinear model
-    b_epsilon = minus_one_to_one(b_epsilon_logit);
-
-    // sigma_intcpt is the intercept parameter, derived from ln_tau_E. For models with time as covariate,
+  if (est_epsilon_model) { // loglinear model
+    b_epsilon = minus_one_to_one(b_epsilon_logit); // TODO: document this?
+    // epsilon_intcpt is the intercept parameter, derived from ln_tau_E. For models with time as covariate,
     // this is interpreted as sigma at time 0
     Type epsilon_intcpt = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa));
     Type log_epsilon_intcpt = log(epsilon_intcpt);
     Type log_epsilon_temp = 0.0;
     Type epsilon_cnst = - log(Type(4.0) * M_PI) / Type(2.0) - ln_kappa;
-    //std::cout << "par: "<< epsilon_slope << std::endl;
     for(int i = 0; i < n_t; i++) {
       log_epsilon_temp = log_epsilon_intcpt + b_epsilon * epsilon_predictor(i);
       sigma_E(i) = exp(log_epsilon_temp); // log-linear model
-      //ln_tau_E_vec(i) = (log(Type(1.0) / (Type(4.0) * M_PI * sigma_E(i)*sigma_E(i))) - Type(2.0) * ln_kappa)/Type(2.0);
-      //ln_tau_E_vec(i) = -log(sigma_E(i)) + epsilon_cnst;
       ln_tau_E_vec(i) = -log_epsilon_temp + epsilon_cnst;
     }
   }
@@ -714,10 +710,10 @@ Type objective_function<Type>::operator()()
     ADREPORT(quadratic_peak);
     ADREPORT(quadratic_reduction);
   }
-  if(est_epsilon_model == 1) {
+  if (est_epsilon_model) {
     REPORT(b_epsilon_logit);
     ADREPORT(b_epsilon_logit);
-    b_epsilon = Type(2.0) * exp(b_epsilon_logit)/(1+exp(b_epsilon_logit)) - 1.0; // constrain to be -1 to 1
+    b_epsilon = Type(2.0) * exp(b_epsilon_logit) / (1.0 + exp(b_epsilon_logit)) - 1.0; // constrain to be -1 to 1
     REPORT(b_epsilon);
     ADREPORT(b_epsilon);
     REPORT(b_epsilon);
