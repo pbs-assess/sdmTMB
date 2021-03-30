@@ -304,6 +304,9 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(X_threshold);
   DATA_VECTOR(proj_X_threshold);
   DATA_INTEGER(threshold_func);
+  // optional model for nonstationary st variance
+  DATA_INTEGER(est_epsilon_model);
+  DATA_VECTOR(epsilon_predictor);
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -326,7 +329,7 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
 
   PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3)
-
+  PARAMETER(b_epsilon_logit); // slope coefficient for log-linear model on epsilon
   // Joint negative log-likelihood
   Type jnll = 0.0;
 
@@ -374,10 +377,10 @@ Type objective_function<Type>::operator()()
   Type range = sqrt(Type(8.0)) / exp(ln_kappa);
 
   if (include_spatial) {
-    Type sigma_O = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O) *
-                            exp(Type(2.0) * ln_kappa));
-    Type sigma_O_trend = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O_trend) *
-      exp(Type(2.0) * ln_kappa));
+    Type sigma_O = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O +
+                            Type(2.0) * ln_kappa));
+    Type sigma_O_trend = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O_trend +
+      Type(2.0) * ln_kappa));
     Type log_sigma_O = log(sigma_O);
     ADREPORT(log_sigma_O);
     REPORT(sigma_O);
@@ -387,8 +390,31 @@ Type objective_function<Type>::operator()()
     REPORT(sigma_O_trend);
     ADREPORT(sigma_O_trend);
   }
-  Type sigma_E = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E) *
-                          exp(Type(2.0) * ln_kappa));
+
+  // optional non-stationary model on epsilon
+  vector<Type> sigma_E(n_t);
+  vector<Type> ln_tau_E_vec(n_t);
+  Type b_epsilon;
+  if (!est_epsilon_model) { // constant model
+    for (int i = 0; i < n_t; i++) {
+      sigma_E(i) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa));
+      ln_tau_E_vec(i) = ln_tau_E;
+    }
+  }
+  if (est_epsilon_model) { // loglinear model
+    b_epsilon = minus_one_to_one(b_epsilon_logit); // TODO: document this?
+    // epsilon_intcpt is the intercept parameter, derived from ln_tau_E. For models with time as covariate,
+    // this is interpreted as sigma at time 0
+    Type epsilon_intcpt = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa));
+    Type log_epsilon_intcpt = log(epsilon_intcpt);
+    Type log_epsilon_temp = 0.0;
+    Type epsilon_cnst = - log(Type(4.0) * M_PI) / Type(2.0) - ln_kappa;
+    for(int i = 0; i < n_t; i++) {
+      log_epsilon_temp = log_epsilon_intcpt + b_epsilon * epsilon_predictor(i);
+      sigma_E(i) = exp(log_epsilon_temp); // log-linear model
+      ln_tau_E_vec(i) = -log_epsilon_temp + epsilon_cnst;
+    }
+  }
 
   Eigen::SparseMatrix<Type> Q; // Precision matrix
   if (barrier) {
@@ -488,17 +514,19 @@ Type objective_function<Type>::operator()()
   if (!spatial_only) {
     if (!ar1_fields) {
       for (int t = 0; t < n_t; t++)
-        jnll += SCALE(GMRF(Q, s), 1. / exp(ln_tau_E))(epsilon_st.col(t));
+        jnll += SCALE(GMRF(Q, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
     } else {
-      // if (!separable_ar1) {
-      //   nll_epsilon += SCALE(GMRF(Q, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
-      //   for (int t = 1; t < n_t; t++) {
-      //     nll_epsilon += SCALE(GMRF(Q, s), 1./exp(ln_tau_E))(epsilon_st.col(t) -
-      //       rho * epsilon_st.col(t - 1));
-      //   }
-      // } else {
-      jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q, s)), 1./exp(ln_tau_E))(epsilon_st);
-      // }
+      if (est_epsilon_model > 0) {
+        // time-varying epsilon sd
+        jnll += SCALE(GMRF(Q, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
+        for (int t = 1; t < n_t; t++) {
+          jnll += SCALE(GMRF(Q, s), 1./exp(ln_tau_E_vec(t)))((epsilon_st.col(t) -
+            rho * epsilon_st.col(t - 1))/sqrt(1-rho*rho));
+        }
+      } else {
+        // constant epsilon sd, keep calculations as is
+        jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q, s)), 1./exp(ln_tau_E))(epsilon_st);
+      }
     }
   }
 
@@ -715,10 +743,21 @@ Type objective_function<Type>::operator()()
     ADREPORT(quadratic_peak);
     ADREPORT(quadratic_reduction);
   }
+  if (est_epsilon_model) {
+    REPORT(b_epsilon_logit);
+    ADREPORT(b_epsilon_logit);
+    b_epsilon = Type(2.0) * exp(b_epsilon_logit) / (1.0 + exp(b_epsilon_logit)) - 1.0; // constrain to be -1 to 1
+    REPORT(b_epsilon);
+    ADREPORT(b_epsilon);
+    REPORT(b_epsilon);
+    ADREPORT(b_epsilon);
+  }
 
   // ------------------ Reporting ----------------------------------------------
-
-  Type log_sigma_E = log(sigma_E); // for SE
+  vector<Type> log_sigma_E(n_t);
+  for (int i = 0; i < n_t; i++) {
+    log_sigma_E(i) = log(sigma_E(i));
+  }
   ADREPORT(log_sigma_E);      // log spatio-temporal SD
   REPORT(sigma_E);      // spatio-temporal SD
   ADREPORT(sigma_E);      // spatio-temporal SD

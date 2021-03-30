@@ -27,7 +27,8 @@ sdmTMB(
   newton_steps = 0,
   mgcv = TRUE,
   previous_fit = NULL,
-  quadratic_roots = FALSE
+  quadratic_roots = FALSE,
+  epsilon_predictor = NULL
 )
 }
 \arguments{
@@ -120,6 +121,19 @@ quadratic parameters. This means that if you want to generate a quadratic
 profile for depth, and depth and depth^2 are part of your formula, you need
 to make sure these are listed first and that an intercept isn't included.
 For example, \code{formula = cpue ~ 0 + depth + depth2 + as.factor(year)}.}
+
+\item{epsilon_predictor}{A column name (as character) of a predictor of a
+linear trend (in log space) of the spatiotemporal standard deviation. By
+default, this is \code{NULL} and fits a model with a constant spatiotemporal
+variance. However, this argument can also be a character name in the
+original data frame (a covariate that ideally has been standardized to have
+mean 0 and standard deviation = 1). Because the spatiotemporal field varies
+by time step, the standardization should be done by time. If the name of a
+predictor is included, a log-linear model is fit where the predictor is
+used to model effects on the standard deviation, e.g. `log(sd\link{i}) = B0 + B1
+\itemize{
+\item epsilon_predictor\link{i}`.
+}}
 }
 \description{
 Fit a spatial or spatiotemporal predictive-process GLMM with TMB.
@@ -267,6 +281,14 @@ m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) +
     breakpt(depth_scaled) + depth_scaled2, data = pcod_gaus,
   time = "year", spde = pcod_spde_gaus)
 print(m_pos)
+
+# Linear covariate on log(sigma_epsilon) -- note this has convergence problems
+m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+# 2nd example with linear covariate on log(sigma_epsilon) -- this scales the years to
+# start at 1
+d$time = d$year - min(d$year) + 1
+m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+
 }
 }
 \references{
