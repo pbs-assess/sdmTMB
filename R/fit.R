@@ -64,14 +64,16 @@ NULL
 #'   profile for depth, and depth and depth^2 are part of your formula, you need
 #'   to make sure these are listed first and that an intercept isn't included.
 #'   For example, `formula = cpue ~ 0 + depth + depth2 + as.factor(year)`.
-#' @param epsilon_predictor Whether to include a time varying spatiotemporal
-#' component. By default, this is NULL and fits a model with a constant spatio-temporal
-#' variance (epsilon). But this argument can also be a character name in the original
-#' dataframe (a covariate that ideally has been standardized to have mean 0 and standard
-#' deviation = 1). Because the spatiotemporal field varies by time step, the standardization
-#' should be done by time. If the name of a predictor is included, a log-linear model
-#' is fit where the predictor is used to model effects on the standard deviation, e.g.
-#' log(sd[i]) = B0 + B1 * epsilon_predictor[i]
+#' @param epsilon_predictor A column name (as character) of a predictor of a
+#'   linear trend (in log space) of the spatiotemporal standard deviation. By
+#'   default, this is `NULL` and fits a model with a constant spatiotemporal
+#'   variance. However, this argument can also be a character name in the
+#'   original data frame (a covariate that ideally has been standardized to have
+#'   mean 0 and standard deviation = 1). Because the spatiotemporal field varies
+#'   by time step, the standardization should be done by time. If the name of a
+#'   predictor is included, a log-linear model is fit where the predictor is
+#'   used to model effects on the standard deviation, e.g. `log(sd[i]) = B0 + B1
+#'   * epsilon_predictor[i]`.
 #' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
 #'   model.response terms model.offset
@@ -311,11 +313,11 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
   est_epsilon_model <- 0
   epsilon_covariate <- rep(0, length(unique(data[[time]])))
-  if(!is.null(epsilon_predictor)) {
+  if (!is.null(epsilon_predictor)) {
     # covariate vector dimensioned by number of time steps
     time_steps <- unique(data[[time]])
-    for(i in 1:length(time_steps)) {
-      epsilon_covariate[i] = data[which(data[[time]]==time_steps[i])[1],epsilon_predictor]
+    for (i in seq(1, length(time_steps))) {
+      epsilon_covariate[i] <- data[which(data[[time]] == time_steps[i])[1], epsilon_predictor]
     }
     est_epsilon_model <- 1
   }
