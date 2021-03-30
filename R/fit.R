@@ -82,8 +82,8 @@ NULL
 #'   mean 0 and standard deviation = 1). Because the spatiotemporal field varies
 #'   by time step, the standardization should be done by time. If the name of a
 #'   predictor is included, a log-linear model is fit where the predictor is
-#'   used to model effects on the standard deviation, e.g. `log(sd[i]) = B0 + B1
-#'   * epsilon_predictor[i]`.
+#'   used to model effects on the standard deviation,
+#'   e.g. `log(sd(i)) = B0 + B1 * epsilon_predictor(i)`.
 #' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
 #'   model.response terms model.offset
@@ -252,18 +252,17 @@ NULL
 #'   time = "year", spde = pcod_spde_gaus)
 #' print(m_pos)
 #'
-#' # Linear covariate on log(sigma_epsilon) -- note this has convergence problems
+#' # Linear covariate on log(sigma_epsilon); note this has convergence problems
 #' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-# data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-# epsilon_predictor = "year")
+#'   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+#'   epsilon_predictor = "year")
 #
-#' # 2nd example with linear covariate on log(sigma_epsilon) -- this scales the years to
-#' # start at 1
-#' d$time = d$year - min(d$year) + 1
+#' # 2nd example with linear covariate on log(sigma_epsilon)
+#' # this scales the years to start at 1
+#' d$time <- d$year - min(d$year) + 1
 #' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-# data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-# epsilon_predictor = "time")
-#'
+#'   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+#'   epsilon_predictor = "time")
 #' }
 
 sdmTMB <- function(formula, data, spde, time = NULL,

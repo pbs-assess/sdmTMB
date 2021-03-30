@@ -130,10 +130,8 @@ original data frame (a covariate that ideally has been standardized to have
 mean 0 and standard deviation = 1). Because the spatiotemporal field varies
 by time step, the standardization should be done by time. If the name of a
 predictor is included, a log-linear model is fit where the predictor is
-used to model effects on the standard deviation, e.g. `log(sd\link{i}) = B0 + B1
-\itemize{
-\item epsilon_predictor\link{i}`.
-}}
+used to model effects on the standard deviation,
+e.g. \code{log(sd(i)) = B0 + B1 * epsilon_predictor(i)}.}
 }
 \description{
 Fit a spatial or spatiotemporal predictive-process GLMM with TMB.
@@ -282,13 +280,16 @@ m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) +
   time = "year", spde = pcod_spde_gaus)
 print(m_pos)
 
-# Linear covariate on log(sigma_epsilon) -- note this has convergence problems
+# Linear covariate on log(sigma_epsilon); note this has convergence problems
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-# 2nd example with linear covariate on log(sigma_epsilon) -- this scales the years to
-# start at 1
-d$time = d$year - min(d$year) + 1
+  data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+  epsilon_predictor = "year")
+# 2nd example with linear covariate on log(sigma_epsilon)
+# this scales the years to start at 1
+d$time <- d$year - min(d$year) + 1
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-
+  data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+  epsilon_predictor = "time")
 }
 }
 \references{
