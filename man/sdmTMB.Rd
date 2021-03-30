@@ -280,16 +280,17 @@ m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) +
   time = "year", spde = pcod_spde_gaus)
 print(m_pos)
 
-# Linear covariate on log(sigma_epsilon); note this has convergence problems
+# Linear covariate on log(sigma_epsilon):
+# First we will center the years around their mean
+# to help with convergence.
+d$year_centered <- d$year - mean(d$year)
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-  epsilon_predictor = "year")
-# 2nd example with linear covariate on log(sigma_epsilon)
-# this scales the years to start at 1
-d$time <- d$year - min(d$year) + 1
-m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-  data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-  epsilon_predictor = "time")
+  epsilon_predictor = "year_centered")
+print(m) # sigma_E varies with time now
+# coefficient is not yet in tidy.sdmTMB:
+as.list(m$sd_report, "Estimate", report = TRUE)$b_epsilon
+as.list(m$sd_report, "Std. Error", report = TRUE)$b_epsilon
 }
 }
 \references{
