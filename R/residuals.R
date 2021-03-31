@@ -7,11 +7,11 @@ qres_tweedie <- function(object, y, mu) {
   stats::qnorm(u)
 }
 
-qres_binomial <- function(object, y, mu) {
-  n <- rep(1, length(y))
-  a <- stats::pbinom(y - 1, n, mu)
+qres_binomial <- function(object, y, mu, n = NULL) {
+  if (is.null(n)) n <- rep(1, length(y))
+  a <- stats::pbinom(n - y, n, mu)
   b <- stats::pbinom(y, n, mu)
-  u <- stats::runif(n = length(y), min = a, max = b)
+  u <- stats::runif(n = length(y), min = pmin(a, b), max = pmax(a, b))
   stats::qnorm(u)
 }
 
@@ -76,5 +76,5 @@ residuals.sdmTMB <- function(object, ...) {
   )
   y <- object$response
   mu <- object$family$linkinv(predict(object)$est)
-  res_func(object, y, mu)
+  res_func(object, y, mu, ...)
 }

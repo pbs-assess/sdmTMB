@@ -3,12 +3,14 @@
 print.sdmTMB <- function(x, ...) {
   r <- suppressWarnings(tryCatch(x$tmb_obj$report(), error = function(e) NA))
   if (all(is.na(r))) {
-    stop("It looks like the model was built with an older version of sdmTMB. ",
+    stop("It looks like the model was built with a different version of sdmTMB. ",
       "Please update the model with ",
       "`your_model <- sdmTMB:::update_model(your_model)`", call. = FALSE)
-    # x <- update_model(x)
-    # r <- x$tmb_obj$report()
   }
+  # need to initialize the new TMB object once:
+  x$tmb_obj$fn(x$model$par)
+  lp <- x$tmb_obj$env$last.par.best
+  r <- x$tmb_obj$report(lp)
 
   spatial_only <- !is.null(r$sigma_E) && !is.null(r$sigma_O_trend)
 
@@ -60,7 +62,11 @@ print.sdmTMB <- function(x, ...) {
 
   pre <- "Spatiotemporal SD (sigma_E): "
   if (x$tmb_data$spatial_only == 0L) {
-    sigma_E <- paste0(pre, mround(r$sigma_E, 2L), "\n")
+    if (!isTRUE(is.na(x$tmb_map$b_epsilon_logit))) {
+      sigma_E <- paste0(pre, mround(r$sigma_E, 2L), "\n")
+    } else {
+      sigma_E <- paste0(pre, mround(r$sigma_E[1], 2L), "\n")
+    }
   } else {
     sigma_E <- paste0(pre, "not estimated\n")
   }

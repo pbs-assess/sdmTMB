@@ -14,7 +14,8 @@
 #' @param rho Spatiotemporal correlation between years;
 #'   should be between -1 and 1.
 #' @param sigma_O SD of spatial process (Omega).
-#' @param sigma_E SD of spatiotemporal process (Epsilon).
+#' @param sigma_E SD of spatiotemporal process (Epsilon). Can be scalar or
+#'   vector for time-varying model.
 #' @param sigma_V A vector of standard deviations of time-varying random walk on
 #'   parameters. Set to 0 for parameters that should not vary through time.
 #' @param phi Observation error scale parameter.
@@ -23,6 +24,7 @@
 #' @param seed A value with which to set the random seed.
 #' @param list Logical for whether output is in list format. If `TRUE`,
 #'    data is in list element 1 and input values in element 2.
+#' @param size Specific for the binomial family, vector representing binomial N. If not included, defaults to 1 (bernoulli)
 #'
 #' @return A data frame where:
 #' * `omega_s` represents the simulated spatial random effects.
@@ -78,7 +80,8 @@ sdmTMB_sim <- function(mesh,
                        thetaf = 1.5,
                        df = 3,
                        seed = sample.int(1e6, 1),
-                       list = FALSE) {
+                       list = FALSE,
+                       size = NULL) {
   assert_that(is.numeric(x), is.numeric(y))
   assert_that(is.null(dim(x)), is.null(dim(y)))
   assert_that(identical(length(x), length((y))))
@@ -88,7 +91,7 @@ sdmTMB_sim <- function(mesh,
   assert_that(time_steps >= 1)
   assert_that(range > 0)
   assert_that(rho >= -1, rho <= 1)
-  assert_that(sigma_O >= 0, sigma_E >= 0, all(sigma_V >= 0), phi > 0)
+  assert_that(sigma_O >= 0, all(sigma_E >= 0), all(sigma_V >= 0), phi > 0)
   if (!is.null(X)) assert_that(!is.null(betas))
   if (!is.null(betas) && !is.null(X)) assert_that(ncol(X) == length(betas))
   assert_that(length(betas) == length(sigma_V))
@@ -106,15 +109,22 @@ sdmTMB_sim <- function(mesh,
   }
   epsilon_st <- list() # spatiotemporal random effects
 
-  if (time_steps > 1L && sigma_E > 0) {
+  # test whether sigma_E_zero
+  if (length(sigma_E) %in% c(1L, time_steps) == FALSE) {
+    stop("Error: sigma_E must be a scalar or of length time_steps", call. = FALSE)
+  }
+  if (length(sigma_E) == 1L) sigma_E <- rep(sigma_E, time_steps)
+  sigma_E_zero <- length(which(sigma_E == 0)) == time_steps
+
+  if (time_steps > 1L && sigma_E_zero == FALSE) {
     for (i in seq_len(time_steps)) {
       if (i == 1 || rho == 0) {
         epsilon_st[[i]] <-
-          rspde2(coords, sigma = sigma_E, range = range, mesh = mesh, seed = seed * i)
+          rspde2(coords, sigma = sigma_E[i], range = range, mesh = mesh, seed = seed * i)
       } else { # AR1 and not first time slice:
         epsilon_st[[i]] <- rho * epsilon_st[[i - 1]] +
           sqrt(1 - rho^2) * # stationary AR1
-          rspde2(coords, sigma = sigma_E, range = range, mesh = mesh, seed = seed * i)
+          rspde2(coords, sigma = sigma_E[i], range = range, mesh = mesh, seed = seed * i)
       }
     }
   } else {
@@ -164,9 +174,10 @@ sdmTMB_sim <- function(mesh,
   d$mu <- do.call(family$linkinv, list(d$eta))
   N <- nrow(d)
 
+  if(is.null(size)) size <- rep(1,N)
   d$observed <- switch(family$family,
     gaussian  = stats::rnorm(N, mean = d$mu, sd = phi),
-    binomial  = stats::rbinom(N, size = 1L, prob = d$mu),
+    binomial  = stats::rbinom(N, size = size, prob = d$mu),
     tweedie   = fishMod::rTweedie(N, mu = d$mu, phi = phi, p = thetaf),
     Beta      = stats::rbeta(N, d$mu * phi, (1 - d$mu) * phi),
     Gamma     = stats::rgamma(N, shape = phi, scale = d$mu / phi),

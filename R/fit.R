@@ -20,14 +20,16 @@ NULL
 #' @param family The family and link. Supports [gaussian()], [Gamma()],
 #'   [binomial()], [poisson()], \code{\link[sdmTMB:families]{Beta()}},
 #'   \code{\link[sdmTMB:families]{nbinom2()}}, and
-#'   \code{\link[sdmTMB:families]{tweedie()}}].
+#'   \code{\link[sdmTMB:families]{tweedie()}}]. For binomial family options,
+#'   see the 'Binomial families' section below.
 #' @param time_varying An optional formula describing covariates that should be
 #'   modelled as a random walk through time. Be careul not to include
 #'   covariates (including the intercept) in both the main and time-varying
 #'   formula. I.e., at least one should have `~ 0` or ~ -1`.
 #' @param weights Optional likelihood weights for the conditional model.
 #'   Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
-#'   to one and are not internally modified.
+#'   to one and are not internally modified. Can also be used for trials with
+#'   the binomial family. See Details below.
 #' @param extra_time Optional extra time slices (e.g., years) to include for
 #'   interpolation or forecasting with the predict function. See the
 #'   Details section below.
@@ -74,7 +76,16 @@ NULL
 #'   profile for depth, and depth and depth^2 are part of your formula, you need
 #'   to make sure these are listed first and that an intercept isn't included.
 #'   For example, `formula = cpue ~ 0 + depth + depth2 + as.factor(year)`.
-#'
+#' @param epsilon_predictor A column name (as character) of a predictor of a
+#'   linear trend (in log space) of the spatiotemporal standard deviation. By
+#'   default, this is `NULL` and fits a model with a constant spatiotemporal
+#'   variance. However, this argument can also be a character name in the
+#'   original data frame (a covariate that ideally has been standardized to have
+#'   mean 0 and standard deviation = 1). Because the spatiotemporal field varies
+#'   by time step, the standardization should be done by time. If the name of a
+#'   predictor is included, a log-linear model is fit where the predictor is
+#'   used to model effects on the standard deviation,
+#'   e.g. `log(sd(i)) = B0 + B1 * epsilon_predictor(i)`.
 #' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
 #'   model.response terms model.offset
@@ -93,6 +104,16 @@ NULL
 #' In the model formula, an offset can be included by including `+ offset` in
 #' the model formula (a reserved word). The offset will be included in any
 #' prediction. `offset` must be a column in `data`.
+#'
+#' **Binomial families**
+
+#' Following the structure of [stats::glm()] and \pkg{glmmTMB}, a binomial
+#' family can be specified in one of 4 ways: (1) the response may be a factor
+#' (and the model classifies the first level versus all others), (2) the
+#' response may be binomial (0/1), (3) the response can be a matrix of form
+#' `cbind(success, failure)`, and (4) the response may be the observed
+#' proportions, and the 'weights' argument is used to specify the Binomial size
+#' (N) parameter (`prob ~ ..., weights = N`).
 #'
 #' **Threshold models**
 #'
@@ -181,7 +202,7 @@ NULL
 #' max(m$gradients)
 #' max(m1$gradients)
 #'
-#' # Binomial:
+#' # Bernoulli:
 #' pcod_binom <- d
 #' pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
 #' m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
@@ -249,6 +270,18 @@ NULL
 #'     breakpt(depth_scaled) + depth_scaled2, data = pcod_gaus,
 #'   time = "year", spde = pcod_spde_gaus)
 #' print(m_pos)
+#'
+#' # Linear covariate on log(sigma_epsilon):
+#' # First we will center the years around their mean
+#' # to help with convergence.
+#' d$year_centered <- d$year - mean(d$year)
+#' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+#'   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+#'   epsilon_predictor = "year_centered")
+#' print(m) # sigma_E varies with time now
+#' # coefficient is not yet in tidy.sdmTMB:
+#' as.list(m$sd_report, "Estimate", report = TRUE)$b_epsilon
+#' as.list(m$sd_report, "Std. Error", report = TRUE)$b_epsilon
 #' }
 
 sdmTMB <- function(formula, data, spde, time = NULL,
@@ -262,7 +295,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   newton_steps = 0,
   mgcv = TRUE,
   previous_fit = NULL,
-  quadratic_roots = FALSE) {
+  quadratic_roots = FALSE,
+  epsilon_predictor = NULL) {
 
   assert_that(
     is.logical(reml), is.logical(anisotropy), is.logical(silent),
@@ -325,13 +359,54 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     X_ij <- model.matrix(formula, data)
     mf <- model.frame(formula, data)
   } else {
-    mgcv_mod <- mgcv::gam(formula, data = data) # should be fast enough to not worry
-    X_ij <- model.matrix(mgcv_mod)
+    # mgcv::gam will parse a matrix response, but not a factor
     mf <- model.frame(mgcv::interpret.gam(formula)$fake.formula, data)
+    if(identical(family$family, "binomial") & "factor" %in% model.response(mf, "any") == TRUE) {
+      stop("Error: with 'mgcv' = TRUE, the response cannot be a factor")
+    }
+    if(identical(family$family, "binomial")) {
+      mgcv_mod <- mgcv::gam(formula, data = data, family=family) # family needs to be passed into mgcv
+    } else {
+      mgcv_mod <- mgcv::gam(formula, data = data) # should be fast enough to not worry
+    }
+    X_ij <- model.matrix(mgcv_mod)
   }
 
   offset_pos <- grep("^offset$", colnames(X_ij))
-  y_i  <- model.response(mf, "numeric")
+  y_i <- model.response(mf, "numeric")
+
+  # This is taken from approach in glmmTMB to match how they handle binomial
+  # yobs could be a factor -> treat as binary following glm
+  # yobs could be cbind(success, failure)
+  # yobs could be binary
+  # (yobs, weights) could be (proportions, size)
+  # On the C++ side 'yobs' must be the number of successes.
+  size <- rep(1, nrow(X_ij)) # for non-binomial case
+  if (identical(family$family, "binomial")) {
+    ## call this to catch the factor / matrix cases
+    y_i <- model.response(mf, type = "any")
+    if (is.factor(y_i)) {
+      ## following glm, ‘success’ is interpreted as the factor not
+      ## having the first level (and hence usually of having the
+      ## second level).
+      y_i <- pmin(as.numeric(y_i) - 1, 1)
+      size <- rep(1, length(y_i))
+    } else {
+      if (is.matrix(y_i)) { # yobs=cbind(success, failure)
+        size <- y_i[, 1] + y_i[, 2]
+        yobs <- y_i[, 1] # successes
+        y_i <- yobs
+      } else {
+        if (all(y_i %in% c(0, 1))) { # binary
+          size <- rep(1, length(y_i))
+        } else { # proportions
+          y_i <- weights * y_i
+          size <- weights
+          weights <- rep(1, length(y_i))
+        }
+      }
+    }
+  }
 
   if (!is.null(penalties)) {
     assert_that(ncol(X_ij) == length(penalties),
@@ -342,9 +417,6 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
   if (identical(family$link, "log") && min(y_i, na.rm = TRUE) < 0) {
     stop("`link = 'log'` but the reponse data include values < 0.", call. = FALSE)
-  }
-  if (identical(family$family, "binomial") && !all(y_i %in% c(0, 1))) {
-    stop("`family = 'binomial'` but the reponse data include values other than 0 and 1.", call. = FALSE)
   }
 
   offset <- as.vector(model.offset(mf))
@@ -377,8 +449,19 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   }
   df <- if (family$family == "student" && "df" %in% names(family)) family$df else 3
 
+  est_epsilon_model <- 0L
+  epsilon_covariate <- rep(0, length(unique(data[[time]])))
+  if (!is.null(epsilon_predictor)) {
+    # covariate vector dimensioned by number of time steps
+    time_steps <- unique(data[[time]])
+    for (i in seq(1, length(time_steps))) {
+      epsilon_covariate[i] <- data[which(data[[time]] == time_steps[i])[1], epsilon_predictor]
+    }
+    est_epsilon_model <- 1L
+  }
+
   tmb_data <- list(
-    y_i        = y_i,
+    y_i        = c(y_i),
     n_t        = length(unique(data[[time]])),
     t_i        = t_i,
     offset_i   = offset,
@@ -415,6 +498,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     barrier_scaling = if (barrier) spde$barrier_scaling else c(1, 1),
     anisotropy = as.integer(anisotropy),
     family     = .valid_family[family$family],
+    size = c(size),
     link       = .valid_link[family$link],
     df         = df,
     spatial_only = as.integer(spatial_only),
@@ -426,7 +510,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     RE_indexes = RE_indexes,
     proj_RE_indexes = matrix(0, ncol = 0, nrow = 1), # dummy
     nobs_RE = nobs_RE,
-    ln_tau_G_index = ln_tau_G_index
+    ln_tau_G_index = ln_tau_G_index,
+    est_epsilon_model = as.integer(est_epsilon_model),
+    epsilon_predictor = epsilon_covariate
   )
 
   b_thresh <- rep(0, 2)
@@ -449,7 +535,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     omega_s    = rep(0, n_s),
     omega_s_trend = rep(0, n_s),
     epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t),
-    b_threshold = b_thresh
+    b_threshold = b_thresh,
+    b_epsilon_logit = 0
   )
   if (identical(family$link, "inverse") && family$family %in% c("Gamma", "gaussian", "student")) {
     fam <- family
@@ -497,6 +584,11 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       RE         = factor(rep(NA, length(tmb_params$RE))),
       omega_s    = factor(rep(NA, length(tmb_params$omega_s))),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
+
+    # optional models on spatiotemporal sd parameter
+    if (est_epsilon_model == 0L) {
+      tmb_map <- c(tmb_map, list(b_epsilon_logit = as.factor(NA)))
+    }
 
     tmb_obj1 <- TMB::MakeADFun(
       data = tmb_data, parameters = tmb_params,
@@ -548,6 +640,11 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   if (nobs_RE[[1]] > 0) tmb_random <- c(tmb_random, "RE")
   if (reml) tmb_random <- c(tmb_random, "b_j")
 
+  if (est_epsilon_model >= 2) {
+    # model 2 = re model, model 3 = loglinear-re
+    tmb_random <- c(tmb_random, "epsilon_rw")
+  }
+
   if (!is.null(previous_fit)) {
     tmb_params <- previous_fit$tmb_obj$env$parList()
   }
@@ -557,7 +654,13 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     random = tmb_random, DLL = "sdmTMB", silent = silent)
 
   if (!is.null(previous_fit)) {
-    start <- previous_fit$model$par
+    start <- tmb_obj$par
+    # not all parameters will be in previous model; include those that are
+    unique_pars <- unique(names(previous_fit$tmb_obj$par))
+    for(i in seq_along(unique_pars)) {
+      start[which(names(start) == unique_pars[i])] <-
+        previous_fit$tmb_obj$par[which(names(previous_fit$tmb_obj$par) == unique_pars[i])]
+    }
   } else {
     start <- tmb_obj$par
   }
@@ -615,6 +718,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     gradients  = conv$final_grads,
     bad_eig    = conv$bad_eig,
     call       = match.call(expand.dots = TRUE),
-    sd_report  = sd_report),
+    sd_report  = sd_report,
+    version    = utils::packageVersion("sdmTMB")),
     class      = "sdmTMB")
 }
+

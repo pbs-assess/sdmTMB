@@ -14,8 +14,7 @@ test_that("sdmTMB model fit with a covariate beta", {
   sigma_E <- 0.3 # SD of spatial process
   phi <- 0.1 # observation error
   s <- sdmTMB_sim(
-    x = x, y = y, mesh = spde,
-    betas = initial_betas, time_steps = 6L,
+    x = x, y = y, mesh = spde, time_steps = 6L, betas = initial_betas,
     phi = phi, range = range, sigma_O = sigma_O, sigma_E = sigma_E,
     seed = SEED
   )
@@ -32,8 +31,8 @@ test_that("sdmTMB model fit with a covariate beta", {
   expect_equal(m$model$convergence, 0L)
   expect_equal((p$b_j - initial_betas)^2, 0, tol = 0.001)
   expect_equal((exp(p$ln_phi) - phi)^2, 0, tol = 0.002)
-  expect_equal((r$sigma_O - sigma_O)^2, 0, tol = 0.001)
-  expect_equal((r$sigma_E - sigma_E)^2, 0, tol = 0.001)
+  expect_equal((r$sigma_O - sigma_O)^2, 0, tol = 0.002)
+  expect_equal((r$sigma_E[1] - sigma_E)^2, 0, tol = 0.001)
   expect_equal(est$estimate[est$term == "range"], range, tol = 0.01)
   p <- predict(m)
   r <- residuals(m)

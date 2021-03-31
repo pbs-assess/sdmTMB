@@ -41,16 +41,18 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   } else {
     fe_names <- colnames(model.matrix(mgcv::gam(.formula, data = x$data)))
   }
-  fe_names <- fe_names[!fe_names == "offset"]
+
   se_rep <- as.list(x$sd_report, "Std. Error", report = TRUE)
   est_rep <- as.list(x$sd_report, "Estimate", report = TRUE)
   se <- as.list(x$sd_report, "Std. Error", report = FALSE)
   est <- as.list(x$sd_report, "Estimate", report = FALSE)
-  b_j <- est$b_j
-  b_j_se <- se$b_j
+  b_j <- est$b_j[!fe_names == "offset"]
+  b_j_se <- se$b_j[!fe_names == "offset"]
+  fe_names <- fe_names[!fe_names == "offset"]
   out <- data.frame(term = fe_names, estimate = b_j, std.error = b_j_se, stringsAsFactors = FALSE)
   crit <- stats::qnorm(1 - (1 - conf.level) / 2)
   if (exponentiate) trans <- exp else trans <- I
+  if (exponentiate) out$estimate <- trans(out$estimate)
 
   if (x$tmb_data$threshold_func > 0) {
     if (x$threshold_function == 1L) {
@@ -75,6 +77,12 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   se <- c(se, se_rep)
   est <- c(est, est_rep)
   ii <- 1
+  if (length(unique(est$sigma_E)) == 1L) {
+    se$sigma_E <- se$sigma_E[1]
+    est$sigma_E <- est$sigma_E[1]
+    se$log_sigma_E <- se$log_sigma_E[1]
+    est$log_sigma_E <- est$log_sigma_E[1]
+  }
 
   out_re <- list()
   log_name <- c("log_sigma_O", "log_sigma_E", "log_sigma_O_trend",
@@ -84,27 +92,27 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
     "ln_tau_V", "ln_tau_G", "range", "phi")) {
     j <- j + 1
     if (i %in% names(est)) {
-      if (length(est[[i]] > 0L)) {
-        .e <- est[[log_name[j]]]
-        .se <- se[[log_name[j]]]
-        out_re[[i]] <- data.frame(
-          term = i, estimate = est[[i]], std.error = se[[i]],
-          conf.low = exp(.e - crit * .se),
-          conf.high = exp(.e + crit * .se),
-          stringsAsFactors = FALSE
-        )
-        if (i == "sigma_O_trend") out_re[[i]]$term <- "sigma_Z"
-        ii <- ii + 1
-      }
-    }
-  }
-
-  for (i in seq_along(out_re)) {
-    if (grepl("^ln", out_re[[i]]$term[[1]])) {
-      out_re[[i]]$estimate <- exp(out_re[[i]]$estimate)
-      out_re[[i]]$term <- gsub("^ln_", "", out_re[[i]]$term)
+      .e <- est[[log_name[j]]]
+      .se <- se[[log_name[j]]]
+      out_re[[i]] <- data.frame(
+        term = i, estimate = est[[i]], std.error = NA,
+        conf.low = exp(.e - crit * .se),
+        conf.high = exp(.e + crit * .se),
+        stringsAsFactors = FALSE
+      )
+      if (i == "sigma_O_trend") out_re[[i]]$term <- "sigma_Z"
+      ii <- ii + 1
     }
     out_re[[i]]$std.error <- NA
+  }
+  if (!x$tmb_data$spatial_trend) {
+    out_re$sigma_O_trend <- NULL
+  }
+  if (m$tmb_data$spatial_only) {
+    out_re$sigma_E <- NULL
+  }
+  if (!m$tmb_data$spatial_trend) {
+    out_re$ln_tau_V <- NULL
   }
 
   r <- x$tmb_obj$report()

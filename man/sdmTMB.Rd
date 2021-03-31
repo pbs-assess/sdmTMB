@@ -27,7 +27,8 @@ sdmTMB(
   newton_steps = 0,
   mgcv = TRUE,
   previous_fit = NULL,
-  quadratic_roots = FALSE
+  quadratic_roots = FALSE,
+  epsilon_predictor = NULL
 )
 }
 \arguments{
@@ -48,7 +49,8 @@ model.}
 \item{family}{The family and link. Supports \code{\link[=gaussian]{gaussian()}}, \code{\link[=Gamma]{Gamma()}},
 \code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, \code{\link[sdmTMB:families]{Beta()}},
 \code{\link[sdmTMB:families]{nbinom2()}}, and
-\code{\link[sdmTMB:families]{tweedie()}}].}
+\code{\link[sdmTMB:families]{tweedie()}}]. For binomial family options,
+see the 'Binomial families' section below.}
 
 \item{time_varying}{An optional formula describing covariates that should be
 modelled as a random walk through time. Be careul not to include
@@ -57,7 +59,8 @@ formula. I.e., at least one should have \code{~ 0} or ~ -1`.}
 
 \item{weights}{Optional likelihood weights for the conditional model.
 Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
-to one and are not internally modified.}
+to one and are not internally modified. Can also be used for trials with
+the binomial family. See Details below.}
 
 \item{extra_time}{Optional extra time slices (e.g., years) to include for
 interpolation or forecasting with the predict function. See the
@@ -120,6 +123,17 @@ quadratic parameters. This means that if you want to generate a quadratic
 profile for depth, and depth and depth^2 are part of your formula, you need
 to make sure these are listed first and that an intercept isn't included.
 For example, \code{formula = cpue ~ 0 + depth + depth2 + as.factor(year)}.}
+
+\item{epsilon_predictor}{A column name (as character) of a predictor of a
+linear trend (in log space) of the spatiotemporal standard deviation. By
+default, this is \code{NULL} and fits a model with a constant spatiotemporal
+variance. However, this argument can also be a character name in the
+original data frame (a covariate that ideally has been standardized to have
+mean 0 and standard deviation = 1). Because the spatiotemporal field varies
+by time step, the standardization should be done by time. If the name of a
+predictor is included, a log-linear model is fit where the predictor is
+used to model effects on the standard deviation,
+e.g. \code{log(sd(i)) = B0 + B1 * epsilon_predictor(i)}.}
 }
 \description{
 Fit a spatial or spatiotemporal predictive-process GLMM with TMB.
@@ -139,6 +153,15 @@ Anderson et al. (2019) and Barnett et al. (2020) (see reference list below).
 In the model formula, an offset can be included by including \code{+ offset} in
 the model formula (a reserved word). The offset will be included in any
 prediction. \code{offset} must be a column in \code{data}.
+
+\strong{Binomial families}
+Following the structure of \code{\link[stats:glm]{stats::glm()}} and \pkg{glmmTMB}, a binomial
+family can be specified in one of 4 ways: (1) the response may be a factor
+(and the model classifies the first level versus all others), (2) the
+response may be binomial (0/1), (3) the response can be a matrix of form
+\code{cbind(success, failure)}, and (4) the response may be the observed
+proportions, and the 'weights' argument is used to specify the Binomial size
+(N) parameter (\verb{prob ~ ..., weights = N}).
 
 \strong{Threshold models}
 
@@ -207,7 +230,7 @@ m1 <- run_extra_optimization(m, nlminb_loops = 0, newton_steps = 1)
 max(m$gradients)
 max(m1$gradients)
 
-# Binomial:
+# Bernoulli:
 pcod_binom <- d
 pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
 m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
@@ -275,6 +298,18 @@ m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) +
     breakpt(depth_scaled) + depth_scaled2, data = pcod_gaus,
   time = "year", spde = pcod_spde_gaus)
 print(m_pos)
+
+# Linear covariate on log(sigma_epsilon):
+# First we will center the years around their mean
+# to help with convergence.
+d$year_centered <- d$year - mean(d$year)
+m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+  data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+  epsilon_predictor = "year_centered")
+print(m) # sigma_E varies with time now
+# coefficient is not yet in tidy.sdmTMB:
+as.list(m$sd_report, "Estimate", report = TRUE)$b_epsilon
+as.list(m$sd_report, "Std. Error", report = TRUE)$b_epsilon
 }
 }
 \references{

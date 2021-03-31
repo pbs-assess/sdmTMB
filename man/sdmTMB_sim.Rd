@@ -21,7 +21,8 @@ sdmTMB_sim(
   thetaf = 1.5,
   df = 3,
   seed = sample.int(1e+06, 1),
-  list = FALSE
+  list = FALSE,
+  size = NULL
 )
 }
 \arguments{
@@ -49,7 +50,8 @@ should be between -1 and 1.}
 
 \item{sigma_O}{SD of spatial process (Omega).}
 
-\item{sigma_E}{SD of spatiotemporal process (Epsilon).}
+\item{sigma_E}{SD of spatiotemporal process (Epsilon). Can be scalar or
+vector for time-varying model.}
 
 \item{sigma_V}{A vector of standard deviations of time-varying random walk on
 parameters. Set to 0 for parameters that should not vary through time.}
@@ -64,6 +66,8 @@ parameters. Set to 0 for parameters that should not vary through time.}
 
 \item{list}{Logical for whether output is in list format. If \code{TRUE},
 data is in list element 1 and input values in element 2.}
+
+\item{size}{Specific for the binomial family, vector representing binomial N. If not included, defaults to 1 (bernoulli)}
 }
 \value{
 A data frame where:
