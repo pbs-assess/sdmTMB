@@ -56,11 +56,12 @@ out <- furrr::future_map(seq_len(80), function(i) {
 
   mesh <- make_mesh(dat, xy_cols = c("x", "y"), cutoff = 0.1)
 
+  dat$time <- dat$time - min(dat$time) + 1L
   # fit log-linear model with year fixed effects
   m <- sdmTMB(
     data = dat, formula = observed ~ -1 + as.factor(time),
     time = "time", spde = mesh, reml = TRUE, include_spatial = FALSE,
-    epsilon_model = "loglinear"
+    epsilon_predictor = "time"
   )
 
   est <- tidy(m, conf.int = TRUE)
