@@ -114,6 +114,10 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   if (!m$tmb_data$spatial_trend) {
     out_re$ln_tau_V <- NULL
   }
+  if ("ln_tau_G" %in% names(out_re)) {
+    out_re$ln_tau_G$estimate <- exp(out_re$ln_tau_G$estimate)
+    out_re$ln_tau_G$term <- "tau_G"
+  }
 
   r <- x$tmb_obj$report()
   if (!is.null(r$rho) && r$rho != 0L) {
