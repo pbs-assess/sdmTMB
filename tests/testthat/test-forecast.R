@@ -15,7 +15,6 @@ test_that("Forecasting works with a time-varying parameter", {
     include_spatial = FALSE,
     time = "year",
     spde = spde,
-    silent = FALSE,
     mgcv = FALSE,
     family = tweedie(link = "log")
   )
