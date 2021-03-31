@@ -18,12 +18,16 @@ test_that("sdmTMB model fit with a covariate beta", {
     phi = phi, range = range, sigma_O = sigma_O, sigma_E = sigma_E,
     seed = SEED
   )
-  expect_equal(s$observed[1:20], c(-0.364045551132498, -0.0884742484390758, -0.748796917796798,
+  expect_equal(s$observed[c(1:30, 500)],
+    c(-0.364045551132498, -0.0884742484390758, -0.748796917796798,
     -0.0926168889732131, 0.0892802633041351, 0.92937309789911, 0.665431954199266,
     -0.81477972686779, 0.474664276994187, 0.929133590564276, -0.263130711477779,
     -0.115523493789406, 0.898574275118016, -0.964967397393866, -1.10224938263034,
     -0.286050035282319, 0.0810888689537039, -0.149727881361854, 0.364458765137563,
-    0.31886147691733), tolerance = 1e-8)
+    0.31886147691733, -0.184284142634752, 1.27393901104861, -0.822473494638277,
+    -0.594882019789678, -0.515872613077436, 0.578924954453508, -0.464615318681477,
+    0.476914673336151, -0.52150670383694, -0.0152136800518284, -0.394972244437357
+  ), tolerance = 1e-9)
   spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
   plot(spde)
   m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time", spde = spde)
@@ -32,8 +36,9 @@ test_that("sdmTMB model fit with a covariate beta", {
   p <- as.list(m$model$par)
   r <- m$tmb_obj$report()
   est <- tidy(m, "ran_pars")
-  expect_equal(est[,"estimate", drop = TRUE],
-    c(0.303614773, 0.308394419, 0.106559617, 0.064617947), tolerance = 1e-7)
+  expect_equal(sort(est[,"estimate", drop = TRUE]),
+    sort(c(0.106559618205922, 0.0646179753599145, 0.303614800474715, 0.308394406301974)),
+    tolerance = 1e-9)
   expect_equal(m$model$convergence, 0L)
   expect_equal((p$b_j - initial_betas)^2, 0, tol = 0.001)
   expect_equal((exp(p$ln_phi) - phi)^2, 0, tol = 0.002)
@@ -55,8 +60,10 @@ test_that("Anisotropy fits and plots", {
   expect_identical(class(m), "sdmTMB")
   plot_anisotropy(m)
   expect_equal(m$tmb_obj$report()$H,
-    structure(c(0.66544071, 0.07912087, 0.07912087, 1.51217096), .Dim = c(2L, 2L)),
-    tolerance = 1e-3)
+    structure(
+      c(0.665528444798002, 0.079350716881963, 0.079350716881963, 1.51202633656794),
+      .Dim = c(2L, 2L)),
+    tolerance = 1e-5)
 })
 
 test_that("Regularization works", {
