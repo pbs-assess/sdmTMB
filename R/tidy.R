@@ -86,10 +86,14 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
 
   out_re <- list()
   log_name <- c("log_sigma_O", "log_sigma_E", "log_sigma_O_trend",
-    "ln_tau_V", "ln_tau_G", "log_range", "ln_phi")
+    "ln_tau_V", "log_range", "ln_phi")
+  name <- c("sigma_O", "sigma_E", "sigma_O_trend",  "ln_tau_V", "range", "phi")
   j <- 0
-  for (i in c("sigma_O", "sigma_E", "sigma_O_trend",
-    "ln_tau_V", "ln_tau_G", "range", "phi")) {
+  if (length(est$ln_tau_G) > 0L) {
+    log_name <- c(log_name, "ln_tau_G")
+    name <- c(name, "ln_tau_G")
+  }
+  for (i in name) {
     j <- j + 1
     if (i %in% names(est)) {
       .e <- est[[log_name[j]]]
