@@ -15,8 +15,9 @@
 #' @param se_fit Should standard errors on predictions at the new locations given by
 #'   `newdata` be calculated? Warning: the current implementation can be very
 #'   slow for large data sets or high-resolution projections.
-#' @param xy_cols A character vector of length 2 that gives the column names of
-#'   the x and y coordinates in `newdata`.
+#' @param xy_cols Depreciated. Was: a character vector of
+#'   length 2 that gives the column names of the x and y coordinates in
+#'   `newdata`.
 #' @param return_tmb_object Logical. If `TRUE`, will include the TMB object in
 #'   a list format output. Necessary for the [get_index()] or [get_cog()] functions.
 #' @param area A vector of areas for survey grid cells. Only necessary if the
