@@ -85,14 +85,29 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   }
 
   out_re <- list()
-  log_name <- c("log_sigma_O", "log_sigma_E", "log_sigma_O_trend",
-    "ln_tau_V", "log_range", "ln_phi")
-  name <- c("sigma_O", "sigma_E", "sigma_O_trend",  "ln_tau_V", "range", "phi")
-  j <- 0
+  log_name <- c("log_range", "ln_phi")
+  name <- c("range", "phi")
+  if (x$tmb_data$include_spatial) {
+    log_name <- c(log_name, "log_sigma_O")
+    name <- c(name, "sigma_O")
+  }
+  if (!x$tmb_data$spatial_only) {
+    log_name <- c(log_name, "log_sigma_E")
+    name <- c(name, "sigma_E")
+  }
+  if (x$tmb_data$spatial_trend) {
+    log_name <- c(log_name, "log_sigma_O_trend", "ln_tau_V")
+    name <- c(name, "sigma_O_trend", "ln_tau_V")
+  }
+  if (x$tmb_data$include_spatial) {
+    log_name <- c(log_name, "log_sigma_O_trend")
+    name <- c(name, "sigma_O_trend")
+  }
   if (length(est$ln_tau_G) > 0L) {
     log_name <- c(log_name, "ln_tau_G")
     name <- c(name, "ln_tau_G")
   }
+  j <- 0
   for (i in name) {
     j <- j + 1
     if (i %in% names(est)) {
@@ -108,15 +123,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
       ii <- ii + 1
     }
     out_re[[i]]$std.error <- NA
-  }
-  if (!x$tmb_data$spatial_trend) {
-    out_re$sigma_O_trend <- NULL
-  }
-  if (x$tmb_data$spatial_only) {
-    out_re$sigma_E <- NULL
-  }
-  if (!x$tmb_data$spatial_trend) {
-    out_re$ln_tau_V <- NULL
   }
   if ("ln_tau_G" %in% names(out_re)) {
     out_re$ln_tau_G$estimate <- exp(out_re$ln_tau_G$estimate)
