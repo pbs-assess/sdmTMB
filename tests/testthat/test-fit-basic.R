@@ -26,8 +26,8 @@ test_that("sdmTMB model fit with a covariate beta", {
   p <- as.list(m$model$par)
   r <- m$tmb_obj$report()
   est <- tidy(m, "ran_pars")
-  expect_identical(round(est[,"estimate", drop = TRUE], 9),
-    c(0.303614773, 0.308394419, 0.106559617, 0.064617947))
+  expect_equal(est[,"estimate", drop = TRUE],
+    c(0.303614773, 0.308394419, 0.106559617, 0.064617947), tolerance = 1e-7)
   expect_equal(m$model$convergence, 0L)
   expect_equal((p$b_j - initial_betas)^2, 0, tol = 0.001)
   expect_equal((exp(p$ln_phi) - phi)^2, 0, tol = 0.002)
@@ -48,8 +48,9 @@ test_that("Anisotropy fits and plots", {
     family = tweedie(link = "log"), anisotropy = TRUE)
   expect_identical(class(m), "sdmTMB")
   plot_anisotropy(m)
-  expect_identical(round(m$tmb_obj$report()$H, 8),
-    structure(c(0.66544071, 0.07912087, 0.07912087, 1.51217096), .Dim = c(2L, 2L)))
+  expect_equal(m$tmb_obj$report()$H,
+    structure(c(0.66544071, 0.07912087, 0.07912087, 1.51217096), .Dim = c(2L, 2L)),
+    tolerance = 1e-3)
 })
 
 test_that("Regularization works", {
