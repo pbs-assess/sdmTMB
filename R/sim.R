@@ -233,7 +233,7 @@ rspde2 <- function(coords, mesh, sigma = 1, range, variance = sigma^2, alpha = 2
       attributes$A %*% INLA::inla.qsample(
         Q = attributes$Q,
         seed = if (missing(seed)) 0L else seed,
-        # seed = 0L,
+        num.threads = 1L,
         constr = attributes$spde$f$extraconstr
       )
     )
