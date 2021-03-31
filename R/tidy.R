@@ -76,6 +76,12 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   se <- c(se, se_rep)
   est <- c(est, est_rep)
   ii <- 1
+  if (length(unique(est$sigma_E)) == 1L) {
+    se$sigma_E <- se$sigma_E[1]
+    est$sigma_E <- est$sigma_E[1]
+    se$log_sigma_E <- se$log_sigma_E[1]
+    est$log_sigma_E <- est$log_sigma_E[1]
+  }
 
   out_re <- list()
   log_name <- c("log_sigma_O", "log_sigma_E", "log_sigma_O_trend",
@@ -84,11 +90,11 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   for (i in c("sigma_O", "sigma_E", "sigma_O_trend",
     "ln_tau_V", "range", "phi")) {
     j <- j + 1
-    if (i %in% names(est) && est[["sigma_E"]][1] > 0) {
+    if (i %in% names(est)) {
       .e <- est[[log_name[j]]]
       .se <- se[[log_name[j]]]
       out_re[[i]] <- data.frame(
-        term = i, estimate = est[[i]], std.error = se[[i]],
+        term = i, estimate = est[[i]], std.error = NA,
         conf.low = exp(.e - crit * .se),
         conf.high = exp(.e + crit * .se),
         stringsAsFactors = FALSE
@@ -99,6 +105,12 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   }
   if (!x$tmb_data$spatial_trend) {
     out_re$sigma_O_trend <- NULL
+  }
+  if (m$tmb_data$spatial_only) {
+    out_re$sigma_E <- NULL
+  }
+  if (!m$tmb_data$spatial_trend) {
+    out_re$ln_tau_V <- NULL
   }
 
   r <- x$tmb_obj$report()
