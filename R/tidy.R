@@ -85,8 +85,12 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   }
 
   out_re <- list()
-  log_name <- c("log_range", "ln_phi")
-  name <- c("range", "phi")
+  log_name <- c("log_range")
+  name <- c("range")
+  if (!isTRUE(is.na(x$tmb_map$ln_phi))) {
+    log_name <- c(log_name, "ln_phi")
+    name <- c(name, "phi")
+  }
   if (x$tmb_data$include_spatial) {
     log_name <- c(log_name, "log_sigma_O")
     name <- c(name, "sigma_O")
@@ -137,7 +141,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
     rho_lwr <- 2 * stats::plogis(ar_phi - crit * ar_phi_se) - 1
     rho_upr <- 2 * stats::plogis(ar_phi + crit * ar_phi_se) - 1
     out_re[[ii]] <- data.frame(
-      term = "rho", estimate = rho_est, std.error = ar_phi_se,
+      term = "rho", estimate = rho_est, std.error = NA,
       conf.low = rho_lwr, conf.high = rho_upr, stringsAsFactors = FALSE
     )
     ii <- ii + 1
