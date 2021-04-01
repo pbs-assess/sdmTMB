@@ -27,8 +27,9 @@ should be predictor data for each year in the original data set.}
 \code{newdata} be calculated? Warning: the current implementation can be very
 slow for large data sets or high-resolution projections.}
 
-\item{xy_cols}{A character vector of length 2 that gives the column names of
-the x and y coordinates in \code{newdata}.}
+\item{xy_cols}{Depreciated. Was: a character vector of
+length 2 that gives the column names of the x and y coordinates in
+\code{newdata}.}
 
 \item{return_tmb_object}{Logical. If \code{TRUE}, will include the TMB object in
 a list format output. Necessary for the \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}} functions.}
