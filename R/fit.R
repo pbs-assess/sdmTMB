@@ -649,24 +649,13 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     tmb_params <- previous_fit$tmb_obj$env$parList()
   }
 
+  if (!is.null(previous_fit)) tmb_map <- previous_fit$tmb_map
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     random = tmb_random, DLL = "sdmTMB", silent = silent)
 
-  if (!is.null(previous_fit)) {
-    start <- tmb_obj$par
-    # not all parameters will be in previous model; include those that are
-    unique_pars <- unique(names(previous_fit$tmb_obj$par))
-    for(i in seq_along(unique_pars)) {
-      start[which(names(start) == unique_pars[i])] <-
-        previous_fit$tmb_obj$par[which(names(previous_fit$tmb_obj$par) == unique_pars[i])]
-    }
-  } else {
-    start <- tmb_obj$par
-  }
-
   tmb_opt <- stats::nlminb(
-    start = start, objective = tmb_obj$fn, gradient = tmb_obj$gr,
+    start = tmb_obj$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
     control = control)
 
   if (nlminb_loops > 1) {
