@@ -454,8 +454,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   if (!is.null(epsilon_predictor)) {
     # covariate vector dimensioned by number of time steps
     time_steps <- unique(data[[time]])
-    for (i in seq(1, length(time_steps))) {
-      epsilon_covariate[i] <- data[which(data[[time]] == time_steps[i])[1], epsilon_predictor]
+    for (i in seq_along(time_steps)) {
+      epsilon_covariate[i] <- data[data[[time]] == time_steps[i],
+        epsilon_predictor, drop = TRUE][[1]]
     }
     est_epsilon_model <- 1L
   }
@@ -693,6 +694,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     time_varying = time_varying,
     threshold_parameter = thresh$threshold_parameter,
     threshold_function = thresh$threshold_func,
+    epsilon_predictor = epsilon_predictor,
     mgcv_mod   = mgcv_mod,
     time       = time,
     family     = family,
