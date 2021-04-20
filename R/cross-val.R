@@ -46,7 +46,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' @param spde Output from [make_mesh()].
 #' @param time The name of the time column. Leave as `NULL` if this is only spatial data.
 #' @param k_folds Number of folds.
-#' @param fold_ids Optional input name of column containing user fold ids.
+#' @param fold_ids Optional vector containing user fold ids.
 #' @param ... All other arguments required to run [sdmTMB()] model with the
 #'   exception of `weights`, which are used to define the folds.
 #'
