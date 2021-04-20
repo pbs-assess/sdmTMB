@@ -232,15 +232,13 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
         "the `extra_time` argument in `?sdmTMB:::predict.sdmTMB`.",
         call. = FALSE
       )
-
-    # if (!all(original_time %in% new_data_time)) {
-    #   newdata[["sdmTMB_fake_year"]] <- FALSE
-    #   missing_time_elements <- original_time[!original_time %in% new_data_time]
-    #   nd2 <- do.call("rbind",
-    #     replicate(length(missing_time_elements), newdata[1L,,drop=FALSE], simplify = FALSE))
-    #   nd2[[object$time]] <- rep(missing_time_elements, each = 1L)
-    #   nd2$sdmTMB_fake_year <- TRUE
-    #   newdata <- rbind(newdata, nd2)
+    # if (!identical(new_data_time, original_time)) {
+    #   stop("The time elements in `newdata` are not identical to those ",
+    #     "in the original dataset. For now, please predict on all time ",
+    #     "elements and filter out those you don't need after. Please ",
+    #     "let us know on the GitHub issues if this is important to you.",
+    #     call. = FALSE
+    #   )
     # }
 
     # If making population predictions (with standard errors), we don't need
@@ -308,6 +306,7 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     if (length(area) != nrow(proj_X_ij) && length(area) != 1L) {
       stop("`area` should be of the same length as `nrow(newdata)` or of length 1.", call. = FALSE)
     }
+
     tmb_data$proj_X_threshold <- thresh$X_threshold
     tmb_data$area_i <- if (length(area) == 1L) rep(area, nrow(proj_X_ij)) else area
     tmb_data$proj_mesh <- proj_mesh
@@ -324,6 +323,18 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     tmb_data$proj_spatial_index <- newdata$sdm_spatial_id
     tmb_data$proj_t_i <- as.numeric(newdata[[object$time]])
     tmb_data$proj_t_i <- tmb_data$proj_t_i - mean(unique(tmb_data$proj_t_i)) # center on mean
+
+    epsilon_covariate <- rep(0, length(unique(newdata[[object$time]])))
+    if (tmb_data$est_epsilon_model) {
+      # covariate vector dimensioned by number of time steps
+      time_steps <- unique(newdata[[object$time]])
+      for (i in seq_along(time_steps)) {
+        epsilon_covariate[i] <- newdata[newdata[[object$time]] == time_steps[i],
+            object$epsilon_predictor, drop = TRUE][[1]]
+      }
+    }
+    tmb_data$epsilon_predictor <- epsilon_covariate
+
     new_tmb_obj <- TMB::MakeADFun(
       data = tmb_data,
       parameters = object$tmb_obj$env$parList(),
