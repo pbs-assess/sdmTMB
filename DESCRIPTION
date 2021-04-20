@@ -44,7 +44,7 @@ Imports:
     mgcv,
     sf,
     stats,
-    TMB (>= 1.7.13)
+    TMB (>= 1.7.20)
 Suggests:
     dplyr,
     ggplot2,
