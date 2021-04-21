@@ -189,6 +189,7 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
   xy_cols = c("X", "Y"), return_tmb_object = FALSE,
   area = 1, re_form = NULL, ...) {
 
+  check_sdmTMB_version(object$version)
   if (!missing(xy_cols)) {
     warning("argument `xy_cols` is deprecated; this information is already ",
     "in the output of the `make_mesh(). Did you use `make_spde()`?", call. = FALSE)
@@ -425,4 +426,25 @@ get_response <- function(formula) {
   vars <- as.character(attr(tt, "variables"))[-1] ## [1] is the list call
   response <- attr(tt, "response") # index of response var
   vars[response]
+}
+
+remove_9000 <- function(x) {
+  as.package_version(paste0(
+    strsplit(as.character(x), ".", fixed = TRUE)[[1]][1:3],
+    collapse = "."
+  ))
+}
+
+check_sdmTMB_version <- function(version) {
+  if (remove_9000(utils::packageVersion("sdmTMB")) >
+    remove_9000(version)) {
+    warning(
+      "The installed version of sdmTMB is newer than the version\n",
+      "that was used to fit this model. It is possible new parameters\n",
+      "have been added to the TMB model since you fit this model and\n",
+      "that prediction will fail. We recommend you fit and predict\n",
+      "from an sdmTMB model with the same version.",
+      call. = FALSE
+    )
+  }
 }
