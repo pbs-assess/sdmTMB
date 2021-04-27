@@ -114,30 +114,43 @@ plot_map(predictions$data, "epsilon_st") +
   scale_fill_gradient2()
 ```
 
-When we ran our `predict.sdmTBM()` function, it also returned a report from TMB in the output because we included `return_tmb_object = TRUE`. We can then run our `get_index()` function to extract the total biomass calculations and standard errors:
+When we ran our `predict.sdmTBM()` function, it also returned a report from TMB in the output because we included `return_tmb_object = TRUE`. We can then run our `get_index()` function to extract the total biomass calculations and standard errors. We will set the `area` argument to 4 km^2^ since our grid cells are 2 km x 2 km. If some grid cells were not fully in the survey domain (or were on land), we could feed a vector of grid areas to the `area` argument that matched the number of grid cells.
 
 ```{r get-index}
- # not bias correcting for vignette-building speed:
-ind <- get_index(predictions, bias_correct = FALSE)
+# not bias correcting for vignette-building speed:
+index <- get_index(predictions, bias_correct = FALSE, area = 2 * 2)
 ```
 
 ```{r plot-index}
-# scale the biomass by the area and adjust units;
-scale <- 2 * 2 / 1000 # 2 x 2 km grid and converted from kg to tonnes
-ggplot(ind, aes(year, est*scale)) + geom_line() +
-  geom_ribbon(aes(ymin = lwr*scale, ymax = upr*scale), alpha = 0.4) +
+ggplot(index, aes(year, est)) + geom_line() +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4) +
   xlab('Year') + ylab('Biomass estimate (metric tonnes)')
 ```
 
 These are our biomass estimates:
 
 ```{r index-table, results='asis'}
-mutate(ind, 
-  est = est * scale,
-  lwr = lwr * scale,
-  upr = upr * scale,
-  cv = sqrt(exp(se^2) - 1)
-  ) %>% 
+mutate(index, cv = sqrt(exp(se^2) - 1)) %>% 
   select(-log_est, -max_gradient, -bad_eig, -se) %>%
   knitr::kable(format = "pandoc", digits = c(0, 0, 0, 0, 2))
+```
+
+We can also calculate an index for part of the survey domain. We'll make an index for everything south of UTM 5700 by subsetting our prediction grid. For more complicated spatial polygons you could intersect the polygon on the prediction grid using something like `sf::st_intersects()`.
+
+```{r index-subset}
+qcs_grid_south <- qcs_grid[qcs_grid$Y < 5700, ]
+predictions_south <- predict(m, newdata = qcs_grid_south, 
+  return_tmb_object = TRUE, area = 2 * 2)
+index_south <- get_index(predictions_south)
+head(index_south)
+```
+
+We can visually compare the two indexes:
+
+```{r south-index-plot}
+mutate(index, region = "all") %>% 
+  bind_rows(mutate(index_south, region = "south")) %>% 
+  ggplot(aes(year, est)) + 
+  geom_line(aes(colour = region)) +
+  geom_ribbon(aes(ymin = lwr, ymax = upr, fill = region), alpha = 0.4)
 ```
