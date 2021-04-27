@@ -65,10 +65,12 @@ Now we want to predict on a fine-scale grid on the entire survey domain. There i
 glimpse(qcs_grid)
 ```
 
-Now make the predictions on new data:
+Now make the predictions on new data.
+
+We will set the `area` argument to 4 km^2^ since our grid cells are 2 km x 2 km. If some grid cells were not fully in the survey domain (or were on land), we could feed a vector of grid areas to the `area` argument that matched the number of grid cells.
 
 ```{r predictions}
-predictions <- predict(m, newdata = qcs_grid, return_tmb_object = TRUE)
+predictions <- predict(m, newdata = qcs_grid, return_tmb_object = TRUE, area = 4)
 ```
 
 Let's make a small function to make maps.
@@ -114,11 +116,11 @@ plot_map(predictions$data, "epsilon_st") +
   scale_fill_gradient2()
 ```
 
-When we ran our `predict.sdmTBM()` function, it also returned a report from TMB in the output because we included `return_tmb_object = TRUE`. We can then run our `get_index()` function to extract the total biomass calculations and standard errors. We will set the `area` argument to 4 km^2^ since our grid cells are 2 km x 2 km. If some grid cells were not fully in the survey domain (or were on land), we could feed a vector of grid areas to the `area` argument that matched the number of grid cells.
+When we ran our `predict.sdmTBM()` function, it also returned a report from TMB in the output because we included `return_tmb_object = TRUE`. We can then run our `get_index()` function to extract the total biomass calculations and standard errors.
 
 ```{r get-index}
 # not bias correcting for vignette-building speed:
-index <- get_index(predictions, bias_correct = FALSE, area = 2 * 2)
+index <- get_index(predictions, bias_correct = FALSE)
 ```
 
 ```{r plot-index}
