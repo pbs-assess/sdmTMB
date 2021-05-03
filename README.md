@@ -29,8 +29,6 @@ installed, you can install sdmTMB:
 
 ``` r
 # install.packages("remotes")
-install.packages("Matrix", type = "source")
-remotes::install_github("kaskr/adcomp/TMB")
 remotes::install_github("pbs-assess/sdmTMB")
 ```
 
