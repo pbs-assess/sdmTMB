@@ -286,9 +286,6 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     ## not checking so that not all factors need to be in prediction:
     # fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
     proj_RE_indexes <- vapply(RE_names, function(x) as.integer(nd[[x]]) - 1L, rep(1L, nrow(nd)))
-    nobs_RE <- unname(apply(proj_RE_indexes, 2L, max)) + 1L
-    if (length(nobs_RE) == 0L) nobs_RE <- 0L
-    ln_tau_G_index <- unlist(lapply(seq_along(nobs_RE), function(i) rep(i, each = nobs_RE[i]))) - 1L
 
     if (!"mgcv" %in% names(object)) object[["mgcv"]] <- FALSE
     proj_X_ij <- matrix(999)
@@ -312,7 +309,6 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     tmb_data$area_i <- if (length(area) == 1L) rep(area, nrow(proj_X_ij)) else area
     tmb_data$proj_mesh <- proj_mesh
     tmb_data$proj_X_ij <- proj_X_ij
-    tmb_data$ln_tau_G_index <- ln_tau_G_index
     tmb_data$proj_X_rw_ik <- proj_X_rw_ik
     tmb_data$proj_RE_indexes <- proj_RE_indexes
     tmb_data$proj_year <- make_year_i(nd[[object$time]])

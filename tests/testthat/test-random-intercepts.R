@@ -63,6 +63,12 @@ test_that("Model with random intercepts fits appropriately.", {
 
   p <- predict(m)
   p.nd <- predict(m, newdata = s)
+  # newdata is not the same as fitted data:
+  p.nd2 <- predict(m, newdata = s[1:3, , drop = FALSE])
+
+  expect_equal(p.nd2$est[1:3], p$est[1:3], tolerance = 1e-4)
+  expect_equal(p.nd2$est_non_rf[1:3], p$est_non_rf[1:3], tolerance = 1e-4)
+  expect_equal(p.nd2$est[1:3], p.nd$est[1:3], tolerance = 1e-9)
   expect_equal(p$est, p.nd$est, tolerance = 1e-4)
   expect_equal(p$est_rf, p.nd$est_rf, tolerance = 1e-4)
   expect_equal(p$est_non_rf, p.nd$est_non_rf, tolerance = 1e-4)
