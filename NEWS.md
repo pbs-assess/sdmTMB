@@ -4,6 +4,10 @@
 
 * Add `re_form_iid` to `predict.sdmTMB()`.
 
+* Add `map_rf` option to `sdmTMB()`. This lets you map (fix at 
+  their starting values of zero) all random fields to produce a
+  classic GLM/GLMM.
+
 # sdmTMB 0.0.13.9000
 
 * Add IID random intercepts interface. E.g. `... + (1 | g)` #34

@@ -27,7 +27,7 @@ sdmTMB(
   newton_steps = 0,
   mgcv = TRUE,
   previous_fit = NULL,
-  map = NULL,
+  map_rf = FALSE,
   quadratic_roots = FALSE,
   epsilon_predictor = NULL
 )
@@ -117,12 +117,10 @@ optimization with. Can greatly speed up fitting. Note that the data and
 model must be set up \emph{exactly} the same way! However, the \code{weights} argument
 can change, which can be useful for cross-validation.}
 
-\item{map}{Optional list to 'map' off or fix certain parameters at their
-starting values. See \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}} for the syntax. This is an
-advanced feature that will take a strong understanding of the model
-to use at this point. It will be easiest to fit the model once
-and use the \code{model$tmb_map} list as a starting point. Can be used,
-for example, to turn off all spatial and spatiotemporal components.}
+\item{map_rf}{Map all the random fields to 0 to turn the model into a
+classical GLM or GLMM without spatial or spatiotemporal components?
+Note this is not accounted for in \code{print()} or \code{tidy.sdmTMB()};
+some parameters will still appear but their values can be ignored.}
 
 \item{quadratic_roots}{Experimental feature for internal use right now; may
 be moved to a branch. Logical: should quadratic roots be calculated? Note:

@@ -69,12 +69,10 @@ NULL
 #'   optimization with. Can greatly speed up fitting. Note that the data and
 #'   model must be set up *exactly* the same way! However, the `weights` argument
 #'   can change, which can be useful for cross-validation.
-#' @param map Optional list to 'map' off or fix certain parameters at their
-#'   starting values. See [TMB::MakeADFun()] for the syntax. This is an
-#'   advanced feature that will take a strong understanding of the model
-#'   to use at this point. It will be easiest to fit the model once
-#'   and use the `model$tmb_map` list as a starting point. Can be used,
-#'   for example, to turn off all spatial and spatiotemporal components.
+#' @param map_rf Map all the random fields to 0 to turn the model into a
+#'   classical GLM or GLMM without spatial or spatiotemporal components?
+#'   Note this is not accounted for in `print()` or `tidy.sdmTMB()`;
+#'   some parameters will still appear but their values can be ignored.
 #' @param quadratic_roots Experimental feature for internal use right now; may
 #'   be moved to a branch. Logical: should quadratic roots be calculated? Note:
 #'   on the sdmTMB side, the first two coefficients are used to generate the
@@ -301,7 +299,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   newton_steps = 0,
   mgcv = TRUE,
   previous_fit = NULL,
-  map = NULL,
+  map_rf = FALSE,
   quadratic_roots = FALSE,
   epsilon_predictor = NULL) {
 
@@ -309,7 +307,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     is.logical(reml), is.logical(anisotropy), is.logical(silent),
     is.logical(silent), is.logical(spatial_trend), is.logical(mgcv),
     is.logical(multiphase), is.logical(ar1_fields),
-    is.logical(include_spatial)
+    is.logical(include_spatial), is.logical(map_rf)
   )
   if (!is.null(time_varying)) assert_that(identical(class(time_varying), "formula"))
   assert_that(is.list(control))
@@ -579,7 +577,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   if (is.null(thresh$threshold_parameter)) {
     tmb_map <- c(tmb_map, list(b_threshold = factor(rep(NA, 2))))
   }
-  if (multiphase && is.null(previous_fit) && is.null(map)) {
+  if (multiphase && is.null(previous_fit)) {
     not_phase1 <- c(tmb_map, list(
       ln_tau_O   = as.factor(NA),
       ln_tau_E   = as.factor(NA),
@@ -659,7 +657,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   }
 
   if (!is.null(previous_fit)) tmb_map <- previous_fit$tmb_map
-  if (!is.null(map)) tmb_map <- map
+  if (isTRUE(map_rf)) tmb_map <- map_off_rf(tmb_map, tmb_params)
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     random = tmb_random, DLL = "sdmTMB", silent = silent)
@@ -723,3 +721,22 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     class      = "sdmTMB")
 }
 
+map_off_rf <- function(.map, tmb_params) {
+  .map$ln_tau_O <- as.factor(NA)
+  .map$ln_tau_E <- as.factor(NA)
+  # .map$ln_tau_G <- factor(rep(NA, length(tmb_params$ln_tau_G)))
+  # .map$ln_tau_O_trend <- as.factor(NA)
+  # .map$omega_s_trend <- factor(rep(NA, length(tmb_params$omega_s_trend)))
+  .map$ln_kappa <- as.factor(NA)
+  # .map$ln_H_input <- factor(rep(NA, 2))
+  .map$omega_s <- factor(rep(NA, length(tmb_params$omega_s)))
+  .map$epsilon_st <- factor(rep(NA, length(tmb_params$epsilon_st)))
+  .map
+
+  #   .map$ln_tau_O <- as.factor(NA)
+  #   .map$ln_tau_E <- as.factor(NA)
+  #   .map$omega_s <- factor(rep(NA, length(m$tmb_params$omega_s)))
+  #   .map$epsilon_st <- factor(rep(NA, length(m$tmb_params$epsilon_st)))
+  #   .map$ln_kappa <- as.factor(NA)
+
+}
