@@ -24,10 +24,15 @@
 #'   output will be passed to [get_index()] or [get_cog()]. Should be the same length
 #'   as the number of rows of `newdata`. If length 1, will be repeated to match the
 #'   rows of data.
-#' @param re_form `NULL` to specify individual-level predictions. `~0` or `NA`
-#'   for population-level predictions. Note that unlike lme4 or glmmTMB, this
-#'   only affects what the standard errors are calculated on if `se_fit = TRUE`.
-#'   Otherwise, predictions at various levels are returned in all cases.
+#' @param re_form `NULL` to specify including all spatial/spatiotemporal random
+#'   effects in predictions. `~0` or `NA` for population-level predictions. Note
+#'   that unlike lme4 or glmmTMB, this only affects what the standard errors are
+#'   calculated on if `se_fit = TRUE`. This does not affect [get_index()]
+#'   calculations.
+#' @param re_form_iid `NULL` to specify including all random intercepts in the
+#'   predictions. `~0` or `NA` for population-level predictions. No other
+#'   options (e.g., some but not all random intercepts) are implemented yet.
+#'   Only affects predictions with `newdata`. This also affects [get_index()].
 #' @param ... Not implemented.
 #'
 #' @return
@@ -187,7 +192,7 @@
 
 predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
   xy_cols = c("X", "Y"), return_tmb_object = FALSE,
-  area = 1, re_form = NULL, ...) {
+  area = 1, re_form = NULL, re_form_iid = NULL, ...) {
 
   check_sdmTMB_version(object$version)
   if (!missing(xy_cols)) {
@@ -207,6 +212,12 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
 
   # from glmmTMB:
   pop_pred <- (!is.null(re_form) && ((re_form == ~0) || identical(re_form, NA)))
+  pop_pred_iid <- (!is.null(re_form_iid) && ((re_form_iid == ~0) || identical(re_form_iid, NA)))
+  if (pop_pred_iid) {
+    exclude_RE <- object$tmb_data$exclude_RE
+  } else {
+    exclude_RE <- rep(1L, length(object$tmb_data$exclude_RE))
+  }
 
   tmb_data <- object$tmb_data
   tmb_data$do_predict <- 1L
@@ -316,6 +327,7 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     tmb_data$proj_lat <- newdata[[xy_cols[[2]]]]
     tmb_data$calc_se <- as.integer(se_fit)
     tmb_data$pop_pred <- as.integer(pop_pred)
+    tmb_data$exclude_RE <- exclude_RE
     tmb_data$calc_time_totals <- as.integer(!se_fit)
     tmb_data$proj_spatial_index <- newdata$sdm_spatial_id
     tmb_data$proj_t_i <- as.numeric(newdata[[object$time]])

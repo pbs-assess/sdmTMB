@@ -69,6 +69,12 @@ NULL
 #'   optimization with. Can greatly speed up fitting. Note that the data and
 #'   model must be set up *exactly* the same way! However, the `weights` argument
 #'   can change, which can be useful for cross-validation.
+#' @param map Optional list to 'map' off or fix certain parameters at their
+#'   starting values. See [TMB::MakeADFun()] for the syntax. This is an
+#'   advanced feature that will take a strong understanding of the model
+#'   to use at this point. It will be easiest to fit the model once
+#'   and use the `model$tmb_map` list as a starting point. Can be used,
+#'   for example, to turn off all spatial and spatiotemporal components.
 #' @param quadratic_roots Experimental feature for internal use right now; may
 #'   be moved to a branch. Logical: should quadratic roots be calculated? Note:
 #'   on the sdmTMB side, the first two coefficients are used to generate the
@@ -295,6 +301,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   newton_steps = 0,
   mgcv = TRUE,
   previous_fit = NULL,
+  map = NULL,
   quadratic_roots = FALSE,
   epsilon_predictor = NULL) {
 
@@ -478,6 +485,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     do_predict = 0L,
     calc_se    = 0L,
     pop_pred   = 0L,
+    exclude_RE = rep(0L, ncol(RE_indexes)),
     weights_i  = if (!is.null(weights)) weights else rep(1, length(y_i)),
     area_i     = rep(1, length(y_i)),
     normalize_in_r = 0L, # not used
@@ -571,7 +579,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   if (is.null(thresh$threshold_parameter)) {
     tmb_map <- c(tmb_map, list(b_threshold = factor(rep(NA, 2))))
   }
-  if (multiphase && is.null(previous_fit)) {
+  if (multiphase && is.null(previous_fit) && is.null(map)) {
     not_phase1 <- c(tmb_map, list(
       ln_tau_O   = as.factor(NA),
       ln_tau_E   = as.factor(NA),
@@ -651,6 +659,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   }
 
   if (!is.null(previous_fit)) tmb_map <- previous_fit$tmb_map
+  if (!is.null(map)) tmb_map <- map
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     random = tmb_random, DLL = "sdmTMB", silent = silent)

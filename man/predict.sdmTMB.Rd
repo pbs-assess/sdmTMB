@@ -12,6 +12,7 @@
   return_tmb_object = FALSE,
   area = 1,
   re_form = NULL,
+  re_form_iid = NULL,
   ...
 )
 }
@@ -39,10 +40,16 @@ output will be passed to \code{\link[=get_index]{get_index()}} or \code{\link[=g
 as the number of rows of \code{newdata}. If length 1, will be repeated to match the
 rows of data.}
 
-\item{re_form}{\code{NULL} to specify individual-level predictions. \code{~0} or \code{NA}
-for population-level predictions. Note that unlike lme4 or glmmTMB, this
-only affects what the standard errors are calculated on if \code{se_fit = TRUE}.
-Otherwise, predictions at various levels are returned in all cases.}
+\item{re_form}{\code{NULL} to specify including all spatial/spatiotemporal random
+effects in predictions. \code{~0} or \code{NA} for population-level predictions. Note
+that unlike lme4 or glmmTMB, this only affects what the standard errors are
+calculated on if \code{se_fit = TRUE}. This does not affect \code{\link[=get_index]{get_index()}}
+calculations.}
+
+\item{re_form_iid}{\code{NULL} to specify including all random intercepts in the
+predictions. \code{~0} or \code{NA} for population-level predictions. No other
+options (e.g., some but not all random intercepts) are implemented yet.
+Only affects predictions with \code{newdata}. This also affects \code{\link[=get_index]{get_index()}}.}
 
 \item{...}{Not implemented.}
 }

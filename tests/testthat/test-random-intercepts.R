@@ -62,9 +62,11 @@ test_that("Model with random intercepts fits appropriately.", {
   )
 
   p <- predict(m)
-  p.nd <- predict(m, newdata = s)
+  p.nd <- predict(m, newdata = s, re_form_iid = ~ 0)
+  plot(sort(p$est), sort(p.nd$est))
   # newdata is not the same as fitted data:
-  p.nd2 <- predict(m, newdata = s[1:3, , drop = FALSE])
+  # p.nd2 <- predict(m, newdata = s[1:3, , drop = FALSE])
+  p.nd2 <- predict(m, newdata = s[1:3, , drop = FALSE], re_form_iid = ~ 0)
 
   expect_equal(p.nd2$est[1:3], p$est[1:3], tolerance = 1e-4)
   expect_equal(p.nd2$est_non_rf[1:3], p$est_non_rf[1:3], tolerance = 1e-4)
@@ -78,4 +80,11 @@ test_that("Model with random intercepts fits appropriately.", {
   p.nd <- predict(m, newdata = s_drop)
   p <- p[s$g != 1, , drop = FALSE]
   expect_equal(p$est, p.nd$est, tolerance = 1e-4)
+
+  # prediction without random intercepts included:
+  p.nd.null <- predict(m, newdata = s, re_form_iid = NULL)
+  p.nd.na <- predict(m, newdata = s, re_form_iid = NA)
+  p.nd.0 <- predict(m, newdata = s, re_form_iid = ~ 0)
+  expect_identical(p.nd.na, p.nd.0)
+  expect_false(identical(p.nd.null$est, p.nd.0$est))
 })

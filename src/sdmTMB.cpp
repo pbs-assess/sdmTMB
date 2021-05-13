@@ -274,6 +274,7 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(ar1_fields);
   DATA_INTEGER(include_spatial);
   DATA_INTEGER(random_walk);
+  DATA_IVECTOR(exclude_RE);
 
   DATA_VECTOR(proj_lon);
   DATA_VECTOR(proj_lat);
@@ -633,10 +634,10 @@ Type objective_function<Type>::operator()()
     for (int i = 0; i < proj_X_ij.rows(); i++) {
       int temp = 0;
       for (int k = 0; k < n_RE; k++) {
-        if (k == 0) proj_iid_re_i(i) += RE(proj_RE_indexes(i, k));
+        if (k == 0 && !exclude_RE(0)) proj_iid_re_i(i) += RE(proj_RE_indexes(i, k));
         if (k > 0) {
           temp += nobs_RE(k - 1);
-          proj_iid_re_i(i) += RE(proj_RE_indexes(i, k) + temp);
+          if (!exclude_RE(k)) proj_iid_re_i(i) += RE(proj_RE_indexes(i, k) + temp);
         }
       }
       proj_fe(i) += proj_iid_re_i(i);

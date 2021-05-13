@@ -1,5 +1,9 @@
 # sdmTMB
 
+# sdmTMB 0.0.14.9000
+
+* Add `re_form_iid` to `predict.sdmTMB()`.
+
 # sdmTMB 0.0.13.9000
 
 * Add IID random intercepts interface. E.g. `... + (1 | g)` #34
