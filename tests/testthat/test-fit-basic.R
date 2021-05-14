@@ -339,3 +339,10 @@ test_that("The `map_rf` argument works.", {
   expect_true(!identical(p$est, p.map$est))
   expect_true(length(unique(p.map$est)) == length(unique(d$year)))
 })
+
+test_that("Large coordinates cause a warning.", {
+  d <- subset(pcod, year == 2017)
+  d$X <- d$X * 1000
+  d$Y <- d$Y * 1000
+  expect_warning(pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 70))
+})

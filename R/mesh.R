@@ -120,6 +120,15 @@ make_mesh <- function(data, xy_cols,
       call. = FALSE
     )
   }
+
+  if (max(data[[xy_cols[1]]]) > 1e4 || max(data[[xy_cols[2]]] > 1e4)) {
+    warning("The x or y column values are fairly large.\n",
+      "This can cause estimation problems since the spatial range\n",
+      "is dependent on the scale of the coordinates.\n",
+      "Consider scaling the x and y coordinates.\n",
+      "For example, try working in UTM km instead of UTM m by divided by 1000.",
+      call. = FALSE)
+  }
   type <- match.arg(type)
   if (!missing(n_knots) && type == "cutoff") {
     stop("`n_knots` specified but `type = 'cutoff'. ",
