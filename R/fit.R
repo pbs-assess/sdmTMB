@@ -325,6 +325,12 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       stop("There is at least one NA value in the time column. ",
         "Please remove it.", call. = FALSE)
   }
+  if (is.factor(data[[time]])) {
+    if (length(levels(data[[time]])) > length(unique(data[[time]]))) {
+      stop("The time column is a factor and there are extra factor levels.",
+        "Please remove these or turn your time column into an integer.", call. = FALSE)
+    }
+  }
 
   thresh <- check_and_parse_thresh_params(formula, data)
   original_formula <- formula
