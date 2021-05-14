@@ -40,7 +40,7 @@ get_convergence_diagnostics <- function(sd_report) {
 }
 
 make_year_i <- function(x) {
-  x <- as.integer(as.factor(as.character(x)))
+  x <- as.integer(as.factor(x))
   x - min(x)
 }
 
