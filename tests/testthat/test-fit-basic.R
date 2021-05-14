@@ -338,6 +338,34 @@ test_that("The `map_rf` argument works.", {
   expect_true(all(p.map$epsilon_st == 0))
   expect_true(!identical(p$est, p.map$est))
   expect_true(length(unique(p.map$est)) == length(unique(d$year)))
+
+  # basic lm test:
+  dpos <- d[d$density > 0, ]
+  pcod_spde <- make_mesh(dpos, c("X", "Y"), cutoff = 50)
+  m.sdmTMB.map <- sdmTMB(log(density) ~ depth, data = dpos,
+    family = gaussian(), map_rf = TRUE, spde = pcod_spde)
+  m.stats.glm <- stats::lm(log(density) ~ depth, data = dpos)
+  m.glmmTMB <- glmmTMB::glmmTMB(log(density) ~ depth, data = dpos)
+  .t <- tidy(m.sdmTMB.map)
+  expect_equal(.t$estimate, as.numeric(coef(m.stats.glm)), tolerance = 1e-5)
+  expect_equal(exp(m.sdmTMB.map$model$par[["ln_phi"]]),
+    glmmTMB::sigma(m.glmmTMB), tolerance = 1e-5)
+
+  # Bernoulli:
+  pcod_binom <- pcod
+  pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
+  pcod_spde <- make_mesh(pcod_binom, c("X", "Y"), cutoff = 50)
+  m.sdmTMB.map <- sdmTMB(present ~ depth, data = pcod_binom,
+    family = binomial(link = "logit"), map_rf = TRUE, spde = pcod_spde)
+  m.stats.glm <- stats::glm(present ~ depth, data = pcod_binom,
+    family = binomial(link = "logit"))
+  m.glmmTMB <- glmmTMB::glmmTMB(present ~ depth, data = pcod_binom,
+    family = binomial(link = "logit"))
+  b1 <- as.numeric(unclass(glmmTMB::fixef(m.glmmTMB))$cond)
+  b2 <- tidy(m.sdmTMB.map)$estimate
+  b3 <- as.numeric(coef(m.stats.glm))
+  expect_equal(b1, b2, tolerance = 1e-7)
+  expect_equal(b3, b2, tolerance = 1e-6)
 })
 
 test_that("Large coordinates cause a warning.", {
