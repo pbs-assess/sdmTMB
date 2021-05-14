@@ -1,5 +1,12 @@
 # sdmTMB
 
+# sdmTMB 0.0.14.9001
+
+* Add some protections for possible user errors:
+  * AR1 with a spatial-only model
+  * Missing factor levels in time
+  * Coordinate systems that are too big
+
 # sdmTMB 0.0.14.9000
 
 * Add `re_form_iid` to `predict.sdmTMB()`.
