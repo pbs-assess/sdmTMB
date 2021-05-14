@@ -724,7 +724,6 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 map_off_rf <- function(.map, tmb_params) {
   .map$ln_tau_O <- as.factor(NA)
   .map$ln_tau_E <- as.factor(NA)
-  .map$ln_tau_G <- factor(rep(NA, length(tmb_params$ln_tau_G)))
   .map$ln_tau_O_trend <- as.factor(NA)
   .map$omega_s_trend <- factor(rep(NA, length(tmb_params$omega_s_trend)))
   .map$ln_kappa <- as.factor(NA)
