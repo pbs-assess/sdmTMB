@@ -23,7 +23,7 @@ NULL
 #'   \code{\link[sdmTMB:families]{tweedie()}}]. For binomial family options,
 #'   see the 'Binomial families' section below.
 #' @param time_varying An optional formula describing covariates that should be
-#'   modelled as a random walk through time. Be careul not to include
+#'   modelled as a random walk through time. Be careful not to include
 #'   covariates (including the intercept) in both the main and time-varying
 #'   formula. I.e., at least one should have `~ 0` or ~ -1`.
 #' @param weights Optional likelihood weights for the conditional model.
