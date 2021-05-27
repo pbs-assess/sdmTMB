@@ -1,5 +1,9 @@
 # sdmTMB
 
+# sdmTMB 0.0.14.9003
+
+* Add vignette on making pretty maps of the output
+
 # sdmTMB 0.0.14.9001
 
 * Add some protections for possible user errors:
