@@ -335,7 +335,7 @@ make_barrier_spde <- function(spde) {
 #' # We will use `bc_coast` from the package data,
 #' # but you can recreate it with the following.
 #'
-#' # For applied situations on finer scales, you may with to use scale = "small".
+#' # For applied situations on finer scales, you may with to use scale = "large".
 #' # For that, first: remotes::install_github("ropensci/rnaturalearthhires")
 #' # map_data <- rnaturalearth::ne_countries(
 #' #   scale = "medium",
