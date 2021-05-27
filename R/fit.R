@@ -57,6 +57,10 @@ NULL
 #'   include spatiotemporal random effects)? By default a spatial-only model
 #'   will be fit if there is only one unique value in the time column or the
 #'   `time` argument is left at its default value of `NULL`.
+#' @param normalize Logical: use [TMB::normalize()] to normalize the process
+#'   likelihood using the Laplace approximation? Can result in a substantial
+#'   speed boost in some cases. This used to default to `FALSE` prior to
+#'   May 2021.
 #' @param nlminb_loops How many times to run [stats::nlminb()] optimization.
 #'   Sometimes restarting the optimizer at the previous best values aids
 #'   convergence. If the maximum gradient is still too large,
@@ -295,6 +299,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   control = sdmTMBcontrol(), penalties = NULL, ar1_fields = FALSE,
   include_spatial = TRUE, spatial_trend = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
+  normalize = TRUE,
   nlminb_loops = 1,
   newton_steps = 0,
   mgcv = TRUE,
@@ -492,7 +497,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     exclude_RE = rep(0L, ncol(RE_indexes)),
     weights_i  = if (!is.null(weights)) weights else rep(1, length(y_i)),
     area_i     = rep(1, length(y_i)),
-    normalize_in_r = 0L, # not used
+    normalize_in_r = 0L, # not used first time
+    flag = 1L, # part of TMB::normalize()
     calc_time_totals = 0L,
     random_walk = !is.null(time_varying),
     enable_priors = as.integer(!is.null(penalties)),
@@ -662,11 +668,15 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     tmb_params <- previous_fit$tmb_obj$env$parList()
   }
 
+  tmb_data$normalize_in_r <- as.integer(normalize)
+
   if (!is.null(previous_fit)) tmb_map <- previous_fit$tmb_map
   if (isTRUE(map_rf)) tmb_map <- map_off_rf(tmb_map, tmb_params)
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     random = tmb_random, DLL = "sdmTMB", silent = silent)
+
+  if (normalize) tmb_obj <- TMB::normalize(tmb_obj, flag = "flag", value = 0)
 
   tmb_opt <- stats::nlminb(
     start = tmb_obj$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,

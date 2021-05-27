@@ -30,7 +30,16 @@ test_that("sdmTMB model fit with a covariate beta", {
   ), tolerance = 1e-7)
   spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
   plot(spde)
-  m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time", spde = spde)
+  .t1 <- system.time({
+    m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
+      silent = TRUE, spde = spde, normalize = FALSE)
+  })
+  .t2 <- system.time({
+    m_norm <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
+      silent = TRUE, spde = spde, normalize = TRUE)
+  })
+  expect_equal(m$model$par, m_norm$model$par, tolerance = 1e-6)
+  expect_lt(.t2[[1]], .t1[[1]])
   expect_output(print(m), "fit by")
   expect_output(summary(m), "fit by")
   p <- as.list(m$model$par)

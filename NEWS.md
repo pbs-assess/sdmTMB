@@ -1,5 +1,10 @@
 # sdmTMB
 
+# sdmTMB 0.0.15.9000
+
+* Add back `normalize` argument to `sdmTMB()` and default to `TRUE`.
+  This can dramatically speed up some model fits (~4 times for some test models).
+
 # sdmTMB 0.0.14.9003
 
 * Add vignette on making pretty maps of the output

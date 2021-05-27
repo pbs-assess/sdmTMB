@@ -257,6 +257,7 @@ Type objective_function<Type>::operator()()
   DATA_FACTOR(year_i);
 
   DATA_INTEGER(normalize_in_r);
+  DATA_INTEGER(flag);
 
   // Prediction?
   DATA_INTEGER(do_predict);
@@ -557,6 +558,7 @@ Type objective_function<Type>::operator()()
       }
     }
   }
+  if (flag == 0) return jnll;
 
   // ------------------ Probability of data given random effects ---------------
 
