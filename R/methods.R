@@ -4,13 +4,14 @@ print.sdmTMB <- function(x, ...) {
   r <- suppressWarnings(tryCatch(x$tmb_obj$report(), error = function(e) NA))
   if (all(is.na(r))) {
     stop("It looks like the model was built with a different version of sdmTMB. ",
-      "Please update the model with ",
-      "`your_model <- sdmTMB:::update_model(your_model)`", call. = FALSE)
+      "Please fit your model again with the current sdmTMB.", call. = FALSE)
   }
   # need to initialize the new TMB object once:
+  sink(tempfile())
   x$tmb_obj$fn(x$model$par)
   lp <- x$tmb_obj$env$last.par.best
   r <- x$tmb_obj$report(lp)
+  sink()
 
   spatial_only <- !is.null(r$sigma_E) && !is.null(r$sigma_O_trend)
 
