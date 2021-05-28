@@ -106,6 +106,32 @@ vector<Type> RepeatVector(vector<Type> x, int times)
   return res;
 }
 
+// From Osgood-Zimmerman and Wakefield 2021
+// https://arxiv.org/format/2103.09929
+// helper function to use the same penalized complexity prior on
+// matern parameters as used in INLA
+template<class Type>
+Type dPCPriSPDE(Type logtau, Type logkappa, vector<Type> matern_pars, int give_log = 0)
+{
+  Type matern_par_a = matern_pars[0]; // range limit: rho0
+  Type matern_par_b = matern_pars[1]; // range prob: alpha_rho
+  Type matern_par_c = matern_pars[2]; // field sd limit: sigma0
+  Type matern_par_d = matern_pars[3]; // field sd prob: alpha_sigma
+  Type penalty; // prior contribution to jnll
+  Type d = 2.;  // dimension
+  Type lambda1 = -log(matern_par_b) * pow(matern_par_a, d/2.);
+  Type lambda2 = -log(matern_par_d) / matern_par_c;
+  Type range = sqrt(8.) / exp(logkappa);
+  Type sigma = 1. / sqrt(4. * M_PI * exp(2. * logtau) * exp(2. * logkappa));
+  penalty = (-d/2. - 1.) * log(range) - lambda1 * pow(range, -d/2.) - lambda2 * sigma;
+  // Note: (rho, sigma) --> (x=log kappa, y=log tau) -->
+  //  transforms: rho = sqrt(8)/e^x & sigma = 1/(sqrt(4pi)*e^x*e^y)
+  //  --> Jacobian: |J| propto e^(-y -2x)
+  Type jacobian = - logtau - 2. * logkappa;
+  penalty += jacobian;
+  if (give_log) return penalty; else return exp(penalty);
+}
+
 template <class Type>
 vector<Type> GetQuadraticRoots(Type a, Type b, Type threshold)
 {
@@ -272,6 +298,8 @@ Type objective_function<Type>::operator()()
 
   DATA_INTEGER(enable_priors);
   DATA_VECTOR(penalties);
+  DATA_VECTOR(matern_pc_prior_O);
+  DATA_VECTOR(matern_pc_prior_E);
   DATA_INTEGER(ar1_fields);
   DATA_INTEGER(include_spatial);
   DATA_INTEGER(random_walk);
@@ -368,18 +396,15 @@ Type objective_function<Type>::operator()()
   // ------------------ Priors -------------------------------------------------
 
   if (enable_priors) {
-    // jnll -= dnorm(ln_tau_O, Type(0.0), Type(1.0), true);
-    // jnll -= dnorm(ln_tau_E, Type(0.0), Type(1.0), true);
-    // jnll -= dnorm(ln_kappa, Type(0.0), Type(2.0), true);
-    // jnll -= dnorm(ln_phi, Type(0.0), Type(1.0), true);
     for (int j = 0; j < n_j; j++) {
       if (!isNA(penalties(j)))
         jnll -= dnorm(b_j(j), Type(0.0), penalties(j), true);
     }
-    // if (spatial_trend) {
-    //   jnll -= dnorm(ln_tau_O_trend, Type(0.0), Type(1.0), true);
-    // }
   }
+  if (matern_pc_prior_O(0) > 0.)
+    jnll -= dPCPriSPDE(ln_tau_O, ln_kappa, matern_pc_prior_O, true);
+  if (matern_pc_prior_E(0) > 0.)
+    jnll -= dPCPriSPDE(ln_tau_E, ln_kappa, matern_pc_prior_E, true);
 
   // ------------------ Geospatial ---------------------------------------------
 

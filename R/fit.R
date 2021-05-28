@@ -61,6 +61,12 @@ NULL
 #'   likelihood using the Laplace approximation? Can result in a substantial
 #'   speed boost in some cases. This used to default to `FALSE` prior to
 #'   May 2021.
+#' @param matern_prior_O An optional vector of length 4 of penalized complexity
+#'   (PC) prior values. Order is `c(a, b, c, d)` where `P(range < a) = b` and
+#'   `P(sigmaO > c) = d`. sigmaO represents the marginal standard deviation of the
+#'   spatial random field.
+#' @param matern_prior_E Same as `matern_prior_O` but for the spatiotemporal
+#'   field.
 #' @param nlminb_loops How many times to run [stats::nlminb()] optimization.
 #'   Sometimes restarting the optimizer at the previous best values aids
 #'   convergence. If the maximum gradient is still too large,
@@ -299,7 +305,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   control = sdmTMBcontrol(), penalties = NULL, ar1_fields = FALSE,
   include_spatial = TRUE, spatial_trend = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
-  normalize = TRUE,
+  normalize = FALSE,
+  matern_prior_O = NULL,
+  matern_prior_E = NULL,
   nlminb_loops = 1,
   newton_steps = 0,
   mgcv = TRUE,
@@ -312,7 +320,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     is.logical(reml), is.logical(anisotropy), is.logical(silent),
     is.logical(silent), is.logical(spatial_trend), is.logical(mgcv),
     is.logical(multiphase), is.logical(ar1_fields),
-    is.logical(include_spatial), is.logical(map_rf)
+    is.logical(include_spatial), is.logical(map_rf), is.logical(normalize)
   )
   if (!is.null(time_varying)) assert_that(identical(class(time_varying), "formula"))
   assert_that(is.list(control))
@@ -494,6 +502,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     do_predict = 0L,
     calc_se    = 0L,
     pop_pred   = 0L,
+    matern_pc_prior_O = if (!is.null(matern_prior_O)) matern_prior_O else c(0, 0, 0, 0),
+    matern_pc_prior_E = if (!is.null(matern_prior_E)) matern_prior_E else c(0, 0, 0, 0),
     exclude_RE = rep(0L, ncol(RE_indexes)),
     weights_i  = if (!is.null(weights)) weights else rep(1, length(y_i)),
     area_i     = rep(1, length(y_i)),

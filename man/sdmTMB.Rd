@@ -23,6 +23,9 @@ sdmTMB(
   include_spatial = TRUE,
   spatial_trend = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
+  normalize = FALSE,
+  matern_prior_O = NULL,
+  matern_prior_E = NULL,
   nlminb_loops = 1,
   newton_steps = 0,
   mgcv = TRUE,
@@ -100,6 +103,19 @@ See \url{http://dx.doi.org/10.1111/ecog.05176} and the
 include spatiotemporal random effects)? By default a spatial-only model
 will be fit if there is only one unique value in the time column or the
 \code{time} argument is left at its default value of \code{NULL}.}
+
+\item{normalize}{Logical: use \code{\link[TMB:normalize]{TMB::normalize()}} to normalize the process
+likelihood using the Laplace approximation? Can result in a substantial
+speed boost in some cases. This used to default to \code{FALSE} prior to
+May 2021.}
+
+\item{matern_prior_O}{An optional vector of length 4 of penalized complexity
+(PC) prior values. Order is \code{c(a, b, c, d)} where \code{P(range < a) = b} and
+\code{P(sigmaO > c) = d}. sigmaO represents the marginal standard deviation of the
+spatial random field.}
+
+\item{matern_prior_E}{Same as \code{matern_prior_O} but for the spatiotemporal
+field.}
 
 \item{nlminb_loops}{How many times to run \code{\link[stats:nlminb]{stats::nlminb()}} optimization.
 Sometimes restarting the optimizer at the previous best values aids

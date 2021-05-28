@@ -38,7 +38,19 @@ test_that("sdmTMB model fit with a covariate beta", {
     m_norm <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
       silent = TRUE, spde = spde, normalize = TRUE)
   })
+  # P(sp.range < a) = b
+  # P(sp.sigma > c) = d
+  # matern.pri <- c(10, .95, 1., .05) ## a, b, c, d
+  .t3 <- system.time({
+    m_pc <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
+      silent = TRUE, spde = spde, normalize = TRUE,
+      matern_prior_E = c(0.01, 0.999, 0.1, 0.05),
+      matern_prior_O = c(0.01, 0.999, 0.1, 0.05)
+      )
+  })
   expect_equal(m$model$par, m_norm$model$par, tolerance = 1e-6)
+  expect_equal(m$model$par, m_pc$model$par, tolerance = 1e-3)
+  expect_true(m_pc$model$par[['ln_kappa']] > m_norm$model$par[['ln_kappa']])
   expect_lt(.t2[[1]], .t1[[1]])
   expect_output(print(m), "fit by")
   expect_output(summary(m), "fit by")

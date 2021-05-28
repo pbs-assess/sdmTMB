@@ -2,8 +2,12 @@
 
 # sdmTMB 0.0.15.9000
 
-* Add back `normalize` argument to `sdmTMB()` and default to `TRUE`.
-  This can dramatically speed up some model fits (~4 times for some test models).
+* Add experimental penalized complexity (PC) prior as used in INLA.
+  See arguments `matern_prior_O` and `matern_prior_E`.
+
+* Add back `normalize` argument to `sdmTMB()` and default to `FALSE`.
+  Setting to `TRUE` can dramatically speed up some model fits
+  (~4 times for some test models).
 
 # sdmTMB 0.0.14.9003
 
