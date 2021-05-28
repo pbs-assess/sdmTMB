@@ -129,10 +129,11 @@ newdata$lwr <- lwr
 newdata$upr <- upr
 # dim(proj_eta)
 
+# for comparison
 p2 <- predict(m, newdata = qcs_grid)
 
-plot(p2$est - newdata$eta)
-plot(p2$est - eta_med)
+# plot(p2$est - newdata$eta)
+# plot(p2$est - eta_med)
 
 ggplot(p2, aes(X, Y, fill = exp(est))) +
   geom_raster() +
