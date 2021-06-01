@@ -34,11 +34,10 @@
 #'   options (e.g., some but not all random intercepts) are implemented yet.
 #'   Only affects predictions with `newdata`. This also affects [get_index()].
 #' @param sim If > 0, simulate from the fitted parameters with `sim` draws
-#'   assuming a multivariate normal distribution? Returns a matrix of
+#'   assuming a multivariate normal distribution. Returns a matrix of
 #'   `nrow(data)` by `sim` representing the estimates of the linear predictor
 #'   (i.e., in link space). Can be useful for deriving uncertainty on
-#'   predictions (e.g., `apply(out, 1, sd)` or
-#'   `apply(out, 1, quantile, probs = 0.05)`) or propagating uncertainty.
+#'   predictions (e.g., `apply(x, 1, sd)`) or propagating uncertainty.
 #'   This is currently the fastest way to
 #'   generate estimates of uncertainty on predictions in space with sdmTMB.
 #'   Only works with `newdata` specified.
