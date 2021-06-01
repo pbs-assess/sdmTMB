@@ -33,6 +33,15 @@
 #'   predictions. `~0` or `NA` for population-level predictions. No other
 #'   options (e.g., some but not all random intercepts) are implemented yet.
 #'   Only affects predictions with `newdata`. This also affects [get_index()].
+#' @param sim If > 0, simulate from the fitted parameters with `sim` draws
+#'   assuming a multivariate normal distribution? Returns a matrix of
+#'   `nrow(data)` by `sim` representing the estimates of the linear predictor
+#'   (i.e., in link space). Can be useful for deriving uncertainty on
+#'   predictions (e.g., `apply(out, 1, sd)` or
+#'   `apply(out, 1, quantile, probs = 0.05)`) or propagating uncertainty.
+#'   This is currently the fastest way to
+#'   generate estimates of uncertainty on predictions in space with sdmTMB.
+#'   Only works with `newdata` specified.
 #' @param ... Not implemented.
 #'
 #' @return
@@ -192,7 +201,8 @@
 
 predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
   xy_cols = c("X", "Y"), return_tmb_object = FALSE,
-  area = 1, re_form = NULL, re_form_iid = NULL, ...) {
+  area = 1, re_form = NULL, re_form_iid = NULL,
+  sim = 0, ...) {
 
   check_sdmTMB_version(object$version)
   if (!missing(xy_cols)) {
@@ -356,8 +366,32 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     old_par <- object$model$par
     # need to initialize the new TMB object once:
     new_tmb_obj$fn(old_par)
-    lp <- new_tmb_obj$env$last.par.best
 
+    if (sim > 0) {
+      sd_report <- TMB::sdreport(new_tmb_obj,
+        getJointPrecision = TRUE
+        # bias.correct = TRUE,
+        # bias.correct.control = list(sd = TRUE)
+      )
+      mu <- c(sd_report$par.fixed, sd_report$par.random)
+      rmvnorm_prec <- function(mu, tmb_sd, n_sims) {
+        z <- matrix(stats::rnorm(length(mu) * n_sims), ncol = n_sims)
+        L <- Matrix::Cholesky(tmb_sd[["jointPrecision"]], super = TRUE)
+        z <- Matrix::solve(L, z, system = "Lt")
+        z <- Matrix::solve(L, z, system = "Pt")
+        z <- as.matrix(z)
+        mu + z
+      }
+      t_draws <- rmvnorm_prec(mu = mu, tmb_sd = sd_report, n_sims = sim)
+      r <- lapply(seq_len(ncol(t_draws)), function(i) {
+        new_tmb_obj$report(t_draws[, i, drop = TRUE])
+      })
+      out <- lapply(r, `[[`, "proj_eta")
+      out <- do.call("cbind", out)
+      return(out)
+    }
+
+    lp <- new_tmb_obj$env$last.par.best
     r <- new_tmb_obj$report(lp)
 
     if (isFALSE(pop_pred)) {

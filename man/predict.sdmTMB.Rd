@@ -13,6 +13,7 @@
   area = 1,
   re_form = NULL,
   re_form_iid = NULL,
+  sim = 0,
   ...
 )
 }
@@ -50,6 +51,16 @@ calculations.}
 predictions. \code{~0} or \code{NA} for population-level predictions. No other
 options (e.g., some but not all random intercepts) are implemented yet.
 Only affects predictions with \code{newdata}. This also affects \code{\link[=get_index]{get_index()}}.}
+
+\item{sim}{If > 0, simulate from the fitted parameters with \code{sim} draws
+assuming a multivariate normal distribution? Returns a matrix of
+\code{nrow(data)} by \code{sim} representing the estimates of the linear predictor
+(i.e., in link space). Can be useful for deriving uncertainty on
+predictions (e.g., \code{apply(out, 1, sd)} or
+\code{apply(out, 1, quantile, probs = 0.05)}) or propagating uncertainty.
+This is currently the fastest way to
+generate estimates of uncertainty on predictions in space with sdmTMB.
+Only works with \code{newdata} specified.}
 
 \item{...}{Not implemented.}
 }
