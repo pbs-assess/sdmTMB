@@ -713,7 +713,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     }
   }
 
-  sd_report <- TMB::sdreport(tmb_obj)
+  sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = TRUE)
   conv <- get_convergence_diagnostics(sd_report)
 
   data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL

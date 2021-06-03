@@ -372,16 +372,7 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
         # bias.correct = TRUE,
         # bias.correct.control = list(sd = TRUE)
       )
-      mu <- c(sd_report$par.fixed, sd_report$par.random)
-      rmvnorm_prec <- function(mu, tmb_sd, n_sims) {
-        z <- matrix(stats::rnorm(length(mu) * n_sims), ncol = n_sims)
-        L <- Matrix::Cholesky(tmb_sd[["jointPrecision"]], super = TRUE)
-        z <- Matrix::solve(L, z, system = "Lt")
-        z <- Matrix::solve(L, z, system = "Pt")
-        z <- as.matrix(z)
-        mu + z
-      }
-      t_draws <- rmvnorm_prec(mu = mu, tmb_sd = sd_report, n_sims = sim)
+      t_draws <- rmvnorm_prec(tmb_sd = sd_report, n_sims = sim)
       r <- lapply(seq_len(ncol(t_draws)), function(i) {
         new_tmb_obj$report(t_draws[, i, drop = TRUE])
       })
@@ -489,3 +480,4 @@ check_sdmTMB_version <- function(version) {
     )
   }
 }
+
