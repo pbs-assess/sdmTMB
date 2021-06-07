@@ -33,14 +33,13 @@
 #'   predictions. `~0` or `NA` for population-level predictions. No other
 #'   options (e.g., some but not all random intercepts) are implemented yet.
 #'   Only affects predictions with `newdata`. This also affects [get_index()].
-#' @param sim If > 0, simulate from the fitted parameters with `sim` draws
-#'   assuming a multivariate normal distribution. Returns a matrix of
-#'   `nrow(data)` by `sim` representing the estimates of the linear predictor
-#'   (i.e., in link space). Can be useful for deriving uncertainty on
-#'   predictions (e.g., `apply(x, 1, sd)`) or propagating uncertainty.
-#'   This is currently the fastest way to
-#'   generate estimates of uncertainty on predictions in space with sdmTMB.
-#'   Only works with `newdata` specified.
+#' @param sims If > 0, simulate from the joint precision matrix with `sims`
+#'   draws Returns a matrix of `nrow(data)` by `sim` representing the estimates
+#'   of the linear predictor (i.e., in link space). Can be useful for deriving
+#'   uncertainty on predictions (e.g., `apply(x, 1, sd)`) or propagating
+#'   uncertainty. This is currently the fastest way to generate estimates of
+#'   uncertainty on predictions in space with sdmTMB. Only works with `newdata`
+#'   specified.
 #' @param ... Not implemented.
 #'
 #' @return
@@ -201,7 +200,7 @@
 predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
   xy_cols = c("X", "Y"), return_tmb_object = FALSE,
   area = 1, re_form = NULL, re_form_iid = NULL,
-  sim = 0, ...) {
+  sims = 0, ...) {
 
   check_sdmTMB_version(object$version)
   if (!missing(xy_cols)) {
@@ -366,13 +365,13 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     # need to initialize the new TMB object once:
     new_tmb_obj$fn(old_par)
 
-    if (sim > 0) {
+    if (sims > 0) {
       sd_report <- TMB::sdreport(new_tmb_obj,
         getJointPrecision = TRUE
         # bias.correct = TRUE,
         # bias.correct.control = list(sd = TRUE)
       )
-      t_draws <- rmvnorm_prec(tmb_sd = sd_report, n_sims = sim)
+      t_draws <- rmvnorm_prec(tmb_sd = sd_report, n_sims = sims)
       r <- lapply(seq_len(ncol(t_draws)), function(i) {
         new_tmb_obj$report(t_draws[, i, drop = TRUE])
       })

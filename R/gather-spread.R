@@ -20,6 +20,7 @@
 #' library(ggplot2)
 #' ggplot(samps, aes(.value)) + geom_histogram() +
 #'   facet_wrap(~.variable, scales = "free_x")
+
 spread_sims <- function(object, n_sims = 200) {
   if (!"jointPrecision" %in% names(object$sd_report)) {
     stop("TMB::sdreport() must be run with the joint precision returned.", call. = FALSE)
