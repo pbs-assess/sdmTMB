@@ -21,8 +21,8 @@
 #' library(ggplot2)
 #' ggplot(x, aes(year, est, ymin = lwr, ymax = upr)) +
 #'   geom_line() + geom_ribbon(alpha = 0.4)
-#' x <- get_index_sims(m, p, qcs_grid, return_sims = TRUE)
-#' ggplot(x, aes(as.factor(year), .value)) + geom_violin()
+#' x_sims <- get_index_sims(m, p, qcs_grid, return_sims = TRUE)
+#' ggplot(x_sims, aes(as.factor(year), .value)) + geom_violin()
 
 get_index_sims <- function(fit_obj, pred_obj, newdata, level = 0.95,
   return_sims = FALSE, est_function = stats::median,

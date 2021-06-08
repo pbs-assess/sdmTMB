@@ -44,6 +44,6 @@ x <- get_index_sims(m, p, qcs_grid)
 library(ggplot2)
 ggplot(x, aes(year, est, ymin = lwr, ymax = upr)) +
   geom_line() + geom_ribbon(alpha = 0.4)
-x <- get_index_sims(m, p, qcs_grid, return_sims = TRUE)
-ggplot(x, aes(as.factor(year), .value)) + geom_violin()
+x_sims <- get_index_sims(m, p, qcs_grid, return_sims = TRUE)
+ggplot(x_sims, aes(as.factor(year), .value)) + geom_violin()
 }
