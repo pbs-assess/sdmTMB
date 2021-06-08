@@ -1,44 +1,46 @@
 #' Calculate population index via simulation from joint precision matrix
 #'
-#' @param fit_obj [sdmTMB()] output
-#' @param pred_obj [predict.sdmTMB()] output with `sims > 0`
-#' @param newdata The data frame that was supplied as `newdata` to [predict.sdmTMB()].
-#'   I.e., the prediction grid.
-#' @param level Tail quantile
-#' @param return_sims Logical. Return simulation draws (vs. quantile summary).
-#' @param est_function Function to summarize expected value. `mean()` would be
-#'   an alternative.
-#' @param aggregate_function Function to summarize samples with each year.
+#' @param pred_obj [predict.sdmTMB()] output with `sims > 0`.
+#' @param level The confidence level.
+#' @param return_sims Logical. Return simulation draws? The default is a
+#'   quantile summary of those draws.
+#' @param est_function Function to summarize the estimate (the expected value).
+#'   `mean()` would be an alternative to `median()`.
+#' @param agg_function Function to aggregate samples within each time slice.
 #'
 #' @export
 #' @examples
 #' pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
 #' m <- sdmTMB(density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'   data = pcod, spde = pcod_spde, family = tweedie(link = "log"),
-#'   time = "year")
+#'   time = "year"
+#' )
 #' p <- predict(m, newdata = qcs_grid, sims = 100)
-#' x <- get_index_sims(m, p, qcs_grid)
+#' x <- get_index_sims(p)
 #' library(ggplot2)
 #' ggplot(x, aes(year, est, ymin = lwr, ymax = upr)) +
-#'   geom_line() + geom_ribbon(alpha = 0.4)
-#' x_sims <- get_index_sims(m, p, qcs_grid, return_sims = TRUE)
-#' ggplot(x_sims, aes(as.factor(year), .value)) + geom_violin()
-
-get_index_sims <- function(fit_obj, pred_obj, newdata, level = 0.95,
-  return_sims = FALSE, est_function = stats::median,
-  aggregate_function = function(x) sum(exp(x))) {
+#'   geom_line() +
+#'   geom_ribbon(alpha = 0.4)
+#' x_sims <- get_index_sims(p, return_sims = TRUE)
+#' ggplot(x_sims, aes(as.factor(year), .value)) +
+#'   geom_violin()
+get_index_sims <- function(obj,
+                           level = 0.95,
+                           return_sims = FALSE,
+                           est_function = stats::median,
+                           agg_function = function(x) sum(exp(x))) {
+  assert_that(is.matrix(obj))
+  assert_that(!is.null(attr(p, "time")))
   assert_that(is.logical(return_sims))
   assert_that(is.function(est_function))
-  assert_that(is.function(aggregate_function))
+  assert_that(is.function(agg_function))
   assert_that(level > 0 && level < 1)
-  assert_that(class(fit_obj) == "sdmTMB")
-  assert_that(is.matrix(pred_obj))
 
-  .t <- newdata[[fit_obj$time]]
+  .t <- rownames(obj)
   yrs <- sort(unique(.t))
   yr_indexes <- lapply(yrs, function(x) which(.t %in% x))
   out1 <- lapply(yr_indexes, function(x) {
-    apply(pred_obj[x, , drop = FALSE], 2, aggregate_function)
+    apply(obj[x, , drop = FALSE], 2L, agg_function)
   })
   if (return_sims) {
     out2 <- lapply(seq_along(out1), function(i) {
@@ -46,7 +48,7 @@ get_index_sims <- function(fit_obj, pred_obj, newdata, level = 0.95,
         .time = yrs[i], .value = out1[[i]],
         .iteration = seq_along(out1[[i]])
       )
-      stats::setNames(ret, c(fit_obj$time, ".value", ".iteration"))
+      stats::setNames(ret, c(attr(obj, "time"), ".value", ".iteration"))
     })
     return(do.call("rbind", out2))
   } else {
@@ -60,8 +62,11 @@ get_index_sims <- function(fit_obj, pred_obj, newdata, level = 0.95,
       )
     })
     out <- do.call("rbind", out)
-    out[[fit_obj$time]] <- yrs
-    out <- out[, c(fit_obj$time, "est", "lwr", "upr", "log_est", "se"), drop = FALSE]
+    out[[attr(obj, "time")]] <- yrs
+    out <- out[, c(
+      attr(obj, "time"),
+      "est", "lwr", "upr", "log_est", "se"
+    ), drop = FALSE]
     return(`row.names<-`(out, NULL))
   }
 }

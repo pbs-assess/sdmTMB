@@ -5,31 +5,25 @@
 \title{Calculate population index via simulation from joint precision matrix}
 \usage{
 get_index_sims(
-  fit_obj,
-  pred_obj,
-  newdata,
+  obj,
   level = 0.95,
   return_sims = FALSE,
   est_function = stats::median,
-  aggregate_function = function(x) sum(exp(x))
+  agg_function = function(x) sum(exp(x))
 )
 }
 \arguments{
-\item{fit_obj}{\code{\link[=sdmTMB]{sdmTMB()}} output}
+\item{level}{The confidence level.}
 
-\item{pred_obj}{\code{\link[=predict.sdmTMB]{predict.sdmTMB()}} output with \code{sims > 0}}
+\item{return_sims}{Logical. Return simulation draws? The default is a
+quantile summary of those draws.}
 
-\item{newdata}{The data frame that was supplied as \code{newdata} to \code{\link[=predict.sdmTMB]{predict.sdmTMB()}}.
-I.e., the prediction grid.}
+\item{est_function}{Function to summarize the estimate (the expected value).
+\code{mean()} would be an alternative to \code{median()}.}
 
-\item{level}{Tail quantile}
+\item{agg_function}{Function to aggregate samples within each time slice.}
 
-\item{return_sims}{Logical. Return simulation draws (vs. quantile summary).}
-
-\item{est_function}{Function to summarize expected value. \code{mean()} would be
-an alternative.}
-
-\item{aggregate_function}{Function to summarize samples with each year.}
+\item{pred_obj}{\code{\link[=predict.sdmTMB]{predict.sdmTMB()}} output with \code{sims > 0}.}
 }
 \description{
 Calculate population index via simulation from joint precision matrix
@@ -38,12 +32,15 @@ Calculate population index via simulation from joint precision matrix
 pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
 m <- sdmTMB(density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   data = pcod, spde = pcod_spde, family = tweedie(link = "log"),
-  time = "year")
+  time = "year"
+)
 p <- predict(m, newdata = qcs_grid, sims = 100)
-x <- get_index_sims(m, p, qcs_grid)
+x <- get_index_sims(p)
 library(ggplot2)
 ggplot(x, aes(year, est, ymin = lwr, ymax = upr)) +
-  geom_line() + geom_ribbon(alpha = 0.4)
-x_sims <- get_index_sims(m, p, qcs_grid, return_sims = TRUE)
-ggplot(x_sims, aes(as.factor(year), .value)) + geom_violin()
+  geom_line() +
+  geom_ribbon(alpha = 0.4)
+x_sims <- get_index_sims(p, return_sims = TRUE)
+ggplot(x_sims, aes(as.factor(year), .value)) +
+  geom_violin()
 }

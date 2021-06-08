@@ -2,7 +2,7 @@
 ## library(tictoc)
 ## library(sdmTMB)
 ##
-## pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
+## pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
 ## plot(pcod_spde)
 ## pcod_spde$mesh$n
 ## m <- sdmTMB(density ~ 0 + as.factor(year),
@@ -22,14 +22,15 @@
 ## timings[[2]] <- toc()
 ##
 ## tic()
-## p <- predict(m, newdata = qcs_grid, sims = 300L)
+## p <- predict(m, newdata = qcs_grid, sims = 100L)
 ## # ind_sim <- get_index_sims(m, p, newdata = qcs_grid, est_function = function(x) exp(mean(log(x))))
-## ind_sim <- get_index_sims(m, p, newdata = qcs_grid, est_function = median)
+## ind_sim <- get_index_sims(p)
+## ind_sim <- get_index_sims(p, return_sims = TRUE)
 ## timings[[3]] <- toc()
 ## # ind_sim <- mutate(ind_sim,
 ## #   lwr = exp(log_est - 1.96 * se),
 ## #   upr = exp(log_est + 1.96 * se))
-##
+
 ## .t <- lapply(timings, function(x) as.numeric(round(x$toc - x$tic, 1L)))
 ##
 ##

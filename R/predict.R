@@ -380,6 +380,8 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
       r <- apply(t_draws, 2, new_tmb_obj$report)
       out <- lapply(r, `[[`, "proj_eta")
       out <- do.call("cbind", out)
+      rownames(out) <- nd[[object$time]] # for use in index calcs
+      attr(out, "time") <- object$time
       return(out)
     }
 
