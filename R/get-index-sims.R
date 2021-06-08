@@ -37,7 +37,7 @@ get_index_sims <- function(obj,
   assert_that(is.function(agg_function))
   assert_that(level > 0 && level < 1)
 
-  .t <- rownames(obj)
+  .t <- as.numeric(rownames(obj))
   yrs <- sort(unique(.t))
   yr_indexes <- lapply(yrs, function(x) which(.t %in% x))
   out1 <- lapply(yr_indexes, function(x) {
@@ -65,8 +65,7 @@ get_index_sims <- function(obj,
     out <- do.call("rbind", out)
     out[[attr(obj, "time")]] <- yrs
     out <- out[, c(
-      attr(obj, "time"),
-      "est", "lwr", "upr", "log_est", "se"
+      attr(obj, "time"), "est", "lwr", "upr", "log_est", "se"
     ), drop = FALSE]
     return(`row.names<-`(out, NULL))
   }
