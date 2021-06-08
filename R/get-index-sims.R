@@ -2,6 +2,8 @@
 #'
 #' @param fit_obj [sdmTMB()] output
 #' @param pred_obj [predict.sdmTMB()] output with `sims > 0`
+#' @param newdata The data frame that was supplied as `newdata` to [predict.sdmTMB()].
+#'   I.e., the prediction grid.
 #' @param level Tail quantile
 #' @param return_sims Logical. Return simulation draws (vs. quantile summary).
 #' @param est_function Function to summarize expected value. `mean()` would be
@@ -15,14 +17,14 @@
 #'   data = pcod, spde = pcod_spde, family = tweedie(link = "log"),
 #'   time = "year")
 #' p <- predict(m, newdata = qcs_grid, sims = 100)
-#' x <- get_index_sims(m, p)
+#' x <- get_index_sims(m, p, qcs_grid)
 #' library(ggplot2)
 #' ggplot(x, aes(year, est, ymin = lwr, ymax = upr)) +
 #'   geom_line() + geom_ribbon(alpha = 0.4)
-#' x <- get_index_sims(m, p, return_sims = TRUE)
+#' x <- get_index_sims(m, p, qcs_grid, return_sims = TRUE)
 #' ggplot(x, aes(as.factor(year), .value)) + geom_violin()
 
-get_index_sims <- function(fit_obj, pred_obj, level = 0.95,
+get_index_sims <- function(fit_obj, pred_obj, newdata, level = 0.95,
   return_sims = FALSE, est_function = stats::median,
   aggregate_function = function(x) sum(exp(x))) {
   assert_that(is.logical(return_sims))
@@ -32,7 +34,7 @@ get_index_sims <- function(fit_obj, pred_obj, level = 0.95,
   assert_that(class(fit_obj) == "sdmTMB")
   assert_that(is.matrix(pred_obj))
 
-  .t <- fit_obj$data[[fit_obj$time]]
+  .t <- newdata[[fit_obj$time]]
   yrs <- sort(unique(.t))
   yr_indexes <- lapply(yrs, function(x) which(.t %in% x))
   out1 <- lapply(yr_indexes, function(x) {
@@ -52,12 +54,14 @@ get_index_sims <- function(fit_obj, pred_obj, level = 0.95,
       data.frame(
         est = est_function(x),
         lwr = stats::quantile(x, probs = (1 - level) / 2),
-        upr = stats::quantile(x, probs = 1 - (1 - level) / 2)
+        upr = stats::quantile(x, probs = 1 - (1 - level) / 2),
+        se = stats::sd(log(x)),
+        log_est = mean(log(x))
       )
     })
     out <- do.call("rbind", out)
     out[[fit_obj$time]] <- yrs
-    out <- out[, c(fit_obj$time, "est", "lwr", "upr"), drop = FALSE]
+    out <- out[, c(fit_obj$time, "est", "lwr", "upr", "log_est", "se"), drop = FALSE]
     return(`row.names<-`(out, NULL))
   }
 }

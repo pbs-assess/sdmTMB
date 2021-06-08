@@ -7,6 +7,7 @@
 get_index_sims(
   fit_obj,
   pred_obj,
+  newdata,
   level = 0.95,
   return_sims = FALSE,
   est_function = stats::median,
@@ -17,6 +18,9 @@ get_index_sims(
 \item{fit_obj}{\code{\link[=sdmTMB]{sdmTMB()}} output}
 
 \item{pred_obj}{\code{\link[=predict.sdmTMB]{predict.sdmTMB()}} output with \code{sims > 0}}
+
+\item{newdata}{The data frame that was supplied as \code{newdata} to \code{\link[=predict.sdmTMB]{predict.sdmTMB()}}.
+I.e., the prediction grid.}
 
 \item{level}{Tail quantile}
 
@@ -36,10 +40,10 @@ m <- sdmTMB(density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   data = pcod, spde = pcod_spde, family = tweedie(link = "log"),
   time = "year")
 p <- predict(m, newdata = qcs_grid, sims = 100)
-x <- get_index_sims(m, p)
+x <- get_index_sims(m, p, qcs_grid)
 library(ggplot2)
 ggplot(x, aes(year, est, ymin = lwr, ymax = upr)) +
   geom_line() + geom_ribbon(alpha = 0.4)
-x <- get_index_sims(m, p, return_sims = TRUE)
+x <- get_index_sims(m, p, qcs_grid, return_sims = TRUE)
 ggplot(x, aes(as.factor(year), .value)) + geom_violin()
 }
