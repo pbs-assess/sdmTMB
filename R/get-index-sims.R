@@ -30,7 +30,7 @@ get_index_sims <- function(obj,
                            est_function = stats::median,
                            agg_function = function(x) sum(exp(x))) {
   assert_that(is.matrix(obj))
-  assert_that(!is.null(attr(p, "time")))
+  assert_that(!is.null(attr(obj, "time")))
   assert_that(is.logical(return_sims))
   assert_that(is.function(est_function))
   assert_that(is.function(agg_function))
