@@ -100,6 +100,10 @@ NULL
 #'   predictor is included, a log-linear model is fit where the predictor is
 #'   used to model effects on the standard deviation,
 #'   e.g. `log(sd(i)) = B0 + B1 * epsilon_predictor(i)`.
+#' @param get_joint_precision Logical. Passed to `getJointPrecision` in
+#'   [TMB::sdreport()]. Must be `TRUE` to use simulation-based methods in
+#'   [predict.sdmTMB()] or `[get_index_sims()]`. If not needed, setting this
+#'   `FALSE` will reduce object size.
 #' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
 #'   model.response terms model.offset
@@ -314,7 +318,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   previous_fit = NULL,
   map_rf = FALSE,
   quadratic_roots = FALSE,
-  epsilon_predictor = NULL) {
+  epsilon_predictor = NULL,
+  get_joint_precision = TRUE) {
 
   assert_that(
     is.logical(reml), is.logical(anisotropy), is.logical(silent),
@@ -713,7 +718,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     }
   }
 
-  sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = TRUE)
+  sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision)
   conv <- get_convergence_diagnostics(sd_report)
 
   data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL

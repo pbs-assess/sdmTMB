@@ -32,7 +32,8 @@ sdmTMB(
   previous_fit = NULL,
   map_rf = FALSE,
   quadratic_roots = FALSE,
-  epsilon_predictor = NULL
+  epsilon_predictor = NULL,
+  get_joint_precision = TRUE
 )
 }
 \arguments{
@@ -156,6 +157,11 @@ by time step, the standardization should be done by time. If the name of a
 predictor is included, a log-linear model is fit where the predictor is
 used to model effects on the standard deviation,
 e.g. \code{log(sd(i)) = B0 + B1 * epsilon_predictor(i)}.}
+
+\item{get_joint_precision}{Logical. Passed to \code{getJointPrecision} in
+\code{\link[TMB:sdreport]{TMB::sdreport()}}. Must be \code{TRUE} to use simulation-based methods in
+\code{\link[=predict.sdmTMB]{predict.sdmTMB()}} or \verb{[get_index_sims()]}. If not needed, setting this
+\code{FALSE} will reduce object size.}
 }
 \description{
 Fit a spatial or spatiotemporal predictive-process GLMM with TMB.
