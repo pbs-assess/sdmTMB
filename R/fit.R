@@ -83,6 +83,14 @@ NULL
 #'   classical GLM or GLMM without spatial or spatiotemporal components?
 #'   Note this is not accounted for in `print()` or `tidy.sdmTMB()`;
 #'   some parameters will still appear but their values can be ignored.
+#' @param map A named list with factor `NA`s specifying parameter values that
+#'   should be fixed at a constant value. See the documentation in
+#'   [TMB::MakeADFun()]. This should usually be used with `start` to specify the
+#'   fixed value.
+#' @param start A named list specifying the starting values for parameters. You
+#'   can see the necessary structure by fitting the model once and inspecting
+#'   `your_model$tmb_obj$env$parList()`. Elements of `start` that are specified
+#'   will replace the default starting values.
 #' @param quadratic_roots Experimental feature for internal use right now; may
 #'   be moved to a branch. Logical: should quadratic roots be calculated? Note:
 #'   on the sdmTMB side, the first two coefficients are used to generate the
@@ -317,6 +325,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   mgcv = TRUE,
   previous_fit = NULL,
   map_rf = FALSE,
+  map = NULL,
+  start = NULL,
   quadratic_roots = FALSE,
   epsilon_predictor = NULL,
   get_joint_precision = TRUE) {
@@ -334,6 +344,10 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   assert_that(identical(class(spde), "sdmTMBmesh"))
   assert_that(identical(class(formula), "formula"))
   assert_that("data.frame" %in% class(data))
+  if (!is.null(map) && length(map) != length(start)) {
+    warning("`length(map) != length(start)`. You likely want to specify ",
+      "`start` values if you are setting the `map` argument.", call. = FALSE)
+  }
 
   if (is.null(time)) {
     time <- "_sdmTMB_time"
@@ -687,6 +701,14 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
   if (!is.null(previous_fit)) tmb_map <- previous_fit$tmb_map
   if (isTRUE(map_rf)) tmb_map <- map_off_rf(tmb_map, tmb_params)
+  tmb_map <- c(map, tmb_map)
+
+  for (i in seq_along(start)) {
+    message("Initiating ", names(start)[i],
+      " at specified starting value of ", start[[i]], ".")
+    tmb_params[[names(start)[i]]] <- start[[i]]
+  }
+
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     random = tmb_random, DLL = "sdmTMB", silent = silent)

@@ -31,6 +31,8 @@ sdmTMB(
   mgcv = TRUE,
   previous_fit = NULL,
   map_rf = FALSE,
+  map = NULL,
+  start = NULL,
   quadratic_roots = FALSE,
   epsilon_predictor = NULL,
   get_joint_precision = TRUE
@@ -138,6 +140,16 @@ can change, which can be useful for cross-validation.}
 classical GLM or GLMM without spatial or spatiotemporal components?
 Note this is not accounted for in \code{print()} or \code{tidy.sdmTMB()};
 some parameters will still appear but their values can be ignored.}
+
+\item{map}{A named list with factor \code{NA}s specifying parameter values that
+should be fixed at a constant value. See the documentation in
+\code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}. This should usually be used with \code{start} to specify the
+fixed value.}
+
+\item{start}{A named list specifying the starting values for parameters. You
+can see the necessary structure by fitting the model once and inspecting
+\code{your_model$tmb_obj$env$parList()}. Elements of \code{start} that are specified
+will replace the default starting values.}
 
 \item{quadratic_roots}{Experimental feature for internal use right now; may
 be moved to a branch. Logical: should quadratic roots be calculated? Note:
