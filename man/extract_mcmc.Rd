@@ -53,12 +53,12 @@ ggplot(pred, aes(X, Y, fill = est)) + geom_raster() +
 ggplot(pred, aes(X, Y, fill = cv)) + geom_raster() +
   scale_fill_viridis_c(trans = "log")
 
-get_index_sims(p) \%>\%
-  ggplot(aes(year, est, ymin = lwr, ymax = upr)) +
+index_quantiles <- get_index_sims(p)
+ggplot(index_quantiles, aes(year, est, ymin = lwr, ymax = upr)) +
   geom_line() + geom_ribbon(alpha = 0.5)
 
-get_index_sims(p, return_sims = TRUE) \%>\%
-  ggplot(aes(as.factor(year), .value)) +
+index_samples <- get_index_sims(p, return_sims = TRUE)
+ggplot(index_samples, aes(as.factor(year), .value)) +
   geom_violin()
 }
 }
