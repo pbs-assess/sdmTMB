@@ -52,7 +52,7 @@
 #'   ggplot(aes(as.factor(year), .value)) +
 #'   geom_violin()
 #' }
-
+#' @export
 extract_mcmc <- function(object) {
   post <- rstan::extract(object)
   p_names <- names(post)[-length(names(post))] # exclude "lp__"
