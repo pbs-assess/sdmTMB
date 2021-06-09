@@ -40,6 +40,9 @@
 #'   uncertainty. This is currently the fastest way to generate estimates of
 #'   uncertainty on predictions in space with sdmTMB. Only works with `newdata`
 #'   specified.
+#' @param tmbstan_model A model fit with [tmbstan::tmbstan()]. See [extract_mcmc()]
+#'   for more details and an example. Will return a matrix of a similar form as
+#'   if `sims > 0` but representing Bayesian posterior samples from Stan.
 #' @param ... Not implemented.
 #'
 #' @return
@@ -200,7 +203,7 @@
 predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
   xy_cols = c("X", "Y"), return_tmb_object = FALSE,
   area = 1, re_form = NULL, re_form_iid = NULL,
-  sims = 0, ...) {
+  sims = 0, tmbstan_model = NULL, ...) {
 
   check_sdmTMB_version(object$version)
   if (!missing(xy_cols)) {
@@ -374,7 +377,15 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
       }
       t_draws <- rmvnorm_prec(mu = new_tmb_obj$env$last.par.best,
         tmb_sd = sd_report, n_sims = sims)
-      r <- apply(t_draws, 2, new_tmb_obj$report)
+      r <- apply(t_draws, 2L, new_tmb_obj$report)
+    }
+    if (!is.null(tmbstan_model)) {
+      if (!"stanfit" %in% class(tmbstan_model))
+        stop("tmbstan_model must be output from tmbstan::tmbstan().", call. = FALSE)
+      t_draws <- extract_mcmc(tmbstan_model)
+      r <- apply(t_draws, 2L, new_tmb_obj$report)
+    }
+    if (!is.null(tmbstan_model) || sims > 0) {
       out <- lapply(r, `[[`, "proj_eta")
       out <- do.call("cbind", out)
       rownames(out) <- nd[[object$time]] # for use in index calcs

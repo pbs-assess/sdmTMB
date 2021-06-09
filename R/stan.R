@@ -29,6 +29,28 @@
 #'
 #' post <- extract_mcmc(m_stan)
 #' dim(post)
+#'
+#' p <- predict(m_tmb, newdata = qcs_grid, tmbstan_model = m_stan)
+#' p_last <- p[qcs_grid$year == max(qcs_grid$year), ] # just plot last year
+#' pred <- qcs_grid[qcs_grid$year == max(qcs_grid$year), ]
+#' pred$est <- apply(exp(p_last), 1, median)
+#' pred$lwr <- apply(exp(p_last), 1, quantile, probs = 0.1)
+#' pred$upr <- apply(exp(p_last), 1, quantile, probs = 0.9)
+#' pred$cv <- apply(exp(p_last), 1, function(x) sd(x) / mean(x))
+#'
+#' library(ggplot2)
+#' ggplot(pred, aes(X, Y, fill = est)) + geom_raster() +
+#'   scale_fill_viridis_c(trans = "log")
+#' ggplot(pred, aes(X, Y, fill = cv)) + geom_raster() +
+#'   scale_fill_viridis_c(trans = "log")
+#'
+#' get_index_sims(p) %>%
+#'   ggplot(aes(year, est, ymin = lwr, ymax = upr)) +
+#'   geom_line() + geom_ribbon(alpha = 0.5)
+#'
+#' get_index_sims(p, return_sims = TRUE) %>%
+#'   ggplot(aes(as.factor(year), .value)) +
+#'   geom_violin()
 #' }
 
 extract_mcmc <- function(object) {
