@@ -368,15 +368,12 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     if (sims > 0) {
       if (!"jointPrecision" %in% names(object$sd_report)) {
         message("Rerunning TMB::sdreport() with `getJointPrecision = TRUE`.")
-        sd_report <- TMB::sdreport(object$tmb_obj, getJointPrecision = TRUE
-          # bias.correct = TRUE
-          # bias.correct.control = list(sd = TRUE)
-        )
+        sd_report <- TMB::sdreport(object$tmb_obj, getJointPrecision = TRUE)
       } else {
         sd_report <- object$sd_report
       }
-      t_draws <- rmvnorm_prec(tmb_sd = sd_report, n_sims = sims)
-      # r <- future.apply::future_apply(t_draws, 2, new_tmb_obj$report)
+      t_draws <- rmvnorm_prec(mu = new_tmb_obj$env$last.par.best,
+        tmb_sd = sd_report, n_sims = sims)
       r <- apply(t_draws, 2, new_tmb_obj$report)
       out <- lapply(r, `[[`, "proj_eta")
       out <- do.call("cbind", out)

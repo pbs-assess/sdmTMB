@@ -83,8 +83,8 @@ gather_sims <- function(object, n_sims = 200) {
   out[ , c(".iteration", ".variable", ".value"), drop = FALSE]
 }
 
-rmvnorm_prec <- function(tmb_sd, n_sims) {
-  mu <- c(tmb_sd$par.fixed, tmb_sd$par.random)
+rmvnorm_prec <- function(mu, tmb_sd, n_sims) {
+  # mu <- c(tmb_sd$par.fixed, tmb_sd$par.random)
   z <- matrix(stats::rnorm(length(mu) * n_sims), ncol = n_sims)
   L <- Matrix::Cholesky(tmb_sd[["jointPrecision"]], super = TRUE)
   z <- Matrix::solve(L, z, system = "Lt")
