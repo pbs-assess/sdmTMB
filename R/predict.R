@@ -8,22 +8,23 @@
 #' original or new data.
 #'
 #' @param object An object from [sdmTMB()].
-#' @param newdata An optional new data frame. This should be a data frame with
-#'   the same predictor columns as in the fitted data and a time column (if this
-#'   is a spatiotemporal model) with the same name as in the fitted data. There
-#'   should be predictor data for each year in the original data set.
-#' @param se_fit Should standard errors on predictions at the new locations given by
-#'   `newdata` be calculated? Warning: the current implementation can be very
-#'   slow for large data sets or high-resolution projections.
-#' @param xy_cols Depreciated. Was: a character vector of
-#'   length 2 that gives the column names of the x and y coordinates in
-#'   `newdata`.
-#' @param return_tmb_object Logical. If `TRUE`, will include the TMB object in
-#'   a list format output. Necessary for the [get_index()] or [get_cog()] functions.
+#' @param newdata A data frame to make predictions on. This should be a data
+#'   frame with the same predictor columns as in the fitted data and a time
+#'   column (if this is a spatiotemporal model) with the same name as in the
+#'   fitted data. There should be predictor data for each year in the original
+#'   data set.
+#' @param se_fit Should standard errors on predictions at the new locations
+#'   given by `newdata` be calculated? Warning: the current implementation can
+#'   be very slow for large data sets or high-resolution projections. A *much*
+#'   faster option is to use the `sims` argument below and calculate uncertainty
+#'   on the simulations from the joint precision matrix.
+#' @param return_tmb_object Logical. If `TRUE`, will include the TMB object in a
+#'   list format output. Necessary for the [get_index()] or [get_cog()]
+#'   functions.
 #' @param area A vector of areas for survey grid cells. Only necessary if the
-#'   output will be passed to [get_index()] or [get_cog()]. Should be the same length
-#'   as the number of rows of `newdata`. If length 1, will be repeated to match the
-#'   rows of data.
+#'   output will be passed to [get_index()] or [get_cog()] and not all grid
+#'   cells are of area 1. Should be the same length as the number of rows of
+#'   `newdata`. If length 1, will be repeated to match the rows of data.
 #' @param re_form `NULL` to specify including all spatial/spatiotemporal random
 #'   effects in predictions. `~0` or `NA` for population-level predictions. Note
 #'   that unlike lme4 or glmmTMB, this only affects what the standard errors are
@@ -38,15 +39,15 @@
 #'   of the linear predictor (i.e., in link space). Can be useful for deriving
 #'   uncertainty on predictions (e.g., `apply(x, 1, sd)`) or propagating
 #'   uncertainty. This is currently the fastest way to generate estimates of
-#'   uncertainty on predictions in space with sdmTMB. Only works with `newdata`
-#'   specified.
-#' @param tmbstan_model A model fit with [tmbstan::tmbstan()]. See [extract_mcmc()]
-#'   for more details and an example. Will return a matrix of a similar form as
-#'   if `sims > 0` but representing Bayesian posterior samples from Stan.
+#'   uncertainty on predictions in space with sdmTMB.
+#' @param tmbstan_model A model fit with [tmbstan::tmbstan()]. See
+#'   [extract_mcmc()] for more details and an example. If specificed, the
+#'   predict function will return a matrix of a similar form as if `sims > 0`
+#'   but representing Bayesian posterior samples from the Stan model.
 #' @param ... Not implemented.
 #'
 #' @return
-#' If `return_tmb_object = FALSE`:
+#' If `return_tmb_object = FALSE` (and `sims = 0` and `tmbstan_model = NULL`):
 #' A data frame:
 #' * `est`: Estimate in link space (everything is in link space)
 #' * `est_non_rf`: Estimate from everything that isn't a random field
@@ -56,15 +57,20 @@
 #' * `epsilon_st`: Spatiotemporal (intercept) random fields (could be
 #'    independent draws each year or AR1)
 #'
-#' If `return_tmb_object = TRUE`:
+#' If `return_tmb_object = TRUE` (and `sims = 0` and `tmbstan_model = NULL`):
 #' A list:
 #' * `data`: The data frame described above
 #' * `report`: The TMB report on parameter values
-#' * `obj`: The TMB object returned from the prediction run.
-#' * `fit_obj`: The original TMB model object.
+#' * `obj`: The TMB object returned from the prediction run
+#' * `fit_obj`: The original TMB model object
 #'
 #' You likely only need the `data` element as an end user. The other elements
 #' are included for other functions.
+#'
+#' If `sims > 0` or `tmbstan_model` is not `NULL`:
+#' A matrix:
+#' * Columns represent samples
+#' * Rows represent predictions with one row per row of `newdata`
 #'
 #' @export
 #'
@@ -200,16 +206,12 @@
 #'   scale_fill_viridis_c(trans = "sqrt")
 #' }
 
-predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
-  xy_cols = c("X", "Y"), return_tmb_object = FALSE,
+predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
+  return_tmb_object = FALSE,
   area = 1, re_form = NULL, re_form_iid = NULL,
   sims = 0, tmbstan_model = NULL, ...) {
 
   check_sdmTMB_version(object$version)
-  if (!missing(xy_cols)) {
-    warning("argument `xy_cols` is deprecated; this information is already ",
-    "in the output of the `make_mesh(). Did you use `make_spde()`?", call. = FALSE)
-  }
   if (!"xy_cols" %in% names(object$spde)) {
     warning("It looks like this model was fit with make_spde(). ",
     "Using `xy_cols`, but future versions of sdmTMB may not be compatible with this.",

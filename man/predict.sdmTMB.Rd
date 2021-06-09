@@ -6,9 +6,8 @@
 \usage{
 \method{predict}{sdmTMB}(
   object,
-  newdata = NULL,
+  newdata = object$data,
   se_fit = FALSE,
-  xy_cols = c("X", "Y"),
   return_tmb_object = FALSE,
   area = 1,
   re_form = NULL,
@@ -21,26 +20,26 @@
 \arguments{
 \item{object}{An object from \code{\link[=sdmTMB]{sdmTMB()}}.}
 
-\item{newdata}{An optional new data frame. This should be a data frame with
-the same predictor columns as in the fitted data and a time column (if this
-is a spatiotemporal model) with the same name as in the fitted data. There
-should be predictor data for each year in the original data set.}
+\item{newdata}{A data frame to make predictions on. This should be a data
+frame with the same predictor columns as in the fitted data and a time
+column (if this is a spatiotemporal model) with the same name as in the
+fitted data. There should be predictor data for each year in the original
+data set.}
 
-\item{se_fit}{Should standard errors on predictions at the new locations given by
-\code{newdata} be calculated? Warning: the current implementation can be very
-slow for large data sets or high-resolution projections.}
+\item{se_fit}{Should standard errors on predictions at the new locations
+given by \code{newdata} be calculated? Warning: the current implementation can
+be very slow for large data sets or high-resolution projections. A \emph{much}
+faster option is to use the \code{sims} argument below and calculate uncertainty
+on the simulations from the joint precision matrix.}
 
-\item{xy_cols}{Depreciated. Was: a character vector of
-length 2 that gives the column names of the x and y coordinates in
-\code{newdata}.}
-
-\item{return_tmb_object}{Logical. If \code{TRUE}, will include the TMB object in
-a list format output. Necessary for the \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}} functions.}
+\item{return_tmb_object}{Logical. If \code{TRUE}, will include the TMB object in a
+list format output. Necessary for the \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}}
+functions.}
 
 \item{area}{A vector of areas for survey grid cells. Only necessary if the
-output will be passed to \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}}. Should be the same length
-as the number of rows of \code{newdata}. If length 1, will be repeated to match the
-rows of data.}
+output will be passed to \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}} and not all grid
+cells are of area 1. Should be the same length as the number of rows of
+\code{newdata}. If length 1, will be repeated to match the rows of data.}
 
 \item{re_form}{\code{NULL} to specify including all spatial/spatiotemporal random
 effects in predictions. \code{~0} or \code{NA} for population-level predictions. Note
@@ -58,17 +57,17 @@ draws Returns a matrix of \code{nrow(data)} by \code{sim} representing the estim
 of the linear predictor (i.e., in link space). Can be useful for deriving
 uncertainty on predictions (e.g., \code{apply(x, 1, sd)}) or propagating
 uncertainty. This is currently the fastest way to generate estimates of
-uncertainty on predictions in space with sdmTMB. Only works with \code{newdata}
-specified.}
+uncertainty on predictions in space with sdmTMB.}
 
-\item{tmbstan_model}{A model fit with \code{\link[tmbstan:tmbstan]{tmbstan::tmbstan()}}. See \code{\link[=extract_mcmc]{extract_mcmc()}}
-for more details and an example. Will return a matrix of a similar form as
-if \code{sims > 0} but representing Bayesian posterior samples from Stan.}
+\item{tmbstan_model}{A model fit with \code{\link[tmbstan:tmbstan]{tmbstan::tmbstan()}}. See
+\code{\link[=extract_mcmc]{extract_mcmc()}} for more details and an example. If specificed, the
+predict function will return a matrix of a similar form as if \code{sims > 0}
+but representing Bayesian posterior samples from the Stan model.}
 
 \item{...}{Not implemented.}
 }
 \value{
-If \code{return_tmb_object = FALSE}:
+If \code{return_tmb_object = FALSE} (and \code{sims = 0} and \code{tmbstan_model = NULL}):
 A data frame:
 \itemize{
 \item \code{est}: Estimate in link space (everything is in link space)
@@ -80,17 +79,24 @@ A data frame:
 independent draws each year or AR1)
 }
 
-If \code{return_tmb_object = TRUE}:
+If \code{return_tmb_object = TRUE} (and \code{sims = 0} and \code{tmbstan_model = NULL}):
 A list:
 \itemize{
 \item \code{data}: The data frame described above
 \item \code{report}: The TMB report on parameter values
-\item \code{obj}: The TMB object returned from the prediction run.
-\item \code{fit_obj}: The original TMB model object.
+\item \code{obj}: The TMB object returned from the prediction run
+\item \code{fit_obj}: The original TMB model object
 }
 
 You likely only need the \code{data} element as an end user. The other elements
 are included for other functions.
+
+If \code{sims > 0} or \code{tmbstan_model} is not \code{NULL}:
+A matrix:
+\itemize{
+\item Columns represent samples
+\item Rows represent predictions with one row per row of \code{newdata}
+}
 }
 \description{
 Make predictions from an sdmTMB model. The function can predict on the
