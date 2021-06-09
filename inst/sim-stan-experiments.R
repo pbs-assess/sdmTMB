@@ -86,18 +86,39 @@ names(m_tmb$tmb_obj$env$last.par.best)[1:100]
 post <- rstan::extract(m_stan)
 names(post)
 
+# ---------------------------
+# This is the important code to convert Stan posterior samples
+# into a matrix where each column can be fed into `tmb_obj$report()`
+post <- rstan::extract(m_stan)
+p_names <- unique(names(m_tmb$tmb_obj$env$last.par.best))
 post_matrix <- matrix(ncol = nrow(post$b_j),
   nrow = length(m_tmb$tmb_obj$env$last.par.best))
 for (i in seq_len(ncol(post_matrix))) {
-  post_pars <- numeric()
-  post_pars <- c(post_pars, post$b_j[i,,drop=TRUE])
-  post_pars <- c(post_pars, post$thetaf[i])
-  post_pars <- c(post_pars, post$ln_phi[i])
-  post_pars <- c(post_pars, post$omega_s[i,,drop=TRUE])
-  post_pars <- c(post_pars, post$epsilon_st[i,,drop=TRUE])
-  stopifnot(length(post_pars) == length(m_tmb$tmb_obj$env$last.par.best))
-  post_matrix[,i] <- post_pars
+  post_pars <- list()
+  for (j in seq_along(p_names)) {
+    par_j <- p_names[j]
+    if (is.matrix(post[[par_j]])) {
+      post_pars[[j]] <- post[[par_j]][i, , drop = TRUE]
+    } else {
+      post_pars[[j]] <- post[[par_j]][i]
+    }
+  }
+  post_matrix[, i] <- unlist(post_pars)
 }
+# ---------------------------
+
+# post_matrix <- matrix(ncol = nrow(post$b_j),
+#   nrow = length(m_tmb$tmb_obj$env$last.par.best))
+# for (i in seq_len(ncol(post_matrix))) {
+#   post_pars <- numeric()
+#   post_pars <- c(post_pars, post$b_j[i,,drop=TRUE])
+#   post_pars <- c(post_pars, post$thetaf[i])
+#   post_pars <- c(post_pars, post$ln_phi[i])
+#   post_pars <- c(post_pars, post$omega_s[i,,drop=TRUE])
+#   post_pars <- c(post_pars, post$epsilon_st[i,,drop=TRUE])
+#   stopifnot(length(post_pars) == length(m_tmb$tmb_obj$env$last.par.best))
+#   post_matrix[,i] <- post_pars
+# }
 
 # post_tmb <- matrix(ncol = nrow(post$b_j), nrow = length(post_))
 #   m_tmb$tmb_obj$report(post_pars)
