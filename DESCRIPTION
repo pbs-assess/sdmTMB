@@ -42,6 +42,7 @@ Imports:
     Matrix,
     methods,
     mgcv,
+    rstan,
     sf,
     stats,
     TMB (>= 1.7.20)
@@ -52,7 +53,8 @@ Suggests:
     rgdal,
     rmarkdown,
     splancs,
-    testthat
+    testthat,
+    tmbstan
 LinkingTo:
     RcppEigen,
     TMB
