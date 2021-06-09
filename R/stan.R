@@ -2,8 +2,9 @@
 #'
 #' Returns a matrix of parameter samples. Rows correspond to the order
 #' of `your_model$tmb_obj$env$last.par.best`. Columns correspond to
-#' posterior samples. Can be fed into [predict.sdmTMB()] to make
-#' fully Bayesian predictions.
+#' posterior samples. Is used internally by [predict.sdmTMB()] to make
+#' fully Bayesian predictions. See the `tmbstan_model` argument
+#' in [predict.sdmTMB()].
 #'
 #' @param object Output from [tmbstan::tmbstan()] run on the `tmb_obj`
 #'   element of an [sdmTMB()] model. E.g., `tmbstan(your_model$tmb_obj)`.

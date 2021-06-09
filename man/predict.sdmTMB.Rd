@@ -14,6 +14,7 @@
   re_form = NULL,
   re_form_iid = NULL,
   sims = 0,
+  tmbstan_model = NULL,
   ...
 )
 }
@@ -59,6 +60,10 @@ uncertainty on predictions (e.g., \code{apply(x, 1, sd)}) or propagating
 uncertainty. This is currently the fastest way to generate estimates of
 uncertainty on predictions in space with sdmTMB. Only works with \code{newdata}
 specified.}
+
+\item{tmbstan_model}{A model fit with \code{\link[tmbstan:tmbstan]{tmbstan::tmbstan()}}. See \code{\link[=extract_mcmc]{extract_mcmc()}}
+for more details and an example. Will return a matrix of a similar form as
+if \code{sims > 0} but representing Bayesian posterior samples from Stan.}
 
 \item{...}{Not implemented.}
 }

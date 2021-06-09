@@ -13,8 +13,9 @@ element of an \code{\link[=sdmTMB]{sdmTMB()}} model. E.g., \code{tmbstan(your_mo
 \description{
 Returns a matrix of parameter samples. Rows correspond to the order
 of \code{your_model$tmb_obj$env$last.par.best}. Columns correspond to
-posterior samples. Can be fed into \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} to make
-fully Bayesian predictions.
+posterior samples. Is used internally by \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} to make
+fully Bayesian predictions. See the \code{tmbstan_model} argument
+in \code{\link[=predict.sdmTMB]{predict.sdmTMB()}}.
 }
 \examples{
 \dontrun{
