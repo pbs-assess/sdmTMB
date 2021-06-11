@@ -206,8 +206,45 @@ NULL
 #' Reference for local trends:
 #'
 #' Barnett, L.A.K., E.J. Ward, S.C. Anderson. Improving estimates of species
-#' distribution change by incorporating local trends. In press at Ecography.
-#' <https://doi.org/10.1111/ecog.05176>
+#' distribution change by incorporating local trends. Ecography. 44(3):427-439.
+#' <https://doi.org/10.1111/ecog.05176>.
+#'
+#' Further explanation of the model and application to calculating climate
+#' velocities:
+#'
+#' English, P., E.J. Ward, C.N. Rooper, R.E. Forrest, L.A. Rogers, K.L. Hunter,
+#' A.M. Edwards, B.M. Connors, S.C. Anderson. Contrasting climate velocity impacts
+#' in warm and cool locations: A meta-analysis across 38 demersal fish species in
+#' the northeast Pacific. EcoEvoRxiv. <https://doi.org/10.32942/osf.io/b87ng>.
+#'
+#' Code for implementing the penalized complexity prior on the spatial
+#' covariance parameters and simulation from the joint precision matrix adapted
+#' from:
+#'
+#' Osgood-Zimmerman, A. and Wakefield, J. 2021. A Statistical introduction
+#' to Template Model Builder: a flexible tool for spatial modeling.
+#' arXiv 2103.09929. <https://arxiv.org/abs/2103.09929>.
+#'
+#' Code for implementing the barrier-SPDE written by Olav Nikolai Breivik and
+#' Hans Skaug and adapted via the VAST R package.
+#'
+#' A number of sections of the original TMB model code were adapted from the
+#' VAST R package:
+#'
+#' Thorson, J.T., 2019. Guidance for decisions using the Vector Autoregressive
+#' Spatio-Temporal (VAST) package in stock, ecosystem, habitat and climate
+#' assessments. Fish. Res. 210:143–161.
+#' <https://doi.org/10.1016/j.fishres.2018.10.013>.
+#'
+#' Code for the `family` R-to-TMB implementation, selected parameterizations of
+#' the observation distributions, general package structure inspiration, and the
+#' idea behind the TMB prediction approach were adapted from the glmmTMB R
+#' package:
+#'
+#' Mollie E. Brooks, Kasper Kristensen, Koen J. van Benthem, Arni Magnusson,
+#' Casper W. Berg, Anders Nielsen, Hans J. Skaug, Martin Maechler and Benjamin
+#' M. Bolker (2017). glmmTMB Balances Speed and Flexibility Among Packages for
+#' Zero-inflated Generalized Linear Mixed Modeling. The R Journal, 9(2):378-400.
 #'
 #' @export
 #'

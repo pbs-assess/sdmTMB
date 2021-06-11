@@ -31,3 +31,10 @@ library(ggplot2)
 ggplot(samps, aes(.value)) + geom_histogram() +
   facet_wrap(~.variable, scales = "free_x")
 }
+\references{
+Code for simulating from the joint precision matrix adapted from:
+
+Osgood-Zimmerman, A. and Wakefield, J. 2021. A Statistical introduction
+to Template Model Builder: a flexible tool for spatial modeling.
+arXiv 2103.09929. \url{https://arxiv.org/abs/2103.09929}.
+}

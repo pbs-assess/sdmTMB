@@ -7,6 +7,13 @@
 #' @param object Output from [sdmTMB()].
 #' @param n_sims The number of simulation draws.
 #'
+#' @references
+#' Code for simulating from the joint precision matrix adapted from:
+#'
+#' Osgood-Zimmerman, A. and Wakefield, J. 2021. A Statistical introduction
+#' to Template Model Builder: a flexible tool for spatial modeling.
+#' arXiv 2103.09929. <https://arxiv.org/abs/2103.09929>.
+#'
 #' @export
 #' @rdname gather_sims
 #' @examples
