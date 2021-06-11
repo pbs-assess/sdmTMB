@@ -26,7 +26,7 @@ spread_sims <- function(object, n_sims = 200) {
     stop("TMB::sdreport() must be run with the joint precision returned.", call. = FALSE)
   }
   tmb_sd <- object$sd_report
-  samps <- rmvnorm_prec(tmb_sd, n_sims)
+  samps <- rmvnorm_prec(object$tmb_obj$env$last.par.best, tmb_sd, n_sims)
   pars <- c(tmb_sd$par.fixed, tmb_sd$par.random)
   pn <- names(pars)
   pars <- pars[pn %in% names(tmb_sd$par.fixed)]
