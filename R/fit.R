@@ -51,7 +51,7 @@ NULL
 #'   fields.
 #' @param spatial_trend Should a separate spatial field be included in the
 #'   trend that represents local (time) trends? Requires spatiotemporal data.
-#'   See <http://dx.doi.org/10.1111/ecog.05176> and the
+#'   See \doi{10.1111/ecog.05176} and the
 #'   [spatial trends vignette](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html).
 #' @param spatial_only Logical: should only a spatial model be fit (i.e. do not
 #'   include spatiotemporal random effects)? By default a spatial-only model
@@ -207,7 +207,7 @@ NULL
 #'
 #' Barnett, L.A.K., E.J. Ward, S.C. Anderson. Improving estimates of species
 #' distribution change by incorporating local trends. Ecography. 44(3):427-439.
-#' <https://doi.org/10.1111/ecog.05176>.
+#' \doi{10.1111/ecog.05176}.
 #'
 #' Further explanation of the model and application to calculating climate
 #' velocities:
@@ -215,7 +215,7 @@ NULL
 #' English, P., E.J. Ward, C.N. Rooper, R.E. Forrest, L.A. Rogers, K.L. Hunter,
 #' A.M. Edwards, B.M. Connors, S.C. Anderson. Contrasting climate velocity impacts
 #' in warm and cool locations: A meta-analysis across 38 demersal fish species in
-#' the northeast Pacific. EcoEvoRxiv. <https://doi.org/10.32942/osf.io/b87ng>.
+#' the northeast Pacific. EcoEvoRxiv. \doi{10.32942/osf.io/b87ng}.
 #'
 #' Code for implementing the penalized complexity prior on the spatial
 #' covariance parameters and simulation from the joint precision matrix adapted
@@ -234,7 +234,7 @@ NULL
 #' Thorson, J.T., 2019. Guidance for decisions using the Vector Autoregressive
 #' Spatio-Temporal (VAST) package in stock, ecosystem, habitat and climate
 #' assessments. Fish. Res. 210:143–161.
-#' <https://doi.org/10.1016/j.fishres.2018.10.013>.
+#' \doi{10.1016/j.fishres.2018.10.013}.
 #'
 #' Code for the `family` R-to-TMB implementation, selected parameterizations of
 #' the observation distributions, general package structure inspiration, and the
@@ -245,6 +245,7 @@ NULL
 #' Casper W. Berg, Anders Nielsen, Hans J. Skaug, Martin Maechler and Benjamin
 #' M. Bolker (2017). glmmTMB Balances Speed and Flexibility Among Packages for
 #' Zero-inflated Generalized Linear Mixed Modeling. The R Journal, 9(2):378-400.
+#' \doi{10.32614/rj-2017-066}.
 #'
 #' @export
 #'
