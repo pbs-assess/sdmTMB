@@ -127,8 +127,8 @@ Type dPCPriSPDE(Type logtau, Type logkappa, vector<Type> matern_pars, int give_l
   // Note: (rho, sigma) --> (x=log kappa, y=log tau) -->
   //  transforms: rho = sqrt(8)/e^x & sigma = 1/(sqrt(4pi)*e^x*e^y)
   //  --> Jacobian: |J| propto e^(-y -2x)
-  Type jacobian = - logtau - 2. * logkappa;
-  penalty += jacobian;
+  // Type jacobian = - logtau - 2. * logkappa; // only want Jacobian for Stan MCMC
+  // penalty += jacobian;
   if (give_log) return penalty; else return exp(penalty);
 }
 
