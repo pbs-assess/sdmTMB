@@ -150,25 +150,25 @@ update_model <- function(object,
   object$version <- utils::packageVersion("sdmTMB")
   object$updated_model <- TRUE
 
+  # object$tmb_params <- object$tmb_params[
+  #   c("ln_H_input", "b_j", "ln_tau_O", "ln_tau_O_trend", "ln_tau_E",
+  #     "ln_kappa", "thetaf", "ln_phi", "ln_tau_V", "ar1_phi", "ln_tau_G",
+  #     "RE", "b_rw_t", "omega_s", "omega_s_trend", "epsilon_st", "b_threshold",
+  #     "b_epsilon_logit")]
+  #
   object$tmb_obj <- TMB::MakeADFun(
     data = object$tmb_data, parameters = object$tmb_params,
     map = object$tmb_map, random = object$tmb_random, DLL = "sdmTMB", silent = silent,
     checkParameterOrder = FALSE
   )
-
-  object$tmb_params <- object$tmb_params[
-    c("ln_H_input", "b_j", "ln_tau_O", "ln_tau_O_trend", "ln_tau_E",
-      "ln_kappa", "thetaf", "ln_phi", "ln_tau_V", "ar1_phi", "ln_tau_G",
-      "RE", "b_rw_t", "omega_s", "omega_s_trend", "epsilon_st", "b_threshold",
-      "b_epsilon_logit")]
-
-  browser()
-  object$model <- stats::nlminb(
-    start = object$tmb_params, objective = object$tmb_obj$fn,
-    gradient = object$tmb_obj$gr,
-    control = sdmTMBcontrol())
-  object$sd_report <- TMB::sdreport(object$tmb_obj,
-    getJointPrecision = "jointPrecision" %in% names(object$sd_report))
+  #
+  # # browser()
+  # object$model <- stats::nlminb(
+  #   start = object$tmb_params, objective = object$tmb_obj$fn,
+  #   gradient = object$tmb_obj$gr,
+  #   control = sdmTMBcontrol())
+  # object$sd_report <- TMB::sdreport(object$tmb_obj,
+  #   getJointPrecision = "jointPrecision" %in% names(object$sd_report))
 
   object
 }
