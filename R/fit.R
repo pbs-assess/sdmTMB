@@ -809,13 +809,13 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision)
   conv <- get_convergence_diagnostics(sd_report)
 
-  structure(c(out_structure, list(
+  out <- c(out_structure, list(
     model      = tmb_opt,
     tmb_obj    = tmb_obj,
     sd_report  = sd_report,
     gradients  = conv$final_grads,
-    bad_eig    = conv$bad_eig),
-    class      = "sdmTMB"))
+    bad_eig    = conv$bad_eig))
+  `class<-`(out, "sdmTMB")
 }
 
 map_off_rf <- function(.map, tmb_params) {
