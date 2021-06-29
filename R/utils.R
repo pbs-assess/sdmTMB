@@ -136,7 +136,8 @@ update_model <- function(object,
   }
 
   if (!"xy_cols" %in% names(object$spde) && is.null(xy_cols)) {
-    stop("Please specify `xy_cols` as in `make_mesh()`.", call. = FALSE)
+    stop("Please specify `xy_cols` as in `make_mesh()`. ",
+      "See `?update_model()`.", call. = FALSE)
   }
   if (!"xy_cols" %in% names(object$spde)) {
     object$spde$xy_cols <- xy_cols
@@ -175,7 +176,7 @@ check_and_parse_thresh_params <- function(formula, data) {
     formula <- out$formula
     threshold_function <- "logistic"
   }
-  if(!is.null(threshold_parameter)) {
+  if (!is.null(threshold_parameter)) {
     if (length(threshold_parameter) > 1) {
       stop("`threshold_parameter` must be a single variable name.", call. = FALSE)
     }
@@ -193,7 +194,8 @@ check_and_parse_thresh_params <- function(formula, data) {
     threshold_func <- match(threshold_function, c("linear", "logistic"))
   }
   X_threshold <- as.numeric(unlist(X_threshold))
-  list(formula = formula, threshold_parameter = threshold_parameter,
+  list(
+    formula = formula, threshold_parameter = threshold_parameter,
     threshold_func = threshold_func, X_threshold = X_threshold
   )
 }
