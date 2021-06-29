@@ -50,6 +50,10 @@ check_offset <- function(formula) {
 }
 
 update_model <- function(object, silent = FALSE) {
+
+  stop("There are unresolved problems with this function. ",
+    "Do not use it. Re-fit your model if you need to update it.", call. = FALSE)
+
   if (!"nobs_RE" %in% names(object$tmb_data)) {
     object$tmb_data$nobs_RE <- 0L
     object$tmb_data$ln_tau_G_index <- 0L
