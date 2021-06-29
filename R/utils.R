@@ -71,9 +71,12 @@ check_offset <- function(formula) {
 update_model <- function(object,
                          xy_cols = NULL,
                          silent = FALSE) {
+
+  stop("There are unresolved problems with this function.",
+    "Do not use it. Re-fit your model if you need to update it.", call. = FALSE)
   if (!"nobs_RE" %in% names(object$tmb_data)) {
     object$tmb_data$nobs_RE <- 0L
-    object$tmb_data$ln_tau_G_index <- 0L
+    object$tmb_data$ln_tau_G_index <- rep(0L, 1L)
     object$tmb_data$RE_indexes <- matrix(ncol = 0L, nrow = nrow(object$tmb_data$X_ij))
     object$tmb_data$proj_RE_indexes <- matrix(ncol = 0L, nrow = 1L)
     object$tmb_params$ln_tau_G <- 0
@@ -94,7 +97,7 @@ update_model <- function(object,
     object$tmb_data$spde_barrier <- make_barrier_spde(object$spde)
   }
   if (!"pop_pred" %in% names(object$tmb_data)) object$tmb_data$pop_pred <- 0L
-  if (!"penalties" %in% names(object$tmb_data)) object$tmb_data$penalties <- rep(NA, ncol(object$tmb_data$X_ij))
+  if (!"penalties" %in% names(object$tmb_data)) object$tmb_data$penalties <- rep(NA_real_, ncol(object$tmb_data$X_ij))
   if (!"mgcv" %in% names(object)) object$mgcv <- FALSE
   object$tmb_data$weights_i <- rep(1, length(object$tmb_data$y_i))
   object$tmb_data$calc_quadratic_range <- 0L
@@ -152,6 +155,21 @@ update_model <- function(object,
     map = object$tmb_map, random = object$tmb_random, DLL = "sdmTMB", silent = silent,
     checkParameterOrder = FALSE
   )
+
+  object$tmb_params <- object$tmb_params[
+    c("ln_H_input", "b_j", "ln_tau_O", "ln_tau_O_trend", "ln_tau_E",
+      "ln_kappa", "thetaf", "ln_phi", "ln_tau_V", "ar1_phi", "ln_tau_G",
+      "RE", "b_rw_t", "omega_s", "omega_s_trend", "epsilon_st", "b_threshold",
+      "b_epsilon_logit")]
+
+  browser()
+  object$model <- stats::nlminb(
+    start = object$tmb_params, objective = object$tmb_obj$fn,
+    gradient = object$tmb_obj$gr,
+    control = sdmTMBcontrol())
+  object$sd_report <- TMB::sdreport(object$tmb_obj,
+    getJointPrecision = "jointPrecision" %in% names(object$sd_report))
+
   object
 }
 
