@@ -8,7 +8,7 @@ print.sdmTMB <- function(x, ...) {
   }
   # need to initialize the new TMB object once:
   sink(tempfile())
-  x$tmb_obj$fn(x$model$par)
+  x$tmb_obj$fn()
   lp <- x$tmb_obj$env$last.par.best
   r <- x$tmb_obj$report(lp)
   sink()
