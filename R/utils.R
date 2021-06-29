@@ -67,6 +67,7 @@ check_offset <- function(formula) {
 #'   as specified in [make_mesh()]. Only needed if the mesh was previously
 #'   made with `make_spde()`, which did not include the column names.
 #' @param silent Silent or include optimization details when later fitting?
+#' @export
 update_model <- function(object,
                          xy_cols = NULL,
                          silent = FALSE) {
