@@ -94,7 +94,7 @@ update_model <- function(object,
     object$tmb_data$spde_barrier <- make_barrier_spde(object$spde)
   }
   if (!"pop_pred" %in% names(object$tmb_data)) object$tmb_data$pop_pred <- 0L
-  if (!"penalties" %in% names(object$tmb_data)) object$tmb_data$penalties <- rep(1, ncol(object$tmb_data$X_ij))
+  if (!"penalties" %in% names(object$tmb_data)) object$tmb_data$penalties <- rep(NA, ncol(object$tmb_data$X_ij))
   if (!"mgcv" %in% names(object)) object$mgcv <- FALSE
   object$tmb_data$weights_i <- rep(1, length(object$tmb_data$y_i))
   object$tmb_data$calc_quadratic_range <- 0L
@@ -125,7 +125,7 @@ update_model <- function(object,
     object$tmb_data$est_epsilon_model <- 0L
   }
   if (!"epsilon_predictor" %in% names(object$tmb_data)) {
-    object$tmb_data$epsilon_predictor <- rep(0, 2L)
+    object$tmb_data$epsilon_predictor <- rep(0, object$tmb_data$n_t)
   }
   if (!"proj_spatial_index" %in% names(object$tmb_data)) {
     object$tmb_data$proj_spatial_index <- 0
