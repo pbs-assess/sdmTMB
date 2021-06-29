@@ -112,6 +112,8 @@ NULL
 #'   [TMB::sdreport()]. Must be `TRUE` to use simulation-based methods in
 #'   [predict.sdmTMB()] or `[get_index_sims()]`. If not needed, setting this
 #'   `FALSE` will reduce object size.
+#' @param do_fit Fit the model (`TRUE`) or return the processed data without
+#'   fitting (`FALSE`)?
 #' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
 #'   model.response terms model.offset
@@ -367,7 +369,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   start = NULL,
   quadratic_roots = FALSE,
   epsilon_predictor = NULL,
-  get_joint_precision = TRUE) {
+  get_joint_precision = TRUE,
+  do_fit = TRUE) {
 
   assert_that(
     is.logical(reml), is.logical(anisotropy), is.logical(silent),
@@ -656,7 +659,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   if (is.null(thresh$threshold_parameter)) {
     tmb_map <- c(tmb_map, list(b_threshold = factor(rep(NA, 2))))
   }
-  if (multiphase && is.null(previous_fit)) {
+  if (multiphase && is.null(previous_fit) && do_fit) {
     not_phase1 <- c(tmb_map, list(
       ln_tau_O   = as.factor(NA),
       ln_tau_E   = as.factor(NA),
@@ -747,6 +750,31 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     tmb_params[[names(start)[i]]] <- start[[i]]
   }
 
+  data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL
+  out_structure <- structure(list(
+    data       = data,
+    spde       = spde,
+    formula    = original_formula,
+    split_formula = split_formula,
+    time_varying = time_varying,
+    threshold_parameter = thresh$threshold_parameter,
+    threshold_function = thresh$threshold_func,
+    epsilon_predictor = epsilon_predictor,
+    mgcv_mod   = mgcv_mod,
+    time       = time,
+    family     = family,
+    response   = y_i,
+    tmb_data   = tmb_data,
+    tmb_params = tmb_params,
+    tmb_map    = tmb_map,
+    tmb_random = tmb_random,
+    reml       = reml,
+    mgcv       = mgcv,
+    call       = match.call(expand.dots = TRUE),
+    version    = utils::packageVersion("sdmTMB")),
+    class      = "sdmTMB")
+  if (!do_fit) return(out_structure)
+
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     random = tmb_random, DLL = "sdmTMB", silent = silent)
@@ -781,35 +809,13 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision)
   conv <- get_convergence_diagnostics(sd_report)
 
-  data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL
-
-  structure(list(
+  structure(c(out_structure, list(
     model      = tmb_opt,
-    data       = data,
-    spde       = spde,
-    formula    = original_formula,
-    split_formula = split_formula,
-    time_varying = time_varying,
-    threshold_parameter = thresh$threshold_parameter,
-    threshold_function = thresh$threshold_func,
-    epsilon_predictor = epsilon_predictor,
-    mgcv_mod   = mgcv_mod,
-    time       = time,
-    family     = family,
-    response   = y_i,
-    tmb_data   = tmb_data,
-    tmb_params = tmb_params,
-    tmb_map    = tmb_map,
-    tmb_random = tmb_random,
     tmb_obj    = tmb_obj,
-    reml       = reml,
-    mgcv       = mgcv,
-    gradients  = conv$final_grads,
-    bad_eig    = conv$bad_eig,
-    call       = match.call(expand.dots = TRUE),
     sd_report  = sd_report,
-    version    = utils::packageVersion("sdmTMB")),
-    class      = "sdmTMB")
+    gradients  = conv$final_grads,
+    bad_eig    = conv$bad_eig),
+    class      = "sdmTMB"))
 }
 
 map_off_rf <- function(.map, tmb_params) {

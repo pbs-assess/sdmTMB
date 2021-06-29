@@ -35,7 +35,8 @@ sdmTMB(
   start = NULL,
   quadratic_roots = FALSE,
   epsilon_predictor = NULL,
-  get_joint_precision = TRUE
+  get_joint_precision = TRUE,
+  do_fit = TRUE
 )
 }
 \arguments{
@@ -174,6 +175,9 @@ e.g. \code{log(sd(i)) = B0 + B1 * epsilon_predictor(i)}.}
 \code{\link[TMB:sdreport]{TMB::sdreport()}}. Must be \code{TRUE} to use simulation-based methods in
 \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} or \verb{[get_index_sims()]}. If not needed, setting this
 \code{FALSE} will reduce object size.}
+
+\item{do_fit}{Fit the model (\code{TRUE}) or return the processed data without
+fitting (\code{FALSE})?}
 }
 \description{
 Fit a spatial or spatiotemporal predictive-process GLMM with TMB.

@@ -49,7 +49,27 @@ check_offset <- function(formula) {
     gsub(" ", "", unlist(strsplit(as.character(formula), "\\+")))))
 }
 
-update_model <- function(object, silent = FALSE) {
+#' Update an old sdmTMB model
+#'
+#' @description
+#' If the installed version of sdmTMB is newer than the version that was used to
+#' fit a model, it is possible new parameters have been added to the TMB model
+#' since the model was fit and functions such as `print()` or `predict()` will
+#' not work. We recommend you fit and predict from an sdmTMB model with the same
+#' version.
+#'
+#' You can re-fit the model or you can try running `update_model()` on your
+#' older model and saving it to a new model object. This fills in any newer
+#' default TMB data, default TMB parameters, and default TMB map values.
+#'
+#' @param object A model fitted with [sdmTMB()].
+#' @param xy_cols A character vector of x and y column names contained in data
+#'   as specified in [make_mesh()]. Only needed if the mesh was previously
+#'   made with `make_spde()`, which did not include the column names.
+#' @param silent Silent or include optimization details when later fitting?
+update_model <- function(object,
+                         xy_cols = NULL,
+                         silent = FALSE) {
   if (!"nobs_RE" %in% names(object$tmb_data)) {
     object$tmb_data$nobs_RE <- 0L
     object$tmb_data$ln_tau_G_index <- 0L
@@ -85,11 +105,51 @@ update_model <- function(object, silent = FALSE) {
     object$tmb_params$b_threshold <- rep(0, 2)
     object$tmb_map$b_threshold <- factor(c(NA, NA))
   }
+
+  # more dummy data
   if (!"df" %in% names(object$tmb_data)) object$tmb_data$df <- 3
+  if (!"matern_pc_prior_O" %in% names(object$tmb_data)) {
+    object$tmb_data$matern_pc_prior_O <- rep(0, 4L)
+  }
+  if (!"matern_pc_prior_E" %in% names(object$tmb_data)) {
+    object$tmb_data$matern_pc_prior_E <- rep(0, 4L)
+  }
+  if (!"exclude_RE" %in% names(object$tmb_data)) {
+    object$tmb_data$exclude_RE <- rep(0L, 0)
+  }
+  if (!"size" %in% names(object$tmb_data)) {
+    object$tmb_data$size <- rep(1, nrow(object$tmb_data$X_ij))
+  }
+  if (!"est_epsilon_model" %in% names(object$tmb_data)) {
+    object$tmb_data$est_epsilon_model <- 0L
+  }
+  if (!"epsilon_predictor" %in% names(object$tmb_data)) {
+    object$tmb_data$epsilon_predictor <- rep(0, 2L)
+  }
+  if (!"proj_spatial_index" %in% names(object$tmb_data)) {
+    object$tmb_data$proj_spatial_index <- 0
+  }
+
+  # more params
+  if (!"b_epsilon_logit" %in% names(object$tmb_params)) {
+    object$tmb_params$b_epsilon_logit <- 0
+  }
+
+  if (!"xy_cols" %in% names(object$spde) && is.null(xy_cols)) {
+    stop("Please specify `xy_cols` as in `make_mesh()`.", call. = FALSE)
+  }
+  if (!"xy_cols" %in% names(object$spde)) {
+    object$spde$xy_cols <- xy_cols
+  }
+
+  object$version <- utils::packageVersion("sdmTMB")
+  object$updated_model <- TRUE
+
   object$tmb_obj <- TMB::MakeADFun(
     data = object$tmb_data, parameters = object$tmb_params,
     map = object$tmb_map, random = object$tmb_random, DLL = "sdmTMB", silent = silent,
-    checkParameterOrder = FALSE)
+    checkParameterOrder = FALSE
+  )
   object
 }
 

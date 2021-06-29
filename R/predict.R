@@ -211,7 +211,13 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
   area = 1, re_form = NULL, re_form_iid = NULL,
   sims = 0, tmbstan_model = NULL, ...) {
 
-  check_sdmTMB_version(object$version)
+  if ("version" %in% names(object)) {
+    check_sdmTMB_version(object$version)
+  } else {
+    stop("This looks like a very old version of a model fit. Update the model with ",
+      "`sdmTMB::update_model()` or re-fit the model before predicting with it.",
+      call. = FALSE)
+  }
   if (!"xy_cols" %in% names(object$spde)) {
     warning("It looks like this model was fit with make_spde(). ",
     "Using `xy_cols`, but future versions of sdmTMB may not be compatible with this.",
@@ -489,7 +495,9 @@ check_sdmTMB_version <- function(version) {
       "that was used to fit this model. It is possible new parameters\n",
       "have been added to the TMB model since you fit this model and\n",
       "that prediction will fail. We recommend you fit and predict\n",
-      "from an sdmTMB model with the same version.",
+      "from an sdmTMB model with the same version. Alternatively,\n",
+      "you can try running `sdmTMB::update_model()` on your older\n",
+      "model.",
       call. = FALSE
     )
   }
