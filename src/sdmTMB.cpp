@@ -284,6 +284,7 @@ Type objective_function<Type>::operator()()
 
   DATA_INTEGER(normalize_in_r);
   DATA_INTEGER(flag);
+  DATA_INTEGER(share_range);
 
   // Prediction?
   DATA_INTEGER(do_predict);
@@ -460,21 +461,23 @@ Type objective_function<Type>::operator()()
 
   Eigen::SparseMatrix<Type> Q_s; // Precision matrix
   Eigen::SparseMatrix<Type> Q_st; // Precision matrix
+
   if (barrier) {
     Q_s = Q_spde(spde_barrier, exp(ln_kappa(0)), barrier_scaling);
-    Q_st = Q_spde(spde_barrier, exp(ln_kappa(1)), barrier_scaling);
+    if (!share_range) Q_st = Q_spde(spde_barrier, exp(ln_kappa(1)), barrier_scaling);
   } else {
     if (anisotropy) {
       matrix<Type> H = MakeH(ln_H_input);
       Q_s = R_inla::Q_spde(spde_aniso, exp(ln_kappa(0)), H);
-      Q_st = R_inla::Q_spde(spde_aniso, exp(ln_kappa(1)), H);
+      if (!share_range) Q_st = R_inla::Q_spde(spde_aniso, exp(ln_kappa(1)), H);
       REPORT(H);
     }
     if (!anisotropy) {
       Q_s = R_inla::Q_spde(spde, exp(ln_kappa(0)));
-      Q_st = R_inla::Q_spde(spde, exp(ln_kappa(1)));
+      if (!share_range) Q_st = R_inla::Q_spde(spde, exp(ln_kappa(1)));
     }
   }
+  if (share_range) Q_st = Q_s;
 
   // ------------------ INLA projections ---------------------------------------
 

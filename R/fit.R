@@ -586,6 +586,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     enable_priors = as.integer(!is.null(penalties)),
     penalties = if (!is.null(penalties)) penalties else rep(NA_real_, ncol(X_ij)),
     priors = as.numeric(.priors),
+    share_range = as.integer(share_range),
     include_spatial = as.integer(include_spatial),
     proj_mesh  = Matrix::Matrix(0, 1, 1, doDiag = FALSE), # dummy
     proj_X_ij  = matrix(0, ncol = 1, nrow = 1), # dummy
@@ -756,7 +757,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   if (!is.null(previous_fit)) tmb_map <- previous_fit$tmb_map
   if (isTRUE(map_rf)) tmb_map <- map_off_rf(tmb_map, tmb_params)
   tmb_map <- c(map, tmb_map)
-  if (share_range) tmb_map <- c(tmb_map, list(ln_kappa = factor(c("a", "a"))))
+  if (share_range) tmb_map <- c(tmb_map, list(ln_kappa = factor(c(1, NA))))
 
   for (i in seq_along(start)) {
     message("Initiating ", names(start)[i],
