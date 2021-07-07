@@ -757,7 +757,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   if (!is.null(previous_fit)) tmb_map <- previous_fit$tmb_map
   if (isTRUE(map_rf)) tmb_map <- map_off_rf(tmb_map, tmb_params)
   tmb_map <- c(map, tmb_map)
-  if (share_range) tmb_map <- c(tmb_map, list(ln_kappa = factor(c(1, NA))))
+  if (share_range) tmb_map <- c(tmb_map, list(ln_kappa = factor(c(1L, 1L))))
 
   for (i in seq_along(start)) {
     message("Initiating ", names(start)[i],
