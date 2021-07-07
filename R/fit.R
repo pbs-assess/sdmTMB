@@ -44,6 +44,7 @@ NULL
 #' @param penalties Optional vector of penalties (priors) on the fixed effects.
 #'   See the Regularization Details section below.
 #' below.
+#' @param priors Optional vector of penalties/priors on the fixed effects.
 #' @param ar1_fields Estimate the spatiotemporal random fields as a
 #'   stationary AR1 process?
 #' @param include_spatial Should a separate spatial random field be estimated?
@@ -57,6 +58,8 @@ NULL
 #'   include spatiotemporal random effects)? By default a spatial-only model
 #'   will be fit if there is only one unique value in the time column or the
 #'   `time` argument is left at its default value of `NULL`.
+#' @param share_range Logical: estimated a shared spatial and spatiotemporal
+#'   range parameter?
 #' @param normalize Logical: use [TMB::normalize()] to normalize the process
 #'   likelihood using the Laplace approximation? Can result in a substantial
 #'   speed boost in some cases. This used to default to `FALSE` prior to
@@ -354,9 +357,12 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   family = gaussian(link = "identity"),
   time_varying = NULL, weights = NULL, extra_time = NULL, reml = FALSE,
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
-  control = sdmTMBcontrol(), penalties = NULL, ar1_fields = FALSE,
+  control = sdmTMBcontrol(), penalties = NULL,
+  priors = list(range_O = NA, sigma_O = NA, range_E = NA, sigma_E = NA, phi = NA, rho = NA),
+  ar1_fields = FALSE,
   include_spatial = TRUE, spatial_trend = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
+  share_range = TRUE,
   normalize = FALSE,
   matern_prior_O = NULL,
   matern_prior_E = NULL,
@@ -378,6 +384,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     is.logical(multiphase), is.logical(ar1_fields),
     is.logical(include_spatial), is.logical(map_rf), is.logical(normalize)
   )
+  assert_that(is.list(priors))
+  prior_names <- c("range_O", "sigma_O", "range_E", "sigma_E", "phi", "rho")
+  assert_that(all(names(priors) %in% prior_names))
   if (!is.null(time_varying)) assert_that(identical(class(time_varying), "formula"))
   assert_that(is.list(control))
   if (!is.null(previous_fit)) assert_that(identical(class(previous_fit), "sdmTMB"))
@@ -545,6 +554,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     est_epsilon_model <- 1L
   }
 
+  .priors <- stats::setNames(rep(NA_real_, length(prior_names)), prior_names)
+  for (.par in prior_names) if (.par %in% names(priors)) .priors[[.par]] <- priors[[.par]]
+
   tmb_data <- list(
     y_i        = c(y_i),
     n_t        = length(unique(data[[time]])),
@@ -573,6 +585,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     random_walk = !is.null(time_varying),
     enable_priors = as.integer(!is.null(penalties)),
     penalties = if (!is.null(penalties)) penalties else rep(NA_real_, ncol(X_ij)),
+    priors = as.numeric(.priors),
     include_spatial = as.integer(include_spatial),
     proj_mesh  = Matrix::Matrix(0, 1, 1, doDiag = FALSE), # dummy
     proj_X_ij  = matrix(0, ncol = 1, nrow = 1), # dummy
@@ -613,7 +626,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     ln_tau_O   = 0,
     ln_tau_O_trend = 0,
     ln_tau_E   = 0,
-    ln_kappa   = 0,
+    ln_kappa   = rep(0, 2),
     thetaf     = 0,
     ln_phi     = 0,
     ln_tau_V   = rep(0, ncol(X_rw_ik)),
@@ -667,7 +680,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       ln_tau_G   = factor(rep(NA, length(tmb_params$ln_tau_G))),
       ln_tau_O_trend = as.factor(NA),
       omega_s_trend  = factor(rep(NA, length(tmb_params$omega_s_trend))),
-      ln_kappa   = as.factor(NA),
+      ln_kappa   = factor(rep(NA, 2)),
       ln_H_input = factor(rep(NA, 2)),
       b_rw_t     = factor(rep(NA, length(tmb_params$b_rw_t))),
       RE         = factor(rep(NA, length(tmb_params$RE))),
@@ -743,6 +756,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   if (!is.null(previous_fit)) tmb_map <- previous_fit$tmb_map
   if (isTRUE(map_rf)) tmb_map <- map_off_rf(tmb_map, tmb_params)
   tmb_map <- c(map, tmb_map)
+  if (share_range) tmb_map <- c(tmb_map, list(ln_kappa = factor(c("a", "a"))))
 
   for (i in seq_along(start)) {
     message("Initiating ", names(start)[i],
@@ -774,6 +788,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     version    = utils::packageVersion("sdmTMB")),
     class      = "sdmTMB")
   if (!do_fit) return(out_structure)
+
 
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
@@ -823,7 +838,7 @@ map_off_rf <- function(.map, tmb_params) {
   .map$ln_tau_E <- as.factor(NA)
   .map$ln_tau_O_trend <- as.factor(NA)
   .map$omega_s_trend <- factor(rep(NA, length(tmb_params$omega_s_trend)))
-  .map$ln_kappa <- as.factor(NA)
+  .map$ln_kappa <- factor(rep(NA, 2))
   .map$ln_H_input <- factor(rep(NA, 2))
   .map$omega_s <- factor(rep(NA, length(tmb_params$omega_s)))
   .map$epsilon_st <- factor(rep(NA, length(tmb_params$epsilon_st)))

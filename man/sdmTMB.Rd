@@ -19,10 +19,13 @@ sdmTMB(
   anisotropy = FALSE,
   control = sdmTMBcontrol(),
   penalties = NULL,
+  priors = list(range_O = NA, sigma_O = NA, range_E = NA, sigma_E = NA, phi = NA, rho =
+    NA),
   ar1_fields = FALSE,
   include_spatial = TRUE,
   spatial_trend = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
+  share_range = TRUE,
   normalize = FALSE,
   matern_prior_O = NULL,
   matern_prior_E = NULL,
@@ -91,6 +94,8 @@ Phases are usually faster and more stable.}
 See the Regularization Details section below.
 below.}
 
+\item{priors}{Optional vector of penalties/priors on the fixed effects.}
+
 \item{ar1_fields}{Estimate the spatiotemporal random fields as a
 stationary AR1 process?}
 
@@ -107,6 +112,9 @@ See \doi{10.1111/ecog.05176} and the
 include spatiotemporal random effects)? By default a spatial-only model
 will be fit if there is only one unique value in the time column or the
 \code{time} argument is left at its default value of \code{NULL}.}
+
+\item{share_range}{Logical: estimated a shared spatial and spatiotemporal
+range parameter?}
 
 \item{normalize}{Logical: use \code{\link[TMB:normalize]{TMB::normalize()}} to normalize the process
 likelihood using the Laplace approximation? Can result in a substantial
