@@ -121,7 +121,7 @@ sdmTMB_cv <- function(formula, data, spde, time = NULL,
     } else {
       object <- do.call(sdmTMB, args)
       if (max(object$gradients) > 0.001) {
-        object <- run_extra_optimization(object, nlminb_loops = 0L, newton_steps = 1L)
+        object <- run_extra_optimization(object, nlminb_loops = 0L, newton_loops = 1L)
       }
     }
 

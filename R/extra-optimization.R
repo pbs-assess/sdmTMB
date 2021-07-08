@@ -4,7 +4,7 @@
 #' @param nlminb_loops How many extra times to run [stats::nlminb()]
 #'   optimization. Sometimes restarting the optimizer at the previous best
 #'   values aids convergence.
-#' @param newton_steps How many extra Newton optimization steps to try with
+#' @param newton_loops How many extra Newton optimization loops to try with
 #'   [stats::optimHess()]. Sometimes aids convergence.
 #' @param control Optimization control options. See [sdmTMBcontrol()].
 #'
@@ -15,9 +15,14 @@
 #' # See ?sdmTMB
 run_extra_optimization <- function(object,
   nlminb_loops = 1,
-  newton_steps = 1,
+  newton_loops = 1,
   control = sdmTMBcontrol()) {
   # FIXME: DRY; use this function in sdmTMB()
+
+  dot_checks <- c("nlminb_loops", "newton_steps", "mgcv", "quadratic_roots",
+    "newton_loops", "start", "map", "map_rf", "get_joint_precision", "normalize")
+  for (i in dot_checks) control[[i]] <- NULL # what's left should be for nlminb
+
   new_obj <- object
   old_par <- object$model$par
   new_obj$tmb_obj$fn(old_par) # initialize the TMB object
@@ -33,7 +38,7 @@ run_extra_optimization <- function(object,
     tmb_opt[["iterations"]] <- tmb_opt[["iterations"]] + temp[["iterations"]]
     tmb_opt[["evaluations"]] <- tmb_opt[["evaluations"]] + temp[["evaluations"]]
   }
-  for (i in seq_len(newton_steps)) {
+  for (i in seq_len(newton_loops)) {
     g <- as.numeric(new_obj$tmb_obj$gr(tmb_opt$par))
     h <- stats::optimHess(
       tmb_opt$par,

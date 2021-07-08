@@ -32,20 +32,18 @@ test_that("sdmTMB model fit with a covariate beta", {
   plot(spde)
   .t1 <- system.time({
     m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
-      silent = TRUE, spde = spde, normalize = FALSE)
+      silent = TRUE, spde = spde, control = sdmTMBcontrol(normalize = FALSE))
   })
   .t2 <- system.time({
     m_norm <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
-      silent = TRUE, spde = spde, normalize = TRUE)
+      silent = TRUE, spde = spde, control = sdmTMBcontrol(normalize = TRUE))
   })
-  # P(sp.range < a) = b
-  # P(sp.sigma > c) = d
-  # matern.pri <- c(10, .95, 1., .05) ## a, b, c, d
   .t3 <- system.time({
     m_pc <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
-      silent = TRUE, spde = spde, normalize = TRUE,
-      matern_prior_E = c(0.01, 0.999, 0.1, 0.05),
-      matern_prior_O = c(0.01, 0.999, 0.1, 0.05)
+      silent = TRUE, spde = spde, control = sdmTMBcontrol(normalize = TRUE),
+      priors = list(range_O = 0.01, sigma_O = 0.1)
+      # matern_prior_E = c(0.01, 0.999, 0.1, 0.05),
+      # matern_prior_O = c(0.01, 0.999, 0.1, 0.05)
       )
   })
   expect_equal(m$model$par, m_norm$model$par, tolerance = 1e-6)
@@ -58,14 +56,14 @@ test_that("sdmTMB model fit with a covariate beta", {
   r <- m$tmb_obj$report()
   est <- tidy(m, "ran_pars")
   expect_equal(sort(est[,"estimate", drop = TRUE]),
-    sort(c(0.106559618205922, 0.0646179753599145, 0.303614800474715, 0.308394406301974)),
-    tolerance = 1e-7)
+    sort(c(0.106559618205922, 0.106559618205922, 0.0646179753599145, 0.303614800474715, 0.308394406301974)),
+    tolerance = 1e-6)
   expect_equal(m$model$convergence, 0L)
   expect_equal((p$b_j - initial_betas)^2, 0, tol = 0.001)
   expect_equal((exp(p$ln_phi) - phi)^2, 0, tol = 0.002)
   expect_equal((r$sigma_O - sigma_O)^2, 0, tol = 0.002)
   expect_equal((r$sigma_E[1] - sigma_E)^2, 0, tol = 0.001)
-  expect_equal(est$estimate[est$term == "range"], range, tol = 0.01)
+  expect_equal(est$estimate[est$term == "range"][1], range, tol = 0.01)
   p <- predict(m)
   r <- residuals(m)
   expect_equal(mean((p$est - s$observed)^2), 0, tol = 0.002)
@@ -209,7 +207,7 @@ test_that("A time-varying model fits and predicts appropriately", {
   )
   spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
   m <- sdmTMB(data = s, formula = observed ~ 0, include_spatial = FALSE,
-    time_varying = ~ 0 + cov1, time = "time", spde = spde, mgcv = FALSE)
+    time_varying = ~ 0 + cov1, time = "time", spde = spde, control = sdmTMBcontrol(mgcv = FALSE))
   expect_equal(exp(m$model$par["ln_tau_V"])[[1]], sigma_V, tolerance = 0.05)
   tidy(m, effects = "ran_par")
   b_t <- dplyr::group_by(s, time) %>%
@@ -351,7 +349,7 @@ test_that("The `map_rf` argument works.", {
   p <- predict(m)
   m.map <- sdmTMB(density ~ 0 + as.factor(year),
     data = d, time = "year", spde = pcod_spde,
-    family = tweedie(link = "log"), map_rf = TRUE
+    family = tweedie(link = "log"), control = sdmTMBcontrol(map_rf = TRUE)
   )
   p.map <- predict(m.map)
 
@@ -364,7 +362,8 @@ test_that("The `map_rf` argument works.", {
   dpos <- d[d$density > 0, ]
   pcod_spde <- make_mesh(dpos, c("X", "Y"), cutoff = 50)
   m.sdmTMB.map <- sdmTMB(log(density) ~ depth, data = dpos,
-    family = gaussian(), map_rf = TRUE, spde = pcod_spde)
+    family = gaussian(), control = sdmTMBcontrol(map_rf = TRUE),
+    spde = pcod_spde)
   m.stats.glm <- stats::lm(log(density) ~ depth, data = dpos)
   m.glmmTMB <- glmmTMB::glmmTMB(log(density) ~ depth, data = dpos)
   .t <- tidy(m.sdmTMB.map)
@@ -377,7 +376,7 @@ test_that("The `map_rf` argument works.", {
   pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
   pcod_spde <- make_mesh(pcod_binom, c("X", "Y"), cutoff = 50)
   m.sdmTMB.map <- sdmTMB(present ~ depth, data = pcod_binom,
-    family = binomial(link = "logit"), map_rf = TRUE, spde = pcod_spde)
+    family = binomial(link = "logit"), control = sdmTMBcontrol(map_rf = TRUE), spde = pcod_spde)
   m.stats.glm <- stats::glm(present ~ depth, data = pcod_binom,
     family = binomial(link = "logit"))
   m.glmmTMB <- glmmTMB::glmmTMB(present ~ depth, data = pcod_binom,

@@ -26,20 +26,10 @@ sdmTMB(
   spatial_trend = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
   share_range = TRUE,
-  normalize = FALSE,
-  matern_prior_O = NULL,
-  matern_prior_E = NULL,
-  nlminb_loops = 1,
-  newton_steps = 0,
-  mgcv = TRUE,
   previous_fit = NULL,
-  map_rf = FALSE,
-  map = NULL,
-  start = NULL,
-  quadratic_roots = FALSE,
   epsilon_predictor = NULL,
-  get_joint_precision = TRUE,
-  do_fit = TRUE
+  do_fit = TRUE,
+  ...
 )
 }
 \arguments{
@@ -83,18 +73,15 @@ to the list of random effects to intetgrate over.}
 
 \item{silent}{Silent or include optimization details?}
 
-\item{multiphase}{Logical: estimate the fixed and random effects in phases?
-Phases are usually faster and more stable.}
-
 \item{anisotropy}{Logical: allow for anisotropy? See \code{\link[=plot_anisotropy]{plot_anisotropy()}}.}
 
 \item{control}{Optimization control options. See \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}.}
 
-\item{penalties}{Optional vector of penalties (priors) on the fixed effects.
-See the Regularization Details section below.
-below.}
+\item{penalties}{Optional vector of penalties (priors) on the main
+(intercept, slope) fixed effects. See the Regularization Details section
+below. below.}
 
-\item{priors}{Optional vector of penalties/priors on the fixed effects.}
+\item{priors}{Optional vector of penalties/priors on the other fixed effects.}
 
 \item{ar1_fields}{Estimate the spatiotemporal random fields as a
 stationary AR1 process?}
@@ -116,57 +103,10 @@ will be fit if there is only one unique value in the time column or the
 \item{share_range}{Logical: estimated a shared spatial and spatiotemporal
 range parameter?}
 
-\item{normalize}{Logical: use \code{\link[TMB:normalize]{TMB::normalize()}} to normalize the process
-likelihood using the Laplace approximation? Can result in a substantial
-speed boost in some cases. This used to default to \code{FALSE} prior to
-May 2021.}
-
-\item{matern_prior_O}{An optional vector of length 4 of penalized complexity
-(PC) prior values. Order is \code{c(a, b, c, d)} where \code{P(range < a) = b} and
-\code{P(sigmaO > c) = d}. sigmaO represents the marginal standard deviation of the
-spatial random field.}
-
-\item{matern_prior_E}{Same as \code{matern_prior_O} but for the spatiotemporal
-field.}
-
-\item{nlminb_loops}{How many times to run \code{\link[stats:nlminb]{stats::nlminb()}} optimization.
-Sometimes restarting the optimizer at the previous best values aids
-convergence. If the maximum gradient is still too large,
-try increasing this to \code{2}.}
-
-\item{newton_steps}{How many Newton optimization steps to try with
-\code{\link[stats:optim]{stats::optimHess()}} after running \code{\link[stats:nlminb]{stats::nlminb()}}. Sometimes aids
-convergence.}
-
-\item{mgcv}{Parse the formula with \code{\link[mgcv:gam]{mgcv::gam()}}?}
-
 \item{previous_fit}{A previously fitted sdmTMB model to initialize the
 optimization with. Can greatly speed up fitting. Note that the data and
 model must be set up \emph{exactly} the same way! However, the \code{weights} argument
 can change, which can be useful for cross-validation.}
-
-\item{map_rf}{Map all the random fields to 0 to turn the model into a
-classical GLM or GLMM without spatial or spatiotemporal components?
-Note this is not accounted for in \code{print()} or \code{tidy.sdmTMB()};
-some parameters will still appear but their values can be ignored.}
-
-\item{map}{A named list with factor \code{NA}s specifying parameter values that
-should be fixed at a constant value. See the documentation in
-\code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}. This should usually be used with \code{start} to specify the
-fixed value.}
-
-\item{start}{A named list specifying the starting values for parameters. You
-can see the necessary structure by fitting the model once and inspecting
-\code{your_model$tmb_obj$env$parList()}. Elements of \code{start} that are specified
-will replace the default starting values.}
-
-\item{quadratic_roots}{Experimental feature for internal use right now; may
-be moved to a branch. Logical: should quadratic roots be calculated? Note:
-on the sdmTMB side, the first two coefficients are used to generate the
-quadratic parameters. This means that if you want to generate a quadratic
-profile for depth, and depth and depth^2 are part of your formula, you need
-to make sure these are listed first and that an intercept isn't included.
-For example, \code{formula = cpue ~ 0 + depth + depth2 + as.factor(year)}.}
 
 \item{epsilon_predictor}{A column name (as character) of a predictor of a
 linear trend (in log space) of the spatiotemporal standard deviation. By
@@ -179,13 +119,10 @@ predictor is included, a log-linear model is fit where the predictor is
 used to model effects on the standard deviation,
 e.g. \code{log(sd(i)) = B0 + B1 * epsilon_predictor(i)}.}
 
-\item{get_joint_precision}{Logical. Passed to \code{getJointPrecision} in
-\code{\link[TMB:sdreport]{TMB::sdreport()}}. Must be \code{TRUE} to use simulation-based methods in
-\code{\link[=predict.sdmTMB]{predict.sdmTMB()}} or \verb{[get_index_sims()]}. If not needed, setting this
-\code{FALSE} will reduce object size.}
-
 \item{do_fit}{Fit the model (\code{TRUE}) or return the processed data without
 fitting (\code{FALSE})?}
+
+\item{...}{Not currently used.}
 }
 \description{
 Fit a spatial or spatiotemporal predictive-process GLMM with TMB.
@@ -278,7 +215,7 @@ tidy(m, conf.int = TRUE)
 tidy(m, effects = "ran_par", conf.int = TRUE)
 
 # Run extra optimization steps to help convergence:
-m1 <- run_extra_optimization(m, nlminb_loops = 0, newton_steps = 1)
+m1 <- run_extra_optimization(m, nlminb_loops = 0, newton_loops = 1)
 max(m$gradients)
 max(m1$gradients)
 

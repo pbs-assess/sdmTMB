@@ -54,14 +54,14 @@ print.sdmTMB <- function(x, ...) {
   }
   range <- mround(r$range, 2L)
 
-  pre <- "Spatial SD (sigma_O): "
+  pre <- "Spatial SD: "
   if (!is.null(r$sigma_O)) {
     sigma_O <- paste0(pre, mround(r$sigma_O, 2L), "\n")
   } else {
     sigma_O <- ""
   }
 
-  pre <- "Spatiotemporal SD (sigma_E): "
+  pre <- "Spatiotemporal SD: "
   if (x$tmb_data$spatial_only == 0L) {
     if (!isTRUE(is.na(x$tmb_map$b_epsilon_logit))) {
       sigma_E <- paste0(pre, mround(r$sigma_E, 2L), "\n")
@@ -150,8 +150,15 @@ print.sdmTMB <- function(x, ...) {
     print(mm_tv)
   }
 
+  range_text <- if (x$tmb_data$share_range) {
+    paste0("Matern range parameter: ", range[1], "\n")
+  } else {
+    paste0("Matern range parameter (spatial): ", range[1], "\n",
+      "Matern range parameter (spatiotemporal): ", range[2], "\n")
+  }
+
   cat("\n",
-    paste0("Matern range parameter: ", range, "\n"),
+    range_text,
     phi,
     sigma_O,
     sigma_E,

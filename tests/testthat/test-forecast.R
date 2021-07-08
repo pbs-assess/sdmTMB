@@ -15,7 +15,7 @@ test_that("Forecasting works with a time-varying parameter", {
     include_spatial = FALSE,
     time = "year",
     spde = spde,
-    mgcv = FALSE,
+    control = sdmTMBcontrol(mgcv = FALSE),
     family = tweedie(link = "log")
   )
   print(m)

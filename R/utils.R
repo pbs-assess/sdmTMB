@@ -4,17 +4,78 @@ set_par_value <- function(opt, par) {
 
 #' Optimization control options
 #'
-#' Any arguments to pass to [stats::nlminb()].
+#' [sdmTMB()] and [stats::nlminb()] control options.
 #'
 #' @param eval.max Maximum number of evaluations of the objective function
 #'   allowed.
 #' @param iter.max Maximum number of iterations allowed.
+#' @param nlminb_loops How many times to run [stats::nlminb()] optimization.
+#'   Sometimes restarting the optimizer at the previous best values aids
+#'   convergence. If the maximum gradient is still too large,
+#'   try increasing this to `2`.
+#' @param newton_steps How many Newton optimization steps to try with
+#'   [stats::optimHess()] after running [stats::nlminb()]. Sometimes aids
+#'   convergence.
+#' @param mgcv Parse the formula with [mgcv::gam()]?
+#' @param map_rf Map all the random fields to 0 to turn the model into a
+#'   classical GLM or GLMM without spatial or spatiotemporal components?
+#'   Note this is not accounted for in `print()` or `tidy.sdmTMB()`;
+#'   some parameters will still appear but their values can be ignored.
+#' @param map A named list with factor `NA`s specifying parameter values that
+#'   should be fixed at a constant value. See the documentation in
+#'   [TMB::MakeADFun()]. This should usually be used with `start` to specify the
+#'   fixed value.
+#' @param start A named list specifying the starting values for parameters. You
+#'   can see the necessary structure by fitting the model once and inspecting
+#'   `your_model$tmb_obj$env$parList()`. Elements of `start` that are specified
+#'   will replace the default starting values.
+#' @param quadratic_roots Experimental feature for internal use right now; may
+#'   be moved to a branch. Logical: should quadratic roots be calculated? Note:
+#'   on the sdmTMB side, the first two coefficients are used to generate the
+#'   quadratic parameters. This means that if you want to generate a quadratic
+#'   profile for depth, and depth and depth^2 are part of your formula, you need
+#'   to make sure these are listed first and that an intercept isn't included.
+#'   For example, `formula = cpue ~ 0 + depth + depth2 + as.factor(year)`.
+#' @param normalize Logical: use [TMB::normalize()] to normalize the process
+#'   likelihood using the Laplace approximation? Can result in a substantial
+#'   speed boost in some cases. This used to default to `FALSE` prior to
+#'   May 2021.
+#' @param multiphase Logical: estimate the fixed and random effects in phases?
+#'   Phases are usually faster and more stable.
+#' @param get_joint_precision Logical. Passed to `getJointPrecision` in
+#'   [TMB::sdreport()]. Must be `TRUE` to use simulation-based methods in
+#'   [predict.sdmTMB()] or `[get_index_sims()]`. If not needed, setting this
+#'   `FALSE` will reduce object size.
 #' @param ... Anything else. See the 'Control parameters' section of
 #'   [stats::nlminb()].
 #'
 #' @export
-sdmTMBcontrol <- function(eval.max = 1e4, iter.max = 1e4, ...) {
-  list(eval.max = eval.max, iter.max = iter.max, ...)
+sdmTMBcontrol <- function(
+  eval.max = 1e4,
+  iter.max = 1e4,
+  normalize = FALSE,
+  nlminb_loops = 1,
+  newton_loops = 0,
+  mgcv = TRUE,
+  quadratic_roots = FALSE,
+  start = NULL,
+  map_rf = FALSE,
+  map = NULL,
+  get_joint_precision = TRUE,
+  ...) {
+  list(
+    eval.max = eval.max,
+    iter.max = iter.max,
+    normalize = normalize,
+    nlminb_loops = nlminb_loops,
+    newton_loops = newton_loops,
+    mgcv = mgcv,
+    quadratic_roots = quadratic_roots,
+    start = start,
+    map_rf = map_rf,
+    map = map,
+    get_joint_precision = get_joint_precision,
+    ...)
 }
 
 get_convergence_diagnostics <- function(sd_report) {

@@ -7,7 +7,7 @@
 run_extra_optimization(
   object,
   nlminb_loops = 1,
-  newton_steps = 1,
+  newton_loops = 1,
   control = sdmTMBcontrol()
 )
 }
@@ -18,7 +18,7 @@ run_extra_optimization(
 optimization. Sometimes restarting the optimizer at the previous best
 values aids convergence.}
 
-\item{newton_steps}{How many extra Newton optimization steps to try with
+\item{newton_loops}{How many extra Newton optimization loops to try with
 \code{\link[stats:optim]{stats::optimHess()}}. Sometimes aids convergence.}
 
 \item{control}{Optimization control options. See \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}.}

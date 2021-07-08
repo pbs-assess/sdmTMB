@@ -300,8 +300,8 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(enable_priors);
   DATA_VECTOR(penalties);
   DATA_VECTOR(priors);
-  DATA_VECTOR(matern_pc_prior_O);
-  DATA_VECTOR(matern_pc_prior_E);
+  // DATA_VECTOR(matern_pc_prior_O);
+  // DATA_VECTOR(matern_pc_prior_E);
   DATA_INTEGER(ar1_fields);
   DATA_INTEGER(include_spatial);
   DATA_INTEGER(random_walk);

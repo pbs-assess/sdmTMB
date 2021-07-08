@@ -37,14 +37,12 @@ NULL
 #'   rather than maximum likelihood? Internally, this adds the fixed effects
 #'   to the list of random effects to intetgrate over.
 #' @param silent Silent or include optimization details?
-#' @param multiphase Logical: estimate the fixed and random effects in phases?
-#'   Phases are usually faster and more stable.
 #' @param anisotropy Logical: allow for anisotropy? See [plot_anisotropy()].
 #' @param control Optimization control options. See [sdmTMBcontrol()].
-#' @param penalties Optional vector of penalties (priors) on the fixed effects.
-#'   See the Regularization Details section below.
-#' below.
-#' @param priors Optional vector of penalties/priors on the fixed effects.
+#' @param penalties Optional vector of penalties (priors) on the main
+#'   (intercept, slope) fixed effects. See the Regularization Details section
+#'   below. below.
+#' @param priors Optional vector of penalties/priors on the other fixed effects.
 #' @param ar1_fields Estimate the spatiotemporal random fields as a
 #'   stationary AR1 process?
 #' @param include_spatial Should a separate spatial random field be estimated?
@@ -60,47 +58,16 @@ NULL
 #'   `time` argument is left at its default value of `NULL`.
 #' @param share_range Logical: estimated a shared spatial and spatiotemporal
 #'   range parameter?
-#' @param normalize Logical: use [TMB::normalize()] to normalize the process
-#'   likelihood using the Laplace approximation? Can result in a substantial
-#'   speed boost in some cases. This used to default to `FALSE` prior to
-#'   May 2021.
-#' @param matern_prior_O An optional vector of length 4 of penalized complexity
-#'   (PC) prior values. Order is `c(a, b, c, d)` where `P(range < a) = b` and
-#'   `P(sigmaO > c) = d`. sigmaO represents the marginal standard deviation of the
-#'   spatial random field.
-#' @param matern_prior_E Same as `matern_prior_O` but for the spatiotemporal
-#'   field.
-#' @param nlminb_loops How many times to run [stats::nlminb()] optimization.
-#'   Sometimes restarting the optimizer at the previous best values aids
-#'   convergence. If the maximum gradient is still too large,
-#'   try increasing this to `2`.
-#' @param newton_steps How many Newton optimization steps to try with
-#'   [stats::optimHess()] after running [stats::nlminb()]. Sometimes aids
-#'   convergence.
-#' @param mgcv Parse the formula with [mgcv::gam()]?
+# @param matern_prior_O An optional vector of length 4 of penalized complexity
+#   (PC) prior values. Order is `c(a, b, c, d)` where `P(range < a) = b` and
+#   `P(sigmaO > c) = d`. sigmaO represents the marginal standard deviation of the
+#   spatial random field.
+# @param matern_prior_E Same as `matern_prior_O` but for the spatiotemporal
+#   field.
 #' @param previous_fit A previously fitted sdmTMB model to initialize the
 #'   optimization with. Can greatly speed up fitting. Note that the data and
 #'   model must be set up *exactly* the same way! However, the `weights` argument
 #'   can change, which can be useful for cross-validation.
-#' @param map_rf Map all the random fields to 0 to turn the model into a
-#'   classical GLM or GLMM without spatial or spatiotemporal components?
-#'   Note this is not accounted for in `print()` or `tidy.sdmTMB()`;
-#'   some parameters will still appear but their values can be ignored.
-#' @param map A named list with factor `NA`s specifying parameter values that
-#'   should be fixed at a constant value. See the documentation in
-#'   [TMB::MakeADFun()]. This should usually be used with `start` to specify the
-#'   fixed value.
-#' @param start A named list specifying the starting values for parameters. You
-#'   can see the necessary structure by fitting the model once and inspecting
-#'   `your_model$tmb_obj$env$parList()`. Elements of `start` that are specified
-#'   will replace the default starting values.
-#' @param quadratic_roots Experimental feature for internal use right now; may
-#'   be moved to a branch. Logical: should quadratic roots be calculated? Note:
-#'   on the sdmTMB side, the first two coefficients are used to generate the
-#'   quadratic parameters. This means that if you want to generate a quadratic
-#'   profile for depth, and depth and depth^2 are part of your formula, you need
-#'   to make sure these are listed first and that an intercept isn't included.
-#'   For example, `formula = cpue ~ 0 + depth + depth2 + as.factor(year)`.
 #' @param epsilon_predictor A column name (as character) of a predictor of a
 #'   linear trend (in log space) of the spatiotemporal standard deviation. By
 #'   default, this is `NULL` and fits a model with a constant spatiotemporal
@@ -111,12 +78,9 @@ NULL
 #'   predictor is included, a log-linear model is fit where the predictor is
 #'   used to model effects on the standard deviation,
 #'   e.g. `log(sd(i)) = B0 + B1 * epsilon_predictor(i)`.
-#' @param get_joint_precision Logical. Passed to `getJointPrecision` in
-#'   [TMB::sdreport()]. Must be `TRUE` to use simulation-based methods in
-#'   [predict.sdmTMB()] or `[get_index_sims()]`. If not needed, setting this
-#'   `FALSE` will reduce object size.
 #' @param do_fit Fit the model (`TRUE`) or return the processed data without
 #'   fitting (`FALSE`)?
+#' @param ... Not currently used.
 #' @importFrom methods as is
 #' @importFrom stats gaussian model.frame model.matrix
 #'   model.response terms model.offset
@@ -267,7 +231,7 @@ NULL
 #' tidy(m, effects = "ran_par", conf.int = TRUE)
 #'
 #' # Run extra optimization steps to help convergence:
-#' m1 <- run_extra_optimization(m, nlminb_loops = 0, newton_steps = 1)
+#' m1 <- run_extra_optimization(m, nlminb_loops = 0, newton_loops = 1)
 #' max(m$gradients)
 #' max(m1$gradients)
 #'
@@ -357,26 +321,44 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   family = gaussian(link = "identity"),
   time_varying = NULL, weights = NULL, extra_time = NULL, reml = FALSE,
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
-  control = sdmTMBcontrol(), penalties = NULL,
+  control = sdmTMBcontrol(),
+  penalties = NULL,
   priors = list(range_O = NA, sigma_O = NA, range_E = NA, sigma_E = NA, phi = NA, rho = NA),
-  ar1_fields = FALSE,
-  include_spatial = TRUE, spatial_trend = FALSE,
+
+    ar1_fields = FALSE,
+  include_spatial = TRUE,
+  spatial_trend = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
   share_range = TRUE,
-  normalize = FALSE,
-  matern_prior_O = NULL,
-  matern_prior_E = NULL,
-  nlminb_loops = 1,
-  newton_steps = 0,
-  mgcv = TRUE,
   previous_fit = NULL,
-  map_rf = FALSE,
-  map = NULL,
-  start = NULL,
-  quadratic_roots = FALSE,
   epsilon_predictor = NULL,
-  get_joint_precision = TRUE,
-  do_fit = TRUE) {
+  do_fit = TRUE,
+  ...
+  ) {
+
+  normalize <- control$normalize
+  nlminb_loops <- control$nlminb_loops
+  newton_loops <- control$newton_loops
+  mgcv <- control$mgcv
+  quadratic_roots <- control$quadratic_roots
+  start <- control$start
+  map_rf <- control$map_rf
+  map <- control$map
+  get_joint_precision <- control$get_joint_precision
+  dots <- list(...)
+  dot_checks <- c("nlminb_loops", "newton_steps", "mgcv", "quadratic_roots",
+    "newton_loops", "start", "map", "map_rf", "get_joint_precision", "normalize")
+  for (i in dot_checks) control[[i]] <- NULL # what's left should be for nlminb
+  dot_old <- dot_checks %in% names(dots)
+  if (any(dot_old)) {
+    stop("The ", if (sum(dot_old) > 1) "arguments" else "argument", " `",
+      paste(dot_checks[dot_old], collapse = "`, `"),
+      "` ", if (sum(dot_old) > 1) "were" else "was",
+      " found in the call to `sdmTMB()`.\n",
+      if (sum(dot_old) > 1) "These are " else "This is ",
+      "now passed through the `control` argument via the\n",
+      "`sdmTMBcontrol()` list.", call. = FALSE)
+  }
 
   assert_that(
     is.logical(reml), is.logical(anisotropy), is.logical(silent),
@@ -574,8 +556,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     do_predict = 0L,
     calc_se    = 0L,
     pop_pred   = 0L,
-    matern_pc_prior_O = if (!is.null(matern_prior_O)) matern_prior_O else c(0, 0, 0, 0),
-    matern_pc_prior_E = if (!is.null(matern_prior_E)) matern_prior_E else c(0, 0, 0, 0),
+    # matern_pc_prior_O = if (!is.null(matern_prior_O)) matern_prior_O else c(0, 0, 0, 0),
+    # matern_pc_prior_E = if (!is.null(matern_prior_E)) matern_prior_E else c(0, 0, 0, 0),
     exclude_RE = rep(0L, ncol(RE_indexes)),
     weights_i  = if (!is.null(weights)) weights else rep(1, length(y_i)),
     area_i     = rep(1, length(y_i)),
@@ -812,9 +794,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       tmb_opt[["evaluations"]] <- tmb_opt[["evaluations"]] + temp[["evaluations"]]
     }
   }
-  if (newton_steps > 0) {
+  if (newton_loops > 0) {
     if(!silent) cat("running newtonsteps\n")
-    for (i in seq_len(newton_steps)) {
+    for (i in seq_len(newton_loops)) {
       g <- as.numeric(tmb_obj$gr(tmb_opt$par))
       h <- stats::optimHess(tmb_opt$par, fn = tmb_obj$fn, gr = tmb_obj$gr)
       tmb_opt$par <- tmb_opt$par - solve(h, g)
