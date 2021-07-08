@@ -13,7 +13,7 @@ set_par_value <- function(opt, par) {
 #'   Sometimes restarting the optimizer at the previous best values aids
 #'   convergence. If the maximum gradient is still too large,
 #'   try increasing this to `2`.
-#' @param newton_steps How many Newton optimization steps to try with
+#' @param newton_loops How many Newton optimization steps to try with
 #'   [stats::optimHess()] after running [stats::nlminb()]. Sometimes aids
 #'   convergence.
 #' @param mgcv Parse the formula with [mgcv::gam()]?

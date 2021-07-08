@@ -35,6 +35,10 @@ Sometimes restarting the optimizer at the previous best values aids
 convergence. If the maximum gradient is still too large,
 try increasing this to \code{2}.}
 
+\item{newton_loops}{How many Newton optimization steps to try with
+\code{\link[stats:optim]{stats::optimHess()}} after running \code{\link[stats:nlminb]{stats::nlminb()}}. Sometimes aids
+convergence.}
+
 \item{mgcv}{Parse the formula with \code{\link[mgcv:gam]{mgcv::gam()}}?}
 
 \item{quadratic_roots}{Experimental feature for internal use right now; may
@@ -67,10 +71,6 @@ fixed value.}
 
 \item{...}{Anything else. See the 'Control parameters' section of
 \code{\link[stats:nlminb]{stats::nlminb()}}.}
-
-\item{newton_steps}{How many Newton optimization steps to try with
-\code{\link[stats:optim]{stats::optimHess()}} after running \code{\link[stats:nlminb]{stats::nlminb()}}. Sometimes aids
-convergence.}
 
 \item{multiphase}{Logical: estimate the fixed and random effects in phases?
 Phases are usually faster and more stable.}
