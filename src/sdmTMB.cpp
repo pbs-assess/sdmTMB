@@ -111,12 +111,13 @@ vector<Type> RepeatVector(vector<Type> x, int times)
 // helper function to use the same penalized complexity prior on
 // matern parameters as used in INLA
 template<class Type>
-Type dPCPriSPDE(Type logtau, Type logkappa, Type matern_range, Type matern_SD, int give_log = 0)
+Type dPCPriSPDE(Type logtau, Type logkappa, Type matern_range, Type matern_SD,
+    Type range_prob, Type SD_prob, int give_log = 0)
 {
-  Type matern_par_a = matern_range; // range limit: rho0
-  Type matern_par_b = Type(0.05); // range prob: alpha_rho
-  Type matern_par_c = matern_SD; // field sd limit: sigma0
-  Type matern_par_d = Type(0.05); // field sd prob: alpha_sigma
+  Type matern_par_a = matern_range; // range limit
+  Type matern_par_b = range_prob; // range prob
+  Type matern_par_c = matern_SD; // field sd limit
+  Type matern_par_d = SD_prob; // field sd prob
   Type penalty; // prior contribution to jnll
   Type d = 2.;  // dimension
   Type lambda1 = -log(matern_par_b) * pow(matern_par_a, d/2.);
@@ -297,11 +298,8 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(calc_quadratic_range);
   DATA_VECTOR(area_i); // area per prediction grid cell for index standardization
 
-  DATA_INTEGER(enable_priors);
-  DATA_VECTOR(penalties);
-  DATA_VECTOR(priors);
-  // DATA_VECTOR(matern_pc_prior_O);
-  // DATA_VECTOR(matern_pc_prior_E);
+  DATA_MATRIX(priors_b); // beta priors matrix
+  DATA_VECTOR(priors); // all other priors as a vector
   DATA_INTEGER(ar1_fields);
   DATA_INTEGER(include_spatial);
   DATA_INTEGER(random_walk);
@@ -399,18 +397,20 @@ Type objective_function<Type>::operator()()
 
   Type rho = minus_one_to_one(ar1_phi);
   Type phi = exp(ln_phi);
-  if (enable_priors) {
-    for (int j = 0; j < n_j; j++) {
-      if (!isNA(penalties(j)))
-        jnll -= dnorm(b_j(j), Type(0), penalties(j), true);
-    }
-    if (!isNA(priors(4))) jnll -= dnorm(phi, Type(0), priors(4), true);
-    if (!isNA(priors(5))) jnll -= dnorm(rho, Type(0), priors(5), true);
+  for (int j = 0; j < n_j; j++) {
+    if (!isNA(priors_b(j, 0)) && !isNA(priors_b(j, 1)))
+      jnll -= dnorm(b_j(j), priors_b(j, 0), priors_b(j, 1), true);
   }
-  if (!isNA(priors(0)) && !isNA(priors(1)))
-    jnll -= dPCPriSPDE(ln_tau_O, ln_kappa(0), priors(0), priors(1), true);
-  if (!isNA(priors(2)) && !isNA(priors(3)))
-    jnll -= dPCPriSPDE(ln_tau_E, ln_kappa(1), priors(2), priors(3), true);
+  // start vector of priors:
+  if (!isNA(priors(0)) && !isNA(priors(2)))
+    jnll -= dPCPriSPDE(ln_tau_O, ln_kappa(0), priors(0), priors(1), priors(2), priors(3), true);
+  if (!isNA(priors(4)) && !isNA(priors(6)))
+    jnll -= dPCPriSPDE(ln_tau_E, ln_kappa(1), priors(4), priors(5), priors(6), priors(7), true);
+  if (!isNA(priors(8))) jnll -= dnorm(phi, priors(8), priors(9), true);
+  if (!isNA(priors(10))) jnll -= dnorm(rho, priors(10), priors(11), true);
+
+  // Jacobians for Stan:
+  // FIXME
 
   // ------------------ Geospatial ---------------------------------------------
 
@@ -611,6 +611,7 @@ Type objective_function<Type>::operator()()
         break;
       case tweedie_family:
         s1 = invlogit(thetaf) + Type(1.0);
+        if (!isNA(priors(12))) jnll -= dnorm(s1, priors(12), priors(13), true);
         jnll -= keep(i) * dtweedie(y_i(i), mu_i(i), phi, s1, true) * weights_i(i);
         break;
       case binomial_family:  // in logit space not inverse logit

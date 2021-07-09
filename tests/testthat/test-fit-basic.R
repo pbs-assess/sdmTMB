@@ -41,10 +41,8 @@ test_that("sdmTMB model fit with a covariate beta", {
   .t3 <- system.time({
     m_pc <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
       silent = TRUE, spde = spde, control = sdmTMBcontrol(normalize = TRUE),
-      priors = list(range_O = 0.01, sigma_O = 0.1)
-      # matern_prior_E = c(0.01, 0.999, 0.1, 0.05),
-      # matern_prior_O = c(0.01, 0.999, 0.1, 0.05)
-      )
+      priors = sdmTMBpriors(matern_s = pc_matern(range_gt = 0.01, sigma_lt = 0.1))
+    )
   })
   expect_equal(m$model$par, m_norm$model$par, tolerance = 1e-6)
   expect_equal(m$model$par, m_pc$model$par, tolerance = 1e-3)
@@ -100,7 +98,7 @@ test_that("Regularization works", {
     formula = density ~ 0 + depth_scaled + as.factor(year),
     spde = make_mesh(d, c("X", "Y"), n_knots = 50, type = "kmeans"),
     family = tweedie(link = "log"),
-    penalties = c(NA, NA, NA))
+    priors = sdmTMBpriors(b = normal(c(NA, NA, NA), c(NA, NA, NA))))
   expect_equal(m1$sd_report, m2$sd_report)
 
   # Ridge regression on depth term:
@@ -108,7 +106,7 @@ test_that("Regularization works", {
     formula = density ~ 0 + depth_scaled + as.factor(year),
     spde = make_mesh(d, c("X", "Y"), n_knots = 50, type = "kmeans"),
     family = tweedie(link = "log"),
-    penalties = c(1, NA, NA))
+    priors = sdmTMBpriors(b = normal(c(0, NA, NA), c(1, NA, NA))))
   b1 <- tidy(m1)
   b2 <- tidy(m2)
   expect_lt(b2$estimate[1], b1$estimate[2])

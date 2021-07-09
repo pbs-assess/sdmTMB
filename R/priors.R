@@ -1,32 +1,72 @@
 #' Prior distributions
 #'
 #' @description
-#' Optional priors/penalties on model parameters.
-#' This tesults in penalized likelihood within TMB
-#' or can be used as priors if the model is passed
-#' to \pkg{tmbstan} (see the example in [extract_mcmc()]). Note that as of 2021-07-07 Jacobian adjustments
-#' **are not** made when passing to Stan for MCMC sampling.
+#' Optional priors/penalties on model parameters. This tesults in penalized
+#' likelihood within TMB or can be used as priors if the model is passed to
+#' \pkg{tmbstan} (see the example in [extract_mcmc()]).
 #'
-#' @description
-#' `normal()` and `halfnormal()` define normal and half-normal
-#' priors that, at this point, must have a location (mean)
-#' parameter of 0.
+#' **Note** that Jacobian adjustments **are not** yet made when passing to
+#' Stan for MCMC sampling. This does not affect normal TMB model fitting.
+#'
+#' @details
+#' `normal()` and `halfnormal()` define normal and half-normal priors that, at
+#' this point, must have a location (mean) parameter of 0. `halfnormal()` is the
+#' same as `normal()` but can be used to make the syntax clearer. It is intended
+#' to be used for parameters that have support `> 0`.
+#'
+#' @param matern_s A PC (Penalized Complexity) prior (`pc_matern()`) on the
+#'   spatial random field Matern parameters.
+#' @param matern_st Same as `matern_s` but for the spatiotemporal random field.
+#'   Note that you will likely want to set `share_fields = FALSE` if you choose
+#'   to set both a spatial and spatiotemporal Matern PC prior since they both
+#'   include a prior on the spatial range parameter.
+#' @param phi A `halfnormal()` prior for the dispersion parameter in the
+#'   observation distribution.
+#' @param ar1_rho A `normal()` prior for the AR1 random field parameter. Note
+#'   the parameter has support `-1 < ar1_rho < 1`.
+#' @param tweedie_p A `normal()` prior for the Tweedie power parameter. Note the
+#'   parameter has support `1 < tweedie_p < 2` so choose a mean appropriately.
+#' @param b `normal()` priors for the main population-level 'beta' effects.
+#'
+#' @rdname priors
+#' @export
+sdmTMBpriors <- function(
+  matern_s = pc_matern(range_gt = NA, sigma_lt = NA),
+  matern_st = pc_matern(range_gt = NA, sigma_lt = NA),
+  phi = halfnormal(NA, NA),
+  ar1_rho = normal(NA, NA),
+  tweedie_p = normal(NA, NA),
+  b = normal(NA, NA)
+) {
+  assert_that(attr(matern_s, "dist") == "pc_matern")
+  assert_that(attr(matern_st, "dist") == "pc_matern")
+  assert_that(attr(phi, "dist") == "normal")
+  assert_that(attr(tweedie_p, "dist") == "normal")
+  assert_that(attr(b, "dist") == "normal")
+  list(
+    matern_s = matern_s,
+    matern_st = matern_st,
+    phi = phi,
+    ar1_rho = ar1_rho,
+    tweedie_p = tweedie_p,
+    b = b
+  )
+}
+
 #'
 #' @param location Location parameter.
 #' @param scale Scale parameter (SD, not variance, for normal/half-normal).
-#' @param matern_range
-#' @param matern_sd
-#' @param prob
 #' @export
 #' @rdname priors
 #' @examples
 #' normal(0, 1)
 normal <- function(location = 0, scale = 1) {
-  assert_that(all(location[!is.na(location)] == 0))
+  # assert_that(all(location[!is.na(location)] == 0))
   assert_that(all(scale[!is.na(scale)] > 0))
   assert_that(length(location) == length(scale))
   assert_that(sum(is.na(location)) == sum(is.na(scale)))
-  c(location, scale)
+  x <- matrix(c(location, scale), ncol = 2L)
+  `attr<-`(x, "dist", "normal")
 }
 
 #' @export
@@ -54,7 +94,6 @@ halfnormal <- function(location = 0, scale = 1) {
 #' d <- subset(pcod, year > 2011)
 #' pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
 #'
-#' \dontrun{
 #' # - no priors on population-level effects (`b`)
 #' # - halfnormal(0, 10) prior on dispersion parameter `phi`
 #' # - Matern PC priors on spatial `matern_s` and spatiotemporal
@@ -62,7 +101,7 @@ halfnormal <- function(location = 0, scale = 1) {
 #' m <- sdmTMB(density ~ s(depth, k = 3),
 #'   data = d, spde = pcod_spde, family = tweedie(),
 #'   share_range = FALSE, time = "year",
-#'   priors = list(
+#'   priors = sdmTMBpriors(
 #'     phi = halfnormal(0, 10),
 #'     matern_s = pc_matern(range_gt = 5, sigma_lt = 1),
 #'     matern_st = pc_matern(range_gt = 5, sigma_lt = 1)
@@ -76,12 +115,32 @@ halfnormal <- function(location = 0, scale = 1) {
 #' m <- sdmTMB(density ~ depth_scaled,
 #'   data = d, spde = pcod_spde, family = tweedie(),
 #'   spatial_only = TRUE,
-#'   priors = list(
+#'   priors = sdmTMBpriors(
 #'     b = normal(c(NA, 0), c(NA, 1)),
 #'     matern_s = pc_matern(range_gt = 5, sigma_lt = 1)
 #'   )
 #' )
-#' }
+#'
+#' # You get a prior, you get a prior, you get a prior!
+#' # (except on the annual means; see the `NA`s)
+#' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+#'   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+#'   share_range = FALSE, ar1_fields = TRUE,
+#'   priors = sdmTMBpriors(
+#'     b = normal(c(0, 0, NA, NA, NA), c(2, 2, NA, NA, NA)),
+#'     phi = halfnormal(0, 10),
+#'     tweedie_p = normal(1.5, 2),
+#'     ar1_rho = normal(0, 1),
+#'     matern_s = pc_matern(range_gt = 5, sigma_lt = 1),
+#'     matern_st = pc_matern(range_gt = 5, sigma_lt = 1))
+#' )
 pc_matern <- function(range_gt, sigma_lt, range_prob = 0.05, sigma_prob = 0.05) {
-  c(range, range_lt_prob, sigma, sigma_gt_prob)
+  assert_that(range_prob > 0 && range_prob < 1)
+  assert_that(sigma_prob > 0 && sigma_prob < 1)
+  if (!is.na(range_gt)) assert_that(range_gt > 0)
+  if (!is.na(sigma_lt)) assert_that(sigma_lt > 0)
+  if (!is.na(range_gt)) assert_that(!is.na(sigma_lt))
+  if (!is.na(sigma_lt)) assert_that(!is.na(range_gt))
+  x <- c(range_gt, sigma_lt, range_prob, sigma_prob)
+  `attr<-`(x, "dist", "pc_matern")
 }

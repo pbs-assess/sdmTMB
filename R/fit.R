@@ -39,10 +39,7 @@ NULL
 #' @param silent Silent or include optimization details?
 #' @param anisotropy Logical: allow for anisotropy? See [plot_anisotropy()].
 #' @param control Optimization control options. See [sdmTMBcontrol()].
-#' @param penalties Optional vector of penalties (priors) on the main
-#'   (intercept, slope) fixed effects. See the Regularization Details section
-#'   below. below.
-#' @param priors Optional vector of penalties/priors on the other fixed effects.
+#' @param priors Optional vector of penalties/priors. See [sdmTMBpriors()].
 #' @param ar1_fields Estimate the spatiotemporal random fields as a
 #'   stationary AR1 process?
 #' @param include_spatial Should a separate spatial random field be estimated?
@@ -322,10 +319,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   time_varying = NULL, weights = NULL, extra_time = NULL, reml = FALSE,
   silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
   control = sdmTMBcontrol(),
-  penalties = NULL,
-  priors = list(range_O = NA, sigma_O = NA, range_E = NA, sigma_E = NA, phi = NA, rho = NA),
-
-    ar1_fields = FALSE,
+  priors = sdmTMBpriors(),
+  ar1_fields = FALSE,
   include_spatial = TRUE,
   spatial_trend = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
@@ -346,9 +341,16 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   map <- control$map
   get_joint_precision <- control$get_joint_precision
   dots <- list(...)
+
+  if ("penalties" %in% names(dots)) {
+    stop("`penalties` are now specified via the `priors` argument.",
+      "E.g., `priors = sdmTMBpriors(b = normal(c(0, 0), c(1, 1)))`",
+      "for 2 fixed effects.", call. = FALSE)
+  }
   dot_checks <- c("nlminb_loops", "newton_steps", "mgcv", "quadratic_roots",
     "newton_loops", "start", "map", "map_rf", "get_joint_precision", "normalize")
-  for (i in dot_checks) control[[i]] <- NULL # what's left should be for nlminb
+  .control <- control
+  for (i in dot_checks) .control[[i]] <- NULL # what's left should be for nlminb
   dot_old <- dot_checks %in% names(dots)
   if (any(dot_old)) {
     stop("The ", if (sum(dot_old) > 1) "arguments" else "argument", " `",
@@ -367,10 +369,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     is.logical(include_spatial), is.logical(map_rf), is.logical(normalize)
   )
   assert_that(is.list(priors))
-  prior_names <- c("range_O", "sigma_O", "range_E", "sigma_E", "phi", "rho")
-  assert_that(all(names(priors) %in% prior_names))
   if (!is.null(time_varying)) assert_that(identical(class(time_varying), "formula"))
-  assert_that(is.list(control))
+  assert_that(is.list(.control))
   if (!is.null(previous_fit)) assert_that(identical(class(previous_fit), "sdmTMB"))
   if (!is.null(time)) assert_that(is.character(time))
   assert_that(identical(class(spde), "sdmTMBmesh"))
@@ -483,12 +483,12 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     }
   }
 
-  if (!is.null(penalties)) {
-    assert_that(ncol(X_ij) == length(penalties),
-      msg = paste0("The number of fixed effects does not match the number of ",
-        "penalty terms. Ensure that offset terms are not in penalty vector and ",
-        "that any spline terms are properly accounted for."))
-  }
+  # if (!is.null(penalties)) {
+  #   assert_that(ncol(X_ij) == length(penalties),
+  #     msg = paste0("The number of fixed effects does not match the number of ",
+  #       "penalty terms. Ensure that offset terms are not in penalty vector and ",
+  #       "that any spline terms are properly accounted for."))
+  # }
 
   if (identical(family$link, "log") && min(y_i, na.rm = TRUE) < 0) {
     stop("`link = 'log'` but the reponse data include values < 0.", call. = FALSE)
@@ -536,8 +536,17 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     est_epsilon_model <- 1L
   }
 
-  .priors <- stats::setNames(rep(NA_real_, length(prior_names)), prior_names)
-  for (.par in prior_names) if (.par %in% names(priors)) .priors[[.par]] <- priors[[.par]]
+  priors_b <- priors$b
+  .priors <- priors
+  .priors$b <- NULL
+  if (nrow(priors_b) == 1L && ncol(X_ij) > 1L) {
+    if (!is.na(priors_b[[1]])) {
+      message("Expanding `b` priors to match model matrix.")
+    }
+    priors_b <- do.call("rbind", replicate(ncol(X_ij), priors_b,
+      simplify = FALSE
+    ))
+  }
 
   tmb_data <- list(
     y_i        = c(y_i),
@@ -556,8 +565,6 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     do_predict = 0L,
     calc_se    = 0L,
     pop_pred   = 0L,
-    # matern_pc_prior_O = if (!is.null(matern_prior_O)) matern_prior_O else c(0, 0, 0, 0),
-    # matern_pc_prior_E = if (!is.null(matern_prior_E)) matern_prior_E else c(0, 0, 0, 0),
     exclude_RE = rep(0L, ncol(RE_indexes)),
     weights_i  = if (!is.null(weights)) weights else rep(1, length(y_i)),
     area_i     = rep(1, length(y_i)),
@@ -565,9 +572,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     flag = 1L, # part of TMB::normalize()
     calc_time_totals = 0L,
     random_walk = !is.null(time_varying),
-    enable_priors = as.integer(!is.null(penalties)),
-    penalties = if (!is.null(penalties)) penalties else rep(NA_real_, ncol(X_ij)),
-    priors = as.numeric(.priors),
+    priors_b = priors_b,
+    priors = as.numeric(unlist(.priors)),
     share_range = as.integer(share_range),
     include_spatial = as.integer(include_spatial),
     proj_mesh  = Matrix::Matrix(0, 1, 1, doDiag = FALSE), # dummy
@@ -681,7 +687,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
     tmb_opt1 <- stats::nlminb(
       start = tmb_obj1$par, objective = tmb_obj1$fn,
-      gradient = tmb_obj1$gr, control = control)
+      gradient = tmb_obj1$gr, control = .control)
 
     # Set starting values based on phase 1:
     if (isFALSE(contains_offset))
@@ -767,6 +773,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     tmb_random = tmb_random,
     reml       = reml,
     mgcv       = mgcv,
+    priors     = priors,
+    control    = control,
     call       = match.call(expand.dots = TRUE),
     version    = utils::packageVersion("sdmTMB")),
     class      = "sdmTMB")
@@ -781,7 +789,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
   tmb_opt <- stats::nlminb(
     start = tmb_obj$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
-    control = control)
+    control = .control)
 
   if (nlminb_loops > 1) {
     if(!silent) cat("running extra nlminb loops\n")
@@ -789,7 +797,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       temp <- tmb_opt[c("iterations", "evaluations")]
       tmb_opt <- stats::nlminb(
         start = tmb_opt$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
-        control = control)
+        control = .control)
       tmb_opt[["iterations"]] <- tmb_opt[["iterations"]] + temp[["iterations"]]
       tmb_opt[["evaluations"]] <- tmb_opt[["evaluations"]] + temp[["evaluations"]]
     }

@@ -18,9 +18,7 @@ sdmTMB(
   multiphase = TRUE,
   anisotropy = FALSE,
   control = sdmTMBcontrol(),
-  penalties = NULL,
-  priors = list(range_O = NA, sigma_O = NA, range_E = NA, sigma_E = NA, phi = NA, rho =
-    NA),
+  priors = sdmTMBpriors(),
   ar1_fields = FALSE,
   include_spatial = TRUE,
   spatial_trend = FALSE,
@@ -77,11 +75,7 @@ to the list of random effects to intetgrate over.}
 
 \item{control}{Optimization control options. See \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}.}
 
-\item{penalties}{Optional vector of penalties (priors) on the main
-(intercept, slope) fixed effects. See the Regularization Details section
-below. below.}
-
-\item{priors}{Optional vector of penalties/priors on the other fixed effects.}
+\item{priors}{Optional vector of penalties/priors. See \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}.}
 
 \item{ar1_fields}{Estimate the spatiotemporal random fields as a
 stationary AR1 process?}
