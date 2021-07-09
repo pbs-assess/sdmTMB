@@ -15,6 +15,8 @@ sdmTMBcontrol(
   start = NULL,
   map_rf = FALSE,
   map = NULL,
+  lower = NULL,
+  upper = NULL,
   get_joint_precision = TRUE,
   ...
 )
@@ -63,6 +65,13 @@ some parameters will still appear but their values can be ignored.}
 should be fixed at a constant value. See the documentation in
 \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}. This should usually be used with \code{start} to specify the
 fixed value.}
+
+\item{lower}{An optional named list of lower bounds within the optimization.
+Parameter vectors with the same name (e.g., \code{b_j} or \code{ln_kappa} in some
+cases) can be specified as a numeric vector. E.g.
+\code{lower = list(b_j = c(-5, -5))}.}
+
+\item{upper}{An optional named list of upper bounds within the optimization.}
 
 \item{get_joint_precision}{Logical. Passed to \code{getJointPrecision} in
 \code{\link[TMB:sdreport]{TMB::sdreport()}}. Must be \code{TRUE} to use simulation-based methods in

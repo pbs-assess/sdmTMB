@@ -339,6 +339,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   start <- control$start
   map_rf <- control$map_rf
   map <- control$map
+  lower <- control$lower
+  upper <- control$upper
   get_joint_precision <- control$get_joint_precision
   dots <- list(...)
 
@@ -347,7 +349,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       "E.g., `priors = sdmTMBpriors(b = normal(c(0, 0), c(1, 1)))`",
       "for 2 fixed effects.", call. = FALSE)
   }
-  dot_checks <- c("nlminb_loops", "newton_steps", "mgcv", "quadratic_roots",
+  dot_checks <- c("lower", "upper",
+    "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots",
     "newton_loops", "start", "map", "map_rf", "get_joint_precision", "normalize")
   .control <- control
   for (i in dot_checks) .control[[i]] <- NULL # what's left should be for nlminb
@@ -616,6 +619,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     ln_tau_O_trend = 0,
     ln_tau_E   = 0,
     ln_kappa   = rep(0, 2),
+    # ln_kappa   = rep(log(sqrt(8) / median(stats::dist(spde$mesh$loc))), 2),
     thetaf     = 0,
     ln_phi     = 0,
     ln_tau_V   = rep(0, ncol(X_rw_ik)),
@@ -685,8 +689,10 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       data = tmb_data, parameters = tmb_params,
       map = not_phase1, DLL = "sdmTMB", silent = silent)
 
+    lim <- set_limits(tmb_obj1, lower = lower, upper = upper, silent = TRUE)
     tmb_opt1 <- stats::nlminb(
       start = tmb_obj1$par, objective = tmb_obj1$fn,
+      lower = lim$lower, upper = lim$upper,
       gradient = tmb_obj1$gr, control = .control)
 
     # Set starting values based on phase 1:
@@ -754,6 +760,13 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   }
 
   data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL
+
+  tmb_obj <- TMB::MakeADFun(
+    data = tmb_data, parameters = tmb_params, map = tmb_map,
+    random = tmb_random, DLL = "sdmTMB", silent = silent)
+  lim <- set_limits(tmb_obj, lower = lower, upper = upper,
+    loc = spde$mesh$loc, silent = FALSE)
+
   out_structure <- structure(list(
     data       = data,
     spde       = spde,
@@ -773,23 +786,21 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     tmb_random = tmb_random,
     reml       = reml,
     mgcv       = mgcv,
+    lower      = lim$lower,
+    upper      = lim$upper,
     priors     = priors,
-    control    = control,
+    nlminb_control = .control,
+    control  = control,
     call       = match.call(expand.dots = TRUE),
     version    = utils::packageVersion("sdmTMB")),
     class      = "sdmTMB")
   if (!do_fit) return(out_structure)
 
-
-  tmb_obj <- TMB::MakeADFun(
-    data = tmb_data, parameters = tmb_params, map = tmb_map,
-    random = tmb_random, DLL = "sdmTMB", silent = silent)
-
   if (normalize) tmb_obj <- TMB::normalize(tmb_obj, flag = "flag", value = 0)
 
   tmb_opt <- stats::nlminb(
     start = tmb_obj$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
-    control = .control)
+    lower = lim$lower, upper = lim$upper, control = .control)
 
   if (nlminb_loops > 1) {
     if(!silent) cat("running extra nlminb loops\n")
@@ -797,7 +808,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       temp <- tmb_opt[c("iterations", "evaluations")]
       tmb_opt <- stats::nlminb(
         start = tmb_opt$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
-        control = .control)
+        control = .control, lower = lim$lower, upper = lim$upper)
       tmb_opt[["iterations"]] <- tmb_opt[["iterations"]] + temp[["iterations"]]
       tmb_opt[["evaluations"]] <- tmb_opt[["evaluations"]] + temp[["evaluations"]]
     }
@@ -806,11 +817,13 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     if(!silent) cat("running newtonsteps\n")
     for (i in seq_len(newton_loops)) {
       g <- as.numeric(tmb_obj$gr(tmb_opt$par))
-      h <- stats::optimHess(tmb_opt$par, fn = tmb_obj$fn, gr = tmb_obj$gr)
+      h <- stats::optimHess(tmb_opt$par, fn = tmb_obj$fn, gr = tmb_obj$gr,
+        upper = lim$upper, lower = lim$lower)
       tmb_opt$par <- tmb_opt$par - solve(h, g)
       tmb_opt$objective <- tmb_obj$fn(tmb_opt$par)
     }
   }
+  check_bounds(tmb_opt$par, lim$lower, lim$upper)
 
   sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision)
   conv <- get_convergence_diagnostics(sd_report)
@@ -834,4 +847,64 @@ map_off_rf <- function(.map, tmb_params) {
   .map$omega_s <- factor(rep(NA, length(tmb_params$omega_s)))
   .map$epsilon_st <- factor(rep(NA, length(tmb_params$epsilon_st)))
   .map
+}
+
+check_bounds <- function(.par, lower, upper) {
+  for (i in seq_along(.par)) {
+    if (is.finite(lower[i]) || is.finite(upper[i])) {
+      if (abs(.par[i] - lower[i]) < 0.0001) {
+        warning("Parameter ", names(.par)[i],
+          " is very close or equal to its lower bound.\n",
+          "Consider changing your model configuration or bounds.",
+          call. = FALSE)
+      }
+      if (abs(.par[i] - upper[i]) < 0.0001) {
+        warning("Parameter ", names(.par)[i],
+          " is very close or equal to its upper bound.\n",
+          "Consider changing your model configuration or bounds.",
+          call. = FALSE)
+      }
+    }
+  }
+}
+
+set_limits <- function(tmb_obj, lower, upper, loc = NULL, silent = TRUE) {
+  .lower <- stats::setNames(rep(-Inf, length(tmb_obj$par)), names(tmb_obj$par))
+  .upper <- stats::setNames(rep(Inf, length(tmb_obj$par)), names(tmb_obj$par))
+  for (i_name in names(lower)) {
+    if (i_name %in% names(.lower)) {
+      .lower[names(.lower) %in% i_name] <- lower[[i_name]]
+      if (!silent) message("Setting lower limit for ", i_name, " to ",
+        lower[[i_name]], ".")
+    }
+    if (i_name %in% names(.upper)) {
+      .upper[names(.upper) %in% i_name] <- upper[[i_name]]
+      if (!silent) message("Setting upper limit for ", i_name, " to ",
+        upper[[i_name]], ".")
+    }
+  }
+  if ("ar1_phi" %in% names(tmb_obj$par) &&
+      !"ar1_phi" %in% union(names(lower), names(upper))) {
+    .lower["ar1_phi"] <- stats::qlogis((-0.999 + 1) / 2)
+    .upper["ar1_phi"] <- stats::qlogis((0.999 + 1) / 2)
+  }
+
+  # if (!is.null(loc) && !"ln_kappa" %in% union(names(lower), names(upper))) {
+  #   .dist <- stats::dist(loc)
+  #   range_limits <- c(min(.dist) * 0.25, max(.dist) * 4)
+  #   .upper[names(.upper) == "ln_kappa"] <- log(sqrt(8) / range_limits[1])
+  #   .lower[names(.upper) == "ln_kappa"] <- log(sqrt(8) / range_limits[2])
+  #   message("Setting limits on range to ",
+  #     round(range_limits[1], 1), " and ",
+  #     round(range_limits[2], 1), ":\n",
+  #     "half the minimum and twice the maximum knot distance."
+  #   )
+  #   if (.upper[names(.upper) == "ln_kappa"][1] <= tmb_obj$par[["ln_kappa"]][1]) {
+  #     .upper[names(.upper) == "ln_kappa"] <- tmb_obj$par[["ln_kappa"]][1] + 0.1
+  #   }
+  #   if (.lower[names(.lower) == "ln_kappa"][1] >= tmb_obj$par[["ln_kappa"]][1]) {
+  #     .lower[names(.lower) == "ln_kappa"] <- tmb_obj$par[["ln_kappa"]][1] - 0.1
+  #   }
+  # }
+  list(lower = .lower, upper = .upper)
 }

@@ -6,7 +6,6 @@
 #'   values aids convergence.
 #' @param newton_loops How many extra Newton optimization loops to try with
 #'   [stats::optimHess()]. Sometimes aids convergence.
-#' @param control Optimization control options. See [sdmTMBcontrol()].
 #'
 #' @return An updated model fit of class `sdmTMB`.
 #' @export
@@ -15,13 +14,8 @@
 #' # See ?sdmTMB
 run_extra_optimization <- function(object,
   nlminb_loops = 1,
-  newton_loops = 1,
-  control = sdmTMBcontrol()) {
+  newton_loops = 1) {
   # FIXME: DRY; use this function in sdmTMB()
-
-  dot_checks <- c("nlminb_loops", "newton_steps", "mgcv", "quadratic_roots",
-    "newton_loops", "start", "map", "map_rf", "get_joint_precision", "normalize")
-  for (i in dot_checks) control[[i]] <- NULL # what's left should be for nlminb
 
   new_obj <- object
   old_par <- object$model$par
@@ -33,7 +27,9 @@ run_extra_optimization <- function(object,
       start = tmb_opt$par,
       objective = new_obj$tmb_obj$fn,
       gradient = new_obj$tmb_obj$gr,
-      control = control
+      control = object$nlminb_control,
+      lower = object$lower,
+      upper = object$upper
     )
     tmb_opt[["iterations"]] <- tmb_opt[["iterations"]] + temp[["iterations"]]
     tmb_opt[["evaluations"]] <- tmb_opt[["evaluations"]] + temp[["evaluations"]]
@@ -43,7 +39,9 @@ run_extra_optimization <- function(object,
     h <- stats::optimHess(
       tmb_opt$par,
       fn = new_obj$tmb_obj$fn,
-      gr = new_obj$tmb_obj$gr
+      gr = new_obj$tmb_obj$gr,
+      lower = object$lower,
+      upper = object$upper
     )
     tmb_opt$par <- tmb_opt$par - solve(h, g)
     tmb_opt$objective <- new_obj$tmb_obj$fn(tmb_opt$par)

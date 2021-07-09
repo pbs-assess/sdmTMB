@@ -42,6 +42,11 @@ set_par_value <- function(opt, par) {
 #'   May 2021.
 #' @param multiphase Logical: estimate the fixed and random effects in phases?
 #'   Phases are usually faster and more stable.
+#' @param lower An optional named list of lower bounds within the optimization.
+#'   Parameter vectors with the same name (e.g., `b_j` or `ln_kappa` in some
+#'   cases) can be specified as a numeric vector. E.g.
+#'   `lower = list(b_j = c(-5, -5))`.
+#' @param upper An optional named list of upper bounds within the optimization.
 #' @param get_joint_precision Logical. Passed to `getJointPrecision` in
 #'   [TMB::sdreport()]. Must be `TRUE` to use simulation-based methods in
 #'   [predict.sdmTMB()] or `[get_index_sims()]`. If not needed, setting this
@@ -61,6 +66,8 @@ sdmTMBcontrol <- function(
   start = NULL,
   map_rf = FALSE,
   map = NULL,
+  lower = NULL,
+  upper = NULL,
   get_joint_precision = TRUE,
   ...) {
   list(
@@ -74,6 +81,8 @@ sdmTMBcontrol <- function(
     start = start,
     map_rf = map_rf,
     map = map,
+    lower = lower,
+    upper = upper,
     get_joint_precision = get_joint_precision,
     ...)
 }

@@ -94,7 +94,7 @@ test_that("Poisson fits", {
   skip_on_ci()
   skip_on_cran()
   d <- pcod
-  spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
+  spde <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
   set.seed(3)
   d$density <- rpois(nrow(pcod), 3)
   m <- sdmTMB(data = d, formula = density ~ 1,
