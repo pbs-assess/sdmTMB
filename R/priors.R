@@ -14,6 +14,33 @@
 #' same as `normal()` but can be used to make the syntax clearer. It is intended
 #' to be used for parameters that have support `> 0`.
 #'
+#' @details
+#' See \url{https://arxiv.org/abs/1503.00256} for a description of the
+#' PC prior for Gaussian random fields. Quoting the discussion (and substituting
+#' the argument names in `pc_matern()`):
+#' "In the simulation study we observe good coverage of the equal-tailed 95%
+#' credible intervals when the prior satisfies `P(sigma > sigma_lt) = 0.05` and
+#' `P(range < range_gt) = 0.05`, where `sigma_lt` is between 2.5 to 40 times
+#' the true marginal standard deviation and `range_gt` is between 1/10 and 1/2.5
+#' of the true range." Also see [INLA::inla.spde2.pcmatern()].
+#'
+#' @details
+#' Keep in mind that the range is dependent on the units and scale of the
+#' coordinate system. In practice, you may choose to try fitting the model
+#' without a PC prior and then constraining the model from there. A better
+#' option would be to simulate from a model with a given range and sigma to
+#' choose reasonable values for the system or base the prior on knowledge from a
+#' model fit to a similar system but with more spatial information in the data.
+#'
+#' @references
+#' Fuglstad, G.-A., Simpson, D., Lindgren, F., and Rue, H. (2016) Constructing
+#' Priors that Penalize the Complexity of Gaussian Random Fields.
+#' arXiv:1503.00256
+#'
+#' Simpson, D., Rue, H., Martins, T., Riebler, A., and Sørbye, S. (2015)
+#' Penalising model component complexity: A principled, practical approach to
+#' constructing priors. arXiv:1403.4630
+#'
 #' @param matern_s A PC (Penalized Complexity) prior (`pc_matern()`) on the
 #'   spatial random field Matern parameters.
 #' @param matern_st Same as `matern_s` but for the spatiotemporal random field.
@@ -29,6 +56,8 @@
 #' @param b `normal()` priors for the main population-level 'beta' effects.
 #'
 #' @rdname priors
+#'
+#'
 #' @export
 sdmTMBpriors <- function(
   matern_s = pc_matern(range_gt = NA, sigma_lt = NA),

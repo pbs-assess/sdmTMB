@@ -70,6 +70,22 @@ covariance function.
 this point, must have a location (mean) parameter of 0. \code{halfnormal()} is the
 same as \code{normal()} but can be used to make the syntax clearer. It is intended
 to be used for parameters that have support \verb{> 0}.
+
+See \url{https://arxiv.org/abs/1503.00256} for a description of the
+PC prior for Gaussian random fields. Quoting the discussion (and substituting
+the argument names in \code{pc_matern()}):
+"In the simulation study we observe good coverage of the equal-tailed 95\%
+credible intervals when the prior satisfies \code{P(sigma > sigma_lt) = 0.05} and
+\code{P(range < range_gt) = 0.05}, where \code{sigma_lt} is between 2.5 to 40 times
+the true marginal standard deviation and \code{range_gt} is between 1/10 and 1/2.5
+of the true range."
+
+Keep in mind that the range is dependent on the units and scale of the
+coordinate system. In practice, you may choose to try fitting the model
+without a PC prior and then constraining the model from there. A better
+option would be to simulate from a model with a given range and sigma to
+choose reasonable values for the system or base the prior on knowledge from a
+model fit to a similar system but with more spatial information in the data.
 }
 \examples{
 normal(0, 1)
