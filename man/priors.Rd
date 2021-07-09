@@ -78,7 +78,7 @@ the argument names in \code{pc_matern()}):
 credible intervals when the prior satisfies \code{P(sigma > sigma_lt) = 0.05} and
 \code{P(range < range_gt) = 0.05}, where \code{sigma_lt} is between 2.5 to 40 times
 the true marginal standard deviation and \code{range_gt} is between 1/10 and 1/2.5
-of the true range."
+of the true range." Also see \code{\link[INLA:inla.spde2.pcmatern]{INLA::inla.spde2.pcmatern()}}.
 
 Keep in mind that the range is dependent on the units and scale of the
 coordinate system. In practice, you may choose to try fitting the model
@@ -135,4 +135,13 @@ m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     matern_s = pc_matern(range_gt = 5, sigma_lt = 1),
     matern_st = pc_matern(range_gt = 5, sigma_lt = 1))
 )
+}
+\references{
+Fuglstad, G.-A., Simpson, D., Lindgren, F., and Rue, H. (2016) Constructing
+Priors that Penalize the Complexity of Gaussian Random Fields.
+arXiv:1503.00256
+
+Simpson, D., Rue, H., Martins, T., Riebler, A., and Sørbye, S. (2015)
+Penalising model component complexity: A principled, practical approach to
+constructing priors. arXiv:1403.4630
 }

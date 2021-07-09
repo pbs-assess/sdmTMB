@@ -15,7 +15,6 @@ sdmTMB(
   extra_time = NULL,
   reml = FALSE,
   silent = TRUE,
-  multiphase = TRUE,
   anisotropy = FALSE,
   control = sdmTMBcontrol(),
   priors = sdmTMBpriors(),

@@ -1,6 +1,6 @@
 #' Calculate population index via simulation from joint precision matrix
 #'
-#' @param pred_obj [predict.sdmTMB()] output with `sims > 0`.
+#' @param obj [predict.sdmTMB()] output with `sims > 0`.
 #' @param level The confidence level.
 #' @param return_sims Logical. Return simulation draws? The default is a
 #'   quantile summary of those draws.

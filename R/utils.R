@@ -68,6 +68,7 @@ sdmTMBcontrol <- function(
   map = NULL,
   lower = NULL,
   upper = NULL,
+  multiphase = TRUE,
   get_joint_precision = TRUE,
   ...) {
   list(
@@ -83,6 +84,7 @@ sdmTMBcontrol <- function(
     map = map,
     lower = lower,
     upper = upper,
+    multiphase = multiphase,
     get_joint_precision = get_joint_precision,
     ...)
 }

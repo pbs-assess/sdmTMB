@@ -13,6 +13,8 @@ get_index_sims(
 )
 }
 \arguments{
+\item{obj}{\code{\link[=predict.sdmTMB]{predict.sdmTMB()}} output with \code{sims > 0}.}
+
 \item{level}{The confidence level.}
 
 \item{return_sims}{Logical. Return simulation draws? The default is a
@@ -22,8 +24,6 @@ quantile summary of those draws.}
 \code{mean()} would be an alternative to \code{median()}.}
 
 \item{agg_function}{Function to aggregate samples within each time slice.}
-
-\item{pred_obj}{\code{\link[=predict.sdmTMB]{predict.sdmTMB()}} output with \code{sims > 0}.}
 }
 \description{
 Calculate population index via simulation from joint precision matrix

@@ -17,6 +17,7 @@ sdmTMBcontrol(
   map = NULL,
   lower = NULL,
   upper = NULL,
+  multiphase = TRUE,
   get_joint_precision = TRUE,
   ...
 )
@@ -73,6 +74,9 @@ cases) can be specified as a numeric vector. E.g.
 
 \item{upper}{An optional named list of upper bounds within the optimization.}
 
+\item{multiphase}{Logical: estimate the fixed and random effects in phases?
+Phases are usually faster and more stable.}
+
 \item{get_joint_precision}{Logical. Passed to \code{getJointPrecision} in
 \code{\link[TMB:sdreport]{TMB::sdreport()}}. Must be \code{TRUE} to use simulation-based methods in
 \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} or \verb{[get_index_sims()]}. If not needed, setting this
@@ -80,9 +84,6 @@ cases) can be specified as a numeric vector. E.g.
 
 \item{...}{Anything else. See the 'Control parameters' section of
 \code{\link[stats:nlminb]{stats::nlminb()}}.}
-
-\item{multiphase}{Logical: estimate the fixed and random effects in phases?
-Phases are usually faster and more stable.}
 }
 \description{
 \code{\link[=sdmTMB]{sdmTMB()}} and \code{\link[stats:nlminb]{stats::nlminb()}} control options.

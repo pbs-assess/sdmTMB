@@ -317,7 +317,7 @@ NULL
 sdmTMB <- function(formula, data, spde, time = NULL,
   family = gaussian(link = "identity"),
   time_varying = NULL, weights = NULL, extra_time = NULL, reml = FALSE,
-  silent = TRUE, multiphase = TRUE, anisotropy = FALSE,
+  silent = TRUE, anisotropy = FALSE,
   control = sdmTMBcontrol(),
   priors = sdmTMBpriors(),
   ar1_fields = FALSE,
@@ -337,6 +337,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   mgcv <- control$mgcv
   quadratic_roots <- control$quadratic_roots
   start <- control$start
+  multiphase <- control$multiphase
   map_rf <- control$map_rf
   map <- control$map
   lower <- control$lower
@@ -350,7 +351,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       "for 2 fixed effects.", call. = FALSE)
   }
   dot_checks <- c("lower", "upper",
-    "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots",
+    "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",
     "newton_loops", "start", "map", "map_rf", "get_joint_precision", "normalize")
   .control <- control
   for (i in dot_checks) .control[[i]] <- NULL # what's left should be for nlminb
