@@ -63,14 +63,13 @@
 #' tidy(m, conf.int = TRUE)
 #' tidy(m, "ran_pars", conf.int = TRUE)
 #'
-#' #' # example with time-varying sigma_E (spatiotemporal variation)
+#' # example with time-varying sigma_E (spatiotemporal variation)
 #' s <- sdmTMB_sim(
-#' x = x, y = y, mesh = mesh, X = X,
-#' betas = c(0.5, 0.7), time_steps = time_steps, rho = 0,
-#' phi = 0.2, range = 0.8, sigma_O = 0,
-#' sigma_E = seq(0.2,1,length.out=time_steps),
-#' seed = 123, family = gaussian())
-#'
+#'   x = x, y = y, mesh = mesh, X = X,
+#'   betas = c(0.5, 0.7), time_steps = time_steps, rho = 0,
+#'   phi = 0.2, range = 0.8, sigma_O = 0,
+#'   sigma_E = seq(0.2, 1, length.out = time_steps),
+#'   seed = 123, family = gaussian())
 #' }
 
 sdmTMB_sim <- function(mesh,
