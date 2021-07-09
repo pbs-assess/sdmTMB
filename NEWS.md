@@ -1,21 +1,55 @@
 # sdmTMB
 
+# sdmTMB 0.0.16.9000
+
+* Added simulation from the MVN precision matrix to `predict.sdmTMB()`. 
+  See the `sims` argument.
+  
+* Added `gather_sims()` and `spread_sims()` to extract parameter
+  simulations from the joint precision matrix in a format that
+  matches the tidybayes package.
+
+* Added `get_index_sims()` for a population index calculated from
+  the MVN simulation draws.
+  
+* Added `extract_mcmc()` to extract MCMC samples if the model is
+  passed to tmbstan.
+  
+* Added the ability to predict from a model fitted with tmbstan.
+  See the `tmbstan_model` argument in `predict.sdmTMB()`.
+
+* Allowed for separate random field Matern range parameters for 
+  spatial and spatiotemporal fields. E.g. `sdmTMB(shared_range = FALSE)`
+
+* Bounded the AR1 rho parameter between -0.999 and 0.999 to improve 
+  convergence; was -1 to 1. Please post an issue if this creates
+  problems for your model.
+
+* Added `map`, `start`, `lower`, and `upper` options to control
+  model fitting. See `sdmTMBcontrol()`.
+
+* Added priors for all parameters. See `?sdmTMB::priors` and the
+  `priors` argument in `sdmTMB()`. PC priors are available for
+  the random fields. See `?pc_matern` and the details there.
+  
+* Move many less-common arguments from `sdmTMB()` to `sdmTMBcontrol()`.
+
 # sdmTMB 0.0.15.9000
 
-* Add experimental penalized complexity (PC) prior as used in INLA.
+* Added experimental penalized complexity (PC) prior as used in INLA.
   See arguments `matern_prior_O` and `matern_prior_E`.
 
-* Add back `normalize` argument to `sdmTMB()` and default to `FALSE`.
+* Added back `normalize` argument to `sdmTMB()` and default to `FALSE`.
   Setting to `TRUE` can dramatically speed up some model fits
   (~4 times for some test models).
 
 # sdmTMB 0.0.14.9003
 
-* Add vignette on making pretty maps of the output
+* Added vignette on making pretty maps of the output
 
 # sdmTMB 0.0.14.9001
 
-* Add some protections for possible user errors:
+* Added some protections for possible user errors:
   * AR1 with a spatial-only model
   * Missing factor levels in time
   * Coordinate systems that are too big
