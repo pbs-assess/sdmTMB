@@ -2,6 +2,12 @@
 
 # sdmTMB 0.0.16.9000
 
+* Lower default `nlminb()` `eval.max` and `iter.max` to 1000 and 2000.
+
+* Added `profile` option in `sdmTMBcontrol()`. This can dramatically
+  improve model fitting speed with many fixed effects. Note the
+  result is likely to be slightly different with `TRUE` vs. `FALSE`.
+
 * Added simulation from the MVN precision matrix to `predict.sdmTMB()`. 
   See the `sims` argument.
   

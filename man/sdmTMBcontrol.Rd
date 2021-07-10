@@ -5,8 +5,8 @@
 \title{Optimization control options}
 \usage{
 sdmTMBcontrol(
-  eval.max = 10000,
-  iter.max = 10000,
+  eval.max = 1000,
+  iter.max = 1000,
   normalize = FALSE,
   nlminb_loops = 1,
   newton_loops = 0,
@@ -18,6 +18,7 @@ sdmTMBcontrol(
   lower = NULL,
   upper = NULL,
   multiphase = TRUE,
+  profile = FALSE,
   get_joint_precision = TRUE,
   ...
 )
@@ -76,6 +77,11 @@ cases) can be specified as a numeric vector. E.g.
 
 \item{multiphase}{Logical: estimate the fixed and random effects in phases?
 Phases are usually faster and more stable.}
+
+\item{profile}{Logical: should population-level/fixed effects be profiled
+out of the likelihood? These are then appended to the random effects
+vector without the Laplace approximation. See \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}. \emph{This
+can dramatically speed up model fit if there are many fixed effects.}}
 
 \item{get_joint_precision}{Logical. Passed to \code{getJointPrecision} in
 \code{\link[TMB:sdreport]{TMB::sdreport()}}. Must be \code{TRUE} to use simulation-based methods in

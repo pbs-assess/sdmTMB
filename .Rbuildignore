@@ -12,3 +12,4 @@ prediction-grids/
 ^docs$
 ^pkgdown$
 ^\.github$
+^TMB_spde_example$

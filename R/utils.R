@@ -42,6 +42,10 @@ set_par_value <- function(opt, par) {
 #'   May 2021.
 #' @param multiphase Logical: estimate the fixed and random effects in phases?
 #'   Phases are usually faster and more stable.
+#' @param profile Logical: should population-level/fixed effects be profiled
+#'   out of the likelihood? These are then appended to the random effects
+#'   vector without the Laplace approximation. See [TMB::MakeADFun()]. *This
+#'   can dramatically speed up model fit if there are many fixed effects.*
 #' @param lower An optional named list of lower bounds within the optimization.
 #'   Parameter vectors with the same name (e.g., `b_j` or `ln_kappa` in some
 #'   cases) can be specified as a numeric vector. E.g.
@@ -56,8 +60,8 @@ set_par_value <- function(opt, par) {
 #'
 #' @export
 sdmTMBcontrol <- function(
-  eval.max = 1e4,
-  iter.max = 1e4,
+  eval.max = 2e3,
+  iter.max = 1e3,
   normalize = FALSE,
   nlminb_loops = 1,
   newton_loops = 0,
@@ -69,6 +73,7 @@ sdmTMBcontrol <- function(
   lower = NULL,
   upper = NULL,
   multiphase = TRUE,
+  profile = FALSE,
   get_joint_precision = TRUE,
   ...) {
   list(
@@ -78,6 +83,7 @@ sdmTMBcontrol <- function(
     nlminb_loops = nlminb_loops,
     newton_loops = newton_loops,
     mgcv = mgcv,
+    profile = profile,
     quadratic_roots = quadratic_roots,
     start = start,
     map_rf = map_rf,

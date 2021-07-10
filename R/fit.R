@@ -350,7 +350,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       "E.g., `priors = sdmTMBpriors(b = normal(c(0, 0), c(1, 1)))`",
       "for 2 fixed effects.", call. = FALSE)
   }
-  dot_checks <- c("lower", "upper",
+  dot_checks <- c("lower", "upper", "profile",
     "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",
     "newton_loops", "start", "map", "map_rf", "get_joint_precision", "normalize")
   .control <- control
@@ -764,6 +764,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
+    profile = if (control$profile) "b_j" else NULL,
     random = tmb_random, DLL = "sdmTMB", silent = silent)
   lim <- set_limits(tmb_obj, lower = lower, upper = upper,
     loc = spde$mesh$loc, silent = FALSE)
