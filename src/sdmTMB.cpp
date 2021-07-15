@@ -301,6 +301,7 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(priors_b); // beta priors matrix
   DATA_VECTOR(priors); // all other priors as a vector
   DATA_INTEGER(ar1_fields);
+  DATA_INTEGER(rw_fields);
   DATA_INTEGER(include_spatial);
   DATA_INTEGER(random_walk);
   DATA_IVECTOR(exclude_RE);
@@ -573,29 +574,50 @@ Type objective_function<Type>::operator()()
 
   // Spatial (intercept) random effects:
   if (include_spatial)
-    jnll += SCALE(GMRF(Q_s, s), 1.0 / exp(ln_tau_O))(omega_s);
+    jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
   // Spatial trend random effects:
   if (spatial_trend)
-    jnll += SCALE(GMRF(Q_s, s), 1.0 / exp(ln_tau_O_trend))(omega_s_trend);
+    jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O_trend))(omega_s_trend);
   // Spatiotemporal random effects:
   if (!spatial_only) {
-    if (!ar1_fields) {
+    if (!ar1_fields && !rw_fields) {
       for (int t = 0; t < n_t; t++)
         jnll += SCALE(GMRF(Q_st, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
     } else {
-      if (est_epsilon_model > 0) {
-        // time-varying epsilon sd
-        jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
-        for (int t = 1; t < n_t; t++) {
-          jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(t)))((epsilon_st.col(t) -
-            rho * epsilon_st.col(t - 1))/sqrt(1-rho*rho));
+      if (est_epsilon_model) { // time-varying epsilon sd
+        if (ar1_fields) {
+          jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
+          for (int t = 1; t < n_t; t++) {
+            jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(t)))((epsilon_st.col(t) -
+              rho * epsilon_st.col(t - 1))/sqrt(1. - rho * rho));
+          }
+        } else if (rw_fields) {
+          jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
+          for (int t = 1; t < n_t; t++) {
+            jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(t)))(epsilon_st.col(t) - epsilon_st.col(t - 1));
+          }
+        } else {
+          error("Field type not implemented.");
         }
-      } else {
-        // constant epsilon sd, keep calculations as is
-        jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q_st, s)), 1./exp(ln_tau_E))(epsilon_st);
+      } else { // constant epsilon sd, keep calculations as is
+        if (ar1_fields) {
+          jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q_st, s)), 1./exp(ln_tau_E))(epsilon_st);
+          // jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
+          // for (int t = 1; t < n_t; t++) {
+          //   jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))((epsilon_st.col(t) -
+          //     rho * epsilon_st.col(t - 1))/sqrt(1. - rho * rho));
+          // }
+        } else if (rw_fields) {
+          jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
+          for (int t = 1; t < n_t; t++) {
+            jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(t) - epsilon_st.col(t - 1));
+          }
+          } else {
+            error("Field type not implemented.");
+          }
+        }
       }
     }
-  }
   if (flag == 0) return jnll;
 
   // ------------------ Probability of data given random effects ---------------

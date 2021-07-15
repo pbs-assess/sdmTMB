@@ -5,7 +5,7 @@
 \title{Optimization control options}
 \usage{
 sdmTMBcontrol(
-  eval.max = 1000,
+  eval.max = 2000,
   iter.max = 1000,
   normalize = FALSE,
   nlminb_loops = 1,

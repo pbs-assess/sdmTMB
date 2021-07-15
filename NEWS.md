@@ -2,6 +2,10 @@
 
 # sdmTMB 0.0.16.9000
 
+* Add random walk option: `fields = "RW"`.
+
+* Depreciate `ar1_fields` argument. See new `fields` argument in `sdmTMB().
+
 * Lower default `nlminb()` `eval.max` and `iter.max` to 1000 and 2000.
 
 * Added `profile` option in `sdmTMBcontrol()`. This can dramatically

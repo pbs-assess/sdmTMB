@@ -192,7 +192,7 @@ pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 15)
 unique(d$year)
 m <- sdmTMB(
   data = d, formula = density ~ 1,
-  ar1_fields = TRUE, # using an AR1 to have something to forecast with
+  fields = "AR1", # using an AR1 to have something to forecast with
   extra_time = 2019L,
   include_spatial = FALSE,
   time = "year", spde = pcod_spde, family = tweedie(link = "log")

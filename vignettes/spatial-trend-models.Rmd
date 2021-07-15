@@ -23,7 +23,7 @@ library(dplyr)
 library(sdmTMB)
 ```
 
-Using the built-in British Columbia Queen Charlotte Sound Pacific Cod dataset, we might be intererest in fitting a model that describes spatially varying trends through time. The data are as follows:
+Using the built-in British Columbia Queen Charlotte Sound Pacific Cod dataset, we might be interested in fitting a model that describes spatially varying trends through time. The data are as follows:
 
 - There are columns for depth and depth squared.
 - Depth was centred and scaled by its standard deviation and we've included those in the data frame so that they could be used to similarly scale the prediction grid.
@@ -61,7 +61,7 @@ In the third model we make the spatiotemporal random fields follow an AR1 proces
 m3 <- sdmTMB(density ~ 1, data = pcod,
   spde = pcod_spde, family = tweedie(link = "log"),
   spatial_trend = TRUE, time = "year",
-  spatial_only = FALSE, ar1_fields = TRUE)
+  spatial_only = FALSE, fields = "AR1")
 ```
 
 Let's look at the residuals:

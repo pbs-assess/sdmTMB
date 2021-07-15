@@ -23,7 +23,7 @@ long-format data frame. The format matches the format in the \pkg{tidybayes}
 pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 40)
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2,
   data = pcod, spde = pcod_spde, family = tweedie(link = "log"),
-  include_spatial = FALSE, ar1_fields = TRUE, time = "year")
+  include_spatial = FALSE, fields = "AR1", time = "year")
 head(spread_sims(m, n_sims = 10))
 head(gather_sims(m, n_sims = 10))
 samps <- gather_sims(m, n_sims = 1000)

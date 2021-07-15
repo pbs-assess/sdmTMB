@@ -18,7 +18,7 @@ sdmTMB(
   anisotropy = FALSE,
   control = sdmTMBcontrol(),
   priors = sdmTMBpriors(),
-  ar1_fields = FALSE,
+  fields = c("IID", "AR1", "RW"),
   include_spatial = TRUE,
   spatial_trend = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
@@ -76,8 +76,15 @@ to the list of random effects to intetgrate over.}
 
 \item{priors}{Optional vector of penalties/priors. See \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}.}
 
-\item{ar1_fields}{Estimate the spatiotemporal random fields as a
-stationary AR1 process?}
+\item{fields}{Estimate the spatiotemporal random fields as \code{"IID"}
+(independent and identically distributed; default), stationary \code{"AR1"}
+(first-order autoregressive), or as a random walk (\code{"RW"})? Note that the
+spatiotemporal standard deviation represents the marginal steady-state
+standard deviation of the process in the case of the AR1. I.e., it's
+scaled according to the correlation. See the
+\href{https://kaskr.github.io/adcomp/classAR1__t.html}{TMB documentation}.
+If the AR1 correlation coefficient (rho) is estimated close to 1, say >
+0.99, then you may want to switch to the random walk \code{"RW"}.}
 
 \item{include_spatial}{Should a separate spatial random field be estimated?
 If enabled then there will be separate spatial and spatiotemporal
@@ -101,15 +108,15 @@ optimization with. Can greatly speed up fitting. Note that the data and
 model must be set up \emph{exactly} the same way! However, the \code{weights} argument
 can change, which can be useful for cross-validation.}
 
-\item{epsilon_predictor}{A column name (as character) of a predictor of a
-linear trend (in log space) of the spatiotemporal standard deviation. By
-default, this is \code{NULL} and fits a model with a constant spatiotemporal
-variance. However, this argument can also be a character name in the
-original data frame (a covariate that ideally has been standardized to have
-mean 0 and standard deviation = 1). Because the spatiotemporal field varies
-by time step, the standardization should be done by time. If the name of a
-predictor is included, a log-linear model is fit where the predictor is
-used to model effects on the standard deviation,
+\item{epsilon_predictor}{(Experimental) A column name (as character) of a
+predictor of a linear trend (in log space) of the spatiotemporal standard
+deviation. By default, this is \code{NULL} and fits a model with a constant
+spatiotemporal variance. However, this argument can also be a character
+name in the original data frame (a covariate that ideally has been
+standardized to have mean 0 and standard deviation = 1). Because the
+spatiotemporal field varies by time step, the standardization should be
+done by time. If the name of a predictor is included, a log-linear model is
+fit where the predictor is used to model effects on the standard deviation,
 e.g. \code{log(sd(i)) = B0 + B1 * epsilon_predictor(i)}.}
 
 \item{do_fit}{Fit the model (\code{TRUE}) or return the processed data without

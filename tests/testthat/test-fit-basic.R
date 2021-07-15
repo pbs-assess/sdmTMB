@@ -156,7 +156,7 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   )
   spde <- make_mesh(dat, c("x", "y"), cutoff = 0.02)
   m <- sdmTMB(
-    ar1_fields = FALSE, include_spatial = FALSE,
+    fields = "AR1", include_spatial = FALSE,
     data = dat, formula = observed ~ 1, time = "time",
     family = gaussian(link = "identity"), spde = spde
   )
@@ -171,7 +171,7 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-3)
 
   m <- sdmTMB(
-    ar1_fields = TRUE, include_spatial = FALSE,
+    fields = "AR1", include_spatial = FALSE,
     data = dat, formula = observed ~ 1, time = "time",
     family = gaussian(link = "identity"), spde = spde
   )
@@ -410,4 +410,31 @@ test_that("Large coordinates cause a warning.", {
   d$X <- d$X * 1000
   d$Y <- d$Y * 1000
   expect_warning(pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 70))
+})
+
+test_that("Random walk fields work", {
+  skip_on_cran()
+  skip_on_ci()
+  d <- subset(pcod, year >= 2013)
+  pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 15)
+  m_rw <- sdmTMB(density ~ 1,
+    data = d, time = "year", spde = pcod_spde,
+    family = tweedie(link = "log"), fields = "RW"
+  )
+  expect_identical(m_rw$tmb_data$rw_fields, 1L)
+  p_rw <- predict(m_rw)
+
+  # close to AR1 with high rho:
+  m_ar1 <- sdmTMB(density ~ 1,
+    data = d, time = "year", spde = pcod_spde,
+    family = tweedie(link = "log"), fields = "AR1",
+    control = sdmTMBcontrol(
+      start = list(ar1_phi = qlogis((0.99 + 1) / 2)),
+      map = list(ar1_phi = factor(NA)))
+  )
+  expect_identical(m_ar1$tmb_data$ar1_fields, 1L)
+  expect_identical(m_ar1$tmb_data$rw_fields, 0L)
+  p_ar1 <- predict(m_ar1)
+
+  expect_gt(stats::cor(p_ar1$est, p_rw$est), 0.95)
 })

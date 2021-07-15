@@ -40,8 +40,15 @@ NULL
 #' @param anisotropy Logical: allow for anisotropy? See [plot_anisotropy()].
 #' @param control Optimization control options. See [sdmTMBcontrol()].
 #' @param priors Optional vector of penalties/priors. See [sdmTMBpriors()].
-#' @param ar1_fields Estimate the spatiotemporal random fields as a
-#'   stationary AR1 process?
+#' @param fields Estimate the spatiotemporal random fields as `"IID"`
+#'   (independent and identically distributed; default), stationary `"AR1"`
+#'   (first-order autoregressive), or as a random walk (`"RW"`)? Note that the
+#'    spatiotemporal standard deviation represents the marginal steady-state
+#'    standard deviation of the process in the case of the AR1. I.e., it's
+#'    scaled according to the correlation. See the
+#'    [TMB documentation](https://kaskr.github.io/adcomp/classAR1__t.html).
+#'    If the AR1 correlation coefficient (rho) is estimated close to 1, say >
+#'    0.99, then you may want to switch to the random walk `"RW"`.
 #' @param include_spatial Should a separate spatial random field be estimated?
 #'   If enabled then there will be separate spatial and spatiotemporal
 #'   fields.
@@ -55,25 +62,19 @@ NULL
 #'   `time` argument is left at its default value of `NULL`.
 #' @param share_range Logical: estimated a shared spatial and spatiotemporal
 #'   range parameter?
-# @param matern_prior_O An optional vector of length 4 of penalized complexity
-#   (PC) prior values. Order is `c(a, b, c, d)` where `P(range < a) = b` and
-#   `P(sigmaO > c) = d`. sigmaO represents the marginal standard deviation of the
-#   spatial random field.
-# @param matern_prior_E Same as `matern_prior_O` but for the spatiotemporal
-#   field.
 #' @param previous_fit A previously fitted sdmTMB model to initialize the
 #'   optimization with. Can greatly speed up fitting. Note that the data and
 #'   model must be set up *exactly* the same way! However, the `weights` argument
 #'   can change, which can be useful for cross-validation.
-#' @param epsilon_predictor A column name (as character) of a predictor of a
-#'   linear trend (in log space) of the spatiotemporal standard deviation. By
-#'   default, this is `NULL` and fits a model with a constant spatiotemporal
-#'   variance. However, this argument can also be a character name in the
-#'   original data frame (a covariate that ideally has been standardized to have
-#'   mean 0 and standard deviation = 1). Because the spatiotemporal field varies
-#'   by time step, the standardization should be done by time. If the name of a
-#'   predictor is included, a log-linear model is fit where the predictor is
-#'   used to model effects on the standard deviation,
+#' @param epsilon_predictor (Experimental) A column name (as character) of a
+#'   predictor of a linear trend (in log space) of the spatiotemporal standard
+#'   deviation. By default, this is `NULL` and fits a model with a constant
+#'   spatiotemporal variance. However, this argument can also be a character
+#'   name in the original data frame (a covariate that ideally has been
+#'   standardized to have mean 0 and standard deviation = 1). Because the
+#'   spatiotemporal field varies by time step, the standardization should be
+#'   done by time. If the name of a predictor is included, a log-linear model is
+#'   fit where the predictor is used to model effects on the standard deviation,
 #'   e.g. `log(sd(i)) = B0 + B1 * epsilon_predictor(i)`.
 #' @param do_fit Fit the model (`TRUE`) or return the processed data without
 #'   fitting (`FALSE`)?
@@ -320,7 +321,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   silent = TRUE, anisotropy = FALSE,
   control = sdmTMBcontrol(),
   priors = sdmTMBpriors(),
-  ar1_fields = FALSE,
+  fields = c("IID", "AR1", "RW"),
   include_spatial = TRUE,
   spatial_trend = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
@@ -345,6 +346,13 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   get_joint_precision <- control$get_joint_precision
   dots <- list(...)
 
+  if ("ar1_fields" %in% names(dots)) {
+    warning("`ar1_fields` is depreciated and is now specified via the ",
+      "`fields` argument. Setting `fields = 'AR1'` for you for now if `ar1_fields = TRUE`.",
+      call. = FALSE)
+    fields <- if (dots$ar1_fields) "AR1" else "IID"
+    dots$ar1_fields <- NULL
+  }
   if ("penalties" %in% names(dots)) {
     stop("`penalties` are now specified via the `priors` argument.",
       "E.g., `priors = sdmTMBpriors(b = normal(c(0, 0), c(1, 1)))`",
@@ -366,6 +374,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       "`sdmTMBcontrol()` list.", call. = FALSE)
   }
 
+  fields <- match.arg(fields)
+  ar1_fields <- identical("AR1", fields)
+  rw_fields <- identical("RW", fields)
   assert_that(
     is.logical(reml), is.logical(anisotropy), is.logical(silent),
     is.logical(silent), is.logical(spatial_trend), is.logical(mgcv),
@@ -562,6 +573,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     A_spatial_index = data$sdm_spatial_id - 1L,
     year_i     = make_year_i(data[[time]]),
     ar1_fields = if (spatial_only) 0L else as.integer(ar1_fields),
+    rw_fields = if (spatial_only) 0L else as.integer(rw_fields),
     X_ij       = X_ij,
     X_rw_ik    = X_rw_ik,
     proj_lon   = 0,
