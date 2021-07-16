@@ -1,10 +1,14 @@
 # sdmTMB
 
-# sdmTMB 0.0.16.9000
+# sdmTMB 0.0.17.9000
 
 * Add random walk option: `fields = "RW"`.
 
 * Depreciate `ar1_fields` argument. See new `fields` argument in `sdmTMB().
+
+* Many packages moved from 'Imports' to 'Suggests'
+
+# sdmTMB 0.0.16.9000
 
 * Lower default `nlminb()` `eval.max` and `iter.max` to 1000 and 2000.
 
