@@ -63,7 +63,7 @@ print.sdmTMB <- function(x, ...) {
 
   pre <- "Spatiotemporal SD: "
   if (x$tmb_data$spatial_only == 0L) {
-    if (!isTRUE(is.na(x$tmb_map$b_epsilon_logit))) {
+    if (!isTRUE(is.na(x$tmb_map$b_epsilon))) {
       sigma_E <- paste0(pre, mround(r$sigma_E, 2L), "\n")
     } else {
       sigma_E <- paste0(pre, mround(r$sigma_E[1], 2L), "\n")
