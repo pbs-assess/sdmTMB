@@ -18,6 +18,7 @@ fully Bayesian predictions. See the \code{tmbstan_model} argument
 in \code{\link[=predict.sdmTMB]{predict.sdmTMB()}}.
 }
 \examples{
+
 \dontrun{
 pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
 plot(pcod_spde)

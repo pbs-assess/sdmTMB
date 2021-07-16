@@ -9,7 +9,7 @@
 #' @param object Output from [tmbstan::tmbstan()] run on the `tmb_obj`
 #'   element of an [sdmTMB()] model. E.g., `tmbstan(your_model$tmb_obj)`.
 #' @examples
-
+#'
 #' \dontrun{
 #' pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
 #' plot(pcod_spde)
@@ -55,6 +55,9 @@
 #' }
 #' @export
 extract_mcmc <- function(object) {
+  if (!requireNamespace("rstan", quietly = TRUE)) {
+    stop("rstan must be installed to use `extract_mcmc()`.", call. = FALSE)
+  }
   post <- rstan::extract(object)
   p_names <- names(post)[-length(names(post))] # exclude "lp__"
   p <- lapply(seq_len(nrow(post$b_j)), function(i) {
