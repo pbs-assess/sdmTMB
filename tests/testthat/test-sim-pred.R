@@ -1,5 +1,6 @@
 test_that("rmvnorm sim prediction works", {
   skip_on_cran()
+  skip_if_not_installed("INLA")
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
   m <- sdmTMB(data = pcod,
     formula = density ~ 0 + as.factor(year),

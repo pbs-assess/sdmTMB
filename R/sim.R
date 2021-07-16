@@ -90,6 +90,10 @@ sdmTMB_sim <- function(mesh,
                        seed = sample.int(1e6, 1),
                        list = FALSE,
                        size = NULL) {
+
+  if (!requireNamespace("INLA", quietly = TRUE)) {
+    stop("INLA must be installed to use this function.", call. = FALSE)
+  }
   assert_that(is.numeric(x), is.numeric(y))
   assert_that(is.null(dim(x)), is.null(dim(y)))
   assert_that(identical(length(x), length((y))))

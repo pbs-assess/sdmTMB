@@ -1,12 +1,7 @@
-context("Index and COG calculations work")
-
-test_that("make_spde() works but throws a warning", {
-  expect_warning({pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 30)})
-})
-
 test_that("get_index() and get_cog() work", {
   skip_on_ci()
   skip_on_cran()
+  skip_if_not_installed("INLA")
   pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
   m <- sdmTMB(
     data = pcod,

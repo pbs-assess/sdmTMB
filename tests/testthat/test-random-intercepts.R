@@ -1,5 +1,3 @@
-context("Random intercepts")
-
 test_that("RE group factor levels are properly checked.", {
   expect_error(check_valid_factor_levels(c(1, 2, 3), "test"))
   expect_error(check_valid_factor_levels(c("A", "B")))
@@ -10,6 +8,9 @@ test_that("RE group factor levels are properly checked.", {
 })
 
 test_that("Model with random intercepts fits appropriately.", {
+  skip_on_cran()
+  skip_if_not_installed("INLA")
+  skip_if_not_installed("glmmTMB")
   set.seed(1)
   x <- stats::runif(500, -1, 1)
   y <- stats::runif(500, -1, 1)

@@ -345,3 +345,4 @@ check_valid_factor_levels <- function(x, .name = "") {
 inla_installed <- function() {
   requireNamespace("INLA", quietly = TRUE)
 }
+

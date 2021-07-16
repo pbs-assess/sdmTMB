@@ -1,7 +1,7 @@
 test_that("Basic prior parsing works", {
-  expect_equivalent(normal(0, 1), matrix(c(0, 1), ncol = 2L))
-  expect_equivalent(halfnormal(0, 1), matrix(c(0, 1), ncol = 2L))
-  expect_equivalent(pc_matern(5, 5, 0.05, 0.05), c(5, 5, 0.05, 0.05))
+  expect_equal(normal(0, 1), matrix(c(0, 1), ncol = 2L), ignore_attr = TRUE)
+  expect_equal(halfnormal(0, 1), matrix(c(0, 1), ncol = 2L), ignore_attr = TRUE)
+  expect_equal(pc_matern(5, 5, 0.05, 0.05), c(5, 5, 0.05, 0.05), ignore_attr = TRUE)
 
   expect_error(normal(NA, 1))
   expect_error(normal(0, -1))
@@ -21,6 +21,7 @@ test_that("Basic prior parsing works", {
 test_that("Prior fitting works", {
   skip_on_ci()
   skip_on_cran()
+  skip_if_not_installed("INLA")
   d <- subset(pcod, year >= 2013)
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
 
