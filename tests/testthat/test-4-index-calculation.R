@@ -8,12 +8,14 @@ test_that("get_index(), get_index_sims(), and get_cog() work", {
     formula = density ~ 0 + as.factor(year),
     time = "year", spde = pcod_spde, family = tweedie(link = "log")
   )
+  expect_snapshot(m)
   predictions <- predict(m, newdata = qcs_grid, return_tmb_object = TRUE)
 
   p <- predict(m, newdata = qcs_grid, return_tmb_object = FALSE)
   expect_error(get_index(p), regexp = "return_tmb_object")
 
   ind <- get_index(predictions, bias_correct = FALSE)
+  expect_snapshot(ind[,1:6])
 
   expect_equal(class(ind), "data.frame")
   expect_equal(ind$est,
@@ -34,7 +36,7 @@ test_that("get_index(), get_index_sims(), and get_cog() work", {
   expect_gt(cor(ind_sim$est, ind$est), 0.95)
   expect_gt(cor(ind_sim$lwr, ind$lwr), 0.95)
   expect_gt(cor(ind_sim$upr, ind$upr), 0.95)
-  # sims mimics bias corrected one, which would be higher:
+  # sims mimics bias corrected index, which would be higher:
   expect_gt(mean(ind$est), mean(ind_sim$est))
 
   cog <- get_cog(predictions, bias_correct = FALSE)
