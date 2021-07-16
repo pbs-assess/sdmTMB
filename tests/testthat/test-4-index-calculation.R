@@ -1,4 +1,5 @@
 test_that("get_index(), get_index_sims(), and get_cog() work", {
+  local_edition(3)
   skip_on_ci()
   skip_on_cran()
   skip_if_not_installed("INLA")

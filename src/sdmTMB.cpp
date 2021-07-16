@@ -367,7 +367,7 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
 
   PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3)
-  PARAMETER(b_epsilon_logit); // slope coefficient for log-linear model on epsilon
+  PARAMETER(b_epsilon); // slope coefficient for log-linear model on epsilon
   // Joint negative log-likelihood
   Type jnll = 0.0;
 
@@ -438,7 +438,7 @@ Type objective_function<Type>::operator()()
   // optional non-stationary model on epsilon
   vector<Type> sigma_E(n_t);
   vector<Type> ln_tau_E_vec(n_t);
-  Type b_epsilon;
+  //Type b_epsilon;
   if (!est_epsilon_model) { // constant model
     for (int i = 0; i < n_t; i++) {
       sigma_E(i) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa(1)));
@@ -446,9 +446,9 @@ Type objective_function<Type>::operator()()
     }
   }
   if (est_epsilon_model) { // loglinear model
-    b_epsilon = minus_one_to_one(b_epsilon_logit); // TODO: document this?
+    //b_epsilon = minus_one_to_one(b_epsilon_logit); // TODO: document this?
     // epsilon_intcpt is the intercept parameter, derived from ln_tau_E. For models with time as covariate,
-    // this is interpreted as sigma at time 0
+    // this is interpreted as sigma when covariate = 0.
     Type epsilon_intcpt = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa(1)));
     Type log_epsilon_intcpt = log(epsilon_intcpt);
     Type log_epsilon_temp = 0.0;
@@ -840,13 +840,13 @@ Type objective_function<Type>::operator()()
     ADREPORT(quadratic_reduction);
   }
   if (est_epsilon_model) {
-    REPORT(b_epsilon_logit);
-    ADREPORT(b_epsilon_logit);
-    b_epsilon = Type(2.0) * exp(b_epsilon_logit) / (1.0 + exp(b_epsilon_logit)) - 1.0; // constrain to be -1 to 1
+    //REPORT(b_epsilon_logit);
+    //ADREPORT(b_epsilon_logit);
+    //b_epsilon = Type(2.0) * exp(b_epsilon_logit) / (1.0 + exp(b_epsilon_logit)) - 1.0; // constrain to be -1 to 1
     REPORT(b_epsilon);
     ADREPORT(b_epsilon);
-    REPORT(b_epsilon);
-    ADREPORT(b_epsilon);
+    //REPORT(b_epsilon);
+    //ADREPORT(b_epsilon);
   }
 
   // ------------------ Reporting ----------------------------------------------

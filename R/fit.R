@@ -316,11 +316,13 @@ NULL
 #'
 #' # Linear covariate on log(sigma_epsilon):
 #' # First we will center the years around their mean
-#' # to help with convergence.
+#' # to help with convergence. Also constrain the slope to be (-1,1)
+#' # to help convergence (estimation is done in log-space)
 #' pcod_2011$year_centered <- pcod_2011$year - mean(pcod_2011$year)
 #' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
 #'   data = pcod_2011, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-#'   epsilon_predictor = "year_centered")
+#'   epsilon_predictor = "year_centered",
+#'   control = sdmTMBcontrol(lower = list(b_epsilon = -1),upper = list(b_epsilon = 1)))
 #' print(m) # sigma_E varies with time now
 #'
 #' # coefficient is not yet in tidy.sdmTMB:
@@ -658,7 +660,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     omega_s_trend = rep(0, n_s),
     epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t),
     b_threshold = b_thresh,
-    b_epsilon_logit = 0
+    b_epsilon = 0
   )
   if (identical(family$link, "inverse") && family$family %in% c("Gamma", "gaussian", "student")) {
     fam <- family
@@ -709,7 +711,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
     # optional models on spatiotemporal sd parameter
     if (est_epsilon_model == 0L) {
-      tmb_map <- c(tmb_map, list(b_epsilon_logit = as.factor(NA)))
+      tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
     }
 
     tmb_obj1 <- TMB::MakeADFun(
