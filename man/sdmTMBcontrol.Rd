@@ -94,3 +94,9 @@ can dramatically speed up model fit if there are many fixed effects.}}
 \description{
 \code{\link[=sdmTMB]{sdmTMB()}} and \code{\link[stats:nlminb]{stats::nlminb()}} control options.
 }
+\examples{
+sdmTMBcontrol()
+
+# Usually used within sdmTMB(). For example:
+# sdmTMB(..., control = sdmTMBcontrol(profile = TRUE))
+}

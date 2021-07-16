@@ -26,6 +26,7 @@ exception of \code{weights}, which are used to define the folds.}
 Save log likelihoods of k-fold cross-validation for sdmTMB models
 }
 \examples{
+if (inla_installed()) {
 spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 
 # library(future) # for parallel processing
@@ -40,4 +41,5 @@ m_cv$sum_loglik
 head(m_cv$data)
 m_cv$models[[1]]
 m_cv$max_gradients
+}
 }

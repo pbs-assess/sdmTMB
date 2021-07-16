@@ -92,6 +92,7 @@ normal(0, 1)
 halfnormal(0, 1)
 pc_matern(range_gt = 5, sigma_lt = 1)
 
+if (inla_installed()) {
 d <- subset(pcod, year > 2011)
 pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
 
@@ -135,6 +136,7 @@ m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     matern_s = pc_matern(range_gt = 5, sigma_lt = 1),
     matern_st = pc_matern(range_gt = 5, sigma_lt = 1))
 )
+}
 }
 \references{
 Fuglstad, G.-A., Simpson, D., Lindgren, F., and Rue, H. (2016) Constructing

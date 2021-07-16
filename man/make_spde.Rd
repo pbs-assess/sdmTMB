@@ -28,22 +28,3 @@ up}
 \description{
 \strong{Depreciated; please use \code{\link[=make_mesh]{make_mesh()}} instead.}
 }
-\examples{
-# **Depreciated; please use `make_mesh()` instead.**
-\donttest{
-sp <- make_spde(pcod$X, pcod$Y, n_knots = 25)
-plot_spde(sp)
-
-loc_xy <- cbind(pcod$X, pcod$Y)
-bnd <- INLA::inla.nonconvex.hull(as.matrix(loc_xy), convex = -0.05)
-mesh <- INLA::inla.mesh.2d(
-  boundary = bnd,
-  max.edge = c(20, 50),
-  offset = -0.05,
-  cutoff = c(2, 5),
-  min.angle = 10
-)
-sp2 <- make_spde(pcod$X, pcod$Y, mesh = mesh)
-plot_spde(sp2)
-}
-}

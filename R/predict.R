@@ -96,6 +96,7 @@
 #'
 #' predictions$resids <- residuals(m) # randomized quantile residuals
 #'
+#' \donttest{
 #' if (require("ggplot2", quietly = TRUE) && inla_installed()) {
 #'
 #' ggplot(predictions, aes(X, Y, col = resids)) + scale_colour_gradient2() +
@@ -164,7 +165,6 @@
 #'   ymin = exp(est - 1.96 * est_se), ymax = exp(est + 1.96 * est_se))) +
 #'   geom_line() + geom_ribbon(alpha = 0.4)
 #'
-#' \donttest{
 #' # Forecasting ----------------------------------------------------------
 #' pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 15)
 #'

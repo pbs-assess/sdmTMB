@@ -59,6 +59,11 @@ set_par_value <- function(opt, par) {
 #'   [stats::nlminb()].
 #'
 #' @export
+#' @examples
+#' sdmTMBcontrol()
+#'
+#' # Usually used within sdmTMB(). For example:
+#' # sdmTMB(..., control = sdmTMBcontrol(profile = TRUE))
 sdmTMBcontrol <- function(
   eval.max = 2e3,
   iter.max = 1e3,
@@ -337,6 +342,7 @@ check_valid_factor_levels <- function(x, .name = "") {
 #' Check if INLA installed (i.e., not on CRAN)
 #'
 #' @export
+#' @noRd
 inla_installed <- function() {
   requireNamespace("INLA", quietly = TRUE)
 }

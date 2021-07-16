@@ -29,18 +29,20 @@ quantile summary of those draws.}
 Calculate population index via simulation from joint precision matrix
 }
 \examples{
-pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
 m <- sdmTMB(density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  data = pcod, spde = pcod_spde, family = tweedie(link = "log"),
+  data = pcod_2011, spde = pcod_mesh_2011, family = tweedie(link = "log"),
   time = "year"
 )
-p <- predict(m, newdata = qcs_grid, sims = 100)
+qcs_grid_2011 <- subset(qcs_grid, year >= 2011)
+p <- predict(m, newdata = qcs_grid_2011, sims = 100)
 x <- get_index_sims(p)
-library(ggplot2)
-ggplot(x, aes(year, est, ymin = lwr, ymax = upr)) +
-  geom_line() +
-  geom_ribbon(alpha = 0.4)
 x_sims <- get_index_sims(p, return_sims = TRUE)
-ggplot(x_sims, aes(as.factor(year), .value)) +
-  geom_violin()
+
+if (require("ggplot2", quietly = TRUE)) {
+  ggplot(x, aes(year, est, ymin = lwr, ymax = upr)) +
+    geom_line() +
+    geom_ribbon(alpha = 0.4)
+  ggplot(x_sims, aes(as.factor(year), .value)) +
+    geom_violin()
+}
 }

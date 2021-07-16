@@ -53,6 +53,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' @export
 #'
 #' @examples
+#' if (inla_installed()) {
 #' spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 #'
 #' # library(future) # for parallel processing
@@ -67,6 +68,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' head(m_cv$data)
 #' m_cv$models[[1]]
 #' m_cv$max_gradients
+#' }
 sdmTMB_cv <- function(formula, data, spde, time = NULL,
                       k_folds = 10, fold_ids = NULL,
                       ...) {

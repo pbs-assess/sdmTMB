@@ -42,9 +42,9 @@ represents the center of a "barrier" mesh triangle.
 Transform a mesh object into a barrier mesh object
 }
 \examples{
-library(sf)
-library(dplyr)
-library(ggplot2)
+if (require("sf", quietly = TRUE) &&
+  require("ggplot2", quietly = TRUE) &&
+  require("dplyr", quietly = TRUE)) {
 
 # First, download coastline data for our region.
 # We will use `bc_coast` from the package data,
@@ -117,6 +117,7 @@ ggplot(bc_coast) +
 fit <- sdmTMB(density ~ s(depth, k = 3), data = pcod, spde = bspde,
   family = tweedie(link = "log"))
 fit
+}
 }
 \references{
 Bakka, H., Vanhatalo, J., Illian, J., Simpson, D., and Rue, H. 2019.
