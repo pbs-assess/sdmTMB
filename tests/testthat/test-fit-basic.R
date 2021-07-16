@@ -389,7 +389,7 @@ test_that("The `map_rf` argument works.", {
     glmmTMB::sigma(m.glmmTMB), tolerance = 1e-5)
 
   # Bernoulli:
-  pcod_binom <- pcod
+  pcod_binom <- pcod_2011
   pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
   pcod_spde <- make_mesh(pcod_binom, c("X", "Y"), cutoff = 50)
   m.sdmTMB.map <- sdmTMB(present ~ depth, data = pcod_binom,
