@@ -34,7 +34,6 @@ Imports:
     assertthat,
     clisymbols,
     fishMod,
-    future.apply,
     generics,
     graphics,
     Matrix,

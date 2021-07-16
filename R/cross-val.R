@@ -56,8 +56,8 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' if (inla_installed()) {
 #' spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 #'
-#' # library(future) # for parallel processing
-#' # plan(multisession) # for parallel processing
+# # library(future) # for parallel processing
+# # plan(multisession) # for parallel processing
 #' m_cv <- sdmTMB_cv(
 #'   density ~ 0 + depth_scaled + depth_scaled2,
 #'   data = pcod, spde = spde,
@@ -110,8 +110,8 @@ sdmTMB_cv <- function(formula, data, spde, time = NULL,
     weights = weights, ...
   )
 
-  out <- future.apply::future_lapply(seq_len(k_folds), function(k) {
-    # out <- lapply(seq_len(k_folds), function(k) {
+  # out <- future.apply::future_lapply(seq_len(k_folds), function(k) {
+  out <- lapply(seq_len(k_folds), function(k) {
     # data in kth fold get weight of 0:
     weights <- ifelse(data$cv_fold == k, 1, 0)
     args <- c(list(
@@ -145,7 +145,8 @@ sdmTMB_cv <- function(formula, data, spde, time = NULL,
       max_gradient = max(abs(object$gradients)),
       bad_eig = object$bad_eig
     )
-  }, future.seed = TRUE)
+  # }, future.seed = TRUE)
+  })
 
   models <- lapply(out, `[[`, "model")
   data <- lapply(out, `[[`, "data")
