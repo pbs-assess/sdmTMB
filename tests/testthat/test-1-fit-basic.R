@@ -87,38 +87,6 @@ test_that("Anisotropy fits and plots", {
     tolerance = 1e-3)
 })
 
-test_that("Regularization works", {
-  skip_on_cran()
-  skip_on_ci()
-  skip_if_not_installed("INLA")
-  local_edition(2)
-  d <- subset(pcod, year >= 2015)
-  d$depth_scaled <- as.numeric(scale(d$depth_scaled))
-  m1 <- sdmTMB(data = d,
-    formula = density ~ 0 + depth_scaled + as.factor(year),
-    spde = make_mesh(d, c("X", "Y"), n_knots = 50, type = "kmeans"),
-    family = tweedie(link = "log"))
-
-  # Bypassing via NAs:
-  m2 <- sdmTMB(data = d,
-    formula = density ~ 0 + depth_scaled + as.factor(year),
-    spde = make_mesh(d, c("X", "Y"), n_knots = 50, type = "kmeans"),
-    family = tweedie(link = "log"),
-    priors = sdmTMBpriors(b = normal(c(NA, NA, NA), c(NA, NA, NA))))
-  expect_equal(m1$sd_report, m2$sd_report)
-
-  # Ridge regression on depth term:
-  m2 <- sdmTMB(data = d,
-    formula = density ~ 0 + depth_scaled + as.factor(year),
-    spde = make_mesh(d, c("X", "Y"), n_knots = 50, type = "kmeans"),
-    family = tweedie(link = "log"),
-    priors = sdmTMBpriors(b = normal(c(0, NA, NA), c(1, NA, NA))))
-  b1 <- tidy(m1)
-  b2 <- tidy(m2)
-  expect_lt(b2$estimate[1], b1$estimate[2])
-  expect_lt(b2$std.error[1], b1$std.error[2])
-})
-
 test_that("A model with splines works", {
   skip_on_cran()
   skip_on_ci()
@@ -189,49 +157,3 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   p_nd <- predict(m, newdata = dat)
   expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-3)
 })
-
-test_that("A time-varying model fits and predicts appropriately", {
-  skip_on_cran()
-  skip_on_ci()
-  skip_if_not_installed("INLA")
-  local_edition(2)
-  SEED <- 42
-  set.seed(SEED)
-  x <- stats::runif(60, -1, 1)
-  y <- stats::runif(60, -1, 1)
-  initial_betas <- 0.5
-  range <- 0.5
-  sigma_O <- 0
-  sigma_E <- 0.1
-  phi <- 0.1
-  sigma_V <- 0.3
-  loc <- data.frame(x = x, y = y)
-  spde <- make_mesh(loc, c("x", "y"), cutoff = 0.02)
-
-  s <- sdmTMB_sim(
-    x = x, y = y, mesh = spde, range = range,
-    betas = initial_betas, time_steps = 12L, sigma_V = sigma_V,
-    phi = phi, sigma_O = sigma_O, sigma_E = sigma_E,
-    seed = SEED
-  )
-  spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
-  m <- sdmTMB(data = s, formula = observed ~ 0, include_spatial = FALSE,
-    time_varying = ~ 0 + cov1, time = "time", spde = spde, control = sdmTMBcontrol(mgcv = FALSE))
-  expect_equal(exp(m$model$par["ln_tau_V"])[[1]], sigma_V, tolerance = 0.05)
-  tidy(m, effects = "ran_par")
-  b_t <- dplyr::group_by(s, time) %>%
-    dplyr::summarize(b_t = unique(b), .groups = "drop") %>%
-    dplyr::pull(b_t)
-  r <- m$tmb_obj$report()
-  b_t_fit <- r$b_rw_t
-  plot(b_t, b_t_fit, asp = 1);abline(a = 0, b = 1)
-  expect_equal(mean((b_t- b_t_fit)^2), 0, tolerance = 1e-4)
-  p <- predict(m)
-  plot(p$est, s$observed, asp = 1);abline(a = 0, b = 1)
-  expect_equal(mean((p$est - s$observed)^2), 0, tolerance = 0.01)
-
-  cols <- c("est", "est_non_rf", "est_rf", "omega_s", "epsilon_st")
-  p_nd <- predict(m, newdata = s)
-  expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-4)
-})
-
