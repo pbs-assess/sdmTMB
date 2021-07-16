@@ -61,9 +61,19 @@ qres_beta <- function(object, y, mu) {
   stats::qnorm(u)
 }
 
+#' Residuals
+#'
+#' Residuals are randomized quantile residuals when response values take on
+#' whole numbers (Poisson, Tweedie, binomial, NB2).
+#'
+#' @param object An [sdmTMB()] model
+#' @param type Type of residual. Residual at the MLE or based on simulations
+#'   from the joint precision matrix are available.
+#' @param ... Passed to residual function. Only `n` works for binomial.
 #' @export
 #' @importFrom stats predict
-residuals.sdmTMB <- function(object, ...) {
+residuals.sdmTMB <- function(object, type = c("mle", "sim"), ...) {
+  type <- match.arg(type)
   res_func <- switch(object$family$family,
     gaussian = qres_gaussian,
     binomial = qres_binomial,
@@ -74,7 +84,13 @@ residuals.sdmTMB <- function(object, ...) {
     poisson  = qres_pois,
     student  = qres_student
   )
+  if (type == "mle") {
+    mu <- object$family$linkinv(predict(object)$est)
+  } else if (type == "sim") {
+    mu <- object$family$linkinv(predict(object, sims = 1L)[, 1, drop = TRUE])
+  } else {
+    stop("`type` not implemented", call. = FALSE)
+  }
   y <- object$response
-  mu <- object$family$linkinv(predict(object)$est)
   res_func(object, y, mu, ...)
 }
