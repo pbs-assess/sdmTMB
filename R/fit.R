@@ -316,13 +316,13 @@ NULL
 #'
 #' # Linear covariate on log(sigma_epsilon):
 #' # First we will center the years around their mean
-#' # to help with convergence. Also constrain the slope to be (-1,1)
+#' # to help with convergence. Also constrain the slope to be (-1, 1)
 #' # to help convergence (estimation is done in log-space)
 #' pcod_2011$year_centered <- pcod_2011$year - mean(pcod_2011$year)
 #' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
 #'   data = pcod_2011, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
 #'   epsilon_predictor = "year_centered",
-#'   control = sdmTMBcontrol(lower = list(b_epsilon = -1),upper = list(b_epsilon = 1)))
+#'   control = sdmTMBcontrol(lower = list(b_epsilon = -1), upper = list(b_epsilon = 1)))
 #' print(m) # sigma_E varies with time now
 #'
 #' # coefficient is not yet in tidy.sdmTMB:
@@ -578,6 +578,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       simplify = FALSE
     ))
   }
+  if (!identical(nrow(priors_b), ncol(X_ij)))
+    stop("The number of 'b' priors does not match the model matrix.", call. = FALSE)
 
   tmb_data <- list(
     y_i        = c(y_i),
