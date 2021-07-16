@@ -42,15 +42,38 @@ test_that("sdmTMB model fit with a covariate beta", {
   })
   .t3 <- system.time({
     m_pc <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
-      silent = TRUE, spde = spde, control = sdmTMBcontrol(normalize = TRUE),
-      priors = sdmTMBpriors(matern_st = pc_matern(range_gt = 0.2, sigma_lt = 0.1))
-    )
+      silent = F, spde = spde, control = sdmTMBcontrol(normalize = TRUE),
+      priors = sdmTMBpriors(
+        matern_s = pc_matern(range_gt = 0.2, sigma_lt = 0.2, range_prob = 0.05, sigma_prob = 0.05)))
   })
+
   expect_equal(m$model$par, m_norm$model$par, tolerance = 1e-6)
-  expect_equal(m$model$par, m_pc$model$par, tolerance = 1e-3)
-  #commented test out: pc model kappa is slightly greater (7.6e-07) than m_norm kappa
-  #expect_true(m_pc$model$par[['ln_kappa']] < m_norm$model$par[['ln_kappa']])
+  expect_equal(m$model$par, m_pc$model$par, tolerance = 0.05)
+  expect_equal(m_norm$model$par,
+    c(b_j = 0.503595856761081, ln_tau_O = -3.35228685372638, ln_tau_E = -3.36790645836186,
+      ln_kappa = 3.2787706588366, ln_phi = -2.73926219324089), tolerance = 1e-6)
+  expect_equal(m_pc$model$par,
+    c(b_j = 0.503637202649408, ln_tau_O = -3.24417611857513, ln_tau_E = -3.28868651103016,
+    ln_kappa = 3.22562715681386, ln_phi = -2.73162064776338), tolerance = 1e-6)
+
+  # PC should make range bigger and sigmaO smaller
+  # therefore, ln_kappa smaller
+  expect_true(m_pc$model$par[['ln_kappa']] < m_norm$model$par[['ln_kappa']])
+  expect_true(m_pc$model$par[['ln_kappa']] < m_norm$model$par[['ln_kappa']])
+  r_pc <- m_pc$tmb_obj$report()
+  r <- m_norm$tmb_obj$report()
+  expect_true(r_pc$range[1] > r$range[1])
+  expect_true(r_pc$sigma_O < r$sigma_O)
+
+  # PC should make random field pars more precise:
+  se_pc <- as.list(m_pc$sd_report, "Std. Error")
+  se <- as.list(m_norm$sd_report, "Std. Error")
+  expect_true(se_pc$ln_kappa[1] < se$ln_kappa[1])
+  expect_true(se_pc$ln_tau_O < se$ln_tau_O)
+
+  # normalize = TRUE should be faster here:
   expect_lt(.t2[[1]], .t1[[1]])
+
   expect_output(print(m), "fit by")
   expect_output(summary(m), "fit by")
   p <- as.list(m$model$par)

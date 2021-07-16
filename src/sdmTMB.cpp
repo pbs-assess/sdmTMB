@@ -118,6 +118,14 @@ Type dPCPriSPDE(Type logtau, Type logkappa, Type matern_range, Type matern_SD,
   Type matern_par_b = range_prob; // range prob
   Type matern_par_c = matern_SD; // field sd limit
   Type matern_par_d = SD_prob; // field sd prob
+
+  // std::cout << "ln_tau: " << logtau << "; ";
+  // std::cout << "ln_kappa: " << logkappa << "; ";
+  // std::cout << "matern_range: " << matern_range << "; ";
+  // std::cout << "range_prob " << range_prob << "; ";
+  // std::cout << "matern_SD: " << matern_SD << "; ";
+  // std::cout << "SD_prob: " << SD_prob << "; ";
+
   Type penalty; // prior contribution to jnll
   Type d = 2.;  // dimension
   Type lambda1 = -log(matern_par_b) * pow(matern_par_a, d/2.);
@@ -125,6 +133,8 @@ Type dPCPriSPDE(Type logtau, Type logkappa, Type matern_range, Type matern_SD,
   Type range = sqrt(8.) / exp(logkappa);
   Type sigma = 1. / sqrt(4. * M_PI * exp(2. * logtau) * exp(2. * logkappa));
   penalty = (-d/2. - 1.) * log(range) - lambda1 * pow(range, -d/2.) - lambda2 * sigma;
+
+  // std::cout << "PC penalty: " << penalty << "\n";
   // Note: (rho, sigma) --> (x=log kappa, y=log tau) -->
   //  transforms: rho = sqrt(8)/e^x & sigma = 1/(sqrt(4pi)*e^x*e^y)
   //  --> Jacobian: |J| propto e^(-y -2x)
@@ -394,24 +404,9 @@ Type objective_function<Type>::operator()()
     s95 = b_threshold(0) + exp(b_threshold(1)); // threshold at which function is 95% of max
     s_max = b_threshold(2);
   }
-  // ------------------ Priors -------------------------------------------------
 
   Type rho = minus_one_to_one(ar1_phi);
   Type phi = exp(ln_phi);
-  for (int j = 0; j < n_j; j++) {
-    if (!isNA(priors_b(j, 0)) && !isNA(priors_b(j, 1)))
-      jnll -= dnorm(b_j(j), priors_b(j, 0), priors_b(j, 1), true);
-  }
-  // start vector of priors:
-  if (!isNA(priors(0)) && !isNA(priors(2)))
-    jnll -= dPCPriSPDE(ln_tau_O, ln_kappa(0), priors(0), priors(1), priors(2), priors(3), true);
-  if (!isNA(priors(4)) && !isNA(priors(6)))
-    jnll -= dPCPriSPDE(ln_tau_E, ln_kappa(1), priors(4), priors(5), priors(6), priors(7), true);
-  if (!isNA(priors(8))) jnll -= dnorm(phi, priors(8), priors(9), true);
-  if (!isNA(priors(10))) jnll -= dnorm(rho, priors(10), priors(11), true);
-
-  // Jacobians for Stan:
-  // FIXME
 
   // ------------------ Geospatial ---------------------------------------------
 
@@ -670,6 +665,27 @@ Type objective_function<Type>::operator()()
       }
     }
   }
+
+  // ------------------ Priors -------------------------------------------------
+
+  for (int j = 0; j < n_j; j++) {
+    if (!isNA(priors_b(j, 0)) && !isNA(priors_b(j, 1)))
+      jnll -= dnorm(b_j(j), priors_b(j, 0), priors_b(j, 1), true);
+  }
+  // start vector of priors:
+  if (!isNA(priors(0)) && !isNA(priors(1)) && !isNA(priors(2)) && !isNA(priors(3))) {
+    // std::cout << "Using spatial PC prior" << "\n";
+    jnll -= dPCPriSPDE(ln_tau_O, ln_kappa(0), priors(0), priors(1), priors(2), priors(3), true);
+  }
+  if (!isNA(priors(4)) && !isNA(priors(5)) && !isNA(priors(6)) && !isNA(priors(7))) {
+    // std::cout << "Using spatiotemporal PC prior" << "\n";
+    jnll -= dPCPriSPDE(ln_tau_E, ln_kappa(1), priors(4), priors(5), priors(6), priors(7), true);
+  }
+  if (!isNA(priors(8))) jnll -= dnorm(phi, priors(8), priors(9), true);
+  if (!isNA(priors(10))) jnll -= dnorm(rho, priors(10), priors(11), true);
+
+  // Jacobians for Stan:
+  // FIXME
 
   // ------------------ Predictions on new data --------------------------------
 
