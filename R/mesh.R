@@ -96,6 +96,11 @@ make_mesh <- function(data, xy_cols,
                       seed = 42,
                       refine = list(min.angle = 21, max.edge = Inf, max.n.strict = -1, max.n = 1000),
                       mesh = NULL) {
+
+  if (!requireNamespace("INLA", quietly = TRUE)) {
+    stop("INLA must be installed to use this function.", call. = FALSE)
+  }
+
   if (missing(xy_cols) || is.numeric(xy_cols) || is.numeric(data)) {
     stop("It looks like you are using an old format of make_spde(). ",
       "The function now uses `data` and `xy_cols` arguments ",
@@ -391,6 +396,14 @@ make_barrier_spde <- function(spde) {
 
 add_barrier_mesh <- function(spde_obj, barrier_sf, range_fraction = 0.2,
                              proj_scaling = 1, plot = FALSE) {
+
+  if (!requireNamespace("INLA", quietly = TRUE)) {
+    stop("INLA must be installed to use this function.", call. = FALSE)
+  }
+  if (!requireNamespace("sf", quietly = TRUE)) {
+    stop("The sf package must be installed to use this function.", call. = FALSE)
+  }
+
   assert_that(
     is.numeric(range_fraction), range_fraction <= 1,
     range_fraction > 0, length(range_fraction) == 1
