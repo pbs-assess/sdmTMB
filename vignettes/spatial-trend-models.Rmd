@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.width = 7,
-  fig.asp = 0.618
+  fig.asp = 0.618,
   eval = identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
 )
 ```
