@@ -342,7 +342,6 @@ check_valid_factor_levels <- function(x, .name = "") {
 #' Check if INLA installed (i.e., not on CRAN)
 #'
 #' @export
-#' @noRd
 inla_installed <- function() {
   requireNamespace("INLA", quietly = TRUE)
 }
