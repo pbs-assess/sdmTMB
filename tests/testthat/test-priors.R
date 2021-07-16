@@ -22,8 +22,8 @@ test_that("Prior fitting works", {
   skip_on_ci()
   skip_on_cran()
   skip_if_not_installed("INLA")
-  d <- subset(pcod, year >= 2013)
-  pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
+  d <- pcod_2011
+  pcod_spde <- pcod_mesh_2011
 
   # no priors
   m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
@@ -31,12 +31,20 @@ test_that("Prior fitting works", {
     fields = "AR1",
     share_range = FALSE)
 
+  # population-effects missing a prior; should error
+  expect_error({mp <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+    data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+    share_range = FALSE, fields = "AR1",
+    priors = sdmTMBpriors(
+      b = normal(c(0, 0, NA, NA, NA), c(2, 2, NA, NA, NA)))
+  )}, regexp = "prior")
+
   # all the priors
   mp <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
     share_range = FALSE, fields = "AR1",
     priors = sdmTMBpriors(
-      b = normal(c(0, 0, NA, NA, NA), c(2, 2, NA, NA, NA)),
+      b = normal(c(0, 0, NA, NA, NA, NA), c(2, 2, NA, NA, NA, NA)),
       phi = halfnormal(0, 10),
       tweedie_p = normal(1.5, 2),
       ar1_rho = normal(0, 1),
