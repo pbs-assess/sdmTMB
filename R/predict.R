@@ -76,11 +76,14 @@
 #'
 #' @examples
 #' # We'll only use a small number of knots so this example runs quickly
-#' # but you will likely want to use many more in applied situations.
+#' # but you will likely want to use more in applied situations.
 #'
-#' library(ggplot2)
-#' d <- pcod
-#' pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
+#' d <- pcod_2011
+#' if (inla_installed()) {
+#'   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
+#' } else {
+#'   pcod_spde <- pcod_mesh_2011 # use cached version on CRAN
+#' }
 #' m <- sdmTMB(
 #'  data = d, formula = density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'  time = "year", spde = pcod_spde, family = tweedie(link = "log")
@@ -92,7 +95,9 @@
 #' head(predictions)
 #'
 #' predictions$resids <- residuals(m) # randomized quantile residuals
-#' \donttest{
+#'
+#' if (require("ggplot2", quietly = TRUE) && inla_installed()) {
+#'
 #' ggplot(predictions, aes(X, Y, col = resids)) + scale_colour_gradient2() +
 #'   geom_point() + facet_wrap(~year)
 #' hist(predictions$resids)
@@ -100,7 +105,8 @@
 #'
 #' # Predictions onto new data --------------------------------------------
 #'
-#' predictions <- predict(m, newdata = qcs_grid)
+#' qcs_grid_2011 <- subset(qcs_grid, year >= min(pcod_2011$year))
+#' predictions <- predict(m, newdata = qcs_grid_2011)
 #'
 #' # A short function for plotting our predictions:
 #' plot_map <- function(dat, column = "est") {
@@ -138,7 +144,7 @@
 #'
 #' # You'll need at least one time element. If time isn't also a fixed effect
 #' # then it doesn't matter what you pick:
-#' nd$year <- 2003L
+#' nd$year <- 2011L
 #' p <- predict(m, newdata = nd, se_fit = TRUE, re_form = NA)
 #' ggplot(p, aes(depth_scaled, exp(est),
 #'   ymin = exp(est - 1.96 * est_se), ymax = exp(est + 1.96 * est_se))) +
@@ -152,12 +158,13 @@
 #' )
 #' nd <- data.frame(depth_scaled =
 #'   seq(min(d$depth_scaled), max(d$depth_scaled), length.out = 100))
-#' nd$year <- 2003L
+#' nd$year <- 2011L
 #' p <- predict(m_gam, newdata = nd, se_fit = TRUE, re_form = NA)
 #' ggplot(p, aes(depth_scaled, exp(est),
 #'   ymin = exp(est - 1.96 * est_se), ymax = exp(est + 1.96 * est_se))) +
 #'   geom_line() + geom_ribbon(alpha = 0.4)
 #'
+#' \donttest{
 #' # Forecasting ----------------------------------------------------------
 #' pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 15)
 #'
@@ -165,15 +172,15 @@
 #' m <- sdmTMB(
 #'   data = d, formula = density ~ 1,
 #'   fields = "AR1", # using an AR1 to have something to forecast with
-#'   extra_time = 2019L,
+#'   extra_time = 2019L, # `L` for integer to match our data
 #'   include_spatial = FALSE,
 #'   time = "year", spde = pcod_spde, family = tweedie(link = "log")
 #' )
 #'
 #' # Add a year to our grid:
-#' grid2019 <- qcs_grid[qcs_grid$year == max(qcs_grid$year), ]
+#' grid2019 <- qcs_grid_2011[qcs_grid_2011$year == max(qcs_grid_2011$year), ]
 #' grid2019$year <- 2019L # `L` because `year` is an integer in the data
-#' qcsgrid_forecast <- rbind(qcs_grid, grid2019)
+#' qcsgrid_forecast <- rbind(qcs_grid_2011, grid2019)
 #'
 #' predictions <- predict(m, newdata = qcsgrid_forecast)
 #' plot_map(predictions, "exp(est)") +
@@ -204,6 +211,7 @@
 #' plot_map(p, "exp(est)") +
 #'   ggtitle("Prediction (fixed effects + all random effects)") +
 #'   scale_fill_viridis_c(trans = "sqrt")
+#' }
 #' }
 
 predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,

@@ -333,3 +333,10 @@ check_valid_factor_levels <- function(x, .name = "") {
     msg = sprintf(
       "Random effect group column `%s` has extra factor levels. Please remove them.", .name))
 }
+
+#' Check if INLA installed (i.e., not on CRAN)
+#'
+#' @export
+inla_installed <- function() {
+  requireNamespace("INLA", quietly = TRUE)
+}

@@ -203,32 +203,43 @@ An element can contain \code{NA} if you wish to avoid a penalty/prior on a speci
 term (e.g., the intercept).
 }
 \examples{
-d <- subset(pcod, year >= 2011) # subset for example speed
-pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
+if (inla_installed()) {
+  pcod_spde <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 25) # a coarse mesh for example speed
+} else {
+  pcod_spde <- pcod_mesh_2011 # load cached mesh so example runs on CRAN
+}
 plot(pcod_spde)
 
 # Tweedie:
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-  data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
+  data = pcod_2011, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
 print(m)
 tidy(m, conf.int = TRUE)
 tidy(m, effects = "ran_par", conf.int = TRUE)
 
+if (inla_installed()) {
 # Run extra optimization steps to help convergence:
+# (Not typically needed)
 m1 <- run_extra_optimization(m, nlminb_loops = 0, newton_loops = 1)
 max(m$gradients)
 max(m1$gradients)
 
 # Bernoulli:
-pcod_binom <- d
+pcod_binom <- pcod_2011
 pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
 m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   data = pcod_binom, time = "year", spde = pcod_spde,
   family = binomial(link = "logit"))
 print(m_bin)
 
+# Fit a spatial-only model (by not specifying `time`):
+m <- sdmTMB(
+  density ~ depth_scaled + depth_scaled2, data = pcod_2011,
+  spde = pcod_spde, family = tweedie(link = "log"))
+print(m)
+
 # Gaussian:
-pcod_gaus <- subset(d, density > 0 & year >= 2013)
+pcod_gaus <- subset(pcod_2011, density > 0 & year >= 2013)
 pcod_spde_gaus <- make_mesh(pcod_gaus, c("X", "Y"), cutoff = 30)
 m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
@@ -243,6 +254,7 @@ m_gam <- sdmTMB(log(density) ~ 0 + as.factor(year) + s(depth_scaled, k = 4),
 print(m_gam)
 
 # With IID random intercepts:
+# Simulate some data:
 set.seed(1)
 x <- runif(500, -1, 1)
 y <- runif(500, -1, 1)
@@ -253,21 +265,20 @@ s <- sdmTMB_sim(x = x, y = y, betas = 0, time = 1L,
 s$g <- gl(50, 10)
 iid_re_vals <- rnorm(50, 0, 0.3)
 s$observed <- s$observed + iid_re_vals[s$g]
+
+# Fit it:
 m <- sdmTMB(observed ~ 1 + (1 | g), spde = spde, data = s)
 print(m)
 tidy(m, "ran_pars", conf.int = TRUE) # see tau_G
 theta <- as.list(m$sd_report, "Estimate")
 plot(iid_re_vals, theta$RE)
+}
 
 \donttest{
-# Fit a spatial only model:
-m <- sdmTMB(
-  density ~ depth_scaled + depth_scaled2, data = d,
-  spde = pcod_spde, family = tweedie(link = "log"))
-print(m)
+if (inla_installed()) {
 
 # Spatial-trend example:
-m <- sdmTMB(density ~ depth_scaled, data = d,
+m <- sdmTMB(density ~ depth_scaled, data = pcod_2011,
   spde = pcod_spde, family = tweedie(link = "log"),
   spatial_trend = TRUE, time = "year")
 tidy(m, effects = "ran_par")
@@ -275,7 +286,8 @@ tidy(m, effects = "ran_par")
 # Time-varying effects of depth and depth squared:
 m <- sdmTMB(density ~ 0 + as.factor(year),
   time_varying = ~ 0 + depth_scaled + depth_scaled2,
-  data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
+  data = pcod_2011, time = "year", spde = pcod_spde,
+  family = tweedie(link = "log"))
 print(m)
 
 # See the b_rw_t estimates; these are the time-varying (random walk) effects.
@@ -291,14 +303,16 @@ print(m_pos)
 # Linear covariate on log(sigma_epsilon):
 # First we will center the years around their mean
 # to help with convergence.
-d$year_centered <- d$year - mean(d$year)
+pcod_2011$year_centered <- pcod_2011$year - mean(pcod_2011$year)
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-  data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+  data = pcod_2011, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
   epsilon_predictor = "year_centered")
 print(m) # sigma_E varies with time now
+
 # coefficient is not yet in tidy.sdmTMB:
 as.list(m$sd_report, "Estimate", report = TRUE)$b_epsilon
 as.list(m$sd_report, "Std. Error", report = TRUE)$b_epsilon
+}
 }
 }
 \references{

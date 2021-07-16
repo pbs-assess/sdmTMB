@@ -37,6 +37,12 @@ nd[["year"]] <- rep(original_time, each = nrow(qcs_grid))
 qcs_grid <- nd
 usethis::use_data(qcs_grid, internal = FALSE, overwrite = TRUE)
 
+pcod_2011 <- subset(pcod, year >= 2011)
+pcod_mesh_2011 <- sdmTMB::make_mesh(pcod_2011, xy_cols = c("X", "Y"), cutoff = 20)
+usethis::use_data(pcod_mesh_2011, internal = FALSE, overwrite = TRUE)
+
+usethis::use_data(pcod_2011, internal = FALSE, overwrite = TRUE)
+
 # pcod_spde <- make_spde(pcod$X, pcod$Y, n_knots = 140)
 # plot_spde(pcod_spde)
 # m <- sdmTMB(
