@@ -582,7 +582,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     # has means in first col and the remainder is Var-cov matrix
     priors_b <- mvnormal(rep(NA, ncol(X_ij)))
   }
-  if (!identical(nrow(priors_b), ncol(X_ij)))
+  # ncol(X_ij) may occur if time varying model, no intercept
+  if (ncol(X_ij) > 0 & !identical(nrow(priors_b), ncol(X_ij)))
     stop("The number of 'b' priors does not match the model matrix.", call. = FALSE)
   if(ncol(priors_b) == 2 & attributes(priors_b)$dist == "normal") {
     # normal priors passed in by user. change to MVN diagonal matrix
@@ -599,7 +600,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     priors_b_Sigma <- diag(2) # TMB can't handle 0-dim matrix
   } else {
     Sigma <- priors_b[,-1]
-    priors_b_Sigma <- Sigma[not_na, not_na]
+    priors_b_Sigma <- as.matrix(Sigma[not_na, not_na])
   }
 
   tmb_data <- list(
