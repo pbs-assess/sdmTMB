@@ -308,7 +308,10 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(calc_quadratic_range);
   DATA_VECTOR(area_i); // area per prediction grid cell for index standardization
 
-  DATA_MATRIX(priors_b); // beta priors matrix
+  DATA_VECTOR(priors_b_mean);
+  DATA_MATRIX(priors_b_Sigma); // beta priors matrix
+  DATA_INTEGER(priors_b_n);
+  DATA_IVECTOR(priors_b_index);
   DATA_VECTOR(priors); // all other priors as a vector
   DATA_INTEGER(ar1_fields);
   DATA_INTEGER(rw_fields);
@@ -668,10 +671,24 @@ Type objective_function<Type>::operator()()
 
   // ------------------ Priors -------------------------------------------------
 
-  for (int j = 0; j < n_j; j++) {
-    if (!isNA(priors_b(j, 0)) && !isNA(priors_b(j, 1)))
-      jnll -= dnorm(b_j(j), priors_b(j, 0), priors_b(j, 1), true);
+  // construct special object for MVN distribution, always has mean 0
+  MVNORM_t<Type> neg_log_dmvnorm(priors_b_Sigma);
+  // apply nll on residual. note that other univariate densities are positive log-likelihoods
+  // but the dmvnorm is negative. We're accumulating the neg LL, which is why this is a + sign
+  if(priors_b_n > 0) {
+    vector<Type> b_j_subset(priors_b_n),b_mean_subset(priors_b_n);
+    for(int j = 0; j < priors_b_n; j++) {
+      b_j_subset(j) = b_j(priors_b_index(j));
+      b_mean_subset(j) = priors_b_mean(j);
+    }
+    jnll += neg_log_dmvnorm(b_j_subset - b_mean_subset);
   }
+  //jnll += neg_log_dmvnorm(b_j - priors_b_mean);
+  //for (int j = 0; j < n_j; j++) {
+  //   if (!isNA(priors_b(j, 0)) && !isNA(priors_b(j, 1)))
+  //     jnll -= dnorm(b_j(j), priors_b_mean(j), priors_b_Sigma(j,j), true);
+  //}
+
   // start vector of priors:
   if (!isNA(priors(0)) && !isNA(priors(1)) && !isNA(priors(2)) && !isNA(priors(3))) {
     // std::cout << "Using spatial PC prior" << "\n";

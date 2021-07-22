@@ -4,6 +4,7 @@
 \alias{sdmTMBpriors}
 \alias{normal}
 \alias{halfnormal}
+\alias{mvnormal}
 \alias{pc_matern}
 \title{Prior distributions}
 \usage{
@@ -19,6 +20,8 @@ sdmTMBpriors(
 normal(location = 0, scale = 1)
 
 halfnormal(location = 0, scale = 1)
+
+mvnormal(location = 0, scale = diag(length(location)))
 
 pc_matern(range_gt, sigma_lt, range_prob = 0.05, sigma_prob = 0.05)
 }
@@ -44,7 +47,7 @@ parameter has support \verb{1 < tweedie_p < 2} so choose a mean appropriately.}
 
 \item{location}{Location parameter.}
 
-\item{scale}{Scale parameter (SD, not variance, for normal/half-normal).}
+\item{scale}{Scale parameter (Variance - covariance matrix).}
 
 \item{range_gt}{A value one expects the spatial or spatiotemporal range is \strong{g}reater \strong{t}han with \code{1 - range_prob} probability.}
 
@@ -90,6 +93,7 @@ model fit to a similar system but with more spatial information in the data.
 \examples{
 normal(0, 1)
 halfnormal(0, 1)
+mvnormal(c(0,0))
 pc_matern(range_gt = 5, sigma_lt = 1)
 
 if (inla_installed()) {

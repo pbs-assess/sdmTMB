@@ -56,3 +56,31 @@ test_that("Prior fitting works", {
   expect_gt(mp$model$par[["ln_tau_O"]], m$model$par[["ln_tau_O"]])
   expect_gt(mp$model$par[["ln_tau_E"]], m$model$par[["ln_tau_E"]])
 })
+
+
+test_that("Additional priors work", {
+  skip_on_ci()
+  skip_on_cran()
+  skip_if_not_installed("INLA")
+  d <- pcod_2011
+  pcod_spde <- pcod_mesh_2011
+
+  # univariate normal priors
+  m_norm <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+                   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+                   fields = "AR1",
+                   priors = sdmTMBpriors(b = normal(rep(0,6), rep(1,6))),
+                   share_range = FALSE)
+
+  m_mvn <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+                  data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+                  fields = "AR1",
+                  priors = sdmTMBpriors(b = mvnormal(rep(0,6), diag(1,6))),
+                  share_range = FALSE)
+
+  m_mvn_na <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+                  data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+                  fields = "AR1",
+                  priors = sdmTMBpriors(b = mvnormal(c(NA,0,0,0,0,0), diag(1,6))),
+                  share_range = FALSE)
+})
