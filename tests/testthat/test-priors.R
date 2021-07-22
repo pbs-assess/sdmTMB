@@ -71,16 +71,17 @@ test_that("Additional priors work", {
                    fields = "AR1",
                    priors = sdmTMBpriors(b = normal(rep(0,6), rep(1,6))),
                    share_range = FALSE)
-
+  expect_identical(class(m_norm), "sdmTMB")
   m_mvn <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
                   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
                   fields = "AR1",
                   priors = sdmTMBpriors(b = mvnormal(rep(0,6), diag(1,6))),
                   share_range = FALSE)
-
+  expect_identical(class(m_mvn), "sdmTMB")
   m_mvn_na <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
                   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
                   fields = "AR1",
                   priors = sdmTMBpriors(b = mvnormal(c(NA,0,0,0,0,0), diag(1,6))),
                   share_range = FALSE)
+  expect_identical(class(m_mvn_na), "sdmTMB")
 })
