@@ -45,13 +45,17 @@ parameter has support \verb{1 < tweedie_p < 2} so choose a mean appropriately.}
 
 \item{b}{\code{normal()} priors for the main population-level 'beta' effects.}
 
-\item{location}{Location parameter.}
+\item{location}{Location parameter(s).}
 
-\item{scale}{Scale parameter (Variance - covariance matrix).}
+\item{scale}{Scale parameter. For \code{normal()}/\code{halfnormal()}: standard
+deviation(s). For \code{mvnormal()}: variance-covariance matrix.}
 
-\item{range_gt}{A value one expects the spatial or spatiotemporal range is \strong{g}reater \strong{t}han with \code{1 - range_prob} probability.}
+\item{range_gt}{A value one expects the spatial or spatiotemporal range is
+\strong{g}reater \strong{t}han with \code{1 - range_prob} probability.}
 
-\item{sigma_lt}{A value one expects the spatial or spatiotemporal marginal standard deviation (\code{sigma_O} or \code{sigma_E} internally) is \strong{l}ess \strong{t}han with \code{1 - sigma_prob} probability.}
+\item{sigma_lt}{A value one expects the spatial or spatiotemporal marginal
+standard deviation (\code{sigma_O} or \code{sigma_E} internally) is \strong{l}ess \strong{t}han
+with \code{1 - sigma_prob} probability.}
 
 \item{range_prob}{Probability. See description for \code{range_gt}.}
 
@@ -93,7 +97,7 @@ model fit to a similar system but with more spatial information in the data.
 \examples{
 normal(0, 1)
 halfnormal(0, 1)
-mvnormal(c(0,0))
+mvnormal(c(0, 0))
 pc_matern(range_gt = 5, sigma_lt = 1)
 
 if (inla_installed()) {

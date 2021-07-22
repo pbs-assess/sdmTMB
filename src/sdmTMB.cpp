@@ -387,15 +387,7 @@ Type objective_function<Type>::operator()()
   // ------------------ End of parameters --------------------------------------
 
   int n_i = y_i.size();   // number of observations
-  int n_j = X_ij.cols();  // number of fixed-effect params
   int n_RE = RE_indexes.cols();  // number of random effect intercepts
-
-  // Type nll_data = 0;     // likelihood of data
-  // Type nll_varphi = 0;   // random walk effects
-  // Type nll_omega = 0;    // spatial effects
-  // Type nll_omega_trend = 0;    // spatial trend effects
-  // Type nll_epsilon = 0;  // spatio-temporal effects
-  // Type nll_priors = 0;   // priors
 
   // ------------------ Derived variables -------------------------------------------------
   Type s_slope, s_cut, s50, s95, s_max;
@@ -444,9 +436,8 @@ Type objective_function<Type>::operator()()
     }
   }
   if (est_epsilon_model) { // loglinear model
-    //b_epsilon = minus_one_to_one(b_epsilon_logit); // TODO: document this?
-    // epsilon_intcpt is the intercept parameter, derived from ln_tau_E. For models with time as covariate,
-    // this is interpreted as sigma when covariate = 0.
+    // epsilon_intcpt is the intercept parameter, derived from ln_tau_E.
+    // For models with time as covariate, this is interpreted as sigma when covariate = 0.
     Type epsilon_intcpt = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa(1)));
     Type log_epsilon_intcpt = log(epsilon_intcpt);
     Type log_epsilon_temp = 0.0;
@@ -671,10 +662,11 @@ Type objective_function<Type>::operator()()
 
   // ------------------ Priors -------------------------------------------------
 
-  // construct special object for MVN distribution, always has mean 0
+  // Construct special object for MVN distribution; always has mean 0.
   MVNORM_t<Type> neg_log_dmvnorm(priors_b_Sigma);
-  // apply nll on residual. note that other univariate densities are positive log-likelihoods
-  // but the dmvnorm is negative. We're accumulating the neg LL, which is why this is a + sign
+  // Apply nll on residual. Note that other univariate densities are positive
+  // log-likelihoods but the dmvnorm is negative.
+  // We're accumulating the neg LL, which is why this is a + sign.
   if(priors_b_n > 0) {
     vector<Type> b_j_subset(priors_b_n),b_mean_subset(priors_b_n);
     for(int j = 0; j < priors_b_n; j++) {
@@ -683,11 +675,6 @@ Type objective_function<Type>::operator()()
     }
     jnll += neg_log_dmvnorm(b_j_subset - b_mean_subset);
   }
-  //jnll += neg_log_dmvnorm(b_j - priors_b_mean);
-  //for (int j = 0; j < n_j; j++) {
-  //   if (!isNA(priors_b(j, 0)) && !isNA(priors_b(j, 1)))
-  //     jnll -= dnorm(b_j(j), priors_b_mean(j), priors_b_Sigma(j,j), true);
-  //}
 
   // start vector of priors:
   if (!isNA(priors(0)) && !isNA(priors(1)) && !isNA(priors(2)) && !isNA(priors(3))) {

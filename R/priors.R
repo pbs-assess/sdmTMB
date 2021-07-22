@@ -71,7 +71,7 @@ sdmTMBpriors <- function(
   assert_that(attr(matern_st, "dist") == "pc_matern")
   assert_that(attr(phi, "dist") == "normal")
   assert_that(attr(tweedie_p, "dist") == "normal")
-  assert_that(attr(b, "dist") %in% c("normal","mvnormal"))
+  assert_that(attr(b, "dist") %in% c("normal", "mvnormal"))
   list(
     matern_s = matern_s,
     matern_st = matern_st,
@@ -83,8 +83,9 @@ sdmTMBpriors <- function(
 }
 
 #'
-#' @param location Location parameter.
-#' @param scale Scale parameter (SD, not variance, for normal/half-normal).
+#' @param location Location parameter(s).
+#' @param scale Scale parameter. For `normal()`/`halfnormal()`: standard
+#'   deviation(s). For `mvnormal()`: variance-covariance matrix.
 #' @export
 #' @rdname priors
 #' @examples
@@ -106,24 +107,22 @@ halfnormal <- function(location = 0, scale = 1) {
   normal(location, scale)
 }
 
-#' @param location Location parameter.
-#' @param scale Scale parameter (Variance - covariance matrix).
 #' @export
 #' @rdname priors
 #' @examples
-#' mvnormal(c(0,0))
+#' mvnormal(c(0, 0))
 mvnormal <- function(location = 0, scale = diag(length(location))) {
-  # assert_that(all(location[!is.na(location)] == 0))
-  #assert_that(length(which(is.na(scale))) == 0)
   assert_that(length(location) == dim(scale)[1])
-  #assert_that(sum(is.na(location)) == sum(is.na(scale)))
   # return single matrix, where first col = locations, rest = Sigma
   x <- cbind(as.matrix(location,ncol=1), scale)
   `attr<-`(x, "dist", "mvnormal")
 }
 
-#' @param range_gt A value one expects the spatial or spatiotemporal range is **g**reater **t**han with `1 - range_prob` probability.
-#' @param sigma_lt A value one expects the spatial or spatiotemporal marginal standard deviation (`sigma_O` or `sigma_E` internally) is **l**ess **t**han with `1 - sigma_prob` probability.
+#' @param range_gt A value one expects the spatial or spatiotemporal range is
+#'   **g**reater **t**han with `1 - range_prob` probability.
+#' @param sigma_lt A value one expects the spatial or spatiotemporal marginal
+#'   standard deviation (`sigma_O` or `sigma_E` internally) is **l**ess **t**han
+#'   with `1 - sigma_prob` probability.
 #' @param range_prob Probability. See description for `range_gt`.
 #' @param sigma_prob Probability. See description for `sigma_lt`.
 #' @export

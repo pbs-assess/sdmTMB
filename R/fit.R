@@ -575,9 +575,6 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       message("Expanding `b` priors to match model matrix.")
     }
     # creates matrix that is 2 columns of NAs, rows = number of unique bs
-    #priors_b <- do.call("rbind", replicate(ncol(X_ij), priors_b,
-    #  simplify = FALSE
-    #))
     # Instead of passing in a 2-column matrix of NAs, pass in a matrix that
     # has means in first col and the remainder is Var-cov matrix
     priors_b <- mvnormal(rep(NA, ncol(X_ij)))
@@ -585,21 +582,21 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   # ncol(X_ij) may occur if time varying model, no intercept
   if (ncol(X_ij) > 0 & !identical(nrow(priors_b), ncol(X_ij)))
     stop("The number of 'b' priors does not match the model matrix.", call. = FALSE)
-  if(ncol(priors_b) == 2 & attributes(priors_b)$dist == "normal") {
-    # normal priors passed in by user. change to MVN diagonal matrix
+  if (ncol(priors_b) == 2 && attributes(priors_b)$dist == "normal") {
+    # normal priors passed in by user; change to MVN diagonal matrix
     # as.numeric() here prevents diag(NA) taking on factor
-    if(length(priors_b[,2])==1) {
-      if(is.na(priors_b[,2])) priors_b[,2] = 1
+    if (length(priors_b[, 2]) == 1L) {
+      if (is.na(priors_b[, 2])) priors_b[, 2] <- 1
     }
-    priors_b <- mvnormal(location = priors_b[,1], scale = diag(as.numeric(priors_b[,2])))
+    priors_b <- mvnormal(location = priors_b[, 1], scale = diag(as.numeric(priors_b[, 2])))
   }
-  # in some cases, priors_b will be a mix of NAs and numeric values
-  # easiest way to deal with this is subset the Sigma matrix
+  # in some cases, priors_b will be a mix of NAs (no prior) and numeric values
+  # easiest way to deal with this is to subset the Sigma matrix
   not_na <- which(!is.na(priors_b[,1]))
-  if(length(not_na)==0) {
+  if (length(not_na) == 0L) {
     priors_b_Sigma <- diag(2) # TMB can't handle 0-dim matrix
   } else {
-    Sigma <- priors_b[,-1]
+    Sigma <- priors_b[, -1]
     priors_b_Sigma <- as.matrix(Sigma[not_na, not_na])
   }
 
