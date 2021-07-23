@@ -46,7 +46,8 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' @param spde Output from [make_mesh()].
 #' @param time The name of the time column. Leave as `NULL` if this is only spatial data.
 #' @param k_folds Number of folds.
-#' @param fold_ids Optional vector containing user fold ids.
+#' @param fold_ids Optional vector containing user fold ids. Can also be a single string,
+#' e.g. "fold_id" representing the name of the variable in `data`
 #' @param ... All other arguments required to run [sdmTMB()] model with the
 #'   exception of `weights`, which are used to define the folds.
 #'
@@ -89,7 +90,23 @@ sdmTMB_cv <- function(formula, data, spde, time = NULL,
     data <- do.call(rbind, dd)
     fold_ids <- "cv_fold"
   } else {
-    data$cv_fold <- fold_ids
+    # fold_ids passed in. can be numeric, or a named column in `data`
+    data$cv_fold <- NA
+    if(length(fold_ids)==nrow(data)) {
+      data$cv_fold <- fold_ids
+    }
+    if(length(fold_ids)==1 & class(fold_ids)=="character") {
+      if(fold_ids %in% names(data) == FALSE) {
+        stop("Error: name of fold identifier not found in data")
+      }
+      data$cv_fold = data[[fold_ids]]
+    }
+    if(length(fold_ids)>1 & length(fold_ids)<nrow(data)) {
+      stop("Error: dimension of fold_ids doesn't match data, and is not a named variable")
+    }
+    if(length(which(is.na(data$cv_fold))) > 0) {
+      stop("Error: NAs found in fold IDs, please check fold_ids are specified correctly")
+    }
   }
 
   dot_args <- as.list(substitute(list(...)))[-1L]
