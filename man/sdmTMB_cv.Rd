@@ -17,8 +17,9 @@ sdmTMB_cv(formula, data, spde, time = NULL, k_folds = 10, fold_ids = NULL, ...)
 
 \item{k_folds}{Number of folds.}
 
-\item{fold_ids}{Optional vector containing user fold ids. Can also be a single string,
-e.g. "fold_id" representing the name of the variable in \code{data}}
+\item{fold_ids}{Optional vector containing user fold IDs. Can also be a
+single string, e.g. \code{"fold_id"} representing the name of the variable in
+\code{data}.}
 
 \item{...}{All other arguments required to run \code{\link[=sdmTMB]{sdmTMB()}} model with the
 exception of \code{weights}, which are used to define the folds.}

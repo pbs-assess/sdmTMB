@@ -46,8 +46,9 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' @param spde Output from [make_mesh()].
 #' @param time The name of the time column. Leave as `NULL` if this is only spatial data.
 #' @param k_folds Number of folds.
-#' @param fold_ids Optional vector containing user fold ids. Can also be a single string,
-#' e.g. "fold_id" representing the name of the variable in `data`
+#' @param fold_ids Optional vector containing user fold IDs. Can also be a
+#'   single string, e.g. `"fold_id"` representing the name of the variable in
+#'   `data`.
 #' @param ... All other arguments required to run [sdmTMB()] model with the
 #'   exception of `weights`, which are used to define the folds.
 #'
@@ -57,8 +58,6 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' if (inla_installed()) {
 #' spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 #'
-# # library(future) # for parallel processing
-# # plan(multisession) # for parallel processing
 #' m_cv <- sdmTMB_cv(
 #'   density ~ 0 + depth_scaled + depth_scaled2,
 #'   data = pcod, spde = spde,
@@ -90,22 +89,22 @@ sdmTMB_cv <- function(formula, data, spde, time = NULL,
     data <- do.call(rbind, dd)
     fold_ids <- "cv_fold"
   } else {
-    # fold_ids passed in. can be numeric, or a named column in `data`
+    # fold_ids passed in; can be numeric, or a named column in `data`
     data$cv_fold <- NA
-    if(length(fold_ids)==nrow(data)) {
+    if (length(fold_ids) == nrow(data)) {
       data$cv_fold <- fold_ids
     }
-    if(length(fold_ids)==1 & class(fold_ids)=="character") {
-      if(fold_ids %in% names(data) == FALSE) {
-        stop("Error: name of fold identifier not found in data")
+    if (length(fold_ids) == 1L && is.character(fold_ids)) {
+      if (!fold_ids %in% names(data)) {
+        stop("Name of fold identifier not found in data.", call. = FALSE)
       }
-      data$cv_fold = data[[fold_ids]]
+      data$cv_fold <- data[[fold_ids]]
     }
-    if(length(fold_ids)>1 & length(fold_ids)<nrow(data)) {
-      stop("Error: dimension of fold_ids doesn't match data, and is not a named variable")
+    if (length(fold_ids) > 1 && length(fold_ids) < nrow(data)) {
+      stop("Dimension of `fold_ids` doesn't match data and is not a named variable.")
     }
-    if(length(which(is.na(data$cv_fold))) > 0) {
-      stop("Error: NAs found in fold IDs, please check fold_ids are specified correctly")
+    if (length(which(is.na(data$cv_fold))) > 0) {
+      stop("NAs found in `fold_ids`; please check `fold_ids` are specified correctly.")
     }
   }
 
