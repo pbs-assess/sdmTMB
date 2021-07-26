@@ -580,6 +580,10 @@ Type objective_function<Type>::operator()()
             jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(t)))((epsilon_st.col(t) -
               rho * epsilon_st.col(t - 1))/sqrt(1. - rho * rho));
           }
+          int n_rows=epsilon_st.cols();
+          int m_cols=epsilon_st.size()/n_rows;
+          // This penalty added to match Kasper's AR1_t() implementation
+          jnll += Type((n_rows-1)*m_cols) * log(sqrt(Type(1)-rho*rho));
         } else if (rw_fields) {
           jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
           for (int t = 1; t < n_t; t++) {
