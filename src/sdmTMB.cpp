@@ -595,11 +595,6 @@ Type objective_function<Type>::operator()()
       } else { // constant epsilon sd, keep calculations as is
         if (ar1_fields) {
           jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q_st, s)), 1./exp(ln_tau_E))(epsilon_st);
-          // jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
-          // for (int t = 1; t < n_t; t++) {
-          //   jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))((epsilon_st.col(t) -
-          //     rho * epsilon_st.col(t - 1))/sqrt(1. - rho * rho));
-          // }
         } else if (rw_fields) {
           jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
           for (int t = 1; t < n_t; t++) {
