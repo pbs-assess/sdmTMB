@@ -44,7 +44,8 @@ Transform a mesh object into a barrier mesh object
 \examples{
 if (require("sf", quietly = TRUE) &&
   require("ggplot2", quietly = TRUE) &&
-  require("dplyr", quietly = TRUE)) {
+  require("dplyr", quietly = TRUE) &&
+  require("INLA", quietly = TRUE)) {
 
 # First, download coastline data for our region.
 # We will use `bc_coast` from the package data,
@@ -122,9 +123,9 @@ fit
 \references{
 Bakka, H., Vanhatalo, J., Illian, J., Simpson, D., and Rue, H. 2019.
 Non-stationary Gaussian models with physical barriers.
-\url{http://arxiv.org/abs/1608.03787}
+\url{https://arxiv.org/abs/1608.03787}
 
-\url{http://www.r-inla.org/barrier-model}
+\url{https://sites.google.com/a/r-inla.org/www/barrier-model}
 
 \url{https://haakonbakkagit.github.io/btopic107.html}
 }
