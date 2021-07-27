@@ -111,7 +111,8 @@ sdmTMB_cv <- function(formula, data, spde, time = NULL,
   out <- future.apply::future_lapply(seq_len(k_folds), function(k) {
     # out <- lapply(seq_len(k_folds), function(k) {
     # data in kth fold get weight of 0:
-    weights <- ifelse(data$cv_fold == k, 1, 0)
+    weights <- ifelse(data$cv_fold == k, 0, 1)
+
     args <- c(list(
       data = data, formula = formula, time = time,
       spde = spde, weights = weights, previous_fit = fit1
