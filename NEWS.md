@@ -1,5 +1,9 @@
 # sdmTMB
 
+# sdmTMB 0.0.14.9004
+
+* Fix bug in cross validation where the included 'fold' was reversed
+
 # sdmTMB 0.0.14.9003
 
 * Add vignette on making pretty maps of the output
@@ -15,7 +19,7 @@
 
 * Add `re_form_iid` to `predict.sdmTMB()`.
 
-* Add `map_rf` option to `sdmTMB()`. This lets you map (fix at 
+* Add `map_rf` option to `sdmTMB()`. This lets you map (fix at
   their starting values of zero) all random fields to produce a
   classic GLM/GLMM.
 
