@@ -133,7 +133,8 @@ sdmTMB_cv <- function(formula, data, spde, time = NULL,
 
   fit_func <- function(k) {
     # data in kth fold get weight of 0:
-    weights <- ifelse(data$cv_fold == k, 1, 0)
+    weights <- ifelse(data$cv_fold == k, 0, 1)
+
     args <- c(list(
       data = data, formula = formula, time = time,
       spde = spde, weights = weights, previous_fit = if (use_initial_fit) fit1 else NULL
