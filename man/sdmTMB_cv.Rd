@@ -4,7 +4,16 @@
 \alias{sdmTMB_cv}
 \title{Save log likelihoods of k-fold cross-validation for sdmTMB models}
 \usage{
-sdmTMB_cv(formula, data, spde, time = NULL, k_folds = 10, fold_ids = NULL, ...)
+sdmTMB_cv(
+  formula,
+  data,
+  spde,
+  time = NULL,
+  k_folds = 10,
+  fold_ids = NULL,
+  use_initial_fit = FALSE,
+  ...
+)
 }
 \arguments{
 \item{formula}{Model formula.}
@@ -20,6 +29,9 @@ sdmTMB_cv(formula, data, spde, time = NULL, k_folds = 10, fold_ids = NULL, ...)
 \item{fold_ids}{Optional vector containing user fold IDs. Can also be a
 single string, e.g. \code{"fold_id"} representing the name of the variable in
 \code{data}.}
+
+\item{use_initial_fit}{Fit the first fold and use those parameter values
+as starting values for subsequent folds? Can be faster with many folds.}
 
 \item{...}{All other arguments required to run \code{\link[=sdmTMB]{sdmTMB()}} model with the
 exception of \code{weights}, which are used to define the folds.}

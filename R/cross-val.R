@@ -49,6 +49,8 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' @param fold_ids Optional vector containing user fold IDs. Can also be a
 #'   single string, e.g. `"fold_id"` representing the name of the variable in
 #'   `data`.
+#' @param use_initial_fit Fit the first fold and use those parameter values
+#'   as starting values for subsequent folds? Can be faster with many folds.
 #' @param ... All other arguments required to run [sdmTMB()] model with the
 #'   exception of `weights`, which are used to define the folds.
 #'
@@ -71,6 +73,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' }
 sdmTMB_cv <- function(formula, data, spde, time = NULL,
                       k_folds = 10, fold_ids = NULL,
+                      use_initial_fit = FALSE,
                       ...) {
   if (k_folds < 1) stop("`k_folds` must be >= 1.", call. = FALSE)
 
@@ -120,25 +123,27 @@ sdmTMB_cv <- function(formula, data, spde, time = NULL,
     weights <- rep(1, nrow(data))
   }
 
-  # run model on first fold to get starting values:
-  fit1 <- sdmTMB(
-    data = data, formula = formula, time = time, spde = spde,
-    weights = weights, ...
-  )
+  if (use_initial_fit) {
+    # run model on first fold to get starting values:
+    fit1 <- sdmTMB(
+      data = data, formula = formula, time = time, spde = spde,
+      weights = weights, ...
+    )
+  }
 
   fit_func <- function(k) {
     # data in kth fold get weight of 0:
     weights <- ifelse(data$cv_fold == k, 1, 0)
     args <- c(list(
       data = data, formula = formula, time = time,
-      spde = spde, weights = weights, previous_fit = fit1
+      spde = spde, weights = weights, previous_fit = if (use_initial_fit) fit1 else NULL
     ), dot_args)
-    if (k == 1L) {
+    if (k == 1L && use_initial_fit) {
       object <- fit1
     } else {
       object <- do.call(sdmTMB, args)
-      if (max(object$gradients) > 0.001) {
-        object <- run_extra_optimization(object, nlminb_loops = 0L, newton_loops = 1L)
+      if (max(object$gradients) > 0.01) {
+        object <- run_extra_optimization(object, nlminb_loops = 1L, newton_loops = 0L)
       }
     }
 
