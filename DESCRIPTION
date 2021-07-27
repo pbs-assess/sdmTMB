@@ -43,6 +43,7 @@ Imports:
     TMB (>= 1.7.20)
 Suggests:
     dplyr,
+    future.apply,
     ggplot2,
     glmmTMB,
     INLA,

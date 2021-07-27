@@ -126,8 +126,7 @@ sdmTMB_cv <- function(formula, data, spde, time = NULL,
     weights = weights, ...
   )
 
-  # out <- future.apply::future_lapply(seq_len(k_folds), function(k) {
-  out <- lapply(seq_len(k_folds), function(k) {
+  fit_func <- function(k) {
     # data in kth fold get weight of 0:
     weights <- ifelse(data$cv_fold == k, 1, 0)
     args <- c(list(
@@ -161,8 +160,18 @@ sdmTMB_cv <- function(formula, data, spde, time = NULL,
       max_gradient = max(abs(object$gradients)),
       bad_eig = object$bad_eig
     )
-  # }, future.seed = TRUE)
-  })
+  }
+
+  if (requireNamespace("future.apply", quietly = TRUE)) {
+    message("Running fits with `future.apply()`.\n",
+      "Set a parallel `future::plan()` to use parallel processing.")
+    out <- future.apply::future_lapply(seq_len(k_folds), fit_func, future.seed = TRUE)
+  } else {
+    message("Running fits sequentially.\n",
+      "Install the future and future.apply packages and\n",
+      "set a parallel `future::plan()` to use parallel processing.")
+    out <- lapply(seq_len(k_folds), fit_func)
+  }
 
   models <- lapply(out, `[[`, "model")
   data <- lapply(out, `[[`, "data")
