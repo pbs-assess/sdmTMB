@@ -383,6 +383,7 @@ Type objective_function<Type>::operator()()
   PARAMETER(b_epsilon); // slope coefficient for log-linear model on epsilon
   // Joint negative log-likelihood
   Type jnll = 0.0;
+  Type nll_obs = 0.0;
 
   // ------------------ End of parameters --------------------------------------
 
@@ -617,47 +618,49 @@ Type objective_function<Type>::operator()()
     if (!isNA(y_i(i))) {
       switch (family) {
       case gaussian_family:
-        jnll -= keep(i) * dnorm(y_i(i), mu_i(i), phi, true) * weights_i(i);
+        nll_obs -= keep(i) * dnorm(y_i(i), mu_i(i), phi, true) * weights_i(i);
         break;
       case tweedie_family:
         s1 = invlogit(thetaf) + Type(1.0);
         if (!isNA(priors(12))) jnll -= dnorm(s1, priors(12), priors(13), true);
-        jnll -= keep(i) * dtweedie(y_i(i), mu_i(i), phi, s1, true) * weights_i(i);
+        nll_obs -= keep(i) * dtweedie(y_i(i), mu_i(i), phi, s1, true) * weights_i(i);
         break;
       case binomial_family:  // in logit space not inverse logit
-        jnll -= keep(i) * dbinom_robust(y_i(i), size(i), mu_i(i), true) * weights_i(i);
+        nll_obs -= keep(i) * dbinom_robust(y_i(i), size(i), mu_i(i), true) * weights_i(i);
         break;
       case poisson_family:
-        jnll -= keep(i) * dpois(y_i(i), mu_i(i), true) * weights_i(i);
+        nll_obs -= keep(i) * dpois(y_i(i), mu_i(i), true) * weights_i(i);
         break;
       case Gamma_family:
         s1 = exp(ln_phi);         // shape
         s2 = mu_i(i) / s1;        // scale
-        jnll -= keep(i) * dgamma(y_i(i), s1, s2, true) * weights_i(i);
+        nll_obs -= keep(i) * dgamma(y_i(i), s1, s2, true) * weights_i(i);
         // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
-        // jnll -= keep(i) * dgamma(y_i(i), s1, mu_i(i) / s1, true) * weights_i(i);
+        // nll_obs -= keep(i) * dgamma(y_i(i), s1, mu_i(i) / s1, true) * weights_i(i);
         break;
       case nbinom2_family:
         s1 = log(mu_i(i)); // log(mu_i)
         s2 = 2. * s1 - ln_phi; // log(var - mu)
-        jnll -= keep(i) * dnbinom_robust(y_i(i), s1, s2, true) * weights_i(i);
+        nll_obs -= keep(i) * dnbinom_robust(y_i(i), s1, s2, true) * weights_i(i);
         break;
       case lognormal_family:
-        jnll -= keep(i) * dlnorm(y_i(i), log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi, true) * weights_i(i);
+        nll_obs -= keep(i) * dlnorm(y_i(i), log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi, true) * weights_i(i);
         break;
       case student_family:
-        jnll -= keep(i) * dstudent(y_i(i), mu_i(i), exp(ln_phi), df, true) * weights_i(i);
+        nll_obs -= keep(i) * dstudent(y_i(i), mu_i(i), exp(ln_phi), df, true) * weights_i(i);
         break;
       case Beta_family: // Ferrari and Cribari-Neto 2004; betareg package
         s1 = mu_i(i) * phi;
         s2 = (Type(1) - mu_i(i)) * phi;
-        jnll -= keep(i) * dbeta(y_i(i), s1, s2, true) * weights_i(i);
+        nll_obs -= keep(i) * dbeta(y_i(i), s1, s2, true) * weights_i(i);
         break;
       default:
         error("Family not implemented.");
       }
     }
   }
+  jnll += nll_obs;
+  REPORT(nll_obs);
 
   // ------------------ Priors -------------------------------------------------
 
