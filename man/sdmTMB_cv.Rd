@@ -7,10 +7,12 @@
 sdmTMB_cv(
   formula,
   data,
+  mesh_args,
   spde,
   time = NULL,
   k_folds = 10,
   fold_ids = NULL,
+  parallel = TRUE,
   use_initial_fit = FALSE,
   ...
 )
@@ -20,15 +22,23 @@ sdmTMB_cv(
 
 \item{data}{A data frame.}
 
-\item{spde}{Output from \code{\link[=make_mesh]{make_mesh()}}.}
+\item{mesh_args}{Arguments for \code{\link[=make_mesh]{make_mesh()}}. If supplied, the mesh will be
+reconstruncted for each fold.}
 
-\item{time}{The name of the time column. Leave as \code{NULL} if this is only spatial data.}
+\item{spde}{Output from \code{\link[=make_mesh]{make_mesh()}}. If supplied, the mesh will be constant
+across folds.}
+
+\item{time}{The name of the time column. Leave as \code{NULL} if this is only
+spatial data.}
 
 \item{k_folds}{Number of folds.}
 
 \item{fold_ids}{Optional vector containing user fold IDs. Can also be a
 single string, e.g. \code{"fold_id"} representing the name of the variable in
 \code{data}.}
+
+\item{parallel}{If \code{TRUE} and a \code{\link[future:plan]{future::plan()}} is supplied, will be run in
+parallel.}
 
 \item{use_initial_fit}{Fit the first fold and use those parameter values
 as starting values for subsequent folds? Can be faster with many folds.}
@@ -43,6 +53,9 @@ Save log likelihoods of k-fold cross-validation for sdmTMB models
 if (inla_installed()) {
 spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 
+# Set parallel processing if desired:
+# library(future)
+# plan(multisession)
 m_cv <- sdmTMB_cv(
   density ~ 0 + depth_scaled + depth_scaled2,
   data = pcod, spde = spde,
@@ -53,5 +66,14 @@ m_cv$sum_loglik
 head(m_cv$data)
 m_cv$models[[1]]
 m_cv$max_gradients
+
+\donttest{
+# Create mesh each fold:
+m_cv2 <- sdmTMB_cv(
+  density ~ 0 + depth_scaled + depth_scaled2,
+  data = pcod, mesh_args = list(xy_cols = c("X", "Y", cutoff = 20)),
+  family = tweedie(link = "log"), k_folds = 2
+)
+}
 }
 }

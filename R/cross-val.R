@@ -43,12 +43,18 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'
 #' @param formula Model formula.
 #' @param data A data frame.
-#' @param spde Output from [make_mesh()].
-#' @param time The name of the time column. Leave as `NULL` if this is only spatial data.
+#' @param spde Output from [make_mesh()]. If supplied, the mesh will be constant
+#'   across folds.
+#' @param mesh_args Arguments for [make_mesh()]. If supplied, the mesh will be
+#'   reconstruncted for each fold.
+#' @param time The name of the time column. Leave as `NULL` if this is only
+#'   spatial data.
 #' @param k_folds Number of folds.
 #' @param fold_ids Optional vector containing user fold IDs. Can also be a
 #'   single string, e.g. `"fold_id"` representing the name of the variable in
 #'   `data`.
+#' @param parallel If `TRUE` and a [future::plan()] is supplied, will be run in
+#'   parallel.
 #' @param use_initial_fit Fit the first fold and use those parameter values
 #'   as starting values for subsequent folds? Can be faster with many folds.
 #' @param ... All other arguments required to run [sdmTMB()] model with the
@@ -60,6 +66,9 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' if (inla_installed()) {
 #' spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 #'
+#' # Set parallel processing if desired:
+#' # library(future)
+#' # plan(multisession)
 #' m_cv <- sdmTMB_cv(
 #'   density ~ 0 + depth_scaled + depth_scaled2,
 #'   data = pcod, spde = spde,
@@ -70,14 +79,28 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' head(m_cv$data)
 #' m_cv$models[[1]]
 #' m_cv$max_gradients
+#'
+#' \donttest{
+#' # Create mesh each fold:
+#' m_cv2 <- sdmTMB_cv(
+#'   density ~ 0 + depth_scaled + depth_scaled2,
+#'   data = pcod, mesh_args = list(xy_cols = c("X", "Y", cutoff = 20)),
+#'   family = tweedie(link = "log"), k_folds = 2
+#' )
 #' }
-sdmTMB_cv <- function(formula, data, spde, time = NULL,
-                      k_folds = 10, fold_ids = NULL,
-                      use_initial_fit = FALSE,
-                      ...) {
+#' }
+sdmTMB_cv <- function(formula, data, mesh_args, spde, time = NULL,
+  k_folds = 10, fold_ids = NULL, parallel = TRUE,
+  use_initial_fit = FALSE,
+  ...) {
   if (k_folds < 1) stop("`k_folds` must be >= 1.", call. = FALSE)
 
   data[["_sdm_order_"]] <- seq_len(nrow(data))
+  stopifnot(!missing(mesh_args) || !missing(spde))
+  stopifnot(!(!missing(mesh_args) && !missing(spde)))
+  constant_mesh <- missing(mesh_args)
+  if (missing(mesh_args)) mesh_args <- NULL
+  if (missing(spde)) spde <- NULL
 
   # add column of fold_ids stratified across time steps
   if (is.null(time)) {
@@ -118,15 +141,24 @@ sdmTMB_cv <- function(formula, data, spde, time = NULL,
 
   if (k_folds > 1) {
     # data in kth fold get weight of 0:
-    weights <- ifelse(data$cv_fold == 1L, 1, 0)
+    weights <- ifelse(data$cv_fold == 1L, 0, 1)
   } else {
     weights <- rep(1, nrow(data))
   }
 
   if (use_initial_fit) {
     # run model on first fold to get starting values:
+
+    if (!constant_mesh) {
+      dat_fit <- data[data$cv_fold != 1L, , drop = FALSE]
+      mesh_args[["data"]] <- dat_fit
+      mesh <- do.call(make_mesh, mesh_args)
+    } else {
+      mesh <- spde
+      dat_fit <- data
+    }
     fit1 <- sdmTMB(
-      data = data, formula = formula, time = time, spde = spde,
+      data = dat_fit, formula = formula, time = time, spde = mesh,
       weights = weights, ...
     )
   }
@@ -135,29 +167,62 @@ sdmTMB_cv <- function(formula, data, spde, time = NULL,
     # data in kth fold get weight of 0:
     weights <- ifelse(data$cv_fold == k, 0, 1)
 
-    args <- c(list(
-      data = data, formula = formula, time = time,
-      spde = spde, weights = weights, previous_fit = if (use_initial_fit) fit1 else NULL
-    ), dot_args)
     if (k == 1L && use_initial_fit) {
       object <- fit1
     } else {
-      object <- do.call(sdmTMB, args)
-      if (max(object$gradients) > 0.01) {
-        object <- run_extra_optimization(object, nlminb_loops = 1L, newton_loops = 0L)
+      if (!constant_mesh) {
+        dat_fit <- data[data$cv_fold != k, , drop = FALSE]
+        mesh_args[["data"]] <- dat_fit
+        mesh <- do.call(make_mesh, mesh_args)
+      } else {
+        mesh <- spde
+        dat_fit <- data
       }
+      args <- c(list(
+        data = dat_fit, formula = formula, time = time, spde = mesh,
+        weights = weights, previous_fit = if (use_initial_fit) fit1 else NULL), dot_args)
+      object <- do.call(sdmTMB, args)
+      # if (max(object$gradients) > 0.01) {
+        # object <- run_extra_optimization(object, nlminb_loops = 1L, newton_loops = 0L)
+      # }
     }
 
+    cv_data <- data[data$cv_fold == k, , drop = FALSE]
     # predict for withheld data:
-    predicted <- predict(object)[weights == 0, , drop = FALSE]
-    cv_data <- data[weights == 0, , drop = FALSE]
+    predicted_obj <- predict(object, newdata = cv_data, return_tmb_obj = TRUE)
+    # predicted <- predicted_obj$data[weights == 0, , drop = FALSE]
+    predicted <- predicted_obj$data
+    # cv_data <- data[weights == 0, , drop = FALSE]
     cv_data$cv_predicted <- object$family$linkinv(predicted$est)
     response <- get_response(object$formula)
     withheld_y <- predicted[[response]]
     withheld_mu <- cv_data$cv_predicted
 
     # calculate log likelihood for each withheld observation:
-    cv_data$cv_loglik <- ll_sdmTMB(object, withheld_y, withheld_mu)
+
+    # trickery to get the log likelihood of the withheld data directly from the TMB report():
+    # tmb_data <- predicted_obj$tmb_data
+    # tmb_data$weights_i <- ifelse(tmb_data$weights_i == 1, 0, 1) # reversed
+    # new_tmb_obj <- TMB::MakeADFun(
+    #   data = tmb_data,
+    #   parameters = predicted_obj$fit_obj$tmb_obj$env$parList(),
+    #   map = predicted_obj$fit_obj$tmb_map,
+    #   random = predicted_obj$fit_obj$tmb_random,
+    #   DLL = "sdmTMB",
+    #   silent = TRUE
+    # )
+    # old_par <- predicted_obj$obj$model$par
+    # # need to initialize the new TMB object once:
+    # sink(tempfile())
+    # new_tmb_obj$fn(old_par)
+    # sink()
+    # lp <- predicted_obj$fit_obj$tmb_obj$env$last.par.best
+    # r <- new_tmb_obj$report(lp)
+    # r$nll_obs
+    # cv_data$cv_loglik <- -1 * r$nll_obs
+
+    # cv_data$cv_loglik <- ll_sdmTMB(object, withheld_y, withheld_mu)
+    cv_data$cv_loglik <- sum(ll_sdmTMB(object, withheld_y, withheld_mu))
 
     list(
       data = cv_data,
@@ -168,20 +233,23 @@ sdmTMB_cv <- function(formula, data, spde, time = NULL,
     )
   }
 
-  if (requireNamespace("future.apply", quietly = TRUE)) {
+  if (requireNamespace("future.apply", quietly = TRUE) && parallel) {
     message("Running fits with `future.apply()`.\n",
       "Set a parallel `future::plan()` to use parallel processing.")
     out <- future.apply::future_lapply(seq_len(k_folds), fit_func, future.seed = TRUE)
+    # out <- lapply(seq_len(k_folds), fit_func)
   } else {
     message("Running fits sequentially.\n",
-      "Install the future and future.apply packages and\n",
-      "set a parallel `future::plan()` to use parallel processing.")
+      "Install the future and future.apply packages,\n",
+      "set a parallel `future::plan()`, and set `parallel = TRUE` to use parallel processing.")
     out <- lapply(seq_len(k_folds), fit_func)
   }
 
   models <- lapply(out, `[[`, "model")
   data <- lapply(out, `[[`, "data")
-  fold_cv_ll <- vapply(data, function(.x) sum(.x$cv_loglik), FUN.VALUE = numeric(1L))
+  # fold_cv_ll <- vapply(data, function(.x) sum(.x$cv_loglik), FUN.VALUE = numeric(1L))
+  fold_cv_ll <- vapply(data, function(.x) .x$cv_loglik[[1L]], FUN.VALUE = numeric(1L))
+  # fold_cv_ll_R <- vapply(data, function(.x) .x$cv_loglik_R[[1L]], FUN.VALUE = numeric(1L))
   data <- do.call(rbind, data)
   data <- data[order(data[["_sdm_order_"]]), , drop = FALSE]
   data[["_sdm_order_"]] <- NULL
@@ -195,6 +263,7 @@ sdmTMB_cv <- function(formula, data, spde, time = NULL,
     data = data,
     models = models,
     fold_loglik = fold_cv_ll,
+    # fold_loglik_R = fold_cv_ll_R,
     sum_loglik = sum(data$cv_loglik),
     converged = converged,
     pdHess = pdHess,
