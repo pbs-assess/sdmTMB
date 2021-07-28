@@ -97,7 +97,7 @@ sdmTMB_cv <- function(formula, data, spde, time = NULL,
 
   if (k_folds > 1) {
     # data in kth fold get weight of 0:
-    weights <- ifelse(data$cv_fold == 1L, 1, 0)
+    weights <- ifelse(data$cv_fold == 1L, 0, 1)
   } else {
     weights <- rep(1, nrow(data))
   }
