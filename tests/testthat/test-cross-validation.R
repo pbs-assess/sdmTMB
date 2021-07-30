@@ -14,6 +14,8 @@ test_that("Basic cross validation works", {
     family = tweedie(link = "log"), time = "year", k_folds = 2
   )
   expect_equal(class(x$sum_loglik), "numeric")
+  expect_equal(x$sum_loglik, sum(x$data$cv_loglik))
+  expect_equal(x$sum_loglik, sum(x$fold_loglik))
   expect_true("data.frame" %in% class(x$data))
   expect_equal(class(x$models[[1]]), "sdmTMB")
 })
