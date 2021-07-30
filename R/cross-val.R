@@ -222,7 +222,7 @@ sdmTMB_cv <- function(formula, data, mesh_args, spde, time = NULL,
     # cv_data$cv_loglik <- -1 * r$nll_obs
 
     # cv_data$cv_loglik <- ll_sdmTMB(object, withheld_y, withheld_mu)
-    cv_data$cv_loglik <- sum(ll_sdmTMB(object, withheld_y, withheld_mu))
+    cv_data$cv_loglik <- ll_sdmTMB(object, withheld_y, withheld_mu)
 
     list(
       data = cv_data,
@@ -247,8 +247,8 @@ sdmTMB_cv <- function(formula, data, mesh_args, spde, time = NULL,
 
   models <- lapply(out, `[[`, "model")
   data <- lapply(out, `[[`, "data")
-  # fold_cv_ll <- vapply(data, function(.x) sum(.x$cv_loglik), FUN.VALUE = numeric(1L))
-  fold_cv_ll <- vapply(data, function(.x) .x$cv_loglik[[1L]], FUN.VALUE = numeric(1L))
+  fold_cv_ll <- vapply(data, function(.x) sum(.x$cv_loglik), FUN.VALUE = numeric(1L))
+  #fold_cv_ll <- vapply(data, function(.x) .x$cv_loglik[[1L]], FUN.VALUE = numeric(1L))
   # fold_cv_ll_R <- vapply(data, function(.x) .x$cv_loglik_R[[1L]], FUN.VALUE = numeric(1L))
   data <- do.call(rbind, data)
   data <- data[order(data[["_sdm_order_"]]), , drop = FALSE]
