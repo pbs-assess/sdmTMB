@@ -2,12 +2,13 @@
 % Please edit documentation in R/get-index-sims.R
 \name{get_index_sims}
 \alias{get_index_sims}
-\title{Calculate population index via simulation from joint precision matrix}
+\title{Calculate a population index via simulation from the joint precision matrix}
 \usage{
 get_index_sims(
   obj,
   level = 0.95,
   return_sims = FALSE,
+  area = rep(1, nrow(obj)),
   est_function = stats::median,
   agg_function = function(x) sum(exp(x))
 )
@@ -17,16 +18,23 @@ get_index_sims(
 
 \item{level}{The confidence level.}
 
-\item{return_sims}{Logical. Return simulation draws? The default is a
-quantile summary of those draws.}
+\item{return_sims}{Logical. Return simulation draws? The default (\code{FALSE}) is
+a quantile summary of those simulation draws.}
+
+\item{area}{A vector of grid cell/polyon areas for each year-grid cell (row
+of data) in \code{obj}. Adjust this if cells are not of unit area or not all
+the same area (e.g., some cells are partially over land/water). Note that
+the area vector is added as \code{log(area)} to the raw values in \code{obj}. In
+other words, the function assumes a log link, which typically makes sense.}
 
 \item{est_function}{Function to summarize the estimate (the expected value).
 \code{mean()} would be an alternative to \code{median()}.}
 
-\item{agg_function}{Function to aggregate samples within each time slice.}
+\item{agg_function}{Function to aggregate samples within each time slice.
+Assuming a log link, the \code{sum(exp(x) * area)} default makes sense.}
 }
 \description{
-Calculate population index via simulation from joint precision matrix
+Calculate a population index via simulation from the joint precision matrix
 }
 \examples{
 m <- sdmTMB(density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,

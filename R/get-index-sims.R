@@ -1,12 +1,18 @@
-#' Calculate population index via simulation from joint precision matrix
+#' Calculate a population index via simulation from the joint precision matrix
 #'
 #' @param obj [predict.sdmTMB()] output with `sims > 0`.
 #' @param level The confidence level.
-#' @param return_sims Logical. Return simulation draws? The default is a
-#'   quantile summary of those draws.
+#' @param return_sims Logical. Return simulation draws? The default (`FALSE`) is
+#'   a quantile summary of those simulation draws.
+#' @param area A vector of grid cell/polyon areas for each year-grid cell (row
+#'   of data) in `obj`. Adjust this if cells are not of unit area or not all
+#'   the same area (e.g., some cells are partially over land/water). Note that
+#'   the area vector is added as `log(area)` to the raw values in `obj`. In
+#'   other words, the function assumes a log link, which typically makes sense.
 #' @param est_function Function to summarize the estimate (the expected value).
 #'   `mean()` would be an alternative to `median()`.
 #' @param agg_function Function to aggregate samples within each time slice.
+#'   Assuming a log link, the `sum(exp(x) * area)` default makes sense.
 #'
 #' @export
 #' @examples
@@ -29,15 +35,22 @@
 get_index_sims <- function(obj,
                            level = 0.95,
                            return_sims = FALSE,
+                           area = rep(1, nrow(obj)),
                            est_function = stats::median,
                            agg_function = function(x) sum(exp(x))) {
   assert_that(is.matrix(obj), !is.null(attr(obj, "time")),
     msg = paste0("`obj` should be matrix output from `predict.sdmTMB()` ",
-      "with the `sims > 0`."))
+      "with the `sims > 0` or a matrix with a `time` attribute."))
   assert_that(is.logical(return_sims))
   assert_that(is.function(est_function))
   assert_that(is.function(agg_function))
   assert_that(level > 0 && level < 1)
+  assert_that(length(area) == nrow(obj))
+  assert_that(sum(is.na(area)) == 0L)
+  assert_that(all(area >= 0))
+
+  .time_attr <- attr(obj, "time")
+  obj <- apply(obj, 2L, function(x) x + log(area))
 
   .t <- as.numeric(rownames(obj))
   yrs <- sort(unique(.t))
@@ -51,7 +64,7 @@ get_index_sims <- function(obj,
         .time = yrs[i], .value = out1[[i]],
         .iteration = seq_along(out1[[i]])
       )
-      stats::setNames(ret, c(attr(obj, "time"), ".value", ".iteration"))
+      stats::setNames(ret, c(.time_attr, ".value", ".iteration"))
     })
     return(do.call("rbind", out2))
   } else {
@@ -65,9 +78,9 @@ get_index_sims <- function(obj,
       )
     })
     out <- do.call("rbind", out)
-    out[[attr(obj, "time")]] <- yrs
+    out[[.time_attr]] <- yrs
     out <- out[, c(
-      attr(obj, "time"), "est", "lwr", "upr", "log_est", "se"
+      .time_attr, "est", "lwr", "upr", "log_est", "se"
     ), drop = FALSE]
     return(`row.names<-`(out, NULL))
   }
