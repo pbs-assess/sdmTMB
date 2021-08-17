@@ -23,6 +23,7 @@ Extract a relative biomass/abundance index or a center of gravity
 }
 \examples{
 \donttest{
+if (inla_installed()) {
 # Use a small number of knots for this example to make it fast:
 pcod_spde <- make_mesh(pcod, c("X", "Y"), n_knots = 60, type = "kmeans")
 m <- sdmTMB(
@@ -34,12 +35,14 @@ m <- sdmTMB(
 predictions <- predict(m, newdata = qcs_grid, return_tmb_object = TRUE)
 ind <- get_index(predictions)
 
-library(ggplot2)
+if (require("ggplot2", quietly = TRUE)) {
 ggplot(ind, aes(year, est)) + geom_line() +
   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4)
+}
 
 cog <- get_cog(predictions)
 cog
+}
 }
 
 }

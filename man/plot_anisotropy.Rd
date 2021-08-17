@@ -14,6 +14,7 @@ Plot anisotropy
 }
 \examples{
 \donttest{
+if (inla_installed()) {
 d <- pcod
 m <- sdmTMB(data = d,
   formula = density ~ 0 + as.factor(year),
@@ -21,5 +22,6 @@ m <- sdmTMB(data = d,
   family = tweedie(link = "log"), anisotropy = TRUE,
   include_spatial = FALSE)
 plot_anisotropy(m)
+}
 }
 }

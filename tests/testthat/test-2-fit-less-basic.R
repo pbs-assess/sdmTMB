@@ -1,74 +1,8 @@
-context("basic model fitting and prediction tests")
-
-SEED <- 1
-set.seed(SEED)
-x <- stats::runif(100, -1, 1)
-y <- stats::runif(100, -1, 1)
-loc <- data.frame(x = x, y = y)
-spde <- make_mesh(loc, c("x", "y"), cutoff = 0.02)
-
-test_that("sdmTMB model fit with a covariate beta", {
-  initial_betas <- 0.5
-  range <- 0.1
-  sigma_O <- 0.3 # SD of spatial process
-  sigma_E <- 0.3 # SD of spatial process
-  phi <- 0.1 # observation error
-  s <- sdmTMB_sim(
-    x = x, y = y, mesh = spde, time_steps = 6L, betas = initial_betas,
-    phi = phi, range = range, sigma_O = sigma_O, sigma_E = sigma_E,
-    seed = SEED
-  )
-  expect_equal(s$observed[c(1:30, 500)],
-    c(-0.364045551132498, -0.0884742484390758, -0.748796917796798,
-    -0.0926168889732131, 0.0892802633041351, 0.92937309789911, 0.665431954199266,
-    -0.81477972686779, 0.474664276994187, 0.929133590564276, -0.263130711477779,
-    -0.115523493789406, 0.898574275118016, -0.964967397393866, -1.10224938263034,
-    -0.286050035282319, 0.0810888689537039, -0.149727881361854, 0.364458765137563,
-    0.31886147691733, -0.184284142634752, 1.27393901104861, -0.822473494638277,
-    -0.594882019789678, -0.515872613077436, 0.578924954453508, -0.464615318681477,
-    0.476914673336151, -0.52150670383694, -0.0152136800518284, -0.394972244437357
-  ), tolerance = 1e-7)
-  spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
-  plot(spde)
-  m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time", spde = spde)
-  expect_output(print(m), "fit by")
-  expect_output(summary(m), "fit by")
-  p <- as.list(m$model$par)
-  r <- m$tmb_obj$report()
-  est <- tidy(m, "ran_pars")
-  expect_equal(sort(est[,"estimate", drop = TRUE]),
-    sort(c(0.106559618205922, 0.0646179753599145, 0.303614800474715, 0.308394406301974)),
-    tolerance = 1e-7)
-  expect_equal(m$model$convergence, 0L)
-  expect_equal((p$b_j - initial_betas)^2, 0, tol = 0.001)
-  expect_equal((exp(p$ln_phi) - phi)^2, 0, tol = 0.002)
-  expect_equal((r$sigma_O - sigma_O)^2, 0, tol = 0.002)
-  expect_equal((r$sigma_E[1] - sigma_E)^2, 0, tol = 0.001)
-  expect_equal(est$estimate[est$term == "range"], range, tol = 0.01)
-  p <- predict(m)
-  r <- residuals(m)
-  expect_equal(mean((p$est - s$observed)^2), 0, tol = 0.002)
-})
-
-test_that("Anisotropy fits and plots", {
-  skip_on_ci()
-  skip_on_cran()
-  m <- sdmTMB(data = pcod,
-    formula = density ~ 0 + as.factor(year),
-    spde = make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans"),
-    family = tweedie(link = "log"), anisotropy = TRUE)
-  expect_identical(class(m), "sdmTMB")
-  plot_anisotropy(m)
-  expect_equal(m$tmb_obj$report()$H,
-    structure(
-      c(0.665528444798002, 0.079350716881963, 0.079350716881963, 1.51202633656794),
-      .Dim = c(2L, 2L)),
-    tolerance = 1e-3)
-})
-
 test_that("Regularization works", {
   skip_on_cran()
   skip_on_ci()
+  skip_if_not_installed("INLA")
+  local_edition(2)
   d <- subset(pcod, year >= 2015)
   d$depth_scaled <- as.numeric(scale(d$depth_scaled))
   m1 <- sdmTMB(data = d,
@@ -81,7 +15,7 @@ test_that("Regularization works", {
     formula = density ~ 0 + depth_scaled + as.factor(year),
     spde = make_mesh(d, c("X", "Y"), n_knots = 50, type = "kmeans"),
     family = tweedie(link = "log"),
-    penalties = c(NA, NA, NA))
+    priors = sdmTMBpriors(b = normal(c(NA, NA, NA), c(NA, NA, NA))))
   expect_equal(m1$sd_report, m2$sd_report)
 
   # Ridge regression on depth term:
@@ -89,84 +23,18 @@ test_that("Regularization works", {
     formula = density ~ 0 + depth_scaled + as.factor(year),
     spde = make_mesh(d, c("X", "Y"), n_knots = 50, type = "kmeans"),
     family = tweedie(link = "log"),
-    penalties = c(1, NA, NA))
+    priors = sdmTMBpriors(b = normal(c(0, NA, NA), c(1, NA, NA))))
   b1 <- tidy(m1)
   b2 <- tidy(m2)
   expect_lt(b2$estimate[1], b1$estimate[2])
   expect_lt(b2$std.error[1], b1$std.error[2])
 })
 
-test_that("A model with splines works", {
-  skip_on_cran()
-  skip_on_ci()
-  d <- subset(pcod, year >= 2015)
-  m <- sdmTMB(data = d,
-    formula = density ~ 1 + s(depth_scaled),
-    spde = make_mesh(d, c("X", "Y"), n_knots = 50, type = "kmeans"),
-    family = tweedie(link = "log"))
-  expect_identical(class(m), "sdmTMB")
-})
-
-test_that("A spatiotemporal version works with predictions on new data points", {
-  d <- subset(pcod, year >= 2015)
-  pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
-  m <- sdmTMB(
-    data = d,
-    formula = density ~ 0 + as.factor(year),
-    time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-    include_spatial = FALSE
-  )
-  # Predictions at original data locations:
-  predictions <- predict(m)
-  predictions$resids <- residuals(m) # randomized quantile residuals
-  # Predictions onto new data:
-  predictions <- predict(m, newdata = subset(qcs_grid, year >= 2015))
-  expect_identical(class(predictions), "data.frame")
-})
-
-test_that("Predictions on the original data set as `newdata`` return the same predictions", {
-  skip_on_cran()
-  skip_on_ci()
-  set.seed(1)
-  x <- stats::runif(70, -1, 1)
-  y <- stats::runif(70, -1, 1)
-  loc <- data.frame(x = x, y = y)
-  spde <- make_mesh(loc, c("x", "y"), cutoff = 0.02)
-  dat <- sdmTMB_sim(x = x, y = y, mesh = spde,
-    time_steps = 9, rho = 0, range = 0.2,
-    sigma_O = 0, sigma_E = 0.3, phi = 0.1,
-    seed = 1
-  )
-  spde <- make_mesh(dat, c("x", "y"), cutoff = 0.02)
-  m <- sdmTMB(
-    ar1_fields = FALSE, include_spatial = FALSE,
-    data = dat, formula = observed ~ 1, time = "time",
-    family = gaussian(link = "identity"), spde = spde
-  )
-  p <- predict(m)
-  p_nd <- predict(m, newdata = dat)
-  tidy(m)
-  tidy(m, conf.int = TRUE)
-  tidy(m, effects = "ran_par")
-  tidy(m, effects = "ran_par", conf.int = TRUE)
-
-  cols <- c("est", "est_non_rf", "est_rf", "omega_s", "epsilon_st")
-  expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-3)
-
-  m <- sdmTMB(
-    ar1_fields = TRUE, include_spatial = FALSE,
-    data = dat, formula = observed ~ 1, time = "time",
-    family = gaussian(link = "identity"), spde = spde
-  )
-
-  p <- predict(m)
-  p_nd <- predict(m, newdata = dat)
-  expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-3)
-})
-
 test_that("A time-varying model fits and predicts appropriately", {
   skip_on_cran()
   skip_on_ci()
+  skip_if_not_installed("INLA")
+  local_edition(2)
   SEED <- 42
   set.seed(SEED)
   x <- stats::runif(60, -1, 1)
@@ -188,7 +56,7 @@ test_that("A time-varying model fits and predicts appropriately", {
   )
   spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
   m <- sdmTMB(data = s, formula = observed ~ 0, include_spatial = FALSE,
-    time_varying = ~ 0 + cov1, time = "time", spde = spde, mgcv = FALSE)
+    time_varying = ~ 0 + cov1, time = "time", spde = spde, control = sdmTMBcontrol(mgcv = FALSE))
   expect_equal(exp(m$model$par["ln_tau_V"])[[1]], sigma_V, tolerance = 0.05)
   tidy(m, effects = "ran_par")
   b_t <- dplyr::group_by(s, time) %>%
@@ -218,6 +86,7 @@ test_that("Year indexes get created correctly", {
 test_that("A spatial trend model fits", {
   skip_on_cran()
   skip_on_ci()
+  skip_if_not_installed("INLA")
   d <- subset(pcod, year >= 2011) # subset for speed
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ depth_scaled, data = d,
@@ -229,6 +98,7 @@ test_that("A spatial trend model fits", {
 test_that("A logistic threshold model fits", {
   skip_on_cran()
   skip_on_ci()
+  skip_if_not_installed("INLA")
   d <- subset(pcod, year >= 2011) # subset for speed
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ 0 + as.factor(year) + logistic(depth_scaled), data = d,
@@ -240,6 +110,7 @@ test_that("A logistic threshold model fits", {
 test_that("A linear threshold model fits", {
   skip_on_cran()
   skip_on_ci()
+  skip_if_not_installed("INLA")
   d <- subset(pcod, year >= 2011) # subset for speed
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ 0 + as.factor(year) + breakpt(depth_scaled), data = d,
@@ -248,11 +119,31 @@ test_that("A linear threshold model fits", {
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
 })
 
+test_that("A time varying epsilon model works", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  d <- subset(pcod, year >= 2011) # subset for speed
+  pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
+  d$year_centered <- d$year - mean(d$year)
+  m <- sdmTMB(density ~ 0 + as.factor(year) + breakpt(depth_scaled), data = d,
+              spde = pcod_spde, family = tweedie(link = "log"),
+              spatial_trend = FALSE, time = "year",
+              epsilon_predictor = "year_centered",
+              control = sdmTMBcontrol(lower = list(b_epsilon = -1),upper = list(b_epsilon = 1)))
+  expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
+  b_epsilon=as.list(m$sd_report, "Estimate", report = TRUE)$b_epsilon
+  # test estimate
+  expect_equal(b_epsilon[1], -0.10163051, tolerance=0.0001)
+})
+
 test_that("SPDE as generated by make_mesh is consistent", {
   set.seed(42)
   skip_on_cran()
   skip_on_ci()
+  skip_if_not_installed("INLA")
   set.seed(1)
+  local_edition(2)
   x <- stats::runif(70, -1, 1)
   y <- stats::runif(70, -1, 1)
   loc <- data.frame(x = x, y = y)
@@ -318,9 +209,30 @@ test_that("SPDE as generated by make_mesh is consistent", {
 #   expect_true(!identical(p$est, p.map$est))
 #   })
 
+test_that("profile option works", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  d <- subset(pcod, year == 2013)
+  pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 10)
+  mp <- sdmTMB(density ~ depth_scaled + depth_scaled2,
+    data = d, spde = pcod_spde, control = sdmTMBcontrol(profile = TRUE),
+    family = tweedie(link = "log")
+  )
+  m <- sdmTMB(density ~ depth_scaled + depth_scaled2,
+    data = d, spde = pcod_spde, control = sdmTMBcontrol(profile = FALSE),
+    family = tweedie(link = "log")
+  )
+  expect_lt(length(mp$model$par), length(m$model$par))
+  bp <- tidy(mp)
+  b <- tidy(m)
+  expect_equal(bp$estimate, b$estimate, tolerance = 0.05)
+})
+
 test_that("The `map_rf` argument works.", {
   skip_on_cran()
   skip_on_ci()
+  skip_if_not_installed("INLA")
   d <- subset(pcod, year >= 2013)
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 50)
   m <- sdmTMB(density ~ 0 + as.factor(year),
@@ -330,7 +242,7 @@ test_that("The `map_rf` argument works.", {
   p <- predict(m)
   m.map <- sdmTMB(density ~ 0 + as.factor(year),
     data = d, time = "year", spde = pcod_spde,
-    family = tweedie(link = "log"), map_rf = TRUE
+    family = tweedie(link = "log"), control = sdmTMBcontrol(map_rf = TRUE)
   )
   p.map <- predict(m.map)
 
@@ -343,7 +255,8 @@ test_that("The `map_rf` argument works.", {
   dpos <- d[d$density > 0, ]
   pcod_spde <- make_mesh(dpos, c("X", "Y"), cutoff = 50)
   m.sdmTMB.map <- sdmTMB(log(density) ~ depth, data = dpos,
-    family = gaussian(), map_rf = TRUE, spde = pcod_spde)
+    family = gaussian(), control = sdmTMBcontrol(map_rf = TRUE),
+    spde = pcod_spde)
   m.stats.glm <- stats::lm(log(density) ~ depth, data = dpos)
   m.glmmTMB <- glmmTMB::glmmTMB(log(density) ~ depth, data = dpos)
   .t <- tidy(m.sdmTMB.map)
@@ -352,11 +265,11 @@ test_that("The `map_rf` argument works.", {
     glmmTMB::sigma(m.glmmTMB), tolerance = 1e-5)
 
   # Bernoulli:
-  pcod_binom <- pcod
+  pcod_binom <- pcod_2011
   pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
   pcod_spde <- make_mesh(pcod_binom, c("X", "Y"), cutoff = 50)
   m.sdmTMB.map <- sdmTMB(present ~ depth, data = pcod_binom,
-    family = binomial(link = "logit"), map_rf = TRUE, spde = pcod_spde)
+    family = binomial(link = "logit"), control = sdmTMBcontrol(map_rf = TRUE), spde = pcod_spde)
   m.stats.glm <- stats::glm(present ~ depth, data = pcod_binom,
     family = binomial(link = "logit"))
   m.glmmTMB <- glmmTMB::glmmTMB(present ~ depth, data = pcod_binom,
@@ -369,8 +282,38 @@ test_that("The `map_rf` argument works.", {
 })
 
 test_that("Large coordinates cause a warning.", {
+  skip_if_not_installed("INLA")
+  skip_on_cran()
   d <- subset(pcod, year == 2017)
   d$X <- d$X * 1000
   d$Y <- d$Y * 1000
   expect_warning(pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 70))
+})
+
+test_that("Random walk fields work", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  d <- subset(pcod, year >= 2013)
+  pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 15)
+  m_rw <- sdmTMB(density ~ 1,
+    data = d, time = "year", spde = pcod_spde,
+    family = tweedie(link = "log"), fields = "RW"
+  )
+  expect_identical(m_rw$tmb_data$rw_fields, 1L)
+  p_rw <- predict(m_rw)
+
+  # close to AR1 with high rho:
+  m_ar1 <- sdmTMB(density ~ 1,
+    data = d, time = "year", spde = pcod_spde,
+    family = tweedie(link = "log"), fields = "AR1",
+    control = sdmTMBcontrol(
+      start = list(ar1_phi = qlogis((0.99 + 1) / 2)),
+      map = list(ar1_phi = factor(NA)))
+  )
+  expect_identical(m_ar1$tmb_data$ar1_fields, 1L)
+  expect_identical(m_ar1$tmb_data$rw_fields, 0L)
+  p_ar1 <- predict(m_ar1)
+
+  expect_gt(stats::cor(p_ar1$est, p_rw$est), 0.95)
 })

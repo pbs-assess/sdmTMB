@@ -55,6 +55,7 @@ convenience options.}
 Construct an SPDE mesh for use with sdmTMB.
 }
 \examples{
+if (inla_installed()) {
 sp <- make_mesh(pcod, c("X", "Y"), cutoff = 30, type = "cutoff")
 plot(sp)
 
@@ -78,5 +79,6 @@ mesh <- INLA::inla.mesh.2d(
 )
 sp2 <- make_mesh(pcod, c("X", "Y"), mesh = mesh)
 plot(sp2)
+}
 }
 }

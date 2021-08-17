@@ -15,21 +15,18 @@ sdmTMB(
   extra_time = NULL,
   reml = FALSE,
   silent = TRUE,
-  multiphase = TRUE,
   anisotropy = FALSE,
   control = sdmTMBcontrol(),
-  penalties = NULL,
-  ar1_fields = FALSE,
+  priors = sdmTMBpriors(),
+  fields = c("IID", "AR1", "RW"),
   include_spatial = TRUE,
   spatial_trend = FALSE,
   spatial_only = identical(length(unique(data[[time]])), 1L),
-  nlminb_loops = 1,
-  newton_steps = 0,
-  mgcv = TRUE,
+  share_range = TRUE,
   previous_fit = NULL,
-  map_rf = FALSE,
-  quadratic_roots = FALSE,
-  epsilon_predictor = NULL
+  epsilon_predictor = NULL,
+  do_fit = TRUE,
+  ...
 )
 }
 \arguments{
@@ -73,19 +70,21 @@ to the list of random effects to intetgrate over.}
 
 \item{silent}{Silent or include optimization details?}
 
-\item{multiphase}{Logical: estimate the fixed and random effects in phases?
-Phases are usually faster and more stable.}
-
 \item{anisotropy}{Logical: allow for anisotropy? See \code{\link[=plot_anisotropy]{plot_anisotropy()}}.}
 
 \item{control}{Optimization control options. See \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}.}
 
-\item{penalties}{Optional vector of penalties (priors) on the fixed effects.
-See the Regularization Details section below.
-below.}
+\item{priors}{Optional vector of penalties/priors. See \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}.}
 
-\item{ar1_fields}{Estimate the spatiotemporal random fields as a
-stationary AR1 process?}
+\item{fields}{Estimate the spatiotemporal random fields as \code{"IID"}
+(independent and identically distributed; default), stationary \code{"AR1"}
+(first-order autoregressive), or as a random walk (\code{"RW"})? Note that the
+spatiotemporal standard deviation represents the marginal steady-state
+standard deviation of the process in the case of the AR1. I.e., it's
+scaled according to the correlation. See the
+\href{https://kaskr.github.io/adcomp/classAR1__t.html}{TMB documentation}.
+If the AR1 correlation coefficient (rho) is estimated close to 1, say >
+0.99, then you may want to switch to the random walk \code{"RW"}.}
 
 \item{include_spatial}{Should a separate spatial random field be estimated?
 If enabled then there will be separate spatial and spatiotemporal
@@ -93,7 +92,7 @@ fields.}
 
 \item{spatial_trend}{Should a separate spatial field be included in the
 trend that represents local (time) trends? Requires spatiotemporal data.
-See \url{http://dx.doi.org/10.1111/ecog.05176} and the
+See \doi{10.1111/ecog.05176} and the
 \href{https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.}
 
 \item{spatial_only}{Logical: should only a spatial model be fit (i.e. do not
@@ -101,45 +100,29 @@ include spatiotemporal random effects)? By default a spatial-only model
 will be fit if there is only one unique value in the time column or the
 \code{time} argument is left at its default value of \code{NULL}.}
 
-\item{nlminb_loops}{How many times to run \code{\link[stats:nlminb]{stats::nlminb()}} optimization.
-Sometimes restarting the optimizer at the previous best values aids
-convergence. If the maximum gradient is still too large,
-try increasing this to \code{2}.}
-
-\item{newton_steps}{How many Newton optimization steps to try with
-\code{\link[stats:optim]{stats::optimHess()}} after running \code{\link[stats:nlminb]{stats::nlminb()}}. Sometimes aids
-convergence.}
-
-\item{mgcv}{Parse the formula with \code{\link[mgcv:gam]{mgcv::gam()}}?}
+\item{share_range}{Logical: estimated a shared spatial and spatiotemporal
+range parameter?}
 
 \item{previous_fit}{A previously fitted sdmTMB model to initialize the
 optimization with. Can greatly speed up fitting. Note that the data and
 model must be set up \emph{exactly} the same way! However, the \code{weights} argument
 can change, which can be useful for cross-validation.}
 
-\item{map_rf}{Map all the random fields to 0 to turn the model into a
-classical GLM or GLMM without spatial or spatiotemporal components?
-Note this is not accounted for in \code{print()} or \code{tidy.sdmTMB()};
-some parameters will still appear but their values can be ignored.}
-
-\item{quadratic_roots}{Experimental feature for internal use right now; may
-be moved to a branch. Logical: should quadratic roots be calculated? Note:
-on the sdmTMB side, the first two coefficients are used to generate the
-quadratic parameters. This means that if you want to generate a quadratic
-profile for depth, and depth and depth^2 are part of your formula, you need
-to make sure these are listed first and that an intercept isn't included.
-For example, \code{formula = cpue ~ 0 + depth + depth2 + as.factor(year)}.}
-
-\item{epsilon_predictor}{A column name (as character) of a predictor of a
-linear trend (in log space) of the spatiotemporal standard deviation. By
-default, this is \code{NULL} and fits a model with a constant spatiotemporal
-variance. However, this argument can also be a character name in the
-original data frame (a covariate that ideally has been standardized to have
-mean 0 and standard deviation = 1). Because the spatiotemporal field varies
-by time step, the standardization should be done by time. If the name of a
-predictor is included, a log-linear model is fit where the predictor is
-used to model effects on the standard deviation,
+\item{epsilon_predictor}{(Experimental) A column name (as character) of a
+predictor of a linear trend (in log space) of the spatiotemporal standard
+deviation. By default, this is \code{NULL} and fits a model with a constant
+spatiotemporal variance. However, this argument can also be a character
+name in the original data frame (a covariate that ideally has been
+standardized to have mean 0 and standard deviation = 1). Because the
+spatiotemporal field varies by time step, the standardization should be
+done by time. If the name of a predictor is included, a log-linear model is
+fit where the predictor is used to model effects on the standard deviation,
 e.g. \code{log(sd(i)) = B0 + B1 * epsilon_predictor(i)}.}
+
+\item{do_fit}{Fit the model (\code{TRUE}) or return the processed data without
+fitting (\code{FALSE})?}
+
+\item{...}{Not currently used.}
 }
 \description{
 Fit a spatial or spatiotemporal predictive-process GLMM with TMB.
@@ -220,32 +203,43 @@ An element can contain \code{NA} if you wish to avoid a penalty/prior on a speci
 term (e.g., the intercept).
 }
 \examples{
-d <- subset(pcod, year >= 2011) # subset for example speed
-pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
+if (inla_installed()) {
+  pcod_spde <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 25) # a coarse mesh for example speed
+} else {
+  pcod_spde <- pcod_mesh_2011 # load cached mesh so example runs on CRAN
+}
 plot(pcod_spde)
 
 # Tweedie:
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-  data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
+  data = pcod_2011, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
 print(m)
 tidy(m, conf.int = TRUE)
 tidy(m, effects = "ran_par", conf.int = TRUE)
 
+if (inla_installed()) {
 # Run extra optimization steps to help convergence:
-m1 <- run_extra_optimization(m, nlminb_loops = 0, newton_steps = 1)
+# (Not typically needed)
+m1 <- run_extra_optimization(m, nlminb_loops = 0, newton_loops = 1)
 max(m$gradients)
 max(m1$gradients)
 
 # Bernoulli:
-pcod_binom <- d
+pcod_binom <- pcod_2011
 pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
 m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   data = pcod_binom, time = "year", spde = pcod_spde,
   family = binomial(link = "logit"))
 print(m_bin)
 
+# Fit a spatial-only model (by not specifying `time`):
+m <- sdmTMB(
+  density ~ depth_scaled + depth_scaled2, data = pcod_2011,
+  spde = pcod_spde, family = tweedie(link = "log"))
+print(m)
+
 # Gaussian:
-pcod_gaus <- subset(d, density > 0 & year >= 2013)
+pcod_gaus <- subset(pcod_2011, density > 0 & year >= 2013)
 pcod_spde_gaus <- make_mesh(pcod_gaus, c("X", "Y"), cutoff = 30)
 m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
@@ -260,6 +254,7 @@ m_gam <- sdmTMB(log(density) ~ 0 + as.factor(year) + s(depth_scaled, k = 4),
 print(m_gam)
 
 # With IID random intercepts:
+# Simulate some data:
 set.seed(1)
 x <- runif(500, -1, 1)
 y <- runif(500, -1, 1)
@@ -270,21 +265,20 @@ s <- sdmTMB_sim(x = x, y = y, betas = 0, time = 1L,
 s$g <- gl(50, 10)
 iid_re_vals <- rnorm(50, 0, 0.3)
 s$observed <- s$observed + iid_re_vals[s$g]
+
+# Fit it:
 m <- sdmTMB(observed ~ 1 + (1 | g), spde = spde, data = s)
 print(m)
 tidy(m, "ran_pars", conf.int = TRUE) # see tau_G
 theta <- as.list(m$sd_report, "Estimate")
 plot(iid_re_vals, theta$RE)
+}
 
 \donttest{
-# Fit a spatial only model:
-m <- sdmTMB(
-  density ~ depth_scaled + depth_scaled2, data = d,
-  spde = pcod_spde, family = tweedie(link = "log"))
-print(m)
+if (inla_installed()) {
 
 # Spatial-trend example:
-m <- sdmTMB(density ~ depth_scaled, data = d,
+m <- sdmTMB(density ~ depth_scaled, data = pcod_2011,
   spde = pcod_spde, family = tweedie(link = "log"),
   spatial_trend = TRUE, time = "year")
 tidy(m, effects = "ran_par")
@@ -292,7 +286,8 @@ tidy(m, effects = "ran_par")
 # Time-varying effects of depth and depth squared:
 m <- sdmTMB(density ~ 0 + as.factor(year),
   time_varying = ~ 0 + depth_scaled + depth_scaled2,
-  data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
+  data = pcod_2011, time = "year", spde = pcod_spde,
+  family = tweedie(link = "log"))
 print(m)
 
 # See the b_rw_t estimates; these are the time-varying (random walk) effects.
@@ -307,15 +302,19 @@ print(m_pos)
 
 # Linear covariate on log(sigma_epsilon):
 # First we will center the years around their mean
-# to help with convergence.
-d$year_centered <- d$year - mean(d$year)
+# to help with convergence. Also constrain the slope to be (-1, 1)
+# to help convergence (estimation is done in log-space)
+pcod_2011$year_centered <- pcod_2011$year - mean(pcod_2011$year)
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-  data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-  epsilon_predictor = "year_centered")
+  data = pcod_2011, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+  epsilon_predictor = "year_centered",
+  control = sdmTMBcontrol(lower = list(b_epsilon = -1), upper = list(b_epsilon = 1)))
 print(m) # sigma_E varies with time now
+
 # coefficient is not yet in tidy.sdmTMB:
 as.list(m$sd_report, "Estimate", report = TRUE)$b_epsilon
 as.list(m$sd_report, "Std. Error", report = TRUE)$b_epsilon
+}
 }
 }
 \references{
@@ -330,6 +329,44 @@ Res. Doc. 2019/041. vii + 321 p.
 Reference for local trends:
 
 Barnett, L.A.K., E.J. Ward, S.C. Anderson. Improving estimates of species
-distribution change by incorporating local trends. In press at Ecography.
-\url{https://doi.org/10.1111/ecog.05176}
+distribution change by incorporating local trends. Ecography. 44(3):427-439.
+\doi{10.1111/ecog.05176}.
+
+Further explanation of the model and application to calculating climate
+velocities:
+
+English, P., E.J. Ward, C.N. Rooper, R.E. Forrest, L.A. Rogers, K.L. Hunter,
+A.M. Edwards, B.M. Connors, S.C. Anderson. Contrasting climate velocity impacts
+in warm and cool locations: A meta-analysis across 38 demersal fish species in
+the northeast Pacific. EcoEvoRxiv. \doi{10.32942/osf.io/b87ng}.
+
+Code for implementing the penalized complexity prior on the spatial
+covariance parameters and simulation from the joint precision matrix adapted
+from:
+
+Osgood-Zimmerman, A. and Wakefield, J. 2021. A Statistical introduction
+to Template Model Builder: a flexible tool for spatial modeling.
+arXiv 2103.09929. \url{https://arxiv.org/abs/2103.09929}.
+
+Code for implementing the barrier-SPDE written by Olav Nikolai Breivik and
+Hans Skaug and adapted via the VAST R package.
+
+A number of sections of the original TMB model code were adapted from the
+VAST R package:
+
+Thorson, J.T., 2019. Guidance for decisions using the Vector Autoregressive
+Spatio-Temporal (VAST) package in stock, ecosystem, habitat and climate
+assessments. Fish. Res. 210:143–161.
+\doi{10.1016/j.fishres.2018.10.013}.
+
+Code for the \code{family} R-to-TMB implementation, selected parameterizations of
+the observation distributions, general package structure inspiration, and the
+idea behind the TMB prediction approach were adapted from the glmmTMB R
+package:
+
+Mollie E. Brooks, Kasper Kristensen, Koen J. van Benthem, Arni Magnusson,
+Casper W. Berg, Anders Nielsen, Hans J. Skaug, Martin Maechler and Benjamin
+M. Bolker (2017). glmmTMB Balances Speed and Flexibility Among Packages for
+Zero-inflated Generalized Linear Mixed Modeling. The R Journal, 9(2):378-400.
+\doi{10.32614/rj-2017-066}.
 }

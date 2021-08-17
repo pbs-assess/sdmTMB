@@ -100,23 +100,28 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
     name <- c(name, "sigma_E")
   }
   if (x$tmb_data$spatial_trend) {
-    log_name <- c(log_name, "log_sigma_O_trend", "ln_tau_V")
+    log_name <- c(log_name, "log_sigma_O_trend")
     name <- c(name, "sigma_O_trend", "ln_tau_V")
   }
-  if (x$tmb_data$include_spatial) {
-    log_name <- c(log_name, "log_sigma_O_trend")
-    name <- c(name, "sigma_O_trend")
+  if (x$tmb_data$random_walk) {
+    log_name <- c(log_name, "ln_tau_V")
+    name <- c(name, "ln_tau_V")
   }
   if (length(est$ln_tau_G) > 0L) {
     log_name <- c(log_name, "ln_tau_G")
     name <- c(name, "ln_tau_G")
   }
   j <- 0
+  if (!"log_range" %in% names(est)) {
+    warning("This model was fit with an old version of sdmTMB. Some parameters may not be available to the tidy() method. Re-fit the model with the current version of sdmTMB if you need access to any missing parameters.", call. = FALSE)
+  }
   for (i in name) {
     j <- j + 1
     if (i %in% names(est)) {
       .e <- est[[log_name[j]]]
       .se <- se[[log_name[j]]]
+      .e <- if (is.null(.e)) NA else .e
+      .se <- if (is.null(.se)) NA else .se
       out_re[[i]] <- data.frame(
         term = i, estimate = est[[i]], std.error = NA,
         conf.low = exp(.e - crit * .se),
@@ -128,9 +133,16 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
     }
     out_re[[i]]$std.error <- NA
   }
+  discard <- unlist(lapply(out_re, function(x) length(x) == 1L)) # e.g. old models and phi
+  out_re[discard] <- NULL
+
   if ("ln_tau_G" %in% names(out_re)) {
     out_re$ln_tau_G$estimate <- exp(out_re$ln_tau_G$estimate)
     out_re$ln_tau_G$term <- "tau_G"
+  }
+  if ("ln_tau_V" %in% names(out_re)) {
+    out_re$ln_tau_V$estimate <- exp(out_re$ln_tau_V$estimate)
+    out_re$ln_tau_V$term <- "tau_V"
   }
 
   r <- x$tmb_obj$report()

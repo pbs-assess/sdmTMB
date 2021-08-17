@@ -42,9 +42,10 @@ represents the center of a "barrier" mesh triangle.
 Transform a mesh object into a barrier mesh object
 }
 \examples{
-library(sf)
-library(dplyr)
-library(ggplot2)
+if (require("sf", quietly = TRUE) &&
+  require("ggplot2", quietly = TRUE) &&
+  require("dplyr", quietly = TRUE) &&
+  require("INLA", quietly = TRUE)) {
 
 # First, download coastline data for our region.
 # We will use `bc_coast` from the package data,
@@ -118,12 +119,13 @@ fit <- sdmTMB(density ~ s(depth, k = 3), data = pcod, spde = bspde,
   family = tweedie(link = "log"))
 fit
 }
+}
 \references{
 Bakka, H., Vanhatalo, J., Illian, J., Simpson, D., and Rue, H. 2019.
 Non-stationary Gaussian models with physical barriers.
-\url{http://arxiv.org/abs/1608.03787}
+\url{https://arxiv.org/abs/1608.03787}
 
-\url{http://www.r-inla.org/barrier-model}
+\url{https://sites.google.com/a/r-inla.org/www/barrier-model}
 
 \url{https://haakonbakkagit.github.io/btopic107.html}
 }

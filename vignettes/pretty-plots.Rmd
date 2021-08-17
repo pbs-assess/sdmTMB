@@ -8,9 +8,13 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
+sf_installed <- require("sf", quietly = TRUE)
+ggplot_installed <- require("ggplot2", quietly = TRUE)
+inla_installed <- require("INLA", quietly = TRUE)
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  eval = identical(Sys.getenv("NOT_CRAN"), "true") && sf_installed && ggplot_installed && inla_installed
 )
 ```
 

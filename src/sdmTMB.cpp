@@ -106,6 +106,43 @@ vector<Type> RepeatVector(vector<Type> x, int times)
   return res;
 }
 
+// From Osgood-Zimmerman and Wakefield 2021
+// https://arxiv.org/format/2103.09929
+// helper function to use the same penalized complexity prior on
+// matern parameters as used in INLA
+template<class Type>
+Type dPCPriSPDE(Type logtau, Type logkappa, Type matern_range, Type matern_SD,
+    Type range_prob, Type SD_prob, int give_log = 0)
+{
+  Type matern_par_a = matern_range; // range limit
+  Type matern_par_b = range_prob; // range prob
+  Type matern_par_c = matern_SD; // field sd limit
+  Type matern_par_d = SD_prob; // field sd prob
+
+  // std::cout << "ln_tau: " << logtau << "; ";
+  // std::cout << "ln_kappa: " << logkappa << "; ";
+  // std::cout << "matern_range: " << matern_range << "; ";
+  // std::cout << "range_prob " << range_prob << "; ";
+  // std::cout << "matern_SD: " << matern_SD << "; ";
+  // std::cout << "SD_prob: " << SD_prob << "; ";
+
+  Type penalty; // prior contribution to jnll
+  Type d = 2.;  // dimension
+  Type lambda1 = -log(matern_par_b) * pow(matern_par_a, d/2.);
+  Type lambda2 = -log(matern_par_d) / matern_par_c;
+  Type range = sqrt(8.) / exp(logkappa);
+  Type sigma = 1. / sqrt(4. * M_PI * exp(2. * logtau) * exp(2. * logkappa));
+  penalty = (-d/2. - 1.) * log(range) - lambda1 * pow(range, -d/2.) - lambda2 * sigma;
+
+  // std::cout << "PC penalty: " << penalty << "\n";
+  // Note: (rho, sigma) --> (x=log kappa, y=log tau) -->
+  //  transforms: rho = sqrt(8)/e^x & sigma = 1/(sqrt(4pi)*e^x*e^y)
+  //  --> Jacobian: |J| propto e^(-y -2x)
+  // Type jacobian = - logtau - 2. * logkappa; // only want Jacobian for Stan MCMC
+  // penalty += jacobian;
+  if (give_log) return penalty; else return exp(penalty);
+}
+
 template <class Type>
 vector<Type> GetQuadraticRoots(Type a, Type b, Type threshold)
 {
@@ -178,20 +215,20 @@ Type InverseLink(Type eta, int link)
 {
   Type out;
   switch (link) {
-    case identity_link:
-      out = eta;
-      break;
-    case log_link:
-      out = exp(eta);
-      break;
-    case logit_link:
-      out = invlogit(eta);
-      break;
-    case inverse_link:
-      out = Type(1.0) / eta;
-      break;
-    default:
-      error("Link not implemented.");
+  case identity_link:
+    out = eta;
+    break;
+  case log_link:
+    out = exp(eta);
+    break;
+  case logit_link:
+    out = invlogit(eta);
+    break;
+  case inverse_link:
+    out = Type(1.0) / eta;
+    break;
+  default:
+    error("Link not implemented.");
   }
   return out;
 }
@@ -201,20 +238,20 @@ Type Link(Type eta, int link)
 {
   Type out;
   switch (link) {
-    case identity_link:
-      out = eta;
-      break;
-    case log_link:
-      out = log(eta);
-      break;
-    case logit_link:
-      out = logit(eta);
-      break;
-    case inverse_link:
-      out = Type(1.0) / eta;
-      break;
-    default:
-      error("Link not implemented.");
+  case identity_link:
+    out = eta;
+    break;
+  case log_link:
+    out = log(eta);
+    break;
+  case logit_link:
+    out = logit(eta);
+    break;
+  case inverse_link:
+    out = Type(1.0) / eta;
+    break;
+  default:
+    error("Link not implemented.");
   }
   return out;
 }
@@ -257,6 +294,8 @@ Type objective_function<Type>::operator()()
   DATA_FACTOR(year_i);
 
   DATA_INTEGER(normalize_in_r);
+  DATA_INTEGER(flag);
+  DATA_INTEGER(share_range);
 
   // Prediction?
   DATA_INTEGER(do_predict);
@@ -269,9 +308,13 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(calc_quadratic_range);
   DATA_VECTOR(area_i); // area per prediction grid cell for index standardization
 
-  DATA_INTEGER(enable_priors);
-  DATA_VECTOR(penalties);
+  DATA_VECTOR(priors_b_mean);
+  DATA_MATRIX(priors_b_Sigma); // beta priors matrix
+  DATA_INTEGER(priors_b_n);
+  DATA_IVECTOR(priors_b_index);
+  DATA_VECTOR(priors); // all other priors as a vector
   DATA_INTEGER(ar1_fields);
+  DATA_INTEGER(rw_fields);
   DATA_INTEGER(include_spatial);
   DATA_INTEGER(random_walk);
   DATA_IVECTOR(exclude_RE);
@@ -321,7 +364,7 @@ Type objective_function<Type>::operator()()
   PARAMETER(ln_tau_O);    // spatial process
   PARAMETER(ln_tau_O_trend);    // optional spatial process on the trend
   PARAMETER(ln_tau_E);    // spatio-temporal process
-  PARAMETER(ln_kappa);    // Matern parameter
+  PARAMETER_VECTOR(ln_kappa);    // Matern parameter
 
   PARAMETER(thetaf);           // tweedie only
   PARAMETER(ln_phi);           // sigma / dispersion / etc.
@@ -337,22 +380,15 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
 
   PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3)
-  PARAMETER(b_epsilon_logit); // slope coefficient for log-linear model on epsilon
+  PARAMETER(b_epsilon); // slope coefficient for log-linear model on epsilon
   // Joint negative log-likelihood
   Type jnll = 0.0;
+  Type nll_obs = 0.0;
 
   // ------------------ End of parameters --------------------------------------
 
   int n_i = y_i.size();   // number of observations
-  int n_j = X_ij.cols();  // number of fixed-effect params
   int n_RE = RE_indexes.cols();  // number of random effect intercepts
-
-  // Type nll_data = 0;     // likelihood of data
-  // Type nll_varphi = 0;   // random walk effects
-  // Type nll_omega = 0;    // spatial effects
-  // Type nll_omega_trend = 0;    // spatial trend effects
-  // Type nll_epsilon = 0;  // spatio-temporal effects
-  // Type nll_priors = 0;   // priors
 
   // ------------------ Derived variables -------------------------------------------------
   Type s_slope, s_cut, s50, s95, s_max;
@@ -364,32 +400,22 @@ Type objective_function<Type>::operator()()
     s95 = b_threshold(0) + exp(b_threshold(1)); // threshold at which function is 95% of max
     s_max = b_threshold(2);
   }
-  // ------------------ Priors -------------------------------------------------
 
-  if (enable_priors) {
-    // jnll -= dnorm(ln_tau_O, Type(0.0), Type(1.0), true);
-    // jnll -= dnorm(ln_tau_E, Type(0.0), Type(1.0), true);
-    // jnll -= dnorm(ln_kappa, Type(0.0), Type(2.0), true);
-    // jnll -= dnorm(ln_phi, Type(0.0), Type(1.0), true);
-    for (int j = 0; j < n_j; j++) {
-      if (!isNA(penalties(j)))
-        jnll -= dnorm(b_j(j), Type(0.0), penalties(j), true);
-    }
-    // if (spatial_trend) {
-    //   jnll -= dnorm(ln_tau_O_trend, Type(0.0), Type(1.0), true);
-    // }
-  }
+  Type rho = minus_one_to_one(ar1_phi);
+  Type phi = exp(ln_phi);
 
   // ------------------ Geospatial ---------------------------------------------
 
   // Matern:
-  Type range = sqrt(Type(8.0)) / exp(ln_kappa);
+  vector<Type> range(2);
+  range(0) = sqrt(Type(8.)) / exp(ln_kappa(0));
+  range(1) = sqrt(Type(8.)) / exp(ln_kappa(1));
 
   if (include_spatial) {
     Type sigma_O = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O +
-                            Type(2.0) * ln_kappa));
+      Type(2.0) * ln_kappa(0)));
     Type sigma_O_trend = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O_trend +
-      Type(2.0) * ln_kappa));
+      Type(2.0) * ln_kappa(0)));
     Type log_sigma_O = log(sigma_O);
     ADREPORT(log_sigma_O);
     REPORT(sigma_O);
@@ -403,21 +429,20 @@ Type objective_function<Type>::operator()()
   // optional non-stationary model on epsilon
   vector<Type> sigma_E(n_t);
   vector<Type> ln_tau_E_vec(n_t);
-  Type b_epsilon;
+  //Type b_epsilon;
   if (!est_epsilon_model) { // constant model
     for (int i = 0; i < n_t; i++) {
-      sigma_E(i) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa));
+      sigma_E(i) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa(1)));
       ln_tau_E_vec(i) = ln_tau_E;
     }
   }
   if (est_epsilon_model) { // loglinear model
-    b_epsilon = minus_one_to_one(b_epsilon_logit); // TODO: document this?
-    // epsilon_intcpt is the intercept parameter, derived from ln_tau_E. For models with time as covariate,
-    // this is interpreted as sigma at time 0
-    Type epsilon_intcpt = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa));
+    // epsilon_intcpt is the intercept parameter, derived from ln_tau_E.
+    // For models with time as covariate, this is interpreted as sigma when covariate = 0.
+    Type epsilon_intcpt = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa(1)));
     Type log_epsilon_intcpt = log(epsilon_intcpt);
     Type log_epsilon_temp = 0.0;
-    Type epsilon_cnst = - log(Type(4.0) * M_PI) / Type(2.0) - ln_kappa;
+    Type epsilon_cnst = - log(Type(4.0) * M_PI) / Type(2.0) - ln_kappa(1);
     for(int i = 0; i < n_t; i++) {
       log_epsilon_temp = log_epsilon_intcpt + b_epsilon * epsilon_predictor(i);
       sigma_E(i) = exp(log_epsilon_temp); // log-linear model
@@ -425,19 +450,25 @@ Type objective_function<Type>::operator()()
     }
   }
 
-  Eigen::SparseMatrix<Type> Q; // Precision matrix
+  Eigen::SparseMatrix<Type> Q_s; // Precision matrix
+  Eigen::SparseMatrix<Type> Q_st; // Precision matrix
+
   if (barrier) {
-    Q = Q_spde(spde_barrier, exp(ln_kappa), barrier_scaling);
+    Q_s = Q_spde(spde_barrier, exp(ln_kappa(0)), barrier_scaling);
+    if (!share_range) Q_st = Q_spde(spde_barrier, exp(ln_kappa(1)), barrier_scaling);
   } else {
     if (anisotropy) {
       matrix<Type> H = MakeH(ln_H_input);
-      Q = R_inla::Q_spde(spde_aniso, exp(ln_kappa), H);
+      Q_s = R_inla::Q_spde(spde_aniso, exp(ln_kappa(0)), H);
+      if (!share_range) Q_st = R_inla::Q_spde(spde_aniso, exp(ln_kappa(1)), H);
       REPORT(H);
     }
     if (!anisotropy) {
-      Q = R_inla::Q_spde(spde, exp(ln_kappa));
+      Q_s = R_inla::Q_spde(spde, exp(ln_kappa(0)));
+      if (!share_range) Q_st = R_inla::Q_spde(spde, exp(ln_kappa(1)));
     }
   }
+  if (share_range) Q_st = Q_s;
 
   // ------------------ INLA projections ---------------------------------------
 
@@ -528,86 +559,139 @@ Type objective_function<Type>::operator()()
     }
   }
 
-  Type rho = minus_one_to_one(ar1_phi);
   bool s = true;
   if (normalize_in_r) s = false;
 
   // Spatial (intercept) random effects:
   if (include_spatial)
-    jnll += SCALE(GMRF(Q, s), 1.0 / exp(ln_tau_O))(omega_s);
+    jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
   // Spatial trend random effects:
   if (spatial_trend)
-    jnll += SCALE(GMRF(Q, s), 1.0 / exp(ln_tau_O_trend))(omega_s_trend);
+    jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O_trend))(omega_s_trend);
   // Spatiotemporal random effects:
   if (!spatial_only) {
-    if (!ar1_fields) {
+    if (!ar1_fields && !rw_fields) {
       for (int t = 0; t < n_t; t++)
-        jnll += SCALE(GMRF(Q, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
+        jnll += SCALE(GMRF(Q_st, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
     } else {
-      if (est_epsilon_model > 0) {
-        // time-varying epsilon sd
-        jnll += SCALE(GMRF(Q, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
-        for (int t = 1; t < n_t; t++) {
-          jnll += SCALE(GMRF(Q, s), 1./exp(ln_tau_E_vec(t)))((epsilon_st.col(t) -
-            rho * epsilon_st.col(t - 1))/sqrt(1-rho*rho));
+      if (est_epsilon_model) { // time-varying epsilon sd
+        if (ar1_fields) {
+          jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
+          for (int t = 1; t < n_t; t++) {
+            jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(t)))((epsilon_st.col(t) -
+              rho * epsilon_st.col(t - 1))/sqrt(1. - rho * rho));
+          }
+          int n_rows=epsilon_st.cols();
+          int m_cols=epsilon_st.size()/n_rows;
+          // This penalty added to match Kasper's AR1_t() implementation
+          jnll += Type((n_rows-1)*m_cols) * log(sqrt(Type(1)-rho*rho));
+        } else if (rw_fields) {
+          jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
+          for (int t = 1; t < n_t; t++) {
+            jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(t)))(epsilon_st.col(t) - epsilon_st.col(t - 1));
+          }
+        } else {
+          error("Field type not implemented.");
         }
-      } else {
-        // constant epsilon sd, keep calculations as is
-        jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q, s)), 1./exp(ln_tau_E))(epsilon_st);
+      } else { // constant epsilon sd, keep calculations as is
+        if (ar1_fields) {
+          jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q_st, s)), 1./exp(ln_tau_E))(epsilon_st);
+        } else if (rw_fields) {
+          jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
+          for (int t = 1; t < n_t; t++) {
+            jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(t) - epsilon_st.col(t - 1));
+          }
+          } else {
+            error("Field type not implemented.");
+          }
+        }
       }
     }
-  }
+  if (flag == 0) return jnll;
 
   // ------------------ Probability of data given random effects ---------------
 
   Type s1, s2;
-  Type phi = exp(ln_phi);
   REPORT(phi);
   ADREPORT(phi);
   for (int i = 0; i < n_i; i++) {
     if (!isNA(y_i(i))) {
       switch (family) {
-        case gaussian_family:
-          jnll -= keep(i) * dnorm(y_i(i), mu_i(i), phi, true) * weights_i(i);
-          break;
-        case tweedie_family:
-          s1 = invlogit(thetaf) + Type(1.0);
-          jnll -= keep(i) * dtweedie(y_i(i), mu_i(i), phi, s1, true) * weights_i(i);
-          break;
-        case binomial_family:  // in logit space not inverse logit
-          jnll -= keep(i) * dbinom_robust(y_i(i), size(i), mu_i(i), true) * weights_i(i);
-          break;
-        case poisson_family:
-          jnll -= keep(i) * dpois(y_i(i), mu_i(i), true) * weights_i(i);
-          break;
-        case Gamma_family:
-          s1 = exp(ln_phi);         // shape
-          s2 = mu_i(i) / s1;        // scale
-          jnll -= keep(i) * dgamma(y_i(i), s1, s2, true) * weights_i(i);
-          // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
-          // jnll -= keep(i) * dgamma(y_i(i), s1, mu_i(i) / s1, true) * weights_i(i);
-          break;
-        case nbinom2_family:
-          s1 = log(mu_i(i)); // log(mu_i)
-          s2 = 2. * s1 - ln_phi; // log(var - mu)
-          jnll -= keep(i) * dnbinom_robust(y_i(i), s1, s2, true) * weights_i(i);
-          break;
-        case lognormal_family:
-          jnll -= keep(i) * dlnorm(y_i(i), log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi, true) * weights_i(i);
-          break;
-        case student_family:
-          jnll -= keep(i) * dstudent(y_i(i), mu_i(i), exp(ln_phi), df, true) * weights_i(i);
-          break;
-        case Beta_family: // Ferrari and Cribari-Neto 2004; betareg package
-          s1 = mu_i(i) * phi;
-          s2 = (Type(1) - mu_i(i)) * phi;
-          jnll -= keep(i) * dbeta(y_i(i), s1, s2, true) * weights_i(i);
-          break;
-        default:
-          error("Family not implemented.");
+      case gaussian_family:
+        nll_obs -= keep(i) * dnorm(y_i(i), mu_i(i), phi, true) * weights_i(i);
+        break;
+      case tweedie_family:
+        s1 = invlogit(thetaf) + Type(1.0);
+        if (!isNA(priors(12))) jnll -= dnorm(s1, priors(12), priors(13), true);
+        nll_obs -= keep(i) * dtweedie(y_i(i), mu_i(i), phi, s1, true) * weights_i(i);
+        break;
+      case binomial_family:  // in logit space not inverse logit
+        nll_obs -= keep(i) * dbinom_robust(y_i(i), size(i), mu_i(i), true) * weights_i(i);
+        break;
+      case poisson_family:
+        nll_obs -= keep(i) * dpois(y_i(i), mu_i(i), true) * weights_i(i);
+        break;
+      case Gamma_family:
+        s1 = exp(ln_phi);         // shape
+        s2 = mu_i(i) / s1;        // scale
+        nll_obs -= keep(i) * dgamma(y_i(i), s1, s2, true) * weights_i(i);
+        // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
+        // nll_obs -= keep(i) * dgamma(y_i(i), s1, mu_i(i) / s1, true) * weights_i(i);
+        break;
+      case nbinom2_family:
+        s1 = log(mu_i(i)); // log(mu_i)
+        s2 = 2. * s1 - ln_phi; // log(var - mu)
+        nll_obs -= keep(i) * dnbinom_robust(y_i(i), s1, s2, true) * weights_i(i);
+        break;
+      case lognormal_family:
+        nll_obs -= keep(i) * dlnorm(y_i(i), log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi, true) * weights_i(i);
+        break;
+      case student_family:
+        nll_obs -= keep(i) * dstudent(y_i(i), mu_i(i), exp(ln_phi), df, true) * weights_i(i);
+        break;
+      case Beta_family: // Ferrari and Cribari-Neto 2004; betareg package
+        s1 = mu_i(i) * phi;
+        s2 = (Type(1) - mu_i(i)) * phi;
+        nll_obs -= keep(i) * dbeta(y_i(i), s1, s2, true) * weights_i(i);
+        break;
+      default:
+        error("Family not implemented.");
       }
     }
   }
+  jnll += nll_obs;
+  REPORT(nll_obs);
+
+  // ------------------ Priors -------------------------------------------------
+
+  // Construct special object for MVN distribution; always has mean 0.
+  MVNORM_t<Type> neg_log_dmvnorm(priors_b_Sigma);
+  // Apply nll on residual. Note that other univariate densities are positive
+  // log-likelihoods but the dmvnorm is negative.
+  // We're accumulating the neg LL, which is why this is a + sign.
+  if(priors_b_n > 0) {
+    vector<Type> b_j_subset(priors_b_n),b_mean_subset(priors_b_n);
+    for(int j = 0; j < priors_b_n; j++) {
+      b_j_subset(j) = b_j(priors_b_index(j));
+      b_mean_subset(j) = priors_b_mean(j);
+    }
+    jnll += neg_log_dmvnorm(b_j_subset - b_mean_subset);
+  }
+
+  // start vector of priors:
+  if (!isNA(priors(0)) && !isNA(priors(1)) && !isNA(priors(2)) && !isNA(priors(3))) {
+    // std::cout << "Using spatial PC prior" << "\n";
+    jnll -= dPCPriSPDE(ln_tau_O, ln_kappa(0), priors(0), priors(1), priors(2), priors(3), true);
+  }
+  if (!isNA(priors(4)) && !isNA(priors(5)) && !isNA(priors(6)) && !isNA(priors(7))) {
+    // std::cout << "Using spatiotemporal PC prior" << "\n";
+    jnll -= dPCPriSPDE(ln_tau_E, ln_kappa(1), priors(4), priors(5), priors(6), priors(7), true);
+  }
+  if (!isNA(priors(8))) jnll -= dnorm(phi, priors(8), priors(9), true);
+  if (!isNA(priors(10))) jnll -= dnorm(rho, priors(10), priors(11), true);
+
+  // Jacobians for Stan:
+  // FIXME
 
   // ------------------ Predictions on new data --------------------------------
 
@@ -778,13 +862,13 @@ Type objective_function<Type>::operator()()
     ADREPORT(quadratic_reduction);
   }
   if (est_epsilon_model) {
-    REPORT(b_epsilon_logit);
-    ADREPORT(b_epsilon_logit);
-    b_epsilon = Type(2.0) * exp(b_epsilon_logit) / (1.0 + exp(b_epsilon_logit)) - 1.0; // constrain to be -1 to 1
+    //REPORT(b_epsilon_logit);
+    //ADREPORT(b_epsilon_logit);
+    //b_epsilon = Type(2.0) * exp(b_epsilon_logit) / (1.0 + exp(b_epsilon_logit)) - 1.0; // constrain to be -1 to 1
     REPORT(b_epsilon);
     ADREPORT(b_epsilon);
-    REPORT(b_epsilon);
-    ADREPORT(b_epsilon);
+    //REPORT(b_epsilon);
+    //ADREPORT(b_epsilon);
   }
 
   // ------------------ Reporting ----------------------------------------------
@@ -806,7 +890,7 @@ Type objective_function<Type>::operator()()
   REPORT(rho);          // AR1 correlation in -1 to 1 space
   REPORT(range);        // Matern approximate distance at 10% correlation
   ADREPORT(range);      // Matern approximate distance at 10% correlation
-  Type log_range = log(range); // for SE
+  vector<Type> log_range = log(range); // for SE
   ADREPORT(log_range);  // log Matern approximate distance at 10% correlation
 
   // ------------------ Joint negative log likelihood --------------------------

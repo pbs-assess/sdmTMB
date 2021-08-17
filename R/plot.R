@@ -6,6 +6,7 @@
 #' @rdname plot_anisotropy
 #' @examples
 #' \donttest{
+#' if (inla_installed()) {
 #' d <- pcod
 #' m <- sdmTMB(data = d,
 #'   formula = density ~ 0 + as.factor(year),
@@ -13,6 +14,7 @@
 #'   family = tweedie(link = "log"), anisotropy = TRUE,
 #'   include_spatial = FALSE)
 #' plot_anisotropy(m)
+#' }
 #' }
 plot_anisotropy <- function(object) {
   stopifnot(identical(class(object), "sdmTMB"))

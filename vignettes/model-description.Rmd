@@ -111,8 +111,20 @@ $$
 $$
 
 where $\rho$ is the correlation between subsequent spatiotemporal random
-fields. The $\rho \boldsymbol{\delta}_{t-1} + \sqrt{1 - \rho^2}$ structure
-ensures a stationary AR1 process.
+fields. The $\rho \boldsymbol{\delta}_{t-1} + \sqrt{1 - \rho^2}$ scales the spatiotemporal variance by the correlation such that it represents the steady-state marginal variance.
+
+## Random walk spatiotemporal random fields
+
+Dropping the optional $\omega_s$ for simplicity:
+
+$$
+\begin{align}
+\mu_{\s,t} &= f^{-1} \left( \boldsymbol{X} \boldsymbol{\beta} + \delta_{\s,t} \right),\\
+\boldsymbol{\delta}_{t=1} &\sim \operatorname{MVNormal} (\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon}),\\
+\boldsymbol{\delta}_{t>1} &= \boldsymbol{\delta}_{t-1} +  \boldsymbol{\epsilon}_t,  \:
+\boldsymbol{\epsilon}_t \sim \operatorname{MVNormal} \left(\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right),
+\end{align}
+$$
 
 ## Offset terms
 

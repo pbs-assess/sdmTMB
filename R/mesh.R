@@ -12,24 +12,6 @@
 #'up
 #' @importFrom graphics points
 #' @export
-#' @examples
-#' # **Depreciated; please use `make_mesh()` instead.**
-#' \donttest{
-#' sp <- make_spde(pcod$X, pcod$Y, n_knots = 25)
-#' plot_spde(sp)
-#'
-#' loc_xy <- cbind(pcod$X, pcod$Y)
-#' bnd <- INLA::inla.nonconvex.hull(as.matrix(loc_xy), convex = -0.05)
-#' mesh <- INLA::inla.mesh.2d(
-#'   boundary = bnd,
-#'   max.edge = c(20, 50),
-#'   offset = -0.05,
-#'   cutoff = c(2, 5),
-#'   min.angle = 10
-#' )
-#' sp2 <- make_spde(pcod$X, pcod$Y, mesh = mesh)
-#' plot_spde(sp2)
-#' }
 
 make_spde <- function(x, y, n_knots, seed = 42, mesh = NULL) {
   loc_xy <- cbind(x, y)
@@ -82,6 +64,7 @@ make_spde <- function(x, y, n_knots, seed = 42, mesh = NULL) {
 #' @export
 #'
 #' @examples
+#' if (inla_installed()) {
 #' sp <- make_mesh(pcod, c("X", "Y"), cutoff = 30, type = "cutoff")
 #' plot(sp)
 #'
@@ -106,12 +89,18 @@ make_spde <- function(x, y, n_knots, seed = 42, mesh = NULL) {
 #' sp2 <- make_mesh(pcod, c("X", "Y"), mesh = mesh)
 #' plot(sp2)
 #' }
+#' }
 make_mesh <- function(data, xy_cols,
                       type = c("kmeans", "cutoff", "cutoff_search"),
                       cutoff, n_knots,
                       seed = 42,
                       refine = list(min.angle = 21, max.edge = Inf, max.n.strict = -1, max.n = 1000),
                       mesh = NULL) {
+
+  if (!requireNamespace("INLA", quietly = TRUE)) {
+    stop("INLA must be installed to use this function.", call. = FALSE)
+  }
+
   if (missing(xy_cols) || is.numeric(xy_cols) || is.numeric(data)) {
     stop("It looks like you are using an old format of make_spde(). ",
       "The function now uses `data` and `xy_cols` arguments ",
@@ -321,15 +310,16 @@ make_barrier_spde <- function(spde) {
 #' @references
 #' Bakka, H., Vanhatalo, J., Illian, J., Simpson, D., and Rue, H. 2019.
 #' Non-stationary Gaussian models with physical barriers.
-#' <http://arxiv.org/abs/1608.03787>
+#' <https://arxiv.org/abs/1608.03787>
 #'
-#' <http://www.r-inla.org/barrier-model>
+#' <https://sites.google.com/a/r-inla.org/www/barrier-model>
 #'
 #' <https://haakonbakkagit.github.io/btopic107.html>
 #' @examples
-#' library(sf)
-#' library(dplyr)
-#' library(ggplot2)
+#' if (require("sf", quietly = TRUE) &&
+#'   require("ggplot2", quietly = TRUE) &&
+#'   require("dplyr", quietly = TRUE) &&
+#'   require("INLA", quietly = TRUE)) {
 #'
 #' # First, download coastline data for our region.
 #' # We will use `bc_coast` from the package data,
@@ -403,9 +393,18 @@ make_barrier_spde <- function(spde) {
 #' fit <- sdmTMB(density ~ s(depth, k = 3), data = pcod, spde = bspde,
 #'   family = tweedie(link = "log"))
 #' fit
+#' }
 
 add_barrier_mesh <- function(spde_obj, barrier_sf, range_fraction = 0.2,
                              proj_scaling = 1, plot = FALSE) {
+
+  if (!requireNamespace("INLA", quietly = TRUE)) {
+    stop("INLA must be installed to use this function.", call. = FALSE)
+  }
+  if (!requireNamespace("sf", quietly = TRUE)) {
+    stop("The sf package must be installed to use this function.", call. = FALSE)
+  }
+
   assert_that(
     is.numeric(range_fraction), range_fraction <= 1,
     range_fraction > 0, length(range_fraction) == 1

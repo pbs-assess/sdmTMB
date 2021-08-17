@@ -8,22 +8,23 @@
 #' original or new data.
 #'
 #' @param object An object from [sdmTMB()].
-#' @param newdata An optional new data frame. This should be a data frame with
-#'   the same predictor columns as in the fitted data and a time column (if this
-#'   is a spatiotemporal model) with the same name as in the fitted data. There
-#'   should be predictor data for each year in the original data set.
-#' @param se_fit Should standard errors on predictions at the new locations given by
-#'   `newdata` be calculated? Warning: the current implementation can be very
-#'   slow for large data sets or high-resolution projections.
-#' @param xy_cols Depreciated. Was: a character vector of
-#'   length 2 that gives the column names of the x and y coordinates in
-#'   `newdata`.
-#' @param return_tmb_object Logical. If `TRUE`, will include the TMB object in
-#'   a list format output. Necessary for the [get_index()] or [get_cog()] functions.
+#' @param newdata A data frame to make predictions on. This should be a data
+#'   frame with the same predictor columns as in the fitted data and a time
+#'   column (if this is a spatiotemporal model) with the same name as in the
+#'   fitted data. There should be predictor data for each year in the original
+#'   data set.
+#' @param se_fit Should standard errors on predictions at the new locations
+#'   given by `newdata` be calculated? Warning: the current implementation can
+#'   be very slow for large data sets or high-resolution projections. A *much*
+#'   faster option is to use the `sims` argument below and calculate uncertainty
+#'   on the simulations from the joint precision matrix.
+#' @param return_tmb_object Logical. If `TRUE`, will include the TMB object in a
+#'   list format output. Necessary for the [get_index()] or [get_cog()]
+#'   functions.
 #' @param area A vector of areas for survey grid cells. Only necessary if the
-#'   output will be passed to [get_index()] or [get_cog()]. Should be the same length
-#'   as the number of rows of `newdata`. If length 1, will be repeated to match the
-#'   rows of data.
+#'   output will be passed to [get_index()] or [get_cog()] and not all grid
+#'   cells are of area 1. Should be the same length as the number of rows of
+#'   `newdata`. If length 1, will be repeated to match the rows of data.
 #' @param re_form `NULL` to specify including all spatial/spatiotemporal random
 #'   effects in predictions. `~0` or `NA` for population-level predictions. Note
 #'   that unlike lme4 or glmmTMB, this only affects what the standard errors are
@@ -33,10 +34,20 @@
 #'   predictions. `~0` or `NA` for population-level predictions. No other
 #'   options (e.g., some but not all random intercepts) are implemented yet.
 #'   Only affects predictions with `newdata`. This also affects [get_index()].
+#' @param sims If > 0, simulate from the joint precision matrix with `sims`
+#'   draws Returns a matrix of `nrow(data)` by `sim` representing the estimates
+#'   of the linear predictor (i.e., in link space). Can be useful for deriving
+#'   uncertainty on predictions (e.g., `apply(x, 1, sd)`) or propagating
+#'   uncertainty. This is currently the fastest way to generate estimates of
+#'   uncertainty on predictions in space with sdmTMB.
+#' @param tmbstan_model A model fit with [tmbstan::tmbstan()]. See
+#'   [extract_mcmc()] for more details and an example. If specificed, the
+#'   predict function will return a matrix of a similar form as if `sims > 0`
+#'   but representing Bayesian posterior samples from the Stan model.
 #' @param ... Not implemented.
 #'
 #' @return
-#' If `return_tmb_object = FALSE`:
+#' If `return_tmb_object = FALSE` (and `sims = 0` and `tmbstan_model = NULL`):
 #' A data frame:
 #' * `est`: Estimate in link space (everything is in link space)
 #' * `est_non_rf`: Estimate from everything that isn't a random field
@@ -46,25 +57,33 @@
 #' * `epsilon_st`: Spatiotemporal (intercept) random fields (could be
 #'    independent draws each year or AR1)
 #'
-#' If `return_tmb_object = TRUE`:
+#' If `return_tmb_object = TRUE` (and `sims = 0` and `tmbstan_model = NULL`):
 #' A list:
 #' * `data`: The data frame described above
 #' * `report`: The TMB report on parameter values
-#' * `obj`: The TMB object returned from the prediction run.
-#' * `fit_obj`: The original TMB model object.
+#' * `obj`: The TMB object returned from the prediction run
+#' * `fit_obj`: The original TMB model object
 #'
 #' You likely only need the `data` element as an end user. The other elements
 #' are included for other functions.
+#'
+#' If `sims > 0` or `tmbstan_model` is not `NULL`:
+#' A matrix:
+#' * Columns represent samples
+#' * Rows represent predictions with one row per row of `newdata`
 #'
 #' @export
 #'
 #' @examples
 #' # We'll only use a small number of knots so this example runs quickly
-#' # but you will likely want to use many more in applied situations.
+#' # but you will likely want to use more in applied situations.
 #'
-#' library(ggplot2)
-#' d <- pcod
-#' pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
+#' d <- pcod_2011
+#' if (inla_installed()) {
+#'   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
+#' } else {
+#'   pcod_spde <- pcod_mesh_2011 # use cached version on CRAN
+#' }
 #' m <- sdmTMB(
 #'  data = d, formula = density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'  time = "year", spde = pcod_spde, family = tweedie(link = "log")
@@ -76,7 +95,10 @@
 #' head(predictions)
 #'
 #' predictions$resids <- residuals(m) # randomized quantile residuals
+#'
 #' \donttest{
+#' if (require("ggplot2", quietly = TRUE) && inla_installed()) {
+#'
 #' ggplot(predictions, aes(X, Y, col = resids)) + scale_colour_gradient2() +
 #'   geom_point() + facet_wrap(~year)
 #' hist(predictions$resids)
@@ -84,7 +106,8 @@
 #'
 #' # Predictions onto new data --------------------------------------------
 #'
-#' predictions <- predict(m, newdata = qcs_grid)
+#' qcs_grid_2011 <- subset(qcs_grid, year >= min(pcod_2011$year))
+#' predictions <- predict(m, newdata = qcs_grid_2011)
 #'
 #' # A short function for plotting our predictions:
 #' plot_map <- function(dat, column = "est") {
@@ -122,7 +145,7 @@
 #'
 #' # You'll need at least one time element. If time isn't also a fixed effect
 #' # then it doesn't matter what you pick:
-#' nd$year <- 2003L
+#' nd$year <- 2011L
 #' p <- predict(m, newdata = nd, se_fit = TRUE, re_form = NA)
 #' ggplot(p, aes(depth_scaled, exp(est),
 #'   ymin = exp(est - 1.96 * est_se), ymax = exp(est + 1.96 * est_se))) +
@@ -136,7 +159,7 @@
 #' )
 #' nd <- data.frame(depth_scaled =
 #'   seq(min(d$depth_scaled), max(d$depth_scaled), length.out = 100))
-#' nd$year <- 2003L
+#' nd$year <- 2011L
 #' p <- predict(m_gam, newdata = nd, se_fit = TRUE, re_form = NA)
 #' ggplot(p, aes(depth_scaled, exp(est),
 #'   ymin = exp(est - 1.96 * est_se), ymax = exp(est + 1.96 * est_se))) +
@@ -148,16 +171,16 @@
 #' unique(d$year)
 #' m <- sdmTMB(
 #'   data = d, formula = density ~ 1,
-#'   ar1_fields = TRUE, # using an AR1 to have something to forecast with
-#'   extra_time = 2019L,
+#'   fields = "AR1", # using an AR1 to have something to forecast with
+#'   extra_time = 2019L, # `L` for integer to match our data
 #'   include_spatial = FALSE,
 #'   time = "year", spde = pcod_spde, family = tweedie(link = "log")
 #' )
 #'
 #' # Add a year to our grid:
-#' grid2019 <- qcs_grid[qcs_grid$year == max(qcs_grid$year), ]
+#' grid2019 <- qcs_grid_2011[qcs_grid_2011$year == max(qcs_grid_2011$year), ]
 #' grid2019$year <- 2019L # `L` because `year` is an integer in the data
-#' qcsgrid_forecast <- rbind(qcs_grid, grid2019)
+#' qcsgrid_forecast <- rbind(qcs_grid_2011, grid2019)
 #'
 #' predictions <- predict(m, newdata = qcsgrid_forecast)
 #' plot_map(predictions, "exp(est)") +
@@ -189,15 +212,19 @@
 #'   ggtitle("Prediction (fixed effects + all random effects)") +
 #'   scale_fill_viridis_c(trans = "sqrt")
 #' }
+#' }
 
-predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
-  xy_cols = c("X", "Y"), return_tmb_object = FALSE,
-  area = 1, re_form = NULL, re_form_iid = NULL, ...) {
+predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
+  return_tmb_object = FALSE,
+  area = 1, re_form = NULL, re_form_iid = NULL,
+  sims = 0, tmbstan_model = NULL, ...) {
 
-  check_sdmTMB_version(object$version)
-  if (!missing(xy_cols)) {
-    warning("argument `xy_cols` is deprecated; this information is already ",
-    "in the output of the `make_mesh(). Did you use `make_spde()`?", call. = FALSE)
+  if ("version" %in% names(object)) {
+    check_sdmTMB_version(object$version)
+  } else {
+    stop("This looks like a very old version of a model fit. Update the model with ",
+      "`sdmTMB::update_model()` or re-fit the model before predicting with it.",
+      call. = FALSE)
   }
   if (!"xy_cols" %in% names(object$spde)) {
     warning("It looks like this model was fit with make_spde(). ",
@@ -356,8 +383,33 @@ predict.sdmTMB <- function(object, newdata = NULL, se_fit = FALSE,
     old_par <- object$model$par
     # need to initialize the new TMB object once:
     new_tmb_obj$fn(old_par)
-    lp <- new_tmb_obj$env$last.par.best
 
+    if (sims > 0) {
+      if (!"jointPrecision" %in% names(object$sd_report)) {
+        message("Rerunning TMB::sdreport() with `getJointPrecision = TRUE`.")
+        sd_report <- TMB::sdreport(object$tmb_obj, getJointPrecision = TRUE)
+      } else {
+        sd_report <- object$sd_report
+      }
+      t_draws <- rmvnorm_prec(mu = new_tmb_obj$env$last.par.best,
+        tmb_sd = sd_report, n_sims = sims)
+      r <- apply(t_draws, 2L, new_tmb_obj$report)
+    }
+    if (!is.null(tmbstan_model)) {
+      if (!"stanfit" %in% class(tmbstan_model))
+        stop("tmbstan_model must be output from tmbstan::tmbstan().", call. = FALSE)
+      t_draws <- extract_mcmc(tmbstan_model)
+      r <- apply(t_draws, 2L, new_tmb_obj$report)
+    }
+    if (!is.null(tmbstan_model) || sims > 0) {
+      out <- lapply(r, `[[`, "proj_eta")
+      out <- do.call("cbind", out)
+      rownames(out) <- nd[[object$time]] # for use in index calcs
+      attr(out, "time") <- object$time
+      return(out)
+    }
+
+    lp <- new_tmb_obj$env$last.par.best
     r <- new_tmb_obj$report(lp)
 
     if (isFALSE(pop_pred)) {
@@ -451,8 +503,11 @@ check_sdmTMB_version <- function(version) {
       "that was used to fit this model. It is possible new parameters\n",
       "have been added to the TMB model since you fit this model and\n",
       "that prediction will fail. We recommend you fit and predict\n",
-      "from an sdmTMB model with the same version.",
+      "from an sdmTMB model with the same version. Alternatively,\n",
+      "you can try running `sdmTMB::update_model()` on your older\n",
+      "model.",
       call. = FALSE
     )
   }
 }
+

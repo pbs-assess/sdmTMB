@@ -4,17 +4,100 @@ set_par_value <- function(opt, par) {
 
 #' Optimization control options
 #'
-#' Any arguments to pass to [stats::nlminb()].
+#' [sdmTMB()] and [stats::nlminb()] control options.
 #'
 #' @param eval.max Maximum number of evaluations of the objective function
 #'   allowed.
 #' @param iter.max Maximum number of iterations allowed.
+#' @param nlminb_loops How many times to run [stats::nlminb()] optimization.
+#'   Sometimes restarting the optimizer at the previous best values aids
+#'   convergence. If the maximum gradient is still too large,
+#'   try increasing this to `2`.
+#' @param newton_loops How many Newton optimization steps to try with
+#'   [stats::optimHess()] after running [stats::nlminb()]. Sometimes aids
+#'   convergence.
+#' @param mgcv Parse the formula with [mgcv::gam()]?
+#' @param map_rf Map all the random fields to 0 to turn the model into a
+#'   classical GLM or GLMM without spatial or spatiotemporal components?
+#'   Note this is not accounted for in `print()` or `tidy.sdmTMB()`;
+#'   some parameters will still appear but their values can be ignored.
+#' @param map A named list with factor `NA`s specifying parameter values that
+#'   should be fixed at a constant value. See the documentation in
+#'   [TMB::MakeADFun()]. This should usually be used with `start` to specify the
+#'   fixed value.
+#' @param start A named list specifying the starting values for parameters. You
+#'   can see the necessary structure by fitting the model once and inspecting
+#'   `your_model$tmb_obj$env$parList()`. Elements of `start` that are specified
+#'   will replace the default starting values.
+#' @param quadratic_roots Experimental feature for internal use right now; may
+#'   be moved to a branch. Logical: should quadratic roots be calculated? Note:
+#'   on the sdmTMB side, the first two coefficients are used to generate the
+#'   quadratic parameters. This means that if you want to generate a quadratic
+#'   profile for depth, and depth and depth^2 are part of your formula, you need
+#'   to make sure these are listed first and that an intercept isn't included.
+#'   For example, `formula = cpue ~ 0 + depth + depth2 + as.factor(year)`.
+#' @param normalize Logical: use [TMB::normalize()] to normalize the process
+#'   likelihood using the Laplace approximation? Can result in a substantial
+#'   speed boost in some cases. This used to default to `FALSE` prior to
+#'   May 2021.
+#' @param multiphase Logical: estimate the fixed and random effects in phases?
+#'   Phases are usually faster and more stable.
+#' @param profile Logical: should population-level/fixed effects be profiled
+#'   out of the likelihood? These are then appended to the random effects
+#'   vector without the Laplace approximation. See [TMB::MakeADFun()]. *This
+#'   can dramatically speed up model fit if there are many fixed effects.*
+#' @param lower An optional named list of lower bounds within the optimization.
+#'   Parameter vectors with the same name (e.g., `b_j` or `ln_kappa` in some
+#'   cases) can be specified as a numeric vector. E.g.
+#'   `lower = list(b_j = c(-5, -5))`.
+#' @param upper An optional named list of upper bounds within the optimization.
+#' @param get_joint_precision Logical. Passed to `getJointPrecision` in
+#'   [TMB::sdreport()]. Must be `TRUE` to use simulation-based methods in
+#'   [predict.sdmTMB()] or `[get_index_sims()]`. If not needed, setting this
+#'   `FALSE` will reduce object size.
 #' @param ... Anything else. See the 'Control parameters' section of
 #'   [stats::nlminb()].
 #'
 #' @export
-sdmTMBcontrol <- function(eval.max = 1e4, iter.max = 1e4, ...) {
-  list(eval.max = eval.max, iter.max = iter.max, ...)
+#' @examples
+#' sdmTMBcontrol()
+#'
+#' # Usually used within sdmTMB(). For example:
+#' # sdmTMB(..., control = sdmTMBcontrol(profile = TRUE))
+sdmTMBcontrol <- function(
+  eval.max = 2e3,
+  iter.max = 1e3,
+  normalize = FALSE,
+  nlminb_loops = 1,
+  newton_loops = 0,
+  mgcv = TRUE,
+  quadratic_roots = FALSE,
+  start = NULL,
+  map_rf = FALSE,
+  map = NULL,
+  lower = NULL,
+  upper = NULL,
+  multiphase = TRUE,
+  profile = FALSE,
+  get_joint_precision = TRUE,
+  ...) {
+  list(
+    eval.max = eval.max,
+    iter.max = iter.max,
+    normalize = normalize,
+    nlminb_loops = nlminb_loops,
+    newton_loops = newton_loops,
+    mgcv = mgcv,
+    profile = profile,
+    quadratic_roots = quadratic_roots,
+    start = start,
+    map_rf = map_rf,
+    map = map,
+    lower = lower,
+    upper = upper,
+    multiphase = multiphase,
+    get_joint_precision = get_joint_precision,
+    ...)
 }
 
 get_convergence_diagnostics <- function(sd_report) {
@@ -49,14 +132,33 @@ check_offset <- function(formula) {
     gsub(" ", "", unlist(strsplit(as.character(formula), "\\+")))))
 }
 
-update_model <- function(object, silent = FALSE) {
+#' Update an old sdmTMB model
+#'
+#' @description
+#' If the installed version of sdmTMB is newer than the version that was used to
+#' fit a model, it is possible new parameters have been added to the TMB model
+#' since the model was fit and functions such as `print()` or `predict()` will
+#' not work. We recommend you fit and predict from an sdmTMB model with the same
+#' version.
+#'
+#' You can re-fit the model or you can try running `update_model()` on your
+#' older model and saving it to a new model object. This fills in any newer
+#' default TMB data, default TMB parameters, and default TMB map values.
+#'
+#' @param object A model fitted with [sdmTMB()].
+#' @param xy_cols A character vector of x and y column names contained in data
+#'   as specified in [make_mesh()]. Only needed if the mesh was previously
+#'   made with `make_spde()`, which did not include the column names.
+#' @param silent Silent or include optimization details when later fitting?
+update_model <- function(object,
+                         xy_cols = NULL,
+                         silent = FALSE) {
 
   stop("There are unresolved problems with this function. ",
     "Do not use it. Re-fit your model if you need to update it.", call. = FALSE)
-
   if (!"nobs_RE" %in% names(object$tmb_data)) {
     object$tmb_data$nobs_RE <- 0L
-    object$tmb_data$ln_tau_G_index <- 0L
+    object$tmb_data$ln_tau_G_index <- rep(0L, 1L)
     object$tmb_data$RE_indexes <- matrix(ncol = 0L, nrow = nrow(object$tmb_data$X_ij))
     object$tmb_data$proj_RE_indexes <- matrix(ncol = 0L, nrow = 1L)
     object$tmb_params$ln_tau_G <- 0
@@ -77,7 +179,7 @@ update_model <- function(object, silent = FALSE) {
     object$tmb_data$spde_barrier <- make_barrier_spde(object$spde)
   }
   if (!"pop_pred" %in% names(object$tmb_data)) object$tmb_data$pop_pred <- 0L
-  if (!"penalties" %in% names(object$tmb_data)) object$tmb_data$penalties <- rep(1, ncol(object$tmb_data$X_ij))
+  if (!"penalties" %in% names(object$tmb_data)) object$tmb_data$penalties <- rep(NA_real_, ncol(object$tmb_data$X_ij))
   if (!"mgcv" %in% names(object)) object$mgcv <- FALSE
   object$tmb_data$weights_i <- rep(1, length(object$tmb_data$y_i))
   object$tmb_data$calc_quadratic_range <- 0L
@@ -89,11 +191,67 @@ update_model <- function(object, silent = FALSE) {
     object$tmb_params$b_threshold <- rep(0, 2)
     object$tmb_map$b_threshold <- factor(c(NA, NA))
   }
+
+  # more dummy data
   if (!"df" %in% names(object$tmb_data)) object$tmb_data$df <- 3
+  if (!"matern_pc_prior_O" %in% names(object$tmb_data)) {
+    object$tmb_data$matern_pc_prior_O <- rep(0, 4L)
+  }
+  if (!"matern_pc_prior_E" %in% names(object$tmb_data)) {
+    object$tmb_data$matern_pc_prior_E <- rep(0, 4L)
+  }
+  if (!"exclude_RE" %in% names(object$tmb_data)) {
+    object$tmb_data$exclude_RE <- rep(0L, 0)
+  }
+  if (!"size" %in% names(object$tmb_data)) {
+    object$tmb_data$size <- rep(1, nrow(object$tmb_data$X_ij))
+  }
+  if (!"est_epsilon_model" %in% names(object$tmb_data)) {
+    object$tmb_data$est_epsilon_model <- 0L
+  }
+  if (!"epsilon_predictor" %in% names(object$tmb_data)) {
+    object$tmb_data$epsilon_predictor <- rep(0, object$tmb_data$n_t)
+  }
+  if (!"proj_spatial_index" %in% names(object$tmb_data)) {
+    object$tmb_data$proj_spatial_index <- 0
+  }
+
+  # more params
+  if (!"b_epsilon_logit" %in% names(object$tmb_params)) {
+    object$tmb_params$b_epsilon_logit <- 0
+  }
+
+  if (!"xy_cols" %in% names(object$spde) && is.null(xy_cols)) {
+    stop("Please specify `xy_cols` as in `make_mesh()`. ",
+      "See `?update_model()`.", call. = FALSE)
+  }
+  if (!"xy_cols" %in% names(object$spde)) {
+    object$spde$xy_cols <- xy_cols
+  }
+
+  object$version <- utils::packageVersion("sdmTMB")
+  object$updated_model <- TRUE
+
+  # object$tmb_params <- object$tmb_params[
+  #   c("ln_H_input", "b_j", "ln_tau_O", "ln_tau_O_trend", "ln_tau_E",
+  #     "ln_kappa", "thetaf", "ln_phi", "ln_tau_V", "ar1_phi", "ln_tau_G",
+  #     "RE", "b_rw_t", "omega_s", "omega_s_trend", "epsilon_st", "b_threshold",
+  #     "b_epsilon_logit")]
+  #
   object$tmb_obj <- TMB::MakeADFun(
     data = object$tmb_data, parameters = object$tmb_params,
     map = object$tmb_map, random = object$tmb_random, DLL = "sdmTMB", silent = silent,
-    checkParameterOrder = FALSE)
+    checkParameterOrder = FALSE
+  )
+  #
+  # # browser()
+  # object$model <- stats::nlminb(
+  #   start = object$tmb_params, objective = object$tmb_obj$fn,
+  #   gradient = object$tmb_obj$gr,
+  #   control = sdmTMBcontrol())
+  # object$sd_report <- TMB::sdreport(object$tmb_obj,
+  #   getJointPrecision = "jointPrecision" %in% names(object$sd_report))
+
   object
 }
 
@@ -119,7 +277,7 @@ check_and_parse_thresh_params <- function(formula, data) {
     formula <- out$formula
     threshold_function <- "logistic"
   }
-  if(!is.null(threshold_parameter)) {
+  if (!is.null(threshold_parameter)) {
     if (length(threshold_parameter) > 1) {
       stop("`threshold_parameter` must be a single variable name.", call. = FALSE)
     }
@@ -137,7 +295,8 @@ check_and_parse_thresh_params <- function(formula, data) {
     threshold_func <- match(threshold_function, c("linear", "logistic"))
   }
   X_threshold <- as.numeric(unlist(X_threshold))
-  list(formula = formula, threshold_parameter = threshold_parameter,
+  list(
+    formula = formula, threshold_parameter = threshold_parameter,
     threshold_func = threshold_func, X_threshold = X_threshold
   )
 }
@@ -178,3 +337,11 @@ check_valid_factor_levels <- function(x, .name = "") {
     msg = sprintf(
       "Random effect group column `%s` has extra factor levels. Please remove them.", .name))
 }
+
+#' Check if INLA installed (i.e., not on CRAN)
+#'
+#' @export
+inla_installed <- function() {
+  requireNamespace("INLA", quietly = TRUE)
+}
+

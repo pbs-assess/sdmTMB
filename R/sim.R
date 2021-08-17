@@ -58,19 +58,18 @@
 #' m <- sdmTMB(
 #'   data = s, formula = observed ~ x1,
 #'   time = "time", spde = mesh,
-#'   ar1_fields = TRUE, include_spatial = FALSE
+#'   fields = "AR1", include_spatial = FALSE
 #' )
 #' tidy(m, conf.int = TRUE)
 #' tidy(m, "ran_pars", conf.int = TRUE)
 #'
-#' #' # example with time-varying sigma_E (spatiotemporal variation)
+#' # example with time-varying sigma_E (spatiotemporal variation)
 #' s <- sdmTMB_sim(
-#' x = x, y = y, mesh = mesh, X = X,
-#' betas = c(0.5, 0.7), time_steps = time_steps, rho = 0,
-#' phi = 0.2, range = 0.8, sigma_O = 0,
-#' sigma_E = seq(0.2,1,length.out=time_steps),
-#' seed = 123, family = gaussian())
-#'
+#'   x = x, y = y, mesh = mesh, X = X,
+#'   betas = c(0.5, 0.7), time_steps = time_steps, rho = 0,
+#'   phi = 0.2, range = 0.8, sigma_O = 0,
+#'   sigma_E = seq(0.2, 1, length.out = time_steps),
+#'   seed = 123, family = gaussian())
 #' }
 
 sdmTMB_sim <- function(mesh,
@@ -91,6 +90,10 @@ sdmTMB_sim <- function(mesh,
                        seed = sample.int(1e6, 1),
                        list = FALSE,
                        size = NULL) {
+
+  if (!requireNamespace("INLA", quietly = TRUE)) {
+    stop("INLA must be installed to use this function.", call. = FALSE)
+  }
   assert_that(is.numeric(x), is.numeric(y))
   assert_that(is.null(dim(x)), is.null(dim(y)))
   assert_that(identical(length(x), length((y))))
