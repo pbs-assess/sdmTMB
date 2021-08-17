@@ -467,11 +467,11 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   } else {
     # mgcv::gam will parse a matrix response, but not a factor
     mf <- model.frame(mgcv::interpret.gam(formula)$fake.formula, data)
-    if(identical(family$family, "binomial") & "factor" %in% model.response(mf, "any") == TRUE) {
-      stop("Error: with 'mgcv' = TRUE, the response cannot be a factor")
+    if (identical(family$family, "binomial") && "factor" %in% model.response(mf, "any")) {
+      stop("Error: with 'mgcv' = TRUE, the response cannot be a factor", call. = FALSE)
     }
-    if(identical(family$family, "binomial")) {
-      mgcv_mod <- mgcv::gam(formula, data = data, family=family) # family needs to be passed into mgcv
+    if (family$family %in% c("binomial", "Gamma")) {
+      mgcv_mod <- mgcv::gam(formula, data = data, family = family) # family needs to be passed into mgcv
     } else {
       mgcv_mod <- mgcv::gam(formula, data = data) # should be fast enough to not worry
     }
@@ -480,6 +480,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
   offset_pos <- grep("^offset$", colnames(X_ij))
   y_i <- model.response(mf, "numeric")
+  if (family$family %in% c("Gamma", "lognormal") && min(y_i) <= 0) {
+    stop("Gamma and lognormal must have response values > 0.", call. = FALSE)
+  }
 
   # This is taken from approach in glmmTMB to match how they handle binomial
   # yobs could be a factor -> treat as binary following glm
