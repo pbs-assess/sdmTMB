@@ -22,8 +22,8 @@ test_that("Basic cross validation works", {
   # Use fold_ids:
   x <- sdmTMB_cv(
     density ~ 0 + depth_scaled + depth_scaled2,
-    data = pcod, spde = spde,
+    data = d, spde = spde,
     family = tweedie(link = "log"),
-    fold_ids = rep(seq(1, 2), nrow(pcod))[seq(1, nrow(pcod))])
+    fold_ids = rep(seq(1, 2), nrow(d))[seq(1, nrow(d))])
   expect_equal(class(x$models[[1]]), "sdmTMB")
 })

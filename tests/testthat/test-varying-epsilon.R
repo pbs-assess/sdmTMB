@@ -67,8 +67,10 @@ test_that("Epsilon models work with AR1 spatiotemporal fields", {
     spde = pcod_spde,
     family = tweedie(link = "log"),
     epsilon_predictor = "dummy",
-    control = sdmTMBcontrol(lower = list(b_epsilon = -1), upper = list(b_epsilon = 1)),
-    map = list(b_epsilon = factor(NA)), start = list(b_epsilon = 0),
+    control = sdmTMBcontrol(
+      lower = list(b_epsilon = -1), upper = list(b_epsilon = 1),
+      map = list(b_epsilon = factor(NA)), start = list(b_epsilon = 0)
+    ),
     fields = "AR1"
   )
 
