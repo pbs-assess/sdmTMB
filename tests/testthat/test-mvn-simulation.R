@@ -34,13 +34,24 @@ test_that("get_index_sims works", {
     time = "year", spatial_only = TRUE
   )
   qcs_grid_2011 <- subset(qcs_grid, year >= 2011)
-  p <- predict(m, newdata = qcs_grid_2011, sims = 3L)
-  expect_equal(ncol(p), 3L)
+  set.seed(1029)
+  p <- predict(m, newdata = qcs_grid_2011, sims = 200L)
+  expect_equal(ncol(p), 200L)
   expect_equal(nrow(p), nrow(qcs_grid_2011))
+
+  # library(dplyr)
+  # a <- reshape2::melt(p)
+  # a <- group_by(a, Var1, Var2) %>% summarize(est = sum(exp(value)))
+  # a <- group_by(a, Var1) %>% summarise(est = median(est))
 
   x <- get_index_sims(p)
   expect_equal(nrow(x), length(unique(qcs_grid_2011$year)))
   expect_true(sum(is.na(x$se)) == 0L)
+
+  p_regular <- predict(m, newdata = qcs_grid_2011, return_tmb_object = TRUE)
+  x_regular <- get_index(p_regular)
+  expect_equal(round(x_regular$est/x$est, 6),
+    c(0.926508, 0.909533, 0.915458, 0.922605))
 
   x_sims <- get_index_sims(p, return_sims = TRUE)
   expect_equal(nrow(x_sims), nrow(x) * ncol(p))
