@@ -18,4 +18,12 @@ test_that("Basic cross validation works", {
   expect_equal(x$sum_loglik, sum(x$fold_loglik))
   expect_true("data.frame" %in% class(x$data))
   expect_equal(class(x$models[[1]]), "sdmTMB")
+
+  # Use fold_ids:
+  x <- sdmTMB_cv(
+    density ~ 0 + depth_scaled + depth_scaled2,
+    data = pcod, spde = spde,
+    family = tweedie(link = "log"),
+    fold_ids = rep(seq(1, 2), nrow(pcod))[seq(1, nrow(pcod))])
+  expect_equal(class(x$models[[1]]), "sdmTMB")
 })

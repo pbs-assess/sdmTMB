@@ -87,10 +87,18 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'   data = pcod, mesh_args = list(xy_cols = c("X", "Y", cutoff = 20)),
 #'   family = tweedie(link = "log"), k_folds = 2
 #' )
+#'
+#' # Use fold_ids:
+#' m_cv3 <- sdmTMB_cv(
+#'   density ~ 0 + depth_scaled + depth_scaled2,
+#'   data = pcod, spde = spde,
+#'   family = tweedie(link = "log"),
+#'   fold_ids = rep(seq(1, 3), nrow(pcod))[seq(1, nrow(pcod))]
+#' )
 #' }
 #' }
 sdmTMB_cv <- function(formula, data, mesh_args, spde, time = NULL,
-  k_folds = 10, fold_ids = NULL, parallel = TRUE,
+  k_folds = 8, fold_ids = NULL, parallel = TRUE,
   use_initial_fit = FALSE,
   ...) {
   if (k_folds < 1) stop("`k_folds` must be >= 1.", call. = FALSE)
@@ -132,6 +140,7 @@ sdmTMB_cv <- function(formula, data, mesh_args, spde, time = NULL,
     if (length(which(is.na(data$cv_fold))) > 0) {
       stop("NAs found in `fold_ids`; please check `fold_ids` are specified correctly.")
     }
+    k_folds <- length(unique(data$cv_fold))
   }
 
   dot_args <- as.list(substitute(list(...)))[-1L]

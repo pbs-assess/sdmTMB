@@ -10,7 +10,7 @@ sdmTMB_cv(
   mesh_args,
   spde,
   time = NULL,
-  k_folds = 10,
+  k_folds = 8,
   fold_ids = NULL,
   parallel = TRUE,
   use_initial_fit = FALSE,
@@ -73,6 +73,14 @@ m_cv2 <- sdmTMB_cv(
   density ~ 0 + depth_scaled + depth_scaled2,
   data = pcod, mesh_args = list(xy_cols = c("X", "Y", cutoff = 20)),
   family = tweedie(link = "log"), k_folds = 2
+)
+
+# Use fold_ids:
+m_cv3 <- sdmTMB_cv(
+  density ~ 0 + depth_scaled + depth_scaled2,
+  data = pcod, spde = spde,
+  family = tweedie(link = "log"),
+  fold_ids = rep(seq(1, 3), nrow(pcod))[seq(1, nrow(pcod))]
 )
 }
 }
