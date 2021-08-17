@@ -46,7 +46,7 @@
   `priors` argument in `sdmTMB()`. PC priors are available for
   the random fields. See `?pc_matern` and the details there.
   
-* Move many less-common arguments from `sdmTMB()` to `sdmTMBcontrol()`.
+* Moved many less-common arguments from `sdmTMB()` to `sdmTMBcontrol()`.
 
 # sdmTMB 0.0.15.9000
 
