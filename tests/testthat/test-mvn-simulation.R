@@ -11,15 +11,11 @@ test_that("rmvnorm sim prediction works", {
   expect_identical(class(p)[[1]], "matrix")
   expect_identical(ncol(p), 15L)
 
-  expect_equal(p[1:2, 1:10],
-    structure(c(1.8699162905496, 1.63531268879039, -0.545589429955865,
-      -0.166086444510931, 2.74585833405298, 2.28654710196737, 0.313636663657174,
-      0.396008072224339, 2.06241095921304, 1.60963231768441, 1.75521432004763,
-      2.07418366348474, 0.333046692746184, 0.555437315814931, 1.97532933260919,
-      2.13437800215603, 5.12385511998788, 4.89894219449716, 0.184090550087612,
-      0.344108837803646), .Dim = c(2L, 10L), .Dimnames = list(c("0",
-        "0"), NULL)),
-    tolerance = 1e-5)
+  expect_equal(round(p[1:2, 1:10], 5),
+    structure(c(1.71569, 1.83575, -1.33492, -1.27293, 0.38908, 0.70163,
+      1.45686, 1.60475, 2.30503, 2.1425, 1.34876, 1.33194, 4.38547,
+      4.14214, 1.29596, 1.0981, 0.50995, 0.37118, 1.85081, 1.80129), .Dim = c(2L,
+        10L), .Dimnames = list(c("0", "0"), NULL)))
 
   .mean <- apply(p, 1, mean)
   .sd <- apply(p, 1, sd)
@@ -50,8 +46,8 @@ test_that("get_index_sims works", {
 
   p_regular <- predict(m, newdata = qcs_grid_2011, return_tmb_object = TRUE)
   x_regular <- get_index(p_regular)
-  expect_equal(round(x_regular$est/x$est, 6),
-    c(0.926508, 0.909533, 0.915458, 0.922605))
+  expect_equal(round(x_regular$est/x$est, 5),
+    c(0.91494, 0.92115, 0.92244, 0.9049))
 
   x_sims <- get_index_sims(p, return_sims = TRUE)
   expect_equal(nrow(x_sims), nrow(x) * ncol(p))
