@@ -56,7 +56,6 @@
 * Added back `normalize` argument to `sdmTMB()` and default to `FALSE`.
   Setting to `TRUE` can dramatically speed up some model fits
   (~4 times for some test models).
->>>>>>> priors-experimental
 
 # sdmTMB 0.0.14.9003
 
