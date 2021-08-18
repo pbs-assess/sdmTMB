@@ -84,17 +84,17 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' # Create mesh each fold:
 #' m_cv2 <- sdmTMB_cv(
 #'   density ~ 0 + depth_scaled + depth_scaled2,
-#'   data = pcod, mesh_args = list(xy_cols = c("X", "Y", cutoff = 20)),
+#'   data = pcod, mesh_args = list(xy_cols = c("X", "Y"), cutoff = 20),
 #'   family = tweedie(link = "log"), k_folds = 2
 #' )
 #'
-# # Use fold_ids:
-# m_cv3 <- sdmTMB_cv(
-#   density ~ 0 + depth_scaled + depth_scaled2,
-#   data = pcod, spde = spde,
-#   family = tweedie(link = "log"),
-#   fold_ids = rep(seq(1, 3), nrow(pcod))[seq(1, nrow(pcod))]
-# )
+#' # Use fold_ids:
+#' m_cv3 <- sdmTMB_cv(
+#'   density ~ 0 + depth_scaled + depth_scaled2,
+#'   data = pcod, spde = spde,
+#'   family = tweedie(link = "log"),
+#'   fold_ids = rep(seq(1, 3), nrow(pcod))[seq(1, nrow(pcod))]
+#' )
 #' }
 #' }
 sdmTMB_cv <- function(formula, data, mesh_args, spde, time = NULL,
