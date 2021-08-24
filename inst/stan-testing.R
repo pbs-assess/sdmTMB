@@ -11,22 +11,51 @@
 #' @examples
 #'
 #' \dontrun{
-#' pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
-#' plot(pcod_spde)
+pcod_spde <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
+
+m_tmb <- sdmTMB(present ~ 0 + as.factor(year),
+  data = pcod_2011, spde = pcod_spde, family = binomial(link = "logit"),
+  priors = sdmTMBpriors(
+    matern_s = pc_matern(range_gt = 15, sigma_lt = 5),
+    b = normal(rep(0, 4), rep(20, 4))
+  )
+)
+print(m_tmb)
+(pars <- m_tmb$model$par)
+
+m_tmb_fixed <- sdmTMB(present ~ 0 + as.factor(year),
+  data = pcod_2011, spde = pcod_spde, family = binomial(link = "logit"),
+  control = sdmTMBcontrol(
+    start = list(
+      ln_kappa = rep(pars[["ln_kappa"]], 2), # need 2; 'mapped' together
+      ln_tau_O = pars[["ln_tau_O"]]),
+    map = list(
+      ln_kappa = factor(c(NA, NA)), # need 2
+      ln_tau_O = factor(NA))
+  ),
+  priors = sdmTMBpriors(
+    b = normal(rep(0, 4), rep(20, 4))
+  )
+)
+
+library(tmbstan)
+m_stan <- tmbstan(m_tmb$tmb_obj, iter = 200, chains = 1)
+print(m_stan, pars = c("b_j", "thetaf", "ln_phi", "omega_s[1]", "epsilon_st[1]"))
+
 #'
 #' # here we will fix the random field parameters at their approximate
 #' # MLEs (maximum likelihood estimates) from a previous fit
 #' # to improve speed of convergence:
-#' m_tmb <- sdmTMB(density ~ 0 + as.factor(year),
-#'   data = pcod, spde = pcod_spde, family = tweedie(link = "log"), time = "year",
-#'   control = sdmTMBcontrol(start = list(ln_kappa = rep(-1.58, 2), ln_tau_E = -0.15, ln_tau_O = -0.65),
-#'     map = list(ln_kappa = rep(factor(NA), 2), ln_tau_E = factor(NA), ln_tau_O = factor(NA))))
+m_tmb <- sdmTMB(density ~ 0 + as.factor(year),
+  data = pcod, spde = pcod_spde, family = tweedie(link = "log"),
+  control = sdmTMBcontrol(start = list(ln_kappa = -1.58, ln_tau_E = -0.15, ln_tau_O = -0.65),
+    map = list(ln_kappa = factor(NA), ln_tau_E = factor(NA), ln_tau_O = factor(NA))))
 #' m_tmb
 #'
 #' # will take 3-5 minutes:
-#' library(tmbstan)
-#' m_stan <- tmbstan(m_tmb$tmb_obj, iter = 200, chains = 1)
-#' print(m_stan, pars = c("b_j", "thetaf", "ln_phi", "omega_s[1]", "epsilon_st[1]"))
+library(tmbstan)
+m_stan <- tmbstan(m_tmb$tmb_obj, iter = 200, chains = 1)
+print(m_stan, pars = c("b_j", "thetaf", "ln_phi", "omega_s[1]", "epsilon_st[1]"))
 #'
 #' post <- extract_mcmc(m_stan)
 #' dim(post)
