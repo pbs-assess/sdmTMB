@@ -17,7 +17,7 @@ NULL
 #' @param spde An object from [make_mesh()].
 #' @param time An optional time column name (as character). Can be left as
 #'   `NULL` for a model with only spatial random fields unless you wish to use
-#'   one of the index or center of gravity functions.
+#'   one of the index or center of gravity functions over time.
 #' @param family The family and link. Supports [gaussian()], [Gamma()],
 #'   [binomial()], [poisson()], \code{\link[sdmTMB:families]{Beta()}},
 #'   \code{\link[sdmTMB:families]{nbinom2()}}, and

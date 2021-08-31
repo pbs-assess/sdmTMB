@@ -43,7 +43,7 @@ Splines are possible via \pkg{mgcv}. See examples below.}
 
 \item{time}{An optional time column name (as character). Can be left as
 \code{NULL} for a model with only spatial random fields unless you wish to use
-one of the index or center of gravity functions.}
+one of the index or center of gravity functions over time.}
 
 \item{family}{The family and link. Supports \code{\link[=gaussian]{gaussian()}}, \code{\link[=Gamma]{Gamma()}},
 \code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, \code{\link[sdmTMB:families]{Beta()}},
