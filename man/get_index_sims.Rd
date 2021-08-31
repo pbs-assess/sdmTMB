@@ -34,7 +34,19 @@ other words, the function assumes a log link, which typically makes sense.}
 Assuming a log link, the \code{sum(exp(x) * area)} default makes sense.}
 }
 \description{
-Calculate a population index via simulation from the joint precision matrix
+Calculate a population index via simulation from the joint precision matrix.
+Compared to \code{\link[=get_index]{get_index()}}, this version can be dramatically faster
+if bias correction was turned on in \code{\link[=get_index]{get_index()}} while being approximately
+equivalent. \strong{This is an experimental function.} We have yet to find a model
+where this function fails to provide a reasonable result, but make no
+guarantees.
+}
+\details{
+Can also be used to produce an index from a model fit with
+\pkg{tmbstan}.
+
+This function does nothing more than summarize and reshape the
+matrix of simulation draws into a data frame.
 }
 \examples{
 m <- sdmTMB(density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
@@ -53,4 +65,7 @@ if (require("ggplot2", quietly = TRUE)) {
   ggplot(x_sims, aes(as.factor(year), .value)) +
     geom_violin()
 }
+}
+\seealso{
+\code{\link[=get_index]{get_index()}}
 }

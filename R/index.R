@@ -5,6 +5,8 @@
 #' @param level The confidence level.
 #' @param ... Passed to [TMB::sdreport()].
 #'
+#' @seealso [get_index_sims()]
+#'
 #' @examples
 #' \donttest{
 #' if (inla_installed()) {

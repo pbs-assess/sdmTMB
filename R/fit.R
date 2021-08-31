@@ -3,29 +3,30 @@ NULL
 
 #' Fit a spatial or spatiotemporal GLMM with TMB
 #'
-#' Fit a spatial or spatiotemporal predictive-process GLMM with TMB.
-#' Among other uses, this can be useful for (dynamic) species distribution
-#' models and relative abundance index standardization.
+#' Fit a spatial or spatiotemporal predictive-process GLMM with TMB. This can be
+#' useful for (dynamic) species distribution models and relative abundance index
+#' standardization among many other uses.
 #'
 #' @param formula Model formula. See the Details section below for how to specify
 #'   offsets and threshold parameters. For index standardization, you may wish
 #'   to include `0 + as.factor(year)` (or whatever the time column is called)
 #'   in the formula. IID random intercepts are possible using \pkg{lme4}
 #'   syntax, e.g., `+ (1 | g)` where `g` is a column with factor levels.
-#'   Splines are possible via mgcv. See examples below.
+#'   Splines are possible via \pkg{mgcv}. See examples below.
 #' @param data A data frame.
 #' @param spde An object from [make_mesh()].
-#' @param time The time column (as character). Leave as `NULL` for a spatial-only
-#'   model.
+#' @param time An optional time column name (as character). Can be left as
+#'   `NULL` for a model with only spatial random fields unless you wish to use
+#'   one of the index or center of gravity functions.
 #' @param family The family and link. Supports [gaussian()], [Gamma()],
 #'   [binomial()], [poisson()], \code{\link[sdmTMB:families]{Beta()}},
 #'   \code{\link[sdmTMB:families]{nbinom2()}}, and
 #'   \code{\link[sdmTMB:families]{tweedie()}}]. For binomial family options,
-#'   see the 'Binomial families' section below.
+#'   see the 'Binomial families' in the Details section below.
 #' @param time_varying An optional formula describing covariates that should be
 #'   modelled as a random walk through time. Be careful not to include
 #'   covariates (including the intercept) in both the main and time-varying
-#'   formula. I.e., at least one should have `~ 0` or ~ -1`.
+#'   formula. I.e., at least one should have `~ 0` or `~ -1`.
 #' @param weights Optional likelihood weights for the conditional model.
 #'   Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
 #'   to one and are not internally modified. Can also be used for trials with
@@ -39,32 +40,32 @@ NULL
 #' @param silent Silent or include optimization details?
 #' @param anisotropy Logical: allow for anisotropy? See [plot_anisotropy()].
 #' @param control Optimization control options. See [sdmTMBcontrol()].
-#' @param priors Optional vector of penalties/priors. See [sdmTMBpriors()].
+#' @param priors Optional penalties/priors. See [sdmTMBpriors()].
 #' @param fields Estimate the spatiotemporal random fields as `"IID"`
 #'   (independent and identically distributed; default), stationary `"AR1"`
-#'   (first-order autoregressive), or as a random walk (`"RW"`)? Note that the
-#'    spatiotemporal standard deviation represents the marginal steady-state
-#'    standard deviation of the process in the case of the AR1. I.e., it's
-#'    scaled according to the correlation. See the
-#'    [TMB documentation](https://kaskr.github.io/adcomp/classAR1__t.html).
-#'    If the AR1 correlation coefficient (rho) is estimated close to 1, say >
-#'    0.99, then you may want to switch to the random walk `"RW"`.
+#'   (first-order autoregressive), or as a random walk (`"RW"`). Note that the
+#'   spatiotemporal standard deviation represents the marginal steady-state
+#'   standard deviation of the process in the case of the AR1. I.e., it is
+#'   scaled according to the correlation. See the [TMB
+#'   documentation](https://kaskr.github.io/adcomp/classAR1__t.html). If the AR1
+#'   correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
+#'   may wish to switch to the random walk `"RW"`.
 #' @param include_spatial Should a separate spatial random field be estimated?
 #'   If enabled then there will be separate spatial and spatiotemporal
 #'   fields.
 #' @param spatial_trend Should a separate spatial field be included in the
-#'   trend that represents local (time) trends? Requires spatiotemporal data.
+#'   trend that represents local time trends? Requires spatiotemporal data.
 #'   See \doi{10.1111/ecog.05176} and the
 #'   [spatial trends vignette](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html).
-#' @param spatial_only Logical: should only a spatial model be fit (i.e. do not
+#' @param spatial_only Logical: should only a spatial model be fit (i.e., do not
 #'   include spatiotemporal random effects)? By default a spatial-only model
 #'   will be fit if there is only one unique value in the time column or the
 #'   `time` argument is left at its default value of `NULL`.
-#' @param share_range Logical: estimated a shared spatial and spatiotemporal
-#'   range parameter?
+#' @param share_range Logical: estimate a shared spatial and spatiotemporal
+#'   range parameter (`TRUE`) or independent range parameters (`FALSE`).
 #' @param previous_fit A previously fitted sdmTMB model to initialize the
 #'   optimization with. Can greatly speed up fitting. Note that the data and
-#'   model must be set up *exactly* the same way! However, the `weights` argument
+#'   model must be set up *exactly* the same way. However, the `weights` argument
 #'   can change, which can be useful for cross-validation.
 #' @param epsilon_predictor (Experimental) A column name (as character) of a
 #'   predictor of a linear trend (in log space) of the spatiotemporal standard
@@ -110,13 +111,13 @@ NULL
 #'
 #' **Threshold models**
 #'
-#' A linear break-point relationship for a covariate can be included via `+
-#' breakpt(variable)` in the formula, where `variable` is a single covariate
-#' corresponding to a column in `data`. In this case the relationship is linear
+#' A linear break-point relationship for a covariate can be included via
+#' `+ breakpt(variable)` in the formula, where `variable` is a single covariate
+#' corresponding to a column in `data`. In this case, the relationship is linear
 #' up to a point and then constant.
 #'
-#' Similarly, a logistic-function threshold model can be included via `+
-#' logistic(variable)`. This option models the relationship as a logistic
+#' Similarly, a logistic-function threshold model can be included via
+#' `+ logistic(variable)`. This option models the relationship as a logistic
 #' function of the 50% and 95% values. This is similar to length- or size-based
 #' selectivity in fisheries, and is parameterized by the points at which f(x) =
 #' 0.5 or 0.95. See the vignette.
@@ -136,8 +137,8 @@ NULL
 #' including `+ as.factor(year)` in `formula` will render a model with no data
 #' to inform the expected value in a missing year. [sdmTMB()] makes no attempt
 #' to determine if the model makes sense for forecasting or interpolation. The
-#' options `time_varying`, `include_spatial`, `ar1_fields`, `time = NULL`
-#' provide mechanisms to predict over missing time slices.
+#' options `time_varying`, `fields = "RW"`, and `fields = "AR1"`
+#' provide mechanisms to predict over missing time slices with process error.
 #'
 #' **Index standardization**
 #'
@@ -145,20 +146,16 @@ NULL
 #' (or whatever the time column is called) in the formula. See a basic
 #' example of index standardization in the relevant
 #' [package vignette](https://pbs-assess.github.io/sdmTMB/articles/model-description.html).
+#' You will need to specify the `time` argument. See [get_index()] and/or
+#' [get_index_sims()].
 #'
-#' **Regularization**
+#' **Regularization and priors**
 #'
 #' You can achieve regularization via penalties (priors) on the fixed effect
-#' parameters. The vector of values supplied to the `penalties` argument
-#' represents standard deviations of normal distributions centered on zero with
-#' one value per fixed effect. These can be used for regularization, e.g.,
-#' Normal(0, 1) for ridge regression. These should not include `offset` terms and
+#' parameters. See [sdmTMBpriors()]. These should not include `offset` terms and
 #' care should be taken if used with splines. You can fit the model once without
 #' penalties and inspect the element `head(your_model$tmb_data$X_ij)` if you
 #' want to see how the formula is translated to the fixed effect model matrix.
-#' The `penalties` vector should correspond to the columns of the `X_ij` matrix.
-#' An element can contain `NA` if you wish to avoid a penalty/prior on a specific
-#' term (e.g., the intercept).
 #'
 #' @references
 #'
@@ -185,8 +182,7 @@ NULL
 #' the northeast Pacific. EcoEvoRxiv. \doi{10.32942/osf.io/b87ng}.
 #'
 #' Code for implementing the penalized complexity prior on the spatial
-#' covariance parameters and simulation from the joint precision matrix adapted
-#' from:
+#' covariance parameters:
 #'
 #' Osgood-Zimmerman, A. and Wakefield, J. 2021. A Statistical introduction
 #' to Template Model Builder: a flexible tool for spatial modeling.

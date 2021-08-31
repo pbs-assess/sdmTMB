@@ -1,5 +1,18 @@
 #' Calculate a population index via simulation from the joint precision matrix
 #'
+#' Calculate a population index via simulation from the joint precision matrix.
+#' Compared to [get_index()], this version can be dramatically faster
+#' if bias correction was turned on in [get_index()] while being approximately
+#' equivalent. **This is an experimental function.** We have yet to find a model
+#' where this function fails to provide a reasonable result, but make no
+#' guarantees.
+#'
+#' @details Can also be used to produce an index from a model fit with
+#'   \pkg{tmbstan}.
+#'
+#' @details This function does nothing more than summarize and reshape the
+#'   matrix of simulation draws into a data frame.
+#'
 #' @param obj [predict.sdmTMB()] output with `sims > 0`.
 #' @param level The confidence level.
 #' @param return_sims Logical. Return simulation draws? The default (`FALSE`) is
@@ -13,6 +26,8 @@
 #'   `mean()` would be an alternative to `median()`.
 #' @param agg_function Function to aggregate samples within each time slice.
 #'   Assuming a log link, the `sum(exp(x) * area)` default makes sense.
+#'
+#' @seealso [get_index()]
 #'
 #' @export
 #' @examples

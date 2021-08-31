@@ -35,25 +35,26 @@ offsets and threshold parameters. For index standardization, you may wish
 to include \code{0 + as.factor(year)} (or whatever the time column is called)
 in the formula. IID random intercepts are possible using \pkg{lme4}
 syntax, e.g., \code{+ (1 | g)} where \code{g} is a column with factor levels.
-Splines are possible via mgcv. See examples below.}
+Splines are possible via \pkg{mgcv}. See examples below.}
 
 \item{data}{A data frame.}
 
 \item{spde}{An object from \code{\link[=make_mesh]{make_mesh()}}.}
 
-\item{time}{The time column (as character). Leave as \code{NULL} for a spatial-only
-model.}
+\item{time}{An optional time column name (as character). Can be left as
+\code{NULL} for a model with only spatial random fields unless you wish to use
+one of the index or center of gravity functions.}
 
 \item{family}{The family and link. Supports \code{\link[=gaussian]{gaussian()}}, \code{\link[=Gamma]{Gamma()}},
 \code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, \code{\link[sdmTMB:families]{Beta()}},
 \code{\link[sdmTMB:families]{nbinom2()}}, and
 \code{\link[sdmTMB:families]{tweedie()}}]. For binomial family options,
-see the 'Binomial families' section below.}
+see the 'Binomial families' in the Details section below.}
 
 \item{time_varying}{An optional formula describing covariates that should be
 modelled as a random walk through time. Be careful not to include
 covariates (including the intercept) in both the main and time-varying
-formula. I.e., at least one should have \code{~ 0} or ~ -1`.}
+formula. I.e., at least one should have \code{~ 0} or \code{~ -1}.}
 
 \item{weights}{Optional likelihood weights for the conditional model.
 Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
@@ -74,38 +75,37 @@ to the list of random effects to intetgrate over.}
 
 \item{control}{Optimization control options. See \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}.}
 
-\item{priors}{Optional vector of penalties/priors. See \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}.}
+\item{priors}{Optional penalties/priors. See \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}.}
 
 \item{fields}{Estimate the spatiotemporal random fields as \code{"IID"}
 (independent and identically distributed; default), stationary \code{"AR1"}
-(first-order autoregressive), or as a random walk (\code{"RW"})? Note that the
+(first-order autoregressive), or as a random walk (\code{"RW"}). Note that the
 spatiotemporal standard deviation represents the marginal steady-state
-standard deviation of the process in the case of the AR1. I.e., it's
-scaled according to the correlation. See the
-\href{https://kaskr.github.io/adcomp/classAR1__t.html}{TMB documentation}.
-If the AR1 correlation coefficient (rho) is estimated close to 1, say >
-0.99, then you may want to switch to the random walk \code{"RW"}.}
+standard deviation of the process in the case of the AR1. I.e., it is
+scaled according to the correlation. See the \href{https://kaskr.github.io/adcomp/classAR1__t.html}{TMB documentation}. If the AR1
+correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
+may wish to switch to the random walk \code{"RW"}.}
 
 \item{include_spatial}{Should a separate spatial random field be estimated?
 If enabled then there will be separate spatial and spatiotemporal
 fields.}
 
 \item{spatial_trend}{Should a separate spatial field be included in the
-trend that represents local (time) trends? Requires spatiotemporal data.
+trend that represents local time trends? Requires spatiotemporal data.
 See \doi{10.1111/ecog.05176} and the
 \href{https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.}
 
-\item{spatial_only}{Logical: should only a spatial model be fit (i.e. do not
+\item{spatial_only}{Logical: should only a spatial model be fit (i.e., do not
 include spatiotemporal random effects)? By default a spatial-only model
 will be fit if there is only one unique value in the time column or the
 \code{time} argument is left at its default value of \code{NULL}.}
 
-\item{share_range}{Logical: estimated a shared spatial and spatiotemporal
-range parameter?}
+\item{share_range}{Logical: estimate a shared spatial and spatiotemporal
+range parameter (\code{TRUE}) or independent range parameters (\code{FALSE}).}
 
 \item{previous_fit}{A previously fitted sdmTMB model to initialize the
 optimization with. Can greatly speed up fitting. Note that the data and
-model must be set up \emph{exactly} the same way! However, the \code{weights} argument
+model must be set up \emph{exactly} the same way. However, the \code{weights} argument
 can change, which can be useful for cross-validation.}
 
 \item{epsilon_predictor}{(Experimental) A column name (as character) of a
@@ -125,9 +125,9 @@ fitting (\code{FALSE})?}
 \item{...}{Not currently used.}
 }
 \description{
-Fit a spatial or spatiotemporal predictive-process GLMM with TMB.
-Among other uses, this can be useful for (dynamic) species distribution
-models and relative abundance index standardization.
+Fit a spatial or spatiotemporal predictive-process GLMM with TMB. This can be
+useful for (dynamic) species distribution models and relative abundance index
+standardization among many other uses.
 }
 \details{
 \strong{Model description}
@@ -154,11 +154,13 @@ proportions, and the 'weights' argument is used to specify the Binomial size
 
 \strong{Threshold models}
 
-A linear break-point relationship for a covariate can be included via \code{+ breakpt(variable)} in the formula, where \code{variable} is a single covariate
-corresponding to a column in \code{data}. In this case the relationship is linear
+A linear break-point relationship for a covariate can be included via
+\code{+ breakpt(variable)} in the formula, where \code{variable} is a single covariate
+corresponding to a column in \code{data}. In this case, the relationship is linear
 up to a point and then constant.
 
-Similarly, a logistic-function threshold model can be included via \code{+ logistic(variable)}. This option models the relationship as a logistic
+Similarly, a logistic-function threshold model can be included via
+\code{+ logistic(variable)}. This option models the relationship as a logistic
 function of the 50\% and 95\% values. This is similar to length- or size-based
 selectivity in fisheries, and is parameterized by the points at which f(x) =
 0.5 or 0.95. See the vignette.
@@ -178,8 +180,8 @@ including extra time slices that the model remains identifiable. For example,
 including \code{+ as.factor(year)} in \code{formula} will render a model with no data
 to inform the expected value in a missing year. \code{\link[=sdmTMB]{sdmTMB()}} makes no attempt
 to determine if the model makes sense for forecasting or interpolation. The
-options \code{time_varying}, \code{include_spatial}, \code{ar1_fields}, \code{time = NULL}
-provide mechanisms to predict over missing time slices.
+options \code{time_varying}, \code{fields = "RW"}, and \code{fields = "AR1"}
+provide mechanisms to predict over missing time slices with process error.
 
 \strong{Index standardization}
 
@@ -187,20 +189,16 @@ For index standardization, you may wish to include \code{0 + as.factor(year)}
 (or whatever the time column is called) in the formula. See a basic
 example of index standardization in the relevant
 \href{https://pbs-assess.github.io/sdmTMB/articles/model-description.html}{package vignette}.
+You will need to specify the \code{time} argument. See \code{\link[=get_index]{get_index()}} and/or
+\code{\link[=get_index_sims]{get_index_sims()}}.
 
-\strong{Regularization}
+\strong{Regularization and priors}
 
 You can achieve regularization via penalties (priors) on the fixed effect
-parameters. The vector of values supplied to the \code{penalties} argument
-represents standard deviations of normal distributions centered on zero with
-one value per fixed effect. These can be used for regularization, e.g.,
-Normal(0, 1) for ridge regression. These should not include \code{offset} terms and
+parameters. See \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}. These should not include \code{offset} terms and
 care should be taken if used with splines. You can fit the model once without
 penalties and inspect the element \code{head(your_model$tmb_data$X_ij)} if you
 want to see how the formula is translated to the fixed effect model matrix.
-The \code{penalties} vector should correspond to the columns of the \code{X_ij} matrix.
-An element can contain \code{NA} if you wish to avoid a penalty/prior on a specific
-term (e.g., the intercept).
 }
 \examples{
 if (inla_installed()) {
@@ -341,8 +339,7 @@ in warm and cool locations: A meta-analysis across 38 demersal fish species in
 the northeast Pacific. EcoEvoRxiv. \doi{10.32942/osf.io/b87ng}.
 
 Code for implementing the penalized complexity prior on the spatial
-covariance parameters and simulation from the joint precision matrix adapted
-from:
+covariance parameters:
 
 Osgood-Zimmerman, A. and Wakefield, J. 2021. A Statistical introduction
 to Template Model Builder: a flexible tool for spatial modeling.

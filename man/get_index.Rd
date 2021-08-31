@@ -46,3 +46,6 @@ cog
 }
 
 }
+\seealso{
+\code{\link[=get_index_sims]{get_index_sims()}}
+}
