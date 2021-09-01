@@ -1,0 +1,52 @@
+reference:
+- title: "Constructing the SPDE mesh"
+  desc: >
+- contents:
+  - inla_installed
+  - make_mesh
+  - make_spde
+  - add_barrier_mesh
+
+- title: "Basic modeling"
+  desc: >
+- contents:
+  - sdmTMB
+  - Families
+  - starts_with("tidy")
+  - starts_with("predict")
+  - starts_with("residuals")
+  - run_extra_optimization
+
+- title: "Advanced options"
+  desc: >
+- contents:
+  - sdmTMBpriors
+  - sdmTMBcontrol
+  - sdmTMB_cv
+  - sdmTMB_sim
+  - spread_sims
+  - extract_mcmc
+  - plot_anisotropy
+
+- title: "Get derived values"
+  desc: >
+- contents:
+  - get_index
+  - get_index_sims
+  - get_cog
+
+- title: "Example data"
+  desc: >
+- contents:
+  - bc_coast
+  - qcs_grid
+  - pcod
+  - pcod_2011
+  - pcod_mesh_2011
+
+- title: "Working with deprecated models"
+  desc: >
+- contents:
+  - make_spde
+  - update_model
+- title: " "
