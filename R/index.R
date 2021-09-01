@@ -1,4 +1,4 @@
-#' Extract a relative biomass/abundance index or a center of gravity
+#' Extract a relative biomass/abundance index
 #'
 #' @param obj Output from [predict.sdmTMB()] with `return_tmb_object = TRUE`.
 #' @param bias_correct Should bias correction be implemented [TMB::sdreport()]?
@@ -39,7 +39,8 @@ get_index <- function(obj, bias_correct = FALSE, level = 0.95, ...)  {
   d
 }
 
-#' @rdname get_index
+#' Extract a center of gravity
+#' @rdname get_cog
 #' @export
 get_cog <- function(obj, bias_correct = FALSE, level = 0.95, ...)  {
   d <- get_generic(obj, value_name = c("cog_x", "cog_y"),

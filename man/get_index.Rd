@@ -2,12 +2,9 @@
 % Please edit documentation in R/index.R
 \name{get_index}
 \alias{get_index}
-\alias{get_cog}
-\title{Extract a relative biomass/abundance index or a center of gravity}
+\title{Extract a relative biomass/abundance index}
 \usage{
 get_index(obj, bias_correct = FALSE, level = 0.95, ...)
-
-get_cog(obj, bias_correct = FALSE, level = 0.95, ...)
 }
 \arguments{
 \item{obj}{Output from \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} with \code{return_tmb_object = TRUE}.}
@@ -19,7 +16,7 @@ get_cog(obj, bias_correct = FALSE, level = 0.95, ...)
 \item{...}{Passed to \code{\link[TMB:sdreport]{TMB::sdreport()}}.}
 }
 \description{
-Extract a relative biomass/abundance index or a center of gravity
+Extract a relative biomass/abundance index
 }
 \examples{
 \donttest{
