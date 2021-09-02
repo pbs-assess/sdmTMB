@@ -42,7 +42,7 @@ test_that("sdmTMB model fit with a covariate beta", {
   })
   .t3 <- system.time({
     m_pc <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
-      silent = F, spde = spde, control = sdmTMBcontrol(normalize = TRUE),
+      silent = TRUE, spde = spde, control = sdmTMBcontrol(normalize = TRUE),
       priors = sdmTMBpriors(
         matern_s = pc_matern(range_gt = 0.2, sigma_lt = 0.2, range_prob = 0.05, sigma_prob = 0.05)))
   })
