@@ -1,5 +1,9 @@
 # sdmTMB
 
+# sdmTMB 0.0.18.9000
+
+* Fix minor error in PC matern prior
+
 # sdmTMB 0.0.17.9000
 
 * Add random walk option: `fields = "RW"`.
