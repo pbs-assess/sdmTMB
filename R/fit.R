@@ -810,6 +810,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       " at specified starting value of ", start[[i]], ".")
     tmb_params[[names(start)[i]]] <- start[[i]]
   }
+  if (length(tmb_params[["ln_kappa"]]) != 2L && "ln_kappa" %in% names(start)) {
+    stop("Note that ln_kappa must be a vector of length 2. It should be the same value if `share_range = TRUE`.", call. = FALSE)
+  }
 
   data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL
 
