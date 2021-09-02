@@ -503,9 +503,7 @@ check_sdmTMB_version <- function(version) {
       "that was used to fit this model. It is possible new parameters\n",
       "have been added to the TMB model since you fit this model and\n",
       "that prediction will fail. We recommend you fit and predict\n",
-      "from an sdmTMB model with the same version. Alternatively,\n",
-      "you can try running `sdmTMB::update_model()` on your older\n",
-      "model.",
+      "from an sdmTMB model with the same version.",
       call. = FALSE
     )
   }
