@@ -271,7 +271,7 @@ Type objective_function<Type>::operator()()
   // Vectors of real data
   DATA_VECTOR(y_i);      // response
   DATA_MATRIX(X_ij);     // model matrix
-  DATA_VECTOR(t_i);      // numeric year vector -- only for spatial_trend==1
+  DATA_VECTOR(z_i);      // numeric vector for spatial covariate effect
   DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
   DATA_VECTOR_INDICATOR(keep, y_i); // https://rdrr.io/cran/TMB/man/oneStepPredict.html
@@ -344,11 +344,11 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(proj_X_ij);
   DATA_MATRIX(proj_X_rw_ik);
   DATA_FACTOR(proj_year);
-  DATA_VECTOR(proj_t_i);
+  DATA_VECTOR(proj_z_i);
   DATA_IVECTOR(proj_spatial_index);
 
   DATA_INTEGER(spatial_only);
-  DATA_INTEGER(spatial_trend);
+  DATA_INTEGER(spatial_covariate);
 
   DATA_VECTOR(X_threshold);
   DATA_VECTOR(proj_X_threshold);
@@ -362,7 +362,7 @@ Type objective_function<Type>::operator()()
   // Fixed effects
   PARAMETER_VECTOR(b_j);  // fixed effect parameters
   PARAMETER(ln_tau_O);    // spatial process
-  PARAMETER(ln_tau_O_trend);    // optional spatial process on the trend
+  PARAMETER(ln_tau_Z);    // optional spatially varying covariate process
   PARAMETER(ln_tau_E);    // spatio-temporal process
   PARAMETER_VECTOR(ln_kappa);    // Matern parameter
 
@@ -376,7 +376,7 @@ Type objective_function<Type>::operator()()
   // Random effects
   PARAMETER_ARRAY(b_rw_t);  // random walk effects
   PARAMETER_VECTOR(omega_s);    // spatial effects; n_s length
-  PARAMETER_VECTOR(omega_s_trend);    // spatial effects on trend; n_s length
+  PARAMETER_VECTOR(zeta_s);    // spatial effects on covariate; n_s length
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
 
   PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3)
@@ -413,16 +413,16 @@ Type objective_function<Type>::operator()()
   if (include_spatial) {
     Type sigma_O = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O +
       Type(2.0) * ln_kappa(0)));
-    Type sigma_O_trend = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O_trend +
+    Type sigma_Z = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_Z +
       Type(2.0) * ln_kappa(0)));
     Type log_sigma_O = log(sigma_O);
     ADREPORT(log_sigma_O);
     REPORT(sigma_O);
     ADREPORT(sigma_O);
-    Type log_sigma_O_trend = log(sigma_O_trend);
-    ADREPORT(log_sigma_O_trend);
-    REPORT(sigma_O_trend);
-    ADREPORT(sigma_O_trend);
+    Type log_sigma_Z = log(sigma_Z);
+    ADREPORT(log_sigma_Z);
+    REPORT(sigma_Z);
+    ADREPORT(sigma_Z);
   }
 
   // optional non-stationary model on epsilon
@@ -477,7 +477,7 @@ Type objective_function<Type>::operator()()
   for (int i = 0; i < n_t; i++)
     epsilon_st_A.col(i) = A_st * vector<Type>(epsilon_st.col(i));
   vector<Type> omega_s_A = A * omega_s;
-  vector<Type> omega_s_trend_A = A * omega_s_trend;
+  vector<Type> zeta_s_A = A * zeta_s;
   vector<Type> epsilon_st_A_vec(n_i);
 
   // ------------------ Linear predictor ---------------------------------------
@@ -516,8 +516,8 @@ Type objective_function<Type>::operator()()
     // Spatially varying effects:
     if (include_spatial) {
       eta_i(i) += omega_s_A(i);  // spatial
-      if (spatial_trend)
-        eta_i(i) += omega_s_trend_A(i) * t_i(i); // spatial trend
+      if (spatial_covariate)
+        eta_i(i) += zeta_s_A(i) * z_i(i); // spatially varying covariate
     }
     epsilon_st_A_vec(i) = epsilon_st_A(A_spatial_index(i), year_i(i)); // record it
     eta_i(i) += epsilon_st_A_vec(i); // spatiotemporal
@@ -564,9 +564,9 @@ Type objective_function<Type>::operator()()
   // Spatial (intercept) random effects:
   if (include_spatial)
     jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
-  // Spatial trend random effects:
-  if (spatial_trend)
-    jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O_trend))(omega_s_trend);
+  // Spatial covariate random effects:
+  if (spatial_covariate)
+    jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_Z))(zeta_s);
   // Spatiotemporal random effects:
   if (!spatial_only) {
     if (!ar1_fields && !rw_fields) {
@@ -747,14 +747,14 @@ Type objective_function<Type>::operator()()
     }
 
     // Spatially varying coefficients:
-    vector<Type> proj_re_sp_trend(proj_X_ij.rows());
+    vector<Type> proj_re_sp_cov(proj_X_ij.rows());
     vector<Type> proj_re_sp_slopes(proj_X_ij.rows());
-    proj_re_sp_trend.setZero();
+    proj_re_sp_cov.setZero();
     proj_re_sp_slopes.setZero();
-    if (spatial_trend) {
-      vector<Type> proj_re_sp_slopes_all = proj_mesh * omega_s_trend;
+    if (spatial_covariate) {
+      vector<Type> proj_re_sp_slopes_all = proj_mesh * zeta_s;
       for (int i = 0; i < proj_X_ij.rows(); i++) {
-        proj_re_sp_trend(i) = proj_re_sp_slopes_all(proj_spatial_index(i)) * proj_t_i(i);
+        proj_re_sp_cov(i) = proj_re_sp_slopes_all(proj_spatial_index(i)) * proj_z_i(i);
         proj_re_sp_slopes(i) = proj_re_sp_slopes_all(proj_spatial_index(i));
       }
     }
@@ -769,14 +769,14 @@ Type objective_function<Type>::operator()()
       proj_re_st_vector(i) = proj_re_st(proj_spatial_index(i), proj_year(i));
     }
 
-    vector<Type> proj_rf = proj_re_sp_st + proj_re_st_vector + proj_re_sp_trend;
+    vector<Type> proj_rf = proj_re_sp_st + proj_re_st_vector + proj_re_sp_cov;
     vector<Type> proj_eta = proj_fe + proj_rf; // proj_fe includes RW and IID random effects
 
     REPORT(proj_fe);            // fixed effect projections
     REPORT(proj_re_sp_st);      // spatial random effect projections
     REPORT(proj_re_st_vector);  // spatiotemporal random effect projections
     REPORT(proj_re_sp_slopes);  // spatial slope projections
-    REPORT(proj_re_sp_trend);   // spatial trend projections (slope * time)
+    REPORT(proj_re_sp_cov);     // spatial covariate projections
     REPORT(proj_eta);           // combined projections (in link space)
     REPORT(proj_rf);            // combined random field projections
     REPORT(proj_rw_i);          // random walk projections
@@ -879,7 +879,7 @@ Type objective_function<Type>::operator()()
   REPORT(epsilon_st_A_vec);   // spatio-temporal effects; vector
   REPORT(b_rw_t);   // time-varying effects
   REPORT(omega_s_A);      // spatial effects; n_s length vector
-  REPORT(omega_s_trend_A); // spatial trend effects; n_s length vector
+  REPORT(zeta_s_A);     // spatial covariate effects; n_s length vector
   REPORT(eta_fixed_i);  // fixed effect predictions in the link space
   REPORT(eta_i);        // fixed and random effect predictions in link space
   REPORT(eta_rw_i);     // time-varying predictions in link space

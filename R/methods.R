@@ -13,7 +13,7 @@ print.sdmTMB <- function(x, ...) {
   r <- x$tmb_obj$report(lp)
   sink()
 
-  spatial_only <- !is.null(r$sigma_E) && !is.null(r$sigma_O_trend)
+  spatial_only <- !is.null(r$sigma_E) && !is.null(r$zeta_O)
 
   fit_by <- "ML"
   if ("reml" %in% names(x)) { # for backwards compatibility

@@ -218,10 +218,14 @@ plot_map(predictions, "epsilon_st") +
 
 # Estimating local trends ----------------------------------------------
 
+d <- pcod
+d$year_scaled <- as.numeric(scale(d$year))
 pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
-m <- sdmTMB(data = pcod, formula = density ~ depth_scaled + depth_scaled2,
+m <- sdmTMB(data = d, formula = density ~ depth_scaled + depth_scaled2,
   spde = pcod_spde, family = tweedie(link = "log"),
-  spatial_trend = TRUE, time = "year", spatial_only = TRUE)
+  spatial_varying = "year_scaled", time = "year", spatial_only = TRUE)
+nd <- qcs_grid
+nd$year_scaled <- (nd$year - mean(d$year)) / sd(d$year)
 p <- predict(m, newdata = qcs_grid)
 
 plot_map(p, "zeta_s") +

@@ -190,10 +190,14 @@
 #'
 #' # Estimating local trends ----------------------------------------------
 #'
+#' d <- pcod
+#' d$year_scaled <- as.numeric(scale(d$year))
 #' pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
-#' m <- sdmTMB(data = pcod, formula = density ~ depth_scaled + depth_scaled2,
+#' m <- sdmTMB(data = d, formula = density ~ depth_scaled + depth_scaled2,
 #'   spde = pcod_spde, family = tweedie(link = "log"),
-#'   spatial_trend = TRUE, time = "year", spatial_only = TRUE)
+#'   spatial_varying = "year_scaled", time = "year", spatial_only = TRUE)
+#' nd <- qcs_grid
+#' nd$year_scaled <- (nd$year - mean(d$year)) / sd(d$year)
 #' p <- predict(m, newdata = qcs_grid)
 #'
 #' plot_map(p, "zeta_s") +
@@ -357,8 +361,7 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     tmb_data$exclude_RE <- exclude_RE
     tmb_data$calc_time_totals <- as.integer(!se_fit)
     tmb_data$proj_spatial_index <- newdata$sdm_spatial_id
-    tmb_data$proj_t_i <- as.numeric(newdata[[object$time]])
-    tmb_data$proj_t_i <- tmb_data$proj_t_i - mean(unique(tmb_data$proj_t_i)) # center on mean
+    tmb_data$proj_z_i <- newdata[[object$spatial_varying]]
 
     epsilon_covariate <- rep(0, length(unique(newdata[[object$time]])))
     if (tmb_data$est_epsilon_model) {
@@ -467,9 +470,9 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     # The following is not an error,
     # IID and RW effects are baked into fixed effects for `newdata` in above code:
     nd$est_non_rf <- r$eta_fixed_i + r$eta_rw_i + r$eta_iid_re_i
-    nd$est_rf <- r$omega_s_A + r$epsilon_st_A_vec + r$omega_s_trend_A
+    nd$est_rf <- r$omega_s_A + r$epsilon_st_A_vec + r$zeta_s_A
     nd$omega_s <- r$omega_s_A
-    nd$zeta_s <- r$omega_s_trend_A
+    nd$zeta_s <- r$zeta_s_A
     nd$epsilon_st <- r$epsilon_st_A_vec
     obj <- object
   }

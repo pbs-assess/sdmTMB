@@ -11,21 +11,21 @@ sdmTMB(
   time = NULL,
   family = gaussian(link = "identity"),
   time_varying = NULL,
+  spatial_varying = NULL,
   weights = NULL,
   extra_time = NULL,
-  reml = FALSE,
   silent = TRUE,
   anisotropy = FALSE,
   control = sdmTMBcontrol(),
   priors = sdmTMBpriors(),
-  fields = c("IID", "AR1", "RW"),
+  spatiotemporal = c("IID", "AR1", "RW", "off"),
   include_spatial = TRUE,
-  spatial_trend = FALSE,
-  spatial_only = identical(length(unique(data[[time]])), 1L),
+  reml = FALSE,
   share_range = TRUE,
   previous_fit = NULL,
-  epsilon_predictor = NULL,
+  experimental = NULL,
   do_fit = TRUE,
+  spatial_only = identical(match.arg(spatiotemporal, "off")),
   ...
 )
 }
@@ -56,6 +56,14 @@ modelled as a random walk through time. Be careful not to include
 covariates (including the intercept) in both the main and time-varying
 formula. I.e., at least one should have \code{~ 0} or \code{~ -1}.}
 
+\item{spatial_varying}{An optional column name (as character) of a predictor
+that the spatial field will act as a spatially varying coefficient. E.g.,
+if the time column, will represent a local-time-trend model.
+See \doi{10.1111/ecog.05176} and the
+\href{https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.
+Note this predictor should be centered to have mean zero
+and have a standard deviation of approximately 1 (scale by the SD).}
+
 \item{weights}{Optional likelihood weights for the conditional model.
 Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
 to one and are not internally modified. Can also be used for trials with
@@ -65,10 +73,6 @@ the binomial family. See Details below.}
 interpolation or forecasting with the predict function. See the
 Details section below.}
 
-\item{reml}{Logical: use REML (restricted maximum likelihood) estimation
-rather than maximum likelihood? Internally, this adds the fixed effects
-to the list of random effects to intetgrate over.}
-
 \item{silent}{Silent or include optimization details?}
 
 \item{anisotropy}{Logical: allow for anisotropy? See \code{\link[=plot_anisotropy]{plot_anisotropy()}}.}
@@ -77,12 +81,12 @@ to the list of random effects to intetgrate over.}
 
 \item{priors}{Optional penalties/priors. See \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}.}
 
-\item{fields}{Estimate the spatiotemporal random fields as \code{"IID"}
+\item{spatiotemporal}{Estimate the spatiotemporal random fields as \code{"IID"}
 (independent and identically distributed; default), stationary \code{"AR1"}
-(first-order autoregressive), or as a random walk (\code{"RW"}). Note that the
-spatiotemporal standard deviation represents the marginal steady-state
-standard deviation of the process in the case of the AR1. I.e., it is
-scaled according to the correlation. See the \href{https://kaskr.github.io/adcomp/classAR1__t.html}{TMB documentation}. If the AR1
+(first-order autoregressive), as a random walk (\code{"RW"}), or off (\code{"off"}).
+Note that the spatiotemporal standard deviation represents the marginal
+steady-state standard deviation of the process in the case of the AR1.
+I.e., it is scaled according to the correlation. See the \href{https://kaskr.github.io/adcomp/classAR1__t.html}{TMB documentation}. If the AR1
 correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
 may wish to switch to the random walk \code{"RW"}.}
 
@@ -90,15 +94,9 @@ may wish to switch to the random walk \code{"RW"}.}
 If enabled then there will be separate spatial and spatiotemporal
 fields.}
 
-\item{spatial_trend}{Should a separate spatial field be included in the
-trend that represents local time trends? Requires spatiotemporal data.
-See \doi{10.1111/ecog.05176} and the
-\href{https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.}
-
-\item{spatial_only}{Logical: should only a spatial model be fit (i.e., do not
-include spatiotemporal random effects)? By default a spatial-only model
-will be fit if there is only one unique value in the time column or the
-\code{time} argument is left at its default value of \code{NULL}.}
+\item{reml}{Logical: use REML (restricted maximum likelihood) estimation
+rather than maximum likelihood? Internally, this adds the fixed effects
+to the list of random effects to intetgrate over.}
 
 \item{share_range}{Logical: estimate a shared spatial and spatiotemporal
 range parameter (\code{TRUE}) or independent range parameters (\code{FALSE}).}
@@ -107,6 +105,16 @@ range parameter (\code{TRUE}) or independent range parameters (\code{FALSE}).}
 optimization with. Can greatly speed up fitting. Note that the data and
 model must be set up \emph{exactly} the same way. However, the \code{weights} argument
 can change, which can be useful for cross-validation.}
+
+\item{do_fit}{Fit the model (\code{TRUE}) or return the processed data without
+fitting (\code{FALSE})?}
+
+\item{spatial_only}{Logical: should only a spatial model be fit (i.e., do not
+include spatiotemporal random effects)? By default a spatial-only model
+will be fit if there is only one unique value in the time column or the
+\code{time} argument is left at its default value of \code{NULL}.}
+
+\item{...}{Not currently used.}
 
 \item{epsilon_predictor}{(Experimental) A column name (as character) of a
 predictor of a linear trend (in log space) of the spatiotemporal standard
@@ -118,11 +126,6 @@ spatiotemporal field varies by time step, the standardization should be
 done by time. If the name of a predictor is included, a log-linear model is
 fit where the predictor is used to model effects on the standard deviation,
 e.g. \code{log(sd(i)) = B0 + B1 * epsilon_predictor(i)}.}
-
-\item{do_fit}{Fit the model (\code{TRUE}) or return the processed data without
-fitting (\code{FALSE})?}
-
-\item{...}{Not currently used.}
 }
 \description{
 Fit a spatial or spatiotemporal predictive-process GLMM with TMB. This can be
@@ -276,9 +279,11 @@ plot(iid_re_vals, theta$RE)
 if (inla_installed()) {
 
 # Spatial-trend example:
+d <- pcod_2011
+d$year_scaled <- as.numeric(scale(d$year))
 m <- sdmTMB(density ~ depth_scaled, data = pcod_2011,
   spde = pcod_spde, family = tweedie(link = "log"),
-  spatial_trend = TRUE, time = "year")
+  spatial_varying = "year_scaled", time = "year")
 tidy(m, effects = "ran_par")
 
 # Time-varying effects of depth and depth squared:
