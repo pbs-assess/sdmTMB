@@ -187,6 +187,7 @@ sdmTMB_cv <- function(formula, data, mesh_args, spde, time = NULL,
         mesh <- spde
         dat_fit <- data
       }
+      dot_args <- as.list(substitute(list(...)))[-1L] # re-evaluate here! issue #54
       args <- c(list(
         data = dat_fit, formula = formula, time = time, spde = mesh,
         weights = weights, previous_fit = if (use_initial_fit) fit1 else NULL), dot_args)

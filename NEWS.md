@@ -1,8 +1,12 @@
 # sdmTMB
 
+# sdmTMB 0.0.18.9001
+
+* Fix bug evaluating `...` when `sdmTMB_cv()` was called within a function. #54
+
 # sdmTMB 0.0.18.9000
 
-* Fix minor error in PC matern prior
+* Fix minor error in PC Matern prior
 
 # sdmTMB 0.0.17.9000
 
@@ -51,6 +55,9 @@
   the random fields. See `?pc_matern` and the details there.
   
 * Moved many less-common arguments from `sdmTMB()` to `sdmTMBcontrol()`.
+
+* Fix bug in `sdmTMB_cv()` where fitting and testing data splits
+  were reversed. I.e., the small chunk was fit; the big chunk was tested.
 
 # sdmTMB 0.0.15.9000
 
