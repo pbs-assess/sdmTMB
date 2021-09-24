@@ -2,6 +2,9 @@
 
 # sdmTMB 0.0.18.9001
 
+* Add ELPD (expected log predictive density) to `sdmTMB_cv()`
+  <https://arxiv.org/abs/1507.04544>
+  
 * Fix bug evaluating `...` when `sdmTMB_cv()` was called within a function. #54
 
 # sdmTMB 0.0.18.9000

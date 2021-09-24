@@ -46,6 +46,21 @@ as starting values for subsequent folds? Can be faster with many folds.}
 \item{...}{All other arguments required to run \code{\link[=sdmTMB]{sdmTMB()}} model with the
 exception of \code{weights}, which are used to define the folds.}
 }
+\value{
+A list:
+\itemize{
+\item \code{data}: Original data plus columns for fold ID, CV predicted value,
+and CV log likelihood.
+\item \code{models}: A list of models; one per fold.
+\item \code{fold_loglik}: Sum of left-out log likelihoods per fold.
+\item \code{fold_elpd}: Expected log predictive density per fold on left-out data.
+\item \code{sum_loglik}: Sum of \code{fold_loglik} across all left-out data.
+\item \code{elpd}: Expected log predictive density across all left-out data.
+\item \code{pdHess}: Logical vector: Hessian was invertible each fold?
+\item \code{converged}: Logical: all \code{pdHess} \code{TRUE}?
+\item \code{max_gradients}: Max gradient per fold.
+}
+}
 \description{
 Save log likelihoods of k-fold cross-validation for sdmTMB models
 }
@@ -61,8 +76,13 @@ m_cv <- sdmTMB_cv(
   data = pcod, spde = spde,
   family = tweedie(link = "log"), k_folds = 2
 )
+
+m_cv$fold_elpd
+m_cv$elpd
+
 m_cv$fold_loglik
 m_cv$sum_loglik
+
 head(m_cv$data)
 m_cv$models[[1]]
 m_cv$max_gradients

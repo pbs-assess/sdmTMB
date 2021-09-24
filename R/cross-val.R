@@ -61,6 +61,18 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'   exception of `weights`, which are used to define the folds.
 #'
 #' @export
+#' @return
+#' A list:
+#' * `data`: Original data plus columns for fold ID, CV predicted value,
+#'           and CV log likelihood.
+#' * `models`: A list of models; one per fold.
+#' * `fold_loglik`: Sum of left-out log likelihoods per fold.
+#' * `fold_elpd`: Expected log predictive density per fold on left-out data.
+#' * `sum_loglik`: Sum of `fold_loglik` across all left-out data.
+#' * `elpd`: Expected log predictive density across all left-out data.
+#' * `pdHess`: Logical vector: Hessian was invertible each fold?
+#' * `converged`: Logical: all `pdHess` `TRUE`?
+#' * `max_gradients`: Max gradient per fold.
 #'
 #' @examples
 #' if (inla_installed()) {
@@ -74,8 +86,13 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'   data = pcod, spde = spde,
 #'   family = tweedie(link = "log"), k_folds = 2
 #' )
+#'
+#' m_cv$fold_elpd
+#' m_cv$elpd
+#'
 #' m_cv$fold_loglik
 #' m_cv$sum_loglik
+#'
 #' head(m_cv$data)
 #' m_cv$models[[1]]
 #' m_cv$max_gradients
@@ -258,6 +275,8 @@ sdmTMB_cv <- function(formula, data, mesh_args, spde, time = NULL,
   models <- lapply(out, `[[`, "model")
   data <- lapply(out, `[[`, "data")
   fold_cv_ll <- vapply(data, function(.x) sum(.x$cv_loglik), FUN.VALUE = numeric(1L))
+  fold_cv_elpd <- vapply(data, function(.x)
+    log_sum_exp(.x$cv_loglik) - log(length(.x$cv_loglik)), FUN.VALUE = numeric(1L))
   #fold_cv_ll <- vapply(data, function(.x) .x$cv_loglik[[1L]], FUN.VALUE = numeric(1L))
   # fold_cv_ll_R <- vapply(data, function(.x) .x$cv_loglik_R[[1L]], FUN.VALUE = numeric(1L))
   data <- do.call(rbind, data)
@@ -265,18 +284,26 @@ sdmTMB_cv <- function(formula, data, mesh_args, spde, time = NULL,
   data[["_sdm_order_"]] <- NULL
   data[["_sdmTMB_time"]] <- NULL
   row.names(data) <- NULL
-  bad_eig <- vapply(out, `[[`, "bad_eig", FUN.VALUE = logical(1L))
+  # bad_eig <- vapply(out, `[[`, "bad_eig", FUN.VALUE = logical(1L))
   pdHess <- vapply(out, `[[`, "pdHess", FUN.VALUE = logical(1L))
   max_grad <- vapply(out, `[[`, "max_gradient", FUN.VALUE = numeric(1L))
-  converged <- all(!bad_eig) && all(pdHess)
+  # converged <- all(!bad_eig) && all(pdHess)
+  converged <- all(pdHess)
   list(
     data = data,
     models = models,
     fold_loglik = fold_cv_ll,
+    fold_elpd = fold_cv_elpd,
     # fold_loglik_R = fold_cv_ll_R,
     sum_loglik = sum(data$cv_loglik),
+    elpd = log_sum_exp(data$cv_loglik) - log(length(data$cv_loglik)),
     converged = converged,
     pdHess = pdHess,
     max_gradients = max_grad
   )
+}
+
+log_sum_exp <- function(x) {
+  max_x <- max(x)
+  max_x + log(sum(exp(x - max_x)))
 }
