@@ -467,12 +467,41 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       stop("Error: with 'mgcv' = TRUE, the response cannot be a factor", call. = FALSE)
     }
     if (family$family %in% c("binomial", "Gamma")) {
-      mgcv_mod <- mgcv::gam(formula, data = data, family = family) # family needs to be passed into mgcv
+      mgcv_mod <- mgcv::gam(formula, data = data, family = family, fit = FALSE) # family needs to be passed into mgcv
     } else {
-      mgcv_mod <- mgcv::gam(formula, data = data) # should be fast enough to not worry
+      mgcv_mod <- mgcv::gam(formula, data = data, fit = FALSE)
     }
-    X_ij <- model.matrix(mgcv_mod)
+    # X_ij <- model.matrix(mgcv_mod)
+    X_ij <- mgcv_mod$X
   }
+
+  terms <- all_terms(formula)
+  smooth_i <- get_smooth_terms(terms)
+  basis <- list()
+  rasm <- list()
+  Xsm <- list()
+  if (length(smooth_i) > 0) {
+    has_smooths <- TRUE
+    smterms <- terms[smooth_i]
+    for (i in seq_along(smterms)) {
+      basis[[i]] <- mgcv::smoothCon(
+        eval(str2expression(smterms[i])), data = data,
+        knots = NULL, absorb.cons = TRUE,
+        diagonal.penalty = FALSE
+      )
+      rasm[[i]] <- mgcv::smooth2random(basis[[i]][[1]], names(data), type = 2)
+      Xsm[[i]] <- rasm[[i]]$rand$Xr
+    }
+  } else {
+    has_smooths <- FALSE
+  }
+  # FIXME: deal with "by =" stuff
+  # FIXME: split off non-smooth model matrix
+  # FIXME: pass in Xsm to TMB
+  # FIXME: set up weights coefs in R then TMB
+  # FIXME: add Normal() penalty on Xsm weights in TMB
+  # FIXME: deal with prediction
+  # FIXME: test with s, t2, by, cc
 
   offset_pos <- grep("^offset$", colnames(X_ij))
   y_i <- model.response(mf, "numeric")
@@ -565,6 +594,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     }
     est_epsilon_model <- 1L
   }
+
 
   priors_b <- priors$b
   .priors <- priors
@@ -963,4 +993,27 @@ set_limits <- function(tmb_obj, lower, upper, loc = NULL, silent = TRUE) {
   #   }
   # }
   list(lower = .lower, upper = .upper)
+}
+
+# from brms:::rm_wsp()
+rm_wsp <- function (x) {
+  out <- gsub("[ \t\r\n]+", "", x, perl = TRUE)
+  dim(out) <- dim(x)
+  out
+}
+# from brms:::all_terms()
+all_terms <- function (x) {
+  if (!length(x)) {
+    return(character(0))
+  }
+  if (!inherits(x, "terms")) {
+    x <- terms(as.formula(x))
+  }
+  rm_wsp(attr(x, "term.labels"))
+}
+
+get_smooth_terms <- function(terms) {
+  x1 <- grep("s\\(", terms)
+  x2 <- grep("t2\\(", terms)
+  c(x1, x2)
 }

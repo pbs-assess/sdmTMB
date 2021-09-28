@@ -30,6 +30,18 @@ Type dlnorm(Type x, Type meanlog, Type sdlog, int give_log = 0)
     return exp(logres);
 }
 
+// List of matrices
+template <class Type>
+struct LOM_t : vector<matrix<Type>> {
+  LOM_t(SEXP x){  // x = list passed from R
+(*this).resize(LENGTH(x));
+    for(int i=0; i<LENGTH(x); i++){
+      SEXP sm = VECTOR_ELT(x, i);
+      (*this)(i) = asMatrix<Type>(sm);
+    }
+  }
+};
+
 // Function to import barrier-SPDE code
 // From Olav Nikolai Breivik and Hans Skaug via VAST
 template<class Type>
