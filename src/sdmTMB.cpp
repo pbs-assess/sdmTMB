@@ -267,6 +267,8 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(t_i);      // numeric year vector -- only for spatial_trend==1
   DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
+  DATA_STRUCT(Xsm, LOM_t); // [L]ist [O]f (smoother) [Matrices]
+
   DATA_VECTOR_INDICATOR(keep, y_i); // https://rdrr.io/cran/TMB/man/oneStepPredict.html
   DATA_VECTOR(weights_i); // optional weights
   // DATA_VECTOR(offset_i); // optional offset
@@ -476,6 +478,20 @@ Type objective_function<Type>::operator()()
   // ------------------ Linear predictor ---------------------------------------
 
   vector<Type> eta_fixed_i = X_ij * b_j;
+
+  // vector<Type> eta_smooth_i;
+  // eta_smooth_i.setZero();
+  // if (has_smooths) { // TODO define has_smooths
+  //   for (int p = 0; p < n_p; p++) {
+  //     // TODO define smooth_weights param vector, define position_start, position_end
+  //     // TODO rename these something sensible
+  //     // TODO define n_p (number of penalized smoothers)
+  //     eta_smooth_i += Xsm(p) * smooth_weights(position_start(p), position_end(p));
+  //   }
+  // }
+  // TODO define sd_smoothers(n_p)
+  // TODO add dnorm(0, sd_smoothers(n_p)) penalties
+
   // add threshold effect if specified
   if (threshold_func > 0) {
     if (threshold_func == 1) {
