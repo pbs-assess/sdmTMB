@@ -32,7 +32,7 @@ Type dlnorm(Type x, Type meanlog, Type sdlog, int give_log = 0)
 
 // List of matrices
 template <class Type>
-struct LOM_t : vector<matrix<Type>> {
+struct LOM_t : vector<matrix<Type> > {
   LOM_t(SEXP x){  // x = list passed from R
 (*this).resize(LENGTH(x));
     for(int i=0; i<LENGTH(x); i++){

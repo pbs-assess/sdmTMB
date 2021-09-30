@@ -81,6 +81,7 @@ NULL
 #'   fitting (`FALSE`)?
 #' @param ... Not currently used.
 #' @importFrom methods as is
+#' @importFrom Matrix .biag
 #' @importFrom stats gaussian model.frame model.matrix
 #'   model.response terms model.offset
 #'
@@ -492,6 +493,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       rasm[[i]] <- mgcv::smooth2random(basis[[i]][[1]], names(data), type = 2)
       Xsm[[i]] <- rasm[[i]]$rand$Xr
     }
+    # .bidag() returns a TsparseMatrix -- diff than bdiag()
+    sm_list = .bdiag(Xsm)         # join Xsm's in sparse matrix
+    sm_dims = unlist(lapply(sm_list,nrow)) # Find dimension of each Xsm
   } else {
     has_smooths <- FALSE
   }
