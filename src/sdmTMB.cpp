@@ -351,6 +351,11 @@ Type objective_function<Type>::operator()()
   // optional model for nonstationary st variance
   DATA_INTEGER(est_epsilon_model);
   DATA_VECTOR(epsilon_predictor);
+
+  // optional stuff for penalized regression splines
+  DATA_INTEGER(has_smooths);  // whether or not smooths are included
+  DATA_IVECTOR(smooth_matrix_dims);
+  DATA_SPARSE_MATRIX(smooth_list_matrix);
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters

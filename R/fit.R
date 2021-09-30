@@ -81,7 +81,7 @@ NULL
 #'   fitting (`FALSE`)?
 #' @param ... Not currently used.
 #' @importFrom methods as is
-#' @importFrom Matrix .biag
+#' @import Matrix
 #' @importFrom stats gaussian model.frame model.matrix
 #'   model.response terms model.offset
 #'
@@ -493,15 +493,18 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       rasm[[i]] <- mgcv::smooth2random(basis[[i]][[1]], names(data), type = 2)
       Xsm[[i]] <- rasm[[i]]$rand$Xr
     }
-    # .bidag() returns a TsparseMatrix -- diff than bdiag()
+    # .bdiag() returns a TsparseMatrix -- diff than bdiag()
     sm_list = .bdiag(Xsm)         # join Xsm's in sparse matrix
-    sm_dims = unlist(lapply(sm_list,nrow)) # Find dimension of each Xsm
+    sm_dims = unlist(lapply(Xsm,nrow)) # Find dimension of each Xsm
   } else {
     has_smooths <- FALSE
+    sm_list = .bdiag(list(matrix(0,1,1)))
+    sm_dims = 1
   }
   # FIXME: deal with "by =" stuff
+  # EW: thinking of the same approach brms takes with factors?
   # FIXME: split off non-smooth model matrix
-  # FIXME: pass in Xsm to TMB
+  # DONE: pass in Xsm to TMB
   # FIXME: set up weights coefs in R then TMB
   # FIXME: add Normal() penalty on Xsm weights in TMB
   # FIXME: deal with prediction
@@ -693,7 +696,10 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     nobs_RE = nobs_RE,
     ln_tau_G_index = ln_tau_G_index,
     est_epsilon_model = as.integer(est_epsilon_model),
-    epsilon_predictor = epsilon_covariate
+    epsilon_predictor = epsilon_covariate,
+    has_smooths = as.integer(has_smooths),
+    smooth_matrix_dims = sm_dims,
+    smooth_list_matrix = sm_list
   )
 
   b_thresh <- rep(0, 2)
