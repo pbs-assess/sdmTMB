@@ -372,12 +372,13 @@ Type objective_function<Type>::operator()()
   PARAMETER(ar1_phi);          // AR1 fields correlation
   PARAMETER_VECTOR(ln_tau_G);  // random intercept sigmas
   PARAMETER_VECTOR(RE);        // random intercept deviations
-
+  PARAMETER_VECTOR(ln_smooth_sigma);  // variances of spline REs if included
   // Random effects
   PARAMETER_ARRAY(b_rw_t);  // random walk effects
   PARAMETER_VECTOR(omega_s);    // spatial effects; n_s length
   PARAMETER_VECTOR(omega_s_trend);    // spatial effects on trend; n_s length
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
+  PARAMETER_VECTOR(b_smooth);  // P-spline smooth parameters
 
   PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3)
   PARAMETER(b_epsilon); // slope coefficient for log-linear model on epsilon
@@ -568,6 +569,19 @@ Type objective_function<Type>::operator()()
       // flat prior on the initial value... then:
       for (int t = 1; t < n_t; t++) {
         jnll += -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
+      }
+    }
+  }
+
+  // random effects for p-splines. All elements are in a single vector but
+  // might correspond to multiple smooths
+  if(has_smooths==1) {
+    int counter = 0;
+    for(int i = 0; i < ln_smooth_sigma.size(); i++) {
+      // step over each smooth
+      for(int j = 0; j < Type(smooth_matrix_dims(i)); j++) {
+        jnll -= dnorm(b_smooth(counter), Type(0.0), exp(ln_smooth_sigma(i)), true);
+        counter = counter + 1;
       }
     }
   }

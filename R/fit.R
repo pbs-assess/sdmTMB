@@ -494,20 +494,23 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       Xsm[[i]] <- rasm[[i]]$rand$Xr
     }
     # .bdiag() returns a TsparseMatrix -- diff than bdiag()
-    sm_list = .bdiag(Xsm)         # join Xsm's in sparse matrix
-    sm_dims = unlist(lapply(Xsm,nrow)) # Find dimension of each Xsm
+    sm_list <- .bdiag(Xsm)         # join Xsm's in sparse matrix
+    sm_dims <- unlist(lapply(Xsm,nrow)) # Find dimension of each Xsm
   } else {
     has_smooths <- FALSE
-    sm_list = .bdiag(list(matrix(0,1,1)))
-    sm_dims = 1
+    sm_list <- .bdiag(list(matrix(0,1,1)))
+    sm_dims <- 0L
   }
   # FIXME: deal with "by =" stuff
   # EW: thinking of the same approach brms takes with factors?
   # FIXME: split off non-smooth model matrix
+  # EW: I think this is already done in the mgcv section above?
   # DONE: pass in Xsm to TMB
-  # FIXME: set up weights coefs in R then TMB
-  # FIXME: add Normal() penalty on Xsm weights in TMB
-  # FIXME: deal with prediction
+  # DONE: set up weights coefs in R then TMB
+  # DONE: add Normal() penalty on Xsm weights in TMB
+  # FIXME: take normal deviations and multiply each sub-vector by
+  # corresponding sparse matrix
+  # FIXME: deal with prediction (I think this is going to need additional matrices)
   # FIXME: test with s, t2, by, cc
 
   offset_pos <- grep("^offset$", colnames(X_ij))
@@ -724,7 +727,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     omega_s_trend = rep(0, n_s),
     epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t),
     b_threshold = b_thresh,
-    b_epsilon = 0
+    b_epsilon = 0,
+    b_smooth = rep(0, ifelse(has_smooths==TRUE, sum(sm_dims), 0)),
+    ln_smooth_sigma = rep(0, length(sm_dims))
   )
   if (identical(family$link, "inverse") && family$family %in% c("Gamma", "gaussian", "student")) {
     fam <- family
@@ -749,6 +754,13 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       ln_tau_E   = as.factor(NA),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
+  #if (!has_smooths) {
+    # map off the standard deviations
+    #tmb_map <- c(tmb_map,
+    #             ln_smooth_sigma = as.factor(NA))#,
+                 #b_smooth = as.factor(rep(NA, ifelse(has_smooths==TRUE, sum(sm_dims), 1))))
+  #}
+
   if (contains_offset) { # fix offset param to 1 to be an offset:
     b_j_map <- seq_along(tmb_params$b_j)
     b_j_map[offset_pos] <- NA
@@ -771,6 +783,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       b_rw_t     = factor(rep(NA, length(tmb_params$b_rw_t))),
       RE         = factor(rep(NA, length(tmb_params$RE))),
       omega_s    = factor(rep(NA, length(tmb_params$omega_s))),
+      b_smooth = factor(rep(NA, length(tmb_params$b_smooth))),
+      ln_smooth_sigma = factor(rep(NA, length(tmb_params$ln_smooth_sigma))),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
     # optional models on spatiotemporal sd parameter
@@ -827,12 +841,18 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       list(b_rw_t = as.factor(matrix(NA, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)))),
       list(ln_tau_V = as.factor(NA))
     )
+
   if (nobs_RE[[1]] > 0) tmb_random <- c(tmb_random, "RE")
   if (reml) tmb_random <- c(tmb_random, "b_j")
 
   if (est_epsilon_model >= 2) {
     # model 2 = re model, model 3 = loglinear-re
     tmb_random <- c(tmb_random, "epsilon_rw")
+  }
+
+  if(has_smooths) {
+    # random effects for the smooth parameters for P-splines splines
+    tmb_random <- c(tmb_random, "b_smooth")
   }
 
   if (!is.null(previous_fit)) {
