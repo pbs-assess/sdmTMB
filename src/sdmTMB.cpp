@@ -181,7 +181,8 @@ enum valid_family {
   nbinom2_family  = 5,
   lognormal_family= 6,
   student_family  = 7,
-  Beta_family     = 8
+  Beta_family     = 8,
+  truncated_nbinom2_family  = 9
 };
 
 enum valid_link {
@@ -591,52 +592,67 @@ Type objective_function<Type>::operator()()
 
   // ------------------ Probability of data given random effects ---------------
 
-  Type s1, s2;
+  // from glmmTMB:
+  // close to zero: use for count data (cf binomial()$initialize)
+#define zt_lik_nearzero(x,loglik_exp) ((x < Type(0.001)) ? -INFINITY : loglik_exp)
+
+  Type s1, s2, s3, lognzprob, tmp_ll;
   REPORT(phi);
   ADREPORT(phi);
   for (int i = 0; i < n_i; i++) {
     if (!isNA(y_i(i))) {
       switch (family) {
       case gaussian_family:
-        jnll -= keep(i) * dnorm(y_i(i), mu_i(i), phi, true) * weights_i(i);
+        tmp_ll = dnorm(y_i(i), mu_i(i), phi, true);
         break;
       case tweedie_family:
         s1 = invlogit(thetaf) + Type(1.0);
         if (!isNA(priors(12))) jnll -= dnorm(s1, priors(12), priors(13), true);
-        jnll -= keep(i) * dtweedie(y_i(i), mu_i(i), phi, s1, true) * weights_i(i);
+        tmp_ll = dtweedie(y_i(i), mu_i(i), phi, s1, true);
         break;
       case binomial_family:  // in logit space not inverse logit
-        jnll -= keep(i) * dbinom_robust(y_i(i), size(i), mu_i(i), true) * weights_i(i);
+        tmp_ll = dbinom_robust(y_i(i), size(i), mu_i(i), true);
         break;
       case poisson_family:
-        jnll -= keep(i) * dpois(y_i(i), mu_i(i), true) * weights_i(i);
+        tmp_ll = dpois(y_i(i), mu_i(i), true);
         break;
       case Gamma_family:
         s1 = exp(ln_phi);         // shape
         s2 = mu_i(i) / s1;        // scale
-        jnll -= keep(i) * dgamma(y_i(i), s1, s2, true) * weights_i(i);
+        tmp_ll = dgamma(y_i(i), s1, s2, true);
         // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
-        // jnll -= keep(i) * dgamma(y_i(i), s1, mu_i(i) / s1, true) * weights_i(i);
+        // tmp_ll = dgamma(y_i(i), s1, mu_i(i) / s1, true);
         break;
       case nbinom2_family:
         s1 = log(mu_i(i)); // log(mu_i)
         s2 = 2. * s1 - ln_phi; // log(var - mu)
-        jnll -= keep(i) * dnbinom_robust(y_i(i), s1, s2, true) * weights_i(i);
+        tmp_ll = dnbinom_robust(y_i(i), s1, s2, true);
+        break;
+      case truncated_nbinom2_family:
+        s1 = log(mu_i(i)); // log(mu_i)
+        s2 = 2. * s1 - ln_phi; // log(var - mu)
+        tmp_ll = dnbinom_robust(y_i(i), s1, s2, true);
+        s3 = logspace_add(Type(0), s1 - ln_phi);
+        lognzprob = logspace_sub(Type(0), -phi * s3);
+        tmp_ll -= lognzprob;
+        tmp_ll = zt_lik_nearzero(y_i(i), tmp_ll);
         break;
       case lognormal_family:
-        jnll -= keep(i) * dlnorm(y_i(i), log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi, true) * weights_i(i);
+        tmp_ll = dlnorm(y_i(i), log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi, true);
         break;
       case student_family:
-        jnll -= keep(i) * dstudent(y_i(i), mu_i(i), exp(ln_phi), df, true) * weights_i(i);
+        tmp_ll = dstudent(y_i(i), mu_i(i), exp(ln_phi), df, true);
         break;
       case Beta_family: // Ferrari and Cribari-Neto 2004; betareg package
         s1 = mu_i(i) * phi;
         s2 = (Type(1) - mu_i(i)) * phi;
-        jnll -= keep(i) * dbeta(y_i(i), s1, s2, true) * weights_i(i);
+        tmp_ll = dbeta(y_i(i), s1, s2, true);
         break;
       default:
         error("Family not implemented.");
       }
+      tmp_ll *= weights_i(i);
+      jnll -= keep(i) * tmp_ll;
     }
   }
 

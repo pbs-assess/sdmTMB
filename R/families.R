@@ -62,6 +62,25 @@ nbinom2 <- function(link = "log") {
     linkinv = stats$linkinv)
 }
 
+
+#' @export
+#' @examples
+#' truncated_nbinom2(link = "log")
+#' @rdname families
+truncated_nbinom2 <- function(link = "log") {
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("log")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+
+  list(family = "truncated_nbinom2", link = linktemp, linkfun = stats$linkfun,
+    linkinv = stats$linkinv)
+}
+
 #' @param df Student-t degrees of freedom fixed value parameter.
 #' @export
 #' @details

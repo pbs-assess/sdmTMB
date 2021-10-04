@@ -5,6 +5,7 @@
 \alias{Beta}
 \alias{lognormal}
 \alias{nbinom2}
+\alias{truncated_nbinom2}
 \alias{student}
 \alias{tweedie}
 \title{Additional families}
@@ -14,6 +15,8 @@ Beta(link = "logit")
 lognormal(link = "log")
 
 nbinom2(link = "log")
+
+truncated_nbinom2(link = "log")
 
 student(link = "identity", df = 3)
 
@@ -37,6 +40,7 @@ The degrees of freedom parameter is currently not estimated and is fixed at \cod
 Beta(link = "logit")
 lognormal(link = "log")
 nbinom2(link = "log")
+truncated_nbinom2(link = "log")
 student(link = "identity")
 tweedie(link = "log")
 }
