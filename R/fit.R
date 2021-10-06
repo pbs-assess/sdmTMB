@@ -486,7 +486,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     smterms <- terms[smooth_i]
     for (i in seq_along(smterms)) {
       basis[[i]] <- mgcv::smoothCon(
-        eval(str2expression(smterms[i])), data = data,
+        eval(str2lang(smterms[i])), data = data,
         knots = NULL, absorb.cons = TRUE,
         diagonal.penalty = FALSE
       )
