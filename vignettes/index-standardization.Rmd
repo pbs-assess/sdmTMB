@@ -131,7 +131,7 @@ index <- get_index(predictions, bias_correct = FALSE)
 ```{r plot-index}
 ggplot(index, aes(year, est)) + geom_line() +
   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4) +
-  xlab('Year') + ylab('Biomass estimate (metric tonnes)')
+  xlab('Year') + ylab('Biomass estimate (kg)')
 ```
 
 These are our biomass estimates:
