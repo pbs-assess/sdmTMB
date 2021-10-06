@@ -4,9 +4,8 @@
 #' @param x A vector of x coordinates. Should match `mesh`.
 #' @param y A vector of y coordinates. Should match `mesh`.
 #' @param range Parameter that controls the decay of spatial correlation.
-#' @param X An optional covariate design matrix formatted as a list with each
-#'   element of the list representing a slice in time. If ommitted and `betas`
-#'   is not `NULL`, will be set to standard normal.
+#' @param X An optional covariate design matrix. If omitted and `betas`
+#'   is not `NULL`, will be set to standard normal draws.
 #' @param betas A vector of beta values (design-matrix fixed-effect coefficient
 #'   values). If a random walk (`sigma_V > 0`), these are the starting values.
 #' @param family Family as in [sdmTMB()].

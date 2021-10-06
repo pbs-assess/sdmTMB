@@ -36,9 +36,8 @@ sdmTMB_sim(
 
 \item{time_steps}{The number of time steps.}
 
-\item{X}{An optional covariate design matrix formatted as a list with each
-element of the list representing a slice in time. If ommitted and \code{betas}
-is not \code{NULL}, will be set to standard normal.}
+\item{X}{An optional covariate design matrix. If omitted and \code{betas}
+is not \code{NULL}, will be set to standard normal draws.}
 
 \item{betas}{A vector of beta values (design-matrix fixed-effect coefficient
 values). If a random walk (\code{sigma_V > 0}), these are the starting values.}
