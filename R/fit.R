@@ -486,7 +486,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     smterms <- terms[smooth_i]
     for (i in seq_along(smterms)) {
       basis[[i]] <- mgcv::smoothCon(
-        eval(str2lang(smterms[i])), data = data,
+        eval(str2expression(smterms[i])), data = data,
         knots = NULL, absorb.cons = TRUE,
         diagonal.penalty = FALSE
       )
@@ -729,7 +729,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     b_threshold = b_thresh,
     b_epsilon = 0,
     b_smooth = rep(0, ifelse(has_smooths==TRUE, sum(sm_dims), 0)),
-    ln_smooth_sigma = rep(0, length(sm_dims))
+    ln_smooth_sigma = rep(0, ifelse(has_smooths==TRUE, length(sm_dims), 0))
   )
   if (identical(family$link, "inverse") && family$family %in% c("Gamma", "gaussian", "student")) {
     fam <- family
@@ -754,12 +754,13 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       ln_tau_E   = as.factor(NA),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
-  #if (!has_smooths) {
+  # Don't actually need to map them off - because they're NA
+  if (!has_smooths) {
     # map off the standard deviations
     #tmb_map <- c(tmb_map,
-    #             ln_smooth_sigma = as.factor(NA))#,
-                 #b_smooth = as.factor(rep(NA, ifelse(has_smooths==TRUE, sum(sm_dims), 1))))
-  #}
+    #             ln_smooth_sigma = as.factor(rep(NA, ifelse(has_smooths==TRUE, sum(sm_dims), 1))),
+    #             b_smooth = as.factor(rep(NA, ifelse(has_smooths==TRUE, sum(sm_dims), 1))))
+  }
 
   if (contains_offset) { # fix offset param to 1 to be an offset:
     b_j_map <- seq_along(tmb_params$b_j)

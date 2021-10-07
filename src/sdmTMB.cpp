@@ -379,7 +379,6 @@ Type objective_function<Type>::operator()()
   PARAMETER_VECTOR(omega_s_trend);    // spatial effects on trend; n_s length
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
   PARAMETER_VECTOR(b_smooth);  // P-spline smooth parameters
-
   PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3)
   PARAMETER(b_epsilon); // slope coefficient for log-linear model on epsilon
   // Joint negative log-likelihood
@@ -498,6 +497,29 @@ Type objective_function<Type>::operator()()
   // TODO define sd_smoothers(n_p)
   // TODO add dnorm(0, sd_smoothers(n_p)) penalties
 
+  // random effects for p-splines. All elements are in a single vector but
+  // might correspond to multiple smooths
+  vector<Type> eta_smooth_i(X_ij.rows());
+  eta_smooth_i.setZero();
+  if(has_smooths==1) {
+    int counter = 0;// Counter
+    int k=0;  // Counter
+    for(int i = 0; i < smooth_matrix_dims.size(); i++) {
+      // step through each smooth matrix
+      for(int j = 0; j < Type(smooth_matrix_dims(i)); j++) {
+        jnll -= dnorm(b_smooth(counter), Type(0.0), Type(exp(ln_smooth_sigma(i))), true);
+        counter = counter + 1;
+      }
+      // calculate the smooth effects, following TMB
+      // https://github.com/skaug/tmb-case-studies/blob/556d26ee46cc50b2ef9a0bf0c4871c37e3211334/pSplines/pSplines.cpp#L32
+      int m_i = smooth_matrix_dims(i);
+      vector<Type> beta_i = b_smooth.segment(k,m_i);  // Recover betai
+      //Eigen::SparseMatrix<Type> smooth_matrix_i = Xsm(i);  // Recover Si
+      k += m_i;
+      eta_smooth_i += Xsm(i) * beta_i;
+    }
+  }
+
   // add threshold effect if specified
   if (threshold_func > 0) {
     if (threshold_func == 1) {
@@ -520,7 +542,7 @@ Type objective_function<Type>::operator()()
   eta_i.setZero();
 
   for (int i = 0; i < n_i; i++) {
-    eta_i(i) = eta_fixed_i(i); // + offset_i(i);
+    eta_i(i) = eta_fixed_i(i) + eta_smooth_i(i); // + offset_i(i);
     if (random_walk) {
       for (int k = 0; k < X_rw_ik.cols(); k++) {
         eta_rw_i(i) += X_rw_ik(i, k) * b_rw_t(year_i(i), k); // record it
@@ -569,19 +591,6 @@ Type objective_function<Type>::operator()()
       // flat prior on the initial value... then:
       for (int t = 1; t < n_t; t++) {
         jnll += -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
-      }
-    }
-  }
-
-  // random effects for p-splines. All elements are in a single vector but
-  // might correspond to multiple smooths
-  if(has_smooths==1) {
-    int counter = 0;
-    for(int i = 0; i < ln_smooth_sigma.size(); i++) {
-      // step over each smooth
-      for(int j = 0; j < Type(smooth_matrix_dims(i)); j++) {
-        jnll -= dnorm(b_smooth(counter), Type(0.0), exp(ln_smooth_sigma(i)), true);
-        counter = counter + 1;
       }
     }
   }
