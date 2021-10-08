@@ -82,6 +82,7 @@ NULL
 #' @param ... Not currently used.
 #' @importFrom methods as is
 #' @import Matrix
+#' @import mgcv
 #' @importFrom stats gaussian model.frame model.matrix
 #'   model.response terms model.offset
 #'
@@ -485,8 +486,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     has_smooths <- TRUE
     smterms <- terms[smooth_i]
     for (i in seq_along(smterms)) {
+      obj <- eval(str2expression(smterms[i]))
       basis[[i]] <- mgcv::smoothCon(
-        eval(str2expression(smterms[i])), data = data,
+        object = obj, data = data,
         knots = NULL, absorb.cons = TRUE,
         diagonal.penalty = FALSE
       )

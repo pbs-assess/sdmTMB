@@ -508,7 +508,7 @@ Type objective_function<Type>::operator()()
       // step through each smooth matrix
       for(int j = 0; j < Type(smooth_matrix_dims(i)); j++) {
         jnll -= dnorm(b_smooth(counter), Type(0.0), Type(exp(ln_smooth_sigma(i))), true);
-        counter = counter + 1;
+        counter += 1;
       }
       // calculate the smooth effects, following TMB
       // https://github.com/skaug/tmb-case-studies/blob/556d26ee46cc50b2ef9a0bf0c4871c37e3211334/pSplines/pSplines.cpp#L32
