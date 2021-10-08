@@ -36,7 +36,6 @@ Imports:
     fishMod,
     generics,
     graphics,
-    Matrix,
     methods,
     mgcv,
     stats,

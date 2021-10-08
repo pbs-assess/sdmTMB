@@ -355,7 +355,6 @@ Type objective_function<Type>::operator()()
   // optional stuff for penalized regression splines
   DATA_INTEGER(has_smooths);  // whether or not smooths are included
   DATA_IVECTOR(smooth_matrix_dims);
-  DATA_SPARSE_MATRIX(smooth_list_matrix);
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -514,7 +513,6 @@ Type objective_function<Type>::operator()()
       // https://github.com/skaug/tmb-case-studies/blob/556d26ee46cc50b2ef9a0bf0c4871c37e3211334/pSplines/pSplines.cpp#L32
       int m_i = smooth_matrix_dims(i);
       vector<Type> beta_i = b_smooth.segment(k,m_i);  // Recover betai
-      //Eigen::SparseMatrix<Type> smooth_matrix_i = Xsm(i);  // Recover Si
       k += m_i;
       eta_smooth_i += Xsm(i) * beta_i;
     }
@@ -918,6 +916,7 @@ Type objective_function<Type>::operator()()
   REPORT(omega_s_A);      // spatial effects; n_s length vector
   REPORT(omega_s_trend_A); // spatial trend effects; n_s length vector
   REPORT(eta_fixed_i);  // fixed effect predictions in the link space
+  REPORT(eta_smooth_i); // smooth effect predictions in the link space
   REPORT(eta_i);        // fixed and random effect predictions in link space
   REPORT(eta_rw_i);     // time-varying predictions in link space
   REPORT(eta_iid_re_i); // IID intercept random effect estimates
@@ -926,6 +925,8 @@ Type objective_function<Type>::operator()()
   ADREPORT(range);      // Matern approximate distance at 10% correlation
   vector<Type> log_range = log(range); // for SE
   ADREPORT(log_range);  // log Matern approximate distance at 10% correlation
+  REPORT(b_smooth);     // smooth coefficients for penalized splines
+  REPORT(ln_smooth_sigma); // standard deviations of smooth random effects, in log-space
 
   // ------------------ Joint negative log likelihood --------------------------
 
