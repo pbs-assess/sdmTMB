@@ -474,13 +474,15 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     }
     # X_ij <- model.matrix(mgcv_mod)
     X_ij <- mgcv_mod$X
+    X_ij <- X_ij[, colnames(X_ij) != "", drop = FALSE] # only keep non-smooth terms
   }
 
   terms <- all_terms(formula)
   smooth_i <- get_smooth_terms(terms)
   basis <- list()
   rasm <- list()
-  Xsm <- list()
+  Zs <- list()
+  Xs <- list()
   if (length(smooth_i) > 0) {
     has_smooths <- TRUE
     smterms <- terms[smooth_i]
@@ -488,26 +490,27 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       obj <- eval(str2expression(smterms[i]))
       basis[[i]] <- mgcv::smoothCon(
         object = obj, data = data,
-        knots = NULL, absorb.cons = TRUE,
-        diagonal.penalty = FALSE
+        knots = NULL, absorb.cons = TRUE, modCon = 3, # see brms standata_basis_sm
+        diagonal.penalty = TRUE
       )
       rasm[[i]] <- mgcv::smooth2random(basis[[i]][[1]], names(data), type = 2)
-      Xsm[[i]] <- rasm[[i]]$rand$Xr
+      Zs[[i]] <- rasm[[i]]$rand$Xr
+      Xs[[i]] <- rasm[[i]]$Xf
     }
-    sm_dims <- unlist(lapply(Xsm,nrow)) # Find dimension of each Xsm
+    sm_dims <- unlist(lapply(Zs, ncol))
+    Xs <- do.call(cbind, Xs) # combine 'em all into one matrix
   } else {
     has_smooths <- FALSE
     sm_dims <- 0L
   }
-  # DONE(?): deal with "by =" stuff
+
+  # FIXME?: deal with "by =" stuff
   # EW: thinking of the same approach brms takes with factors?
-  # FIXME: split off non-smooth model matrix
-  # EW: I think this is already done in the mgcv section above?
-  # DONE: pass in Xsm to TMB
+  # DONE: split off non-smooth model matrix
+  # DONE: pass in Zs to TMB
   # DONE: set up weights coefs in R then TMB
-  # DONE: add Normal() penalty on Xsm weights in TMB
-  # DONE: take normal deviations and multiply each sub-vector by
-  # corresponding sparse matrix
+  # DONE: add Normal() penalty on Zs weights in TMB
+  # DONE: take normal deviations and multiply each sub-vector by corresponding sparse matrix
   # FIXME: deal with prediction (I think this is going to need additional matrices)
   # FIXME: test with s, t2, by, cc
 
@@ -650,7 +653,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     rw_fields = if (spatial_only) 0L else as.integer(rw_fields),
     X_ij       = X_ij,
     X_rw_ik    = X_rw_ik,
-    Xsm        = Xsm,
+    Zs         = Zs, # optional smoother basis function matrices
+    Xs         = Xs, # optional smoother linear effect matrix
     proj_lon   = 0,
     proj_lat   = 0,
     do_predict = 0L,
@@ -708,6 +712,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   tmb_params <- list(
     ln_H_input = c(0, 0),
     b_j        = rep(0, ncol(X_ij)),
+    bs         = rep(0, if (has_smooths) ncol(Xs) else 0),
     ln_tau_O   = 0,
     ln_tau_O_trend = 0,
     ln_tau_E   = 0,
@@ -725,8 +730,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t),
     b_threshold = b_thresh,
     b_epsilon = 0,
-    b_smooth = rep(0, ifelse(has_smooths==TRUE, sum(sm_dims), 0)),
-    ln_smooth_sigma = rep(0, ifelse(has_smooths==TRUE, length(sm_dims), 0))
+    b_smooth = rep(0, if (has_smooths) sum(sm_dims) else 0),
+    ln_smooth_sigma = rep(0, if (has_smooths) length(sm_dims) else 0)
   )
   if (identical(family$link, "inverse") && family$family %in% c("Gamma", "gaussian", "student")) {
     fam <- family
@@ -1044,5 +1049,6 @@ all_terms <- function (x) {
 get_smooth_terms <- function(terms) {
   x1 <- grep("s\\(", terms)
   x2 <- grep("t2\\(", terms)
-  c(x1, x2)
+  x3 <- grep("te\\(", terms)
+  c(x1, x2, x3)
 }

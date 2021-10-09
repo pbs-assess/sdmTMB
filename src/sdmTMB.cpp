@@ -267,7 +267,8 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(t_i);      // numeric year vector -- only for spatial_trend==1
   DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
-  DATA_STRUCT(Xsm, LOM_t); // [L]ist [O]f (smoother) [Matrices]
+  DATA_STRUCT(Zs, LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
+  DATA_MATRIX(Xs); // smoother linear effect matrix
 
   DATA_VECTOR_INDICATOR(keep, y_i); // https://rdrr.io/cran/TMB/man/oneStepPredict.html
   DATA_VECTOR(weights_i); // optional weights
@@ -371,6 +372,7 @@ Type objective_function<Type>::operator()()
   PARAMETER(ar1_phi);          // AR1 fields correlation
   PARAMETER_VECTOR(ln_tau_G);  // random intercept sigmas
   PARAMETER_VECTOR(RE);        // random intercept deviations
+  PARAMETER_VECTOR(bs); // smoother linear effects
   PARAMETER_VECTOR(ln_smooth_sigma);  // variances of spline REs if included
   // Random effects
   PARAMETER_ARRAY(b_rw_t);  // random walk effects
@@ -500,22 +502,19 @@ Type objective_function<Type>::operator()()
   // might correspond to multiple smooths
   vector<Type> eta_smooth_i(X_ij.rows());
   eta_smooth_i.setZero();
-  if(has_smooths==1) {
-    int counter = 0;// Counter
-    int k=0;  // Counter
-    for(int i = 0; i < smooth_matrix_dims.size(); i++) {
-      // step through each smooth matrix
-      for(int j = 0; j < Type(smooth_matrix_dims(i)); j++) {
-        jnll -= dnorm(b_smooth(counter), Type(0.0), Type(exp(ln_smooth_sigma(i))), true);
-        counter += 1;
-      }
-      // calculate the smooth effects, following TMB
-      // https://github.com/skaug/tmb-case-studies/blob/556d26ee46cc50b2ef9a0bf0c4871c37e3211334/pSplines/pSplines.cpp#L32
+  if (has_smooths) {
+    int k = 0;
+    for (int i = 0; i < smooth_matrix_dims.size(); i++) { // iterate over # of smooth elements
       int m_i = smooth_matrix_dims(i);
-      vector<Type> beta_i = b_smooth.segment(k,m_i);  // Recover betai
-      k += m_i;
-      eta_smooth_i += Xsm(i) * beta_i;
+      vector<Type> beta_i = b_smooth.segment(k, k + m_i); // -1?
+      // vector<Type> beta_i = b_smooth;
+      k += m_i + 1;
+      for (int j = 0; j < beta_i.size(); j++) {
+        jnll -= dnorm(beta_i(j), Type(0), exp(ln_smooth_sigma(i)), true);
+      }
+      eta_smooth_i += Zs(i) * beta_i;
     }
+    eta_smooth_i += Xs * bs;
   }
 
   // add threshold effect if specified
