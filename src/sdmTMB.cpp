@@ -355,9 +355,7 @@ Type objective_function<Type>::operator()()
 
   // optional stuff for penalized regression splines
   DATA_INTEGER(has_smooths);  // whether or not smooths are included
-  DATA_IVECTOR(smooth_matrix_dims);
   DATA_IVECTOR(b_smooth_start);
-  DATA_IVECTOR(b_smooth_end);
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -487,30 +485,18 @@ Type objective_function<Type>::operator()()
 
   vector<Type> eta_fixed_i = X_ij * b_j;
 
-  // vector<Type> eta_smooth_i;
-  // eta_smooth_i.setZero();
-  // if (has_smooths) { // TODO define has_smooths
-  //   for (int p = 0; p < n_p; p++) {
-  //     // TODO define smooth_weights param vector, define position_start, position_end
-  //     // TODO rename these something sensible
-  //     // TODO define n_p (number of penalized smoothers)
-  //     eta_smooth_i += Xsm(p) * smooth_weights(position_start(p), position_end(p));
-  //   }
-  // }
-  // TODO define sd_smoothers(n_p)
-  // TODO add dnorm(0, sd_smoothers(n_p)) penalties
-
-  // random effects for p-splines. All elements are in a single vector but
-  // might correspond to multiple smooths
+  // p-splines
   vector<Type> eta_smooth_i(X_ij.rows());
   eta_smooth_i.setZero();
   if (has_smooths) {
-    for (int i = 0; i < smooth_matrix_dims.size(); i++) { // iterate over # of smooth elements
-      vector<Type> beta_i = b_smooth.segment(b_smooth_start(i), b_smooth_end(i));
-      for (int j = 0; j < beta_i.size(); j++) {
-        jnll -= dnorm(beta_i(j), Type(0), exp(ln_smooth_sigma(i)), true);
+    for (int s = 0; s < b_smooth_start.size(); s++) { // iterate over # of smooth elements
+      vector<Type> beta_s(Zs(s).cols());
+      beta_s.setZero();
+      for (int j = 0; j < beta_s.size(); j++) {
+        beta_s(j) = b_smooth(b_smooth_start(s) + j);
+        jnll -= dnorm(beta_s(j), Type(0), exp(ln_smooth_sigma(s)), true);
       }
-      eta_smooth_i += Zs(i) * beta_i;
+      eta_smooth_i += Zs(s) * beta_s;
     }
     eta_smooth_i += Xs * bs;
   }

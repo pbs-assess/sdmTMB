@@ -499,13 +499,11 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     }
     sm_dims <- unlist(lapply(Zs, ncol))
     Xs <- do.call(cbind, Xs) # combine 'em all into one matrix1
-    b_smooth_start <- c(0, cumsum(sm_dims)[-length(sm_dims)]) -
-    b_smooth_end <- cumsum(sm_dims)
+    b_smooth_start <- c(0, cumsum(sm_dims)[-length(sm_dims)])
   } else {
     has_smooths <- FALSE
     sm_dims <- 0L
     b_smooth_start <- 0L
-    b_smooth_end <- 0L
   }
 
   # FIXME?: deal with "by =" stuff
@@ -660,7 +658,6 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     Zs         = Zs, # optional smoother basis function matrices
     Xs         = Xs, # optional smoother linear effect matrix
     b_smooth_start = b_smooth_start,
-    b_smooth_end = b_smooth_end,
     proj_lon   = 0,
     proj_lat   = 0,
     do_predict = 0L,
@@ -708,8 +705,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     ln_tau_G_index = ln_tau_G_index,
     est_epsilon_model = as.integer(est_epsilon_model),
     epsilon_predictor = epsilon_covariate,
-    has_smooths = as.integer(has_smooths),
-    smooth_matrix_dims = sm_dims
+    has_smooths = as.integer(has_smooths)
   )
 
   b_thresh <- rep(0, 2)
