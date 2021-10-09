@@ -487,13 +487,13 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       obj <- eval(str2expression(smterms[i]))
       basis[[i]] <- mgcv::smoothCon(
         object = obj, data = data,
-        knots = NULL, absorb.cons = TRUE, # modCon = 3, # see brms standata_basis_sm
+        knots = NULL, absorb.cons = TRUE,
         diagonal.penalty = TRUE
       )
-      for (j in seq_along(basis[[i]])) { # basis is length > 1 with s(..., by = ...) terms
+      for (j in seq_along(basis[[i]])) { # elements > 1 with `by` terms
         ns_Xf <- ns_Xf + 1
         rasm <- mgcv::smooth2random(basis[[i]][[j]], names(data), type = 2)
-        for (k in seq_along(rasm$rand)) {
+        for (k in seq_along(rasm$rand)) { # elements > 1 with if s(x, y) or t2()
           ns <- ns + 1
           Zs[[ns]] <- rasm$rand[[k]]
         }
@@ -508,16 +508,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     sm_dims <- 0L
     b_smooth_start <- 0L
   }
-
-  # FIXME?: deal with "by =" stuff
-  # EW: thinking of the same approach brms takes with factors?
-  # DONE: split off non-smooth model matrix
-  # DONE: pass in Zs to TMB
-  # DONE: set up weights coefs in R then TMB
-  # DONE: add Normal() penalty on Zs weights in TMB
-  # DONE: take normal deviations and multiply each sub-vector by corresponding sparse matrix
-  # FIXME: deal with prediction (I think this is going to need additional matrices)
-  # FIXME: test with s, t2, by, cc
+  # FIXME: deal with prediction on newdata
 
   offset_pos <- grep("^offset$", colnames(X_ij))
   y_i <- model.response(mf, "numeric")
