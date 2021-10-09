@@ -476,13 +476,13 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   terms <- all_terms(formula)
   smooth_i <- get_smooth_terms(terms)
   basis <- list()
-  rasm <- list()
   Zs <- list()
   Xs <- list()
   if (length(smooth_i) > 0) {
     has_smooths <- TRUE
     smterms <- terms[smooth_i]
     ns <- 0
+    ns_Xf <- 0
     for (i in seq_along(smterms)) {
       obj <- eval(str2expression(smterms[i]))
       basis[[i]] <- mgcv::smoothCon(
@@ -491,10 +491,13 @@ sdmTMB <- function(formula, data, spde, time = NULL,
         diagonal.penalty = TRUE
       )
       for (j in seq_along(basis[[i]])) { # basis is length > 1 with s(..., by = ...) terms
-        ns <- ns + 1
-        rasm[[ns]] <- mgcv::smooth2random(basis[[i]][[j]], names(data), type = 2)
-        Zs[[ns]] <- rasm[[ns]]$rand$Xr
-        Xs[[ns]] <- rasm[[ns]]$Xf
+        ns_Xf <- ns_Xf + 1
+        rasm <- mgcv::smooth2random(basis[[i]][[j]], names(data), type = 2)
+        for (k in seq_along(rasm$rand)) {
+          ns <- ns + 1
+          Zs[[ns]] <- rasm$rand[[k]]
+        }
+        Xs[[ns_Xf]] <- rasm$Xf
       }
     }
     sm_dims <- unlist(lapply(Zs, ncol))
@@ -1043,10 +1046,9 @@ all_terms <- function (x) {
 get_smooth_terms <- function(terms) {
   x1 <- grep("s\\(", terms)
   x2 <- grep("t2\\(", terms)
-  x3 <- grep("by=", terms)
-  if (length(x2) > 0) stop("sdmTMB is not set up to work with t2() yet.", call. = FALSE)
-  if (length(x3) > 0) warning("s(..., by = ) may not yet be set up correctly within sdmTMB.\n",
-    "I.e., it does not match mgcv output exactly.\n",
-    "*Use at your own risk.*", call. = FALSE)
-  x1
+  # x3 <- grep("by=", terms)
+  # if (length(x3) > 0) warning("s(..., by = ) may not yet be set up correctly within sdmTMB.\n",
+    # "I.e., it does not match mgcv output exactly.\n",
+    # "*Use at your own risk.*", call. = FALSE)
+  c(x1, x2)
 }

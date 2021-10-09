@@ -30,16 +30,15 @@ test_that("A model with t2() spline works", {
   skip_if_not_installed("INLA")
   d <- subset(pcod, year >= 2000 & density > 0)
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
-  expect_error(m <- sdmTMB(data = d,
+  m <- sdmTMB(data = d,
     formula = log(density) ~ t2(depth_scaled, year),
-    spde = pcod_spde, control = sdmTMBcontrol(map_rf = TRUE)), regexp = "t2()")
-  # expect_equal(ncol(m$tmb_data$X_ij), 1L)
-  # expect_equal(length(m$tmb_data$Zs), 1L)
-  # p <- predict(m, newdata = NULL)
-  # m_mgcv <- mgcv::gam(log(density) ~ t2(depth_scaled, year), data = d)
-  # p_mgcv <- predict(m_mgcv, newdata = d)
-  # plot(p$est, p_mgcv);abline(a = 0, b = 1)
-  # expect_gt(cor(p$est, p_mgcv), 0.99)
+    spde = pcod_spde, control = sdmTMBcontrol(map_rf = TRUE))
+  p <- predict(m, newdata = NULL)
+  m_mgcv <- mgcv::gam(log(density) ~ t2(depth_scaled, year), data = d,
+    method = "REML")
+  p_mgcv <- predict(m_mgcv, newdata = d)
+  plot(p$est, p_mgcv);abline(a = 0, b = 1)
+  expect_gt(cor(p$est, p_mgcv), 0.99)
 })
 
 test_that("A model with by in spline works", {
@@ -55,9 +54,29 @@ test_that("A model with by in spline works", {
   expect_equal(ncol(m$tmb_data$X_ij), 1L)
   expect_equal(length(m$tmb_data$Zs), length(unique(d$year)))
   p <- predict(m, newdata = NULL)
-  m_mgcv <- mgcv::gam(log(density) ~ s(depth_scaled, by = year_factor), data = d)
+  m_mgcv <- mgcv::gam(log(density) ~ s(depth_scaled, by = year_factor),
+    data = d, method = "REML")
   p_mgcv <- predict(m_mgcv, newdata = d)
   plot(p$est, p_mgcv);abline(a = 0, b = 1)
-  expect_gt(cor(p$est, p_mgcv), 0.82) # FIXME not convinced correct
+  expect_gt(cor(p$est, p_mgcv), 0.85) # FIXME why slightly off? but matches brms better
   # m$tmb_data$b_smooth_start
-})
+  # m_brms <- brms::brm(log(density) ~ s(depth_scaled, by = year_factor),
+  #   data = d, iter = 500, chains = 1, control = list(adapt_delta = 0.99))
+  # p2 <- predict(m_brms)
+  # plot(p_mgcv, p2[,1]);abline(a = 0, b = 1)
+  # plot(p$est, p2[,1]);abline(a = 0, b = 1)
+  # m_brms$model
+  # dd <- brms::standata(m_brms)
+  # head(dd$Xs)
+  # head(m$tmb_data$Xs)
+  # tail(dd$Xs)
+  # tail(m$tmb_data$Xs)
+  # head(dd$Zs_1_1)
+  # head(m$tmb_data$Zs[[1]])
+  # tail(dd$Zs_6_1)
+  # tail(m$tmb_data$Zs[[6]])
+  # e <- rstan::extract(m_brms$fit)
+  # apply(e$bs, 2, median)
+  # m$sd_report
+  # median(e$sds_1_1)
+  })
