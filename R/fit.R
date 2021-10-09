@@ -1046,9 +1046,5 @@ all_terms <- function (x) {
 get_smooth_terms <- function(terms) {
   x1 <- grep("s\\(", terms)
   x2 <- grep("t2\\(", terms)
-  # x3 <- grep("by=", terms)
-  # if (length(x3) > 0) warning("s(..., by = ) may not yet be set up correctly within sdmTMB.\n",
-    # "I.e., it does not match mgcv output exactly.\n",
-    # "*Use at your own risk.*", call. = FALSE)
   c(x1, x2)
 }
