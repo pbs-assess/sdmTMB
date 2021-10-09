@@ -12,7 +12,7 @@ NULL
 #'   to include `0 + as.factor(year)` (or whatever the time column is called)
 #'   in the formula. IID random intercepts are possible using \pkg{lme4}
 #'   syntax, e.g., `+ (1 | g)` where `g` is a column with factor levels.
-#'   Splines are possible via \pkg{mgcv}. See examples below.
+#'   Penalized splines are possible via \pkg{mgcv}. See examples below.
 #' @param data A data frame.
 #' @param spde An object from [make_mesh()].
 #' @param time An optional time column name (as character). Can be left as
@@ -256,13 +256,9 @@ NULL
 #'   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
 #' print(m_pos)
 #'
-#' # With splines via mgcv.
-#' # Make sure to pre-specify an appropriate basis dimension (`k`) since
-#' # the smoothers are not penalized in the current implementation.
-#' # See ?mgcv::choose.k
-#' m_gam <- sdmTMB(log(density) ~ 0 + as.factor(year) + s(depth_scaled, k = 4),
+#' # With p-splines via mgcv:
+#' m_gam <- sdmTMB(log(density) ~ s(depth_scaled),
 #'   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
-#' print(m_gam)
 #'
 #' # With IID random intercepts:
 #' # Simulate some data:
@@ -762,14 +758,6 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       ln_tau_E   = as.factor(NA),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
-  # Don't actually need to map them off - because they're NA
-  if (!has_smooths) {
-    # map off the standard deviations
-    #tmb_map <- c(tmb_map,
-    #             ln_smooth_sigma = as.factor(rep(NA, ifelse(has_smooths==TRUE, sum(sm_dims), 1))),
-    #             b_smooth = as.factor(rep(NA, ifelse(has_smooths==TRUE, sum(sm_dims), 1))))
-  }
-
   if (contains_offset) { # fix offset param to 1 to be an offset:
     b_j_map <- seq_along(tmb_params$b_j)
     b_j_map[offset_pos] <- NA
@@ -860,7 +848,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   }
 
   if(has_smooths) {
-    # random effects for the smooth parameters for P-splines splines
+    # random effects for the smooth parameters for p-splines
     tmb_random <- c(tmb_random, "b_smooth")
   }
 

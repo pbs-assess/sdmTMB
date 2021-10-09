@@ -35,7 +35,7 @@ offsets and threshold parameters. For index standardization, you may wish
 to include \code{0 + as.factor(year)} (or whatever the time column is called)
 in the formula. IID random intercepts are possible using \pkg{lme4}
 syntax, e.g., \code{+ (1 | g)} where \code{g} is a column with factor levels.
-Splines are possible via \pkg{mgcv}. See examples below.}
+Penalized splines are possible via \pkg{mgcv}. See examples below.}
 
 \item{data}{A data frame.}
 
@@ -243,13 +243,9 @@ m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled
   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
 print(m_pos)
 
-# With splines via mgcv.
-# Make sure to pre-specify an appropriate basis dimension (`k`) since
-# the smoothers are not penalized in the current implementation.
-# See ?mgcv::choose.k
-m_gam <- sdmTMB(log(density) ~ 0 + as.factor(year) + s(depth_scaled, k = 4),
+# With p-splines via mgcv:
+m_gam <- sdmTMB(log(density) ~ s(depth_scaled),
   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
-print(m_gam)
 
 # With IID random intercepts:
 # Simulate some data:
