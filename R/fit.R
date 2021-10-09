@@ -81,7 +81,7 @@ NULL
 #'   fitting (`FALSE`)?
 #' @param ... Not currently used.
 #' @importFrom methods as is
-#' @import mgcv
+#' @importFrom mgcv s t2
 #' @importFrom stats gaussian model.frame model.matrix
 #'   model.response terms model.offset
 #'
@@ -486,19 +486,23 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   if (length(smooth_i) > 0) {
     has_smooths <- TRUE
     smterms <- terms[smooth_i]
+    ns <- 0
     for (i in seq_along(smterms)) {
       obj <- eval(str2expression(smterms[i]))
       basis[[i]] <- mgcv::smoothCon(
         object = obj, data = data,
-        knots = NULL, absorb.cons = TRUE, modCon = 3, # see brms standata_basis_sm
+        knots = NULL, absorb.cons = TRUE, # modCon = 3, # see brms standata_basis_sm
         diagonal.penalty = TRUE
       )
-      rasm[[i]] <- mgcv::smooth2random(basis[[i]][[1]], names(data), type = 2)
-      Zs[[i]] <- rasm[[i]]$rand$Xr
-      Xs[[i]] <- rasm[[i]]$Xf
+      for (j in seq_along(basis[[i]])) { # basis is length > 1 with s(..., by = ...) terms
+        ns <- ns + 1
+        rasm[[ns]] <- mgcv::smooth2random(basis[[i]][[j]], names(data), type = 2)
+        Zs[[ns]] <- rasm[[ns]]$rand$Xr
+        Xs[[ns]] <- rasm[[ns]]$Xf
+      }
     }
     sm_dims <- unlist(lapply(Zs, ncol))
-    Xs <- do.call(cbind, Xs) # combine 'em all into one matrix1
+    Xs <- do.call(cbind, Xs) # combine 'em all into one design matrix
     b_smooth_start <- c(0, cumsum(sm_dims)[-length(sm_dims)])
   } else {
     has_smooths <- FALSE
@@ -1051,6 +1055,10 @@ all_terms <- function (x) {
 get_smooth_terms <- function(terms) {
   x1 <- grep("s\\(", terms)
   x2 <- grep("t2\\(", terms)
-  x3 <- grep("te\\(", terms)
-  c(x1, x2, x3)
+  x3 <- grep("by=", terms)
+  if (length(x2) > 0) stop("sdmTMB is not set up to work with t2() yet.", call. = FALSE)
+  if (length(x3) > 0) warning("s(..., by = ) may not yet be set up correctly within sdmTMB.\n",
+    "I.e., it does not match mgcv output exactly.\n",
+    "*Use at your own risk.*", call. = FALSE)
+  x1
 }

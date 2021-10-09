@@ -24,37 +24,40 @@ test_that("A model with 2 s() splines works", {
   expect_gt(cor(p$est, p_mgcv), 0.999)
 })
 
-#
-# test_that("A model with t2() spline works", {
-#   skip_on_cran()
-#   skip_on_ci()
-#   skip_if_not_installed("INLA")
-#   d <- subset(pcod, year >= 2000 & density > 0)
-#   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
-#   m <- sdmTMB(data = d,
-#     formula = log(density) ~ t2(depth_scaled, year),
-#     spde = pcod_spde, control = sdmTMBcontrol(map_rf = TRUE))
-#   expect_equal(ncol(m$tmb_data$X_ij), 1L)
-#   expect_equal(length(m$tmb_data$Zs), 1L)
-#   p <- predict(m, newdata = NULL)
-#   m_mgcv <- mgcv::gam(log(density) ~ t2(depth_scaled, year), data = d)
-#   p_mgcv <- predict(m_mgcv, newdata = d)
-#   plot(p$est, p_mgcv);abline(a = 0, b = 1)
-#   expect_gt(cor(p$est, p_mgcv), 0.99)
-# })
+test_that("A model with t2() spline works", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  d <- subset(pcod, year >= 2000 & density > 0)
+  pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
+  expect_error(m <- sdmTMB(data = d,
+    formula = log(density) ~ t2(depth_scaled, year),
+    spde = pcod_spde, control = sdmTMBcontrol(map_rf = TRUE)), regexp = "t2()")
+  # expect_equal(ncol(m$tmb_data$X_ij), 1L)
+  # expect_equal(length(m$tmb_data$Zs), 1L)
+  # p <- predict(m, newdata = NULL)
+  # m_mgcv <- mgcv::gam(log(density) ~ t2(depth_scaled, year), data = d)
+  # p_mgcv <- predict(m_mgcv, newdata = d)
+  # plot(p$est, p_mgcv);abline(a = 0, b = 1)
+  # expect_gt(cor(p$est, p_mgcv), 0.99)
+})
 
-# test_that("A model with by in spline works", {
-#   skip_on_cran()
-#   skip_on_ci()
-#   skip_if_not_installed("INLA")
-#
-#   # test regular model w/o spline works
-#   d <- subset(pcod, year >= 2015)
-#   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 25) # a coarse mesh for example speed
-#   m <- sdmTMB(data = d,
-#               formula = density ~ s(depth_scaled,by=year),
-#               spde = pcod_spde,
-#               family = tweedie(link = "log"))
-#   expect_identical(class(m), "sdmTMB")
-#
-# })
+test_that("A model with by in spline works", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  d <- subset(pcod, year >= 2006 & density > 0)
+  pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
+  d$year_factor <- as.factor(d$year)
+  expect_warning(m <- sdmTMB(data = d,
+    formula = log(density) ~ s(depth_scaled, by = year_factor),
+    spde = pcod_spde, control = sdmTMBcontrol(map_rf = TRUE)))
+  expect_equal(ncol(m$tmb_data$X_ij), 1L)
+  expect_equal(length(m$tmb_data$Zs), length(unique(d$year)))
+  p <- predict(m, newdata = NULL)
+  m_mgcv <- mgcv::gam(log(density) ~ s(depth_scaled, by = year_factor), data = d)
+  p_mgcv <- predict(m_mgcv, newdata = d)
+  plot(p$est, p_mgcv);abline(a = 0, b = 1)
+  expect_gt(cor(p$est, p_mgcv), 0.82) # FIXME not convinced correct
+  # m$tmb_data$b_smooth_start
+})
