@@ -498,10 +498,14 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       Xs[[i]] <- rasm[[i]]$Xf
     }
     sm_dims <- unlist(lapply(Zs, ncol))
-    Xs <- do.call(cbind, Xs) # combine 'em all into one matrix
+    Xs <- do.call(cbind, Xs) # combine 'em all into one matrix1
+    b_smooth_start <- c(0, cumsum(sm_dims)[-length(sm_dims)]) -
+    b_smooth_end <- cumsum(sm_dims)
   } else {
     has_smooths <- FALSE
     sm_dims <- 0L
+    b_smooth_start <- 0L
+    b_smooth_end <- 0L
   }
 
   # FIXME?: deal with "by =" stuff
@@ -655,6 +659,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     X_rw_ik    = X_rw_ik,
     Zs         = Zs, # optional smoother basis function matrices
     Xs         = Xs, # optional smoother linear effect matrix
+    b_smooth_start = b_smooth_start,
+    b_smooth_end = b_smooth_end,
     proj_lon   = 0,
     proj_lat   = 0,
     do_predict = 0L,

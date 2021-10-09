@@ -356,6 +356,8 @@ Type objective_function<Type>::operator()()
   // optional stuff for penalized regression splines
   DATA_INTEGER(has_smooths);  // whether or not smooths are included
   DATA_IVECTOR(smooth_matrix_dims);
+  DATA_IVECTOR(b_smooth_start);
+  DATA_IVECTOR(b_smooth_end);
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -503,12 +505,8 @@ Type objective_function<Type>::operator()()
   vector<Type> eta_smooth_i(X_ij.rows());
   eta_smooth_i.setZero();
   if (has_smooths) {
-    int k = 0;
     for (int i = 0; i < smooth_matrix_dims.size(); i++) { // iterate over # of smooth elements
-      int m_i = smooth_matrix_dims(i);
-      vector<Type> beta_i = b_smooth.segment(k, k + m_i); // -1?
-      // vector<Type> beta_i = b_smooth;
-      k += m_i + 1;
+      vector<Type> beta_i = b_smooth.segment(b_smooth_start(i), b_smooth_end(i));
       for (int j = 0; j < beta_i.size(); j++) {
         jnll -= dnorm(beta_i(j), Type(0), exp(ln_smooth_sigma(i)), true);
       }
