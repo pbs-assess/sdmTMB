@@ -1002,7 +1002,7 @@ all_terms <- function (x) {
     return(character(0))
   }
   if (!inherits(x, "terms")) {
-    x <- terms(as.formula(x))
+    x <- terms(stats::as.formula(x))
   }
   rm_wsp(attr(x, "term.labels"))
 }

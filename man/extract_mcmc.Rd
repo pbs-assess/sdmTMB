@@ -28,8 +28,10 @@ plot(pcod_spde)
 # to improve speed of convergence:
 m_tmb <- sdmTMB(density ~ 0 + as.factor(year),
   data = pcod, spde = pcod_spde, family = tweedie(link = "log"), time = "year",
-  control = sdmTMBcontrol(start = list(ln_kappa = rep(-1.58, 2), ln_tau_E = -0.15, ln_tau_O = -0.65),
-    map = list(ln_kappa = rep(factor(NA), 2), ln_tau_E = factor(NA), ln_tau_O = factor(NA))))
+  control = sdmTMBcontrol(start = list(ln_kappa = rep(-1.58, 2),
+    ln_tau_E = -0.15, ln_tau_O = -0.65),
+    map = list(ln_kappa = rep(factor(NA), 2),
+      ln_tau_E = factor(NA), ln_tau_O = factor(NA))))
 m_tmb
 
 # will take 3-5 minutes:
