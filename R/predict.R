@@ -302,7 +302,8 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
 
     newdata <- base::merge(newdata, fake_newdata, by = xy_cols,
       all.x = TRUE, all.y = FALSE)
-    newdata <- newdata[order(newdata$sdm_orig_id),, drop=FALSE]
+    newdata <- newdata[order(newdata$sdm_orig_id),, drop = FALSE]
+
 
     proj_mesh <- INLA::inla.spde.make.A(object$spde$mesh,
       loc = as.matrix(fake_newdata[,xy_cols, drop = FALSE]))
@@ -326,14 +327,45 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     proj_RE_indexes <- vapply(RE_names, function(x) as.integer(nd[[x]]) - 1L, rep(1L, nrow(nd)))
 
     if (!"mgcv" %in% names(object)) object[["mgcv"]] <- FALSE
-    proj_X_ij <- matrix(999)
-    if (!object$mgcv) {
-      proj_X_ij <- tryCatch({model.matrix(object$formula, data = nd)},
+    # proj_X_ij <- matrix(999)
+    # if (!object$mgcv) {
+      f2 <- remove_s_and_t2(object$formula)
+      proj_X_ij <- tryCatch({model.matrix(f2, data = nd)},
         error = function(e) NA)
-    }
-    if (object$mgcv || identical(proj_X_ij, NA)) {
-      proj_X_ij <- mgcv::predict.gam(object$mgcv_mod, type = "lpmatrix", newdata = nd)
-    }
+    # }
+    if (identical(proj_X_ij, NA)) stop("Model matrix was not parsed.", call. = FALSE)
+
+    # sm <- parse_smoothers(object$formula, data = object$data, newdata = nd)
+    # sm <- parse_smoothers(object$formula, data = object$data)
+    sm <- parse_smoothers(object$formula, data = object$data, newdata = nd)
+
+    # browser()    # # # #
+    # #
+    # sm$Xs %>% head
+    # sm2$Xs %>% head
+    # sm3$Xs %>% head
+    # # # #
+    # sm$Zs[[1]] %>% head
+    # sm2$Zs[[1]] %>% head
+    # sm2$Zs[[1]] %>% head
+
+
+    # r <- s2rPred(sm,re,dat[1:10,])
+    # range(r$Xf-re$Xf[1:10,])
+    # range(r$rand[[1]]-re$rand[[1]][1:10,])
+
+
+    # if (object$mgcv || identical(proj_X_ij, NA)) {
+    #   sm <- parse_smoothers(object$formula, data = object$data, newdata = nd)
+    #   if (object$family %in% c("binomial", "Gamma")) {
+    #     mgcv_mod <- mgcv::gam(object$formula, data = nd, family = family, fit = FALSE)
+    #   } else {
+    #     mgcv_mod <- mgcv::gam(object$formula, data = nd, fit = FALSE)
+    #   }
+    #   proj_X_ij <- mgcv_mod$X
+    #   proj_X_ij <- proj_X_ij[, colnames(X_ij) != "", drop = FALSE] # only keep non-smooth terms
+    #   # proj_X_ij <- mgcv::predict.gam(object$mgcv_mod, type = "lpmatrix", newdata = nd)
+    # }
     if (!is.null(object$time_varying))
       proj_X_rw_ik <- model.matrix(object$time_varying, data = nd)
     else
@@ -359,6 +391,8 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     tmb_data$proj_spatial_index <- newdata$sdm_spatial_id
     tmb_data$proj_t_i <- as.numeric(newdata[[object$time]])
     tmb_data$proj_t_i <- tmb_data$proj_t_i - mean(unique(tmb_data$proj_t_i)) # center on mean
+    tmb_data$proj_Zs <- sm$Zs
+    tmb_data$proj_Xs <- sm$Xs
 
     epsilon_covariate <- rep(0, length(unique(newdata[[object$time]])))
     if (tmb_data$est_epsilon_model) {

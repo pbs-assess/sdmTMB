@@ -25,6 +25,15 @@ test_that("A model with 2 s() splines works", {
   plot(p$est, p_mgcv)
   abline(a = 0, b = 1)
   expect_gt(cor(p$est, p_mgcv), 0.999)
+
+  pnd <- predict(m, newdata = d[1:8,])
+  expect_equal(p$est[1:8], pnd$est, tolerance = 0.001)
+
+  set.seed(23402)
+  .s <- sample(seq_len(nrow(d)), 200L)
+  pnd_mgcv <- predict(m_mgcv, newdata = d[.s, ])
+  pnd <- predict(m, newdata = d[.s, ])
+  expect_gt(cor(pnd_mgcv, pnd$est), 0.999)
 })
 
 test_that("A model with t2() spline works", {
@@ -36,12 +45,22 @@ test_that("A model with t2() spline works", {
   dat$X <- runif(nrow(dat))
   dat$Y <- runif(nrow(dat))
   spde <- make_mesh(dat, c("X", "Y"), cutoff = 0.1)
-  m_mgcv <- mgcv::gam(y ~ t2(x0, x1, k = 7) + s(x2),
+
+  dat$f <- NULL
+  dat$f0 <- NULL
+  dat$f1 <- NULL
+  dat$f2 <- NULL
+  dat$f3 <- NULL
+  dat$x3 <- NULL
+  dat$observed <- dat$y
+  dat$y <- NULL
+
+  m_mgcv <- mgcv::gam(observed ~ t2(x0, x1, k = 7) + s(x2),
     data = dat,
     method = "REML"
   )
   p_mgcv <- predict(m_mgcv)
-  m <- sdmTMB(y ~ t2(x0, x1, k = 7) + s(x2),
+  m <- sdmTMB(observed ~ t2(x0, x1, k = 7) + s(x2),
     data = dat,
     spde = spde, control = sdmTMBcontrol(map_rf = TRUE)
   )
@@ -50,6 +69,10 @@ test_that("A model with t2() spline works", {
   abline(a = 0, b = 1)
   expect_gt(cor(p$est, p_mgcv), 0.9999)
   expect_equal(as.numeric(p$est), as.numeric(p_mgcv), tolerance = 0.001)
+
+  expect_error(pnd <- predict(m, newdata = dat), regexp = "t2") # FIXME not exactly right!?
+  # expect_equal(p$est, pnd$est, tolerance = 0.001)
+  # plot(p$est, pnd$est)
 })
 
 test_that("A model with by in spline works", {
@@ -90,4 +113,11 @@ test_that("A model with by in spline works", {
   plot(p$est, p_mgcv)
   abline(a = 0, b = 1)
   expect_gt(cor(p$est, p_mgcv), 0.9999)
+})
+
+test_that("Formula removal of s and t2 works", {
+  expect_identical(remove_s_and_t2(y ~ x + s(z)), y ~ x)
+  expect_identical(remove_s_and_t2(y ~ s(x) + s(z)), y ~ 1)
+  expect_identical(remove_s_and_t2(y ~ s(x) + t2(z)), y ~ 1)
+  expect_identical(remove_s_and_t2(y ~ ignore(x) + t2(z)), y ~ ignore(x))
 })

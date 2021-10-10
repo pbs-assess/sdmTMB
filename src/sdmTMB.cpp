@@ -268,7 +268,9 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
   DATA_STRUCT(Zs, LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
+  DATA_STRUCT(proj_Zs, LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
   DATA_MATRIX(Xs); // smoother linear effect matrix
+  DATA_MATRIX(proj_Xs); // smoother linear effect matrix
 
   DATA_VECTOR_INDICATOR(keep, y_i); // https://rdrr.io/cran/TMB/man/oneStepPredict.html
   DATA_VECTOR(weights_i); // optional weights
@@ -725,6 +727,24 @@ Type objective_function<Type>::operator()()
           proj_fe(i) = proj_fe(i) + logistic_threshold(proj_X_threshold(i), s50, s95, s_max);
         }
       }
+    }
+
+    // Smoothers:
+    vector<Type> proj_smooth_i(proj_X_ij.rows());
+    proj_smooth_i.setZero();
+    if (has_smooths) {
+      for (int s = 0; s < b_smooth_start.size(); s++) { // iterate over # of smooth elements
+        vector<Type> beta_s(proj_Zs(s).cols());
+        beta_s.setZero();
+        for (int j = 0; j < beta_s.size(); j++) {
+          beta_s(j) = b_smooth(b_smooth_start(s) + j);
+        }
+        proj_smooth_i += proj_Zs(s) * beta_s;
+      }
+      proj_smooth_i += proj_Xs * bs;
+    }
+    for (int i = 0; i < proj_X_ij.rows(); i++) {
+      proj_fe(i) += proj_smooth_i(i);
     }
 
     // IID random intercepts:

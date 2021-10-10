@@ -453,25 +453,26 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   formula <- split_formula$fixedFormula
   ln_tau_G_index <- unlist(lapply(seq_along(nobs_RE), function(i) rep(i, each = nobs_RE[i]))) - 1L
 
-  if (isFALSE(mgcv)) {
+  formula_no_sm <- remove_s_and_t2(formula)
+  # if (isFALSE(mgcv)) {
     mgcv_mod <- NULL
-    X_ij <- model.matrix(formula, data)
-    mf <- model.frame(formula, data)
-  } else {
-    # mgcv::gam will parse a matrix response, but not a factor
-    mf <- model.frame(mgcv::interpret.gam(formula)$fake.formula, data)
-    if (identical(family$family, "binomial") && "factor" %in% model.response(mf, "any")) {
-      stop("Error: with 'mgcv' = TRUE, the response cannot be a factor", call. = FALSE)
-    }
-    if (family$family %in% c("binomial", "Gamma")) {
-      mgcv_mod <- mgcv::gam(formula, data = data, family = family, fit = FALSE) # family needs to be passed into mgcv
-    } else {
-      mgcv_mod <- mgcv::gam(formula, data = data, fit = FALSE)
-    }
-    # X_ij <- model.matrix(mgcv_mod)
-    X_ij <- mgcv_mod$X
-    X_ij <- X_ij[, colnames(X_ij) != "", drop = FALSE] # only keep non-smooth terms
-  }
+    X_ij <- model.matrix(formula_no_sm, data)
+    mf <- model.frame(formula_no_sm, data)
+  # } else {
+  #   # mgcv::gam will parse a matrix response, but not a factor
+  #   mf <- model.frame(mgcv::interpret.gam(formula)$fake.formula, data)
+  #   if (identical(family$family, "binomial") && "factor" %in% model.response(mf, "any")) {
+  #     stop("Error: with 'mgcv' = TRUE, the response cannot be a factor", call. = FALSE)
+  #   }
+  #   if (family$family %in% c("binomial", "Gamma")) {
+  #     mgcv_mod <- mgcv::gam(formula, data = data, family = family, fit = FALSE) # family needs to be passed into mgcv
+  #   } else {
+  #     mgcv_mod <- mgcv::gam(formula, data = data, fit = FALSE)
+  #   }
+  #   # X_ij <- model.matrix(mgcv_mod)
+  #   X_ij <- mgcv_mod$X
+  #   X_ij <- X_ij[, colnames(X_ij) != "", drop = FALSE] # only keep non-smooth terms
+  # }
 
   # parse everything mgcv + smoothers:
   sm <- parse_smoothers(formula = formula, data = data)
@@ -617,6 +618,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     X_rw_ik    = X_rw_ik,
     Zs         = sm$Zs, # optional smoother basis function matrices
     Xs         = sm$Xs, # optional smoother linear effect matrix
+    proj_Zs    = list(),
+    proj_Xs    = matrix(nrow = 0L, ncol = 0L),
     b_smooth_start = sm$b_smooth_start,
     proj_lon   = 0,
     proj_lat   = 0,
@@ -1007,6 +1010,9 @@ get_smooth_terms <- function(terms) {
 
 parse_smoothers <- function(formula, data, newdata = NULL) {
   terms <- all_terms(formula)
+  if (!is.null(newdata)) {
+    if (any(grepl("t2\\(", terms))) stop("Prediction on newdata with t2() still has issues.", call. = FALSE)
+  }
   smooth_i <- get_smooth_terms(terms)
   basis <- list()
   Zs <- list()
@@ -1027,7 +1033,7 @@ parse_smoothers <- function(formula, data, newdata = NULL) {
         ns_Xf <- ns_Xf + 1
         rasm <- mgcv::smooth2random(basis[[i]][[j]], names(data), type = 2)
         if (!is.null(newdata)) {
-          rasm <- s2rPred(basis[[i]], rasm, data = newdata)
+          rasm <- s2rPred(basis[[i]][[j]], rasm, data = newdata)
         }
         for (k in seq_along(rasm$rand)) { # elements > 1 with if s(x, y) or t2()
           ns <- ns + 1
@@ -1043,6 +1049,7 @@ parse_smoothers <- function(formula, data, newdata = NULL) {
     has_smooths <- FALSE
     sm_dims <- 0L
     b_smooth_start <- 0L
+    Xs <- matrix(nrow = 0L, ncol = 0L)
   }
   list(Xs = Xs, Zs = Zs, has_smooths = has_smooths,
     sm_dims = sm_dims, b_smooth_start = b_smooth_start)
@@ -1054,7 +1061,9 @@ s2rPred <- function(sm, re, data) {
   ## random effects. re must be the result of smooth2random(sm,...,type=2).
   X <- mgcv::PredictMat(sm, data) ## get prediction matrix for new data
   ## transform to r.e. parameterization
-  if (!is.null(re$trans.U)) X <- X %*% re$trans.U
+  if (!is.null(re$trans.U)) {
+    X <- X %*% re$trans.U
+  }
   X <- t(t(X) * re$trans.D)
   ## re-order columns according to random effect re-ordering...
   X[, re$rind] <- X[, re$pen.ind != 0]
@@ -1063,7 +1072,7 @@ s2rPred <- function(sm, re, data) {
   pen.ind[re$rind] <- pen.ind[pen.ind > 0]
   ## start return object...
   r <- list(rand = list(), Xf = X[, which(re$pen.ind == 0), drop = FALSE])
-  for (i in seq(1, length(re$rand))) { ## loop over random effect matrices
+  for (i in seq_along(re$rand)) { ## loop over random effect matrices
     r$rand[[i]] <- X[, which(pen.ind == i), drop = FALSE]
     attr(r$rand[[i]], "s.label") <- attr(re$rand[[i]], "s.label")
   }
