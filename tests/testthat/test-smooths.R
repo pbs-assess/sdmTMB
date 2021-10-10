@@ -113,6 +113,11 @@ test_that("A model with by in spline works", {
   plot(p$est, p_mgcv)
   abline(a = 0, b = 1)
   expect_gt(cor(p$est, p_mgcv), 0.9999)
+
+  set.seed(291823)
+  .s <- sample(seq_len(nrow(dat)), 200L)
+  pnd <- predict(m, newdata = dat[.s,])
+  expect_equal(p$est[.s], pnd$est, tolerance = 0.001)
 })
 
 test_that("Formula removal of s and t2 works", {
