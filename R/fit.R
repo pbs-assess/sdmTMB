@@ -473,42 +473,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     X_ij <- X_ij[, colnames(X_ij) != "", drop = FALSE] # only keep non-smooth terms
   }
 
-  terms <- all_terms(formula)
-  smooth_i <- get_smooth_terms(terms)
-  basis <- list()
-  Zs <- list()
-  Xs <- list()
-  if (length(smooth_i) > 0) {
-    has_smooths <- TRUE
-    smterms <- terms[smooth_i]
-    ns <- 0
-    ns_Xf <- 0
-    for (i in seq_along(smterms)) {
-      obj <- eval(str2expression(smterms[i]))
-      basis[[i]] <- mgcv::smoothCon(
-        object = obj, data = data,
-        knots = NULL, absorb.cons = TRUE,
-        diagonal.penalty = TRUE
-      )
-      for (j in seq_along(basis[[i]])) { # elements > 1 with `by` terms
-        ns_Xf <- ns_Xf + 1
-        rasm <- mgcv::smooth2random(basis[[i]][[j]], names(data), type = 2)
-        for (k in seq_along(rasm$rand)) { # elements > 1 with if s(x, y) or t2()
-          ns <- ns + 1
-          Zs[[ns]] <- rasm$rand[[k]]
-        }
-        Xs[[ns_Xf]] <- rasm$Xf
-      }
-    }
-    sm_dims <- unlist(lapply(Zs, ncol))
-    Xs <- do.call(cbind, Xs) # combine 'em all into one design matrix
-    b_smooth_start <- c(0, cumsum(sm_dims)[-length(sm_dims)])
-  } else {
-    has_smooths <- FALSE
-    sm_dims <- 0L
-    b_smooth_start <- 0L
-  }
-  # FIXME: deal with prediction on newdata
+  # parse everything mgcv + smoothers:
+  sm <- parse_smoothers(formula = formula, data = data)
 
   offset_pos <- grep("^offset$", colnames(X_ij))
   y_i <- model.response(mf, "numeric")
@@ -649,9 +615,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     rw_fields = if (spatial_only) 0L else as.integer(rw_fields),
     X_ij       = X_ij,
     X_rw_ik    = X_rw_ik,
-    Zs         = Zs, # optional smoother basis function matrices
-    Xs         = Xs, # optional smoother linear effect matrix
-    b_smooth_start = b_smooth_start,
+    Zs         = sm$Zs, # optional smoother basis function matrices
+    Xs         = sm$Xs, # optional smoother linear effect matrix
+    b_smooth_start = sm$b_smooth_start,
     proj_lon   = 0,
     proj_lat   = 0,
     do_predict = 0L,
@@ -699,7 +665,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     ln_tau_G_index = ln_tau_G_index,
     est_epsilon_model = as.integer(est_epsilon_model),
     epsilon_predictor = epsilon_covariate,
-    has_smooths = as.integer(has_smooths)
+    has_smooths = as.integer(sm$has_smooths)
   )
 
   b_thresh <- rep(0, 2)
@@ -708,7 +674,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   tmb_params <- list(
     ln_H_input = c(0, 0),
     b_j        = rep(0, ncol(X_ij)),
-    bs         = rep(0, if (has_smooths) ncol(Xs) else 0),
+    bs         = rep(0, if (sm$has_smooths) ncol(sm$Xs) else 0),
     ln_tau_O   = 0,
     ln_tau_O_trend = 0,
     ln_tau_E   = 0,
@@ -726,8 +692,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t),
     b_threshold = b_thresh,
     b_epsilon = 0,
-    b_smooth = rep(0, if (has_smooths) sum(sm_dims) else 0),
-    ln_smooth_sigma = rep(0, if (has_smooths) length(sm_dims) else 0)
+    b_smooth = rep(0, if (sm$has_smooths) sum(sm$sm_dims) else 0),
+    ln_smooth_sigma = rep(0, if (sm$has_smooths) length(sm$sm_dims) else 0)
   )
   if (identical(family$link, "inverse") && family$family %in% c("Gamma", "gaussian", "student")) {
     fam <- family
@@ -841,9 +807,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     tmb_random <- c(tmb_random, "epsilon_rw")
   }
 
-  if(has_smooths) {
-    # random effects for the smooth parameters for p-splines
-    tmb_random <- c(tmb_random, "b_smooth")
+  if (sm$has_smooths) {
+    tmb_random <- c(tmb_random, "b_smooth") # smooth random effects
   }
 
   if (!is.null(previous_fit)) {
@@ -1039,3 +1004,75 @@ get_smooth_terms <- function(terms) {
   x2 <- grep("t2\\(", terms)
   c(x1, x2)
 }
+
+parse_smoothers <- function(formula, data, newdata = NULL) {
+  terms <- all_terms(formula)
+  smooth_i <- get_smooth_terms(terms)
+  basis <- list()
+  Zs <- list()
+  Xs <- list()
+  if (length(smooth_i) > 0) {
+    has_smooths <- TRUE
+    smterms <- terms[smooth_i]
+    ns <- 0
+    ns_Xf <- 0
+    for (i in seq_along(smterms)) {
+      obj <- eval(str2expression(smterms[i]))
+      basis[[i]] <- mgcv::smoothCon(
+        object = obj, data = data,
+        knots = NULL, absorb.cons = TRUE,
+        diagonal.penalty = TRUE
+      )
+      for (j in seq_along(basis[[i]])) { # elements > 1 with `by` terms
+        ns_Xf <- ns_Xf + 1
+        rasm <- mgcv::smooth2random(basis[[i]][[j]], names(data), type = 2)
+        if (!is.null(newdata)) {
+          rasm <- s2rPred(basis[[i]], rasm, data = newdata)
+        }
+        for (k in seq_along(rasm$rand)) { # elements > 1 with if s(x, y) or t2()
+          ns <- ns + 1
+          Zs[[ns]] <- rasm$rand[[k]]
+        }
+        Xs[[ns_Xf]] <- rasm$Xf
+      }
+    }
+    sm_dims <- unlist(lapply(Zs, ncol))
+    Xs <- do.call(cbind, Xs) # combine 'em all into one design matrix
+    b_smooth_start <- c(0, cumsum(sm_dims)[-length(sm_dims)])
+  } else {
+    has_smooths <- FALSE
+    sm_dims <- 0L
+    b_smooth_start <- 0L
+  }
+  list(Xs = Xs, Zs = Zs, has_smooths = has_smooths,
+    sm_dims = sm_dims, b_smooth_start = b_smooth_start)
+}
+
+# from mgcv docs ?mgcv::smooth2random
+s2rPred <- function(sm, re, data) {
+  ## Function to aid prediction from smooths represented as type==2
+  ## random effects. re must be the result of smooth2random(sm,...,type=2).
+  X <- mgcv::PredictMat(sm, data) ## get prediction matrix for new data
+  ## transform to r.e. parameterization
+  if (!is.null(re$trans.U)) X <- X %*% re$trans.U
+  X <- t(t(X) * re$trans.D)
+  ## re-order columns according to random effect re-ordering...
+  X[, re$rind] <- X[, re$pen.ind != 0]
+  ## re-order penalization index in same way
+  pen.ind <- re$pen.ind
+  pen.ind[re$rind] <- pen.ind[pen.ind > 0]
+  ## start return object...
+  r <- list(rand = list(), Xf = X[, which(re$pen.ind == 0), drop = FALSE])
+  for (i in seq(1, length(re$rand))) { ## loop over random effect matrices
+    r$rand[[i]] <- X[, which(pen.ind == i), drop = FALSE]
+    attr(r$rand[[i]], "s.label") <- attr(re$rand[[i]], "s.label")
+  }
+  names(r$rand) <- names(re$rand)
+  r
+}
+## use function to obtain prediction random and fixed effect matrices
+## for first 10 elements of 'dat'. Then confirm that these match the
+## first 10 rows of the original model matrices, as they should...
+# r <- s2rPred(sm,re,dat[1:10,])
+# range(r$Xf-re$Xf[1:10,])
+# range(r$rand[[1]]-re$rand[[1]][1:10,])
