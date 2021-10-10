@@ -458,6 +458,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     mgcv_mod <- NULL
     X_ij <- model.matrix(formula_no_sm, data)
     mf <- model.frame(formula_no_sm, data)
+    mt <- attr(mf, "terms")
+
   # } else {
   #   # mgcv::gam will parse a matrix response, but not a factor
   #   mf <- model.frame(mgcv::interpret.gam(formula)$fake.formula, data)
@@ -867,6 +869,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     priors     = priors,
     nlminb_control = .control,
     control  = control,
+    contrasts  = attr(X_ij, "contrasts"),
+    terms  = attr(mf, "terms"),
+    xlevels    = stats::.getXlevels(mt, mf),
     call       = match.call(expand.dots = TRUE),
     version    = utils::packageVersion("sdmTMB")),
     class      = "sdmTMB")

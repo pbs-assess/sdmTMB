@@ -268,7 +268,7 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
       stop("Some new time elements were found in `newdata`. ",
         "For now, make sure only time elements from the original dataset ",
         "are present. If you would like to predict on new time elements, see ",
-        "the `extra_time` argument in `?sdmTMB:::predict.sdmTMB`.",
+        "the `extra_time` argument in `?predict.sdmTMB`.",
         call. = FALSE
       )
     # if (!identical(new_data_time, original_time)) {
@@ -327,20 +327,16 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     proj_RE_indexes <- vapply(RE_names, function(x) as.integer(nd[[x]]) - 1L, rep(1L, nrow(nd)))
 
     if (!"mgcv" %in% names(object)) object[["mgcv"]] <- FALSE
-    # proj_X_ij <- matrix(999)
-    # if (!object$mgcv) {
-      f2 <- remove_s_and_t2(object$formula)
-      proj_X_ij <- tryCatch({model.matrix(f2, data = nd)},
-        error = function(e) NA)
-    # }
-    if (identical(proj_X_ij, NA)) stop("Model matrix was not parsed.", call. = FALSE)
+    f2 <- remove_s_and_t2(object$formula)
+    tt <- stats::terms(object)
+    Terms <- stats::delete.response(tt)
+    mf <- model.frame(Terms, newdata, xlev = object$xlevels)
+    proj_X_ij <- model.matrix(Terms, mf, contrasts.arg = object$contrasts)
 
     # sm <- parse_smoothers(object$formula, data = object$data, newdata = nd)
     # sm <- parse_smoothers(object$formula, data = object$data)
     sm <- parse_smoothers(object$formula, data = object$data, newdata = nd)
 
-    # browser()    # # # #
-    # #
     # sm$Xs %>% head
     # sm2$Xs %>% head
     # sm3$Xs %>% head
@@ -349,11 +345,9 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     # sm2$Zs[[1]] %>% head
     # sm2$Zs[[1]] %>% head
 
-
     # r <- s2rPred(sm,re,dat[1:10,])
     # range(r$Xf-re$Xf[1:10,])
     # range(r$rand[[1]]-re$rand[[1]][1:10,])
-
 
     # if (object$mgcv || identical(proj_X_ij, NA)) {
     #   sm <- parse_smoothers(object$formula, data = object$data, newdata = nd)
