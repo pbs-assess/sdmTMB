@@ -9,7 +9,8 @@
   nbinom2  = 5,
   lognormal= 6,
   student  = 7,
-  Beta     = 8
+  Beta     = 8,
+  truncated_nbinom2  = 9
 )
 .valid_link <- c(
   identity = 0,
