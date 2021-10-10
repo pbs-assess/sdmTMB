@@ -47,7 +47,8 @@ sdmTMB:
     intercept, `x1` is a covariate with a constant effect, `(1 | g)` is
     a random intercept across groups `g`, and `x2` is a covariate with a
     time-varying effect.
--   Can handle formulas with splines from mgcv. E.g., `y ~ s(x, k = 4)`.
+-   Can handle GAMs (generalized additive models) with penalized
+    smoothers from mgcv. E.g., `y ~ s(x)`.
 -   Can handle linear breakpoint or logistic threshold fixed effects:
     `y ~ breakpt(x1)` or `y ~ logistic(x2)`.
 -   Uses a `family(link)` format similar to `glm()`, lme4, or glmmTMB.
