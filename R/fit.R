@@ -110,6 +110,19 @@ NULL
 #' proportions, and the 'weights' argument is used to specify the Binomial size
 #' (N) parameter (`prob ~ ..., weights = N`).
 #'
+#' **Smooths**
+#' Non-linear smooth terms can be included, similar to generalized additive models in
+#' [mgcv::gam()]. Currently two smooths are allowed to be passed into sdmTMB:
+#' `+ s(variable)` implements a smooth from [mgcv::s()] and `+ t2(variable)` implements
+#' the alternative tensor smooth [mgcv::t2()]. It is important to note that with
+#' both methods, we use penalized smooths, constructed via [mgcv::smooth2random()]. This
+#' is a similar approach implemented in [brms::brm()] and other packages. Within these
+#' smooths, the same syntax commonly used in GAMs can be applied, e.g. 2-dimensional smooths
+#' may be constructed with `+ s(x,y)`; smooths can be specific to various factor levels,
+#' `+ s(variable, by = "year")`; the knots may be specified, e.g. `+ s(variable, k=4)` and
+#' various types of splines may be constructed such as cyclic splines to model seasonality,
+#' `+ s(variable, bs="cc",k=12)`.
+#'
 #' **Threshold models**
 #'
 #' A linear break-point relationship for a covariate can be included via
@@ -455,7 +468,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
   formula_no_sm <- remove_s_and_t2(formula)
   # if (isFALSE(mgcv)) {
-    mgcv_mod <- NULL
+  #  mgcv_mod <- NULL
     X_ij <- model.matrix(formula_no_sm, data)
     mf <- model.frame(formula_no_sm, data)
     mt <- attr(mf, "terms")
@@ -814,6 +827,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
   if (sm$has_smooths) {
     tmb_random <- c(tmb_random, "b_smooth") # smooth random effects
+    message("It looks like you are implementing non-linear smooths. Please be
+            aware these are penalized versions of those functions (e.g. P-splines).
+            Additional details are available in the documentation.")
   }
 
   if (!is.null(previous_fit)) {
@@ -854,7 +870,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     threshold_parameter = thresh$threshold_parameter,
     threshold_function = thresh$threshold_func,
     epsilon_predictor = epsilon_predictor,
-    mgcv_mod   = mgcv_mod,
+    #mgcv_mod   = mgcv_mod,
     time       = time,
     family     = family,
     response   = y_i,

@@ -152,6 +152,19 @@ response may be binomial (0/1), (3) the response can be a matrix of form
 proportions, and the 'weights' argument is used to specify the Binomial size
 (N) parameter (\verb{prob ~ ..., weights = N}).
 
+\strong{Smooths}
+Non-linear smooth terms can be included, similar to generalized additive models in
+\code{\link[mgcv:gam]{mgcv::gam()}}. Currently two smooths are allowed to be passed into sdmTMB:
+\code{+ s(variable)} implements a smooth from \code{\link[mgcv:s]{mgcv::s()}} and \code{+ t2(variable)} implements
+the alternative tensor smooth \code{\link[mgcv:t2]{mgcv::t2()}}. It is important to note that with
+both methods, we use penalized smooths, constructed via \code{\link[mgcv:smooth2random]{mgcv::smooth2random()}}. This
+is a similar approach implemented in \code{\link[brms:brm]{brms::brm()}} and other packages. Within these
+smooths, the same syntax commonly used in GAMs can be applied, e.g. 2-dimensional smooths
+may be constructed with \code{+ s(x,y)}; smooths can be specific to various factor levels,
+\code{+ s(variable, by = "year")}; the knots may be specified, e.g. \code{+ s(variable, k=4)} and
+various types of splines may be constructed such as cyclic splines to model seasonality,
+\code{+ s(variable, bs="cc",k=12)}.
+
 \strong{Threshold models}
 
 A linear break-point relationship for a covariate can be included via
