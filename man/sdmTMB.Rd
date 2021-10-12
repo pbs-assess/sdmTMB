@@ -35,7 +35,8 @@ offsets and threshold parameters. For index standardization, you may wish
 to include \code{0 + as.factor(year)} (or whatever the time column is called)
 in the formula. IID random intercepts are possible using \pkg{lme4}
 syntax, e.g., \code{+ (1 | g)} where \code{g} is a column with factor levels.
-Penalized splines are possible via \pkg{mgcv}. See examples below.}
+Penalized splines are possible via \pkg{mgcv} with \code{s()}. See examples
+and details below.}
 
 \item{data}{A data frame.}
 
@@ -153,18 +154,17 @@ response may be binomial (0/1), (3) the response can be a matrix of form
 proportions, and the 'weights' argument is used to specify the Binomial size
 (N) parameter (\verb{prob ~ ..., weights = N}).
 
-\strong{Smooths}
+\strong{Smooth terms}
 
 Smooth terms can be included following GAMs (generalized additive models) in
-\code{\link[mgcv:gam]{mgcv::gam()}}. Currently one smooth type is allowed to be passed into sdmTMB:
-\code{+ s(variable)} implements a smooth from \code{\link[mgcv:s]{mgcv::s()}}. It is important to note that with
-both methods, we use penalized smooths, constructed via \code{\link[mgcv:smooth2random]{mgcv::smooth2random()}}. This
-is a similar approach implemented in \pkg{brms} and other packages. Within these
-smooths, the same syntax commonly used in GAMs can be applied, e.g. 2-dimensional smooths
-may be constructed with \code{+ s(x, y)}; smooths can be specific to various factor levels,
-\code{+ s(variable, by = "year")}; the upper limit on the knots may be specified,
-e.g. \code{+ s(variable, k = 4)} and various types of splines may be constructed
-such as cyclic splines to model seasonality, \code{+ s(month, bs = "cc", k = 12)}.
+\code{\link[mgcv:gam]{mgcv::gam()}}. Currently, one smooth type is allowed to be passed into
+\code{sdmTMB::sdmTMB()}: \code{+ s(variable)} implements a smooth from \code{\link[mgcv:s]{mgcv::s()}}.
+sdmTMB uses penalized smooths, constructed via \code{\link[mgcv:smooth2random]{mgcv::smooth2random()}}. This
+is a similar approach implemented in \pkg{gamm4} and \pkg{brms} among other
+packages. Within these smooths, the same syntax commonly used in GAMs can be
+applied, e.g. 2-dimensional smooths may be constructed with \code{+ s(x, y)};
+smooths can be specific to various factor levels, \code{+ s(variable, by = "year")}; the basis function dimensions may be specified, e.g. \code{+ s(variable, k = 4)}; and various types of splines may be constructed such as cyclic
+splines to model seasonality, \code{+ s(month, bs = "cc", k = 12)}.
 
 \strong{Threshold models}
 

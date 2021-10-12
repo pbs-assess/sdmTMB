@@ -12,7 +12,8 @@ NULL
 #'   to include `0 + as.factor(year)` (or whatever the time column is called)
 #'   in the formula. IID random intercepts are possible using \pkg{lme4}
 #'   syntax, e.g., `+ (1 | g)` where `g` is a column with factor levels.
-#'   Penalized splines are possible via \pkg{mgcv}. See examples below.
+#'   Penalized splines are possible via \pkg{mgcv} with `s()`. See examples
+#'   and details below.
 #' @param data A data frame.
 #' @param spde An object from [make_mesh()].
 #' @param time An optional time column name (as character). Can be left as
@@ -110,18 +111,19 @@ NULL
 #' proportions, and the 'weights' argument is used to specify the Binomial size
 #' (N) parameter (`prob ~ ..., weights = N`).
 #'
-#' **Smooths**
+#' **Smooth terms**
 #'
 #' Smooth terms can be included following GAMs (generalized additive models) in
-#' [mgcv::gam()]. Currently one smooth type is allowed to be passed into sdmTMB:
-#' `+ s(variable)` implements a smooth from [mgcv::s()]. It is important to note that with
-#' both methods, we use penalized smooths, constructed via [mgcv::smooth2random()]. This
-#' is a similar approach implemented in \pkg{brms} and other packages. Within these
-#' smooths, the same syntax commonly used in GAMs can be applied, e.g. 2-dimensional smooths
-#' may be constructed with `+ s(x, y)`; smooths can be specific to various factor levels,
-#' `+ s(variable, by = "year")`; the upper limit on the knots may be specified,
-#' e.g. `+ s(variable, k = 4)` and various types of splines may be constructed
-#' such as cyclic splines to model seasonality, `+ s(month, bs = "cc", k = 12)`.
+#' [mgcv::gam()]. Currently, one smooth type is allowed to be passed into
+#' `sdmTMB::sdmTMB()`: `+ s(variable)` implements a smooth from [mgcv::s()].
+#' sdmTMB uses penalized smooths, constructed via [mgcv::smooth2random()]. This
+#' is a similar approach implemented in \pkg{gamm4} and \pkg{brms} among other
+#' packages. Within these smooths, the same syntax commonly used in GAMs can be
+#' applied, e.g. 2-dimensional smooths may be constructed with `+ s(x, y)`;
+#' smooths can be specific to various factor levels, `+ s(variable, by =
+#' "year")`; the basis function dimensions may be specified, e.g. `+ s(variable,
+#' k = 4)`; and various types of splines may be constructed such as cyclic
+#' splines to model seasonality, `+ s(month, bs = "cc", k = 12)`.
 #'
 #' **Threshold models**
 #'
