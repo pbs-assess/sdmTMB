@@ -12,7 +12,7 @@ NULL
 #'   to include `0 + as.factor(year)` (or whatever the time column is called)
 #'   in the formula. IID random intercepts are possible using \pkg{lme4}
 #'   syntax, e.g., `+ (1 | g)` where `g` is a column with factor levels.
-#'   Splines are possible via \pkg{mgcv}. See examples below.
+#'   Penalized splines are possible via \pkg{mgcv}. See examples below.
 #' @param data A data frame.
 #' @param spde An object from [make_mesh()].
 #' @param time An optional time column name (as character). Can be left as
@@ -81,6 +81,7 @@ NULL
 #'   fitting (`FALSE`)?
 #' @param ... Not currently used.
 #' @importFrom methods as is
+#' @importFrom mgcv s t2
 #' @importFrom stats gaussian model.frame model.matrix
 #'   model.response terms model.offset
 #'
@@ -100,7 +101,7 @@ NULL
 #' prediction. `offset` must be a column in `data`.
 #'
 #' **Binomial families**
-
+#'
 #' Following the structure of [stats::glm()] and \pkg{glmmTMB}, a binomial
 #' family can be specified in one of 4 ways: (1) the response may be a factor
 #' (and the model classifies the first level versus all others), (2) the
@@ -108,6 +109,19 @@ NULL
 #' `cbind(success, failure)`, and (4) the response may be the observed
 #' proportions, and the 'weights' argument is used to specify the Binomial size
 #' (N) parameter (`prob ~ ..., weights = N`).
+#'
+#' **Smooths**
+#'
+#' Smooth terms can be included following GAMs (generalized additive models) in
+#' [mgcv::gam()]. Currently one smooth type is allowed to be passed into sdmTMB:
+#' `+ s(variable)` implements a smooth from [mgcv::s()]. It is important to note that with
+#' both methods, we use penalized smooths, constructed via [mgcv::smooth2random()]. This
+#' is a similar approach implemented in \pkg{brms} and other packages. Within these
+#' smooths, the same syntax commonly used in GAMs can be applied, e.g. 2-dimensional smooths
+#' may be constructed with `+ s(x, y)`; smooths can be specific to various factor levels,
+#' `+ s(variable, by = "year")`; the upper limit on the knots may be specified,
+#' e.g. `+ s(variable, k = 4)` and various types of splines may be constructed
+#' such as cyclic splines to model seasonality, `+ s(month, bs = "cc", k = 12)`.
 #'
 #' **Threshold models**
 #'
@@ -255,13 +269,9 @@ NULL
 #'   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
 #' print(m_pos)
 #'
-#' # With splines via mgcv.
-#' # Make sure to pre-specify an appropriate basis dimension (`k`) since
-#' # the smoothers are not penalized in the current implementation.
-#' # See ?mgcv::choose.k
-#' m_gam <- sdmTMB(log(density) ~ 0 + as.factor(year) + s(depth_scaled, k = 4),
+#' # With p-splines via mgcv:
+#' m_gam <- sdmTMB(log(density) ~ s(depth_scaled),
 #'   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
-#' print(m_gam)
 #'
 #' # With IID random intercepts:
 #' # Simulate some data:
@@ -456,23 +466,31 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   formula <- split_formula$fixedFormula
   ln_tau_G_index <- unlist(lapply(seq_along(nobs_RE), function(i) rep(i, each = nobs_RE[i]))) - 1L
 
-  if (isFALSE(mgcv)) {
-    mgcv_mod <- NULL
-    X_ij <- model.matrix(formula, data)
-    mf <- model.frame(formula, data)
-  } else {
-    # mgcv::gam will parse a matrix response, but not a factor
-    mf <- model.frame(mgcv::interpret.gam(formula)$fake.formula, data)
-    if (identical(family$family, "binomial") && "factor" %in% model.response(mf, "any")) {
-      stop("Error: with 'mgcv' = TRUE, the response cannot be a factor", call. = FALSE)
-    }
-    if (family$family %in% c("binomial", "Gamma")) {
-      mgcv_mod <- mgcv::gam(formula, data = data, family = family) # family needs to be passed into mgcv
-    } else {
-      mgcv_mod <- mgcv::gam(formula, data = data) # should be fast enough to not worry
-    }
-    X_ij <- model.matrix(mgcv_mod)
-  }
+  formula_no_sm <- remove_s_and_t2(formula)
+  # if (isFALSE(mgcv)) {
+  #  mgcv_mod <- NULL
+    X_ij <- model.matrix(formula_no_sm, data)
+    mf <- model.frame(formula_no_sm, data)
+    mt <- attr(mf, "terms")
+
+  # } else {
+  #   # mgcv::gam will parse a matrix response, but not a factor
+  #   mf <- model.frame(mgcv::interpret.gam(formula)$fake.formula, data)
+  #   if (identical(family$family, "binomial") && "factor" %in% model.response(mf, "any")) {
+  #     stop("Error: with 'mgcv' = TRUE, the response cannot be a factor", call. = FALSE)
+  #   }
+  #   if (family$family %in% c("binomial", "Gamma")) {
+  #     mgcv_mod <- mgcv::gam(formula, data = data, family = family, fit = FALSE) # family needs to be passed into mgcv
+  #   } else {
+  #     mgcv_mod <- mgcv::gam(formula, data = data, fit = FALSE)
+  #   }
+  #   # X_ij <- model.matrix(mgcv_mod)
+  #   X_ij <- mgcv_mod$X
+  #   X_ij <- X_ij[, colnames(X_ij) != "", drop = FALSE] # only keep non-smooth terms
+  # }
+
+  # parse everything mgcv + smoothers:
+  sm <- parse_smoothers(formula = formula, data = data)
 
   offset_pos <- grep("^offset$", colnames(X_ij))
   y_i <- model.response(mf, "numeric")
@@ -566,6 +584,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     est_epsilon_model <- 1L
   }
 
+
   priors_b <- priors$b
   .priors <- priors
   .priors$b <- NULL # removes this in the list, so not passed in as data
@@ -612,6 +631,11 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     rw_fields = if (spatial_only) 0L else as.integer(rw_fields),
     X_ij       = X_ij,
     X_rw_ik    = X_rw_ik,
+    Zs         = sm$Zs, # optional smoother basis function matrices
+    Xs         = sm$Xs, # optional smoother linear effect matrix
+    proj_Zs    = list(),
+    proj_Xs    = matrix(nrow = 0L, ncol = 0L),
+    b_smooth_start = sm$b_smooth_start,
     proj_lon   = 0,
     proj_lat   = 0,
     do_predict = 0L,
@@ -658,7 +682,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     nobs_RE = nobs_RE,
     ln_tau_G_index = ln_tau_G_index,
     est_epsilon_model = as.integer(est_epsilon_model),
-    epsilon_predictor = epsilon_covariate
+    epsilon_predictor = epsilon_covariate,
+    has_smooths = as.integer(sm$has_smooths)
   )
 
   b_thresh <- rep(0, 2)
@@ -667,6 +692,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
   tmb_params <- list(
     ln_H_input = c(0, 0),
     b_j        = rep(0, ncol(X_ij)),
+    bs         = rep(0, if (sm$has_smooths) ncol(sm$Xs) else 0),
     ln_tau_O   = 0,
     ln_tau_O_trend = 0,
     ln_tau_E   = 0,
@@ -683,7 +709,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     omega_s_trend = rep(0, n_s),
     epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t),
     b_threshold = b_thresh,
-    b_epsilon = 0
+    b_epsilon = 0,
+    b_smooth = rep(0, if (sm$has_smooths) sum(sm$sm_dims) else 0),
+    ln_smooth_sigma = rep(0, if (sm$has_smooths) length(sm$sm_dims) else 0)
   )
   if (identical(family$link, "inverse") && family$family %in% c("Gamma", "gaussian", "student")) {
     fam <- family
@@ -730,6 +758,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       b_rw_t     = factor(rep(NA, length(tmb_params$b_rw_t))),
       RE         = factor(rep(NA, length(tmb_params$RE))),
       omega_s    = factor(rep(NA, length(tmb_params$omega_s))),
+      b_smooth = factor(rep(NA, length(tmb_params$b_smooth))),
+      ln_smooth_sigma = factor(rep(NA, length(tmb_params$ln_smooth_sigma))),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
     # optional models on spatiotemporal sd parameter
@@ -786,12 +816,20 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       list(b_rw_t = as.factor(matrix(NA, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)))),
       list(ln_tau_V = as.factor(NA))
     )
+
   if (nobs_RE[[1]] > 0) tmb_random <- c(tmb_random, "RE")
   if (reml) tmb_random <- c(tmb_random, "b_j")
 
   if (est_epsilon_model >= 2) {
     # model 2 = re model, model 3 = loglinear-re
     tmb_random <- c(tmb_random, "epsilon_rw")
+  }
+
+  if (sm$has_smooths) {
+    tmb_random <- c(tmb_random, "b_smooth") # smooth random effects
+    # message("It looks like you are implementing non-linear smooths. Please be
+            # aware these are penalized versions of those functions (e.g. P-splines).
+            # Additional details are available in the documentation.")
   }
 
   if (!is.null(previous_fit)) {
@@ -832,7 +870,7 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     threshold_parameter = thresh$threshold_parameter,
     threshold_function = thresh$threshold_func,
     epsilon_predictor = epsilon_predictor,
-    mgcv_mod   = mgcv_mod,
+    #mgcv_mod   = mgcv_mod,
     time       = time,
     family     = family,
     response   = y_i,
@@ -847,6 +885,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
     priors     = priors,
     nlminb_control = .control,
     control  = control,
+    contrasts  = attr(X_ij, "contrasts"),
+    terms  = attr(mf, "terms"),
+    xlevels    = stats::.getXlevels(mt, mf),
     call       = match.call(expand.dots = TRUE),
     version    = utils::packageVersion("sdmTMB")),
     class      = "sdmTMB")

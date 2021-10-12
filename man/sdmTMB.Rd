@@ -35,7 +35,7 @@ offsets and threshold parameters. For index standardization, you may wish
 to include \code{0 + as.factor(year)} (or whatever the time column is called)
 in the formula. IID random intercepts are possible using \pkg{lme4}
 syntax, e.g., \code{+ (1 | g)} where \code{g} is a column with factor levels.
-Splines are possible via \pkg{mgcv}. See examples below.}
+Penalized splines are possible via \pkg{mgcv}. See examples below.}
 
 \item{data}{A data frame.}
 
@@ -144,6 +144,7 @@ the model formula (a reserved word). The offset will be included in any
 prediction. \code{offset} must be a column in \code{data}.
 
 \strong{Binomial families}
+
 Following the structure of \code{\link[stats:glm]{stats::glm()}} and \pkg{glmmTMB}, a binomial
 family can be specified in one of 4 ways: (1) the response may be a factor
 (and the model classifies the first level versus all others), (2) the
@@ -151,6 +152,19 @@ response may be binomial (0/1), (3) the response can be a matrix of form
 \code{cbind(success, failure)}, and (4) the response may be the observed
 proportions, and the 'weights' argument is used to specify the Binomial size
 (N) parameter (\verb{prob ~ ..., weights = N}).
+
+\strong{Smooths}
+
+Smooth terms can be included following GAMs (generalized additive models) in
+\code{\link[mgcv:gam]{mgcv::gam()}}. Currently one smooth type is allowed to be passed into sdmTMB:
+\code{+ s(variable)} implements a smooth from \code{\link[mgcv:s]{mgcv::s()}}. It is important to note that with
+both methods, we use penalized smooths, constructed via \code{\link[mgcv:smooth2random]{mgcv::smooth2random()}}. This
+is a similar approach implemented in \pkg{brms} and other packages. Within these
+smooths, the same syntax commonly used in GAMs can be applied, e.g. 2-dimensional smooths
+may be constructed with \code{+ s(x, y)}; smooths can be specific to various factor levels,
+\code{+ s(variable, by = "year")}; the upper limit on the knots may be specified,
+e.g. \code{+ s(variable, k = 4)} and various types of splines may be constructed
+such as cyclic splines to model seasonality, \code{+ s(month, bs = "cc", k = 12)}.
 
 \strong{Threshold models}
 
@@ -243,13 +257,9 @@ m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled
   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
 print(m_pos)
 
-# With splines via mgcv.
-# Make sure to pre-specify an appropriate basis dimension (`k`) since
-# the smoothers are not penalized in the current implementation.
-# See ?mgcv::choose.k
-m_gam <- sdmTMB(log(density) ~ 0 + as.factor(year) + s(depth_scaled, k = 4),
+# With p-splines via mgcv:
+m_gam <- sdmTMB(log(density) ~ s(depth_scaled),
   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
-print(m_gam)
 
 # With IID random intercepts:
 # Simulate some data:

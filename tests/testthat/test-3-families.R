@@ -50,7 +50,9 @@ if (require("INLA", quietly = TRUE)) {
     )
     spde <- make_mesh(s, c("x", "y"), n_knots = 50, type = "kmeans")
     m <- sdmTMB(data = s, formula = observed ~ 1, spde = spde,
-      family = student(link = "identity", df = 7))
+      family = student(link = "identity", df = 7),
+      control = sdmTMBcontrol(map_rf = TRUE)
+    )
     expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
     expect_length(residuals(m), nrow(s))
   })
@@ -88,6 +90,26 @@ if (require("INLA", quietly = TRUE)) {
     m <- sdmTMB(data = s, formula = observed ~ 1,
       spde = spde, family = nbinom2())
     expect_equal(round(tidy(m)[,"estimate"], 6), 0.274008)
+  })
+
+  test_that("Truncated NB2 fits", {
+    skip_on_ci()
+    skip_on_cran()
+    set.seed(1)
+    x <- stats::runif(300, -1, 1)
+    y <- stats::runif(300, -1, 1)
+    loc <- data.frame(x = x, y = y)
+    spde <- make_mesh(loc, c("x", "y"), n_knots = 80, type = "kmeans")
+    s <- sdmTMB_sim(x = x, y = y, betas = 0.4, time = 1L, phi = 1.5, range = 0.8,
+      sigma_O = 0.4, sigma_E = 0, seed = 1, mesh = spde, family = nbinom2())
+    s_trunc <- subset(s, observed > 0)
+    spde <- make_mesh(s_trunc, c("x", "y"), n_knots = 80, type = "kmeans")
+    m_sdmTMB <- sdmTMB(data = s_trunc, formula = observed ~ 1,
+      spde = spde, family = truncated_nbinom2(), control = sdmTMBcontrol(map_rf = TRUE))
+    m_glmmTMB <- glmmTMB::glmmTMB(data = s_trunc, formula = observed ~ 1,
+      family = glmmTMB::truncated_nbinom2())
+    expect_equal(m_glmmTMB$fit$par[[1]], m_sdmTMB$model$par[[1]], tolerance = 0.00001)
+    expect_equal(m_glmmTMB$fit$par[[2]], m_sdmTMB$model$par[[2]], tolerance = 0.00001)
   })
 
   test_that("Poisson fits", {

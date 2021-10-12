@@ -35,11 +35,7 @@ print.sdmTMB <- function(x, ...) {
   # .formula <- check_and_parse_thresh_params(x$formula, x$data)$formula
   .formula <- x$split_formula$fixedFormula
   if (!"mgcv" %in% names(x)) x[["mgcv"]] <- FALSE
-  if (isFALSE(x$mgcv)) {
-    fe_names <- colnames(model.matrix(.formula, x$data))
-  } else {
-    fe_names <- colnames(model.matrix(mgcv::gam(.formula, data = x$data)))
-  }
+  fe_names <- colnames(x$tmb_data$X_ij)
   fe_names <- fe_names[!fe_names == "offset"]
 
   pars <- x$model$par

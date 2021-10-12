@@ -255,6 +255,7 @@ update_model <- function(object,
   object
 }
 
+
 check_and_parse_thresh_params <- function(formula, data) {
   terms <- stats::terms(formula)
   terms_labels <- attr(terms, "term.labels")
@@ -345,3 +346,14 @@ inla_installed <- function() {
   requireNamespace("INLA", quietly = TRUE)
 }
 
+remove_s_and_t2 <- function(formula) {
+  terms <- stats::terms(formula)
+  terms_labels <- attr(terms, "term.labels")
+  drop <- grep("s\\(", terms_labels)
+  dropt2 <- grep("t2\\(", terms_labels)
+  tdrop <- terms_labels[union(drop, dropt2)]
+  for (i in seq_along(tdrop)) {
+    formula <- stats::update(formula, paste("~ . -", tdrop[i]))
+  }
+  formula
+}

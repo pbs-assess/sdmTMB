@@ -268,7 +268,7 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
       stop("Some new time elements were found in `newdata`. ",
         "For now, make sure only time elements from the original dataset ",
         "are present. If you would like to predict on new time elements, see ",
-        "the `extra_time` argument in `?sdmTMB:::predict.sdmTMB`.",
+        "the `extra_time` argument in `?predict.sdmTMB`.",
         call. = FALSE
       )
     # if (!identical(new_data_time, original_time)) {
@@ -302,7 +302,8 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
 
     newdata <- base::merge(newdata, fake_newdata, by = xy_cols,
       all.x = TRUE, all.y = FALSE)
-    newdata <- newdata[order(newdata$sdm_orig_id),, drop=FALSE]
+    newdata <- newdata[order(newdata$sdm_orig_id),, drop = FALSE]
+
 
     proj_mesh <- INLA::inla.spde.make.A(object$spde$mesh,
       loc = as.matrix(fake_newdata[,xy_cols, drop = FALSE]))
@@ -326,14 +327,14 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     proj_RE_indexes <- vapply(RE_names, function(x) as.integer(nd[[x]]) - 1L, rep(1L, nrow(nd)))
 
     if (!"mgcv" %in% names(object)) object[["mgcv"]] <- FALSE
-    proj_X_ij <- matrix(999)
-    if (!object$mgcv) {
-      proj_X_ij <- tryCatch({model.matrix(object$formula, data = nd)},
-        error = function(e) NA)
-    }
-    if (object$mgcv || identical(proj_X_ij, NA)) {
-      proj_X_ij <- mgcv::predict.gam(object$mgcv_mod, type = "lpmatrix", newdata = nd)
-    }
+    f2 <- remove_s_and_t2(object$split_formula$fixedFormula)
+    tt <- stats::terms(f2)
+    Terms <- stats::delete.response(tt)
+    mf <- model.frame(Terms, newdata, xlev = object$xlevels)
+    proj_X_ij <- model.matrix(Terms, mf, contrasts.arg = object$contrasts)
+
+    sm <- parse_smoothers(object$formula, data = object$data, newdata = nd)
+
     if (!is.null(object$time_varying))
       proj_X_rw_ik <- model.matrix(object$time_varying, data = nd)
     else
@@ -359,6 +360,8 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     tmb_data$proj_spatial_index <- newdata$sdm_spatial_id
     tmb_data$proj_t_i <- as.numeric(newdata[[object$time]])
     tmb_data$proj_t_i <- tmb_data$proj_t_i - mean(unique(tmb_data$proj_t_i)) # center on mean
+    tmb_data$proj_Zs <- sm$Zs
+    tmb_data$proj_Xs <- sm$Xs
 
     epsilon_covariate <- rep(0, length(unique(newdata[[object$time]])))
     if (tmb_data$est_epsilon_model) {

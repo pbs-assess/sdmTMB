@@ -30,6 +30,18 @@ Type dlnorm(Type x, Type meanlog, Type sdlog, int give_log = 0)
     return exp(logres);
 }
 
+// List of matrices
+template <class Type>
+struct LOM_t : vector<matrix<Type> > {
+  LOM_t(SEXP x){  // x = list passed from R
+(*this).resize(LENGTH(x));
+    for(int i=0; i<LENGTH(x); i++){
+      SEXP sm = VECTOR_ELT(x, i);
+      (*this)(i) = asMatrix<Type>(sm);
+    }
+  }
+};
+
 // Function to import barrier-SPDE code
 // From Olav Nikolai Breivik and Hans Skaug via VAST
 template<class Type>
@@ -181,7 +193,8 @@ enum valid_family {
   nbinom2_family  = 5,
   lognormal_family= 6,
   student_family  = 7,
-  Beta_family     = 8
+  Beta_family     = 8,
+  truncated_nbinom2_family  = 9
 };
 
 enum valid_link {
@@ -254,6 +267,11 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(X_ij);     // model matrix
   DATA_VECTOR(t_i);      // numeric year vector -- only for spatial_trend==1
   DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
+
+  DATA_STRUCT(Zs, LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
+  DATA_STRUCT(proj_Zs, LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
+  DATA_MATRIX(Xs); // smoother linear effect matrix
+  DATA_MATRIX(proj_Xs); // smoother linear effect matrix
 
   DATA_VECTOR_INDICATOR(keep, y_i); // https://rdrr.io/cran/TMB/man/oneStepPredict.html
   DATA_VECTOR(weights_i); // optional weights
@@ -337,6 +355,10 @@ Type objective_function<Type>::operator()()
   // optional model for nonstationary st variance
   DATA_INTEGER(est_epsilon_model);
   DATA_VECTOR(epsilon_predictor);
+
+  // optional stuff for penalized regression splines
+  DATA_INTEGER(has_smooths);  // whether or not smooths are included
+  DATA_IVECTOR(b_smooth_start);
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -353,13 +375,14 @@ Type objective_function<Type>::operator()()
   PARAMETER(ar1_phi);          // AR1 fields correlation
   PARAMETER_VECTOR(ln_tau_G);  // random intercept sigmas
   PARAMETER_VECTOR(RE);        // random intercept deviations
-
+  PARAMETER_VECTOR(bs); // smoother linear effects
+  PARAMETER_VECTOR(ln_smooth_sigma);  // variances of spline REs if included
   // Random effects
   PARAMETER_ARRAY(b_rw_t);  // random walk effects
   PARAMETER_VECTOR(omega_s);    // spatial effects; n_s length
   PARAMETER_VECTOR(omega_s_trend);    // spatial effects on trend; n_s length
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
-
+  PARAMETER_VECTOR(b_smooth);  // P-spline smooth parameters
   PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3)
   PARAMETER(b_epsilon); // slope coefficient for log-linear model on epsilon
   // Joint negative log-likelihood
@@ -464,6 +487,23 @@ Type objective_function<Type>::operator()()
   // ------------------ Linear predictor ---------------------------------------
 
   vector<Type> eta_fixed_i = X_ij * b_j;
+
+  // p-splines
+  vector<Type> eta_smooth_i(X_ij.rows());
+  eta_smooth_i.setZero();
+  if (has_smooths) {
+    for (int s = 0; s < b_smooth_start.size(); s++) { // iterate over # of smooth elements
+      vector<Type> beta_s(Zs(s).cols());
+      beta_s.setZero();
+      for (int j = 0; j < beta_s.size(); j++) {
+        beta_s(j) = b_smooth(b_smooth_start(s) + j);
+        jnll -= dnorm(beta_s(j), Type(0), exp(ln_smooth_sigma(s)), true);
+      }
+      eta_smooth_i += Zs(s) * beta_s;
+    }
+    eta_smooth_i += Xs * bs;
+  }
+
   // add threshold effect if specified
   if (threshold_func > 0) {
     if (threshold_func == 1) {
@@ -486,7 +526,7 @@ Type objective_function<Type>::operator()()
   eta_i.setZero();
 
   for (int i = 0; i < n_i; i++) {
-    eta_i(i) = eta_fixed_i(i); // + offset_i(i);
+    eta_i(i) = eta_fixed_i(i) + eta_smooth_i(i); // + offset_i(i);
     if (random_walk) {
       for (int k = 0; k < X_rw_ik.cols(); k++) {
         eta_rw_i(i) += X_rw_ik(i, k) * b_rw_t(year_i(i), k); // record it
@@ -591,52 +631,67 @@ Type objective_function<Type>::operator()()
 
   // ------------------ Probability of data given random effects ---------------
 
-  Type s1, s2;
+  // from glmmTMB:
+  // close to zero: use for count data (cf binomial()$initialize)
+#define zt_lik_nearzero(x,loglik_exp) ((x < Type(0.001)) ? -INFINITY : loglik_exp)
+
+  Type s1, s2, s3, lognzprob, tmp_ll;
   REPORT(phi);
   ADREPORT(phi);
   for (int i = 0; i < n_i; i++) {
     if (!isNA(y_i(i))) {
       switch (family) {
       case gaussian_family:
-        jnll -= keep(i) * dnorm(y_i(i), mu_i(i), phi, true) * weights_i(i);
+        tmp_ll = dnorm(y_i(i), mu_i(i), phi, true);
         break;
       case tweedie_family:
         s1 = invlogit(thetaf) + Type(1.0);
         if (!isNA(priors(12))) jnll -= dnorm(s1, priors(12), priors(13), true);
-        jnll -= keep(i) * dtweedie(y_i(i), mu_i(i), phi, s1, true) * weights_i(i);
+        tmp_ll = dtweedie(y_i(i), mu_i(i), phi, s1, true);
         break;
       case binomial_family:  // in logit space not inverse logit
-        jnll -= keep(i) * dbinom_robust(y_i(i), size(i), mu_i(i), true) * weights_i(i);
+        tmp_ll = dbinom_robust(y_i(i), size(i), mu_i(i), true);
         break;
       case poisson_family:
-        jnll -= keep(i) * dpois(y_i(i), mu_i(i), true) * weights_i(i);
+        tmp_ll = dpois(y_i(i), mu_i(i), true);
         break;
       case Gamma_family:
         s1 = exp(ln_phi);         // shape
         s2 = mu_i(i) / s1;        // scale
-        jnll -= keep(i) * dgamma(y_i(i), s1, s2, true) * weights_i(i);
+        tmp_ll = dgamma(y_i(i), s1, s2, true);
         // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
-        // jnll -= keep(i) * dgamma(y_i(i), s1, mu_i(i) / s1, true) * weights_i(i);
+        // tmp_ll = dgamma(y_i(i), s1, mu_i(i) / s1, true);
         break;
       case nbinom2_family:
         s1 = log(mu_i(i)); // log(mu_i)
         s2 = 2. * s1 - ln_phi; // log(var - mu)
-        jnll -= keep(i) * dnbinom_robust(y_i(i), s1, s2, true) * weights_i(i);
+        tmp_ll = dnbinom_robust(y_i(i), s1, s2, true);
+        break;
+      case truncated_nbinom2_family:
+        s1 = log(mu_i(i)); // log(mu_i)
+        s2 = 2. * s1 - ln_phi; // log(var - mu)
+        tmp_ll = dnbinom_robust(y_i(i), s1, s2, true);
+        s3 = logspace_add(Type(0), s1 - ln_phi);
+        lognzprob = logspace_sub(Type(0), -phi * s3);
+        tmp_ll -= lognzprob;
+        tmp_ll = zt_lik_nearzero(y_i(i), tmp_ll);
         break;
       case lognormal_family:
-        jnll -= keep(i) * dlnorm(y_i(i), log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi, true) * weights_i(i);
+        tmp_ll = dlnorm(y_i(i), log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi, true);
         break;
       case student_family:
-        jnll -= keep(i) * dstudent(y_i(i), mu_i(i), exp(ln_phi), df, true) * weights_i(i);
+        tmp_ll = dstudent(y_i(i), mu_i(i), exp(ln_phi), df, true);
         break;
       case Beta_family: // Ferrari and Cribari-Neto 2004; betareg package
         s1 = mu_i(i) * phi;
         s2 = (Type(1) - mu_i(i)) * phi;
-        jnll -= keep(i) * dbeta(y_i(i), s1, s2, true) * weights_i(i);
+        tmp_ll = dbeta(y_i(i), s1, s2, true);
         break;
       default:
         error("Family not implemented.");
       }
+      tmp_ll *= weights_i(i);
+      jnll -= keep(i) * tmp_ll;
     }
   }
 
@@ -688,6 +743,24 @@ Type objective_function<Type>::operator()()
           proj_fe(i) = proj_fe(i) + logistic_threshold(proj_X_threshold(i), s50, s95, s_max);
         }
       }
+    }
+
+    // Smoothers:
+    vector<Type> proj_smooth_i(proj_X_ij.rows());
+    proj_smooth_i.setZero();
+    if (has_smooths) {
+      for (int s = 0; s < b_smooth_start.size(); s++) { // iterate over # of smooth elements
+        vector<Type> beta_s(proj_Zs(s).cols());
+        beta_s.setZero();
+        for (int j = 0; j < beta_s.size(); j++) {
+          beta_s(j) = b_smooth(b_smooth_start(s) + j);
+        }
+        proj_smooth_i += proj_Zs(s) * beta_s;
+      }
+      proj_smooth_i += proj_Xs * bs;
+    }
+    for (int i = 0; i < proj_X_ij.rows(); i++) {
+      proj_fe(i) += proj_smooth_i(i);
     }
 
     // IID random intercepts:
@@ -862,6 +935,7 @@ Type objective_function<Type>::operator()()
   REPORT(omega_s_A);      // spatial effects; n_s length vector
   REPORT(omega_s_trend_A); // spatial trend effects; n_s length vector
   REPORT(eta_fixed_i);  // fixed effect predictions in the link space
+  REPORT(eta_smooth_i); // smooth effect predictions in the link space
   REPORT(eta_i);        // fixed and random effect predictions in link space
   REPORT(eta_rw_i);     // time-varying predictions in link space
   REPORT(eta_iid_re_i); // IID intercept random effect estimates
@@ -870,6 +944,8 @@ Type objective_function<Type>::operator()()
   ADREPORT(range);      // Matern approximate distance at 10% correlation
   vector<Type> log_range = log(range); // for SE
   ADREPORT(log_range);  // log Matern approximate distance at 10% correlation
+  REPORT(b_smooth);     // smooth coefficients for penalized splines
+  REPORT(ln_smooth_sigma); // standard deviations of smooth random effects, in log-space
 
   // ------------------ Joint negative log likelihood --------------------------
 
