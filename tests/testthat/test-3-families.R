@@ -50,7 +50,9 @@ if (require("INLA", quietly = TRUE)) {
     )
     spde <- make_mesh(s, c("x", "y"), n_knots = 50, type = "kmeans")
     m <- sdmTMB(data = s, formula = observed ~ 1, spde = spde,
-      family = student(link = "identity", df = 7))
+      family = student(link = "identity", df = 7),
+      control = sdmTMBcontrol(map_rf = TRUE)
+    )
     expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
     expect_length(residuals(m), nrow(s))
   })
