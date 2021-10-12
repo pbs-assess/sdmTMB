@@ -101,7 +101,7 @@ NULL
 #' prediction. `offset` must be a column in `data`.
 #'
 #' **Binomial families**
-
+#'
 #' Following the structure of [stats::glm()] and \pkg{glmmTMB}, a binomial
 #' family can be specified in one of 4 ways: (1) the response may be a factor
 #' (and the model classifies the first level versus all others), (2) the
@@ -111,6 +111,7 @@ NULL
 #' (N) parameter (`prob ~ ..., weights = N`).
 #'
 #' **Smooths**
+#'
 #' Smooth terms can be included following GAMs (generalized additive models) in
 #' [mgcv::gam()]. Currently one smooth type is allowed to be passed into sdmTMB:
 #' `+ s(variable)` implements a smooth from [mgcv::s()]. It is important to note that with

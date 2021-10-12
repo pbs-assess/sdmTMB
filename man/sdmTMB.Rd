@@ -144,6 +144,7 @@ the model formula (a reserved word). The offset will be included in any
 prediction. \code{offset} must be a column in \code{data}.
 
 \strong{Binomial families}
+
 Following the structure of \code{\link[stats:glm]{stats::glm()}} and \pkg{glmmTMB}, a binomial
 family can be specified in one of 4 ways: (1) the response may be a factor
 (and the model classifies the first level versus all others), (2) the
@@ -153,6 +154,7 @@ proportions, and the 'weights' argument is used to specify the Binomial size
 (N) parameter (\verb{prob ~ ..., weights = N}).
 
 \strong{Smooths}
+
 Smooth terms can be included following GAMs (generalized additive models) in
 \code{\link[mgcv:gam]{mgcv::gam()}}. Currently one smooth type is allowed to be passed into sdmTMB:
 \code{+ s(variable)} implements a smooth from \code{\link[mgcv:s]{mgcv::s()}}. It is important to note that with
