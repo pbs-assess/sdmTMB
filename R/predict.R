@@ -327,39 +327,14 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     proj_RE_indexes <- vapply(RE_names, function(x) as.integer(nd[[x]]) - 1L, rep(1L, nrow(nd)))
 
     if (!"mgcv" %in% names(object)) object[["mgcv"]] <- FALSE
-    f2 <- remove_s_and_t2(formula) # logistic(), breakpt() removed already
+    f2 <- remove_s_and_t2(object$split_formula$fixedFormula)
     tt <- stats::terms(f2)
     Terms <- stats::delete.response(tt)
     mf <- model.frame(Terms, newdata, xlev = object$xlevels)
     proj_X_ij <- model.matrix(Terms, mf, contrasts.arg = object$contrasts)
 
-    # sm <- parse_smoothers(object$formula, data = object$data, newdata = nd)
-    # sm <- parse_smoothers(object$formula, data = object$data)
     sm <- parse_smoothers(object$formula, data = object$data, newdata = nd)
 
-    # sm$Xs %>% head
-    # sm2$Xs %>% head
-    # sm3$Xs %>% head
-    # # # #
-    # sm$Zs[[1]] %>% head
-    # sm2$Zs[[1]] %>% head
-    # sm2$Zs[[1]] %>% head
-
-    # r <- s2rPred(sm,re,dat[1:10,])
-    # range(r$Xf-re$Xf[1:10,])
-    # range(r$rand[[1]]-re$rand[[1]][1:10,])
-
-    # if (object$mgcv || identical(proj_X_ij, NA)) {
-    #   sm <- parse_smoothers(object$formula, data = object$data, newdata = nd)
-    #   if (object$family %in% c("binomial", "Gamma")) {
-    #     mgcv_mod <- mgcv::gam(object$formula, data = nd, family = family, fit = FALSE)
-    #   } else {
-    #     mgcv_mod <- mgcv::gam(object$formula, data = nd, fit = FALSE)
-    #   }
-    #   proj_X_ij <- mgcv_mod$X
-    #   proj_X_ij <- proj_X_ij[, colnames(X_ij) != "", drop = FALSE] # only keep non-smooth terms
-    #   # proj_X_ij <- mgcv::predict.gam(object$mgcv_mod, type = "lpmatrix", newdata = nd)
-    # }
     if (!is.null(object$time_varying))
       proj_X_rw_ik <- model.matrix(object$time_varying, data = nd)
     else
