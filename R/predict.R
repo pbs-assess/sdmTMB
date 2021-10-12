@@ -327,7 +327,7 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     proj_RE_indexes <- vapply(RE_names, function(x) as.integer(nd[[x]]) - 1L, rep(1L, nrow(nd)))
 
     if (!"mgcv" %in% names(object)) object[["mgcv"]] <- FALSE
-    f2 <- remove_s_and_t2(object$formula)
+    f2 <- remove_s_and_t2(formula) # logistic(), breakpt() removed already
     tt <- stats::terms(f2)
     Terms <- stats::delete.response(tt)
     mf <- model.frame(Terms, newdata, xlev = object$xlevels)
