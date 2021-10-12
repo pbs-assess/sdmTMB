@@ -76,28 +76,32 @@ test_that("Additional priors work", {
   # univariate normal priors
   m_norm <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     data = d, spde = pcod_spde, family = tweedie(link = "log"),
-    priors = sdmTMBpriors(b = normal(rep(0, 6), rep(1, 6)))
+    priors = sdmTMBpriors(b = normal(rep(0, 6), rep(1, 6))),
+    control = sdmTMBcontrol(map_rf = TRUE)
   )
   expect_identical(class(m_norm), "sdmTMB")
   m_mvn <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     data = d, spde = pcod_spde, family = tweedie(link = "log"),
-    priors = sdmTMBpriors(b = mvnormal(rep(0, 6), diag(1, 6)))
+    priors = sdmTMBpriors(b = mvnormal(rep(0, 6), diag(1, 6))),
+    control = sdmTMBcontrol(map_rf = TRUE)
   )
   expect_identical(class(m_mvn), "sdmTMB")
   m_mvn_na <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     data = d, spde = pcod_spde, family = tweedie(link = "log"),
-    priors = sdmTMBpriors(b = mvnormal(c(NA, 0, 0, 0, 0, 0), diag(1, 6)))
+    priors = sdmTMBpriors(b = mvnormal(c(NA, 0, 0, 0, 0, 0), diag(1, 6))),
+    control = sdmTMBcontrol(map_rf = TRUE)
   )
   expect_identical(class(m_mvn_na), "sdmTMB")
 
   m_norm_na <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     data = d, spde = pcod_spde, family = tweedie(link = "log"),
-    priors = sdmTMBpriors(b = normal(c(NA, rep(0, 5)), c(NA, rep(1, 5))))
+    priors = sdmTMBpriors(b = normal(c(NA, rep(0, 5)), c(NA, rep(1, 5)))),
+    control = sdmTMBcontrol(map_rf = TRUE)
   )
   expect_identical(class(m_norm_na), "sdmTMB")
 
-  expect_equal(tidy(m_norm), tidy(m_mvn))
-  expect_equal(tidy(m_norm_na), tidy(m_mvn_na))
+  expect_equal(tidy(m_norm), tidy(m_mvn), tolerance = 0.0001)
+  expect_equal(tidy(m_norm_na), tidy(m_mvn_na), tolerance = 0.0001)
   expect_true(
     abs(tidy(m_mvn)$estimate[tidy(m_mvn)$term == "depth_scaled"]) <
       abs(tidy(m_mvn_na)$estimate[tidy(m_mvn_na)$term == "depth_scaled"])
