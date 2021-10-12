@@ -827,9 +827,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
   if (sm$has_smooths) {
     tmb_random <- c(tmb_random, "b_smooth") # smooth random effects
-    message("It looks like you are implementing non-linear smooths. Please be
-            aware these are penalized versions of those functions (e.g. P-splines).
-            Additional details are available in the documentation.")
+    # message("It looks like you are implementing non-linear smooths. Please be
+            # aware these are penalized versions of those functions (e.g. P-splines).
+            # Additional details are available in the documentation.")
   }
 
   if (!is.null(previous_fit)) {
