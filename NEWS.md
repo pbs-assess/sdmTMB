@@ -1,5 +1,15 @@
 # sdmTMB
 
+# sdmTMB 0.0.19.9000
+
+* Smoothers `s()` are now *penalized* smoothers: they determine the 
+  degree of wiggliness (as in mgcv) and it is no longer necessary to
+  choose an appropriate `k` value a priori. Models fit with previous
+  versions of sdmTMB with  `s(x, k = ...)` will not match models
+  specified the same way in version >= 0.0.19 since the basis functions
+  are now penalized. All the various `mgcv::s()` options should be supported
+  but `t2()` (and `ti()` and `te()`) are not supported.
+
 # sdmTMB 0.0.18.9001
 
 * Add ELPD (expected log predictive density) to `sdmTMB_cv()`
