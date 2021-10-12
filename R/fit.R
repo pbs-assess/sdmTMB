@@ -111,17 +111,16 @@ NULL
 #' (N) parameter (`prob ~ ..., weights = N`).
 #'
 #' **Smooths**
-#' Non-linear smooth terms can be included, similar to generalized additive models in
-#' [mgcv::gam()]. Currently two smooths are allowed to be passed into sdmTMB:
-#' `+ s(variable)` implements a smooth from [mgcv::s()] and `+ t2(variable)` implements
-#' the alternative tensor smooth [mgcv::t2()]. It is important to note that with
+#' Smooth terms can be included following GAMs (generalized additive models) in
+#' [mgcv::gam()]. Currently one smooth type is allowed to be passed into sdmTMB:
+#' `+ s(variable)` implements a smooth from [mgcv::s()]. It is important to note that with
 #' both methods, we use penalized smooths, constructed via [mgcv::smooth2random()]. This
-#' is a similar approach implemented in [brms::brm()] and other packages. Within these
+#' is a similar approach implemented in \pkg{brms} and other packages. Within these
 #' smooths, the same syntax commonly used in GAMs can be applied, e.g. 2-dimensional smooths
-#' may be constructed with `+ s(x,y)`; smooths can be specific to various factor levels,
-#' `+ s(variable, by = "year")`; the knots may be specified, e.g. `+ s(variable, k=4)` and
-#' various types of splines may be constructed such as cyclic splines to model seasonality,
-#' `+ s(variable, bs="cc",k=12)`.
+#' may be constructed with `+ s(x, y)`; smooths can be specific to various factor levels,
+#' `+ s(variable, by = "year")`; the upper limit on the knots may be specified,
+#' e.g. `+ s(variable, k = 4)` and various types of splines may be constructed
+#' such as cyclic splines to model seasonality, `+ s(month, bs = "cc", k = 12)`.
 #'
 #' **Threshold models**
 #'
