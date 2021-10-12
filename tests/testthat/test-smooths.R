@@ -36,6 +36,8 @@ test_that("A model with 2 s() splines works", {
   expect_gt(cor(pnd_mgcv, pnd$est), 0.999)
 })
 
+# t2() needs absorb.const = FALSE to work with prediction on newdat
+# So, turning off for now.
 # test_that("A model with t2() spline works", {
 #   skip_on_cran()
 #   skip_on_ci()
@@ -91,7 +93,7 @@ test_that("A model with 2 s() splines works", {
   # plot(pbn[,1], pb[,1])
 # })
 
-test_that("A model with by in spline works", {
+test_that("A model with by in spline (and s(x, y)) works", {
   skip_on_cran()
   skip_on_ci()
   skip_if_not_installed("INLA")
@@ -127,6 +129,12 @@ test_that("A model with by in spline works", {
   expect_warning(p2 <- predict(m, newdata = dat), regexp = "smooth")
   plot(p2$est, p$est)
   expect_gt(cor(p2$est, p$est), 0.999)
+
+  # t2(x, y)
+  expect_error(m <- sdmTMB(y ~ t2(x2, x1),
+    data = dat,
+    spde = spde, control = sdmTMBcontrol(map_rf = TRUE)
+  ), regexp = "t2") # t2() intentionally `stop()`ed for now; newdata prediction issues
 
   # Factor `by' variable example (with a spurious covariate x0)
   set.seed(1)
