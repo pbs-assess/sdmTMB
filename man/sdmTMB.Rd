@@ -156,15 +156,17 @@ proportions, and the 'weights' argument is used to specify the Binomial size
 
 \strong{Smooth terms}
 
-Smooth terms can be included following GAMs (generalized additive models) in
-\code{\link[mgcv:gam]{mgcv::gam()}}. Currently, one smooth type is allowed to be passed into
-\code{sdmTMB::sdmTMB()}: \code{+ s(variable)} implements a smooth from \code{\link[mgcv:s]{mgcv::s()}}.
-sdmTMB uses penalized smooths, constructed via \code{\link[mgcv:smooth2random]{mgcv::smooth2random()}}. This
-is a similar approach implemented in \pkg{gamm4} and \pkg{brms} among other
-packages. Within these smooths, the same syntax commonly used in GAMs can be
+Smooth terms can be included following GAMs (generalized additive models)
+using \code{+ s(x)}, which implements a smooth from \code{\link[mgcv:s]{mgcv::s()}}. \pkg{sdmTMB} uses
+penalized smooths, constructed via \code{\link[mgcv:smooth2random]{mgcv::smooth2random()}}. This is a similar
+approach implemented in \pkg{gamm4} and \pkg{brms}, among other packages.
+Within these smooths, the same syntax commonly used in \code{\link[mgcv:s]{mgcv::s()}} can be
 applied, e.g. 2-dimensional smooths may be constructed with \code{+ s(x, y)};
-smooths can be specific to various factor levels, \code{+ s(variable, by = "year")}; the basis function dimensions may be specified, e.g. \code{+ s(variable, k = 4)}; and various types of splines may be constructed such as cyclic
-splines to model seasonality, \code{+ s(month, bs = "cc", k = 12)}.
+smooths can be specific to various factor levels, \code{+ s(x, by = group)}; the
+basis function dimensions may be specified, e.g. \code{+ s(x, k = 4)}; and various
+types of splines may be constructed such as cyclic splines to model
+seasonality, \code{+ s(month, bs = "cc", k = 12)}. Prior to version 0.0.18,
+\pkg{sdmTMB} implemented unpenalized splines.
 
 \strong{Threshold models}
 

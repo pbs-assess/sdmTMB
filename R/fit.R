@@ -113,17 +113,17 @@ NULL
 #'
 #' **Smooth terms**
 #'
-#' Smooth terms can be included following GAMs (generalized additive models) in
-#' [mgcv::gam()]. Currently, one smooth type is allowed to be passed into
-#' `sdmTMB::sdmTMB()`: `+ s(variable)` implements a smooth from [mgcv::s()].
-#' sdmTMB uses penalized smooths, constructed via [mgcv::smooth2random()]. This
-#' is a similar approach implemented in \pkg{gamm4} and \pkg{brms} among other
-#' packages. Within these smooths, the same syntax commonly used in GAMs can be
+#' Smooth terms can be included following GAMs (generalized additive models)
+#' using `+ s(x)`, which implements a smooth from [mgcv::s()]. \pkg{sdmTMB} uses
+#' penalized smooths, constructed via [mgcv::smooth2random()]. This is a similar
+#' approach implemented in \pkg{gamm4} and \pkg{brms}, among other packages.
+#' Within these smooths, the same syntax commonly used in [mgcv::s()] can be
 #' applied, e.g. 2-dimensional smooths may be constructed with `+ s(x, y)`;
-#' smooths can be specific to various factor levels, `+ s(variable, by =
-#' "year")`; the basis function dimensions may be specified, e.g. `+ s(variable,
-#' k = 4)`; and various types of splines may be constructed such as cyclic
-#' splines to model seasonality, `+ s(month, bs = "cc", k = 12)`.
+#' smooths can be specific to various factor levels, `+ s(x, by = group)`; the
+#' basis function dimensions may be specified, e.g. `+ s(x, k = 4)`; and various
+#' types of splines may be constructed such as cyclic splines to model
+#' seasonality, `+ s(month, bs = "cc", k = 12)`. Prior to version 0.0.18,
+#' \pkg{sdmTMB} implemented unpenalized splines.
 #'
 #' **Threshold models**
 #'
