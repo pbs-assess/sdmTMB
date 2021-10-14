@@ -20,13 +20,7 @@ get_smooth_terms <- function(terms) {
   x2 <- grep("t2\\(", terms)
   if (length(x2) > 0L)
     stop("t2() smoothers are not yet supported due to issues with prediction on newdata.", call. = FALSE)
-  if (length(x1) > 0L) warning(
-    "Detected a `s()` smoother. Smoothers are penalized in sdmTMB as\n",
-    "of version 0.0.19, but used to be unpenalized.\n",
-    "You no longer need to specify `k`, specifing `k` now indicates\n",
-    "an upper limit on the basis functions, and the degree of wiggliness\n",
-    "is determined by the data.", call. = FALSE)
-  c(x1)
+  x1
 }
 
 parse_smoothers <- function(formula, data, newdata = NULL) {

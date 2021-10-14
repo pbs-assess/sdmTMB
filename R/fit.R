@@ -823,9 +823,11 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
   if (sm$has_smooths) {
     tmb_random <- c(tmb_random, "b_smooth") # smooth random effects
-    # message("It looks like you are implementing non-linear smooths. Please be
-            # aware these are penalized versions of those functions (e.g. P-splines).
-            # Additional details are available in the documentation.")
+    warning(
+      "Detected a `s()` smoother. Smoothers are penalized in sdmTMB as\n",
+      "of version 0.0.19, but used to be unpenalized.\n",
+      "You no longer need to specify `k` since the degree of wiggliness\n",
+      "is determined by the data.", call. = FALSE)
   }
 
   if (!is.null(previous_fit)) {

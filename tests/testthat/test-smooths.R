@@ -26,13 +26,13 @@ test_that("A model with 2 s() splines works", {
   abline(a = 0, b = 1)
   expect_gt(cor(p$est, p_mgcv), 0.999)
 
-  expect_warning(pnd <- predict(m, newdata = d[1:8,]), regexp = "smooth")
+  pnd <- predict(m, newdata = d[1:8,])
   expect_equal(p$est[1:8], pnd$est, tolerance = 0.001)
 
   set.seed(23402)
   .s <- sample(seq_len(nrow(d)), 200L)
   pnd_mgcv <- predict(m_mgcv, newdata = d[.s, ])
-  expect_warning(pnd <- predict(m, newdata = d[.s, ]))
+  pnd <- predict(m, newdata = d[.s, ])
   expect_gt(cor(pnd_mgcv, pnd$est), 0.999)
 })
 
@@ -126,7 +126,7 @@ test_that("A model with by in spline (and s(x, y)) works", {
   plot(p$est, p_mgcv)
   abline(a = 0, b = 1)
   expect_gt(cor(p$est, p_mgcv), 0.999)
-  expect_warning(p2 <- predict(m, newdata = dat), regexp = "smooth")
+  p2 <- predict(m, newdata = dat)
   plot(p2$est, p$est)
   expect_gt(cor(p2$est, p$est), 0.999)
 
@@ -155,7 +155,7 @@ test_that("A model with by in spline (and s(x, y)) works", {
 
   set.seed(291823)
   .s <- sample(seq_len(nrow(dat)), 200L)
-  expect_warning(pnd <- predict(m, newdata = dat[.s,]), regexp = "smooth")
+  pnd <- predict(m, newdata = dat[.s,])
   expect_equal(p$est[.s], pnd$est, tolerance = 0.001)
 })
 
