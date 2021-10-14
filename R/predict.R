@@ -96,7 +96,6 @@
 #'
 #' predictions$resids <- residuals(m) # randomized quantile residuals
 #'
-#' \donttest{
 #' if (require("ggplot2", quietly = TRUE) && inla_installed()) {
 #'
 #' ggplot(predictions, aes(X, Y, col = resids)) + scale_colour_gradient2() +
@@ -211,7 +210,6 @@
 #' plot_map(p, "exp(est)") +
 #'   ggtitle("Prediction (fixed effects + all random effects)") +
 #'   scale_fill_viridis_c(trans = "sqrt")
-#' }
 #' }
 
 predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
