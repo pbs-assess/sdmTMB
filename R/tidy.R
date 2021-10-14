@@ -33,14 +33,10 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
       msg = "`conf.level` must be length 1 and between 0 and 1")
   }
 
-  # .formula <- check_and_parse_thresh_params(x$formula, x$data)$formula
   .formula <- x$split_formula$fixedFormula
+  .formula <- remove_s_and_t2(.formula)
   if (!"mgcv" %in% names(x)) x[["mgcv"]] <- FALSE
-  if (isFALSE(x$mgcv)) {
-    fe_names <- colnames(model.matrix(.formula, x$data))
-  } else {
-    fe_names <- colnames(model.matrix(mgcv::gam(.formula, data = x$data)))
-  }
+  fe_names <- colnames(model.matrix(.formula, x$data))
 
   se_rep <- as.list(x$sd_report, "Std. Error", report = TRUE)
   est_rep <- as.list(x$sd_report, "Estimate", report = TRUE)
