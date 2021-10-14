@@ -193,16 +193,10 @@ NULL
 #' velocities:
 #'
 #' English, P., E.J. Ward, C.N. Rooper, R.E. Forrest, L.A. Rogers, K.L. Hunter,
-#' A.M. Edwards, B.M. Connors, S.C. Anderson. Contrasting climate velocity impacts
-#' in warm and cool locations: A meta-analysis across 38 demersal fish species in
-#' the northeast Pacific. EcoEvoRxiv. \doi{10.32942/osf.io/b87ng}.
-#'
-#' Code for implementing the penalized complexity prior on the spatial
-#' covariance parameters:
-#'
-#' Osgood-Zimmerman, A. and Wakefield, J. 2021. A Statistical introduction
-#' to Template Model Builder: a flexible tool for spatial modeling.
-#' arXiv 2103.09929. <https://arxiv.org/abs/2103.09929>.
+#' A.M. Edwards, B.M. Connors, S.C. Anderson. 2021. Contrasting climate velocity
+#' impacts in warm and cool locations show that effects of marine warming are
+#' worse in already warmer temperate waters. In press at Fish and Fisheries.
+#' \doi{10.1111/faf.12613}.
 #'
 #' Code for implementing the barrier-SPDE written by Olav Nikolai Breivik and
 #' Hans Skaug and adapted via the VAST R package.
