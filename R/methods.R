@@ -48,6 +48,15 @@ print.sdmTMB <- function(x, ...) {
   } else {
     phi <- ""
   }
+
+  sr <- x$sd_report
+  sr_est <- as.list(sr, "Estimate")
+  if (x$family$family == "tweedie") {
+    tweedie_p <- paste0("Tweedie p: ", mround(plogis(sr_est$thetaf) + 1, 2L), "\n")
+  } else {
+    tweedie_p <- ""
+  }
+
   range <- mround(r$range, 2L)
 
   pre <- "Spatial SD: "
@@ -75,7 +84,6 @@ print.sdmTMB <- function(x, ...) {
     rho <- ""
   }
 
-  sr <- x$sd_report
   sr_se <- summary(sr)[, "Std. Error"]
   sr_est <- summary(sr)[, "Estimate"]
   b_j_se <- unname(round(sr_se[grep("b_j", names(sr_se))], 2L))
@@ -147,15 +155,16 @@ print.sdmTMB <- function(x, ...) {
   }
 
   range_text <- if (x$tmb_data$share_range) {
-    paste0("Matern range parameter: ", range[1], "\n")
+    paste0("Matern range: ", range[1], "\n")
   } else {
-    paste0("Matern range parameter (spatial): ", range[1], "\n",
-      "Matern range parameter (spatiotemporal): ", range[2], "\n")
+    paste0("Matern range(spatial): ", range[1], "\n",
+      "Matern range (spatiotemporal): ", range[2], "\n")
   }
 
   cat("\n",
-    range_text,
     phi,
+    tweedie_p,
+    range_text,
     sigma_O,
     sigma_E,
     rho,
