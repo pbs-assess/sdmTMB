@@ -80,8 +80,8 @@ test_that("sdmTMB model fit with a covariate beta", {
   r <- m$tmb_obj$report()
   est <- tidy(m, "ran_pars")
   expect_equal(sort(est[,"estimate", drop = TRUE]),
-    sort(c(0.106559618205922, 0.106559618205922, 0.0646179753599145, 0.303614800474715, 0.308394406301974)),
-    tolerance = 1e-6)
+    sort(c(0.106559618205922, 0.0646179753599145, 0.303614800474715, 0.308394406301974)),
+    tolerance = 1e-5)
   expect_equal(m$model$convergence, 0L)
   expect_equal((p$b_j - initial_betas)^2, 0, tolerance = 0.001)
   expect_equal((exp(p$ln_phi) - phi)^2, 0, tolerance = 0.002)

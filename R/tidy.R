@@ -19,6 +19,7 @@
 #' @export
 #'
 #' @importFrom assertthat assert_that
+#' @importFrom stats plogis
 #' @examples
 #' # See ?sdmTMB
 tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
@@ -132,6 +133,14 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   discard <- unlist(lapply(out_re, function(x) length(x) == 1L)) # e.g. old models and phi
   out_re[discard] <- NULL
 
+  if (x$family$family == "tweedie") {
+    out_re$tweedie_p <- data.frame(
+      term = "tweedie_p", estimate = plogis(est$thetaf) + 1,
+      std.error = NA, stringsAsFactors = FALSE)
+    out_re$tweedie_p$conf.low <- plogis(est$thetaf - crit * se$thetaf) + 1
+    out_re$tweedie_p$conf.high <- plogis(est$thetaf + crit * se$thetaf) + 1
+  }
+
   if ("ln_tau_G" %in% names(out_re)) {
     out_re$ln_tau_G$estimate <- exp(out_re$ln_tau_G$estimate)
     out_re$ln_tau_G$term <- "tau_G"
@@ -167,6 +176,9 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
     out_re[["conf.low"]] <- NULL
     out_re[["conf.high"]] <- NULL
   }
+
+  out <- unique(out) # range can be duplicated
+  out_re <- unique(out_re)
 
   if (effects == "fixed") {
     return(out)
