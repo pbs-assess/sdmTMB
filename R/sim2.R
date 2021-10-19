@@ -39,29 +39,39 @@
 #' @export
 #'
 #' @examples
-#' \donttest{
 #' if (inla_installed()) {
-#'   set.seed(42)
-#'   x <- runif(30)
-#'   y <- runif(30)
+#'
+#'   set.seed(123)
 #'   # a1 is a fake predictor:
-#'   predictor_dat <- data.frame(X = x, Y = y, a1 = rnorm(30), year = c(rep(1, 15), rep(2, 15)))
+#'   predictor_dat <- data.frame(
+#'     X = runif(300), Y = runif(300),
+#'     a1 = rnorm(300), year = rep(1:6, each = 50)
+#'   )
 #'   mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.1)
+#'
 #'   sim_dat <- sdmTMB_sim2(
-#'     formula = ~a1,
+#'     formula = ~ 1 + a1,
 #'     data = predictor_dat,
 #'     time = "year",
 #'     spde = mesh,
-#'     range = 1,
-#'     sigma_E = 0.05, B = c(0.2, -0.4)
+#'     family = gaussian(link = "identity"),
+#'     range = 0.5,
+#'     sigma_E = 0.1,
+#'     phi = 0.1,
+#'     sigma_O = 0.2,
+#'     seed = 3542,
+#'     B = c(0.2, -0.4) # B0 = intercept, B1 = a1 slope
 #'   )
 #'
+#'   fit <- sdmTMB(observed ~ a1, data = sim_dat, spde = mesh, time = "year")
+#'   fit
+#'
 #'   if (require("ggplot2", quietly = TRUE)) {
-#'     ggplot(sim_dat, aes(x, y, colour = observed)) +
+#'     ggplot(sim_dat, aes(X, Y, colour = observed)) +
 #'       geom_point() +
-#'       facet_wrap(~time)
+#'       facet_wrap(~year) +
+#'       scale_color_gradient2()
 #'   }
-#' }
 #' }
 sdmTMB_sim2 <- function(formula,
                         data,
