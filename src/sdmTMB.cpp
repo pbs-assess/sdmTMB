@@ -359,11 +359,14 @@ Type objective_function<Type>::operator()()
   // optional stuff for penalized regression splines
   DATA_INTEGER(has_smooths);  // whether or not smooths are included
   DATA_IVECTOR(b_smooth_start);
+
+  DATA_INTEGER(do_simulate);
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
   // Fixed effects
   PARAMETER_VECTOR(b_j);  // fixed effect parameters
+  PARAMETER_VECTOR(bs); // smoother linear effects
   PARAMETER(ln_tau_O);    // spatial process
   PARAMETER(ln_tau_O_trend);    // optional spatial process on the trend
   PARAMETER(ln_tau_E);    // spatio-temporal process
@@ -375,16 +378,16 @@ Type objective_function<Type>::operator()()
   PARAMETER(ar1_phi);          // AR1 fields correlation
   PARAMETER_VECTOR(ln_tau_G);  // random intercept sigmas
   PARAMETER_VECTOR(RE);        // random intercept deviations
-  PARAMETER_VECTOR(bs); // smoother linear effects
-  PARAMETER_VECTOR(ln_smooth_sigma);  // variances of spline REs if included
   // Random effects
   PARAMETER_ARRAY(b_rw_t);  // random walk effects
   PARAMETER_VECTOR(omega_s);    // spatial effects; n_s length
   PARAMETER_VECTOR(omega_s_trend);    // spatial effects on trend; n_s length
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
-  PARAMETER_VECTOR(b_smooth);  // P-spline smooth parameters
   PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3)
   PARAMETER(b_epsilon); // slope coefficient for log-linear model on epsilon
+  PARAMETER_VECTOR(b_smooth);  // P-spline smooth parameters
+  PARAMETER_VECTOR(ln_smooth_sigma);  // variances of spline REs if included
+
   // Joint negative log-likelihood
   Type jnll = 0.0;
 
@@ -567,6 +570,9 @@ Type objective_function<Type>::operator()()
   // IID random intercepts:
   for (int g = 0; g < RE.size(); g++) {
     jnll -= dnorm(RE(g), Type(0.0), exp(ln_tau_G(ln_tau_G_index(g))), true);
+    if (do_simulate) {
+      RE(g) = rnorm(Type(0), exp(ln_tau_G(ln_tau_G_index(g))));
+    }
   }
 
   // Random walk effects (dynamic regression):
@@ -575,6 +581,9 @@ Type objective_function<Type>::operator()()
       // flat prior on the initial value... then:
       for (int t = 1; t < n_t; t++) {
         jnll += -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
+        if (do_simulate) {
+          b_rw_t(t, k) = rnorm(b_rw_t(t - 1, k), exp(ln_tau_V(k)));
+        }
       }
     }
   }
@@ -583,8 +592,14 @@ Type objective_function<Type>::operator()()
   if (normalize_in_r) s = false;
 
   // Spatial (intercept) random effects:
-  if (include_spatial)
+  if (include_spatial) {
     jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
+    if (do_simulate) {
+      SIMULATE {
+        SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O)).simulate(omega_s);
+      }
+    }
+  }
   // Spatial trend random effects:
   if (spatial_trend)
     jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O_trend))(omega_s_trend);
@@ -616,10 +631,16 @@ Type objective_function<Type>::operator()()
       } else { // constant epsilon sd, keep calculations as is
         if (ar1_fields) {
           jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q_st, s)), 1./exp(ln_tau_E))(epsilon_st);
+          // if (do_simulate)
+            // SIMULATE {SCALE(SEPARABLE(AR1(rho), GMRF(Q_st, s)), 1./exp(ln_tau_E)).simulate(epsilon_st);}
         } else if (rw_fields) {
           jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
+          // if (do_simulate)
+            // SIMULATE {SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E)).simulate(epsilon_st.col(0));}
           for (int t = 1; t < n_t; t++) {
             jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(t) - epsilon_st.col(t - 1));
+            // if (do_simulate)
+              // SIMULATE {SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E)).simulate(epsilon_st.col(t) - epsilon_st.col(t - 1));}
           }
           } else {
             error("Field type not implemented.");
@@ -643,22 +664,27 @@ Type objective_function<Type>::operator()()
       switch (family) {
       case gaussian_family:
         tmp_ll = dnorm(y_i(i), mu_i(i), phi, true);
+        SIMULATE{y_i(i) = rnorm(mu_i(i), phi);}
         break;
       case tweedie_family:
         s1 = invlogit(thetaf) + Type(1.0);
         if (!isNA(priors(12))) jnll -= dnorm(s1, priors(12), priors(13), true);
         tmp_ll = dtweedie(y_i(i), mu_i(i), phi, s1, true);
+        SIMULATE{y_i(i) = rtweedie(mu_i(i), phi, s1);}
         break;
       case binomial_family:  // in logit space not inverse logit
         tmp_ll = dbinom_robust(y_i(i), size(i), mu_i(i), true);
+        SIMULATE{y_i(i) = rbinom(size(i), mu_i(i));}
         break;
       case poisson_family:
         tmp_ll = dpois(y_i(i), mu_i(i), true);
+        SIMULATE{y_i(i) = rpois(mu_i(i));}
         break;
       case Gamma_family:
         s1 = exp(ln_phi);         // shape
         s2 = mu_i(i) / s1;        // scale
         tmp_ll = dgamma(y_i(i), s1, s2, true);
+        SIMULATE{y_i(i) = rgamma(s1, s2);}
         // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
         // tmp_ll = dgamma(y_i(i), s1, mu_i(i) / s1, true);
         break;
@@ -666,6 +692,11 @@ Type objective_function<Type>::operator()()
         s1 = log(mu_i(i)); // log(mu_i)
         s2 = 2. * s1 - ln_phi; // log(var - mu)
         tmp_ll = dnbinom_robust(y_i(i), s1, s2, true);
+        SIMULATE { // from glmmTMB
+          s1 = mu_i(i);
+          s2 = mu_i(i) * (Type(1) + exp(ln_phi));  // (1+phi) guarantees that var >= mu
+          y_i(i) = rnbinom2(s1, s2);
+        }
         break;
       case truncated_nbinom2_family:
         s1 = log(mu_i(i)); // log(mu_i)
@@ -674,18 +705,27 @@ Type objective_function<Type>::operator()()
         s3 = logspace_add(Type(0), s1 - ln_phi);
         lognzprob = logspace_sub(Type(0), -phi * s3);
         tmp_ll -= lognzprob;
-        tmp_ll = zt_lik_nearzero(y_i(i), tmp_ll);
+        tmp_ll = zt_lik_nearzero(y_i(i), tmp_ll); // from glmmTMB
+        // TODO add sims
+        // SIMULATE{ // from glmmTMB
+          // s1 = mu(i)/exp(ln_phi);
+          // s2 = 1/(1+exp(ln_phi));
+          // yobs(i) = Rf_qnbinom(asDouble(runif(dnbinom(Type(0), s1, s2), Type(1))), asDouble(s1), asDouble(s2), 1, 0);
+        // }
         break;
       case lognormal_family:
         tmp_ll = dlnorm(y_i(i), log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi, true);
+        // TODO add sims
         break;
       case student_family:
+        // TODO add sims
         tmp_ll = dstudent(y_i(i), mu_i(i), exp(ln_phi), df, true);
         break;
       case Beta_family: // Ferrari and Cribari-Neto 2004; betareg package
         s1 = mu_i(i) * phi;
         s2 = (Type(1) - mu_i(i)) * phi;
         tmp_ll = dbeta(y_i(i), s1, s2, true);
+        SIMULATE{y_i(i) = rbeta(s1, s2);}
         break;
       default:
         error("Family not implemented.");
@@ -946,6 +986,9 @@ Type objective_function<Type>::operator()()
   ADREPORT(log_range);  // log Matern approximate distance at 10% correlation
   REPORT(b_smooth);     // smooth coefficients for penalized splines
   REPORT(ln_smooth_sigma); // standard deviations of smooth random effects, in log-space
+  SIMULATE {
+    REPORT(y_i);
+  }
 
   // ------------------ Joint negative log likelihood --------------------------
 
