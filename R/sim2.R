@@ -176,7 +176,7 @@ sdmTMB_sim2 <- function(formula,
     # only retain observations each time slice:
     time_vec <- sort(unique(data[[time]]))
     for (i in seq_len(n_t)) {
-      epsilon_st[[i]] <- epsilon_st[[i]][which(data[[time]] == time_vec[[1]])]
+      epsilon_st[[i]] <- epsilon_st[[i]][which(data[[time]] == time_vec[[i]])]
     }
   }
   epsilon_st <- do.call("c", epsilon_st)
@@ -185,11 +185,12 @@ sdmTMB_sim2 <- function(formula,
 
   d <- list()
   if (!is.null(time)) d[[time]] <- data[[time]]
-  d[[spde$xy_cols[1]]] <- coords[, 1]
-  d[[spde$xy_cols[2]]] <- coords[, 2]
+  d[[spde$xy_cols[1]]] <- data[[spde$xy_cols[1]]]
+  d[[spde$xy_cols[2]]] <- data[[spde$xy_cols[2]]]
   d[["omega_s"]] <- omega_s
   d[["epsilon_st"]] <- epsilon_st
   d[["eta"]] <- eta
+
   d <- do.call("data.frame", d)
   d$eta <- d$eta + d$omega_s + d$epsilon_st
 
