@@ -20,6 +20,7 @@ long-format data frame. The format matches the format in the \pkg{tidybayes}
 \code{spread_draws()} and \code{gather_draws()} functions.
 }
 \examples{
+if (inla_installed()) {
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2,
   data = pcod_2011, spde = pcod_mesh_2011, family = tweedie(link = "log"),
   include_spatial = FALSE, fields = "AR1", time = "year")
@@ -30,6 +31,7 @@ samps <- gather_sims(m, n_sims = 1000)
 if (require("ggplot2", quietly = TRUE)) {
   ggplot(samps, aes(.value)) + geom_histogram() +
     facet_wrap(~.variable, scales = "free_x")
+}
 }
 }
 \references{

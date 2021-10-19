@@ -224,10 +224,8 @@ NULL
 #'
 #' @examples
 #' if (inla_installed()) {
-#'   pcod_spde <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 25) # a coarse mesh for example speed
-#' } else {
-#'   pcod_spde <- pcod_mesh_2011 # load cached mesh so example runs on CRAN
-#' }
+#'
+#' pcod_spde <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 25) # a coarse mesh for example speed
 #' plot(pcod_spde)
 #'
 #' # Tweedie:
@@ -237,7 +235,6 @@ NULL
 #' tidy(m, conf.int = TRUE)
 #' tidy(m, effects = "ran_par", conf.int = TRUE)
 #'
-#' if (inla_installed()) {
 #' # Run extra optimization steps to help convergence:
 #' # (Not typically needed)
 #' m1 <- run_extra_optimization(m, nlminb_loops = 0, newton_loops = 1)

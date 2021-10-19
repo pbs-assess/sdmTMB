@@ -85,6 +85,7 @@ Simulate from a spatial/spatiotemporal model
 }
 \examples{
 \donttest{
+if (inla_installed()) {
 set.seed(42)
 x <- runif(50, -1, 1)
 y <- runif(50, -1, 1)
@@ -116,5 +117,6 @@ s <- sdmTMB_sim(
   phi = 0.2, range = 0.8, sigma_O = 0,
   sigma_E = seq(0.2, 1, length.out = time_steps),
   seed = 123, family = gaussian())
+}
 }
 }

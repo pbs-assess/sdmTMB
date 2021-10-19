@@ -50,13 +50,13 @@ make_spde <- function(x, y, n_knots, seed = 42, mesh = NULL) {
 #' @param type Method to create the mesh. Also see `mesh` argument to supply
 #'   your own mesh.
 #' @param cutoff An optional cutoff if type is `"cutoff"`. "The minimum allowed
-#'   distance between points in the mesh". See [INLA::inla.mesh.create()].
+#'   distance between points in the mesh". See `INLA::inla.mesh.create()`.
 #'   Smaller values create meshes with more knots. Points further apart than this
 #'   value will receive a separate vertex in the mesh before any mesh refinement.
 #' @param n_knots The number of desired knots if `type` is not `"cutoff"`.
 #' @param seed Random seed. Affects [stats::kmeans()] determination of knot
 #'   locations if `type = "kmeans"`.
-#' @param refine Logical or list to pass to [INLA::inla.mesh.create()].
+#' @param refine Logical or list to pass to `INLA::inla.mesh.create()`.
 #' @param mesh An optional mesh created via INLA instead of using the above
 #'   convenience options.
 #'

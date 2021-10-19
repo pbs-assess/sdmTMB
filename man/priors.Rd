@@ -85,7 +85,7 @@ the argument names in \code{pc_matern()}):
 credible intervals when the prior satisfies \code{P(sigma > sigma_lt) = 0.05} and
 \code{P(range < range_gt) = 0.05}, where \code{sigma_lt} is between 2.5 to 40 times
 the true marginal standard deviation and \code{range_gt} is between 1/10 and 1/2.5
-of the true range." Also see \code{\link[INLA:inla.spde2.pcmatern]{INLA::inla.spde2.pcmatern()}}.
+of the true range." Also see \code{INLA::inla.spde2.pcmatern()}.
 
 Keep in mind that the range is dependent on the units and scale of the
 coordinate system. In practice, you may choose to try fitting the model

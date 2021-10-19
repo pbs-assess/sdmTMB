@@ -49,6 +49,8 @@ This function does nothing more than summarize and reshape the
 matrix of simulation draws into a data frame.
 }
 \examples{
+if (inla_installed()) {
+
 m <- sdmTMB(density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   data = pcod_2011, spde = pcod_mesh_2011, family = tweedie(link = "log"),
   time = "year"
@@ -64,6 +66,8 @@ if (require("ggplot2", quietly = TRUE)) {
     geom_ribbon(alpha = 0.4)
   ggplot(x_sims, aes(as.factor(year), .value)) +
     geom_violin()
+}
+
 }
 }
 \seealso{

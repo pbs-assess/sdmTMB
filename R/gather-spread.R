@@ -17,6 +17,7 @@
 #' @export
 #' @rdname gather_sims
 #' @examples
+#' if (inla_installed()) {
 #' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2,
 #'   data = pcod_2011, spde = pcod_mesh_2011, family = tweedie(link = "log"),
 #'   include_spatial = FALSE, fields = "AR1", time = "year")
@@ -27,6 +28,7 @@
 #' if (require("ggplot2", quietly = TRUE)) {
 #'   ggplot(samps, aes(.value)) + geom_histogram() +
 #'     facet_wrap(~.variable, scales = "free_x")
+#' }
 #' }
 
 spread_sims <- function(object, n_sims = 200) {

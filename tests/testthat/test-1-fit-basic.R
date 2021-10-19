@@ -113,6 +113,7 @@ test_that("Anisotropy fits and plots", {
 })
 
 test_that("A spatiotemporal version works with predictions on new data points", {
+  skip_if_not_installed("INLA")
   d <- pcod_2011
   pcod_spde <- pcod_mesh_2011
   m <- sdmTMB(

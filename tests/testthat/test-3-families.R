@@ -32,7 +32,7 @@ x <- stats::runif(100, -1, 1)
 y <- stats::runif(100, -1, 1)
 loc <- data.frame(x = x, y = y)
 
-if (require("INLA", quietly = TRUE)) {
+if (suppressWarnings(require("INLA", quietly = TRUE))) {
   spde <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
 
   test_that("Student family fits", {

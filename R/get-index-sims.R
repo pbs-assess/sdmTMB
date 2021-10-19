@@ -31,6 +31,8 @@
 #'
 #' @export
 #' @examples
+#' if (inla_installed()) {
+#'
 #' m <- sdmTMB(density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'   data = pcod_2011, spde = pcod_mesh_2011, family = tweedie(link = "log"),
 #'   time = "year"
@@ -46,6 +48,8 @@
 #'     geom_ribbon(alpha = 0.4)
 #'   ggplot(x_sims, aes(as.factor(year), .value)) +
 #'     geom_violin()
+#' }
+#'
 #' }
 get_index_sims <- function(obj,
                            level = 0.95,

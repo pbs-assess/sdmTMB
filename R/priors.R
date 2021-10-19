@@ -22,7 +22,7 @@
 #' credible intervals when the prior satisfies `P(sigma > sigma_lt) = 0.05` and
 #' `P(range < range_gt) = 0.05`, where `sigma_lt` is between 2.5 to 40 times
 #' the true marginal standard deviation and `range_gt` is between 1/10 and 1/2.5
-#' of the true range." Also see [INLA::inla.spde2.pcmatern()].
+#' of the true range." Also see `INLA::inla.spde2.pcmatern()`.
 #'
 #' @details
 #' Keep in mind that the range is dependent on the units and scale of the

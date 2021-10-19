@@ -103,15 +103,14 @@ Make predictions from an sdmTMB model. The function can predict on the
 original or new data.
 }
 \examples{
+if (require("ggplot2", quietly = TRUE) && inla_installed()) {
+
 # We'll only use a small number of knots so this example runs quickly
 # but you will likely want to use more in applied situations.
 
 d <- pcod_2011
-if (inla_installed()) {
-  pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
-} else {
-  pcod_spde <- pcod_mesh_2011 # use cached version on CRAN
-}
+
+pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
 m <- sdmTMB(
  data = d, formula = density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
  time = "year", spde = pcod_spde, family = tweedie(link = "log")
@@ -124,7 +123,6 @@ head(predictions)
 
 predictions$resids <- residuals(m) # randomized quantile residuals
 
-if (require("ggplot2", quietly = TRUE) && inla_installed()) {
 
 ggplot(predictions, aes(X, Y, col = resids)) + scale_colour_gradient2() +
   geom_point() + facet_wrap(~year)
