@@ -9,7 +9,6 @@ sdmTMB_sim(
   x,
   y,
   range,
-  time = NULL,
   time_steps = 1L,
   X = NULL,
   betas = NULL,
@@ -87,7 +86,8 @@ A data frame where:
 }
 }
 \description{
-Simulate from a spatial/spatiotemporal model
+\strong{Note we are considering depreciating this function in favour of \code{\link[=sdmTMB_sim2]{sdmTMB_sim2()}},
+which is more flexible and faster.}
 }
 \examples{
 \donttest{

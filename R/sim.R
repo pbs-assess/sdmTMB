@@ -1,5 +1,8 @@
 #' Simulate from a spatial/spatiotemporal model
 #'
+#' **Note we are considering depreciating this function in favour of [sdmTMB_sim2()],
+#' which is more flexible and faster.**
+#'
 #' @param mesh Output from [make_mesh()] or a mesh directly from INLA.
 #' @param x A vector of x coordinates. Should match `mesh`.
 #' @param y A vector of y coordinates. Should match `mesh`.
@@ -80,7 +83,6 @@ sdmTMB_sim <- function(mesh,
                        x,
                        y,
                        range,
-                       time = NULL,
                        time_steps = 1L,
                        X = NULL,
                        betas = NULL,

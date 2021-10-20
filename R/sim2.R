@@ -12,8 +12,6 @@
 #' @param time The time column name.
 #' @param family Family as in [sdmTMB()].
 #' @param range Parameter that controls the decay of spatial correlation.
-#' @param X An optional covariate design matrix. If omitted and `B` is not
-#'   `NULL`, will be set to standard normal draws.
 #' @param B A vector of beta values (fixed-effect coefficient values).
 #' @param rho Spatiotemporal correlation between years; should be between -1 and
 #'   1.

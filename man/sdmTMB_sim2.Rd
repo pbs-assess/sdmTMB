@@ -56,9 +56,6 @@ vector for time-varying model.}
 If not included, defaults to 1 (Bernoulli)}
 
 \item{seed}{A value with which to set the random seed.}
-
-\item{X}{An optional covariate design matrix. If omitted and \code{B} is not
-\code{NULL}, will be set to standard normal draws.}
 }
 \value{
 A data frame where:
