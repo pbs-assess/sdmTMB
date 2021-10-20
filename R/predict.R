@@ -48,26 +48,29 @@
 #'
 #' @return
 #' If `return_tmb_object = FALSE` (and `sims = 0` and `tmbstan_model = NULL`):
+#'
 #' A data frame:
 #' * `est`: Estimate in link space (everything is in link space)
 #' * `est_non_rf`: Estimate from everything that isn't a random field
 #' * `est_rf`: Estimate from all random fields combined
 #' * `omega_s`: Spatial (intercept) random field that is constant through time
 #' * `zeta_s`: Spatial slope random field
-#' * `epsilon_st`: Spatiotemporal (intercept) random fields (could be
-#'    independent draws each year or AR1)
+#' * `epsilon_st`: Spatiotemporal (intercept) random fields, could be
+#'    off (zero), IID, AR1, or random walk
 #'
 #' If `return_tmb_object = TRUE` (and `sims = 0` and `tmbstan_model = NULL`):
+#'
 #' A list:
 #' * `data`: The data frame described above
 #' * `report`: The TMB report on parameter values
 #' * `obj`: The TMB object returned from the prediction run
 #' * `fit_obj`: The original TMB model object
 #'
-#' You likely only need the `data` element as an end user. The other elements
-#' are included for other functions.
+#' In this case, you likely only need the `data` element as an end user.
+#' The other elements are included for other functions.
 #'
 #' If `sims > 0` or `tmbstan_model` is not `NULL`:
+#'
 #' A matrix:
 #' * Columns represent samples
 #' * Rows represent predictions with one row per row of `newdata`

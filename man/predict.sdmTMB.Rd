@@ -68,6 +68,7 @@ but representing Bayesian posterior samples from the Stan model.}
 }
 \value{
 If \code{return_tmb_object = FALSE} (and \code{sims = 0} and \code{tmbstan_model = NULL}):
+
 A data frame:
 \itemize{
 \item \code{est}: Estimate in link space (everything is in link space)
@@ -75,11 +76,12 @@ A data frame:
 \item \code{est_rf}: Estimate from all random fields combined
 \item \code{omega_s}: Spatial (intercept) random field that is constant through time
 \item \code{zeta_s}: Spatial slope random field
-\item \code{epsilon_st}: Spatiotemporal (intercept) random fields (could be
-independent draws each year or AR1)
+\item \code{epsilon_st}: Spatiotemporal (intercept) random fields, could be
+off (zero), IID, AR1, or random walk
 }
 
 If \code{return_tmb_object = TRUE} (and \code{sims = 0} and \code{tmbstan_model = NULL}):
+
 A list:
 \itemize{
 \item \code{data}: The data frame described above
@@ -88,10 +90,11 @@ A list:
 \item \code{fit_obj}: The original TMB model object
 }
 
-You likely only need the \code{data} element as an end user. The other elements
-are included for other functions.
+In this case, you likely only need the \code{data} element as an end user.
+The other elements are included for other functions.
 
 If \code{sims > 0} or \code{tmbstan_model} is not \code{NULL}:
+
 A matrix:
 \itemize{
 \item Columns represent samples
