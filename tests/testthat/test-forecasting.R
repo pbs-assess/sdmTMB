@@ -9,9 +9,9 @@ test_that("Forecasting works with a time-varying parameter", {
   m <- sdmTMB(
     data = pcod, formula = density ~ 0,
     time_varying = ~ 1,
-    fields = "AR1",
+    spatiotemporal = "AR1",
     extra_time = c(2016L, 2018L, 2019L),
-    include_spatial = FALSE,
+    spatial = FALSE,
     time = "year",
     spde = spde,
     control = sdmTMBcontrol(mgcv = FALSE),

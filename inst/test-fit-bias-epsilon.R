@@ -60,7 +60,7 @@ out <- furrr::future_map(seq_len(80), function(i) {
   # fit log-linear model with year fixed effects
   m <- sdmTMB(
     data = dat, formula = observed ~ -1 + as.factor(time),
-    time = "time", spde = mesh, reml = TRUE, include_spatial = FALSE,
+    time = "time", spde = mesh, reml = TRUE, spatial = FALSE,
     epsilon_predictor = "time"
   )
 

@@ -61,7 +61,7 @@
 #' m <- sdmTMB(
 #'   data = s, formula = observed ~ x1,
 #'   time = "time", spde = mesh,
-#'   fields = "AR1", include_spatial = FALSE
+#'   spatiotemporal = "AR1", spatial = "off"
 #' )
 #' tidy(m, conf.int = TRUE)
 #' tidy(m, "ran_pars", conf.int = TRUE)

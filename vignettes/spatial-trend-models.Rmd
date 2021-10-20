@@ -48,7 +48,7 @@ Let's fit three models. First we will fit a model that includes a single interce
 m1 <- sdmTMB(density ~ 1, data = pcod,
   spde = pcod_spde, family = tweedie(link = "log"),
   spatial_trend = TRUE, time = "year",
-  spatial_only = TRUE)
+  spatiotemporal = "off")
 ```
 
 In the second model we will add independent spatiotemporal random fields for each year:
@@ -57,7 +57,7 @@ In the second model we will add independent spatiotemporal random fields for eac
 m2 <- sdmTMB(density ~ 1, data = pcod,
   spde = pcod_spde, family = tweedie(link = "log"),
   spatial_trend = TRUE, time = "year",
-  spatial_only = FALSE)
+  spatiotemporal = "off")
 ```
 
 In the third model we make the spatiotemporal random fields follow an AR1 process:
@@ -66,7 +66,7 @@ In the third model we make the spatiotemporal random fields follow an AR1 proces
 m3 <- sdmTMB(density ~ 1, data = pcod,
   spde = pcod_spde, family = tweedie(link = "log"),
   spatial_trend = TRUE, time = "year",
-  spatial_only = FALSE, fields = "AR1")
+  spatiotemporal = "AR1")
 ```
 
 Let's look at the residuals:

@@ -47,14 +47,12 @@ $$
 where $f$ is a link function (e.g., log or logit) and $f^{-1}$ is its inverse link.
 
 * $\boldsymbol{X} \boldsymbol{\beta}$ is defined by the `formula` argument and
-  represents the "fixed effect" model matrix and a corresponding vector of
+  represents the fixed effect model matrix and a corresponding vector of
   coefficients
 
-* $\omega_s$ are included if `include_spatial = TRUE` or if there is no
-  spatiotemporal component (`time = NULL`)
+* $\omega_s$ are included if `spatial = 'on'`
 
-* $\epsilon_{\s,t}$ are included if there are multiple time elements and
-  `spatial_only = FALSE` (the default if there are multiple time elements)
+* $\epsilon_{\s,t}$ are included by default if there are multiple time elements (`time` argument is not `NULL`) but can be set to IID (`IID`; default), AR1 (`AR1`), random walk (`RW`), or off (`'off`) via the `spatiotemporal` argument
 
 ## Random or multi-level intercepts
 

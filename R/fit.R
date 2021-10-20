@@ -362,7 +362,7 @@ sdmTMB <- function(
   if (!missing(spatial_only)) {
     warning("`spatial_only` is depreciated; please use `spatiotemporal = 'off'`. Setting `spatiotemporal = 'off'` for now.",  call. = FALSE)
   } else {
-    if (identical(length(unique(data[[time]])), 1L) || spatiotemporal == "off") {
+    if (is.null(time) || spatiotemporal == "off") {
       spatial_only <- TRUE
     } else {
       spatial_only <- FALSE
@@ -375,12 +375,17 @@ sdmTMB <- function(
   if (!missing(include_spatial)) {
     warning("`include_spatial` is depreciated; please use the `spatial` argument. Setting `spatial = include_spatial` for now.",  call. = FALSE)
   } else {
-    if (!is.logical(spatial[[1]])) spatial <- match.arg(tolower(spatial))
+    if (!is.logical(spatial[[1]])) spatial <- match.arg(tolower(spatial), choices = c("on", "off"))
     if (identical(spatial, "on") || isTRUE(spatial)) {
       include_spatial <- TRUE
     } else {
       include_spatial <- FALSE
     }
+  }
+
+  if (!include_spatial && spatiotemporal == "off") {
+    warning("Both spatial and spatiotemporal fields are set to 'off'.", call. = FALSE)
+    control$map_rf <- TRUE
   }
 
   normalize <- control$normalize
@@ -430,8 +435,8 @@ sdmTMB <- function(
   assert_that(
     is.logical(reml), is.logical(anisotropy), is.logical(silent),
     is.logical(silent), is.logical(spatial_trend), is.logical(mgcv),
-    is.logical(multiphase), is.logical(ar1_fields),
-    is.logical(include_spatial), is.logical(map_rf), is.logical(normalize)
+    is.logical(multiphase),
+    is.logical(map_rf), is.logical(normalize)
   )
   assert_that(is.list(priors))
   if (!is.null(time_varying)) assert_that(identical(class(time_varying), "formula"))

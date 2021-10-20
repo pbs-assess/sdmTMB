@@ -6,7 +6,7 @@ plot_spde(pcod_spde)
 m_ar1 <- sdmTMB(
   d, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-  silent = FALSE, ar1_fields = TRUE, include_spatial = FALSE)
+  silent = FALSE, spatiotemporal = "AR1", include_spatial = FALSE)
 
 m <- sdmTMB(
   d, density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
@@ -43,7 +43,7 @@ plot_spde(spde)
 
 m_ar1_sim <- sdmTMB(
   s$dat, y ~ 0, time = "time", spde = spde,
-  silent = FALSE, ar1_fields = TRUE, include_spatial = FALSE)
+  silent = FALSE, spatiotemporal = "AR1", spatial = FALSE)
 
 m_ar1_sim$model$par
 minus_one_to_one(m_ar1_sim$model$par[["ar1_phi"]])

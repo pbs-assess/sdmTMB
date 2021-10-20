@@ -6,7 +6,7 @@ plot_spde(pcod_spde)
 m_rw1 <- sdmTMB(d, density ~ 0 + as.factor(year),
   time = "year", time_varying = ~ 0 + depth_scaled + depth_scaled2,
   spde = pcod_spde, family = tweedie(link = "log"),
-  silent = FALSE, ar1_fields = FALSE, include_spatial = TRUE)
+  silent = FALSE, spatiotemporal = "IID", spatial = TRUE)
 
 m_rw1$tmb_obj$report()$ln_tau_V
 r <- m_rw1$tmb_obj$report()

@@ -27,7 +27,7 @@ test_that("get_index_sims works", {
   skip_if_not_installed("INLA")
   m <- sdmTMB(density ~ 0 + as.factor(year),
     data = pcod_2011, spde = pcod_mesh_2011, family = tweedie(link = "log"),
-    time = "year", spatial_only = TRUE
+    time = "year", spatiotemporal = "off"
   )
   qcs_grid_2011 <- subset(qcs_grid, year >= 2011)
   set.seed(1029)

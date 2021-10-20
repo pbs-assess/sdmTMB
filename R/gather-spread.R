@@ -20,7 +20,7 @@
 #' if (inla_installed()) {
 #' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2,
 #'   data = pcod_2011, spde = pcod_mesh_2011, family = tweedie(link = "log"),
-#'   include_spatial = FALSE, fields = "AR1", time = "year")
+#'   spatiotemporal = "AR1", time = "year")
 #' head(spread_sims(m, n_sims = 10))
 #' head(gather_sims(m, n_sims = 10))
 #' samps <- gather_sims(m, n_sims = 1000)

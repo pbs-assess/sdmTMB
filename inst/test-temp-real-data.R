@@ -55,7 +55,7 @@ dat <- sim(
 
 spde <- make_spde(x = dat$x, y = dat$y, n_knots = 200)
 
-m <- sdmTMB(silent = FALSE, ar1_fields = TRUE, include_spatial = FALSE,
+m <- sdmTMB(silent = FALSE, spatiotemporal = "AR1", spatial = FALSE,
   data = dat, formula = z ~ 1, time = "time",
   family = gaussian(link = "identity"), spde = spde
 )
@@ -106,7 +106,7 @@ dat <- sim(
 
 
 spde <- make_spde(x = dat$x, y = dat$y, n_knots = 120)
-m <- sdmTMB(silent = FALSE, ar1_fields = TRUE, include_spatial = FALSE,
+m <- sdmTMB(silent = FALSE, spatiotemporal = "AR1", spatial = FALSE,
   data = dat, formula = z ~ 1, time = "time",
   family = gaussian(link = "identity"), spde = spde
 )
@@ -184,7 +184,7 @@ m <- sdmTMB::sdmTMB(
     temperature_scaled + temperature_scaled2,
   data = dat, time = "year",
   ar1_fields = FALSE,
-  spde = spde, include_spatial = TRUE,
+  spde = spde, spatial = TRUE,
   family = sdmTMB::tweedie(link = "log"),
   anisotropy = FALSE,
   silent = FALSE)

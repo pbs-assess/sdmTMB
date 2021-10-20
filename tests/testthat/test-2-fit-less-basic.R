@@ -55,7 +55,7 @@ test_that("A time-varying model fits and predicts appropriately", {
     seed = SEED
   )
   spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
-  m <- sdmTMB(data = s, formula = observed ~ 0, include_spatial = FALSE,
+  m <- sdmTMB(data = s, formula = observed ~ 0, spatial = FALSE,
     time_varying = ~ 0 + cov1, time = "time", spde = spde, control = sdmTMBcontrol(mgcv = FALSE))
   expect_equal(exp(m$model$par["ln_tau_V"])[[1]], sigma_V, tolerance = 0.05)
   tidy(m, effects = "ran_par")
@@ -298,7 +298,7 @@ test_that("Random walk fields work", {
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 15)
   m_rw <- sdmTMB(density ~ 1,
     data = d, time = "year", spde = pcod_spde,
-    family = tweedie(link = "log"), fields = "RW"
+    family = tweedie(link = "log"), spatiotemporal = "RW"
   )
   expect_identical(m_rw$tmb_data$rw_fields, 1L)
   p_rw <- predict(m_rw)
@@ -306,7 +306,7 @@ test_that("Random walk fields work", {
   # close to AR1 with high rho:
   m_ar1 <- sdmTMB(density ~ 1,
     data = d, time = "year", spde = pcod_spde,
-    family = tweedie(link = "log"), fields = "AR1",
+    family = tweedie(link = "log"), spatiotemporal = "AR1",
     control = sdmTMBcontrol(
       start = list(ar1_phi = qlogis((0.99 + 1) / 2)),
       map = list(ar1_phi = factor(NA)))

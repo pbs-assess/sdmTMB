@@ -12,7 +12,7 @@ test_that("Epsilon models work with RW spatiotemporal fields", {
     time = "year",
     spde = pcod_spde,
     family = tweedie(link = "log"),
-    fields = "RW"
+    spatiotemporal = "RW"
   )
 
   # The way to check that the models are giving the right results is to
@@ -31,7 +31,7 @@ test_that("Epsilon models work with RW spatiotemporal fields", {
       lower = list(b_epsilon = -1), upper = list(b_epsilon = 1),
       map = list(b_epsilon = factor(NA)), start = list(b_epsilon = 0)
     ),
-    fields = "RW"
+    spatiotemporal = "RW"
   )
 
   expect_equal(tidy(m1, "ran_par")$estimate, tidy(m2, "ran_par")$estimate, tolerance = 0.001)
@@ -52,7 +52,7 @@ test_that("Epsilon models work with AR1 spatiotemporal fields", {
     time = "year",
     spde = pcod_spde,
     family = tweedie(link = "log"),
-    fields = "AR1"
+    spatiotemporal = "AR1"
   )
 
   # The way to check that the models are giving the right results is to
@@ -71,7 +71,7 @@ test_that("Epsilon models work with AR1 spatiotemporal fields", {
       lower = list(b_epsilon = -1), upper = list(b_epsilon = 1),
       map = list(b_epsilon = factor(NA)), start = list(b_epsilon = 0)
     ),
-    fields = "AR1"
+    spatiotemporal = "AR1"
   )
 
   expect_equal(tidy(m1, "ran_par")$estimate, tidy(m2, "ran_par")$estimate, tolerance = 0.001)

@@ -48,7 +48,7 @@ out <- furrr::future_map(seq_len(8*10), function(i) {
   m <- sdmTMB(
     data = s, formula = observed ~ x1,
     time = "time", spde = mesh, reml = TRUE,
-    ar1_fields = TRUE, include_spatial = FALSE
+    spatiotemporal = "AR1", spatial = FALSE
   )
   est <- tidy(m, conf.int = TRUE)
   est_ran <- tidy(m, "ran_pars", conf.int = TRUE)

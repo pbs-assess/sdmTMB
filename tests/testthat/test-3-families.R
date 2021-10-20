@@ -150,7 +150,7 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     set.seed(123)
     d$test_gamma <- stats::rgamma(nrow(d), shape = 0.5, scale = 1 / 0.5)
     m <- sdmTMB(data = d, formula = test_gamma ~ 1,
-      spde = spde, family = Gamma(link = "inverse"), spatial_only = TRUE)
+      spde = spde, family = Gamma(link = "inverse"), spatiotemporal = "off")
     expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
   })
 

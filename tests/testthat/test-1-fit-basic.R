@@ -120,7 +120,7 @@ test_that("A spatiotemporal version works with predictions on new data points", 
     data = d,
     formula = density ~ 0 + as.factor(year),
     time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-    include_spatial = FALSE
+    spatial = FALSE
   )
   # Predictions at original data locations:
   predictions <- predict(m)
@@ -147,7 +147,7 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   )
   spde <- make_mesh(dat, c("x", "y"), cutoff = 0.02)
   m <- sdmTMB(
-    fields = "AR1", include_spatial = FALSE,
+    spatiotemporal = "AR1", spatial = FALSE,
     data = dat, formula = observed ~ 1, time = "time",
     family = gaussian(link = "identity"), spde = spde
   )
@@ -162,7 +162,7 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-3)
 
   m <- sdmTMB(
-    fields = "AR1", include_spatial = FALSE,
+    spatiotemporal = "AR1", spatial = FALSE,
     data = dat, formula = observed ~ 1, time = "time",
     family = gaussian(link = "identity"), spde = spde
   )

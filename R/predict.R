@@ -168,9 +168,9 @@
 #' unique(d$year)
 #' m <- sdmTMB(
 #'   data = d, formula = density ~ 1,
-#'   fields = "AR1", # using an AR1 to have something to forecast with
+#'   spatiotemporal = "AR1", # using an AR1 to have something to forecast with
 #'   extra_time = 2019L, # `L` for integer to match our data
-#'   include_spatial = FALSE,
+#'   spatial = "off",
 #'   time = "year", spde = pcod_spde, family = tweedie(link = "log")
 #' )
 #'
@@ -190,7 +190,7 @@
 #' pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 #' m <- sdmTMB(data = pcod, formula = density ~ depth_scaled + depth_scaled2,
 #'   spde = pcod_spde, family = tweedie(link = "log"),
-#'   spatial_trend = TRUE, time = "year", spatial_only = TRUE)
+#'   spatial_trend = TRUE, time = "year", spatiotemporal = "off")
 #' p <- predict(m, newdata = qcs_grid)
 #'
 #' plot_map(p, "zeta_s") +

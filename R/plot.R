@@ -12,7 +12,7 @@
 #'   formula = density ~ 0 + as.factor(year),
 #'   time = "year", spde = make_mesh(d, c("X", "Y"), n_knots = 80, type = "kmeans"),
 #'   family = tweedie(link = "log"), anisotropy = TRUE,
-#'   include_spatial = FALSE)
+#'   spatial = "off")
 #' plot_anisotropy(m)
 #' }
 #' }

@@ -159,7 +159,7 @@ mvnormal <- function(location = 0, scale = diag(length(location))) {
 #' # - Matern PC prior
 #' m <- sdmTMB(density ~ depth_scaled,
 #'   data = d, spde = pcod_spde, family = tweedie(),
-#'   spatial_only = TRUE,
+#'   spatiotemporal = "off",
 #'   priors = sdmTMBpriors(
 #'     b = normal(c(NA, 0), c(NA, 1)),
 #'     matern_s = pc_matern(range_gt = 5, sigma_lt = 1)
@@ -170,7 +170,7 @@ mvnormal <- function(location = 0, scale = diag(length(location))) {
 #' # (except on the annual means; see the `NA`s)
 #' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
 #'   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-#'   share_range = FALSE, fields = "AR1",
+#'   share_range = FALSE, spatiotemporal = "AR1",
 #'   priors = sdmTMBpriors(
 #'     b = normal(c(0, 0, NA, NA, NA), c(2, 2, NA, NA, NA)),
 #'     phi = halfnormal(0, 10),
