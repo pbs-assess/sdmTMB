@@ -132,7 +132,7 @@ sdmTMB_sim2 <- function(formula,
   if (sigma_O > 0) {
     omega_s <- rspde3(rspde_attr_O, seed = seed)
   } else {
-    omega_s <- rep(0, length(x))
+    omega_s <- rep(0, nrow(data))
   }
 
   # test whether sigma_E_zero
