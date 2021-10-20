@@ -396,7 +396,7 @@ sdmTMB <- function(
   }
 
   if (!is.null(experimental)) {
-    if ("epsilon_predictor" %in% experimental) epsilon_predictor <- experimental$epsilon_predictor
+    if ("epsilon_predictor" %in% names(experimental)) epsilon_predictor <- experimental$epsilon_predictor
   } else {
     epsilon_predictor <- NULL
   }

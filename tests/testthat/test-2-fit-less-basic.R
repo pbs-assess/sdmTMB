@@ -130,7 +130,7 @@ test_that("A time varying epsilon model works", {
   m <- sdmTMB(density ~ 0 + as.factor(year) + breakpt(depth_scaled), data = d,
               spde = pcod_spde, family = tweedie(link = "log"),
               time = "year",
-              epsilon_predictor = "year_centered",
+              experimental = list("epsilon_predictor" = "year_centered"),
               control = sdmTMBcontrol(lower = list(b_epsilon = -1),upper = list(b_epsilon = 1)))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
   b_epsilon=as.list(m$sd_report, "Estimate", report = TRUE)$b_epsilon

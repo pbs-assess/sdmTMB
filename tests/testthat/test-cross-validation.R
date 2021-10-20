@@ -3,9 +3,9 @@ test_that("Basic cross validation works", {
   skip_on_cran()
   skip_if_not_installed("INLA")
   d <- subset(pcod, year >= 2011) # subset for example speed
-  spde <- make_mesh(d, c("X", "Y"), cutoff = 20)
+  spde <- make_mesh(d, c("X", "Y"), cutoff = 15)
 
-  set.seed(1)
+  set.seed(2)
   # library(future) # for parallel processing
   # plan(multisession) # for parallel processing
   x <- sdmTMB_cv(
