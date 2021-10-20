@@ -198,8 +198,8 @@ tmb_data$pop_pred <- as.integer(pop_pred)
 tmb_data$exclude_RE <- exclude_RE
 tmb_data$calc_time_totals <- as.integer(!se_fit)
 tmb_data$proj_spatial_index <- newdata$sdm_spatial_id
-tmb_data$proj_t_i <- as.numeric(newdata[[object$time]])
-tmb_data$proj_t_i <- tmb_data$proj_t_i - mean(unique(tmb_data$proj_t_i)) # center on mean
+tmb_data$proj_z_i <- as.numeric(newdata[[object$time]])
+tmb_data$proj_z_i <- tmb_data$proj_t_i - mean(unique(tmb_data$proj_t_i)) # center on mean
 
 epsilon_covariate <- rep(0, length(unique(newdata[[object$time]])))
 if (tmb_data$est_epsilon_model) {

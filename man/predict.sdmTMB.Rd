@@ -196,9 +196,9 @@ pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 15)
 unique(d$year)
 m <- sdmTMB(
   data = d, formula = density ~ 1,
-  fields = "AR1", # using an AR1 to have something to forecast with
+  spatiotemporal = "AR1", # using an AR1 to have something to forecast with
   extra_time = 2019L, # `L` for integer to match our data
-  include_spatial = FALSE,
+  spatial = "off",
   time = "year", spde = pcod_spde, family = tweedie(link = "log")
 )
 
@@ -215,11 +215,15 @@ plot_map(predictions, "epsilon_st") +
 
 # Estimating local trends ----------------------------------------------
 
+d <- pcod
+d$year_scaled <- as.numeric(scale(d$year))
 pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
-m <- sdmTMB(data = pcod, formula = density ~ depth_scaled + depth_scaled2,
+m <- sdmTMB(data = d, formula = density ~ depth_scaled + depth_scaled2,
   spde = pcod_spde, family = tweedie(link = "log"),
-  spatial_trend = TRUE, time = "year", spatial_only = TRUE)
-p <- predict(m, newdata = qcs_grid)
+  spatial_varying = "year_scaled", time = "year", spatiotemporal = "off")
+nd <- qcs_grid
+nd$year_scaled <- (nd$year - mean(d$year)) / sd(d$year)
+p <- predict(m, newdata = nd)
 
 plot_map(p, "zeta_s") +
   ggtitle("Spatial slopes") +
