@@ -23,7 +23,12 @@
 #' @param df Student-t degrees of freedom.
 #' @param seed A value with which to set the random seed.
 #' @param size Specific for the binomial family, vector representing binomial N.
-#'   If not included, defaults to 1 (Bernoulli)
+#'   If not included, defaults to 1 (Bernoulli).
+#' @param omega_s A vector of spatial random field values. If supplied, these
+#'   will be used instead of simulating a spatial random field.
+#' @param epsilon_st A vector of spatiotemporal random field values. If
+#'   supplied, these will be used instead of simulating a spatiotemporal random
+#'   field.
 #'
 #' @return A data frame where:
 #' * The 1st column is the time variable (if present).
@@ -38,7 +43,6 @@
 #'
 #' @examples
 #' if (inla_installed()) {
-#'
 #'   set.seed(123)
 #'   # a1 is a fake predictor:
 #'   predictor_dat <- data.frame(
@@ -64,6 +68,21 @@
 #'   fit <- sdmTMB(observed ~ a1, data = sim_dat, spde = mesh, time = "year")
 #'   fit
 #'
+#'   # example of supplying random field values:
+#'   p <- predict(fit, newdata = NULL)
+#'   sim_dat2 <- sdmTMB_sim2(
+#'     formula = ~ 1 + a1,
+#'     data = predictor_dat,
+#'     time = "year",
+#'     spde = mesh,
+#'     family = gaussian(link = "identity"),
+#'     omega_s = p$omega_s,
+#'     epsilon_st = p$epsilon_st,
+#'     phi = 0.1,
+#'     seed = 342,
+#'     B = c(0.1, -0.2) # B0 = intercept, B1 = a1 slope
+#'   )
+#'
 #'   if (require("ggplot2", quietly = TRUE)) {
 #'     ggplot(sim_dat, aes(X, Y, colour = observed)) +
 #'       geom_point() +
@@ -86,6 +105,8 @@ sdmTMB_sim2 <- function(formula,
                         tweedie_p = 1.5,
                         df = 3,
                         size = NULL,
+                        omega_s = NULL,
+                        epsilon_st = NULL,
                         seed = sample.int(1e6, 1)) {
   mesh <- spde
   betas <- B
@@ -95,7 +116,7 @@ sdmTMB_sim2 <- function(formula,
   assert_that(class(mesh) %in% c("inla.mesh", "sdmTMBmesh"))
   assert_that(tweedie_p > 1, tweedie_p < 2)
   assert_that(df >= 1)
-  assert_that(range > 0)
+  if (!missing(range)) assert_that(range > 0)
   assert_that(rho >= -1, rho <= 1)
   assert_that(sigma_O >= 0, all(sigma_E >= 0), phi > 0)
 
@@ -124,60 +145,67 @@ sdmTMB_sim2 <- function(formula,
 
   coords <- spde$loc_xy
 
-  rspde_attr_O <- get_rspde3_attributes(
-    coords = coords, sigma = sigma_O, range = range,
-    mesh = mesh
-  )
+  if (is.null(omega_s)) {
+    rspde_attr_O <- get_rspde3_attributes(
+      coords = coords, sigma = sigma_O, range = range,
+      mesh = mesh
+    )
 
-  if (sigma_O > 0) {
-    omega_s <- rspde3(rspde_attr_O, seed = seed)
-  } else {
-    omega_s <- rep(0, nrow(data))
+    if (sigma_O > 0) {
+      omega_s <- rspde3(rspde_attr_O, seed = seed)
+    } else {
+      omega_s <- rep(0, nrow(data))
+    }
   }
+  stopifnot(length(omega_s) == nrow(data))
 
   # test whether sigma_E_zero
   if (length(sigma_E) %in% c(1L, n_t) == FALSE) {
     stop("Error: sigma_E must be a scalar or of length time_steps", call. = FALSE)
   }
-  if (length(sigma_E) == 1L) {
-    rspde_attr_E <- get_rspde3_attributes(
-      coords = coords, sigma = sigma_E, range = range,
-      mesh = mesh
-    )
-    sigma_E <- rep(sigma_E, n_t)
-    rspde_attr_E <- rep(list(rspde_attr_E), n_t)
-  } else {
-    rspde_attr_E <- lapply(sigma_E, function(.x) {
-      get_rspde3_attributes(
-        coords = coords,
-        sigma = .x, range = range,
+
+  if (is.null(epsilon_st)) {
+    if (length(sigma_E) == 1L) {
+      rspde_attr_E <- get_rspde3_attributes(
+        coords = coords, sigma = sigma_E, range = range,
         mesh = mesh
       )
-    })
-  }
+      sigma_E <- rep(sigma_E, n_t)
+      rspde_attr_E <- rep(list(rspde_attr_E), n_t)
+    } else {
+      rspde_attr_E <- lapply(sigma_E, function(.x) {
+        get_rspde3_attributes(
+          coords = coords,
+          sigma = .x, range = range,
+          mesh = mesh
+        )
+      })
+    }
 
-  epsilon_st <- list() # spatiotemporal random effects
-  if (sigma_E[[1]] > 0 && n_t > 1L) {
-    for (i in seq_len(n_t)) {
-      if (i == 1 || rho == 0) {
-        epsilon_st[[i]] <- rspde3(rspde_attr_E[[i]], seed = seed * i)
-      } else { # AR1 and not first time slice:
-        epsilon_st[[i]] <- rho * epsilon_st[[i - 1]] +
-          sqrt(1 - rho^2) * rspde3(rspde_attr_E[[i]], seed = seed * i)
+    epsilon_st <- list() # spatiotemporal random effects
+    if (sigma_E[[1]] > 0 && n_t > 1L) {
+      for (i in seq_len(n_t)) {
+        if (i == 1 || rho == 0) {
+          epsilon_st[[i]] <- rspde3(rspde_attr_E[[i]], seed = seed * i)
+        } else { # AR1 and not first time slice:
+          epsilon_st[[i]] <- rho * epsilon_st[[i - 1]] +
+            sqrt(1 - rho^2) * rspde3(rspde_attr_E[[i]], seed = seed * i)
+        }
+      }
+    } else {
+      epsilon_st <- list(rep(0, nrow(X_ij)))
+    }
+
+    if (!is.null(time)) {
+      # only retain observations each time slice:
+      time_vec <- sort(unique(data[[time]]))
+      for (i in seq_len(n_t)) {
+        epsilon_st[[i]] <- epsilon_st[[i]][which(data[[time]] == time_vec[[i]])]
       }
     }
-  } else {
-    epsilon_st <- list(rep(0, nrow(X_ij)))
+    epsilon_st <- do.call("c", epsilon_st)
   }
-
-  if (!is.null(time)) {
-    # only retain observations each time slice:
-    time_vec <- sort(unique(data[[time]]))
-    for (i in seq_len(n_t)) {
-      epsilon_st[[i]] <- epsilon_st[[i]][which(data[[time]] == time_vec[[i]])]
-    }
-  }
-  epsilon_st <- do.call("c", epsilon_st)
+  stopifnot(length(epsilon_st) == nrow(data))
 
   eta <- X_ij %*% B
 

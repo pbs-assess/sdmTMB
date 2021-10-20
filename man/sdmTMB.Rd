@@ -187,7 +187,7 @@ Note that only a single threshold covariate can be included.
 See the
 \href{https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html}{threshold vignette}.
 
-\strong{Forecasting or interpolating}
+\strong{Extra time: forecasting or interpolating}
 
 Extra time slices (e.g., years) can be included for interpolation or
 forecasting with the predict function via the \code{extra_time} argument. The
@@ -197,8 +197,12 @@ including extra time slices that the model remains identifiable. For example,
 including \code{+ as.factor(year)} in \code{formula} will render a model with no data
 to inform the expected value in a missing year. \code{\link[=sdmTMB]{sdmTMB()}} makes no attempt
 to determine if the model makes sense for forecasting or interpolation. The
-options \code{time_varying}, \code{spatiotemporal = "rw"}, and \code{spatiotemporal = "ar1"}
+options \code{time_varying}, \code{spatiotemporal = "RW"}, and \code{spatiotemporal = "AR1"}
 provide mechanisms to predict over missing time slices with process error.
+
+\code{extra_time} can also be used to fill in missing time steps for the purposes
+of a random walk or AR1 spatiotemporal field if their inclusion makes the gaps
+between time steps even.
 
 \strong{Index standardization}
 

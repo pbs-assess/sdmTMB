@@ -19,6 +19,8 @@ sdmTMB_sim2(
   tweedie_p = 1.5,
   df = 3,
   size = NULL,
+  omega_s = NULL,
+  epsilon_st = NULL,
   seed = sample.int(1e+06, 1)
 )
 }
@@ -53,7 +55,14 @@ vector for time-varying model.}
 \item{df}{Student-t degrees of freedom.}
 
 \item{size}{Specific for the binomial family, vector representing binomial N.
-If not included, defaults to 1 (Bernoulli)}
+If not included, defaults to 1 (Bernoulli).}
+
+\item{omega_s}{A vector of spatial random field values. If supplied, these
+will be used instead of simulating a spatial random field.}
+
+\item{epsilon_st}{A vector of spatiotemporal random field values. If
+supplied, these will be used instead of simulating a spatiotemporal random
+field.}
 
 \item{seed}{A value with which to set the random seed.}
 }
@@ -78,7 +87,6 @@ depreciated in favour of this version.
 }
 \examples{
 if (inla_installed()) {
-
   set.seed(123)
   # a1 is a fake predictor:
   predictor_dat <- data.frame(
@@ -103,6 +111,21 @@ if (inla_installed()) {
 
   fit <- sdmTMB(observed ~ a1, data = sim_dat, spde = mesh, time = "year")
   fit
+
+  # example of supplying random field values:
+  p <- predict(fit, newdata = NULL)
+  sim_dat2 <- sdmTMB_sim2(
+    formula = ~ 1 + a1,
+    data = predictor_dat,
+    time = "year",
+    spde = mesh,
+    family = gaussian(link = "identity"),
+    omega_s = p$omega_s,
+    epsilon_st = p$epsilon_st,
+    phi = 0.1,
+    seed = 342,
+    B = c(0.1, -0.2) # B0 = intercept, B1 = a1 slope
+  )
 
   if (require("ggplot2", quietly = TRUE)) {
     ggplot(sim_dat, aes(X, Y, colour = observed)) +
