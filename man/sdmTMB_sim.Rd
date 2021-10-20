@@ -9,6 +9,7 @@ sdmTMB_sim(
   x,
   y,
   range,
+  time = NULL,
   time_steps = 1L,
   X = NULL,
   betas = NULL,
@@ -18,7 +19,8 @@ sdmTMB_sim(
   sigma_E = 0,
   sigma_V = rep(0, length(betas)),
   phi = 0.01,
-  thetaf = 1.5,
+  tweedie_p = 1.5,
+  thetaf,
   df = 3,
   seed = sample.int(1e+06, 1),
   list = FALSE,
@@ -36,16 +38,16 @@ sdmTMB_sim(
 
 \item{time_steps}{The number of time steps.}
 
-\item{X}{An optional covariate design matrix. If omitted and \code{betas}
-is not \code{NULL}, will be set to standard normal draws.}
+\item{X}{An optional covariate design matrix. If omitted and \code{betas} is not
+\code{NULL}, will be set to standard normal draws.}
 
 \item{betas}{A vector of beta values (design-matrix fixed-effect coefficient
 values). If a random walk (\code{sigma_V > 0}), these are the starting values.}
 
 \item{family}{Family as in \code{\link[=sdmTMB]{sdmTMB()}}.}
 
-\item{rho}{Spatiotemporal correlation between years;
-should be between -1 and 1.}
+\item{rho}{Spatiotemporal correlation between years; should be between -1 and
+1.}
 
 \item{sigma_O}{SD of spatial process (Omega).}
 
@@ -57,16 +59,20 @@ parameters. Set to 0 for parameters that should not vary through time.}
 
 \item{phi}{Observation error scale parameter.}
 
-\item{thetaf}{Tweedie p (power) parameter; between 1 and 2.}
+\item{tweedie_p}{Tweedie p (power) parameter; between 1 and 2.}
+
+\item{thetaf}{(Depreciated; use \code{tweedie_p}). Tweedie p (power) parameter;
+between 1 and 2.}
 
 \item{df}{Student-t degrees of freedom.}
 
 \item{seed}{A value with which to set the random seed.}
 
-\item{list}{Logical for whether output is in list format. If \code{TRUE},
-data is in list element 1 and input values in element 2.}
+\item{list}{Logical for whether output is in list format. If \code{TRUE}, data is
+in list element 1 and input values in element 2.}
 
-\item{size}{Specific for the binomial family, vector representing binomial N. If not included, defaults to 1 (bernoulli)}
+\item{size}{Specific for the binomial family, vector representing binomial N.
+If not included, defaults to 1 (bernoulli)}
 }
 \value{
 A data frame where:

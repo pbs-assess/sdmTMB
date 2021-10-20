@@ -28,7 +28,7 @@ make_mesh(
 your own mesh.}
 
 \item{cutoff}{An optional cutoff if type is \code{"cutoff"}. "The minimum allowed
-distance between points in the mesh". See \code{INLA::inla.mesh.create()}.
+distance between points in the mesh". See \code{\link[INLA:inla.mesh.create]{INLA::inla.mesh.create()}}.
 Smaller values create meshes with more knots. Points further apart than this
 value will receive a separate vertex in the mesh before any mesh refinement.}
 
@@ -37,7 +37,7 @@ value will receive a separate vertex in the mesh before any mesh refinement.}
 \item{seed}{Random seed. Affects \code{\link[stats:kmeans]{stats::kmeans()}} determination of knot
 locations if \code{type = "kmeans"}.}
 
-\item{refine}{Logical or list to pass to \code{INLA::inla.mesh.create()}.}
+\item{refine}{Logical or list to pass to \code{\link[INLA:inla.mesh.create]{INLA::inla.mesh.create()}}.}
 
 \item{mesh}{An optional mesh created via INLA instead of using the above
 convenience options.}

@@ -11,6 +11,9 @@ sdmTMB(
   time = NULL,
   family = gaussian(link = "identity"),
   time_varying = NULL,
+  spatial = c("on", "off"),
+  spatiotemporal = c("IID", "AR1", "RW", "off"),
+  share_range = TRUE,
   weights = NULL,
   extra_time = NULL,
   reml = FALSE,
@@ -18,11 +21,10 @@ sdmTMB(
   anisotropy = FALSE,
   control = sdmTMBcontrol(),
   priors = sdmTMBpriors(),
-  fields = c("IID", "AR1", "RW"),
-  include_spatial = TRUE,
   spatial_trend = FALSE,
-  spatial_only = identical(length(unique(data[[time]])), 1L),
-  share_range = TRUE,
+  spatial_only,
+  fields,
+  include_spatial,
   previous_fit = NULL,
   epsilon_predictor = NULL,
   do_fit = TRUE,
@@ -48,19 +50,37 @@ one of the index or center of gravity functions over time.}
 
 \item{family}{The family and link. Supports \code{\link[=gaussian]{gaussian()}}, \code{\link[=Gamma]{Gamma()}},
 \code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, \code{\link[sdmTMB:families]{Beta()}},
-\code{\link[sdmTMB:families]{nbinom2()}}, and
+\code{\link[sdmTMB:families]{nbinom2()}},
+\code{\link[sdmTMB:families]{truncated_nbinom2()}},
+\code{\link[sdmTMB:families]{student()}}, and
 \code{\link[sdmTMB:families]{tweedie()}}]. For binomial family options,
 see the 'Binomial families' in the Details section below.}
 
-\item{time_varying}{An optional formula describing covariates that should be
-modelled as a random walk through time. Be careful not to include
+\item{time_varying}{An optional one-sided formula describing covariates that
+should be modelled as a random walk through time. Be careful not to include
 covariates (including the intercept) in both the main and time-varying
 formula. I.e., at least one should have \code{~ 0} or \code{~ -1}.}
 
+\item{spatial}{Estimate spatial random fields? Options are
+\code{'on'} / \code{'off'} or \code{TRUE} / \code{FALSE}.}
+
+\item{spatiotemporal}{Estimate the spatiotemporal random fields as \code{'IID'}
+(independent and identically distributed; default), stationary \code{'AR1'}
+(first-order autoregressive), as a random walk (\code{'RW'}), or as fixed at 0
+\code{'off'}. Will be set to \code{'off'} if \code{time = NULL}. Note that the
+spatiotemporal standard deviation represents the marginal steady-state
+standard deviation of the process in the case of the AR1. I.e., it is
+scaled according to the correlation. See the \href{https://kaskr.github.io/adcomp/classAR1__t.html}{TMB documentation}. If the AR1
+correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
+may wish to switch to the random walk \code{"RW"}. Capitalization is ignored.}
+
+\item{share_range}{Logical: estimate a shared spatial and spatiotemporal
+range parameter (\code{TRUE}) or independent range parameters (\code{FALSE}).}
+
 \item{weights}{Optional likelihood weights for the conditional model.
-Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
+Implemented as in \pkg{glmmTMB}. Weights do not have to sum
 to one and are not internally modified. Can also be used for trials with
-the binomial family. See Details below.}
+the binomial family. See the Details section below.}
 
 \item{extra_time}{Optional extra time slices (e.g., years) to include for
 interpolation or forecasting with the predict function. See the
@@ -68,41 +88,26 @@ Details section below.}
 
 \item{reml}{Logical: use REML (restricted maximum likelihood) estimation
 rather than maximum likelihood? Internally, this adds the fixed effects
-to the list of random effects to intetgrate over.}
+to the list of random effects to integrate over.}
 
 \item{silent}{Silent or include optimization details?}
 
 \item{anisotropy}{Logical: allow for anisotropy? See \code{\link[=plot_anisotropy]{plot_anisotropy()}}.}
 
-\item{control}{Optimization control options. See \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}.}
+\item{control}{Optimization control options via \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}.}
 
-\item{priors}{Optional penalties/priors. See \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}.}
-
-\item{fields}{Estimate the spatiotemporal random fields as \code{"IID"}
-(independent and identically distributed; default), stationary \code{"AR1"}
-(first-order autoregressive), or as a random walk (\code{"RW"}). Note that the
-spatiotemporal standard deviation represents the marginal steady-state
-standard deviation of the process in the case of the AR1. I.e., it is
-scaled according to the correlation. See the \href{https://kaskr.github.io/adcomp/classAR1__t.html}{TMB documentation}. If the AR1
-correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
-may wish to switch to the random walk \code{"RW"}.}
-
-\item{include_spatial}{Should a separate spatial random field be estimated?
-If enabled then there will be separate spatial and spatiotemporal
-fields.}
+\item{priors}{Optional penalties/priors via \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}.}
 
 \item{spatial_trend}{Should a separate spatial field be included in the
 trend that represents local time trends? Requires spatiotemporal data.
 See \doi{10.1111/ecog.05176} and the
 \href{https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.}
 
-\item{spatial_only}{Logical: should only a spatial model be fit (i.e., do not
-include spatiotemporal random effects)? By default a spatial-only model
-will be fit if there is only one unique value in the time column or the
-\code{time} argument is left at its default value of \code{NULL}.}
+\item{spatial_only}{\strong{Depreciated} Replaced by \code{spatiotemporal = "off"}}
 
-\item{share_range}{Logical: estimate a shared spatial and spatiotemporal
-range parameter (\code{TRUE}) or independent range parameters (\code{FALSE}).}
+\item{fields}{\strong{Depreciated} Replaced by \code{spatiotemporal}.}
+
+\item{include_spatial}{\strong{Depreciated} Replaced by \code{spatial}.}
 
 \item{previous_fit}{A previously fitted sdmTMB model to initialize the
 optimization with. Can greatly speed up fitting. Note that the data and
@@ -126,9 +131,9 @@ fitting (\code{FALSE})?}
 \item{...}{Not currently used.}
 }
 \description{
-Fit a spatial or spatiotemporal predictive-process GLMM with TMB. This can be
-useful for (dynamic) species distribution models and relative abundance index
-standardization among many other uses.
+Fit a spatial or spatiotemporal Gaussian Markov random field GLMM with TMB.
+This can be useful for (dynamic) species distribution models and relative
+abundance index standardization among many other uses.
 }
 \details{
 \strong{Model description}
@@ -173,7 +178,7 @@ seasonality, \code{+ s(month, bs = "cc", k = 12)}. Prior to version 0.0.18,
 A linear break-point relationship for a covariate can be included via
 \code{+ breakpt(variable)} in the formula, where \code{variable} is a single covariate
 corresponding to a column in \code{data}. In this case, the relationship is linear
-up to a point and then constant.
+up to a point and then constant (hockey-stick shaped).
 
 Similarly, a logistic-function threshold model can be included via
 \code{+ logistic(variable)}. This option models the relationship as a logistic
@@ -196,7 +201,7 @@ including extra time slices that the model remains identifiable. For example,
 including \code{+ as.factor(year)} in \code{formula} will render a model with no data
 to inform the expected value in a missing year. \code{\link[=sdmTMB]{sdmTMB()}} makes no attempt
 to determine if the model makes sense for forecasting or interpolation. The
-options \code{time_varying}, \code{fields = "RW"}, and \code{fields = "AR1"}
+options \code{time_varying}, \code{spatiotemporal = "rw"}, and \code{spatiotemporal = "ar1"}
 provide mechanisms to predict over missing time slices with process error.
 
 \strong{Index standardization}
@@ -211,10 +216,10 @@ You will need to specify the \code{time} argument. See \code{\link[=get_index]{g
 \strong{Regularization and priors}
 
 You can achieve regularization via penalties (priors) on the fixed effect
-parameters. See \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}. These should not include \code{offset} terms and
-care should be taken if used with splines. You can fit the model once without
-penalties and inspect the element \code{head(your_model$tmb_data$X_ij)} if you
-want to see how the formula is translated to the fixed effect model matrix.
+parameters. See \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}. These should not include \code{offset} terms.
+You can fit the model once without penalties and inspect the element
+\code{head(your_model$tmb_data$X_ij)} if you want to see how the formula is
+translated to the fixed effect model matrix.
 }
 \examples{
 if (inla_installed()) {
