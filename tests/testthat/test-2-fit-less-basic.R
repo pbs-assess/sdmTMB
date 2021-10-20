@@ -83,15 +83,16 @@ test_that("Year indexes get created correctly", {
   expect_identical(make_year_i(c(1, 4, 2)),    c(0L, 2L, 1L))
 })
 
-test_that("A spatial trend model fits", {
+test_that("A spatially varying coefficient model fits", {
   skip_on_cran()
   skip_on_ci()
   skip_if_not_installed("INLA")
   d <- subset(pcod, year >= 2011) # subset for speed
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
+  d$scaled_year <- (d$year - mean(d$year)) / sd(d$year)
   m <- sdmTMB(density ~ depth_scaled, data = d,
     spde = pcod_spde, family = tweedie(link = "log"),
-    spatial_trend = TRUE, time = "year")
+    spatial_trend = "scaled_year", time = "year")
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
 })
 
@@ -103,7 +104,7 @@ test_that("A logistic threshold model fits", {
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ 0 + as.factor(year) + logistic(depth_scaled), data = d,
     spde = pcod_spde, family = tweedie(link = "log"),
-    spatial_trend = FALSE, time = "year")
+    time = "year")
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
 })
 
@@ -115,7 +116,7 @@ test_that("A linear threshold model fits", {
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ 0 + as.factor(year) + breakpt(depth_scaled), data = d,
     spde = pcod_spde, family = tweedie(link = "log"),
-    spatial_trend = FALSE, time = "year")
+    time = "year")
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
 })
 
@@ -128,7 +129,7 @@ test_that("A time varying epsilon model works", {
   d$year_centered <- d$year - mean(d$year)
   m <- sdmTMB(density ~ 0 + as.factor(year) + breakpt(depth_scaled), data = d,
               spde = pcod_spde, family = tweedie(link = "log"),
-              spatial_trend = FALSE, time = "year",
+              time = "year",
               epsilon_predictor = "year_centered",
               control = sdmTMBcontrol(lower = list(b_epsilon = -1),upper = list(b_epsilon = 1)))
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))

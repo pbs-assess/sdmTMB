@@ -37,9 +37,7 @@ remotes::install_github("pbs-assess/sdmTMB")
 sdmTMB:
 
 -   Fits GLMMs with spatial, spatiotemporal, spatial and spatiotemporal,
-    or AR1 spatiotemporal Gaussian Markov random fields with TMB. It can
-    also fit spatially varying local trends through time as a random
-    field.
+    or AR1 spatiotemporal Gaussian Markov random fields with TMB.
 -   Uses formula interfaces for fixed effects and any time-varying
     effects (dynamic regression)
     (e.g. `formula = y ~ 1 + x1 + (1 | g), time_varying = ~ 0 + x2`),
@@ -47,6 +45,7 @@ sdmTMB:
     intercept, `x1` is a covariate with a constant effect, `(1 | g)` is
     a random intercept across groups `g`, and `x2` is a covariate with a
     time-varying effect.
+-   Can fit spatially varying coefficients as a random field.
 -   Can handle GAMs (generalized additive models) with penalized
     smoothers from mgcv. E.g., `y ~ s(x)`.
 -   Can handle linear breakpoint or logistic threshold fixed effects:

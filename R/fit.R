@@ -446,11 +446,12 @@ sdmTMB <- function(
   rw_fields <- identical("rw", tolower(spatiotemporal))
   assert_that(
     is.logical(reml), is.logical(anisotropy), is.logical(silent),
-    is.logical(silent), is.logical(spatial_trend), is.logical(mgcv),
+    is.logical(silent), is.logical(mgcv),
     is.logical(multiphase),
     is.logical(map_rf), is.logical(normalize)
   )
   assert_that(is.null(spatial_varying) || is.character(spatial_varying))
+  if (!is.null(spatial_varying)) assert_that(spatial_varying %in% names(data))
   assert_that(is.list(priors))
   if (!is.null(time_varying)) assert_that(identical(class(time_varying), "formula"))
   assert_that(is.list(.control))

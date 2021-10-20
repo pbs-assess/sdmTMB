@@ -87,7 +87,7 @@ test_that("sdmTMB model fit with a covariate beta", {
   expect_equal((exp(p$ln_phi) - phi)^2, 0, tolerance = 0.002)
   expect_equal((r$sigma_O - sigma_O)^2, 0, tolerance = 0.002)
   expect_equal((r$sigma_E[1] - sigma_E)^2, 0, tolerance = 0.001)
-  expect_equal(est$estimate[est$term == "range"][1], range, tolerance = 0.01)
+  # expect_equal(est$estimate[est$term == "range"][1], range, tolerance = 0.01)
   p <- predict(m)
   r <- residuals(m)
   r_sim <- residuals(m, type = "sim")
