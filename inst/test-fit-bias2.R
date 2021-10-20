@@ -45,7 +45,7 @@ out <- furrr::future_map(seq_len(100), function(i) {
     # family = Beta(),
     # family = poisson(),
     # family = Gamma(link = "log"),
-    thetaf = 1.5
+    tweedie_p = 1.5
   )
   m <- sdmTMB(
     observed ~ x1, data = s, spde = spde,
@@ -61,7 +61,7 @@ out <- furrr::future_map(seq_len(100), function(i) {
   )
 
   # e <- as.list(m$sd_report, "Estimate")
-  # thetaf <- plogis(e$thetaf) + 1
+  # tweedie_p <- plogis(e$thetaf) + 1
   est <- tidy(m, conf.int = TRUE)
   p <- as.list(m$model$par)
   r <- m$tmb_obj$report()
