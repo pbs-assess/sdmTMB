@@ -220,7 +220,7 @@ d$year_scaled <- as.numeric(scale(d$year))
 pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 m <- sdmTMB(data = d, formula = density ~ depth_scaled + depth_scaled2,
   spde = pcod_spde, family = tweedie(link = "log"),
-  spatial_varying = "year_scaled", time = "year", spatiotemporal = "off")
+  spatial_varying = ~ 0 + year_scaled, time = "year", spatiotemporal = "off")
 nd <- qcs_grid
 nd$year_scaled <- (nd$year - mean(d$year)) / sd(d$year)
 p <- predict(m, newdata = nd)

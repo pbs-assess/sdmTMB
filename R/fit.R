@@ -233,7 +233,8 @@ NULL
 #' @examples
 #' if (inla_installed()) {
 #'
-#' pcod_spde <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 25) # a coarse mesh for example speed
+#' # A coarse mesh for example speed:
+#' pcod_spde <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 25)
 #' plot(pcod_spde)
 #'
 #' # Tweedie:
@@ -265,14 +266,21 @@ NULL
 #'
 #' # Gaussian:
 #' pcod_gaus <- subset(pcod_2011, density > 0 & year >= 2013)
-#' pcod_spde_gaus <- make_mesh(pcod_gaus, c("X", "Y"), cutoff = 30)
+#' pcod_spde_gaus <- make_mesh(pcod_gaus, c("X", "Y"), cutoff = 20)
 #' m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
 #'   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
 #' print(m_pos)
 #'
-#' # With p-splines via mgcv:
-#' m_gam <- sdmTMB(log(density) ~ s(depth_scaled),
-#'   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
+#' # With penalized smoothers via mgcv:
+#' m_gam <- sdmTMB(log(density) ~ s(depth),
+#'   data = pcod_gaus, spde = pcod_spde_gaus
+#' )
+#'
+#' # Turning off all random fields (creating a regular GLM/GAM):
+#' m_gam <- sdmTMB(log(density) ~ s(depth),
+#'   data = pcod_gaus, spde = pcod_spde_gaus,
+#'   spatial = "off", spatiotemporal = "off"
+#' )
 #'
 #' # With IID random intercepts:
 #' # Simulate some data:
@@ -293,15 +301,13 @@ NULL
 #' tidy(m, "ran_pars", conf.int = TRUE) # see tau_G
 #' theta <- as.list(m$sd_report, "Estimate")
 #' plot(iid_re_vals, theta$RE)
-#' }
 #'
 #' \donttest{
-#' if (inla_installed()) {
 #'
-#' # Spatial-trend example:
+#' # Spatially varying coefficient (year) example:
 #' d <- pcod_2011
 #' d$year_scaled <- as.numeric(scale(d$year))
-#' m <- sdmTMB(density ~ depth_scaled, data = pcod_2011,
+#' m <- sdmTMB(density ~ depth_scaled, data = d,
 #'   spde = pcod_spde, family = tweedie(link = "log"),
 #'   spatial_varying = ~ 0 + year_scaled, time = "year")
 #' tidy(m, effects = "ran_par")
@@ -322,21 +328,21 @@ NULL
 #'     breakpt(depth_scaled) + depth_scaled2, data = pcod_gaus,
 #'   time = "year", spde = pcod_spde_gaus)
 #' print(m_pos)
-#'
-#' # Linear covariate on log(sigma_epsilon):
-#' # First we will center the years around their mean
-#' # to help with convergence. Also constrain the slope to be (-1, 1)
-#' # to help convergence (estimation is done in log-space)
-#' pcod_2011$year_centered <- pcod_2011$year - mean(pcod_2011$year)
-#' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-#'   data = pcod_2011, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-#'   epsilon_predictor = "year_centered",
-#'   control = sdmTMBcontrol(lower = list(b_epsilon = -1), upper = list(b_epsilon = 1)))
-#' print(m) # sigma_E varies with time now
-#'
-#' # coefficient is not yet in tidy.sdmTMB:
-#' as.list(m$sd_report, "Estimate", report = TRUE)$b_epsilon
-#' as.list(m$sd_report, "Std. Error", report = TRUE)$b_epsilon
+#
+# # Linear covariate on log(sigma_epsilon):
+# # First we will center the years around their mean
+# # to help with convergence. Also constrain the slope to be (-1, 1)
+# # to help convergence (estimation is done in log-space)
+# pcod_2011$year_centered <- pcod_2011$year - mean(pcod_2011$year)
+# m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+#   data = pcod_2011, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+#   epsilon_predictor = "year_centered",
+#   control = sdmTMBcontrol(lower = list(b_epsilon = -1), upper = list(b_epsilon = 1)))
+# print(m) # sigma_E varies with time now
+#
+# # coefficient is not yet in tidy.sdmTMB:
+# as.list(m$sd_report, "Estimate", report = TRUE)$b_epsilon
+# as.list(m$sd_report, "Std. Error", report = TRUE)$b_epsilon
 #' }
 #' }
 
@@ -392,8 +398,8 @@ sdmTMB <- function(
     }
   }
 
-  if (!include_spatial && spatiotemporal == "off") {
-    warning("Both spatial and spatiotemporal fields are set to 'off'.", call. = FALSE)
+  if (!include_spatial && spatiotemporal == "off" || !include_spatial && spatial_only) {
+    message("Both spatial and spatiotemporal fields are set to 'off'.")
     control$map_rf <- TRUE
   }
 

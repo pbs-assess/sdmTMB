@@ -77,13 +77,14 @@ should be modelled as a random walk through time. Be careful not to include
 covariates (including the intercept) in both the main and time-varying
 formula. I.e., at least one should have \code{~ 0} or \code{~ -1}.}
 
-\item{spatial_varying}{An optional column name (as character) of a predictor
-that the spatial field will act as a spatially varying coefficient. E.g.,
-if the time column, will represent a local-time-trend model.
-See \doi{10.1111/ecog.05176} and the
+\item{spatial_varying}{An optional one-sided formula \strong{with a single
+predictor} of a coefficient that should varying in space as a random
+field. Note that you may want to include a fixed effect for the same
+variable to improve interpretability. If the (scaled) time column, will
+represent a local-time-trend model. See \doi{10.1111/ecog.05176} and the
 \href{https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.
-Note this predictor should be centered to have mean zero
-and have a standard deviation of approximately 1 (scale by the SD).}
+Note this predictor should be centered to have mean zero and have a
+standard deviation of approximately 1 (scale by the SD).}
 
 \item{weights}{Optional likelihood weights for the conditional model.
 Implemented as in \pkg{glmmTMB}. Weights do not have to sum
@@ -219,7 +220,8 @@ translated to the fixed effect model matrix.
 \examples{
 if (inla_installed()) {
 
-pcod_spde <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 25) # a coarse mesh for example speed
+# A coarse mesh for example speed:
+pcod_spde <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 25)
 plot(pcod_spde)
 
 # Tweedie:
@@ -251,14 +253,21 @@ print(m)
 
 # Gaussian:
 pcod_gaus <- subset(pcod_2011, density > 0 & year >= 2013)
-pcod_spde_gaus <- make_mesh(pcod_gaus, c("X", "Y"), cutoff = 30)
+pcod_spde_gaus <- make_mesh(pcod_gaus, c("X", "Y"), cutoff = 20)
 m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
 print(m_pos)
 
-# With p-splines via mgcv:
-m_gam <- sdmTMB(log(density) ~ s(depth_scaled),
-  data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
+# With penalized smoothers via mgcv:
+m_gam <- sdmTMB(log(density) ~ s(depth),
+  data = pcod_gaus, spde = pcod_spde_gaus
+)
+
+# Turning off all random fields (creating a regular GLM/GAM):
+m_gam <- sdmTMB(log(density) ~ s(depth),
+  data = pcod_gaus, spde = pcod_spde_gaus,
+  spatial = "off", spatiotemporal = "off"
+)
 
 # With IID random intercepts:
 # Simulate some data:
@@ -279,17 +288,15 @@ print(m)
 tidy(m, "ran_pars", conf.int = TRUE) # see tau_G
 theta <- as.list(m$sd_report, "Estimate")
 plot(iid_re_vals, theta$RE)
-}
 
 \donttest{
-if (inla_installed()) {
 
-# Spatial-trend example:
+# Spatially varying coefficient (year) example:
 d <- pcod_2011
 d$year_scaled <- as.numeric(scale(d$year))
-m <- sdmTMB(density ~ depth_scaled, data = pcod_2011,
+m <- sdmTMB(density ~ depth_scaled, data = d,
   spde = pcod_spde, family = tweedie(link = "log"),
-  spatial_varying = "year_scaled", time = "year")
+  spatial_varying = ~ 0 + year_scaled, time = "year")
 tidy(m, effects = "ran_par")
 
 # Time-varying effects of depth and depth squared:
@@ -308,21 +315,6 @@ m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) +
     breakpt(depth_scaled) + depth_scaled2, data = pcod_gaus,
   time = "year", spde = pcod_spde_gaus)
 print(m_pos)
-
-# Linear covariate on log(sigma_epsilon):
-# First we will center the years around their mean
-# to help with convergence. Also constrain the slope to be (-1, 1)
-# to help convergence (estimation is done in log-space)
-pcod_2011$year_centered <- pcod_2011$year - mean(pcod_2011$year)
-m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-  data = pcod_2011, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-  epsilon_predictor = "year_centered",
-  control = sdmTMBcontrol(lower = list(b_epsilon = -1), upper = list(b_epsilon = 1)))
-print(m) # sigma_E varies with time now
-
-# coefficient is not yet in tidy.sdmTMB:
-as.list(m$sd_report, "Estimate", report = TRUE)$b_epsilon
-as.list(m$sd_report, "Std. Error", report = TRUE)$b_epsilon
 }
 }
 }
