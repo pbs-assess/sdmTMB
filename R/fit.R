@@ -151,7 +151,7 @@ NULL
 #' See the
 #' [threshold vignette](https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html).
 #'
-#' **Forecasting or interpolating**
+#' **Extra time: forecasting or interpolating**
 #'
 #' Extra time slices (e.g., years) can be included for interpolation or
 #' forecasting with the predict function via the `extra_time` argument. The
@@ -161,8 +161,12 @@ NULL
 #' including `+ as.factor(year)` in `formula` will render a model with no data
 #' to inform the expected value in a missing year. [sdmTMB()] makes no attempt
 #' to determine if the model makes sense for forecasting or interpolation. The
-#' options `time_varying`, `spatiotemporal = "rw"`, and `spatiotemporal = "ar1"`
+#' options `time_varying`, `spatiotemporal = "RW"`, and `spatiotemporal = "AR1"`
 #' provide mechanisms to predict over missing time slices with process error.
+#'
+#' `extra_time` can also be used to fill in missing time steps for the purposes
+#' of a random walk or AR1 spatiotemporal field if their inclusion makes the gaps
+#' between time steps even.
 #'
 #' **Index standardization**
 #'
