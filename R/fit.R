@@ -3,9 +3,9 @@ NULL
 
 #' Fit a spatial or spatiotemporal GLMM with TMB
 #'
-#' Fit a spatial or spatiotemporal predictive-process GLMM with TMB. This can be
-#' useful for (dynamic) species distribution models and relative abundance index
-#' standardization among many other uses.
+#' Fit a spatial or spatiotemporal Gaussian Markov random field GLMM with TMB.
+#' This can be useful for (dynamic) species distribution models and relative
+#' abundance index standardization among many other uses.
 #'
 #' @param formula Model formula. See the Details section below for how to specify
 #'   offsets and threshold parameters. For index standardization, you may wish
@@ -21,49 +21,50 @@ NULL
 #'   one of the index or center of gravity functions over time.
 #' @param family The family and link. Supports [gaussian()], [Gamma()],
 #'   [binomial()], [poisson()], \code{\link[sdmTMB:families]{Beta()}},
-#'   \code{\link[sdmTMB:families]{nbinom2()}}, and
+#'   \code{\link[sdmTMB:families]{nbinom2()}},
+#'   \code{\link[sdmTMB:families]{truncated_nbinom2()}},
+#'   \code{\link[sdmTMB:families]{student()}}, and
 #'   \code{\link[sdmTMB:families]{tweedie()}}]. For binomial family options,
 #'   see the 'Binomial families' in the Details section below.
-#' @param time_varying An optional formula describing covariates that should be
-#'   modelled as a random walk through time. Be careful not to include
+#' @param time_varying An optional one-sided formula describing covariates that
+#'   should be modelled as a random walk through time. Be careful not to include
 #'   covariates (including the intercept) in both the main and time-varying
 #'   formula. I.e., at least one should have `~ 0` or `~ -1`.
-#' @param weights Optional likelihood weights for the conditional model.
-#'   Implemented as in \pkg{glmmTMB}. In other words, weights do not have to sum
-#'   to one and are not internally modified. Can also be used for trials with
-#'   the binomial family. See Details below.
-#' @param extra_time Optional extra time slices (e.g., years) to include for
-#'   interpolation or forecasting with the predict function. See the
-#'   Details section below.
-#' @param reml Logical: use REML (restricted maximum likelihood) estimation
-#'   rather than maximum likelihood? Internally, this adds the fixed effects
-#'   to the list of random effects to intetgrate over.
-#' @param silent Silent or include optimization details?
-#' @param anisotropy Logical: allow for anisotropy? See [plot_anisotropy()].
-#' @param control Optimization control options. See [sdmTMBcontrol()].
-#' @param priors Optional penalties/priors. See [sdmTMBpriors()].
-#' @param fields Estimate the spatiotemporal random fields as `"IID"`
-#'   (independent and identically distributed; default), stationary `"AR1"`
-#'   (first-order autoregressive), or as a random walk (`"RW"`). Note that the
+#' @param spatial Estimate spatial random fields? Options are
+#'   `'on'` / `'off'` or `TRUE` / `FALSE`.
+#' @param spatiotemporal Estimate the spatiotemporal random fields as `'IID'`
+#'   (independent and identically distributed; default), stationary `'AR1'`
+#'   (first-order autoregressive), as a random walk (`'RW'`), or as fixed at 0
+#'   `'off'`. Will be set to `'off'` if `time = NULL`. Note that the
 #'   spatiotemporal standard deviation represents the marginal steady-state
 #'   standard deviation of the process in the case of the AR1. I.e., it is
 #'   scaled according to the correlation. See the [TMB
 #'   documentation](https://kaskr.github.io/adcomp/classAR1__t.html). If the AR1
 #'   correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
-#'   may wish to switch to the random walk `"RW"`.
-#' @param include_spatial Should a separate spatial random field be estimated?
-#'   If enabled then there will be separate spatial and spatiotemporal
-#'   fields.
+#'   may wish to switch to the random walk `"RW"`. Capitalization is ignored.
+#' @param share_range Logical: estimate a shared spatial and spatiotemporal
+#'   range parameter (`TRUE`) or independent range parameters (`FALSE`).
+#' @param weights Optional likelihood weights for the conditional model.
+#'   Implemented as in \pkg{glmmTMB}. Weights do not have to sum
+#'   to one and are not internally modified. Can also be used for trials with
+#'   the binomial family. See the Details section below.
+#' @param extra_time Optional extra time slices (e.g., years) to include for
+#'   interpolation or forecasting with the predict function. See the
+#'   Details section below.
+#' @param reml Logical: use REML (restricted maximum likelihood) estimation
+#'   rather than maximum likelihood? Internally, this adds the fixed effects
+#'   to the list of random effects to integrate over.
+#' @param silent Silent or include optimization details?
+#' @param anisotropy Logical: allow for anisotropy? See [plot_anisotropy()].
+#' @param control Optimization control options via [sdmTMBcontrol()].
+#' @param priors Optional penalties/priors via [sdmTMBpriors()].
 #' @param spatial_trend Should a separate spatial field be included in the
 #'   trend that represents local time trends? Requires spatiotemporal data.
 #'   See \doi{10.1111/ecog.05176} and the
 #'   [spatial trends vignette](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html).
-#' @param spatial_only Logical: should only a spatial model be fit (i.e., do not
-#'   include spatiotemporal random effects)? By default a spatial-only model
-#'   will be fit if there is only one unique value in the time column or the
-#'   `time` argument is left at its default value of `NULL`.
-#' @param share_range Logical: estimate a shared spatial and spatiotemporal
-#'   range parameter (`TRUE`) or independent range parameters (`FALSE`).
+#' @param fields **Depreciated** Replaced by `spatiotemporal`.
+#' @param include_spatial **Depreciated** Replaced by `spatial`.
+#' @param spatial_only **Depreciated** Replaced by `spatiotemporal = "off"`
 #' @param previous_fit A previously fitted sdmTMB model to initialize the
 #'   optimization with. Can greatly speed up fitting. Note that the data and
 #'   model must be set up *exactly* the same way. However, the `weights` argument
@@ -130,7 +131,7 @@ NULL
 #' A linear break-point relationship for a covariate can be included via
 #' `+ breakpt(variable)` in the formula, where `variable` is a single covariate
 #' corresponding to a column in `data`. In this case, the relationship is linear
-#' up to a point and then constant.
+#' up to a point and then constant (hockey-stick shaped).
 #'
 #' Similarly, a logistic-function threshold model can be included via
 #' `+ logistic(variable)`. This option models the relationship as a logistic
@@ -153,7 +154,7 @@ NULL
 #' including `+ as.factor(year)` in `formula` will render a model with no data
 #' to inform the expected value in a missing year. [sdmTMB()] makes no attempt
 #' to determine if the model makes sense for forecasting or interpolation. The
-#' options `time_varying`, `fields = "RW"`, and `fields = "AR1"`
+#' options `time_varying`, `spatiotemporal = "rw"`, and `spatiotemporal = "ar1"`
 #' provide mechanisms to predict over missing time slices with process error.
 #'
 #' **Index standardization**
@@ -168,10 +169,10 @@ NULL
 #' **Regularization and priors**
 #'
 #' You can achieve regularization via penalties (priors) on the fixed effect
-#' parameters. See [sdmTMBpriors()]. These should not include `offset` terms and
-#' care should be taken if used with splines. You can fit the model once without
-#' penalties and inspect the element `head(your_model$tmb_data$X_ij)` if you
-#' want to see how the formula is translated to the fixed effect model matrix.
+#' parameters. See [sdmTMBpriors()]. These should not include `offset` terms.
+#' You can fit the model once without penalties and inspect the element
+#' `head(your_model$tmb_data$X_ij)` if you want to see how the formula is
+#' translated to the fixed effect model matrix.
 #'
 #' @references
 #'
@@ -330,22 +331,57 @@ NULL
 #' }
 #' }
 
-sdmTMB <- function(formula, data, spde, time = NULL,
+sdmTMB <- function(
+  formula,
+  data,
+  spde,
+  time = NULL,
   family = gaussian(link = "identity"),
-  time_varying = NULL, weights = NULL, extra_time = NULL, reml = FALSE,
-  silent = TRUE, anisotropy = FALSE,
+  time_varying = NULL,
+  spatial = c("on", "off"),
+  spatiotemporal = c("IID", "AR1", "RW", "off"),
+  share_range = TRUE,
+  weights = NULL,
+  extra_time = NULL,
+  reml = FALSE,
+  silent = TRUE,
+  anisotropy = FALSE,
   control = sdmTMBcontrol(),
   priors = sdmTMBpriors(),
-  fields = c("IID", "AR1", "RW"),
-  include_spatial = TRUE,
   spatial_trend = FALSE,
-  spatial_only = identical(length(unique(data[[time]])), 1L),
-  share_range = TRUE,
+  spatial_only,
+  fields,
+  include_spatial,
   previous_fit = NULL,
   epsilon_predictor = NULL,
   do_fit = TRUE,
   ...
   ) {
+
+  spatiotemporal <- match.arg(tolower(spatiotemporal), choices = c("iid", "ar1", "rw", "off"))
+  if (!missing(spatial_only)) {
+    warning("`spatial_only` is depreciated; please use `spatiotemporal = 'off'`. Setting `spatiotemporal = 'off'` for now.",  call. = FALSE)
+  } else {
+    if (identical(length(unique(data[[time]])), 1L) || spatiotemporal == "off") {
+      spatial_only <- TRUE
+    } else {
+      spatial_only <- FALSE
+    }
+  }
+  if (!missing(fields)) {
+    warning("`fields` is depreciated; please use `spatiotemporal`. Setting `spatiotemporal = fields` for now.",  call. = FALSE)
+    spatiotemporal <- tolower(fields)
+  }
+  if (!missing(include_spatial)) {
+    warning("`include_spatial` is depreciated; please use the `spatial` argument. Setting `spatial = include_spatial` for now.",  call. = FALSE)
+  } else {
+    if (!is.logical(spatial[[1]])) spatial <- match.arg(tolower(spatial))
+    if (identical(spatial, "on") || isTRUE(spatial)) {
+      include_spatial <- TRUE
+    } else {
+      include_spatial <- FALSE
+    }
+  }
 
   normalize <- control$normalize
   nlminb_loops <- control$nlminb_loops
@@ -363,9 +399,9 @@ sdmTMB <- function(formula, data, spde, time = NULL,
 
   if ("ar1_fields" %in% names(dots)) {
     warning("`ar1_fields` is depreciated and is now specified via the ",
-      "`fields` argument. Setting `fields = 'AR1'` for you for now if `ar1_fields = TRUE`.",
+      "`spatiotemporal` argument. Setting `spatiotemporal = 'AR1'` for you for now if `ar1_fields = TRUE`.",
       call. = FALSE)
-    fields <- if (dots$ar1_fields) "AR1" else "IID"
+    spatiotemporal <- if (dots$ar1_fields) "ar1" else "iid"
     dots$ar1_fields <- NULL
   }
   if ("penalties" %in% names(dots)) {
@@ -389,9 +425,8 @@ sdmTMB <- function(formula, data, spde, time = NULL,
       "`sdmTMBcontrol()` list.", call. = FALSE)
   }
 
-  fields <- match.arg(fields)
-  ar1_fields <- identical("AR1", fields)
-  rw_fields <- identical("RW", fields)
+  ar1_fields <- identical("ar1", tolower(spatiotemporal))
+  rw_fields <- identical("rw", tolower(spatiotemporal))
   assert_that(
     is.logical(reml), is.logical(anisotropy), is.logical(silent),
     is.logical(silent), is.logical(spatial_trend), is.logical(mgcv),
