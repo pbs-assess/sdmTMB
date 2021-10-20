@@ -44,13 +44,15 @@ NULL
 #'   should be modelled as a random walk through time. Be careful not to include
 #'   covariates (including the intercept) in both the main and time-varying
 #'   formula. I.e., at least one should have `~ 0` or `~ -1`.
-#' @param spatial_varying An optional column name (as character) of a predictor
-#'   that the spatial field will act as a spatially varying coefficient. E.g.,
-#'   if the time column, will represent a local-time-trend model.
-#'   See \doi{10.1111/ecog.05176} and the
-#'   [spatial trends vignette](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html).
-#'   Note this predictor should be centered to have mean zero
-#'   and have a standard deviation of approximately 1 (scale by the SD).
+#' @param spatial_varying An optional one-sided formula **with a single
+#'   predictor** of a coefficient that should varying in space as a random
+#'   field. Note that you may want to include a fixed effect for the same
+#'   variable to improve interpretability. If the (scaled) time column, will
+#'   represent a local-time-trend model. See \doi{10.1111/ecog.05176} and the
+#'   [spatial trends
+#'   vignette](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html).
+#'    Note this predictor should be centered to have mean zero and have a
+#'   standard deviation of approximately 1 (scale by the SD).
 #' @param weights Optional likelihood weights for the conditional model.
 #'   Implemented as in \pkg{glmmTMB}. Weights do not have to sum
 #'   to one and are not internally modified. Can also be used for trials with
@@ -89,7 +91,7 @@ NULL
 #' @param ... Not currently used.
 #' @importFrom methods as is
 #' @importFrom mgcv s t2
-#' @importFrom stats gaussian model.frame model.matrix
+#' @importFrom stats gaussian model.frame model.matrix as.formula
 #'   model.response terms model.offset
 #'
 #' @details
@@ -301,7 +303,7 @@ NULL
 #' d$year_scaled <- as.numeric(scale(d$year))
 #' m <- sdmTMB(density ~ depth_scaled, data = pcod_2011,
 #'   spde = pcod_spde, family = tweedie(link = "log"),
-#'   spatial_varying = "year_scaled", time = "year")
+#'   spatial_varying = ~ 0 + year_scaled, time = "year")
 #' tidy(m, effects = "ran_par")
 #'
 #' # Time-varying effects of depth and depth squared:
@@ -450,8 +452,7 @@ sdmTMB <- function(
     is.logical(multiphase),
     is.logical(map_rf), is.logical(normalize)
   )
-  assert_that(is.null(spatial_varying) || is.character(spatial_varying))
-  if (!is.null(spatial_varying)) assert_that(spatial_varying %in% names(data))
+  if (!is.null(spatial_varying)) assert_that(class(spatial_varying) == "formula")
   assert_that(is.list(priors))
   if (!is.null(time_varying)) assert_that(identical(class(time_varying), "formula"))
   assert_that(is.list(.control))
@@ -496,8 +497,13 @@ sdmTMB <- function(
   }
 
   if (!is.null(spatial_varying)) {
-    z_i <- data[[spatial_varying]]
-    if (abs(mean(z_i, na.rm = TRUE)) > 0.001)
+    temp <- model.matrix(spatial_varying, data)
+    .int <- grep("(Intercept)", colnames(temp))
+    if (sum(.int) > 0) temp <- temp[,-.int,drop=FALSE]
+    if (ncol(temp) > 1L) stop("`spatial_varying` should only have 1 covariate.", call. = FALSE)
+    z_i <- as.numeric(temp[,1,drop=TRUE])
+    spatial_varying <- colnames(temp)[[1]]
+    if (abs(mean(z_i, na.rm = TRUE)) > 0.01)
       warning("`spatial_varying` may not be mean-centered.", call. = FALSE)
   } else {
     z_i <- rep(0, nrow(data))

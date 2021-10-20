@@ -48,15 +48,17 @@ First, we will set up a column for time that is Normal(0, 1) to help with estima
 
 ```{r}
 d <- pcod
-d$scaled_year <- (pcod$year - mean(pcod$year)) / sd(pcod$year)
+d$scaled_year <- (pcod$year - mean(pcod$year)) / sd(pcod$year) + 3
 ```
 
-Now fit a model using `spatial_varying = "scaled_year"`:
+Now fit a model using `spatial_varying ~ 0 + scaled_year`:
+
+(The `0 +` drops the intercept, although sdmTMB would take care of that anyways here.)
 
 ```{r}
 m1 <- sdmTMB(density ~ scaled_year, data = d,
   spde = pcod_spde, family = tweedie(link = "log"),
-  spatial_varying = "scaled_year", time = "year",
+  spatial_varying = ~ 0 + scaled_year, time = "year",
   spatiotemporal = "off")
 ```
 
