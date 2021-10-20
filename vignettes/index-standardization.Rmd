@@ -37,14 +37,14 @@ Let's perform index standardization with the built-in data for Pacific cod.
 glimpse(pcod)
 ```
 
-First we will create our SPDE mesh. We will use 100 knots for a balance between speed and accuracy in this vignette. You will likely want to use more for applied scenarios. You will want to make sure that increasing the number of knots does not change the conclusions.
+First we will create our SPDE mesh. We will a relatively course mesh for a balance between speed and accuracy in this vignette (`cutoff = 10` where cutoff is in the units of X and Y (km here) and represents the minimum distance between points before a new mesh vertex is added). You will likely want to use a higher resolution mesh for applied scenarios. You will want to make sure that increasing the number of knots does not change the conclusions.
 
 ```{r spde, fig.asp=0.8}
 pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
 plot(pcod_spde)
 ```
 
-Let's fit a GLMM. Note that if we want to use this model for index standardization then we need to include `0 + as.factor(year)` or `-1 + as.factor(year)` so that we have a factor predictor that represents the mean estimate for each time slice.
+Let's fit a GLMM. Note that if you want to use this model for index standardization then you will likely want to include `0 + as.factor(year)` or `-1 + as.factor(year)` so that there is a factor predictor that represents the mean estimate for each time slice.
 
 ```{r model}
 m <- sdmTMB(
@@ -161,3 +161,32 @@ mutate(index, region = "all") %>%
   geom_line(aes(colour = region)) +
   geom_ribbon(aes(ymin = lwr, ymax = upr, fill = region), alpha = 0.4)
 ```
+
+## Simulation-based indices
+
+An alternative is to generate our index via simulation from the joint precision matrix. This can be much faster than using `bias_correct = TRUE` in `get_index()`. Note that this approach is still preliminary. We have yet to find a situation where it does not match what you would get out of bias-corrected generalized-delta-method standard errors for this class of models, but use the approach at your own risk.
+
+```{r pred-sims}
+pred_sims <- predict(m, newdata = qcs_grid, sims = 500)
+dim(pred_sims)
+```
+
+`pred_sims` is just a matrix with width `sims` and a row for each row of data that was predicted on. You can process this matrix however you would like. For example, we can now calculate spatial uncertainty quickly:
+
+```{r sims-cv-plot, cache=FALSE, fig.height=4, fig.width=4, out.width="3.5in", echo=TRUE}
+qcs_grid$cv <- apply(pred_sims, 1, function(x) sd(exp(x)) / mean(exp(x)))
+ggplot(subset(qcs_grid, year == 2011), aes(X, Y, fill = cv)) + # 2011 as an example
+    geom_raster() + facet_wrap(~year) +
+    coord_fixed() + scale_fill_viridis_c(trans = "log10")
+```
+
+Calculate the index from these simulation draws:
+
+```{r index, cache=TRUE, fig.height=2.5, fig.width=4, out.width="3.5in"}
+qcs_grid$area <- 4 # all 2 x 2km
+ind_sims <- get_index_sims(pred_sims, area = qcs_grid$area)
+ggplot(ind_sims, aes(year, est)) + geom_line() +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4) +
+  ylab("Biomass (kg)")
+```
+
