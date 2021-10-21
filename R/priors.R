@@ -144,7 +144,7 @@ mvnormal <- function(location = 0, scale = diag(length(location))) {
 #' # - Matern PC priors on spatial `matern_s` and spatiotemporal
 #' #   `matern_st` random field parameters
 #' m <- sdmTMB(density ~ s(depth, k = 3),
-#'   data = d, spde = pcod_spde, family = tweedie(),
+#'   data = d, mesh = pcod_spde, family = tweedie(),
 #'   share_range = FALSE, time = "year",
 #'   priors = sdmTMBpriors(
 #'     phi = halfnormal(0, 10),
@@ -158,7 +158,7 @@ mvnormal <- function(location = 0, scale = diag(length(location))) {
 #' # - no prior on the dispersion parameter `phi`
 #' # - Matern PC prior
 #' m <- sdmTMB(density ~ depth_scaled,
-#'   data = d, spde = pcod_spde, family = tweedie(),
+#'   data = d, mesh = pcod_spde, family = tweedie(),
 #'   spatiotemporal = "off",
 #'   priors = sdmTMBpriors(
 #'     b = normal(c(NA, 0), c(NA, 1)),
@@ -169,7 +169,7 @@ mvnormal <- function(location = 0, scale = diag(length(location))) {
 #' # You get a prior, you get a prior, you get a prior!
 #' # (except on the annual means; see the `NA`s)
 #' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-#'   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+#'   data = d, time = "year", mesh = pcod_spde, family = tweedie(link = "log"),
 #'   share_range = FALSE, spatiotemporal = "AR1",
 #'   priors = sdmTMBpriors(
 #'     b = normal(c(0, 0, NA, NA, NA), c(2, 2, NA, NA, NA)),

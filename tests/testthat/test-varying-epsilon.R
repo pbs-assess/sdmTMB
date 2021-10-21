@@ -10,7 +10,7 @@ test_that("Epsilon models work with RW spatiotemporal fields", {
   m1 <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     data = pcod_2011,
     time = "year",
-    spde = pcod_spde,
+    mesh = pcod_spde,
     family = tweedie(link = "log"),
     spatiotemporal = "RW"
   )
@@ -24,7 +24,7 @@ test_that("Epsilon models work with RW spatiotemporal fields", {
   m2 <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     data = pcod_2011,
     time = "year",
-    spde = pcod_spde,
+    mesh = pcod_spde,
     family = tweedie(link = "log"),
     epsilon_predictor = "dummy",
     control = sdmTMBcontrol(
@@ -50,7 +50,7 @@ test_that("Epsilon models work with AR1 spatiotemporal fields", {
   m1 <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     data = pcod_2011,
     time = "year",
-    spde = pcod_spde,
+    mesh = pcod_spde,
     family = tweedie(link = "log"),
     spatiotemporal = "AR1"
   )
@@ -64,7 +64,7 @@ test_that("Epsilon models work with AR1 spatiotemporal fields", {
   m2 <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     data = pcod_2011,
     time = "year",
-    spde = pcod_spde,
+    mesh = pcod_spde,
     family = tweedie(link = "log"),
     epsilon_predictor = "dummy",
     control = sdmTMBcontrol(

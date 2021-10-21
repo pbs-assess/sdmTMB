@@ -15,7 +15,7 @@
 #' m <- sdmTMB(
 #'  data = pcod,
 #'  formula = density ~ 0 + as.factor(year),
-#'  time = "year", spde = pcod_spde, family = tweedie(link = "log")
+#'  time = "year", mesh = pcod_spde, family = tweedie(link = "log")
 #' )
 #' # Note `return_tmb_object = TRUE` and the prediction grid:
 #' predictions <- predict(m, newdata = qcs_grid, return_tmb_object = TRUE)

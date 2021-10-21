@@ -57,7 +57,7 @@ Now fit a model using `spatial_varying ~ 0 + scaled_year`:
 
 ```{r}
 m1 <- sdmTMB(density ~ scaled_year, data = d,
-  spde = pcod_spde, family = tweedie(link = "log"),
+  mesh = pcod_spde, family = tweedie(link = "log"),
   spatial_varying = ~ 0 + scaled_year, time = "year",
   spatiotemporal = "off")
 ```

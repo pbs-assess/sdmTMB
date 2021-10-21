@@ -22,7 +22,7 @@ long-format data frame. The format matches the format in the \pkg{tidybayes}
 \examples{
 if (inla_installed()) {
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2,
-  data = pcod_2011, spde = pcod_mesh_2011, family = tweedie(link = "log"),
+  data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(link = "log"),
   spatiotemporal = "AR1", time = "year")
 head(spread_sims(m, n_sims = 10))
 head(gather_sims(m, n_sims = 10))

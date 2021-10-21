@@ -27,7 +27,7 @@ test_that("Prior fitting works", {
 
   # no priors
   m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-    data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+    data = d, time = "year", mesh = pcod_spde, family = tweedie(link = "log"),
     spatiotemporal = "AR1",
     share_range = FALSE
   )
@@ -36,7 +36,7 @@ test_that("Prior fitting works", {
   expect_error(
     {
       mp <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-        data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+        data = d, time = "year", mesh = pcod_spde, family = tweedie(link = "log"),
         share_range = FALSE, spatiotemporal = "AR1",
         priors = sdmTMBpriors(
           b = normal(c(0, 0, NA, NA, NA), c(2, 2, NA, NA, NA))
@@ -48,7 +48,7 @@ test_that("Prior fitting works", {
 
   # all the priors
   mp <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-    data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+    data = d, time = "year", mesh = pcod_spde, family = tweedie(link = "log"),
     share_range = FALSE, spatiotemporal = "AR1",
     priors = sdmTMBpriors(
       b = normal(c(0, 0, NA, NA, NA, NA), c(2, 2, NA, NA, NA, NA)),
@@ -75,26 +75,26 @@ test_that("Additional priors work", {
 
   # univariate normal priors
   m_norm <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-    data = d, spde = pcod_spde, family = tweedie(link = "log"),
+    data = d, mesh = pcod_spde, family = tweedie(link = "log"),
     priors = sdmTMBpriors(b = normal(rep(0, 6), rep(1, 6))),
     control = sdmTMBcontrol(map_rf = TRUE)
   )
   expect_identical(class(m_norm), "sdmTMB")
   m_mvn <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-    data = d, spde = pcod_spde, family = tweedie(link = "log"),
+    data = d, mesh = pcod_spde, family = tweedie(link = "log"),
     priors = sdmTMBpriors(b = mvnormal(rep(0, 6), diag(1, 6))),
     control = sdmTMBcontrol(map_rf = TRUE)
   )
   expect_identical(class(m_mvn), "sdmTMB")
   m_mvn_na <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-    data = d, spde = pcod_spde, family = tweedie(link = "log"),
+    data = d, mesh = pcod_spde, family = tweedie(link = "log"),
     priors = sdmTMBpriors(b = mvnormal(c(NA, 0, 0, 0, 0, 0), diag(1, 6))),
     control = sdmTMBcontrol(map_rf = TRUE)
   )
   expect_identical(class(m_mvn_na), "sdmTMB")
 
   m_norm_na <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-    data = d, spde = pcod_spde, family = tweedie(link = "log"),
+    data = d, mesh = pcod_spde, family = tweedie(link = "log"),
     priors = sdmTMBpriors(b = normal(c(NA, rep(0, 5)), c(NA, rep(1, 5)))),
     control = sdmTMBcontrol(map_rf = TRUE)
   )

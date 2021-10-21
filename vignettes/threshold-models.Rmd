@@ -57,7 +57,7 @@ where $\psi$ is a scaling parameter (controlling the height of the y-axis for th
 m <- sdmTMB(
   data = pcod,
   formula = density ~ 0 + logistic(depth_scaled) + as.factor(year),
-  time = "year", spde = pcod_spde,
+  time = "year", mesh = pcod_spde,
   family = tweedie(link = "log")
 )
 ```
@@ -89,7 +89,7 @@ Next, we can try to fit the same model but use a linear breakpoint / cutpoint mo
 m <- sdmTMB(
   data = pcod,
   formula = density ~ 0 + breakpt(depth_scaled) + as.factor(year),
-  time = "year", spde = pcod_spde,
+  time = "year", mesh = pcod_spde,
   family = tweedie(link = "log")
 )
 ```

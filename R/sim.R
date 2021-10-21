@@ -63,7 +63,7 @@
 #' mesh <- make_mesh(s, xy_cols = c("x", "y"), cutoff = 0.1)
 #' m <- sdmTMB(
 #'   data = s, formula = observed ~ x1,
-#'   time = "time", spde = mesh,
+#'   time = "time", mesh = mesh,
 #'   spatiotemporal = "AR1", spatial = "off"
 #' )
 #' tidy(m, conf.int = TRUE)

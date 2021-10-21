@@ -43,7 +43,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'
 #' @param formula Model formula.
 #' @param data A data frame.
-#' @param spde Output from [make_mesh()]. If supplied, the mesh will be constant
+#' @param mesh Output from [make_mesh()]. If supplied, the mesh will be constant
 #'   across folds.
 #' @param mesh_args Arguments for [make_mesh()]. If supplied, the mesh will be
 #'   reconstruncted for each fold.
@@ -57,6 +57,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'   parallel.
 #' @param use_initial_fit Fit the first fold and use those parameter values
 #'   as starting values for subsequent folds? Can be faster with many folds.
+#' @param spde **Depreciated.** Use `mesh` instead.
 #' @param ... All other arguments required to run [sdmTMB()] model with the
 #'   exception of `weights`, which are used to define the folds.
 #'
@@ -76,14 +77,14 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'
 #' @examples
 #' if (inla_installed()) {
-#' spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
+#' mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 #'
 #' # Set parallel processing if desired:
 #' # library(future)
 #' # plan(multisession)
 #' m_cv <- sdmTMB_cv(
 #'   density ~ 0 + depth_scaled + depth_scaled2,
-#'   data = pcod, spde = spde,
+#'   data = pcod, mesh = mesh,
 #'   family = tweedie(link = "log"), k_folds = 2
 #' )
 #'
@@ -108,18 +109,23 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' # Use fold_ids:
 #' m_cv3 <- sdmTMB_cv(
 #'   density ~ 0 + depth_scaled + depth_scaled2,
-#'   data = pcod, spde = spde,
+#'   data = pcod, mesh = mesh,
 #'   family = tweedie(link = "log"),
 #'   fold_ids = rep(seq(1, 3), nrow(pcod))[seq(1, nrow(pcod))]
 #' )
 #' }
 #' }
-sdmTMB_cv <- function(formula, data, mesh_args, spde, time = NULL,
+sdmTMB_cv <- function(formula, data, mesh_args, mesh, time = NULL,
   k_folds = 8, fold_ids = NULL, parallel = TRUE,
-  use_initial_fit = FALSE,
+  use_initial_fit = FALSE, spde,
   ...) {
   if (k_folds < 1) stop("`k_folds` must be >= 1.", call. = FALSE)
 
+  if (!missing(spde)) {
+    warning("`spde` is depreciated; please use `mesh` instead.",  call. = FALSE)
+  } else {
+    spde <- mesh
+  }
   data[["_sdm_order_"]] <- seq_len(nrow(data))
   stopifnot(!missing(mesh_args) || !missing(spde))
   stopifnot(!(!missing(mesh_args) && !missing(spde)))
@@ -184,7 +190,7 @@ sdmTMB_cv <- function(formula, data, mesh_args, spde, time = NULL,
       dat_fit <- data
     }
     fit1 <- sdmTMB(
-      data = dat_fit, formula = formula, time = time, spde = mesh,
+      data = dat_fit, formula = formula, time = time, mesh = mesh,
       weights = weights, ...
     )
   }
@@ -206,7 +212,7 @@ sdmTMB_cv <- function(formula, data, mesh_args, spde, time = NULL,
       }
       dot_args <- as.list(substitute(list(...)))[-1L] # re-evaluate here! issue #54
       args <- c(list(
-        data = dat_fit, formula = formula, time = time, spde = mesh,
+        data = dat_fit, formula = formula, time = time, mesh = mesh,
         weights = weights, previous_fit = if (use_initial_fit) fit1 else NULL), dot_args)
       object <- do.call(sdmTMB, args)
       # if (max(object$gradients) > 0.01) {

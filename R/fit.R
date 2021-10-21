@@ -15,7 +15,7 @@ NULL
 #'   Penalized splines are possible via \pkg{mgcv} with `s()`. See examples
 #'   and details below.
 #' @param data A data frame.
-#' @param spde An object from [make_mesh()].
+#' @param mesh An object from [make_mesh()].
 #' @param time An optional time column name (as character). Can be left as
 #'   `NULL` for a model with only spatial random fields unless you wish to use
 #'   one of the index or center of gravity functions over time.
@@ -73,7 +73,7 @@ NULL
 #'   can change, which can be useful for cross-validation.
 #' @param do_fit Fit the model (`TRUE`) or return the processed data without
 #'   fitting (`FALSE`)?
-#' @param experimental A named list for more esoteric or in-development options.
+#' @param experimental A named list for esoteric or in-development options.
 #'    Here be dragons.
 #   (Experimental) A column name (as character) of a
 #   predictor of a linear trend (in log space) of the spatiotemporal standard
@@ -85,9 +85,10 @@ NULL
 #   done by time. If the name of a predictor is included, a log-linear model is
 #   fit where the predictor is used to model effects on the standard deviation,
 #   e.g. `log(sd(i)) = B0 + B1 * epsilon_predictor(i)`.
-#' @param fields **Depreciated** Replaced by `spatiotemporal`.
-#' @param include_spatial **Depreciated** Replaced by `spatial`.
-#' @param spatial_only **Depreciated** Replaced by `spatiotemporal = "off"`
+#' @param fields **Depreciated.** Replaced by `spatiotemporal`.
+#' @param include_spatial **Depreciated.** Replaced by `spatial`.
+#' @param spatial_only **Depreciated.** Replaced by `spatiotemporal = "off"`.
+#' @param spde **Depreciated.** Replaced by `mesh`.
 #' @param ... Not currently used.
 #' @importFrom methods as is
 #' @importFrom mgcv s t2
@@ -243,7 +244,7 @@ NULL
 #'
 #' # Tweedie:
 #' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-#'   data = pcod_2011, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
+#'   data = pcod_2011, time = "year", mesh = pcod_spde, family = tweedie(link = "log"))
 #' print(m)
 #' tidy(m, conf.int = TRUE)
 #' tidy(m, effects = "ran_par", conf.int = TRUE)
@@ -258,31 +259,31 @@ NULL
 #' pcod_binom <- pcod_2011
 #' pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
 #' m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'   data = pcod_binom, time = "year", spde = pcod_spde,
+#'   data = pcod_binom, time = "year", mesh = pcod_spde,
 #'   family = binomial(link = "logit"))
 #' print(m_bin)
 #'
 #' # Fit a spatial-only model (by not specifying `time`):
 #' m <- sdmTMB(
 #'   density ~ depth_scaled + depth_scaled2, data = pcod_2011,
-#'   spde = pcod_spde, family = tweedie(link = "log"))
+#'   mesh = pcod_spde, family = tweedie(link = "log"))
 #' print(m)
 #'
 #' # Gaussian:
 #' pcod_gaus <- subset(pcod_2011, density > 0 & year >= 2013)
 #' pcod_spde_gaus <- make_mesh(pcod_gaus, c("X", "Y"), cutoff = 20)
 #' m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'   data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
+#'   data = pcod_gaus, time = "year", mesh = pcod_spde_gaus)
 #' print(m_pos)
 #'
 #' # With penalized smoothers via mgcv:
 #' m_gam <- sdmTMB(log(density) ~ s(depth),
-#'   data = pcod_gaus, spde = pcod_spde_gaus
+#'   data = pcod_gaus, mesh = pcod_spde_gaus
 #' )
 #'
 #' # Turning off all random fields (creating a regular GLM/GAM):
 #' m_gam <- sdmTMB(log(density) ~ s(depth),
-#'   data = pcod_gaus, spde = pcod_spde_gaus,
+#'   data = pcod_gaus, mesh = pcod_spde_gaus,
 #'   spatial = "off", spatiotemporal = "off"
 #' )
 #'
@@ -300,7 +301,7 @@ NULL
 #' s$observed <- s$observed + iid_re_vals[s$g]
 #'
 #' # Fit it:
-#' m <- sdmTMB(observed ~ 1 + (1 | g), spde = spde, data = s)
+#' m <- sdmTMB(observed ~ 1 + (1 | g), mesh = spde, data = s)
 #' print(m)
 #' tidy(m, "ran_pars", conf.int = TRUE) # see tau_G
 #' theta <- as.list(m$sd_report, "Estimate")
@@ -312,14 +313,14 @@ NULL
 #' d <- pcod_2011
 #' d$year_scaled <- as.numeric(scale(d$year))
 #' m <- sdmTMB(density ~ depth_scaled, data = d,
-#'   spde = pcod_spde, family = tweedie(link = "log"),
+#'   mesh = pcod_spde, family = tweedie(link = "log"),
 #'   spatial_varying = ~ 0 + year_scaled, time = "year")
 #' tidy(m, effects = "ran_par")
 #'
 #' # Time-varying effects of depth and depth squared:
 #' m <- sdmTMB(density ~ 0 + as.factor(year),
 #'   time_varying = ~ 0 + depth_scaled + depth_scaled2,
-#'   data = pcod_2011, time = "year", spde = pcod_spde,
+#'   data = pcod_2011, time = "year", mesh = pcod_spde,
 #'   family = tweedie(link = "log"))
 #' print(m)
 #'
@@ -330,7 +331,7 @@ NULL
 #' # Linear breakpoint model on depth:
 #' m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) +
 #'     breakpt(depth_scaled) + depth_scaled2, data = pcod_gaus,
-#'   time = "year", spde = pcod_spde_gaus)
+#'   time = "year", mesh = pcod_spde_gaus)
 #' print(m_pos)
 #
 # # Linear covariate on log(sigma_epsilon):
@@ -339,7 +340,7 @@ NULL
 # # to help convergence (estimation is done in log-space)
 # pcod_2011$year_centered <- pcod_2011$year - mean(pcod_2011$year)
 # m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-#   data = pcod_2011, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+#   data = pcod_2011, time = "year", mesh = pcod_spde, family = tweedie(link = "log"),
 #   epsilon_predictor = "year_centered",
 #   control = sdmTMBcontrol(lower = list(b_epsilon = -1), upper = list(b_epsilon = 1)))
 # print(m) # sigma_E varies with time now
@@ -353,7 +354,7 @@ NULL
 sdmTMB <- function(
   formula,
   data,
-  spde,
+  mesh,
   time = NULL,
   family = gaussian(link = "identity"),
   spatial = c("on", "off"),
@@ -371,6 +372,7 @@ sdmTMB <- function(
   spatial_only,
   fields,
   include_spatial,
+  spde,
   previous_fit = NULL,
   experimental = NULL,
   do_fit = TRUE,
@@ -400,6 +402,11 @@ sdmTMB <- function(
     } else {
       include_spatial <- FALSE
     }
+  }
+  if (!missing(spde)) {
+    warning("`spde` is depreciated; please use `mesh` instead.",  call. = FALSE)
+  } else {
+    spde <- mesh
   }
 
   if (!include_spatial && spatiotemporal == "off" || !include_spatial && spatial_only) {

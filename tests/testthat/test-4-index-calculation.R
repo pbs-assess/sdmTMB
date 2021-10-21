@@ -7,7 +7,7 @@ test_that("get_index(), get_index_sims(), and get_cog() work", {
   m <- sdmTMB(
     data = pcod,
     formula = density ~ 0 + as.factor(year),
-    time = "year", spde = pcod_spde, family = tweedie(link = "log")
+    time = "year", mesh = pcod_spde, family = tweedie(link = "log")
   )
   # expect_snapshot(m)
   predictions <- predict(m, newdata = qcs_grid, return_tmb_object = TRUE)

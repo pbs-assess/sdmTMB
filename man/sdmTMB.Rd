@@ -7,7 +7,7 @@
 sdmTMB(
   formula,
   data,
-  spde,
+  mesh,
   time = NULL,
   family = gaussian(link = "identity"),
   spatial = c("on", "off"),
@@ -25,6 +25,7 @@ sdmTMB(
   spatial_only,
   fields,
   include_spatial,
+  spde,
   previous_fit = NULL,
   experimental = NULL,
   do_fit = TRUE,
@@ -42,7 +43,7 @@ and details below.}
 
 \item{data}{A data frame.}
 
-\item{spde}{An object from \code{\link[=make_mesh]{make_mesh()}}.}
+\item{mesh}{An object from \code{\link[=make_mesh]{make_mesh()}}.}
 
 \item{time}{An optional time column name (as character). Can be left as
 \code{NULL} for a model with only spatial random fields unless you wish to use
@@ -107,18 +108,20 @@ to the list of random effects to integrate over.}
 
 \item{priors}{Optional penalties/priors via \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}.}
 
-\item{spatial_only}{\strong{Depreciated} Replaced by \code{spatiotemporal = "off"}}
+\item{spatial_only}{\strong{Depreciated.} Replaced by \code{spatiotemporal = "off"}.}
 
-\item{fields}{\strong{Depreciated} Replaced by \code{spatiotemporal}.}
+\item{fields}{\strong{Depreciated.} Replaced by \code{spatiotemporal}.}
 
-\item{include_spatial}{\strong{Depreciated} Replaced by \code{spatial}.}
+\item{include_spatial}{\strong{Depreciated.} Replaced by \code{spatial}.}
+
+\item{spde}{\strong{Depreciated.} Replaced by \code{mesh}.}
 
 \item{previous_fit}{A previously fitted sdmTMB model to initialize the
 optimization with. Can greatly speed up fitting. Note that the data and
 model must be set up \emph{exactly} the same way. However, the \code{weights} argument
 can change, which can be useful for cross-validation.}
 
-\item{experimental}{A named list for more esoteric or in-development options.
+\item{experimental}{A named list for esoteric or in-development options.
 Here be dragons.}
 
 \item{do_fit}{Fit the model (\code{TRUE}) or return the processed data without
@@ -230,7 +233,7 @@ plot(pcod_spde)
 
 # Tweedie:
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-  data = pcod_2011, time = "year", spde = pcod_spde, family = tweedie(link = "log"))
+  data = pcod_2011, time = "year", mesh = pcod_spde, family = tweedie(link = "log"))
 print(m)
 tidy(m, conf.int = TRUE)
 tidy(m, effects = "ran_par", conf.int = TRUE)
@@ -245,31 +248,31 @@ max(m1$gradients)
 pcod_binom <- pcod_2011
 pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
 m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  data = pcod_binom, time = "year", spde = pcod_spde,
+  data = pcod_binom, time = "year", mesh = pcod_spde,
   family = binomial(link = "logit"))
 print(m_bin)
 
 # Fit a spatial-only model (by not specifying `time`):
 m <- sdmTMB(
   density ~ depth_scaled + depth_scaled2, data = pcod_2011,
-  spde = pcod_spde, family = tweedie(link = "log"))
+  mesh = pcod_spde, family = tweedie(link = "log"))
 print(m)
 
 # Gaussian:
 pcod_gaus <- subset(pcod_2011, density > 0 & year >= 2013)
 pcod_spde_gaus <- make_mesh(pcod_gaus, c("X", "Y"), cutoff = 20)
 m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  data = pcod_gaus, time = "year", spde = pcod_spde_gaus)
+  data = pcod_gaus, time = "year", mesh = pcod_spde_gaus)
 print(m_pos)
 
 # With penalized smoothers via mgcv:
 m_gam <- sdmTMB(log(density) ~ s(depth),
-  data = pcod_gaus, spde = pcod_spde_gaus
+  data = pcod_gaus, mesh = pcod_spde_gaus
 )
 
 # Turning off all random fields (creating a regular GLM/GAM):
 m_gam <- sdmTMB(log(density) ~ s(depth),
-  data = pcod_gaus, spde = pcod_spde_gaus,
+  data = pcod_gaus, mesh = pcod_spde_gaus,
   spatial = "off", spatiotemporal = "off"
 )
 
@@ -287,7 +290,7 @@ iid_re_vals <- rnorm(50, 0, 0.3)
 s$observed <- s$observed + iid_re_vals[s$g]
 
 # Fit it:
-m <- sdmTMB(observed ~ 1 + (1 | g), spde = spde, data = s)
+m <- sdmTMB(observed ~ 1 + (1 | g), mesh = spde, data = s)
 print(m)
 tidy(m, "ran_pars", conf.int = TRUE) # see tau_G
 theta <- as.list(m$sd_report, "Estimate")
@@ -299,14 +302,14 @@ plot(iid_re_vals, theta$RE)
 d <- pcod_2011
 d$year_scaled <- as.numeric(scale(d$year))
 m <- sdmTMB(density ~ depth_scaled, data = d,
-  spde = pcod_spde, family = tweedie(link = "log"),
+  mesh = pcod_spde, family = tweedie(link = "log"),
   spatial_varying = ~ 0 + year_scaled, time = "year")
 tidy(m, effects = "ran_par")
 
 # Time-varying effects of depth and depth squared:
 m <- sdmTMB(density ~ 0 + as.factor(year),
   time_varying = ~ 0 + depth_scaled + depth_scaled2,
-  data = pcod_2011, time = "year", spde = pcod_spde,
+  data = pcod_2011, time = "year", mesh = pcod_spde,
   family = tweedie(link = "log"))
 print(m)
 
@@ -317,7 +320,7 @@ summary(m$sd_report)[1:19,]
 # Linear breakpoint model on depth:
 m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) +
     breakpt(depth_scaled) + depth_scaled2, data = pcod_gaus,
-  time = "year", spde = pcod_spde_gaus)
+  time = "year", mesh = pcod_spde_gaus)
 print(m_pos)
 }
 }

@@ -10,7 +10,7 @@ test_that("Basic cross validation works", {
   # plan(multisession) # for parallel processing
   x <- sdmTMB_cv(
     density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-    data = d, spde = spde,
+    data = d, mesh = spde,
     family = tweedie(link = "log"), time = "year", k_folds = 2
   )
   expect_equal(class(x$sum_loglik), "numeric")
@@ -22,7 +22,7 @@ test_that("Basic cross validation works", {
   # Use fold_ids:
   x <- sdmTMB_cv(
     density ~ 0 + depth_scaled + depth_scaled2,
-    data = d, spde = spde,
+    data = d, mesh = spde,
     family = tweedie(link = "log"),
     fold_ids = rep(seq(1, 2), nrow(d))[seq(1, nrow(d))])
   expect_equal(class(x$models[[1]]), "sdmTMB")

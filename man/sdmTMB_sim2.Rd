@@ -99,7 +99,7 @@ if (inla_installed()) {
     formula = ~ 1 + a1,
     data = predictor_dat,
     time = "year",
-    spde = mesh,
+    mesh = mesh,
     family = gaussian(link = "identity"),
     range = 0.5,
     sigma_E = 0.1,
@@ -109,7 +109,7 @@ if (inla_installed()) {
     B = c(0.2, -0.4) # B0 = intercept, B1 = a1 slope
   )
 
-  fit <- sdmTMB(observed ~ a1, data = sim_dat, spde = mesh, time = "year")
+  fit <- sdmTMB(observed ~ a1, data = sim_dat, mesh = mesh, time = "year")
   fit
 
   # example of supplying random field values:
@@ -118,7 +118,7 @@ if (inla_installed()) {
     formula = ~ 1 + a1,
     data = predictor_dat,
     time = "year",
-    spde = mesh,
+    mesh = mesh,
     family = gaussian(link = "identity"),
     omega_s = p$omega_s,
     epsilon_st = p$epsilon_st,

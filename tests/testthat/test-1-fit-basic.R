@@ -34,15 +34,15 @@ test_that("sdmTMB model fit with a covariate beta", {
   plot(spde)
   .t1 <- system.time({
     m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
-      silent = TRUE, spde = spde, control = sdmTMBcontrol(normalize = FALSE))
+      silent = TRUE, mesh = spde, control = sdmTMBcontrol(normalize = FALSE))
   })
   .t2 <- system.time({
     m_norm <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
-      silent = TRUE, spde = spde, control = sdmTMBcontrol(normalize = TRUE))
+      silent = TRUE, mesh = spde, control = sdmTMBcontrol(normalize = TRUE))
   })
   .t3 <- system.time({
     m_pc <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
-      silent = TRUE, spde = spde, control = sdmTMBcontrol(normalize = TRUE),
+      silent = TRUE, mesh = spde, control = sdmTMBcontrol(normalize = TRUE),
       priors = sdmTMBpriors(
         matern_s = pc_matern(range_gt = 0.2, sigma_lt = 0.2, range_prob = 0.05, sigma_prob = 0.05)))
   })
@@ -101,7 +101,7 @@ test_that("Anisotropy fits and plots", {
   local_edition(2)
   m <- sdmTMB(data = pcod,
     formula = density ~ 0 + as.factor(year),
-    spde = make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans"),
+    mesh = make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans"),
     family = tweedie(link = "log"), anisotropy = TRUE)
   expect_identical(class(m), "sdmTMB")
   plot_anisotropy(m)
@@ -119,7 +119,7 @@ test_that("A spatiotemporal version works with predictions on new data points", 
   m <- sdmTMB(
     data = d,
     formula = density ~ 0 + as.factor(year),
-    time = "year", spde = pcod_spde, family = tweedie(link = "log"),
+    time = "year", mesh = pcod_spde, family = tweedie(link = "log"),
     spatial = FALSE
   )
   # Predictions at original data locations:
@@ -149,7 +149,7 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   m <- sdmTMB(
     spatiotemporal = "AR1", spatial = FALSE,
     data = dat, formula = observed ~ 1, time = "time",
-    family = gaussian(link = "identity"), spde = spde
+    family = gaussian(link = "identity"), mesh = spde
   )
   p <- predict(m)
   p_nd <- predict(m, newdata = dat)
@@ -164,7 +164,7 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   m <- sdmTMB(
     spatiotemporal = "AR1", spatial = FALSE,
     data = dat, formula = observed ~ 1, time = "time",
-    family = gaussian(link = "identity"), spde = spde
+    family = gaussian(link = "identity"), mesh = spde
   )
 
   p <- predict(m)

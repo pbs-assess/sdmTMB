@@ -60,7 +60,7 @@ Now we will fit a model and predict on a grid. The coordinates X and Y are alrea
 d <- subset(pcod, year == 2017)
 pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2,
-  data = d, spde = pcod_spde, family = tweedie(link = "log"))
+  data = d, mesh = pcod_spde, family = tweedie(link = "log"))
 p <- predict(m, newdata = qcs_grid)
 ```
 

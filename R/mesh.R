@@ -390,7 +390,7 @@ make_barrier_spde <- function(spde) {
 #'
 #' # Now, when we fit our model with the new mesh, it will automatically
 #' # include a barrier structure in the spatial correlation:
-#' fit <- sdmTMB(density ~ s(depth, k = 3), data = pcod, spde = bspde,
+#' fit <- sdmTMB(density ~ s(depth, k = 3), data = pcod, mesh = bspde,
 #'   family = tweedie(link = "log"))
 #' fit
 #' }

@@ -116,7 +116,7 @@ d <- pcod_2011
 pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
 m <- sdmTMB(
  data = d, formula = density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
- time = "year", spde = pcod_spde, family = tweedie(link = "log")
+ time = "year", mesh = pcod_spde, family = tweedie(link = "log")
 )
 
 # Predictions at original data locations -------------------------------
@@ -183,7 +183,7 @@ ggplot(p, aes(depth_scaled, exp(est),
 
 m_gam <- sdmTMB(
  data = d, formula = density ~ 0 + as.factor(year) + s(depth_scaled, k = 3),
- time = "year", spde = pcod_spde, family = tweedie(link = "log")
+ time = "year", mesh = pcod_spde, family = tweedie(link = "log")
 )
 nd <- data.frame(depth_scaled =
   seq(min(d$depth_scaled), max(d$depth_scaled), length.out = 100))
@@ -202,7 +202,7 @@ m <- sdmTMB(
   spatiotemporal = "AR1", # using an AR1 to have something to forecast with
   extra_time = 2019L, # `L` for integer to match our data
   spatial = "off",
-  time = "year", spde = pcod_spde, family = tweedie(link = "log")
+  time = "year", mesh = pcod_spde, family = tweedie(link = "log")
 )
 
 # Add a year to our grid:
@@ -222,7 +222,7 @@ d <- pcod
 d$year_scaled <- as.numeric(scale(d$year))
 pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 m <- sdmTMB(data = d, formula = density ~ depth_scaled + depth_scaled2,
-  spde = pcod_spde, family = tweedie(link = "log"),
+  mesh = pcod_spde, family = tweedie(link = "log"),
   spatial_varying = ~ 0 + year_scaled, time = "year", spatiotemporal = "off")
 nd <- qcs_grid
 nd$year_scaled <- (nd$year - mean(d$year)) / sd(d$year)

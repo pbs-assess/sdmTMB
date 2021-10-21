@@ -52,7 +52,7 @@ matrix of simulation draws into a data frame.
 if (inla_installed()) {
 
 m <- sdmTMB(density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  data = pcod_2011, spde = pcod_mesh_2011, family = tweedie(link = "log"),
+  data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(link = "log"),
   time = "year"
 )
 qcs_grid_2011 <- subset(qcs_grid, year >= 2011)
