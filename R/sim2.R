@@ -122,6 +122,7 @@ sdmTMB_sim2 <- function(formula,
   assert_that(rho >= -1, rho <= 1)
   assert_that(sigma_O >= 0, all(sigma_E >= 0), phi > 0)
 
+  spde <- mesh
   if (class(mesh) == "sdmTMBmesh") {
     mesh <- mesh$mesh
   }
