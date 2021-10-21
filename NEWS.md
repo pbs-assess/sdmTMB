@@ -1,5 +1,32 @@
 # sdmTMB
 
+# sdmTMB 0.0.20.9000
+
+* `fields` in `sdmTMB()` is now depreciated and replaced by `spatiotemporal`.
+
+* `include_spatial` in `sdmTMB()` is now depreciated and replaced by `spatial`.
+
+* `spatial_only` in `sdmTMB()` is now depreciated and replaced by `spatiotemporal`. 
+   E.g. `spatial_only = TRUE` is now `spatiotemporal = 'off'` or leaving 
+   `time = NULL`.
+   
+* `spde` in `sdmTMB()` is now depreciated and replaced by `mesh`.
+
+* `sdmTMB_sim2()` is new and will likely replace `sdmTMB_sim()` eventually. 
+  `sdmTMB_sim2()` is set up to take a formula and a data frame and is easier
+  to use if you want different spatial observations (and covariates) for each
+  time slice. It can also take a vector of fitted random field values.
+  
+* `spatial_trend` is now `spatial_varying` and accepts a one-sided formula
+  *with a single predictor* of any coefficient that should varying in space as a
+  random field. Note that you may want to include a fixed effect for the same
+  variable to improve interpretability. If the (scaled) time column is used, it will
+  represent a local-time-trend model as before.
+  
+* The Tweedie power (p) parameter is now in `print()` and `tidy()` output.
+
+* `thetaf` is now `tweedie_p` in `sdmTMB_sim()`.
+
 # sdmTMB 0.0.19.9000
 
 * Smoothers `s()` are now *penalized* smoothers: they determine the 
