@@ -11,7 +11,7 @@
 #' @param formula A *one-sided* formula describing the fixed-effect structure.
 #' @param data A data frame containing the predictors described in `formula` and the
 #'   time column if `time` is specified.
-#' @param spde Output from [make_mesh()].
+#' @param mesh Output from [make_mesh()].
 #' @param time The time column name.
 #' @param family Family as in [sdmTMB()].
 #' @param range Parameter that controls the decay of spatial correlation.
@@ -95,7 +95,7 @@
 #' }
 sdmTMB_sim2 <- function(formula,
                         data,
-                        spde,
+                        mesh,
                         time = NULL,
                         family = gaussian(link = "identity"),
                         # time_varying = NULL,
@@ -111,7 +111,6 @@ sdmTMB_sim2 <- function(formula,
                         omega_s = NULL,
                         epsilon_st = NULL,
                         seed = sample.int(1e6, 1)) {
-  mesh <- spde
   betas <- B
   if (!requireNamespace("INLA", quietly = TRUE)) {
     stop("INLA must be installed to use this function.", call. = FALSE)

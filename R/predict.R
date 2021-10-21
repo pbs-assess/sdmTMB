@@ -225,8 +225,7 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
   if ("version" %in% names(object)) {
     check_sdmTMB_version(object$version)
   } else {
-    stop("This looks like a very old version of a model fit. Update the model with ",
-      "`sdmTMB::update_model()` or re-fit the model before predicting with it.",
+    stop("This looks like a very old version of a model fit. Re-fit the model before predicting with it.",
       call. = FALSE)
   }
   if (!"xy_cols" %in% names(object$spde)) {
@@ -236,9 +235,6 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
   } else {
     xy_cols <- object$spde$xy_cols
   }
-
-  test <- suppressWarnings(tryCatch(object$tmb_obj$report(), error = function(e) NA))
-  if (all(is.na(test))) object <- update_model(object)
 
   # from glmmTMB:
   pop_pred <- (!is.null(re_form) && ((re_form == ~0) || identical(re_form, NA)))

@@ -7,7 +7,7 @@
 sdmTMB_sim2(
   formula,
   data,
-  spde,
+  mesh,
   time = NULL,
   family = gaussian(link = "identity"),
   range,
@@ -30,7 +30,7 @@ sdmTMB_sim2(
 \item{data}{A data frame containing the predictors described in \code{formula} and the
 time column if \code{time} is specified.}
 
-\item{spde}{Output from \code{\link[=make_mesh]{make_mesh()}}.}
+\item{mesh}{Output from \code{\link[=make_mesh]{make_mesh()}}.}
 
 \item{time}{The time column name.}
 
