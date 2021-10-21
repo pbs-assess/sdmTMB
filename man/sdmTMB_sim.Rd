@@ -86,6 +86,8 @@ A data frame where:
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
 \strong{Note we are considering depreciating this function in favour of \code{\link[=sdmTMB_sim2]{sdmTMB_sim2()}},
 which is more flexible and faster.}
 }

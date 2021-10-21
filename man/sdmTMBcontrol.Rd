@@ -10,7 +10,7 @@ sdmTMBcontrol(
   normalize = FALSE,
   nlminb_loops = 1,
   newton_loops = 0,
-  mgcv = TRUE,
+  mgcv = deprecated(),
   quadratic_roots = FALSE,
   start = NULL,
   map_rf = FALSE,

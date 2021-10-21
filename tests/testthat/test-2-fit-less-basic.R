@@ -56,7 +56,7 @@ test_that("A time-varying model fits and predicts appropriately", {
   )
   spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
   m <- sdmTMB(data = s, formula = observed ~ 0, spatial = FALSE,
-    time_varying = ~ 0 + cov1, time = "time", mesh = spde, control = sdmTMBcontrol(mgcv = FALSE))
+    time_varying = ~ 0 + cov1, time = "time", mesh = spde)
   expect_equal(exp(m$model$par["ln_tau_V"])[[1]], sigma_V, tolerance = 0.05)
   tidy(m, effects = "ran_par")
   b_t <- dplyr::group_by(s, time) %>%

@@ -1,5 +1,8 @@
 #' Simulate from a spatial/spatiotemporal model
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
 #' **Note we are considering depreciating this function in favour of [sdmTMB_sim2()],
 #' which is more flexible and faster.**
 #'

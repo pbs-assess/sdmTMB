@@ -22,13 +22,13 @@ sdmTMB(
   anisotropy = FALSE,
   control = sdmTMBcontrol(),
   priors = sdmTMBpriors(),
-  spatial_only,
-  fields,
-  include_spatial,
-  spde,
   previous_fit = NULL,
   experimental = NULL,
   do_fit = TRUE,
+  spatial_only = deprecated(),
+  fields = deprecated(),
+  include_spatial = deprecated(),
+  spde = deprecated(),
   ...
 )
 }
@@ -108,14 +108,6 @@ to the list of random effects to integrate over.}
 
 \item{priors}{Optional penalties/priors via \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}.}
 
-\item{spatial_only}{\strong{Depreciated.} Replaced by \code{spatiotemporal = "off"}.}
-
-\item{fields}{\strong{Depreciated.} Replaced by \code{spatiotemporal}.}
-
-\item{include_spatial}{\strong{Depreciated.} Replaced by \code{spatial}.}
-
-\item{spde}{\strong{Depreciated.} Replaced by \code{mesh}.}
-
 \item{previous_fit}{A previously fitted sdmTMB model to initialize the
 optimization with. Can greatly speed up fitting. Note that the data and
 model must be set up \emph{exactly} the same way. However, the \code{weights} argument
@@ -126,6 +118,14 @@ Here be dragons.}
 
 \item{do_fit}{Fit the model (\code{TRUE}) or return the processed data without
 fitting (\code{FALSE})?}
+
+\item{spatial_only}{\strong{Depreciated.} Replaced by \code{spatiotemporal = "off"}.}
+
+\item{fields}{\strong{Depreciated.} Replaced by \code{spatiotemporal}.}
+
+\item{include_spatial}{\strong{Depreciated.} Replaced by \code{spatial}.}
+
+\item{spde}{\strong{Depreciated.} Replaced by \code{mesh}.}
 
 \item{...}{Not currently used.}
 }
@@ -350,7 +350,7 @@ worse in already warmer temperate waters. In press at Fish and Fisheries.
 \doi{10.1111/faf.12613}.
 
 Code for implementing the barrier-SPDE written by Olav Nikolai Breivik and
-Hans Skaug and adapted via the VAST R package.
+Hans Skaug.
 
 A number of sections of the original TMB model code were adapted from the
 VAST R package:

@@ -80,6 +80,8 @@ A data frame where:
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
 This version (vs. \code{\link[=sdmTMB_sim]{sdmTMB_sim()}}) is set up to take a formula and a data
 frame and is easier to use if you want different spatial observations (and
 covariates) for each time slice. Eventually \code{\link[=sdmTMB_sim]{sdmTMB_sim()}} will be

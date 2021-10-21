@@ -62,6 +62,8 @@ with \code{1 - sigma_prob} probability.}
 \item{sigma_prob}{Probability. See description for \code{sigma_lt}.}
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
 Optional priors/penalties on model parameters. This tesults in penalized
 likelihood within TMB or can be used as priors if the model is passed to
 \pkg{tmbstan} (see the example in \code{\link[=extract_mcmc]{extract_mcmc()}}).

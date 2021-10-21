@@ -52,7 +52,7 @@ predictions. \code{~0} or \code{NA} for population-level predictions. No other
 options (e.g., some but not all random intercepts) are implemented yet.
 Only affects predictions with \code{newdata}. This also affects \code{\link[=get_index]{get_index()}}.}
 
-\item{sims}{If > 0, simulate from the joint precision matrix with \code{sims}
+\item{sims}{\strong{Experimental.} If > 0, simulate from the joint precision matrix with \code{sims}
 draws Returns a matrix of \code{nrow(data)} by \code{sim} representing the estimates
 of the linear predictor (i.e., in link space). Can be useful for deriving
 uncertainty on predictions (e.g., \code{apply(x, 1, sd)}) or propagating

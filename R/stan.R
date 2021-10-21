@@ -1,5 +1,8 @@
 #' Extract MCMC samples from a model fit with [tmbstan::tmbstan()].
 #'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
 #' Returns a matrix of parameter samples. Rows correspond to the order
 #' of `your_model$tmb_obj$env$last.par.best`. Columns correspond to
 #' posterior samples. Is used internally by [predict.sdmTMB()] to make

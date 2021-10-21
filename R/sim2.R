@@ -1,5 +1,8 @@
 #' Simulate from a spatial/spatiotemporal model
 #'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
 #' This version (vs. [sdmTMB_sim()]) is set up to take a formula and a data
 #' frame and is easier to use if you want different spatial observations (and
 #' covariates) for each time slice. Eventually [sdmTMB_sim()] will be

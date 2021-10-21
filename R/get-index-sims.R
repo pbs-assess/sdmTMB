@@ -1,5 +1,8 @@
 #' Calculate a population index via simulation from the joint precision matrix
 #'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
 #' Calculate a population index via simulation from the joint precision matrix.
 #' Compared to [get_index()], this version can be dramatically faster
 #' if bias correction was turned on in [get_index()] while being approximately

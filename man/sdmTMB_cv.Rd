@@ -14,7 +14,7 @@ sdmTMB_cv(
   fold_ids = NULL,
   parallel = TRUE,
   use_initial_fit = FALSE,
-  spde,
+  spde = deprecated(),
   ...
 )
 }

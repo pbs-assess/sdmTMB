@@ -117,12 +117,12 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' }
 sdmTMB_cv <- function(formula, data, mesh_args, mesh, time = NULL,
   k_folds = 8, fold_ids = NULL, parallel = TRUE,
-  use_initial_fit = FALSE, spde,
+  use_initial_fit = FALSE, spde = deprecated(),
   ...) {
   if (k_folds < 1) stop("`k_folds` must be >= 1.", call. = FALSE)
 
-  if (!missing(spde)) {
-    warning("`spde` is depreciated; please use `mesh` instead.",  call. = FALSE)
+  if (is_present(spde)) {
+    deprecate_warn("0.0.20", "sdmTMB_cv(spde)", "sdmTMB_cv(mesh)")
   } else {
     spde <- mesh
   }

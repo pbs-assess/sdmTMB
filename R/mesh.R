@@ -1,5 +1,8 @@
 #' Construct an SPDE mesh (depreciated)
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
 #' **Depreciated; please use [make_mesh()] instead.**
 #'
 #' @param x X numeric vector.

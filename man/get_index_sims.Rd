@@ -34,6 +34,8 @@ other words, the function assumes a log link, which typically makes sense.}
 Assuming a log link, the \code{sum(exp(x) * area)} default makes sense.}
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
 Calculate a population index via simulation from the joint precision matrix.
 Compared to \code{\link[=get_index]{get_index()}}, this version can be dramatically faster
 if bias correction was turned on in \code{\link[=get_index]{get_index()}} while being approximately

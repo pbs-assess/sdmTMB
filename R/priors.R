@@ -1,6 +1,8 @@
 #' Prior distributions
 #'
 #' @description
+#' `r lifecycle::badge("experimental")`
+#'
 #' Optional priors/penalties on model parameters. This tesults in penalized
 #' likelihood within TMB or can be used as priors if the model is passed to
 #' \pkg{tmbstan} (see the example in [extract_mcmc()]).

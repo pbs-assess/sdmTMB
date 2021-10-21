@@ -94,6 +94,7 @@ NULL
 #' @importFrom mgcv s t2
 #' @importFrom stats gaussian model.frame model.matrix as.formula
 #'   model.response terms model.offset
+#' @importFrom lifecycle deprecated is_present deprecate_warn
 #'
 #' @details
 #'
@@ -212,7 +213,7 @@ NULL
 #' \doi{10.1111/faf.12613}.
 #'
 #' Code for implementing the barrier-SPDE written by Olav Nikolai Breivik and
-#' Hans Skaug and adapted via the VAST R package.
+#' Hans Skaug.
 #'
 #' A number of sections of the original TMB model code were adapted from the
 #' VAST R package:
@@ -369,19 +370,19 @@ sdmTMB <- function(
   anisotropy = FALSE,
   control = sdmTMBcontrol(),
   priors = sdmTMBpriors(),
-  spatial_only,
-  fields,
-  include_spatial,
-  spde,
   previous_fit = NULL,
   experimental = NULL,
   do_fit = TRUE,
+  spatial_only = deprecated(),
+  fields = deprecated(),
+  include_spatial = deprecated(),
+  spde = deprecated(),
   ...
   ) {
 
   spatiotemporal <- match.arg(tolower(spatiotemporal), choices = c("iid", "ar1", "rw", "off"))
-  if (!missing(spatial_only)) {
-    warning("`spatial_only` is depreciated; please use `spatiotemporal = 'off'`. Setting `spatiotemporal = 'off'` for now.",  call. = FALSE)
+  if (is_present(spatial_only)) {
+    deprecate_warn("0.0.20", "sdmTMB(spatial_only)", "sdmTMB(spatiotemporal)", details = "`spatiotemporal = 'off'` (or `time = NULL`) is equivalent to `spatial_only = TRUE`.")
   } else {
     if (is.null(time) || spatiotemporal == "off") {
       spatial_only <- TRUE
@@ -389,12 +390,12 @@ sdmTMB <- function(
       spatial_only <- FALSE
     }
   }
-  if (!missing(fields)) {
-    warning("`fields` is depreciated; please use `spatiotemporal`. Setting `spatiotemporal = fields` for now.",  call. = FALSE)
+  if (is_present(fields)) {
+    deprecate_warn("0.0.20", "sdmTMB(fields)", "sdmTMB(spatiotemporal)")
     spatiotemporal <- tolower(fields)
   }
-  if (!missing(include_spatial)) {
-    warning("`include_spatial` is depreciated; please use the `spatial` argument. Setting `spatial = include_spatial` for now.",  call. = FALSE)
+  if (is_present(include_spatial)) {
+    deprecate_warn("0.0.20", "sdmTMB(include_spatial)", "sdmTMB(spatial)")
   } else {
     if (!is.logical(spatial[[1]])) spatial <- match.arg(tolower(spatial), choices = c("on", "off"))
     if (identical(spatial, "on") || isTRUE(spatial)) {
@@ -403,12 +404,11 @@ sdmTMB <- function(
       include_spatial <- FALSE
     }
   }
-  if (!missing(spde)) {
-    warning("`spde` is depreciated; please use `mesh` instead.",  call. = FALSE)
+  if (is_present(spde)) {
+    deprecate_warn("0.0.20", "sdmTMB(spde)", "sdmTMB(mesh)")
   } else {
     spde <- mesh
   }
-
   if (!include_spatial && spatiotemporal == "off" || !include_spatial && spatial_only) {
     message("Both spatial and spatiotemporal fields are set to 'off'.")
     control$map_rf <- TRUE
@@ -422,7 +422,6 @@ sdmTMB <- function(
   normalize <- control$normalize
   nlminb_loops <- control$nlminb_loops
   newton_loops <- control$newton_loops
-  mgcv <- control$mgcv
   quadratic_roots <- control$quadratic_roots
   start <- control$start
   multiphase <- control$multiphase
@@ -434,9 +433,8 @@ sdmTMB <- function(
   dots <- list(...)
 
   if ("ar1_fields" %in% names(dots)) {
-    warning("`ar1_fields` is depreciated and is now specified via the ",
-      "`spatiotemporal` argument. Setting `spatiotemporal = 'AR1'` for you for now if `ar1_fields = TRUE`.",
-      call. = FALSE)
+    deprecate_warn("0.0.20", "sdmTMB(ar1_fields)", "sdmTMB(spatiotemporal)",
+      details = "For now, setting `spatiotemporal = 'AR1'` for you.")
     spatiotemporal <- if (dots$ar1_fields) "ar1" else "iid"
     dots$ar1_fields <- NULL
   }
@@ -465,7 +463,7 @@ sdmTMB <- function(
   rw_fields <- identical("rw", tolower(spatiotemporal))
   assert_that(
     is.logical(reml), is.logical(anisotropy), is.logical(silent),
-    is.logical(silent), is.logical(mgcv),
+    is.logical(silent),
     is.logical(multiphase),
     is.logical(map_rf), is.logical(normalize)
   )
@@ -537,28 +535,9 @@ sdmTMB <- function(
   ln_tau_G_index <- unlist(lapply(seq_along(nobs_RE), function(i) rep(i, each = nobs_RE[i]))) - 1L
 
   formula_no_sm <- remove_s_and_t2(formula)
-  # if (isFALSE(mgcv)) {
-  #  mgcv_mod <- NULL
-    X_ij <- model.matrix(formula_no_sm, data)
-    mf <- model.frame(formula_no_sm, data)
-    mt <- attr(mf, "terms")
-
-  # } else {
-  #   # mgcv::gam will parse a matrix response, but not a factor
-  #   mf <- model.frame(mgcv::interpret.gam(formula)$fake.formula, data)
-  #   if (identical(family$family, "binomial") && "factor" %in% model.response(mf, "any")) {
-  #     stop("Error: with 'mgcv' = TRUE, the response cannot be a factor", call. = FALSE)
-  #   }
-  #   if (family$family %in% c("binomial", "Gamma")) {
-  #     mgcv_mod <- mgcv::gam(formula, data = data, family = family, fit = FALSE) # family needs to be passed into mgcv
-  #   } else {
-  #     mgcv_mod <- mgcv::gam(formula, data = data, fit = FALSE)
-  #   }
-  #   # X_ij <- model.matrix(mgcv_mod)
-  #   X_ij <- mgcv_mod$X
-  #   X_ij <- X_ij[, colnames(X_ij) != "", drop = FALSE] # only keep non-smooth terms
-  # }
-
+  X_ij <- model.matrix(formula_no_sm, data)
+  mf <- model.frame(formula_no_sm, data)
+  mt <- attr(mf, "terms")
   # parse everything mgcv + smoothers:
   sm <- parse_smoothers(formula = formula, data = data)
 
@@ -942,7 +921,6 @@ sdmTMB <- function(
     threshold_parameter = thresh$threshold_parameter,
     threshold_function = thresh$threshold_func,
     epsilon_predictor = epsilon_predictor,
-    #mgcv_mod   = mgcv_mod,
     time       = time,
     family     = family,
     response   = y_i,
@@ -952,7 +930,6 @@ sdmTMB <- function(
     tmb_random = tmb_random,
     spatial_varying = spatial_varying,
     reml       = reml,
-    mgcv       = mgcv,
     lower      = lim$lower,
     upper      = lim$upper,
     priors     = priors,

@@ -34,7 +34,7 @@
 #'   predictions. `~0` or `NA` for population-level predictions. No other
 #'   options (e.g., some but not all random intercepts) are implemented yet.
 #'   Only affects predictions with `newdata`. This also affects [get_index()].
-#' @param sims If > 0, simulate from the joint precision matrix with `sims`
+#' @param sims **Experimental.** If > 0, simulate from the joint precision matrix with `sims`
 #'   draws Returns a matrix of `nrow(data)` by `sim` representing the estimates
 #'   of the linear predictor (i.e., in link space). Can be useful for deriving
 #'   uncertainty on predictions (e.g., `apply(x, 1, sd)`) or propagating
