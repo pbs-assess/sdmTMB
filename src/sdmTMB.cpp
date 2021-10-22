@@ -582,7 +582,7 @@ Type objective_function<Type>::operator()()
       for (int t = 1; t < n_t; t++) {
         jnll += -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
         if (sim_re) {
-          b_rw_t(t, k) = rnorm(b_rw_t(t - 1, k), exp(ln_tau_V(k)));
+          SIMULATE{b_rw_t(t, k) = rnorm(b_rw_t(t - 1, k), exp(ln_tau_V(k)));}
         }
       }
     }
@@ -617,8 +617,16 @@ Type objective_function<Type>::operator()()
     if (!ar1_fields && !rw_fields) {
       for (int t = 0; t < n_t; t++)
         jnll += SCALE(GMRF(Q_st, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
+      if (sim_re) {
+        for (int t = 0; t < n_t; t++) { // untested!!
+          vector<Type> epsilon_st_tmp(epsilon_st.rows());
+          SIMULATE {GMRF(Q_st, s).simulate(epsilon_st_tmp);}
+          epsilon_st.col(t) = epsilon_st_tmp * exp(ln_tau_E);
+        }
+      }
     } else {
       if (est_epsilon_model) { // time-varying epsilon sd
+        if (sim_re) error("Simulation not implemented for time-varying epsilon SD yet.");
         if (ar1_fields) {
           jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
           for (int t = 1; t < n_t; t++) {
@@ -650,7 +658,7 @@ Type objective_function<Type>::operator()()
             jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(t) - epsilon_st.col(t - 1));
           }
           if (sim_re) {
-            for (int t = 0; t < n_t; t++) {
+            for (int t = 0; t < n_t; t++) { // untested!!
               vector<Type> epsilon_st_tmp(epsilon_st.rows());
               SIMULATE {GMRF(Q_st, s).simulate(epsilon_st_tmp);}
               epsilon_st_tmp *= exp(ln_tau_E);
@@ -725,6 +733,7 @@ Type objective_function<Type>::operator()()
         lognzprob = logspace_sub(Type(0), -phi * s3);
         tmp_ll -= lognzprob;
         tmp_ll = zt_lik_nearzero(y_i(i), tmp_ll); // from glmmTMB
+        SIMULATE{error("Simulation not implemented for truncated nbinom2 yet.");}
         // TODO add sims
         // SIMULATE{ // from glmmTMB
           // s1 = mu(i)/exp(ln_phi);
@@ -734,11 +743,11 @@ Type objective_function<Type>::operator()()
         break;
       case lognormal_family:
         tmp_ll = dlnorm(y_i(i), log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi, true);
-        // TODO add sims
+        SIMULATE{y_i(i) = exp(rnorm(log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi));}
         break;
       case student_family:
-        // TODO add sims
         tmp_ll = dstudent(y_i(i), mu_i(i), exp(ln_phi), df, true);
+        SIMULATE{error("Simulation not implemented for Student-t yet.");}
         break;
       case Beta_family: // Ferrari and Cribari-Neto 2004; betareg package
         s1 = mu_i(i) * phi;
