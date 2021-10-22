@@ -111,6 +111,8 @@ sdmTMB_sim2 <- function(formula,
                         omega_s = NULL,
                         epsilon_st = NULL,
                         seed = sample.int(1e6, 1)) {
+
+  set.seed(seed)
   betas <- B
   if (!requireNamespace("INLA", quietly = TRUE)) {
     stop("INLA must be installed to use this function.", call. = FALSE)
