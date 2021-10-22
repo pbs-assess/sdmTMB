@@ -415,7 +415,11 @@ sdmTMB <- function(
   }
 
   if (!is.null(experimental)) {
-    if ("epsilon_predictor" %in% names(experimental)) epsilon_predictor <- experimental$epsilon_predictor
+    if ("epsilon_predictor" %in% names(experimental)) {
+      epsilon_predictor <- experimental$epsilon_predictor
+    } else {
+      epsilon_predictor <- NULL
+    }
   } else {
     epsilon_predictor <- NULL
   }
@@ -927,6 +931,7 @@ sdmTMB <- function(
     response   = y_i,
     tmb_data   = tmb_data,
     tmb_params = tmb_params,
+    tmb_obj    = tmb_obj,
     tmb_map    = tmb_map,
     tmb_random = tmb_random,
     spatial_varying = spatial_varying,
@@ -976,9 +981,9 @@ sdmTMB <- function(
   sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision)
   conv <- get_convergence_diagnostics(sd_report)
 
+  out_structure$tmb_obj <- tmb_obj
   out <- c(out_structure, list(
     model      = tmb_opt,
-    tmb_obj    = tmb_obj,
     sd_report  = sd_report,
     gradients  = conv$final_grads,
     bad_eig    = conv$bad_eig))

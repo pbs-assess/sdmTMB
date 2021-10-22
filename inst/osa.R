@@ -3,10 +3,10 @@ pcod_spde_gaus <- make_mesh(pcod_gaus, c("X", "Y"), cutoff = 15)
 m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year), time = "year",
   data = pcod_gaus, mesh = pcod_spde_gaus)
 
+m_pos$tmb_data$sim_re
+
 s <- m_pos$tmb_obj$simulate()
 names(s)
-
-
 
 r <- as.list(m_pos$sd_report, "Estimate")
 plot(s$epsilon_st_A_vec)
@@ -28,6 +28,11 @@ ggplot(pcod_gaus, aes(X, Y, size = sim, colour = sim)) + geom_point() +
 ggplot(pcod_gaus, aes(X, Y, size = log(density), colour = log(density))) + geom_point() +
   scale_size_area() + scale_colour_viridis_c()
 
+
+r <- m_pos$tmb_obj$report()
+pcod_gaus[["omega"]] <- r$omega_s_A
+plot(r$omega_s_A, s$omega_s_A);abline(a = 0, b = 1)
+m_pos$tmb_data$sim_re
 
 s <- m_pos$tmb_obj$simulate(complete = TRUE)
 
