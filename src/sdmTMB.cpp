@@ -360,7 +360,7 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(has_smooths);  // whether or not smooths are included
   DATA_IVECTOR(b_smooth_start);
 
-  DATA_INTEGER(do_simulate);
+  DATA_INTEGER(sim_re);
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -570,8 +570,8 @@ Type objective_function<Type>::operator()()
   // IID random intercepts:
   for (int g = 0; g < RE.size(); g++) {
     jnll -= dnorm(RE(g), Type(0.0), exp(ln_tau_G(ln_tau_G_index(g))), true);
-    if (do_simulate) {
-      RE(g) = rnorm(Type(0), exp(ln_tau_G(ln_tau_G_index(g))));
+    if (sim_re) {
+      SIMULATE{RE(g) = rnorm(Type(0), exp(ln_tau_G(ln_tau_G_index(g))));}
     }
   }
 
@@ -581,7 +581,7 @@ Type objective_function<Type>::operator()()
       // flat prior on the initial value... then:
       for (int t = 1; t < n_t; t++) {
         jnll += -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
-        if (do_simulate) {
+        if (sim_re) {
           b_rw_t(t, k) = rnorm(b_rw_t(t - 1, k), exp(ln_tau_V(k)));
         }
       }
@@ -593,18 +593,22 @@ Type objective_function<Type>::operator()()
 
   // Spatial (intercept) random effects:
   if (include_spatial) {
-    jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
-    if (do_simulate) {
+      // jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
+      jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
+    if (sim_re) {
       SIMULATE {
-        SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O)).simulate(omega_s);
+        GMRF(Q_s, s).simulate(omega_s);
+        omega_s *= exp(ln_tau_O);
       }
     }
     if (spatial_covariate) {
       jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_Z))(zeta_s);
-      if (do_simulate) {
+      if (sim_re) {
         SIMULATE {
-          SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_Z)).simulate(zeta_s);
+          GMRF(Q_s, s).simulate(zeta_s);
+          zeta_s *= exp(ln_tau_Z);
         }
+      }
     }
   }
 
@@ -636,23 +640,33 @@ Type objective_function<Type>::operator()()
       } else { // constant epsilon sd, keep calculations as is
         if (ar1_fields) {
           jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q_st, s)), 1./exp(ln_tau_E))(epsilon_st);
-          // if (do_simulate)
-            // SIMULATE {SCALE(SEPARABLE(AR1(rho), GMRF(Q_st, s)), 1./exp(ln_tau_E)).simulate(epsilon_st);}
+          if (sim_re) {
+            SIMULATE {SEPARABLE(AR1(rho), GMRF(Q_st, s)).simulate(epsilon_st);}
+            epsilon_st *= exp(ln_tau_E);
+          }
         } else if (rw_fields) {
           jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
-          // if (do_simulate)
-            // SIMULATE {SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E)).simulate(epsilon_st.col(0));}
           for (int t = 1; t < n_t; t++) {
             jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(t) - epsilon_st.col(t - 1));
-            // if (do_simulate)
-              // SIMULATE {SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E)).simulate(epsilon_st.col(t) - epsilon_st.col(t - 1));}
           }
-          } else {
-            error("Field type not implemented.");
+          if (sim_re) {
+            for (int t = 0; t < n_t; t++) {
+              vector<Type> epsilon_st_tmp(epsilon_st.rows());
+              SIMULATE {GMRF(Q_st, s).simulate(epsilon_st_tmp);}
+              epsilon_st_tmp *= exp(ln_tau_E);
+              if (t == 0) {
+                epsilon_st.col(0) = epsilon_st_tmp;
+              } else {
+                epsilon_st.col(t) = epsilon_st.col(t-1) + epsilon_st_tmp;
+              }
+            }
           }
+        } else {
+          error("Field type not implemented.");
         }
       }
     }
+  }
   if (flag == 0) return jnll;
 
   // ------------------ Probability of data given random effects ---------------
@@ -993,6 +1007,8 @@ Type objective_function<Type>::operator()()
   REPORT(ln_smooth_sigma); // standard deviations of smooth random effects, in log-space
   SIMULATE {
     REPORT(y_i);
+    REPORT(omega_s)
+    REPORT(epsilon_st)
   }
 
   // ------------------ Joint negative log likelihood --------------------------
