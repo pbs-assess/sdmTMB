@@ -1017,7 +1017,11 @@ Type objective_function<Type>::operator()()
   SIMULATE {
     REPORT(y_i);
     REPORT(omega_s)
+    REPORT(omega_s_A)
     REPORT(epsilon_st)
+    REPORT(epsilon_st_A_vec)
+    REPORT(zeta_s)
+    REPORT(zeta_s_A)
   }
 
   // ------------------ Joint negative log likelihood --------------------------
