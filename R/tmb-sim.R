@@ -195,7 +195,8 @@ sdmTMB_simulate <- function(
   d[["omega_s"]] <- s$omega_s_A
   d[["epsilon_st"]] <- s$epsilon_st_A_vec
   d[["zeta_s"]] <- s$zeta_s_A
-  d[["eta"]] <- s$eta_i
+  d[["mu"]] <- s$eta_i
+  d[["eta"]] <- family$linkfun(s$eta_i)
   d[["observed"]] <- s$y_i
   d <- do.call("data.frame", d)
   cbind(d, fit$tmb_data$X_ij)
