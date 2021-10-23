@@ -117,30 +117,32 @@ sdmTMB_simulate <- function(
     stop("INLA must be installed to use this function.", call. = FALSE)
   }
 
+  if (!is.null(previous_fit)) mesh <- previous_fit$spde
+  if (!is.null(previous_fit)) data <- previous_fit$data
+
+  assert_that(tweedie_p > 1 && tweedie_p < 2 || is.null(tweedie_p))
+  assert_that(df >= 1 || is.null(df))
+  assert_that(all(range > 0) || is.null(range))
+  assert_that(length(range) %in% c(1, 2) || is.null(range))
+  assert_that(rho >= -1 && rho <= 1 || is.null(rho))
+  assert_that(phi > 0 || is.null(phi))
+  assert_that(sigma_O >= 0 || is.null(sigma_O))
+  assert_that(all(sigma_E >= 0) || is.null(sigma_E))
+  assert_that(sigma_Z >= 0 || is.null(sigma_Z))
+
   if (is.null(previous_fit)) {
+    assert_that(class(mesh) %in% "sdmTMBmesh")
     assert_that(!is.null(range), !is.null(sigma_O) || !is.null(sigma_E), !is.null(B))
     if (!family$family %in% c("binomial", "poisson"))
       assert_that(!is.null(phi))
-    assert_that(class(mesh) %in% "sdmTMBmesh")
-    assert_that(tweedie_p > 1 && tweedie_p < 2 || is.null(tweedie_p))
-    assert_that(df >= 1 || is.null(df))
-    assert_that(all(range > 0))
-    assert_that(length(range) %in% c(1, 2))
-    assert_that(rho >= -1 && rho <= 1 || is.null(rho))
-    assert_that(phi > 0 || is.null(phi))
-    assert_that(sigma_O >= 0 || is.null(sigma_O))
-    assert_that(all(sigma_E >= 0) || is.null(sigma_E))
-    assert_that(sigma_Z >= 0 || is.null(sigma_Z))
 
     response <- get_response(formula)
     if (length(response) == 0L) {
       formula <- as.formula(paste("sdmTMB_response_", paste(as.character(formula), collapse = "")))
       data[["sdmTMB_response_"]] <- 0.1 # fake! does nothing but lets sdmTMB parse the formula
     }
-  }
 
-  # get tmb_data structure; parsed model matrices etc.:
-  if (is.null(previous_fit)) {
+    # get tmb_data structure; parsed model matrices etc.:
     fit <- sdmTMB(
       formula = formula, data = data, mesh = mesh, time = time,
       family = family, do_fit = FALSE,
@@ -152,6 +154,7 @@ sdmTMB_simulate <- function(
   }
   params <- fit$tmb_params
   tmb_data <- fit$tmb_data
+  tmb_data$sim_re <- as.integer(simulate_re)
 
   if (!is.null(B)) {
     n_covariates <- length(B)
