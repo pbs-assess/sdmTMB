@@ -36,8 +36,9 @@
 #' @return A data frame where:
 #' * The 1st column is the time variable (if present).
 #' * The 2nd and 3rd columns are the spatial coordinates.
-#' * `omega_s` represents the simulated spatial random effects.
-#' * `epsilon_st` represents the simulated spatiotemporal random effects.
+#' * `omega_s` represents the simulated spatial random effects (only if present).
+#' * `zeta_s` represents the simulated spatial varying covariate field (only if present).
+#' * `epsilon_st` represents the simulated spatiotemporal random effects (only if present).
 #' * `eta` is the true value in link space
 #' * `mu` is the true value in inverse link space.
 #' * `observed` represents the simulated process with observation error.
@@ -98,8 +99,8 @@ sdmTMB_simulate <- function(
   data,
   mesh,
   family = gaussian(link = "identity"),
-  time = NULL,
   previous_fit = NULL,
+  time = NULL,
   B = NULL,
   range = NULL,
   rho = NULL,
@@ -147,12 +148,12 @@ sdmTMB_simulate <- function(
       formula = formula, data = data, mesh = mesh, time = time,
       family = family, do_fit = FALSE,
       share_range = length(range) == 1L,
-      experimental = list(sim_re = simulate_re), ...
-    )
+      experimental = list(sim_re = simulate_re), ...)
+      params <- fit$tmb_params
   } else {
     fit <- previous_fit
+    params <- fit$tmb_obj$env$parList()
   }
-  params <- fit$tmb_params
   tmb_data <- fit$tmb_data
   tmb_data$sim_re <- as.integer(simulate_re)
 
@@ -164,20 +165,32 @@ sdmTMB_simulate <- function(
     )
   }
 
-  if (is.null(sigma_O)) sigma_O <- 0
-  if (is.null(sigma_Z)) sigma_Z <- 0
-  if (is.null(sigma_E)) sigma_E <- 0
+  if (!is.null(previous_fit)) {
+    range <- fit$tmb_obj$report()$range
+  }
 
-  if (!is.null(range)) {
-    if (length(range) == 1L) range <- rep(range, 2)
-    kappa <- sqrt(8)/range
+  if (is.null(previous_fit)) {
+    if (is.null(sigma_O)) sigma_O <- 0
+    if (is.null(sigma_Z)) sigma_Z <- 0
+    if (is.null(sigma_E)) sigma_E <- 0
+  }
+
+  if (length(range) == 1L) range <- rep(range, 2)
+
+  kappa <- sqrt(8)/range
+  params$ln_kappa <- log(kappa)
+
+  if (!is.null(sigma_O) || is.null(previous_fit)) {
     tau_O <- 1/(sqrt(4 * pi) * kappa[1] * sigma_O)
-    tau_Z <- 1/(sqrt(4 * pi) * kappa[1] * sigma_Z)
-    tau_E <- 1/(sqrt(4 * pi) * kappa[2] * sigma_E)
-    params$ln_kappa <- log(kappa)
     params$ln_tau_O <- log(tau_O)
-    params$ln_tau_E <- log(tau_E)
+  }
+  if (!is.null(sigma_Z) || is.null(previous_fit)) {
+    tau_Z <- 1/(sqrt(4 * pi) * kappa[1] * sigma_Z)
     params$ln_tau_Z <- log(tau_Z)
+  }
+  if (!is.null(sigma_E) || is.null(previous_fit)) {
+    tau_E <- 1/(sqrt(4 * pi) * kappa[2] * sigma_E)
+    params$ln_tau_E <- log(tau_E)
   }
 
   if (!is.null(B)) params$b_j <- B
@@ -192,12 +205,12 @@ sdmTMB_simulate <- function(
   s <- newobj$simulate()
 
   d <- list()
-  if (!is.null(time)) d[[time]] <- data[[time]]
+  if (!is.null(fit$time)) d[[fit$time]] <- data[[fit$time]]
   d[[mesh$xy_cols[1]]] <- data[[mesh$xy_cols[1]]]
   d[[mesh$xy_cols[2]]] <- data[[mesh$xy_cols[2]]]
-  d[["omega_s"]] <- s$omega_s_A
-  d[["epsilon_st"]] <- s$epsilon_st_A_vec
-  d[["zeta_s"]] <- s$zeta_s_A
+  d[["omega_s"]] <- if (all(s$omega_s_A != 0)) s$omega_s_A
+  d[["epsilon_st"]] <- if (all(s$epsilon_st_A_vec != 0)) s$epsilon_st_A_vec
+  d[["zeta_s"]] <- if (all(s$zeta_s_A != 0)) s$zeta_s_A
   d[["mu"]] <- s$eta_i
   d[["eta"]] <- family$linkfun(s$eta_i)
   d[["observed"]] <- s$y_i
