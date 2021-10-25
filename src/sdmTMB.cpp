@@ -1,7 +1,7 @@
 #define TMB_LIB_INIT R_init_sdmTMB
 #include <TMB.hpp>
-// #include <omp.h>
 #include "utils.h"
+// #include <omp.h>
 
 enum valid_family {
   gaussian_family = 0,
@@ -300,8 +300,7 @@ Type objective_function<Type>::operator()()
   // IID random intercepts:
   for (int g = 0; g < RE.size(); g++) {
     jnll -= dnorm(RE(g), Type(0.0), exp(ln_tau_G(ln_tau_G_index(g))), true);
-    if (sim_re) {
-      SIMULATE{RE(g) = rnorm(Type(0), exp(ln_tau_G(ln_tau_G_index(g))));}
+    if (sim_re) SIMULATE{RE(g) = rnorm(Type(0), exp(ln_tau_G(ln_tau_G_index(g))));
     }
   }
 
@@ -311,9 +310,7 @@ Type objective_function<Type>::operator()()
       // flat prior on the initial value... then:
       for (int t = 1; t < n_t; t++) {
         jnll += -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
-        if (sim_re) {
-          SIMULATE{b_rw_t(t, k) = rnorm(b_rw_t(t - 1, k), exp(ln_tau_V(k)));}
-        }
+        if (sim_re) SIMULATE{b_rw_t(t, k) = rnorm(b_rw_t(t - 1, k), exp(ln_tau_V(k)));}
       }
     }
   }
@@ -422,7 +419,7 @@ Type objective_function<Type>::operator()()
 
   vector<Type> eta_fixed_i = X_ij * b_j;
 
-  // p-splines
+  // p-splines/smoothers
   vector<Type> eta_smooth_i(X_ij.rows());
   eta_smooth_i.setZero();
   if (has_smooths) {
@@ -432,6 +429,7 @@ Type objective_function<Type>::operator()()
       for (int j = 0; j < beta_s.size(); j++) {
         beta_s(j) = b_smooth(b_smooth_start(s) + j);
         jnll -= dnorm(beta_s(j), Type(0), exp(ln_smooth_sigma(s)), true);
+        if (sim_re) SIMULATE{beta_s(j) = rnorm(Type(0), exp(ln_smooth_sigma(s)));}
       }
       eta_smooth_i += Zs(s) * beta_s;
     }
@@ -552,13 +550,7 @@ Type objective_function<Type>::operator()()
         lognzprob = logspace_sub(Type(0), -phi * s3);
         tmp_ll -= lognzprob;
         tmp_ll = zt_lik_nearzero(y_i(i), tmp_ll); // from glmmTMB
-        SIMULATE{error("Simulation not implemented for truncated nbinom2 yet.");}
-        // TODO add sims
-        // SIMULATE{ // from glmmTMB
-          // s1 = mu(i)/exp(ln_phi);
-          // s2 = 1/(1+exp(ln_phi));
-          // yobs(i) = Rf_qnbinom(asDouble(runif(dnbinom(Type(0), s1, s2), Type(1))), asDouble(s1), asDouble(s2), 1, 0);
-        // }
+        SIMULATE{y_i(i) = rtruncated_nbinom(asDouble(phi), 0, asDouble(mu_i(i)));}
         break;
       case lognormal_family:
         tmp_ll = sdmTMB::dlnorm(y_i(i), log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi, true);
@@ -566,7 +558,7 @@ Type objective_function<Type>::operator()()
         break;
       case student_family:
         tmp_ll = sdmTMB::dstudent(y_i(i), mu_i(i), exp(ln_phi), df, true);
-        SIMULATE{error("Simulation not implemented for Student-t yet.");}
+        SIMULATE{y_i(i) = mu_i(i) + phi * rt(df);}
         break;
       case Beta_family: // Ferrari and Cribari-Neto 2004; betareg package
         s1 = mu_i(i) * phi;
