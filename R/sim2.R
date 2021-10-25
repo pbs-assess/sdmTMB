@@ -198,7 +198,7 @@ sdmTMB_sim2 <- function(formula,
         }
       }
     } else {
-      epsilon_st <- list(rep(0, nrow(X_ij)))
+      epsilon_st <- replicate(n_t, list(rep(0, nrow(X_ij))))
     }
 
     if (!is.null(time)) {

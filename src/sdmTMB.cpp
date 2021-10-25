@@ -476,6 +476,118 @@ Type objective_function<Type>::operator()()
   }
   if (share_range) Q_st = Q_s;
 
+  // ------------------ Probability of random effects --------------------------
+
+  // IID random intercepts:
+  for (int g = 0; g < RE.size(); g++) {
+    jnll -= dnorm(RE(g), Type(0.0), exp(ln_tau_G(ln_tau_G_index(g))), true);
+    if (sim_re) {
+      SIMULATE{RE(g) = rnorm(Type(0), exp(ln_tau_G(ln_tau_G_index(g))));}
+    }
+  }
+
+  // Random walk effects (dynamic regression):
+  if (random_walk) {
+    for (int k = 0; k < X_rw_ik.cols(); k++) {
+      // flat prior on the initial value... then:
+      for (int t = 1; t < n_t; t++) {
+        jnll += -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
+        if (sim_re) {
+          SIMULATE{b_rw_t(t, k) = rnorm(b_rw_t(t - 1, k), exp(ln_tau_V(k)));}
+        }
+      }
+    }
+  }
+
+  bool s = true;
+  if (normalize_in_r) s = false;
+
+  // Spatial (intercept) random effects:
+  if (include_spatial) {
+    // jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
+    jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
+    if (sim_re) {
+      SIMULATE {
+        GMRF(Q_s, s).simulate(omega_s);
+        omega_s *= 1. / exp(ln_tau_O);
+      }
+    }
+    if (spatial_covariate) {
+      jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_Z))(zeta_s);
+      if (sim_re) {
+        SIMULATE {
+          GMRF(Q_s, s).simulate(zeta_s);
+          zeta_s *= 1. / exp(ln_tau_Z);
+        }
+      }
+    }
+  }
+
+  // Spatiotemporal random effects:
+  if (!spatial_only) {
+    if (!ar1_fields && !rw_fields) {
+      for (int t = 0; t < n_t; t++)
+        jnll += SCALE(GMRF(Q_st, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
+      if (sim_re) {
+        for (int t = 0; t < n_t; t++) { // untested!!
+          vector<Type> epsilon_st_tmp(epsilon_st.rows());
+          SIMULATE {GMRF(Q_st, s).simulate(epsilon_st_tmp);}
+          epsilon_st.col(t) = epsilon_st_tmp / exp(ln_tau_E);
+        }
+      }
+    } else {
+      if (est_epsilon_model) { // time-varying epsilon sd
+        if (sim_re) error("Simulation not implemented for time-varying epsilon SD yet.");
+        if (ar1_fields) {
+          jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
+          for (int t = 1; t < n_t; t++) {
+            jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(t)))((epsilon_st.col(t) -
+              rho * epsilon_st.col(t - 1))/sqrt(1. - rho * rho));
+          }
+          int n_rows=epsilon_st.cols();
+          int m_cols=epsilon_st.size()/n_rows;
+          // This penalty added to match Kasper's AR1_t() implementation
+          jnll += Type((n_rows-1)*m_cols) * log(sqrt(Type(1)-rho*rho));
+        } else if (rw_fields) {
+          jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
+          for (int t = 1; t < n_t; t++) {
+            jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(t)))(epsilon_st.col(t) - epsilon_st.col(t - 1));
+          }
+        } else {
+          error("Field type not implemented.");
+        }
+      } else { // constant epsilon sd, keep calculations as is
+        if (ar1_fields) {
+          jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q_st, s)), 1./exp(ln_tau_E))(epsilon_st);
+          if (sim_re) {
+            SIMULATE {SEPARABLE(AR1(rho), GMRF(Q_st, s)).simulate(epsilon_st);}
+            epsilon_st *= 1./exp(ln_tau_E);
+          }
+        } else if (rw_fields) {
+          jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
+          for (int t = 1; t < n_t; t++) {
+            jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(t) - epsilon_st.col(t - 1));
+          }
+          if (sim_re) {
+            for (int t = 0; t < n_t; t++) { // untested!!
+              vector<Type> epsilon_st_tmp(epsilon_st.rows());
+              SIMULATE {GMRF(Q_st, s).simulate(epsilon_st_tmp);}
+              epsilon_st_tmp *= 1./exp(ln_tau_E);
+              if (t == 0) {
+                epsilon_st.col(0) = epsilon_st_tmp;
+              } else {
+                epsilon_st.col(t) = epsilon_st.col(t-1) + epsilon_st_tmp;
+              }
+            }
+          }
+        } else {
+          error("Field type not implemented.");
+        }
+      }
+    }
+  }
+  if (flag == 0) return jnll;
+
   // ------------------ INLA projections ---------------------------------------
 
   // Here we are projecting the spatiotemporal and spatial random effects to the
@@ -564,118 +676,6 @@ Type objective_function<Type>::operator()()
       mu_i(i) = InverseLink(eta_i(i), link);
     }
   }
-
-  // ------------------ Probability of random effects --------------------------
-
-  // IID random intercepts:
-  for (int g = 0; g < RE.size(); g++) {
-    jnll -= dnorm(RE(g), Type(0.0), exp(ln_tau_G(ln_tau_G_index(g))), true);
-    if (sim_re) {
-      SIMULATE{RE(g) = rnorm(Type(0), exp(ln_tau_G(ln_tau_G_index(g))));}
-    }
-  }
-
-  // Random walk effects (dynamic regression):
-  if (random_walk) {
-    for (int k = 0; k < X_rw_ik.cols(); k++) {
-      // flat prior on the initial value... then:
-      for (int t = 1; t < n_t; t++) {
-        jnll += -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
-        if (sim_re) {
-          SIMULATE{b_rw_t(t, k) = rnorm(b_rw_t(t - 1, k), exp(ln_tau_V(k)));}
-        }
-      }
-    }
-  }
-
-  bool s = true;
-  if (normalize_in_r) s = false;
-
-  // Spatial (intercept) random effects:
-  if (include_spatial) {
-      // jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
-      jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
-    if (sim_re) {
-      SIMULATE {
-        GMRF(Q_s, s).simulate(omega_s);
-        omega_s *= exp(ln_tau_O);
-      }
-    }
-    if (spatial_covariate) {
-      jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_Z))(zeta_s);
-      if (sim_re) {
-        SIMULATE {
-          GMRF(Q_s, s).simulate(zeta_s);
-          zeta_s *= exp(ln_tau_Z);
-        }
-      }
-    }
-  }
-
-  // Spatiotemporal random effects:
-  if (!spatial_only) {
-    if (!ar1_fields && !rw_fields) {
-      for (int t = 0; t < n_t; t++)
-        jnll += SCALE(GMRF(Q_st, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
-      if (sim_re) {
-        for (int t = 0; t < n_t; t++) { // untested!!
-          vector<Type> epsilon_st_tmp(epsilon_st.rows());
-          SIMULATE {GMRF(Q_st, s).simulate(epsilon_st_tmp);}
-          epsilon_st.col(t) = epsilon_st_tmp * exp(ln_tau_E);
-        }
-      }
-    } else {
-      if (est_epsilon_model) { // time-varying epsilon sd
-        if (sim_re) error("Simulation not implemented for time-varying epsilon SD yet.");
-        if (ar1_fields) {
-          jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
-          for (int t = 1; t < n_t; t++) {
-            jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(t)))((epsilon_st.col(t) -
-              rho * epsilon_st.col(t - 1))/sqrt(1. - rho * rho));
-          }
-          int n_rows=epsilon_st.cols();
-          int m_cols=epsilon_st.size()/n_rows;
-          // This penalty added to match Kasper's AR1_t() implementation
-          jnll += Type((n_rows-1)*m_cols) * log(sqrt(Type(1)-rho*rho));
-        } else if (rw_fields) {
-          jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
-          for (int t = 1; t < n_t; t++) {
-            jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(t)))(epsilon_st.col(t) - epsilon_st.col(t - 1));
-          }
-        } else {
-          error("Field type not implemented.");
-        }
-      } else { // constant epsilon sd, keep calculations as is
-        if (ar1_fields) {
-          jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q_st, s)), 1./exp(ln_tau_E))(epsilon_st);
-          if (sim_re) {
-            SIMULATE {SEPARABLE(AR1(rho), GMRF(Q_st, s)).simulate(epsilon_st);}
-            epsilon_st *= exp(ln_tau_E);
-          }
-        } else if (rw_fields) {
-          jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
-          for (int t = 1; t < n_t; t++) {
-            jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(t) - epsilon_st.col(t - 1));
-          }
-          if (sim_re) {
-            for (int t = 0; t < n_t; t++) { // untested!!
-              vector<Type> epsilon_st_tmp(epsilon_st.rows());
-              SIMULATE {GMRF(Q_st, s).simulate(epsilon_st_tmp);}
-              epsilon_st_tmp *= exp(ln_tau_E);
-              if (t == 0) {
-                epsilon_st.col(0) = epsilon_st_tmp;
-              } else {
-                epsilon_st.col(t) = epsilon_st.col(t-1) + epsilon_st_tmp;
-              }
-            }
-          }
-        } else {
-          error("Field type not implemented.");
-        }
-      }
-    }
-  }
-  if (flag == 0) return jnll;
 
   // ------------------ Probability of data given random effects ---------------
 
