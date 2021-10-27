@@ -1,188 +1,7 @@
 #define TMB_LIB_INIT R_init_sdmTMB
 #include <TMB.hpp>
 // #include <omp.h>
-
-template <class Type>
-bool isNA(Type x)
-{
-  return R_IsNA(asDouble(x));
-}
-
-template <class Type>
-Type dstudent(Type x, Type mean, Type sigma, Type df, int give_log = 0)
-{
-  // from metRology::dt.scaled()
-  // dt((x - mean)/sd, df, ncp = ncp, log = TRUE) - log(sd)
-  Type logres = dt((x - mean) / sigma, df, true) - log(sigma);
-  if (give_log)
-    return logres;
-  else
-    return exp(logres);
-}
-
-template <class Type>
-Type dlnorm(Type x, Type meanlog, Type sdlog, int give_log = 0)
-{
-  Type logres = dnorm(log(x), meanlog, sdlog, true) - log(x);
-  if (give_log)
-    return logres;
-  else
-    return exp(logres);
-}
-
-// List of matrices
-template <class Type>
-struct LOM_t : vector<matrix<Type> > {
-  LOM_t(SEXP x){  // x = list passed from R
-(*this).resize(LENGTH(x));
-    for(int i=0; i<LENGTH(x); i++){
-      SEXP sm = VECTOR_ELT(x, i);
-      (*this)(i) = asMatrix<Type>(sm);
-    }
-  }
-};
-
-// Function to import barrier-SPDE code
-// From Olav Nikolai Breivik and Hans Skaug via VAST
-template<class Type>
-struct spde_barrier_t{
-  vector<Type> C0;
-  vector<Type> C1;
-  Eigen::SparseMatrix<Type> D0;
-  Eigen::SparseMatrix<Type> D1;
-  Eigen::SparseMatrix<Type> I;
-  spde_barrier_t(SEXP x){  /* x = List passed from R */
-    C0 = asVector<Type>(getListElement(x,"C0"));
-    C1 = asVector<Type>(getListElement(x,"C1"));
-    D0 = tmbutils::asSparseMatrix<Type>(getListElement(x,"D0"));
-    D1 = tmbutils::asSparseMatrix<Type>(getListElement(x,"D1"));
-    I = tmbutils::asSparseMatrix<Type>(getListElement(x,"I"));
-  }
-};
-
-// Function to calculate Q (precision) matrix using barrier-SPDE
-// From Olav Nikolai Breivik and Hans Skaug via VAST
-template<class Type>
-Eigen::SparseMatrix<Type> Q_spde(spde_barrier_t<Type> spde, Type kappa, vector<Type> c){
-  //using namespace Eigen;
-  vector <Type> range(2);
-  range(0) = sqrt(8)/kappa*c(0);
-  range(1) = range(0)*c(1);
-
-  int dimLatent = spde.D0.row(0).size();
-  vector<Type> Cdiag(dimLatent);
-  Eigen::SparseMatrix<Type > Cinv(dimLatent,dimLatent);
-
-  Cdiag = spde.C0*pow(range(0),2) + spde.C1*pow(range(1),2);
-  for(int i =0; i<dimLatent; ++i){
-    Cinv.coeffRef(i,i) = 1/Cdiag(i);
-  }
-
-  Eigen::SparseMatrix<Type>A = spde.I;
-  A = A + (pow(range(0),2)/8) * spde.D0 + (pow(range(1),2)/8) * spde.D1;
-
-  Eigen::SparseMatrix<Type> Q = A.transpose() * Cinv * A/M_PI *2 * 3;
-
-  return Q;
-}
-
-template <class Type>
-Type minus_one_to_one(Type x)
-{
-  return Type(2) * invlogit(x) - Type(1);
-}
-
-template <class Type>
-matrix<Type> MakeH(vector<Type> x)
-{
-  matrix<Type> H(2, 2);
-  H(0, 0) = exp(x(0));
-  H(1, 0) = x(1);
-  H(0, 1) = x(1);
-  H(1, 1) = (1 + x(1) * x(1)) / exp(x(0));
-  return H;
-}
-
-template <class Type>
-vector<Type> RepeatVector(vector<Type> x, int times)
-{
-  int n = x.size() * times;
-  vector<Type> res(n);
-  int k = 0;
-  for (int i = 0; i < times; i++) {
-    for (int j = 0; j < x.size(); j++) {
-      res[k] = x(j);
-      k++;
-    }
-  }
-  return res;
-}
-
-// https://github.com/hrue/r-inla/blob/devel/r-inla.org/doc/prior/pc.matern.pdf
-template<class Type>
-Type pc_prior_matern(Type logtau, Type logkappa, Type matern_range, Type matern_SD,
-    Type range_prob, Type SD_prob, int give_log = 0)
-{
-  Type d = 2.;  // dimension
-  Type dhalf = d / 2.;
-  Type lam1 = -log(range_prob) * pow(matern_range, dhalf);
-  Type lam2 = -log(SD_prob) / matern_SD;
-  Type range = sqrt(8.) / exp(logkappa);
-  Type sigma = 1. / sqrt(4. * M_PI * exp(2. * logtau) * exp(2. * logkappa));
-  Type range_ll = log(dhalf) + log(lam1) + log(pow(range, -1. - dhalf)) - lam1 * pow(range, -dhalf);
-  Type sigma_ll = log(lam2) - lam2 * sigma;
-  Type penalty = range_ll + sigma_ll;
-  // std::cout << "PC penalty: " << penalty << "\n";
-  if (give_log) return penalty; else return exp(penalty);
-}
-
-template <class Type>
-vector<Type> GetQuadraticRoots(Type a, Type b, Type threshold)
-{
-  vector<Type> res(4);
-  Type c = 1.; // doesn't matter; setting to an arbitrary value
-  Type crit_y = (a * pow(-b / (2. * a), 2.) + b * (-b / (2. * a)) + c) + log(threshold);
-  // solve for 0 = ax2 + bx + (c - crit_y)
-  c = c - crit_y;
-  res(0) = -1. * (b - sqrt(pow(b, 2.) - 4. * c * a))/(2.*a);
-  res(1) = -1. * (b + sqrt(pow(b, 2.) - 4. * c * a))/(2.*a);
-
-  // calculate vertex of parabola
-  Type xpeak = -b / (2.*a);
-  // res(2) is the hi/lowpoint of parabola evaluated at xpeak
-  res(2) = (a * (pow(xpeak, 2.)) + b * (xpeak) + c);
-
-  // calculate reduction of changing from mean to +/- 1 SD
-  res(3) = (a * (pow(xpeak+1, 2.)) + b * (xpeak+1) + c) / res(2);
-  return res;
-}
-
-template <class Type>
-Type linear_threshold(Type x, Type slope, Type cutpoint)
-{
-  // linear threshold model. relationship linear up to a point then constant
-  // keep all parameters unconstrained - slope and scale can be neg/pos,
-  // as can cutpoint if covariate is scaled ~ N(0,1).
-  Type pred;
-  if(x < cutpoint) {
-    pred = x * slope;
-  } else {
-    pred = cutpoint * slope;
-  }
-  return pred;
-}
-
-template <class Type>
-Type logistic_threshold(Type x, Type s50, Type s95, Type scale)
-{
-  // logistic threshold model. similar to length or size based selectivity
-  // in fisheries, parameterized by the points at which f(x) = 0.5 or 0.95
-  // s50 and scale are unconstrained. s95 has to be > s50 though, so modelled as
-  // s95 = s50 + exp(b(1))
-  //Type s95 = s50 + exp(soffset); // this done outside function
-  Type pred = (scale) * Type(1.0)/(Type(1.0) + exp(-log(Type(19.0)) * (x - s50) / (s95 - s50)));
-  return pred;
-}
+#include "utils.h"
 
 enum valid_family {
   gaussian_family = 0,
@@ -268,8 +87,8 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(z_i);      // numeric vector for spatial covariate effect
   DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
-  DATA_STRUCT(Zs, LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
-  DATA_STRUCT(proj_Zs, LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
+  DATA_STRUCT(Zs, sdmTMB::LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
+  DATA_STRUCT(proj_Zs, sdmTMB::LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
   DATA_MATRIX(Xs); // smoother linear effect matrix
   DATA_MATRIX(proj_Xs); // smoother linear effect matrix
 
@@ -335,7 +154,7 @@ Type objective_function<Type>::operator()()
 
   // Barrier
   DATA_INTEGER(barrier);
-  DATA_STRUCT(spde_barrier, spde_barrier_t);
+  DATA_STRUCT(spde_barrier, sdmTMB::spde_barrier_t);
   DATA_VECTOR(barrier_scaling); // scaling of range
 
   // Projections
@@ -407,7 +226,7 @@ Type objective_function<Type>::operator()()
     s_max = b_threshold(2);
   }
 
-  Type rho = minus_one_to_one(ar1_phi);
+  Type rho = sdmTMB::minus_one_to_one(ar1_phi);
   Type phi = exp(ln_phi);
 
   // ------------------ Geospatial ---------------------------------------------
@@ -464,7 +283,7 @@ Type objective_function<Type>::operator()()
     if (!share_range) Q_st = Q_spde(spde_barrier, exp(ln_kappa(1)), barrier_scaling);
   } else {
     if (anisotropy) {
-      matrix<Type> H = MakeH(ln_H_input);
+      matrix<Type> H = sdmTMB::MakeH(ln_H_input);
       Q_s = R_inla::Q_spde(spde_aniso, exp(ln_kappa(0)), H);
       if (!share_range) Q_st = R_inla::Q_spde(spde_aniso, exp(ln_kappa(1)), H);
       REPORT(H);
@@ -624,12 +443,12 @@ Type objective_function<Type>::operator()()
     if (threshold_func == 1) {
       // linear
       for (int i = 0; i < n_i; i++) {
-        eta_fixed_i(i) += linear_threshold(X_threshold(i), s_slope, s_cut);
+        eta_fixed_i(i) += sdmTMB::linear_threshold(X_threshold(i), s_slope, s_cut);
       }
     } else {
       // logistic
       for (int i = 0; i < n_i; i++) {
-        eta_fixed_i(i) += logistic_threshold(X_threshold(i), s50, s95, s_max);
+        eta_fixed_i(i) += sdmTMB::logistic_threshold(X_threshold(i), s50, s95, s_max);
       }
     }
   }
@@ -687,7 +506,7 @@ Type objective_function<Type>::operator()()
   REPORT(phi);
   ADREPORT(phi);
   for (int i = 0; i < n_i; i++) {
-    if (!isNA(y_i(i))) {
+    if (!sdmTMB::isNA(y_i(i))) {
       switch (family) {
       case gaussian_family:
         tmp_ll = dnorm(y_i(i), mu_i(i), phi, true);
@@ -695,7 +514,7 @@ Type objective_function<Type>::operator()()
         break;
       case tweedie_family:
         s1 = invlogit(thetaf) + Type(1.0);
-        if (!isNA(priors(12))) jnll -= dnorm(s1, priors(12), priors(13), true);
+        if (!sdmTMB::isNA(priors(12))) jnll -= dnorm(s1, priors(12), priors(13), true);
         tmp_ll = dtweedie(y_i(i), mu_i(i), phi, s1, true);
         SIMULATE{y_i(i) = rtweedie(mu_i(i), phi, s1);}
         break;
@@ -742,11 +561,11 @@ Type objective_function<Type>::operator()()
         // }
         break;
       case lognormal_family:
-        tmp_ll = dlnorm(y_i(i), log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi, true);
+        tmp_ll = sdmTMB::dlnorm(y_i(i), log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi, true);
         SIMULATE{y_i(i) = exp(rnorm(log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi));}
         break;
       case student_family:
-        tmp_ll = dstudent(y_i(i), mu_i(i), exp(ln_phi), df, true);
+        tmp_ll = sdmTMB::dstudent(y_i(i), mu_i(i), exp(ln_phi), df, true);
         SIMULATE{error("Simulation not implemented for Student-t yet.");}
         break;
       case Beta_family: // Ferrari and Cribari-Neto 2004; betareg package
@@ -780,16 +599,16 @@ Type objective_function<Type>::operator()()
   }
 
   // start vector of priors:
-  if (!isNA(priors(0)) && !isNA(priors(1)) && !isNA(priors(2)) && !isNA(priors(3))) {
+  if (!sdmTMB::isNA(priors(0)) && !sdmTMB::isNA(priors(1)) && !sdmTMB::isNA(priors(2)) && !sdmTMB::isNA(priors(3))) {
     // std::cout << "Using spatial PC prior" << "\n";
-    jnll -= pc_prior_matern(ln_tau_O, ln_kappa(0), priors(0), priors(1), priors(2), priors(3), true);
+    jnll -= sdmTMB::pc_prior_matern(ln_tau_O, ln_kappa(0), priors(0), priors(1), priors(2), priors(3), true);
   }
-  if (!isNA(priors(4)) && !isNA(priors(5)) && !isNA(priors(6)) && !isNA(priors(7))) {
+  if (!sdmTMB::isNA(priors(4)) && !sdmTMB::isNA(priors(5)) && !sdmTMB::isNA(priors(6)) && !sdmTMB::isNA(priors(7))) {
     // std::cout << "Using spatiotemporal PC prior" << "\n";
-    jnll -= pc_prior_matern(ln_tau_E, ln_kappa(1), priors(4), priors(5), priors(6), priors(7), true);
+    jnll -= sdmTMB::pc_prior_matern(ln_tau_E, ln_kappa(1), priors(4), priors(5), priors(6), priors(7), true);
   }
-  if (!isNA(priors(8))) jnll -= dnorm(phi, priors(8), priors(9), true);
-  if (!isNA(priors(10))) jnll -= dnorm(rho, priors(10), priors(11), true);
+  if (!sdmTMB::isNA(priors(8))) jnll -= dnorm(phi, priors(8), priors(9), true);
+  if (!sdmTMB::isNA(priors(10))) jnll -= dnorm(rho, priors(10), priors(11), true);
 
   // Jacobians for Stan:
   // FIXME
@@ -803,12 +622,12 @@ Type objective_function<Type>::operator()()
       if (threshold_func == 1) {
         // linear
         for (int i = 0; i < proj_X_ij.rows(); i++) {
-          proj_fe(i) = proj_fe(i) + linear_threshold(proj_X_threshold(i), s_slope, s_cut);
+          proj_fe(i) = proj_fe(i) + sdmTMB::linear_threshold(proj_X_threshold(i), s_slope, s_cut);
         }
       } else {
         // logistic
         for (int i = 0; i < proj_X_ij.rows(); i++) {
-          proj_fe(i) = proj_fe(i) + logistic_threshold(proj_X_threshold(i), s50, s95, s_max);
+          proj_fe(i) = proj_fe(i) + sdmTMB::logistic_threshold(proj_X_threshold(i), s50, s95, s_max);
         }
       }
     }
@@ -860,7 +679,7 @@ Type objective_function<Type>::operator()()
 
     // Spatial and spatiotemporal random fields:
     vector<Type> proj_re_sp = proj_mesh * omega_s;
-    vector<Type> proj_re_sp_st_all = RepeatVector(proj_re_sp, n_t);
+    vector<Type> proj_re_sp_st_all = sdmTMB::RepeatVector(proj_re_sp, n_t);
     array<Type> proj_re_st_temp(proj_mesh.rows(), n_t);
     array<Type> proj_re_st(proj_mesh.rows(), n_t);
     for (int i = 0; i < n_t; i++) {
@@ -960,7 +779,7 @@ Type objective_function<Type>::operator()()
     ADREPORT(s_max);
   }
   if (calc_quadratic_range && b_j(1) < Type(0)) {
-    vector<Type> quadratic_roots = GetQuadraticRoots(b_j(1), b_j(0), Type(0.05));
+    vector<Type> quadratic_roots = sdmTMB::GetQuadraticRoots(b_j(1), b_j(0), Type(0.05));
     Type quadratic_low = quadratic_roots(0);
     Type quadratic_hi = quadratic_roots(1);
     Type quadratic_range = quadratic_roots(1) - quadratic_roots(0);
@@ -981,16 +800,12 @@ Type objective_function<Type>::operator()()
     ADREPORT(quadratic_reduction);
   }
   if (est_epsilon_model) {
-    //REPORT(b_epsilon_logit);
-    //ADREPORT(b_epsilon_logit);
-    //b_epsilon = Type(2.0) * exp(b_epsilon_logit) / (1.0 + exp(b_epsilon_logit)) - 1.0; // constrain to be -1 to 1
     REPORT(b_epsilon);
     ADREPORT(b_epsilon);
-    //REPORT(b_epsilon);
-    //ADREPORT(b_epsilon);
   }
 
   // ------------------ Reporting ----------------------------------------------
+
   vector<Type> log_sigma_E(n_t);
   for (int i = 0; i < n_t; i++) {
     log_sigma_E(i) = log(sigma_E(i));
@@ -1024,8 +839,5 @@ Type objective_function<Type>::operator()()
     REPORT(zeta_s_A)
   }
 
-  // ------------------ Joint negative log likelihood --------------------------
-
-  // jnll += nll_data + nll_omega + nll_omega_trend + nll_varphi + nll_epsilon + nll_priors;
   return jnll;
 }
