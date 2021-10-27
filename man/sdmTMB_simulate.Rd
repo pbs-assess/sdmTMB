@@ -9,8 +9,8 @@ sdmTMB_simulate(
   data,
   mesh,
   family = gaussian(link = "identity"),
-  time = NULL,
   previous_fit = NULL,
+  time = NULL,
   B = NULL,
   range = NULL,
   rho = NULL,
@@ -35,10 +35,10 @@ time column if \code{time} is specified.}
 
 \item{family}{Family as in \code{\link[=sdmTMB]{sdmTMB()}}.}
 
-\item{time}{The time column name.}
-
 \item{previous_fit}{An optional previous \code{\link[=sdmTMB]{sdmTMB()}} fit to pull parameter values.
 Will be over-ruled by any non-NULL specified parameter arguments.}
+
+\item{time}{The time column name.}
 
 \item{B}{A vector of beta values (fixed-effect coefficient values).}
 
@@ -72,8 +72,9 @@ A data frame where:
 \itemize{
 \item The 1st column is the time variable (if present).
 \item The 2nd and 3rd columns are the spatial coordinates.
-\item \code{omega_s} represents the simulated spatial random effects.
-\item \code{epsilon_st} represents the simulated spatiotemporal random effects.
+\item \code{omega_s} represents the simulated spatial random effects (only if present).
+\item \code{zeta_s} represents the simulated spatial varying covariate field (only if present).
+\item \code{epsilon_st} represents the simulated spatiotemporal random effects (only if present).
 \item \code{eta} is the true value in link space
 \item \code{mu} is the true value in inverse link space.
 \item \code{observed} represents the simulated process with observation error.
@@ -92,7 +93,8 @@ will be depreciated in favour of this version.
 \examples{
 if (inla_installed()) {
   set.seed(123)
-  # a1 is a fake predictor:
+
+  # make fake predictor(s) (a1) and sampling locations:
   predictor_dat <- data.frame(
     X = runif(300), Y = runif(300),
     a1 = rnorm(300), year = rep(1:6, each = 50)
@@ -104,32 +106,15 @@ if (inla_installed()) {
     data = predictor_dat,
     time = "year",
     mesh = mesh,
-    family = gaussian(link = "identity"),
+    family = gaussian(),
     range = 0.5,
     sigma_E = 0.1,
     phi = 0.1,
     sigma_O = 0.2,
-    seed = 3542,
+    seed = 42,
     B = c(0.2, -0.4) # B0 = intercept, B1 = a1 slope
   )
-
-  fit <- sdmTMB(observed ~ a1, data = sim_dat, mesh = mesh, time = "year")
-  fit
-
-  # example of supplying random field values:
-  p <- predict(fit, newdata = NULL)
-  sim_dat2 <- sdmTMB_simulate(
-    formula = ~ 1 + a1,
-    data = predictor_dat,
-    time = "year",
-    mesh = mesh,
-    family = gaussian(link = "identity"),
-    omega_s = p$omega_s,
-    epsilon_st = p$epsilon_st,
-    phi = 0.1,
-    seed = 342,
-    B = c(0.1, -0.2) # B0 = intercept, B1 = a1 slope
-  )
+  head(sim_dat)
 
   if (require("ggplot2", quietly = TRUE)) {
     ggplot(sim_dat, aes(X, Y, colour = observed)) +
@@ -137,5 +122,17 @@ if (inla_installed()) {
       facet_wrap(~year) +
       scale_color_gradient2()
   }
+
+  # fit to the simulated data:
+  fit <- sdmTMB(observed ~ a1, data = sim_dat, mesh = mesh, time = "year")
+  fit
+
+  # example supplying previous fit, simulating new random effects,
+  # and changing spatial SD (sigma_O) and observation error (phi):
+  sim_dat2 <- sdmTMB_simulate(previous_fit = fit,
+    simulate_re = TRUE, phi = 0.04, sigma_O = 0.4
+  )
+  head(sim_dat2)
+
 }
 }
