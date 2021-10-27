@@ -12,10 +12,12 @@
    
 * `spde` in `sdmTMB()` is now depreciated and replaced by `mesh`.
 
-* `sdmTMB_sim2()` is new and will likely replace `sdmTMB_sim()` eventually. 
-  `sdmTMB_sim2()` is set up to take a formula and a data frame and is easier
+* `sdmTMB_simulate()` is new and will likely replace `sdmTMB_sim()` eventually. 
+  `sdmTMB_simulate()` is set up to take a formula and a data frame and is easier
   to use if you want different spatial observations (and covariates) for each
-  time slice. It can also take a vector of fitted random field values.
+  time slice. It can also take a fitted model and modify parts of it to simulate.
+  Finally, this function uses TMB for simulation and so is much faster and
+  more flexible in what it can simulate (e.g., anisotropy) than the previous version.
   
 * `spatial_trend` is now `spatial_varying` and accepts a one-sided formula
   *with a single predictor* of any coefficient that should varying in space as a
