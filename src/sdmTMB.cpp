@@ -552,7 +552,7 @@ Type objective_function<Type>::operator()()
         lognzprob = logspace_sub(Type(0), -phi * s3);
         tmp_ll -= lognzprob;
         tmp_ll = zt_lik_nearzero(y_i(i), tmp_ll); // from glmmTMB
-        SIMULATE{y_i(i) = rtruncated_nbinom(asDouble(phi), 0, asDouble(mu_i(i)));}
+        SIMULATE{y_i(i) = sdmTMB::rtruncated_nbinom(asDouble(phi), 0, asDouble(mu_i(i)));}
         break;
       case nbinom1_family:
         s1 = log(mu_i(i));
@@ -568,7 +568,7 @@ Type objective_function<Type>::operator()()
         lognzprob = logspace_sub(Type(0), -mu_i(i) / phi * s3); // 1-prob(0)
         tmp_ll -= lognzprob;
         tmp_ll = zt_lik_nearzero(y_i(i), tmp_ll);
-        SIMULATE{y_i(i) = rtruncated_nbinom(asDouble(mu_i(i)/phi), 0, asDouble(mu_i(i)));}
+        SIMULATE{y_i(i) = sdmTMB::rtruncated_nbinom(asDouble(mu_i(i)/phi), 0, asDouble(mu_i(i)));}
         break;
       case lognormal_family:
         tmp_ll = sdmTMB::dlnorm(y_i(i), log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi, true);
