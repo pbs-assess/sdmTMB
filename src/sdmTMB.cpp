@@ -13,7 +13,9 @@ enum valid_family {
   lognormal_family= 6,
   student_family  = 7,
   Beta_family     = 8,
-  truncated_nbinom2_family  = 9
+  truncated_nbinom2_family  = 9,
+  nbinom1_family  = 10,
+  truncated_nbinom1_family  = 11
 };
 
 enum valid_link {
@@ -552,6 +554,8 @@ Type objective_function<Type>::operator()()
         tmp_ll = zt_lik_nearzero(y_i(i), tmp_ll); // from glmmTMB
         SIMULATE{y_i(i) = rtruncated_nbinom(asDouble(phi), 0, asDouble(mu_i(i)));}
         break;
+      case nbinom1_family:
+        error("NB1 family not implemented yet.");
       case lognormal_family:
         tmp_ll = sdmTMB::dlnorm(y_i(i), log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi, true);
         SIMULATE{y_i(i) = exp(rnorm(log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi));}

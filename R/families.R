@@ -40,7 +40,7 @@ lognormal <- function(link = "log") {
 }
 
 #' @details
-#' The negative binomial parameterization is the NB2 where the variance grows
+#' The `nbinom2` negative binomial parameterization is the NB2 where the variance grows
 #' quadratically with the mean (Hilbe 2011).
 #' @references
 #' Hilbe, J. M. (2011). Negative binomial regression. Cambridge University Press.
@@ -57,11 +57,29 @@ nbinom2 <- function(link = "log") {
     stats <- stats::make.link(linktemp)
   else if (is.character(link))
     stats <- stats::make.link(link)
-
   list(family = "nbinom2", link = linktemp, linkfun = stats$linkfun,
     linkinv = stats$linkinv)
 }
 
+#' @details
+#' The `nbinom1` negative binomial parameterization lets the variance grow
+#' linearly with the mean (Hilbe 2011).
+#' @export
+#' @examples
+#' nbinom1(link = "log")
+#' @rdname families
+nbinom1 <- function(link = "log") {
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("log")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+  list(family = "nbinom1", link = linktemp, linkfun = stats$linkfun,
+    linkinv = stats$linkinv)
+}
 
 #' @export
 #' @examples
@@ -78,6 +96,24 @@ truncated_nbinom2 <- function(link = "log") {
     stats <- stats::make.link(link)
 
   list(family = "truncated_nbinom2", link = linktemp, linkfun = stats$linkfun,
+    linkinv = stats$linkinv)
+}
+
+#' @export
+#' @examples
+#' truncated_nbinom1(link = "log")
+#' @rdname families
+truncated_nbinom1 <- function(link = "log") {
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("log")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+
+  list(family = "truncated_nbinom1", link = linktemp, linkfun = stats$linkfun,
     linkinv = stats$linkinv)
 }
 
