@@ -1,5 +1,10 @@
 # sdmTMB
 
+# sdmTMB 0.0.19.9002
+
+* Simulation from the parameter covariance matrix works if random effects
+  are turned off. #57
+
 # sdmTMB 0.0.19.9000
 
 * Smoothers `s()` are now *penalized* smoothers: they determine the 

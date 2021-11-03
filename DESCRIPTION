@@ -1,7 +1,7 @@
 Type: Package
 Package: sdmTMB
 Title: Spatiotemporal Species Distribution GLMMs with 'TMB'
-Version: 0.0.19.9001
+Version: 0.0.19.9002
 Authors@R:
     c(person(given = c("Sean", "C."),
              family = "Anderson",
@@ -39,6 +39,7 @@ Imports:
     Matrix,
     methods,
     mgcv,
+    mvtnorm,
     stats,
     TMB (>= 1.7.20)
 Suggests:

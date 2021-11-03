@@ -357,3 +357,11 @@ remove_s_and_t2 <- function(formula) {
   }
   formula
 }
+
+has_no_random_effects <- function(obj) {
+  "omega_s" %in% names(obj$tmb_map) &&
+    "omega_s_trend" %in% names(obj$tmb_map) &&
+    "epsilon_st" %in% names(obj$tmb_map) &&
+    "b_rw_t" %in% names(obj$tmb_map) &&
+    !"RE" %in% obj$tmb_random
+}

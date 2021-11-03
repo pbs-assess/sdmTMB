@@ -384,14 +384,20 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     new_tmb_obj$fn(old_par)
 
     if (sims > 0) {
-      if (!"jointPrecision" %in% names(object$sd_report)) {
+      if (!"jointPrecision" %in% names(object$sd_report) && !has_no_random_effects(object)) {
         message("Rerunning TMB::sdreport() with `getJointPrecision = TRUE`.")
         sd_report <- TMB::sdreport(object$tmb_obj, getJointPrecision = TRUE)
       } else {
         sd_report <- object$sd_report
       }
-      t_draws <- rmvnorm_prec(mu = new_tmb_obj$env$last.par.best,
-        tmb_sd = sd_report, n_sims = sims)
+      if (has_no_random_effects(object)) {
+        t_draws <- t(mvtnorm::rmvnorm(n = sims, mean = sd_report$par.fixed,
+          sigma = sd_report$cov.fixed))
+        row.names(t_draws) <- NULL
+      } else {
+        t_draws <- rmvnorm_prec(mu = new_tmb_obj$env$last.par.best,
+          tmb_sd = sd_report, n_sims = sims)
+      }
       r <- apply(t_draws, 2L, new_tmb_obj$report)
     }
     if (!is.null(tmbstan_model)) {

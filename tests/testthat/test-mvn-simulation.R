@@ -1,12 +1,35 @@
+test_that("rmvnorm sim prediction works with no random effects", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  m <- sdmTMB(
+    data = pcod_2011,
+    formula = density ~ 0 + as.factor(year),
+    spde = pcod_mesh_2011, family = tweedie(link = "log"),
+    control = sdmTMBcontrol(map_rf = TRUE)
+  )
+  set.seed(1)
+  p <- predict(m, newdata = qcs_grid[qcs_grid$year >= 2011, ], sims = 30L)
+  p1 <- predict(m, newdata = qcs_grid[qcs_grid$year >= 2011, ])
+  expect_identical(class(p)[[1]], "matrix")
+  expect_identical(ncol(p), 30L)
+  .mean <- apply(p, 1, mean)
+  expect_gt(sd(p[1, , drop = TRUE]), 0.1)
+  expect_gt(cor(.mean, p1$est), 0.99)
+})
+
 test_that("rmvnorm sim prediction works", {
   skip_on_cran()
+  skip_on_ci()
   skip_if_not_installed("INLA")
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
-  m <- sdmTMB(data = pcod,
+  m <- sdmTMB(
+    data = pcod,
     formula = density ~ 0 + as.factor(year),
-    spde = mesh, family = tweedie(link = "log"))
+    spde = mesh, family = tweedie(link = "log")
+  )
   set.seed(1)
-  p <- predict(m, newdata = qcs_grid, sim = 15L)
+  p <- predict(m, newdata = qcs_grid, sims = 15L)
   p1 <- predict(m, newdata = qcs_grid)
   expect_identical(class(p)[[1]], "matrix")
   expect_identical(ncol(p), 15L)
@@ -24,6 +47,7 @@ test_that("rmvnorm sim prediction works", {
 
 test_that("get_index_sims works", {
   skip_on_cran()
+  skip_on_ci()
   skip_if_not_installed("INLA")
   m <- sdmTMB(density ~ 0 + as.factor(year),
     data = pcod_2011, spde = pcod_mesh_2011, family = tweedie(link = "log"),
