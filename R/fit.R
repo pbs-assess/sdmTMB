@@ -23,6 +23,8 @@ NULL
 #'   [binomial()], [poisson()], \code{\link[sdmTMB:families]{Beta()}},
 #'   \code{\link[sdmTMB:families]{nbinom2()}},
 #'   \code{\link[sdmTMB:families]{truncated_nbinom2()}},
+#'   \code{\link[sdmTMB:families]{nbinom1()}},
+#'   \code{\link[sdmTMB:families]{truncated_nbinom1()}},
 #'   \code{\link[sdmTMB:families]{student()}}, and
 #'   \code{\link[sdmTMB:families]{tweedie()}}]. For binomial family options,
 #'   see the 'Binomial families' in the Details section below.

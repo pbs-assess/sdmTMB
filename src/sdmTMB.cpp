@@ -540,7 +540,7 @@ Type objective_function<Type>::operator()()
         tmp_ll = dnbinom_robust(y_i(i), s1, s2, true);
         SIMULATE { // from glmmTMB
           s1 = mu_i(i);
-          s2 = mu_i(i) * (Type(1) + exp(ln_phi));  // (1+phi) guarantees that var >= mu
+          s2 = mu_i(i) * (Type(1) + mu_i(i) / phi);
           y_i(i) = rnbinom2(s1, s2);
         }
         break;
@@ -555,7 +555,21 @@ Type objective_function<Type>::operator()()
         SIMULATE{y_i(i) = rtruncated_nbinom(asDouble(phi), 0, asDouble(mu_i(i)));}
         break;
       case nbinom1_family:
-        error("NB1 family not implemented yet.");
+        s1 = log(mu_i(i));
+        s2 = s1 + ln_phi;
+        tmp_ll = dnbinom_robust(y_i(i), s1, s2, true);
+        SIMULATE {y_i(i) = rnbinom2(mu_i(i), mu_i(i) * (Type(1) + phi));}
+        break;
+      case truncated_nbinom1_family:
+        s1 = log(mu_i(i));
+        s2 = s1 + ln_phi;
+        tmp_ll = dnbinom_robust(y_i(i), s1, s2, true);
+        s3 = logspace_add(Type(0), ln_phi);
+        lognzprob = logspace_sub(Type(0), -mu_i(i) / phi * s3); // 1-prob(0)
+        tmp_ll -= lognzprob;
+        tmp_ll = zt_lik_nearzero(y_i(i), tmp_ll);
+        SIMULATE{y_i(i) = rtruncated_nbinom(asDouble(mu_i(i)/phi), 0, asDouble(mu_i(i)));}
+        break;
       case lognormal_family:
         tmp_ll = sdmTMB::dlnorm(y_i(i), log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi, true);
         SIMULATE{y_i(i) = exp(rnorm(log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi));}

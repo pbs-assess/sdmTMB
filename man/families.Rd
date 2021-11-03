@@ -5,7 +5,9 @@
 \alias{Beta}
 \alias{lognormal}
 \alias{nbinom2}
+\alias{nbinom1}
 \alias{truncated_nbinom2}
+\alias{truncated_nbinom1}
 \alias{student}
 \alias{tweedie}
 \title{Additional families}
@@ -16,7 +18,11 @@ lognormal(link = "log")
 
 nbinom2(link = "log")
 
+nbinom1(link = "log")
+
 truncated_nbinom2(link = "log")
+
+truncated_nbinom1(link = "log")
 
 student(link = "identity", df = 3)
 
@@ -31,8 +37,11 @@ tweedie(link = "log")
 Additional families compatible with \code{\link[=sdmTMB]{sdmTMB()}}.
 }
 \details{
-The negative binomial parameterization is the NB2 where the variance grows
+The \code{nbinom2} negative binomial parameterization is the NB2 where the variance grows
 quadratically with the mean (Hilbe 2011).
+
+The \code{nbinom1} negative binomial parameterization lets the variance grow
+linearly with the mean (Hilbe 2011).
 
 The degrees of freedom parameter is currently not estimated and is fixed at \code{df}.
 }
@@ -40,7 +49,9 @@ The degrees of freedom parameter is currently not estimated and is fixed at \cod
 Beta(link = "logit")
 lognormal(link = "log")
 nbinom2(link = "log")
+nbinom1(link = "log")
 truncated_nbinom2(link = "log")
+truncated_nbinom1(link = "log")
 student(link = "identity")
 tweedie(link = "log")
 }
