@@ -41,7 +41,7 @@ NULL
 #'   documentation](https://kaskr.github.io/adcomp/classAR1__t.html). If the AR1
 #'   correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
 #'   may wish to switch to the random walk `"RW"`. Capitalization is ignored. `TRUE`
-#'   gets converted to `'on'` and `FALSE` gets converted to `off`.
+#'   gets converted to `'iid'` and `FALSE` gets converted to `off`.
 #' @param share_range Logical: estimate a shared spatial and spatiotemporal
 #'   range parameter (`TRUE`) or independent range parameters (`FALSE`).
 #' @param time_varying An optional one-sided formula describing covariates that
