@@ -37,7 +37,7 @@ Let's perform index standardization with the built-in data for Pacific cod.
 glimpse(pcod)
 ```
 
-First we will create our SPDE mesh. We will a relatively course mesh for a balance between speed and accuracy in this vignette (`cutoff = 10` where cutoff is in the units of X and Y (km here) and represents the minimum distance between points before a new mesh vertex is added). You will likely want to use a higher resolution mesh for applied scenarios. You will want to make sure that increasing the number of knots does not change the conclusions.
+First we will create our SPDE mesh. We will use a relatively course mesh for a balance between speed and accuracy in this vignette (`cutoff = 10` where cutoff is in the units of X and Y (km here) and represents the minimum distance between points before a new mesh vertex is added). You will likely want to use a higher resolution mesh for applied scenarios. You will want to make sure that increasing the number of knots does not change the conclusions.
 
 ```{r spde, fig.asp=0.8}
 pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
@@ -53,7 +53,7 @@ m <- sdmTMB(
   time = "year", mesh = pcod_spde, family = tweedie(link = "log"))
 ```
 
-We can inspect randomized quantile residuals::
+We can inspect randomized quantile residuals:
 
 ```{r residuals, fig.width = 8}
 pcod$resids <- residuals(m) # randomized quantile residuals
