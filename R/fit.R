@@ -40,7 +40,8 @@ NULL
 #'   scaled according to the correlation. See the [TMB
 #'   documentation](https://kaskr.github.io/adcomp/classAR1__t.html). If the AR1
 #'   correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
-#'   may wish to switch to the random walk `"RW"`. Capitalization is ignored.
+#'   may wish to switch to the random walk `"RW"`. Capitalization is ignored. `TRUE`
+#'   gets converted to `'on'` and `FALSE` gets converted to `off`.
 #' @param share_range Logical: estimate a shared spatial and spatiotemporal
 #'   range parameter (`TRUE`) or independent range parameters (`FALSE`).
 #' @param time_varying An optional one-sided formula describing covariates that
@@ -383,6 +384,9 @@ sdmTMB <- function(
   ...
   ) {
 
+  spatiotemporal <- match.arg(tolower(as.character(spatiotemporal)), choices = c("iid", "ar1", "rw", "off", "true", "false"))
+  if (spatiotemporal == "true") spatiotemporal <- "iid"
+  if (spatiotemporal == "false") spatiotemporal <- "off"
   spatiotemporal <- match.arg(tolower(spatiotemporal), choices = c("iid", "ar1", "rw", "off"))
   if (is_present(spatial_only)) {
     deprecate_warn("0.0.20", "sdmTMB(spatial_only)", "sdmTMB(spatiotemporal)", details = "`spatiotemporal = 'off'` (or `time = NULL`) is equivalent to `spatial_only = TRUE`.")
