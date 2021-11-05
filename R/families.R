@@ -158,7 +158,7 @@ tweedie <- function(link = "log") {
 
 #' @export
 #' @examples
-#' censpois(link = "log")
+#' censored_poisson(link = "log")
 #' @rdname families
 censored_poisson <- function(link = "log") {
   linktemp <- substitute(link)

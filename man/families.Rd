@@ -57,7 +57,7 @@ truncated_nbinom2(link = "log")
 truncated_nbinom1(link = "log")
 student(link = "identity")
 tweedie(link = "log")
-censpois(link = "log")
+censored_poisson(link = "log")
 }
 \references{
 Hilbe, J. M. (2011). Negative binomial regression. Cambridge University Press.
