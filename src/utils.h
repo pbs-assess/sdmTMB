@@ -5,6 +5,38 @@ bool isNA(Type x) {
 }
 
 template <class Type>
+Type dcenspois(Type x, Type lambda, Type lwr, Type upr, int give_log = 0)
+{
+  // Should not do the obvious route due to numerical issues
+  // tmp_ll = log(ppois(UPPER_i(i), mu_i(i), true) - ppois(LOWER_i(i)-1, mu_i, true));
+  Type tmp_ll;
+  if (lwr == upr) {  // no censorship
+    tmp_ll = dpois(lwr, lambda, true);
+  }
+  if (isNA(upr)) {  // right censored
+    if (lwr == Type(0)) {
+      tmp_ll = 0.0;
+    }
+    if (lwr > Type(0)) {
+      tmp_ll = dpois(Type(0), lambda, true);
+      for (int j = 1; j < CppAD::Integer(lwr); j++) {
+        tmp_ll = logspace_add(tmp_ll, dpois(Type(j), lambda, true));
+      }
+      tmp_ll = logspace_sub(Type(0), tmp_ll);  // 1 - F(lower-1)
+    }
+  } else {
+    tmp_ll = dpois(lwr, lambda, true);
+    for (int j = (CppAD::Integer(lwr) + 1); j < (CppAD::Integer(upr) + 1); j++) {
+      tmp_ll = logspace_add(tmp_ll, dpois(Type(j), lambda, true));
+    }
+  }
+  if (give_log)
+    return tmp_ll;
+  else
+    return exp(tmp_ll);
+}
+
+template <class Type>
 Type dstudent(Type x, Type mean, Type sigma, Type df, int give_log = 0) {
   // from metRology::dt.scaled()
   // dt((x - mean)/sd, df, ncp = ncp, log = TRUE) - log(sd)
