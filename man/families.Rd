@@ -10,6 +10,7 @@
 \alias{truncated_nbinom1}
 \alias{student}
 \alias{tweedie}
+\alias{censored_poisson}
 \title{Additional families}
 \usage{
 Beta(link = "logit")
@@ -27,6 +28,8 @@ truncated_nbinom1(link = "log")
 student(link = "identity", df = 3)
 
 tweedie(link = "log")
+
+censored_poisson(link = "log")
 }
 \arguments{
 \item{link}{The link.}
@@ -54,6 +57,7 @@ truncated_nbinom2(link = "log")
 truncated_nbinom1(link = "log")
 student(link = "identity")
 tweedie(link = "log")
+censpois(link = "log")
 }
 \references{
 Hilbe, J. M. (2011). Negative binomial regression. Cambridge University Press.

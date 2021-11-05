@@ -185,5 +185,99 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
     expect_length(residuals(m), nrow(s))
   })
-
 }
+
+test_that("Censored Poisson fits", {
+  skip_on_ci()
+  skip_on_cran()
+  set.seed(1)
+
+  predictor_dat <- data.frame(X = runif(300), Y = runif(300))
+  mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.2)
+  sim_dat <- sdmTMB_simulate(
+    formula = ~1,
+    data = predictor_dat,
+    mesh = mesh,
+    family = poisson(),
+    range = 0.5,
+    sigma_O = 0.2,
+    seed = 1,
+    B = 2 # B0 = intercept
+  )
+  m_pois <- sdmTMB(
+    data = sim_dat, formula = observed ~ 1,
+    mesh = mesh, family = poisson(link = "log")
+  )
+  m_nocens_pois <- sdmTMB(
+    data = sim_dat, formula = observed ~ 1,
+    mesh = mesh, family = censored_poisson(link = "log"),
+    experimental = list(upr = sim_dat$observed, lwr = sim_dat$observed)
+  )
+  expect_equal(m_nocens_pois$tmb_data$lwr, m_nocens_pois$tmb_data$upr)
+  expect_equal(m_nocens_pois$tmb_data$lwr, as.numeric(m_nocens_pois$tmb_data$y_i))
+  expect_equal(names(m_nocens_pois$tmb_data$family), "censored_poisson")
+  expect_equal(m_pois$model, m_nocens_pois$model)
+
+  # left-censored version
+  L_1 <- 5 # zeros and ones cannot be observed directly - observed as <= L1
+  y <- sim_dat$observed
+  lwr <- ifelse(y <= L_1, 0, y)
+  upr <- ifelse(y <= L_1, L_1, y)
+  m_left_cens_pois <- sdmTMB(
+    data = sim_dat, formula = observed ~ 1,
+    mesh = mesh, family = censored_poisson(link = "log"),
+    experimental = list(lwr = lwr, upr = upr),
+    control = sdmTMBcontrol(map_rf = TRUE)
+  )
+
+  # right-censored version
+  U_1 <- 8 # U_1 and above cannot be directly observed - instead we see >= U1
+  y <- sim_dat$observed
+  lwr <- ifelse(y >= U_1, U_1, y)
+  upr <- ifelse(y >= U_1, NA, y)
+  m_right_cens_pois <- sdmTMB(
+    data = sim_dat, formula = observed ~ 1,
+    mesh = mesh, family = censored_poisson(link = "log"),
+    experimental = list(lwr = lwr, upr = upr),
+    control = sdmTMBcontrol(map_rf = TRUE)
+  )
+
+  # interval-censored tough example
+  # unique bounds per observation with upper limit 500 to test numerical underflow issues
+  set.seed(123)
+  U_2 <- sample(c(5:9), size = length(y), replace = TRUE)
+  L_2 <- sample(c(1, 2, 3, 4), size = length(y), replace = TRUE)
+  lwr <- ifelse(y >= U_2, U_2, ifelse(y <= L_2, 0, y))
+  upr <- ifelse(y >= U_2, 500, ifelse(y <= L_2, L_2, y))
+  m_interval_cens_pois <- sdmTMB(
+    data = sim_dat, formula = observed ~ 1,
+    mesh = mesh, family = censored_poisson(link = "log"),
+    experimental = list(lwr = lwr, upr = upr),
+    control = sdmTMBcontrol(map_rf = TRUE)
+  )
+  expect_true(all(!is.na(summary(m_interval_cens_pois$sd_report)[, "Std. Error"])))
+
+  # reversed upr and lwr:
+  expect_error(
+    m <- sdmTMB(
+      data = sim_dat, formula = observed ~ 1,
+      mesh = mesh, family = censored_poisson(link = "log"),
+      experimental = list(lwr = upr, upr = lwr)
+    ), regexp = "lwr")
+
+  # wrong length lwr and upr
+  expect_error(
+    m <- sdmTMB(
+      data = sim_dat, formula = observed ~ 1,
+      mesh = mesh, family = censored_poisson(link = "log"),
+      experimental = list(lwr = c(1, 2), upr = c(4, 5, 6))
+    ), regexp = "lwr")
+
+  # missing lwr/upr
+  expect_error(
+    m <- sdmTMB(
+      data = sim_dat, formula = observed ~ 1,
+      mesh = mesh, family = censored_poisson(link = "log"),
+    ), regexp = "lwr")
+
+})

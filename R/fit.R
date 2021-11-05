@@ -25,6 +25,7 @@ NULL
 #'   \code{\link[sdmTMB:families]{truncated_nbinom2()}},
 #'   \code{\link[sdmTMB:families]{nbinom1()}},
 #'   \code{\link[sdmTMB:families]{truncated_nbinom1()}},
+#'   \code{\link[sdmTMB:families]{censored_poisson()}},
 #'   \code{\link[sdmTMB:families]{student()}}, and
 #'   \code{\link[sdmTMB:families]{tweedie()}}]. For binomial family options,
 #'   see the 'Binomial families' in the Details section below.
@@ -422,8 +423,18 @@ sdmTMB <- function(
     } else {
       epsilon_predictor <- NULL
     }
+    if ("lwr" %in% names(experimental) && "upr" %in% names(experimental)) {
+      lwr <- experimental$lwr
+      upr <- experimental$upr
+    } else {
+      epsilon_predictor <- NULL
+      lwr <- 0
+      upr <- Inf
+    }
   } else {
     epsilon_predictor <- NULL
+    lwr <- 0
+    upr <- Inf
   }
   normalize <- control$normalize
   nlminb_loops <- control$nlminb_loops
@@ -485,6 +496,13 @@ sdmTMB <- function(
   if (!is.null(map) && length(map) != length(start)) {
     warning("`length(map) != length(start)`. You likely want to specify ",
       "`start` values if you are setting the `map` argument.", call. = FALSE)
+  }
+  if (family$family == "censored_poisson") {
+    assert_that("lwr" %in% names(experimental) && "upr" %in% names(experimental),
+      msg = "`lwr` and `upr` must be specified in `experimental` as elements of a named list to use the censored Poisson likelihood.")
+    assert_that(length(lwr) == nrow(data) && length(upr) == nrow(data))
+    assert_that(length(lwr) == length(upr))
+    assert_that(mean(lwr, na.rm = TRUE) <= mean(upr, na.rm = TRUE))
   }
 
   if (is.null(time)) {
@@ -739,7 +757,9 @@ sdmTMB <- function(
     ln_tau_G_index = ln_tau_G_index,
     est_epsilon_model = as.integer(est_epsilon_model),
     epsilon_predictor = epsilon_covariate,
-    has_smooths = as.integer(sm$has_smooths)
+    has_smooths = as.integer(sm$has_smooths),
+    upr = upr,
+    lwr = lwr
   )
 
   b_thresh <- rep(0, 2)
@@ -783,7 +803,7 @@ sdmTMB <- function(
     tmb_map <- c(tmb_map, list(ln_H_input = factor(rep(NA, 2))))
   if (!ar1_fields)
     tmb_map <- c(tmb_map, list(ar1_phi = as.factor(NA)))
-  if (family$family %in% c("binomial", "poisson"))
+  if (family$family %in% c("binomial", "poisson", "censored_poisson"))
     tmb_map <- c(tmb_map, list(ln_phi = as.factor(NA)))
   if (family$family != "tweedie")
     tmb_map <- c(tmb_map, list(thetaf = as.factor(NA)))
@@ -841,7 +861,7 @@ sdmTMB <- function(
 
     if (family$family == "tweedie")
       tmb_params$thetaf <- set_par_value(tmb_opt1, "thetaf")
-    if (!family$family %in% c("binomial", "poisson"))  # no dispersion param
+    if (!family$family %in% c("binomial", "poisson", "censored_poisson"))  # no dispersion param
       tmb_params$ln_phi <- set_par_value(tmb_opt1, "ln_phi")
   }
 

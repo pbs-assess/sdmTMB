@@ -2,6 +2,8 @@
 
 # sdmTMB 0.0.20.9000
 
+*  Add `censored_poisson(link = 'log')` family; implemented by @joenomiddlename
+
 * `fields` in `sdmTMB()` is now depreciated and replaced by `spatiotemporal`.
 
 * `include_spatial` in `sdmTMB()` is now depreciated and replaced by `spatial`.

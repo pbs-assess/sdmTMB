@@ -15,7 +15,8 @@ enum valid_family {
   Beta_family     = 8,
   truncated_nbinom2_family  = 9,
   nbinom1_family  = 10,
-  truncated_nbinom1_family  = 11
+  truncated_nbinom1_family  = 11,
+  censored_poisson_family  = 12
 };
 
 enum valid_link {
@@ -182,6 +183,9 @@ Type objective_function<Type>::operator()()
   DATA_IVECTOR(b_smooth_start);
 
   DATA_INTEGER(sim_re);
+
+  DATA_VECTOR(lwr); // lower bound for censpois on counts
+  DATA_VECTOR(upr); // upper bound for censpois on counts
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -524,6 +528,10 @@ Type objective_function<Type>::operator()()
         break;
       case poisson_family:
         tmp_ll = dpois(y_i(i), mu_i(i), true);
+        SIMULATE{y_i(i) = rpois(mu_i(i));}
+        break;
+      case censored_poisson_family:
+        tmp_ll = sdmTMB::dcenspois(y_i(i), mu_i(i), lwr(i), upr(i), true);
         SIMULATE{y_i(i) = rpois(mu_i(i));}
         break;
       case Gamma_family:
