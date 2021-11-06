@@ -384,7 +384,8 @@ sdmTMB <- function(
   ...
   ) {
 
-  spatiotemporal <- match.arg(tolower(as.character(spatiotemporal)), choices = c("iid", "ar1", "rw", "off", "true", "false"))
+  spatiotemporal <- match.arg(tolower(as.character(spatiotemporal[[1]])),
+    choices = c("iid", "ar1", "rw", "off", "true", "false"))
   if (spatiotemporal == "true") spatiotemporal <- "iid"
   if (spatiotemporal == "false") spatiotemporal <- "off"
   spatiotemporal <- match.arg(tolower(spatiotemporal), choices = c("iid", "ar1", "rw", "off"))
