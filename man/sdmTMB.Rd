@@ -118,7 +118,21 @@ model must be set up \emph{exactly} the same way. However, the \code{weights} ar
 can change, which can be useful for cross-validation.}
 
 \item{experimental}{A named list for esoteric or in-development options.
-Here be dragons.}
+Here be dragons.
+(Experimental) A column name (as character) of a
+predictor of a linear trend (in log space) of the spatiotemporal standard
+deviation. By default, this is \code{NULL} and fits a model with a constant
+spatiotemporal variance. However, this argument can also be a character
+name in the original data frame (a covariate that ideally has been
+standardized to have mean 0 and standard deviation = 1). Because the
+spatiotemporal field varies by time step, the standardization should be
+done by time. If the name of a predictor is included, a log-linear model is
+fit where the predictor is used to model effects on the standard deviation,
+e.g. \code{log(sd(i)) = B0 + B1 * epsilon_predictor(i)}. The 'epsilon_model' argument may also
+be specified. This is the name of the model to use to modeling time-varying epsilon. This
+can be one of the following: "trend" (default, fits a linear model without random effects),
+"re" (fits a model with random effects in epsilon_st, but no trend), and "trend-re" (a model
+that includes both the trend and random effects)}
 
 \item{do_fit}{Fit the model (\code{TRUE}) or return the processed data without
 fitting (\code{FALSE})?}

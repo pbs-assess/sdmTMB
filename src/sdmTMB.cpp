@@ -176,6 +176,8 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(threshold_func);
   // optional model for nonstationary st variance
   DATA_INTEGER(est_epsilon_model);
+  DATA_INTEGER(est_epsilon_slope);
+  DATA_INTEGER(est_epsilon_re);
   DATA_VECTOR(epsilon_predictor);
 
   // optional stuff for penalized regression splines
@@ -210,6 +212,8 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
   PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3)
   PARAMETER(b_epsilon); // slope coefficient for log-linear model on epsilon
+  PARAMETER_VECTOR(epsilon_re);
+  PARAMETER(ln_epsilon_re_sigma);
   PARAMETER_VECTOR(b_smooth);  // P-spline smooth parameters
   PARAMETER_VECTOR(ln_smooth_sigma);  // variances of spline REs if included
 
@@ -274,8 +278,17 @@ Type objective_function<Type>::operator()()
     Type log_epsilon_intcpt = log(epsilon_intcpt);
     Type log_epsilon_temp = 0.0;
     Type epsilon_cnst = - log(Type(4.0) * M_PI) / Type(2.0) - ln_kappa(1);
+    if(est_epsilon_re) {
+      //jnll -= dnorm(exp(ln_epsilon_re_sigma), Type(0.2), Type(1), true);
+      for(int i = 0; i < n_t; i++) {
+        jnll -= dnorm(epsilon_re(i), Type(0), exp(ln_epsilon_re_sigma), true);
+      }
+    }
+
     for(int i = 0; i < n_t; i++) {
-      log_epsilon_temp = log_epsilon_intcpt + b_epsilon * epsilon_predictor(i);
+      log_epsilon_temp = log_epsilon_intcpt;
+      if(est_epsilon_slope) log_epsilon_temp += b_epsilon * epsilon_predictor(i);
+      if(est_epsilon_re) log_epsilon_temp += epsilon_re(i);
       sigma_E(i) = exp(log_epsilon_temp); // log-linear model
       ln_tau_E_vec(i) = -log_epsilon_temp + epsilon_cnst;
     }
@@ -817,9 +830,13 @@ Type objective_function<Type>::operator()()
     ADREPORT(quadratic_peak);
     ADREPORT(quadratic_reduction);
   }
-  if (est_epsilon_model) {
+  if (est_epsilon_slope) {
     REPORT(b_epsilon);
     ADREPORT(b_epsilon);
+  }
+  if(est_epsilon_re) {
+    REPORT(ln_epsilon_re_sigma);
+    ADREPORT(ln_epsilon_re_sigma);
   }
 
   // ------------------ Reporting ----------------------------------------------

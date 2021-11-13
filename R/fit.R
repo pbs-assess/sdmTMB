@@ -79,16 +79,20 @@ NULL
 #'   fitting (`FALSE`)?
 #' @param experimental A named list for esoteric or in-development options.
 #'    Here be dragons.
-#   (Experimental) A column name (as character) of a
-#   predictor of a linear trend (in log space) of the spatiotemporal standard
-#   deviation. By default, this is `NULL` and fits a model with a constant
-#   spatiotemporal variance. However, this argument can also be a character
-#   name in the original data frame (a covariate that ideally has been
-#   standardized to have mean 0 and standard deviation = 1). Because the
-#   spatiotemporal field varies by time step, the standardization should be
-#   done by time. If the name of a predictor is included, a log-linear model is
-#   fit where the predictor is used to model effects on the standard deviation,
-#   e.g. `log(sd(i)) = B0 + B1 * epsilon_predictor(i)`.
+#'   (Experimental) A column name (as character) of a
+#'   predictor of a linear trend (in log space) of the spatiotemporal standard
+#'   deviation. By default, this is `NULL` and fits a model with a constant
+#'   spatiotemporal variance. However, this argument can also be a character
+#'   name in the original data frame (a covariate that ideally has been
+#'   standardized to have mean 0 and standard deviation = 1). Because the
+#'   spatiotemporal field varies by time step, the standardization should be
+#'   done by time. If the name of a predictor is included, a log-linear model is
+#'   fit where the predictor is used to model effects on the standard deviation,
+#'   e.g. `log(sd(i)) = B0 + B1 * epsilon_predictor(i)`. The 'epsilon_model' argument may also
+#' be specified. This is the name of the model to use to modeling time-varying epsilon. This
+#' can be one of the following: "trend" (default, fits a linear model without random effects),
+#' "re" (fits a model with random effects in epsilon_st, but no trend), and "trend-re" (a model
+#' that includes both the trend and random effects)
 #' @param fields **Depreciated.** Replaced by `spatiotemporal`.
 #' @param include_spatial **Depreciated.** Replaced by `spatial`.
 #' @param spatial_only **Depreciated.** Replaced by `spatiotemporal = "off"`.
@@ -421,13 +425,21 @@ sdmTMB <- function(
     message("Both spatial and spatiotemporal fields are set to 'off'.")
     control$map_rf <- TRUE
   }
-
+  epsilon_model <- NULL
+  epsilon_predictor <- NULL
   if (!is.null(experimental)) {
     if ("epsilon_predictor" %in% names(experimental)) {
       epsilon_predictor <- experimental$epsilon_predictor
     } else {
       epsilon_predictor <- NULL
     }
+
+    if ("epsilon_model" %in% names(experimental)) {
+      epsilon_model <- experimental$epsilon_model
+    } else {
+      epsilon_model <- NULL
+    }
+
     if ("lwr" %in% names(experimental) && "upr" %in% names(experimental)) {
       lwr <- experimental$lwr
       upr <- experimental$upr
@@ -652,14 +664,31 @@ sdmTMB <- function(
 
   est_epsilon_model <- 0L
   epsilon_covariate <- rep(0, length(unique(data[[time]])))
-  if (!is.null(epsilon_predictor)) {
-    # covariate vector dimensioned by number of time steps
-    time_steps <- unique(data[[time]])
-    for (i in seq_along(time_steps)) {
-      epsilon_covariate[i] <- data[data[[time]] == time_steps[i],
-        epsilon_predictor, drop = TRUE][[1]]
+  if (!is.null(epsilon_predictor) & !is.null(epsilon_model)) {
+    if(epsilon_model %in% c("trend","trend-re")) {
+      # covariate vector dimensioned by number of time steps
+      time_steps <- unique(data[[time]])
+      for (i in seq_along(time_steps)) {
+        epsilon_covariate[i] <- data[data[[time]] == time_steps[i],
+                                     epsilon_predictor, drop = TRUE][[1]]
+      }
+      est_epsilon_model <- 1L
     }
-    est_epsilon_model <- 1L
+  }
+  # flags for turning off the trend and random effects
+  est_epsilon_slope <- 0
+  if(!is.null(epsilon_model)) {
+    if(epsilon_model %in% c("trend","trend-re")) {
+      est_epsilon_slope <- 1L
+      est_epsilon_model <- 1L
+    }
+  }
+  est_epsilon_re <- 0
+  if(!is.null(epsilon_model)) {
+    if(epsilon_model[1] %in% c("re","trend-re")) {
+      est_epsilon_re <- 1L
+      est_epsilon_model <- 1L
+    }
   }
 
 
@@ -762,6 +791,8 @@ sdmTMB <- function(
     ln_tau_G_index = ln_tau_G_index,
     est_epsilon_model = as.integer(est_epsilon_model),
     epsilon_predictor = epsilon_covariate,
+    est_epsilon_slope = as.integer(est_epsilon_slope),
+    est_epsilon_re = as.integer(est_epsilon_re),
     has_smooths = as.integer(sm$has_smooths),
     upr = upr,
     lwr = lwr
@@ -791,6 +822,8 @@ sdmTMB <- function(
     epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t),
     b_threshold = b_thresh,
     b_epsilon = 0,
+    ln_epsilon_re_sigma = 0,
+    epsilon_re = rep(0, tmb_data$n_t),
     b_smooth = rep(0, if (sm$has_smooths) sum(sm$sm_dims) else 0),
     ln_smooth_sigma = rep(0, if (sm$has_smooths) length(sm$sm_dims) else 0)
   )
@@ -847,6 +880,13 @@ sdmTMB <- function(
     if (est_epsilon_model == 0L) {
       tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
     }
+    if (est_epsilon_slope == 0L) {
+      tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
+    }
+    if (est_epsilon_re == 0L) {
+      tmb_map <- c(tmb_map, list(ln_epsilon_re_sigma = as.factor(NA),
+                                 epsilon_re = factor(rep(NA, tmb_data$n_t))))
+    }
 
     tmb_obj1 <- TMB::MakeADFun(
       data = tmb_data, parameters = tmb_params,
@@ -881,6 +921,7 @@ sdmTMB <- function(
   }
   if (!is.null(spatial_varying)) tmb_random <- c(tmb_random, "zeta_s")
   if (!is.null(time_varying)) tmb_random <- c(tmb_random, "b_rw_t")
+  if(est_epsilon_re) tmb_random <- c(tmb_random, "epsilon_re")
 
   if (!include_spatial) {
     tmb_map <- c(tmb_map, list(
