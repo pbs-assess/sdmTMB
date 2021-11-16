@@ -519,7 +519,7 @@ sdmTMB <- function(
       msg = "`lwr` and `upr` must be specified in `experimental` as elements of a named list to use the censored Poisson likelihood.")
     assert_that(length(lwr) == nrow(data) && length(upr) == nrow(data))
     assert_that(length(lwr) == length(upr))
-    assert_that(mean(lwr, na.rm = TRUE) <= mean(upr, na.rm = TRUE))
+    assert_that(mean(upr-lwr, na.rm = TRUE)>=0)
   }
 
   if (is.null(time)) {

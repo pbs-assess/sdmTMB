@@ -11,23 +11,20 @@ Type dcenspois(Type x, Type lambda, Type lwr, Type upr, int give_log = 0)
   // tmp_ll = log(ppois(UPPER_i(i), mu_i(i), true) - ppois(LOWER_i(i)-1, mu_i, true));
   Type tmp_ll;
   if (lwr == upr) {  // no censorship
-    tmp_ll = dpois(lwr, lambda, true);
+    tmp_ll = dpois(Type(lwr), lambda, true);
   }
   if (isNA(upr)) {  // right censored
     if (lwr == Type(0)) {
       tmp_ll = 0.0;
     }
     if (lwr > Type(0)) {
-      tmp_ll = dpois(Type(0), lambda, true);
-      for (int j = 1; j < CppAD::Integer(lwr); j++) {
-        tmp_ll = logspace_add(tmp_ll, dpois(Type(j), lambda, true));
-      }
+      tmp_ll = log(ppois(Type(lwr-1.0), lambda)); // F(lower-1)
       tmp_ll = logspace_sub(Type(0), tmp_ll);  // 1 - F(lower-1)
     }
   } else {
-    tmp_ll = dpois(lwr, lambda, true);
-    for (int j = (CppAD::Integer(lwr) + 1); j < (CppAD::Integer(upr) + 1); j++) {
-      tmp_ll = logspace_add(tmp_ll, dpois(Type(j), lambda, true));
+    tmp_ll = log(ppois(Type(upr), lambda)); // F(upr)
+    if (lwr > Type(0)) {
+      tmp_ll = logspace_sub(tmp_ll, log(ppois(Type(lwr-1.0), lambda))); // F(upr) - F(lwr-1) iff lwr>0
     }
   }
   if (give_log)
