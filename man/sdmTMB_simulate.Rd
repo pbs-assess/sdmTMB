@@ -20,7 +20,7 @@ sdmTMB_simulate(
   phi = NULL,
   tweedie_p = NULL,
   df = NULL,
-  simulate_re = TRUE,
+  fixed_re = list(omega_s = NULL, epsilon_st = NULL, zeta_s = NULL),
   seed = sample.int(1e+06, 1),
   ...
 )
@@ -61,7 +61,9 @@ ranges will be unique.}
 
 \item{df}{Student-t degrees of freedom.}
 
-\item{simulate_re}{Include random effect simulation?}
+\item{fixed_re}{A list of optional random effects to fix at specified
+(e.g., previously estimated) values. Values of \code{NULL} will result
+in the random effects being simulated.}
 
 \item{seed}{A value with which to set the random seed.}
 

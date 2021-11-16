@@ -732,7 +732,7 @@ sdmTMB <- function(
     offset_i   = offset,
     A          = spde$A,
     A_st       = A_st,
-    sim_re     = if ("sim_re" %in% names(experimental)) as.integer(experimental$sim_re) else 0L,
+    sim_re     = if ("sim_re" %in% names(experimental)) as.integer(experimental$sim_re) else rep(0L, 6),
     A_spatial_index = data$sdm_spatial_id - 1L,
     year_i     = make_year_i(data[[time]]),
     ar1_fields = if (spatial_only) 0L else as.integer(ar1_fields),

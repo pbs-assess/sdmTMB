@@ -28,7 +28,9 @@
 #' @param tweedie_p Tweedie p (power) parameter; between 1 and 2.
 #' @param df Student-t degrees of freedom.
 #' @param seed A value with which to set the random seed.
-#' @param simulate_re Include random effect simulation?
+#' @param fixed_re A list of optional random effects to fix at specified
+#'    (e.g., previously estimated) values. Values of `NULL` will result
+#'    in the random effects being simulated.
 #' @param previous_fit An optional previous [sdmTMB()] fit to pull parameter values.
 #'   Will be over-ruled by any non-NULL specified parameter arguments.
 #' @param ... Any other arguments to pass to [sdmTMB()].
@@ -106,7 +108,7 @@ sdmTMB_simulate <- function(
   phi = NULL,
   tweedie_p = NULL,
   df = NULL,
-  simulate_re = TRUE,
+  fixed_re = list(omega_s = NULL, epsilon_st = NULL, zeta_s = NULL),
   seed = sample.int(1e6, 1),
   ...) {
 
@@ -139,19 +141,32 @@ sdmTMB_simulate <- function(
       data[["sdmTMB_response_"]] <- 0.1 # fake! does nothing but lets sdmTMB parse the formula
     }
 
+    .sim_re <- list(omega = TRUE, epsilon = TRUE, zeta = TRUE,
+      IID = TRUE, RW = TRUE, smooth = TRUE)
+    if (!is.null(fixed_re$omega_s)) {
+      .sim_re$omega <- FALSE
+    }
+    if (!is.null(fixed_re$epsilon_st)) {
+      .sim_re$epsilon <- FALSE
+    }
+    if (!is.null(fixed_re$zeta_s)) {
+      .sim_re$zeta <- FALSE
+    }
+    .sim_re <- as.integer(unlist(.sim_re))
+
     # get tmb_data structure; parsed model matrices etc.:
     fit <- sdmTMB(
       formula = formula, data = data, mesh = mesh, time = time,
       family = family, do_fit = FALSE,
       share_range = length(range) == 1L,
-      experimental = list(sim_re = simulate_re), ...)
+      experimental = list(sim_re = .sim_re), ...)
       params <- fit$tmb_params
   } else {
     fit <- previous_fit
     params <- fit$tmb_obj$env$parList()
   }
   tmb_data <- fit$tmb_data
-  tmb_data$sim_re <- as.integer(simulate_re)
+  # tmb_data$sim_re <- as.integer(simulate_re)
 
   if (!is.null(B)) {
     n_covariates <- length(B)
@@ -193,6 +208,16 @@ sdmTMB_simulate <- function(
   if (!is.null(phi)) params$ln_phi <- log(phi)
   if (!is.null(rho))  params$ar1_phi <- stats::qlogis((rho + 1)/2)
   if (!is.null(df)) tmb_data$df <- df
+
+  if (!is.null(fixed_re$omega_s)) {
+    params$omega_s <- fixed_re$omega_s
+  }
+  if (!is.null(fixed_re$epsilon_st)) {
+    params$epsilon_st <- fixed_re$epsilon_st
+  }
+  if (!is.null(fixed_re$zeta_s)) {
+    params$zeta_s <- fixed_re$zeta_s
+  }
 
   newobj <- TMB::MakeADFun(data = tmb_data, map = fit$tmb_map,
     random = fit$tmb_random, parameters = params, DLL = "sdmTMB")

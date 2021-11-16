@@ -184,7 +184,7 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(has_smooths);  // whether or not smooths are included
   DATA_IVECTOR(b_smooth_start);
 
-  DATA_INTEGER(sim_re);
+  DATA_IVECTOR(sim_re); // sim random effects? 0,1; order: omega, epsilon, zeta, IID, RW, smoothers
 
   DATA_VECTOR(lwr); // lower bound for censpois on counts
   DATA_VECTOR(upr); // upper bound for censpois on counts
@@ -212,8 +212,8 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
   PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3)
   PARAMETER(b_epsilon); // slope coefficient for log-linear model on epsilon
-  PARAMETER_VECTOR(epsilon_re);
   PARAMETER(ln_epsilon_re_sigma);
+  PARAMETER_VECTOR(epsilon_re);
   PARAMETER_VECTOR(b_smooth);  // P-spline smooth parameters
   PARAMETER_VECTOR(ln_smooth_sigma);  // variances of spline REs if included
 
@@ -319,7 +319,7 @@ Type objective_function<Type>::operator()()
   // IID random intercepts:
   for (int g = 0; g < RE.size(); g++) {
     jnll -= dnorm(RE(g), Type(0.0), exp(ln_tau_G(ln_tau_G_index(g))), true);
-    if (sim_re) SIMULATE{RE(g) = rnorm(Type(0), exp(ln_tau_G(ln_tau_G_index(g))));
+    if (sim_re(3)) SIMULATE{RE(g) = rnorm(Type(0), exp(ln_tau_G(ln_tau_G_index(g))));
     }
   }
 
@@ -329,7 +329,7 @@ Type objective_function<Type>::operator()()
       // flat prior on the initial value... then:
       for (int t = 1; t < n_t; t++) {
         jnll += -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
-        if (sim_re) SIMULATE{b_rw_t(t, k) = rnorm(b_rw_t(t - 1, k), exp(ln_tau_V(k)));}
+        if (sim_re(4)) SIMULATE{b_rw_t(t, k) = rnorm(b_rw_t(t - 1, k), exp(ln_tau_V(k)));}
       }
     }
   }
@@ -341,7 +341,7 @@ Type objective_function<Type>::operator()()
   if (include_spatial) {
     // jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
     jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
-    if (sim_re) {
+    if (sim_re(0)) {
       SIMULATE {
         GMRF(Q_s, s).simulate(omega_s);
         omega_s *= 1. / exp(ln_tau_O);
@@ -349,7 +349,7 @@ Type objective_function<Type>::operator()()
     }
     if (spatial_covariate) {
       jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_Z))(zeta_s);
-      if (sim_re) {
+      if (sim_re(3)) {
         SIMULATE {
           GMRF(Q_s, s).simulate(zeta_s);
           zeta_s *= 1. / exp(ln_tau_Z);
@@ -363,7 +363,7 @@ Type objective_function<Type>::operator()()
     if (!ar1_fields && !rw_fields) {
       for (int t = 0; t < n_t; t++)
         jnll += SCALE(GMRF(Q_st, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
-      if (sim_re) {
+      if (sim_re(1)) {
         for (int t = 0; t < n_t; t++) { // untested!!
           vector<Type> epsilon_st_tmp(epsilon_st.rows());
           SIMULATE {GMRF(Q_st, s).simulate(epsilon_st_tmp);}
@@ -372,7 +372,7 @@ Type objective_function<Type>::operator()()
       }
     } else {
       if (est_epsilon_model) { // time-varying epsilon sd
-        if (sim_re) error("Simulation not implemented for time-varying epsilon SD yet.");
+        if (sim_re(1)) error("Simulation not implemented for time-varying epsilon SD yet.");
         if (ar1_fields) {
           jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
           for (int t = 1; t < n_t; t++) {
@@ -394,7 +394,7 @@ Type objective_function<Type>::operator()()
       } else { // constant epsilon sd, keep calculations as is
         if (ar1_fields) {
           jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q_st, s)), 1./exp(ln_tau_E))(epsilon_st);
-          if (sim_re) {
+          if (sim_re(1)) {
             SIMULATE {SEPARABLE(AR1(rho), GMRF(Q_st, s)).simulate(epsilon_st);}
             epsilon_st *= 1./exp(ln_tau_E);
           }
@@ -403,7 +403,7 @@ Type objective_function<Type>::operator()()
           for (int t = 1; t < n_t; t++) {
             jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(t) - epsilon_st.col(t - 1));
           }
-          if (sim_re) {
+          if (sim_re(1)) {
             for (int t = 0; t < n_t; t++) { // untested!!
               vector<Type> epsilon_st_tmp(epsilon_st.rows());
               SIMULATE {GMRF(Q_st, s).simulate(epsilon_st_tmp);}
@@ -448,7 +448,7 @@ Type objective_function<Type>::operator()()
       for (int j = 0; j < beta_s.size(); j++) {
         beta_s(j) = b_smooth(b_smooth_start(s) + j);
         jnll -= dnorm(beta_s(j), Type(0), exp(ln_smooth_sigma(s)), true);
-        if (sim_re) SIMULATE{beta_s(j) = rnorm(Type(0), exp(ln_smooth_sigma(s)));}
+        if (sim_re(5)) SIMULATE{beta_s(j) = rnorm(Type(0), exp(ln_smooth_sigma(s)));}
       }
       eta_smooth_i += Zs(s) * beta_s;
     }
