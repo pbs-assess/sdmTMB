@@ -191,7 +191,7 @@ sdmTMB_simulate <- function(
 
   if (!is.null(B)) params$b_j <- B
   if (!is.null(phi)) params$ln_phi <- log(phi)
-  if (!is.null(rho))  params$ar1_phi <- stats::qlogis(rho + 1)/2
+  if (!is.null(rho))  params$ar1_phi <- stats::qlogis((rho + 1)/2)
   if (!is.null(df)) tmb_data$df <- df
 
   newobj <- TMB::MakeADFun(data = tmb_data, map = fit$tmb_map,
@@ -207,8 +207,8 @@ sdmTMB_simulate <- function(
   d[["omega_s"]] <- if (all(s$omega_s_A != 0)) s$omega_s_A
   d[["epsilon_st"]] <- if (all(s$epsilon_st_A_vec != 0)) s$epsilon_st_A_vec
   d[["zeta_s"]] <- if (all(s$zeta_s_A != 0)) s$zeta_s_A
-  d[["mu"]] <- s$eta_i
-  d[["eta"]] <- family$linkfun(s$eta_i)
+  d[["mu"]] <- family$linkinv(s$eta_i)
+  d[["eta"]] <- s$eta_i
   d[["observed"]] <- s$y_i
   d <- do.call("data.frame", d)
   cbind(d, fit$tmb_data$X_ij)
