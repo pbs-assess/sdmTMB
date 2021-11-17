@@ -1,5 +1,9 @@
 # sdmTMB
 
+# sdmTMB 0.0.19.9003
+
+* Fix bug affecting prediction with `se_fit = TRUE` for breakpoint models.
+
 # sdmTMB 0.0.19.9002
 
 * Simulation from the parameter covariance matrix works if random effects
