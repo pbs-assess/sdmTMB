@@ -365,3 +365,17 @@ has_no_random_effects <- function(obj) {
     "b_rw_t" %in% names(obj$tmb_map) &&
     !"RE" %in% obj$tmb_random
 }
+
+# basic, from glmmTMB... keeping until figure out if need commented stuff...
+get_pars <- function(object, unlist = TRUE) {
+  ee <- object$tmb_obj$env
+  x <- ee$last.par.best
+  # work around built-in default to parList, which
+  #  is bad if no random component
+  # if (length(ee$random)>0) x <- x[-ee$random]
+  p <- ee$parList(x = x)
+  # if (!unlist) return(p)
+  # p <- unlist(p[names(p)!="b"])  ## drop primary RE
+  # names(p) <- gsub("[0-9]+$","",names(p)) ## remove disambiguators
+  p
+}
