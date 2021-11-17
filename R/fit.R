@@ -880,9 +880,6 @@ sdmTMB <- function(
     if (est_epsilon_model == 0L) {
       tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
     }
-    if (est_epsilon_slope == 0L) {
-      tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
-    }
     if (est_epsilon_re == 0L) {
       tmb_map <- c(tmb_map, list(ln_epsilon_re_sigma = as.factor(NA),
                                  epsilon_re = factor(rep(NA, tmb_data$n_t))))
