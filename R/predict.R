@@ -374,7 +374,7 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
 
     new_tmb_obj <- TMB::MakeADFun(
       data = tmb_data,
-      parameters = object$tmb_obj$env$parList(),
+      parameters = get_pars(object),
       map = object$tmb_map,
       random = object$tmb_random,
       DLL = "sdmTMB",
