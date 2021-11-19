@@ -133,6 +133,9 @@ m3
 AIC(m3)
 ```
 
+
+## Parameter estimates
+
 We can view the confidence intervals on the fixed effects by using the tidy function:
 
 ```{r tweedie-fe}
@@ -165,6 +168,8 @@ If the model includes a spatial_varying predictor than:
 sigma_Z	- SD of spatially varying coefficient field (Zeta).
 
 
+## Model diagnostics
+
 We can inspect randomized quantile residuals:
 
 ```{r residuals, fig.width = 8}
@@ -175,6 +180,9 @@ abline(a = 0, b = 1)
 ggplot(pcod, aes(X, Y, col = resids)) + scale_colour_gradient2() +
   geom_point() + facet_wrap(~year) + coord_fixed()
 ```
+
+
+## Spatial predictions
 
 Now we want to predict on a fine-scale grid on the entire survey domain. There is a grid built into the package for Queen Charlotte Sound named `qcs_grid`. Our prediction grid also needs to have all the covariates that we used in the model above.
 
@@ -213,6 +221,7 @@ plot_map(predictions, "exp(est)") +
   ggtitle("Prediction (fixed effects + all random effects)", 
           subtitle = paste("maximum estimated biomass density =", round(max(exp(predictions$est)))))
 ```
+
 We can also look at just the fixed effects, here only a quadratic effect of depth:
 
 ```{r plot-fix-defects, fig.width = 6}
@@ -237,28 +246,6 @@ plot_map(predictions, "epsilon_st") +
   facet_wrap(~year) +
   ggtitle("Spatiotemporal random effects only") 
 ```
-
-We can visualize the conditional effect of any covariates by feeding simplified dataframes to the predict function:
-
-```{r depth-eff, fig.width = 6}
-nd <- data.frame(
-  depth_scaled = seq(min(pcod$depth_scaled) + 0.2, 
-    max(pcod$depth_scaled) - 0.2, length.out = 100), 
-  year = 2015L # a chosen year
-)
-nd$depth_scaled2 <- nd$depth_scaled^2
-
-p <- predict(m3, newdata = nd, se_fit = TRUE, re_form = NA)
-
-ggplot(p, aes(depth_scaled, exp(est), 
-  ymin = exp(est - 1.96 * est_se), 
-  ymax = exp(est + 1.96 * est_se))) +
-  geom_line() + geom_ribbon(alpha = 0.4) +
-  scale_x_continuous(labels = function(x) round(exp(x*pcod$depth_sd[1] + pcod$depth_mean[1]))) +
-  coord_cartesian(expand = F) +
-  labs(x="Depth (m)", y="Biomass density (kg/km2)") 
-```
-
 
 We can also estimate the uncertainty in our spatiotemporal density predictions using the simulations from the joint precision matrix by setting sims > 0 in the predict function. Here we generate 100 estimates and use apply() to calculate a median estimate, upper and lower confidence intervals, and a CV.  
 
@@ -286,3 +273,72 @@ ggplot(pred_last, aes(X, Y, fill = cv)) + geom_raster()+
   scale_fill_viridis_c()
 ```
 
+## Conditional effects
+
+We can visualize the conditional effect of any covariates by feeding simplified dataframes to the predict function:
+
+```{r depth-eff, fig.width = 6}
+nd <- data.frame(
+  depth_scaled = seq(min(pcod$depth_scaled) + 0.2, 
+    max(pcod$depth_scaled) - 0.2, length.out = 100), 
+  year = 2015L # a chosen year
+)
+nd$depth_scaled2 <- nd$depth_scaled^2
+
+p <- predict(m3, newdata = nd, se_fit = TRUE, re_form = NA)
+
+ggplot(p, aes(depth_scaled, exp(est), 
+  ymin = exp(est - 1.96 * est_se), 
+  ymax = exp(est + 1.96 * est_se))) +
+  geom_line() + geom_ribbon(alpha = 0.4) +
+  scale_x_continuous(labels = function(x) round(exp(x*pcod$depth_sd[1] + pcod$depth_mean[1]))) +
+  coord_cartesian(expand = F) +
+  labs(x="Depth (m)", y="Biomass density (kg/km2)") 
+```
+
+
+### Time-varying effects
+
+We could also let the effect of depth vary through time. 
+To do this it helps to give each year a separate intercept. 
+
+```{r tv-effect}
+m4 <- sdmTMB(
+  data = pcod,
+  formula = density ~ 0 + as.factor(year),
+  time_varying = ~ 0 + depth_scaled + depth_scaled2,
+  mesh = mesh,
+  family = tweedie(link = "log"),
+  spatial = "on",
+  time = "year",
+  spatiotemporal = "IID"
+)
+m4
+AIC(m4)
+```
+
+
+To plot these make newdata that contains all combinations of the time-varying covariate and time. This is easily created using expand.grid.
+
+```{r tv-depth-eff, fig.width = 6}
+nd <- expand.grid(
+  depth_scaled = seq(min(pcod$depth_scaled) + 0.2, 
+    max(pcod$depth_scaled) - 0.2, length.out = 50), 
+  year = unique(pcod$year) # all years
+)
+nd$depth_scaled2 <- nd$depth_scaled^2
+
+p <- predict(m4, newdata = nd, se_fit = TRUE, re_form = NA)
+
+ggplot(p, aes(depth_scaled, exp(est), 
+  ymin = exp(est - 1.96 * est_se),
+  ymax = exp(est + 1.96 * est_se),
+  group = as.factor(year))) +
+  geom_line(aes(colour = year), lwd= 1) + 
+  geom_ribbon(aes(fill = year), alpha = 0.1) +
+  scale_colour_viridis_c() +
+  scale_fill_viridis_c() +
+  scale_x_continuous(labels = function(x) round(exp(x*pcod$depth_sd[1] + pcod$depth_mean[1]))) +
+  coord_cartesian(expand = F) +
+  labs(x="Depth (m)", y="Biomass density (kg/km2)") 
+```
