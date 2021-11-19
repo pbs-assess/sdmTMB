@@ -133,7 +133,12 @@ m3
 AIC(m3)
 ```
 
-We can view the confidence intervals on the estimated random effect parameters by using the tidy function:
+We can view the confidence intervals on the fixed effects by using the tidy function:
+
+```{r tweedie-fe}
+tidy(m3, conf.int = TRUE)
+```
+And similarly for the random effect parameters:
 
 ```{r tweedie-re}
 tidy(m3, "ran_pars", conf.int = TRUE)
@@ -182,7 +187,7 @@ Now make the predictions on new data.
 We will set the `area` argument to 4 km^2^ since our grid cells are 2 km x 2 km. If some grid cells were not fully in the survey domain (or were on land), we could feed a vector of grid areas to the `area` argument that matched the number of grid cells.
 
 ```{r predictions}
-predictions <- predict(m3, newdata = qcs_grid, return_tmb_object = TRUE, area = 4)
+predictions <- predict(m3, newdata = qcs_grid)
 ```
 
 Let's make a small function to make maps.
@@ -195,18 +200,23 @@ plot_map <- function(dat, column) {
 }
 ```
 
-There are four kinds of predictions that we get out of the model. First we will show the predictions that incorporate all fixed effects and random effects:
+There are four kinds of predictions that we get out of the model. 
+
+First we will show the predictions that incorporate all fixed effects and random effects:
 
 ```{r plot-all-effects, fig.width = 8}
-plot_map(predictions$data, "exp(est)") +
-  scale_fill_viridis_c(trans = "sqrt") +
+plot_map(predictions, "exp(est)") +
+  scale_fill_viridis_c(trans = "sqrt", 
+                       # trim extreme high values to make spatial variation more visible
+                       na.value = "yellow", limits = c(0, quantile(exp(predictions$est), 0.995))) + 
   facet_wrap(~year) +
-  ggtitle("Prediction (fixed effects + all random effects)")
+  ggtitle("Prediction (fixed effects + all random effects)", 
+          subtitle = paste("maximum estimated biomass density =", round(max(exp(predictions$est)))))
 ```
-We can also look at just the fixed effects, here year:
+We can also look at just the fixed effects, here only a quadratic effect of depth:
 
 ```{r plot-fix-defects, fig.width = 6}
-plot_map(predictions$data, "exp(est_non_rf)")+
+plot_map(predictions, "exp(est_non_rf)")+
   scale_fill_viridis_c(trans = "sqrt") +
   ggtitle("Prediction (fixed effects only)") 
 ```
@@ -214,7 +224,7 @@ plot_map(predictions$data, "exp(est_non_rf)")+
 We can look at the spatial random effects that represent consistent deviations in space through time that are not accounted for by our fixed effects. In other words, these deviations represent consistent biotic and abiotic factors that are affecting biomass density but are not accounted for in the model.
 
 ```{r plot-spatial-effects, fig.width = 6}
-plot_map(predictions$data, "omega_s") +
+plot_map(predictions, "omega_s") +
   scale_fill_gradient2()+
   ggtitle("Spatial random effects only") 
 ```
@@ -222,7 +232,7 @@ plot_map(predictions$data, "omega_s") +
 And finally we can look at the spatiotemporal random effects that represent deviation from the fixed effect predictions and the spatial random effect deviations. These represent biotic and abiotic factors that are changing through time and are not accounted for in the model.
 
 ```{r plot-spatiotemporal-effects, fig.width = 8}
-plot_map(predictions$data, "epsilon_st") +
+plot_map(predictions, "epsilon_st") +
   scale_fill_gradient2()+
   facet_wrap(~year) +
   ggtitle("Spatiotemporal random effects only") 
@@ -247,5 +257,32 @@ ggplot(p, aes(depth_scaled, exp(est),
   scale_x_continuous(labels = function(x) round(exp(x*pcod$depth_sd[1] + pcod$depth_mean[1]))) +
   coord_cartesian(expand = F) +
   labs(x="Depth (m)", y="Biomass density (kg/km2)") 
+```
+
+
+We can also estimate the uncertainty in our spatiotemporal density predictions using the simulations from the joint precision matrix by setting sims > 0 in the predict function. Here we generate 100 estimates and use apply() to calculate a median estimate, upper and lower confidence intervals, and a CV.  
+
+```{r sim-cv}
+sim <- predict(m3, newdata = qcs_grid, sims = 100)
+sim_last <- sim[qcs_grid$year == max(qcs_grid$year), ] # just plot last year
+pred_last <- predictions[predictions$year == max(qcs_grid$year), ]
+pred_last$median <- apply(exp(p_last), 1, median)
+pred_last$lwr <- apply(exp(p_last), 1, quantile, probs = 0.025)
+pred_last$upr <- apply(exp(p_last), 1, quantile, probs = 0.975)
+pred_last$cv <- round(apply(exp(p_last), 1, function(x) sd(x) / mean(x)), 2)
+```
+
+Plot the median estimated biomass densities for the last year.
+
+```{r plot-median, fig.width = 6}
+ggplot(pred_last, aes(X, Y, fill = median)) + geom_raster()+
+  scale_fill_viridis_c(trans= "sqrt")
+```
+
+And then the CV on the estimates. 
+
+```{r plot-cv, fig.width = 6}
+ggplot(pred_last, aes(X, Y, fill = cv)) + geom_raster()+
+  scale_fill_viridis_c()
 ```
 
