@@ -25,25 +25,101 @@ test_that("Test that non-stationary model works with random effects in epsilon w
   m <- sdmTMB(
     data = s, formula = observed ~ 1,
     time = "time", mesh = mesh,
-    fields = "AR1", include_spatial = FALSE,
-    experimental = list(epsilon_predictor = "year_centered",epsilon_model = "re"),
-    control = sdmTMBcontrol(lower = list(b_epsilon = -1,ln_epsilon_re_sigma=-3),
-                            upper = list(b_epsilon = 1,ln_epsilon_re_sigma=1))
+    epsilon_predictor = "year_centered",
+    spatiotemporal = "IID", spatial="off",
+    experimental = list(epsilon_predictor = "time",
+                        epsilon_model = "re"),
+    control = sdmTMBcontrol(lower = list(b_epsilon = -1, ln_epsilon_re_sigma = -3),
+                            upper = list(b_epsilon = 1, ln_epsilon_re_sigma=1))
   )
   idx = grep("ln_epsilon_re_sigma",names(m$sd_report$value))
 
-  expect_equal(as.numeric(m$sd_report$value[idx]), -2.13, tolerance = 0.002)
+  expect_equal(as.numeric(m$sd_report$value[idx]), -1.054972, tolerance = 0.002)
 
   m <- sdmTMB(
     data = s, formula = observed ~ 1,
     time = "time", mesh = mesh,
-    fields = "IID", include_spatial = FALSE,
-    experimental = list(epsilon_predictor = "year_centered",epsilon_model = "re"),
-    control = sdmTMBcontrol(lower = list(b_epsilon = -1,ln_epsilon_re_sigma=-3),
-                            upper = list(b_epsilon = 1,ln_epsilon_re_sigma=1))
+    epsilon_predictor = "year_centered",
+    spatiotemporal = "AR1", spatial="off",
+    experimental = list(epsilon_predictor = "time",
+                        epsilon_model = "re"),
+    control = sdmTMBcontrol(lower = list(b_epsilon = -1, ln_epsilon_re_sigma = -3),
+                            upper = list(b_epsilon = 1, ln_epsilon_re_sigma=1))
   )
   idx = grep("ln_epsilon_re_sigma",names(m$sd_report$value))
 
-  expect_equal(as.numeric(m$sd_report$value[idx]), -1.055, tolerance = 0.002)
+  expect_equal(as.numeric(m$sd_report$value[idx]), -2.130359, tolerance = 0.002)
+
+})
+
+
+test_that("Test that non-stationary model works with random effects in epsilon with trend works", {
+  local_edition(2)
+  skip_if_not_installed("INLA")
+
+  # fit non-stationary model - iid
+  m <- sdmTMB(
+    data = s, formula = observed ~ 1,
+    time = "time", mesh = mesh,
+    epsilon_predictor = "year_centered",
+    spatiotemporal = "IID", spatial="off",
+    experimental = list(epsilon_predictor = "time",
+                        epsilon_model = "trend-re"),
+    control = sdmTMBcontrol(lower = list(b_epsilon = -1, ln_epsilon_re_sigma = -3),
+                            upper = list(b_epsilon = 1, ln_epsilon_re_sigma=1))
+  )
+  idx = grep("ln_epsilon_re_sigma",names(m$sd_report$value))
+
+  expect_equal(as.numeric(m$sd_report$value[idx]), -1.054972, tolerance = 0.002)
+
+  m <- sdmTMB(
+    data = s, formula = observed ~ 1,
+    time = "time", mesh = mesh,
+    epsilon_predictor = "year_centered",
+    spatiotemporal = "AR1", spatial="off",
+    experimental = list(epsilon_predictor = "time",
+                        epsilon_model = "trend-re"),
+    control = sdmTMBcontrol(lower = list(b_epsilon = -1, ln_epsilon_re_sigma = -3),
+                            upper = list(b_epsilon = 1, ln_epsilon_re_sigma=1))
+  )
+  idx = grep("ln_epsilon_re_sigma",names(m$sd_report$value))
+
+  expect_equal(as.numeric(m$sd_report$value[idx]), -2.130359, tolerance = 0.002)
+
+})
+
+
+test_that("Test that non-stationary model works with in epsilon with trend works", {
+  local_edition(2)
+  skip_if_not_installed("INLA")
+
+  # fit non-stationary model - iid
+  m <- sdmTMB(
+    data = s, formula = observed ~ 1,
+    time = "time", mesh = mesh,
+    epsilon_predictor = "year_centered",
+    spatiotemporal = "IID", spatial="off",
+    experimental = list(epsilon_predictor = "time",
+                        epsilon_model = "trend"),
+    control = sdmTMBcontrol(lower = list(b_epsilon = -1, ln_epsilon_re_sigma = -3),
+                            upper = list(b_epsilon = 1, ln_epsilon_re_sigma=1))
+  )
+  idx = grep("b_epsilon",names(m$sd_report$value))
+
+  expect_equal(as.numeric(m$sd_report$value[idx]), -1.054972, tolerance = 0.002)
+
+  m <- sdmTMB(
+    data = s, formula = observed ~ 1,
+    time = "time", mesh = mesh,
+    epsilon_predictor = "year_centered",
+    spatiotemporal = "AR1", spatial="off",
+    experimental = list(epsilon_predictor = "time",
+                        epsilon_model = "trend"),
+    control = sdmTMBcontrol(lower = list(b_epsilon = -1, ln_epsilon_re_sigma = -3),
+                            upper = list(b_epsilon = 1, ln_epsilon_re_sigma=1))
+  )
+  idx = grep("b_epsilon",names(m$sd_report$value))
+
+  expect_equal(as.numeric(m$sd_report$value[idx]), -2.130359, tolerance = 0.002)
 
 })
