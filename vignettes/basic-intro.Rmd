@@ -266,10 +266,10 @@ We can also estimate the uncertainty in our spatiotemporal density predictions u
 sim <- predict(m3, newdata = qcs_grid, sims = 100)
 sim_last <- sim[qcs_grid$year == max(qcs_grid$year), ] # just plot last year
 pred_last <- predictions[predictions$year == max(qcs_grid$year), ]
-pred_last$median <- apply(exp(p_last), 1, median)
-pred_last$lwr <- apply(exp(p_last), 1, quantile, probs = 0.025)
-pred_last$upr <- apply(exp(p_last), 1, quantile, probs = 0.975)
-pred_last$cv <- round(apply(exp(p_last), 1, function(x) sd(x) / mean(x)), 2)
+pred_last$median <- apply(exp(sim_last), 1, median)
+pred_last$lwr <- apply(exp(sim_last), 1, quantile, probs = 0.025)
+pred_last$upr <- apply(exp(sim_last), 1, quantile, probs = 0.975)
+pred_last$cv <- round(apply(exp(sim_last), 1, function(x) sd(x) / mean(x)), 2)
 ```
 
 Plot the median estimated biomass densities for the last year.
