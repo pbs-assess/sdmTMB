@@ -76,7 +76,7 @@ nd <- data.frame(
     max(pcod$depth_scaled) - 0.2, length.out = 100), 
   year = 2015L # a chosen year
 )
-p <- predict(m, newdata = nd, se_fit = TRUE, re_form = NA, xy_cols = c("X", "Y"))
+p <- predict(m, newdata = nd, se_fit = TRUE, re_form = NA)
 ggplot(p, aes(depth_scaled, exp(est), 
   ymin = exp(est - 1.96 * est_se), 
   ymax = exp(est + 1.96 * est_se))) +
