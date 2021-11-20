@@ -444,12 +444,12 @@ sdmTMB <- function(
       lwr <- experimental$lwr
       upr <- experimental$upr
     } else {
-      epsilon_predictor <- NULL
+      #epsilon_predictor <- NULL
       lwr <- 0
       upr <- Inf
     }
   } else {
-    epsilon_predictor <- NULL
+    #epsilon_predictor <- NULL
     lwr <- 0
     upr <- Inf
   }
