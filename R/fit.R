@@ -646,16 +646,16 @@ sdmTMB <- function(
   }
 
   # Stuff needed for spatiotemporal A matrix:
-  data$sdm_orig_id <- seq(1, nrow(data))
-  data$sdm_x <- spde$loc_xy[,1,drop=TRUE]
-  data$sdm_y <- spde$loc_xy[,2,drop=TRUE]
-  fake_data <- unique(data.frame(sdm_x = data$sdm_x, sdm_y = data$sdm_y))
-  fake_data[["sdm_spatial_id"]] <- seq(1, nrow(fake_data))
-  data <- base::merge(data, fake_data, by = c("sdm_x", "sdm_y"),
-    all.x = TRUE, all.y = FALSE)
-  data <- data[order(data$sdm_orig_id),, drop=FALSE]
-  A_st <- INLA::inla.spde.make.A(spde$mesh,
-    loc = as.matrix(fake_data[, c("sdm_x", "sdm_y"), drop = FALSE]))
+  # data$sdm_orig_id <- seq(1, nrow(data))
+  # data$sdm_x <- spde$loc_xy[,1,drop=TRUE]
+  # data$sdm_y <- spde$loc_xy[,2,drop=TRUE]
+  # fake_data <- unique(data.frame(sdm_x = data$sdm_x, sdm_y = data$sdm_y))
+  # fake_data[["sdm_spatial_id"]] <- seq(1, nrow(fake_data))
+  # data <- base::merge(data, fake_data, by = c("sdm_x", "sdm_y"),
+  #   all.x = TRUE, all.y = FALSE)
+  # data <- data[order(data$sdm_orig_id),, drop=FALSE]
+  # A_st <- INLA::inla.spde.make.A(spde$mesh,
+  #   loc = as.matrix(fake_data[, c("sdm_x", "sdm_y"), drop = FALSE]))
 
   n_s <- nrow(spde$mesh$loc)
 
@@ -729,15 +729,16 @@ sdmTMB <- function(
     priors_b_Sigma <- as.matrix(Sigma[not_na, not_na])
   }
 
+  if (!"A_st" %in% names(spde)) stop("`mesh` was created with an old version of `make_mesh()`.", call. = FALSE)
   tmb_data <- list(
     y_i        = c(y_i),
     n_t        = length(unique(data[[time]])),
     z_i        = z_i,
     offset_i   = offset,
     A          = spde$A,
-    A_st       = A_st,
+    A_st       = spde$A_st,
     sim_re     = if ("sim_re" %in% names(experimental)) as.integer(experimental$sim_re) else rep(0L, 6),
-    A_spatial_index = data$sdm_spatial_id - 1L,
+    A_spatial_index = spde$sdm_spatial_id - 1L,
     year_i     = make_year_i(data[[time]]),
     ar1_fields = if (spatial_only) 0L else as.integer(ar1_fields),
     rw_fields = if (spatial_only) 0L else as.integer(rw_fields),
