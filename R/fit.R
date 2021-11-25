@@ -388,11 +388,15 @@ sdmTMB <- function(
   ...
   ) {
 
+  sp_len <- length(spatiotemporal)
   spatiotemporal <- match.arg(tolower(as.character(spatiotemporal[[1]])),
     choices = c("iid", "ar1", "rw", "off", "true", "false"))
   if (spatiotemporal == "true") spatiotemporal <- "iid"
   if (spatiotemporal == "false") spatiotemporal <- "off"
   spatiotemporal <- match.arg(tolower(spatiotemporal), choices = c("iid", "ar1", "rw", "off"))
+  if (is.null(time) && spatiotemporal != "off" && sp_len == 1L) {
+    stop("`spatiotemporal` is set but the `time` argument is missing.", call. = FALSE)
+  }
   if (is_present(spatial_only)) {
     deprecate_warn("0.0.20", "sdmTMB(spatial_only)", "sdmTMB(spatiotemporal)", details = "`spatiotemporal = 'off'` (or `time = NULL`) is equivalent to `spatial_only = TRUE`.")
   } else {
