@@ -218,7 +218,7 @@ Type objective_function<Type>::operator()()
   PARAMETER_VECTOR(ln_smooth_sigma);  // variances of spline REs if included
 
   // Joint negative log-likelihood
-  Type jnll = 0.0;
+  Type jnll = 0;
 
   // ------------------ End of parameters --------------------------------------
 
@@ -314,26 +314,6 @@ Type objective_function<Type>::operator()()
   }
   if (share_range) Q_st = Q_s;
 
-  // ------------------ Probability of random effects --------------------------
-
-  // IID random intercepts:
-  for (int g = 0; g < RE.size(); g++) {
-    jnll -= dnorm(RE(g), Type(0.0), exp(ln_tau_G(ln_tau_G_index(g))), true);
-    if (sim_re(3)) SIMULATE{RE(g) = rnorm(Type(0), exp(ln_tau_G(ln_tau_G_index(g))));
-    }
-  }
-
-  // Random walk effects (dynamic regression):
-  if (random_walk) {
-    for (int k = 0; k < X_rw_ik.cols(); k++) {
-      // flat prior on the initial value... then:
-      for (int t = 1; t < n_t; t++) {
-        jnll += -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
-        if (sim_re(4)) SIMULATE{b_rw_t(t, k) = rnorm(b_rw_t(t - 1, k), exp(ln_tau_V(k)));}
-      }
-    }
-  }
-
   bool s = true;
   if (normalize_in_r) s = false;
 
@@ -423,6 +403,25 @@ Type objective_function<Type>::operator()()
   }
   if (flag == 0) return jnll;
 
+  // ------------------ Probability of random effects --------------------------
+
+  // IID random intercepts:
+  for (int g = 0; g < RE.size(); g++) {
+    jnll -= dnorm(RE(g), Type(0.0), exp(ln_tau_G(ln_tau_G_index(g))), true);
+    if (sim_re(3)) SIMULATE{RE(g) = rnorm(Type(0), exp(ln_tau_G(ln_tau_G_index(g))));
+    }
+  }
+
+  // Random walk effects (dynamic regression):
+  if (random_walk) {
+    for (int k = 0; k < X_rw_ik.cols(); k++) {
+      // flat prior on the initial value... then:
+      for (int t = 1; t < n_t; t++) {
+        jnll += -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
+        if (sim_re(4)) SIMULATE{b_rw_t(t, k) = rnorm(b_rw_t(t - 1, k), exp(ln_tau_V(k)));}
+      }
+    }
+  }
   // ------------------ INLA projections ---------------------------------------
 
   // Here we are projecting the spatiotemporal and spatial random effects to the
