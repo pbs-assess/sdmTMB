@@ -26,8 +26,12 @@ print.sdmTMB <- function(x, ...) {
     title <- paste0("Spatiotemporal model fit by ", fit_by, " ['sdmTMB']\n")
   }
   formula <- paste0("Formula: ", deparse(x$call$formula), "\n")
-  time <- paste0("Time column: ", deparse(x$call$time), "\n")
-  spde <- paste0("SPDE: ", deparse(x$call$spde), "\n")
+  if (deparse(x$call$time) != "NULL") {
+    time <- paste0("Time column: ", deparse(x$call$time), "\n")
+  } else {
+    time <- NULL
+  }
+  spde <- paste0("Mesh: ", deparse(x$call$mesh), "\n")
   data <- paste0("Data: ", deparse(x$call$data), "\n")
   family <- paste0("Family: ", paste0(x$family$family, "(link = '", x$family$link, "')"), "\n")
   criterion <- paste0(fit_by, " criterion at convergence: ", mround(x$model$objective, 3), "\n")
