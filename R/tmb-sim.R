@@ -3,7 +3,7 @@
 #' @description
 #' `r lifecycle::badge("experimental")`
 #'
-#' This version (vs. [sdmTMB_sim()]) (1) uses TMB for simulation and is
+#' `sdmTMB_simulate()` (vs. [sdmTMB_sim()]) (1) uses TMB for simulation and is
 #' therefore **much** faster and more flexible, (2) is set up to take a formula and
 #' a data frame and is therefore easier to use if you want different spatial
 #' observations (and covariates) for each time slice. Eventually [sdmTMB_sim()]
@@ -46,6 +46,7 @@
 #' * `observed` represents the simulated process with observation error.
 #' * The remaining columns are the fixed-effect model matrix.
 #' @export
+#' @seealso [simulate.sdmTMB()]
 #'
 #' @examples
 #' if (inla_installed()) {
@@ -86,32 +87,30 @@
 #'
 #'   # example supplying previous fit, simulating new random effects,
 #'   # and changing spatial SD (sigma_O) and observation error (phi):
-#'   sim_dat2 <- sdmTMB_simulate(previous_fit = fit,
+#'   sim_dat2 <- sdmTMB_simulate(
+#'     previous_fit = fit,
 #'     simulate_re = TRUE, phi = 0.04, sigma_O = 0.4
 #'   )
 #'   head(sim_dat2)
-#'
 #' }
-sdmTMB_simulate <- function(
-  formula,
-  data,
-  mesh,
-  family = gaussian(link = "identity"),
-  previous_fit = NULL,
-  time = NULL,
-  B = NULL,
-  range = NULL,
-  rho = NULL,
-  sigma_O = NULL,
-  sigma_E = NULL,
-  sigma_Z = NULL,
-  phi = NULL,
-  tweedie_p = NULL,
-  df = NULL,
-  fixed_re = list(omega_s = NULL, epsilon_st = NULL, zeta_s = NULL),
-  seed = sample.int(1e6, 1),
-  ...) {
-
+sdmTMB_simulate <- function(formula,
+                            data,
+                            mesh,
+                            family = gaussian(link = "identity"),
+                            previous_fit = NULL,
+                            time = NULL,
+                            B = NULL,
+                            range = NULL,
+                            rho = NULL,
+                            sigma_O = NULL,
+                            sigma_E = NULL,
+                            sigma_Z = NULL,
+                            phi = NULL,
+                            tweedie_p = NULL,
+                            df = NULL,
+                            fixed_re = list(omega_s = NULL, epsilon_st = NULL, zeta_s = NULL),
+                            seed = sample.int(1e6, 1),
+                            ...) {
   if (!requireNamespace("INLA", quietly = TRUE)) {
     stop("INLA must be installed to use this function.", call. = FALSE)
   }
@@ -132,8 +131,9 @@ sdmTMB_simulate <- function(
   if (is.null(previous_fit)) {
     assert_that(class(mesh) %in% "sdmTMBmesh")
     assert_that(!is.null(range), !is.null(sigma_O) || !is.null(sigma_E), !is.null(B))
-    if (!family$family %in% c("binomial", "poisson"))
+    if (!family$family %in% c("binomial", "poisson")) {
       assert_that(!is.null(phi))
+    }
 
     response <- get_response(formula)
     if (length(response) == 0L) {
@@ -141,8 +141,10 @@ sdmTMB_simulate <- function(
       data[["sdmTMB_response_"]] <- 0.1 # fake! does nothing but lets sdmTMB parse the formula
     }
 
-    .sim_re <- list(omega = TRUE, epsilon = TRUE, zeta = TRUE,
-      IID = TRUE, RW = TRUE, smooth = TRUE)
+    .sim_re <- list(
+      omega = TRUE, epsilon = TRUE, zeta = TRUE,
+      IID = TRUE, RW = TRUE, smooth = TRUE
+    )
     if (!is.null(fixed_re$omega_s)) {
       .sim_re$omega <- FALSE
     }
@@ -159,8 +161,9 @@ sdmTMB_simulate <- function(
       formula = formula, data = data, mesh = mesh, time = time,
       family = family, do_fit = FALSE,
       share_range = length(range) == 1L,
-      experimental = list(sim_re = .sim_re), ...)
-      params <- fit$tmb_params
+      experimental = list(sim_re = .sim_re), ...
+    )
+    params <- fit$tmb_params
   } else {
     fit <- previous_fit
     params <- fit$tmb_obj$env$parList()
@@ -171,8 +174,10 @@ sdmTMB_simulate <- function(
   if (!is.null(B)) {
     n_covariates <- length(B)
     assert_that(ncol(fit$tmb_data$X_ij) == length(B),
-      msg = paste0("Number of specified fixed-effect `B` parameters does ",
-        "not match model matrix columns implied by the formula.")
+      msg = paste0(
+        "Number of specified fixed-effect `B` parameters does ",
+        "not match model matrix columns implied by the formula."
+      )
     )
   }
 
@@ -188,25 +193,25 @@ sdmTMB_simulate <- function(
 
   if (length(range) == 1L) range <- rep(range, 2)
 
-  kappa <- sqrt(8)/range
+  kappa <- sqrt(8) / range
   params$ln_kappa <- log(kappa)
 
   if (!is.null(sigma_O) || is.null(previous_fit)) {
-    tau_O <- 1/(sqrt(4 * pi) * kappa[1] * sigma_O)
+    tau_O <- 1 / (sqrt(4 * pi) * kappa[1] * sigma_O)
     params$ln_tau_O <- log(tau_O)
   }
   if (!is.null(sigma_Z) || is.null(previous_fit)) {
-    tau_Z <- 1/(sqrt(4 * pi) * kappa[1] * sigma_Z)
+    tau_Z <- 1 / (sqrt(4 * pi) * kappa[1] * sigma_Z)
     params$ln_tau_Z <- log(tau_Z)
   }
   if (!is.null(sigma_E) || is.null(previous_fit)) {
-    tau_E <- 1/(sqrt(4 * pi) * kappa[2] * sigma_E)
+    tau_E <- 1 / (sqrt(4 * pi) * kappa[2] * sigma_E)
     params$ln_tau_E <- log(tau_E)
   }
 
   if (!is.null(B)) params$b_j <- B
   if (!is.null(phi)) params$ln_phi <- log(phi)
-  if (!is.null(rho))  params$ar1_phi <- stats::qlogis((rho + 1)/2)
+  if (!is.null(rho)) params$ar1_phi <- stats::qlogis((rho + 1) / 2)
   if (!is.null(df)) tmb_data$df <- df
 
   if (!is.null(fixed_re$omega_s)) {
@@ -219,8 +224,10 @@ sdmTMB_simulate <- function(
     params$zeta_s <- fixed_re$zeta_s
   }
 
-  newobj <- TMB::MakeADFun(data = tmb_data, map = fit$tmb_map,
-    random = fit$tmb_random, parameters = params, DLL = "sdmTMB")
+  newobj <- TMB::MakeADFun(
+    data = tmb_data, map = fit$tmb_map,
+    random = fit$tmb_random, parameters = params, DLL = "sdmTMB"
+  )
 
   set.seed(seed)
   s <- newobj$simulate()
@@ -237,4 +244,39 @@ sdmTMB_simulate <- function(
   d[["observed"]] <- s$y_i
   d <- do.call("data.frame", d)
   cbind(d, fit$tmb_data$X_ij)
+}
+
+#' Simulate from a fitted sdmTMB model
+#'
+#' `simulate.sdmTMB` is an S3 method for producing a matrix of simulations from
+#' a fitted model. This is similar to [lme4::simulate.merMod()] and
+#' [glmmTMB::simulate.glmmTMB()]. It can be used with the \pkg{DHARMa} package
+#' among other uses.
+#'
+#' @method simulate sdmTMB
+#' @param object sdmTMB model
+#' @param nsim Number of response lists to simulate. Defaults to 1.
+#' @param seed Random number seed
+#' @param re_form Not yet used. Will be used to allow simulation from or
+#'   conditioning on various random effects. For now, simulation is conditional
+#'   on all fitted random effects.
+#' @param ... Extra arguments (not used)
+#' @return Returns a matrix; number of columns is `nsim`.
+#' @importFrom stats simulate
+#'
+#' @seealso [sdmTMBsimulate()]
+#'
+#' @export
+simulate.sdmTMB <- function(object, nsim = 1, seed = sample.int(1e6, 1),
+                            re_form, ...) {
+  set.seed(seed)
+  params <- object$tmb_obj$env$parList()
+  tmb_data <- object$tmb_data
+  # tmb_data$sim_re <- rep(1, length(tmb_data$sim_re))
+  newobj <- TMB::MakeADFun(
+    data = tmb_data, map = object$tmb_map,
+    random = object$tmb_random, parameters = params, DLL = "sdmTMB"
+  )
+  ret <- lapply(seq_len(nsim), function(i) newobj$simulate()$y_i)
+  do.call(cbind, ret)
 }

@@ -86,7 +86,7 @@ A data frame where:
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 
-This version (vs. \code{\link[=sdmTMB_sim]{sdmTMB_sim()}}) (1) uses TMB for simulation and is
+\code{sdmTMB_simulate()} (vs. \code{\link[=sdmTMB_sim]{sdmTMB_sim()}}) (1) uses TMB for simulation and is
 therefore \strong{much} faster and more flexible, (2) is set up to take a formula and
 a data frame and is therefore easier to use if you want different spatial
 observations (and covariates) for each time slice. Eventually \code{\link[=sdmTMB_sim]{sdmTMB_sim()}}
@@ -131,10 +131,13 @@ if (inla_installed()) {
 
   # example supplying previous fit, simulating new random effects,
   # and changing spatial SD (sigma_O) and observation error (phi):
-  sim_dat2 <- sdmTMB_simulate(previous_fit = fit,
+  sim_dat2 <- sdmTMB_simulate(
+    previous_fit = fit,
     simulate_re = TRUE, phi = 0.04, sigma_O = 0.4
   )
   head(sim_dat2)
-
 }
+}
+\seealso{
+\code{\link[=simulate.sdmTMB]{simulate.sdmTMB()}}
 }
