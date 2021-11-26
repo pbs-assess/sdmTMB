@@ -1,0 +1,240 @@
+---
+title: "Residual checking with sdmTMB"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{residual-checking}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE, cache=FALSE}
+dplyr_installed <- require("dplyr", quietly = TRUE)
+ggplot_installed <- require("ggplot2", quietly = TRUE)
+inla_installed <- require("INLA", quietly = TRUE)
+glmmTMB_installed <- require("glmmTMB", quietly = TRUE)
+DHARMa_installed <- require("DHARMa", quietly = TRUE)
+tmbstan_installed <- require("tmbstan", quietly = TRUE)
+pkgs <- dplyr_installed && ggplot_installed && inla_installed && glmmTMB_installed && DHARMa_installed &&
+  tmbstan_installed
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.asp = 0.618,
+  eval = identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
+)
+```
+
+```{r packages, message=FALSE, warning=TRUE}
+library(sdmTMB)
+```
+
+Start with some data simulated from scratch. We will simulate from a NB2 negative binomial observation model, a spatial random field, an intercept, and one predictor named 'a1' that will have a linear effect on the observed data.
+
+```{r}
+set.seed(1)
+predictor_dat <- data.frame(X = runif(1000), Y = runif(1000), a1 = rnorm(1000))
+mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.1)
+dat <- sdmTMB_simulate(
+  formula = ~ 1 + a1,
+  data = predictor_dat,
+  mesh = mesh,
+  family = nbinom2(link = "log"),
+  phi = 0.2,
+  range = 0.4,
+  sigma_O = 0.3,
+  seed = 1,
+  B = c(0.2, 0.5) # B0 = intercept, B1 = a1 slope
+)
+```
+
+Next, we will fit versions with various responses and predictors. The first model will use the Poisson instead of the NB2. The 2nd model will match the simulated data. The third model is missing the 'a1' predictor. We'll use a PC prior on the Matern parameters to aid in estimation.
+
+```{r}
+pc <- pc_matern(range_gt = 0.1, sigma_lt = 1)
+
+fit_pois <- sdmTMB(observed ~ 1 + a1, data = dat, family = poisson(), mesh = mesh,
+  priors = sdmTMBpriors(matern_s = pc))
+fit_pois
+
+fit_nb2 <- sdmTMB(observed ~ 1 + a1, data = dat, family = nbinom2(), mesh = mesh,
+  priors = sdmTMBpriors(matern_s = pc))
+fit_nb2
+
+fit_nb2_miss <- sdmTMB(observed ~ 1, data = dat, family = nbinom2(), mesh = mesh,
+  priors = sdmTMBpriors(matern_s = pc))
+fit_nb2_miss
+```
+
+We can see just by looking at these fits that the Poisson model inflates the spatial random field standard deviation (SD) compared to the truth. The model missing the 'a1' predictor does so to a lesser degree.
+
+Randomized quantile residuals at fixed effect MLE (Maximum Likelihood Estimates) and random effects that maximize the log likelihood at estimated fixed effects:
+
+```{r}
+rq_res <- residuals(fit_pois)
+rq_res <- rq_res[is.finite(rq_res)] # some Inf
+qqnorm(rq_res);qqline(rq_res)
+
+rq_res <- residuals(fit_nb2)
+qqnorm(rq_res);qqline(rq_res)
+```
+
+These use the approach from Dunn and Smyth (1996). They are also known as PIT (probability-integral-transform) residuals. They apply randomization to integer response values, transform the residuals using the distribution function (e.g., `pnorm()`), simulate from a uniform distribution, and transform the samples such that they would be Gaussian if consistent with the model. You can see the source code at <https://github.com/pbs-assess/sdmTMB/blob/master/R/residuals.R>
+
+We can see here that there are likely issues with the Poisson model in the tails.
+
+These types of residuals are known to have statistical issues for state-space models; even if the model is the 'correct' model, the QQ plot may appear to have problems (Thygesen et al. 2017).
+
+One-step-ahead residuals (Thygesen et al. 2017) are one option to fix this problem (although slow to calculate). Another option is to take a draw from the posterior with MCMC (e.g., Rufener et al. 2021).  Also see <https://kaskr.github.io/adcomp/_book/Validation.html>
+
+Here we will draw MCMC predictions and residuals. We will only take a single draw for speed:
+
+```{r}
+stan_fit <- tmbstan::tmbstan(fit_nb2$tmb_obj, iter = 100, warmup = 99, chains = 1)
+stan_eta <- predict(fit_nb2, tmbstan_model = stan_fit)
+stan_mu <- as.numeric(fit_nb2$family$linkinv(stan_eta))
+mcmc_res <- sdmTMB:::qres_nbinom2(fit_nb2, y = dat$observed, mu = stan_mu)
+qqnorm(mcmc_res);qqline(mcmc_res)
+```
+
+We can see these look a bit better. Remember, this is the 'correct' model.
+
+We can take simulations from the fitted model to use with simulation-based residuals:
+
+```{r}
+s_pois <- simulate(fit_pois, nsim = 500)
+s_nb2_miss <- simulate(fit_nb2_miss, nsim = 500)
+s_nb2 <- simulate(fit_nb2, nsim = 500)
+```
+
+These return a matrix where each row represents a row of data and each column is a simulation draw:
+
+```{r}
+dim(s_pois)
+```
+
+Test whether fitted models are consistent with the observed number of zeros:
+
+```{r}
+sum(dat$observed == 0) / length(dat$observed)
+sum(s_pois == 0)/length(s_pois)
+sum(s_nb2 == 0)/length(s_nb2)
+```
+
+The are obviously too few zeros in the data simulated from the Poisson model.
+
+Use the residuals with DHARMa:
+
+```{r}
+# My reading of DHARMa documation is that the predicted response for the 
+# residuals vs. fitted plot should ideally not include the random effects:
+pred_fixed <- fit_pois$family$linkinv(predict(fit_pois)$est_non_rf)
+r_pois <- DHARMa::createDHARMa(
+  simulatedResponse = s_pois,
+  observedResponse = dat$observed,
+  fittedPredictedResponse = pred_fixed
+)
+plot(r_pois)
+DHARMa::testResiduals(r_pois)
+DHARMa::testSpatialAutocorrelation(r_pois, x = dat$X, y = dat$Y)
+DHARMa::testZeroInflation(r_pois)
+```
+
+In the QQ residual plots we clearly see evidence of over dispersion compared to the Poisson. Note the values clumping near 1.0 on the observed axis and deviating downwards towards 0.0 observed. This is indicative of to many zeros and especially too many large values compared to the assumed Poisson distribution.
+
+Lets try with the correct model:
+
+```{r}
+pred_fixed <- fit_nb2$family$linkinv(predict(fit_nb2)$est_non_rf)
+r_nb2 <- DHARMa::createDHARMa(
+  simulatedResponse = s_nb2,
+  observedResponse = dat$observed,
+  fittedPredictedResponse = pred_fixed
+)
+plot(r_nb2)
+DHARMa::testResiduals(r_nb2)
+DHARMa::testSpatialAutocorrelation(r_nb2, x = dat$X, y = dat$Y)
+DHARMa::testZeroInflation(r_nb2)
+```
+
+Everything looks fine.
+
+What about the model where we were missing a predictor?
+
+```{r}
+pred_fixed <- fit_nb2_miss$family$linkinv(predict(fit_nb2_miss)$est_non_rf)
+r_nb2_miss <- DHARMa::createDHARMa(
+  simulatedResponse = s_nb2_miss,
+  observedResponse = dat$observed,
+  fittedPredictedResponse = pred_fixed
+)
+plot(r_nb2_miss)
+```
+
+This looks fine so far, but the plot on the right represents simulated residuals against the prediction without the random effects, which here is just an intercept. Lets try plotting the residuals against the missing predictor:
+
+```{r}
+DHARMa::plotResiduals(r_nb2_miss, form = dat$a1)
+```
+
+We can see a slight trend in the residuals against 'a1' since we have missed including it in the model.
+
+We can also see the difference in the log likelihood or by using the `AIC()` method:
+
+```{r}
+# negative log likelihood is lower; 
+# i.e. log likelihood is higher, but we do have one more parameter
+fit_nb2$model$objective
+fit_nb2_miss$model$objective
+AIC(fit_nb2_miss, fit_nb2) # AIC supports including the 'a1' predictor
+```
+
+The above used simulations with the parameters fixed at there Maximum Likelihood Estimate (MLE) and predictions conditional on the fitted random effects. Alternatively, we could simulate with the parameters drawn from their joint precision matrix to encapsulate uncertainty about the parameters. This may be a better test for residual analysis, but this is an open area of research as far as I can tell.
+
+```{r}
+# simulate with the parameters drawn from the joint precision matrix:
+s2 <- simulate(fit_nb2, nsim = 1, params = "MVN")
+```
+
+Or we could simulate with new random fields based on the estimated parameters governing the random fields (range and SD):
+
+```{r}
+# simulate with new random fields:
+s3 <- simulate(fit_nb2, nsim = 1, re_form = ~ 0)
+```
+
+We could, of course, combine those two options:
+
+```{r}
+# simulate with new random fields and new parameter draws:
+s4 <- simulate(fit_nb2, nsim = 500, params = "MVN", re_form = ~ 0)
+pred_fixed <- fit_nb2$family$linkinv(predict(fit_nb2)$est_non_rf)
+r_nb2 <- DHARMa::createDHARMa(
+  simulatedResponse = s4,
+  observedResponse = dat$observed,
+  fittedPredictedResponse = pred_fixed
+)
+plot(r_nb2)
+```
+
+These also look OK.
+
+We could also perform our simulation with parameters drawn from the Stan model fit:
+
+```{r}
+# simulate from a Stan model fit with new observation error:
+# make sure `nsim` is <= number of samples from rstan
+s5 <- simulate(fit_nb2, nsim = 1, tmbstan_model = stan_fit)
+```
+
+This last option, while slower since the Stan model must be sampled from, is likely the best approach.
+
+For help interpreting the DHARMa residual plots, see `vignette("DHARMa", package="DHARMa")`
+
+# References
+
+Dunn, P.K., and Smyth, G.K. 1996. Randomized Quantile Residuals. Journal of Computational and Graphical Statistics 5(3): 236–244. doi:10.1080/10618600.1996.10474708.
+
+Rufener, M.-C., Kristensen, K., Nielsen, J.R., and Bastardie, F. 2021. Bridging the gap between commercial fisheries and survey data to model the spatiotemporal dynamics of marine species. Ecological Applications In press: e02453. doi:10.1002/eap.2453.
+
+Thygesen, U.H., Albertsen, C.M., Berg, C.W., Kristensen, K., and Nielsen, A. 2017. Validation of ecological state space models using the Laplace approximation. Environ Ecol Stat 24(2): 317–339. doi:10.1007/s10651-017-0372-4.

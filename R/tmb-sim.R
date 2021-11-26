@@ -256,10 +256,18 @@ sdmTMB_simulate <- function(formula,
 #' @method simulate sdmTMB
 #' @param object sdmTMB model
 #' @param nsim Number of response lists to simulate. Defaults to 1.
+#' @param params Whether the parameters used in the simulation should come from
+#'   the Maximum Likelihood Estimate (`"mle"`) or from new draws from the joint
+#'   precision matrix assuming they are multivariate normal distributed
+#'   (`"mvn"`).
+#' @param re_form `NULL` to specify a simulation conditional on fitted random
+#'   effects (this only simulates observation error). `~0` or `NA` to simulate
+#'   new random affects (smoothers, which internally are random effects, will
+#'   not be simulated as new).
+#' @param tmbstan_model An optional model fit via [tmbstan::tmbstan()]. If
+#'   provided the parameters will be drawn from the MCMC samples and new
+#'   observation error will be added. See the example in [extract_mcmc()].
 #' @param seed Random number seed
-#' @param re_form Not yet used. Will be used to allow simulation from or
-#'   conditioning on various random effects. For now, simulation is conditional
-#'   on all fitted random effects.
 #' @param ... Extra arguments (not used)
 #' @return Returns a matrix; number of columns is `nsim`.
 #' @importFrom stats simulate
@@ -267,16 +275,106 @@ sdmTMB_simulate <- function(formula,
 #' @seealso [sdmTMBsimulate()]
 #'
 #' @export
-simulate.sdmTMB <- function(object, nsim = 1, seed = sample.int(1e6, 1),
-                            re_form, ...) {
+#' @examples
+#' if (inla_installed()) {
+#'
+#' # start with some data simulated from scratch:
+#' set.seed(1)
+#' predictor_dat <- data.frame(X = runif(300), Y = runif(300), a1 = rnorm(300))
+#' mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.1)
+#' dat <- sdmTMB_simulate(
+#'   formula = ~ 1 + a1,
+#'   data = predictor_dat,
+#'   mesh = mesh,
+#'   family = poisson(),
+#'   range = 0.5,
+#'   sigma_O = 0.2,
+#'   seed = 42,
+#'   B = c(0.2, -0.4) # B0 = intercept, B1 = a1 slope
+#' )
+#' fit <- sdmTMB(observed ~ 1 + a1, data = dat, family = poisson(), mesh = mesh)
+#'
+#' # simulate from the model:
+#' s1 <- simulate(fit, nsim = 300)
+#' dim(s1)
+#'
+#' # test whether fitted models are consistent with the observed number of zeros:
+#' sum(s1 == 0)/length(s1)
+#' sum(dat$observed == 0) / length(dat$observed)
+#'
+#' # use the residuals with DHARMa:
+#' if (require("DHARMa", quietly = TRUE)) {
+#'   pred_fixed <- fit$family$linkinv(predict(fit)$est_non_rf)
+#'   r <- DHARMa::createDHARMa(
+#'     simulatedResponse = s1,
+#'     observedResponse = dat$observed,
+#'     fittedPredictedResponse = pred_fixed
+#'   )
+#'   plot(r)
+#'   DHARMa::testResiduals(r)
+#'   DHARMa::testSpatialAutocorrelation(r, x = dat$X, y = dat$Y)
+#'   DHARMa::testZeroInflation(r)
+#' }
+#'
+#' # simulate with the parameters drawn from the joint precision matrix:
+#' s2 <- simulate(fit, nsim = 1, params = "MVN")
+#'
+#' # simulate with new random fields:
+#' s3 <- simulate(fit, nsim = 1, re_form = ~ 0)
+#'
+#' # simulate with new random fields and new parameter draws:
+#' s3 <- simulate(fit, nsim = 1, params = "MVN", re_form = ~ 0)
+#'
+#' # simulate from a Stan model fit with new observation error:
+#' \donttest{
+#' if (require("tmbstan", quietly = TRUE)) {
+#'   stan_fit <- tmbstan::tmbstan(fit$tmb_obj, iter = 110, warmup = 100, chains = 1)
+#'   # make sure `nsim` is <= number of samples from rstan
+#'   s3 <- simulate(fit, nsim = 10, tmbstan_model = stan_fit)
+#' }
+#' }
+#' }
+
+simulate.sdmTMB <- function(object, nsim = 1L, params = c("mle", "mvn"),
+                            re_form = NULL, tmbstan_model = NULL,
+                            seed = sample.int(1e6, 1L), ...) {
   set.seed(seed)
-  params <- object$tmb_obj$env$parList()
-  tmb_data <- object$tmb_data
-  # tmb_data$sim_re <- rep(1, length(tmb_data$sim_re))
+  params <- tolower(params)
+  params <- match.arg(params, choices = c("mle", "mvn"))
+
+  # re_form stuff
+  conditional_re <- !(!is.null(re_form) && ((re_form == ~0) || identical(re_form, NA)))
+  tmb_dat <- object$tmb_data
+  if (conditional_re) {
+    tmb_dat$sim_re <- rep(0L, length(object$tmb_data$sim_re)) # don't simulate any REs
+  } else {
+    stopifnot(length(object$tmb_data$sim_re) == 6L) # in case this gets changed
+    tmb_dat$sim_re <- c(rep(1L, 5L), 0L) # last is smoothers; don't simulate them
+  }
   newobj <- TMB::MakeADFun(
-    data = tmb_data, map = object$tmb_map,
-    random = object$tmb_random, parameters = params, DLL = "sdmTMB"
+    data = tmb_dat, map = object$tmb_map,
+    random = object$tmb_random, parameters = object$tmb_obj$env$parList(), DLL = "sdmTMB"
   )
-  ret <- lapply(seq_len(nsim), function(i) newobj$simulate()$y_i)
+
+  # params MLE/MVN stuff
+  if (is.null(tmbstan_model)) {
+    if (params == "MVN") {
+      new_par <- rmvnorm_prec(object$tmb_obj$env$last.par.best, object$sd_report, nsim)
+    } else {
+      new_par <- object$tmb_obj$env$last.par.best
+    }
+  } else {
+    new_par <- extract_mcmc(tmbstan_model)
+  }
+
+  # do the sim
+  if (params == "MVN" || !is.null(tmbstan_model)) { # we have a matrix
+    ret <- lapply(seq_len(nsim), function(i) {
+      newobj$simulate(par = new_par[, i, drop = TRUE], complete = FALSE)$y_i
+    })
+  } else {
+    ret <- lapply(seq_len(nsim), function(i) newobj$simulate(par = new_par, complete = FALSE)$y_i)
+  }
+
   do.call(cbind, ret)
 }

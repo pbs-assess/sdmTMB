@@ -43,6 +43,7 @@ Imports:
     stats,
     TMB (>= 1.7.20)
 Suggests:
+    DHARMa,
     dplyr,
     future.apply,
     ggplot2,
