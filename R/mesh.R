@@ -166,17 +166,19 @@ make_mesh <- function(data, xy_cols,
   spde <- INLA::inla.spde2.matern(mesh)
   A <- INLA::inla.spde.make.A(mesh, loc = loc_xy)
 
-  # A_st matrix
-  data$sdm_orig_id <- seq(1, nrow(data))
-  data$sdm_x <- loc_xy[,1,drop=TRUE]
-  data$sdm_y <- loc_xy[,2,drop=TRUE]
-  fake_data <- unique(data.frame(sdm_x = data$sdm_x, sdm_y = data$sdm_y))
+  # # A_st matrix (by station)
+  # data$sdm_orig_id <- seq(1, nrow(data))
+  # data$sdm_x <- loc_xy[,1,drop=TRUE]
+  # data$sdm_y <- loc_xy[,2,drop=TRUE]
+  # fake_data <- unique(data.frame(sdm_x = data$sdm_x, sdm_y = data$sdm_y))
+  fake_data <- data
   fake_data[["sdm_spatial_id"]] <- seq(1, nrow(fake_data))
-  data <- base::merge(data, fake_data, by = c("sdm_x", "sdm_y"),
-    all.x = TRUE, all.y = FALSE)
-  data <- data[order(data$sdm_orig_id),, drop=FALSE]
-  A_st <- INLA::inla.spde.make.A(spde$mesh,
-    loc = as.matrix(fake_data[, c("sdm_x", "sdm_y"), drop = FALSE]))
+  # data <- base::merge(data, fake_data, by = c("sdm_x", "sdm_y"),
+  #   all.x = TRUE, all.y = FALSE)
+  # data <- data[order(data$sdm_orig_id),, drop=FALSE]
+  # A_st <- INLA::inla.spde.make.A(spde$mesh,
+  #   loc = as.matrix(fake_data[, c("sdm_x", "sdm_y"), drop = FALSE]))
+  A_st <- A
 
   structure(list(
     loc_xy = loc_xy, xy_cols = xy_cols, mesh = mesh, spde = spde,
