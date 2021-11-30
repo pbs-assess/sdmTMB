@@ -526,8 +526,10 @@ sdmTMB <- function(
     assert_that(mean(upr-lwr, na.rm = TRUE)>=0)
   }
 
-  assert_that(time %in% names(data),
-    msg = "Specified `time` column is missing from `data`.")
+  if (!is.null(time)) {
+    assert_that(time %in% names(data),
+      msg = "Specified `time` column is missing from `data`.")
+  }
   if (is.null(time)) {
     time <- "_sdmTMB_time"
     data[[time]] <- 0L
