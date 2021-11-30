@@ -526,6 +526,8 @@ sdmTMB <- function(
     assert_that(mean(upr-lwr, na.rm = TRUE)>=0)
   }
 
+  assert_that(time %in% names(data),
+    msg = "Specified `time` column is missing from `data`.")
   if (is.null(time)) {
     time <- "_sdmTMB_time"
     data[[time]] <- 0L
@@ -540,6 +542,9 @@ sdmTMB <- function(
         "Please remove these or turn your time column into an integer.", call. = FALSE)
     }
   }
+
+  assert_that(identical(nrow(mesh$loc_xy), nrow(data)),
+    msg = "Number of x-y coordinates in `mesh` does not match `nrow(data)`.")
 
   thresh <- check_and_parse_thresh_params(formula, data)
   original_formula <- formula
