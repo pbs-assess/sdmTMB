@@ -23,13 +23,27 @@ ll_lognormal <- function(object, withheld_y, withheld_mu) {
   stats::dlnorm(x = withheld_y, meanlog = withheld_mu - 0.5 * (.sd)^2, sdlog = .sd, log = TRUE)
 }
 
-ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
+dstudent <- function(x, df, mean, sd, ncp, log = FALSE) {
+  # from metRology::dt.scaled()
+  if (!log) {
+    return(stats::dt((x - mean)/sd, df, ncp = ncp, log = FALSE)/sd)
+  } else {
+    return(stats::dt((x - mean)/sd, df, ncp = ncp, log = TRUE) - log(sd))
+  }
+}
 
+ll_student <- function(object, withheld_y, withheld_mu) {
+  .sd <- exp(object$model$par[["ln_phi"]])
+  dstudent(x = withheld_y, df = object$tmb_data$df, mean = withheld_mu, sd = .sd, log = TRUE)
+}
+
+ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
   family_func <- switch(object$family$family,
     gaussian = ll_gaussian,
     tweedie = ll_tweedie,
     binomial = ll_binomial,
     lognormal = ll_lognormal,
+    student = ll_student,
     Gamma = ll_gamma,
     stop(object$family$family, " not yet implemented. ",
       "Please file an issue on GitHub.",
