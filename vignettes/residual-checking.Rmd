@@ -140,7 +140,7 @@ DHARMa::testSpatialAutocorrelation(r_pois, x = dat$X, y = dat$Y)
 DHARMa::testZeroInflation(r_pois)
 ```
 
-In the QQ residual plots we clearly see evidence of over dispersion compared to the Poisson. Note the values clumping near 1.0 on the observed axis and deviating downwards towards 0.0 observed. This is indicative of to many zeros and especially too many large values compared to the assumed Poisson distribution.
+In the QQ residual plots we clearly see evidence of over dispersion compared to the Poisson. Note the values clumping near 1.0 on the observed axis and deviating downwards towards 0.0 observed. This is indicative of too many zeros and especially too many large values compared to the assumed Poisson distribution.
 
 Lets try with the correct model:
 
@@ -189,7 +189,7 @@ fit_nb2_miss$model$objective
 AIC(fit_nb2_miss, fit_nb2) # AIC supports including the 'a1' predictor
 ```
 
-The above used simulations with the parameters fixed at there Maximum Likelihood Estimate (MLE) and predictions conditional on the fitted random effects. Alternatively, we could simulate with the parameters drawn from their joint precision matrix to encapsulate uncertainty about the parameters. This may be a better test for residual analysis, but this is an open area of research as far as I can tell.
+The above used simulations with the parameters fixed at their Maximum Likelihood Estimate (MLE) and predictions conditional on the fitted random effects. Alternatively, we could simulate with the parameters drawn from their joint precision matrix to encapsulate uncertainty about the parameters. This may be a better test for residual analysis, but this is an open area of research as far as I can tell.
 
 ```{r}
 # simulate with the parameters drawn from the joint precision matrix:
@@ -229,7 +229,7 @@ s5 <- simulate(fit_nb2, nsim = 1, tmbstan_model = stan_fit)
 
 This last option, while slower since the Stan model must be sampled from, is likely the best approach.
 
-For help interpreting the DHARMa residual plots, see `vignette("DHARMa", package="DHARMa")`
+For help interpreting the DHARMa residual plots, see `vignette("DHARMa", package="DHARMa")`.
 
 # References
 
