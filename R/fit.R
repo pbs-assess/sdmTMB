@@ -545,7 +545,7 @@ sdmTMB <- function(
     }
   }
 
-  assert_that(identical(nrow(mesh$loc_xy), nrow(data)),
+  assert_that(identical(nrow(spde$loc_xy), nrow(data)),
     msg = "Number of x-y coordinates in `mesh` does not match `nrow(data)`.")
 
   thresh <- check_and_parse_thresh_params(formula, data)
