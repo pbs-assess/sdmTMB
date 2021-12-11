@@ -4,11 +4,15 @@ test_that("A model with 2 s() splines works", {
   skip_if_not_installed("INLA")
   d <- subset(pcod, year >= 2000 & density > 0)
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
-  expect_warning({m <- sdmTMB(
-    data = d,
-    formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
-    mesh = pcod_spde, spatial = "off", spatiotemporal = "off"
-  )}, "smooth")
+  expect_warning({
+    suppressMessages({
+      m <- sdmTMB(
+        data = d,
+        formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
+        mesh = pcod_spde, spatial = "off", spatiotemporal = "off"
+      )
+    })
+  }, "smooth")
   expect_equal(ncol(m$tmb_data$X_ij), 1L)
   expect_equal(length(m$tmb_data$Zs), 2L)
   # head(m$tmb_data$Zs[[1]])
@@ -164,3 +168,62 @@ test_that("Formula removal of s and t2 works", {
   expect_identical(remove_s_and_t2(y ~ s(x) + t2(z)), y ~ 1)
   expect_identical(remove_s_and_t2(y ~ ignore(x) + t2(z)), y ~ ignore(x))
 })
+
+test_that("Smooth plotting works", {
+  d <- subset(pcod, year >= 2000 & density > 0)
+  pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
+  expect_warning({
+    suppressMessages({
+      m <- sdmTMB(
+        data = d,
+        formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
+        mesh = pcod_spde, spatial = "off", spatiotemporal = "off"
+      )
+    })
+  }, "smooth")
+
+  plot_smooth(m)
+  plot_smooth(m, level = 0.4)
+  plot_smooth(m, select = 2)
+  plot_smooth(m, ggplot = TRUE)
+  plot_smooth(m, ggplot = TRUE, rug = FALSE)
+  plot_smooth(m, rug = FALSE)
+  plot_smooth(m, n = 3)
+  out <- plot_smooth(m, return_data = TRUE)
+  expect_equal(class(out), "data.frame")
+
+  expect_warning({
+    suppressMessages({
+      m <- sdmTMB(
+        data = d,
+        formula = log(density) ~ s(depth_scaled) + year,
+        mesh = pcod_spde, spatial = "off", spatiotemporal = "off"
+      )
+    })
+  }, "smooth")
+
+  plot_smooth(m, select = 1)
+  expect_error(plot_smooth(m, select = 2), regexp = "select")
+
+  expect_warning({
+    suppressMessages({
+      m <- sdmTMB(
+        data = d, time = "year",
+        formula = log(density) ~ s(depth_scaled),
+        mesh = pcod_spde, spatial = "on", spatiotemporal = "off"
+      )
+    })
+  }, "smooth")
+  plot_smooth(m)
+
+  expect_warning({
+    suppressMessages({
+      m <- sdmTMB(
+        data = d, time = "year",
+        formula = log(density) ~ 0 + s(depth_scaled) + as.factor(year),
+        mesh = pcod_spde, spatial = "on", spatiotemporal = "off"
+      )
+    })
+  }, "smooth")
+  expect_error(plot_smooth(m), regexp = "factor") # FIXME!!
+  })
