@@ -36,7 +36,7 @@ plot_anisotropy <- function(object) {
 #'
 #' @param object An [sdmTMB()] model.
 #' @param select The smoother term to plot.
-#' @param n The number of equal spaced point to evaluate the smoother along.
+#' @param n The number of equally spaced points to evaluate the smoother along.
 #' @param level The confidence level.
 #' @param ggplot Logical: use the \pkg{ggplot2} package?
 #' @param rug Logical: add rug lines along the lower axis?
@@ -125,8 +125,8 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
       xlab = sel_name, ylab = paste0("s(", sel_name, ")")
     )
     if (se) {
-      lines(nd[[sel_name]], lwr, lty = 2)
-      lines(nd[[sel_name]], upr, lty = 2)
+      graphics::lines(nd[[sel_name]], lwr, lty = 2)
+      graphics::lines(nd[[sel_name]], upr, lty = 2)
     }
     if (rug) rug(object$data[[sel_name]])
   } else {

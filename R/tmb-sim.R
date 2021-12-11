@@ -256,6 +256,7 @@ sdmTMB_simulate <- function(formula,
 #' @method simulate sdmTMB
 #' @param object sdmTMB model
 #' @param nsim Number of response lists to simulate. Defaults to 1.
+#' @param seed Random number seed
 #' @param params Whether the parameters used in the simulation should come from
 #'   the Maximum Likelihood Estimate (`"mle"`) or from new draws from the joint
 #'   precision matrix assuming they are multivariate normal distributed
@@ -267,12 +268,11 @@ sdmTMB_simulate <- function(formula,
 #' @param tmbstan_model An optional model fit via [tmbstan::tmbstan()]. If
 #'   provided the parameters will be drawn from the MCMC samples and new
 #'   observation error will be added. See the example in [extract_mcmc()].
-#' @param seed Random number seed
 #' @param ... Extra arguments (not used)
 #' @return Returns a matrix; number of columns is `nsim`.
 #' @importFrom stats simulate
 #'
-#' @seealso [sdmTMBsimulate()]
+#' @seealso [sdmTMB_simulate()]
 #'
 #' @export
 #' @examples
@@ -335,9 +335,8 @@ sdmTMB_simulate <- function(formula,
 #' }
 #' }
 
-simulate.sdmTMB <- function(object, nsim = 1L, params = c("mle", "mvn"),
-                            re_form = NULL, tmbstan_model = NULL,
-                            seed = sample.int(1e6, 1L), ...) {
+simulate.sdmTMB <- function(object, nsim = 1L, params = c("mle", "mvn"), seed = sample.int(1e6, 1L),
+                            re_form = NULL, tmbstan_model = NULL, ...) {
   set.seed(seed)
   params <- tolower(params)
   params <- match.arg(params, choices = c("mle", "mvn"))

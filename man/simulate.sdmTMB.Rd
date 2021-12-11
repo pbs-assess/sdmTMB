@@ -8,9 +8,9 @@
   object,
   nsim = 1L,
   params = c("mle", "mvn"),
+  seed = sample.int(1e+06, 1L),
   re_form = NULL,
   tmbstan_model = NULL,
-  seed = sample.int(1e+06, 1L),
   ...
 )
 }
@@ -24,6 +24,8 @@ the Maximum Likelihood Estimate (\code{"mle"}) or from new draws from the joint
 precision matrix assuming they are multivariate normal distributed
 (\code{"mvn"}).}
 
+\item{seed}{Random number seed}
+
 \item{re_form}{\code{NULL} to specify a simulation conditional on fitted random
 effects (this only simulates observation error). \code{~0} or \code{NA} to simulate
 new random affects (smoothers, which internally are random effects, will
@@ -32,8 +34,6 @@ not be simulated as new).}
 \item{tmbstan_model}{An optional model fit via \code{\link[tmbstan:tmbstan]{tmbstan::tmbstan()}}. If
 provided the parameters will be drawn from the MCMC samples and new
 observation error will be added. See the example in \code{\link[=extract_mcmc]{extract_mcmc()}}.}
-
-\item{seed}{Random number seed}
 
 \item{...}{Extra arguments (not used)}
 }
@@ -107,5 +107,5 @@ if (require("tmbstan", quietly = TRUE)) {
 }
 }
 \seealso{
-\code{\link[=sdmTMBsimulate]{sdmTMBsimulate()}}
+\code{\link[=sdmTMB_simulate]{sdmTMB_simulate()}}
 }

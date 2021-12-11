@@ -19,7 +19,7 @@ plot_smooth(
 
 \item{select}{The smoother term to plot.}
 
-\item{n}{The number of equal spaced point to evaluate the smoother along.}
+\item{n}{The number of equally spaced points to evaluate the smoother along.}
 
 \item{level}{The confidence level.}
 
