@@ -248,22 +248,17 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh, time = NULL,
     # calculate log likelihood for each withheld observation:
 
     # trickery to get the log likelihood of the withheld data directly from the TMB report():
-    # tmb_data <- predicted_obj$tmb_data
+    # tmb_data <- object$tmb_data
     # tmb_data$weights_i <- ifelse(tmb_data$weights_i == 1, 0, 1) # reversed
     # new_tmb_obj <- TMB::MakeADFun(
     #   data = tmb_data,
-    #   parameters = predicted_obj$fit_obj$tmb_obj$env$parList(),
+    #   parameters = get_pars(object),
     #   map = predicted_obj$fit_obj$tmb_map,
     #   random = predicted_obj$fit_obj$tmb_random,
     #   DLL = "sdmTMB",
     #   silent = TRUE
     # )
-    # old_par <- predicted_obj$obj$model$par
-    # # need to initialize the new TMB object once:
-    # sink(tempfile())
-    # new_tmb_obj$fn(old_par)
-    # sink()
-    # lp <- predicted_obj$fit_obj$tmb_obj$env$last.par.best
+    # lp <- object$tmb_obj$env$last.par.best
     # r <- new_tmb_obj$report(lp)
     # r$nll_obs
     # cv_data$cv_loglik <- -1 * r$nll_obs
