@@ -22,7 +22,8 @@ print.sdmTMB <- function(x, ...) {
 
   if (isTRUE(spatial_only)) {
     title <- paste0("Spatial model fit by ", fit_by, " ['sdmTMB']\n")
-  } else {
+
+      } else {
     title <- paste0("Spatiotemporal model fit by ", fit_by, " ['sdmTMB']\n")
   }
   formula <- paste0("Formula: ", deparse(x$call$formula), "\n")
@@ -78,7 +79,7 @@ print.sdmTMB <- function(x, ...) {
       sigma_E <- paste0(pre, mround(r$sigma_E[1], 2L), "\n")
     }
   } else {
-    sigma_E <- paste0(pre, "not estimated\n")
+    sigma_E <- NULL
   }
 
   pre <- "Spatiotemporal AR1 correlation (rho): "
@@ -96,6 +97,26 @@ print.sdmTMB <- function(x, ...) {
   mm <- cbind(b_j, b_j_se)
   colnames(mm) <- c("coef.est", "coef.se")
   row.names(mm) <- fe_names
+
+  if (x$tmb_data$has_smooths) {
+    bs_se <- unname(round(sr_se[grep("bs", names(sr_se))], 2L))
+    bs <- unname(round(sr_est[grep("bs", names(sr_est))], 2L))
+    sm <- parse_smoothers(formula = x$formula, data = x$data)
+    sm_names <- unlist(lapply(sm$Zs, function(x) attr(x, "s.label")))
+    sm_names <- gsub("\\)$", "", gsub("s\\(", "", sm_names))
+    sm_names_bs <- paste0("s", sm_names)
+    sm_names_sds <- paste0("sds(", sm_names, ")")
+    mm_sm <- cbind(bs, bs_se)
+    row.names(mm_sm) <- sm_names_bs
+    mm <- rbind(mm, mm_sm)
+    smooth_sds <- round(exp(unname(sr_est[grep("ln_smooth_sigma", names(sr_est))])), 2L)
+    re_sm_mat <- matrix(NA_real_, nrow = length(smooth_sds), ncol = 1L)
+    re_sm_mat[,1] <- smooth_sds
+    rownames(re_sm_mat) <- sm_names_sds
+    colnames(re_sm_mat) <- "Std. Dev."
+  } else {
+    re_sm_mat <- NULL
+  }
 
   sr_se <- as.list(sr, "Std. Error")
   sr_est <- as.list(sr, "Estimate")
@@ -121,7 +142,8 @@ print.sdmTMB <- function(x, ...) {
     re_int_names <- barnames(x$split_formula$reTrmFormulas)
     re_int_mat <- matrix(NA_real_, nrow = length(re_int_names), ncol = 1)
     re_int_mat[,1] <- round(.tidy$estimate[.tidy$term == "tau_G"], 2)
-    rownames(re_int_mat) <- paste(re_int_names, "(Intercept)")
+    # rownames(re_int_mat) <- paste(re_int_names, "(Intercept)")
+    rownames(re_int_mat) <- re_int_names
     colnames(re_int_mat) <- "Std. Dev."
   } else {
     re_int_mat <- NULL
@@ -149,8 +171,13 @@ print.sdmTMB <- function(x, ...) {
   print(mm)
 
   if (!is.null(re_int_mat)) {
-    cat("\n")
+    cat("\nRandom intercepts:\n")
     print(re_int_mat)
+  }
+
+  if (!is.null(re_sm_mat)) {
+    cat("\nSmooth terms:\n")
+    print(re_sm_mat)
   }
 
   if (!is.null(x$time_varying)) {
@@ -170,7 +197,7 @@ print.sdmTMB <- function(x, ...) {
     tweedie_p,
     range_text,
     sigma_O,
-    sigma_E,
+    if (!is.null(sigma_E)) sigma_E,
     rho,
     criterion,
     "\nSee ?tidy.sdmTMB to extract these values as a data frame.\n",
