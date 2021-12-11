@@ -2,6 +2,11 @@
 
 # sdmTMB 0.0.20.9000
 
+*  Smoothers now appear in `print()` output. The format should roughly match brms.
+   The main-effect component (e.g., `sdepth` for `s(depth)`) represents the
+   linear component and the random effect (e.g., `sds(depth)`) component in
+   the output corresponds to the standard deviation of the penalized weights.
+
 *  Add `censored_poisson(link = 'log')` family; implemented by @joenomiddlename
 
 * `fields` in `sdmTMB()` is now depreciated and replaced by `spatiotemporal`.

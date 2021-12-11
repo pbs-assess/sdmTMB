@@ -97,7 +97,6 @@ s3 <- simulate(fit, nsim = 1, re_form = ~ 0)
 s3 <- simulate(fit, nsim = 1, params = "MVN", re_form = ~ 0)
 
 # simulate from a Stan model fit with new observation error:
-
 \donttest{
 if (require("tmbstan", quietly = TRUE)) {
   stan_fit <- tmbstan::tmbstan(fit$tmb_obj, iter = 110, warmup = 100, chains = 1)
