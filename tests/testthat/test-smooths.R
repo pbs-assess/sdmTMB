@@ -216,14 +216,15 @@ test_that("Smooth plotting works", {
   }, "smooth")
   plot_smooth(m)
 
+  # with a factor
   expect_warning({
     suppressMessages({
-      m <- sdmTMB(
+      m1 <- sdmTMB(
         data = d, time = "year",
         formula = log(density) ~ 0 + s(depth_scaled) + as.factor(year),
         mesh = pcod_spde, spatial = "on", spatiotemporal = "off"
       )
     })
   }, "smooth")
-  expect_error(plot_smooth(m), regexp = "factor") # FIXME!!
-  })
+  plot_smooth(m)
+})

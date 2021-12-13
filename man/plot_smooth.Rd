@@ -32,6 +32,15 @@ plot_smooth(
 \description{
 Plot a smooth term from an sdmTMB model
 }
+\details{
+Note:
+\itemize{
+\item Any numeric predictor is set to its mean
+\item Any factor predictor is set to its first-level value
+\item The time element (if present) is set to its minimum value
+\item The x and y coordinates are set to their mean values
+}
+}
 \examples{
 d <- subset(pcod, year >= 2000 & density > 0)
 pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)

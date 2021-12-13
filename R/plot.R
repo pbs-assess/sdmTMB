@@ -43,6 +43,13 @@ plot_anisotropy <- function(object) {
 #' @param return_data Logical: return the predicted data instead of making a plot?
 #' @export
 #'
+#' @details
+#' Note:
+#' * Any numeric predictor is set to its mean
+#' * Any factor predictor is set to its first-level value
+#' * The time element (if present) is set to its minimum value
+#' * The x and y coordinates are set to their mean values
+#'
 #' @examples
 #' d <- subset(pcod, year >= 2000 & density > 0)
 #' pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
@@ -54,8 +61,7 @@ plot_anisotropy <- function(object) {
 #' plot_smooth(m)
 
 plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
-  ggplot = FALSE, rug = TRUE, return_data = FALSE) {
-
+                        ggplot = FALSE, rug = TRUE, return_data = FALSE) {
   se <- TRUE
 
   assert_that(class(object) == "sdmTMB")
@@ -95,22 +101,41 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
   nd <- data.frame(x = seq(min(x), max(x), length.out = n))
   names(nd)[1] <- sel_name
 
-  for (i in seq_along(non_select_names)) {
-    if (!non_select_names[[i]] %in% colnames(object$data)) {
-      stop("A model matrix column wasn't found in the original data.\n",
-        "Perhaps you have factor predictors? `plot_smooth()` is not\n",
-        "yet set up for factors.", call. = FALSE)
+  dat <- object$data
+  .t <- terms(object$formula)
+  .t <- labels(.t)
+  checks <- c("^as\\.factor\\(", "^factor\\(")
+  for (ch in checks) {
+    if (any(grepl(ch, .t))) { # any factors from formula? if so, explicitely switch class
+      ft <- grep(ch, .t)
+      for (i in ft) {
+        x <- gsub(ch, "", .t[i])
+        x <- gsub("\\)", "", x)
+        dat[[x]] <- as.factor(dat[[x]])
+      }
     }
-    nd[[non_select_names[i]]] <- mean(object$data[[non_select_names[i]]])
-  } # FIXME for time column, year?
-  # FIXME factors!!!
-
-  nd[object$time] <- min(object$data[[object$time]]) # FIXME
+  }
+  dat[, object$spde$xy_cols] <- NULL
+  dat[[object$time]] <- NULL
+  for (i in seq_len(ncol(dat))) {
+    if (names(dat)[i] != sel_name) {
+      if (is.factor(dat[, i, drop = TRUE])) {
+        nd[[names(dat)[[i]]]] <- sort(dat[, i, drop = TRUE])[[1]] # TODO note!
+      } else {
+        nd[[names(dat)[[i]]]] <- mean(dat[, i, drop = TRUE], na.rm = TRUE) # TODO note!
+      }
+    }
+  }
+  nd[object$time] <- min(object$data[[object$time]], na.rm = TRUE) # TODO note!
+  nd[[object$spde$xy_cols[1]]] <- mean(object$data[[object$spde$xy_cols[1]]], na.rm = TRUE) # TODO note!
+  nd[[object$spde$xy_cols[2]]] <- mean(object$data[[object$spde$xy_cols[2]]], na.rm = TRUE) # TODO note!
 
   p <- predict(object, newdata = nd, se_fit = se, re_form = NA)
-  if (return_data) return(p)
+  if (return_data) {
+    return(p)
+  }
   inv <- object$family$linkinv
-  qv <- stats::qnorm(1-(1-level)/2)
+  qv <- stats::qnorm(1 - (1 - level) / 2)
 
   if (!ggplot) {
     if (se) {
@@ -120,7 +145,7 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
     } else {
       ylim <- range(p$est)
     }
-    plot(nd[[sel_name]], p$est,
+    plot(nd[[sel_name]], inv(p$est),
       type = "l", ylim = ylim,
       xlab = sel_name, ylab = paste0("s(", sel_name, ")")
     )
