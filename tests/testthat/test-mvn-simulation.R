@@ -26,8 +26,7 @@ test_that("rmvnorm sim prediction works", {
   m <- sdmTMB(
     data = pcod,
     formula = density ~ 0 + as.factor(year),
-    spde = mesh, family = tweedie(link = "log")
-  )
+    mesh = mesh, family = tweedie(link = "log"))
   set.seed(1)
   p <- predict(m, newdata = qcs_grid, sims = 15L)
   p1 <- predict(m, newdata = qcs_grid)
@@ -50,8 +49,8 @@ test_that("get_index_sims works", {
   skip_on_ci()
   skip_if_not_installed("INLA")
   m <- sdmTMB(density ~ 0 + as.factor(year),
-    data = pcod_2011, spde = pcod_mesh_2011, family = tweedie(link = "log"),
-    time = "year", spatial_only = TRUE
+    data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(link = "log"),
+    time = "year", spatiotemporal = "off"
   )
   qcs_grid_2011 <- subset(qcs_grid, year >= 2011)
   set.seed(1029)

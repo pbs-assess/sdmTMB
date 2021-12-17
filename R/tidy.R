@@ -96,9 +96,9 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
     log_name <- c(log_name, "log_sigma_E")
     name <- c(name, "sigma_E")
   }
-  if (x$tmb_data$spatial_trend) {
-    log_name <- c(log_name, "log_sigma_O_trend")
-    name <- c(name, "sigma_O_trend", "ln_tau_V")
+  if (x$tmb_data$spatial_covariate) {
+    log_name <- c(log_name, "log_sigma_Z")
+    name <- c(name, "sigma_Z", "ln_tau_Z")
   }
   if (x$tmb_data$random_walk) {
     log_name <- c(log_name, "ln_tau_V")
@@ -125,7 +125,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
         conf.high = exp(.e + crit * .se),
         stringsAsFactors = FALSE
       )
-      if (i == "sigma_O_trend") out_re[[i]]$term <- "sigma_Z"
+      if (i == "sigma_Z") out_re[[i]]$term <- "sigma_Z"
       ii <- ii + 1
     }
     out_re[[i]]$std.error <- NA
@@ -170,7 +170,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   if (identical(est$ln_tau_E, 0)) out_re <- out_re[out_re$term != "sigma_E", ]
   if (identical(est$ln_tau_V, 0)) out_re <- out_re[out_re$term != "tau_V", ]
   if (identical(est$ln_tau_O, 0)) out_re <- out_re[out_re$term != "sigma_O", ]
-  if (identical(est$ln_tau_O_trend, 0)) out_re <- out_re[out_re$term != "sigma_Z", ]
+  if (identical(est$ln_tau_Z, 0)) out_re <- out_re[out_re$term != "sigma_Z", ]
 
   if (!conf.int) {
     out_re[["conf.low"]] <- NULL

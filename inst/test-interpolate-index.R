@@ -19,7 +19,7 @@ time_steps <- 20
 sigma_O <- 0
 sigma_E <- 0.5
 phi <- 1.2
-thetaf <- 1.7 # Tweedie p
+tweedie_p <- 1.7
 .range <- 1
 missing_years <- seq(14L, 20L, 2L)
 
@@ -35,7 +35,7 @@ sim_test_index <- function(i) {
     betas = rep(1, time_steps), time_steps = time_steps,
     rho = 0.6,
     phi = phi, range = .range, sigma_O = sigma_O, sigma_E = sigma_E,
-    seed = SEED * i, family = tweedie(), thetaf = thetaf
+    seed = SEED * i, family = tweedie(), tweedie_p = tweedie_p
   )
 
   s <- mutate(s, year = as.integer(as.character(dat$year)))
@@ -63,10 +63,10 @@ sim_test_index <- function(i) {
     data = s_sampled,
     formula = observed ~ 1,
     time = "time",
-    ar1_fields = TRUE,
+    spatiotemporal = "IID",
     silent = TRUE,
     extra_time = missing_years,
-    include_spatial = FALSE,
+    spatial = FALSE,
     spde = mesh,
     reml = TRUE,
     family = tweedie(),

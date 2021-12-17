@@ -33,13 +33,13 @@ test_that("Model with random intercepts fits appropriately.", {
   s$observed <- s$observed + RE_vals[s$g] + RE_vals2[s$h]
 
   # ignore RE:
-  m1 <- sdmTMB(data = s, formula = observed ~ 1, spde = spde)
+  m1 <- sdmTMB(data = s, formula = observed ~ 1, mesh = spde)
   tidy(m1, "fixed", conf.int = TRUE)
   .t1 <- tidy(m1, "ran_pars", conf.int = TRUE)
 
   # with RE:
   m <- sdmTMB(data = s, time = NULL,
-    formula = observed ~ 1 + (1 | g) + (1 | h), spde = spde)
+    formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde)
   tidy(m, "fixed", conf.int = TRUE)
   .t <- tidy(m, "ran_pars", conf.int = TRUE)
   print(m)
@@ -58,7 +58,7 @@ test_that("Model with random intercepts fits appropriately.", {
   s_drop <- s[s$g != 1, , drop = FALSE]
   expect_error(
     sdmTMB(data = s_drop,
-      formula = observed ~ 1 + (1 | g) + (1 | h), spde = spde),
+      formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde),
     regexp = "levels"
   )
 
@@ -89,7 +89,7 @@ test_that("Model with random intercepts fits appropriately.", {
 
   # random ints match glmmTMB exactly:
   m <- sdmTMB(data = s,
-    formula = observed ~ 1 + (1 | g) + (1 | h), spde = spde, control = sdmTMBcontrol(map_rf = TRUE))
+    formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde, control = sdmTMBcontrol(map_rf = TRUE))
   .t <- tidy(m, "ran_pars")
   m.glmmTMB <- glmmTMB::glmmTMB(data = s, formula = observed ~ 1 + (1 | g) + (1 | h))
   .v <- glmmTMB::VarCorr(m.glmmTMB)

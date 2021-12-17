@@ -1,29 +1,38 @@
 #' Simulate from a spatial/spatiotemporal model
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' **Note we are considering depreciating this function in favour of [sdmTMB_sim2()],
+#' which is more flexible and faster.**
+#'
 #' @param mesh Output from [make_mesh()] or a mesh directly from INLA.
 #' @param x A vector of x coordinates. Should match `mesh`.
 #' @param y A vector of y coordinates. Should match `mesh`.
 #' @param range Parameter that controls the decay of spatial correlation.
-#' @param X An optional covariate design matrix. If omitted and `betas`
-#'   is not `NULL`, will be set to standard normal draws.
+#' @param X An optional covariate design matrix. If omitted and `betas` is not
+#'   `NULL`, will be set to standard normal draws.
 #' @param betas A vector of beta values (design-matrix fixed-effect coefficient
 #'   values). If a random walk (`sigma_V > 0`), these are the starting values.
 #' @param family Family as in [sdmTMB()].
 #' @param time_steps The number of time steps.
-#' @param rho Spatiotemporal correlation between years;
-#'   should be between -1 and 1.
+#' @param rho Spatiotemporal correlation between years; should be between -1 and
+#'   1.
 #' @param sigma_O SD of spatial process (Omega).
 #' @param sigma_E SD of spatiotemporal process (Epsilon). Can be scalar or
 #'   vector for time-varying model.
 #' @param sigma_V A vector of standard deviations of time-varying random walk on
 #'   parameters. Set to 0 for parameters that should not vary through time.
 #' @param phi Observation error scale parameter.
-#' @param thetaf Tweedie p (power) parameter; between 1 and 2.
+#' @param tweedie_p Tweedie p (power) parameter; between 1 and 2.
+#' @param thetaf (Depreciated; use `tweedie_p`). Tweedie p (power) parameter;
+#'   between 1 and 2.
 #' @param df Student-t degrees of freedom.
 #' @param seed A value with which to set the random seed.
-#' @param list Logical for whether output is in list format. If `TRUE`,
-#'    data is in list element 1 and input values in element 2.
-#' @param size Specific for the binomial family, vector representing binomial N. If not included, defaults to 1 (bernoulli)
+#' @param list Logical for whether output is in list format. If `TRUE`, data is
+#'   in list element 1 and input values in element 2.
+#' @param size Specific for the binomial family, vector representing binomial N.
+#'   If not included, defaults to 1 (bernoulli)
 #'
 #' @return A data frame where:
 #' * `omega_s` represents the simulated spatial random effects.
@@ -57,8 +66,8 @@
 #' mesh <- make_mesh(s, xy_cols = c("x", "y"), cutoff = 0.1)
 #' m <- sdmTMB(
 #'   data = s, formula = observed ~ x1,
-#'   time = "time", spde = mesh,
-#'   fields = "AR1", include_spatial = FALSE
+#'   time = "time", mesh = mesh,
+#'   spatiotemporal = "AR1", spatial = "off"
 #' )
 #' tidy(m, conf.int = TRUE)
 #' tidy(m, "ran_pars", conf.int = TRUE)
@@ -86,7 +95,8 @@ sdmTMB_sim <- function(mesh,
                        sigma_E = 0,
                        sigma_V = rep(0, length(betas)),
                        phi = 0.01,
-                       thetaf = 1.5,
+                       tweedie_p = 1.5,
+                       thetaf,
                        df = 3,
                        seed = sample.int(1e6, 1),
                        list = FALSE,
@@ -99,7 +109,7 @@ sdmTMB_sim <- function(mesh,
   assert_that(is.null(dim(x)), is.null(dim(y)))
   assert_that(identical(length(x), length((y))))
   assert_that(class(mesh) %in% c("inla.mesh", "sdmTMBmesh"))
-  assert_that(thetaf > 1, thetaf < 2)
+  assert_that(tweedie_p > 1, tweedie_p < 2)
   assert_that(df >= 1)
   assert_that(time_steps >= 1)
   assert_that(range > 0)
@@ -109,6 +119,10 @@ sdmTMB_sim <- function(mesh,
   if (!is.null(betas) && !is.null(X)) assert_that(ncol(X) == length(betas))
   assert_that(length(betas) == length(sigma_V))
   if (!is.null(X)) assert_that(time_steps * length(x) == nrow(X))
+
+  if (!missing(thetaf)) {
+    stop("Please use 'tweedie_p' instead of 'thetaf' in `sdmTMB_sim()`.", call. = FALSE)
+  }
 
   if (class(mesh) == "sdmTMBmesh") {
     mesh <- mesh$mesh
@@ -191,10 +205,13 @@ sdmTMB_sim <- function(mesh,
   d$observed <- switch(family$family,
     gaussian  = stats::rnorm(N, mean = d$mu, sd = phi),
     binomial  = stats::rbinom(N, size = size, prob = d$mu),
-    tweedie   = fishMod::rTweedie(N, mu = d$mu, phi = phi, p = thetaf),
+    tweedie   = fishMod::rTweedie(N, mu = d$mu, phi = phi, p = tweedie_p),
     Beta      = stats::rbeta(N, d$mu * phi, (1 - d$mu) * phi),
     Gamma     = stats::rgamma(N, shape = phi, scale = d$mu / phi),
     nbinom2   = stats::rnbinom(N, size = phi, mu = d$mu),
+    nbinom1   = rnbinom1(N, mu = d$mu, phi = phi), # internal function
+    # truncated_nbinom2 = aster::rktnb(N, size = phi, mu = d$mu, k = 1),
+    # truncated_nbinom1 = aster::rktnb(N, size = d$mu / phi, mu = d$mu, k = 1),
     poisson   = stats::rpois(N, lambda = d$mu),
     student   = rstudent(N, d$mu, sigma = phi, nu = df),
     lognormal = stats::rlnorm(N, meanlog = log(d$mu) - (phi^2) / 2, sdlog = phi),
@@ -218,7 +235,7 @@ sdmTMB_sim <- function(mesh,
       rho = rho,
       phi = phi,
       df = df,
-      thetaf = thetaf
+      tweedie_p = tweedie_p
     ))
     sim_out
   } else {
@@ -240,7 +257,6 @@ rspde2 <- function(coords, mesh, sigma = 1, range, variance = sigma^2, alpha = 2
   attributes$spde <- INLA::inla.spde2.matern(attributes$mesh, alpha = alpha)
   attributes$Q <- INLA::inla.spde2.precision(attributes$spde, theta = theta)
   attributes$A <- INLA::inla.mesh.project(mesh = attributes$mesh, loc = coords)$A
-  # attributes$A <-  INLA::inla.spde.make.A(attributes$mesh, loc = coords)
   if (as.integer(n) == 1L) {
     result <- drop(
       attributes$A %*% INLA::inla.qsample(

@@ -130,7 +130,7 @@ This model includes a spatiotemporal random field, but no fixed spatial random f
 ```{r}
 m <- sdmTMB(formula = observed ~ 1, 
             ar1_fields = TRUE,
-            include_spatial = TRUE, 
+            spatial = TRUE, 
             silent = TRUE,
             data = dat, 
             time = "time",
@@ -310,7 +310,7 @@ sim_predictions <- function(iter = sample.int(1e3, 1), plot = FALSE,
   m <- sdmTMB(
     silent = TRUE,
     ar1_fields = ar1_fields,
-    include_spatial = TRUE,
+    spatial = TRUE,
     data = dat, formula = formula, time = "time",
     family = family, spde = spde
   )

@@ -52,7 +52,7 @@ predictions. \code{~0} or \code{NA} for population-level predictions. No other
 options (e.g., some but not all random intercepts) are implemented yet.
 Only affects predictions with \code{newdata}. This also affects \code{\link[=get_index]{get_index()}}.}
 
-\item{sims}{If > 0, simulate from the joint precision matrix with \code{sims}
+\item{sims}{\strong{Experimental.} If > 0, simulate from the joint precision matrix with \code{sims}
 draws Returns a matrix of \code{nrow(data)} by \code{sim} representing the estimates
 of the linear predictor (i.e., in link space). Can be useful for deriving
 uncertainty on predictions (e.g., \code{apply(x, 1, sd)}) or propagating
@@ -68,6 +68,7 @@ but representing Bayesian posterior samples from the Stan model.}
 }
 \value{
 If \code{return_tmb_object = FALSE} (and \code{sims = 0} and \code{tmbstan_model = NULL}):
+
 A data frame:
 \itemize{
 \item \code{est}: Estimate in link space (everything is in link space)
@@ -75,11 +76,12 @@ A data frame:
 \item \code{est_rf}: Estimate from all random fields combined
 \item \code{omega_s}: Spatial (intercept) random field that is constant through time
 \item \code{zeta_s}: Spatial slope random field
-\item \code{epsilon_st}: Spatiotemporal (intercept) random fields (could be
-independent draws each year or AR1)
+\item \code{epsilon_st}: Spatiotemporal (intercept) random fields, could be
+off (zero), IID, AR1, or random walk
 }
 
 If \code{return_tmb_object = TRUE} (and \code{sims = 0} and \code{tmbstan_model = NULL}):
+
 A list:
 \itemize{
 \item \code{data}: The data frame described above
@@ -88,10 +90,11 @@ A list:
 \item \code{fit_obj}: The original TMB model object
 }
 
-You likely only need the \code{data} element as an end user. The other elements
-are included for other functions.
+In this case, you likely only need the \code{data} element as an end user.
+The other elements are included for other functions.
 
 If \code{sims > 0} or \code{tmbstan_model} is not \code{NULL}:
+
 A matrix:
 \itemize{
 \item Columns represent samples
@@ -113,7 +116,7 @@ d <- pcod_2011
 pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
 m <- sdmTMB(
  data = d, formula = density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
- time = "year", spde = pcod_spde, family = tweedie(link = "log")
+ time = "year", mesh = pcod_spde, family = tweedie(link = "log")
 )
 
 # Predictions at original data locations -------------------------------
@@ -180,7 +183,7 @@ ggplot(p, aes(depth_scaled, exp(est),
 
 m_gam <- sdmTMB(
  data = d, formula = density ~ 0 + as.factor(year) + s(depth_scaled, k = 3),
- time = "year", spde = pcod_spde, family = tweedie(link = "log")
+ time = "year", mesh = pcod_spde, family = tweedie(link = "log")
 )
 nd <- data.frame(depth_scaled =
   seq(min(d$depth_scaled), max(d$depth_scaled), length.out = 100))
@@ -196,10 +199,10 @@ pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 15)
 unique(d$year)
 m <- sdmTMB(
   data = d, formula = density ~ 1,
-  fields = "AR1", # using an AR1 to have something to forecast with
+  spatiotemporal = "AR1", # using an AR1 to have something to forecast with
   extra_time = 2019L, # `L` for integer to match our data
-  include_spatial = FALSE,
-  time = "year", spde = pcod_spde, family = tweedie(link = "log")
+  spatial = "off",
+  time = "year", mesh = pcod_spde, family = tweedie(link = "log")
 )
 
 # Add a year to our grid:
@@ -215,11 +218,15 @@ plot_map(predictions, "epsilon_st") +
 
 # Estimating local trends ----------------------------------------------
 
+d <- pcod
+d$year_scaled <- as.numeric(scale(d$year))
 pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
-m <- sdmTMB(data = pcod, formula = density ~ depth_scaled + depth_scaled2,
-  spde = pcod_spde, family = tweedie(link = "log"),
-  spatial_trend = TRUE, time = "year", spatial_only = TRUE)
-p <- predict(m, newdata = qcs_grid)
+m <- sdmTMB(data = d, formula = density ~ depth_scaled + depth_scaled2,
+  mesh = pcod_spde, family = tweedie(link = "log"),
+  spatial_varying = ~ 0 + year_scaled, time = "year", spatiotemporal = "off")
+nd <- qcs_grid
+nd$year_scaled <- (nd$year - mean(d$year)) / sd(d$year)
+p <- predict(m, newdata = nd)
 
 plot_map(p, "zeta_s") +
   ggtitle("Spatial slopes") +

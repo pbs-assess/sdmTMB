@@ -1,6 +1,8 @@
 #' Prior distributions
 #'
 #' @description
+#' `r lifecycle::badge("experimental")`
+#'
 #' Optional priors/penalties on model parameters. This tesults in penalized
 #' likelihood within TMB or can be used as priors if the model is passed to
 #' \pkg{tmbstan} (see the example in [extract_mcmc()]).
@@ -22,7 +24,7 @@
 #' credible intervals when the prior satisfies `P(sigma > sigma_lt) = 0.05` and
 #' `P(range < range_gt) = 0.05`, where `sigma_lt` is between 2.5 to 40 times
 #' the true marginal standard deviation and `range_gt` is between 1/10 and 1/2.5
-#' of the true range." Also see `INLA::inla.spde2.pcmatern()`.
+#' of the true range." Also see [INLA::inla.spde2.pcmatern()].
 #'
 #' @details
 #' Keep in mind that the range is dependent on the units and scale of the
@@ -136,6 +138,7 @@ mvnormal <- function(location = 0, scale = diag(length(location))) {
 #' pc_matern(range_gt = 5, sigma_lt = 1)
 #'
 #' if (inla_installed()) {
+#'
 #' d <- subset(pcod, year > 2011)
 #' pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
 #'
@@ -144,7 +147,7 @@ mvnormal <- function(location = 0, scale = diag(length(location))) {
 #' # - Matern PC priors on spatial `matern_s` and spatiotemporal
 #' #   `matern_st` random field parameters
 #' m <- sdmTMB(density ~ s(depth, k = 3),
-#'   data = d, spde = pcod_spde, family = tweedie(),
+#'   data = d, mesh = pcod_spde, family = tweedie(),
 #'   share_range = FALSE, time = "year",
 #'   priors = sdmTMBpriors(
 #'     phi = halfnormal(0, 10),
@@ -158,8 +161,8 @@ mvnormal <- function(location = 0, scale = diag(length(location))) {
 #' # - no prior on the dispersion parameter `phi`
 #' # - Matern PC prior
 #' m <- sdmTMB(density ~ depth_scaled,
-#'   data = d, spde = pcod_spde, family = tweedie(),
-#'   spatial_only = TRUE,
+#'   data = d, mesh = pcod_spde, family = tweedie(),
+#'   spatiotemporal = "off",
 #'   priors = sdmTMBpriors(
 #'     b = normal(c(NA, 0), c(NA, 1)),
 #'     matern_s = pc_matern(range_gt = 5, sigma_lt = 1)
@@ -169,8 +172,8 @@ mvnormal <- function(location = 0, scale = diag(length(location))) {
 #' # You get a prior, you get a prior, you get a prior!
 #' # (except on the annual means; see the `NA`s)
 #' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-#'   data = d, time = "year", spde = pcod_spde, family = tweedie(link = "log"),
-#'   share_range = FALSE, fields = "AR1",
+#'   data = d, time = "year", mesh = pcod_spde, family = tweedie(link = "log"),
+#'   share_range = FALSE, spatiotemporal = "AR1",
 #'   priors = sdmTMBpriors(
 #'     b = normal(c(0, 0, NA, NA, NA), c(2, 2, NA, NA, NA)),
 #'     phi = halfnormal(0, 10),
@@ -179,6 +182,7 @@ mvnormal <- function(location = 0, scale = diag(length(location))) {
 #'     matern_s = pc_matern(range_gt = 5, sigma_lt = 1),
 #'     matern_st = pc_matern(range_gt = 5, sigma_lt = 1))
 #' )
+#'
 #' }
 pc_matern <- function(range_gt, sigma_lt, range_prob = 0.05, sigma_prob = 0.05) {
   assert_that(range_prob > 0 && range_prob < 1)

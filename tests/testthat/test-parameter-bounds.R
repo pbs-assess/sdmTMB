@@ -16,7 +16,7 @@ test_that("lower and upper work", {
   expect_warning({
     suppressMessages({
       m <- sdmTMB(density ~ depth_scaled,
-        data = d, spde = pcod_spde, family = tweedie(link = "log"),
+        data = d, mesh = pcod_spde, family = tweedie(link = "log"),
         control = sdmTMBcontrol(
           lower = list(ln_phi = 0),
           upper = list(ln_phi = 2.5)))
@@ -26,7 +26,7 @@ test_that("lower and upper work", {
   expect_warning({
     suppressMessages({
       m <- sdmTMB(density ~ depth_scaled,
-        data = d, spde = pcod_spde, family = tweedie(link = "log"),
+        data = d, mesh = pcod_spde, family = tweedie(link = "log"),
         control = sdmTMBcontrol(
           lower = list(b_j = c(3, -0.46)),
           upper = list(b_j = c(3.5, -0.45))

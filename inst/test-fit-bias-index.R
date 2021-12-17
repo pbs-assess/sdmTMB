@@ -19,7 +19,7 @@ time_steps <- 20
 sigma_O <- 0.6
 sigma_E <- 0.3
 phi <- 1.2
-thetaf <- 1.7 # Tweedie p
+tweedie_p <- 1.7 # Tweedie p
 .range <- 1
 
 loc <- data.frame(x = x, y = y)
@@ -33,7 +33,7 @@ sim_test_index <- function(i) {
     x = x, y = y, mesh = spde, X = model.matrix(~ 0 + year, dat),
     betas = betas, time_steps = time_steps,
     phi = phi, range = .range, sigma_O = sigma_O, sigma_E = sigma_E,
-    seed = SEED * i, family = tweedie(), thetaf = thetaf
+    seed = SEED * i, family = tweedie(), tweedie_p = tweedie_p
   )
   s <- mutate(s, year = dat$year)
   s_sampled <- s %>% group_by(year) %>% slice_sample(n = 25L)

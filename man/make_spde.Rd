@@ -26,5 +26,7 @@ up}
 \item{object}{Output from \code{\link[=make_spde]{make_spde()}}.}
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
 \strong{Depreciated; please use \code{\link[=make_mesh]{make_mesh()}} instead.}
 }

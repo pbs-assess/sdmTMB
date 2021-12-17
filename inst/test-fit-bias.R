@@ -51,7 +51,7 @@ out <- furrr::future_map(seq(1, 8*50), function(i) {
   spde <- make_mesh(s, xy_cols = c("x", "y"), n_knots = 150)
   # plot(spde)
   m <- tryCatch({sdmTMB(data = s, formula = observed ~ 0 + cov1,
-    time = "time", spatial_only = TRUE, spde = spde, reml = TRUE)}, error = function(e) NA)
+    time = "time", spatiotemporal = "off", spde = spde, reml = TRUE)}, error = function(e) NA)
   if (identical(m, NA)) return(NA)
   est <- tidy(m, conf.int = TRUE)
   p <- as.list(m$model$par)

@@ -20,7 +20,7 @@ values aids convergence.}
 An updated model fit of class \code{sdmTMB}.
 }
 \description{
-Run extra optimization on an already fitted object
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
 \examples{
 # See ?sdmTMB

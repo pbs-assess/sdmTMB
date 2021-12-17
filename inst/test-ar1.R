@@ -87,8 +87,8 @@ plot_spde(spde)
 
 m <- sdmTMB(
   silent = FALSE,
-  ar1_fields = TRUE,
-  include_spatial = TRUE, # no fixed spatial random field
+  spatiotemporal = "AR1",
+  spatial = TRUE, # no fixed spatial random field
   data = dat, formula = z ~ 1, time = "time",
   family = gaussian(link = "identity"), spde = spde
 )
@@ -243,8 +243,8 @@ sim_parameters <- function(iter = sample.int(1e3, 1), plot = TRUE,
 
   m <- sdmTMB(
     silent = FALSE,
-    ar1_fields = ar1_fields,
-    include_spatial = TRUE,
+    spatiotemporal = "AR1",
+    spatial = TRUE,
     data = dat, formula = formula, time = "time",
     family = family, spde = spde
   )
@@ -338,8 +338,8 @@ sim_predictions <- function(iter = sample.int(1e3, 1), plot = TRUE,
 
   m <- sdmTMB(
     silent = FALSE,
-    ar1_fields = ar1_fields,
-    include_spatial = TRUE,
+    spatiotemporal = "AR1",
+    spatial = TRUE,
     data = dat, formula = formula, time = "time",
     family = family, spde = spde
   )

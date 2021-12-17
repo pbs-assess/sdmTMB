@@ -10,9 +10,9 @@ test_that("Epsilon models work with RW spatiotemporal fields", {
   m1 <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     data = pcod_2011,
     time = "year",
-    spde = pcod_spde,
+    mesh = pcod_spde,
     family = tweedie(link = "log"),
-    fields = "RW"
+    spatiotemporal = "RW"
   )
 
   # The way to check that the models are giving the right results is to
@@ -24,14 +24,14 @@ test_that("Epsilon models work with RW spatiotemporal fields", {
   m2 <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     data = pcod_2011,
     time = "year",
-    spde = pcod_spde,
+    mesh = pcod_spde,
     family = tweedie(link = "log"),
     epsilon_predictor = "dummy",
     control = sdmTMBcontrol(
       lower = list(b_epsilon = -1), upper = list(b_epsilon = 1),
       map = list(b_epsilon = factor(NA)), start = list(b_epsilon = 0)
     ),
-    fields = "RW"
+    spatiotemporal = "RW"
   )
 
   expect_equal(tidy(m1, "ran_par")$estimate, tidy(m2, "ran_par")$estimate, tolerance = 0.001)
@@ -50,9 +50,9 @@ test_that("Epsilon models work with AR1 spatiotemporal fields", {
   m1 <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     data = pcod_2011,
     time = "year",
-    spde = pcod_spde,
+    mesh = pcod_spde,
     family = tweedie(link = "log"),
-    fields = "AR1"
+    spatiotemporal = "AR1"
   )
 
   # The way to check that the models are giving the right results is to
@@ -64,14 +64,14 @@ test_that("Epsilon models work with AR1 spatiotemporal fields", {
   m2 <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     data = pcod_2011,
     time = "year",
-    spde = pcod_spde,
+    mesh = pcod_spde,
     family = tweedie(link = "log"),
     epsilon_predictor = "dummy",
     control = sdmTMBcontrol(
       lower = list(b_epsilon = -1), upper = list(b_epsilon = 1),
       map = list(b_epsilon = factor(NA)), start = list(b_epsilon = 0)
     ),
-    fields = "AR1"
+    spatiotemporal = "AR1"
   )
 
   expect_equal(tidy(m1, "ran_par")$estimate, tidy(m2, "ran_par")$estimate, tolerance = 0.001)

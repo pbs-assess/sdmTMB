@@ -4,12 +4,15 @@ test_that("A model with 2 s() splines works", {
   skip_if_not_installed("INLA")
   d <- subset(pcod, year >= 2000 & density > 0)
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
-  expect_warning({m <- sdmTMB(
-    data = d,
-    formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
-    spde = pcod_spde,
-    control = sdmTMBcontrol(map_rf = TRUE)
-  )}, "smooth")
+  expect_warning({
+    suppressMessages({
+      m <- sdmTMB(
+        data = d,
+        formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
+        mesh = pcod_spde, spatial = "off", spatiotemporal = "off"
+      )
+    })
+  }, "smooth")
   expect_equal(ncol(m$tmb_data$X_ij), 1L)
   expect_equal(length(m$tmb_data$Zs), 2L)
   # head(m$tmb_data$Zs[[1]])
@@ -71,7 +74,7 @@ test_that("A model with 2 s() splines works", {
 #   p_mgcv <- predict(m_mgcv)
 #   expect_error(m <- sdmTMB(observed ~ t2(.x0, .x1, k = 7),
 #     data = dat,
-#     spde = spde, control = sdmTMBcontrol(map_rf = TRUE)
+#     mesh = spde, control = sdmTMBcontrol(map_rf = TRUE)
 #   ), regexp = "t2")
   # p <- predict(m, newdata = NULL)
   # plot(p$est, p_mgcv)
@@ -108,7 +111,7 @@ test_that("A model with by in spline (and s(x, y)) works", {
   spde <- make_mesh(dat, c("X", "Y"), cutoff = 0.1)
   expect_warning(m <- sdmTMB(y ~ s(x2, by = x1),
     data = dat,
-    spde = spde, control = sdmTMBcontrol(map_rf = TRUE)
+    mesh = spde, control = sdmTMBcontrol(map_rf = TRUE)
   ), regexp = "smooth")
   p <- predict(m, newdata = NULL)
   plot(p$est, p_mgcv)
@@ -120,7 +123,7 @@ test_that("A model with by in spline (and s(x, y)) works", {
   p_mgcv <- predict(m_mgcv)
   expect_warning(m <- sdmTMB(y ~ s(x2, x1),
     data = dat,
-    spde = spde, control = sdmTMBcontrol(map_rf = TRUE)
+    mesh = spde, control = sdmTMBcontrol(map_rf = TRUE)
   ), regexp = "smooth")
   p <- predict(m, newdata = NULL)
   plot(p$est, p_mgcv)
@@ -133,7 +136,7 @@ test_that("A model with by in spline (and s(x, y)) works", {
   # t2(x, y)
   expect_error(m <- sdmTMB(y ~ t2(x2, x1),
     data = dat,
-    spde = spde, control = sdmTMBcontrol(map_rf = TRUE)
+    mesh = spde, control = sdmTMBcontrol(map_rf = TRUE)
   ), regexp = "t2") # t2() intentionally `stop()`ed for now; newdata prediction issues
 
   # Factor `by' variable example (with a spurious covariate x0)
@@ -146,7 +149,7 @@ test_that("A model with by in spline (and s(x, y)) works", {
   spde <- make_mesh(dat, c("X", "Y"), cutoff = 0.1)
   expect_warning(m <- sdmTMB(y ~ fac + s(x2, by = fac) + s(x0),
     data = dat,
-    spde = spde, control = sdmTMBcontrol(map_rf = TRUE)
+    mesh = spde, control = sdmTMBcontrol(map_rf = TRUE)
   ), regexp = "smooth")
   p <- predict(m, newdata = NULL)
   plot(p$est, p_mgcv)
@@ -164,4 +167,64 @@ test_that("Formula removal of s and t2 works", {
   expect_identical(remove_s_and_t2(y ~ s(x) + s(z)), y ~ 1)
   expect_identical(remove_s_and_t2(y ~ s(x) + t2(z)), y ~ 1)
   expect_identical(remove_s_and_t2(y ~ ignore(x) + t2(z)), y ~ ignore(x))
+})
+
+test_that("Smooth plotting works", {
+  d <- subset(pcod, year >= 2000 & density > 0)
+  pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
+  expect_warning({
+    suppressMessages({
+      m <- sdmTMB(
+        data = d,
+        formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
+        mesh = pcod_spde, spatial = "off", spatiotemporal = "off"
+      )
+    })
+  }, "smooth")
+
+  plot_smooth(m)
+  plot_smooth(m, level = 0.4)
+  plot_smooth(m, select = 2)
+  plot_smooth(m, ggplot = TRUE)
+  plot_smooth(m, ggplot = TRUE, rug = FALSE)
+  plot_smooth(m, rug = FALSE)
+  plot_smooth(m, n = 3)
+  out <- plot_smooth(m, return_data = TRUE)
+  expect_equal(class(out), "data.frame")
+
+  expect_warning({
+    suppressMessages({
+      m <- sdmTMB(
+        data = d,
+        formula = log(density) ~ s(depth_scaled) + year,
+        mesh = pcod_spde, spatial = "off", spatiotemporal = "off"
+      )
+    })
+  }, "smooth")
+
+  plot_smooth(m, select = 1)
+  expect_error(plot_smooth(m, select = 2), regexp = "select")
+
+  expect_warning({
+    suppressMessages({
+      m <- sdmTMB(
+        data = d, time = "year",
+        formula = log(density) ~ s(depth_scaled),
+        mesh = pcod_spde, spatial = "on", spatiotemporal = "off"
+      )
+    })
+  }, "smooth")
+  plot_smooth(m)
+
+  # with a factor
+  expect_warning({
+    suppressMessages({
+      m1 <- sdmTMB(
+        data = d, time = "year",
+        formula = log(density) ~ 0 + s(depth_scaled) + as.factor(year),
+        mesh = pcod_spde, spatial = "on", spatiotemporal = "off"
+      )
+    })
+  }, "smooth")
+  plot_smooth(m)
 })

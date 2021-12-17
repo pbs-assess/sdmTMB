@@ -71,7 +71,7 @@ est <- purrr::map_dfr(families, function(.fam) {
     m <- tryCatch({sdmTMB(
       data = s, formula = observed ~ x1,
       time = "time", spde = spde, reml = TRUE,
-      spatial_only = TRUE, family = .fam
+      spatiotemporal = "off", family = .fam
     )}, error = function(e) return(NULL))
 
     if (max(m$gradients) > 0.001) {

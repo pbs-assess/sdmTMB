@@ -34,6 +34,8 @@ other words, the function assumes a log link, which typically makes sense.}
 Assuming a log link, the \code{sum(exp(x) * area)} default makes sense.}
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
 Calculate a population index via simulation from the joint precision matrix.
 Compared to \code{\link[=get_index]{get_index()}}, this version can be dramatically faster
 if bias correction was turned on in \code{\link[=get_index]{get_index()}} while being approximately
@@ -52,7 +54,7 @@ matrix of simulation draws into a data frame.
 if (inla_installed()) {
 
 m <- sdmTMB(density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  data = pcod_2011, spde = pcod_mesh_2011, family = tweedie(link = "log"),
+  data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(link = "log"),
   time = "year"
 )
 qcs_grid_2011 <- subset(qcs_grid, year >= 2011)

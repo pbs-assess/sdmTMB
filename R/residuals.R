@@ -23,6 +23,29 @@ qres_nbinom2 <- function(object, y, mu) {
   stats::qnorm(u)
 }
 
+# from glmmTMB:
+rnbinom1 <- function(n, mu, phi) {
+  # var = mu*(1+phi) = mu*(1+mu/k) -> k = mu/phi
+  stats::rnbinom(n, mu = mu, size = mu / phi)
+}
+dnbinom1 <- function(x, mu, phi) {
+  stats::dnbinom(x, mu = mu, size = mu / phi)
+}
+pnbinom1 <- function(q, mu, phi) {
+  stats::pnbinom(q, mu = mu, size = mu / phi)
+}
+qnbinom1 <- function(p, mu, phi) {
+  stats::qnbinom(p, mu = mu, size = mu / phi)
+}
+
+qres_nbinom1 <- function(object, y, mu) {
+  phi <- exp(object$model$par[["ln_phi"]])
+  a <- pnbinom1(y - 1, phi = phi, mu = mu)
+  b <- pnbinom1(y, phi = phi, mu = mu)
+  u <- stats::runif(n = length(y), min = a, max = b)
+  stats::qnorm(u)
+}
+
 qres_pois <- function(object, y, mu) {
   a <- stats::ppois(y - 1, mu)
   b <- stats::ppois(y, mu)
@@ -81,6 +104,7 @@ residuals.sdmTMB <- function(object, type = c("mle", "sim"), ...) {
     Beta     = qres_beta,
     Gamma    = qres_gamma,
     nbinom2  = qres_nbinom2,
+    nbinom1  = qres_nbinom1,
     poisson  = qres_pois,
     student  = qres_student
   )

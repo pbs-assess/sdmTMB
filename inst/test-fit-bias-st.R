@@ -47,8 +47,8 @@ out <- furrr::future_map(seq_len(8*10), function(i) {
   mesh <- make_mesh(s, xy_cols = c("x", "y"), cutoff = 0.1)
   m <- sdmTMB(
     data = s, formula = observed ~ x1,
-    time = "time", spde = mesh, reml = TRUE,
-    ar1_fields = TRUE, include_spatial = FALSE
+    time = "time", mesh = mesh, reml = TRUE,
+    spatiotemporal = "AR1", spatial = FALSE
   )
   est <- tidy(m, conf.int = TRUE)
   est_ran <- tidy(m, "ran_pars", conf.int = TRUE)
@@ -106,7 +106,7 @@ worm_plot <- function(dat, lwr, est, upr, true, title) {
     geom_point(size = 1.5) +
     geom_linerange(size = 0.3) +
     scale_shape_manual(values = c("TRUE" = 19, "FALSE" = 21)) +
-    guides(shape = FALSE) +
+    guides(shape = "none") +
     ggtitle(title) +
     labs(x = "Parameter value") +
     theme(axis.title.y = element_blank(), axis.text.y = element_blank(),
@@ -128,7 +128,7 @@ coverage <- est %>%
 coverage
 
 coverage <- est %>%
-  mutate(covered = rho.lwr < rho.true & rho.upr > rho.true) %>%
+  mutate(covered = rho.lwr < rho & rho.upr > rho) %>%
   pull(covered) %>%
   mean()
 coverage

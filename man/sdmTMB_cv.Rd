@@ -8,12 +8,13 @@ sdmTMB_cv(
   formula,
   data,
   mesh_args,
-  spde,
+  mesh,
   time = NULL,
   k_folds = 8,
   fold_ids = NULL,
   parallel = TRUE,
   use_initial_fit = FALSE,
+  spde = deprecated(),
   ...
 )
 }
@@ -25,7 +26,7 @@ sdmTMB_cv(
 \item{mesh_args}{Arguments for \code{\link[=make_mesh]{make_mesh()}}. If supplied, the mesh will be
 reconstruncted for each fold.}
 
-\item{spde}{Output from \code{\link[=make_mesh]{make_mesh()}}. If supplied, the mesh will be constant
+\item{mesh}{Output from \code{\link[=make_mesh]{make_mesh()}}. If supplied, the mesh will be constant
 across folds.}
 
 \item{time}{The name of the time column. Leave as \code{NULL} if this is only
@@ -42,6 +43,8 @@ parallel.}
 
 \item{use_initial_fit}{Fit the first fold and use those parameter values
 as starting values for subsequent folds? Can be faster with many folds.}
+
+\item{spde}{\strong{Depreciated.} Use \code{mesh} instead.}
 
 \item{...}{All other arguments required to run \code{\link[=sdmTMB]{sdmTMB()}} model with the
 exception of \code{weights}, which are used to define the folds.}
@@ -66,14 +69,14 @@ Save log likelihoods of k-fold cross-validation for sdmTMB models
 }
 \examples{
 if (inla_installed()) {
-spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
+mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 
 # Set parallel processing if desired:
 # library(future)
 # plan(multisession)
 m_cv <- sdmTMB_cv(
   density ~ 0 + depth_scaled + depth_scaled2,
-  data = pcod, spde = spde,
+  data = pcod, mesh = mesh,
   family = tweedie(link = "log"), k_folds = 2
 )
 
@@ -98,7 +101,7 @@ m_cv2 <- sdmTMB_cv(
 # Use fold_ids:
 m_cv3 <- sdmTMB_cv(
   density ~ 0 + depth_scaled + depth_scaled2,
-  data = pcod, spde = spde,
+  data = pcod, mesh = mesh,
   family = tweedie(link = "log"),
   fold_ids = rep(seq(1, 3), nrow(pcod))[seq(1, nrow(pcod))]
 )

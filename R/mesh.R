@@ -1,5 +1,8 @@
 #' Construct an SPDE mesh (depreciated)
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
 #' **Depreciated; please use [make_mesh()] instead.**
 #'
 #' @param x X numeric vector.
@@ -50,13 +53,13 @@ make_spde <- function(x, y, n_knots, seed = 42, mesh = NULL) {
 #' @param type Method to create the mesh. Also see `mesh` argument to supply
 #'   your own mesh.
 #' @param cutoff An optional cutoff if type is `"cutoff"`. "The minimum allowed
-#'   distance between points in the mesh". See `INLA::inla.mesh.create()`.
+#'   distance between points in the mesh". See [INLA::inla.mesh.create()].
 #'   Smaller values create meshes with more knots. Points further apart than this
 #'   value will receive a separate vertex in the mesh before any mesh refinement.
 #' @param n_knots The number of desired knots if `type` is not `"cutoff"`.
 #' @param seed Random seed. Affects [stats::kmeans()] determination of knot
 #'   locations if `type = "kmeans"`.
-#' @param refine Logical or list to pass to `INLA::inla.mesh.create()`.
+#' @param refine Logical or list to pass to [INLA::inla.mesh.create()].
 #' @param mesh An optional mesh created via INLA instead of using the above
 #'   convenience options.
 #'
@@ -162,9 +165,25 @@ make_mesh <- function(data, xy_cols,
   }
   spde <- INLA::inla.spde2.matern(mesh)
   A <- INLA::inla.spde.make.A(mesh, loc = loc_xy)
+
+  # # A_st matrix (by station)
+  # data$sdm_orig_id <- seq(1, nrow(data))
+  # data$sdm_x <- loc_xy[,1,drop=TRUE]
+  # data$sdm_y <- loc_xy[,2,drop=TRUE]
+  # fake_data <- unique(data.frame(sdm_x = data$sdm_x, sdm_y = data$sdm_y))
+  fake_data <- data
+  fake_data[["sdm_spatial_id"]] <- seq(1, nrow(fake_data))
+  # data <- base::merge(data, fake_data, by = c("sdm_x", "sdm_y"),
+  #   all.x = TRUE, all.y = FALSE)
+  # data <- data[order(data$sdm_orig_id),, drop=FALSE]
+  # A_st <- INLA::inla.spde.make.A(spde$mesh,
+  #   loc = as.matrix(fake_data[, c("sdm_x", "sdm_y"), drop = FALSE]))
+  A_st <- A
+
   structure(list(
     loc_xy = loc_xy, xy_cols = xy_cols, mesh = mesh, spde = spde,
-    loc_centers = loc_centers, A = A
+    loc_centers = loc_centers, A = A, A_st = A_st,
+    sdm_spatial_id = fake_data$sdm_spatial_id
   ), class = "sdmTMBmesh")}
 
 binary_search_knots <- function(loc_xy,
@@ -390,7 +409,7 @@ make_barrier_spde <- function(spde) {
 #'
 #' # Now, when we fit our model with the new mesh, it will automatically
 #' # include a barrier structure in the spatial correlation:
-#' fit <- sdmTMB(density ~ s(depth, k = 3), data = pcod, spde = bspde,
+#' fit <- sdmTMB(density ~ s(depth, k = 3), data = pcod, mesh = bspde,
 #'   family = tweedie(link = "log"))
 #' fit
 #' }

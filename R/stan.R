@@ -1,5 +1,8 @@
 #' Extract MCMC samples from a model fit with [tmbstan::tmbstan()].
 #'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
 #' Returns a matrix of parameter samples. Rows correspond to the order
 #' of `your_model$tmb_obj$env$last.par.best`. Columns correspond to
 #' posterior samples. Is used internally by [predict.sdmTMB()] to make
@@ -18,7 +21,7 @@
 #' # MLEs (maximum likelihood estimates) from a previous fit
 #' # to improve speed of convergence:
 #' m_tmb <- sdmTMB(density ~ 0 + as.factor(year),
-#'   data = pcod, spde = pcod_spde, family = tweedie(link = "log"), time = "year",
+#'   data = pcod, mesh = pcod_spde, family = tweedie(link = "log"), time = "year",
 #'   control = sdmTMBcontrol(start = list(ln_kappa = rep(-1.58, 2),
 #'     ln_tau_E = -0.15, ln_tau_O = -0.65),
 #'     map = list(ln_kappa = rep(factor(NA), 2),
