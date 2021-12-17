@@ -65,8 +65,6 @@ ranges will be unique.}
 (e.g., previously estimated) values. Values of \code{NULL} will result
 in the random effects being simulated.}
 
-\item{seed}{A value with which to set the random seed.}
-
 \item{...}{Any other arguments to pass to \code{\link[=sdmTMB]{sdmTMB()}}.}
 }
 \value{

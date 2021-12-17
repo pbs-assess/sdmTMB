@@ -27,7 +27,6 @@
 #' @param phi Observation error scale parameter (e.g., SD in Gaussian).
 #' @param tweedie_p Tweedie p (power) parameter; between 1 and 2.
 #' @param df Student-t degrees of freedom.
-#' @param seed A value with which to set the random seed.
 #' @param fixed_re A list of optional random effects to fix at specified
 #'    (e.g., previously estimated) values. Values of `NULL` will result
 #'    in the random effects being simulated.
@@ -335,7 +334,8 @@ sdmTMB_simulate <- function(formula,
 #' }
 #' }
 
-simulate.sdmTMB <- function(object, nsim = 1L, params = c("mle", "mvn"), seed = sample.int(1e6, 1L),
+simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
+                            params = c("mle", "mvn"),
                             re_form = NULL, tmbstan_model = NULL, ...) {
   set.seed(seed)
   params <- tolower(params)

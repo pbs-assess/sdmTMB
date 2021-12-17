@@ -7,8 +7,8 @@
 \method{simulate}{sdmTMB}(
   object,
   nsim = 1L,
-  params = c("mle", "mvn"),
   seed = sample.int(1e+06, 1L),
+  params = c("mle", "mvn"),
   re_form = NULL,
   tmbstan_model = NULL,
   ...
@@ -19,12 +19,12 @@
 
 \item{nsim}{Number of response lists to simulate. Defaults to 1.}
 
+\item{seed}{Random number seed}
+
 \item{params}{Whether the parameters used in the simulation should come from
 the Maximum Likelihood Estimate (\code{"mle"}) or from new draws from the joint
 precision matrix assuming they are multivariate normal distributed
 (\code{"mvn"}).}
-
-\item{seed}{Random number seed}
 
 \item{re_form}{\code{NULL} to specify a simulation conditional on fitted random
 effects (this only simulates observation error). \code{~0} or \code{NA} to simulate
