@@ -121,7 +121,7 @@ sum(s_pois == 0)/length(s_pois)
 sum(s_nb2 == 0)/length(s_nb2)
 ```
 
-The are obviously too few zeros in the data simulated from the Poisson model.
+There are obviously too few zeros in the data simulated from the Poisson model.
 
 Use the residuals with DHARMa:
 
