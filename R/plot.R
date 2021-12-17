@@ -106,11 +106,11 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
   .t <- labels(.t)
   checks <- c("^as\\.factor\\(", "^factor\\(")
   for (ch in checks) {
-    if (any(grepl(ch, .t))) { # any factors from formula? if so, explicitely switch class
+    if (any(grepl(ch, .t))) { # any factors from formula? if so, explicitly switch class
       ft <- grep(ch, .t)
       for (i in ft) {
         x <- gsub(ch, "", .t[i])
-        x <- gsub("\\)", "", x)
+        x <- gsub("\\)$", "", x)
         dat[[x]] <- as.factor(dat[[x]])
       }
     }
