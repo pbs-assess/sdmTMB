@@ -30,10 +30,8 @@ g_mesh <- ggplot(bc_coast_proj) +
     mapping = aes(X1000, Y1000, size = density), colour = "#3182BD") +
   scale_size_area(max_size = 10) +
   theme_light() +
-  theme(panel.grid.major = element_line(colour = "grey90")) +
   theme(legend.position = "none") +
   theme(
-    panel.grid.major = element_line(colour = "grey90"),
     axis.title.x = element_blank(),
     axis.title.y = element_blank()
   )
