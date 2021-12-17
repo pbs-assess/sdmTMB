@@ -559,8 +559,10 @@ sdmTMB <- function(
     }
     data <- expand_time(df = data, time_slices = extra_time, time_column = time)
     weights <- data$weight_sdmTMB
-    spde$A <- INLA::inla.spde.make.A(spde$mesh, loc = as.matrix(data[, spde$xy_cols, drop = FALSE]))
     spde$loc_xy <- as.matrix(data[,spde$xy_cols,drop=FALSE])
+    spde$A <- INLA::inla.spde.make.A(spde$mesh, loc = spde$loc_xy)
+    spde$A_st <- spde$A # FIXME
+    spde$sdm_spatial_id <- seq(1, nrow(data)) # FIXME
   }
 
   if (!is.null(spatial_varying)) {
