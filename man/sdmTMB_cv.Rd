@@ -8,7 +8,7 @@ sdmTMB_cv(
   formula,
   data,
   mesh_args,
-  mesh,
+  mesh = NULL,
   time = NULL,
   k_folds = 8,
   fold_ids = NULL,

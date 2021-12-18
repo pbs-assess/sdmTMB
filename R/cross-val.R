@@ -129,7 +129,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' )
 #' }
 #' }
-sdmTMB_cv <- function(formula, data, mesh_args, mesh, time = NULL,
+sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
   k_folds = 8, fold_ids = NULL, parallel = TRUE,
   use_initial_fit = FALSE, spde = deprecated(),
   ...) {
@@ -141,8 +141,8 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh, time = NULL,
     spde <- mesh
   }
   data[["_sdm_order_"]] <- seq_len(nrow(data))
-  stopifnot(!missing(mesh_args) || !missing(spde))
-  stopifnot(!(!missing(mesh_args) && !missing(spde)))
+  # stopifnot(!missing(mesh_args) || !missing(spde))
+  # stopifnot(!(!missing(mesh_args) && !missing(spde)))
   constant_mesh <- missing(mesh_args)
   if (missing(mesh_args)) mesh_args <- NULL
   if (missing(spde)) spde <- NULL
