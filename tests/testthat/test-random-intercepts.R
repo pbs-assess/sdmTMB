@@ -56,9 +56,10 @@ test_that("Model with random intercepts fits appropriately.", {
 
   # missing a factor level:
   s_drop <- s[s$g != 1, , drop = FALSE]
+  spde_drop <- make_mesh(s_drop, c("x", "y"), n_knots = 10, type = "kmeans")
   expect_error(
     sdmTMB(data = s_drop,
-      formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde),
+      formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde_drop),
     regexp = "levels"
   )
 

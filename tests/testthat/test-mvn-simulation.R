@@ -5,7 +5,7 @@ test_that("rmvnorm sim prediction works with no random effects", {
   m <- sdmTMB(
     data = pcod_2011,
     formula = density ~ 0 + as.factor(year),
-    spde = pcod_mesh_2011, family = tweedie(link = "log"),
+    mesh = pcod_mesh_2011, family = tweedie(link = "log"),
     control = sdmTMBcontrol(map_rf = TRUE)
   )
   set.seed(1)
