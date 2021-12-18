@@ -35,7 +35,8 @@ time column if \code{time} is specified.}
 
 \item{family}{Family as in \code{\link[=sdmTMB]{sdmTMB()}}.}
 
-\item{previous_fit}{An optional previous \code{\link[=sdmTMB]{sdmTMB()}} fit to pull parameter values.
+\item{previous_fit}{(Depreciated; please use \code{\link[=simulate.sdmTMB]{simulate.sdmTMB()}}).
+An optional previous \code{\link[=sdmTMB]{sdmTMB()}} fit to pull parameter values.
 Will be over-ruled by any non-NULL specified parameter arguments.}
 
 \item{time}{The time column name.}
@@ -65,6 +66,8 @@ ranges will be unique.}
 (e.g., previously estimated) values. Values of \code{NULL} will result
 in the random effects being simulated.}
 
+\item{seed}{Seed number.}
+
 \item{...}{Any other arguments to pass to \code{\link[=sdmTMB]{sdmTMB()}}.}
 }
 \value{
@@ -87,8 +90,11 @@ A data frame where:
 \code{sdmTMB_simulate()} (vs. \code{\link[=sdmTMB_sim]{sdmTMB_sim()}}) (1) uses TMB for simulation and is
 therefore \strong{much} faster and more flexible, (2) is set up to take a formula and
 a data frame and is therefore easier to use if you want different spatial
-observations (and covariates) for each time slice. Eventually \code{\link[=sdmTMB_sim]{sdmTMB_sim()}}
-will be depreciated in favour of this version.
+observations (and covariates) for each time slice. \code{\link[=sdmTMB_sim]{sdmTMB_sim()}} uses pure
+R for simulation. \code{sdmTMB_simulate()} uses TMB for simulation.
+
+\code{\link[=simulate.sdmTMB]{simulate.sdmTMB()}}, on the other hand, takes an existing fit and simulates
+new observations and optionally new random effects.
 }
 \examples{
 if (inla_installed()) {

@@ -6,8 +6,11 @@
 #' `sdmTMB_simulate()` (vs. [sdmTMB_sim()]) (1) uses TMB for simulation and is
 #' therefore **much** faster and more flexible, (2) is set up to take a formula and
 #' a data frame and is therefore easier to use if you want different spatial
-#' observations (and covariates) for each time slice. Eventually [sdmTMB_sim()]
-#' will be depreciated in favour of this version.
+#' observations (and covariates) for each time slice. [sdmTMB_sim()] uses pure
+#' R for simulation. `sdmTMB_simulate()` uses TMB for simulation.
+#'
+#' [simulate.sdmTMB()], on the other hand, takes an existing fit and simulates
+#' new observations and optionally new random effects.
 #'
 #' @param formula A *one-sided* formula describing the fixed-effect structure.
 #' @param data A data frame containing the predictors described in `formula` and the
@@ -30,8 +33,10 @@
 #' @param fixed_re A list of optional random effects to fix at specified
 #'    (e.g., previously estimated) values. Values of `NULL` will result
 #'    in the random effects being simulated.
-#' @param previous_fit An optional previous [sdmTMB()] fit to pull parameter values.
+#' @param previous_fit (Depreciated; please use [simulate.sdmTMB()]).
+#'   An optional previous [sdmTMB()] fit to pull parameter values.
 #'   Will be over-ruled by any non-NULL specified parameter arguments.
+#' @param seed Seed number.
 #' @param ... Any other arguments to pass to [sdmTMB()].
 #'
 #' @return A data frame where:
