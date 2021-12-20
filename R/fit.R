@@ -726,7 +726,7 @@ sdmTMB <- function(
     if (length(priors_b[, 2]) == 1L) {
       if (is.na(priors_b[, 2])) priors_b[, 2] <- 1
     }
-    priors_b <- mvnormal(location = priors_b[, 1], scale = diag(as.numeric(priors_b[, 2])))
+    priors_b <- mvnormal(location = priors_b[, 1], scale = diag(as.numeric(priors_b[, 2]), ncol = nrow(priors_b)))
   }
   # in some cases, priors_b will be a mix of NAs (no prior) and numeric values
   # easiest way to deal with this is to subset the Sigma matrix
@@ -734,7 +734,7 @@ sdmTMB <- function(
   if (length(not_na) == 0L) {
     priors_b_Sigma <- diag(2) # TMB can't handle 0-dim matrix
   } else {
-    Sigma <- priors_b[, -1]
+    Sigma <- as.matrix(priors_b[, -1])
     priors_b_Sigma <- as.matrix(Sigma[not_na, not_na])
   }
 

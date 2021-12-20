@@ -73,6 +73,13 @@ test_that("Additional priors work", {
   d <- pcod_2011
   pcod_spde <- pcod_mesh_2011
 
+  # priors with one covariate/intercept only and the normal scale not 1:
+  m_norm <- sdmTMB(density ~ 1,
+    data = d, mesh = pcod_spde, family = tweedie(link = "log"),
+    priors = sdmTMBpriors(b = normal(0, 10)),
+    control = sdmTMBcontrol(map_rf = TRUE)
+  )
+
   # univariate normal priors
   m_norm <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     data = d, mesh = pcod_spde, family = tweedie(link = "log"),
