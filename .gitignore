@@ -12,3 +12,4 @@ docs
 _pkgdown.yml
 *.html
 doc
+README_cache

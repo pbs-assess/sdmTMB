@@ -1,30 +1,24 @@
 ---
-output: github_document
+output: 
+  github_document:
+    toc: true
+    toc_depth: 3
+    df_print: "tibble"
+    includes:
+      in_header: header.md
 ---
-
-<!-- README.md is generated from README.Rmd. Please edit that file -->
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.path = "man/figures/README-",
-  out.width = "100%"
+  out.width = "50%",
+  cache = TRUE,
+  autodep = TRUE,
+  dpi = 72
 )
 ```
-
-# sdmTMB <a href='https://github.com/pbs-assess/sdmTMB'><img src='man/figures/logo-sdmTMB.png' align="right" height="139" /></a>
-
-> Spatial and spatiotemporal GLMMs with TMB
-
-<!-- badges: start -->
-[![R-CMD-check](https://github.com/pbs-assess/sdmTMB/workflows/R-CMD-check/badge.svg)](https://github.com/pbs-assess/sdmTMB/actions)
-[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
-[![Coverage
-status](https://codecov.io/gh/pbs-assess/sdmTMB/branch/master/graph/badge.svg)](https://codecov.io/github/pbs-assess/sdmTMB?branch=master)
-<!-- badges: end -->
-
-sdmTMB is an R package that implements spatial and spatiotemporal predictive-process GLMMs (Generalized Linear Mixed Effects Models) using Template Model Builder ([TMB](https://github.com/kaskr/adcomp)), [R-INLA](https://www.r-inla.org/), and Gaussian Markov random fields. One common application is for species distribution models (SDMs).
     
 ## Installation
 
@@ -41,16 +35,412 @@ sdmTMB:
 
 - Fits GLMMs with spatial, spatiotemporal, spatial and spatiotemporal, or AR1 spatiotemporal Gaussian Markov random fields with TMB. 
 - Uses formula interfaces for fixed effects and any time-varying effects (dynamic regression) (e.g. `formula = y ~ 1 + x1 + (1 | g), time_varying = ~ 0 + x2`), where `y` is the response, `1` represents an intercept, `0` omits an intercept, `x1` is a covariate with a constant effect, `(1 | g)` is a random intercept across groups `g`, and `x2` is a covariate with a time-varying effect.
-- Can fit spatially varying coefficients as a random field.
+- Can fit spatially varying coefficients as a random field (e.g. `spatial_varying = ~ 0 + x3`).
 - Can handle GAMs (generalized additive models) with penalized smoothers from mgcv. E.g., `y ~ s(x)`.
 - Can handle linear breakpoint or logistic threshold fixed effects: `y ~ breakpt(x1)` or `y ~ logistic(x2)`.
 - Uses a `family(link)` format similar to `glm()`, lme4, or glmmTMB. This includes Gaussian, Poisson, negative binomial, gamma, binomial, lognormal, Student-t, and Tweedie distributions with identity, log, inverse, and logit links. E.g., `family = tweedie(link = "log")`.
 - Has `predict()` and `residuals()` methods. The residuals are randomized-quantile residuals similar to those implemented in the [DHARMa](https://cran.r-project.org/package=DHARMa) package. The `predict()` function can take a `newdata` argument similar to `lm()` or `glm()` etc. The predictions are bilinear interpolated predictive-process predictions (i.e., they make smooth pretty maps).
-- Has a simulation function `sdmTMB_sim()` for simulation testing models and `sdmTMB_cv()` for cross-validation testing of model accuracy or comparing across model configurations.
+- Has a simulation function `simulate()` for simulating from existing fits (e.g., for DHARMa), `sdmTMB_simulate()` for generating simulated data from scratch, and `sdmTMB_cv()` for cross-validation testing of model accuracy or comparing across model configurations.
 - Includes functionality for estimating the centre of gravity or total biomass by time step for index standardization.
 - Can optionally allow for anisotropy in the random fields (spatial correlation that is directionally dependent) and barriers (e.g., land for ocean species) to spatial correlation.
+- Can interpolate over missing time slices or forecast onto future time slices.
 - Can generate an SPDE predictive-process mesh or can take any standard R-INLA mesh created externally as input.
 
-## Examples
+See `?sdmTMB` and `?predict.sdmTMB` for the most complete examples. Also see the vignettes ('Articles') on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html).
 
-The main function is `sdmTMB()`. See `?sdmTMB` and `?predict.sdmTMB` for the most complete examples. Also see the vignettes ('Articles') on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html).
+## Basic use
+
+An sdmTMB model requires a data frame that contains a response column, columns for any predictors, and columns for spatial coordinates.
+It usually makes sense to convert the spatial coordinates to an equidistant projection such as UTMs such that distance remains constant throughout the study region [e.g., using `sf::st_transform()`].
+Here, we illustrate a spatial model fit to Pacific cod (*Gadus macrocephalus*) trawl survey data from Queen Charlotte Sound, BC, Canada.
+Our model contains a main effect of depth as a penalized smoother, a spatial random field, and Tweedie observation error.
+Our data frame `pcod` (built into the package) has a column `year` for the year of the survey, `density` for density of Pacific cod in a given survey tow, `present` for whether `density > 0`, depth` for depth in meters of that tow, and spatial coordinates `X` and `Y`, which are UTM coordinates in kilometres.
+
+```{r, echo=TRUE, eval=FALSE}
+library(dplyr)
+library(ggplot2)
+library(sdmTMB)
+head(pcod)
+```
+
+```{r, echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+library(sdmTMB)
+theme_set(theme_light())
+dplyr::select(pcod, year, density, present, depth, X, Y) %>% 
+  head(n = 3)
+```
+
+We start by creating a mesh object that contains matrices to apply the SPDE approach.
+
+```{r}
+mesh <- make_mesh(pcod, xy_cols = c("X", "Y"), cutoff = 10)
+```
+
+Here, `cutoff` defines the minimum allowed distance between points in the units of `X` and `Y` (km). Alternatively, we could have created any mesh via the INLA package and supplied it to `make_mesh()`. 
+We can inspect our mesh object with the associated plotting method `plot(mesh)`.
+
+Fit a spatial model with a smoother for depth:
+
+```{r, warning=FALSE, message=FALSE}
+fit <- sdmTMB(
+  density ~ s(depth, k = 5),
+  data = pcod,
+  family = tweedie(link = "log"),
+  mesh = mesh,
+  spatial = "on"
+)
+```
+
+Print the model fit:
+
+```{r}
+fit
+```
+
+The output indicates our model was fit by maximum (marginal) likelihood (`ML`). We also see the formula, mesh, fitted data, and family. Next we see any estimated main effects including the linear component of the smoother (`sdepth`), the standard deviation on the smoother weights (`sds(depth)`), the Tweedie dispersion and power parameters, the Matérn range distance (distance at which points are effectively indepenent), the marginal spatial field standard deviation, and the negative log likelihood at convergence.
+
+We can extract parameters as a data frame:
+
+```{r}
+tidy(fit, conf.int = TRUE)
+tidy(fit, effects = "ran_pars", conf.int = TRUE)
+```
+
+Plot the smoother effect:
+
+```{r}
+plot_smooth(fit, ggplot = TRUE)
+```
+
+Predict on new data:
+
+```{r}
+p <- predict(fit, newdata = qcs_grid)
+```
+
+```{r, eval=FALSE, echo=TRUE}
+head(p)
+```
+
+```{r, eval=TRUE, echo=FALSE}
+select(p, X, Y, depth, est, est_non_rf, est_rf, omega_s) %>% 
+  head(n = 3)
+```
+
+```{r}
+ggplot(p, aes(X, Y, fill = exp(est))) + geom_raster() +
+  scale_fill_viridis_c(trans = "sqrt")
+```
+
+We could switch to a presence-absence model by changing the response column and family:
+
+```{r, eval=FALSE}
+fit <- sdmTMB(
+  present ~ s(depth, k = 5),
+  data = pcod,
+  family = binomial(link = "logit"),
+  mesh = mesh
+)
+```
+
+We could instead fit a spatiotemporal model by specifying the `time` column and a spatiotemporal structure:
+
+```{r, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+fit_spatiotemporal <- sdmTMB(
+  density ~ s(depth, k = 5), 
+  family = tweedie(link = "log"), 
+  data = pcod, 
+  mesh = mesh,
+  time = "year", 
+  spatial = "off", 
+  spatiotemporal = "ar1"
+)
+```
+
+If we wanted to create an area-weighted standardized population index, we could predict on a grid covering the entire survey (`qcs_grid`) with grid cell area 4 (2 x 2 km) and pass the predictions to `get_index()`:
+
+```{r}
+p_st <- predict(fit_spatiotemporal, newdata = qcs_grid, 
+  return_tmb_object = TRUE, area = 4)
+index <- get_index(p_st)
+ggplot(index, aes(year, est)) +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), fill = "grey90") +
+  geom_line(lwd = 1, colour = "grey30") +
+  labs(x = "Year", y = "Biomass (kg)")
+```
+
+Or the center of gravity:
+
+```{r}
+cog <- get_cog(p_st, format = "wide")
+ggplot(cog, aes(est_x, est_y, colour = year)) +
+  geom_pointrange(aes(xmin = lwr_x, xmax = upr_x)) +
+  geom_pointrange(aes(ymin = lwr_y, ymax = upr_y)) +
+  scale_colour_viridis_c()
+```
+
+## Advanced functionality
+
+### Time-varying coefficients
+
+Time-varying (random walk) effect of depth:
+
+```{r, eval=FALSE}
+mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
+fit <- sdmTMB(
+  density ~ 1, 
+  time_varying = ~ 0 + depth,
+  family = tweedie(link = "log"),
+  data = pcod,
+  mesh = mesh,
+  spatial = "off",
+  spatiotemporal = "ar1",
+  time = "year",
+  silent = FALSE # see progress
+)
+```
+
+Time-varying intercept:
+
+```{r, eval=FALSE}
+fit <- sdmTMB(
+  density ~ 0 + s(depth, k = 5), 
+  time_varying = ~ 1, 
+  data = pcod,
+  mesh = mesh,
+  time = "year",
+  silent = FALSE
+)
+```
+
+### Spatially varying coefficients (SVC)
+
+Spatially varying effect of time:
+
+```{r, eval=TRUE, warning=FALSE}
+pcod$year_scaled <- as.numeric(scale(pcod$year))
+fit <- sdmTMB(
+  density ~ s(depth, k = 5) + year_scaled,
+  data = pcod,
+  mesh = mesh, 
+  family = tweedie(link = "log"),
+  spatial_varying = ~ 0 + year_scaled, 
+  time = "year",
+  spatiotemporal = "off"
+)
+```
+
+See `zeta_s` in the output, which represents the coefficient varying in space. You'll want to ensure you set up your model such that it ballpark has a mean of 0 (e.g., by including it in `formula` too).
+
+```{r}
+qcs_grid$year_scaled <- (qcs_grid$year - mean(pcod$year)) / sd(pcod$year)
+p <- predict(fit, newdata = subset(qcs_grid, year == 2011))
+ggplot(p, aes(X, Y, fill = zeta_s)) + geom_raster() +
+  scale_fill_gradient2()
+```
+
+### Simulating data
+
+#### Simulating data from scratch:
+
+```{r}
+predictor_dat <- expand.grid(
+  X = seq(0, 1, length.out = 100), Y = seq(0, 1, length.out = 100)
+)
+mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.05)
+sim_dat <- sdmTMB_simulate(
+  formula = ~ 1,
+  data = predictor_dat,
+  mesh = mesh,
+  family = poisson(link = "log"),
+  range = 0.3,
+  sigma_O = 0.4,
+  seed = 1,
+  B = 1 # B0 = intercept
+)
+head(sim_dat)
+
+# sample 200 points for fitting:
+set.seed(1)
+sim_dat_obs <- sim_dat[sample(seq_len(nrow(sim_dat)), 200), ]
+```
+
+```{r}
+ggplot(sim_dat, aes(X, Y)) +
+  geom_raster(aes(fill = exp(eta))) + # mean without observation error
+  geom_point(aes(size = observed), data = sim_dat_obs, pch = 21) +
+  scale_fill_viridis_c() +
+  scale_size_area() +
+  coord_cartesian(expand = FALSE)
+```
+
+Fit to the simulated data:
+
+```{r}
+mesh <- make_mesh(sim_dat_obs, xy_cols = c("X", "Y"), cutoff = 0.05)
+fit <- sdmTMB(
+  observed ~ 1,
+  data = sim_dat_obs,
+  family = poisson(),
+  mesh = mesh
+)
+```
+
+#### Simulating from an existing fit
+
+```{r}
+s <- simulate(fit, nsim = 100)
+dim(s)
+s[1:3,1:4]
+```
+
+Using those simulations to check DHARMa residuals:
+
+```{r}
+res <- DHARMa::createDHARMa(
+  simulatedResponse = s,
+  observedResponse = sim_dat_obs$observed,
+  fittedPredictedResponse = predict(fit)$est_non_rf # identity link
+)
+DHARMa::plotQQunif(res, testUniformity = FALSE, testOutliers = FALSE, testDispersion = FALSE)
+```
+
+Comparing those to the built-in randomized-quantile residuals:
+
+```{r}
+r <- residuals(fit)
+qqnorm(r);qqline(r)
+```
+
+### Bayesian MCMC sampling with Stan
+
+The fitted model can be passed to the tmbstan package to sample from the posterior with Stan. Note this can be slow for larger models.
+
+```{r, warning=FALSE, message=FALSE, results='hide'}
+# only 1 chain and 400 iterations for speed:
+fit_mcmc <- tmbstan::tmbstan(fit$tmb_obj, chains = 1, iter = 400)
+```
+
+Internal paramater posteriors:
+
+```{r}
+print(fit_mcmc, pars = c("b_j", "omega_s[1]"))
+```
+
+Predicting with the Stan/tmbstan model:
+
+```{r}
+pred_mcmc <- predict(fit, newdata = qcs_grid, tmbstan_model = fit_mcmc)
+# Each row has 200 posterior samples for a row of the `newdata` data frame:
+dim(pred_mcmc)
+```
+
+### Sampling from the joint precision matrix
+
+We can take samples from the implied parameter distribution assuming an MVN covariance matrix on the internal parameterization:
+
+```{r}
+samps <- gather_sims(fit, n_sims = 1000)
+ggplot(samps, aes(.value)) + geom_histogram() +
+  facet_wrap(~.variable, scales = "free_x")
+```
+
+### Calculating uncertainty on spatial predictions
+
+The fastest way to get pointwise prediction uncertainty is to use the MVN samples:
+
+```{r}
+p <- predict(fit, newdata = predictor_dat, sims = 500)
+predictor_dat$se <- apply(p, 1, sd)
+ggplot(predictor_dat, aes(X, Y, fill = se)) +
+  geom_raster() +
+  scale_fill_viridis_c(option = "A") +
+  coord_cartesian(expand = FALSE)
+```
+
+### Priors
+
+Priors (or 'penalties') can be placed on most parameters. For example, here we place a PC prior on the Matérn random field parameters, a standard normal prior on the effect of depth, a Normal(0, 10^2) prior on the intercept, and a half-normal prior on the Tweedie dispersion parameter (`phi`):
+
+```{r}
+mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
+fit <- sdmTMB(
+  density ~ depth_scaled,
+  data = pcod,
+  family = tweedie(),
+  mesh = mesh,
+  priors = sdmTMBpriors(
+    matern_s = pc_matern(range_gt = 10, sigma_lt = 5),
+    b = normal(c(0, 0), c(1, 10)),
+    phi = halfnormal(0, 15)
+  )
+)
+```
+
+### Cross validation
+
+sdmTMB has built-in functionality for cross-validation. If we were to set a `future::plan()`, the folds would be fit in parallel:
+
+```{r, warning=FALSE}
+mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
+## Set parallel processing if desired:
+# library(future)
+# plan(multisession)
+m_cv <- sdmTMB_cv(
+  density ~ s(depth, k = 5),
+  data = pcod, mesh = mesh,
+  family = tweedie(link = "log"), k_folds = 2
+)
+# Sum of log likelihoods of left-out data:
+m_cv$sum_loglik
+# Expected log pointwise predictive density from left-out data:
+# (average likelihood density)
+m_cv$elpd
+```
+
+### Turning off random fields
+
+We can turn off the random fields for model comparison:
+
+```{r, warning=FALSE, message=FALSE}
+fit_sdmTMB <- sdmTMB(
+  present ~ poly(depth_scaled, 2),
+  data = pcod, mesh = mesh,
+  spatial = "off",
+  family = binomial()
+)
+fit_glm <- glm(
+  present ~ poly(depth_scaled, 2),
+  data = pcod,
+  family = binomial()
+)
+
+tidy(fit_sdmTMB)
+broom::tidy(fit_glm)
+```
+
+### Using a custom INLA mesh
+
+Defining a mesh directly with INLA:
+
+```{r, warning=FALSE, fig.asp = 1}
+bnd <- INLA::inla.nonconvex.hull(cbind(pcod$X, pcod$Y), convex = -0.1)
+mesh_inla <- INLA::inla.mesh.2d(
+  boundary = bnd,
+  max.edge = c(25, 50)
+)
+mesh <- make_mesh(pcod, c("X", "Y"), mesh = mesh_inla)
+plot(mesh)
+```
+
+```{r, eval=FALSE}
+fit <- sdmTMB(
+  density ~ s(depth, k = 5),
+  data = pcod,
+  family = tweedie(link = "log"),
+  mesh = mesh
+)
+```
+
