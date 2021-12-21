@@ -209,8 +209,7 @@ See also the vignettes on [Intro to modelling with sdmTMB](https://https://pbs-a
 ```{r, eval=FALSE}
 fit <- sdmTMB(
   present ~ 1 + breakpt(depth_scaled), 
-  data = pcod, 
-  mesh = mesh,
+  data = pcod, mesh = mesh,
   time = "year",
   family = binomial(link = "logit")
 )
@@ -219,8 +218,7 @@ fit <- sdmTMB(
 ```{r, eval=FALSE}
 fit <- sdmTMB(
   present ~ 1 + logistic(depth_scaled), 
-  data = pcod, 
-  mesh = mesh,
+  data = pcod, mesh = mesh,
   time = "year",
   family = binomial(link = "logit")
 )
@@ -236,8 +234,7 @@ Time-varying intercept:
 fit <- sdmTMB(
   density ~ 0 + s(depth, k = 5), 
   time_varying = ~ 1, 
-  data = pcod,
-  mesh = mesh,
+  data = pcod, mesh = mesh,
   time = "year",  
   family = tweedie(link = "log"),
   silent = FALSE # see progress
@@ -250,8 +247,7 @@ Time-varying (random walk) effect of depth:
 fit <- sdmTMB(
   density ~ 1, 
   time_varying = ~ 0 + depth_scaled + depth_scaled2,
-  data = pcod,
-  mesh = mesh,  
+  data = pcod, mesh = mesh,
   time = "year",
   family = tweedie(link = "log"),
   spatial = "off",
@@ -270,11 +266,10 @@ Spatially varying effect of time:
 pcod$year_scaled <- as.numeric(scale(pcod$year))
 fit <- sdmTMB(
   density ~ s(depth, k = 5) + year_scaled,
-  data = pcod,
-  mesh = mesh, 
-  family = tweedie(link = "log"),
   spatial_varying = ~ 0 + year_scaled, 
+  data = pcod, mesh = mesh, 
   time = "year",
+  family = tweedie(link = "log"),
   spatiotemporal = "off"
 )
 ```
@@ -298,10 +293,9 @@ We can use the same syntax (`1 | group`) as lme4 or glmmTMB to fit random interc
 pcod$year_factor <- as.factor(pcod$year)
 fit <- sdmTMB(
   density ~ s(depth, k = 5) + (1 | year_factor),
-  family = tweedie(link = "log"), 
-  data = pcod, 
-  mesh = mesh,
-  time = "year"
+  data = pcod, mesh = mesh,
+  time = "year",
+  family = tweedie(link = "log")
 )
 ```
 
@@ -347,8 +341,8 @@ mesh <- make_mesh(sim_dat_obs, xy_cols = c("X", "Y"), cutoff = 0.05)
 fit <- sdmTMB(
   observed ~ 1,
   data = sim_dat_obs,
-  family = poisson(),
-  mesh = mesh
+  mesh = mesh,
+  family = poisson()
 )
 ```
 
@@ -440,9 +434,8 @@ Priors/penalties can be placed on most parameters. For example, here we place a 
 mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
 fit <- sdmTMB(
   density ~ depth_scaled,
-  data = pcod,
+  data = pcod, mesh = mesh,
   family = tweedie(),
-  mesh = mesh,
   priors = sdmTMBpriors(
     matern_s = pc_matern(range_gt = 10, sigma_lt = 5),
     b = normal(c(0, 0), c(1, 10)),
@@ -520,9 +513,8 @@ plot(mesh)
 ```{r, eval=FALSE}
 fit <- sdmTMB(
   density ~ s(depth, k = 5),
-  data = pcod,
-  family = tweedie(link = "log"),
-  mesh = mesh
+  data = pcod, mesh = mesh,
+  family = tweedie(link = "log")
 )
 ```
 
