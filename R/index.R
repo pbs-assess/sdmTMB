@@ -40,12 +40,21 @@ get_index <- function(obj, bias_correct = FALSE, level = 0.95, ...)  {
 }
 
 #' @rdname get_index
+#' @param format Long or wide.
 #' @export
-get_cog <- function(obj, bias_correct = FALSE, level = 0.95, ...)  {
+get_cog <- function(obj, bias_correct = FALSE, level = 0.95, format = c("long", "wide"), ...)  {
   d <- get_generic(obj, value_name = c("cog_x", "cog_y"),
     bias_correct = bias_correct, level = level, trans = I, ...)
   d <- d[, names(d) != "trans_est", drop = FALSE]
   d$coord <- c(rep("X", each = nrow(d)/2), rep("Y", each = nrow(d)/2))
+  format <- match.arg(format)
+  if (format == "wide") {
+    x <- d[d$coord == "X", c("est", "lwr", "upr", "se"),drop=FALSE]
+    y <- d[d$coord == "Y", c("est", "lwr", "upr", "se"),drop=FALSE]
+    names(x) <- paste0(names(x), "_", "x")
+    names(y) <- paste0(names(y), "_", "y")
+    d <- cbind(d[d$coord == "X", "year", drop=FALSE], cbind(x, y))
+  }
   d
 }
 

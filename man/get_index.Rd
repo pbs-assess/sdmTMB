@@ -7,7 +7,13 @@
 \usage{
 get_index(obj, bias_correct = FALSE, level = 0.95, ...)
 
-get_cog(obj, bias_correct = FALSE, level = 0.95, ...)
+get_cog(
+  obj,
+  bias_correct = FALSE,
+  level = 0.95,
+  format = c("long", "wide"),
+  ...
+)
 }
 \arguments{
 \item{obj}{Output from \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} with \code{return_tmb_object = TRUE}.}
@@ -17,6 +23,8 @@ get_cog(obj, bias_correct = FALSE, level = 0.95, ...)
 \item{level}{The confidence level.}
 
 \item{...}{Passed to \code{\link[TMB:sdreport]{TMB::sdreport()}}.}
+
+\item{format}{Long or wide.}
 }
 \description{
 Extract a relative biomass/abundance index or a center of gravity
