@@ -6,10 +6,9 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^Session.vim$
-prediction-grids/
 ^Makefile$
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
 ^\.github$
-^TMB_spde_example$
+^README_cache$
