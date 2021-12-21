@@ -19,7 +19,6 @@
 #' columns are the ranges. Column and row names are provided.
 #'
 #' @export
-#'
 #' @examples
 #' plot_pc_matern(range_gt = 5, sigma_lt = 1)
 #' plot_pc_matern(range_gt = 5, sigma_lt = 10)
@@ -43,14 +42,14 @@ plot_pc_matern <- function(range_gt,
       )
     })
   })
-  image(
+  graphics::image(
     ranges, sigmas,
     z = t(exp(out)),
     col = .viridis100,
     xlab = "Range", ylab = "Sigma"
   )
-  abline(v = range_gt, col = "white")
-  abline(h = sigma_lt, col = "white")
+  graphics::abline(v = range_gt, col = "white")
+  graphics::abline(h = sigma_lt, col = "white")
   rownames(out) <- sigmas
   colnames(out) <- ranges
   invisible(out)
