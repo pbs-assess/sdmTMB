@@ -39,7 +39,7 @@ set_par_value <- function(opt, par) {
 #' @param normalize Logical: use [TMB::normalize()] to normalize the process
 #'   likelihood using the Laplace approximation? Can result in a substantial
 #'   speed boost in some cases. This used to default to `FALSE` prior to
-#'   May 2021.
+#'   May 2021. Currently not working for models fit with REML or random intercepts.
 #' @param multiphase Logical: estimate the fixed and random effects in phases?
 #'   Phases are usually faster and more stable.
 #' @param profile Logical: should population-level/fixed effects be profiled
