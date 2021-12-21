@@ -41,8 +41,8 @@ We extend the generalized linear mixed models (GLMMs) familiar to ecologists to 
 * spatiotemporal random fields that may be independent by year or modelled with random walks or autoregressive processes
 * smooth terms for covariates, using the familiar `s()` notation from mgcv
 * breakpoint (hockey-stick) or logistic covariates
-* spatially varying coefficient models (SVCs)
 * time-varying covariates (coefficients modelled as random walks)
+* spatially varying coefficient models (SVCs)
 * interpolation or forecasting over missing or future time slices
 * a wide range of families: all standard R families plus `tweedie()`, `nbinom1()`, `nbinom2()`, `lognormal()`, and `student()`, plus some truncated and censored families
 
@@ -105,8 +105,8 @@ Fit a spatial model with a smoother for depth:
 fit <- sdmTMB(
   density ~ s(depth, k = 5),
   data = pcod,
-  family = tweedie(link = "log"),
   mesh = mesh,
+  family = tweedie(link = "log"),
   spatial = "on"
 )
 ```
@@ -157,9 +157,10 @@ We could switch to a presence-absence model by changing the response column and 
 ```{r, eval=FALSE}
 fit <- sdmTMB(
   present ~ s(depth, k = 5),
-  data = pcod,
-  family = binomial(link = "logit"),
-  mesh = mesh
+  data = pcod, 
+  mesh = mesh,
+  time = "year",
+  family = binomial(link = "logit")
 )
 ```
 
@@ -168,10 +169,10 @@ We could instead fit a spatiotemporal model by specifying the `time` column and 
 ```{r, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 fit_spatiotemporal <- sdmTMB(
   density ~ s(depth, k = 5), 
-  family = tweedie(link = "log"), 
   data = pcod, 
   mesh = mesh,
-  time = "year", 
+  time = "year",
+  family = tweedie(link = "log"), 
   spatial = "off", 
   spatiotemporal = "ar1"
 )
@@ -199,26 +200,35 @@ ggplot(cog, aes(est_x, est_y, colour = year)) +
   scale_colour_viridis_c()
 ```
 
+See also the vignettes on [Intro to modelling with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/basic-intro.html) and [Index standardization with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html). 
+
 ## Advanced functionality
 
-### Time-varying coefficients
-
-Time-varying (random walk) effect of depth:
+### Breakpoint and theshold effects
 
 ```{r, eval=FALSE}
-mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
 fit <- sdmTMB(
-  density ~ 1, 
-  time_varying = ~ 0 + depth,
-  family = tweedie(link = "log"),
-  data = pcod,
+  present ~ 1 + breakpt(depth_scaled), 
+  data = pcod, 
   mesh = mesh,
-  spatial = "off",
-  spatiotemporal = "ar1",
   time = "year",
-  silent = FALSE # see progress
+  family = binomial(link = "logit")
 )
 ```
+
+```{r, eval=FALSE}
+fit <- sdmTMB(
+  present ~ 1 + logistic(depth_scaled), 
+  data = pcod, 
+  mesh = mesh,
+  time = "year",
+  family = binomial(link = "logit")
+)
+```
+
+See the vignette on [Threshold modeling with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html). 
+
+### Time-varying coefficients
 
 Time-varying intercept:
 
@@ -228,10 +238,29 @@ fit <- sdmTMB(
   time_varying = ~ 1, 
   data = pcod,
   mesh = mesh,
+  time = "year",  
+  family = tweedie(link = "log"),
+  silent = FALSE # see progress
+)
+```
+
+Time-varying (random walk) effect of depth:
+
+```{r, eval=FALSE}
+fit <- sdmTMB(
+  density ~ 1, 
+  time_varying = ~ 0 + depth_scaled + depth_scaled2,
+  data = pcod,
+  mesh = mesh,  
   time = "year",
+  family = tweedie(link = "log"),
+  spatial = "off",
+  spatiotemporal = "ar1",
   silent = FALSE
 )
 ```
+
+See the vignette on [Intro to modelling with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/basic-intro.html). 
 
 ### Spatially varying coefficients (SVC)
 
@@ -258,6 +287,8 @@ p <- predict(fit, newdata = subset(qcs_grid, year == 2011))
 ggplot(p, aes(X, Y, fill = zeta_s)) + geom_raster() +
   scale_fill_gradient2()
 ```
+
+See the vignette on [Fitting spatial trend models with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html). 
 
 ### Random intercepts
 
@@ -349,7 +380,7 @@ r <- residuals(fit)
 qqnorm(r);qqline(r)
 ```
 
-See [`?simulate.sdmTMB](https://pbs-assess.github.io/sdmTMB/reference/simulate.sdmTMB.html) and [`?residuals.sdmTMB](https://pbs-assess.github.io/sdmTMB/reference/residuals.sdmTMB.html) for more details.
+See the vignette on [Residual checking with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html),  [`?simulate.sdmTMB](https://pbs-assess.github.io/sdmTMB/reference/simulate.sdmTMB.html), and [`?residuals.sdmTMB](https://pbs-assess.github.io/sdmTMB/reference/residuals.sdmTMB.html) for more details.
 
 ### Bayesian MCMC sampling with Stan
 
