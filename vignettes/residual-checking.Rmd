@@ -29,7 +29,7 @@ knitr::opts_chunk$set(
 library(sdmTMB)
 ```
 
-Start with some data simulated from scratch. We will simulate from a NB2 negative binomial observation model, a spatial random field, an intercept, and one predictor named 'a1' that will have a linear effect on the observed data.
+Start with some data simulated from scratch. We will simulate from an NB2 negative binomial observation model, a spatial random field, an intercept, and one predictor named 'a1' that will have a linear effect on the observed data.
 
 ```{r}
 set.seed(1)
@@ -48,7 +48,7 @@ dat <- sdmTMB_simulate(
 )
 ```
 
-Next, we will fit versions with various responses and predictors. The first model will use the Poisson instead of the NB2. The 2nd model will match the simulated data. The third model is missing the 'a1' predictor. We'll use a PC prior on the Matern parameters to aid in estimation.
+Next, we will fit versions with various responses and predictors. The first model will use the Poisson instead of the NB2. The 2nd model will match the simulated data. The third model is missing the 'a1' predictor. We'll use a PC prior on the Matérn parameters to aid in estimation.
 
 ```{r}
 pc <- pc_matern(range_gt = 0.1, sigma_lt = 1)
@@ -68,7 +68,7 @@ fit_nb2_miss
 
 We can see just by looking at these fits that the Poisson model inflates the spatial random field standard deviation (SD) compared to the truth. The model missing the 'a1' predictor does so to a lesser degree.
 
-Randomized quantile residuals at fixed effect MLE (Maximum Likelihood Estimates) and random effects that maximize the log likelihood at estimated fixed effects:
+Here are randomized quantile residuals at fixed effect MLEs (Maximum Likelihood Estimates) and random effects that maximize the log likelihood at estimated fixed effects:
 
 ```{r}
 rq_res <- residuals(fit_pois)
@@ -85,9 +85,9 @@ We can see here that there are likely issues with the Poisson model in the tails
 
 These types of residuals are known to have statistical issues for state-space models; even if the model is the 'correct' model, the QQ plot may appear to have problems (Thygesen et al. 2017).
 
-One-step-ahead residuals (Thygesen et al. 2017) are one option to fix this problem (although slow to calculate). Another option is to take a draw from the posterior with MCMC (e.g., Rufener et al. 2021).  Also see <https://kaskr.github.io/adcomp/_book/Validation.html>
+One-step-ahead residuals (Thygesen et al. 2017) are one option to fix this problem (although slow to calculate). Another option is to take a draw from the posterior with MCMC (e.g., Rufener et al. 2021). Also see <https://kaskr.github.io/adcomp/_book/Validation.html>
 
-Here we will draw MCMC predictions and residuals. We will only take a single draw for speed:
+Here we will draw MCMC predictions and calculate residuals. We will only take a single draw for speed:
 
 ```{r}
 stan_fit <- tmbstan::tmbstan(fit_nb2$tmb_obj, iter = 100, warmup = 99, chains = 1)
