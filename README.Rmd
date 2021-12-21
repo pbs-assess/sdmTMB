@@ -159,7 +159,6 @@ fit <- sdmTMB(
   present ~ s(depth, k = 5),
   data = pcod, 
   mesh = mesh,
-  time = "year",
   family = binomial(link = "logit")
 )
 ```
@@ -210,7 +209,6 @@ See also the vignettes on [Intro to modelling with sdmTMB](https://https://pbs-a
 fit <- sdmTMB(
   present ~ 1 + breakpt(depth_scaled), 
   data = pcod, mesh = mesh,
-  time = "year",
   family = binomial(link = "logit")
 )
 ```
@@ -219,7 +217,6 @@ fit <- sdmTMB(
 fit <- sdmTMB(
   present ~ 1 + logistic(depth_scaled), 
   data = pcod, mesh = mesh,
-  time = "year",
   family = binomial(link = "logit")
 )
 ```
