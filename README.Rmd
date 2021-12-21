@@ -199,7 +199,7 @@ ggplot(cog, aes(est_x, est_y, colour = year)) +
   scale_colour_viridis_c()
 ```
 
-See also the vignettes on [Intro to modelling with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/basic-intro.html) and [Index standardization with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html). 
+For more on these basic features, see the vignettes [Intro to modelling with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/basic-intro.html) and [Index standardization with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html). 
 
 ## Advanced functionality
 
@@ -221,7 +221,7 @@ fit <- sdmTMB(
 )
 ```
 
-See the vignette on [Threshold modeling with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html). 
+See the vignette on [Threshold modeling with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html) for more details.
 
 ### Time-varying coefficients
 
@@ -253,7 +253,7 @@ fit <- sdmTMB(
 )
 ```
 
-See the vignette on [Intro to modelling with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/basic-intro.html). 
+See the vignette [Intro to modelling with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/basic-intro.html) for more details.
 
 ### Spatially varying coefficients (SVC)
 
@@ -280,7 +280,7 @@ ggplot(p, aes(X, Y, fill = zeta_s)) + geom_raster() +
   scale_fill_gradient2()
 ```
 
-See the vignette on [Fitting spatial trend models with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html). 
+See the vignette on [Fitting spatial trend models with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html) for more details.
 
 ### Random intercepts
 
