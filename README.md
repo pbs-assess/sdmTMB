@@ -17,12 +17,13 @@ sdmTMB is an R package that fits spatial and spatiotemporal GLMMs (Generalized L
 ## Table of contents
 
 -   [Installation](#installation)
--   [Functionality](#functionality)
+-   [Overview](#overview)
 -   [Basic use](#basic-use)
 -   [Advanced functionality](#advanced-functionality)
     -   [Time-varying coefficients](#time-varying-coefficients)
     -   [Spatially varying coefficients
         (SVC)](#spatially-varying-coefficients-svc)
+    -   [Random intercepts](#random-intercepts)
     -   [Simulating data](#simulating-data)
     -   [Bayesian MCMC sampling with
         Stan](#bayesian-mcmc-sampling-with-stan)
@@ -34,6 +35,7 @@ sdmTMB is an R package that fits spatial and spatiotemporal GLMMs (Generalized L
     -   [Cross validation](#cross-validation)
     -   [Turning off random fields](#turning-off-random-fields)
     -   [Using a custom INLA mesh](#using-a-custom-inla-mesh)
+    -   [Barrier meshes](#barrier-meshes)
 
 ## Installation
 
@@ -46,51 +48,59 @@ installed, you can install sdmTMB:
 remotes::install_github("pbs-assess/sdmTMB")
 ```
 
-## Functionality
+## Overview
 
-sdmTMB:
+Analyzing geostatistical data (coordinate-referenced observations) is
+becoming increasingly common in ecology. sdmTMB implements
+geostatistical spatial and spatiotemporal GLMMs using TMB for model
+fitting and R-INLA to set up SPDE (stochastic partial differential
+equation) matrices. One common application is for species distribution
+models (SDMs), hence the package name. The goal of sdmTMB is to provide
+a fast, flexible, and user-friendly interface—similar to the popular R
+package glmmTMB—but with the addition of spatial and spatiotemporal
+models with an SPDE approach. We extend the generalized linear mixed
+models (GLMMs) familiar to ecologists to include the following optional
+features:
 
--   Fits GLMMs with spatial, spatiotemporal, spatial and spatiotemporal,
-    or AR1 spatiotemporal Gaussian Markov random fields with TMB.
--   Uses formula interfaces for fixed effects and any time-varying
-    effects (dynamic regression)
-    (e.g. `formula = y ~ 1 + x1 + (1 | g), time_varying = ~ 0 + x2`),
-    where `y` is the response, `1` represents an intercept, `0` omits an
-    intercept, `x1` is a covariate with a constant effect, `(1 | g)` is
-    a random intercept across groups `g`, and `x2` is a covariate with a
-    time-varying effect.
--   Can fit spatially varying coefficients as a random field
-    (e.g. `spatial_varying = ~ 0 + x3`).
--   Can handle GAMs (generalized additive models) with penalized
-    smoothers from mgcv. E.g., `y ~ s(x)`.
--   Can handle linear breakpoint or logistic threshold fixed effects:
-    `y ~ breakpt(x1)` or `y ~ logistic(x2)`.
--   Uses a `family(link)` format similar to `glm()`, lme4, or glmmTMB.
-    This includes Gaussian, Poisson, negative binomial, gamma, binomial,
-    lognormal, Student-t, and Tweedie distributions with identity, log,
-    inverse, and logit links. E.g., `family = tweedie(link = "log")`.
--   Has `predict()` and `residuals()` methods. The residuals are
-    randomized-quantile residuals similar to those implemented in the
-    [DHARMa](https://cran.r-project.org/package=DHARMa) package. The
-    `predict()` function can take a `newdata` argument similar to `lm()`
-    or `glm()` etc. The predictions are bilinear interpolated
-    predictive-process predictions (i.e., they make smooth pretty maps).
--   Has a simulation function `simulate()` for simulating from existing
-    fits (e.g., for DHARMa), `sdmTMB_simulate()` for generating
-    simulated data from scratch, and `sdmTMB_cv()` for cross-validation
-    testing of model accuracy or comparing across model configurations.
--   Includes functionality for estimating the centre of gravity or total
-    biomass by time step for index standardization.
--   Can optionally allow for anisotropy in the random fields (spatial
-    correlation that is directionally dependent) and barriers (e.g.,
-    land for ocean species) to spatial correlation.
--   Can interpolate over missing time slices or forecast onto future
-    time slices.
--   Can generate an SPDE predictive-process mesh or can take any
-    standard R-INLA mesh created externally as input.
+-   spatial random fields
+-   spatiotemporal random fields that may be independent by year or
+    modelled with random walks or autoregressive processes
+-   smooth terms for covariates, using the familiar `s()` notation from
+    mgcv
+-   breakpoint (hockey-stick) or logistic covariates
+-   spatially varying coefficient models (SVCs)
+-   time-varying covariates (coefficients modelled as random walks)
+-   interpolation or forecasting over missing or future time slices
+-   a wide range of families: all standard R families plus `tweedie()`,
+    `nbinom1()`, `nbinom2()`, `lognormal()`, and `student()`, plus some
+    truncated and censored families
 
-See `?sdmTMB` and `?predict.sdmTMB` for the most complete examples. Also
-see the vignettes (‘Articles’) on the [documentation
+Estimation is performed in sdmTMB via maximum marginal likelihood with
+the objective function calculated in TMB and minimized in R via
+`stats::nlminb()` with the random effects integrated over via the
+Laplace approximation. The sdmTMB package also allows for models to be
+passed to Stan via tmbstan, allowing for Bayesian model estimation.
+
+<!-- sdmTMB: -->
+<!-- - Fits GLMMs with spatial, spatiotemporal, spatial and spatiotemporal, or AR1 spatiotemporal Gaussian Markov random fields with TMB.  -->
+<!-- - Uses formula interfaces for fixed effects and any time-varying effects (dynamic regression) (e.g. `formula = y ~ 1 + x1 + (1 | g), time_varying = ~ 0 + x2`), where `y` is the response, `1` represents an intercept, `0` omits an intercept, `x1` is a covariate with a constant effect, `(1 | g)` is a random intercept across groups `g`, and `x2` is a covariate with a time-varying effect. -->
+<!-- - Can fit spatially varying coefficients as a random field (e.g. `spatial_varying = ~ 0 + x3`). -->
+<!-- - Can handle GAMs (generalized additive models) with penalized smoothers from mgcv. E.g., `y ~ s(x)`. -->
+<!-- - Can handle linear breakpoint or logistic threshold fixed effects: `y ~ breakpt(x1)` or `y ~ logistic(x2)`. -->
+<!-- - Uses a `family(link)` format similar to `glm()`, lme4, or glmmTMB. This includes Gaussian, Poisson, negative binomial, gamma, binomial, lognormal, Student-t, and Tweedie distributions with identity, log, inverse, and logit links. E.g., `family = tweedie(link = "log")`. -->
+<!-- - Has `predict()` and `residuals()` methods. The residuals are randomized-quantile residuals similar to those implemented in the [DHARMa](https://cran.r-project.org/package=DHARMa) package. The `predict()` function can take a `newdata` argument similar to `lm()` or `glm()` etc. The predictions are bilinear interpolated predictive-process predictions (i.e., they make smooth pretty maps). -->
+<!-- - Has a simulation function `simulate()` for simulating from existing fits (e.g., for DHARMa), `sdmTMB_simulate()` for generating simulated data from scratch, and `sdmTMB_cv()` for cross-validation testing of model accuracy or comparing across model configurations. -->
+<!-- - Includes functionality for estimating the centre of gravity or total biomass by time step for index standardization. -->
+<!-- - Can optionally allow for anisotropy in the random fields (spatial correlation that is directionally dependent) and barriers (e.g., land for ocean species) to spatial correlation. -->
+<!-- - Can interpolate over missing time slices or forecast onto future time slices. -->
+<!-- - Can generate an SPDE predictive-process mesh or can take any standard R-INLA mesh created externally as input. -->
+
+See
+[`?sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB.html)
+and
+[`?predict.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/predict.sdmTMB.html)
+for the most complete examples. Also see the vignettes (‘Articles’) on
+the [documentation
 site](https://pbs-assess.github.io/sdmTMB/index.html).
 
 ## Basic use
@@ -353,9 +363,25 @@ ggplot(p, aes(X, Y, fill = zeta_s)) + geom_raster() +
 
 <img src="man/figures/README-unnamed-chunk-20-1.png" width="50%" />
 
+### Random intercepts
+
+We can use the same syntax (`1 | group`) as lme4 or glmmTMB to fit
+random intercepts:
+
+``` r
+pcod$year_factor <- as.factor(pcod$year)
+fit <- sdmTMB(
+  density ~ s(depth, k = 5) + (1 | year_factor),
+  family = tweedie(link = "log"), 
+  data = pcod, 
+  mesh = mesh,
+  time = "year"
+)
+```
+
 ### Simulating data
 
-#### Simulating data from scratch:
+#### Simulating data from scratch
 
 ``` r
 predictor_dat <- expand.grid(
@@ -397,7 +423,7 @@ ggplot(sim_dat, aes(X, Y)) +
   coord_cartesian(expand = FALSE)
 ```
 
-<img src="man/figures/README-unnamed-chunk-22-1.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-23-1.png" width="50%" />
 
 Fit to the simulated data:
 
@@ -410,6 +436,10 @@ fit <- sdmTMB(
   mesh = mesh
 )
 ```
+
+See
+[`?sdmTMB_simulate`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB_simulate.html)
+for more details.
 
 #### Simulating from an existing fit
 
@@ -435,7 +465,7 @@ res <- DHARMa::createDHARMa(
 DHARMa::plotQQunif(res, testUniformity = FALSE, testOutliers = FALSE, testDispersion = FALSE)
 ```
 
-<img src="man/figures/README-unnamed-chunk-25-1.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-26-1.png" width="50%" />
 
 Comparing those to the built-in randomized-quantile residuals:
 
@@ -444,19 +474,25 @@ r <- residuals(fit)
 qqnorm(r);qqline(r)
 ```
 
-<img src="man/figures/README-unnamed-chunk-26-1.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-27-1.png" width="50%" />
+
+See
+[`?simulate.sdmTMB](https://pbs-assess.github.io/sdmTMB/reference/simulate.sdmTMB.html) and [`?residuals.sdmTMB](https://pbs-assess.github.io/sdmTMB/reference/residuals.sdmTMB.html)
+for more details.
 
 ### Bayesian MCMC sampling with Stan
 
 The fitted model can be passed to the tmbstan package to sample from the
-posterior with Stan. Note this can be slow for larger models.
+posterior with Stan. Note this can be slow for larger or poorly
+identified models. See examples of fixing parameters in
+[`?extract_mcmc`](https://pbs-assess.github.io/sdmTMB/reference/extract_mcmc.html).
 
 ``` r
 # only 1 chain and 400 iterations for speed:
 fit_mcmc <- tmbstan::tmbstan(fit$tmb_obj, chains = 1, iter = 400)
 ```
 
-Internal paramater posteriors:
+Internal parameter posteriors:
 
 ``` r
 print(fit_mcmc, pars = c("b_j", "omega_s[1]"))
@@ -468,7 +504,7 @@ print(fit_mcmc, pars = c("b_j", "omega_s[1]"))
 #> b_j         0.99    0.03 0.15  0.62  0.93  1.00 1.06  1.27    35 1.00
 #> omega_s[1] -0.07    0.03 0.23 -0.50 -0.23 -0.06 0.10  0.33    63 1.01
 #> 
-#> Samples were drawn using NUTS(diag_e) at Mon Dec 20 16:19:18 2021.
+#> Samples were drawn using NUTS(diag_e) at Mon Dec 20 23:02:26 2021.
 #> For each parameter, n_eff is a crude measure of effective sample size,
 #> and Rhat is the potential scale reduction factor on split chains (at 
 #> convergence, Rhat=1).
@@ -483,6 +519,10 @@ dim(pred_mcmc)
 #> [1] 65826   200
 ```
 
+See
+[`?extract_mcmc`](https://pbs-assess.github.io/sdmTMB/reference/extract_mcmc.html)
+for more details.
+
 ### Sampling from the joint precision matrix
 
 We can take samples from the implied parameter distribution assuming an
@@ -495,11 +535,17 @@ ggplot(samps, aes(.value)) + geom_histogram() +
 #> `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-<img src="man/figures/README-unnamed-chunk-30-1.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-31-1.png" width="50%" />
+
+See
+[`?gather_sims`](https://pbs-assess.github.io/sdmTMB/reference/gather_sims.html)
+and
+[`?get_index_sims`](https://pbs-assess.github.io/sdmTMB/reference/get_index_sims.html)
+for more details.
 
 ### Calculating uncertainty on spatial predictions
 
-The fastest way to get pointwise prediction uncertainty is to use the
+The fastest way to get point-wise prediction uncertainty is to use the
 MVN samples:
 
 ``` r
@@ -511,15 +557,15 @@ ggplot(predictor_dat, aes(X, Y, fill = se)) +
   coord_cartesian(expand = FALSE)
 ```
 
-<img src="man/figures/README-unnamed-chunk-31-1.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-32-1.png" width="50%" />
 
 ### Priors
 
-Priors (or ‘penalties’) can be placed on most parameters. For example,
-here we place a PC prior on the Matérn random field parameters, a
-standard normal prior on the effect of depth, a Normal(0, 10^2) prior on
-the intercept, and a half-normal prior on the Tweedie dispersion
-parameter (`phi`):
+Priors/penalties can be placed on most parameters. For example, here we
+place a PC (penalized complexity) prior on the Matérn random field
+parameters, a standard normal prior on the effect of depth, a Normal(0,
+10^2) prior on the intercept, and a half-normal prior on the Tweedie
+dispersion parameter (`phi`):
 
 ``` r
 mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
@@ -535,6 +581,18 @@ fit <- sdmTMB(
   )
 )
 ```
+
+We can visualize the PC Matérn prior:
+
+``` r
+plot_pc_matern(range_gt = 10, sigma_lt = 5)
+```
+
+<img src="man/figures/README-unnamed-chunk-34-1.png" width="50%" />
+
+See
+[`?sdmTMBpriors`](https://pbs-assess.github.io/sdmTMB/reference/priors.html)
+for more details.
 
 ### Cross validation
 
@@ -561,6 +619,10 @@ m_cv$sum_loglik
 m_cv$elpd
 #> [1] -1.009422
 ```
+
+See
+[`?sdmTMB_cv`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB_cv.html)
+for more details.
 
 ### Turning off random fields
 
@@ -609,7 +671,7 @@ mesh <- make_mesh(pcod, c("X", "Y"), mesh = mesh_inla)
 plot(mesh)
 ```
 
-<img src="man/figures/README-unnamed-chunk-35-1.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-37-1.png" width="50%" />
 
 ``` r
 fit <- sdmTMB(
@@ -619,3 +681,9 @@ fit <- sdmTMB(
   mesh = mesh
 )
 ```
+
+### Barrier meshes
+
+A barrier mesh limits correlation across barriers (e.g., land or water).
+See the example in
+[`?add_barrier_mesh`](https://pbs-assess.github.io/sdmTMB/reference/add_barrier_mesh.html).

@@ -64,7 +64,7 @@ The sdmTMB package also allows for models to be passed to Stan via tmbstan, allo
 <!-- - Can interpolate over missing time slices or forecast onto future time slices. -->
 <!-- - Can generate an SPDE predictive-process mesh or can take any standard R-INLA mesh created externally as input. -->
 
-See `?sdmTMB` and `?predict.sdmTMB` for the most complete examples. Also see the vignettes ('Articles') on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html).
+See [`?sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB.html) and [`?predict.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/predict.sdmTMB.html) for the most complete examples. Also see the vignettes ('Articles') on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html).
 
 ## Basic use
 
@@ -321,7 +321,7 @@ fit <- sdmTMB(
 )
 ```
 
-See [`?sdmTMB_simulate](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB_simulate.html) for more details.
+See [`?sdmTMB_simulate`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB_simulate.html) for more details.
 
 #### Simulating from an existing fit
 
@@ -353,7 +353,7 @@ See [`?simulate.sdmTMB](https://pbs-assess.github.io/sdmTMB/reference/simulate.s
 
 ### Bayesian MCMC sampling with Stan
 
-The fitted model can be passed to the tmbstan package to sample from the posterior with Stan. Note this can be slow for larger or poorly identified models. See examples of fixing parameters in `?extract_mcmc`.
+The fitted model can be passed to the tmbstan package to sample from the posterior with Stan. Note this can be slow for larger or poorly identified models. See examples of fixing parameters in [`?extract_mcmc`](https://pbs-assess.github.io/sdmTMB/reference/extract_mcmc.html).
 
 ```{r, warning=FALSE, message=FALSE, results='hide'}
 # only 1 chain and 400 iterations for speed:
@@ -374,7 +374,7 @@ pred_mcmc <- predict(fit, newdata = qcs_grid, tmbstan_model = fit_mcmc)
 dim(pred_mcmc)
 ```
 
-See [`?extract_mcmc](https://pbs-assess.github.io/sdmTMB/reference/extract_mcmc.html) for more details.
+See [`?extract_mcmc`](https://pbs-assess.github.io/sdmTMB/reference/extract_mcmc.html) for more details.
 
 ### Sampling from the joint precision matrix
 
@@ -386,7 +386,7 @@ ggplot(samps, aes(.value)) + geom_histogram() +
   facet_wrap(~.variable, scales = "free_x")
 ```
 
-See [`?gather_sims](https://pbs-assess.github.io/sdmTMB/reference/gather_sims.html) and [`?get_index_sims](https://pbs-assess.github.io/sdmTMB/reference/get_index_sims.html) for more details.
+See [`?gather_sims`](https://pbs-assess.github.io/sdmTMB/reference/gather_sims.html) and [`?get_index_sims`](https://pbs-assess.github.io/sdmTMB/reference/get_index_sims.html) for more details.
 
 ### Calculating uncertainty on spatial predictions
 
@@ -497,4 +497,4 @@ fit <- sdmTMB(
 
 ### Barrier meshes
 
-A barrier mesh limits correlation across barriers (e.g., land or water). See the example in [`?add_barrier_mesh`](https://pbs-assess.github.io/sdmTMB/reference/add_barrier_mesh.html)).
+A barrier mesh limits correlation across barriers (e.g., land or water). See the example in [`?add_barrier_mesh`](https://pbs-assess.github.io/sdmTMB/reference/add_barrier_mesh.html).
