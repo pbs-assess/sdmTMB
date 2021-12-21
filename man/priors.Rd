@@ -101,6 +101,7 @@ normal(0, 1)
 halfnormal(0, 1)
 mvnormal(c(0, 0))
 pc_matern(range_gt = 5, sigma_lt = 1)
+plot_pc_matern(range_gt = 5, sigma_lt = 1)
 
 if (inla_installed()) {
 
@@ -158,4 +159,7 @@ arXiv:1503.00256
 Simpson, D., Rue, H., Martins, T., Riebler, A., and Sørbye, S. (2015)
 Penalising model component complexity: A principled, practical approach to
 constructing priors. arXiv:1403.4630
+}
+\seealso{
+\code{\link[=plot_pc_matern]{plot_pc_matern()}}
 }

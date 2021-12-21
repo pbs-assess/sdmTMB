@@ -130,12 +130,16 @@ mvnormal <- function(location = 0, scale = diag(length(location))) {
 #' @export
 #' @rdname priors
 #'
+#' @seealso
+#' [plot_pc_matern()]
+#'
 #' @description
 #' `pc_matern()` is the Penalized Complexity prior for the Matern
 #' covariance function.
 #'
 #' @examples
 #' pc_matern(range_gt = 5, sigma_lt = 1)
+#' plot_pc_matern(range_gt = 5, sigma_lt = 1)
 #'
 #' if (inla_installed()) {
 #'
