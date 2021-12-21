@@ -32,19 +32,22 @@ remotes::install_github("pbs-assess/sdmTMB")
 ## Overview
 
 Analyzing geostatistical data (coordinate-referenced observations) is becoming increasingly common in ecology.
-sdmTMB implements geostatistical spatial and spatiotemporal GLMMs using TMB for model fitting and INLA to set up SPDE matrices.
+sdmTMB implements geostatistical spatial and spatiotemporal GLMMs using TMB for model fitting and R-INLA to set up SPDE (stochastic partial differential equation) matrices.
 One common application is for species distribution models (SDMs), hence the package name.
-Our aim is to provide a fast, flexible, and user-friendly interface---similar to the popular R package glmmTMB, but with the addition of spatial and spatiotemporal models with an SPDE approach.
-We extend the generalized linear mixed models (GLMMs) familiar to ecologists to include the following optional features: 
+The goal of sdmTMB is to provide a fast, flexible, and user-friendly interface---similar to the popular R package glmmTMB---but with the addition of spatial and spatiotemporal models with an SPDE approach.
+We extend the generalized linear mixed models (GLMMs) familiar to ecologists to include the following optional features:
 
-* spatial fields
-* spatiotemporal fields that may be independent by year or modeled with random walks or autoregressive processes
-* smooth terms for covariates, using the familiar `s()` notation in mgcv
+* spatial random fields
+* spatiotemporal random fields that may be independent by year or modelled with random walks or autoregressive processes
+* smooth terms for covariates, using the familiar `s()` notation from mgcv
+* breakpoint (hockey-stick) or logistic covariates
 * spatially varying coefficient models (SVCs)
-* non-stationary covariates (coefficients modeled as random walks)
+* time-varying covariates (coefficients modelled as random walks)
+* interpolation or forecasting over missing or future time slices
+* a wide range of families: all standard R families plus `tweedie()`, `nbinom1()`, `nbinom2()`, `lognormal()`, and `student()`, plus some truncated and censored families
 
-Estimation is performed in sdmTMB via maximum marginal likelihood, implemented using Template Model Builder (TMB).
-The sdmTMB package also allows for models to be passed to Stan, allowing for efficient Bayesian estimation.
+Estimation is performed in sdmTMB via maximum marginal likelihood with the objective function calculated in TMB and minimized in R via `stats::nlminb()` with the random effects integrated over via the Laplace approximation.
+The sdmTMB package also allows for models to be passed to Stan via tmbstan, allowing for Bayesian model estimation.
 
 <!-- sdmTMB: -->
 
@@ -256,9 +259,24 @@ ggplot(p, aes(X, Y, fill = zeta_s)) + geom_raster() +
   scale_fill_gradient2()
 ```
 
+### Random intercepts
+
+We can use the same syntax (`1 | group`) as lme4 or glmmTMB to fit random intercepts:
+
+```{r, eval=FALSE, echo=TRUE, warning=FALSE, message=FALSE}
+pcod$year_factor <- as.factor(pcod$year)
+fit <- sdmTMB(
+  density ~ s(depth, k = 5) + (1 | year_factor),
+  family = tweedie(link = "log"), 
+  data = pcod, 
+  mesh = mesh,
+  time = "year"
+)
+```
+
 ### Simulating data
 
-#### Simulating data from scratch:
+#### Simulating data from scratch
 
 ```{r}
 predictor_dat <- expand.grid(
@@ -303,6 +321,8 @@ fit <- sdmTMB(
 )
 ```
 
+See [`?sdmTMB_simulate](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB_simulate.html) for more details.
+
 #### Simulating from an existing fit
 
 ```{r}
@@ -329,16 +349,18 @@ r <- residuals(fit)
 qqnorm(r);qqline(r)
 ```
 
+See [`?simulate.sdmTMB](https://pbs-assess.github.io/sdmTMB/reference/simulate.sdmTMB.html) and [`?residuals.sdmTMB](https://pbs-assess.github.io/sdmTMB/reference/residuals.sdmTMB.html) for more details.
+
 ### Bayesian MCMC sampling with Stan
 
-The fitted model can be passed to the tmbstan package to sample from the posterior with Stan. Note this can be slow for larger models.
+The fitted model can be passed to the tmbstan package to sample from the posterior with Stan. Note this can be slow for larger or poorly identified models. See examples of fixing parameters in `?extract_mcmc`.
 
 ```{r, warning=FALSE, message=FALSE, results='hide'}
 # only 1 chain and 400 iterations for speed:
 fit_mcmc <- tmbstan::tmbstan(fit$tmb_obj, chains = 1, iter = 400)
 ```
 
-Internal paramater posteriors:
+Internal parameter posteriors:
 
 ```{r}
 print(fit_mcmc, pars = c("b_j", "omega_s[1]"))
@@ -352,6 +374,8 @@ pred_mcmc <- predict(fit, newdata = qcs_grid, tmbstan_model = fit_mcmc)
 dim(pred_mcmc)
 ```
 
+See [`?extract_mcmc](https://pbs-assess.github.io/sdmTMB/reference/extract_mcmc.html) for more details.
+
 ### Sampling from the joint precision matrix
 
 We can take samples from the implied parameter distribution assuming an MVN covariance matrix on the internal parameterization:
@@ -362,9 +386,11 @@ ggplot(samps, aes(.value)) + geom_histogram() +
   facet_wrap(~.variable, scales = "free_x")
 ```
 
+See [`?gather_sims](https://pbs-assess.github.io/sdmTMB/reference/gather_sims.html) and [`?get_index_sims](https://pbs-assess.github.io/sdmTMB/reference/get_index_sims.html) for more details.
+
 ### Calculating uncertainty on spatial predictions
 
-The fastest way to get pointwise prediction uncertainty is to use the MVN samples:
+The fastest way to get point-wise prediction uncertainty is to use the MVN samples:
 
 ```{r}
 p <- predict(fit, newdata = predictor_dat, sims = 500)
@@ -377,7 +403,7 @@ ggplot(predictor_dat, aes(X, Y, fill = se)) +
 
 ### Priors
 
-Priors (or 'penalties') can be placed on most parameters. For example, here we place a PC prior on the Matérn random field parameters, a standard normal prior on the effect of depth, a Normal(0, 10^2) prior on the intercept, and a half-normal prior on the Tweedie dispersion parameter (`phi`):
+Priors/penalties can be placed on most parameters. For example, here we place a PC (penalized complexity) prior on the Matérn random field parameters, a standard normal prior on the effect of depth, a Normal(0, 10^2) prior on the intercept, and a half-normal prior on the Tweedie dispersion parameter (`phi`):
 
 ```{r}
 mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
@@ -393,6 +419,14 @@ fit <- sdmTMB(
   )
 )
 ```
+
+We can visualize the PC Matérn prior:
+
+```{r}
+plot_pc_matern(range_gt = 10, sigma_lt = 5)
+```
+
+See [`?sdmTMBpriors`](https://pbs-assess.github.io/sdmTMB/reference/priors.html) for more details.
 
 ### Cross validation
 
@@ -414,6 +448,8 @@ m_cv$sum_loglik
 # (average likelihood density)
 m_cv$elpd
 ```
+
+See [`?sdmTMB_cv`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB_cv.html) for more details.
 
 ### Turning off random fields
 
@@ -459,3 +495,6 @@ fit <- sdmTMB(
 )
 ```
 
+### Barrier meshes
+
+A barrier mesh limits correlation across barriers (e.g., land or water). See the example in [`?add_barrier_mesh`](https://pbs-assess.github.io/sdmTMB/reference/add_barrier_mesh.html)).
