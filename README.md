@@ -116,9 +116,9 @@ contains a main effect of depth as a penalized smoother, a spatial
 random field, and Tweedie observation error. Our data frame `pcod`
 (built into the package) has a column `year` for the year of the survey,
 `density` for density of Pacific cod in a given survey tow, `present`
-for whether `density > 0`,
-depth`for depth in meters of that tow, and spatial coordinates`X`and`Y\`,
-which are UTM coordinates in kilometres.
+for whether `density > 0`, `depth` for depth in meters of that tow, and
+spatial coordinates `X` and `Y`, which are UTM coordinates in
+kilometres.
 
 ``` r
 library(dplyr)

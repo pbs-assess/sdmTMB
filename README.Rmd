@@ -72,7 +72,7 @@ An sdmTMB model requires a data frame that contains a response column, columns f
 It usually makes sense to convert the spatial coordinates to an equidistant projection such as UTMs such that distance remains constant throughout the study region [e.g., using `sf::st_transform()`].
 Here, we illustrate a spatial model fit to Pacific cod (*Gadus macrocephalus*) trawl survey data from Queen Charlotte Sound, BC, Canada.
 Our model contains a main effect of depth as a penalized smoother, a spatial random field, and Tweedie observation error.
-Our data frame `pcod` (built into the package) has a column `year` for the year of the survey, `density` for density of Pacific cod in a given survey tow, `present` for whether `density > 0`, depth` for depth in meters of that tow, and spatial coordinates `X` and `Y`, which are UTM coordinates in kilometres.
+Our data frame `pcod` (built into the package) has a column `year` for the year of the survey, `density` for density of Pacific cod in a given survey tow, `present` for whether `density > 0`, `depth` for depth in meters of that tow, and spatial coordinates `X` and `Y`, which are UTM coordinates in kilometres.
 
 ```{r, echo=TRUE, eval=FALSE}
 library(dplyr)
