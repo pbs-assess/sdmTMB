@@ -29,22 +29,37 @@ Assuming you have a [C++ compiler](https://support.rstudio.com/hc/en-us/articles
 remotes::install_github("pbs-assess/sdmTMB")
 ```
 
-## Functionality
+## Overview
 
-sdmTMB:
+Analyzing geostatistical data (coordinate-referenced observations) is becoming increasingly common in ecology.
+sdmTMB implements geostatistical spatial and spatiotemporal GLMMs using TMB for model fitting and INLA to set up SPDE matrices.
+One common application is for species distribution models (SDMs), hence the package name.
+Our aim is to provide a fast, flexible, and user-friendly interface---similar to the popular R package glmmTMB, but with the addition of spatial and spatiotemporal models with an SPDE approach.
+We extend the generalized linear mixed models (GLMMs) familiar to ecologists to include the following optional features: 
 
-- Fits GLMMs with spatial, spatiotemporal, spatial and spatiotemporal, or AR1 spatiotemporal Gaussian Markov random fields with TMB. 
-- Uses formula interfaces for fixed effects and any time-varying effects (dynamic regression) (e.g. `formula = y ~ 1 + x1 + (1 | g), time_varying = ~ 0 + x2`), where `y` is the response, `1` represents an intercept, `0` omits an intercept, `x1` is a covariate with a constant effect, `(1 | g)` is a random intercept across groups `g`, and `x2` is a covariate with a time-varying effect.
-- Can fit spatially varying coefficients as a random field (e.g. `spatial_varying = ~ 0 + x3`).
-- Can handle GAMs (generalized additive models) with penalized smoothers from mgcv. E.g., `y ~ s(x)`.
-- Can handle linear breakpoint or logistic threshold fixed effects: `y ~ breakpt(x1)` or `y ~ logistic(x2)`.
-- Uses a `family(link)` format similar to `glm()`, lme4, or glmmTMB. This includes Gaussian, Poisson, negative binomial, gamma, binomial, lognormal, Student-t, and Tweedie distributions with identity, log, inverse, and logit links. E.g., `family = tweedie(link = "log")`.
-- Has `predict()` and `residuals()` methods. The residuals are randomized-quantile residuals similar to those implemented in the [DHARMa](https://cran.r-project.org/package=DHARMa) package. The `predict()` function can take a `newdata` argument similar to `lm()` or `glm()` etc. The predictions are bilinear interpolated predictive-process predictions (i.e., they make smooth pretty maps).
-- Has a simulation function `simulate()` for simulating from existing fits (e.g., for DHARMa), `sdmTMB_simulate()` for generating simulated data from scratch, and `sdmTMB_cv()` for cross-validation testing of model accuracy or comparing across model configurations.
-- Includes functionality for estimating the centre of gravity or total biomass by time step for index standardization.
-- Can optionally allow for anisotropy in the random fields (spatial correlation that is directionally dependent) and barriers (e.g., land for ocean species) to spatial correlation.
-- Can interpolate over missing time slices or forecast onto future time slices.
-- Can generate an SPDE predictive-process mesh or can take any standard R-INLA mesh created externally as input.
+* spatial fields
+* spatiotemporal fields that may be independent by year or modeled with random walks or autoregressive processes
+* smooth terms for covariates, using the familiar `s()` notation in mgcv
+* spatially varying coefficient models (SVCs)
+* non-stationary covariates (coefficients modeled as random walks)
+
+Estimation is performed in sdmTMB via maximum marginal likelihood, implemented using Template Model Builder (TMB).
+The sdmTMB package also allows for models to be passed to Stan, allowing for efficient Bayesian estimation.
+
+<!-- sdmTMB: -->
+
+<!-- - Fits GLMMs with spatial, spatiotemporal, spatial and spatiotemporal, or AR1 spatiotemporal Gaussian Markov random fields with TMB.  -->
+<!-- - Uses formula interfaces for fixed effects and any time-varying effects (dynamic regression) (e.g. `formula = y ~ 1 + x1 + (1 | g), time_varying = ~ 0 + x2`), where `y` is the response, `1` represents an intercept, `0` omits an intercept, `x1` is a covariate with a constant effect, `(1 | g)` is a random intercept across groups `g`, and `x2` is a covariate with a time-varying effect. -->
+<!-- - Can fit spatially varying coefficients as a random field (e.g. `spatial_varying = ~ 0 + x3`). -->
+<!-- - Can handle GAMs (generalized additive models) with penalized smoothers from mgcv. E.g., `y ~ s(x)`. -->
+<!-- - Can handle linear breakpoint or logistic threshold fixed effects: `y ~ breakpt(x1)` or `y ~ logistic(x2)`. -->
+<!-- - Uses a `family(link)` format similar to `glm()`, lme4, or glmmTMB. This includes Gaussian, Poisson, negative binomial, gamma, binomial, lognormal, Student-t, and Tweedie distributions with identity, log, inverse, and logit links. E.g., `family = tweedie(link = "log")`. -->
+<!-- - Has `predict()` and `residuals()` methods. The residuals are randomized-quantile residuals similar to those implemented in the [DHARMa](https://cran.r-project.org/package=DHARMa) package. The `predict()` function can take a `newdata` argument similar to `lm()` or `glm()` etc. The predictions are bilinear interpolated predictive-process predictions (i.e., they make smooth pretty maps). -->
+<!-- - Has a simulation function `simulate()` for simulating from existing fits (e.g., for DHARMa), `sdmTMB_simulate()` for generating simulated data from scratch, and `sdmTMB_cv()` for cross-validation testing of model accuracy or comparing across model configurations. -->
+<!-- - Includes functionality for estimating the centre of gravity or total biomass by time step for index standardization. -->
+<!-- - Can optionally allow for anisotropy in the random fields (spatial correlation that is directionally dependent) and barriers (e.g., land for ocean species) to spatial correlation. -->
+<!-- - Can interpolate over missing time slices or forecast onto future time slices. -->
+<!-- - Can generate an SPDE predictive-process mesh or can take any standard R-INLA mesh created externally as input. -->
 
 See `?sdmTMB` and `?predict.sdmTMB` for the most complete examples. Also see the vignettes ('Articles') on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html).
 
