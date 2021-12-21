@@ -359,6 +359,10 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     tmb_data$proj_spatial_index <- newdata$sdm_spatial_id
     tmb_data$proj_Zs <- sm$Zs
     tmb_data$proj_Xs <- sm$Xs
+    if (!is.null(object$spatial_varying)) {
+      if (!object$spatial_varying %in% names(newdata))
+        stop("The `spatial_varying` column is missing from `newdata`.", call. = FALSE)
+    }
     tmb_data$proj_z_i <- if (is.null(object$spatial_varying)) 0 else newdata[[object$spatial_varying]]
 
     epsilon_covariate <- rep(0, length(unique(newdata[[object$time]])))
