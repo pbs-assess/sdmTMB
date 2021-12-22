@@ -98,7 +98,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   }
   if (x$tmb_data$spatial_covariate) {
     log_name <- c(log_name, "log_sigma_Z")
-    name <- c(name, "sigma_Z", "ln_tau_Z")
+    name <- c(name, "sigma_Z")
   }
   if (x$tmb_data$random_walk) {
     log_name <- c(log_name, "ln_tau_V")
@@ -108,6 +108,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
     log_name <- c(log_name, "ln_tau_G")
     name <- c(name, "ln_tau_G")
   }
+
   j <- 0
   if (!"log_range" %in% names(est)) {
     warning("This model was fit with an old version of sdmTMB. Some parameters may not be available to the tidy() method. Re-fit the model with the current version of sdmTMB if you need access to any missing parameters.", call. = FALSE)
@@ -125,7 +126,13 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
         conf.high = exp(.e + crit * .se),
         stringsAsFactors = FALSE
       )
-      if (i == "sigma_Z") out_re[[i]]$term <- "sigma_Z"
+
+      # these ones don't have a non-log version in the .cpp:
+      if (i == "ln_tau_G") out_re[[i]]$estimate <- exp(out_re[[i]]$estimate)
+      if (i == "ln_tau_G") out_re[[i]]$term <- "sigma_G"
+      if (i == "ln_tau_V") out_re[[i]]$estimate <- exp(out_re[[i]]$estimate)
+      if (i == "ln_tau_V") out_re[[i]]$term <- "sigma_V"
+
       ii <- ii + 1
     }
     out_re[[i]]$std.error <- NA
@@ -139,15 +146,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
       std.error = NA, stringsAsFactors = FALSE)
     out_re$tweedie_p$conf.low <- plogis(est$thetaf - crit * se$thetaf) + 1
     out_re$tweedie_p$conf.high <- plogis(est$thetaf + crit * se$thetaf) + 1
-  }
-
-  if ("ln_tau_G" %in% names(out_re)) {
-    out_re$ln_tau_G$estimate <- exp(out_re$ln_tau_G$estimate)
-    out_re$ln_tau_G$term <- "tau_G"
-  }
-  if ("ln_tau_V" %in% names(out_re)) {
-    out_re$ln_tau_V$estimate <- exp(out_re$ln_tau_V$estimate)
-    out_re$ln_tau_V$term <- "tau_V"
   }
 
   r <- x$tmb_obj$report()
@@ -168,7 +166,8 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   row.names(out_re) <- NULL
 
   if (identical(est$ln_tau_E, 0)) out_re <- out_re[out_re$term != "sigma_E", ]
-  if (identical(est$ln_tau_V, 0)) out_re <- out_re[out_re$term != "tau_V", ]
+  if (identical(est$ln_tau_V, 0)) out_re <- out_re[out_re$term != "sigma_V", ]
+  if (identical(est$ln_tau_G, 0)) out_re <- out_re[out_re$term != "sigma_G", ]
   if (identical(est$ln_tau_O, 0)) out_re <- out_re[out_re$term != "sigma_O", ]
   if (identical(est$ln_tau_Z, 0)) out_re <- out_re[out_re$term != "sigma_Z", ]
 
