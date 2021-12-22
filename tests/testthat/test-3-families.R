@@ -181,9 +181,16 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     s <- sdmTMB_sim(x = x, y = y, sigma_E = 0, mesh = spde, sigma_O = 0.2,
       range = 0.8, family = Beta(), phi = 4)
     m <- sdmTMB(data = s, formula = observed ~ 1,
-      mesh = spde, family = Beta(link = "logit"))
+      mesh = spde, family = Beta(link = "logit"),
+      spatial = "off")
     expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
     expect_length(residuals(m), nrow(s))
+
+    m_glmmTMB<- glmmTMB::glmmTMB(data = s, formula = observed ~ 1,
+      family = glmmTMB::beta_family(link = "logit"))
+
+    expect_equal(m$model$par[[2]], m_glmmTMB$fit$par[[2]], tolerance = 1e-4)
+    expect_equal(m$model$par[[1]], m_glmmTMB$fit$par[[1]], tolerance = 1e-4)
   })
 }
 
