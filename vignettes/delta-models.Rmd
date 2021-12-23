@@ -1,0 +1,164 @@
+---
+title: "Fitting delta models with sdmTMB"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Fitting delta models with sdmTMB}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE, cache=FALSE}
+dplyr_installed <- require("dplyr", quietly = TRUE)
+ggplot_installed <- require("ggplot2", quietly = TRUE)
+inla_installed <- requireNamespace("INLA", quietly = TRUE)
+pkgs <- dplyr_installed && ggplot_installed && inla_installed
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.asp = 0.618,
+  eval = identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
+)
+```
+
+```{r packages, message=FALSE, warning=TRUE}
+library(ggplot2)
+library(dplyr)
+library(sdmTMB)
+```
+
+<!-- # ```{r packages, message=FALSE, warning=FALSE, cache=FALSE} -->
+<!-- # library(TMB) -->
+<!-- # library(VAST) -->
+<!-- # library(sp) -->
+<!-- # library(sdmTMB) -->
+<!-- # library(here) -->
+<!-- # ``` -->
+
+sdmTMB does not have built-in hurdle models, but we can fit the two components separately and easily combine the predictions. 
+In this case, our delta-gamma model involves fitting a binomial presence-absence model and then a model for the positive catches only with a Gamma observation distribution and a log link. 
+Hurdle models are more appropriate than something like a Tweedie when there are differences in the processes controlling presence vs. abundance, or when greater flexibility to account for overdispersion is required.
+A similar strategy can also be employed for zero-inflated count data, though additional zero-truncated distributions (yet to be implemented) may be required for some data sets. 
+
+We will use a data set built into the sdmTMB package: trawl survey data for Pacific Cod in Queen Charlotte Sound. The density units are kg/km^2^. Here, X and Y are coordinates in UTM zone 9.
+
+```{r glimpse-pcod}
+glimpse(pcod)
+```
+
+
+```{r spde, fig.asp=0.8}
+mesh1 <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
+plot(mesh1)
+```
+
+This delta-gamma model is quite similar to the Tweedie model in the [Intro to modelling with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/basic-intro.html) vignette, except that we will use `s()` for the depth effect.
+
+```{r model1, warning=FALSE}
+m1 <- sdmTMB(
+  formula = present ~ 0 + as.factor(year) + s(depth, k = 3), 
+  data = pcod, 
+  mesh = mesh1, 
+  time = "year", family = binomial(link = "logit"),
+  spatiotemporal = "iid", 
+  spatial = "on"
+  )
+m1
+```
+
+One can use different covariates in each model, but in this case we will just let the depth effect be more wiggly. 
+It's also not necessary to use the same mesh, but one can do so by updating the first mesh to match the reduced data frame as shown here:
+
+```{r model2, warning=FALSE}
+dat2 <- subset(pcod, density > 0)
+# it's not necessary to use the same mesh but one can by just updating the first mesh to match
+mesh2 <- make_mesh(dat2, xy_cols = c("X", "Y"),
+  mesh = mesh1$mesh)
+# plot(mesh2)
+
+m2 <- sdmTMB(
+  formula = density ~ 0 + as.factor(year) + s(depth), 
+  data = dat2, 
+  mesh = mesh2, 
+  time = "year", 
+  family = Gamma(link = "log"),
+  spatiotemporal = "iid", 
+  spatial = "on"
+  )
+m2
+```
+
+We can easily inspect to effect of the smoothed covariate using the function `plot_smooth()`.
+
+```{r model1-depth}
+s1 <- plot_smooth(m1, ggplot = TRUE) 
+s1 + xlim(min(pcod$depth), max(pcod$depth))
+```
+
+```{r model2-depth}
+s2 <- plot_smooth(m2, ggplot = TRUE) 
+s2 + xlim(min(pcod$depth), max(pcod$depth))
+```
+
+Next, we need some way of combining the predictions across the two models. 
+We will do that by simulating from the joint parameter precision matrix using the `predict()` function with any number of simulations selected (e.g., `sims = 500`). 
+<!-- Here, we use fewer for speed, but more is always better. -->
+
+```{r delta-pred, cache=TRUE, echo=TRUE}
+tictoc::tic()
+set.seed(28239)
+p_bin <- predict(m1, newdata = qcs_grid, sims = 500)
+p_pos <- predict(m2, newdata = qcs_grid, sims = 500)
+p_bin_prob <- plogis(p_bin)
+p_pos_exp <- exp(p_pos)
+p_combined <- p_bin_prob * p_pos_exp
+tictoc::toc()
+```
+
+`p_combined` is just a matrix with a row for each row of data that was predicted on and width sims (`dim(p_combined)`: `r dim(p_combined)`). 
+You can process this matrix however you would like. 
+We can save median predictions and upper and lower 95% confidence intervals:
+
+```{r mapped-pred}
+pred <- qcs_grid # use the grid as template for saving our predictions
+pred$median <- apply(p_combined, 1, median)
+# pred$lwr <- apply(p_combined, 1, quantile, probs = 0.025)
+# pred$upr <- apply(p_combined, 1, quantile, probs = 0.975)
+
+ggplot(subset(pred, year == 2017), aes(X, Y, fill = median)) +
+  geom_raster() +
+  scale_fill_viridis_c(trans = "sqrt")
+```
+
+And we can now calculate spatial uncertainty:
+
+```{r cv}
+pred$cv <- apply(p_combined, 1, function(x) sd(x) / mean(x))
+
+ggplot(subset(pred, year == 2017), aes(X, Y, fill = cv)) + # 2011 as an example
+    geom_raster() + facet_wrap(~year) +
+    coord_fixed() + scale_fill_viridis_c(trans = "log10")
+```
+
+sdmTMB also has a function for calculating an index from those draws `get_index_sims()`.
+The default for this function expects the simulations to still be in log space, so they we either need to `log(p_combined)`, or we can set `agg_function = function(x) sum(x)`. 
+Note that the number of simulations influences these estimates and confidence intervals.
+
+```{r get_index}
+qcs_grid$area <- 4 # all 2 x 2km
+ind <- get_index_sims(p_combined/1000, # convert from kg to tonnes
+                      agg_function = function(x) sum(x), 
+                      area = qcs_grid$area)
+ggplot(ind, aes(year, est)) + geom_line() +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4) +
+  ylab("Biomass (t)")
+```
+For more on modelling for the purposes of creating an index see the vignette on [Index standardization with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html).
+
+This document was built using:
+
+```{r, echo=TRUE}
+R.Version()$version.string
+packageVersion("sdmTMB")
+```
