@@ -96,29 +96,43 @@ s2 + xlim(min(pcod$depth), max(pcod$depth))
 ```
 
 Next, we need some way of combining the predictions across the two models. 
-We will do that by simulating from the joint parameter precision matrix using the `predict()` function with any number of simulations selected (e.g., `sims = 500`). 
-Note that because the predictions come from simulated draws from the parameter covariance matrix, the predictions will become more consistent with a larger number of draws. However, more draws take longer to calculate and take more memory (larger matrix), so small number (~100) may be fine for experimentation. 
-A larger number (say ~1000) may be appropriate for final model runs.
+If all we need are point predictions, we can just multiply the predictions from the two models:
 
-```{r delta-pred, cache=TRUE, echo=TRUE}
-set.seed(28239)
-p_bin <- predict(m1, newdata = qcs_grid, sims = 500)
-p_pos <- predict(m2, newdata = qcs_grid, sims = 500)
-p_bin_prob <- m1$family$linkinv(p_bin)
-p_pos_exp <- m2$family$linkinv(p_pos)
-p_combined <- p_bin_prob * p_pos_exp
+```{r delta-pred-simple, echo=TRUE}
+pred <- qcs_grid # use the grid as template for saving our predictions
+p_bin <- predict(m1, newdata = qcs_grid)
+p_pos <- predict(m2, newdata = qcs_grid)
+p_bin_prob <- m1$family$linkinv(p_bin$est)
+p_pos_exp <- m2$family$linkinv(p_pos$est)
+pred$est_exp <- p_bin_prob * p_pos_exp
 ```
 
-`p_combined` is just a matrix with a row for each row of data that was predicted on and width sims (`dim(p_combined)`: `r dim(p_combined)`). 
+But if a measure of uncertainty is required, we can simulate from the joint parameter precision matrix using the `predict()` function with any number of simulations selected (e.g., `sims = 500`). 
+Because the predictions come from simulated draws from the parameter covariance matrix, the predictions will become more consistent with a larger number of draws. 
+However, more draws take longer to calculate and take more memory (larger matrix), so small number (~100) may be fine for experimentation. 
+A larger number (say ~1000) may be appropriate for final model runs.
+
+```{r delta-pred-sim, echo=TRUE}
+set.seed(28239)
+p_bin_sim <- predict(m1, newdata = qcs_grid, sims = 500)
+p_pos_sim <- predict(m2, newdata = qcs_grid, sims = 500)
+p_bin_prob_sim <- m1$family$linkinv(p_bin_sim)
+p_pos_exp_sim <- m2$family$linkinv(p_pos_sim)
+p_combined_sim <- p_bin_prob_sim * p_pos_exp_sim
+```
+
+`p_combined_sim` is just a matrix with a row for each row of data that was predicted on and width sims (`dim(p_combined_sim)`: `r dim(p_combined_sim)`). 
 You can process this matrix however you would like. 
 We can save median predictions and upper and lower 95% confidence intervals:
 
-```{r mapped-pred}
-pred <- qcs_grid # use the grid as template for saving our predictions
-pred$median <- apply(p_combined, 1, median)
-# pred$lwr <- apply(p_combined, 1, quantile, probs = 0.025)
-# pred$upr <- apply(p_combined, 1, quantile, probs = 0.975)
+```{r, fig.width=5}
+pred$median <- apply(p_combined_sim, 1, median)
+# pred$lwr <- apply(p_combined_sim, 1, quantile, probs = 0.025)
+# pred$upr <- apply(p_combined_sim, 1, quantile, probs = 0.975)
+plot(pred$est_exp, pred$median)
+```
 
+```{r}
 ggplot(subset(pred, year == 2017), aes(X, Y, fill = median)) +
   geom_raster() +
   scale_fill_viridis_c(trans = "sqrt")
@@ -127,7 +141,7 @@ ggplot(subset(pred, year == 2017), aes(X, Y, fill = median)) +
 And we can now calculate spatial uncertainty:
 
 ```{r cv}
-pred$cv <- apply(p_combined, 1, function(x) sd(x) / mean(x))
+pred$cv <- apply(p_combined_sim, 1, function(x) sd(x) / mean(x))
 
 ggplot(subset(pred, year == 2017), aes(X, Y, fill = cv)) + # 2017 as an example
   geom_raster() +
@@ -142,7 +156,7 @@ The default for this function expects the simulations to still be in log space, 
 
 ```{r get_index}
 qcs_grid$area <- 4 # all 2 x 2km
-ind <- get_index_sims(p_combined / 1000, # convert from kg to tonnes
+ind <- get_index_sims(p_combined_sim / 1000, # convert from kg to tonnes
   agg_function = function(x) sum(x),
   area = qcs_grid$area
 )
