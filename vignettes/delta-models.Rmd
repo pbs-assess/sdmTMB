@@ -135,6 +135,7 @@ plot(pred$est_exp, pred$median)
 ```{r}
 ggplot(subset(pred, year == 2017), aes(X, Y, fill = median)) +
   geom_raster() +
+  coord_fixed() +
   scale_fill_viridis_c(trans = "sqrt")
 ```
 
@@ -145,7 +146,6 @@ pred$cv <- apply(p_combined_sim, 1, function(x) sd(x) / mean(x))
 
 ggplot(subset(pred, year == 2017), aes(X, Y, fill = cv)) + # 2017 as an example
   geom_raster() +
-  facet_wrap(~year) +
   coord_fixed() +
   scale_fill_viridis_c(trans = "log10")
 ```
