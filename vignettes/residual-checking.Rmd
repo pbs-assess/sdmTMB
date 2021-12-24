@@ -2,7 +2,7 @@
 title: "Residual checking with sdmTMB"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{residual-checking}
+  %\VignetteIndexEntry{Residual checking with sdmTMB}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
