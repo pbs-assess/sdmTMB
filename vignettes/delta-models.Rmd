@@ -43,10 +43,20 @@ glimpse(pcod)
 
 ```{r spde, fig.asp=0.7}
 mesh1 <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
-plot(mesh1)
 ```
 
-This delta-gamma model is similar to the Tweedie model in the [Intro to modelling with sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/basic-intro.html) vignette, except that we will use `s()` for the depth effect.
+It is not necessary to use the same mesh for both models, but one can do so by updating the first mesh to match the reduced data frame as shown here:
+
+```{r, fig.asp=0.9, cache=FALSE}
+dat2 <- subset(pcod, density > 0)
+mesh2 <- make_mesh(dat2,
+  xy_cols = c("X", "Y"),
+  mesh = mesh1$mesh
+)
+plot(mesh2)
+```
+
+This delta-gamma model is similar to the Tweedie model in the [Intro to modelling with sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/basic-intro.html) vignette, except that we will use `s()` for the depth effect. 
 
 ```{r model1, cache=TRUE, warning=FALSE}
 m1 <- sdmTMB(
@@ -61,14 +71,8 @@ m1
 ```
 
 One can use different covariates in each model, but in this case we will just let the depth effect be more wiggly by not specifying `k = 3`. 
-It's also not necessary to use the same mesh, but one can do so by updating the first mesh to match the reduced data frame as shown here:
 
 ```{r model2, cache=TRUE, warning=FALSE}
-dat2 <- subset(pcod, density > 0)
-mesh2 <- make_mesh(dat2,
-  xy_cols = c("X", "Y"),
-  mesh = mesh1$mesh
-)
 m2 <- sdmTMB(
   formula = density ~ 0 + as.factor(year) + s(depth),
   data = dat2,
