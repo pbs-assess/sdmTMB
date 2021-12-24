@@ -101,14 +101,12 @@ Note that because the predictions come from simulated draws from the parameter c
 A larger number (say ~1000) may be appropriate for final model runs.
 
 ```{r delta-pred, cache=TRUE, echo=TRUE}
-tictoc::tic()
 set.seed(28239)
 p_bin <- predict(m1, newdata = qcs_grid, sims = 500)
 p_pos <- predict(m2, newdata = qcs_grid, sims = 500)
 p_bin_prob <- m1$family$linkinv(p_bin)
 p_pos_exp <- m2$family$linkinv(p_pos)
 p_combined <- p_bin_prob * p_pos_exp
-tictoc::toc()
 ```
 
 `p_combined` is just a matrix with a row for each row of data that was predicted on and width sims (`dim(p_combined)`: `r dim(p_combined)`). 
