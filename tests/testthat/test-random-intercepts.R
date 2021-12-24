@@ -94,8 +94,8 @@ test_that("Model with random intercepts fits appropriately.", {
   .t <- tidy(m, "ran_pars")
   m.glmmTMB <- glmmTMB::glmmTMB(data = s, formula = observed ~ 1 + (1 | g) + (1 | h))
   .v <- glmmTMB::VarCorr(m.glmmTMB)
-  expect_equal(.t$estimate[.t$term == "tau_G"][1], sqrt(as.numeric(.v$cond$g)), tolerance = 1e-7)
-  expect_equal(.t$estimate[.t$term == "tau_G"][2], sqrt(as.numeric(.v$cond$h)), tolerance = 1e-7)
+  expect_equal(.t$estimate[.t$term == "sigma_G"][1], sqrt(as.numeric(.v$cond$g)), tolerance = 1e-7)
+  expect_equal(.t$estimate[.t$term == "sigma_G"][2], sqrt(as.numeric(.v$cond$h)), tolerance = 1e-7)
 
   sdmTMB_re <- as.list(m$sd_report, "Estimate")
   glmmTMB_re <- glmmTMB::ranef(m.glmmTMB)$cond
