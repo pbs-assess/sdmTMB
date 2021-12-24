@@ -12,7 +12,7 @@
 status](https://codecov.io/gh/pbs-assess/sdmTMB/branch/master/graph/badge.svg)](https://codecov.io/github/pbs-assess/sdmTMB?branch=master)
 <!-- badges: end -->
 
-sdmTMB is an R package that fits spatial and spatiotemporal GLMMs (Generalized Linear Mixed Effects Models) using Template Model Builder ([TMB](https://github.com/kaskr/adcomp)), [R-INLA](https://www.r-inla.org/), and Gaussian Markov random fields. One common application is for species distribution models (SDMs).
+sdmTMB is an R package that fits spatial and spatiotemporal predictive-process GLMMs (Generalized Linear Mixed Effects Models) using Template Model Builder ([TMB](https://github.com/kaskr/adcomp)), [R-INLA](https://www.r-inla.org/), and Gaussian Markov random fields. One common application is for species distribution models (SDMs).
 
 ## Table of contents
 
@@ -24,15 +24,17 @@ sdmTMB is an R package that fits spatial and spatiotemporal GLMMs (Generalized L
     -   [Spatially varying coefficients
         (SVC)](#spatially-varying-coefficients-svc)
     -   [Random intercepts](#random-intercepts)
+    -   [Breakpoint and theshold
+        effects](#breakpoint-and-theshold-effects)
     -   [Simulating data](#simulating-data)
-    -   [Bayesian MCMC sampling with
-        Stan](#bayesian-mcmc-sampling-with-stan)
     -   [Sampling from the joint precision
         matrix](#sampling-from-the-joint-precision-matrix)
     -   [Calculating uncertainty on spatial
         predictions](#calculating-uncertainty-on-spatial-predictions)
-    -   [Priors](#priors)
     -   [Cross validation](#cross-validation)
+    -   [Priors](#priors)
+    -   [Bayesian MCMC sampling with
+        Stan](#bayesian-mcmc-sampling-with-stan)
     -   [Turning off random fields](#turning-off-random-fields)
     -   [Using a custom INLA mesh](#using-a-custom-inla-mesh)
     -   [Barrier meshes](#barrier-meshes)
@@ -50,17 +52,17 @@ remotes::install_github("pbs-assess/sdmTMB")
 
 ## Overview
 
-Analyzing geostatistical data (coordinate-referenced observations) is
-becoming increasingly common in ecology. sdmTMB implements
-geostatistical spatial and spatiotemporal GLMMs using TMB for model
-fitting and R-INLA to set up SPDE (stochastic partial differential
-equation) matrices. One common application is for species distribution
-models (SDMs), hence the package name. The goal of sdmTMB is to provide
-a fast, flexible, and user-friendly interface—similar to the popular R
-package glmmTMB—but with the addition of spatial and spatiotemporal
-models with an SPDE approach. We extend the generalized linear mixed
-models (GLMMs) familiar to ecologists to include the following optional
-features:
+Analyzing geostatistical data (coordinate-referenced observations from
+some underlying spatial process) is becoming increasingly common in
+ecology. sdmTMB implements geostatistical spatial and spatiotemporal
+GLMMs using TMB for model fitting and R-INLA to set up SPDE (stochastic
+partial differential equation) matrices. One common application is for
+species distribution models (SDMs), hence the package name. The goal of
+sdmTMB is to provide a fast, flexible, and user-friendly
+interface—similar to the popular R package glmmTMB—but with a focus on
+spatial and spatiotemporal models with an SPDE approach. We extend the
+generalized linear mixed models (GLMMs) familiar to ecologists to
+include the following optional features:
 
 -   spatial random fields
 -   spatiotemporal random fields that may be independent by year or
@@ -68,8 +70,8 @@ features:
 -   smooth terms for covariates, using the familiar `s()` notation from
     mgcv
 -   breakpoint (hockey-stick) or logistic covariates
--   spatially varying coefficient models (SVCs)
 -   time-varying covariates (coefficients modelled as random walks)
+-   spatially varying coefficient models (SVCs)
 -   interpolation or forecasting over missing or future time slices
 -   a wide range of families: all standard R families plus `tweedie()`,
     `nbinom1()`, `nbinom2()`, `lognormal()`, and `student()`, plus some
@@ -153,8 +155,8 @@ Fit a spatial model with a smoother for depth:
 fit <- sdmTMB(
   density ~ s(depth, k = 5),
   data = pcod,
-  family = tweedie(link = "log"),
   mesh = mesh,
+  family = tweedie(link = "log"),
   spatial = "on"
 )
 ```
@@ -190,7 +192,7 @@ The output indicates our model was fit by maximum (marginal) likelihood
 see any estimated main effects including the linear component of the
 smoother (`sdepth`), the standard deviation on the smoother weights
 (`sds(depth)`), the Tweedie dispersion and power parameters, the Matérn
-range distance (distance at which points are effectively indepenent),
+range distance (distance at which points are effectively independent),
 the marginal spatial field standard deviation, and the negative log
 likelihood at convergence.
 
@@ -218,7 +220,7 @@ Plot the smoother effect:
 plot_smooth(fit, ggplot = TRUE)
 ```
 
-<img src="man/figures/README-unnamed-chunk-8-1.png" width="50%" />
+<img src="man/figures/README-plot-smooth-1.png" width="50%" />
 
 Predict on new data:
 
@@ -242,7 +244,7 @@ ggplot(p, aes(X, Y, fill = exp(est))) + geom_raster() +
   scale_fill_viridis_c(trans = "sqrt")
 ```
 
-<img src="man/figures/README-unnamed-chunk-12-1.png" width="50%" />
+<img src="man/figures/README-plot-predictions-1.png" width="50%" />
 
 We could switch to a presence-absence model by changing the response
 column and family:
@@ -250,9 +252,9 @@ column and family:
 ``` r
 fit <- sdmTMB(
   present ~ s(depth, k = 5),
-  data = pcod,
-  family = binomial(link = "logit"),
-  mesh = mesh
+  data = pcod, 
+  mesh = mesh,
+  family = binomial(link = "logit")
 )
 ```
 
@@ -262,10 +264,10 @@ column and a spatiotemporal structure:
 ``` r
 fit_spatiotemporal <- sdmTMB(
   density ~ s(depth, k = 5), 
-  family = tweedie(link = "log"), 
   data = pcod, 
   mesh = mesh,
-  time = "year", 
+  time = "year",
+  family = tweedie(link = "log"), 
   spatial = "off", 
   spatiotemporal = "ar1"
 )
@@ -285,7 +287,7 @@ ggplot(index, aes(year, est)) +
   labs(x = "Year", y = "Biomass (kg)")
 ```
 
-<img src="man/figures/README-unnamed-chunk-15-1.png" width="50%" />
+<img src="man/figures/README-plot-index-1.png" width="50%" />
 
 Or the center of gravity:
 
@@ -297,28 +299,17 @@ ggplot(cog, aes(est_x, est_y, colour = year)) +
   scale_colour_viridis_c()
 ```
 
-<img src="man/figures/README-unnamed-chunk-16-1.png" width="50%" />
+<img src="man/figures/README-plot-cog-1.png" width="50%" />
+
+For more on these basic features, see the vignettes [Intro to modelling
+with
+sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/basic-intro.html)
+and [Index standardization with
+sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html).
 
 ## Advanced functionality
 
 ### Time-varying coefficients
-
-Time-varying (random walk) effect of depth:
-
-``` r
-mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
-fit <- sdmTMB(
-  density ~ 1, 
-  time_varying = ~ 0 + depth,
-  family = tweedie(link = "log"),
-  data = pcod,
-  mesh = mesh,
-  spatial = "off",
-  spatiotemporal = "ar1",
-  time = "year",
-  silent = FALSE # see progress
-)
-```
 
 Time-varying intercept:
 
@@ -326,12 +317,31 @@ Time-varying intercept:
 fit <- sdmTMB(
   density ~ 0 + s(depth, k = 5), 
   time_varying = ~ 1, 
-  data = pcod,
-  mesh = mesh,
+  data = pcod, mesh = mesh,
+  time = "year",  
+  family = tweedie(link = "log"),
+  silent = FALSE # see progress
+)
+```
+
+Time-varying (random walk) effect of depth:
+
+``` r
+fit <- sdmTMB(
+  density ~ 1, 
+  time_varying = ~ 0 + depth_scaled + depth_scaled2,
+  data = pcod, mesh = mesh,
   time = "year",
+  family = tweedie(link = "log"),
+  spatial = "off",
+  spatiotemporal = "ar1",
   silent = FALSE
 )
 ```
+
+See the vignette [Intro to modelling with
+sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/basic-intro.html)
+for more details.
 
 ### Spatially varying coefficients (SVC)
 
@@ -341,11 +351,10 @@ Spatially varying effect of time:
 pcod$year_scaled <- as.numeric(scale(pcod$year))
 fit <- sdmTMB(
   density ~ s(depth, k = 5) + year_scaled,
-  data = pcod,
-  mesh = mesh, 
-  family = tweedie(link = "log"),
   spatial_varying = ~ 0 + year_scaled, 
+  data = pcod, mesh = mesh, 
   time = "year",
+  family = tweedie(link = "log"),
   spatiotemporal = "off"
 )
 ```
@@ -361,7 +370,11 @@ ggplot(p, aes(X, Y, fill = zeta_s)) + geom_raster() +
   scale_fill_gradient2()
 ```
 
-<img src="man/figures/README-unnamed-chunk-20-1.png" width="50%" />
+<img src="man/figures/README-plot-zeta-1.png" width="50%" />
+
+See the vignette on [Fitting spatial trend models with
+sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html)
+for more details.
 
 ### Random intercepts
 
@@ -372,12 +385,33 @@ random intercepts:
 pcod$year_factor <- as.factor(pcod$year)
 fit <- sdmTMB(
   density ~ s(depth, k = 5) + (1 | year_factor),
-  family = tweedie(link = "log"), 
-  data = pcod, 
-  mesh = mesh,
-  time = "year"
+  data = pcod, mesh = mesh,
+  time = "year",
+  family = tweedie(link = "log")
 )
 ```
+
+### Breakpoint and theshold effects
+
+``` r
+fit <- sdmTMB(
+  present ~ 1 + breakpt(depth_scaled), 
+  data = pcod, mesh = mesh,
+  family = binomial(link = "logit")
+)
+```
+
+``` r
+fit <- sdmTMB(
+  present ~ 1 + logistic(depth_scaled), 
+  data = pcod, mesh = mesh,
+  family = binomial(link = "logit")
+)
+```
+
+See the vignette on [Threshold modeling with
+sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html)
+for more details.
 
 ### Simulating data
 
@@ -423,7 +457,7 @@ ggplot(sim_dat, aes(X, Y)) +
   coord_cartesian(expand = FALSE)
 ```
 
-<img src="man/figures/README-unnamed-chunk-23-1.png" width="50%" />
+<img src="man/figures/README-plot-sim-dat-1.png" width="50%" />
 
 Fit to the simulated data:
 
@@ -432,8 +466,8 @@ mesh <- make_mesh(sim_dat_obs, xy_cols = c("X", "Y"), cutoff = 0.05)
 fit <- sdmTMB(
   observed ~ 1,
   data = sim_dat_obs,
-  family = poisson(),
-  mesh = mesh
+  mesh = mesh,
+  family = poisson()
 )
 ```
 
@@ -465,7 +499,7 @@ res <- DHARMa::createDHARMa(
 DHARMa::plotQQunif(res, testUniformity = FALSE, testOutliers = FALSE, testDispersion = FALSE)
 ```
 
-<img src="man/figures/README-unnamed-chunk-26-1.png" width="50%" />
+<img src="man/figures/README-plot-dharma-1.png" width="50%" />
 
 Comparing those to the built-in randomized-quantile residuals:
 
@@ -474,53 +508,11 @@ r <- residuals(fit)
 qqnorm(r);qqline(r)
 ```
 
-<img src="man/figures/README-unnamed-chunk-27-1.png" width="50%" />
+<img src="man/figures/README-plot-quant-resid-1.png" width="50%" />
 
-See
-[`?simulate.sdmTMB](https://pbs-assess.github.io/sdmTMB/reference/simulate.sdmTMB.html) and [`?residuals.sdmTMB](https://pbs-assess.github.io/sdmTMB/reference/residuals.sdmTMB.html)
-for more details.
-
-### Bayesian MCMC sampling with Stan
-
-The fitted model can be passed to the tmbstan package to sample from the
-posterior with Stan. Note this can be slow for larger or poorly
-identified models. See examples of fixing parameters in
-[`?extract_mcmc`](https://pbs-assess.github.io/sdmTMB/reference/extract_mcmc.html).
-
-``` r
-# only 1 chain and 400 iterations for speed:
-fit_mcmc <- tmbstan::tmbstan(fit$tmb_obj, chains = 1, iter = 400)
-```
-
-Internal parameter posteriors:
-
-``` r
-print(fit_mcmc, pars = c("b_j", "omega_s[1]"))
-#> Inference for Stan model: sdmTMB.
-#> 1 chains, each with iter=400; warmup=200; thin=1; 
-#> post-warmup draws per chain=200, total post-warmup draws=200.
-#> 
-#>             mean se_mean   sd  2.5%   25%   50%  75% 97.5% n_eff Rhat
-#> b_j         0.99    0.03 0.15  0.62  0.93  1.00 1.06  1.27    35 1.00
-#> omega_s[1] -0.07    0.03 0.23 -0.50 -0.23 -0.06 0.10  0.33    63 1.01
-#> 
-#> Samples were drawn using NUTS(diag_e) at Mon Dec 20 23:02:26 2021.
-#> For each parameter, n_eff is a crude measure of effective sample size,
-#> and Rhat is the potential scale reduction factor on split chains (at 
-#> convergence, Rhat=1).
-```
-
-Predicting with the Stan/tmbstan model:
-
-``` r
-pred_mcmc <- predict(fit, newdata = qcs_grid, tmbstan_model = fit_mcmc)
-# Each row has 200 posterior samples for a row of the `newdata` data frame:
-dim(pred_mcmc)
-#> [1] 65826   200
-```
-
-See
-[`?extract_mcmc`](https://pbs-assess.github.io/sdmTMB/reference/extract_mcmc.html)
+See the vignette on [Residual checking with
+sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html),
+[`?simulate.sdmTMB](https://pbs-assess.github.io/sdmTMB/reference/simulate.sdmTMB.html), and [`?residuals.sdmTMB](https://pbs-assess.github.io/sdmTMB/reference/residuals.sdmTMB.html)
 for more details.
 
 ### Sampling from the joint precision matrix
@@ -535,7 +527,7 @@ ggplot(samps, aes(.value)) + geom_histogram() +
 #> `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-<img src="man/figures/README-unnamed-chunk-31-1.png" width="50%" />
+<img src="man/figures/README-plot-mvn-1.png" width="50%" />
 
 See
 [`?gather_sims`](https://pbs-assess.github.io/sdmTMB/reference/gather_sims.html)
@@ -557,42 +549,7 @@ ggplot(predictor_dat, aes(X, Y, fill = se)) +
   coord_cartesian(expand = FALSE)
 ```
 
-<img src="man/figures/README-unnamed-chunk-32-1.png" width="50%" />
-
-### Priors
-
-Priors/penalties can be placed on most parameters. For example, here we
-place a PC (penalized complexity) prior on the Matérn random field
-parameters, a standard normal prior on the effect of depth, a Normal(0,
-10^2) prior on the intercept, and a half-normal prior on the Tweedie
-dispersion parameter (`phi`):
-
-``` r
-mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
-fit <- sdmTMB(
-  density ~ depth_scaled,
-  data = pcod,
-  family = tweedie(),
-  mesh = mesh,
-  priors = sdmTMBpriors(
-    matern_s = pc_matern(range_gt = 10, sigma_lt = 5),
-    b = normal(c(0, 0), c(1, 10)),
-    phi = halfnormal(0, 15)
-  )
-)
-```
-
-We can visualize the PC Matérn prior:
-
-``` r
-plot_pc_matern(range_gt = 10, sigma_lt = 5)
-```
-
-<img src="man/figures/README-unnamed-chunk-34-1.png" width="50%" />
-
-See
-[`?sdmTMBpriors`](https://pbs-assess.github.io/sdmTMB/reference/priors.html)
-for more details.
+<img src="man/figures/README-plot-pred-mvn-1.png" width="50%" />
 
 ### Cross validation
 
@@ -613,15 +570,92 @@ m_cv <- sdmTMB_cv(
 #> Set a parallel `future::plan()` to use parallel processing.
 # Sum of log likelihoods of left-out data:
 m_cv$sum_loglik
-#> [1] -6806.148
+#> [1] -6750.892
 # Expected log pointwise predictive density from left-out data:
 # (average likelihood density)
 m_cv$elpd
-#> [1] -1.009422
+#> [1] -1.008653
 ```
 
 See
 [`?sdmTMB_cv`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB_cv.html)
+for more details.
+
+### Priors
+
+Priors/penalties can be placed on most parameters. For example, here we
+place a PC (penalized complexity) prior on the Matérn random field
+parameters, a standard normal prior on the effect of depth, a Normal(0,
+10^2) prior on the intercept, and a half-normal prior on the Tweedie
+dispersion parameter (`phi`):
+
+``` r
+mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
+fit <- sdmTMB(
+  density ~ depth_scaled,
+  data = pcod, mesh = mesh,
+  family = tweedie(),
+  priors = sdmTMBpriors(
+    matern_s = pc_matern(range_gt = 10, sigma_lt = 5),
+    b = normal(c(0, 0), c(1, 10)),
+    phi = halfnormal(0, 15)
+  )
+)
+```
+
+We can visualize the PC Matérn prior:
+
+``` r
+plot_pc_matern(range_gt = 10, sigma_lt = 5)
+```
+
+<img src="man/figures/README-plot-pc-matern-1.png" width="50%" />
+
+See
+[`?sdmTMBpriors`](https://pbs-assess.github.io/sdmTMB/reference/priors.html)
+for more details.
+
+### Bayesian MCMC sampling with Stan
+
+The fitted model can be passed to the tmbstan package to sample from the
+posterior with Stan. Note this can be slow for large or poorly
+identified models. See examples of fixing parameters in
+[`?extract_mcmc`](https://pbs-assess.github.io/sdmTMB/reference/extract_mcmc.html).
+
+``` r
+# only 1 chain and 400 iterations for speed:
+fit_mcmc <- tmbstan::tmbstan(fit$tmb_obj, chains = 1, iter = 400)
+```
+
+Internal parameter posteriors:
+
+``` r
+print(fit_mcmc, pars = c("b_j", "omega_s[1]"))
+#> Inference for Stan model: sdmTMB.
+#> 1 chains, each with iter=400; warmup=200; thin=1; 
+#> post-warmup draws per chain=200, total post-warmup draws=200.
+#> 
+#>             mean se_mean   sd  2.5%   25%   50%  75% 97.5% n_eff Rhat
+#> b_j         0.99    0.03 0.15  0.62  0.93  1.00 1.06  1.27    35 1.00
+#> omega_s[1] -0.07    0.03 0.23 -0.50 -0.23 -0.06 0.10  0.33    63 1.01
+#> 
+#> Samples were drawn using NUTS(diag_e).
+#> For each parameter, n_eff is a crude measure of effective sample size,
+#> and Rhat is the potential scale reduction factor on split chains (at 
+#> convergence, Rhat=1).
+```
+
+Predicting with the Stan/tmbstan model:
+
+``` r
+pred_mcmc <- predict(fit, newdata = qcs_grid, tmbstan_model = fit_mcmc)
+# Each row has 200 posterior samples for a row of the `newdata` data frame:
+dim(pred_mcmc)
+#> [1] 65826   200
+```
+
+See
+[`?extract_mcmc`](https://pbs-assess.github.io/sdmTMB/reference/extract_mcmc.html)
 for more details.
 
 ### Turning off random fields
@@ -671,14 +705,13 @@ mesh <- make_mesh(pcod, c("X", "Y"), mesh = mesh_inla)
 plot(mesh)
 ```
 
-<img src="man/figures/README-unnamed-chunk-37-1.png" width="50%" />
+<img src="man/figures/README-inla-mesh-1.png" width="30%" />
 
 ``` r
 fit <- sdmTMB(
   density ~ s(depth, k = 5),
-  data = pcod,
-  family = tweedie(link = "log"),
-  mesh = mesh
+  data = pcod, mesh = mesh,
+  family = tweedie(link = "log")
 )
 ```
 
