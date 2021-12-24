@@ -29,11 +29,12 @@ library(sdmTMB)
 ```
 
 sdmTMB does not have built-in hurdle models (also called delta models), but we can fit the two components separately and easily combine the predictions. 
-In this case, our delta-gamma model involves fitting a binomial presence-absence model (`family = binomial(link = "logit")`) and then a model for the positive catches only with a Gamma observation distribution and a log link (`Gamma(link = "log")`). 
+In this case, our delta-gamma model involves fitting a binomial presence-absence model (`family = binomial(link = "logit")`) and then a model for the positive catches only with a gamma observation distribution and a log link (`Gamma(link = "log")`).
+We could also use a `lognormal(link = "log")` family.
 Hurdle models are more appropriate than something like a Tweedie when there are differences in the processes controlling presence vs. abundance, or when greater flexibility to account for overdispersion is required.
-A similar strategy can also be employed for zero-inflated count data but with a a `truncated_nbinom1(link = "log")` or `truncated_nbinom2(link = "log")` distribution instead of the Gamma. 
+A similar strategy can also be used for zero-inflated count data but with a `truncated_nbinom1(link = "log")` or `truncated_nbinom2(link = "log")` distribution instead of the gamma for the positive component.
 
-We will use a data set built into the sdmTMB package: trawl survey data for Pacific Cod in Queen Charlotte Sound. The density units are kg/km^2^. Here, X and Y are coordinates in UTM zone 9.
+We will use a dataset built into the sdmTMB package: trawl survey data for Pacific Cod in Queen Charlotte Sound, British Columbia, Canada. The density units are kg/km^2^. Here, X and Y are coordinates in UTM zone 9.
 
 ```{r glimpse-pcod}
 glimpse(pcod)
@@ -45,7 +46,7 @@ mesh1 <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
 plot(mesh1)
 ```
 
-This delta-gamma model is quite similar to the Tweedie model in the [Intro to modelling with sdmTMB](https://https://pbs-assess.github.io/sdmTMB/articles/basic-intro.html) vignette, except that we will use `s()` for the depth effect.
+This delta-gamma model is similar to the Tweedie model in the [Intro to modelling with sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/basic-intro.html) vignette, except that we will use `s()` for the depth effect.
 
 ```{r model1, cache=TRUE, warning=FALSE}
 m1 <- sdmTMB(
@@ -64,13 +65,10 @@ It's also not necessary to use the same mesh, but one can do so by updating the 
 
 ```{r model2, cache=TRUE, warning=FALSE}
 dat2 <- subset(pcod, density > 0)
-# it's not necessary to use the same mesh but one can by just updating the first mesh to match
 mesh2 <- make_mesh(dat2,
   xy_cols = c("X", "Y"),
   mesh = mesh1$mesh
 )
-# plot(mesh2)
-
 m2 <- sdmTMB(
   formula = density ~ 0 + as.factor(year) + s(depth),
   data = dat2,
@@ -83,7 +81,7 @@ m2 <- sdmTMB(
 m2
 ```
 
-We can easily inspect the effect of the smoothed covariate using the function `plot_smooth()`.
+We can inspect the effect of the smoothed covariate using `plot_smooth()`.
 
 ```{r model1-depth, cache=TRUE}
 s1 <- plot_smooth(m1, ggplot = TRUE)
@@ -96,7 +94,7 @@ s2 + xlim(min(pcod$depth), max(pcod$depth))
 ```
 
 Next, we need some way of combining the predictions across the two models. 
-If all we need are point predictions, we can just multiply the predictions from the two models:
+If all we need are point predictions, we can just multiply the predictions from the two models after applying the inverse link:
 
 ```{r delta-pred-simple, echo=TRUE}
 pred <- qcs_grid # use the grid as template for saving our predictions
@@ -109,7 +107,7 @@ pred$est_exp <- p_bin_prob * p_pos_exp
 
 But if a measure of uncertainty is required, we can simulate from the joint parameter precision matrix using the `predict()` function with any number of simulations selected (e.g., `sims = 500`). 
 Because the predictions come from simulated draws from the parameter covariance matrix, the predictions will become more consistent with a larger number of draws. 
-However, more draws take longer to calculate and take more memory (larger matrix), so small number (~100) may be fine for experimentation. 
+However, a greater number of draws takes longer to calculate and will use more memory (larger matrix), so fewer draws (~100) may be fine for experimentation. 
 A larger number (say ~1000) may be appropriate for final model runs.
 
 ```{r delta-pred-sim, echo=TRUE}
@@ -143,7 +141,6 @@ And we can now calculate spatial uncertainty:
 
 ```{r cv}
 pred$cv <- apply(p_combined_sim, 1, function(x) sd(x) / mean(x))
-
 ggplot(subset(pred, year == 2017), aes(X, Y, fill = cv)) + # 2017 as an example
   geom_raster() +
   coord_fixed() +
@@ -152,7 +149,7 @@ ggplot(subset(pred, year == 2017), aes(X, Y, fill = cv)) + # 2017 as an example
 
 sdmTMB also has a function for calculating an index from those draws `get_index_sims()`.
 This function is just summing biomass or abundance across grid cells for each simulation draw and for each year and then calculating quantiles on the distribution of samples.
-The default for this function expects the simulations to still be in log space, so then we either need to `log(p_combined)`, or we can set `agg_function = function(x) sum(x)`. 
+The default for this function expects the simulations to still be in log space, so we either need to `log(p_combined)`, or we can set `agg_function = function(x) sum(x)`. 
 
 ```{r get_index}
 qcs_grid$area <- 4 # all 2 x 2km
