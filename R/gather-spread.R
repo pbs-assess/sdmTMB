@@ -39,15 +39,19 @@ spread_sims <- function(object, n_sims = 200) {
   samps <- rmvnorm_prec(object$tmb_obj$env$last.par.best, tmb_sd, n_sims)
   pars <- c(tmb_sd$par.fixed, tmb_sd$par.random)
   pn <- names(pars)
-  pars <- pars[pn %in% names(tmb_sd$par.fixed)]
-  samps <- samps[pn %in% names(tmb_sd$par.fixed), , drop = FALSE]
-  pn <- pn[pn %in% names(tmb_sd$par.fixed)]
+  pn <- c(pn[pn == "b_j"], pn[pn != "b_j"]) # if REML, must move b_j to beginning:
+  par_fixed <- names(tmb_sd$par.fixed)
+  if (object$reml) par_fixed <- c("b_j", par_fixed)
+  pars <- pars[pn %in% par_fixed]
+  samps <- samps[pn %in% par_fixed, , drop = FALSE]
+  pn <- pn[pn %in% par_fixed]
   .formula <- object$split_formula$fixedFormula
   if (isFALSE(object$mgcv)) {
     fe_names <- colnames(model.matrix(.formula, object$data))
   } else {
     fe_names <- colnames(model.matrix(mgcv::gam(.formula, data = object$data)))
   }
+
   fe_names <- fe_names[!fe_names == "offset"]
   row.names(samps) <- pn
   row.names(samps)[row.names(samps) == "b_j"] <- fe_names
