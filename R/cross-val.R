@@ -37,6 +37,16 @@ ll_student <- function(object, withheld_y, withheld_mu) {
   dstudent(x = withheld_y, df = object$tmb_data$df, mean = withheld_mu, sd = .sd, log = TRUE)
 }
 
+ll_nbinom1 <- function(object, withheld_y, withheld_mu) {
+  phi <- exp(object$model$par[["ln_phi"]])
+  stats::dnbinom(x = withheld_y, size = withheld_mu/phi, mu = withheld_mu, log = TRUE)
+}
+
+ll_nbinom2 <- function(object, withheld_y, withheld_mu) {
+  phi <- exp(object$model$par[["ln_phi"]])
+  stats::dnbinom(x = withheld_y, size = phi, mu = withheld_mu, log = TRUE)
+}
+
 ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
   family_func <- switch(object$family$family,
     gaussian = ll_gaussian,
@@ -45,6 +55,8 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
     lognormal = ll_lognormal,
     student = ll_student,
     Gamma = ll_gamma,
+    nbinom1 = ll_nbinom1,
+    nbinom2 = ll_nbinom2,
     stop(object$family$family, " not yet implemented. ",
       "Please file an issue on GitHub.",
       call. = FALSE
