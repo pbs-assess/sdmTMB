@@ -40,6 +40,11 @@
 #'   uncertainty on predictions (e.g., `apply(x, 1, sd)`) or propagating
 #'   uncertainty. This is currently the fastest way to generate estimates of
 #'   uncertainty on predictions in space with sdmTMB.
+#' @param sims_var **Experimental.** Which TMB reported variable from the model
+#'   should be extracted from the joint precision matrix simulation draws?
+#'   Defaults to the link-space predictions. Options include: `"omega_s"`,
+#'   `"zeta_s"`, `"epsilon_st"`, and `"est_rf"` (as described below).
+#'   Other options will be passed verbatim.
 #' @param tmbstan_model A model fit with [tmbstan::tmbstan()]. See
 #'   [extract_mcmc()] for more details and an example. If specificed, the
 #'   predict function will return a matrix of a similar form as if `sims > 0`
@@ -220,7 +225,7 @@
 predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
   return_tmb_object = FALSE,
   area = 1, re_form = NULL, re_form_iid = NULL,
-  sims = 0, tmbstan_model = NULL, ...) {
+  sims = 0, sims_var = "est", tmbstan_model = NULL, ...) {
 
   if ("version" %in% names(object)) {
     check_sdmTMB_version(object$version)
@@ -413,7 +418,14 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
       r <- apply(t_draws, 2L, new_tmb_obj$report)
     }
     if (!is.null(tmbstan_model) || sims > 0) {
-      out <- lapply(r, `[[`, "proj_eta")
+      .var <-  switch(sims_var,
+        "est" = "proj_eta",
+        "est_rf" = "proj_rf",
+        "omega_s" = "proj_re_sp_st",
+        "zeta_s" = "proj_re_sp_slopes",
+        "epsilon_st" = "proj_re_st_vector",
+        sims_var)
+      out <- lapply(r, `[[`, .var)
       out <- do.call("cbind", out)
       rownames(out) <- nd[[object$time]] # for use in index calcs
       attr(out, "time") <- object$time

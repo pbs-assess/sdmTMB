@@ -13,6 +13,7 @@
   re_form = NULL,
   re_form_iid = NULL,
   sims = 0,
+  sims_var = "est",
   tmbstan_model = NULL,
   ...
 )
@@ -58,6 +59,12 @@ of the linear predictor (i.e., in link space). Can be useful for deriving
 uncertainty on predictions (e.g., \code{apply(x, 1, sd)}) or propagating
 uncertainty. This is currently the fastest way to generate estimates of
 uncertainty on predictions in space with sdmTMB.}
+
+\item{sims_var}{\strong{Experimental.} Which TMB reported variable from the model
+should be extracted from the joint precision matrix simulation draws?
+Defaults to the link-space predictions. Options include: \code{"omega_s"},
+\code{"zeta_s"}, \code{"epsilon_st"}, and \code{"est_rf"} (as described below).
+Other options will be passed verbatim.}
 
 \item{tmbstan_model}{A model fit with \code{\link[tmbstan:tmbstan]{tmbstan::tmbstan()}}. See
 \code{\link[=extract_mcmc]{extract_mcmc()}} for more details and an example. If specificed, the
