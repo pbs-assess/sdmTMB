@@ -536,7 +536,7 @@ Type objective_function<Type>::operator()()
         break;
       case binomial_family:  // in logit space not inverse logit
         tmp_ll = dbinom_robust(y_i(i), size(i), mu_i(i), true);
-        SIMULATE{y_i(i) = rbinom(size(i), InverseLink(mu_i(i)));}
+        SIMULATE{y_i(i) = rbinom(size(i), InverseLink(mu_i(i), link));}
         break;
       case poisson_family:
         tmp_ll = dpois(y_i(i), mu_i(i), true);
