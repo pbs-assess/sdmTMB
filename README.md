@@ -512,7 +512,9 @@ qqnorm(r);qqline(r)
 
 See the vignette on [Residual checking with
 sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html),
-[`?simulate.sdmTMB](https://pbs-assess.github.io/sdmTMB/reference/simulate.sdmTMB.html), and [`?residuals.sdmTMB](https://pbs-assess.github.io/sdmTMB/reference/residuals.sdmTMB.html)
+[`?simulate.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/simulate.sdmTMB.html),
+and
+[`?residuals.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/residuals.sdmTMB.html)
 for more details.
 
 ### Sampling from the joint precision matrix
