@@ -8,9 +8,11 @@ qres_tweedie <- function(object, y, mu) {
 }
 
 qres_binomial <- function(object, y, mu, n = NULL) {
+  p <- object$family$linkinv(mu) # robust binomial in link space!
   if (is.null(n)) n <- rep(1, length(y))
-  a <- stats::pbinom(n - y, n, mu)
-  b <- stats::pbinom(y, n, mu)
+  y <- n * y
+  a <- stats::pbinom(y - 1, n, p)
+  b <- stats::pbinom(y, n, p)
   u <- stats::runif(n = length(y), min = pmin(a, b), max = pmax(a, b))
   stats::qnorm(u)
 }
