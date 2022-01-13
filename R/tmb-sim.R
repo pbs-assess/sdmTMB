@@ -382,3 +382,56 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
 
   do.call(cbind, ret)
 }
+
+#' Get DHARMa residuals
+#'
+#' @param object Output from [sdmTMB()].
+#' @param simulated_response Output from [simulate.sdmTMB()].
+#' @param plot Logical. A data frame of observed and expected values is
+#'   invisibly returned, so you can set `plot = FALSE` and assign the output to
+#'   an object if you wish to plot the residuals yourself. See the examples.
+#' @param fitted_column The column from the output of [predict.sdmTMB()] to pass
+#'   to [DHARMa::createDHARMa()]'s `fittedPredictedResponse` argument.
+#' @param ... Other arguments to pass to [DHARMa::createDHARMa()].
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' fit <- sdmTMB(density ~ 0 + as.factor(year),
+#'   data = pcod_2011, time = "year", mesh = pcod_mesh_2011,
+#'   family = tweedie(link = "log"), spatial = "on",
+#'   spatiotemporal = "off")
+#' s <- simulate(m, nsim = 500)
+#' get_dharma_residuals(fit, s)
+#' r <- get_dharma_residuals(fit, s, plot = FALSE)
+#' head(r)
+#' plot(r$expected, r$observed)
+#' abline(a = 0, b = 1)
+
+get_dharma_residuals <- function(object, simulated_response, plot = TRUE,
+                                 fitted_column = "est_non_rf", ...) {
+  if (!requireNamespace("DHARMa", quietly = TRUE)) {
+    stop("DHARMa must be installed to use this function.", call. = FALSE)
+  }
+  .fitted <- object$family$linkinv(predict(object, newdata = NULL)[[fitted_column]])
+  res <- DHARMa::createDHARMa(
+    simulatedResponse = sim_response,
+    observedResponse = as.numeric(object$response),
+    fittedPredictedResponse = .fitted,
+    ...
+  )
+  u <- res$scaledResiduals
+  .n <- length(u)
+  m <- seq_len(.n) / (.n + 1)
+  z <- stats::qqplot(m, u, plot.it = FALSE)
+  if (plot) {
+    DHARMa::plotQQunif(
+      res,
+      testUniformity = FALSE,
+      testOutliers = FALSE, testDispersion = FALSE
+    )
+  }
+  invisible(data.frame(observed = z$y, expected = z$x))
+}
+
