@@ -478,43 +478,32 @@ for more details.
 #### Simulating from an existing fit
 
 ``` r
-s <- simulate(fit, nsim = 100)
+s <- simulate(fit, nsim = 500)
 dim(s)
-#> [1] 200 100
+#> [1] 969 500
 s[1:3,1:4]
-#>      [,1] [,2] [,3] [,4]
-#> [1,]    5    2    4    4
-#> [2,]    2    2    3    2
-#> [3,]    5    5    2    4
+#>      [,1]     [,2]     [,3]     [,4]
+#> [1,]    0 59.40310 83.20888  0.00000
+#> [2,]    0 34.56408  0.00000 19.99839
+#> [3,]    0  0.00000  0.00000  0.00000
 ```
 
 Using those simulations to check DHARMa residuals:
 
 ``` r
-res <- DHARMa::createDHARMa(
-  simulatedResponse = s,
-  observedResponse = sim_dat_obs$observed,
-  fittedPredictedResponse = predict(fit)$est_non_rf # identity link
-)
-DHARMa::plotQQunif(res, testUniformity = FALSE, testOutliers = FALSE, testDispersion = FALSE)
+# dharma_residuals(s, fit)
+# or with the pipe, %>%:
+simulate(fit, nsim = 500) %>% 
+  dharma_residuals(fit)
 ```
 
 <img src="man/figures/README-plot-dharma-1.png" width="50%" />
-
-Comparing those to the built-in randomized-quantile residuals:
-
-``` r
-r <- residuals(fit)
-qqnorm(r);qqline(r)
-```
-
-<img src="man/figures/README-plot-quant-resid-1.png" width="50%" />
 
 See the vignette on [Residual checking with
 sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html),
 [`?simulate.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/simulate.sdmTMB.html),
 and
-[`?residuals.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/residuals.sdmTMB.html)
+[`?dharma_residuals`](https://pbs-assess.github.io/sdmTMB/reference/dharma_residuals.html)
 for more details.
 
 ### Sampling from the joint precision matrix

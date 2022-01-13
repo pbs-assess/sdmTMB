@@ -99,6 +99,7 @@ qres_beta <- function(object, y, mu) {
 #' @importFrom stats predict
 #' @seealso [dharma_residuals()]
 residuals.sdmTMB <- function(object, type = c("mle", "sim"), ...) {
+  message("Consider using `dharma_residuals()` instead.")
   type <- match.arg(type)
   res_func <- switch(object$family$family,
     gaussian = qres_gaussian,

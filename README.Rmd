@@ -347,31 +347,33 @@ See [`?sdmTMB_simulate`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB_si
 
 #### Simulating from an existing fit
 
-```{r}
-s <- simulate(fit, nsim = 100)
+```{r sim, include=FALSE, eval=FALSE}
+s <- simulate(fit, nsim = 500)
 dim(s)
 s[1:3,1:4]
 ```
 
+``` r
+s <- simulate(fit, nsim = 500)
+dim(s)
+#> [1] 969 500
+s[1:3,1:4]
+#>      [,1]     [,2]     [,3]     [,4]
+#> [1,]    0 59.40310 83.20888  0.00000
+#> [2,]    0 34.56408  0.00000 19.99839
+#> [3,]    0  0.00000  0.00000  0.00000
+```
+
 Using those simulations to check DHARMa residuals:
 
-```{r plot-dharma}
-res <- DHARMa::createDHARMa(
-  simulatedResponse = s,
-  observedResponse = sim_dat_obs$observed,
-  fittedPredictedResponse = predict(fit)$est_non_rf # identity link
-)
-DHARMa::plotQQunif(res, testUniformity = FALSE, testOutliers = FALSE, testDispersion = FALSE)
+```{r plot-dharma, warning=FALSE, results='hide'}
+# dharma_residuals(s, fit)
+# or with the pipe, %>%:
+simulate(fit, nsim = 500) %>% 
+  dharma_residuals(fit)
 ```
 
-Comparing those to the built-in randomized-quantile residuals:
-
-```{r plot-quant-resid}
-r <- residuals(fit)
-qqnorm(r);qqline(r)
-```
-
-See the vignette on [Residual checking with sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html),  [`?simulate.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/simulate.sdmTMB.html), and [`?residuals.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/residuals.sdmTMB.html) for more details.
+See the vignette on [Residual checking with sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html),  [`?simulate.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/simulate.sdmTMB.html), and [`?dharma_residuals`](https://pbs-assess.github.io/sdmTMB/reference/dharma_residuals.html) for more details.
 
 ### Sampling from the joint precision matrix
 
@@ -402,7 +404,7 @@ ggplot(predictor_dat, aes(X, Y, fill = se)) +
 
 sdmTMB has built-in functionality for cross-validation. If we were to set a `future::plan()`, the folds would be fit in parallel:
 
-```{r, warning=FALSE}
+```{r cv, warning=FALSE}
 mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
 ## Set parallel processing if desired:
 # library(future)
@@ -421,12 +423,11 @@ m_cv$elpd
 
 See [`?sdmTMB_cv`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB_cv.html) for more details.
 
-
 ### Priors
 
 Priors/penalties can be placed on most parameters. For example, here we place a PC (penalized complexity) prior on the Matérn random field parameters, a standard normal prior on the effect of depth, a Normal(0, 10^2) prior on the intercept, and a half-normal prior on the Tweedie dispersion parameter (`phi`):
 
-```{r}
+```{r priors}
 mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
 fit <- sdmTMB(
   density ~ depth_scaled,
@@ -452,7 +453,7 @@ See [`?sdmTMBpriors`](https://pbs-assess.github.io/sdmTMB/reference/priors.html)
 
 The fitted model can be passed to the tmbstan package to sample from the posterior with Stan. Note this can be slow for large or poorly identified models. See examples of fixing parameters in [`?extract_mcmc`](https://pbs-assess.github.io/sdmTMB/reference/extract_mcmc.html).
 
-```{r, warning=FALSE, message=FALSE, results='hide', eval=FALSE}
+```{r mcmc, warning=FALSE, message=FALSE, results='hide', eval=FALSE}
 # only 1 chain and 400 iterations for speed:
 fit_mcmc <- tmbstan::tmbstan(fit$tmb_obj, chains = 1, iter = 400)
 ```
@@ -490,7 +491,7 @@ See [`?extract_mcmc`](https://pbs-assess.github.io/sdmTMB/reference/extract_mcmc
 
 We can turn off the random fields for model comparison:
 
-```{r, warning=FALSE, message=FALSE}
+```{r no-rf, warning=FALSE, message=FALSE}
 fit_sdmTMB <- sdmTMB(
   present ~ poly(depth_scaled, 2),
   data = pcod, mesh = mesh,
@@ -521,7 +522,7 @@ mesh <- make_mesh(pcod, c("X", "Y"), mesh = mesh_inla)
 plot(mesh)
 ```
 
-```{r, eval=FALSE}
+```{r inla-mesh2, eval=FALSE}
 fit <- sdmTMB(
   density ~ s(depth, k = 5),
   data = pcod, mesh = mesh,
