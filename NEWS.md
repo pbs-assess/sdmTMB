@@ -1,5 +1,11 @@
 # sdmTMB
 
+# sdmTMB 0.0.20.9001
+
+* Add `dharma_residuals()`.
+
+* Fix bug in `simulate.sdmTMB()` and `residuals.sdmTMB()` for binomial family.
+
 # sdmTMB 0.0.20.9000
 
 *  Smoothers now appear in `print()` output. The format should roughly match brms.

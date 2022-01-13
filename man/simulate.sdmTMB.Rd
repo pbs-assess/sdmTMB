@@ -107,5 +107,5 @@ if (require("tmbstan", quietly = TRUE)) {
 }
 }
 \seealso{
-\code{\link[=sdmTMB_simulate]{sdmTMB_simulate()}}
+\code{\link[=sdmTMB_simulate]{sdmTMB_simulate()}}, \code{\link[=dharma_residuals]{dharma_residuals()}}
 }

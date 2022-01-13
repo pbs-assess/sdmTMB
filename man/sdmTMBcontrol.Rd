@@ -32,7 +32,7 @@ allowed.}
 \item{normalize}{Logical: use \code{\link[TMB:normalize]{TMB::normalize()}} to normalize the process
 likelihood using the Laplace approximation? Can result in a substantial
 speed boost in some cases. This used to default to \code{FALSE} prior to
-May 2021.}
+May 2021. Currently not working for models fit with REML or random intercepts.}
 
 \item{nlminb_loops}{How many times to run \code{\link[stats:nlminb]{stats::nlminb()}} optimization.
 Sometimes restarting the optimizer at the previous best values aids

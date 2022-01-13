@@ -18,3 +18,6 @@ from the joint precision matrix are available.}
 Residuals are randomized quantile residuals when response values take on
 whole numbers (Poisson, Tweedie, binomial, NB2).
 }
+\seealso{
+\code{\link[=dharma_residuals]{dharma_residuals()}}
+}

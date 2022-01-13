@@ -97,6 +97,7 @@ qres_beta <- function(object, y, mu) {
 #' @param ... Passed to residual function. Only `n` works for binomial.
 #' @export
 #' @importFrom stats predict
+#' @seealso [dharma_residuals()]
 residuals.sdmTMB <- function(object, type = c("mle", "sim"), ...) {
   type <- match.arg(type)
   res_func <- switch(object$family$family,
