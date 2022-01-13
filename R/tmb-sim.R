@@ -414,9 +414,19 @@ get_dharma_residuals <- function(object, simulated_response, plot = TRUE,
   if (!requireNamespace("DHARMa", quietly = TRUE)) {
     stop("DHARMa must be installed to use this function.", call. = FALSE)
   }
-  .fitted <- object$family$linkinv(predict(object, newdata = NULL)[[fitted_column]])
+
+  assert_that(class(object) == "sdmTMB")
+  assert_that(is.logical(plot))
+  assert_that(is.character(fitted_column))
+  assert_that(is.matrix(simulated_response))
+  assert_that(nrow(simulated_response) == length(as.numeric(object$response)))
+
+  p <- predict(object, newdata = NULL)
+  assert_that(fitted_column %in% names(p))
+
+  .fitted <- object$family$linkinv(p[[fitted_column]])
   res <- DHARMa::createDHARMa(
-    simulatedResponse = sim_response,
+    simulatedResponse = simulated_response,
     observedResponse = as.numeric(object$response),
     fittedPredictedResponse = .fitted,
     ...
