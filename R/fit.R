@@ -57,6 +57,17 @@ NULL
 #'   vignette](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html).
 #'    Note this predictor should be centered to have mean zero and have a
 #'   standard deviation of approximately 1 (scale by the SD).
+#' @param CAR_neighbours Optional m x m adjacency matrix describing neighbors for replacing
+#' the SPDE spatial model with a conditional autoregressive model (CAR). The CAR
+#' adjacency matrix is often represented as W, and the spatial effects are assumed to
+#' be ~ MVN(0, Q^{-1}) where Q = [τ(D−αW)]. The parameter tau controls the magnitude of
+#' variation, alpha controls spatial dependency (ranges from -1 to 1, with alpha = 1 being
+#' the completely dependent). The matrix W is a matrix of 0s and 1s describing whether 2
+#' areas are neighbouring (1) or not (0), and the matrix D is a diagonal matrix with
+#' the number of neighbors for each region as the diagonal. Because the diagonal of W is 0,
+#' we use `CAR_neighbours` to specify both W and D -- the diagonal being used to construct D,
+#' and all other elements being used as W. If `CAR_neighbours` is used, the majority of other
+#' arguments apply (e.g. spatial and spatiotemporal CAR components can be turned on / off)
 #' @param weights Optional likelihood weights for the conditional model.
 #'   Implemented as in \pkg{glmmTMB}. Weights do not have to sum
 #'   to one and are not internally modified. Can also be used for trials with
@@ -371,6 +382,7 @@ sdmTMB <- function(
   share_range = TRUE,
   time_varying = NULL,
   spatial_varying = NULL,
+  CAR_neighbours = NULL, # could also be a list of 2 matrices
   weights = NULL,
   extra_time = NULL,
   reml = FALSE,
@@ -386,11 +398,11 @@ sdmTMB <- function(
   include_spatial = deprecated(),
   spde = deprecated(),
   ...
-  ) {
+) {
 
   sp_len <- length(spatiotemporal)
   spatiotemporal <- match.arg(tolower(as.character(spatiotemporal[[1]])),
-    choices = c("iid", "ar1", "rw", "off", "true", "false"))
+                              choices = c("iid", "ar1", "rw", "off", "true", "false"))
   if (spatiotemporal == "true") spatiotemporal <- "iid"
   if (spatiotemporal == "false") spatiotemporal <- "off"
   spatiotemporal <- match.arg(tolower(spatiotemporal), choices = c("iid", "ar1", "rw", "off"))
@@ -457,6 +469,30 @@ sdmTMB <- function(
     lwr <- 0
     upr <- Inf
   }
+
+  car_model <- FALSE
+  if(!is.null(CAR_neighbours)) {
+    if(!is.matrix(CAR_neighbours)) {
+      stop("Please pass in CAR_neighbours as a m x m matrix")
+    } else {
+      if(ncol(CAR_neighbours) != nrow(CAR_neighbours)) {
+        stop("Dimensions don't match: please pass in CAR_neighbours as a m x m matrix")
+      } else {
+        car_model <- TRUE
+        car_k <- ncol(CAR_neighbours)
+        if(car_k != length(unique(data$car_region))) {
+          stop("Dimension mismatch between CAR_neighbours and unique values found in car_region")
+        }
+      }
+    }
+  } else { # dummy values to pass in as tmb data
+    car_k <- 2
+    CAR_neighbours <- diag(2)
+    data$car_region <- 1
+  }
+  CAR_D <- diag(diag(CAR_neighbours))
+  CAR_W <- CAR_neighbours-CAR_D
+
   normalize <- control$normalize
   nlminb_loops <- control$nlminb_loops
   newton_loops <- control$newton_loops
@@ -464,6 +500,7 @@ sdmTMB <- function(
   start <- control$start
   multiphase <- control$multiphase
   map_rf <- control$map_rf
+  if(car_model) map_rf <- TRUE # override control$map_rf if CAR model
   map <- control$map
   lower <- control$lower
   upper <- control$upper
@@ -472,29 +509,29 @@ sdmTMB <- function(
 
   if ("ar1_fields" %in% names(dots)) {
     deprecate_warn("0.0.20", "sdmTMB(ar1_fields)", "sdmTMB(spatiotemporal)",
-      details = "For now, setting `spatiotemporal = 'AR1'` for you.")
+                   details = "For now, setting `spatiotemporal = 'AR1'` for you.")
     spatiotemporal <- if (dots$ar1_fields) "ar1" else "iid"
     dots$ar1_fields <- NULL
   }
   if ("penalties" %in% names(dots)) {
     stop("`penalties` are now specified via the `priors` argument.",
-      "E.g., `priors = sdmTMBpriors(b = normal(c(0, 0), c(1, 1)))`",
-      "for 2 fixed effects.", call. = FALSE)
+         "E.g., `priors = sdmTMBpriors(b = normal(c(0, 0), c(1, 1)))`",
+         "for 2 fixed effects.", call. = FALSE)
   }
   dot_checks <- c("lower", "upper", "profile",
-    "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",
-    "newton_loops", "start", "map", "map_rf", "get_joint_precision", "normalize")
+                  "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",
+                  "newton_loops", "start", "map", "map_rf", "get_joint_precision", "normalize")
   .control <- control
   for (i in dot_checks) .control[[i]] <- NULL # what's left should be for nlminb
   dot_old <- dot_checks %in% names(dots)
   if (any(dot_old)) {
     stop("The ", if (sum(dot_old) > 1) "arguments" else "argument", " `",
-      paste(dot_checks[dot_old], collapse = "`, `"),
-      "` ", if (sum(dot_old) > 1) "were" else "was",
-      " found in the call to `sdmTMB()`.\n",
-      if (sum(dot_old) > 1) "These are " else "This is ",
-      "now passed through the `control` argument via the\n",
-      "`sdmTMBcontrol()` list.", call. = FALSE)
+         paste(dot_checks[dot_old], collapse = "`, `"),
+         "` ", if (sum(dot_old) > 1) "were" else "was",
+         " found in the call to `sdmTMB()`.\n",
+         if (sum(dot_old) > 1) "These are " else "This is ",
+         "now passed through the `control` argument via the\n",
+         "`sdmTMBcontrol()` list.", call. = FALSE)
   }
 
   ar1_fields <- identical("ar1", tolower(spatiotemporal))
@@ -516,11 +553,11 @@ sdmTMB <- function(
   assert_that("data.frame" %in% class(data))
   if (!is.null(map) && length(map) != length(start)) {
     warning("`length(map) != length(start)`. You likely want to specify ",
-      "`start` values if you are setting the `map` argument.", call. = FALSE)
+            "`start` values if you are setting the `map` argument.", call. = FALSE)
   }
   if (family$family == "censored_poisson") {
     assert_that("lwr" %in% names(experimental) && "upr" %in% names(experimental),
-      msg = "`lwr` and `upr` must be specified in `experimental` as elements of a named list to use the censored Poisson likelihood.")
+                msg = "`lwr` and `upr` must be specified in `experimental` as elements of a named list to use the censored Poisson likelihood.")
     assert_that(length(lwr) == nrow(data) && length(upr) == nrow(data))
     assert_that(length(lwr) == length(upr))
     assert_that(mean(upr-lwr, na.rm = TRUE)>=0)
@@ -528,7 +565,7 @@ sdmTMB <- function(
 
   if (!is.null(time)) {
     assert_that(time %in% names(data),
-      msg = "Specified `time` column is missing from `data`.")
+                msg = "Specified `time` column is missing from `data`.")
   }
   if (is.null(time)) {
     time <- "_sdmTMB_time"
@@ -536,17 +573,17 @@ sdmTMB <- function(
   } else {
     if (sum(is.na(data[[time]])) > 1)
       stop("There is at least one NA value in the time column. ",
-        "Please remove it.", call. = FALSE)
+           "Please remove it.", call. = FALSE)
   }
   if (is.factor(data[[time]])) {
     if (length(levels(data[[time]])) > length(unique(data[[time]]))) {
       stop("The time column is a factor and there are extra factor levels.",
-        "Please remove these or turn your time column into an integer.", call. = FALSE)
+           "Please remove these or turn your time column into an integer.", call. = FALSE)
     }
   }
 
-  assert_that(identical(nrow(spde$loc_xy), nrow(data)),
-    msg = "Number of x-y coordinates in `mesh` does not match `nrow(data)`.")
+  assert_that(identical(nrow(mesh$loc_xy), nrow(data)),
+              msg = "Number of x-y coordinates in `mesh` does not match `nrow(data)`.")
 
   thresh <- check_and_parse_thresh_params(formula, data)
   original_formula <- formula
@@ -555,14 +592,12 @@ sdmTMB <- function(
   if (!is.null(extra_time)) { # for forecasting or interpolating
     if (!"xy_cols" %in% names(spde)) {
       stop("Please use make_mesh() instead of the depreciated make_spde() to use `extra_time`.",
-        call. = FALSE)
+           call. = FALSE)
     }
     data <- expand_time(df = data, time_slices = extra_time, time_column = time)
     weights <- data$weight_sdmTMB
+    spde$A <- INLA::inla.spde.make.A(spde$mesh, loc = as.matrix(data[, spde$xy_cols, drop = FALSE]))
     spde$loc_xy <- as.matrix(data[,spde$xy_cols,drop=FALSE])
-    spde$A <- INLA::inla.spde.make.A(spde$mesh, loc = spde$loc_xy)
-    spde$A_st <- spde$A # FIXME
-    spde$sdm_spatial_id <- seq(1, nrow(data)) # FIXME
   }
 
   if (!is.null(spatial_varying)) {
@@ -726,7 +761,7 @@ sdmTMB <- function(
     if (length(priors_b[, 2]) == 1L) {
       if (is.na(priors_b[, 2])) priors_b[, 2] <- 1
     }
-    priors_b <- mvnormal(location = priors_b[, 1], scale = diag(as.numeric(priors_b[, 2]), ncol = nrow(priors_b)))
+    priors_b <- mvnormal(location = priors_b[, 1], scale = diag(as.numeric(priors_b[, 2])))
   }
   # in some cases, priors_b will be a mix of NAs (no prior) and numeric values
   # easiest way to deal with this is to subset the Sigma matrix
@@ -734,7 +769,7 @@ sdmTMB <- function(
   if (length(not_na) == 0L) {
     priors_b_Sigma <- diag(2) # TMB can't handle 0-dim matrix
   } else {
-    Sigma <- as.matrix(priors_b[, -1])
+    Sigma <- priors_b[, -1]
     priors_b_Sigma <- as.matrix(Sigma[not_na, not_na])
   }
 
@@ -809,7 +844,12 @@ sdmTMB <- function(
     est_epsilon_re = as.integer(est_epsilon_re),
     has_smooths = as.integer(sm$has_smooths),
     upr = upr,
-    lwr = lwr
+    lwr = lwr,
+    car_model = as.numeric(car_model),
+    car_k = car_k,
+    car_region = data$car_region,
+    CAR_D = CAR_D,
+    CAR_W = CAR_W
   )
 
   b_thresh <- rep(0, 2)
@@ -837,6 +877,12 @@ sdmTMB <- function(
     b_threshold = b_thresh,
     b_epsilon = 0,
     ln_epsilon_re_sigma = 0,
+    ln_car_tau_s = 0,
+    ln_car_tau_st = 0,
+    car_alpha_s = 0,
+    car_alpha_st = 0,
+    car_re_s = rep(0, car_k),
+    car_re_st = matrix(0, tmb_data$n_t, car_k),
     epsilon_re = rep(0, tmb_data$n_t),
     b_smooth = rep(0, if (sm$has_smooths) sum(sm$sm_dims) else 0),
     ln_smooth_sigma = rep(0, if (sm$has_smooths) length(sm$sm_dims) else 0)
@@ -862,8 +908,19 @@ sdmTMB <- function(
   if (spatial_only)
     tmb_map <- c(tmb_map, list(
       ln_tau_E   = as.factor(NA),
+      ln_car_tau_st = as.factor(NA),
+      car_alpha_st = as.factor(NA),
+      car_re_st = factor(matrix(NA, nrow = tmb_data$n_t, ncol = car_k)),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
+  if(!car_model) {
+    tmb_map <- c(tmb_map, list(ln_car_tau_s = as.factor(NA),
+                               ln_car_tau_st = as.factor(NA),
+                               car_alpha_s = as.factor(NA),
+                               car_alpha_st = as.factor(NA),
+                               car_re_s = factor(rep(NA, car_k)),
+                               car_re_st = as.factor(matrix(NA, nrow = tmb_data$n_t, ncol = car_k))))
+  }
   if (contains_offset) { # fix offset param to 1 to be an offset:
     b_j_map <- seq_along(tmb_params$b_j)
     b_j_map[offset_pos] <- NA
@@ -888,7 +945,11 @@ sdmTMB <- function(
       omega_s    = factor(rep(NA, length(tmb_params$omega_s))),
       b_smooth = factor(rep(NA, length(tmb_params$b_smooth))),
       ln_smooth_sigma = factor(rep(NA, length(tmb_params$ln_smooth_sigma))),
-      epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
+      epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st))),
+      ln_car_tau_s = as.factor(NA),
+      ln_car_tau_st = as.factor(NA),
+      car_re_s = factor(rep(NA, car_k)),
+      car_re_st = as.factor(matrix(NA, nrow = tmb_data$n_t, ncol = car_k))))
 
     # optional models on spatiotemporal sd parameter
     if (est_epsilon_model == 0L) {
@@ -926,11 +987,14 @@ sdmTMB <- function(
 
   if (spatial_only) {
     tmb_random <- "omega_s"
+    if(car_model) tmb_random <- "car_re_s"
   } else {
     if (include_spatial) {
       tmb_random <- c("omega_s", "epsilon_st")
+      if(car_model) tmb_random <- c("car_re_s", "car_re_st")
     } else {
       tmb_random <- "epsilon_st"
+      if(car_model) tmb_random <- "car_re_st"
     }
   }
   if (!is.null(spatial_varying)) tmb_random <- c(tmb_random, "zeta_s")
@@ -940,6 +1004,7 @@ sdmTMB <- function(
   if (!include_spatial) {
     tmb_map <- c(tmb_map, list(
       ln_tau_O = as.factor(NA),
+      car_re_s = factor(rep(NA, car_k)),
       omega_s  = factor(rep(NA, length(tmb_params$omega_s)))))
   }
   if (is.null(spatial_varying)) {
@@ -949,8 +1014,8 @@ sdmTMB <- function(
   }
   if (is.null(time_varying))
     tmb_map <- c(tmb_map,
-      list(b_rw_t = as.factor(matrix(NA, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)))),
-      list(ln_tau_V = as.factor(NA))
+                 list(b_rw_t = as.factor(matrix(NA, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)))),
+                 list(ln_tau_V = as.factor(NA))
     )
 
   if (nobs_RE[[1]] > 0) tmb_random <- c(tmb_random, "RE")
@@ -983,7 +1048,7 @@ sdmTMB <- function(
 
   for (i in seq_along(start)) {
     message("Initiating ", names(start)[i],
-      " at specified starting value of ", start[[i]], ".")
+            " at specified starting value of ", start[[i]], ".")
     tmb_params[[names(start)[i]]] <- start[[i]]
   }
   if (length(tmb_params[["ln_kappa"]]) != 2L && "ln_kappa" %in% names(start)) {
@@ -997,7 +1062,7 @@ sdmTMB <- function(
     profile = if (control$profile) "b_j" else NULL,
     random = tmb_random, DLL = "sdmTMB", silent = silent)
   lim <- set_limits(tmb_obj, lower = lower, upper = upper,
-    loc = spde$mesh$loc, silent = FALSE)
+                    loc = spde$mesh$loc, silent = FALSE)
 
   out_structure <- structure(list(
     data       = data,
@@ -1053,7 +1118,7 @@ sdmTMB <- function(
     for (i in seq_len(newton_loops)) {
       g <- as.numeric(tmb_obj$gr(tmb_opt$par))
       h <- stats::optimHess(tmb_opt$par, fn = tmb_obj$fn, gr = tmb_obj$gr,
-        upper = lim$upper, lower = lim$lower)
+                            upper = lim$upper, lower = lim$lower)
       tmb_opt$par <- tmb_opt$par - solve(h, g)
       tmb_opt$objective <- tmb_obj$fn(tmb_opt$par)
     }
@@ -1089,15 +1154,15 @@ check_bounds <- function(.par, lower, upper) {
     if (is.finite(lower[i]) || is.finite(upper[i])) {
       if (abs(.par[i] - lower[i]) < 0.0001) {
         warning("Parameter ", names(.par)[i],
-          " is very close or equal to its lower bound.\n",
-          "Consider changing your model configuration or bounds.",
-          call. = FALSE)
+                " is very close or equal to its lower bound.\n",
+                "Consider changing your model configuration or bounds.",
+                call. = FALSE)
       }
       if (abs(.par[i] - upper[i]) < 0.0001) {
         warning("Parameter ", names(.par)[i],
-          " is very close or equal to its upper bound.\n",
-          "Consider changing your model configuration or bounds.",
-          call. = FALSE)
+                " is very close or equal to its upper bound.\n",
+                "Consider changing your model configuration or bounds.",
+                call. = FALSE)
       }
     }
   }
@@ -1110,12 +1175,12 @@ set_limits <- function(tmb_obj, lower, upper, loc = NULL, silent = TRUE) {
     if (i_name %in% names(.lower)) {
       .lower[names(.lower) %in% i_name] <- lower[[i_name]]
       if (!silent) message("Setting lower limit for ", i_name, " to ",
-        lower[[i_name]], ".")
+                           lower[[i_name]], ".")
     }
     if (i_name %in% names(.upper)) {
       .upper[names(.upper) %in% i_name] <- upper[[i_name]]
       if (!silent) message("Setting upper limit for ", i_name, " to ",
-        upper[[i_name]], ".")
+                           upper[[i_name]], ".")
     }
   }
   if ("ar1_phi" %in% names(tmb_obj$par) &&

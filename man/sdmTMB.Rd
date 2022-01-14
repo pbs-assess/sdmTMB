@@ -15,6 +15,7 @@ sdmTMB(
   share_range = TRUE,
   time_varying = NULL,
   spatial_varying = NULL,
+  CAR_neighbours = NULL,
   weights = NULL,
   extra_time = NULL,
   reml = FALSE,
@@ -90,6 +91,18 @@ represent a local-time-trend model. See \doi{10.1111/ecog.05176} and the
 \href{https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.
 Note this predictor should be centered to have mean zero and have a
 standard deviation of approximately 1 (scale by the SD).}
+
+\item{CAR_neighbours}{Optional m x m adjacency matrix describing neighbors for replacing
+the SPDE spatial model with a conditional autoregressive model (CAR). The CAR
+adjacency matrix is often represented as W, and the spatial effects are assumed to
+be ~ MVN(0, Q^{-1}) where Q = \link{τ(D−αW)}. The parameter tau controls the magnitude of
+variation, alpha controls spatial dependency (ranges from -1 to 1, with alpha = 1 being
+the completely dependent). The matrix W is a matrix of 0s and 1s describing whether 2
+areas are neighbouring (1) or not (0), and the matrix D is a diagonal matrix with
+the number of neighbors for each region as the diagonal. Because the diagonal of W is 0,
+we use \code{CAR_neighbours} to specify both W and D -- the diagonal being used to construct D,
+and all other elements being used as W. If \code{CAR_neighbours} is used, the majority of other
+arguments apply (e.g. spatial and spatiotemporal CAR components can be turned on / off)}
 
 \item{weights}{Optional likelihood weights for the conditional model.
 Implemented as in \pkg{glmmTMB}. Weights do not have to sum

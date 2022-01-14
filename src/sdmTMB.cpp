@@ -188,6 +188,13 @@ Type objective_function<Type>::operator()()
 
   DATA_VECTOR(lwr); // lower bound for censpois on counts
   DATA_VECTOR(upr); // upper bound for censpois on counts
+
+  // optional stuff for CAR models
+  DATA_INTEGER(car_model);
+  DATA_INTEGER(car_k); // number of regions
+  DATA_IVECTOR(car_region); // indicator of which region each data point is coming from
+  DATA_MATRIX(CAR_W); // matrix whose diagonal is 0, and is adjacency of weights
+  DATA_MATRIX(CAR_D); // diagonal matrix specifying number of neighbors of each group
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -216,6 +223,13 @@ Type objective_function<Type>::operator()()
   PARAMETER_VECTOR(epsilon_re);
   PARAMETER_VECTOR(b_smooth);  // P-spline smooth parameters
   PARAMETER_VECTOR(ln_smooth_sigma);  // variances of spline REs if included
+  // CAR stuff
+  PARAMETER(ln_car_tau_s); // spatial car
+  PARAMETER(ln_car_tau_st);// spatiotemporal car
+  PARAMETER(car_alpha_s); // spatial car
+  PARAMETER(car_alpha_st);// spatiotemporal car
+  PARAMETER_VECTOR(car_re_s); // spatial effects
+  PARAMETER_MATRIX(car_re_st); // spatiotemporal effects, n_t x car_k
 
   // Joint negative log-likelihood
   Type jnll = 0;
@@ -238,6 +252,31 @@ Type objective_function<Type>::operator()()
 
   Type rho = sdmTMB::minus_one_to_one(ar1_phi);
   Type phi = exp(ln_phi);
+
+  // ------------------ CAR ---------------------------------------------
+  Type car_tau_s = exp(ln_car_tau_s);
+  Type car_tau_st = exp(ln_car_tau_st);
+  vector<Type> car_i(n_i);
+  for(int i = 0; i < n_i; i++) car_i(i) = 0;
+  // random effects for spatial
+  if(include_spatial) {
+    matrix<Type> Qs = car_tau_s*(CAR_D - car_alpha_s*CAR_W);
+    MVNORM_t<Type> neg_log_dmvnorm_s(Qs.inverse());
+    // Apply nll on residual. Note that other univariate densities are positive
+    // log-likelihoods but the dmvnorm is negative.
+    // We're accumulating the neg LL, which is why this is a + sign.
+    jnll += neg_log_dmvnorm_s(car_re_s);
+    for(int i = 0; i < n_i; i++) car_i(i) += car_re_s(car_region(i));
+  }
+  if (!spatial_only) {
+    matrix<Type> Qst = car_tau_st*(CAR_D - car_alpha_st*CAR_W);
+    MVNORM_t<Type> neg_log_dmvnorm_st(Qst.inverse());
+    // each time slice ~ MVN
+    for (int k = 1; k < car_k; k++) {
+      jnll += neg_log_dmvnorm_st(car_re_st.col(k));
+    }
+    for(int i = 0; i < n_i; i++) car_i(i) += car_re_st(year_i(i), car_region(i));
+  }
 
   // ------------------ Geospatial ---------------------------------------------
 
@@ -476,7 +515,7 @@ Type objective_function<Type>::operator()()
   eta_i.setZero();
 
   for (int i = 0; i < n_i; i++) {
-    eta_i(i) = eta_fixed_i(i) + eta_smooth_i(i); // + offset_i(i);
+    eta_i(i) = eta_fixed_i(i) + eta_smooth_i(i) + car_i(i); // + offset_i(i);
     if (random_walk) {
       for (int k = 0; k < X_rw_ik.cols(); k++) {
         eta_rw_i(i) += X_rw_ik(i, k) * b_rw_t(year_i(i), k); // record it
@@ -536,7 +575,7 @@ Type objective_function<Type>::operator()()
         break;
       case binomial_family:  // in logit space not inverse logit
         tmp_ll = dbinom_robust(y_i(i), size(i), mu_i(i), true);
-        SIMULATE{y_i(i) = rbinom(size(i), InverseLink(mu_i(i), link));}
+        SIMULATE{y_i(i) = rbinom(size(i), mu_i(i));}
         break;
       case poisson_family:
         tmp_ll = dpois(y_i(i), mu_i(i), true);
@@ -837,6 +876,24 @@ Type objective_function<Type>::operator()()
     REPORT(ln_epsilon_re_sigma);
     ADREPORT(ln_epsilon_re_sigma);
   }
+  if(car_model) {
+    if(include_spatial) {
+      REPORT(ln_car_tau_s);
+      ADREPORT(ln_car_tau_s);
+      REPORT(car_re_s);
+      ADREPORT(car_re_s);
+      REPORT(car_alpha_s);
+      ADREPORT(car_alpha_s);
+    }
+    if(!spatial_only) {
+      REPORT(ln_car_tau_st);
+      ADREPORT(ln_car_tau_st);
+      REPORT(car_re_st);
+      ADREPORT(car_re_st);
+      REPORT(car_alpha_st);
+      ADREPORT(car_alpha_st);
+    }
+  }
 
   // ------------------ Reporting ----------------------------------------------
 
@@ -866,11 +923,11 @@ Type objective_function<Type>::operator()()
   SIMULATE {
     REPORT(y_i);
     REPORT(omega_s)
-    REPORT(omega_s_A)
-    REPORT(epsilon_st)
-    REPORT(epsilon_st_A_vec)
-    REPORT(zeta_s)
-    REPORT(zeta_s_A)
+      REPORT(omega_s_A)
+      REPORT(epsilon_st)
+      REPORT(epsilon_st_A_vec)
+      REPORT(zeta_s)
+      REPORT(zeta_s_A)
   }
 
   return jnll;
