@@ -193,8 +193,8 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(car_model);
   DATA_INTEGER(car_k); // number of regions
   DATA_IVECTOR(car_region); // indicator of which region each data point is coming from
-  DATA_MATRIX(CAR_W); // matrix whose diagonal is 0, and is adjacency of weights
-  DATA_MATRIX(CAR_D); // diagonal matrix specifying number of neighbors of each group
+  DATA_SPARSE_MATRIX(CAR_W); // matrix whose diagonal is 0, and is adjacency of weights
+  DATA_SPARSE_MATRIX(CAR_D); // diagonal matrix specifying number of neighbors of each group
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -260,21 +260,31 @@ Type objective_function<Type>::operator()()
   for(int i = 0; i < n_i; i++) car_i(i) = 0;
   // random effects for spatial
   if(include_spatial) {
-    matrix<Type> Qs = car_tau_s*(CAR_D - car_alpha_s*CAR_W);
-    MVNORM_t<Type> neg_log_dmvnorm_s(Qs.inverse());
     // Apply nll on residual. Note that other univariate densities are positive
     // log-likelihoods but the dmvnorm is negative.
     // We're accumulating the neg LL, which is why this is a + sign.
-    jnll += neg_log_dmvnorm_s(car_re_s);
+    //matrix<Type> Qs = car_tau_s*(CAR_D - car_alpha_s*CAR_W);
+    //MVNORM_t<Type> neg_log_dmvnorm_s(Qs.inverse());
+    //jnll += neg_log_dmvnorm_s(car_re_s);
+
+    Eigen::SparseMatrix<Type> Q_car_s = CAR_D - car_alpha_s*CAR_W;
+    GMRF_t<Type> nldens_s = GMRF(Q_car_s);
+    jnll += SCALE(nldens_s, car_tau_s)(car_re_s);
     for(int i = 0; i < n_i; i++) car_i(i) += car_re_s(car_region(i));
   }
   if (!spatial_only) {
-    matrix<Type> Qst = car_tau_st*(CAR_D - car_alpha_st*CAR_W);
-    MVNORM_t<Type> neg_log_dmvnorm_st(Qst.inverse());
+    //matrix<Type> Qst = car_tau_st*(CAR_D - car_alpha_st*CAR_W);
+    //MVNORM_t<Type> neg_log_dmvnorm_st(Qst.inverse());
     // each time slice ~ MVN
+    //for (int k = 1; k < car_k; k++) {
+    //  jnll += neg_log_dmvnorm_st(car_re_st.col(k));
+    //}
+    Eigen::SparseMatrix<Type> Q_car_st = CAR_D - car_alpha_st*CAR_W;
+    GMRF_t<Type> nldens_st = GMRF(Q_car_st);
     for (int k = 1; k < car_k; k++) {
-      jnll += neg_log_dmvnorm_st(car_re_st.col(k));
+      jnll += SCALE(nldens_st, car_tau_st)(car_re_st.col(k));
     }
+
     for(int i = 0; i < n_i; i++) car_i(i) += car_re_st(year_i(i), car_region(i));
   }
 

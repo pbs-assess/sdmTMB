@@ -30,7 +30,7 @@ test_that("Forecasting works with a 1D Car model", {
                   x = runif(1000, 0, 5),
                   resid = rnorm(1000, 0, 0.03))
   df = dplyr::left_join(df, spat_data)
-  df$y = 3 + 0.1 * df$x + df$re + df$resid
+  df$y = 30 + df$x*0.1 * df$x + df$re + df$resid
 
   # try with limits, no priors
   m <- sdmTMB(y ~ x, data = df, time = "year",
@@ -85,5 +85,20 @@ test_that("Forecasting works with a 1D Car model", {
   expect_equal(m$sd_report$par.fixed[which(names(m$sd_report$par.fixed)=="car_alpha_s")], alpha, tolerance = 1e-3)
 
 
+  set.seed(33)
+  n.torus <- 10
+  rho <- 0.2
+  sigma <- 1.5
+  prec <- 1/sigma
+  beta <- c(1, 1)
+  XX <- cbind(rep(1, n.torus^2), sample(log(1:n.torus^2)/5))
+  mydata1 <- CAR.simTorus(n1 = n.torus, n2 = n.torus, rho = rho, prec = prec)
+  ## Simulate CAR data for a given spatial weight matrix
+  Wmat <- mydata1$W
+  mydata2 <- CAR.simWmat(rho = rho, prec = prec, W = Wmat)
+  ## Simualte data from a linear model with CAR error
+  y <- XX %*% beta + mydata1$X
+  mydata1$data.vec <- data.frame(y=y, XX[,-1])
+  mydata3 <- CAR.simLM(pars = c(0.1, 1, 2, 0.5), data = mydata1)
 
 })

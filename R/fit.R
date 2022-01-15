@@ -848,8 +848,8 @@ sdmTMB <- function(
     car_model = as.numeric(car_model),
     car_k = car_k,
     car_region = data$car_region,
-    CAR_D = CAR_D,
-    CAR_W = CAR_W
+    CAR_D = as(CAR_D, "dgTMatrix"),
+    CAR_W = as(CAR_W, "dgTMatrix")
   )
 
   b_thresh <- rep(0, 2)
