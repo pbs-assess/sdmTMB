@@ -879,8 +879,8 @@ sdmTMB <- function(
     ln_epsilon_re_sigma = 0,
     ln_car_tau_s = 0,
     ln_car_tau_st = 0,
-    car_alpha_s = 0,
-    car_alpha_st = 0,
+    logit_car_alpha_s = 0,
+    logit_car_alpha_st = 0,
     car_re_s = rep(0, car_k),
     car_re_st = matrix(0, tmb_data$n_t, car_k),
     epsilon_re = rep(0, tmb_data$n_t),
@@ -909,15 +909,15 @@ sdmTMB <- function(
     tmb_map <- c(tmb_map, list(
       ln_tau_E   = as.factor(NA),
       ln_car_tau_st = as.factor(NA),
-      car_alpha_st = as.factor(NA),
+      logit_car_alpha_st = as.factor(NA),
       car_re_st = factor(matrix(NA, nrow = tmb_data$n_t, ncol = car_k)),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
   if(!car_model) {
     tmb_map <- c(tmb_map, list(ln_car_tau_s = as.factor(NA),
                                ln_car_tau_st = as.factor(NA),
-                               car_alpha_s = as.factor(NA),
-                               car_alpha_st = as.factor(NA),
+                               logit_car_alpha_s = as.factor(NA),
+                               logit_car_alpha_st = as.factor(NA),
                                car_re_s = factor(rep(NA, car_k)),
                                car_re_st = as.factor(matrix(NA, nrow = tmb_data$n_t, ncol = car_k))))
   }

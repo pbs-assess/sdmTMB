@@ -226,8 +226,8 @@ Type objective_function<Type>::operator()()
   // CAR stuff
   PARAMETER(ln_car_tau_s); // spatial car
   PARAMETER(ln_car_tau_st);// spatiotemporal car
-  PARAMETER(car_alpha_s); // spatial car
-  PARAMETER(car_alpha_st);// spatiotemporal car
+  PARAMETER(logit_car_alpha_s); // spatial car
+  PARAMETER(logit_car_alpha_st);// spatiotemporal car
   PARAMETER_VECTOR(car_re_s); // spatial effects
   PARAMETER_MATRIX(car_re_st); // spatiotemporal effects, n_t x car_k
 
@@ -254,6 +254,8 @@ Type objective_function<Type>::operator()()
   Type phi = exp(ln_phi);
 
   // ------------------ CAR ---------------------------------------------
+  Type car_alpha_s = exp(logit_car_alpha_s)/(1+exp(logit_car_alpha_s));
+  Type car_alpha_st = exp(logit_car_alpha_st)/(1+exp(logit_car_alpha_st));
   Type car_tau_s = exp(ln_car_tau_s);
   Type car_tau_st = exp(ln_car_tau_st);
   vector<Type> car_i(n_i);
@@ -263,14 +265,14 @@ Type objective_function<Type>::operator()()
     // Apply nll on residual. Note that other univariate densities are positive
     // log-likelihoods but the dmvnorm is negative.
     // We're accumulating the neg LL, which is why this is a + sign.
-    //matrix<Type> Qs = car_tau_s*(CAR_D - car_alpha_s*CAR_W);
-    //MVNORM_t<Type> neg_log_dmvnorm_s(Qs.inverse());
-    //jnll += neg_log_dmvnorm_s(car_re_s);
-
+    // matrix<Type> Qs = car_tau_s*(CAR_D - car_alpha_s*CAR_W);
+    // MVNORM_t<Type> neg_log_dmvnorm_s(Qs.inverse());
+    // jnll += neg_log_dmvnorm_s(car_re_s);
     Eigen::SparseMatrix<Type> Q_car_s = CAR_D - car_alpha_s*CAR_W;
     GMRF_t<Type> nldens_s = GMRF(Q_car_s);
     jnll += SCALE(nldens_s, car_tau_s)(car_re_s);
-    for(int i = 0; i < n_i; i++) car_i(i) += car_re_s(car_region(i));
+    //jnll += 10000 * pow(car_re_s.sum() - Type(0), Type(2));
+    for(int i = 0; i < n_i; i++) car_i(i) += car_re_s(car_region(i)-1);
   }
   if (!spatial_only) {
     //matrix<Type> Qst = car_tau_st*(CAR_D - car_alpha_st*CAR_W);
@@ -279,13 +281,14 @@ Type objective_function<Type>::operator()()
     //for (int k = 1; k < car_k; k++) {
     //  jnll += neg_log_dmvnorm_st(car_re_st.col(k));
     //}
+    // τD * (I−αB), B =D^(-1)W, = τ(D−αW)
     Eigen::SparseMatrix<Type> Q_car_st = CAR_D - car_alpha_st*CAR_W;
     GMRF_t<Type> nldens_st = GMRF(Q_car_st);
     for (int k = 1; k < car_k; k++) {
       jnll += SCALE(nldens_st, car_tau_st)(car_re_st.col(k));
     }
 
-    for(int i = 0; i < n_i; i++) car_i(i) += car_re_st(year_i(i), car_region(i));
+    for(int i = 0; i < n_i; i++) car_i(i) += car_re_st(year_i(i), car_region(i)-1);
   }
 
   // ------------------ Geospatial ---------------------------------------------
