@@ -12,7 +12,8 @@ sim_car <- function(seed) {
   diag(CAR_nb) <- rowSums(W)
   D <- rowSums(W)
   alpha <- 0.8
-  tau <- 2
+  sigma <- 1.2
+  tau <- 1/(sigma*sigma) # same as (1/sigma^2)
   B0 <- 0.5
 
   Tau <- tau * (diag(rowSums(W)) - alpha * W)
@@ -22,7 +23,7 @@ sim_car <- function(seed) {
   # spatial data
   spat_data <- data.frame(
     car_region = 1:nrow(W),
-    year = 1,
+    #year = 1,
     lon = runif(nrow(W)), # dummy
     lat = runif(nrow(W))
   ) # dummy
@@ -30,12 +31,18 @@ sim_car <- function(seed) {
   # library(ggplot2)
   # ggplot(spat_data, aes(lon, lat)) + geom_point()
 
-  ln_phi <- log(0.2)
-  df <- data.frame(
-    car_region = 1:nrow(W),
-    x = rnorm(nrow(W), 3, 1),
-    resid = rnorm(nrow(W), 0, exp(ln_phi))
-  )
+  # ln_phi <- log(0.2)
+  # df <- data.frame(
+  #   car_region = 1:nrow(W),
+  #   x = rnorm(nrow(W), 3, 1),
+  #   resid = rnorm(nrow(W), 0, exp(ln_phi))
+  # )
+  df <- expand.grid(
+     car_region = 1:nrow(W),
+     year = 1:5)
+  df$x = rnorm(nrow(df), 3, 1)
+  df$resid = rnorm(nrow(df), 0, exp(ln_phi))
+
   df <- dplyr::left_join(df, spat_data, by = "car_region")
 
   df$mu <- B0 + re[df$car_region]
@@ -46,11 +53,11 @@ sim_car <- function(seed) {
 
   # try with limits, no priors
   m <- sdmTMB(y ~ 1,
-    data = df, time = "year",
-    mesh = make_mesh(df, c("lon", "lat"), n_knots = 8),
-    spatiotemporal = "off",
-    spatial = "on", silent = TRUE,
-    CAR_neighbours = CAR_nb
+              data = df, time = "year",
+              mesh = make_mesh(df, c("lon", "lat"), n_knots = 8),
+              spatiotemporal = "off",
+              spatial = "on", silent = TRUE,
+              CAR_neighbours = CAR_nb
   )
 
   est_ln_tau_inv <- as.numeric(m$sd_report$par.fixed[which(names(m$sd_report$par.fixed) == "ln_car_tau_s")])
@@ -72,10 +79,10 @@ sim_car <- function(seed) {
 # plan(multisession, workers = floor(availableCores() / 2))
 # out <- furrr::future_map_dfr(seq_len(50), ~ sim_car(seed = .x), .options = furrr_options(seed = TRUE))
 
-out <- purrr::map_dfr(seq_len(50), ~ sim_car(seed = .x))
+out <- purrr::map_dfr(seq_len(500), ~ sim_car(seed = .x))
 par(mfrow = c(1, 3))
-hist(out$ln_phi);abline(v = log(0.2), col = "red")
-hist(out$est_tau);abline(v = 2, col = "red")
+hist(out$ln_phi);abline(v = 0.0459, col = "red")
+hist(out$est_tau);abline(v = 1/(1.2^2), col = "red")
 hist(out$alpha_est);abline(v = 0.8, col = "red")
 
 mean(out$ln_phi)
