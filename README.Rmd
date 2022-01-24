@@ -26,7 +26,7 @@ Assuming you have a [C++ compiler](https://support.rstudio.com/hc/en-us/articles
 
 ```{r, eval=FALSE}
 # install.packages("remotes")
-remotes::install_github("pbs-assess/sdmTMB")
+remotes::install_github("pbs-assess/sdmTMB", dependencies = TRUE)
 ```
 
 ## Overview

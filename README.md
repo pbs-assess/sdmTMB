@@ -47,7 +47,7 @@ installed, you can install sdmTMB:
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("pbs-assess/sdmTMB")
+remotes::install_github("pbs-assess/sdmTMB", dependencies = TRUE)
 ```
 
 ## Overview
