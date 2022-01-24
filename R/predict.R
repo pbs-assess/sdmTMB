@@ -249,13 +249,17 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
   tmb_data$do_predict <- 1L
 
   if (!is.null(newdata)) {
-    if (any(!xy_cols %in% names(newdata)) && isFALSE(pop_pred))
+
+    if (any(!xy_cols %in% names(newdata)) && isFALSE(pop_pred) && object$tmb_data$car_model==0)
       stop("`xy_cols` (the column names for the x and y coordinates) ",
         "are not in `newdata`. Did you miss specifying the argument ",
         "`xy_cols` to match your data? The newer `make_mesh()` ",
         "(vs. `make_spde()`) takes care of this for you.", call. = FALSE
       )
-
+    if(object$tmb_data$car_model==1) {
+      newdata$car_x <- runif(nrow(newdata)) # Add dummy for CAR models
+      newdata$car_y <- runif(nrow(newdata))
+    }
     if (object$time == "_sdmTMB_time") newdata[[object$time]] <- 0L
     if (!identical(class(object$data[[object$time]]), class(newdata[[object$time]])))
       stop("Class of fitted time column does not match class of `newdata` time column.",

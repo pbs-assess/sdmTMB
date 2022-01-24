@@ -61,7 +61,7 @@ NULL
 #' the SPDE spatial model with a conditional autoregressive model (CAR). The CAR
 #' adjacency matrix is often represented as W, and the spatial effects are assumed to
 #' be ~ MVN(0, Q^{-1}) where Q = [τ(D−αW)]. The parameter tau controls the magnitude of
-#' variation, alpha controls spatial dependency (ranges from -1 to 1, with alpha = 1 being
+#' variation, alpha controls spatial dependency (ranges from 0 to 1, with alpha = 1 being
 #' the completely dependent). The matrix W is a matrix of 0s and 1s describing whether 2
 #' areas are neighbouring (1) or not (0), and the matrix D is a diagonal matrix with
 #' the number of neighbors for each region as the diagonal. Because the diagonal of W is 0,
@@ -374,7 +374,7 @@ NULL
 sdmTMB <- function(
   formula,
   data,
-  mesh,
+  mesh=NULL,
   time = NULL,
   family = gaussian(link = "identity"),
   spatial = c("on", "off"),
@@ -483,6 +483,11 @@ sdmTMB <- function(
         if(car_k != length(unique(data$car_region))) {
           stop("Dimension mismatch between CAR_neighbours and unique values found in car_region")
         }
+        # construct fake mesh for template -- need for predictions etc
+        data$car_x <- runif(nrow(data))
+        data$car_y <- runif(nrow(data))
+        mesh <- make_mesh(data,c("car_x","car_y"),n_knots=min(car_k, 8))
+        spde <- mesh
       }
     }
   } else { # dummy values to pass in as tmb data
