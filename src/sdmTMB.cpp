@@ -261,7 +261,7 @@ Type objective_function<Type>::operator()()
   vector<Type> car_i(n_i);
   for(int i = 0; i < n_i; i++) car_i(i) = 0;
   // random effects for spatial
-  if(include_spatial) {
+  if(include_spatial && car_model) {
     // Apply nll on residual. Note that other univariate densities are positive
     // log-likelihoods but the dmvnorm is negative.
     // We're accumulating the neg LL, which is why this is a + sign.
@@ -271,10 +271,12 @@ Type objective_function<Type>::operator()()
     Eigen::SparseMatrix<Type> Q_car_s = CAR_D - car_alpha_s*CAR_W;
     GMRF_t<Type> nldens_s = GMRF(Q_car_s);
     jnll += SCALE(nldens_s, car_tau_s)(car_re_s);
-    //jnll += 10000 * pow(car_re_s.sum() - Type(0), Type(2));
+    //for(int i = 0; i < car_k; i++) {
+    //  std::cout << car_re_s(i) << "\n";
+    //}
     for(int i = 0; i < n_i; i++) car_i(i) += car_re_s(car_region(i)-1);
   }
-  if (!spatial_only) {
+  if (!spatial_only && car_model) {
     //matrix<Type> Qst = car_tau_st*(CAR_D - car_alpha_st*CAR_W);
     //MVNORM_t<Type> neg_log_dmvnorm_st(Qst.inverse());
     // each time slice ~ MVN
@@ -298,7 +300,7 @@ Type objective_function<Type>::operator()()
   range(0) = sqrt(Type(8.)) / exp(ln_kappa(0));
   range(1) = sqrt(Type(8.)) / exp(ln_kappa(1));
 
-  if (include_spatial) {
+  if (include_spatial && !car_model) {
     Type sigma_O = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O +
       Type(2.0) * ln_kappa(0)));
     Type sigma_Z = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_Z +
@@ -370,7 +372,7 @@ Type objective_function<Type>::operator()()
   if (normalize_in_r) s = false;
 
   // Spatial (intercept) random effects:
-  if (include_spatial) {
+  if (include_spatial && !car_model) {
     // jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
     jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
     if (sim_re(0)) {
@@ -391,7 +393,7 @@ Type objective_function<Type>::operator()()
   }
 
   // Spatiotemporal random effects:
-  if (!spatial_only) {
+  if (!spatial_only && !car_model) {
     if (!ar1_fields && !rw_fields) {
       for (int t = 0; t < n_t; t++)
         jnll += SCALE(GMRF(Q_st, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
@@ -537,7 +539,7 @@ Type objective_function<Type>::operator()()
     }
 
     // Spatially varying effects:
-    if (include_spatial) {
+    if (include_spatial && !car_model) {
       eta_i(i) += omega_s_A(i);  // spatial
       if (spatial_covariate)
         eta_i(i) += zeta_s_A(i) * z_i(i); // spatially varying covariate

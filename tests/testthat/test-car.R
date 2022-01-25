@@ -55,7 +55,19 @@ test_that("Test 1D CAR model works", {
 
   expect_equal(class(predict(m, df)), "data.frame")
 
-  #pred = predict(m, df)
+  # test with several years of data
+  df = expand.grid(car_region = 1:nrow(W),
+                  year = 1:2)
+  #df = dplyr::left_join(df,spat_data)
+  df$resid = rnorm(nrow(W),0,exp(-1.203973))
+  df$mu = B0 + re[df$car_region]
+  df$y = B0 + re[df$car_region] + df$resid
+
+  #spde = make_mesh(df, c("car_region","car_region"),n_knots=4)
+  m <- sdmTMB(y ~1, data = df, time = "year",
+              spatiotemporal = "off",
+              spatial = "on",
+              CAR_neighbours = CAR_nb)
 
   # names(B0) = "b_j"
   # expect_equal(m$sd_report$par.fixed[which(names(m$sd_report$par.fixed)=="b_j")], B0, tolerance = 1e-2)
