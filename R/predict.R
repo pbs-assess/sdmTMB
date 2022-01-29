@@ -46,7 +46,7 @@
 #'   `"zeta_s"`, `"epsilon_st"`, and `"est_rf"` (as described below).
 #'   Other options will be passed verbatim.
 #' @param tmbstan_model A model fit with [tmbstan::tmbstan()]. See
-#'   [extract_mcmc()] for more details and an example. If specificed, the
+#'   [extract_mcmc()] for more details and an example. If specified, the
 #'   predict function will return a matrix of a similar form as if `sims > 0`
 #'   but representing Bayesian posterior samples from the Stan model.
 #' @param ... Not implemented.

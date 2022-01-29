@@ -67,7 +67,7 @@ Defaults to the link-space predictions. Options include: \code{"omega_s"},
 Other options will be passed verbatim.}
 
 \item{tmbstan_model}{A model fit with \code{\link[tmbstan:tmbstan]{tmbstan::tmbstan()}}. See
-\code{\link[=extract_mcmc]{extract_mcmc()}} for more details and an example. If specificed, the
+\code{\link[=extract_mcmc]{extract_mcmc()}} for more details and an example. If specified, the
 predict function will return a matrix of a similar form as if \code{sims > 0}
 but representing Bayesian posterior samples from the Stan model.}
 
