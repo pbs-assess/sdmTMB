@@ -217,6 +217,7 @@ sdmTMB_simulate <- function(formula,
   if (!is.null(phi)) params$ln_phi <- log(phi)
   if (!is.null(rho)) params$ar1_phi <- stats::qlogis((rho + 1) / 2)
   if (!is.null(df)) tmb_data$df <- df
+  if (!is.null(tweedie_p)) params$thetaf <- stats::qlogis(tweedie_p - 1)
 
   if (!is.null(fixed_re$omega_s)) {
     params$omega_s <- fixed_re$omega_s
