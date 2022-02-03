@@ -873,6 +873,19 @@ sdmTMB <- function(
   if (is.null(thresh$threshold_parameter)) {
     tmb_map <- c(tmb_map, list(b_threshold = factor(rep(NA, 2))))
   }
+
+  # optional models on spatiotemporal sd parameter
+  if (est_epsilon_re == 0L) {
+    tmb_map <- c(tmb_map, list(ln_epsilon_re_sigma = as.factor(NA),
+      epsilon_re = factor(rep(NA, tmb_data$n_t))))
+  }
+  if (est_epsilon_model == 0L) {
+    tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
+  }
+  if (est_epsilon_slope == 0L) {
+    tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
+  }
+
   if (multiphase && is.null(previous_fit) && do_fit) {
     not_phase1 <- c(tmb_map, list(
       ln_tau_O   = as.factor(NA),
@@ -889,18 +902,6 @@ sdmTMB <- function(
       b_smooth = factor(rep(NA, length(tmb_params$b_smooth))),
       ln_smooth_sigma = factor(rep(NA, length(tmb_params$ln_smooth_sigma))),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
-
-    # optional models on spatiotemporal sd parameter
-    if (est_epsilon_model == 0L) {
-      tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
-    }
-    if(est_epsilon_slope == 0L) {
-      tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
-    }
-    if (est_epsilon_re == 0L) {
-      tmb_map <- c(tmb_map, list(ln_epsilon_re_sigma = as.factor(NA),
-                                 epsilon_re = factor(rep(NA, tmb_data$n_t))))
-    }
 
     tmb_obj1 <- TMB::MakeADFun(
       data = tmb_data, parameters = tmb_params,
