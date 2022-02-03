@@ -65,7 +65,7 @@ extract_mcmc <- function(object) {
   }
   post <- rstan::extract(object)
   p_names <- names(post)[-length(names(post))] # exclude "lp__"
-  p <- lapply(seq_len(nrow(post$b_j)), function(i) {
+  p <- lapply(seq_len(length(post[["lp__"]])), function(i) {
     post_pars <- list()
     for (j in seq_along(p_names)) {
       par_j <- p_names[j]
