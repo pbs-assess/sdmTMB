@@ -500,7 +500,7 @@ sdmTMB <- function(
   ar1_fields <- identical("ar1", tolower(spatiotemporal))
   rw_fields <- identical("rw", tolower(spatiotemporal))
   assert_that(
-    is.logical(reml), is.logical(anisotropy), is.logical(silent),
+    is.logical(reml), is.logical(anisotropy), is.logical(share_range), is.logical(silent),
     is.logical(silent),
     is.logical(multiphase),
     is.logical(map_rf), is.logical(normalize)
