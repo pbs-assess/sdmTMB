@@ -7,13 +7,15 @@
 #' @examples
 #' \donttest{
 #' if (inla_installed()) {
-#' d <- pcod
-#' m <- sdmTMB(data = d,
-#'   formula = density ~ 0 + as.factor(year),
-#'   time = "year", mesh = make_mesh(d, c("X", "Y"), n_knots = 80, type = "kmeans"),
-#'   family = tweedie(link = "log"), anisotropy = TRUE,
-#'   spatial = "off")
-#' plot_anisotropy(m)
+#'   d <- pcod
+#'   m <- sdmTMB(
+#'     data = d,
+#'     formula = density ~ 0 + as.factor(year),
+#'     time = "year", mesh = make_mesh(d, c("X", "Y"), n_knots = 80, type = "kmeans"),
+#'     family = tweedie(link = "log"), anisotropy = TRUE,
+#'     spatial = "off"
+#'   )
+#'   plot_anisotropy(m)
 #' }
 #' }
 plot_anisotropy <- function(object) {
@@ -26,8 +28,10 @@ plot_anisotropy <- function(object) {
     x1 = eig$vectors[1, , drop = TRUE] * eig$values,
     y1 = eig$vectors[2, , drop = TRUE] * eig$values
   )
-  plot(0, xlim = range(c(dat$x0, dat$x1)),
-    ylim = range(c(dat$y0, dat$y1)), type = "n", asp = 1, xlab = "", ylab = "")
+  plot(0,
+    xlim = range(c(dat$x0, dat$x1)),
+    ylim = range(c(dat$y0, dat$y1)), type = "n", asp = 1, xlab = "", ylab = ""
+  )
   graphics::arrows(dat$x0, dat$y0, dat$x1, dat$y1)
   invisible(list(eig = eig, dat = dat, H = report$H))
 }
@@ -51,15 +55,16 @@ plot_anisotropy <- function(object) {
 #' * The x and y coordinates are set to their mean values
 #'
 #' @examples
-#' d <- subset(pcod, year >= 2000 & density > 0)
-#' pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
-#' m <- sdmTMB(
-#'   data = d,
-#'   formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
-#'   mesh = pcod_spde
-#' )
-#' plot_smooth(m)
-
+#' if (inla_installed()) {
+#'   d <- subset(pcod, year >= 2000 & density > 0)
+#'   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
+#'   m <- sdmTMB(
+#'     data = d,
+#'     formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
+#'     mesh = pcod_spde
+#'   )
+#'   plot_smooth(m)
+#' }
 plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
                         ggplot = FALSE, rug = TRUE, return_data = FALSE) {
   se <- TRUE

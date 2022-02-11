@@ -15,13 +15,15 @@ Plot anisotropy
 \examples{
 \donttest{
 if (inla_installed()) {
-d <- pcod
-m <- sdmTMB(data = d,
-  formula = density ~ 0 + as.factor(year),
-  time = "year", mesh = make_mesh(d, c("X", "Y"), n_knots = 80, type = "kmeans"),
-  family = tweedie(link = "log"), anisotropy = TRUE,
-  spatial = "off")
-plot_anisotropy(m)
+  d <- pcod
+  m <- sdmTMB(
+    data = d,
+    formula = density ~ 0 + as.factor(year),
+    time = "year", mesh = make_mesh(d, c("X", "Y"), n_knots = 80, type = "kmeans"),
+    family = tweedie(link = "log"), anisotropy = TRUE,
+    spatial = "off"
+  )
+  plot_anisotropy(m)
 }
 }
 }

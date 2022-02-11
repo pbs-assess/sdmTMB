@@ -42,12 +42,14 @@ Note:
 }
 }
 \examples{
-d <- subset(pcod, year >= 2000 & density > 0)
-pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
-m <- sdmTMB(
-  data = d,
-  formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
-  mesh = pcod_spde
-)
-plot_smooth(m)
+if (inla_installed()) {
+  d <- subset(pcod, year >= 2000 & density > 0)
+  pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
+  m <- sdmTMB(
+    data = d,
+    formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
+    mesh = pcod_spde
+  )
+  plot_smooth(m)
+}
 }
