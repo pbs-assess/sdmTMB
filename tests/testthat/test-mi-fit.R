@@ -1,7 +1,7 @@
 library(TMB)
 library(MASS)
 library(tweedie)
-library(sdmTMB)
+#library(sdmTMB)
 
 ### Parameterization #######
 # specify true values of metabolic index
@@ -108,7 +108,8 @@ data <- list(y = thedata$y,
              ndata = ndata,
             priorsigma = prior$priorsigma,
              priormeans = prior$priormeans,
-            nprior = 4L)
+            nprior = 4L,
+            cut_prior = c(log(2), log(2)))
 
 params <- list(Eo = Eo,
                n = n,
@@ -117,9 +118,9 @@ params <- list(Eo = Eo,
                logAo = log(400),
                ln_phi = 3,
                thetaf = 0,
-               b_threshold = c(-.5, 5)
+               b_threshold = c(-.5, log(4))
 )
-obj <- MakeADFun(data = data, parameters = params, DLL = "baby_sdmTMB")
+obj <- MakeADFun(data = data, parameters = params, DLL = "baby_sdmTMB", silent = TRUE)
 opt <- nlminb(obj$par, obj$fn, obj$gr)
 rep <- sdreport(obj)
 transformed <- summary(rep, "report")
@@ -133,7 +134,7 @@ Eofit <- summary(rep,"fixed")[1,1]
 nfit <- summary(rep,"fixed")[2,1]
 Aofit <- exp(summary(rep,"fixed")[5,1])
 s2fit <- summary(rep, "fixed")[8,1]
-scutfit <- summary(rep, "fixed")[9,1]
+scutfit <- exp(summary(rep, "fixed")[9,1]) +1
 
 gen.data <- calc_mi_y(thedata$po2, thedata$temp, b_threshold= c(s2fit, scutfit), Eofit, nfit, Aofit)
 

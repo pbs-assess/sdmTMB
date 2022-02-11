@@ -17,7 +17,8 @@ Type objective_function<Type>::operator() () {
   DATA_INTEGER(ndata);
   DATA_MATRIX(priorsigma); // variance covariance matrix of MI parameters from bayesian fit to lab data
   DATA_VECTOR(priormeans);
-  DATA_INTEGER(nprior); // posterior means of MI parameters
+  DATA_INTEGER(nprior); // prior means of MI parameters
+  DATA_VECTOR(cut_prior); // prior mean and variance of cutoff
 
   // parameter inputs
   PARAMETER(Eo);
@@ -34,10 +35,15 @@ Type objective_function<Type>::operator() () {
 
   // procedures aka transformed variables
   // Breakpoint function
-  Type s_slope, s_cut;
+  Type s_slope, logs_cut, s_cut;
   // these are for linear model
   s_slope = b_threshold(0);
-  s_cut = b_threshold(1);
+  logs_cut = b_threshold(1);
+  s_cut = exp(logs_cut) + 1; // add one automatically so that when logs_cut goes to 0, s_cut goes to 1, the smallest possible value
+
+  // apply a prior on logs_cut so that has a log mean of log(2) and sd of 0.4.
+  jnll -= dnorm(logs_cut, cut_prior(0), cut_prior(1), true);
+
   Type kb;
   kb = 0.00008617333262145; //boltzmans constant in eV per K
 
@@ -52,6 +58,9 @@ Type objective_function<Type>::operator() () {
 
   Ao = exp(logAo);
   ADREPORT(Ao);
+  ADREPORT(s_cut);
+  ADREPORT(s_slope);
+
   // get prior on logdevAo
   jnll -= dnorm(logAo, logAomu, logAosigma, true);
 
@@ -78,6 +87,9 @@ Type objective_function<Type>::operator() () {
     Type invtemp = pow(kb, -1) * (pow(temp[i], -1) - pow(tref, -1));
      mi[i] = pO2[i] * Ao * pow(W, n) * exp(Eo * invtemp);
   }
+  // Apply prior on cutoff assuming on average it is 3, and that s_cut -1 follows a log-normal distribution.
+
+
 
 
   // calculate expected value and jnll
