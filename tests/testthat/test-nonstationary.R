@@ -7,20 +7,23 @@ N <- length(x)
 time_steps <- 20
 X <- model.matrix(~1, data.frame(x1 = rnorm(N * time_steps)))
 loc <- data.frame(x = x, y = y)
-mesh <- make_mesh(loc, xy_cols = c("x", "y"), cutoff = 0.1)
-epsilons <- exp(rnorm(time_steps))
-s <- sdmTMB_sim(
-  x = x, y = y, mesh = mesh, X = X,
-  betas = c(0.2), time_steps = time_steps, rho = 0.5,
-  phi = 0.2, range = 0.8, sigma_O = 0, sigma_E = epsilons,
-  seed = 123, family = gaussian()
-)
-s$year_centered <- s$time - mean(s$time)
-mesh <- make_mesh(s, xy_cols = c("x", "y"), cutoff = 0.1)
 
 test_that("Test that non-stationary model works with random effects in epsilon works", {
   local_edition(2)
+  skip_on_cran()
+  skip_on_ci()
   skip_if_not_installed("INLA")
+
+  mesh <- make_mesh(loc, xy_cols = c("x", "y"), cutoff = 0.1)
+  epsilons <- exp(rnorm(time_steps))
+  s <- sdmTMB_sim(
+    x = x, y = y, mesh = mesh, X = X,
+    betas = c(0.2), time_steps = time_steps, rho = 0.5,
+    phi = 0.2, range = 0.8, sigma_O = 0, sigma_E = epsilons,
+    seed = 123, family = gaussian()
+  )
+  s$year_centered <- s$time - mean(s$time)
+  mesh <- make_mesh(s, xy_cols = c("x", "y"), cutoff = 0.1)
 
   # fit non-stationary model - iid
   m <- sdmTMB(
@@ -63,7 +66,20 @@ test_that("Test that non-stationary model works with random effects in epsilon w
 
 test_that("Test that non-stationary model works with random effects in epsilon with trend works", {
   local_edition(2)
+  skip_on_cran()
+  skip_on_ci()
   skip_if_not_installed("INLA")
+
+  mesh <- make_mesh(loc, xy_cols = c("x", "y"), cutoff = 0.1)
+  epsilons <- exp(rnorm(time_steps))
+  s <- sdmTMB_sim(
+    x = x, y = y, mesh = mesh, X = X,
+    betas = c(0.2), time_steps = time_steps, rho = 0.5,
+    phi = 0.2, range = 0.8, sigma_O = 0, sigma_E = epsilons,
+    seed = 123, family = gaussian()
+  )
+  s$year_centered <- s$time - mean(s$time)
+  mesh <- make_mesh(s, xy_cols = c("x", "y"), cutoff = 0.1)
 
   # fit non-stationary model - iid
   m <- sdmTMB(
@@ -104,7 +120,20 @@ test_that("Test that non-stationary model works with random effects in epsilon w
 
 test_that("Test that non-stationary model works with in epsilon with trend works", {
   local_edition(2)
+  skip_on_cran()
+  skip_on_ci()
   skip_if_not_installed("INLA")
+
+  mesh <- make_mesh(loc, xy_cols = c("x", "y"), cutoff = 0.1)
+  epsilons <- exp(rnorm(time_steps))
+  s <- sdmTMB_sim(
+    x = x, y = y, mesh = mesh, X = X,
+    betas = c(0.2), time_steps = time_steps, rho = 0.5,
+    phi = 0.2, range = 0.8, sigma_O = 0, sigma_E = epsilons,
+    seed = 123, family = gaussian()
+  )
+  s$year_centered <- s$time - mean(s$time)
+  mesh <- make_mesh(s, xy_cols = c("x", "y"), cutoff = 0.1)
 
   # fit non-stationary model - iid
   m <- sdmTMB(

@@ -235,11 +235,9 @@
 
 * Barrier meshes are now possible. See `add_barrier_mesh()` for an example.
 
-* There is a pkgdown website now that gets auto generated with GitHub actions:
-  <https://pbs-assess.github.io/sdmTMB/index.html>
+* There is a pkgdown website now that gets auto generated with GitHub actions.
 
-* There is the start of a model description vignette:
-  <https://github.com/pbs-assess/sdmTMB/blob/devel/vignettes/model-description.Rmd>
+* There is the start of a model description vignette.
   It is very much a work in progress.
 
 # sdmTMB 0.0.6.9009
