@@ -554,14 +554,13 @@ sdmTMB <- function(
 
   if (!is.null(extra_time)) { # for forecasting or interpolating
     if (!"xy_cols" %in% names(spde)) {
-      stop("Please use make_mesh() instead of the depreciated make_spde() to use `extra_time`.",
+      stop("Please use make_mesh() instead of the deprecated make_spde() to use `extra_time`.",
         call. = FALSE)
     }
     data <- expand_time(df = data, time_slices = extra_time, time_column = time)
     weights <- data$weight_sdmTMB
     spde$loc_xy <- as.matrix(data[,spde$xy_cols,drop=FALSE])
-    spde$A <- INLA::inla.spde.make.A(spde$mesh, loc = spde$loc_xy)
-    spde$A_st <- spde$A # FIXME
+    spde$A_st <- INLA::inla.spde.make.A(spde$mesh, loc = spde$loc_xy)
     spde$sdm_spatial_id <- seq(1, nrow(data)) # FIXME
   }
 
@@ -744,7 +743,6 @@ sdmTMB <- function(
     n_t        = length(unique(data[[time]])),
     z_i        = z_i,
     offset_i   = offset,
-    A          = spde$A,
     A_st       = spde$A_st,
     sim_re     = if ("sim_re" %in% names(experimental)) as.integer(experimental$sim_re) else rep(0L, 6),
     A_spatial_index = spde$sdm_spatial_id - 1L,
@@ -768,7 +766,8 @@ sdmTMB <- function(
     area_i     = rep(1, length(y_i)),
     normalize_in_r = 0L, # not used first time
     flag = 1L, # part of TMB::normalize()
-    calc_time_totals = 0L,
+    calc_index_totals = 0L,
+    calc_cog = 0L,
     random_walk = !is.null(time_varying),
     priors_b_n = length(not_na),
     priors_b_index = not_na,

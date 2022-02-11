@@ -5,14 +5,16 @@
 \alias{gather_sims}
 \title{Extract parameter simulations from the joint precision matrix}
 \usage{
-spread_sims(object, n_sims = 200)
+spread_sims(object, nsim = 200, n_sims = deprecated())
 
-gather_sims(object, n_sims = 200)
+gather_sims(object, nsim = 200, n_sims = deprecated())
 }
 \arguments{
 \item{object}{Output from \code{\link[=sdmTMB]{sdmTMB()}}.}
 
-\item{n_sims}{The number of simulation draws.}
+\item{nsim}{The number of simulation draws.}
+
+\item{n_sims}{Deprecated: please use \code{nsim}.}
 }
 \description{
 \code{spread_sims()} returns a wide-format data frame. \code{gather_sims()} returns a
@@ -24,9 +26,9 @@ if (inla_installed()) {
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2,
   data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(link = "log"),
   spatiotemporal = "AR1", time = "year")
-head(spread_sims(m, n_sims = 10))
-head(gather_sims(m, n_sims = 10))
-samps <- gather_sims(m, n_sims = 1000)
+head(spread_sims(m, nsim = 10))
+head(gather_sims(m, nsim = 10))
+samps <- gather_sims(m, nsim = 1000)
 
 if (require("ggplot2", quietly = TRUE)) {
   ggplot(samps, aes(.value)) + geom_histogram() +

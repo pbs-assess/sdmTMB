@@ -12,7 +12,8 @@
   area = 1,
   re_form = NULL,
   re_form_iid = NULL,
-  sims = 0,
+  nsim = 0,
+  sims = deprecated(),
   sims_var = "est",
   tmbstan_model = NULL,
   ...
@@ -30,7 +31,7 @@ data set.}
 \item{se_fit}{Should standard errors on predictions at the new locations
 given by \code{newdata} be calculated? Warning: the current implementation can
 be very slow for large data sets or high-resolution projections. A \emph{much}
-faster option is to use the \code{sims} argument below and calculate uncertainty
+faster option is to use the \code{nsim} argument below and calculate uncertainty
 on the simulations from the joint precision matrix.}
 
 \item{return_tmb_object}{Logical. If \code{TRUE}, will include the TMB object in a
@@ -53,12 +54,14 @@ predictions. \code{~0} or \code{NA} for population-level predictions. No other
 options (e.g., some but not all random intercepts) are implemented yet.
 Only affects predictions with \code{newdata}. This also affects \code{\link[=get_index]{get_index()}}.}
 
-\item{sims}{\strong{Experimental.} If > 0, simulate from the joint precision matrix with \code{sims}
+\item{nsim}{\strong{Experimental.} If > 0, simulate from the joint precision matrix with \code{sims}
 draws Returns a matrix of \code{nrow(data)} by \code{sim} representing the estimates
 of the linear predictor (i.e., in link space). Can be useful for deriving
 uncertainty on predictions (e.g., \code{apply(x, 1, sd)}) or propagating
 uncertainty. This is currently the fastest way to generate estimates of
 uncertainty on predictions in space with sdmTMB.}
+
+\item{sims}{\strong{Deprecated}. Please use \code{nsim} instead.}
 
 \item{sims_var}{\strong{Experimental.} Which TMB reported variable from the model
 should be extracted from the joint precision matrix simulation draws?
@@ -68,13 +71,13 @@ Other options will be passed verbatim.}
 
 \item{tmbstan_model}{A model fit with \code{\link[tmbstan:tmbstan]{tmbstan::tmbstan()}}. See
 \code{\link[=extract_mcmc]{extract_mcmc()}} for more details and an example. If specified, the
-predict function will return a matrix of a similar form as if \code{sims > 0}
+predict function will return a matrix of a similar form as if \code{nsim > 0}
 but representing Bayesian posterior samples from the Stan model.}
 
 \item{...}{Not implemented.}
 }
 \value{
-If \code{return_tmb_object = FALSE} (and \code{sims = 0} and \code{tmbstan_model = NULL}):
+If \code{return_tmb_object = FALSE} (and \code{nsim = 0} and \code{tmbstan_model = NULL}):
 
 A data frame:
 \itemize{
@@ -87,7 +90,7 @@ A data frame:
 off (zero), IID, AR1, or random walk
 }
 
-If \code{return_tmb_object = TRUE} (and \code{sims = 0} and \code{tmbstan_model = NULL}):
+If \code{return_tmb_object = TRUE} (and \code{nsim = 0} and \code{tmbstan_model = NULL}):
 
 A list:
 \itemize{
@@ -100,7 +103,7 @@ A list:
 In this case, you likely only need the \code{data} element as an end user.
 The other elements are included for other functions.
 
-If \code{sims > 0} or \code{tmbstan_model} is not \code{NULL}:
+If \code{nsim > 0} or \code{tmbstan_model} is not \code{NULL}:
 
 A matrix:
 \itemize{

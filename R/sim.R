@@ -3,7 +3,7 @@
 #' @description
 #' `r lifecycle::badge("deprecated")`
 #'
-#' **Note we are considering depreciating this function in favour of [sdmTMB_sim2()],
+#' **Note we are considering depreciating this function in favour of [sdmTMB_simulate()],
 #' which is more flexible and faster.**
 #'
 #' @param mesh Output from [make_mesh()] or a mesh directly from INLA.

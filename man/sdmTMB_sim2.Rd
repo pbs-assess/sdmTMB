@@ -85,7 +85,7 @@ A data frame where:
 This version (vs. \code{\link[=sdmTMB_sim]{sdmTMB_sim()}}) is set up to take a formula and a data
 frame and is easier to use if you want different spatial observations (and
 covariates) for each time slice. Eventually \code{\link[=sdmTMB_sim]{sdmTMB_sim()}} will be
-depreciated in favour of this version.
+deprecated in favour of this version.
 }
 \examples{
 if (inla_installed()) {

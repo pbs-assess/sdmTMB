@@ -5,7 +5,8 @@
 #' `spread_draws()` and `gather_draws()` functions.
 #'
 #' @param object Output from [sdmTMB()].
-#' @param n_sims The number of simulation draws.
+#' @param nsim The number of simulation draws.
+#' @param n_sims Deprecated: please use `nsim`.
 #'
 #' @references
 #' Code for simulating from the joint precision matrix adapted from:
@@ -21,9 +22,9 @@
 #' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2,
 #'   data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(link = "log"),
 #'   spatiotemporal = "AR1", time = "year")
-#' head(spread_sims(m, n_sims = 10))
-#' head(gather_sims(m, n_sims = 10))
-#' samps <- gather_sims(m, n_sims = 1000)
+#' head(spread_sims(m, nsim = 10))
+#' head(gather_sims(m, nsim = 10))
+#' samps <- gather_sims(m, nsim = 1000)
 #'
 #' if (require("ggplot2", quietly = TRUE)) {
 #'   ggplot(samps, aes(.value)) + geom_histogram() +
@@ -31,9 +32,15 @@
 #' }
 #' }
 
-spread_sims <- function(object, n_sims = 200) {
+spread_sims <- function(object, nsim = 200, n_sims = deprecated()) {
   if (!"jointPrecision" %in% names(object$sd_report)) {
     stop("TMB::sdreport() must be run with the joint precision returned.", call. = FALSE)
+  }
+
+  if (is_present(n_sims)) {
+    deprecate_warn("0.0.21", "spread_sims(n_sims)", "spread_sims(nsim)")
+  } else {
+    n_sims <- nsim
   }
   tmb_sd <- object$sd_report
   samps <- rmvnorm_prec(object$tmb_obj$env$last.par.best, tmb_sd, n_sims)
@@ -84,7 +91,14 @@ spread_sims <- function(object, n_sims = 200) {
 
 #' @export
 #' @rdname gather_sims
-gather_sims <- function(object, n_sims = 200) {
+gather_sims <- function(object, nsim = 200, n_sims = deprecated()) {
+
+  if (is_present(n_sims)) {
+    deprecate_warn("0.0.21", "gather_sims(n_sims)", "gather_sims(nsim)")
+  } else {
+    n_sims <- nsim
+  }
+
   out_wide <- spread_sims(object, n_sims)
   out_wide$.iteration <- NULL
   out <- stats::reshape(out_wide, direction = "long", varying = list(names(out_wide)),
@@ -98,11 +112,25 @@ gather_sims <- function(object, n_sims = 200) {
 }
 
 rmvnorm_prec <- function(mu, tmb_sd, n_sims) {
-  # mu <- c(tmb_sd$par.fixed, tmb_sd$par.random)
   z <- matrix(stats::rnorm(length(mu) * n_sims), ncol = n_sims)
   L <- Matrix::Cholesky(tmb_sd[["jointPrecision"]], super = TRUE)
   z <- Matrix::solve(L, z, system = "Lt")
   z <- Matrix::solve(L, z, system = "Pt")
   z <- as.matrix(z)
   mu + z
+}
+
+rmvnorm_prec_random <- function(obj, tmb_sd, n_sims) {
+  mu <- tmb_sd$par.random
+  z <- matrix(stats::rnorm(length(mu) * n_sims), ncol = n_sims)
+  jp <- obj$env$spHess(obj$env$last.par.best, random = TRUE)
+  L <- Matrix::Cholesky(jp, super = TRUE)
+  z <- Matrix::solve(L, z, system = "Lt")
+  z <- Matrix::solve(L, z, system = "Pt")
+  z <- as.matrix(z)
+  out <- mu + z
+  fe_mat <- matrix(unname(tmb_sd$par.fixed),
+    ncol = n_sims,
+    nrow = length(tmb_sd$par.fixed))
+  rbind(fe_mat, out)
 }

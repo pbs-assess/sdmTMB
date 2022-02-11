@@ -115,7 +115,7 @@ residuals.sdmTMB <- function(object, type = c("mle", "sim"), ...) {
   if (type == "mle") {
     mu <- object$family$linkinv(predict(object)$est)
   } else if (type == "sim") {
-    mu <- object$family$linkinv(predict(object, sims = 1L)[, 1, drop = TRUE])
+    mu <- object$family$linkinv(predict(object, nsim = 1L)[, 1L, drop = TRUE])
   } else {
     stop("`type` not implemented", call. = FALSE)
   }

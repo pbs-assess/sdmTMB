@@ -1,5 +1,18 @@
 # sdmTMB
 
+# sdmTMB 0.0.21.9000
+
+* `sims` and `n_sims` arguments have been deprecated and standardized
+  to `nsim` to match the `simulate()` S3 method.
+
+* Bias correction on `get_index()` and `get_cog()` is now selective and 
+  is just applied to the necessary derived parameters.
+
+* INLA projection matrix 'A' is now shared across spatial and spatiotemporal
+  fields.
+
+* Add `add_utm_columns()` to ease adding UTM columns.
+
 # sdmTMB 0.0.20.9001
 
 * Add `dharma_residuals()`.

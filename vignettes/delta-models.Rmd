@@ -28,11 +28,11 @@ library(dplyr)
 library(sdmTMB)
 ```
 
-sdmTMB does not have built-in hurdle models (also called delta models), but we can fit the two components separately and easily combine the predictions. 
-In this case, our delta-gamma model involves fitting a binomial presence-absence model (`family = binomial(link = "logit")`) and then a model for the positive catches only with a gamma observation distribution and a log link (`Gamma(link = "log")`).
+sdmTMB does not have built-in hurdle models (also called delta models), but we can fit the two components separately and combine the predictions. 
+In this case, our delta-Gamma model involves fitting a binomial presence-absence model (`family = binomial(link = "logit")`) and then a model for the positive catches only with a Gamma observation distribution and a log link (`Gamma(link = "log")`).
 We could also use a `lognormal(link = "log")` family.
-Hurdle models are more appropriate than something like a Tweedie when there are differences in the processes controlling presence vs. abundance, or when greater flexibility to account for overdispersion is required.
-A similar strategy can also be used for zero-inflated count data but with a `truncated_nbinom1(link = "log")` or `truncated_nbinom2(link = "log")` distribution instead of the gamma for the positive component.
+Hurdle models are more appropriate than something like a Tweedie when there are differences in the processes controlling presence vs. abundance, or when greater flexibility to account for dispersion is required.
+A similar strategy can also be used for zero-inflated count data but with a `truncated_nbinom1(link = "log")` or `truncated_nbinom2(link = "log")` distribution instead of the Gamma for the positive component.
 
 We will use a dataset built into the sdmTMB package: trawl survey data for Pacific Cod in Queen Charlotte Sound, British Columbia, Canada. The density units are kg/km^2^. Here, X and Y are coordinates in UTM zone 9.
 
@@ -42,12 +42,12 @@ glimpse(pcod)
 
 
 ```{r spde, fig.asp=0.7}
-mesh1 <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
+mesh1 <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
 ```
 
 It is not necessary to use the same mesh for both models, but one can do so by updating the first mesh to match the reduced data frame as shown here:
 
-```{r, fig.asp=0.9, cache=FALSE}
+```{r, fig.asp=0.9}
 dat2 <- subset(pcod, density > 0)
 mesh2 <- make_mesh(dat2,
   xy_cols = c("X", "Y"),
@@ -58,7 +58,7 @@ plot(mesh2)
 
 This delta-gamma model is similar to the Tweedie model in the [Intro to modelling with sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/basic-intro.html) vignette, except that we will use `s()` for the depth effect. 
 
-```{r model1, cache=TRUE, warning=FALSE}
+```{r model1, warning=FALSE}
 m1 <- sdmTMB(
   formula = present ~ 0 + as.factor(year) + s(depth, k = 3),
   data = pcod,
@@ -72,7 +72,7 @@ m1
 
 One can use different covariates in each model, but in this case we will just let the depth effect be more wiggly by not specifying `k = 3`. 
 
-```{r model2, cache=TRUE, warning=FALSE}
+```{r model2, warning=FALSE}
 m2 <- sdmTMB(
   formula = density ~ 0 + as.factor(year) + s(depth),
   data = dat2,
@@ -87,12 +87,12 @@ m2
 
 We can inspect the effect of the smoothed covariate using `plot_smooth()`.
 
-```{r model1-depth, cache=TRUE}
+```{r model1-depth}
 s1 <- plot_smooth(m1, ggplot = TRUE)
 s1 + xlim(min(pcod$depth), max(pcod$depth))
 ```
 
-```{r model2-depth, cache=TRUE}
+```{r model2-depth}
 s2 <- plot_smooth(m2, ggplot = TRUE)
 s2 + xlim(min(pcod$depth), max(pcod$depth))
 ```
@@ -116,15 +116,15 @@ A larger number (say ~1000) may be appropriate for final model runs.
 
 ```{r delta-pred-sim, echo=TRUE}
 set.seed(28239)
-p_bin_sim <- predict(m1, newdata = qcs_grid, sims = 500)
-p_pos_sim <- predict(m2, newdata = qcs_grid, sims = 500)
+p_bin_sim <- predict(m1, newdata = qcs_grid, nsim = 500)
+p_pos_sim <- predict(m2, newdata = qcs_grid, nsim = 500)
 p_bin_prob_sim <- m1$family$linkinv(p_bin_sim)
 p_pos_exp_sim <- m2$family$linkinv(p_pos_sim)
 p_combined_sim <- p_bin_prob_sim * p_pos_exp_sim
 ```
 
-`p_combined_sim` is just a matrix with a row for each row of data that was predicted on and width sims (`dim(p_combined_sim)`: `r dim(p_combined_sim)`). 
-You can process this matrix however you would like. 
+`p_combined_sim` is just a matrix with a row for each row of data that was predicted on and width `nsim`. 
+You can process this matrix however you would like.
 We can save median predictions and upper and lower 95% confidence intervals:
 
 ```{r, fig.width=5}

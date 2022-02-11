@@ -14,7 +14,7 @@ get_index_sims(
 )
 }
 \arguments{
-\item{obj}{\code{\link[=predict.sdmTMB]{predict.sdmTMB()}} output with \code{sims > 0}.}
+\item{obj}{\code{\link[=predict.sdmTMB]{predict.sdmTMB()}} output with \code{nsim > 0}.}
 
 \item{level}{The confidence level.}
 
@@ -58,7 +58,7 @@ m <- sdmTMB(density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   time = "year"
 )
 qcs_grid_2011 <- subset(qcs_grid, year >= 2011)
-p <- predict(m, newdata = qcs_grid_2011, sims = 100)
+p <- predict(m, newdata = qcs_grid_2011, nsim = 100)
 x <- get_index_sims(p)
 x_sims <- get_index_sims(p, return_sims = TRUE)
 

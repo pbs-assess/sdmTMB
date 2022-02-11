@@ -16,7 +16,7 @@
 #' @details This function does nothing more than summarize and reshape the
 #'   matrix of simulation draws into a data frame.
 #'
-#' @param obj [predict.sdmTMB()] output with `sims > 0`.
+#' @param obj [predict.sdmTMB()] output with `nsim > 0`.
 #' @param level The confidence level.
 #' @param return_sims Logical. Return simulation draws? The default (`FALSE`) is
 #'   a quantile summary of those simulation draws.
@@ -41,7 +41,7 @@
 #'   time = "year"
 #' )
 #' qcs_grid_2011 <- subset(qcs_grid, year >= 2011)
-#' p <- predict(m, newdata = qcs_grid_2011, sims = 100)
+#' p <- predict(m, newdata = qcs_grid_2011, nsim = 100)
 #' x <- get_index_sims(p)
 #' x_sims <- get_index_sims(p, return_sims = TRUE)
 #'
@@ -62,7 +62,7 @@ get_index_sims <- function(obj,
                            agg_function = function(x) sum(exp(x))) {
   assert_that(is.matrix(obj), !is.null(attr(obj, "time")),
     msg = paste0("`obj` should be matrix output from `predict.sdmTMB()` ",
-      "with the `sims > 0` or a matrix with a `time` attribute."))
+      "with the `nsim > 0` or a matrix with a `time` attribute."))
   assert_that(is.logical(return_sims))
   assert_that(is.function(est_function))
   assert_that(is.function(agg_function))

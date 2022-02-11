@@ -512,7 +512,7 @@ We can take samples from the implied parameter distribution assuming an
 MVN covariance matrix on the internal parameterization:
 
 ``` r
-samps <- gather_sims(fit, n_sims = 1000)
+samps <- gather_sims(fit, nsim = 1000)
 ggplot(samps, aes(.value)) + geom_histogram() +
   facet_wrap(~.variable, scales = "free_x")
 #> `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
@@ -532,7 +532,7 @@ The fastest way to get point-wise prediction uncertainty is to use the
 MVN samples:
 
 ``` r
-p <- predict(fit, newdata = predictor_dat, sims = 500)
+p <- predict(fit, newdata = predictor_dat, nsim = 500)
 predictor_dat$se <- apply(p, 1, sd)
 ggplot(predictor_dat, aes(X, Y, fill = se)) +
   geom_raster() +

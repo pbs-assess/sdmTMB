@@ -16,7 +16,7 @@
 #' @param se_fit Should standard errors on predictions at the new locations
 #'   given by `newdata` be calculated? Warning: the current implementation can
 #'   be very slow for large data sets or high-resolution projections. A *much*
-#'   faster option is to use the `sims` argument below and calculate uncertainty
+#'   faster option is to use the `nsim` argument below and calculate uncertainty
 #'   on the simulations from the joint precision matrix.
 #' @param return_tmb_object Logical. If `TRUE`, will include the TMB object in a
 #'   list format output. Necessary for the [get_index()] or [get_cog()]
@@ -34,12 +34,13 @@
 #'   predictions. `~0` or `NA` for population-level predictions. No other
 #'   options (e.g., some but not all random intercepts) are implemented yet.
 #'   Only affects predictions with `newdata`. This also affects [get_index()].
-#' @param sims **Experimental.** If > 0, simulate from the joint precision matrix with `sims`
+#' @param nsim **Experimental.** If > 0, simulate from the joint precision matrix with `sims`
 #'   draws Returns a matrix of `nrow(data)` by `sim` representing the estimates
 #'   of the linear predictor (i.e., in link space). Can be useful for deriving
 #'   uncertainty on predictions (e.g., `apply(x, 1, sd)`) or propagating
 #'   uncertainty. This is currently the fastest way to generate estimates of
 #'   uncertainty on predictions in space with sdmTMB.
+#' @param sims **Deprecated**. Please use `nsim` instead.
 #' @param sims_var **Experimental.** Which TMB reported variable from the model
 #'   should be extracted from the joint precision matrix simulation draws?
 #'   Defaults to the link-space predictions. Options include: `"omega_s"`,
@@ -47,12 +48,12 @@
 #'   Other options will be passed verbatim.
 #' @param tmbstan_model A model fit with [tmbstan::tmbstan()]. See
 #'   [extract_mcmc()] for more details and an example. If specified, the
-#'   predict function will return a matrix of a similar form as if `sims > 0`
+#'   predict function will return a matrix of a similar form as if `nsim > 0`
 #'   but representing Bayesian posterior samples from the Stan model.
 #' @param ... Not implemented.
 #'
 #' @return
-#' If `return_tmb_object = FALSE` (and `sims = 0` and `tmbstan_model = NULL`):
+#' If `return_tmb_object = FALSE` (and `nsim = 0` and `tmbstan_model = NULL`):
 #'
 #' A data frame:
 #' * `est`: Estimate in link space (everything is in link space)
@@ -63,7 +64,7 @@
 #' * `epsilon_st`: Spatiotemporal (intercept) random fields, could be
 #'    off (zero), IID, AR1, or random walk
 #'
-#' If `return_tmb_object = TRUE` (and `sims = 0` and `tmbstan_model = NULL`):
+#' If `return_tmb_object = TRUE` (and `nsim = 0` and `tmbstan_model = NULL`):
 #'
 #' A list:
 #' * `data`: The data frame described above
@@ -74,7 +75,7 @@
 #' In this case, you likely only need the `data` element as an end user.
 #' The other elements are included for other functions.
 #'
-#' If `sims > 0` or `tmbstan_model` is not `NULL`:
+#' If `nsim > 0` or `tmbstan_model` is not `NULL`:
 #'
 #' A matrix:
 #' * Columns represent samples
@@ -224,8 +225,8 @@
 
 predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
   return_tmb_object = FALSE,
-  area = 1, re_form = NULL, re_form_iid = NULL,
-  sims = 0, sims_var = "est", tmbstan_model = NULL, ...) {
+  area = 1, re_form = NULL, re_form_iid = NULL, nsim = 0,
+  sims = deprecated(), sims_var = "est", tmbstan_model = NULL, ...) {
 
   if ("version" %in% names(object)) {
     check_sdmTMB_version(object$version)
@@ -239,6 +240,12 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     "Please replace make_spde() with make_mesh().", call. = FALSE)
   } else {
     xy_cols <- object$spde$xy_cols
+  }
+
+  if (is_present(sims)) {
+    deprecate_warn("0.0.21", "predict.sdmTMB(sims)", "predict.sdmTMB(nsim)")
+  } else {
+    sims <- nsim
   }
 
   # from glmmTMB:
@@ -360,7 +367,8 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     tmb_data$calc_se <- as.integer(se_fit)
     tmb_data$pop_pred <- as.integer(pop_pred)
     tmb_data$exclude_RE <- exclude_RE
-    tmb_data$calc_time_totals <- as.integer(!se_fit)
+    # tmb_data$calc_index_totals <- as.integer(!se_fit)
+    # tmb_data$calc_cog <- as.integer(!se_fit)
     tmb_data$proj_spatial_index <- newdata$sdm_spatial_id
     tmb_data$proj_Zs <- sm$Zs
     tmb_data$proj_Xs <- sm$Xs
@@ -406,8 +414,13 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
           sigma = sd_report$cov.fixed))
         row.names(t_draws) <- NULL
       } else {
-        t_draws <- rmvnorm_prec(mu = new_tmb_obj$env$last.par.best,
-          tmb_sd = sd_report, n_sims = sims)
+        # if (!mvn_mle) {
+          t_draws <- rmvnorm_prec(mu = new_tmb_obj$env$last.par.best,
+            tmb_sd = sd_report, n_sims = sims)
+        # } else {
+        #   t_draws <- rmvnorm_prec_random(new_tmb_obj,
+        #     tmb_sd = sd_report, n_sims = sims)
+        # }
       }
       r <- apply(t_draws, 2L, new_tmb_obj$report)
     }
@@ -498,7 +511,7 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
   }
 
   if (return_tmb_object)
-    return(list(data = nd, report = r, obj = obj, fit_obj = object))
+    return(list(data = nd, report = r, obj = obj, fit_obj = object, pred_tmb_data = tmb_data))
   else
     return(nd)
 }

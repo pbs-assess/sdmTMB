@@ -9,7 +9,7 @@ test_that("rmvnorm sim prediction works with no random effects", {
     control = sdmTMBcontrol(map_rf = TRUE)
   )
   set.seed(1)
-  p <- predict(m, newdata = qcs_grid[qcs_grid$year >= 2011, ], sims = 30L)
+  p <- predict(m, newdata = qcs_grid[qcs_grid$year >= 2011, ], nsim = 30L)
   p1 <- predict(m, newdata = qcs_grid[qcs_grid$year >= 2011, ])
   expect_identical(class(p)[[1]], "matrix")
   expect_identical(ncol(p), 30L)
@@ -28,7 +28,7 @@ test_that("rmvnorm sim prediction works", {
     formula = density ~ 0 + as.factor(year),
     mesh = mesh, family = tweedie(link = "log"))
   set.seed(1)
-  p <- predict(m, newdata = qcs_grid, sims = 15L)
+  p <- predict(m, newdata = qcs_grid, nsim = 15L)
   p1 <- predict(m, newdata = qcs_grid)
   expect_identical(class(p)[[1]], "matrix")
   expect_identical(ncol(p), 15L)
@@ -54,7 +54,7 @@ test_that("get_index_sims works", {
   )
   qcs_grid_2011 <- subset(qcs_grid, year >= 2011)
   set.seed(1029)
-  p <- predict(m, newdata = qcs_grid_2011, sims = 200L)
+  p <- predict(m, newdata = qcs_grid_2011, nsim = 200L)
   expect_equal(ncol(p), 200L)
   expect_equal(nrow(p), nrow(qcs_grid_2011))
 

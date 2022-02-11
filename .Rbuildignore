@@ -2,6 +2,7 @@
 ^doc$
 ^codecov\.yml$
 ^README\.Rmd$
+^header\.md$
 ^data-raw$
 ^.*\.Rproj$
 ^\.Rproj\.user$

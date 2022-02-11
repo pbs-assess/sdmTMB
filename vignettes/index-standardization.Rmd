@@ -167,11 +167,11 @@ mutate(index, region = "all") %>%
 An alternative is to generate our index via simulation from the joint precision matrix. This can be much faster than using `bias_correct = TRUE` in `get_index()`. Note that this approach is still preliminary. We have yet to find a situation where it does not match what you would get out of bias-corrected generalized-delta-method standard errors for this class of models, but use the approach at your own risk.
 
 ```{r pred-sims}
-pred_sims <- predict(m, newdata = qcs_grid, sims = 500)
+pred_sims <- predict(m, newdata = qcs_grid, nsim = 500)
 dim(pred_sims)
 ```
 
-`pred_sims` is just a matrix with width `sims` and a row for each row of data that was predicted on. You can process this matrix however you would like. For example, we can now calculate spatial uncertainty quickly:
+`pred_sims` is just a matrix with width `nsim` and a row for each row of data that was predicted on. You can process this matrix however you would like. For example, we can now calculate spatial uncertainty quickly:
 
 ```{r sims-cv-plot, cache=FALSE, fig.height=4, fig.width=4, out.width="3.5in", echo=TRUE}
 qcs_grid$cv <- apply(pred_sims, 1, function(x) sd(exp(x)) / mean(exp(x)))

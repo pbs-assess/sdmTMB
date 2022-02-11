@@ -107,7 +107,6 @@ Type objective_function<Type>::operator()()
   DATA_IVECTOR(nobs_RE);
   DATA_IVECTOR(ln_tau_G_index);
 
-  DATA_SPARSE_MATRIX(A); // INLA 'A' projection matrix for original data
   DATA_SPARSE_MATRIX(A_st); // INLA 'A' projection matrix for unique stations
   DATA_IVECTOR(A_spatial_index); // Vector of stations to match up A_st output
 
@@ -125,7 +124,8 @@ Type objective_function<Type>::operator()()
   // Should predictions be population (vs. individual-level) predictions?
   DATA_INTEGER(pop_pred);
   // Calculate total summed by year (e.g. biomass)?
-  DATA_INTEGER(calc_time_totals);
+  DATA_INTEGER(calc_index_totals);
+  DATA_INTEGER(calc_cog);
   DATA_INTEGER(calc_quadratic_range);
   DATA_VECTOR(area_i); // area per prediction grid cell for index standardization
 
@@ -429,8 +429,8 @@ Type objective_function<Type>::operator()()
   array<Type> epsilon_st_A(A_st.rows(), n_t);
   for (int i = 0; i < n_t; i++)
     epsilon_st_A.col(i) = A_st * vector<Type>(epsilon_st.col(i));
-  vector<Type> omega_s_A = A * omega_s;
-  vector<Type> zeta_s_A = A * zeta_s;
+  vector<Type> omega_s_A = A_st * omega_s;
+  vector<Type> zeta_s_A = A_st * zeta_s;
   vector<Type> epsilon_st_A_vec(n_i);
 
   // ------------------ Linear predictor ---------------------------------------
@@ -761,11 +761,11 @@ Type objective_function<Type>::operator()()
       }
     }
 
-    if (calc_time_totals) {
+    // Total biomass etc.:
+    vector<Type> total(n_t);
+    if (calc_index_totals || calc_cog) {
       // ------------------ Derived quantities ---------------------------------
 
-      // Total biomass etc.:
-      vector<Type> total(n_t);
       for (int i = 0; i < proj_eta.size(); i++) {
         total(proj_year(i)) += InverseLink(proj_eta(i), link) * area_i(i);
       }
@@ -773,9 +773,19 @@ Type objective_function<Type>::operator()()
       for (int i = 0; i < n_t; i++) {
         link_total(i) = Link(total(i), link);
       }
-      REPORT(link_total);
-      ADREPORT(link_total);
-
+      // if (calc_index_totals) {
+        REPORT(link_total);
+        ADREPORT(link_total);
+      // }
+      // PARAMETER_ARRAY(eps_total);
+      // if (eps_total.size() > 0) {
+      //   Type S;
+      //   for (int t = 0; t < n_t; t++) {
+      //     S = newton::Tag(total(t));
+      //     jnll += eps_total(t) * S;
+      //   }
+    }
+    if (calc_cog) {
       // Centre of gravity:
       vector<Type> cog_x(n_t);
       vector<Type> cog_y(n_t);

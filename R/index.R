@@ -71,7 +71,31 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
       "`your_model <- sdmTMB:::update_model(your_model)` ",
       "first before running this function.", call. = FALSE)
 
-  sr <- TMB::sdreport(obj$obj, bias.correct = bias_correct, ...)
+  tmb_data <- obj$pred_tmb_data
+  if (value_name[1] == "link_total")
+    tmb_data$calc_index_totals <- 1L
+  if (value_name[1] == "cog_x")
+    tmb_data$calc_cog <- 1L
+
+  new_obj <- TMB::MakeADFun(
+    data = tmb_data,
+    parameters = get_pars(obj$fit_obj),
+    map = obj$fit_obj$tmb_map,
+    random = obj$fit_obj$tmb_random,
+    DLL = "sdmTMB",
+    silent = TRUE
+  )
+  # need to initialize the new TMB object once?
+  # new_obj$fn(obj$fit_obj$model$par)
+  if ("ADreportIndex" %in% names(new_obj$env)) {
+    ind <- new_obj$env$ADreportIndex()
+    to_split <- as.vector(unlist(ind[value_name]))
+  } else {
+    to_split <- NULL
+  }
+
+  sr <- TMB::sdreport(new_obj, bias.correct = bias_correct,
+    bias.correct.control = list(sd = FALSE, split = to_split, nsplit = NULL), ...)
   conv <- get_convergence_diagnostics(sr)
   ssr <- summary(sr, "report")
   log_total <- ssr[row.names(ssr) %in% value_name, , drop = FALSE]

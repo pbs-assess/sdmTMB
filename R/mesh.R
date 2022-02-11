@@ -3,7 +3,7 @@
 #' @description
 #' `r lifecycle::badge("deprecated")`
 #'
-#' **Depreciated; please use [make_mesh()] instead.**
+#' **Deprecated; please use [make_mesh()] instead.**
 #'
 #' @param x X numeric vector.
 #' @param y Y numeric vector.
@@ -18,7 +18,7 @@
 
 make_spde <- function(x, y, n_knots, seed = 42, mesh = NULL) {
   loc_xy <- cbind(x, y)
-  .Deprecated("make_mesh", msg = "make_spde() is depreciated. Please use make_mesh() instead.")
+  .Deprecated("make_mesh", msg = "make_spde() is deprecated. Please use make_mesh() instead.")
   if (is.null(mesh)) {
     if (n_knots >= nrow(loc_xy)) {
       warning(
@@ -182,7 +182,7 @@ make_mesh <- function(data, xy_cols,
 
   structure(list(
     loc_xy = loc_xy, xy_cols = xy_cols, mesh = mesh, spde = spde,
-    loc_centers = loc_centers, A = A, A_st = A_st,
+    loc_centers = loc_centers, A_st = A_st,
     sdm_spatial_id = fake_data$sdm_spatial_id
   ), class = "sdmTMBmesh")}
 
@@ -223,7 +223,7 @@ binary_search_knots <- function(loc_xy,
 #' @importFrom graphics plot
 #' @export
 plot_spde <- function(object) {
-  .Deprecated("plot", msg = "plot_spde() is depreciated. Please use make_mesh() and plot()")
+  .Deprecated("plot", msg = "plot_spde() is deprecated. Please use make_mesh() and plot()")
   plot(object$mesh, main = NA, edge.color = "grey60", asp = 1)
   if ("x" %in% names(object)) {
     points(object$x, object$y, pch = 21, col = "#00000070")

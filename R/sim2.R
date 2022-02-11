@@ -6,7 +6,7 @@
 #' This version (vs. [sdmTMB_sim()]) is set up to take a formula and a data
 #' frame and is easier to use if you want different spatial observations (and
 #' covariates) for each time slice. Eventually [sdmTMB_sim()] will be
-#' depreciated in favour of this version.
+#' deprecated in favour of this version.
 #'
 #' @param formula A *one-sided* formula describing the fixed-effect structure.
 #' @param data A data frame containing the predictors described in `formula` and the

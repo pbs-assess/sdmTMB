@@ -249,7 +249,7 @@ plot_map(predictions, "epsilon_st") +
 We can also estimate the uncertainty in our spatiotemporal density predictions using simulations from the joint precision matrix by setting `sims` `> 0` in the predict function. Here we generate 100 estimates and use `apply()` to calculate a median estimate, upper and lower confidence intervals, and a CV.  
 
 ```{r sim-cv}
-sim <- predict(m3, newdata = qcs_grid, sims = 100)
+sim <- predict(m3, newdata = qcs_grid, nsim = 100)
 sim_last <- sim[qcs_grid$year == max(qcs_grid$year), ] # just plot last year
 pred_last <- predictions[predictions$year == max(qcs_grid$year), ]
 pred_last$median <- apply(exp(sim_last), 1, median)
