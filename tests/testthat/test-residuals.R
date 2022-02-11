@@ -1,4 +1,7 @@
 test_that("Simulated residuals work", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
   fit <- sdmTMB(density ~ as.factor(year) + poly(depth, 2),
     data = pcod_2011, time = "year", mesh = pcod_mesh_2011,
     family = tweedie(link = "log"), spatial = "off",
