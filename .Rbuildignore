@@ -13,3 +13,4 @@
 ^pkgdown$
 ^\.github$
 ^README_cache$
+^cran-comments\.md$
