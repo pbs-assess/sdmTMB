@@ -4,8 +4,8 @@
 
 #' Predict from an sdmTMB model
 #'
-#' Make predictions from an sdmTMB model. The function can predict on the
-#' original or new data.
+#' Make predictions from an sdmTMB model; can predict on the original or new
+#' data.
 #'
 #' @param object An object from [sdmTMB()].
 #' @param newdata A data frame to make predictions on. This should be a data
@@ -87,15 +87,11 @@
 #' @examples
 #' if (require("ggplot2", quietly = TRUE) && inla_installed()) {
 #'
-#' # We'll only use a small number of knots so this example runs quickly
-#' # but you will likely want to use more in applied situations.
-#'
 #' d <- pcod_2011
-#'
-#' pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
+#' mesh <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
 #' m <- sdmTMB(
 #'  data = d, formula = density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'  time = "year", mesh = pcod_spde, family = tweedie(link = "log")
+#'  time = "year", mesh = mesh, family = tweedie(link = "log")
 #' )
 #'
 #' # Predictions at original data locations -------------------------------
@@ -104,7 +100,6 @@
 #' head(predictions)
 #'
 #' predictions$resids <- residuals(m) # randomized quantile residuals
-#'
 #'
 #' ggplot(predictions, aes(X, Y, col = resids)) + scale_colour_gradient2() +
 #'   geom_point() + facet_wrap(~year)
@@ -150,9 +145,9 @@
 #'   seq(min(d$depth_scaled), max(d$depth_scaled), length.out = 100))
 #' nd$depth_scaled2 <- nd$depth_scaled^2
 #'
-#' # You'll need at least one time element. If time isn't also a fixed effect
-#' # then it doesn't matter what you pick:
-#' nd$year <- 2011L
+#' # Because this is a spatiotemporal model, you'll need at least one time
+#' # element. If time isn't also a fixed effect then it doesn't matter what you pick:
+#' nd$year <- 2011L # L: integer to match original data
 #' p <- predict(m, newdata = nd, se_fit = TRUE, re_form = NA)
 #' ggplot(p, aes(depth_scaled, exp(est),
 #'   ymin = exp(est - 1.96 * est_se), ymax = exp(est + 1.96 * est_se))) +
@@ -161,9 +156,12 @@
 #' # Plotting marginal effect of a spline ---------------------------------
 #'
 #' m_gam <- sdmTMB(
-#'  data = d, formula = density ~ 0 + as.factor(year) + s(depth_scaled, k = 3),
-#'  time = "year", mesh = pcod_spde, family = tweedie(link = "log")
+#'  data = d, formula = density ~ 0 + as.factor(year) + s(depth_scaled, k = 5),
+#'  time = "year", mesh = mesh, family = tweedie(link = "log")
 #' )
+#' plot_smooth(m_gam)
+#'
+#' # or manually:
 #' nd <- data.frame(depth_scaled =
 #'   seq(min(d$depth_scaled), max(d$depth_scaled), length.out = 100))
 #' nd$year <- 2011L
@@ -173,7 +171,7 @@
 #'   geom_line() + geom_ribbon(alpha = 0.4)
 #'
 #' # Forecasting ----------------------------------------------------------
-#' pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 15)
+#' mesh <- make_mesh(d, c("X", "Y"), cutoff = 15)
 #'
 #' unique(d$year)
 #' m <- sdmTMB(
@@ -181,7 +179,7 @@
 #'   spatiotemporal = "AR1", # using an AR1 to have something to forecast with
 #'   extra_time = 2019L, # `L` for integer to match our data
 #'   spatial = "off",
-#'   time = "year", mesh = pcod_spde, family = tweedie(link = "log")
+#'   time = "year", mesh = mesh, family = tweedie(link = "log")
 #' )
 #'
 #' # Add a year to our grid:
@@ -199,9 +197,9 @@
 #'
 #' d <- pcod
 #' d$year_scaled <- as.numeric(scale(d$year))
-#' pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
+#' mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 #' m <- sdmTMB(data = d, formula = density ~ depth_scaled + depth_scaled2,
-#'   mesh = pcod_spde, family = tweedie(link = "log"),
+#'   mesh = mesh, family = tweedie(link = "log"),
 #'   spatial_varying = ~ 0 + year_scaled, time = "year", spatiotemporal = "off")
 #' nd <- qcs_grid
 #' nd$year_scaled <- (nd$year - mean(d$year)) / sd(d$year)

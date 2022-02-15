@@ -261,45 +261,55 @@ translated to the fixed effect model matrix.
 if (inla_installed()) {
 
 # A coarse mesh for example speed:
-pcod_spde <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 25)
-plot(pcod_spde)
+mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 25)
+plot(mesh)
 
 # Tweedie:
-m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-  data = pcod_2011, time = "year", mesh = pcod_spde, family = tweedie(link = "log"))
-print(m)
-tidy(m, conf.int = TRUE)
-tidy(m, effects = "ran_par", conf.int = TRUE)
+fit <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+  data = pcod_2011, time = "year", mesh = mesh, family = tweedie(link = "log"))
+print(fit)
+tidy(fit, conf.int = TRUE)
+tidy(fit, effects = "ran_par", conf.int = TRUE)
 
 # Bernoulli:
 pcod_binom <- pcod_2011
-pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
 m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  data = pcod_binom, time = "year", mesh = pcod_spde,
+  data = pcod_binom, time = "year", mesh = mesh,
   family = binomial(link = "logit"))
 print(m_bin)
 
-# Fit a spatial-only model (by not specifying `time`):
-m <- sdmTMB(
+# Fit a spatial-only model (by not specifying `time` or setting
+# `spatiotemporal = 'off'`):
+fit <- sdmTMB(
   density ~ depth_scaled + depth_scaled2, data = pcod_2011,
-  mesh = pcod_spde, family = tweedie(link = "log"))
-print(m)
+  mesh = mesh, family = tweedie(link = "log"))
+print(fit)
 
 # Gaussian:
 pcod_gaus <- subset(pcod_2011, density > 0 & year >= 2013)
-pcod_spde_gaus <- make_mesh(pcod_gaus, c("X", "Y"), cutoff = 20)
+mesh_gaus <- make_mesh(pcod_gaus, c("X", "Y"), cutoff = 20)
 m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  data = pcod_gaus, time = "year", mesh = pcod_spde_gaus)
+  data = pcod_gaus, mesh = mesh_gaus)
 print(m_pos)
 
 # With penalized smoothers via mgcv:
 m_gam <- sdmTMB(log(density) ~ s(depth),
-  data = pcod_gaus, mesh = pcod_spde_gaus
+  data = pcod_gaus, mesh = mesh_gaus
+)
+
+# Specifying the basis dimension via `k =`:
+m_gam <- sdmTMB(log(density) ~ s(depth, k = 5),
+  data = pcod_gaus, mesh = mesh_gaus
+)
+
+# Separate smoother by year:
+m_gam <- sdmTMB(log(density) ~ s(depth, by = as.factor(year)),
+  data = pcod_gaus, mesh = mesh_gaus
 )
 
 # Turning off all random fields (creating a regular GLM/GAM):
 m_gam <- sdmTMB(log(density) ~ s(depth),
-  data = pcod_gaus, mesh = pcod_spde_gaus,
+  data = pcod_gaus, mesh = mesh_gaus,
   spatial = "off", spatiotemporal = "off"
 )
 
@@ -309,18 +319,18 @@ set.seed(1)
 x <- runif(500, -1, 1)
 y <- runif(500, -1, 1)
 loc <- data.frame(x = x, y = y)
-spde <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
+mesh_sim <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
 s <- sdmTMB_sim(x = x, y = y, betas = 0, time = 1L,
-  phi = 0.1, range = 1.4, sigma_O = 0.2, sigma_E = 0, mesh = spde)
+  phi = 0.1, range = 1.4, sigma_O = 0.2, sigma_E = 0, mesh = mesh_sim)
 s$g <- gl(50, 10)
 iid_re_vals <- rnorm(50, 0, 0.3)
 s$observed <- s$observed + iid_re_vals[s$g]
 
 # Fit it:
-m <- sdmTMB(observed ~ 1 + (1 | g), mesh = spde, data = s)
-print(m)
-tidy(m, "ran_pars", conf.int = TRUE) # see tau_G
-theta <- as.list(m$sd_report, "Estimate")
+fit <- sdmTMB(observed ~ 1 + (1 | g), mesh = mesh_sim, data = s)
+print(fit)
+tidy(fit, "ran_pars", conf.int = TRUE) # see tau_G
+theta <- as.list(fit$sd_report, "Estimate")
 plot(iid_re_vals, theta$RE)
 
 \donttest{
@@ -328,26 +338,26 @@ plot(iid_re_vals, theta$RE)
 # Spatially varying coefficient (year) example:
 d <- pcod_2011
 d$year_scaled <- as.numeric(scale(d$year))
-m <- sdmTMB(density ~ depth_scaled, data = d,
-  mesh = pcod_spde, family = tweedie(link = "log"),
+fit <- sdmTMB(density ~ depth_scaled, data = d,
+  mesh = mesh, family = tweedie(link = "log"),
   spatial_varying = ~ 0 + year_scaled, time = "year")
-tidy(m, effects = "ran_par")
+tidy(fit, effects = "ran_par")
 
 # Time-varying effects of depth and depth squared:
-m <- sdmTMB(density ~ 0 + as.factor(year),
+fit <- sdmTMB(density ~ 0 + as.factor(year),
   time_varying = ~ 0 + depth_scaled + depth_scaled2,
-  data = pcod_2011, time = "year", mesh = pcod_spde,
+  data = pcod_2011, time = "year", mesh = mesh,
   family = tweedie(link = "log"))
-print(m)
+print(fit)
 
 # See the b_rw_t estimates; these are the time-varying (random walk) effects.
 # These could be added to tidy.sdmTMB() eventually.
-summary(m$sd_report)[1:19,]
+summary(fit$sd_report)[1:19,]
 
 # Linear breakpoint model on depth:
 m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) +
     breakpt(depth_scaled) + depth_scaled2, data = pcod_gaus,
-  time = "year", mesh = pcod_spde_gaus)
+  time = "year", mesh = mesh_gaus)
 print(m_pos)
 }
 }
