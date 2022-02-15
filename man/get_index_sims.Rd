@@ -33,6 +33,24 @@ other words, the function assumes a log link, which typically makes sense.}
 \item{agg_function}{Function to aggregate samples within each time slice.
 Assuming a log link, the \code{sum(exp(x) * area)} default makes sense.}
 }
+\value{
+A data frame. If \code{return_sims = FALSE}:
+\itemize{
+\item name of column (e.g. \code{year}) that was supplied to \code{\link[=sdmTMB]{sdmTMB()}} time argument
+\item \code{est}: estimate
+\item \code{lwr}: lower confidence interval value
+\item \code{upr}: upper confidence interval value
+\item \code{log_est}: log estimate
+\item \code{se}: standard error on the log estimate
+}
+
+If \code{return_sims = TRUE}, samples from the index values in a long-format data frame:
+\itemize{
+\item name of column (e.g. \code{year}) that was supplied to \code{\link[=sdmTMB]{sdmTMB()}} time argument
+\item \code{.value}: sample value
+\item \code{.iteration}: sample number
+}
+}
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 

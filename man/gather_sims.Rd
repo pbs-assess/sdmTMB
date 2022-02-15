@@ -16,6 +16,20 @@ gather_sims(object, nsim = 200, n_sims = deprecated())
 
 \item{n_sims}{Deprecated: please use \code{nsim}.}
 }
+\value{
+A data frame. \code{gather_sims()} returns a long-format data frame:
+\itemize{
+\item \code{.iteration}: the sample ID
+\item \code{.variable}: the parameter name
+\item \code{.value}: the parameter sample value
+}
+
+\code{spread_sims()} returns a wide-format data frame:
+\itemize{
+\item \code{.iteration}: the sample ID
+\item columns for each parameter with a sample per row
+}
+}
 \description{
 \code{spread_sims()} returns a wide-format data frame. \code{gather_sims()} returns a
 long-format data frame. The format matches the format in the \pkg{tidybayes}
@@ -24,7 +38,7 @@ long-format data frame. The format matches the format in the \pkg{tidybayes}
 \examples{
 if (inla_installed()) {
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2,
-  data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(link = "log"),
+  data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(),
   spatiotemporal = "AR1", time = "year")
 head(spread_sims(m, nsim = 10))
 head(gather_sims(m, nsim = 10))
@@ -35,11 +49,4 @@ if (require("ggplot2", quietly = TRUE)) {
     facet_wrap(~.variable, scales = "free_x")
 }
 }
-}
-\references{
-Code for simulating from the joint precision matrix adapted from:
-
-Osgood-Zimmerman, A. and Wakefield, J. 2021. A Statistical introduction
-to Template Model Builder: a flexible tool for spatial modeling.
-arXiv 2103.09929. \url{https://arxiv.org/abs/2103.09929}.
 }

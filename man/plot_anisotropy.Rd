@@ -9,6 +9,10 @@ plot_anisotropy(object)
 \arguments{
 \item{object}{An object from \code{\link[=sdmTMB]{sdmTMB()}}.}
 }
+\value{
+A plot of eigenvectors illustrating the estimated anisotropy. A list
+of the plotted data is invisibly returned.
+}
 \description{
 Plot anisotropy
 }

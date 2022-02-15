@@ -36,6 +36,9 @@ censored_poisson(link = "log")
 
 \item{df}{Student-t degrees of freedom fixed value parameter.}
 }
+\value{
+A list with elements \code{family}, \code{link}, \code{linkfun}, and \code{linkinv}.
+}
 \description{
 Additional families compatible with \code{\link[=sdmTMB]{sdmTMB()}}.
 }

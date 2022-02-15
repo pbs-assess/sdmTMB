@@ -1,48 +1,3 @@
-#' Construct an SPDE mesh (depreciated)
-#'
-#' @description
-#' `r lifecycle::badge("deprecated")`
-#'
-#' **Deprecated; please use [make_mesh()] instead.**
-#'
-#' @param x X numeric vector.
-#' @param y Y numeric vector.
-#' @param n_knots The number of knots.
-#' @param seed Random seed. Affects [stats::kmeans()] determination of knot locations.
-#' @param mesh An optional mesh created via INLA. If supplied, this mesh will be
-#'   used instead of creating one with [stats::kmeans()] and the `n_knots`
-#'   argument.
-#'up
-#' @importFrom graphics points
-#' @export
-
-make_spde <- function(x, y, n_knots, seed = 42, mesh = NULL) {
-  loc_xy <- cbind(x, y)
-  .Deprecated("make_mesh", msg = "make_spde() is deprecated. Please use make_mesh() instead.")
-  if (is.null(mesh)) {
-    if (n_knots >= nrow(loc_xy)) {
-      warning(
-        "Reducing `n_knots` to be one less than the ",
-        "number of data points."
-      )
-      n_knots <- nrow(loc_xy) - 1
-    }
-    set.seed(seed)
-    knots <- stats::kmeans(x = loc_xy, centers = n_knots)
-    loc_centers <- knots$centers
-    mesh <- INLA::inla.mesh.create(loc_centers, refine = TRUE)
-  } else {
-    knots <- list()
-    loc_centers <- NA
-  }
-  spde <- INLA::inla.spde2.matern(mesh)
-  A <- INLA::inla.spde.make.A(mesh, loc = loc_xy)
-  list(
-    x = x, y = y, mesh = mesh, spde = spde,
-    loc_centers = loc_centers, A = A
-  )
-}
-
 #' Construct an SPDE mesh for sdmTMB
 #'
 #' Construct an SPDE mesh for use with sdmTMB.
@@ -63,7 +18,11 @@ make_spde <- function(x, y, n_knots, seed = 42, mesh = NULL) {
 #' @param mesh An optional mesh created via INLA instead of using the above
 #'   convenience options.
 #'
-#' @return `make_mesh()`: A list of class sdmTMBmesh
+#' @return
+#' `make_mesh()`: A list of class `sdmTMBmesh`. The element `mesh` is the output from
+#' [INLA::inla.mesh.create()] and the element `spde` is the output from
+#' [INLA::inla.spde2.matern()].
+#'
 #' @export
 #'
 #' @examples
@@ -105,7 +64,7 @@ make_mesh <- function(data, xy_cols,
   }
 
   if (missing(xy_cols) || is.numeric(xy_cols) || is.numeric(data)) {
-    stop("It looks like you are using an old format of make_spde(). ",
+    stop("It looks like you are using an old format of make_mesh(). ",
       "The function now uses `data` and `xy_cols` arguments ",
       "to enable carrying through the x and y column names ",
       "to the predict function. Please update your code.",
@@ -217,27 +176,11 @@ binary_search_knots <- function(loc_xy,
   mesh
 }
 
-
-#' @param object Output from [make_spde()].
-#' @rdname make_spde
-#' @importFrom graphics plot
-#' @export
-plot_spde <- function(object) {
-  .Deprecated("plot", msg = "plot_spde() is deprecated. Please use make_mesh() and plot()")
-  plot(object$mesh, main = NA, edge.color = "grey60", asp = 1)
-  if ("x" %in% names(object)) {
-    points(object$x, object$y, pch = 21, col = "#00000070")
-  } else {
-    points(object$loc_xy, pch = 21, col = "#00000070")
-  }
-  points(object$loc_centers, pch = 20, col = "red")
-}
-
 #' @param x Output from [make_mesh()].
 #' @param ... Passed to [graphics::plot()].
 #'
 #' @importFrom graphics points
-#' @return `plot.sdmTMB()`: A plot
+#' @return `plot.sdmTMB()`: A plot of the mesh and data points.
 #' @rdname make_mesh
 #' @export
 plot.sdmTMBmesh <- function(x, ...) {

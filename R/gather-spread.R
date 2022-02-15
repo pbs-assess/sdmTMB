@@ -8,19 +8,25 @@
 #' @param nsim The number of simulation draws.
 #' @param n_sims Deprecated: please use `nsim`.
 #'
-#' @references
-#' Code for simulating from the joint precision matrix adapted from:
-#'
-#' Osgood-Zimmerman, A. and Wakefield, J. 2021. A Statistical introduction
-#' to Template Model Builder: a flexible tool for spatial modeling.
-#' arXiv 2103.09929. <https://arxiv.org/abs/2103.09929>.
-#'
 #' @export
 #' @rdname gather_sims
+#'
+#' @return
+#' A data frame. `gather_sims()` returns a long-format data frame:
+#'
+#' * `.iteration`: the sample ID
+#' * `.variable`: the parameter name
+#' * `.value`: the parameter sample value
+#'
+#' `spread_sims()` returns a wide-format data frame:
+#'
+#' * `.iteration`: the sample ID
+#' * columns for each parameter with a sample per row
+#'
 #' @examples
 #' if (inla_installed()) {
 #' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2,
-#'   data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(link = "log"),
+#'   data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(),
 #'   spatiotemporal = "AR1", time = "year")
 #' head(spread_sims(m, nsim = 10))
 #' head(gather_sims(m, nsim = 10))

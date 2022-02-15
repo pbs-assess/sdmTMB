@@ -78,6 +78,7 @@
 #' If `nsim > 0` or `tmbstan_model` is not `NULL`:
 #'
 #' A matrix:
+#'
 #' * Columns represent samples
 #' * Rows represent predictions with one row per row of `newdata`
 #'

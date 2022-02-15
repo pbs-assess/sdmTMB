@@ -61,6 +61,9 @@ with \code{1 - sigma_prob} probability.}
 
 \item{sigma_prob}{Probability. See description for \code{sigma_lt}.}
 }
+\value{
+A named list with values for the specified priors.
+}
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 
@@ -75,6 +78,8 @@ Stan for MCMC sampling. This does not affect normal TMB model fitting.
 covariance function.
 }
 \details{
+Meant to be passed to the \code{priors} argument in \code{\link[=sdmTMB]{sdmTMB()}}.
+
 \code{normal()} and \code{halfnormal()} define normal and half-normal priors that, at
 this point, must have a location (mean) parameter of 0. \code{halfnormal()} is the
 same as \code{normal()} but can be used to make the syntax clearer. It is intended
@@ -95,6 +100,8 @@ without a PC prior and then constraining the model from there. A better
 option would be to simulate from a model with a given range and sigma to
 choose reasonable values for the system or base the prior on knowledge from a
 model fit to a similar system but with more spatial information in the data.
+
+
 }
 \examples{
 normal(0, 1)

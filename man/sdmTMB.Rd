@@ -147,6 +147,21 @@ fitting (\code{FALSE})?}
 
 \item{...}{Not currently used.}
 }
+\value{
+An object (list) of class \code{sdmTMB}. Useful elements include:
+\itemize{
+\item \code{sd_report}: output from \code{\link[TMB:sdreport]{TMB::sdreport()}}
+\item \code{gradients}: log likelihood gradients with respect to each fixed effect
+\item \code{model}: output from \code{\link[stats:nlminb]{stats::nlminb()}}
+\item \code{data}: the fitted data
+\item \code{mesh}: the object that was supplied to the \code{mesh} argmument
+\item \code{family}: the family object, which includes the inverse link function
+\item \code{tmb_params}: The parameters list passed to \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}
+\item \code{tmb_map}: The 'map' list passed to \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}
+\item \code{tmb_data}: The data list passed to \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}
+\item \code{tmb_obj}: The TMB object created by \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}
+}
+}
 \description{
 Fit a spatial or spatiotemporal Gaussian Markov random field GLMM with TMB.
 This can be useful for (dynamic) species distribution models and relative
@@ -255,12 +270,6 @@ m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
 print(m)
 tidy(m, conf.int = TRUE)
 tidy(m, effects = "ran_par", conf.int = TRUE)
-
-# Run extra optimization steps to help convergence:
-# (Not typically needed)
-m1 <- run_extra_optimization(m, nlminb_loops = 0, newton_loops = 1)
-max(m$gradients)
-max(m1$gradients)
 
 # Bernoulli:
 pcod_binom <- pcod_2011

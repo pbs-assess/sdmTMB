@@ -32,6 +32,22 @@
 #'
 #' @seealso [get_index()]
 #'
+#' @return
+#' A data frame. If `return_sims = FALSE`:
+#'
+#' * name of column (e.g. `year`) that was supplied to [sdmTMB()] time argument
+#' * `est`: estimate
+#' * `lwr`: lower confidence interval value
+#' * `upr`: upper confidence interval value
+#' * `log_est`: log estimate
+#' * `se`: standard error on the log estimate
+#'
+#' If `return_sims = TRUE`, samples from the index values in a long-format data frame:
+#'
+#' * name of column (e.g. `year`) that was supplied to [sdmTMB()] time argument
+#' * `.value`: sample value
+#' * `.iteration`: sample number
+#'
 #' @export
 #' @examples
 #' if (inla_installed()) {

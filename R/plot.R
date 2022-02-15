@@ -4,6 +4,9 @@
 #'
 #' @export
 #' @rdname plot_anisotropy
+#'
+#' @return A plot of eigenvectors illustrating the estimated anisotropy. A list
+#'   of the plotted data is invisibly returned.
 #' @examples
 #' \donttest{
 #' if (inla_installed()) {

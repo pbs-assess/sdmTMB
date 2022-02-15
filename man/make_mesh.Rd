@@ -47,9 +47,11 @@ convenience options.}
 \item{...}{Passed to \code{\link[graphics:plot.default]{graphics::plot()}}.}
 }
 \value{
-\code{make_mesh()}: A list of class sdmTMBmesh
+\code{make_mesh()}: A list of class \code{sdmTMBmesh}. The element \code{mesh} is the output from
+\code{\link[INLA:inla.mesh.create]{INLA::inla.mesh.create()}} and the element \code{spde} is the output from
+\code{\link[INLA:inla.spde2.matern]{INLA::inla.spde2.matern()}}.
 
-\code{plot.sdmTMB()}: A plot
+\code{plot.sdmTMB()}: A plot of the mesh and data points.
 }
 \description{
 Construct an SPDE mesh for use with sdmTMB.

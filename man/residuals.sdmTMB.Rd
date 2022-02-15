@@ -2,7 +2,7 @@
 % Please edit documentation in R/residuals.R
 \name{residuals.sdmTMB}
 \alias{residuals.sdmTMB}
-\title{Residuals}
+\title{Residuals method for sdmTMB models}
 \usage{
 \method{residuals}{sdmTMB}(object, type = c("mle", "sim"), ...)
 }
@@ -14,9 +14,20 @@ from the joint precision matrix are available.}
 
 \item{...}{Passed to residual function. Only \code{n} works for binomial.}
 }
+\value{
+A vector of randomized quantile residuals.
+}
 \description{
-Residuals are randomized quantile residuals when response values take on
-whole numbers (Poisson, Tweedie, binomial, NB2).
+These residuals are randomized quantile residuals (Dunn & Smyth 1996), which
+are also known as probability integral transform (PIT) residuals (Smith
+1985). See the residual-checking vignette: \code{browseVignettes("sdmTMB")} or \href{https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html}{on the documentation site}.
+}
+\references{
+Dunn, P.K. & Smyth, G.K. (1996). Randomized Quantile Residuals. Journal of
+Computational and Graphical Statistics, 5, 236–244.
+
+Smith, J.Q. (1985). Diagnostic checks of non-standard time series models.
+Journal of Forecasting, 4, 283–291.
 }
 \seealso{
 \code{\link[=dharma_residuals]{dharma_residuals()}}

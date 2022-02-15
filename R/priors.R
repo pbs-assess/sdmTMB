@@ -11,6 +11,9 @@
 #' Stan for MCMC sampling. This does not affect normal TMB model fitting.
 #'
 #' @details
+#' Meant to be passed to the `priors` argument in [sdmTMB()].
+#'
+#' @details
 #' `normal()` and `halfnormal()` define normal and half-normal priors that, at
 #' this point, must have a location (mean) parameter of 0. `halfnormal()` is the
 #' same as `normal()` but can be used to make the syntax clearer. It is intended
@@ -59,6 +62,10 @@
 #'
 #' @rdname priors
 #'
+#' @return
+#' A named list with values for the specified priors.
+#'
+#' @details
 #'
 #' @export
 sdmTMBpriors <- function(

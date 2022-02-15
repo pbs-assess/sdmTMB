@@ -86,10 +86,13 @@ qres_beta <- function(object, y, mu) {
   stats::qnorm(u)
 }
 
-#' Residuals
+#' Residuals method for sdmTMB models
 #'
-#' Residuals are randomized quantile residuals when response values take on
-#' whole numbers (Poisson, Tweedie, binomial, NB2).
+#' These residuals are randomized quantile residuals (Dunn & Smyth 1996), which
+#' are also known as probability integral transform (PIT) residuals (Smith
+#' 1985). See the residual-checking vignette: `browseVignettes("sdmTMB")` or [on
+#' the documentation
+#' site](https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html).
 #'
 #' @param object An [sdmTMB()] model
 #' @param type Type of residual. Residual at the MLE or based on simulations
@@ -97,7 +100,14 @@ qres_beta <- function(object, y, mu) {
 #' @param ... Passed to residual function. Only `n` works for binomial.
 #' @export
 #' @importFrom stats predict
+#' @return A vector of randomized quantile residuals.
 #' @seealso [dharma_residuals()]
+#' @references
+#' Dunn, P.K. & Smyth, G.K. (1996). Randomized Quantile Residuals. Journal of
+#' Computational and Graphical Statistics, 5, 236–244.
+#'
+#' Smith, J.Q. (1985). Diagnostic checks of non-standard time series models.
+#' Journal of Forecasting, 4, 283–291.
 residuals.sdmTMB <- function(object, type = c("mle", "sim"), ...) {
   message("Consider using `dharma_residuals()` instead.")
   type <- match.arg(type)

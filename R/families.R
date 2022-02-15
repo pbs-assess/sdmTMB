@@ -6,6 +6,10 @@
 #' @export
 #' @rdname families
 #' @name Families
+#'
+#' @return
+#' A list with elements `family`, `link`, `linkfun`, and `linkinv`.
+#'
 #' @examples
 #' Beta(link = "logit")
 Beta <- function(link = "logit") {

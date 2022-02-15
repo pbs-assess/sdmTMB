@@ -23,5 +23,13 @@ An updated model fit of class \code{sdmTMB}.
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
 \examples{
-# See ?sdmTMB
+if (inla_installed()) {
+# Run extra optimization steps to help convergence:
+# (Not typically needed)
+fit <- sdmTMB(density ~ 0 + poly(depth, 2) + as.factor(year),
+  data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie())
+fit_1 <- run_extra_optimization(fit, nlminb_loops = 0, newton_loops = 1)
+max(fit$gradients)
+max(fit_1$gradients)
+}
 }

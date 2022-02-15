@@ -104,6 +104,20 @@ NULL
 #'   model.response terms model.offset
 #' @importFrom lifecycle deprecated is_present deprecate_warn
 #'
+#' @return
+#' An object (list) of class `sdmTMB`. Useful elements include:
+#'
+#' * `sd_report`: output from [TMB::sdreport()]
+#' * `gradients`: log likelihood gradients with respect to each fixed effect
+#' * `model`: output from [stats::nlminb()]
+#' * `data`: the fitted data
+#' * `mesh`: the object that was supplied to the `mesh` argmument
+#' * `family`: the family object, which includes the inverse link function
+#' * `tmb_params`: The parameters list passed to [TMB::MakeADFun()]
+#' * `tmb_map`: The 'map' list passed to [TMB::MakeADFun()]
+#' * `tmb_data`: The data list passed to [TMB::MakeADFun()]
+#' * `tmb_obj`: The TMB object created by [TMB::MakeADFun()]
+#'
 #' @details
 #'
 #' **Model description**
@@ -257,12 +271,6 @@ NULL
 #' print(m)
 #' tidy(m, conf.int = TRUE)
 #' tidy(m, effects = "ran_par", conf.int = TRUE)
-#'
-#' # Run extra optimization steps to help convergence:
-#' # (Not typically needed)
-#' m1 <- run_extra_optimization(m, nlminb_loops = 0, newton_loops = 1)
-#' max(m$gradients)
-#' max(m1$gradients)
 #'
 #' # Bernoulli:
 #' pcod_binom <- pcod_2011
@@ -554,7 +562,7 @@ sdmTMB <- function(
 
   if (!is.null(extra_time)) { # for forecasting or interpolating
     if (!"xy_cols" %in% names(spde)) {
-      stop("Please use make_mesh() instead of the deprecated make_spde() to use `extra_time`.",
+      stop("Please use make_mesh() instead of the deprecated make_mesh() to use `extra_time`.",
         call. = FALSE)
     }
     data <- expand_time(df = data, time_slices = extra_time, time_column = time)
@@ -1002,6 +1010,7 @@ sdmTMB <- function(
   out_structure <- structure(list(
     data       = data,
     spde       = spde,
+    mesh       = spde,
     formula    = original_formula,
     split_formula = split_formula,
     time_varying = time_varying,
