@@ -12,7 +12,7 @@ Ao <- 200
 phi <- 5
 s1 <- 1.5
 
-SEED <- 1234
+SEED <- 125
 set.seed(SEED)
 
 # set variance / covariance matrix of logpO2 and logtemp
@@ -77,7 +77,7 @@ calc_mi_y <- function(po2, temp, b_threshold, Eo, n, Ao) {
 
 gen.data <- calc_mi_y(thedata$po2, thedata$temp, b_threshold, Eo, n, Ao)
 
-thedata$mi <- gen.data$mi
+thedata$mi <- gen.data$mi/Ao
 thedata$y <- gen.data$y
 
 # View simulated data and underlying  model
@@ -97,6 +97,8 @@ priors <- function() {
 }
 
 prior <- priors()
+
+# onoy want to keep prior
 thedata$tempK <- thedata$temp + 273.15
 compile("src/baby_sdmTMB.cpp")
 dyn.load(dynlib("src/baby_sdmTMB"))
@@ -108,35 +110,32 @@ data <- list(y = thedata$y,
              ndata = ndata,
             priorsigma = prior$priorsigma,
              priormeans = prior$priormeans,
-            nprior = 4L,
-            cut_prior = c(log(2), log(2)))
+            nprior = 2L)
 
 params <- list(Eo = Eo,
                n = n,
-               logAomu = prior$priormeans[3],
-               logAosigma = prior$priormeans[4],
-               logAo = log(400),
                ln_phi = 3,
                thetaf = 0,
-               b_threshold = c(-.5, log(4))
+               b_threshold = c(10, .02)
 )
-obj <- MakeADFun(data = data, parameters = params, DLL = "baby_sdmTMB", silent = TRUE)
+obj <- MakeADFun(data = data, parameters = params, DLL = "baby_sdmTMB", random = c("Eo", "n"),silent = TRUE)
 opt <- nlminb(obj$par, obj$fn, obj$gr)
 rep <- sdreport(obj)
 transformed <- summary(rep, "report")
 print(transformed)
 print(summary(rep, "fixed"))
+print(summary(rep, "random"))
 sd_report <- TMB::sdreport(obj, getJointPrecision = get_joint_precision)
 
 ### Check Fits ####
 
-Eofit <- summary(rep,"fixed")[1,1]
-nfit <- summary(rep,"fixed")[2,1]
-Aofit <- exp(summary(rep,"fixed")[5,1])
-s2fit <- summary(rep, "fixed")[8,1]
-scutfit <- exp(summary(rep, "fixed")[9,1]) +1
+Eofit <- summary(rep,"random")[1,1]
+nfit <- summary(rep,"random")[2,1]
+s2fit <- summary(rep, "fixed")[3,1]
+scutfit <- summary(rep, "fixed")[4,1]
 
-gen.data <- calc_mi_y(thedata$po2, thedata$temp, b_threshold= c(s2fit, scutfit), Eofit, nfit, Aofit)
+#gen.data <- calc_mi_y(thedata$po2, thedata$temp, b_threshold= c(s2fit, scutfit), Eofit, nfit, Aofit)
 
-points(thedata$mi, gen.data$mu, type = "p", pch = 21, bg = "red")
-plot(thedata$mi, gen.data$mi)
+#points(thedata$mi, gen.data$mu, type = "p", pch = 21, bg = "red")
+#plot(thedata$mi, gen.data$mi)
+#abline(a=0, b =1)
