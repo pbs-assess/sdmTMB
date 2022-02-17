@@ -92,6 +92,15 @@ test_that("sdmTMB model fit with a covariate beta", {
   r <- residuals(m)
   r_sim <- residuals(m, type = "sim")
   expect_equal(mean((p$est - s$observed)^2), 0, tolerance = 0.002)
+
+  nd <- s
+  nd$time <- as.numeric(nd$time)
+  p_ok <- predict(m, newdata = nd)
+  expect_true(class(p_ok) == "data.frame")
+
+  # mismatch:
+  nd$time <- as.factor(nd$time)
+  expect_error(predict(m, newdata = nd), regexp = "class")
 })
 
 test_that("Anisotropy fits and plots", {

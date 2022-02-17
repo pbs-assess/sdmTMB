@@ -268,9 +268,8 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
       )
 
     if (object$time == "_sdmTMB_time") newdata[[object$time]] <- 0L
-    if (!identical(class(object$data[[object$time]]), class(newdata[[object$time]])))
-      stop("Class of fitted time column does not match class of `newdata` time column.",
-        call. = FALSE)
+
+    check_time_class(object, newdata)
     original_time <- sort(unique(object$data[[object$time]]))
     new_data_time <- sort(unique(newdata[[object$time]]))
 
@@ -544,3 +543,15 @@ check_sdmTMB_version <- function(version) {
   }
 }
 
+check_time_class <- function(object, newdata) {
+  cls1 <- class(object$data[[object$time]])
+  cls2 <- class(newdata[[object$time]])
+  if (!identical(cls1, cls2)) {
+    if (!identical(sort(c(cls1, cls2)), c("integer", "numeric"))) {
+      stop(
+        "Class of fitted time column (", cls1, ") does not match class of ",
+        "`newdata` time column (", cls2 ,").",
+        call. = FALSE)
+    }
+  }
+}

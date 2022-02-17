@@ -48,5 +48,10 @@ test_that("get_index(), get_index_sims(), and get_cog() work", {
     5735.0945, 5726.1765, 5745.2497, 5744.2829, 5757.1354, 5755.7778
   )
   expect_lt(sum(abs(cog$est - cached) / cached), 1e-04)
+
+  # missing time:
+  .qcs_grid <- subset(qcs_grid, year != 2015)
+  p <- predict(m, newdata = .qcs_grid, return_tmb_object = TRUE)
+  expect_error(get_index(p), regexp = "time")
 })
 
