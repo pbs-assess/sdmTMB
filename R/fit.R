@@ -1044,6 +1044,7 @@ sdmTMB <- function(
     control  = control,
     contrasts  = attr(X_ij, "contrasts"),
     terms  = attr(mf, "terms"),
+    extra_time = extra_time,
     xlevels    = stats::.getXlevels(mt, mf),
     call       = match.call(expand.dots = TRUE),
     version    = utils::packageVersion("sdmTMB")),
