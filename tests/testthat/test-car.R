@@ -179,7 +179,8 @@ test_that("Test CAR model works with several time slices", {
               spatiotemporal = "iid",
               spatial = "off",
               CAR_neighbours = CAR_nb,
-              control = sdmTMBcontrol(lower = list(logit_car_alpha_s = -10, ln_car_tau_s = -5),
+              control = sdmTMBcontrol(multiphase=FALSE,
+                                      lower = list(logit_car_alpha_s = -10, ln_car_tau_s = -5),
                                       upper = list(logit_car_alpha_s = 10, ln_car_tau_s = 4)))
 
 })

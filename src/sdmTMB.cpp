@@ -271,9 +271,8 @@ Type objective_function<Type>::operator()()
     Eigen::SparseMatrix<Type> Q_car_s = CAR_D - car_alpha_s*CAR_W;
     GMRF_t<Type> nldens_s = GMRF(Q_car_s);
     jnll += SCALE(nldens_s, car_tau_s)(car_re_s);
-    //for(int i = 0; i < car_k; i++) {
-    //  std::cout << car_re_s(i) << "\n";
-    //}
+
+    // map random effects to individual observations
     for(int i = 0; i < n_i; i++) car_i(i) += car_re_s(car_region(i)-1);
   }
   if (!spatial_only && car_model) {
@@ -531,6 +530,8 @@ Type objective_function<Type>::operator()()
 
   for (int i = 0; i < n_i; i++) {
     eta_i(i) = eta_fixed_i(i) + eta_smooth_i(i) + car_i(i); // + offset_i(i);
+    std::cout << Type(car_re_s(i)) << "\n";
+
     if (random_walk) {
       for (int k = 0; k < X_rw_ik.cols(); k++) {
         eta_rw_i(i) += X_rw_ik(i, k) * b_rw_t(year_i(i), k); // record it

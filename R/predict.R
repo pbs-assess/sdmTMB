@@ -434,6 +434,24 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
       nd$omega_s <- r$proj_re_sp_st
       nd$zeta_s <- r$proj_re_sp_slopes
       nd$epsilon_st <- r$proj_re_st_vector
+
+      if(object$tmb_data$car_model == 1) {
+        # parse RE estimates from CAR model into omega and epsilon
+        car_s_indx = which(names(object$sd_report$par.random)=="car_re_s")
+        if(length(car_s_indx) > 0) {
+          # spatial component was included
+          nd$omega_s = object$sd_report$par.random[car_s_indx[nd$car_region]]
+        }
+        car_st_indx = which(names(object$sd_report$par.random)=="car_re_st")
+        if(length(car_st_indx) > 0) {
+          # spatial component was included
+          #TODO fix
+          #nd$epsilon_st = object$sd_report$par.random[car_st_indx[nd$car_region]]
+        }
+        nd$est_rf = nd$omega_s + nd$epsilon_st
+        nd$est_non_rf = nd$est - nd$est_rf
+      }
+
     }
 
     nd$sdm_spatial_id <- NULL
