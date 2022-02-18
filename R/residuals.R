@@ -69,6 +69,12 @@ qres_gaussian <- function(object, y, mu) {
   stats::qnorm(u)
 }
 
+qres_lognormal <- function(object, y, mu) {
+  dispersion <- exp(object$model$par[["ln_phi"]])
+  u <- stats::plnorm(q = y, meanlog = log(mu) - (dispersion^2)/2, sdlog = dispersion)
+  stats::qnorm(u)
+}
+
 # https://en.wikipedia.org/wiki/Location%E2%80%93scale_family
 pt_ls <- function(q, df, mu, sigma) stats::pt((q - mu)/sigma, df)
 
@@ -120,7 +126,9 @@ residuals.sdmTMB <- function(object, type = c("mle", "sim"), ...) {
     nbinom2  = qres_nbinom2,
     nbinom1  = qres_nbinom1,
     poisson  = qres_pois,
-    student  = qres_student
+    student  = qres_student,
+    lognormal  = qres_lognormal,
+    stop(paste(object$family$family, "not yet supported."), call. = FALSE)
   )
   if (type == "mle") {
     mu <- object$family$linkinv(predict(object)$est)
