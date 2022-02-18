@@ -143,6 +143,9 @@ sdmTMB_simulate <- function(formula,
     if (length(response) == 0L) {
       formula <- as.formula(paste("sdmTMB_response_", paste(as.character(formula), collapse = "")))
       data[["sdmTMB_response_"]] <- 0.1 # fake! does nothing but lets sdmTMB parse the formula
+      if (family$family %in% c("binomial", "poisson", "nbinom2", "nbinom1", "truncated_nbinom2", "truncated_nbinom1")) {
+        data[["sdmTMB_response_"]] <- 1
+      }
     }
 
     .sim_re <- list(
