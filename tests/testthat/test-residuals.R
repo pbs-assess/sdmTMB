@@ -89,7 +89,7 @@ test_that("randomized quantile residuals work,", {
   check_resids(fit)
   check_resids_dharma(fit)
 
-  d <- sim_dat(nbinom2(), sigma_O = 0.001))
+  d <- sim_dat(nbinom2(), sigma_O = 0.001)
   fit <- sdmTMB(
     observed ~ 0,
     family = nbinom2(),
