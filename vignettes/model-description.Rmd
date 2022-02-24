@@ -3,243 +3,587 @@ title: "Model description"
 output:
   rmarkdown::html_vignette:
     toc: true
-    toc_depth: 3
+    toc_depth: 2
+bibliography: 'refs.bib'
+csl: 'mee.csl'
 vignette: >
   %\VignetteIndexEntry{Model description}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup, echo=FALSE, cache=FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  echo = FALSE,
+  error = FALSE,
+  message = FALSE,
+  warning = FALSE
 )
 ```
 
 \newcommand{\s}{\boldsymbol{s}}
 
-## Notation conventions
+\clearpage
 
-* Bold lowercase for vectors
+# Notation conventions
 
-* Bold subscript $\s$ since x, y
+This appendix uses the following notation conventions:
 
-* Bold uppercase for matrices
+* Greek symbols for parameters,
 
-* $\phi$ for all 'dispersion' parameters for consistency with code
+* the Latin/Roman alphabet for data (except $\boldsymbol{Q}$ and $\boldsymbol{H}$, which are used by convention),
 
-* Family titles link to TMB or sdmTMB source code
+* bold symbols for vectors or matrices (e.g., $\boldsymbol{\omega}$ is a vector and $\omega_{\s}$ is the value of $\boldsymbol{\omega}$ at point in space $\s$),
 
-* Attempt to link math symbols to argument options in model and code symbols
+* $\phi$ for all distribution dispersion parameters for consistency with the code,
 
-## Basic model structure
+* $\mathbb{E}[y]$ to define the expected value (mean) of variable $y$,
 
-$$
-\begin{align}
-  \mathbb{E}(y_{\s,t}) &= \mu_{\s,t},\\
-  \mu_{\s,t} &= f^{-1}
-  \left( \boldsymbol{X} \boldsymbol{\beta} + \omega_s + \epsilon_{\s,t} \right),\\
-  \boldsymbol{\omega} &\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_\omega \right),\\
-  \boldsymbol{\epsilon}_t &\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right).
-\end{align}
-$$
-where $f$ is a link function (e.g., log or logit) and $f^{-1}$ is its inverse link.
+* $\mathrm{Var}[y]$ to define the expected variance of the variable $y$,
 
-* $\boldsymbol{X} \boldsymbol{\beta}$ is defined by the `formula` argument and
-  represents the fixed effect model matrix and a corresponding vector of
-  coefficients
+* a $^*$ superscript represents interpolated or projected values as opposed to values at knot locations (e.g., $\boldsymbol{\omega}$ vs. $\boldsymbol{\omega}^*$), and
 
-* $\omega_s$ are included if `spatial = 'on'`
+* where possible, notation has been chosen to match VAST [@thorson2019] to maintain consistency (e.g., $\boldsymbol{\omega}$ for spatial fields and $\boldsymbol{\epsilon}_t$ for spatiotemporal fields).
 
-* $\epsilon_{\s,t}$ are included by default if there are multiple time elements (`time` argument is not `NULL`) but can be set to IID (`IID`; default), AR1 (`AR1`), random walk (`RW`), or off (`'off`) via the `spatiotemporal` argument
+Below are tables of all major indices and symbols.
 
-## Random or multi-level intercepts
+```{r indices}
+library(magrittr)
+subscripts <- tibble::tribble(
+  ~Symbol, ~Description,
+  "$\\s$", "Index for space; a vector of x and y coordinates",
+  "$t$", "Index for time",
+  "$g$", "Group"
+)
+knitr::kable(subscripts, caption = "Subscript notation", escape = FALSE)
+```
 
-$$
-\begin{align}
-  \mu_{\s,t} &= f^{-1} \left( \ldots + \alpha_{g} + \ldots \right),\\
-  \alpha_g &\sim \operatorname{Normal} \left(0, \sigma_\alpha^2 \right),\\
-\end{align}
-$$
+```{r symbols, results='asis'}
+symbols <- tibble::tribble(
+  ~Symbol, ~Code, ~Description,
+  "$y$", "`y_i`", "Observed response data",
+  "$\\mu$", "`mu_i`", "Mean",
+  "$\\phi$", "`phi`", "A dispersion parameter for a distribution",
+  "$f$", "`fit$family$link`", "Link function",
+  "$f^{-1}$", "`fit$family$linkinv`", "Inverse link function",
+  "$\\boldsymbol{\\beta}$", "`b_j`", "Parameter vector",
+  "$\\boldsymbol{X}$", "`X_ij`", "A predictor model matrix",
+  "$O_{\\s, t}$", "`offset`", "An offset variable at point $\\s$ and time $t$",
 
-where $\alpha_g$ is an example optional "random" intercept---an intercept
-centered on zero that varies by level $g$ and is constrained by
-$\sigma_\alpha$. This is defined by the `formula` argument via the `(1 | g)`
-syntax as in lme4 or glmmTMB.
+  "$\\omega_{\\s}$", "`omega_s`", "Spatial random field at point $\\s$ (knot)",
+  "$\\omega_{\\s}^*$", "`omega_s_A`", "Spatial random field at point $\\s$ (interpolated)",
+  "$\\zeta_{\\s}$", "`zeta_s`", "Spatially varying coefficient random field at point $\\s$ (knot)",
+  "$\\zeta_{\\s}^*$", "`zeta_s_A`", "Spatially varying coefficient random field at point $\\s$ (interpolated)",
+  "$\\epsilon_{\\s, t}$", "`epsilon_st`", "Spatiotemporal random field at point $\\s$ and time $t$ (knot)",
+  "$\\epsilon_{\\s, t}^*$", "`epsilon_st_A`", "Spatiotemporal random field at point $\\s$ and time $t$ (interpolated)",
+  "$\\delta_{\\s,t}$", "`b_t`", "AR(1) or random walk spatiotemporal deviations (knot)",
+  "$\\alpha_g$", "`RE`", "IID random intercept deviation for group $g$",
 
-## Time-varying regression parameters
+  "$\\boldsymbol{\\Sigma}_\\omega$", "`-`", "Spatial random field covariance matrix",
+  "$\\boldsymbol{\\Sigma}_\\zeta$", "`-`", "Spatially varying coefficient random field covariance matrix",
+  "$\\boldsymbol{\\Sigma}_\\epsilon$", "`-`", "Spatiotemporal random field covariance matrix",
+  "$\\boldsymbol{Q}_\\omega$", "`Q_s`", "Spatial random field precision matrix",
+  "$\\boldsymbol{Q}_\\zeta$", "`Q_s`", "Spatially varying coefficient random field precision matrix",
+  "$\\boldsymbol{Q}_\\epsilon$", "`Q_st`", "Spatiotemporal random field precision matrix",
 
-$$
-\begin{align}
-  \mu_{\s,t} &= f^{-1} \left( \ldots + \gamma_{t} x_{\s,t} + \ldots \right),\\
-  \gamma_{t=1} &\sim \operatorname{Uniform} \left(-\infty, \infty \right),\\
-  \gamma_{t>1} &\sim \operatorname{Normal} \left(\gamma_{t-1}, \sigma^2_{\gamma} \right),
-\end{align}
-$$
+  "$\\sigma_\\alpha^2$", "`sigma_G`", "IID random intercept variance",
+  "$\\sigma_\\epsilon^2$", "`sigma_E`", "Spatiotemporal random field marginal variance",
+  "$\\sigma_\\omega^2$", "`sigma_O`", "Spatial random field marginal variance",
+  "$\\sigma_\\zeta^2$", "`sigma_Z`", "Spatially varying coefficient random field marginal variance",
+  "$\\kappa_\\omega$", "`kappa(0)`", "Spatial decorrelation rate",
+  "$\\kappa_\\epsilon$", "`kappa(1)`", "Spatiotemporal decorrelation rate",
 
-where $\gamma_t$ is an example optional time-varying regression parameter and
-$x_{\s,t} is the corresponding predictor value. This is defined via the
-`time_varying` argument. E.g., `~ 0 + x`. The first value is given an implicit
-uniform prior. I.e., the same variable should not appear in the fixed effect
-formula since the initial value is estimated as part of the time-varying formula.
+  "$\\rho$", "`ar1_rho`", "Correlation between random fields in subsequent time steps",
+  "$\\boldsymbol{A}$", "`A`", "Sparse projection matrix to interpolate between knot and data locations",
+  "$\\boldsymbol{H}$", "`H`", "2-parameter rotation matrix used to define anisotropy"
+)
+knitr::kable(symbols, caption = "Symbol notation, code representation (in model output or in model template code), and descriptions.", escape = FALSE,
+   linesep = c(
+    rep('', 7), # y, mean etc.
+    '\\addlinespace',
+    rep('', 7), # fields
+    '\\addlinespace',
+    rep('', 5), # covariance stuff
+    '\\addlinespace',
+    rep('', 5), # more covariance stuff
+    '\\addlinespace',
+    rep('', 99) # end
+  ))
+```
 
-## Spatial regression parameters
+# sdmTMB model structure
 
-$$
-\begin{align}
-  \mu_{\s,t} &= f^{-1} \left( \ldots + \zeta_s x_t + \ldots \right),\\
-  \boldsymbol{\zeta} &\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_\zeta \right),
-\end{align}
-$$
-
-where $\zeta_s$ is a regression parameter that varies spatially and $x_t$ is a predictor that is constant for a given time $t$. Currently, $x_t$ must be the time variable itself. If you are interested in using a different predictor, contact the developers.
-
-## AR1 spatiotemporal random fields
-
-Dropping the optional $\omega_s$ for simplicity:
-
-$$
-\begin{align}
-\mu_{\s,t} &= f^{-1} \left( \boldsymbol{X} \boldsymbol{\beta} + \delta_{\s,t} \right),\\
-\boldsymbol{\delta}_{t=1} &\sim \operatorname{MVNormal} (\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon}),\\
-\boldsymbol{\delta}_{t>1} &= \rho \boldsymbol{\delta}_{t-1} + \sqrt{1 - \rho^2} \boldsymbol{\epsilon}_t,  \:
-\boldsymbol{\epsilon}_t \sim \operatorname{MVNormal} \left(\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right),
-\end{align}
-$$
-
-where $\rho$ is the correlation between subsequent spatiotemporal random
-fields. The $\rho \boldsymbol{\delta}_{t-1} + \sqrt{1 - \rho^2}$ scales the spatiotemporal variance by the correlation such that it represents the steady-state marginal variance.
-
-## Random walk spatiotemporal random fields
-
-Dropping the optional $\omega_s$ for simplicity:
+The complete sdmTMB model can be written as
 
 $$
-\begin{align}
-\mu_{\s,t} &= f^{-1} \left( \boldsymbol{X} \boldsymbol{\beta} + \delta_{\s,t} \right),\\
-\boldsymbol{\delta}_{t=1} &\sim \operatorname{MVNormal} (\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon}),\\
-\boldsymbol{\delta}_{t>1} &= \boldsymbol{\delta}_{t-1} +  \boldsymbol{\epsilon}_t,  \:
-\boldsymbol{\epsilon}_t \sim \operatorname{MVNormal} \left(\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right),
-\end{align}
+\begin{aligned}
+\mathbb{E}[y_{\s,t}] &= \mu_{\s,t},\\
+\mu_{\boldsymbol{s},t} &=
+f^{-1} \left( \boldsymbol{X}_{1,\boldsymbol{s},t} \boldsymbol{\beta} +
+O_{\s,t} +
+\alpha_g +
+\boldsymbol{X}_{2,\boldsymbol{s},t} \gamma_t +
+\boldsymbol{X}_{3,t} \zeta_{\boldsymbol{s}} +
+\omega_{\s} +
+\epsilon_{\s,t} \right),
+\end{aligned}
 $$
 
-## Offset terms
+where
 
-Offset terms can be included with the reserved word `offset` in the formula.
-E.g., `y ~ x + offset`.
+* $y_{\s,t}$ represents the response data at point $\s$ and time $t$;
+* $\mu$ represents the mean;
+* $f$ represents a link function (e.g., log or logit) and $f^{-1}$ represents its inverse;
+* $\boldsymbol{X}_{1}$, $\boldsymbol{X}_{2}$, and $\boldsymbol{X}_{3}$ represent design matrices;
+* $\boldsymbol{\beta}$ represents a vector of fixed-effect coefficients;
+* $O_{\s,t}$ represents an offset: a covariate (usually log transformed) with a coefficient fixed at one;
+* $\alpha_{g}$ represents random intercepts by group $g$, $\alpha_{g}\sim \mathrm{N}(0,\sigma^2_\alpha)$;
+* $\gamma_{t}$ represents time-varying coefficients (a random walk), $\gamma_{t} \sim \mathrm{N}(\gamma_{t-1},\sigma^2_\gamma)$;
+* $\zeta_{\boldsymbol{s}}$ represents spatially varying coefficients (a random field), $\zeta_{\s} \sim \mathrm{MVN}(\boldsymbol{0},\boldsymbol{\Sigma}_\zeta)$;
+* $\omega_{\boldsymbol{s}}$ represents a spatial component (a random field), $\omega_{\s} \sim \mathrm{MVN}(\boldsymbol{0},\boldsymbol{\Sigma}_\omega)$; and
+* $\epsilon_{\s,t}$ represents a spatiotemporal component (a random field), $\epsilon_{\s,t} \sim \mathrm{MVN}(\boldsymbol{0},\boldsymbol{\Sigma}_{\epsilon})$.
 
-These are included in the linear predictor as
+A single sdmTMB model will rarely, if ever, contain all of the above components. Next, we will split the model apart to describe the various parts in more detail using '$\ldots$' to represent the other optional components.
+
+## Main effects
 
 $$
-\begin{align}
-  \mu_{\s,t} &= f^{-1} \left( \ldots + O_{\s,t} + \ldots \right),
-\end{align}
+\begin{aligned}
+\mu_{\boldsymbol{s},t} &= f^{-1} \left( \boldsymbol{X}_{1,\boldsymbol{s},t} \boldsymbol{\beta} \ldots \right)
+\end{aligned}
 $$
-where $O_{\s,t}$ is an offset term---a **log transformed** variable without
-a coefficient (assuming a log link).
 
-## Threshold models
+Within `sdmTMB()`, $\boldsymbol{X}_{1,\boldsymbol{s},t} \boldsymbol{\beta}$ is defined by the `formula` argument and represents the main-effect model matrix and a corresponding vector of coefficients. This main effect formula can contain optional penalized smoothers or non-linear functions as defined below.
 
-### Linear breakpoint threshold models
+### Smoothers
 
-TODO
+Smoothers in sdmTMB are implemented with the same formula syntax familiar to mgcv users fitting GAMs (generalized additive models).
+Smooths are implemented in the formula using `+ s(x)`, which implements a smooth from `mgcv::s()`.
+Within these smooths, the same syntax commonly used in `mgcv::s()` can be applied, e.g. 2-dimensional smooths may be constructed with `+ s(x, y)`; smooths can be specific to various factor levels, `+ s(x, by = group)`; smooths can vary according to a continuous variable, `+ s(x, by = x2)`; the basis function dimensions may be specified, e.g. `+ s(x, k = 4)`; and various types of splines may be constructed such as cyclic splines to model seasonality, e.g. `+ s(month, bs = "cc", k = 12)`.
+
+While mgcv can fit unpenalized (e.g., B-splines) or penalized splines (P-splines), sdmTMB only implements penalized splines.
+The penalized splines are constructed in sdmTMB using the function `mgcv::smooth2random()`, which transforms splines into random effects (and associated design matrices) that are estimable in a mixed-effects modelling framework.
+This is the same approach as is implemented in the R packages gamm4 [@wood2020] and brms [@burkner2017].
+<!-- There are too other options for the brms ref, burkner2018 and burkner2021 -->
+
+### Linear break-point threshold models
+
+The linear break-point or "hockey stick" model can be used to describe threshold or asymptotic responses.
+This function consists of two pieces, so that for $x < b_{1}$, $s(x) = x \cdot b_{0}$, and for $x > b_{1}$, $s(x) = b_{1} \cdot b_{0}$.
+In both cases, $b_{0}$ represents the slope of the function up to a threshold, and the product $b_{1} \cdot b_{0}$ represents the value at the asymptote. No constraints are placed on parameters $b_{0}$ or $b_{1}$.
 
 These models can be fit by including `+ breakpt(x)` in the model formula, where
 `x` is a covariate.
 
 ### Logistic threshold models
 
-The form is
+Models with logistic threshold relationships between a predictor and the response can be fit with the form
 
 $$
-s(x)=\tau + \psi\ { \left[ 1+{ e }^{ -\ln\ \left(19\right) \cdot \left( x-s50 \right)
+s(x)=\tau + \psi\ { \left[ 1+{ e }^{ -\ln \left(19\right) \cdot \left( x-s50 \right)
      / \left(s95 - s50 \right) } \right] }^{-1},
 $$
-where $\psi$ is a scaling parameter (controlling the height of the y-axis for
-the response, and is unconstrained), $\tau$ is an intercept, $s50$ is
-a parameter controlling the point at which the function reaches 50% of the
-maximum ($\psi$), and $s95$ is a parameter controlling the point at which the
-function reaches 95%. The parameter $s50$ is unconstrained, and $s95$ is
-constrained to be larger than $s50$.
+
+where $s$ represents the logistic function,
+$\psi$ is a scaling parameter (controlling the height of the y-axis for the response; unconstrained),
+$\tau$ is an intercept,
+$s50$ is a parameter controlling the point at which the function reaches 50% of the maximum ($\psi$),
+and $s95$ is a parameter controlling the point at which the function reaches 95% of the maximum.
+The parameter $s50$ is unconstrained but $s95$ is constrained to be larger than $s50$.
 
 These models can be fit by including `+ logistic(x)` in the model formula, where `x` is a covariate.
 
-## Observation model families
+## Spatial random fields
 
-### [Binomial](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaee11f805f02bc1febc6d7bf0487671be)
-
-Internally parameterized as the [robust
-version](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaecb5a18095a320b42e2d20c4b120f5f5).
-
-### [Beta](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga5324c83759d5211c7c2fbbad37fa8e59)
+Spatial random fields, $\omega_{\s}$, are included if `spatial = 'on'` and omitted if `spatial = 'off'`.
 
 $$
-\operatorname{Beta} \left(\mu \phi, 1 - \mu \phi \right)
+\begin{aligned}
+\mu_{\boldsymbol{s},t} &= f^{-1} \left( \ldots + \omega_{\s} + \ldots \right),\\
+\boldsymbol{\omega} &\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_\omega \right),\\
+\end{aligned}
+$$
+The marginal standard deviation of $\boldsymbol{\omega}$ is indicated by `Spatial SD` in the model output or as `sigma_O` in the output of `sdmTMB::tidy(fit, "ran_pars")`.
+
+Internally, the random fields follow a Gaussian Markov random field (GMRF)
+
+$$
+\boldsymbol{\omega} \sim \mathrm{MVNormal}\left(\boldsymbol{0}, \sigma_\omega^2 \boldsymbol{Q}^{-1}_\omega\right),
+$$
+where $\boldsymbol{Q}_\omega$ is a sparse precision matrix and $\sigma_\omega^2$ is the marginal variance.
+
+## Spatiotemporal random fields
+
+Spatiotemporal random fields are included by default if there are multiple time elements (`time` argument is not `NULL`) and can be set to IID (independent and identically distributed, `'iid'`; default), AR(1) (`'ar1'`), random walk (`'rw'`), or off (`'off'`) via the `spatiotemporal` argument.
+These text values are case insensitive.
+
+Spatiotemporal random fields are represented by $\boldsymbol{\epsilon}_t$ within sdmTMB.
+This has been chosen to match the representation in VAST [@thorson2019].
+The marginal standard deviation of $\boldsymbol{\epsilon}_t$ is indicated by `Spatiotemporal SD` in the model output or as `sigma_E` in the output of `sdmTMB::tidy(fit, "ran_pars")`.
+
+### IID spatiotemporal random fields
+
+IID spatiotemporal random fields (`spatiotemporal = 'iid'`) can be represented as
+
+$$
+\begin{aligned}
+\mu_{\boldsymbol{s},t} &= f^{-1} \left( \ldots + \epsilon_{\s,t} + \ldots \right),\\
+\boldsymbol{\epsilon_{t}} &\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right).
+\end{aligned}
 $$
 
-where $\phi$ is variance.
+where $\epsilon_{\s,t}$ represent random field deviations at point $\s$ and time $t$.
+The random fields are assumed independent across time slices.
+
+Similarly to the spatial random fields, these spatiotemporal random fields (including all versions described below) are parameterized internally with a sparse precision matrix ($\boldsymbol{Q}_\epsilon$)
 
 $$
-\operatorname{Binomial} \left( N, \mu \right)
+\boldsymbol{\epsilon_{t}} \sim \mathrm{MVNormal}\left(\boldsymbol{0}, \sigma_\epsilon^2 \boldsymbol{Q}^{-1}_\epsilon\right).
 $$
 
-$N = 1$ (i.e., 'size' currently fixed) and $\mu$ is probability
+### AR(1) spatiotemporal random fields
 
-### [Gamma](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gab0e2205710a698ad6a0ed39e0652c9a3)
+First-order auto regressive, AR(1), spatiotemporal random fields (`spatiotemporal = 'ar1'`) add a parameter defining the correlation between random field deviations from one time slice to the next.
+They are defined as
 
-As shape, scale:
+$$
+\begin{aligned}
+\mu_{\s,t} &= f^{-1} \left( \ldots + \delta_{\s,t} \ldots \right),\\
+\boldsymbol{\delta}_{t=1} &\sim \operatorname{MVNormal} (\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon}),\\
+\boldsymbol{\delta}_{t>1} &= \rho \boldsymbol{\delta}_{t-1} + \sqrt{1 - \rho^2} \boldsymbol{\epsilon_{t}},  \:
+\boldsymbol{\epsilon_{t}} \sim \operatorname{MVNormal} \left(\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right),
+\end{aligned}
+$$
+where $\rho$ is the correlation between subsequent spatiotemporal random fields.
+The $\rho \boldsymbol{\delta}_{t-1} + \sqrt{1 - \rho^2}$ term scales the spatiotemporal variance by the correlation such that it represents the steady-state marginal variance.
+The correlation $\rho$ allows for mean-reverting spatiotemporal fields, and is constrained to be $-1 < \rho < 1$.
+Internally, the parameter is estimated as `ar1_phi`, which is unconstrained.
+The parameter `ar1_phi` is transformed to $\rho$ with $\rho = 2 \left( \mathrm{logit}^{-1}(\texttt{ar1\_phi}) - 1 \right)$.
+
+### Random walk spatiotemporal random fields (RW)
+
+Random walk spatiotemporal random fields (`spatiotemporal = 'rw'`) represent a model where the difference in spatiotemporal deviations from one time slice to the next are IID. There defined as
+
+$$
+\begin{aligned}
+\mu_{\s,t} &= f^{-1} \left( \ldots + \delta_{\s,t} + \ldots \right),\\
+\boldsymbol{\delta}_{t=1} &\sim \operatorname{MVNormal} (\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon}),\\
+\boldsymbol{\delta}_{t>1} &= \boldsymbol{\delta}_{t-1} +  \boldsymbol{\epsilon_{t-1}},  \:
+\boldsymbol{\epsilon_{t-1}} \sim \operatorname{MVNormal} \left(\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right),
+\end{aligned}
+$$
+
+where the distribution of the spatiotemporal field in the initial time step is the same as for the AR(1) model, but the absence of the $\rho$ parameter allows the spatiotemporal field to be non-stationary in time.
+Note that, in contrast to the AR(1) parametrization, the variance is no longer the steady-state marginal variance.
+
+## Time-varying regression parameters
+
+Parameters can be modelled as time varying (a random walk) according to the form
+
+$$
+\begin{aligned}
+  \mu_{\s,t} &= f^{-1} \left( \ldots + \gamma_{t} \boldsymbol{X}_{2,s,t} + \ldots \right),\\
+  \gamma_{t=1} &\sim \operatorname{Uniform} \left(-\infty, \infty \right),\\
+  \gamma_{t>1} &\sim \operatorname{Normal} \left(\gamma_{t-1}, \sigma^2_{\gamma} \right),
+\end{aligned}
+$$
+
+where $\gamma_t$ is an example optional time-varying regression parameter and $x_{\s,t}$ is the corresponding predictor value.
+This is defined via the `time_varying` argument, assuming that the `time` argument is also supplied a column name.
+For example, `time_varying ~ 0 + x`.
+The first value is given an implicit uniform prior.
+I.e., the same variable should not appear in the fixed effect formula since the initial value is estimated as part of the time-varying formula.
+The formula `time_varying = ~ 1` implicitly represents a time-varying intercept and, this case, the intercept should be omitted from the main effects (`formula ~ + 0 + ...` or `formula ~ -1 + ...`).
+
+## Spatially varying coefficients (SVC)
+
+Spatially varying coefficient (SVC) models are defined as
+
+$$
+\begin{aligned}
+  \mu_{\s,t} &= f^{-1} \left( \ldots + \boldsymbol{X}_{3,t} \zeta_{\boldsymbol{s}} + \ldots \right),\\
+  \boldsymbol{\zeta} &\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_\zeta \right),
+\end{aligned}
+$$
+
+where $\boldsymbol{\zeta}$ is a random field representing a spatially varying coefficient.
+Usually, $\boldsymbol{X}_{3,t}$ would represent a predictor that is constant spatially for a given time $t$.
+Currently, $\boldsymbol{X}_{3,t}$ is restricted to a single covariate (column vector), supplied by a one-sided formula to `spatial_varying`.
+For example `spatial_varying = ~ 0 + x`, where `0` omits the intercept.
+
+The random fields are parameterized internally with a sparse precision matrix ($\boldsymbol{Q}_\zeta$)
+
+$$
+\boldsymbol{\zeta} \sim \mathrm{MVNormal}\left(\boldsymbol{0}, \sigma_\zeta^2 \boldsymbol{Q}^{-1}_\zeta\right).
+$$
+
+## IID random or multi-level intercepts
+
+$$
+\begin{aligned}
+  \mu_{\s,t} &= f^{-1} \left( \ldots + \alpha_{g} + \ldots \right),\\
+  \alpha_g &\sim \operatorname{Normal} \left(0, \sigma_\alpha^2 \right),\\
+\end{aligned}
+$$
+
+where $\alpha_g$ is an example optional "random" intercept---an intercept
+with mean zero that varies by level $g$ and is constrained by $\sigma_\alpha$.
+This is defined by the `formula` argument via the `(1 | g)` syntax as in lme4 or glmmTMB.
+There can be multiple random intercepts, despite only showing one above.
+E.g., `(1 | g1) + (1 | g2)`, in which case they are assumed independent and uncorrelated from each other.
+
+## Offset terms
+
+Offset terms can be included with the reserved word `offset` in the formula.
+E.g., `y ~ x + offset`.
+These are included in the linear predictor as
+
+$$
+\begin{aligned}
+  \mu_{\s,t} &= f^{-1} \left( \ldots + O_{\s,t} + \ldots \right),
+\end{aligned}
+$$
+
+where $O_{\s,t}$ is an offset term---a **log transformed** variable without a coefficient (assuming a log link).
+
+# Observation model families
+
+Here we describe the main observation families that are available in sdmTMB and comment on their parametrization, statistical properties, utility, and code representation in sdmTMB.
+
+## Binomial
+
+$$
+\operatorname{Binomial} \left(N, \mu \right)
+$$
+where $N$ is the size or number of trials, and $\mu$ is the probability of success for each trial.
+If $N = 1$, the distribution becomes the Bernoulli distribution.
+Internally, the distribution is parameterized as the [robust
+version](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaecb5a18095a320b42e2d20c4b120f5f5) in TMB, which is numerically stable when probabilities approach 0 or 1.
+Following the structure of `stats::glm()`, lme4, and glmmTMB, a binomial family can be specified in one of 4 ways:
+
+1. the response may be a factor (and the model classifies the first level versus all others)
+2. the response may be binomial (0/1)
+3. the response can be a matrix of form `cbind(success, failure)`, or
+4. the response may be the observed proportions, and the `weights` argument is used to specify the Binomial size ($N$) parameter (`probabilty ~ ..., weights = N`).
+
+Code defined [within TMB](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaee11f805f02bc1febc6d7bf0487671be).
+
+Example: `family = binomial(link = "logit")`
+
+## Beta
+
+$$
+\operatorname{Beta} \left(\mu \phi, (1 - \mu) \phi \right)
+$$
+where $\mu$ is the mean and $\phi$ is a precision parameter.
+This parametrization follows @ferrari2004 and the betareg R package [@cribari-neto2010].
+The variance is $\mu (1 - \mu) / (\phi + 1)$.
+
+Code defined [within TMB](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga5324c83759d5211c7c2fbbad37fa8e59).
+
+Example: `family = Beta(link = "logit")`
+
+## Gamma
 
 $$
 \operatorname{Gamma} \left( \phi, \frac{\mu}{\phi}  \right)
 $$
+where $\phi$ represents the Gamma shape and $\mu / \phi$ represents the scale.
+The mean is $\mu$ and variance is $\mu \cdot \phi^2$.
 
-where $\phi$ represents the shape and $\frac{\mu}{\phi}$ represents the scale.
+Code defined [within TMB](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gab0e2205710a698ad6a0ed39e0652c9a3).
 
-### [Gaussian](https://kaskr.github.io/adcomp/dnorm_8hpp.html)
+Example: `family = Gamma(link = "log")`
 
-$$
-\operatorname{Normal} \left( \mu, \phi \right)
-$$
-where $\phi$ is the standard deviation (following Stan convention of SD not variance).
-
-### [Lognormal](https://github.com/pbs-assess/sdmTMB/blob/28a93496a93b12e5a2f73f703bc96afbf14d86c1/src/sdmTMB.cpp#L22-L30)
+## Gaussian
 
 $$
-\operatorname{Lognormal} \left( \log \mu - \frac{\phi^2}{2}, \phi \right)
+\operatorname{Normal} \left( \mu, \phi^2 \right)
+$$
+where $\mu$ is the mean and $\phi$ is the standard deviation.
+The variance is $\phi^2$.
+
+Example: `family = Gaussian(link = "identity")`
+
+Code defined [within TMB](https://kaskr.github.io/adcomp/dnorm_8hpp.html).
+
+## Lognormal
+
+<!-- \operatorname{Lognormal} \left( \log \mu - \frac{\phi^2}{2}, \phi^2 \right) -->
+
+sdmTMB uses the bias-corrected lognormal distribution where $\phi$ represents the standard deviation in log-space:
+
+$$
+\operatorname{Lognormal} \left( \log \mu - \frac{\phi^2}{2}, \phi^2 \right).
+$$
+Because of the bias correction, $\mathbb{E}[y] = \mu$ and $\mathrm{Var}[\log y] = \phi^2$.
+
+Code defined [within sdmTMB](https://github.com/pbs-assess/sdmTMB/blob/18a39eabc111e2179fa589f942c8820d87ad10df/src/utils.h#L47-L54) based on the TMB `dnorm()` normal density.
+
+Example: `family = lognormal(link = "log")`
+
+## Negative Binomial 1 (NB1)
+
+$$
+\operatorname{NB1} \left( \mu, \phi \right)
 $$
 
+where $\mu$ is the mean and $\phi$ is the dispersion parameter.
+The variance scales linearly with the mean $\mathrm{Var}[y] = \mu + \mu / \phi$ [@hilbe2011].
+Internally, the distribution is parameterized as the [robust version](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa23e3ede4669d941b0b54314ed42a75c) in TMB.
 
-### [Negative Binomial](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga76266c19046e04b651fce93aa0810351)
+Code defined [within sdmTMB](https://github.com/pbs-assess/sdmTMB/blob/18a39eabc111e2179fa589f942c8820d87ad10df/src/sdmTMB.cpp#L577-L582) based on NB2 and borrowed from glmmTMB.
 
-Internally parameterized as the [robust version](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa23e3ede4669d941b0b54314ed42a75c)
+Example: `family = nbinom1(link = "log")`
+
+## Negative Binomial 2 (NB2)
 
 $$
 \operatorname{NB2} \left( \mu, \phi \right)
 $$
 
-Variance scales quadratically with mean $\mathrm{Var}[y] = \mu + \mu^2 / \phi$.
+where $\mu$ is the mean and $\phi$ is the dispersion parameter.
+The variance scales quadratically with the mean $\mathrm{Var}[y] = \mu + \mu^2 / \phi$ [@hilbe2011].
+The NB2 parametrization is more commonly seen in ecology than the NB1.
+Internally, the distribution is parameterized as the [robust version](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa23e3ede4669d941b0b54314ed42a75c) in TMB.
 
-### [Poisson](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa1ed15503e1441a381102a8c4c9baaf1)
+Code defined [within TMB](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga76266c19046e04b651fce93aa0810351).
+
+Example: `family = nbinom2(link = "log")`
+
+## Poisson
 
 $$
 \operatorname{Poisson} \left( \mu \right)
 $$
+where $\mu$ represents the mean and $\mathrm{Var}[y] = \mu$.
 
-### [Student-t](https://github.com/pbs-assess/sdmTMB/blob/28a93496a93b12e5a2f73f703bc96afbf14d86c1/src/sdmTMB.cpp#L11-L20)
+Code defined [within TMB](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa1ed15503e1441a381102a8c4c9baaf1).
+
+Example: `family = poisson(link = "log")`
+
+## Student-t
 
 $$
 \operatorname{Student-t} \left( \mu, \phi, \nu \right)
 $$
 
-where $\nu$, the degrees of freedom, is currently fixed at 3.
+where $\nu$, the degrees of freedom (`df`), is a user-supplied fixed parameter. Lower values of $\nu$ result in heavier tails compared to the Gaussian distribution. Above approximately `df = 20`, the distribution becomes very similar to the Gaussian. The Student-t distribution with a low degrees of freedom (e.g., $\nu \le 7$) can be helpful for modelling data that would otherwise be suitable for Gaussian but needs an approach that is robust to outliers [e.g., @anderson2017c].
 
-### [Tweedie](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga262f3c2d1cf36f322a62d902a608aae0)
+Code defined [within sdmTMB](https://github.com/pbs-assess/sdmTMB/blob/18a39eabc111e2179fa589f942c8820d87ad10df/src/utils.h#L37-L45) based on the `dt()` distribution in TMB.
 
-[Source code](https://kaskr.github.io/adcomp/tweedie_8cpp_source.html) as in [cplm](https://CRAN.R-project.org/package=cplm) package. <https://link.springer.com/article/10.1007/s11222-012-9343-7>
+Example: `family = student(link = "log", df = 7)`
+
+## Tweedie
 
 $$
 \operatorname{Tweedie} \left(\mu, p, \phi \right), \: 1 < p < 2
 $$
 
+where $\mu$ is the mean, $p$ is the power parameter constrained between 1 and 2, and $\phi$ is the dispersion parameter.
+The Tweedie distribution can be helpful for modelling data that are positive and continuous but also contain zeros.
 
+Internally, $p$ is transformed from $\mathrm{logit}^{-1} (\texttt{thetaf}) + 1$ to constrain it between 1 and 2 and \texttt{thetaf} is estimated as an unconstrained variable.
+
+The [source code](https://kaskr.github.io/adcomp/tweedie_8cpp_source.html) is implemented as in the [cplm](https://CRAN.R-project.org/package=cplm) package [@zhang2013a] and is based on @dunn2005. The TMB version is defined [here](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga262f3c2d1cf36f322a62d902a608aae0).
+
+Example: `family = tweedie(link = "log")`
+
+# Gaussian random fields
+
+## Matérn parameterization
+
+The Matérn defines the covariance $\Phi \left( s_j, s_k \right)$ between spatial locations $s_j$ and $s_k$ as
+
+$$
+\Phi\left( s_j,s_k \right) = \tau^2/\Gamma(\nu)2^{\nu - 1} (\kappa d_{jk})^\nu K_\nu \left( \kappa d_{jk} \right),
+$$
+<!-- TODO: paraphrase this to avoid self plagiarizing the synopsis report! -->
+
+where $\tau^2$ controls the spatial variance,
+$\nu$ controls the smoothness,
+$\Gamma$ represents the Gamma function,
+$d_{jk}$ represents the distance between locations $s_j$ and $s_k$,
+$K_\nu$ represents the modified Bessel function of the second kind,
+and $\kappa$ controls the spatial correlation range (decorrelation rate).
+The parameter $\nu$ is set to 1 to take advantage of the Stochastic Partial Differential Equation (SPDE) approximation to the GRF to greatly increase computational efficiency [@lindgren2011].
+Internally, the parameter $\kappa$ and $\tau$ are converted to range and marginal standard deviation $\sigma$ as $\textrm{range} = \sqrt{8} / \kappa$ and $\sigma = 1 / \sqrt{4 \pi \exp \left(2 \log(\tau) + 2 \log(\kappa) \right) }$.
+
+In the case of a spatiotemporal model with both spatial and spatiotemporal fields, if `share_range` is `TRUE` in `sdmTMB()` (the default), then a single $\kappa$ and range are estimated with separate $\sigma_\omega$ and $\sigma_\epsilon$. This often makes sense since the data are often only weakly informative about $\kappa$.
+If `share_range = FALSE`, then separate $\kappa_\omega$ and $\kappa_\epsilon$ are estimated.
+The spatially varying coefficient field always shares $\kappa$ with the spatial random field.
+
+## Projection $\boldsymbol{A}$ matrix
+
+The values of the spatial variables at the knots are multiplied by a projection matrix $\boldsymbol{A}$ that bilinearly interpolates from the knot locations to the values at the locations of the observed or predicted data [@lindgren2015]
+
+$$
+\boldsymbol{\omega}^* = \boldsymbol{A} \boldsymbol{\omega},
+$$
+where $\boldsymbol{\omega}^*$ represents the values of the spatial random fields at the observed locations or predicted data locations.
+The matrix $\boldsymbol{A}$ has a row for each data point or prediction point and a column for each knot.
+Three non-zero elements on each row define the weight of the neighbouring 3 knot locations for location $\s$.
+The same bilinear interpolation happens for any spatiotemporal random fields
+
+$$
+\boldsymbol{\epsilon}_t^* = \boldsymbol{A} \boldsymbol{\epsilon}_t.
+$$
+
+## Anisoptropy
+
+TMB allows for anisotropy, where spatial covariance may be asymmetric with respect to latitude and longitude ([full details](https://kaskr.github.io/adcomp/namespaceR__inla.html)). Anisotropy can be turned on and off with the logical `anisotropy` argument to `sdmTMB()`. There are a number of ways to implement anisotropic covariance [@fuglstad2015a], and we adopt a 2-parameter rotation matrix $\textbf{H}$. The elements of $\textbf{H}$ are defined by the parameter vector $\boldsymbol{x}$ so that $H_{1,1} = x_{1}$, $H_{1,2} = H_{2,1} = x_{2}$ and $H_{2,2} = (1 + x_{2}^2) / x_{1}$.
+
+Once a model is fitted with `sdmTMB()`, the anisotropy relationships may be plotted using the `plot_anisotropy()` function, which takes the fitted object as an argument. If a barrier mesh is used, anisotropy is disabled.
+
+## Incorporating physical barriers into the SPDE
+
+In some cases the spatial domain of interest may be complex and bounded by some barrier such as by land or water (e.g., coastlines, islands, lakes).
+SPDE models allow for physical barriers to be incorporated into the modelling [@bakka2019].
+With  `sdmTMB()` models, the mesh construction occurs in two steps: the user (1) constructs a mesh with a call to `sdmTMB::make_mesh()`, and (2) passes the mesh to `sdmTMB::add_barrier_mesh()`.
+The barriers must be constructed as `sf` objects [@pebesma2018] with polygons defining the barriers.
+See `?sdmTMB::add_barrier_mesh` for examples.
+
+The barrier implementation requires the user to select a fraction value (`range_fraction` argument) that defines the fraction of the usual spatial range when crossing the barrier [@bakka2019].
+For example, if the range was estimated at 10 km, `range_fraction = 0.2` would assume that the range was 2 km across the barrier.
+This would let the spatial correlation decay 5 times faster with distance.
+From experimentation, values around 0.1 or 0.2 seem to work well but values much lower than 0.1 can result in convergence issues.
+
+[This website](https://haakonbakkagit.github.io/btopic128.html) by Francesco Serafini and Haakon Bakka provides an illustration with INLA.
+The implementation within TMB was borrowed from code written by Olav Nikolai Breivik and Hans Skaug at the [TMB Case Studies](https://github.com/skaug/tmb-case-studies) Github site.
+
+# Optimization
+
+## Optimization details
+
+The sdmTMB model is fit by maximum marginal likelihood.
+Internally, a TMB [@kristensen2016] model template calculates the marginal log likelihood and its gradient, and the negative log likelihood is minimized via the non-linear optimization routine `stats::nlminb()` in R [@gay1990; @r2021].
+Random effects are estimated at values that maximize the log likelihood conditional on the estimated fixed effects and are integrated over via the Laplace approximation [@kristensen2016].
+
+Like AD Model Builder [@fournier2012ad], TMB allows for parameters to be fit in phases and we include the `multiphase` argument in `sdmTMB::sdmTMBcontrol()` to allow this.
+For high-dimensional models (many fixed and random effects), phased estimation may be faster and result in more stable convergence.
+In sdmTMB, phased estimation proceeds by first estimating all fixed-effect parameters contributing to the likelihood (holding random effects constant at initial values).
+In the second phase, the random-effect parameters (and their variances) are also estimated.
+Fixed-effect parameters are also estimated in the second phase and are initialized at their estimates from the first phase.
+
+In some cases, a single call to `stats::nlminb()` may not be result in convergence (e.g., the maximum gradient of the marginal likelihood with respect to fixed-effect parameters is not small enough yet), and the algorithm may need to be run multiple times.
+In the `sdmTMB::sdmTMBcontrol()` function, we include an argument `nlminb_loops` that will restart the optimization at the previous best values.
+The number of `nlminb_loops` should generally be small (e.g., 2 or 3 initially), and defaults to 1.
+For some sdmTMB models, the Hessian may also be unstable and need to be re-evaluated.
+We do this optionally with the `stats::optimHess()` routine after the call to `stats::nlminb()`.
+The `stats::optimHess()` function implements a Newton optimization routine to find the Hessian, and we include the argument `newton_loops` in `sdmTMB::sdmTMBcontrol()` to allow for multiple function evaluations (each starting at the previous best value).
+By default, this is not included and `newton_loops` is set to 0.
+If a model is already fit, the function `sdmTMB::run_extra_optimization()` can run additional optimization loops with either routine to further reduce the maximum gradient.
+
+## Assessing convergence
+
+Much of the guidance around diagnostics and glmmTMB also applies to sdmTMB, e.g. [the glmmTMB vignette on troubleshooting](https://cran.r-project.org/web/packages/glmmTMB/vignettes/troubleshooting.html).
+Optimization with `stats::nlminb()` involves specifying the number of iterations and evaluations (`eval.max` and `iter.max`) and the tolerances (`abs.tol`, `rel.tol`, `x.tol`, `xf.tol`)---a greater number of iterations and smaller tolerance thresholds increase the chance that the optimal solution is found, but more evaluations translates into longer computation time.
+Warnings of non-positive-definite Hessian matrices (accompanied by parameters with `NA`s for standard errors) often mean models are improperly specified given the data.
+Standard errors can be observed in the output of `print.sdmTMB()` or by checking `fit$sd_report`.
+The maximum gradient of the marginal likelihood with respect to fixed-effect parameters can be checked by inspecting (`fit$gradients`).
+Guidance varies, but the maximum gradient should likely be at least $< 0.001$ before assuming the fitting routine is consistent with convergence.
+If maximum gradients are already relatively small, they can often be reduced further with additional optimization calls beginning at the previous best parameter vector as described above with `sdmTMB::run_extra_optimization()`.
+
+# References
