@@ -1,5 +1,5 @@
 ---
-title: "Model description"
+title: "sdmTMB model description"
 output:
   rmarkdown::html_vignette:
     toc: true
@@ -7,7 +7,7 @@ output:
 bibliography: 'refs.bib'
 csl: 'mee.csl'
 vignette: >
-  %\VignetteIndexEntry{Model description}
+  %\VignetteIndexEntry{sdmTMB model description}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
