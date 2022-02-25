@@ -50,57 +50,33 @@ This appendix uses the following notation conventions:
 Below are tables of all major indices and symbols.
 
 ```{r indices}
-library(magrittr)
-subscripts <- tibble::tribble(
-  ~Symbol, ~Description,
-  "$\\s$", "Index for space; a vector of x and y coordinates",
-  "$t$", "Index for time",
-  "$g$", "Group"
+subscripts <- structure(
+  list(
+    Symbol = c(
+      "$\\s$", 
+      "$t$",
+      "$g$"
+    ), 
+    Description = c(
+      "Index for space; a vector of x and y coordinates", 
+      "Index for time", 
+      "Group"
+    )),
+  row.names = c(NA, -3L), class = "data.frame"
 )
 knitr::kable(subscripts, caption = "Subscript notation", escape = FALSE)
 ```
 
 ```{r symbols, results='asis'}
-symbols <- tibble::tribble(
-  ~Symbol, ~Code, ~Description,
-  "$y$", "`y_i`", "Observed response data",
-  "$\\mu$", "`mu_i`", "Mean",
-  "$\\phi$", "`phi`", "A dispersion parameter for a distribution",
-  "$f$", "`fit$family$link`", "Link function",
-  "$f^{-1}$", "`fit$family$linkinv`", "Inverse link function",
-  "$\\boldsymbol{\\beta}$", "`b_j`", "Parameter vector",
-  "$\\boldsymbol{X}$", "`X_ij`", "A predictor model matrix",
-  "$O_{\\s, t}$", "`offset`", "An offset variable at point $\\s$ and time $t$",
-
-  "$\\omega_{\\s}$", "`omega_s`", "Spatial random field at point $\\s$ (knot)",
-  "$\\omega_{\\s}^*$", "`omega_s_A`", "Spatial random field at point $\\s$ (interpolated)",
-  "$\\zeta_{\\s}$", "`zeta_s`", "Spatially varying coefficient random field at point $\\s$ (knot)",
-  "$\\zeta_{\\s}^*$", "`zeta_s_A`", "Spatially varying coefficient random field at point $\\s$ (interpolated)",
-  "$\\epsilon_{\\s, t}$", "`epsilon_st`", "Spatiotemporal random field at point $\\s$ and time $t$ (knot)",
-  "$\\epsilon_{\\s, t}^*$", "`epsilon_st_A`", "Spatiotemporal random field at point $\\s$ and time $t$ (interpolated)",
-  "$\\delta_{\\s,t}$", "`b_t`", "AR(1) or random walk spatiotemporal deviations (knot)",
-  "$\\alpha_g$", "`RE`", "IID random intercept deviation for group $g$",
-
-  "$\\boldsymbol{\\Sigma}_\\omega$", "`-`", "Spatial random field covariance matrix",
-  "$\\boldsymbol{\\Sigma}_\\zeta$", "`-`", "Spatially varying coefficient random field covariance matrix",
-  "$\\boldsymbol{\\Sigma}_\\epsilon$", "`-`", "Spatiotemporal random field covariance matrix",
-  "$\\boldsymbol{Q}_\\omega$", "`Q_s`", "Spatial random field precision matrix",
-  "$\\boldsymbol{Q}_\\zeta$", "`Q_s`", "Spatially varying coefficient random field precision matrix",
-  "$\\boldsymbol{Q}_\\epsilon$", "`Q_st`", "Spatiotemporal random field precision matrix",
-
-  "$\\sigma_\\alpha^2$", "`sigma_G`", "IID random intercept variance",
-  "$\\sigma_\\epsilon^2$", "`sigma_E`", "Spatiotemporal random field marginal variance",
-  "$\\sigma_\\omega^2$", "`sigma_O`", "Spatial random field marginal variance",
-  "$\\sigma_\\zeta^2$", "`sigma_Z`", "Spatially varying coefficient random field marginal variance",
-  "$\\kappa_\\omega$", "`kappa(0)`", "Spatial decorrelation rate",
-  "$\\kappa_\\epsilon$", "`kappa(1)`", "Spatiotemporal decorrelation rate",
-
-  "$\\rho$", "`ar1_rho`", "Correlation between random fields in subsequent time steps",
-  "$\\boldsymbol{A}$", "`A`", "Sparse projection matrix to interpolate between knot and data locations",
-  "$\\boldsymbol{H}$", "`H`", "2-parameter rotation matrix used to define anisotropy"
+symbols <- read.csv(
+  system.file("symbols.csv", package = "sdmTMB"), 
+  stringsAsFactors = FALSE
 )
-knitr::kable(symbols, caption = "Symbol notation, code representation (in model output or in model template code), and descriptions.", escape = FALSE,
-   linesep = c(
+knitr::kable(symbols, 
+  caption = 
+    "Symbol notation, code representation (in model output or in model template code), and descriptions.", 
+  escape = FALSE,
+  linesep = c(
     rep('', 7), # y, mean etc.
     '\\addlinespace',
     rep('', 7), # fields
@@ -110,7 +86,8 @@ knitr::kable(symbols, caption = "Symbol notation, code representation (in model 
     rep('', 5), # more covariance stuff
     '\\addlinespace',
     rep('', 99) # end
-  ))
+  )
+)
 ```
 
 # sdmTMB model structure
