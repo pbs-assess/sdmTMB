@@ -13,7 +13,7 @@ print.sdmTMB <- function(x, ...) {
   r <- x$tmb_obj$report(lp)
   sink()
 
-  spatial_only <- !is.null(r$sigma_E) && !is.null(r$zeta_O)
+  spatial_only <- as.logical(x$tmb_data$spatial_only)
 
   fit_by <- "ML"
   if ("reml" %in% names(x)) { # for backwards compatibility
@@ -22,8 +22,7 @@ print.sdmTMB <- function(x, ...) {
 
   if (isTRUE(spatial_only)) {
     title <- paste0("Spatial model fit by ", fit_by, " ['sdmTMB']\n")
-
-      } else {
+  } else {
     title <- paste0("Spatiotemporal model fit by ", fit_by, " ['sdmTMB']\n")
   }
   formula <- paste0("Formula: ", deparse(x$call$formula), "\n")
