@@ -187,7 +187,7 @@ print.sdmTMB <- function(x, ...) {
   range_text <- if (x$tmb_data$share_range) {
     paste0("Matern range: ", range[1], "\n")
   } else {
-    paste0("Matern range(spatial): ", range[1], "\n",
+    paste0("Matern range (spatial): ", range[1], "\n",
       "Matern range (spatiotemporal): ", range[2], "\n")
   }
 
