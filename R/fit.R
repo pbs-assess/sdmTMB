@@ -1088,7 +1088,8 @@ sdmTMB <- function(
     model      = tmb_opt,
     sd_report  = sd_report,
     gradients  = conv$final_grads,
-    bad_eig    = conv$bad_eig))
+    bad_eig    = conv$bad_eig,
+    pos_def_hessian = sd_report$pdHess))
   `class<-`(out, "sdmTMB")
 }
 
