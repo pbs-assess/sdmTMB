@@ -852,7 +852,7 @@ sdmTMB <- function(
     lwr = lwr,
     car_model = as.numeric(car_model),
     car_k = car_k,
-    car_region = data$car_region,
+    car_region = make_year_i(data$car_region), # make_year_i also can be used here
     CAR_D = as(CAR_D, "dgTMatrix"),
     CAR_W = as(CAR_W, "dgTMatrix")
   )

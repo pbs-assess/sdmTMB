@@ -192,7 +192,7 @@ Type objective_function<Type>::operator()()
   // optional stuff for CAR models
   DATA_INTEGER(car_model);
   DATA_INTEGER(car_k); // number of regions
-  DATA_IVECTOR(car_region); // indicator of which region each data point is coming from
+  DATA_FACTOR(car_region); // indicator of which region each data point is coming from
   DATA_SPARSE_MATRIX(CAR_W); // matrix whose diagonal is 0, and is adjacency of weights
   DATA_SPARSE_MATRIX(CAR_D); // diagonal matrix specifying number of neighbors of each group
   // ------------------ Parameters ---------------------------------------------
@@ -271,9 +271,9 @@ Type objective_function<Type>::operator()()
     Eigen::SparseMatrix<Type> Q_car_s = CAR_D - car_alpha_s*CAR_W;
     GMRF_t<Type> nldens_s = GMRF(Q_car_s);
     jnll += SCALE(nldens_s, car_tau_s)(car_re_s);
-
+    //jnll -= dgamma(car_tau_s, Type(1.0), Type(1.0), true);
     // map random effects to individual observations
-    for(int i = 0; i < n_i; i++) car_i(i) += car_re_s(car_region(i)-1);
+    for(int i = 0; i < n_i; i++) car_i(i) += car_re_s(car_region(i));
   }
   if (!spatial_only && car_model) {
     //matrix<Type> Qst = car_tau_st*(CAR_D - car_alpha_st*CAR_W);
@@ -285,11 +285,11 @@ Type objective_function<Type>::operator()()
     // τD * (I−αB), B =D^(-1)W, = τ(D−αW)
     Eigen::SparseMatrix<Type> Q_car_st = CAR_D - car_alpha_st*CAR_W;
     GMRF_t<Type> nldens_st = GMRF(Q_car_st);
-    for (int k = 1; k < car_k; k++) {
+    for (int k = 0; k < car_k; k++) {
       jnll += SCALE(nldens_st, car_tau_st)(car_re_st.col(k));
     }
 
-    for(int i = 0; i < n_i; i++) car_i(i) += car_re_st(year_i(i), car_region(i)-1);
+    for(int i = 0; i < n_i; i++) car_i(i) += car_re_st(year_i(i), car_region(i));
   }
 
   // ------------------ Geospatial ---------------------------------------------
@@ -530,7 +530,7 @@ Type objective_function<Type>::operator()()
 
   for (int i = 0; i < n_i; i++) {
     eta_i(i) = eta_fixed_i(i) + eta_smooth_i(i) + car_i(i); // + offset_i(i);
-    std::cout << Type(car_re_s(i)) << "\n";
+    //std::cout << Type(car_re_s(i)) << "\n";
 
     if (random_walk) {
       for (int k = 0; k < X_rw_ik.cols(); k++) {
