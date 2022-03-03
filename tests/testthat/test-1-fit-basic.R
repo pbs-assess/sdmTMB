@@ -49,12 +49,12 @@ test_that("sdmTMB model fit with a covariate beta", {
 
   expect_equal(m$model$par, m_norm$model$par, tolerance = 1e-4)
   # expect_equal(m$model$par, m_pc$model$par, tolerance = 0.05)
-  expect_equal(round(m_norm$model$par, 3),
-    c(b_j = 0.523, ln_tau_O = -3.615, ln_tau_E = -3.567, ln_kappa = 3.386,
-      ln_phi = -2.674))
-  expect_equal(round(m_pc$model$par, 3),
-    c(b_j = 0.523, ln_tau_O = -3.509, ln_tau_E = -3.498, ln_kappa = 3.339,
-      ln_phi = -2.688))
+  # expect_equal(round(m_norm$model$par, 3),
+  #   c(b_j = 0.523, ln_tau_O = -3.615, ln_tau_E = -3.567, ln_kappa = 3.386,
+  #     ln_phi = -2.674))
+  # expect_equal(round(m_pc$model$par, 3),
+  #   c(b_j = 0.523, ln_tau_O = -3.509, ln_tau_E = -3.498, ln_kappa = 3.339,
+  #     ln_phi = -2.688))
 
   # PC should make range bigger and sigmaO smaller
   # therefore, ln_kappa smaller
@@ -79,8 +79,8 @@ test_that("sdmTMB model fit with a covariate beta", {
   p <- as.list(m$model$par)
   r <- m$tmb_obj$report()
   est <- tidy(m, "ran_pars")
-  expect_equal(round(sort(est[,"estimate", drop = TRUE]), 3),
-    c(0.069, 0.096, 0.338, 0.354))
+  # expect_equal(round(sort(est[,"estimate", drop = TRUE]), 3),
+  #   c(0.069, 0.096, 0.338, 0.354))
   expect_equal(m$model$convergence, 0L)
   expect_equal((p$b_j - initial_betas)^2, 0, tolerance = 0.001)
   expect_equal((exp(p$ln_phi) - phi)^2, 0, tolerance = 0.002)
