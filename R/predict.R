@@ -270,8 +270,8 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     if (object$time == "_sdmTMB_time") newdata[[object$time]] <- 0L
 
     check_time_class(object, newdata)
-    original_time <- sort(unique(object$data[[object$time]]))
-    new_data_time <- sort(unique(newdata[[object$time]]))
+    original_time <- as.numeric(sort(unique(object$data[[object$time]])))
+    new_data_time <- as.numeric(sort(unique(newdata[[object$time]])))
 
     if (!all(new_data_time %in% original_time))
       stop("Some new time elements were found in `newdata`. ",
@@ -280,14 +280,15 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
         "the `extra_time` argument in `?predict.sdmTMB`.",
         call. = FALSE
       )
-    # if (!identical(new_data_time, original_time)) {
-    #   stop("The time elements in `newdata` are not identical to those ",
-    #     "in the original dataset. For now, please predict on all time ",
-    #     "elements and filter out those you don't need after. Please ",
-    #     "let us know on the GitHub issues if this is important to you.",
-    #     call. = FALSE
-    #   )
-    # }
+
+    if (!identical(new_data_time, original_time) & isFALSE(pop_pred)) {
+      stop("The time elements in `newdata` are not identical to those ",
+        "in the original dataset. For now, please predict on all time ",
+        "elements and filter out those you don't need after. Please ",
+        "let us know on the GitHub issues if this is important to you.",
+        call. = FALSE
+      )
+    }
 
     # If making population predictions (with standard errors), we don't need
     # to worry about space, so fill in dummy values if the user hasn't made any:

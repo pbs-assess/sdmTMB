@@ -51,7 +51,6 @@ test_that("get_index(), get_index_sims(), and get_cog() work", {
 
   # missing time:
   .qcs_grid <- subset(qcs_grid, year != 2015)
-  p <- predict(m, newdata = .qcs_grid, return_tmb_object = TRUE)
-  expect_error(get_index(p), regexp = "time")
+  expect_error(p <- predict(m, newdata = .qcs_grid, return_tmb_object = TRUE), regexp = "time")
 })
 
