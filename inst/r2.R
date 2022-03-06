@@ -56,6 +56,7 @@ r2.sdmTMB <- function(x, which_fixef = NULL) {
 
   fe <- fixef(fit)
   X <- fit$tmb_data$X_ij
+  varF_all <- var(as.vector(fe %*% t(X))) # variance from fixed-effects
   if (!is.null(which_fixef)) {
     assert_that(max(which_fixef) <= length(fe))
     assert_that(min(which_fixef) >= 1)
@@ -91,7 +92,7 @@ r2.sdmTMB <- function(x, which_fixef = NULL) {
 
   varR <- suppressMessages(var(as.vector(residuals(fit)))) # residual variance
 
-  denominator <- varF + varO + varE + varR + varV
+  denominator <- varF_all + varO + varE + varR + varV
   marg <- varF/denominator
 
   if (varO != 0) {
@@ -110,7 +111,7 @@ r2.sdmTMB <- function(x, which_fixef = NULL) {
     cond_tv <- NULL
   }
   if (varE != 0 || varO != 0 || varV != 0) {
-    cond_all <- (denominator - varR)/denominator
+    cond_all <- (varF + varO + varE + varV)/denominator
   } else {
     cond_all <- NULL
   }
