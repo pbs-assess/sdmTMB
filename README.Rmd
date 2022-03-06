@@ -255,7 +255,8 @@ See `zeta_s` in the output, which represents the coefficient varying in space. Y
 
 ```{r plot-zeta}
 qcs_grid$year_scaled <- (qcs_grid$year - mean(pcod$year)) / sd(pcod$year)
-p <- predict(fit, newdata = subset(qcs_grid, year == 2011))
+p <- predict(fit, newdata = qcs_grid) %>% 
+  subset(year == 2011) # any year
 ggplot(p, aes(X, Y, fill = zeta_s)) + geom_raster() +
   scale_fill_gradient2()
 ```

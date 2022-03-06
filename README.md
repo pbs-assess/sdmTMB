@@ -165,7 +165,7 @@ Print the model fit:
 
 ``` r
 fit
-#> Spatiotemporal model fit by ML ['sdmTMB']
+#> Spatial model fit by ML ['sdmTMB']
 #> Formula: density ~ s(depth, k = 5)
 #> Mesh: mesh
 #> Data: pcod
@@ -365,7 +365,8 @@ has a mean of 0 (e.g., by including it in `formula` too).
 
 ``` r
 qcs_grid$year_scaled <- (qcs_grid$year - mean(pcod$year)) / sd(pcod$year)
-p <- predict(fit, newdata = subset(qcs_grid, year == 2011))
+p <- predict(fit, newdata = qcs_grid) %>% 
+  subset(year == 2011) # any year
 ggplot(p, aes(X, Y, fill = zeta_s)) + geom_raster() +
   scale_fill_gradient2()
 ```
