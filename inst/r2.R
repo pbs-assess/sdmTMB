@@ -1,3 +1,4 @@
+library(sdmTMB)
 set.seed(1)
 predictor_dat <- data.frame(
   X = runif(300), Y = runif(300),
@@ -15,7 +16,7 @@ sim_dat <- sdmTMB_simulate(
   range = 0.5,
   sigma_E = 0.2,
   sigma_O = 0.7,
-  phi = 0.4,
+  phi = 0.9,
   seed = 123,
   B = c(0.2, -0.4, 0.3)
 )
@@ -64,7 +65,7 @@ r2.sdmTMB <- function(x, which_fixef = NULL) {
     fe <- fe[which_fixef]
     X <- X[,which_fixef,drop=FALSE]
   }
-  VarF <- var(as.vector(fe %*% t(X))) # variance from fixed-effects
+  varF <- var(as.vector(fe %*% t(X))) # variance from fixed-effects
 
   b <- tidy(fit, "ran_par")
 
@@ -80,33 +81,49 @@ r2.sdmTMB <- function(x, which_fixef = NULL) {
     varE <- 0
   }
 
-  VarR <- suppressMessages(var(as.vector(residuals(fit)))) # residual variance
+  if (x$tmb_data$random_walk == 1L) {
+    if (!identical(x$time_varying, ~ 1))
+      stop("r2.sdmTMB() currently only works with time-varying intercepts.", call. = FALSE)
+    varV <- b$estimate[b$term == "sigma_V"]^2 # time-varying variance
+  } else {
+    varV <- 0
+  }
 
-  marg_r2 <- VarF/(VarF + VarO + VarE + VarR)
+  varR <- suppressMessages(var(as.vector(residuals(fit)))) # residual variance
+
+  denominator <- varF + varO + varE + varR + varV
+  marg <- varF/denominator
 
   if (varO != 0) {
-    cond_rf_sp_r2 <- (VarO + VarF)/(VarF + VarO + VarE + VarR)
+    cond_rf_sp <- (varO)/denominator
   } else {
-    cond_rf_sp_r2 <- NULL
+    cond_rf_sp <- NULL
   }
   if (varE != 0) {
-    cond_rf_spt_r2 <- (VarE + VarF)/(VarF + VarO + VarE + VarR)
+    cond_rf_spt <- (varE)/denominator
   } else {
-    cond_rf_sp_r2 <- NULL
+    cond_rf_sp <- NULL
+  }
+  if (varV != 0) {
+    cond_tv <- (varV)/denominator
+  } else {
+    cond_tv <- NULL
+  }
+  if (varE != 0 || varO != 0 || varV != 0) {
+    cond_all <- (denominator - varR)/denominator
+  } else {
+    cond_all <- NULL
   }
 
-  if (varE != 0 || varO != 0) {
-    cond_rf_r2 <- (VarE + VarO + VarF)/(VarF + VarO + VarE + VarR)
-  } else {
-    cond_rf_r2 <- NULL
-  }
-
-  list(
-    marg = marg_r2,
-    cond_rf_sp = cond_rf_sp_r2,
-    cond_rf_spt = cond_rf_spt_r2,
-    cond_rf_all = cond_rf_r2
+  out <- list(
+    marginal = marg,
+    partial_time_varying = cond_tv,
+    partial_spatial = cond_rf_sp,
+    partial_spatiotemporal = cond_rf_spt,
+    condional = cond_all
   )
+  out[vapply(out, is.null, logical(1L))] <- NULL
+  out
 }
 
 r2.sdmTMB(fit)
