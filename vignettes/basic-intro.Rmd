@@ -12,8 +12,7 @@ vignette: >
 dplyr_installed <- require("dplyr", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
 inla_installed <- require("INLA", quietly = TRUE)
-glmmTMB_installed <- require("glmmTMB", quietly = TRUE)
-pkgs <- dplyr_installed && ggplot_installed && inla_installed && glmmTMB_installed
+pkgs <- dplyr_installed && ggplot_installed && inla_installed
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -73,10 +72,10 @@ m
 AIC(m)
 ```
 
-For comparison, here's the same model in glmmTMB:
+For comparison, here's the same model with `glm()`:
 
-```{r glmmTMB-logistic}
-m0 <- glmmTMB::glmmTMB(
+```{r glm-logistic}
+m0 <- glm(
   data = pcod,
   formula = present ~ depth_scaled + depth_scaled2,
   family = binomial(link = "logit")
