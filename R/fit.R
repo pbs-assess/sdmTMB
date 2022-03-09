@@ -60,7 +60,8 @@ NULL
 #' @param weights Optional likelihood weights for the conditional model.
 #'   Implemented as in \pkg{glmmTMB}. Weights do not have to sum
 #'   to one and are not internally modified. Can also be used for trials with
-#'   the binomial family. See the Details section below.
+#'   the binomial family; the weights argument needs to be a vector and not a name
+#'   of the variable in the dataframe. See the Details section below.
 #' @param extra_time Optional extra time slices (e.g., years) to include for
 #'   interpolation or forecasting with the predict function. See the
 #'   Details section below.
