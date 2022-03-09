@@ -786,7 +786,7 @@ sdmTMB <- function(
     flag = 1L, # part of TMB::normalize()
     calc_index_totals = 0L,
     calc_cog = 0L,
-    random_walk = !is.null(time_varying),
+    random_walk = as.integer(!is.null(time_varying)),
     priors_b_n = length(not_na),
     priors_b_index = not_na,
     priors_b_mean = priors_b[not_na,1],
