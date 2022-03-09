@@ -379,10 +379,12 @@ Type objective_function<Type>::operator()()
             epsilon_st *= 1./exp(ln_tau_E);
           }
         } else if (rw_fields) {
-          jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
-          for (int t = 1; t < n_t; t++) {
-            jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(t) - epsilon_st.col(t - 1));
-          }
+          for (int t = 0; t < n_t; t++)
+            jnll += SCALE(GMRF(Q_st, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
+          // jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
+          // for (int t = 1; t < n_t; t++) {
+          //   jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(t) - epsilon_st.col(t - 1));
+          // }
           if (sim_re(1)) {
             for (int t = 0; t < n_t; t++) { // untested!!
               vector<Type> epsilon_st_tmp(epsilon_st.rows());
@@ -429,6 +431,11 @@ Type objective_function<Type>::operator()()
   array<Type> epsilon_st_A(A_st.rows(), n_t);
   for (int i = 0; i < n_t; i++)
     epsilon_st_A.col(i) = A_st * vector<Type>(epsilon_st.col(i));
+  if (rw_fields) {
+    for (int i = 1; i < n_t; i++)
+      epsilon_st_A.col(i) = epsilon_st_A.col(i - 1) + epsilon_st_A.col(i);
+  }
+
   vector<Type> omega_s_A = A_st * omega_s;
   vector<Type> zeta_s_A = A_st * zeta_s;
   vector<Type> epsilon_st_A_vec(n_i);
@@ -715,6 +722,10 @@ Type objective_function<Type>::operator()()
     for (int i = 0; i < n_t; i++) {
       proj_re_st_temp.col(i) = proj_mesh * vector<Type>(epsilon_st.col(i));
       proj_re_st.col(i) = proj_re_st_temp.col(i);
+    }
+    if (rw_fields) {
+      for (int i = 1; i < n_t; i++)
+        proj_re_st.col(i) = proj_re_st.col(i - 1) + proj_re_st.col(i);
     }
 
     // Spatially varying coefficients:
