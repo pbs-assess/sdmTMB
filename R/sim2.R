@@ -117,7 +117,7 @@ sdmTMB_sim2 <- function(formula,
   if (!requireNamespace("INLA", quietly = TRUE)) {
     stop("INLA must be installed to use this function.", call. = FALSE)
   }
-  assert_that(class(mesh) %in% c("inla.mesh", "sdmTMBmesh"))
+  # assert_that(class(mesh) %in% c("inla.mesh", "sdmTMBmesh"))
   assert_that(tweedie_p > 1, tweedie_p < 2)
   assert_that(df >= 1)
   if (!missing(range)) assert_that(range > 0)
@@ -125,7 +125,7 @@ sdmTMB_sim2 <- function(formula,
   assert_that(sigma_O >= 0, all(sigma_E >= 0), phi > 0)
 
   spde <- mesh
-  if (class(mesh) == "sdmTMBmesh") {
+  if (is(mesh, "sdmTMBmesh")) {
     mesh <- mesh$mesh
   }
 

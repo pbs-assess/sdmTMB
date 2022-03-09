@@ -108,7 +108,7 @@ sdmTMB_sim <- function(mesh,
   assert_that(is.numeric(x), is.numeric(y))
   assert_that(is.null(dim(x)), is.null(dim(y)))
   assert_that(identical(length(x), length((y))))
-  assert_that(class(mesh) %in% c("inla.mesh", "sdmTMBmesh"))
+  assert_that(is(mesh, "sdmTMBmesh"))
   assert_that(tweedie_p > 1, tweedie_p < 2)
   assert_that(df >= 1)
   assert_that(time_steps >= 1)
@@ -124,7 +124,7 @@ sdmTMB_sim <- function(mesh,
     stop("Please use 'tweedie_p' instead of 'thetaf' in `sdmTMB_sim()`.", call. = FALSE)
   }
 
-  if (class(mesh) == "sdmTMBmesh") {
+  if (is(mesh, "sdmTMBmesh")) {
     mesh <- mesh$mesh
   }
   n_covariates <- length(betas)

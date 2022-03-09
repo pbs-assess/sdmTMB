@@ -133,7 +133,7 @@ sdmTMB_simulate <- function(formula,
   assert_that(sigma_Z >= 0 || is.null(sigma_Z))
 
   if (is.null(previous_fit)) {
-    assert_that(class(mesh) %in% "sdmTMBmesh")
+    assert_that(is(mesh, "sdmTMBmesh"))
     assert_that(!is.null(range), !is.null(sigma_O) || !is.null(sigma_E), !is.null(B))
     if (!family$family %in% c("binomial", "poisson")) {
       assert_that(!is.null(phi))
