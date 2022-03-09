@@ -494,7 +494,7 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
         "to the `newdata` argument.", call. = FALSE)
     }
     nd <- object$data
-    lp <- object$tmb_obj$env$last.par
+    lp <- object$tmb_obj$env$last.par.best
     # object$tmb_obj$fn(lp) # call once to update internal structures?
     r <- object$tmb_obj$report(lp)
 
