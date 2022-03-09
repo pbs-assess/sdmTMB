@@ -65,6 +65,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          remotes::install_cran("glmmTMB", type = "source")
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("sf")
           remotes::install_cran("rcmdcheck")

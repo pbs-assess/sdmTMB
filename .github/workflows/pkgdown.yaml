@@ -36,6 +36,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          remotes::install_cran("glmmTMB", type = "source")
           remotes::install_deps(dependencies = TRUE)
           install.packages("pkgdown")
           install.packages("textshaping", type = "binary")
