@@ -788,7 +788,7 @@ sdmTMB <- function(
     calc_cog = 0L,
     random_walk = as.integer(!is.null(time_varying)),
     priors_b_n = length(not_na),
-    priors_b_index = not_na,
+    priors_b_index = not_na - 1L,
     priors_b_mean = priors_b[not_na,1],
     priors_b_Sigma = priors_b_Sigma,
     priors = as.numeric(unlist(.priors)),

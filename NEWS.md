@@ -1,6 +1,13 @@
 # sdmTMB
 
+
+
 # sdmTMB 0.0.21.9000
+
+* Make `predict(..., newdata = NULL)` also use `last.par.best` instead of
+  `last.par` to match `newdata = df`.
+
+* Fix bug in MVN fixed-effect prior indexing
 
 * `sims` and `n_sims` arguments have been deprecated and standardized
   to `nsim` to match the `simulate()` S3 method.
