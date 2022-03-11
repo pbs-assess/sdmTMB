@@ -223,12 +223,12 @@ Type objective_function<Type>::operator()()
   PARAMETER_VECTOR(b_smooth);  // P-spline smooth parameters
   PARAMETER_VECTOR(ln_smooth_sigma);  // variances of spline REs if included
   // CAR stuff
-  PARAMETER(ln_car_tau_s); // spatial car
-  PARAMETER(ln_car_tau_st);// spatiotemporal car
-  PARAMETER(logit_car_alpha_s); // spatial car
-  PARAMETER(logit_car_alpha_st);// spatiotemporal car
-  PARAMETER_VECTOR(car_re_s); // spatial effects
-  PARAMETER_ARRAY(car_re_st); // spatiotemporal effects, n_t x car_k
+  PARAMETER(ln_car_tau_s); // ln spatial car precision parameter
+  PARAMETER(ln_car_tau_st);// ln spatio-temporal car precision parameter
+  PARAMETER(logit_car_alpha_s); // spatial car, 0 < car_alpha_s < 1
+  PARAMETER(logit_car_alpha_st);// spatio-temporal car, 0 < car_alpha_st < 1
+  PARAMETER_VECTOR(car_re_s); // spatial effects, length n_car region
+  PARAMETER_ARRAY(car_re_st); // spatio-temporal effects, n_car region by n_t matrix
 
   // Joint negative log-likelihood
   Type jnll = 0;
@@ -286,7 +286,7 @@ Type objective_function<Type>::operator()()
     // optional beta prior on car_alpha_st
     if (!sdmTMB::isNA(priors(16))) jnll -= dbeta(car_alpha_st, priors(16), priors(17), true);
 
-    for(int i = 0; i < n_i; i++) car_i(i) += car_re_st(year_i(i), car_region(i));
+    for(int i = 0; i < n_i; i++) car_i(i) += car_re_st(car_region(i), year_i(i));
   }
 
   // ------------------ Geospatial ---------------------------------------------

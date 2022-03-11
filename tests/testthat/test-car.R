@@ -76,9 +76,10 @@ test_that("Test spatiotemporal CAR model works", {
   set.seed(123)
   N = 10
 
-  grid <- expand.grid(x = 1:N, y = 1:N)
+  grid <- expand.grid(loc_x = 1:N, loc_y = 1:N)
   n <- nrow(grid)
   distance <- as.matrix(dist(grid))
+  grid$car_region = 1:nrow(grid)
   W <- array(0, c(n, n))
   W[distance == 1] <- 1
 
@@ -93,8 +94,8 @@ test_that("Test spatiotemporal CAR model works", {
   Tau <- tau*(diag(rowSums(W)) - alpha*W)
   # spatial random component
   re_s = mvtnorm::rmvnorm(1, mean = rep(0, nrow(W)), sigma = solve(Tau))
-  # spatiotemporal random component
-  re_st = mvtnorm::rmvnorm(10, mean = rep(0, nrow(W)), sigma = solve(Tau))
+  # spatiotemporal random component -- transpose so year on cols
+  re_st = t(mvtnorm::rmvnorm(10, mean = rep(0, nrow(W)), sigma = solve(Tau)))
 
   # spatial data
   spat_data = data.frame(car_region = 1:nrow(W),
@@ -106,15 +107,22 @@ test_that("Test spatiotemporal CAR model works", {
 
   # test with several years of data
   df = expand.grid(car_region = 1:nrow(W),
-                   year = 1:nrow(re_st))
+                   year = 1:ncol(re_st))
   df$re_s = re_s[df$car_region]
-  df$re_st = re_st[cbind(df$year, df$car_region)]
+  df$re_st = re_st[cbind(df$car_region, df$year)]
 
   df$resid = rnorm(nrow(W),0,exp(ln_phi))
 
   df$mu = B0 + df$re_s + df$re_st
   df$y = df$mu + df$resid
 
+  # add in x-y for plotting
+  # df = dplyr::left_join(df, grid)
+  # ggplot(df, aes(loc_x,loc_y,fill=re_st)) +
+  #   geom_tile() +
+  #   scale_fill_gradient2() +
+  #   facet_wrap(~year)
+  #
   #this is blowing up -- will look into why. it's specifically the stuff around 'nldens_st'
   m <- sdmTMB(y ~1, data = df, time="year",
               spatiotemporal = "iid",
