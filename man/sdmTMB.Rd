@@ -95,7 +95,7 @@ standard deviation of approximately 1 (scale by the SD).}
 \item{CAR_neighbours}{Optional m x m adjacency matrix describing neighbors for replacing
 the SPDE spatial model with a conditional autoregressive model (CAR). The CAR
 adjacency matrix is often represented as W, and the spatial effects are assumed to
-be ~ MVN(0, Q^{-1}) where Q = \link{τ(D−αW)}. The parameter tau controls the magnitude of
+be ~ MVN(0, Q^{-1}) where Q = \link{τ(D−αW)}. The parameter τ (tau) controls the magnitude of
 variation, alpha controls spatial dependency (ranges from 0 to 1, with alpha = 1 being
 the completely dependent). The matrix W is a matrix of 0s and 1s describing whether 2
 areas are neighbouring (1) or not (0), and the matrix D is a diagonal matrix with

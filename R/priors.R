@@ -56,9 +56,9 @@
 #' @param tweedie_p A `normal()` prior for the Tweedie power parameter. Note the
 #'   parameter has support `1 < tweedie_p < 2` so choose a mean appropriately.
 #' @param car_alpha_s A `beta()` prior for the alpha parameter of the spatial CAR model,
-#'   parameterized with 2 shape parameters as in `rbeta()`
+#'   parameterized with 2 shape parameters as in \pkg{stats}
 #' @param car_alpha_st A `beta()` prior for the alpha parameter of the spatiotemporal CAR model,
-#'   parameterized with 2 shape parameters as in `rbeta()`
+#'   parameterized with 2 shape parameters as in \pkg{stats}
 #' @param b `normal()` priors for the main population-level 'beta' effects.
 #'
 #' @rdname priors

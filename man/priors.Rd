@@ -49,10 +49,10 @@ the parameter has support \verb{-1 < ar1_rho < 1}.}
 parameter has support \verb{1 < tweedie_p < 2} so choose a mean appropriately.}
 
 \item{car_alpha_s}{A \code{beta()} prior for the alpha parameter of the spatial CAR model,
-parameterized with 2 shape parameters as in \code{rbeta()}}
+parameterized with 2 shape parameters as in \pkg{stats}}
 
 \item{car_alpha_st}{A \code{beta()} prior for the alpha parameter of the spatiotemporal CAR model,
-parameterized with 2 shape parameters as in \code{rbeta()}}
+parameterized with 2 shape parameters as in \pkg{stats}}
 
 \item{b}{\code{normal()} priors for the main population-level 'beta' effects.}
 
