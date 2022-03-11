@@ -495,6 +495,7 @@ sdmTMB <- function(
     CAR_neighbours <- diag(2)
     data$car_region <- 1
   }
+  # CAR math, Q=[Dτ(I−αB)] . Dτ=τD  and B=D−1W, so simplifies to [τ(D−αW)]
   CAR_D <- diag(diag(CAR_neighbours))
   CAR_W <- CAR_neighbours-CAR_D
 
@@ -851,7 +852,6 @@ sdmTMB <- function(
     upr = upr,
     lwr = lwr,
     car_model = as.numeric(car_model),
-    car_k = car_k,
     car_region = make_year_i(data$car_region), # make_year_i also can be used here
     CAR_D = as(CAR_D, "dgTMatrix"),
     CAR_W = as(CAR_W, "dgTMatrix")
@@ -1010,6 +1010,8 @@ sdmTMB <- function(
     tmb_map <- c(tmb_map, list(
       ln_tau_O = as.factor(NA),
       car_re_s = factor(rep(NA, car_k)),
+      ln_car_tau_s = as.factor(NA),
+      logit_car_alpha_s = as.factor(NA),
       omega_s  = factor(rep(NA, length(tmb_params$omega_s)))))
   }
   if (is.null(spatial_varying)) {

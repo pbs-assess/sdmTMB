@@ -55,6 +55,10 @@
 #'   the parameter has support `-1 < ar1_rho < 1`.
 #' @param tweedie_p A `normal()` prior for the Tweedie power parameter. Note the
 #'   parameter has support `1 < tweedie_p < 2` so choose a mean appropriately.
+#' @param car_alpha_s A `beta()` prior for the alpha parameter of the spatial CAR model,
+#'   parameterized with 2 shape parameters as in `rbeta()`
+#' @param car_alpha_st A `beta()` prior for the alpha parameter of the spatiotemporal CAR model,
+#'   parameterized with 2 shape parameters as in `rbeta()`
 #' @param b `normal()` priors for the main population-level 'beta' effects.
 #'
 #' @rdname priors
@@ -67,12 +71,16 @@ sdmTMBpriors <- function(
   phi = halfnormal(NA, NA),
   ar1_rho = normal(NA, NA),
   tweedie_p = normal(NA, NA),
+  car_alpha_s = beta(NA, NA),
+  car_alpha_st = beta(NA, NA),
   b = normal(NA, NA)
 ) {
   assert_that(attr(matern_s, "dist") == "pc_matern")
   assert_that(attr(matern_st, "dist") == "pc_matern")
   assert_that(attr(phi, "dist") == "normal")
   assert_that(attr(tweedie_p, "dist") == "normal")
+  assert_that(attr(car_alpha_s, "dist") == "beta")
+  assert_that(attr(car_alpha_st, "dist") == "beta")
   assert_that(attr(b, "dist") %in% c("normal", "mvnormal"))
   list(
     matern_s = matern_s,
@@ -80,9 +88,28 @@ sdmTMBpriors <- function(
     phi = phi,
     ar1_rho = ar1_rho,
     tweedie_p = tweedie_p,
+    car_alpha_s = car_alpha_s,
+    car_alpha_st = car_alpha_st,
     b = b
   )
 }
+
+#'
+#' @param shape1 Shape parameter, following syntax of `rbeta()`.
+#' @param shape2 Shape parameter, following syntax of `rbeta()`.
+#' @export
+#' @rdname priors
+#' @examples
+#' beta(1, 1)
+beta <- function(shape1 = 1, shape2 = 1) {
+  assert_that(all(shape1[!is.na(shape1)] > 0))
+  assert_that(all(shape2[!is.na(shape2)] > 0))
+  assert_that(length(shape1) == length(shape2))
+  assert_that(sum(is.na(shape1)) == sum(is.na(shape2)))
+  x <- matrix(c(shape1, shape2), ncol = 2L)
+  `attr<-`(x, "dist", "beta")
+}
+
 
 #'
 #' @param location Location parameter(s).

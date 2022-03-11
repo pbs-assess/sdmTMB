@@ -2,6 +2,7 @@
 % Please edit documentation in R/priors.R
 \name{sdmTMBpriors}
 \alias{sdmTMBpriors}
+\alias{beta}
 \alias{normal}
 \alias{halfnormal}
 \alias{mvnormal}
@@ -14,8 +15,12 @@ sdmTMBpriors(
   phi = halfnormal(NA, NA),
   ar1_rho = normal(NA, NA),
   tweedie_p = normal(NA, NA),
+  car_alpha_s = beta(NA, NA),
+  car_alpha_st = beta(NA, NA),
   b = normal(NA, NA)
 )
+
+beta(shape1 = 1, shape2 = 1)
 
 normal(location = 0, scale = 1)
 
@@ -43,7 +48,17 @@ the parameter has support \verb{-1 < ar1_rho < 1}.}
 \item{tweedie_p}{A \code{normal()} prior for the Tweedie power parameter. Note the
 parameter has support \verb{1 < tweedie_p < 2} so choose a mean appropriately.}
 
+\item{car_alpha_s}{A \code{beta()} prior for the alpha parameter of the spatial CAR model,
+parameterized with 2 shape parameters as in \code{rbeta()}}
+
+\item{car_alpha_st}{A \code{beta()} prior for the alpha parameter of the spatiotemporal CAR model,
+parameterized with 2 shape parameters as in \code{rbeta()}}
+
 \item{b}{\code{normal()} priors for the main population-level 'beta' effects.}
+
+\item{shape1}{Shape parameter, following syntax of \code{rbeta()}.}
+
+\item{shape2}{Shape parameter, following syntax of \code{rbeta()}.}
 
 \item{location}{Location parameter(s).}
 
@@ -97,6 +112,7 @@ choose reasonable values for the system or base the prior on knowledge from a
 model fit to a similar system but with more spatial information in the data.
 }
 \examples{
+beta(1, 1)
 normal(0, 1)
 halfnormal(0, 1)
 mvnormal(c(0, 0))

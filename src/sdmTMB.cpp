@@ -191,7 +191,6 @@ Type objective_function<Type>::operator()()
 
   // optional stuff for CAR models
   DATA_INTEGER(car_model);
-  DATA_INTEGER(car_k); // number of regions
   DATA_FACTOR(car_region); // indicator of which region each data point is coming from
   DATA_SPARSE_MATRIX(CAR_W); // matrix whose diagonal is 0, and is adjacency of weights
   DATA_SPARSE_MATRIX(CAR_D); // diagonal matrix specifying number of neighbors of each group
@@ -229,7 +228,7 @@ Type objective_function<Type>::operator()()
   PARAMETER(logit_car_alpha_s); // spatial car
   PARAMETER(logit_car_alpha_st);// spatiotemporal car
   PARAMETER_VECTOR(car_re_s); // spatial effects
-  PARAMETER_MATRIX(car_re_st); // spatiotemporal effects, n_t x car_k
+  PARAMETER_ARRAY(car_re_st); // spatiotemporal effects, n_t x car_k
 
   // Joint negative log-likelihood
   Type jnll = 0;
@@ -254,8 +253,8 @@ Type objective_function<Type>::operator()()
   Type phi = exp(ln_phi);
 
   // ------------------ CAR ---------------------------------------------
-  Type car_alpha_s = exp(logit_car_alpha_s)/(1+exp(logit_car_alpha_s));
-  Type car_alpha_st = exp(logit_car_alpha_st)/(1+exp(logit_car_alpha_st));
+  Type car_alpha_s = invlogit(logit_car_alpha_s);
+  Type car_alpha_st = invlogit(logit_car_alpha_st);
   Type car_tau_s = exp(ln_car_tau_s);
   Type car_tau_st = exp(ln_car_tau_st);
   vector<Type> car_i(n_i);
@@ -271,23 +270,21 @@ Type objective_function<Type>::operator()()
     Eigen::SparseMatrix<Type> Q_car_s = CAR_D - car_alpha_s*CAR_W;
     GMRF_t<Type> nldens_s = GMRF(Q_car_s);
     jnll += SCALE(nldens_s, car_tau_s)(car_re_s);
-    //jnll -= dgamma(car_tau_s, Type(1.0), Type(1.0), true);
+    // optional beta prior on car_alpha_s
+    if (!sdmTMB::isNA(priors(14))) jnll -= dbeta(car_alpha_s, priors(14), priors(15), true);
     // map random effects to individual observations
     for(int i = 0; i < n_i; i++) car_i(i) += car_re_s(car_region(i));
   }
   if (!spatial_only && car_model) {
-    //matrix<Type> Qst = car_tau_st*(CAR_D - car_alpha_st*CAR_W);
-    //MVNORM_t<Type> neg_log_dmvnorm_st(Qst.inverse());
     // each time slice ~ MVN
-    //for (int k = 1; k < car_k; k++) {
-    //  jnll += neg_log_dmvnorm_st(car_re_st.col(k));
-    //}
     // τD * (I−αB), B =D^(-1)W, = τ(D−αW)
     Eigen::SparseMatrix<Type> Q_car_st = CAR_D - car_alpha_st*CAR_W;
     GMRF_t<Type> nldens_st = GMRF(Q_car_st);
-    for (int k = 0; k < car_k; k++) {
-      jnll += SCALE(nldens_st, car_tau_st)(car_re_st.col(k));
+    for (int t = 0; t < n_t; t++) {
+      jnll += SCALE(nldens_st, car_tau_st)(car_re_st.col(t));
     }
+    // optional beta prior on car_alpha_st
+    if (!sdmTMB::isNA(priors(16))) jnll -= dbeta(car_alpha_st, priors(16), priors(17), true);
 
     for(int i = 0; i < n_i; i++) car_i(i) += car_re_st(year_i(i), car_region(i));
   }
@@ -894,6 +891,10 @@ Type objective_function<Type>::operator()()
   }
   if(car_model) {
     if(include_spatial) {
+      Type car_sigma_s;
+      car_sigma_s = sqrt(1/exp(ln_car_tau_s));
+      REPORT(car_sigma_s);
+      ADREPORT(car_sigma_s);
       REPORT(ln_car_tau_s);
       ADREPORT(ln_car_tau_s);
       REPORT(car_re_s);
@@ -902,6 +903,10 @@ Type objective_function<Type>::operator()()
       ADREPORT(car_alpha_s);
     }
     if(!spatial_only) {
+      Type car_sigma_st;
+      car_sigma_st = sqrt(1/exp(ln_car_tau_st));
+      REPORT(car_sigma_st);
+      ADREPORT(car_sigma_st);
       REPORT(ln_car_tau_st);
       ADREPORT(ln_car_tau_st);
       REPORT(car_re_st);
@@ -917,9 +922,11 @@ Type objective_function<Type>::operator()()
   for (int i = 0; i < n_t; i++) {
     log_sigma_E(i) = log(sigma_E(i));
   }
-  ADREPORT(log_sigma_E);      // log spatio-temporal SD
-  REPORT(sigma_E);      // spatio-temporal SD
-  ADREPORT(sigma_E);      // spatio-temporal SD
+  if(!car_model) {
+    ADREPORT(log_sigma_E);      // log spatio-temporal SD
+    REPORT(sigma_E);      // spatio-temporal SD
+    ADREPORT(sigma_E);      // spatio-temporal SD
+  }
   REPORT(epsilon_st_A_vec);   // spatio-temporal effects; vector
   REPORT(b_rw_t);   // time-varying effects
   REPORT(omega_s_A);      // spatial effects; n_s length vector
@@ -930,10 +937,12 @@ Type objective_function<Type>::operator()()
   REPORT(eta_rw_i);     // time-varying predictions in link space
   REPORT(eta_iid_re_i); // IID intercept random effect estimates
   REPORT(rho);          // AR1 correlation in -1 to 1 space
-  REPORT(range);        // Matern approximate distance at 10% correlation
-  ADREPORT(range);      // Matern approximate distance at 10% correlation
-  vector<Type> log_range = log(range); // for SE
-  ADREPORT(log_range);  // log Matern approximate distance at 10% correlation
+  if(!car_model) {
+    REPORT(range);        // Matern approximate distance at 10% correlation
+    ADREPORT(range);      // Matern approximate distance at 10% correlation
+    vector<Type> log_range = log(range); // for SE
+    ADREPORT(log_range);  // log Matern approximate distance at 10% correlation
+  }
   REPORT(b_smooth);     // smooth coefficients for penalized splines
   REPORT(ln_smooth_sigma); // standard deviations of smooth random effects, in log-space
   SIMULATE {
