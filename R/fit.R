@@ -887,7 +887,7 @@ sdmTMB <- function(
     logit_car_alpha_s = 0,
     logit_car_alpha_st = 0,
     car_re_s = rep(0, car_k),
-    car_re_st = matrix(0, tmb_data$n_t, car_k),
+    car_re_st = matrix(0, car_k, tmb_data$n_t),
     epsilon_re = rep(0, tmb_data$n_t),
     b_smooth = rep(0, if (sm$has_smooths) sum(sm$sm_dims) else 0),
     ln_smooth_sigma = rep(0, if (sm$has_smooths) length(sm$sm_dims) else 0)
@@ -915,7 +915,7 @@ sdmTMB <- function(
       ln_tau_E   = as.factor(NA),
       ln_car_tau_st = as.factor(NA),
       logit_car_alpha_st = as.factor(NA),
-      car_re_st = factor(matrix(NA, nrow = tmb_data$n_t, ncol = car_k)),
+      car_re_st = factor(matrix(NA, ncol = tmb_data$n_t, nrow = car_k)),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
   if(!car_model) {
@@ -924,7 +924,7 @@ sdmTMB <- function(
                                logit_car_alpha_s = as.factor(NA),
                                logit_car_alpha_st = as.factor(NA),
                                car_re_s = factor(rep(NA, car_k)),
-                               car_re_st = as.factor(matrix(NA, nrow = tmb_data$n_t, ncol = car_k))))
+                               car_re_st = as.factor(matrix(NA, ncol = tmb_data$n_t, nrow = car_k))))
   }
   if (contains_offset) { # fix offset param to 1 to be an offset:
     b_j_map <- seq_along(tmb_params$b_j)
@@ -954,7 +954,7 @@ sdmTMB <- function(
       ln_car_tau_s = as.factor(NA),
       ln_car_tau_st = as.factor(NA),
       car_re_s = factor(rep(NA, car_k)),
-      car_re_st = as.factor(matrix(NA, nrow = tmb_data$n_t, ncol = car_k))))
+      car_re_st = as.factor(matrix(NA, ncol = tmb_data$n_t, nrow = car_k))))
 
     # optional models on spatiotemporal sd parameter
     if (est_epsilon_model == 0L) {
