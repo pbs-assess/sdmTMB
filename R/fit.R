@@ -67,7 +67,9 @@ NULL
 #' the number of neighbors for each region as the diagonal. Because the diagonal of W is 0,
 #' we use `CAR_neighbours` to specify both W and D -- the diagonal being used to construct D,
 #' and all other elements being used as W. If `CAR_neighbours` is used, the majority of other
-#' arguments apply (e.g. spatial and spatiotemporal CAR components can be turned on / off)
+#' arguments apply (e.g. spatial and spatiotemporal CAR components can be turned on / off). The
+#' intrinsic CAR model (iCAR) with alpha fixed at 1 is challenging in a maximum likelihood setting,
+#' but can be approximated with a highly informative and skewed prior on alpha, e.g. ~ Beta(10000,1)
 #' @param weights Optional likelihood weights for the conditional model.
 #'   Implemented as in \pkg{glmmTMB}. Weights do not have to sum
 #'   to one and are not internally modified. Can also be used for trials with
@@ -498,6 +500,18 @@ sdmTMB <- function(
   # CAR math, Q=[Dτ(I−αB)] . Dτ=τD  and B=D−1W, so simplifies to [τ(D−αW)]
   CAR_D <- diag(diag(CAR_neighbours))
   CAR_W <- CAR_neighbours-CAR_D
+  # also include option for iCAR model, where alpha fixed = 1. User sets prior on either
+  # alpha_s or alpha_st to 0: next 10 lines
+  # alpha_s_prior = sum(priors$car_alpha_s)
+  # alpha_st_prior = sum(priors$car_alpha_s)
+  # icar = FALSE
+  # if(!is.na(alpha_s_prior) & alpha_s_prior == 0) {
+  #   icar = TRUE
+  # }
+  # if(!is.na(alpha_st_prior) & alpha_st_prior == 0) {
+  #   icar = TRUE
+  # }
+  # if(icar) diag(CAR_D) = diag(CAR_D) + runif(nrow(CAR_D),-0.001,0.001)
 
   normalize <- control$normalize
   nlminb_loops <- control$nlminb_loops
@@ -854,7 +868,8 @@ sdmTMB <- function(
     car_model = as.numeric(car_model),
     car_region = make_year_i(data$car_region), # make_year_i also can be used here
     CAR_D = as(CAR_D, "dgTMatrix"),
-    CAR_W = as(CAR_W, "dgTMatrix")
+    CAR_W = as(CAR_W, "dgTMatrix")#,
+    #icar_model = as.numeric(icar)
   )
 
   b_thresh <- rep(0, 2)
@@ -917,6 +932,11 @@ sdmTMB <- function(
       logit_car_alpha_st = as.factor(NA),
       car_re_st = factor(matrix(NA, ncol = tmb_data$n_t, nrow = car_k)),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
+  # if(icar) {
+  #   tmb_map <- c(tmb_map,
+  #                list(logit_car_alpha_st = as.factor(NA),
+  #                     logit_car_alpha_s = as.factor(NA)))
+  # }
 
   if(!car_model) {
     tmb_map <- c(tmb_map, list(ln_car_tau_s = as.factor(NA),

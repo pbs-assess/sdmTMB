@@ -102,7 +102,9 @@ areas are neighbouring (1) or not (0), and the matrix D is a diagonal matrix wit
 the number of neighbors for each region as the diagonal. Because the diagonal of W is 0,
 we use \code{CAR_neighbours} to specify both W and D -- the diagonal being used to construct D,
 and all other elements being used as W. If \code{CAR_neighbours} is used, the majority of other
-arguments apply (e.g. spatial and spatiotemporal CAR components can be turned on / off)}
+arguments apply (e.g. spatial and spatiotemporal CAR components can be turned on / off). The
+intrinsic CAR model (iCAR) with alpha fixed at 1 is challenging in a maximum likelihood setting,
+but can be approximated with a highly informative and skewed prior on alpha, e.g. ~ Beta(10000,1)}
 
 \item{weights}{Optional likelihood weights for the conditional model.
 Implemented as in \pkg{glmmTMB}. Weights do not have to sum

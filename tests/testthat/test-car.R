@@ -47,7 +47,7 @@ test_that("Test CAR model works with 1 time slice", {
   # ggplot(df, aes(lon, lat, colour = y)) + geom_point() + scale_color_viridis_c()
 
   # try with no limits, no priors
-  m <- sdmTMB(y ~ 1, data = df,
+  m <- sdmTMB(y ~ 0, data = df,
               spatiotemporal = "off",
               spatial = "on",
               CAR_neighbours = CAR_nb)
@@ -55,17 +55,27 @@ test_that("Test CAR model works with 1 time slice", {
 
   # check that adding years doesn't affect the model
   df$year = sample(1:10,size=nrow(df), replace=T)
-  m <- sdmTMB(y ~ 1, data = df,time="year",
+  m <- sdmTMB(y ~ 0, data = df,time="year",
               spatiotemporal = "off",
               spatial = "on",
               CAR_neighbours = CAR_nb)
+  expect_equal(class(m), "sdmTMB")
 
   # add a beta prior to car_alpha_s
-  m <- sdmTMB(y ~ 1, data = df,time="year",
+  m <- sdmTMB(y ~ 0, data = df,time="year",
               spatiotemporal = "off",
               spatial = "on",
-              priors=sdmTMBpriors(car_alpha_s = beta(10,1)),
+              priors=sdmTMBpriors(car_alpha_s = beta(100000,1)),
               CAR_neighbours = CAR_nb)
+  expect_equal(class(m), "sdmTMB")
+
+  # fit icar model
+  # m <- sdmTMB(y ~ 0, data = df,
+  #             spatiotemporal = "off",
+  #             spatial = "on",
+  #             priors=sdmTMBpriors(car_alpha_s = beta(0,0)),
+  #             CAR_neighbours = CAR_nb)
+  # expect_equal(class(m), "sdmTMB")
 })
 
 test_that("Test spatiotemporal CAR model works", {
@@ -124,9 +134,10 @@ test_that("Test spatiotemporal CAR model works", {
   #   facet_wrap(~year)
   #
   #this is blowing up -- will look into why. it's specifically the stuff around 'nldens_st'
-  m <- sdmTMB(y ~1, data = df, time="year",
+  m <- sdmTMB(y ~0, data = df, time="year",
               spatiotemporal = "iid",
               spatial = "off",
               CAR_neighbours = CAR_nb)
+  expect_equal(class(m), "sdmTMB")
 
 })

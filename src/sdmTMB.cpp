@@ -194,6 +194,7 @@ Type objective_function<Type>::operator()()
   DATA_FACTOR(car_region); // indicator of which region each data point is coming from
   DATA_SPARSE_MATRIX(CAR_W); // matrix whose diagonal is 0, and is adjacency of weights
   DATA_SPARSE_MATRIX(CAR_D); // diagonal matrix specifying number of neighbors of each group
+  //DATA_INTEGER(icar_model); // boolean, whether to fit an icar model which fixes alpha = 1
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -267,18 +268,33 @@ Type objective_function<Type>::operator()()
     // matrix<Type> Qs = car_tau_s*(CAR_D - car_alpha_s*CAR_W);
     // MVNORM_t<Type> neg_log_dmvnorm_s(Qs.inverse());
     // jnll += neg_log_dmvnorm_s(car_re_s);
-    Eigen::SparseMatrix<Type> Q_car_s = CAR_D - car_alpha_s*CAR_W;
+    Eigen::SparseMatrix<Type> Q_car_s;
+    // if(icar_model) {
+    //   Q_car_s = CAR_D - CAR_W;
+    // } else {
+      Q_car_s = CAR_D - car_alpha_s*CAR_W;
+    // }
+
     GMRF_t<Type> nldens_s = GMRF(Q_car_s);
     jnll += SCALE(nldens_s, car_tau_s)(car_re_s);
     // optional beta prior on car_alpha_s
     if (!sdmTMB::isNA(priors(14))) jnll -= dbeta(car_alpha_s, priors(14), priors(15), true);
     // map random effects to individual observations
+    //Type demean_cnst = 0;
+    //if(icar_model) demean_cnst = car_re_s.mean();
     for(int i = 0; i < n_i; i++) car_i(i) += car_re_s(car_region(i));
   }
   if (!spatial_only && car_model) {
     // each time slice ~ MVN
     // τD * (I−αB), B =D^(-1)W, = τ(D−αW)
-    Eigen::SparseMatrix<Type> Q_car_st = CAR_D - car_alpha_st*CAR_W;
+    Eigen::SparseMatrix<Type> Q_car_st;
+
+    // if(icar_model) {
+    //   Q_car_st = CAR_D - CAR_W;
+    // } else {
+      Q_car_st = CAR_D - car_alpha_st*CAR_W;
+    // }
+
     GMRF_t<Type> nldens_st = GMRF(Q_car_st);
     for (int t = 0; t < n_t; t++) {
       jnll += SCALE(nldens_st, car_tau_st)(car_re_st.col(t));
@@ -290,7 +306,6 @@ Type objective_function<Type>::operator()()
   }
 
   // ------------------ Geospatial ---------------------------------------------
-
   // Matern:
   vector<Type> range(2);
   range(0) = sqrt(Type(8.)) / exp(ln_kappa(0));
