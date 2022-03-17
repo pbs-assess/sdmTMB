@@ -4,7 +4,8 @@
 #'
 #' @param data A data frame.
 #' @param xy_cols A character vector of x and y column names contained in
-#'   `data`.
+#'   `data`. These should likely be in an equal distance projection. For
+#'   a helper function to convert to UTMs, see [add_utm_columns()].
 #' @param type Method to create the mesh. Also see `mesh` argument to supply
 #'   your own mesh.
 #' @param cutoff An optional cutoff if type is `"cutoff"`. "The minimum allowed

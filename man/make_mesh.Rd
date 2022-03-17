@@ -22,7 +22,8 @@ make_mesh(
 \item{data}{A data frame.}
 
 \item{xy_cols}{A character vector of x and y column names contained in
-\code{data}.}
+\code{data}. These should likely be in an equal distance projection. For
+a helper function to convert to UTMs, see \code{\link[=add_utm_columns]{add_utm_columns()}}.}
 
 \item{type}{Method to create the mesh. Also see \code{mesh} argument to supply
 your own mesh.}
