@@ -10,7 +10,7 @@ tictoc::toc()
 
 # ------
 
-tests <- expand.grid(iter = 1:2, i = 1:6)
+tests <- expand.grid(iter = 1, i = 1:6)
 df <- purrr::pmap_dfr(tests, function(iter, i) {
   cat(i, "\n")
   options(sdmTMB.cores = i)
@@ -20,6 +20,4 @@ df <- purrr::pmap_dfr(tests, function(iter, i) {
   a <- tictoc::toc()
   data.frame(iter = iter, n_threads = i, time = unname(a$toc - a$tic))
 })
-ggplot(df, aes(as.factor(n_threads), time)) + geom_boxplot()
-
-
+ggplot(df, aes(n_threads, time)) + geom_point()
