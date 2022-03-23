@@ -442,11 +442,10 @@ sdmTMB <- function(
   if (!include_spatial && spatiotemporal == "off" || !include_spatial && spatial_only) {
     # message("Both spatial and spatiotemporal fields are set to 'off'.")
     control$map_rf <- TRUE
-  }
-  if ((spatial == "off" || isFALSE(spatial)) && spatiotemporal == "off" && missing(mesh)) {
-    # message("Constructing fake mesh object.")
-    data$sdmTMB_X_ <- data$sdmTMB_Y_ <- stats::runif(nrow(data))
-    mesh <- make_mesh(data, c("sdmTMB_X_", "sdmTMB_Y_"), cutoff = 1)
+    if (missing(mesh)) {
+      data$sdmTMB_X_ <- data$sdmTMB_Y_ <- stats::runif(nrow(data))
+      mesh <- make_mesh(data, c("sdmTMB_X_", "sdmTMB_Y_"), cutoff = 1)
+    }
   }
   if (is_present(spde)) {
     deprecate_warn("0.0.20", "sdmTMB(spde)", "sdmTMB(mesh)")
