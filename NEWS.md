@@ -1,8 +1,8 @@
 # sdmTMB
 
+# sdmTMB 0.0.21.9009
 
-
-# sdmTMB 0.0.21.9000
+* Add experimental `sdmTMB_stacking()` for ensemble model stacking weights.
 
 * Add fake mesh if random fields are all off. #59
 

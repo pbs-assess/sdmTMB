@@ -7,46 +7,56 @@
 sdmTMB_stacking(model_list, include_folds = NULL)
 }
 \arguments{
-\item{model_list}{A collection of models fit with \code{\link[=sdmTMB_cv]{sdmTMB_cv()}}, to generate
-estimates of predictive densities}
+\item{model_list}{A list of models fit with \code{\link[=sdmTMB_cv]{sdmTMB_cv()}} to generate
+estimates of predictive densities. You will want to set the seed
+to the same value before fitting each model or manually construct
+the fold IDs so that they are the same across models.}
 
 \item{include_folds}{An optional numeric vector specifying which folds to
 include in the calculations. For example, if 5 folds are used for k-fold
-CV, and the first 4 are needed to generate these weights, \code{include_folds = 1:4}.}
+cross validation, and the first 4 are needed to generate these weights,
+\code{include_folds = 1:4}.}
+}
+\value{
+A vector of model weights.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
 This approach is described in Yao et al. 2018, Bayesian Analysis. The general
 method minimizes (or maximizes) some quantity across models. For simple
 models with normal error, this may be the root mean squared error (RMSE), but
-other approaches include log scores. We adopt the latter here, where log
+other approaches include the log score. We adopt the latter here, where log
 scores are used to generate the stacking of predictive distributions
 }
 \examples{
 if (inla_installed()) {
-  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 
   # Set parallel processing if desired:
   # library(future)
   # plan(multisession)
   # depth as quadratic:
+  set.seed(1)
   m_cv_1 <- sdmTMB_cv(
     density ~ 0 + depth_scaled + depth_scaled2,
-    data = pcod, mesh = mesh,
+    data = pcod_2011, mesh = pcod_mesh_2011,
     family = tweedie(link = "log"), k_folds = 2
   )
   # depth as linear:
+  set.seed(1)
   m_cv_2 <- sdmTMB_cv(
     density ~ 0 + depth_scaled,
-    data = pcod, mesh = mesh,
+    data = pcod_2011, mesh = pcod_mesh_2011,
     family = tweedie(link = "log"), k_folds = 2
   )
+  set.seed(1)
   m_cv_3 <- sdmTMB_cv(
     density ~ 1,
-    data = pcod, mesh = mesh,
+    data = pcod_2011, mesh = pcod_mesh_2011,
     family = tweedie(link = "log"), k_folds = 2
   )
   models <- list(m_cv_1, m_cv_2, m_cv_3)
   weights <- sdmTMB_stacking(models)
+  weights
 }
 }
