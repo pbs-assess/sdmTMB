@@ -570,7 +570,7 @@ sdmTMB <- function(
   assert_that(identical(nrow(spde$loc_xy), nrow(data)),
     msg = "Number of x-y coordinates in `mesh` does not match `nrow(data)`.")
 
-  n_orig <- TMB::openmp(NULL)
+  n_orig <- suppressWarnings(TMB::openmp(NULL))
   if (n_orig > 0 && .Platform$OS.type == "unix") { # openMP is supported
     TMB::openmp(n = control$parallel)
     on.exit({TMB::openmp(n = n_orig)})
