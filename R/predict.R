@@ -247,6 +247,12 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     sims <- nsim
   }
 
+  n_orig <- TMB::openmp(NULL)
+  if (n_orig > 0 && .Platform$OS.type == "unix") { # openMP is supported
+    TMB::openmp(n = object$control$parallel)
+    on.exit({TMB::openmp(n = n_orig)})
+  }
+
   # from glmmTMB:
   pop_pred <- (!is.null(re_form) && ((re_form == ~0) || identical(re_form, NA)))
   pop_pred_iid <- (!is.null(re_form_iid) && ((re_form_iid == ~0) || identical(re_form_iid, NA)))
