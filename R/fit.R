@@ -500,7 +500,7 @@ sdmTMB <- function(
       "E.g., `priors = sdmTMBpriors(b = normal(c(0, 0), c(1, 1)))`",
       "for 2 fixed effects.", call. = FALSE)
   }
-  dot_checks <- c("lower", "upper", "profile",
+  dot_checks <- c("lower", "upper", "profile", "parallel",
     "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",
     "newton_loops", "start", "map", "map_rf", "get_joint_precision", "normalize")
   .control <- control
@@ -566,6 +566,13 @@ sdmTMB <- function(
 
   assert_that(identical(nrow(spde$loc_xy), nrow(data)),
     msg = "Number of x-y coordinates in `mesh` does not match `nrow(data)`.")
+
+  n_orig <- TMB::openmp(NULL)
+  if (n_orig > 0) { # openMP is supported
+    TMB::openmp(n = control$parallel)
+    # message("Using ", control$parallel, " threads")
+    on.exit({TMB::openmp(n = n_orig)})
+  }
 
   thresh <- check_and_parse_thresh_params(formula, data)
   original_formula <- formula

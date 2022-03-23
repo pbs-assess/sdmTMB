@@ -55,6 +55,7 @@ set_par_value <- function(opt, par) {
 #'   [TMB::sdreport()]. Must be `TRUE` to use simulation-based methods in
 #'   [predict.sdmTMB()] or `[get_index_sims()]`. If not needed, setting this
 #'   `FALSE` will reduce object size.
+#' @param parallel Number of cores to use.
 #' @param ... Anything else. See the 'Control parameters' section of
 #'   [stats::nlminb()].
 #'
@@ -80,12 +81,19 @@ sdmTMBcontrol <- function(
   multiphase = TRUE,
   profile = FALSE,
   get_joint_precision = TRUE,
+  parallel = getOption("sdmTMB.cores", 1L),
   ...) {
 
   if (is_present(mgcv)) {
     deprecate_warn("0.0.20", "sdmTMBcontrol(mgcv)",
       details = "`mgcv` argument no longer does anything.")
   }
+
+  if (!is.null(parallel)) {
+    assert_that(!is.na(parallel), parallel > 0)
+    parallel <- as.integer(parallel)
+  }
+
   list(
     eval.max = eval.max,
     iter.max = iter.max,
@@ -100,6 +108,7 @@ sdmTMBcontrol <- function(
     lower = lower,
     upper = upper,
     multiphase = multiphase,
+    parallel = parallel,
     get_joint_precision = get_joint_precision,
     ...)
 }

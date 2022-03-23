@@ -81,6 +81,14 @@ Type objective_function<Type>::operator()()
   using namespace density;
   using namespace Eigen;
 
+  #ifdef _OPENMP
+    this -> max_parallel_regions = omp_get_max_threads();
+    // std::cout << "OpenMP max_parallel_regions=" << this -> max_parallel_regions << "\n";
+  #else
+    this -> max_parallel_regions = 1;
+    // std::cout << "no OpenMP (max_parallel_regions=1)\n";
+  #endif
+
   // Set max number of OpenMP threads to help us optimize faster (as in glmmTMB)
   // max_parallel_regions = omp_get_max_threads();
 
@@ -320,7 +328,7 @@ Type objective_function<Type>::operator()()
   // Spatial (intercept) random effects:
   if (include_spatial) {
     // jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
-    jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
+    PARALLEL_REGION jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
     if (sim_re(0)) {
       SIMULATE {
         GMRF(Q_s, s).simulate(omega_s);
@@ -328,7 +336,7 @@ Type objective_function<Type>::operator()()
       }
     }
     if (spatial_covariate) {
-      jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_Z))(zeta_s);
+      PARALLEL_REGION jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_Z))(zeta_s);
       if (sim_re(3)) {
         SIMULATE {
           GMRF(Q_s, s).simulate(zeta_s);
@@ -342,7 +350,7 @@ Type objective_function<Type>::operator()()
   if (!spatial_only) {
     if (!ar1_fields && !rw_fields) {
       for (int t = 0; t < n_t; t++)
-        jnll += SCALE(GMRF(Q_st, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
+        PARALLEL_REGION jnll += SCALE(GMRF(Q_st, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
       if (sim_re(1)) {
         for (int t = 0; t < n_t; t++) { // untested!!
           vector<Type> epsilon_st_tmp(epsilon_st.rows());
@@ -354,33 +362,33 @@ Type objective_function<Type>::operator()()
       if (est_epsilon_model) { // time-varying epsilon sd
         if (sim_re(1)) error("Simulation not implemented for time-varying epsilon SD yet.");
         if (ar1_fields) {
-          jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
+          PARALLEL_REGION jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
           for (int t = 1; t < n_t; t++) {
-            jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(t)))((epsilon_st.col(t) -
+            PARALLEL_REGION jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(t)))((epsilon_st.col(t) -
               rho * epsilon_st.col(t - 1))/sqrt(1. - rho * rho));
           }
           int n_rows=epsilon_st.cols();
           int m_cols=epsilon_st.size()/n_rows;
           // This penalty added to match Kasper's AR1_t() implementation
-          jnll += Type((n_rows-1)*m_cols) * log(sqrt(Type(1)-rho*rho));
+          PARALLEL_REGION jnll += Type((n_rows-1)*m_cols) * log(sqrt(Type(1)-rho*rho));
         } else if (rw_fields) {
-          jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
+          PARALLEL_REGION jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
           for (int t = 1; t < n_t; t++) {
-            jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(t)))(epsilon_st.col(t) - epsilon_st.col(t - 1));
+            PARALLEL_REGION jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(t)))(epsilon_st.col(t) - epsilon_st.col(t - 1));
           }
         } else {
           error("Field type not implemented.");
         }
       } else { // constant epsilon sd, keep calculations as is
         if (ar1_fields) {
-          jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q_st, s)), 1./exp(ln_tau_E))(epsilon_st);
+          PARALLEL_REGION jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q_st, s)), 1./exp(ln_tau_E))(epsilon_st);
           if (sim_re(1)) {
             SIMULATE {SEPARABLE(AR1(rho), GMRF(Q_st, s)).simulate(epsilon_st);}
             epsilon_st *= 1./exp(ln_tau_E);
           }
         } else if (rw_fields) {
           for (int t = 0; t < n_t; t++)
-            jnll += SCALE(GMRF(Q_st, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
+            PARALLEL_REGION jnll += SCALE(GMRF(Q_st, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
           // jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
           // for (int t = 1; t < n_t; t++) {
           //   jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(t) - epsilon_st.col(t - 1));
@@ -409,7 +417,7 @@ Type objective_function<Type>::operator()()
 
   // IID random intercepts:
   for (int g = 0; g < RE.size(); g++) {
-    jnll -= dnorm(RE(g), Type(0.0), exp(ln_tau_G(ln_tau_G_index(g))), true);
+    PARALLEL_REGION jnll -= dnorm(RE(g), Type(0.0), exp(ln_tau_G(ln_tau_G_index(g))), true);
     if (sim_re(3)) SIMULATE{RE(g) = rnorm(Type(0), exp(ln_tau_G(ln_tau_G_index(g))));
     }
   }
@@ -419,7 +427,7 @@ Type objective_function<Type>::operator()()
     for (int k = 0; k < X_rw_ik.cols(); k++) {
       // flat prior on the initial value... then:
       for (int t = 1; t < n_t; t++) {
-        jnll += -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
+        PARALLEL_REGION jnll += -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
         if (sim_re(4)) SIMULATE{b_rw_t(t, k) = rnorm(b_rw_t(t - 1, k), exp(ln_tau_V(k)));}
       }
     }
@@ -453,7 +461,7 @@ Type objective_function<Type>::operator()()
       beta_s.setZero();
       for (int j = 0; j < beta_s.size(); j++) {
         beta_s(j) = b_smooth(b_smooth_start(s) + j);
-        jnll -= dnorm(beta_s(j), Type(0), exp(ln_smooth_sigma(s)), true);
+        PARALLEL_REGION jnll -= dnorm(beta_s(j), Type(0), exp(ln_smooth_sigma(s)), true);
         if (sim_re(5)) SIMULATE{beta_s(j) = rnorm(Type(0), exp(ln_smooth_sigma(s)));}
       }
       eta_smooth_i += Zs(s) * beta_s;
@@ -528,7 +536,7 @@ Type objective_function<Type>::operator()()
   Type s1, s2, s3, lognzprob, tmp_ll;
   REPORT(phi);
   ADREPORT(phi);
-  for (int i = 0; i < n_i; i++) {
+  for (int i = 0; i < n_i; i++) PARALLEL_REGION {
     if (!sdmTMB::isNA(y_i(i))) {
       switch (family) {
       case gaussian_family:
