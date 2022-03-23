@@ -439,14 +439,19 @@ sdmTMB <- function(
       include_spatial <- FALSE
     }
   }
+  if (!include_spatial && spatiotemporal == "off" || !include_spatial && spatial_only) {
+    # message("Both spatial and spatiotemporal fields are set to 'off'.")
+    control$map_rf <- TRUE
+  }
+  if ((spatial == "off" || isFALSE(spatial)) && spatiotemporal == "off" && missing(mesh)) {
+    # message("Constructing fake mesh object.")
+    data$sdmTMB_X_ <- data$sdmTMB_Y_ <- stats::runif(nrow(data))
+    mesh <- make_mesh(data, c("sdmTMB_X_", "sdmTMB_Y_"), cutoff = 1)
+  }
   if (is_present(spde)) {
     deprecate_warn("0.0.20", "sdmTMB(spde)", "sdmTMB(mesh)")
   } else {
     spde <- mesh
-  }
-  if (!include_spatial && spatiotemporal == "off" || !include_spatial && spatial_only) {
-    message("Both spatial and spatiotemporal fields are set to 'off'.")
-    control$map_rf <- TRUE
   }
   epsilon_model <- NULL
   epsilon_predictor <- NULL
@@ -563,7 +568,6 @@ sdmTMB <- function(
         "Please remove these or turn your time column into an integer.", call. = FALSE)
     }
   }
-
   assert_that(identical(nrow(spde$loc_xy), nrow(data)),
     msg = "Number of x-y coordinates in `mesh` does not match `nrow(data)`.")
 
@@ -1010,6 +1014,7 @@ sdmTMB <- function(
   }
 
   data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL
+  data$sdmTMB_X_ <- data$sdmTMB_Y_ <- NULL
 
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,

@@ -100,6 +100,12 @@ test_that("sdmTMB model fit with a covariate beta", {
   # mismatch:
   nd$time <- as.factor(nd$time)
   expect_error(predict(m, newdata = nd), regexp = "class")
+
+  # no fields; fake mesh:
+  m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
+    spatial = "off", spatiotemporal = "off")
+  m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
+    spatial = FALSE, spatiotemporal = "off")
 })
 
 test_that("Anisotropy fits and plots", {

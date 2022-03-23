@@ -25,6 +25,9 @@ print.sdmTMB <- function(x, ...) {
   } else {
     title <- paste0("Spatiotemporal model fit by ", fit_by, " ['sdmTMB']\n")
   }
+  if (x$control$map_rf) {
+    title <- paste0("Model fit by ", fit_by, " ['sdmTMB']\n")
+  }
   formula <- paste0("Formula: ", deparse(x$call$formula), "\n")
   if (deparse(x$call$time) != "NULL") {
     time <- paste0("Time column: ", deparse(x$call$time), "\n")
@@ -189,6 +192,9 @@ print.sdmTMB <- function(x, ...) {
   } else {
     paste0("Matern range (spatial): ", range[1], "\n",
       "Matern range (spatiotemporal): ", range[2], "\n")
+  }
+  if (x$control$map_rf) {
+    range_text <- NULL
   }
 
   cat("\n",

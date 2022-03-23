@@ -4,6 +4,8 @@
 
 # sdmTMB 0.0.21.9000
 
+* Add fake mesh if random fields are all off. #59
+
 * Make `predict(..., newdata = NULL)` also use `last.par.best` instead of
   `last.par` to match `newdata = df`.
 
