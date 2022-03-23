@@ -20,6 +20,7 @@ sdmTMBcontrol(
   multiphase = TRUE,
   profile = FALSE,
   get_joint_precision = TRUE,
+  parallel = getOption("sdmTMB.cores", 1L),
   ...
 )
 }
@@ -87,6 +88,15 @@ can dramatically speed up model fit if there are many fixed effects.}}
 \code{\link[TMB:sdreport]{TMB::sdreport()}}. Must be \code{TRUE} to use simulation-based methods in
 \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} or \verb{[get_index_sims()]}. If not needed, setting this
 \code{FALSE} will reduce object size.}
+
+\item{parallel}{Number of cores to use. Best set with the option
+\code{options(sdmTMB.cores = n)}, where \code{n} is the number of cores.
+Currently only works on Mac/Linux. Note that the models in sdmTMB
+often slow down with too many cores. Ideal numbers appear to be
+a bit less than half the available cores or ~3-4 on the machines
+we have tested. Also propogates to prediction and index calculation.
+Can we tweaked after the fact in a fitted model by modifying
+\code{fit$control$parallel}.}
 
 \item{...}{Anything else. See the 'Control parameters' section of
 \code{\link[stats:nlminb]{stats::nlminb()}}.}
