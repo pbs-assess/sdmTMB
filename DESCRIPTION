@@ -64,7 +64,7 @@ LinkingTo:
 VignetteBuilder:
     knitr
 Additional_repositories:
-    https://inla.r-inla-download.org/R/testing
+    https://inla.r-inla-download.org/R/stable
 ByteCompile: true
 Encoding: UTF-8
 LazyData: true
