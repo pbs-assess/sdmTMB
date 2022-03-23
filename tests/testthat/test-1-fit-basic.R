@@ -106,6 +106,8 @@ test_that("sdmTMB model fit with a covariate beta", {
     spatial = "off", spatiotemporal = "off")
   m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
     spatial = FALSE, spatiotemporal = "off")
+  m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, spatial = "off")
+  m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, spatial = FALSE)
 })
 
 test_that("Anisotropy fits and plots", {
