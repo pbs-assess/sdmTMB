@@ -93,13 +93,13 @@ test_that("spatial = off and spatiotemporal = off triggers map_rf", {
   skip_on_cran()
   skip_on_ci()
   skip_if_not_installed("INLA")
-  expect_message(m1 <- sdmTMB(
+  m1 <- sdmTMB(
     formula = density ~ 1,
     data = pcod_2011,
     spatial = "off",
     spatiotemporal = "off",
     mesh = pcod_mesh_2011
-  ), regexp = "fields")
+  )
   m2 <- sdmTMB(
     formula = density ~ 1,
     data = pcod_2011,
