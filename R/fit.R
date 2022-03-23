@@ -570,11 +570,7 @@ sdmTMB <- function(
   n_orig <- TMB::openmp(NULL)
   if (n_orig > 0 && .Platform$OS.type == "unix") { # openMP is supported
     TMB::openmp(n = control$parallel)
-    # message("Using ", control$parallel, " threads")
     on.exit({TMB::openmp(n = n_orig)})
-  }
-  if (.Platform$OS.type != "unix" && control$parallel > 1) {
-    warning("Parallel processing is currently only enabled on Unix", call. = FALSE)
   }
 
   thresh <- check_and_parse_thresh_params(formula, data)
