@@ -130,7 +130,7 @@ m <- sdmTMB(
 predictions <- predict(m)
 head(predictions)
 
-predictions$resids <- residuals(m) # randomized quantile residuals
+predictions$resids <- residuals(m, type = "randomized-quantile")
 
 ggplot(predictions, aes(X, Y, col = resids)) + scale_colour_gradient2() +
   geom_point() + facet_wrap(~year)

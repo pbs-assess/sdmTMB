@@ -56,7 +56,7 @@ m <- sdmTMB(
 We can inspect randomized quantile residuals:
 
 ```{r residuals, fig.width = 8}
-pcod$resids <- residuals(m) # randomized quantile residuals
+pcod$resids <- residuals(m, type = "randomized-quantile")
 hist(pcod$resids)
 qqnorm(pcod$resids)
 abline(a = 0, b = 1)

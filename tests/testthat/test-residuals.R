@@ -140,7 +140,7 @@ test_that("randomized quantile residuals work,", {
     family = student(df = 10),
     data = d, mesh = mesh
   )
-  r <- residuals(fit)
+  r <- residuals(fit, type = "randomized-quantile")
   qqnorm(r)
   qqline(r)
   p <- stats::shapiro.test(r)

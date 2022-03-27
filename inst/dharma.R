@@ -20,7 +20,7 @@ plot(s)
 
 plot(s, quantreg = FALSE, rank = TRUE)
 
-r <- residuals(m)
+r <- residuals(m, type = "randomized-quantile")
 qqnorm(r);qqline(r)
 
 set.seed(10292)

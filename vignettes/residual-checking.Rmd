@@ -71,11 +71,11 @@ We can see just by looking at these fits that the Poisson model inflates the spa
 Here are randomized quantile residuals at fixed effect MLEs (Maximum Likelihood Estimates) and random effects that maximize the log likelihood at estimated fixed effects:
 
 ```{r}
-rq_res <- residuals(fit_pois)
+rq_res <- residuals(fit_pois, type = "randomized-quantile")
 rq_res <- rq_res[is.finite(rq_res)] # some Inf
 qqnorm(rq_res);qqline(rq_res)
 
-rq_res <- residuals(fit_nb2)
+rq_res <- residuals(fit_nb2, type = "randomized-quantile")
 qqnorm(rq_res);qqline(rq_res)
 ```
 

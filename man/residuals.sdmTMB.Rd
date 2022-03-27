@@ -4,21 +4,28 @@
 \alias{residuals.sdmTMB}
 \title{Residuals method for sdmTMB models}
 \usage{
-\method{residuals}{sdmTMB}(object, type = c("mle", "sim"), ...)
+\method{residuals}{sdmTMB}(
+  object,
+  type = c("response", "randomized-quantile"),
+  mu_type = c("mle", "sim"),
+  ...
+)
 }
 \arguments{
 \item{object}{An \code{\link[=sdmTMB]{sdmTMB()}} model}
 
-\item{type}{Type of residual. Residual at the MLE or based on simulations
+\item{type}{Type of residual.}
+
+\item{mu_type}{Type of mean estimate. Residual at the MLE or based on simulations
 from the joint precision matrix are available.}
 
 \item{...}{Passed to residual function. Only \code{n} works for binomial.}
 }
 \value{
-A vector of randomized quantile residuals.
+A vector of residuals.
 }
 \description{
-These residuals are randomized quantile residuals (Dunn & Smyth 1996), which
+Randomized quantile residuals (Dunn & Smyth 1996)
 are also known as probability integral transform (PIT) residuals (Smith
 1985). See the residual-checking vignette: \code{browseVignettes("sdmTMB")} or \href{https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html}{on the documentation site}.
 }

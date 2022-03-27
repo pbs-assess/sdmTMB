@@ -94,19 +94,20 @@ qres_beta <- function(object, y, mu) {
 
 #' Residuals method for sdmTMB models
 #'
-#' These residuals are randomized quantile residuals (Dunn & Smyth 1996), which
+#' Randomized quantile residuals (Dunn & Smyth 1996)
 #' are also known as probability integral transform (PIT) residuals (Smith
 #' 1985). See the residual-checking vignette: `browseVignettes("sdmTMB")` or [on
 #' the documentation
 #' site](https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html).
 #'
 #' @param object An [sdmTMB()] model
-#' @param type Type of residual. Residual at the MLE or based on simulations
+#' @param type Type of residual.
+#' @param mu_type Type of mean estimate. Residual at the MLE or based on simulations
 #'   from the joint precision matrix are available.
 #' @param ... Passed to residual function. Only `n` works for binomial.
 #' @export
 #' @importFrom stats predict
-#' @return A vector of randomized quantile residuals.
+#' @return A vector of residuals.
 #' @seealso [dharma_residuals()]
 #' @references
 #' Dunn, P.K. & Smyth, G.K. (1996). Randomized Quantile Residuals. Journal of
@@ -114,9 +115,15 @@ qres_beta <- function(object, y, mu) {
 #'
 #' Smith, J.Q. (1985). Diagnostic checks of non-standard time series models.
 #' Journal of Forecasting, 4, 283–291.
-residuals.sdmTMB <- function(object, type = c("mle", "sim"), ...) {
-  message("Consider using `dharma_residuals()` instead.")
+residuals.sdmTMB <- function(object,
+  type = c("response", "randomized-quantile"),
+  mu_type = c("mle", "sim"), ...) {
+
+  message("residuals.sdmTMB() now returns response residuals by default.")
+  # message("Consider using `dharma_residuals()` instead.")
+  mu_type <- match.arg(mu_type)
   type <- match.arg(type)
+
   res_func <- switch(object$family$family,
     gaussian = qres_gaussian,
     binomial = qres_binomial,
@@ -130,13 +137,21 @@ residuals.sdmTMB <- function(object, type = c("mle", "sim"), ...) {
     lognormal  = qres_lognormal,
     stop(paste(object$family$family, "not yet supported."), call. = FALSE)
   )
-  if (type == "mle") {
+  if (mu_type == "mle") {
     mu <- object$family$linkinv(predict(object, newdata = NULL)$est)
-  } else if (type == "sim") {
+  } else if (mu_type == "sim") {
     mu <- object$family$linkinv(predict(object, nsim = 1L)[, 1L, drop = TRUE])
+  } else {
+    stop("`mu_type` not implemented", call. = FALSE)
+  }
+  y <- object$response
+
+  if (type == "response") {
+    r <- y - mu
+  } else if (type == "randomized-quantile") {
+    r <- res_func(object, y, mu, ...)
   } else {
     stop("`type` not implemented", call. = FALSE)
   }
-  y <- object$response
-  res_func(object, y, mu, ...)
+  r
 }
