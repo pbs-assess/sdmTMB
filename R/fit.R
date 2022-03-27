@@ -1019,7 +1019,7 @@ sdmTMB <- function(
   }
 
   data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL
-  data$sdmTMB_X_ <- data$sdmTMB_Y_ <- NULL
+  # data$sdmTMB_X_ <- data$sdmTMB_Y_ <- NULL
 
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
