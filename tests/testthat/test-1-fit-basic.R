@@ -188,7 +188,7 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-3)
 })
 
-test_that("poly() works on newdata" {
+test_that("poly() works on newdata", {
   # https://github.com/pbs-assess/sdmTMB/issues/77
   d <- pcod_2011
   mesh <- make_mesh(d, c("X", "Y"), cutoff = 20)
