@@ -1,5 +1,9 @@
 # sdmTMB
 
+# sdmTMB 0.0.22.9000
+
+* Fix bug in predictions with `poly(..., raw = FALSE)` on newdata. #77
+
 # sdmTMB 0.0.21.9009
 
 * Add experimental `sdmTMB_stacking()` for ensemble model stacking weights.
