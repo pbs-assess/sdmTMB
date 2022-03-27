@@ -356,6 +356,7 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     if (!"mgcv" %in% names(object)) object[["mgcv"]] <- FALSE
     f2 <- remove_s_and_t2(object$split_formula$fixedFormula)
     tt <- stats::terms(f2)
+    attr(tt, "predvars") <- attr(object$terms, "predvars")
     Terms <- stats::delete.response(tt)
     mf <- model.frame(Terms, newdata, xlev = object$xlevels)
     proj_X_ij <- model.matrix(Terms, mf, contrasts.arg = object$contrasts)
