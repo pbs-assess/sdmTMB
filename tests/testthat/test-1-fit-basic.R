@@ -187,3 +187,23 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   p_nd <- predict(m, newdata = dat)
   expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-3)
 })
+
+test_that("poly() works on newdata" {
+  # https://github.com/pbs-assess/sdmTMB/issues/77
+  d <- pcod_2011
+  mesh <- make_mesh(d, c("X", "Y"), cutoff = 20)
+  m <- sdmTMB(
+    data = d, formula = density ~ poly(log(depth), 2),
+    mesh = mesh, family = sdmTMB::tweedie(link = "log"),
+    spatial = "off"
+  )
+  nd <- pcod_2011[1:3,]
+  p <- predict(m, newdata = nd)
+  p <- p$est
+  m2 <- glmmTMB::glmmTMB(
+    data = d, formula = density ~ poly(log(depth), 2),
+    family = glmmTMB::tweedie(link = "log")
+  )
+  p2 <- predict(m2, newdata = nd)
+  expect_equal(p, p2)
+})
