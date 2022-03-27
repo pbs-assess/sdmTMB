@@ -228,15 +228,15 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
   sims = deprecated(), sims_var = "est", tmbstan_model = NULL, ...) {
 
   # check if this is visreg:
-  sys_calls <- unlist(lapply(sys.calls(), deparse)) # retrieve function that called this
+  # sys_calls <- unlist(lapply(sys.calls(), deparse)) # retrieve function that called this
   visreg_df <- FALSE
-  if (!is.null(visreg_df) && any(substr(sys_calls, 1, 6) == "visreg")) {
-    visreg_df <- TRUE
-    if (any(sys_calls == "residuals(fit)")) visreg_df <- FALSE
-    # turn on standard error if in a function call
-    indx <- which(substr(sys_calls,1,10) == "visregPred")
-    if (length(indx) > 0 && any(unlist(strsplit(sys_calls[indx], ",")) == " se.fit = TRUE")) se_fit <- TRUE
-  }
+  # if (!is.null(visreg_df) && any(substr(sys_calls, 1, 6) == "visreg")) {
+  #   visreg_df <- TRUE
+  #   if (any(sys_calls == "residuals(fit)")) visreg_df <- FALSE
+  #   # turn on standard error if in a function call
+  #   indx <- which(substr(sys_calls,1,10) == "visregPred")
+  #   if (length(indx) > 0 && any(unlist(strsplit(sys_calls[indx], ",")) == " se.fit = TRUE")) se_fit <- TRUE
+  # }
 
   if ("version" %in% names(object)) {
     check_sdmTMB_version(object$version)
