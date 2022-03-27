@@ -228,7 +228,7 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
   sims = deprecated(), sims_var = "est", tmbstan_model = NULL, ...) {
 
   # check if this is visreg:
-  # sys_calls <- unlist(lapply(sys.calls(), deparse)) # retrieve function that called this
+  sys_calls <- sys.calls() # unlist(lapply(sys.calls(), deparse)) # retrieve function that called this
   visreg_df <- FALSE
   # if (!is.null(visreg_df) && any(substr(sys_calls, 1, 6) == "visreg")) {
   #   visreg_df <- TRUE
