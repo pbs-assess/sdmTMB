@@ -75,7 +75,7 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
     warning("Bias correction can be slower with multiple cores; using 1 core.", call. = FALSE)
     obj$fit_obj$control$parallel <- 1L
   }
-  n_orig <- TMB::openmp(NULL)
+  n_orig <- suppressWarnings(TMB::openmp(NULL))
   if (n_orig > 0 && .Platform$OS.type == "unix") { # openMP is supported
     TMB::openmp(n = obj$fit_obj$control$parallel)
     on.exit({TMB::openmp(n = n_orig)})

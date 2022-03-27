@@ -258,7 +258,7 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     sims <- nsim
   }
 
-  n_orig <- TMB::openmp(NULL)
+  n_orig <- suppressWarnings(TMB::openmp(NULL))
   if (n_orig > 0 && .Platform$OS.type == "unix") { # openMP is supported
     TMB::openmp(n = object$control$parallel)
     on.exit({TMB::openmp(n = n_orig)})
