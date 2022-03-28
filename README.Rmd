@@ -66,6 +66,20 @@ The sdmTMB package also allows for models to be passed to Stan via tmbstan, allo
 
 See [`?sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB.html) and [`?predict.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/predict.sdmTMB.html) for the most complete examples. Also see the vignettes ('Articles') on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html).
 
+## Citation
+
+To cite sdmTMB in publications use:
+
+```r
+citation("sdmTMB")
+```
+
+Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett.
+2022. sdmTMB: an R package for fast, flexible, and
+user-friendly generalized linear mixed effects models with
+spatial and spatiotemporal random fields. bioRxiv
+2022.03.24.485545; doi: <https://doi.org/10.1101/2022.03.24.485545>
+
 ## Basic use
 
 An sdmTMB model requires a data frame that contains a response column, columns for any predictors, and columns for spatial coordinates.
