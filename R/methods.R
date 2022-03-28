@@ -107,6 +107,16 @@ print.sdmTMB <- function(x, ...) {
     sm_names <- unlist(lapply(sm$Zs, function(x) attr(x, "s.label")))
     sm_names <- gsub("\\)$", "", gsub("s\\(", "", sm_names))
     sm_names_bs <- paste0("s", sm_names)
+    xx <- lapply(sm_names_bs, function(.x) { # split out 2D + smooths
+      n_sm <- grep(",", .x) + 1
+      if (length(n_sm)) {
+        .x <- paste(.x, seq_len(n_sm), sep = "_")
+        gsub(",", "", .x)
+      } else {
+        .x
+      }
+    })
+    sm_names_bs <- unlist(xx)
     sm_names_sds <- paste0("sds(", sm_names, ")")
     mm_sm <- cbind(bs, bs_se)
     row.names(mm_sm) <- sm_names_bs

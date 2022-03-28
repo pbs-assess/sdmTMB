@@ -221,3 +221,23 @@ test_that("Smooth plotting works", {
   })
   plot_smooth(m)
 })
+
+test_that("print works with s(X, Y)", {
+  d <- subset(pcod_2011, density > 0)
+  m <- sdmTMB(log(density) ~ s(X, Y, k = 5), data = d, spatial = "off")
+  print(m)
+  expect_output(summary(m), regexp = "sXY_1")
+  expect_output(summary(m), regexp = "sXY_2")
+
+  m2 <- sdmTMB(log(density) ~ s(X) + s(Y), data = d, spatial = "off")
+  summary(m2)
+
+  m3 <- sdmTMB(log(density) ~ s(X) + s(Y) + s(depth, year), data = d, spatial = "off")
+  summary(m3)
+  expect_output(summary(m3), regexp = "sX")
+  expect_output(summary(m3), regexp = "sY")
+  expect_output(summary(m3), regexp = "sdepthyear_1")
+  expect_output(summary(m3), regexp = "sdepthyear_2")
+  # m <- brms::brm(log(density) ~ s(X) + s(Y) + s(depth, year), data = d, chains = 1, iter = 800)
+  # m
+})
