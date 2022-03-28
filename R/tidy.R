@@ -162,6 +162,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
     ii <- ii + 1
   }
 
+  if (x$control$map_rf) out_re$range <- NULL
   out_re <- do.call("rbind", out_re)
   row.names(out_re) <- NULL
 
