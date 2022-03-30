@@ -38,6 +38,7 @@ parse_smoothers <- function(formula, data, newdata = NULL) {
     ns <- 0
     ns_Xf <- 0
     for (i in seq_along(smterms)) {
+      if(grepl('bs\\=\\"re', smterms[i])) stop("Error: bs = 're' is not currently supported for smooths")
       obj <- eval(str2expression(smterms[i]))
       basis[[i]] <- mgcv::smoothCon(
         object = obj, data = data,
