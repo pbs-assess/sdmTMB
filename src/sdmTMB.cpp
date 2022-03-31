@@ -782,6 +782,8 @@ Type objective_function<Type>::operator()()
 
     // Total biomass etc.:
     vector<Type> total(n_t);
+    total.setZero();
+
     if (calc_index_totals || calc_cog) {
       // ------------------ Derived quantities ---------------------------------
 
@@ -792,10 +794,10 @@ Type objective_function<Type>::operator()()
       for (int i = 0; i < n_t; i++) {
         link_total(i) = Link(total(i), link);
       }
-      // if (calc_index_totals) {
+      if (calc_index_totals) {
         REPORT(link_total);
         ADREPORT(link_total);
-      // }
+      }
       // PARAMETER_ARRAY(eps_total);
       // if (eps_total.size() > 0) {
       //   Type S;
@@ -808,6 +810,8 @@ Type objective_function<Type>::operator()()
       // Centre of gravity:
       vector<Type> cog_x(n_t);
       vector<Type> cog_y(n_t);
+      cog_x.setZero();
+      cog_y.setZero();
       for (int i = 0; i < proj_eta.size(); i++) {
         cog_x(proj_year(i)) += proj_lon(i) * InverseLink(proj_eta(i), link) * area_i(i);
         cog_y(proj_year(i)) += proj_lat(i) * InverseLink(proj_eta(i), link) * area_i(i);
