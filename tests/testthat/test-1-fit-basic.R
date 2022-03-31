@@ -72,7 +72,7 @@ test_that("sdmTMB model fit with a covariate beta", {
   expect_true(se_pc$ln_tau_O < se$ln_tau_O)
 
   # normalize = TRUE should be faster here:
-  expect_lt(.t2[[1]], .t1[[1]])
+  # expect_lt(.t2[[1]], .t1[[1]])
 
   expect_output(print(m), "fit by")
   expect_output(summary(m), "fit by")
