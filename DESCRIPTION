@@ -43,7 +43,7 @@ Imports:
     mgcv,
     mvtnorm,
     stats,
-    TMB (>= 1.7.20)
+    TMB (>= 1.8.0)
 Suggests:
     DHARMa,
     dplyr,
