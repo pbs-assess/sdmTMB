@@ -179,3 +179,148 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
     return(g)
   }
 }
+
+
+#' Predict a univariate or bivariate smooth term from an sdmTMB model over uniform intervals
+#' @param object An [sdmTMB()] model.
+#' @param select The smoother term to plot as a character, e.g. "s(year)", "s(year,depth)", etc. Smooths that are entered in the
+#' formula as being grouped by a factor, "s(depth,by=year)" need to be entered using a `:`, e.g.
+#' "s(depth_scaled):year"
+#' @param n The number of equally spaced points to evaluate the smoother along. Factor variables, used with the `by=` syntax
+#' will be evaluated at each unique factor level
+#' @export
+#'
+#' @details
+#' Note:
+#' * Any numeric predictor is set to its mean
+#' * Any factor predictor is set to its first-level value
+#' * The time element (if present) is set to its minimum value
+#' * The x and y coordinates are set to their mean values
+#'
+#' @examples
+#' if (inla_installed()) {
+#'   d <- subset(pcod, year >= 2000 & density > 0)
+#'   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
+#'   m <- sdmTMB(
+#'     data = d,
+#'     #formula = log(density) ~ s(lat,depth_scaled,by=year),
+#'     #formula = log(density) ~ s(depth_scaled,by=year),
+#'     formula = log(density) ~ s(depth_scaled),
+#'     mesh = pcod_spde
+#'   )
+#'   ps <- pred_smooth(m, "s(depth_scaled)")
+#'   # call to gratia is then gratia::draw(ps)
+#' }
+pred_smooth <- function(object, smooth = NA, n = 100) {
+
+  assert_that(class(object) == "sdmTMB")
+  assert_that(is.numeric(n))
+  assert_that(length(select) == 1L)
+  assert_that(length(n) == 1L)
+  assert_that(n < 500)
+
+  sm <- parse_smoothers(object$formula, object$data)
+  smooth_names <- unlist(lapply(sm$Zs, function(x) attr(x, "s.label")))
+
+  if(is.na(smooth)) {
+    select <- 1 # just plot first smooth
+  } else {
+    select <- match(smooth, smooth_names)
+    if(is.na(select)) stop("Error: smooth name not recognized")
+  }
+
+  sm_names <- gsub("\\)$", "", gsub("s\\(", "", smooth_names))
+
+  fe_names <- colnames(object$tmb_data$X_ij)
+  fe_names <- fe_names[!fe_names == "offset"] # FIXME
+  fe_names <- fe_names[!fe_names == "(Intercept)"]
+
+  all_names <- c(sm_names, fe_names)
+  sel_name <- sm_names[select]
+  non_select_names <- all_names[!all_names %in% sel_name]
+
+  # need to parse formula looking first for 2+ dimensional smooths
+  by_var <- NA
+  #if(grepl(",",sel_name)) {
+  split_names <- unlist(strsplit(sel_name,","))
+
+  if(any(grepl("\\):", split_names))) {
+    # catch case where a 2+D smooth includes a grouping variable
+    idx <- grep("\\):", split_names)
+    by_var <- unlist(strsplit(split_names[idx],")"))[2]
+    by_var <- substr(by_var, 2, nchar(by_var))
+    split_names[idx] <- unlist(strsplit(split_names[idx],")"))[1]
+  }
+  if(length(split_names) > 2) {
+    # This error is a gratia thing -- R code below works just fine to create a df
+    stop("Error: smooths with more than 2 dimensions are not supported yet")
+  }
+
+  var_list <- list() # create a list of variables to evaluate over
+  for(i in 1:length(split_names)) {
+    x <- object$data[[split_names[i]]] # get data from sdmTMB model
+    if(class(x) %in% c("numeric","integer")) {
+      var_list[i] <- list(x = seq(min(x), max(x), length.out = n))
+    } else {
+      var_list[i] <- list(x = unique(x)) # factor or string        }
+    }
+  }
+
+  if(!is.na(by_var)) {
+    x <- object$data[[by_var]]
+    var_list[length(var_list)+1] <- list(x = unique(x)) # factor or string
+  }
+  nd <- expand.grid(var_list) # expand df to all combinations
+
+  if(is.na(by_var)) {
+    # include by = NA
+    names(nd) <- split_names
+    nd <- cbind(data.frame(smooth = rep(smooth_names[select],nrow(nd)),
+                           by_variable = rep(NA, nrow(nd))), nd)
+  } else {
+    names(nd) <- c(split_names, "by_variable")
+    nd <- cbind(data.frame(smooth = rep(smooth_names[select],nrow(nd))), nd)
+  }
+
+  # additional 2 columns that need to be added are est and se
+
+  dat <- object$data
+  .t <- terms(object$formula)
+  .t <- labels(.t)
+  checks <- c("^as\\.factor\\(", "^factor\\(")
+  for (ch in checks) {
+    if (any(grepl(ch, .t))) { # any factors from formula? if so, explicitly switch class
+      ft <- grep(ch, .t)
+      for (i in ft) {
+        x <- gsub(ch, "", .t[i])
+        x <- gsub("\\)$", "", x)
+        dat[[x]] <- as.factor(dat[[x]])
+      }
+    }
+  }
+  dat[, object$spde$xy_cols] <- NULL
+  dat[[object$time]] <- NULL
+  for (i in seq_len(ncol(dat))) {
+    if (names(dat)[i] != sel_name && names(dat)[i]%in%names(nd) == FALSE) {
+      if (is.factor(dat[, i, drop = TRUE])) {
+        nd[[names(dat)[[i]]]] <- sort(dat[, i, drop = TRUE])[[1]] # TODO note!
+      } else {
+        nd[[names(dat)[[i]]]] <- mean(dat[, i, drop = TRUE], na.rm = TRUE) # TODO note!
+      }
+    }
+  }
+  nd[object$time] <- min(object$data[[object$time]], na.rm = TRUE) # TODO note!
+  nd[[object$spde$xy_cols[1]]] <- mean(object$data[[object$spde$xy_cols[1]]], na.rm = TRUE) # TODO note!
+  nd[[object$spde$xy_cols[2]]] <- mean(object$data[[object$spde$xy_cols[2]]], na.rm = TRUE) # TODO note!
+
+  p <- predict(object, newdata = nd, se_fit = TRUE, re_form = NA)
+  nd$est <- p$est
+  nd$se <- p$est_se
+
+  # classes here are equivalent to gratia::evaluate_smooth(object, smooth)
+  class(nd) <- c("evaluated_1d_smooth", "evaluated_smooth", "tbl_df", "tbl",
+                 "data.frame")
+  if(length(split_names)==2) class(nd)[1] = "evaluated_2d_smooth"
+  return(nd)
+
+}
