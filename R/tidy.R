@@ -73,6 +73,16 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
 
   se <- c(se, se_rep)
   est <- c(est, est_rep)
+
+  # not ADREPORTed for speed:
+  est$sigma_E <- exp(est$log_sigma_E)
+  est$sigma_O <- exp(est$log_sigma_O)
+  est$sigma_Z <- exp(est$log_sigma_Z)
+  est$range <- exp(est$log_range)
+  est$phi <- exp(est$ln_phi)
+  est$sigma_G <- exp(est$ln_tau_G)
+  est$sigma_V <- exp(est$ln_tau_V)
+
   ii <- 1
   if (length(unique(est$sigma_E)) == 1L) {
     se$sigma_E <- se$sigma_E[1]
@@ -102,11 +112,11 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   }
   if (x$tmb_data$random_walk) {
     log_name <- c(log_name, "ln_tau_V")
-    name <- c(name, "ln_tau_V")
+    name <- c(name, "tau_V")
   }
   if (length(est$ln_tau_G) > 0L) {
     log_name <- c(log_name, "ln_tau_G")
-    name <- c(name, "ln_tau_G")
+    name <- c(name, "tau_G")
   }
 
   j <- 0
@@ -126,12 +136,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
         conf.high = exp(.e + crit * .se),
         stringsAsFactors = FALSE
       )
-
-      # these ones don't have a non-log version in the .cpp:
-      if (i == "ln_tau_G") out_re[[i]]$estimate <- exp(out_re[[i]]$estimate)
-      if (i == "ln_tau_G") out_re[[i]]$term <- "sigma_G"
-      if (i == "ln_tau_V") out_re[[i]]$estimate <- exp(out_re[[i]]$estimate)
-      if (i == "ln_tau_V") out_re[[i]]$term <- "sigma_V"
 
       ii <- ii + 1
     }

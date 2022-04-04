@@ -262,11 +262,9 @@ Type objective_function<Type>::operator()()
     Type log_sigma_O = log(sigma_O);
     ADREPORT(log_sigma_O);
     REPORT(sigma_O);
-    ADREPORT(sigma_O);
     Type log_sigma_Z = log(sigma_Z);
     ADREPORT(log_sigma_Z);
     REPORT(sigma_Z);
-    ADREPORT(sigma_Z);
   }
 
   // optional non-stationary model on epsilon
@@ -535,7 +533,6 @@ Type objective_function<Type>::operator()()
 
   Type s1, s2, s3, lognzprob, tmp_ll;
   REPORT(phi);
-  ADREPORT(phi);
   for (int i = 0; i < n_i; i++) PARALLEL_REGION {
     if (!sdmTMB::isNA(y_i(i))) {
       switch (family) {
@@ -879,7 +876,6 @@ Type objective_function<Type>::operator()()
   }
   ADREPORT(log_sigma_E);      // log spatio-temporal SD
   REPORT(sigma_E);      // spatio-temporal SD
-  ADREPORT(sigma_E);      // spatio-temporal SD
   REPORT(epsilon_st_A_vec);   // spatio-temporal effects; vector
   REPORT(b_rw_t);   // time-varying effects
   REPORT(omega_s_A);      // spatial effects; n_s length vector
@@ -891,7 +887,6 @@ Type objective_function<Type>::operator()()
   REPORT(eta_iid_re_i); // IID intercept random effect estimates
   REPORT(rho);          // AR1 correlation in -1 to 1 space
   REPORT(range);        // Matern approximate distance at 10% correlation
-  ADREPORT(range);      // Matern approximate distance at 10% correlation
   vector<Type> log_range = log(range); // for SE
   ADREPORT(log_range);  // log Matern approximate distance at 10% correlation
   REPORT(b_smooth);     // smooth coefficients for penalized splines
