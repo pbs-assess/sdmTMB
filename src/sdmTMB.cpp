@@ -217,7 +217,7 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(b_rw_t);  // random walk effects
   PARAMETER_ARRAY(omega_s);    // spatial effects; n_s length
   PARAMETER_ARRAY(zeta_s);    // spatial effects on covariate; n_s length
-  PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t by n_m matrix
+  PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t by n_m array
   PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3) // DELTA TODO
   PARAMETER(b_epsilon); // slope coefficient for log-linear model on epsilon DELTA TODO 
   PARAMETER(ln_epsilon_re_sigma); // DELTA TODO
@@ -383,38 +383,38 @@ Type objective_function<Type>::operator()()
       if (!ar1_fields && !rw_fields) {
         for (int t = 0; t < n_t; t++)
           // PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
-          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E(m)))(epsilon_st.col(t)); // TODO FIXME ARRAY DELTA!!
+          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E(m)))(epsilon_st.col(m).col(t));
         if (sim_re(1)) {
-          for (int t = 0; t < n_t; t++) { // untested!!
-            vector<Type> epsilon_st_tmp(epsilon_st.rows()); // TODO DELTA FIXME ARRAY
+          for (int t = 0; t < n_t; t++) {
+            vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
             SIMULATE {GMRF(Q_temp, s).simulate(epsilon_st_tmp);}
-            epsilon_st.col(t) = epsilon_st_tmp / exp(ln_tau_E(m)); // correct? not vec tau_E? TODO DELTA FIXME ARRAY
+            epsilon_st.col(m).col(t) = epsilon_st_tmp / exp(ln_tau_E(m));
           }
         }
       } else {
         if (ar1_fields) {
-          PARALLEL_REGION jnll += SCALE(SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)), 1./exp(ln_tau_E(m)))(epsilon_st); // TODO FIXME ARRAY DELTA
+          PARALLEL_REGION jnll += SCALE(SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)), 1./exp(ln_tau_E(m)))(epsilon_st.col(m));
           if (sim_re(1)) {
-            SIMULATE {SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)).simulate(epsilon_st);} // TODO FIXME ARRAY DELTA
-            epsilon_st *= 1./exp(ln_tau_E(m));
+            SIMULATE {SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)).simulate(epsilon_st.col(m));}
+            epsilon_st.col(m) *= 1./exp(ln_tau_E(m));
           }
         } else if (rw_fields) {
           for (int t = 0; t < n_t; t++)
             // PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
-            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E(m)))(epsilon_st.col(t)); // TODO FIXME ARRAY DELTA 
+            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E(m)))(epsilon_st.col(m).col(t));
           // jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
           // for (int t = 1; t < n_t; t++) {
           //   jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(t) - epsilon_st.col(t - 1));
           // }
           if (sim_re(1)) {
-            for (int t = 0; t < n_t; t++) { // untested!! // TODO FIXME ARRAY DELTA  all below:
-              vector<Type> epsilon_st_tmp(epsilon_st.rows());
+            for (int t = 0; t < n_t; t++) {
+              vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
               SIMULATE {GMRF(Q_st, s).simulate(epsilon_st_tmp);}
               epsilon_st_tmp *= 1./exp(ln_tau_E(m));
               if (t == 0) {
-                epsilon_st.col(0) = epsilon_st_tmp;
+                epsilon_st.col(m).col(0) = epsilon_st_tmp;
               } else {
-                epsilon_st.col(t) = epsilon_st.col(t-1) + epsilon_st_tmp;
+                epsilon_st.col(m).col(t) = epsilon_st.col(m).col(t-1) + epsilon_st_tmp;
               }
             }
           }
@@ -456,14 +456,14 @@ if (flag == 0) return jnll;
 
   // Here we are projecting the spatiotemporal and spatial random effects to the
   // locations of the data using the INLA 'A' matrices.
-  // TODO DELTA FIXME ARRAYS
+  // DELTA DONE
   array<Type> epsilon_st_A(A_st.rows(), n_t, n_m);
   for (int m = 0; m < n_m; m++)
-    for (int i = 0; i < n_t; i++)
-      epsilon_st_A.col(i) = A_st * vector<Type>(epsilon_st.col(i));
+    for (int t = 0; t < n_t; t++)
+      epsilon_st_A.col(m).col(t) = A_st * vector<Type>(epsilon_st.col(m).col(t));
   if (rw_fields) {
-    for (int i = 1; i < n_t; i++)
-      epsilon_st_A.col(i) = epsilon_st_A.col(i - 1) + epsilon_st_A.col(i);
+    for (int t = 1; t < n_t; i++)
+      epsilon_st_A.col(m).col(t) = epsilon_st_A.col(m).col(t - 1) + epsilon_st_A.col(m).col(t);
   }
 
   vector<Type> omega_s_A = A_st * omega_s;
@@ -473,9 +473,8 @@ if (flag == 0) return jnll;
   // ------------------ Linear predictor ---------------------------------------
 
   // DELTA DONE?
-  vector<Type> eta_fixed_i = X_ij * b_j.col;
   array<Type> eta_fixed_i(X_ij.rows(), n_m);
-  for (int m = 0; m < n_m; m++) eta_fixed_i.col(m) = X_ij * b_j.col(m); // TODO DELTA WORKS?
+  for (int m = 0; m < n_m; m++) eta_fixed_i.col(m) = X_ij * vector<Type>(b_j.col(m));
 
   // p-splines/smoothers
   array<Type> eta_smooth_i(X_ij.rows(), n_m);
@@ -490,9 +489,9 @@ if (flag == 0) return jnll;
           PARALLEL_REGION jnll -= dnorm(beta_s(j,m), Type(0), exp(ln_smooth_sigma(s,m)), true);
           if (sim_re(5)) SIMULATE{beta_s(j) = rnorm(Type(0), exp(ln_smooth_sigma(s,m)));}
         }
-        eta_smooth_i += Zs(s) * beta_s.col(m);
+        eta_smooth_i += Zs(s) * vector<Type>(beta_s.col(m));
       }
-      eta_smooth_i += Xs * bs.col(m);
+      eta_smooth_i += Xs * vector<Type>(bs.col(m));
     }
   }
 
@@ -534,7 +533,7 @@ if (flag == 0) return jnll;
 
       // Spatially varying effects:
       if (include_spatial) {
-        eta_i(i,m) += omega_s_A(i,m);  // spatial DELTA omega
+        eta_i(i,m) += omega_s_A(i,m);  // spatial omega
         if (spatial_covariate)
           eta_i(i,m) += zeta_s_A(i,m) * z_i(i); // spatially varying covariate DELTA
       }
@@ -574,14 +573,14 @@ if (flag == 0) return jnll;
       if (!sdmTMB::isNA(y_i(i,m))) {
         switch (family) {
           case gaussian_family:
-            tmp_ll = dnorm(y_i(i,m), mu_i(i), phi(m), true);
-            SIMULATE{y_i(i,m) = rnorm(mu_i(i), phi(m));}
+            tmp_ll = dnorm(y_i(i,m), mu_i(i,m), phi(m), true);
+            SIMULATE{y_i(i,m) = rnorm(mu_i(i,m), phi(m));}
             break;
           case tweedie_family:
             s1 = invlogit(thetaf) + Type(1.0);
             if (!sdmTMB::isNA(priors(12))) jnll -= dnorm(s1, priors(12), priors(13), true);
-            tmp_ll = dtweedie(y_i(i,m), mu_i(i), phi(m), s1, true);
-            SIMULATE{y_i(i,m) = rtweedie(mu_i(i), phi(m), s1);}
+            tmp_ll = dtweedie(y_i(i,m), mu_i(i,m), phi(m), s1, true);
+            SIMULATE{y_i(i,m) = rtweedie(mu_i(i,m), phi(m), s1);}
             break;
           case binomial_family:  // in logit space not inverse logit
             tmp_ll = dbinom_robust(y_i(i,m), size(i), mu_i(i,m), true);
@@ -601,7 +600,7 @@ if (flag == 0) return jnll;
             tmp_ll = dgamma(y_i(i,m), s1, s2, true);
             SIMULATE{y_i(i,m) = rgamma(s1, s2);}
             // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
-            // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i) / s1, true);
+            // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
             break;
           case nbinom2_family:
             s1 = log(mu_i(i,m)); // log(mu_i)
@@ -624,7 +623,7 @@ if (flag == 0) return jnll;
             SIMULATE{y_i(i,m) = sdmTMB::rtruncated_nbinom(asDouble(phi(m)), 0, asDouble(mu_i(i,m)));}
             break;
           case nbinom1_family:
-            s1 = log(mu_i(i),m);
+            s1 = log(mu_i(i,m));
             s2 = s1 + ln_phi(m);
             tmp_ll = dnbinom_robust(y_i(i,m), s1, s2, true);
             SIMULATE {y_i(i,m) = rnbinom2(mu_i(i,m), mu_i(i,m) * (Type(1) + phi(m)));}
