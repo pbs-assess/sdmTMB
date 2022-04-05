@@ -249,4 +249,10 @@ double rtruncated_nbinom(double alpha, int k, double mu) {
   }
 }
 
+template<class Type>
+Type calc_rf_sigma(Type ln_tau, Type ln_kappa) {
+  Type sigma = 1 / sqrt(Type(4.) * M_PI * exp(Type(2.) * ln_tau + Type(2.) * ln_kappa));
+  return sigma;
+}
+
 }  // namespace sdmTMB
