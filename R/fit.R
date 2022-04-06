@@ -893,13 +893,22 @@ sdmTMB <- function(
 
   # Mapping off params as needed:
   tmb_map <- list()
+  tmb_map$ln_phi <- rep(1, n_m)
   if (!anisotropy)
     tmb_map <- c(tmb_map, list(ln_H_input = factor(rep(NA, 2))))
   if (!ar1_fields)
     tmb_map <- c(tmb_map, list(ar1_phi = factor(rep(NA, n_m))))
-  if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson") && !delta)
-    tmb_map <- c(tmb_map, list(ln_phi = factor(rep(NA, n_m)))) # TODO delta
-  if (family$family[[1]] != "tweedie")  # TODO DELTA
+  if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson"))
+    tmb_map$ln_phi[1] <- factor(NA)
+  if (delta) {
+    if (family$family[[2]] %in% c("binomial", "poisson", "censored_poisson"))
+      tmb_map$ln_phi[2] <- factor(NA)
+    else
+      tmb_map$ln_phi[2] <- 2
+  }
+  tmb_map$ln_phi <- as.factor(tmb_map$ln_phi)
+
+  if (!"tweedie" %in% family$family)
     tmb_map <- c(tmb_map, list(thetaf = as.factor(NA)))
   if (spatial_only)
     tmb_map <- c(tmb_map, list(
@@ -1036,12 +1045,12 @@ sdmTMB <- function(
   data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL
   data$sdmTMB_X_ <- data$sdmTMB_Y_ <- NULL
 
-  if (delta) {
+  if (!tmb_data$has_smooths) {
     tmb_map <- c(tmb_map, list(b_smooth = factor(NA)))
     tmb_map <- c(tmb_map, list(bs = factor(NA)))
     tmb_map <- c(tmb_map, list(ln_smooth_sigma = factor(NA)))
-    tmb_map <- c(tmb_map, list(ln_phi = factor(c(NA, 1))))
   }
+
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     profile = if (control$profile) "b_j" else NULL,
