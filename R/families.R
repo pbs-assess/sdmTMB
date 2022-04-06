@@ -257,6 +257,8 @@ delta_truncated_nbinom1 <- function(link1 = "logit", link2 = "log") {
 #' \doi{10.1139/cjfas-2017-0266}
 #' @export
 delta_poisson_link_gamma <- function(link1 = "log", link2 = "log") {
-  .make_delta(link1, link2, family = c("binomial", "Gamma"),
+  out <- .make_delta(link1, link2, family = c("binomial", "Gamma"),
     valid_links = c("log", "log"))
+  out$type <- "poisson_link_delta"
+  out
 }

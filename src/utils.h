@@ -125,6 +125,7 @@ matrix<Type> MakeH(vector<Type> x) {
   return H;
 }
 
+// FIXME no longer needed!?
 template <class Type>
 vector<Type> RepeatVector(vector<Type> x, int times) {
   int n = x.size() * times;

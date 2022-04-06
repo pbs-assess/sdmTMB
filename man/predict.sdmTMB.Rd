@@ -7,6 +7,7 @@
 \method{predict}{sdmTMB}(
   object,
   newdata = object$data,
+  type = c("link", "response"),
   se_fit = FALSE,
   return_tmb_object = FALSE,
   area = 1,
@@ -27,6 +28,8 @@ frame with the same predictor columns as in the fitted data and a time
 column (if this is a spatiotemporal model) with the same name as in the
 fitted data. There should be predictor data for each year in the original
 data set.}
+
+\item{type}{Should the \code{est} column be in link (default) or response space?}
 
 \item{se_fit}{Should standard errors on predictions at the new locations
 given by \code{newdata} be calculated? Warning: the current implementation can

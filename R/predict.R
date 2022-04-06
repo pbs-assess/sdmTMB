@@ -13,6 +13,7 @@
 #'   column (if this is a spatiotemporal model) with the same name as in the
 #'   fitted data. There should be predictor data for each year in the original
 #'   data set.
+#' @param type Should the `est` column be in link (default) or response space?
 #' @param se_fit Should standard errors on predictions at the new locations
 #'   given by `newdata` be calculated? Warning: the current implementation can
 #'   be very slow for large data sets or high-resolution projections. A *much*
@@ -222,7 +223,9 @@
 #'   scale_fill_viridis_c(trans = "sqrt")
 #' }
 
-predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
+predict.sdmTMB <- function(object, newdata = object$data,
+  type = c("link", "response"),
+  se_fit = FALSE,
   return_tmb_object = FALSE,
   area = 1, re_form = NULL, re_form_iid = NULL, nsim = 0,
   sims = deprecated(), sims_var = "est", tmbstan_model = NULL, ...) {
@@ -246,6 +249,8 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
   } else {
     sims <- nsim
   }
+
+  type <- match.arg(type)
 
   n_orig <- suppressWarnings(TMB::openmp(NULL))
   if (n_orig > 0 && .Platform$OS.type == "unix") { # openMP is supported
@@ -312,17 +317,17 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
       stop("There is at least one NA value in the time column. ",
         "Please remove it.", call. = FALSE)
 
-    newdata$sdm_orig_id <- seq(1, nrow(newdata))
-    fake_newdata <- unique(newdata[,xy_cols])
-    fake_newdata[["sdm_spatial_id"]] <- seq(1, nrow(fake_newdata)) - 1L
-
-    newdata <- base::merge(newdata, fake_newdata, by = xy_cols,
-      all.x = TRUE, all.y = FALSE)
-    newdata <- newdata[order(newdata$sdm_orig_id),, drop = FALSE]
-
+    # newdata$sdm_orig_id <- seq(1, nrow(newdata))
+    # fake_newdata <- unique(newdata[,xy_cols])
+    # fake_newdata[["sdm_spatial_id"]] <- seq(1, nrow(fake_newdata)) - 1L
+    newdata$sdm_spatial_id <- seq(1, nrow(newdata)) # FIXME doing nothing now
+    #
+    # newdata <- base::merge(newdata, fake_newdata, by = xy_cols,
+    #   all.x = TRUE, all.y = FALSE)
+    # newdata <- newdata[order(newdata$sdm_orig_id),, drop = FALSE]
 
     proj_mesh <- INLA::inla.spde.make.A(object$spde$mesh,
-      loc = as.matrix(fake_newdata[,xy_cols, drop = FALSE]))
+      loc = as.matrix(newdata[,xy_cols, drop = FALSE]))
 
     # this formula has breakpt() etc. in it:
     thresh <- check_and_parse_thresh_params(object$formula, newdata)
@@ -375,7 +380,7 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     tmb_data$exclude_RE <- exclude_RE
     # tmb_data$calc_index_totals <- as.integer(!se_fit)
     # tmb_data$calc_cog <- as.integer(!se_fit)
-    tmb_data$proj_spatial_index <- newdata$sdm_spatial_id
+    tmb_data$proj_spatial_index <- newdata$sdm_spatial_id - 1L
     tmb_data$proj_Zs <- sm$Zs
     tmb_data$proj_Xs <- sm$Xs
     if (!is.null(object$spatial_varying)) {
@@ -455,12 +460,45 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     r <- new_tmb_obj$report(lp)
 
     if (isFALSE(pop_pred)) {
-      nd$est <- r$proj_eta
-      nd$est_non_rf <- r$proj_fe
-      nd$est_rf <- r$proj_rf
-      nd$omega_s <- r$proj_re_sp_st
-      nd$zeta_s <- r$proj_re_sp_slopes
-      nd$epsilon_st <- r$proj_re_st_vector
+      if (isTRUE(object$family$delta)) {
+        nd$est1 <- r$proj_eta[,1]
+        nd$est2 <- r$proj_eta[,2]
+        nd$est_non_rf1 <- r$proj_fe[,1]
+        nd$est_non_rf2 <- r$proj_fe[,2]
+        nd$est_rf1 <- r$proj_rf[,1]
+        nd$est_rf2 <- r$proj_rf[,2]
+        nd$omega_s1 <- r$proj_omega_s_A[,1]
+        nd$omega_s2 <- r$proj_omega_s_A[,2]
+        nd$zeta_s1 <- r$proj_zeta_s_A[,1]
+        nd$zeta_s2 <- r$proj_zeta_s_A[,2]
+        nd$epsilon_st1 <- r$proj_epsilon_st_A_vec[,1]
+        nd$epsilon_st2 <- r$proj_epsilon_st_A_vec[,2]
+        if (type == "response") {
+          nd$est1 <- object$family$linkinv[[1]](nd$est1)
+          nd$est2 <- object$family$linkinv[[2]](nd$est2)
+          if (object$tmb_data$poisson_link_delta) {
+            .n <- nd$est1 # expected group density (already exp())
+            .p <- 1 - exp(-.n) # expected encounter rate
+            .w <- nd$est2 # expected biomass per group (already exp())
+            .r <- (.n * .w) / .p # (n * w)/p # positive expectation
+            nd$est1 <- .p # expected encounter rate
+            nd$est2 <- .r # positive expectation
+            nd$est <- .n * .w # expected combined value
+          } else {
+            nd$est <- nd$est1 * nd$est2
+          }
+        }
+      } else {
+        nd$est <- r$proj_eta
+        nd$est_non_rf <- r$proj_fe
+        nd$est_rf <- r$proj_rf
+        nd$omega_s <- r$proj_omega_s_A
+        nd$zeta_s <- r$proj_zeta_s_A
+        nd$epsilon_st <- r$proj_epsilon_st_A_vec
+        if (type == "response") {
+          nd$est <- object$family$linkinv[[1]](nd$est)
+        }
+      }
     }
 
     nd$sdm_spatial_id <- NULL
@@ -500,6 +538,9 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
         "supply `newdata`. In the meantime you could supply your original data frame ",
         "to the `newdata` argument.", call. = FALSE)
     }
+    if (isTRUE(object$family$delta)) {
+      stop("Delta model prediction not implemented for `newdata = NULL` yet.", call. = FALSE)
+    }
     nd <- object$data
     lp <- object$tmb_obj$env$last.par.best
     # object$tmb_obj$fn(lp) # call once to update internal structures?
@@ -514,6 +555,23 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     nd$zeta_s <- r$zeta_s_A
     nd$epsilon_st <- r$epsilon_st_A_vec
     obj <- object
+  }
+
+  # clean up:
+  if (!object$tmb_data$include_spatial) {
+    nd$omega_s1 <- NULL
+    nd$omega_s2 <- NULL
+    nd$omega_s <- NULL
+  }
+  if (object$tmb_data$spatial_only) {
+    nd$epsilon_st1 <- NULL
+    nd$epsilon_st2 <- NULL
+    nd$epsilon_st <- NULL
+  }
+  if (!object$tmb_data$spatial_covariate) {
+    nd$zeta_s1 <- NULL
+    nd$zeta_s1 <- NULL
+    nd$zeta_s <- NULL
   }
 
   if (return_tmb_object)

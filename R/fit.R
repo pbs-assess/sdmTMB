@@ -840,7 +840,8 @@ sdmTMB <- function(
     est_epsilon_re = as.integer(est_epsilon_re),
     has_smooths = as.integer(sm$has_smooths),
     upr = upr,
-    lwr = lwr
+    lwr = lwr,
+    poisson_link_delta = as.integer(isTRUE(family$type == "poisson_link_delta"))
   )
 
   b_thresh <- rep(0, 2)
