@@ -1,5 +1,9 @@
 # sdmTMB
 
+# sdmTMB 0.0.22.9001
+
+* Switch to TMBad library for ~3-fold speedup(!)
+
 # sdmTMB 0.0.22.9000
 
 * Fix bug in predictions with `poly(..., raw = FALSE)` on newdata. #77
