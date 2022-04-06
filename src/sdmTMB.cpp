@@ -906,6 +906,17 @@ Type objective_function<Type>::operator()()
       if (calc_index_totals) {
         REPORT(link_total);
         ADREPORT(link_total);
+        ADREPORT(total);
+      }
+
+      // Low-rank sparse hessian bias-correction
+      PARAMETER_VECTOR(eps_index);
+      if (eps_index.size() > 0) {
+        Type S;
+        for (int t=0; t < n_t; t++) {
+          S = total(t); // Set lowrank tag on S = sum(exp(x))
+          jnll += eps_index(t) * S;
+        }
       }
       // PARAMETER_ARRAY(eps_total);
       // if (eps_total.size() > 0) {

@@ -94,35 +94,74 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   if (value_name[1] == "cog_x")
     tmb_data$calc_cog <- 1L
 
+  pars <- get_pars(obj$fit_obj)
+  eps_name <- "eps_index" # FIXME break out into function; add for COG?
+  pars[[eps_name]] <- numeric(0)
+
   new_obj <- TMB::MakeADFun(
     data = tmb_data,
-    parameters = get_pars(obj$fit_obj),
+    parameters = pars,
     map = obj$fit_obj$tmb_map,
     random = obj$fit_obj$tmb_random,
     DLL = "sdmTMB",
     silent = TRUE
   )
-  # need to initialize the new TMB object once?
-  # new_obj$fn(obj$fit_obj$model$par)
-  if ("ADreportIndex" %in% names(new_obj$env)) {
-    ind <- new_obj$env$ADreportIndex()
-    to_split <- as.vector(unlist(ind[value_name]))
+
+  sr <- TMB::sdreport(new_obj, bias.correct = FALSE, ...)
+  sr_est <- as.list(sr, "Estimate", report = TRUE)
+
+  if (bias_correct) {
+    if (value_name[1] == "cog_x") {
+      stop("Fast bias correction not yet fixed for COG.", call. = FALSE)
+    }
+    # extract and modify parameters
+    pars[[eps_name]] <- rep(0, length(sr_est$total))
+    fixed <- obj$fit_obj$model$par
+    new_values <- rep(0, length(sr_est$total))
+    names(new_values) <- rep(eps_name, length(new_values))
+    fixed <- c(fixed, new_values)
+
+    # FIXME from VAST: detect sparse + lowrank hessian ... appears to freeze with lowrank=FALSE
+    new_obj2 <- TMB::MakeADFun(
+      data = tmb_data,
+      parameters = pars,
+      map = obj$fit_obj$tmb_map,
+      random = obj$fit_obj$tmb_random,
+      DLL = "sdmTMB",
+      silent = TRUE
+    )
+    gradient <- new_obj2$gr(fixed)
+    corrected_vals <- gradient[names(fixed) == eps_name]
   } else {
-    to_split <- NULL
+    message("Bias correction is turned off. It is recommended to turn this on for final inference.")
   }
 
-  sr <- TMB::sdreport(new_obj, bias.correct = bias_correct,
-    bias.correct.control = list(sd = FALSE, split = to_split, nsplit = NULL), ...)
+  # # need to initialize the new TMB object once?
+  # # new_obj$fn(obj$fit_obj$model$par)
+  # if ("ADreportIndex" %in% names(new_obj$env)) {
+  #   ind <- new_obj$env$ADreportIndex()
+  #   to_split <- as.vector(unlist(ind[value_name]))
+  # } else {
+  #   to_split <- NULL
+  # }
+  #
+  # sr <- TMB::sdreport(new_obj, bias.correct = bias_correct,
+  #   bias.correct.control = list(sd = FALSE, split = to_split, nsplit = NULL), ...)
   conv <- get_convergence_diagnostics(sr)
   ssr <- summary(sr, "report")
   log_total <- ssr[row.names(ssr) %in% value_name, , drop = FALSE]
   row.names(log_total) <- NULL
   d <- as.data.frame(log_total)
-  if (bias_correct)
-    d <- d[,3:2,drop=FALSE]
+  # if (bias_correct)
+  #   d <- d[,3:2,drop=FALSE]
   time_name <- obj$fit_obj$time
   names(d) <- c("trans_est", "se")
-  d$est <- as.numeric(trans(d$trans_est))
+  if (bias_correct) {
+    d$trans_est <- log(corrected_vals)
+    d$est <- corrected_vals
+  } else {
+    d$est <- as.numeric(trans(d$trans_est))
+  }
   d$lwr <- as.numeric(trans(d$trans_est + stats::qnorm((1-level)/2) * d$se))
   d$upr <- as.numeric(trans(d$trans_est + stats::qnorm(1-(1-level)/2) * d$se))
   d[[time_name]] <- sort(unique(obj$fit_obj$data[[time_name]]))
