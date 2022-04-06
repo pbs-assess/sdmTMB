@@ -132,14 +132,6 @@ if (inla_installed()) {
   # fit to the simulated data:
   fit <- sdmTMB(observed ~ a1, data = sim_dat, mesh = mesh, time = "year")
   fit
-
-  # example supplying previous fit, simulating new random effects,
-  # and changing spatial SD (sigma_O) and observation error (phi):
-  sim_dat2 <- sdmTMB_simulate(
-    previous_fit = fit,
-    simulate_re = TRUE, phi = 0.04, sigma_O = 0.4
-  )
-  head(sim_dat2)
 }
 }
 \seealso{

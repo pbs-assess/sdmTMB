@@ -88,14 +88,14 @@
 #'   # fit to the simulated data:
 #'   fit <- sdmTMB(observed ~ a1, data = sim_dat, mesh = mesh, time = "year")
 #'   fit
-#'
-#'   # example supplying previous fit, simulating new random effects,
-#'   # and changing spatial SD (sigma_O) and observation error (phi):
-#'   sim_dat2 <- sdmTMB_simulate(
-#'     previous_fit = fit,
-#'     simulate_re = TRUE, phi = 0.04, sigma_O = 0.4
-#'   )
-#'   head(sim_dat2)
+#
+#   # example supplying previous fit, simulating new random effects,
+#   # and changing spatial SD (sigma_O) and observation error (phi):
+#   sim_dat2 <- sdmTMB_simulate(
+#     previous_fit = fit,
+#     simulate_re = TRUE, phi = 0.04, sigma_O = 0.4
+#   )
+#   head(sim_dat2)
 #' }
 sdmTMB_simulate <- function(formula,
                             data,
@@ -119,6 +119,7 @@ sdmTMB_simulate <- function(formula,
     stop("INLA must be installed to use this function.", call. = FALSE)
   }
 
+  if (!is.null(previous_fit)) stop("`previous_fit` is deprecated. See `simulate.sdmTMB()`", call. = FALSE)
   if (!is.null(previous_fit)) mesh <- previous_fit$spde
   if (!is.null(previous_fit)) data <- previous_fit$data
 
@@ -168,7 +169,8 @@ sdmTMB_simulate <- function(formula,
       formula = formula, data = data, mesh = mesh, time = time,
       family = family, do_fit = FALSE,
       share_range = length(range) == 1L,
-      experimental = list(sim_re = .sim_re), ...
+      # experimental = list(sim_re = .sim_re),
+      ...
     )
     params <- fit$tmb_params
   } else {
@@ -176,7 +178,8 @@ sdmTMB_simulate <- function(formula,
     params <- fit$tmb_obj$env$parList()
   }
   tmb_data <- fit$tmb_data
-  # tmb_data$sim_re <- as.integer(simulate_re)
+  tmb_data$sim_re <- as.integer(.sim_re)
+  # tmb_data$sim_re <- c(1L, 0L, 0L, 0L, 0L, 0L)
 
   if (!is.null(B)) {
     n_covariates <- length(B)

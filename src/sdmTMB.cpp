@@ -345,15 +345,18 @@ Type objective_function<Type>::operator()()
   }
 
   // Spatiotemporal random effects:
+  vector<Type> epsilon_st_tmp(epsilon_st.rows());
+  epsilon_st_tmp.setZero();
   if (!spatial_only) {
     if (!ar1_fields && !rw_fields) {
       for (int t = 0; t < n_t; t++)
         PARALLEL_REGION jnll += SCALE(GMRF(Q_st, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
       if (sim_re(1)) {
         for (int t = 0; t < n_t; t++) { // untested!!
-          vector<Type> epsilon_st_tmp(epsilon_st.rows());
-          SIMULATE {GMRF(Q_st, s).simulate(epsilon_st_tmp);}
-          epsilon_st.col(t) = epsilon_st_tmp / exp(ln_tau_E);
+          SIMULATE {
+            GMRF(Q_st, s).simulate(epsilon_st_tmp);
+            epsilon_st.col(t) = epsilon_st_tmp / exp(ln_tau_E_vec(t));
+          }
         }
       }
     } else {
@@ -381,8 +384,10 @@ Type objective_function<Type>::operator()()
         if (ar1_fields) {
           PARALLEL_REGION jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q_st, s)), 1./exp(ln_tau_E))(epsilon_st);
           if (sim_re(1)) {
-            SIMULATE {SEPARABLE(AR1(rho), GMRF(Q_st, s)).simulate(epsilon_st);}
-            epsilon_st *= 1./exp(ln_tau_E);
+            SIMULATE {
+              SEPARABLE(AR1(rho), GMRF(Q_st, s)).simulate(epsilon_st);
+              epsilon_st *= 1./exp(ln_tau_E);
+            }
           }
         } else if (rw_fields) {
           for (int t = 0; t < n_t; t++)
@@ -393,13 +398,14 @@ Type objective_function<Type>::operator()()
           // }
           if (sim_re(1)) {
             for (int t = 0; t < n_t; t++) { // untested!!
-              vector<Type> epsilon_st_tmp(epsilon_st.rows());
-              SIMULATE {GMRF(Q_st, s).simulate(epsilon_st_tmp);}
-              epsilon_st_tmp *= 1./exp(ln_tau_E);
-              if (t == 0) {
-                epsilon_st.col(0) = epsilon_st_tmp;
-              } else {
-                epsilon_st.col(t) = epsilon_st.col(t-1) + epsilon_st_tmp;
+              SIMULATE {
+                GMRF(Q_st, s).simulate(epsilon_st_tmp);
+                epsilon_st_tmp *= 1./exp(ln_tau_E);
+                if (t == 0) {
+                  epsilon_st.col(0) = epsilon_st_tmp;
+                } else {
+                  epsilon_st.col(t) = epsilon_st.col(t-1) + epsilon_st_tmp;
+                }
               }
             }
           }
