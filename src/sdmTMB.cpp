@@ -577,9 +577,18 @@ Type objective_function<Type>::operator()()
       }
       eta_i(i,m) += eta_iid_re_i(i,m);
 
+      bool poisson_link_delta = false;
+      if (n_m > 1) if (family(0) == 1 && family(1) == 4 && link(0) == 1 && link(1) == 1)
+          poisson_link_delta = true;
+
       if (family(m) == 1 && link(m) == 2) {
         // binomial(link = "logit"); don't touch (using robust density function in logit space)
         mu_i(i,m) = eta_i(i,m);
+      } else if (poisson_link_delta) { // clogog, but put in logit space for robust density function:
+        Type n = exp(eta_i(i,0)); 
+        Type p = 1 - exp(-n);
+        if (m == 0) mu_i(i,0) = logit(p);
+        if (m == 1) mu_i(i,1) = (n/p) * exp(eta_i(i,1));
       } else {
         mu_i(i,m) = InverseLink(eta_i(i,m), link(m));
       }
@@ -610,7 +619,8 @@ Type objective_function<Type>::operator()()
             break;
           case binomial_family:  // in logit space not inverse logit
             tmp_ll = dbinom_robust(y_i(i,m), size(i), mu_i(i,m), true);
-            SIMULATE{y_i(i,m) = rbinom(size(i), InverseLink(mu_i(i,m), link(m)));}
+            // SIMULATE{y_i(i,m) = rbinom(size(i), InverseLink(mu_i(i,m), link(m)));}
+            SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));} // FIXME hardcoded invlogit
             break;
           case poisson_family:
             tmp_ll = dpois(y_i(i,m), mu_i(i,m), true);
@@ -621,7 +631,7 @@ Type objective_function<Type>::operator()()
             SIMULATE{y_i(i,m) = rpois(mu_i(i,m));}
             break;
           case Gamma_family:
-            s1 = exp(ln_phi(m));         // shape
+            s1 = exp(ln_phi(m));        // shape
             s2 = mu_i(i,m) / s1;        // scale
             tmp_ll = dgamma(y_i(i,m), s1, s2, true);
             SIMULATE{y_i(i,m) = rgamma(s1, s2);}

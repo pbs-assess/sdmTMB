@@ -404,10 +404,10 @@ sdmTMB <- function(
   fields = deprecated(),
   include_spatial = deprecated(),
   spde = deprecated(),
-  delta = FALSE,
   ...
   ) {
 
+  delta <- isTRUE(family$delta)
   sp_len <- length(spatiotemporal)
   spatiotemporal <- match.arg(tolower(as.character(spatiotemporal[[1]])),
     choices = c("iid", "ar1", "rw", "off", "true", "false"))
@@ -542,7 +542,7 @@ sdmTMB <- function(
     warning("`length(map) != length(start)`. You likely want to specify ",
       "`start` values if you are setting the `map` argument.", call. = FALSE)
   }
-  if (family$family == "censored_poisson") {
+  if (family$family[1] == "censored_poisson") {
     assert_that("lwr" %in% names(experimental) && "upr" %in% names(experimental),
       msg = "`lwr` and `upr` must be specified in `experimental` as elements of a named list to use the censored Poisson likelihood.")
     assert_that(length(lwr) == nrow(data) && length(upr) == nrow(data))
@@ -625,7 +625,7 @@ sdmTMB <- function(
 
   offset_pos <- grep("^offset$", colnames(X_ij))
   y_i <- model.response(mf, "numeric")
-  if (family$family %in% c("Gamma", "lognormal") && min(y_i) <= 0) {
+  if (family$family[1] %in% c("Gamma", "lognormal") && min(y_i) <= 0 && !delta) {
     stop("Gamma and lognormal must have response values > 0.", call. = FALSE)
   }
 
@@ -636,7 +636,7 @@ sdmTMB <- function(
   # (yobs, weights) could be (proportions, size)
   # On the C++ side 'yobs' must be the number of successes.
   size <- rep(1, nrow(X_ij)) # for non-binomial case
-  if (identical(family$family, "binomial")) {
+  if (identical(family$family[1], "binomial") && !delta) {
     ## call this to catch the factor / matrix cases
     y_i <- model.response(mf, type = "any")
     if (is.factor(y_i)) {
@@ -669,7 +669,7 @@ sdmTMB <- function(
   #       "that any spline terms are properly accounted for."))
   # }
 
-  if (identical(family$link, "log") && min(y_i, na.rm = TRUE) < 0) {
+  if (identical(family$link[1], "log") && min(y_i, na.rm = TRUE) < 0 && !delta) {
     stop("`link = 'log'` but the reponse data include values < 0.", call. = FALSE)
   }
 
@@ -701,7 +701,7 @@ sdmTMB <- function(
     warning("Using a barrier mesh; therefore, anistropy will be disabled.", call. = FALSE)
     anisotropy <- FALSE
   }
-  df <- if (family$family == "student" && "df" %in% names(family)) family$df else 3
+  df <- if (family$family[1] == "student" && "df" %in% names(family)) family$df else 3
 
   est_epsilon_model <- 0L
   epsilon_covariate <- rep(0, length(unique(data[[time]])))
@@ -764,13 +764,6 @@ sdmTMB <- function(
   } else {
     Sigma <- as.matrix(priors_b[, -1])
     priors_b_Sigma <- as.matrix(Sigma[not_na, not_na])
-  }
-
-  # TODO DELTA TEMP
-  if (delta) {
-    family <- list()
-    family$family <- c("binomial", "Gamma")
-    family$link <- c("logit", "log")
   }
 
   if (!"A_st" %in% names(spde)) stop("`mesh` was created with an old version of `make_mesh()`.", call. = FALSE)
@@ -1030,7 +1023,9 @@ sdmTMB <- function(
   if (!is.null(previous_fit)) tmb_map <- previous_fit$tmb_map
   if (isTRUE(map_rf)) tmb_map <- map_off_rf(tmb_map, tmb_params)
   tmb_map <- c(map, tmb_map)
-  if (share_range) tmb_map <- c(tmb_map, list(ln_kappa = factor(c(1L, 1L, 1L, 1L))))
+
+  if (share_range && !delta) tmb_map <- c(tmb_map, list(ln_kappa = as.factor(rep(1, length(tmb_params$ln_kappa)))))
+  if (share_range && delta) tmb_map <- c(tmb_map, list(ln_kappa = as.factor(c(1, 1, 2, 2))))
 
   for (i in seq_along(start)) {
     message("Initiating ", names(start)[i],
