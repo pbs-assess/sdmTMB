@@ -75,13 +75,17 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   est <- c(est, est_rep)
 
   # not ADREPORTed for speed:
-  est$sigma_E <- exp(est$log_sigma_E)
-  est$sigma_O <- exp(est$log_sigma_O)
-  est$sigma_Z <- exp(est$log_sigma_Z)
-  est$range <- exp(est$log_range)
-  est$phi <- exp(est$ln_phi)
-  est$sigma_G <- exp(est$ln_tau_G)
-  est$sigma_V <- exp(est$ln_tau_V)
+  optional_assign <- function(est, from, to) {
+    if (from %in% names(est)) est[[to]] <- exp(est[[from]])
+    est
+  }
+  est <- optional_assign(est, "log_sigma_E", "sigma_E")
+  est <- optional_assign(est, "log_sigma_O", "sigma_O")
+  est <- optional_assign(est, "log_sigma_Z", "sigma_Z")
+  est <- optional_assign(est, "log_range", "range")
+  est <- optional_assign(est, "ln_phi", "phi")
+  est <- optional_assign(est, "ln_tau_G", "sigma_G")
+  est <- optional_assign(est, "ln_tau_V", "sigma_V")
 
   ii <- 1
   if (length(unique(est$sigma_E)) == 1L) {
@@ -116,7 +120,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   }
   if (length(est$ln_tau_G) > 0L) {
     log_name <- c(log_name, "ln_tau_G")
-    name <- c(name, "tau_G")
+    name <- c(name, "sigma_G")
   }
 
   j <- 0
