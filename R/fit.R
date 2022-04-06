@@ -404,6 +404,7 @@ sdmTMB <- function(
   fields = deprecated(),
   include_spatial = deprecated(),
   spde = deprecated(),
+  delta = FALSE,
   ...
   ) {
 
@@ -765,9 +766,19 @@ sdmTMB <- function(
     priors_b_Sigma <- as.matrix(Sigma[not_na, not_na])
   }
 
+  # TODO DELTA TEMP
+  if (delta) {
+    family <- list()
+    family$family <- c("binomial", "Gamma")
+    family$link <- c("logit", "log")
+  }
+
   if (!"A_st" %in% names(spde)) stop("`mesh` was created with an old version of `make_mesh()`.", call. = FALSE)
+  # TODO DELTA:
+  if (delta) y_i <- cbind(ifelse(y_i > 0, 1, 0), ifelse(y_i > 0, y_i, NA_real_))
+  if (!delta) y_i <- matrix(y_i, ncol = 1L)
   tmb_data <- list(
-    y_i        = c(y_i),
+    y_i        = y_i,
     n_t        = length(unique(data[[time]])),
     z_i        = z_i,
     offset_i   = offset,
@@ -842,31 +853,35 @@ sdmTMB <- function(
   b_thresh <- rep(0, 2)
   if (thresh$threshold_func == 2L) b_thresh <- c(0, b_thresh) # logistic
 
+
+  # TODO DELTA
+  n_m <- if (isTRUE(delta)) 2L else 1L
+
   tmb_params <- list(
     ln_H_input = c(0, 0),
-    b_j        = rep(0, ncol(X_ij)),
-    bs         = rep(0, if (sm$has_smooths) ncol(sm$Xs) else 0),
-    ln_tau_O   = 0,
-    ln_tau_Z = 0,
-    ln_tau_E   = 0,
-    ln_kappa   = rep(0, 2),
+    b_j        = matrix(0, ncol(X_ij), n_m),
+    bs         = if (sm$has_smooths) matrix(0, nrow = ncol(sm$Xs), ncol = n_m) else array(0),
+    ln_tau_O   = rep(0, n_m),
+    ln_tau_Z = rep(0, n_m),
+    ln_tau_E   = rep(0, n_m),
+    ln_kappa   = matrix(0, 2L, n_m),
     # ln_kappa   = rep(log(sqrt(8) / median(stats::dist(spde$mesh$loc))), 2),
     thetaf     = 0,
-    ln_phi     = 0,
-    ln_tau_V   = rep(0, ncol(X_rw_ik)),
-    ar1_phi    = 0,
-    ln_tau_G   = rep(0, ncol(RE_indexes)),
-    RE         = rep(0, sum(nobs_RE)),
-    b_rw_t     = matrix(0, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)),
-    omega_s    = rep(0, n_s),
-    zeta_s    = rep(0, n_s),
-    epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t),
+    ln_phi     = rep(0, n_m),
+    ln_tau_V   = matrix(0, ncol(X_rw_ik), n_m),
+    ar1_phi    = rep(0, n_m),
+    ln_tau_G   = matrix(0, ncol(RE_indexes), n_m),
+    RE         = matrix(0, sum(nobs_RE), n_m),
+    b_rw_t     = array(0, dim = c(tmb_data$n_t, ncol(X_rw_ik), n_m)),
+    omega_s    = matrix(0, n_s, n_m),
+    zeta_s    = matrix(0, n_s, n_m),
+    epsilon_st = array(0, dim = c(n_s, tmb_data$n_t, n_m)),
     b_threshold = b_thresh,
-    b_epsilon = 0,
-    ln_epsilon_re_sigma = 0,
-    epsilon_re = rep(0, tmb_data$n_t),
-    b_smooth = rep(0, if (sm$has_smooths) sum(sm$sm_dims) else 0),
-    ln_smooth_sigma = rep(0, if (sm$has_smooths) length(sm$sm_dims) else 0)
+    # b_epsilon = 0,
+    # ln_epsilon_re_sigma = 0,
+    # epsilon_re = rep(0, tmb_data$n_t),
+    b_smooth = if (sm$has_smooths) matrix(0, sum(sm$sm_dims), n_m) else array(0),
+    ln_smooth_sigma = if (sm$has_smooths) matrix(0, length(sm$sm_dims), n_m) else array(0)
   )
   if (identical(family$link, "inverse") && family$family %in% c("Gamma", "gaussian", "student")) {
     fam <- family
@@ -881,47 +896,46 @@ sdmTMB <- function(
   if (!anisotropy)
     tmb_map <- c(tmb_map, list(ln_H_input = factor(rep(NA, 2))))
   if (!ar1_fields)
-    tmb_map <- c(tmb_map, list(ar1_phi = as.factor(NA)))
-  if (family$family %in% c("binomial", "poisson", "censored_poisson"))
-    tmb_map <- c(tmb_map, list(ln_phi = as.factor(NA)))
-  if (family$family != "tweedie")
+    tmb_map <- c(tmb_map, list(ar1_phi = factor(rep(NA, n_m))))
+  if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson") && !delta)
+    tmb_map <- c(tmb_map, list(ln_phi = factor(rep(NA, n_m)))) # TODO delta
+  if (family$family[[1]] != "tweedie")  # TODO DELTA
     tmb_map <- c(tmb_map, list(thetaf = as.factor(NA)))
   if (spatial_only)
     tmb_map <- c(tmb_map, list(
-      ln_tau_E   = as.factor(NA),
+      ln_tau_E   = factor(rep(NA, n_m)),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
+  if (delta && contains_offset) stop("Offsets not implemented with delta model yet!") # TODO DELTA
   if (contains_offset) { # fix offset param to 1 to be an offset:
     b_j_map <- seq_along(tmb_params$b_j)
     b_j_map[offset_pos] <- NA
     tmb_map <- c(tmb_map, list(b_j = as.factor(b_j_map)))
   }
 
+  if (delta && !is.null(thresh$threshold_parameter)) stop("Offsets not implemented with threshold models yet!") # TODO DELTA
   if (is.null(thresh$threshold_parameter)) {
     tmb_map <- c(tmb_map, list(b_threshold = factor(rep(NA, 2))))
   }
 
-  # optional models on spatiotemporal sd parameter
-  if (est_epsilon_re == 0L) {
-    tmb_map <- c(tmb_map, list(ln_epsilon_re_sigma = as.factor(NA),
-      epsilon_re = factor(rep(NA, tmb_data$n_t))))
-  }
-  if (est_epsilon_model == 0L) {
-    tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
-  }
-  if (est_epsilon_slope == 0L) {
-    tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
-  }
+##  # optional models on spatiotemporal sd parameter
+##  if (est_epsilon_re == 0L) {
+##    tmb_map <- c(tmb_map, list(ln_epsilon_re_sigma = as.factor(NA),
+##      epsilon_re = factor(rep(NA, tmb_data$n_t))))
+##  }
+##  if (est_epsilon_model == 0L) {
+##    tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
+##  }
 
   if (multiphase && is.null(previous_fit) && do_fit) {
     not_phase1 <- c(tmb_map, list(
-      ln_tau_O   = as.factor(NA),
-      ln_tau_E   = as.factor(NA),
-      ln_tau_V   = factor(rep(NA, ncol(X_rw_ik))),
+      ln_tau_O   = factor(rep(NA, n_m)),
+      ln_tau_E   = factor(rep(NA, n_m)),
+      ln_tau_V   = factor(rep(NA, length(tmb_params$ln_tau_V))),
       ln_tau_G   = factor(rep(NA, length(tmb_params$ln_tau_G))),
-      ln_tau_Z   = as.factor(NA),
+      ln_tau_Z   = factor(rep(NA, length(tmb_params$ln_tau_Z))),
       zeta_s     = factor(rep(NA, length(tmb_params$zeta_s))),
-      ln_kappa   = factor(rep(NA, 2)),
+      ln_kappa   = factor(rep(NA, length(tmb_params$ln_kappa))),
       ln_H_input = factor(rep(NA, 2)),
       b_rw_t     = factor(rep(NA, length(tmb_params$b_rw_t))),
       RE         = factor(rep(NA, length(tmb_params$RE))),
@@ -940,15 +954,15 @@ sdmTMB <- function(
       lower = lim$lower, upper = lim$upper,
       gradient = tmb_obj1$gr, control = .control)
 
-    # Set starting values based on phase 1:
-    if (isFALSE(contains_offset))
-      tmb_params$b_j <- set_par_value(tmb_opt1, "b_j")
-    else
-      tmb_params$b_j[-offset_pos] <- set_par_value(tmb_opt1, "b_j")
+##    # Set starting values based on phase 1:
+##    if (isFALSE(contains_offset))
+##      tmb_params$b_j <- set_par_value(tmb_opt1, "b_j") # TODO DELTA
+##    else
+##      tmb_params$b_j[-offset_pos] <- set_par_value(tmb_opt1, "b_j") # TODO DELTA
 
-    if (family$family == "tweedie")
+    if (family$family[[1]] == "tweedie")
       tmb_params$thetaf <- set_par_value(tmb_opt1, "thetaf")
-    if (!family$family %in% c("binomial", "poisson", "censored_poisson"))  # no dispersion param
+    if (!family$family[[1]] %in% c("binomial", "poisson", "censored_poisson") && !delta)  # no dispersion param
       tmb_params$ln_phi <- set_par_value(tmb_opt1, "ln_phi")
   }
 
@@ -967,27 +981,27 @@ sdmTMB <- function(
 
   if (!include_spatial) {
     tmb_map <- c(tmb_map, list(
-      ln_tau_O = as.factor(NA),
+      ln_tau_O = factor(rep(NA, n_m)),
       omega_s  = factor(rep(NA, length(tmb_params$omega_s)))))
   }
   if (is.null(spatial_varying)) {
     tmb_map <- c(tmb_map, list(
-      ln_tau_Z = as.factor(NA),
+      ln_tau_Z = factor(rep(NA, n_m)),
       zeta_s = factor(rep(NA, length(tmb_params$zeta_s)))))
   }
   if (is.null(time_varying))
     tmb_map <- c(tmb_map,
-      list(b_rw_t = as.factor(matrix(NA, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)))),
-      list(ln_tau_V = as.factor(NA))
+      list(b_rw_t = factor(rep(NA, length(tmb_params$b_rw_t)))),
+      list(ln_tau_V = factor(rep(NA, n_m)))
     )
 
   if (nobs_RE[[1]] > 0) tmb_random <- c(tmb_random, "RE")
   if (reml) tmb_random <- c(tmb_random, "b_j")
 
-  if (est_epsilon_model >= 2) {
-    # model 2 = re model, model 3 = loglinear-re
-    tmb_random <- c(tmb_random, "epsilon_rw")
-  }
+##  if (est_epsilon_model >= 2) {
+##    # model 2 = re model, model 3 = loglinear-re
+##    tmb_random <- c(tmb_random, "epsilon_rw")
+##  }
 
   if (sm$has_smooths) {
     tmb_random <- c(tmb_random, "b_smooth") # smooth random effects
@@ -1007,13 +1021,14 @@ sdmTMB <- function(
   if (!is.null(previous_fit)) tmb_map <- previous_fit$tmb_map
   if (isTRUE(map_rf)) tmb_map <- map_off_rf(tmb_map, tmb_params)
   tmb_map <- c(map, tmb_map)
-  if (share_range) tmb_map <- c(tmb_map, list(ln_kappa = factor(c(1L, 1L))))
+  if (share_range) tmb_map <- c(tmb_map, list(ln_kappa = factor(c(1L, 1L, 1L, 1L))))
 
   for (i in seq_along(start)) {
     message("Initiating ", names(start)[i],
       " at specified starting value of ", start[[i]], ".")
     tmb_params[[names(start)[i]]] <- start[[i]]
   }
+  # TODO DELTA:
   if (length(tmb_params[["ln_kappa"]]) != 2L && "ln_kappa" %in% names(start)) {
     stop("Note that ln_kappa must be a vector of length 2. It should be the same value if `share_range = TRUE`.", call. = FALSE)
   }
@@ -1021,12 +1036,19 @@ sdmTMB <- function(
   data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL
   data$sdmTMB_X_ <- data$sdmTMB_Y_ <- NULL
 
+  if (delta) {
+    tmb_map <- c(tmb_map, list(b_smooth = factor(NA)))
+    tmb_map <- c(tmb_map, list(bs = factor(NA)))
+    tmb_map <- c(tmb_map, list(ln_smooth_sigma = factor(NA)))
+    tmb_map <- c(tmb_map, list(ln_phi = factor(c(NA, 1))))
+  }
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     profile = if (control$profile) "b_j" else NULL,
     random = tmb_random, DLL = "sdmTMB", silent = silent)
   lim <- set_limits(tmb_obj, lower = lower, upper = upper,
     loc = spde$mesh$loc, silent = FALSE)
+
 
   out_structure <- structure(list(
     data       = data,
