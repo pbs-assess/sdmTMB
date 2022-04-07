@@ -245,10 +245,10 @@ print_footer <- function(x) {
 print.sdmTMB <- function(x, ...) {
   delta <- isTRUE(x$family$delta)
   print_header(x)
-  if (delta) cat("\nComponent delta/hurdle models:\n\n")
+  if (delta) cat("\nDelta/hurdle model 1: -----------------------------------\n")
   print_one_model(x, 1)
   if (delta) {
-    cat("\n")
+    cat("\nDelta/hurdle model 2: -----------------------------------\n")
     print_one_model(x, 2)
   }
   if (delta) cat("\n")
