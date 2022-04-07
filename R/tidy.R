@@ -8,6 +8,7 @@
 #' @param conf.level Confidence level for CI.
 #' @param exponentiate Whether to exponentiate the fixed-effect coefficient
 #'   estimates and confidence intervals.
+#' @param model Which model to tidy if a delta model (1 or 2).
 #' @param ... Extra arguments (not used).
 #'
 #' @return A data frame
@@ -22,7 +23,7 @@
 #' @importFrom stats plogis
 #' @examples
 #' # See ?sdmTMB
-tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
+tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
                  conf.int = FALSE, conf.level = 0.95, exponentiate = FALSE, ...) {
   effects <- match.arg(effects)
   assert_that(is.logical(exponentiate))
@@ -46,12 +47,18 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   b_j <- est$b_j[!fe_names == "offset"]
   b_j_se <- se$b_j[!fe_names == "offset"]
   fe_names <- fe_names[!fe_names == "offset"]
-  out <- data.frame(term = fe_names, estimate = b_j, std.error = b_j_se, stringsAsFactors = FALSE)
+  out <- data.frame(term = fe_names, estimate = b_j[model], std.error = b_j_se[model], stringsAsFactors = FALSE)
   crit <- stats::qnorm(1 - (1 - conf.level) / 2)
   if (exponentiate) trans <- exp else trans <- I
   if (exponentiate) out$estimate <- trans(out$estimate)
 
+  delta <- isTRUE(x$family$delta)
+  assert_that(is.numeric(model))
+  if (delta) assert_that(model %in% c(1, 2), msg = "`model` must be 1 or 2.")
+  if (!delta) assert_that(model == 1, msg = "Only one model: `model` must be 1.")
+
   if (x$tmb_data$threshold_func > 0) {
+    if (delta) stop("not implemented for threshold delta models yet.")
     if (x$threshold_function == 1L) {
       par_name <- paste0(x$threshold_parameter, c("-slope", "-breakpt"))
     } else {
@@ -73,15 +80,53 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
 
   se <- c(se, se_rep)
   est <- c(est, est_rep)
+  # cleanup:
+  est$epsilon_st <- NULL
+  est$zeta_s <- NULL
+  est$omega_s <- NULL
+  est$ln_H_input <- NULL
+
+  se$epsilon_st <- NULL
+  se$zeta_s <- NULL
+  se$omega_s <- NULL
+  se$ln_H_input <- NULL
+
+  subset_pars <- function(p, model) {
+    p$b_j <- p$b_j[,model]
+    p$ln_tau_O <- p$ln_tau_O[model]
+    p$ln_tau_Z <- p$ln_tau_Z[model]
+    p$ln_tau_E <- p$ln_tau_E[model]
+    p$ln_kappa <- p$ln_kappa[,model]
+    p$ln_phi <- p$ln_phi[model]
+    p$ln_tau_V <- p$ln_tau_V[,model]
+    p$ar1_phi <- p$ar1_phi[model]
+    p$ln_tau_G <- p$ln_tau_G[,model]
+    p$log_sigma_O <- p$log_sigma_O[model]
+    p$log_sigma_E <- p$log_sigma_E[model]
+    p$log_sigma_Z <- p$log_sigma_Z[model]
+    p$log_range <- p$log_range[,model]
+    p
+  }
+  est <- subset_pars(est, model)
+  se <- subset_pars(se, model)
+
+  if (x$family$family[[model]] %in% c("binomial", "poisson")) {
+    se$ln_phi <- NULL
+    est$ln_phi <- NULL
+  }
 
   # not ADREPORTed for speed:
-  est$sigma_E <- exp(est$log_sigma_E)
-  est$sigma_O <- exp(est$log_sigma_O)
-  est$sigma_Z <- exp(est$log_sigma_Z)
-  est$range <- exp(est$log_range)
-  est$phi <- exp(est$ln_phi)
-  est$sigma_G <- exp(est$ln_tau_G)
-  est$sigma_V <- exp(est$ln_tau_V)
+  optional_assign <- function(est, from, to) {
+    if (from %in% names(est)) est[[to]] <- exp(est[[from]])
+    est
+  }
+  est <- optional_assign(est, "log_sigma_E", "sigma_E")
+  est <- optional_assign(est, "log_sigma_O", "sigma_O")
+  est <- optional_assign(est, "log_sigma_Z", "sigma_Z")
+  est <- optional_assign(est, "log_range", "range")
+  est <- optional_assign(est, "ln_phi", "phi")
+  est <- optional_assign(est, "ln_tau_G", "sigma_G")
+  est <- optional_assign(est, "ln_tau_V", "sigma_V")
 
   ii <- 1
   if (length(unique(est$sigma_E)) == 1L) {
@@ -116,7 +161,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   }
   if (length(est$ln_tau_G) > 0L) {
     log_name <- c(log_name, "ln_tau_G")
-    name <- c(name, "tau_G")
+    name <- c(name, "sigma_G")
   }
 
   j <- 0
@@ -144,7 +189,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   discard <- unlist(lapply(out_re, function(x) length(x) == 1L)) # e.g. old models and phi
   out_re[discard] <- NULL
 
-  if (x$family$family == "tweedie") {
+  if ("tweedie" %in% x$family$family) {
     out_re$tweedie_p <- data.frame(
       term = "tweedie_p", estimate = plogis(est$thetaf) + 1,
       std.error = NA, stringsAsFactors = FALSE)

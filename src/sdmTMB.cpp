@@ -257,10 +257,12 @@ Type objective_function<Type>::operator()()
 
   // DELTA DONE
   // Matern:
-  matrix<Type> range(2,n_m);
-  for (int m = 0; m < n_m; m++)
-    for (int r = 0; r < 1; r++)
+  array<Type> range(2,n_m);
+  for (int m = 0; m < n_m; m++) {
+    for (int r = 0; r < 2; r++) {
       range(r,m) = sqrt(Type(8.)) / exp(ln_kappa(r,m));
+    }
+  }
 
   // DELTA DONE
   vector<Type> sigma_O(n_m);
@@ -1000,6 +1002,17 @@ Type objective_function<Type>::operator()()
   //  }
 
   // FIXME save memory by not reporting all these or optionally so for MVN/Bayes?
+
+
+  array<Type> log_range(range.rows(),range.cols()); // for SE
+  for (int i = 0; i < range.rows(); i++) {
+    for (int m = 0; m < range.cols(); m++) {
+      log_range(i,m) = log(range(i,m));
+    }
+  }
+
+
+  // array<Type> log_range = log(range);
   vector<Type> log_sigma_E = log(sigma_E);
   ADREPORT(log_sigma_E);      // log spatio-temporal SD
   REPORT(sigma_E);      // spatio-temporal SD
@@ -1014,8 +1027,8 @@ Type objective_function<Type>::operator()()
   REPORT(eta_iid_re_i); // IID intercept random effect estimates
   REPORT(rho);          // AR1 correlation in -1 to 1 space
   REPORT(range);        // Matern approximate distance at 10% correlation
-  // matrix<Type> log_range = log(range); // for SE // TODO DELTA FIXME
-  // ADREPORT(log_range);  // log Matern approximate distance at 10% correlation // TODO DELTA FIXME
+  REPORT(log_range);  // log Matern approximate distance at 10% correlation
+  ADREPORT(log_range);  // log Matern approximate distance at 10% correlation
   REPORT(b_smooth);     // smooth coefficients for penalized splines
   REPORT(ln_smooth_sigma); // standard deviations of smooth random effects, in log-space
   SIMULATE {

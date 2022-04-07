@@ -7,6 +7,7 @@
 \method{tidy}{sdmTMB}(
   x,
   effects = c("fixed", "ran_pars"),
+  model = 1,
   conf.int = FALSE,
   conf.level = 0.95,
   exponentiate = FALSE,
@@ -19,6 +20,8 @@
 \item{effects}{A character vector including one or more of "fixed"
 (fixed-effect parameters), "ran_pars" (standard deviations, spatial range,
 and other random effect terms).}
+
+\item{model}{Which model to tidy if a delta model (1 or 2).}
 
 \item{conf.int}{Include a confidence interval?}
 
