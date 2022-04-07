@@ -366,20 +366,20 @@ Type objective_function<Type>::operator()()
       }
       PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_O(m)))(omega_s.col(m));
       if (sim_re(0)) {
-        // TODO DELTA
-        // SIMULATE {
-        //   GMRF(Q_temp, s).simulate(omega_s.col(m));
-        //   omega_s.col(m) *= 1. / exp(ln_tau_O(m));
-        // }
+        vector<Type> omega_s_tmp(omega_s.rows());
+        SIMULATE {
+          GMRF(Q_temp, s).simulate(omega_s_tmp);
+          omega_s.col(m) = omega_s_tmp / exp(ln_tau_O(m));
+        }
       }
       if (spatial_covariate) {
         PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_Z(m)))(zeta_s.col(m));
         if (sim_re(3)) {
-          // TODO DELTA
-          //          SIMULATE {
-          //            GMRF(Q_s, s).simulate(zeta_s.col(m));
-          //            zeta_s.col(m) *= 1. / exp(ln_tau_Z(m));
-          //          }
+          vector<Type> zeta_s_tmp(zeta_s.rows());
+          SIMULATE {
+            GMRF(Q_s, s).simulate(zeta_s_tmp);
+            zeta_s.col(m) = zeta_s_tmp / exp(ln_tau_Z(m));
+          }
         }
       }
     }
@@ -401,19 +401,18 @@ Type objective_function<Type>::operator()()
           PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E(m)))(epsilon_st.col(m).col(t));
         if (sim_re(1)) {
           for (int t = 0; t < n_t; t++) {
-            // TODO DELTA
-            // vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
-            // SIMULATE {GMRF(Q_temp, s).simulate(epsilon_st_tmp);}
-            // epsilon_st.col(m).col(t) = epsilon_st_tmp / exp(ln_tau_E(m));
+            vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
+            SIMULATE {GMRF(Q_temp, s).simulate(epsilon_st_tmp);
+            epsilon_st.col(m).col(t) = epsilon_st_tmp / exp(ln_tau_E(m));}
           }
         }
       } else {
         if (ar1_fields) {
           PARALLEL_REGION jnll += SCALE(SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)), 1./exp(ln_tau_E(m)))(epsilon_st.col(m));
           if (sim_re(1)) {
-            // TODO DELTA
-            // SIMULATE {SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)).simulate(epsilon_st.col(m));}
-            // epsilon_st.col(m) *= 1./exp(ln_tau_E(m));
+            array<Type> epsilon_st_tmp(epsilon_st.col(m).rows(),n_t);
+            SIMULATE {SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)).simulate(epsilon_st_tmp);
+            epsilon_st.col(m) = epsilon_st_tmp / exp(ln_tau_E(m));}
           }
         } else if (rw_fields) {
           for (int t = 0; t < n_t; t++)
@@ -425,15 +424,14 @@ Type objective_function<Type>::operator()()
           // }
           if (sim_re(1)) {
             for (int t = 0; t < n_t; t++) {
-              // TODO DELTA
-              //  vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
-              //  SIMULATE {GMRF(Q_st, s).simulate(epsilon_st_tmp);}
-              //  epsilon_st_tmp *= 1./exp(ln_tau_E(m));
-              //  if (t == 0) {
-              //    epsilon_st.col(m).col(0) = epsilon_st_tmp;
-              //  } else {
-              //    epsilon_st.col(m).col(t) = epsilon_st.col(m).col(t-1) + epsilon_st_tmp;
-              //  }
+               vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
+               SIMULATE {GMRF(Q_st, s).simulate(epsilon_st_tmp);}
+               epsilon_st_tmp *= 1./exp(ln_tau_E(m));
+               if (t == 0) {
+                 epsilon_st.col(m).col(0) = epsilon_st_tmp;
+               } else {
+                 epsilon_st.col(m).col(t) = epsilon_st.col(m).col(t-1) + epsilon_st_tmp;
+               }
             }
           }
         } else {
