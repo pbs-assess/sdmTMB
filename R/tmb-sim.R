@@ -201,7 +201,7 @@ sdmTMB_simulate <- function(formula,
   if (length(range) == 1L) range <- rep(range, 2)
 
   kappa <- sqrt(8) / range
-  params$ln_kappa <- log(kappa)
+  params$ln_kappa <- matrix(log(kappa), ncol = 1L) # TODO DELTA
 
   if (!is.null(sigma_O) || is.null(previous_fit)) {
     tau_O <- 1 / (sqrt(4 * pi) * kappa[1] * sigma_O)
@@ -216,7 +216,7 @@ sdmTMB_simulate <- function(formula,
     params$ln_tau_E <- log(tau_E)
   }
 
-  if (!is.null(B)) params$b_j <- B
+  if (!is.null(B)) params$b_j <- matrix(B, ncol = 1L) # TODO DELTA
   if (!is.null(phi)) params$ln_phi <- log(phi)
   if (!is.null(rho)) {
     if (rho != 0) tmb_data$ar1_fields <- 1L
