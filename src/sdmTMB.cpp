@@ -105,7 +105,8 @@ Type objective_function<Type>::operator()()
 
   // DATA_VECTOR_INDICATOR(keep, y_i); // https://rdrr.io/cran/TMB/man/oneStepPredict.html
   DATA_VECTOR(weights_i); // optional weights
-  // DATA_VECTOR(offset_i); // optional offset
+  DATA_VECTOR(offset_i); // optional offset
+  // DATA_VECTOR(proj_offset_i); // optional offset
 
   DATA_INTEGER(n_t);  // number of years
 
@@ -510,9 +511,9 @@ Type objective_function<Type>::operator()()
           PARALLEL_REGION jnll -= dnorm(beta_s(j,m), Type(0), exp(ln_smooth_sigma(s,m)), true);
           if (sim_re(5)) SIMULATE{beta_s(j) = rnorm(Type(0), exp(ln_smooth_sigma(s,m)));}
         }
-        eta_smooth_i += Zs(s) * vector<Type>(beta_s.col(m));
+        eta_smooth_i.col(m) += Zs(s) * vector<Type>(beta_s.col(m));
       }
-      eta_smooth_i += Xs * vector<Type>(bs.col(m));
+      eta_smooth_i.col(m) += Xs * vector<Type>(bs.col(m));
     }
   }
 
@@ -544,7 +545,8 @@ Type objective_function<Type>::operator()()
   // combine parts:
   for (int m = 0; m < n_m; m++) {
     for (int i = 0; i < n_i; i++) {
-      eta_i(i,m) = eta_fixed_i(i,m); // + eta_smooth_i(i,m); TODO DELTA CRASHING!?? // + offset_i(i);
+      eta_i(i,m) = eta_fixed_i(i,m) + eta_smooth_i(i,m);
+      if ((n_m == 2 && m == 2) || n_m == 1) eta_i(i,m) += offset_i(i);
       if (random_walk) {
         for (int k = 0; k < X_rw_ik.cols(); k++) {
           eta_rw_i(i,m) += X_rw_ik(i, k) * b_rw_t(year_i(i), k, m); // record it
@@ -763,12 +765,10 @@ Type objective_function<Type>::operator()()
           for (int j = 0; j < beta_s.size(); j++) {
             beta_s(j,m) = b_smooth(b_smooth_start(s) + j,m);
           }
-          proj_smooth_i += proj_Zs(s) * vector<Type>(beta_s.col(m));
+          proj_smooth_i.col(m) += proj_Zs(s) * vector<Type>(beta_s.col(m));
         }
-        proj_smooth_i += proj_Xs * vector<Type>(bs.col(m));
-      }
-      for (int i = 0; i < n_p; i++) {
-        proj_fe(i) += proj_smooth_i(i);
+        proj_smooth_i.col(m) += proj_Xs * vector<Type>(bs.col(m));
+        proj_fe.col(m) += proj_smooth_i.col(m);
       }
     }
 
@@ -809,7 +809,6 @@ Type objective_function<Type>::operator()()
     array<Type> proj_epsilon_st_A(n_p, n_t, n_m);
     array<Type> proj_epsilon_st_A_vec(n_p, n_m);
 
-
     for (int m = 0; m < n_m; m++) {
       for (int t = 0; t < n_t; t++)
         proj_epsilon_st_A.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
@@ -840,6 +839,12 @@ Type objective_function<Type>::operator()()
         proj_epsilon_st_A_vec(i,m) = proj_epsilon_st_A(proj_spatial_index(i), proj_year(i),m);
       }
     }
+
+    // for (int m = 0; m < n_m; m++) {
+    //   for (int i = 0; i < n_i; i++) {
+    //     if ((n_m == 2 && m == 2) || n_m == 1) proj_fe(i,m) += proj_offset_i(i);
+    //   }
+    // }
 
     array<Type> proj_rf(n_p, n_m);
     array<Type> proj_eta(n_p, n_m);

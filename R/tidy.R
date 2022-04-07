@@ -54,6 +54,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
 
   delta <- isTRUE(x$family$delta)
   assert_that(is.numeric(model))
+  assert_that(length(model) == 1L)
   if (delta) assert_that(model %in% c(1, 2), msg = "`model` must be 1 or 2.")
   if (!delta) assert_that(model == 1, msg = "Only one model: `model` must be 1.")
 

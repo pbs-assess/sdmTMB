@@ -16,6 +16,7 @@ sdmTMB(
   time_varying = NULL,
   spatial_varying = NULL,
   weights = NULL,
+  offset = NULL,
   extra_time = NULL,
   reml = FALSE,
   silent = TRUE,
@@ -96,6 +97,9 @@ Implemented as in \pkg{glmmTMB}. Weights do not have to sum
 to one and are not internally modified. Can also be used for trials with
 the binomial family; the weights argument needs to be a vector and not a name
 of the variable in the dataframe. See the Details section below.}
+
+\item{offset}{Model offset. In delta/hurdle models applies only to positive
+component.}
 
 \item{extra_time}{Optional extra time slices (e.g., years) to include for
 interpolation or forecasting with the predict function. See the

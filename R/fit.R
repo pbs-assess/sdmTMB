@@ -62,6 +62,8 @@ NULL
 #'   to one and are not internally modified. Can also be used for trials with
 #'   the binomial family; the weights argument needs to be a vector and not a name
 #'   of the variable in the dataframe. See the Details section below.
+#' @param offset Model offset. In delta/hurdle models applies only to positive
+#'   component.
 #' @param extra_time Optional extra time slices (e.g., years) to include for
 #'   interpolation or forecasting with the predict function. See the
 #'   Details section below.
@@ -391,6 +393,7 @@ sdmTMB <- function(
   time_varying = NULL,
   spatial_varying = NULL,
   weights = NULL,
+  offset = NULL,
   extra_time = NULL,
   reml = FALSE,
   silent = TRUE,
@@ -606,6 +609,7 @@ sdmTMB <- function(
     z_i <- rep(0, nrow(data))
   }
   contains_offset <- check_offset(formula)
+  if (contains_offset) warning("Contains offset in formula. This is deprecated. Please use the `offset` argument.", call. = FALSE)
 
   split_formula <- glmmTMB::splitForm(formula)
   RE_names <- barnames(split_formula$reTrmFormulas)
@@ -673,7 +677,7 @@ sdmTMB <- function(
     stop("`link = 'log'` but the reponse data include values < 0.", call. = FALSE)
   }
 
-  offset <- as.vector(model.offset(mf))
+  # offset <- as.vector(model.offset(mf))
   if (is.null(offset)) offset <- rep(0, length(y_i))
 
   if (!is.null(time_varying)) {
@@ -767,7 +771,6 @@ sdmTMB <- function(
   }
 
   if (!"A_st" %in% names(spde)) stop("`mesh` was created with an old version of `make_mesh()`.", call. = FALSE)
-  # TODO DELTA:
   if (delta) y_i <- cbind(ifelse(y_i > 0, 1, 0), ifelse(y_i > 0, y_i, NA_real_))
   if (!delta) y_i <- matrix(y_i, ncol = 1L)
   tmb_data <- list(
@@ -775,6 +778,7 @@ sdmTMB <- function(
     n_t        = length(unique(data[[time]])),
     z_i        = z_i,
     offset_i   = offset,
+    proj_offset_i = 0,
     A_st       = spde$A_st,
     sim_re     = if ("sim_re" %in% names(experimental)) as.integer(experimental$sim_re) else rep(0L, 6),
     A_spatial_index = spde$sdm_spatial_id - 1L,
@@ -909,7 +913,7 @@ sdmTMB <- function(
       ln_tau_E   = factor(rep(NA, n_m)),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
-  if (delta && contains_offset) stop("Offsets not implemented with delta model yet!") # TODO DELTA
+  if (delta && contains_offset) stop("`offset` in formula is deprecated in favour of the `offset` argument. For delta models, the `offset` argument must be used.", call. = FALSE)
   if (contains_offset) { # fix offset param to 1 to be an offset:
     b_j_map <- seq_along(tmb_params$b_j)
     b_j_map[offset_pos] <- NA
