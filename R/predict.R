@@ -22,10 +22,6 @@
 #' @param return_tmb_object Logical. If `TRUE`, will include the TMB object in a
 #'   list format output. Necessary for the [get_index()] or [get_cog()]
 #'   functions.
-#' @param area A vector of areas for survey grid cells. Only necessary if the
-#'   output will be passed to [get_index()] or [get_cog()] and not all grid
-#'   cells are of area 1. Should be the same length as the number of rows of
-#'   `newdata`. If length 1, will be repeated to match the rows of data.
 #' @param re_form `NULL` to specify including all spatial/spatiotemporal random
 #'   effects in predictions. `~0` or `NA` for population-level predictions. Note
 #'   that unlike lme4 or glmmTMB, this only affects what the standard errors are
@@ -41,6 +37,7 @@
 #'   uncertainty on predictions (e.g., `apply(x, 1, sd)`) or propagating
 #'   uncertainty. This is currently the fastest way to generate estimates of
 #'   uncertainty on predictions in space with sdmTMB.
+#' @param area **Deprecated**. Please use `area` in [get_index()].
 #' @param sims **Deprecated**. Please use `nsim` instead.
 #' @param sims_var **Experimental.** Which TMB reported variable from the model
 #'   should be extracted from the joint precision matrix simulation draws?
@@ -227,7 +224,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
   type = c("link", "response"),
   se_fit = FALSE,
   return_tmb_object = FALSE,
-  area = 1, re_form = NULL, re_form_iid = NULL, nsim = 0,
+  area = deprecated(), re_form = NULL, re_form_iid = NULL, nsim = 0,
   sims = deprecated(), sims_var = "est", tmbstan_model = NULL, ...) {
 
   if ("version" %in% names(object)) {
@@ -242,6 +239,12 @@ predict.sdmTMB <- function(object, newdata = object$data,
     "Please replace make_spde() with make_mesh().", call. = FALSE)
   } else {
     xy_cols <- object$spde$xy_cols
+  }
+
+  if (is_present(area)) {
+    deprecate_warn("0.0.22", "predict.sdmTMB(area)", "get_index(area)")
+  } else {
+    area <- 1
   }
 
   if (is_present(sims)) {

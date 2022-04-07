@@ -10,7 +10,7 @@
   type = c("link", "response"),
   se_fit = FALSE,
   return_tmb_object = FALSE,
-  area = 1,
+  area = deprecated(),
   re_form = NULL,
   re_form_iid = NULL,
   nsim = 0,
@@ -41,10 +41,7 @@ on the simulations from the joint precision matrix.}
 list format output. Necessary for the \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}}
 functions.}
 
-\item{area}{A vector of areas for survey grid cells. Only necessary if the
-output will be passed to \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}} and not all grid
-cells are of area 1. Should be the same length as the number of rows of
-\code{newdata}. If length 1, will be repeated to match the rows of data.}
+\item{area}{\strong{Deprecated}. Please use \code{area} in \code{\link[=get_index]{get_index()}}.}
 
 \item{re_form}{\code{NULL} to specify including all spatial/spatiotemporal random
 effects in predictions. \code{~0} or \code{NA} for population-level predictions. Note

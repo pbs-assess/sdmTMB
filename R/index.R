@@ -3,6 +3,9 @@
 #' @param obj Output from [predict.sdmTMB()] with `return_tmb_object = TRUE`.
 #' @param bias_correct Should bias correction be implemented [TMB::sdreport()]?
 #' @param level The confidence level.
+#' @param area Grid cell area. A vector of length `newdata` from
+#'   [predict.sdmTMB()] or a value of length 1, which will be repeated
+#'   internally to match.
 #' @param ... Passed to [TMB::sdreport()].
 #'
 #' @seealso [get_index_sims()]
@@ -32,9 +35,9 @@
 #' }
 #'
 #' @export
-get_index <- function(obj, bias_correct = FALSE, level = 0.95, ...)  {
+get_index <- function(obj, bias_correct = FALSE, level = 0.95, area = 1, ...)  {
   d <- get_generic(obj, value_name = "link_total",
-    bias_correct = bias_correct, level = level, trans = exp, ...)
+    bias_correct = bias_correct, level = level, trans = exp, area = area, ...)
   names(d)[names(d) == "trans_est"] <- "log_est"
   d
 }
@@ -42,9 +45,9 @@ get_index <- function(obj, bias_correct = FALSE, level = 0.95, ...)  {
 #' @rdname get_index
 #' @param format Long or wide.
 #' @export
-get_cog <- function(obj, bias_correct = FALSE, level = 0.95, format = c("long", "wide"), ...)  {
+get_cog <- function(obj, bias_correct = FALSE, level = 0.95, format = c("long", "wide"), area = 1, ...)  {
   d <- get_generic(obj, value_name = c("cog_x", "cog_y"),
-    bias_correct = bias_correct, level = level, trans = I, ...)
+    bias_correct = bias_correct, level = level, trans = I, area = area, ...)
   d <- d[, names(d) != "trans_est", drop = FALSE]
   d$coord <- c(rep("X", each = nrow(d)/2), rep("Y", each = nrow(d)/2))
   format <- match.arg(format)
@@ -59,7 +62,7 @@ get_cog <- function(obj, bias_correct = FALSE, level = 0.95, format = c("long", 
 }
 
 get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
-  trans = I, ...) {
+  trans = I, area = 1, ...) {
 
   if (is.null(obj[["obj"]])) {
     stop("`obj` needs to be created with ",
@@ -88,13 +91,21 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
       call. = FALSE)
   }
 
+  if (length(area) != nrow(obj$pred_tmb_data$proj_X_ij) && length(area) != 1L) {
+    stop("`area` should be of the same length as `nrow(newdata)` or of length 1.", call. = FALSE)
+  }
+  if (length(area) == 1L)
+    area <- rep(area, nrow(obj$pred_tmb_data$proj_X_ij))
+
   tmb_data <- obj$pred_tmb_data
+  tmb_data$area_i <- area
   if (value_name[1] == "link_total")
     tmb_data$calc_index_totals <- 1L
   if (value_name[1] == "cog_x")
     tmb_data$calc_cog <- 1L
 
   pars <- get_pars(obj$fit_obj)
+
   eps_name <- "eps_index" # FIXME break out into function; add for COG?
   pars[[eps_name]] <- numeric(0)
 
