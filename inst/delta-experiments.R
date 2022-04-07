@@ -236,6 +236,11 @@ fit_tw <- sdmTMB(density ~ s(log(depth), k = 5),
   time = "year",
   family = tweedie()
 )
+fit_pg <- sdmTMB(density ~ s(log(depth), k = 5),
+  data = pcod, mesh = pcod_spde,
+  time = "year",
+  family = delta_poisson_link_gamma()
+)
 
 print_other_parameters(fit_tw)
 print_other_parameters(fit_dg)
@@ -247,6 +252,10 @@ print_one_model(fit_dg, 2)
 
 print(fit_dg)
 print(fit_tw)
+
+AIC(fit_tw)
+AIC(fit_pg)
+AIC(fit_dg)
 
 # --------------
 

@@ -1136,12 +1136,12 @@ sdmTMB <- function(
 }
 
 map_off_rf <- function(.map, tmb_params) {
-  .map$ln_tau_O <- as.factor(NA)
-  .map$ln_tau_E <- as.factor(NA)
-  .map$ln_tau_Z <- as.factor(NA)
+  .map$ln_tau_O <- as.factor(rep(NA, length(tmb_params$ln_tau_O)))
+  .map$ln_tau_E <- as.factor(rep(NA, length(tmb_params$ln_tau_E)))
+  .map$ln_tau_Z <- as.factor(rep(NA, length(tmb_params$ln_tau_Z)))
   .map$zeta_s <- factor(rep(NA, length(tmb_params$zeta_s)))
-  .map$ln_kappa <- factor(rep(NA, 2))
-  .map$ln_H_input <- factor(rep(NA, 2))
+  .map$ln_kappa <- factor(rep(NA, length(tmb_params$ln_kappa)))
+  .map$ln_H_input <- factor(rep(NA, length(tmb_params$ln_H_input)))
   .map$omega_s <- factor(rep(NA, length(tmb_params$omega_s)))
   .map$epsilon_st <- factor(rep(NA, length(tmb_params$epsilon_st)))
   .map

@@ -148,6 +148,9 @@ print_time_varying <- function(x, m = 1) {
 print_range <- function(x, m = 1) {
   b <- tidy(x, effects = "ran_pars", model = m)
   range <- b$estimate[b$term == "range"]
+  if (is.null(range)) {
+    return(NULL)
+  }
   range <- mround(range, 2L)
   range_text <- if (x$tmb_data$share_range) {
     paste0("Matern range: ", range[1], "\n")
