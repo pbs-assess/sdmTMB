@@ -184,7 +184,7 @@ censored_poisson <- function(link = "log") {
 }
 
 .make_delta <- function(link1, link2, valid_links = c("logit", "log"),
-  family = c("binomial", "Gamma")) {
+  family = c("binomial", "Gamma"), clean_name = "") {
   linktemp1 <- substitute(link1, parent.frame())
   linktemp2 <- substitute(link2, parent.frame())
   if (!is.character(linktemp1)) linktemp1 <- deparse(linktemp1)
@@ -207,7 +207,8 @@ censored_poisson <- function(link = "log") {
     link = c(linktemp1, linktemp2),
     linkfun = list(stats1$linkfun, stats2$linkfun),
     linkinv = list(stats1$linkinv, stats2$linkinv),
-    delta = TRUE
+    delta = TRUE,
+    clean_name = clean_name
   )
 }
 
@@ -218,7 +219,7 @@ censored_poisson <- function(link = "log") {
 #' delta_gamma()
 #' @rdname families
 delta_gamma <- function(link1 = "logit", link2 = "log") {
-  .make_delta(link1, link2, family = c("binomial", "Gamma"))
+  .make_delta(link1, link2, family = c("binomial", "Gamma"), clean_name = "delta_gamma(link1 = 'logit', link2 = 'log')")
 }
 
 #' @export
@@ -226,7 +227,7 @@ delta_gamma <- function(link1 = "logit", link2 = "log") {
 #' delta_lognormal()
 #' @rdname families
 delta_lognormal <- function(link1 = "logit", link2 = "log") {
-  .make_delta(link1, link2, family = c("binomial", "lognormal"))
+  .make_delta(link1, link2, family = c("binomial", "lognormal"), clean_name = "delta_lognormal(link1 = 'logit', link2 = 'log')")
 }
 
 #' @export
@@ -234,7 +235,7 @@ delta_lognormal <- function(link1 = "logit", link2 = "log") {
 #' delta_truncated_nbinom2()
 #' @rdname families
 delta_truncated_nbinom2 <- function(link1 = "logit", link2 = "log") {
-  .make_delta(link1, link2, family = c("binomial", "truncated_nbinom2"))
+  .make_delta(link1, link2, family = c("binomial", "truncated_nbinom2"), clean_name = "delta_truncated_nbinom2(link1 = 'logit', link2 = 'log')")
 }
 
 #' @export
@@ -242,7 +243,7 @@ delta_truncated_nbinom2 <- function(link1 = "logit", link2 = "log") {
 #' delta_truncated_nbinom1()
 #' @rdname families
 delta_truncated_nbinom1 <- function(link1 = "logit", link2 = "log") {
-  .make_delta(link1, link2, family = c("binomial", "truncated_nbinom1"))
+  .make_delta(link1, link2, family = c("binomial", "truncated_nbinom1"), clean_name = "delta_truncated_nbinom1(link1 = 'logit', link2 = 'log')")
 }
 
 #' @examples
@@ -258,7 +259,7 @@ delta_truncated_nbinom1 <- function(link1 = "logit", link2 = "log") {
 #' @export
 delta_poisson_link_gamma <- function(link1 = "log", link2 = "log") {
   out <- .make_delta(link1, link2, family = c("binomial", "Gamma"),
-    valid_links = c("log", "log"))
+    valid_links = c("log", "log"), clean_name = "delta_poisson_link_gamma(link1 = 'log', link2 = 'log')")
   out$type <- "poisson_link_delta"
   out
 }

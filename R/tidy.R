@@ -44,10 +44,10 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
   est_rep <- as.list(x$sd_report, "Estimate", report = TRUE)
   se <- as.list(x$sd_report, "Std. Error", report = FALSE)
   est <- as.list(x$sd_report, "Estimate", report = FALSE)
-  b_j <- est$b_j[!fe_names == "offset"]
-  b_j_se <- se$b_j[!fe_names == "offset"]
+  b_j <- est$b_j[!fe_names == "offset",model,drop=TRUE]
+  b_j_se <- se$b_j[!fe_names == "offset",model,drop=TRUE]
   fe_names <- fe_names[!fe_names == "offset"]
-  out <- data.frame(term = fe_names, estimate = b_j[model], std.error = b_j_se[model], stringsAsFactors = FALSE)
+  out <- data.frame(term = fe_names, estimate = b_j, std.error = b_j_se, stringsAsFactors = FALSE)
   crit <- stats::qnorm(1 - (1 - conf.level) / 2)
   if (exponentiate) trans <- exp else trans <- I
   if (exponentiate) out$estimate <- trans(out$estimate)
