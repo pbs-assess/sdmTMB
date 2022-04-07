@@ -546,7 +546,9 @@ Type objective_function<Type>::operator()()
   for (int m = 0; m < n_m; m++) {
     for (int i = 0; i < n_i; i++) {
       eta_i(i,m) = eta_fixed_i(i,m) + eta_smooth_i(i,m);
-      if ((n_m == 2 && m == 2) || n_m == 1) eta_i(i,m) += offset_i(i);
+      if ((n_m == 2 && m == 2) || n_m == 1) {
+        if (!poisson_link_delta) eta_i(i,m) += offset_i(i);
+      }
       if (random_walk) {
         for (int k = 0; k < X_rw_ik.cols(); k++) {
           eta_rw_i(i,m) += X_rw_ik(i, k) * b_rw_t(year_i(i), k, m); // record it
@@ -583,7 +585,7 @@ Type objective_function<Type>::operator()()
         mu_i(i,m) = eta_i(i,m);
       } else if (poisson_link_delta) { // clogog, but put in logit space for robust density function:
         Type n = exp(eta_i(i,0));
-        Type p = 1 - exp(-n);
+        Type p = 1 - exp(-exp(offset_i(i)) * n);
         if (m == 0) mu_i(i,0) = logit(p);
         if (m == 1) mu_i(i,1) = (n/p) * exp(eta_i(i,1));
       } else {
