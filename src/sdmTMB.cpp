@@ -135,7 +135,7 @@ Type objective_function<Type>::operator()()
   // Calculate total summed by year (e.g. biomass)?
   DATA_INTEGER(calc_index_totals);
   DATA_INTEGER(calc_cog);
-  DATA_INTEGER(calc_quadratic_range);
+  // DATA_INTEGER(calc_quadratic_range); // DELTA TODO
   DATA_VECTOR(area_i); // area per prediction grid cell for index standardization
 
   DATA_VECTOR(priors_b_mean);
@@ -184,9 +184,9 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(proj_X_threshold);
   DATA_INTEGER(threshold_func);
   // optional model for nonstationary st variance
-  DATA_INTEGER(est_epsilon_model);
-  DATA_INTEGER(est_epsilon_slope);
-  DATA_INTEGER(est_epsilon_re);
+  // DATA_INTEGER(est_epsilon_model); // DELTA TODO
+  // DATA_INTEGER(est_epsilon_slope); // DELTA TODO
+  // DATA_INTEGER(est_epsilon_re); // DELTA TODO
   DATA_VECTOR(epsilon_predictor);
 
   // optional stuff for penalized regression splines
@@ -506,10 +506,10 @@ Type objective_function<Type>::operator()()
       for (int s = 0; s < b_smooth_start.size(); s++) { // iterate over # of smooth elements
         array<Type> beta_s(Zs(s).cols(),n_m);
         beta_s.setZero();
-        for (int j = 0; j < beta_s.size(); j++) {
+        for (int j = 0; j < beta_s.rows(); j++) {
           beta_s(j,m) = b_smooth(b_smooth_start(s) + j,m);
           PARALLEL_REGION jnll -= dnorm(beta_s(j,m), Type(0), exp(ln_smooth_sigma(s,m)), true);
-          if (sim_re(5)) SIMULATE{beta_s(j) = rnorm(Type(0), exp(ln_smooth_sigma(s,m)));}
+          if (sim_re(5)) SIMULATE{beta_s(j,m) = rnorm(Type(0), exp(ln_smooth_sigma(s,m)));}
         }
         eta_smooth_i.col(m) += Zs(s) * vector<Type>(beta_s.col(m));
       }
@@ -762,7 +762,7 @@ Type objective_function<Type>::operator()()
         for (int s = 0; s < b_smooth_start.size(); s++) { // iterate over # of smooth elements
           array<Type> beta_s(proj_Zs(s).cols(),n_m);
           beta_s.setZero();
-          for (int j = 0; j < beta_s.size(); j++) {
+          for (int j = 0; j < beta_s.rows(); j++) {
             beta_s(j,m) = b_smooth(b_smooth_start(s) + j,m);
           }
           proj_smooth_i.col(m) += proj_Zs(s) * vector<Type>(beta_s.col(m));
