@@ -171,13 +171,11 @@ test_that("Smooth plotting works", {
   skip_if_not_installed("INLA")
   d <- subset(pcod, year >= 2000 & density > 0)
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
-  suppressMessages({
-    m <- sdmTMB(
-      data = d,
-      formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
-      mesh = pcod_spde, spatial = "off", spatiotemporal = "off"
-    )
-  })
+  m <- sdmTMB(
+    data = d,
+    formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
+    mesh = pcod_spde, spatial = "off", spatiotemporal = "off"
+  )
 
   plot_smooth(m)
   plot_smooth(m, level = 0.4)
@@ -189,13 +187,12 @@ test_that("Smooth plotting works", {
   out <- plot_smooth(m, return_data = TRUE)
   expect_equal(class(out), "data.frame")
 
-  suppressMessages({
-    m <- sdmTMB(
-      data = d,
-      formula = log(density) ~ s(depth_scaled) + year,
-      mesh = pcod_spde, spatial = "off", spatiotemporal = "off"
-    )
-  })
+  m <- sdmTMB(
+    data = d,
+    formula = log(density) ~ s(depth_scaled) + year,
+    mesh = pcod_spde, spatial = "off", spatiotemporal = "off",
+    control = sdmTMBcontrol(newton_loops = 1)
+  )
 
   plot_smooth(m, select = 1)
   expect_error(plot_smooth(m, select = 2), regexp = "select")
