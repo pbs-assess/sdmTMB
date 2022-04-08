@@ -453,9 +453,9 @@ predict.sdmTMB <- function(object, newdata = object$data,
       .var <-  switch(sims_var,
         "est" = "proj_eta",
         "est_rf" = "proj_rf",
-        "omega_s" = "proj_re_sp_st",
-        "zeta_s" = "proj_re_sp_slopes",
-        "epsilon_st" = "proj_re_st_vector",
+        "omega_s" = "proj_omega_s_A",
+        "zeta_s" = "proj_zeta_s_A",
+        "epsilon_st" = "proj_epsilon_st_A_vec",
         sims_var)
       out <- lapply(r, `[[`, .var)
       out <- do.call("cbind", out)
