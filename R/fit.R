@@ -655,11 +655,11 @@ sdmTMB <- function(
     spde$sdm_spatial_id <- seq(1, nrow(data)) # FIXME
   }
 
+  spatial_varying_formula <- spatial_varying # save it
   if (!is.null(spatial_varying)) {
     z_i <- model.matrix(spatial_varying, data)
     .int <- grep("(Intercept)", colnames(z_i))
     if (sum(.int) > 0) z_i <- z_i[,-.int,drop=FALSE]
-    spatial_varying_formula <- spatial_varying
     spatial_varying <- colnames(z_i)
   } else {
     z_i <- matrix(0, nrow(data), 0L)
