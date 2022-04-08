@@ -63,14 +63,14 @@ test_that("A time-varying model fits and predicts appropriately", {
     dplyr::summarize(b_t = unique(b), .groups = "drop") %>%
     dplyr::pull(b_t)
   r <- m$tmb_obj$report()
-  b_t_fit <- r$b_rw_t
+  b_t_fit <- r$b_rw_t[,,1]
   plot(b_t, b_t_fit, asp = 1);abline(a = 0, b = 1)
   expect_equal(mean((b_t- b_t_fit)^2), 0, tolerance = 1e-4)
   p <- predict(m)
   plot(p$est, s$observed, asp = 1);abline(a = 0, b = 1)
   expect_equal(mean((p$est - s$observed)^2), 0, tolerance = 0.01)
 
-  cols <- c("est", "est_non_rf", "est_rf", "omega_s", "epsilon_st")
+  cols <- c("est", "est_non_rf", "est_rf", "epsilon_st")
   p_nd <- predict(m, newdata = s)
   expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-4)
 })
@@ -344,6 +344,8 @@ test_that("Multiple SVC works", {
     data = pcod
   )
   fit$sd_report
+  s <- as.list(fit$sd_report, "Std. Error")
+  expect_true(sum(is.na(s$b_j)) == 0L)
   fit
   qcs_grid$syear <- as.numeric(scale(qcs_grid$year))
   p <- predict(fit, newdata = qcs_grid)
