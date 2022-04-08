@@ -92,14 +92,15 @@ represent a local-time-trend model. See \doi{10.1111/ecog.05176} and the
 Note this predictor should be centered to have mean zero and have a
 standard deviation of approximately 1 (scale by the SD).}
 
-\item{weights}{Optional likelihood weights for the conditional model.
-Implemented as in \pkg{glmmTMB}. Weights do not have to sum
-to one and are not internally modified. Can also be used for trials with
-the binomial family; the weights argument needs to be a vector and not a name
-of the variable in the dataframe. See the Details section below.}
+\item{weights}{A numeric vector representing optional likelihood weights for
+the conditional model. Implemented as in \pkg{glmmTMB}: weights do not have
+to sum to one and are not internally modified. Can also be used for trials
+with the binomial family; the weights argument needs to be a vector and not
+a name of the variable in the data frame. See the Details section below.}
 
-\item{offset}{Model offset. In delta/hurdle models applies only to positive
-component.}
+\item{offset}{A numeric vector representing the model offset. In delta/hurdle
+models, this applies only to the positive component. Usually a log
+transformed variable. Not used in any prediction.}
 
 \item{extra_time}{Optional extra time slices (e.g., years) to include for
 interpolation or forecasting with the predict function. See the
@@ -168,7 +169,8 @@ An object (list) of class \code{sdmTMB}. Useful elements include:
 }
 }
 \description{
-Fit a spatial or spatiotemporal Gaussian Markov random field GLMM with TMB.
+Fit a spatial or spatiotemporal Gaussian random field GLMM with TMB using
+the SPDE approach.
 This can be useful for (dynamic) species distribution models and relative
 abundance index standardization among many other uses.
 }
@@ -179,12 +181,6 @@ For now, see the
 \href{https://pbs-assess.github.io/sdmTMB/articles/model-description.html}{model description}
 vignette for a start. There are also descriptions of particular models in
 Anderson et al. (2019) and Barnett et al. (2020) (see reference list below).
-
-\strong{Offsets}
-
-In the model formula, an offset can be included by including \code{+ offset} in
-the model formula (a reserved word). The offset will be included in any
-prediction. \code{offset} must be a column in \code{data}.
 
 \strong{Binomial families}
 
@@ -265,116 +261,193 @@ translated to the fixed effect model matrix.
 \examples{
 if (inla_installed()) {
 
-# A coarse mesh for example speed:
-mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 25)
-plot(mesh)
+# Build a fairly coarse mesh for example speed:
+mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
+# `cutoff = 10` or `15` might make more sense in applied situations
+# `cutoff` is the minimum distance between mesh vertices in units of the
+# x and y coordinates.
+# Or build any mesh in INLA and pass it to the `mesh` argument.
 
-# Tweedie:
-fit <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-  data = pcod_2011, time = "year", mesh = mesh, family = tweedie(link = "log"))
-print(fit)
+# Quick mesh plot:
+plot(mesh)
+# Or:
+# ggplot2::ggplot() + inlabru::gg(mesh$mesh)
+
+# Fit a Tweedie spatial random field GLMM with a smoother for depth:
+fit <- sdmTMB(
+  density ~ s(depth),
+  data = pcod_2011, mesh = mesh,
+  family = tweedie(link = "log")
+)
+fit
+
+# Extract coefficients:
 tidy(fit, conf.int = TRUE)
 tidy(fit, effects = "ran_par", conf.int = TRUE)
 
-# Bernoulli:
-pcod_binom <- pcod_2011
-m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  data = pcod_binom, time = "year", mesh = mesh,
-  family = binomial(link = "logit"))
-print(m_bin)
+# Check maximum gradient is small:
+max(fit$gradients)
 
-# Fit a spatial-only model (by not specifying `time` or setting
-# `spatiotemporal = 'off'`):
+# Predict; see ?predict.sdmTMB
+p <- predict(fit)
+p <- predict(fit, newdata = subset(qcs_grid, year == 2017))
+
+# Add spatiotemporal random fields:
 fit <- sdmTMB(
-  density ~ depth_scaled + depth_scaled2, data = pcod_2011,
-  mesh = mesh, family = tweedie(link = "log"))
-print(fit)
-
-# Gaussian:
-pcod_gaus <- subset(pcod_2011, density > 0 & year >= 2013)
-mesh_gaus <- make_mesh(pcod_gaus, c("X", "Y"), cutoff = 20)
-m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  data = pcod_gaus, mesh = mesh_gaus)
-print(m_pos)
-
-# With penalized smoothers via mgcv:
-m_gam <- sdmTMB(log(density) ~ s(depth),
-  data = pcod_gaus, mesh = mesh_gaus
+  density ~ 1 + s(depth) + as.factor(year),
+  time = "year", #<
+  data = pcod_2011, mesh = mesh,
+  family = tweedie(link = "log")
 )
+fit
 
-# Specifying the basis dimension via `k =`:
-m_gam <- sdmTMB(log(density) ~ s(depth, k = 5),
-  data = pcod_gaus, mesh = mesh_gaus
+# Make the fields AR1:
+fit <- sdmTMB(
+  density ~ s(depth),
+  time = "year",
+  spatial = "off",
+  spatiotemporal = "ar1", #<
+  data = pcod_2011, mesh = mesh,
+  family = tweedie(link = "log")
 )
+fit
 
-# Separate smoother by year:
-m_gam <- sdmTMB(log(density) ~ s(depth, by = as.factor(year)),
-  data = pcod_gaus, mesh = mesh_gaus
+# Make the fields a random walk:
+fit <- sdmTMB(
+  density ~ s(depth),
+  time = "year",
+  spatial = "off",
+  spatiotemporal = "rw", #<
+  data = pcod_2011, mesh = mesh,
+  family = tweedie(link = "log")
 )
+fit
 
-# Turning off all random fields (creating a regular GLM/GAM):
-m_gam <- sdmTMB(log(density) ~ s(depth),
-  data = pcod_gaus, mesh = mesh_gaus,
-  spatial = "off", spatiotemporal = "off"
+# Depth smoothers by year:
+fit <- sdmTMB(
+  density ~ s(depth, by = as.factor(year)), #<
+  time = "year",
+  spatial = "off",
+  spatiotemporal = "rw",
+  data = pcod_2011, mesh = mesh,
+  family = tweedie(link = "log")
 )
+fit
 
-# With IID random intercepts:
-# Simulate some data:
-set.seed(1)
-x <- runif(500, -1, 1)
-y <- runif(500, -1, 1)
-loc <- data.frame(x = x, y = y)
-mesh_sim <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
-s <- sdmTMB_sim(x = x, y = y, betas = 0, time = 1L,
-  phi = 0.1, range = 1.4, sigma_O = 0.2, sigma_E = 0, mesh = mesh_sim)
-s$g <- gl(50, 10)
-iid_re_vals <- rnorm(50, 0, 0.3)
-s$observed <- s$observed + iid_re_vals[s$g]
+# 2D depth-year smoother:
+fit <- sdmTMB(
+  density ~ s(depth, year), #<
+  spatial = "off",
+  data = pcod_2011, mesh = mesh,
+  family = tweedie(link = "log")
+)
+fit
 
-# Fit it:
-fit <- sdmTMB(observed ~ 1 + (1 | g), mesh = mesh_sim, data = s)
-print(fit)
-tidy(fit, "ran_pars", conf.int = TRUE) # see tau_G
-theta <- as.list(fit$sd_report, "Estimate")
-plot(iid_re_vals, theta$RE)
+# Turn off spatial random fields:
+fit <- sdmTMB(
+  present ~ poly(log(depth)),
+  spatial = "off", #<
+  data = pcod_2011, mesh = mesh,
+  family = binomial()
+)
+fit
 
-\donttest{
+# Which, matches glm():
+fit_glm <- glm(
+  present ~ poly(log(depth)),
+  data = pcod_2011,
+  family = binomial()
+)
+summary(fit_glm)
+AIC(fit, fit_glm)
 
-# Spatially varying coefficient (year) example:
-d <- pcod_2011
-d$year_scaled <- as.numeric(scale(d$year))
-fit <- sdmTMB(density ~ depth_scaled, data = d,
-  mesh = mesh, family = tweedie(link = "log"),
-  spatial_varying = ~ 0 + year_scaled, time = "year")
-tidy(fit, effects = "ran_par")
+# Delta/hurdle binomial-Gamma model:
+fit_dg <- sdmTMB(
+  density ~ poly(log(depth)),
+  data = pcod_2011, mesh = mesh,
+  spatial = "off",
+  family = delta_gamma() #<
+)
+fit_dg
+
+# Delta/hurdle Poisson-link (cloglog link):
+fit_pg <- sdmTMB(
+  density ~ s(depth),
+  data = pcod_2011, mesh = mesh,
+  spatial = "off",
+  family = delta_poisson_link_gamma() #<
+)
+fit_pg
+
+# Delta/hurdle truncated NB2:
+pcod_2011$count <- round(pcod_2011$density)
+fit_nb2 <- sdmTMB(
+  count ~ s(depth),
+  data = pcod_2011, mesh = mesh,
+  spatial = "off",
+  family = delta_truncated_nbinom2() #<
+)
+fit_nb2
+
+# Regular NB2:
+fit_nb2 <- sdmTMB(
+  count ~ s(depth),
+  data = pcod_2011, mesh = mesh,
+  spatial = "off",
+  family = nbinom2() #<
+)
+fit_nb2
+
+# IID random intercepts by year:
+pcod_2011$fyear <- as.factor(pcod_2011$year)
+fit <- sdmTMB(
+  density ~ s(depth) + (1 | fyear), #<
+  data = pcod_2011, mesh = mesh,
+  family = tweedie(link = "log")
+)
+fit
+
+# Spatially varying coefficient of year:
+pcod_2011$year_scaled <- as.numeric(scale(pcod_2011$year))
+fit <- sdmTMB(
+  density ~ year_scaled,
+  spatial_varying = ~ 0 + year_scaled, #<
+  data = pcod_2011, mesh = mesh, family = tweedie(), time = "year"
+)
+fit
 
 # Time-varying effects of depth and depth squared:
-fit <- sdmTMB(density ~ 0 + as.factor(year),
-  time_varying = ~ 0 + depth_scaled + depth_scaled2,
+fit <- sdmTMB(
+  density ~ 0 + as.factor(year),
+  time_varying = ~ 0 + depth_scaled + depth_scaled2, #<
   data = pcod_2011, time = "year", mesh = mesh,
-  family = tweedie(link = "log"))
+  family = tweedie()
+)
 print(fit)
+# Extract values:
+est <- as.list(fit$sd_report, "Estimate")
+se <- as.list(fit$sd_report, "Std. Error")
+est$b_rw_t[, , 1]
+se$b_rw_t[, , 1]
 
-# See the b_rw_t estimates; these are the time-varying (random walk) effects.
-# These could be added to tidy.sdmTMB() eventually.
-summary(fit$sd_report)[1:19,]
-
-# Linear breakpoint model on depth:
-m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) +
-    breakpt(depth_scaled) + depth_scaled2, data = pcod_gaus,
-  time = "year", mesh = mesh_gaus)
-print(m_pos)
-}
+# Linear break-point effect of depth:
+fit <- sdmTMB(
+  density ~ breakpt(depth_scaled), #<
+  data = pcod_2011,
+  # spatial = "off",
+  mesh = mesh,
+  family = tweedie()
+)
+fit
 }
 }
 \references{
-Main reference/report introducing the package. We plan to write a paper
-to cite in the near future:
+Main reference introducing the package to cite when using sdmTMB:
 
-Anderson, S.C., E.A. Keppel, A.M. Edwards, 2019. A reproducible data synopsis
-for over 100 species of British Columbia groundfish. DFO Can. Sci. Advis. Sec.
-Res. Doc. 2019/041. vii + 321 p.
-\url{https://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2019/2019_041-eng.html}
+Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett. 2022. sdmTMB: an R
+package for fast, flexible, and user-friendly generalized linear mixed effects
+models with spatial and spatiotemporal random fields.
+bioRxiv 2022.03.24.485545; \doi{10.1101/2022.03.24.485545}.
 
 Reference for local trends:
 

@@ -183,8 +183,15 @@ print_other_parameters <- function(x, m = 1) {
   tweedie_p <- get_term_text("tweedie_p", "Tweedie p")
   sigma_O <- get_term_text("sigma_O", "Spatial SD")
   sigma_E <- get_term_text("sigma_E", "Spatiotemporal SD")
-  sigma_Z <- get_term_text("sigma_Z", "Spatially varying coefficient SD")
   rho <- get_term_text("rho", "Spatiotemporal AR1 correlation (rho)")
+
+  if ("sigma_Z" %in% b$term) {
+    a <- mround(b$estimate[b$term == "sigma_Z"], 2L)
+    sigma_Z <- paste0("Spatially varying coefficient SD (", x$spatial_varying,  "): ", a, "\n")
+    sigma_Z <- paste(sigma_Z, collapse = "")
+  } else {
+    sigma_Z <- ""
+  }
 
   named_list(phi, tweedie_p, sigma_O, sigma_E, sigma_Z, rho)
 }
@@ -220,13 +227,15 @@ print_one_model <- function(x, m = 1) {
   }
 
   if (!is.null(iid_re)) {
-    cat("\nRandom intercepts:\n")
-    print(re_int_mat)
+    cat("Random intercepts:\n")
+    print(iid_re)
+    cat("\n")
   }
 
   if (!is.null(tv)) {
-    cat("\nTime-varying parameters:\n")
+    cat("Time-varying parameters:\n")
     print(tv)
+    cat("\n")
   }
 
   cat(other$phi)

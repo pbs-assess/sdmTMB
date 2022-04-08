@@ -95,7 +95,7 @@ Type objective_function<Type>::operator()()
   // Vectors of real data
   DATA_ARRAY(y_i);      // response
   DATA_MATRIX(X_ij);     // model matrix
-  DATA_VECTOR(z_i);      // numeric vector for spatial covariate effect
+  DATA_MATRIX(z_i);      // model matrix for spatial covariate effect
   DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
   DATA_STRUCT(Zs, sdmTMB::LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
@@ -174,7 +174,7 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(proj_X_ij);
   DATA_MATRIX(proj_X_rw_ik);
   DATA_FACTOR(proj_year);
-  DATA_VECTOR(proj_z_i);
+  DATA_MATRIX(proj_z_i);
   DATA_IVECTOR(proj_spatial_index);
 
   DATA_INTEGER(spatial_only);
@@ -205,7 +205,7 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(b_j);  // fixed effect parameters
   PARAMETER_ARRAY(bs); // smoother linear effects
   PARAMETER_VECTOR(ln_tau_O);    // spatial process
-  PARAMETER_VECTOR(ln_tau_Z);    // optional spatially varying covariate process
+  PARAMETER_ARRAY(ln_tau_Z);    // optional spatially varying covariate process
   PARAMETER_VECTOR(ln_tau_E);    // spatio-temporal process
   PARAMETER_ARRAY(ln_kappa);    // Matern parameter
 
@@ -218,7 +218,7 @@ Type objective_function<Type>::operator()()
   // Random effects
   PARAMETER_ARRAY(b_rw_t);  // random walk effects
   PARAMETER_ARRAY(omega_s);    // spatial effects; n_s length
-  PARAMETER_ARRAY(zeta_s);    // spatial effects on covariate; n_s length
+  PARAMETER_ARRAY(zeta_s);    // spatial effects on covariate; n_s length, n_z cols, n_m
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t by n_m array
   PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3) // DELTA TODO
   // PARAMETER(b_epsilon); // slope coefficient for log-linear model on epsilon DELTA TODO
@@ -267,16 +267,22 @@ Type objective_function<Type>::operator()()
 
   // DELTA DONE
   vector<Type> sigma_O(n_m);
-  vector<Type> sigma_Z(n_m);
+  int n_z = ln_tau_Z.rows();
+  array<Type> sigma_Z(n_z, n_m);
   if (include_spatial) {
     for (int m = 0; m < n_m; m++) {
       sigma_O(m) = sdmTMB::calc_rf_sigma(ln_tau_O(m), ln_kappa(0,m));
-      sigma_Z(m) = sdmTMB::calc_rf_sigma(ln_tau_Z(m), ln_kappa(0,m));
+      for (int z = 0; z < n_z; z++) {
+        sigma_Z(z,m) = sdmTMB::calc_rf_sigma(ln_tau_Z(z,m), ln_kappa(0,m));
+      }
     }
     vector<Type> log_sigma_O = log(sigma_O);
     ADREPORT(log_sigma_O);
     REPORT(sigma_O);
-    vector<Type> log_sigma_Z = log(sigma_Z);
+    array<Type> log_sigma_Z(n_z,n_m); // for SE
+    for (int z = 0; z < n_z; z++)
+      for (int m = 0; m < n_m; m++)
+        log_sigma_Z(z,m) = log(sigma_Z(z,m));
     ADREPORT(log_sigma_Z);
     REPORT(sigma_Z);
   }
@@ -373,12 +379,14 @@ Type objective_function<Type>::operator()()
         }
       }
       if (spatial_covariate) {
-        PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_Z(m)))(zeta_s.col(m));
-        if (sim_re(3)) {
-          vector<Type> zeta_s_tmp(zeta_s.rows());
-          SIMULATE {
-            GMRF(Q_s, s).simulate(zeta_s_tmp);
-            zeta_s.col(m) = zeta_s_tmp / exp(ln_tau_Z(m));
+        for (int z = 0; z < n_z; z++) {
+          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_Z(z,m)))(zeta_s.col(m).col(z));
+          if (sim_re(3)) {
+            vector<Type> zeta_s_tmp(zeta_s.col(m).rows());
+            SIMULATE {
+              GMRF(Q_s, s).simulate(zeta_s_tmp);
+              zeta_s.col(m).col(z) = zeta_s_tmp / exp(ln_tau_Z(z,m));
+            }
           }
         }
       }
@@ -474,7 +482,7 @@ Type objective_function<Type>::operator()()
   // locations of the data using the INLA 'A' matrices.
   // DELTA DONE
   array<Type> omega_s_A(n_i, n_m);
-  array<Type> zeta_s_A(n_i, n_m);
+  array<Type> zeta_s_A(n_i, n_z, n_m);
   array<Type> epsilon_st_A(n_i, n_t, n_m);
   array<Type> epsilon_st_A_vec(n_i, n_m);
 
@@ -486,7 +494,8 @@ Type objective_function<Type>::operator()()
         epsilon_st_A.col(m).col(t) = epsilon_st_A.col(m).col(t - 1) + epsilon_st_A.col(m).col(t);
     }
     omega_s_A.col(m) = A_st * vector<Type>(omega_s.col(m));
-    zeta_s_A.col(m) = A_st * vector<Type>(zeta_s.col(m));
+    for (int z = 0; z < n_z; z++)
+      zeta_s_A.col(m).col(z) = A_st * vector<Type>(zeta_s.col(m).col(z));
   }
 
 
@@ -558,7 +567,8 @@ Type objective_function<Type>::operator()()
       if (include_spatial) {
         eta_i(i,m) += omega_s_A(i,m);  // spatial omega
        if (spatial_covariate)
-         eta_i(i,m) += zeta_s_A(i,m) * z_i(i); // spatially varying covariate DELTA
+         for (int z = 0; z < n_z; z++)
+           eta_i(i,m) += zeta_s_A(i,z,m) * z_i(i,z); // spatially varying covariate DELTA
       }
       epsilon_st_A_vec(i,m) = epsilon_st_A(A_spatial_index(i), year_i(i),m); // record it
       eta_i(i,m) += epsilon_st_A_vec(i,m); // spatiotemporal

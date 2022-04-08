@@ -3,7 +3,8 @@ NULL
 
 #' Fit a spatial or spatiotemporal GLMM with TMB
 #'
-#' Fit a spatial or spatiotemporal Gaussian Markov random field GLMM with TMB.
+#' Fit a spatial or spatiotemporal Gaussian random field GLMM with TMB using
+#' the SPDE approach.
 #' This can be useful for (dynamic) species distribution models and relative
 #' abundance index standardization among many other uses.
 #'
@@ -57,13 +58,14 @@ NULL
 #'   vignette](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html).
 #'    Note this predictor should be centered to have mean zero and have a
 #'   standard deviation of approximately 1 (scale by the SD).
-#' @param weights Optional likelihood weights for the conditional model.
-#'   Implemented as in \pkg{glmmTMB}. Weights do not have to sum
-#'   to one and are not internally modified. Can also be used for trials with
-#'   the binomial family; the weights argument needs to be a vector and not a name
-#'   of the variable in the dataframe. See the Details section below.
-#' @param offset Model offset. In delta/hurdle models applies only to positive
-#'   component.
+#' @param weights A numeric vector representing optional likelihood weights for
+#'   the conditional model. Implemented as in \pkg{glmmTMB}: weights do not have
+#'   to sum to one and are not internally modified. Can also be used for trials
+#'   with the binomial family; the weights argument needs to be a vector and not
+#'   a name of the variable in the data frame. See the Details section below.
+#' @param offset A numeric vector representing the model offset. In delta/hurdle
+#'   models, this applies only to the positive component. Usually a log
+#'   transformed variable. Not used in any prediction.
 #' @param extra_time Optional extra time slices (e.g., years) to include for
 #'   interpolation or forecasting with the predict function. See the
 #'   Details section below.
@@ -129,12 +131,6 @@ NULL
 #' [model description](https://pbs-assess.github.io/sdmTMB/articles/model-description.html)
 #' vignette for a start. There are also descriptions of particular models in
 #' Anderson et al. (2019) and Barnett et al. (2020) (see reference list below).
-#'
-#' **Offsets**
-#'
-#' In the model formula, an offset can be included by including `+ offset` in
-#' the model formula (a reserved word). The offset will be included in any
-#' prediction. `offset` must be a column in `data`.
 #'
 #' **Binomial families**
 #'
@@ -214,13 +210,12 @@ NULL
 #'
 #' @references
 #'
-#' Main reference/report introducing the package. We plan to write a paper
-#' to cite in the near future:
+#' Main reference introducing the package to cite when using sdmTMB:
 #'
-#' Anderson, S.C., E.A. Keppel, A.M. Edwards, 2019. A reproducible data synopsis
-#' for over 100 species of British Columbia groundfish. DFO Can. Sci. Advis. Sec.
-#' Res. Doc. 2019/041. vii + 321 p.
-#' <https://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2019/2019_041-eng.html>
+#' Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett. 2022. sdmTMB: an R
+#' package for fast, flexible, and user-friendly generalized linear mixed effects
+#' models with spatial and spatiotemporal random fields.
+#' bioRxiv 2022.03.24.485545; \doi{10.1101/2022.03.24.485545}.
 #'
 #' Reference for local trends:
 #'
@@ -264,121 +259,184 @@ NULL
 #' @examples
 #' if (inla_installed()) {
 #'
-#' # A coarse mesh for example speed:
-#' mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 25)
-#' plot(mesh)
+#' # Build a fairly coarse mesh for example speed:
+#' mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
+#' # `cutoff = 10` or `15` might make more sense in applied situations
+#' # `cutoff` is the minimum distance between mesh vertices in units of the
+#' # x and y coordinates.
+#' # Or build any mesh in INLA and pass it to the `mesh` argument.
 #'
-#' # Tweedie:
-#' fit <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-#'   data = pcod_2011, time = "year", mesh = mesh, family = tweedie(link = "log"))
-#' print(fit)
+#' # Quick mesh plot:
+#' plot(mesh)
+#' # Or:
+#' # ggplot2::ggplot() + inlabru::gg(mesh$mesh)
+#'
+#' # Fit a Tweedie spatial random field GLMM with a smoother for depth:
+#' fit <- sdmTMB(
+#'   density ~ s(depth),
+#'   data = pcod_2011, mesh = mesh,
+#'   family = tweedie(link = "log")
+#' )
+#' fit
+#'
+#' # Extract coefficients:
 #' tidy(fit, conf.int = TRUE)
 #' tidy(fit, effects = "ran_par", conf.int = TRUE)
 #'
-#' # Bernoulli:
-#' pcod_binom <- pcod_2011
-#' m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'   data = pcod_binom, time = "year", mesh = mesh,
-#'   family = binomial(link = "logit"))
-#' print(m_bin)
+#' # Check maximum gradient is small:
+#' max(fit$gradients)
 #'
-#' # Fit a spatial-only model (by not specifying `time` or setting
-#' # `spatiotemporal = 'off'`):
+#' # Predict; see ?predict.sdmTMB
+#' p <- predict(fit)
+#' p <- predict(fit, newdata = subset(qcs_grid, year == 2017))
+#'
+#' # Add spatiotemporal random fields:
 #' fit <- sdmTMB(
-#'   density ~ depth_scaled + depth_scaled2, data = pcod_2011,
-#'   mesh = mesh, family = tweedie(link = "log"))
-#' print(fit)
-#'
-#' # Gaussian:
-#' pcod_gaus <- subset(pcod_2011, density > 0 & year >= 2013)
-#' mesh_gaus <- make_mesh(pcod_gaus, c("X", "Y"), cutoff = 20)
-#' m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'   data = pcod_gaus, mesh = mesh_gaus)
-#' print(m_pos)
-#'
-#' # With penalized smoothers via mgcv:
-#' m_gam <- sdmTMB(log(density) ~ s(depth),
-#'   data = pcod_gaus, mesh = mesh_gaus
+#'   density ~ 1 + s(depth) + as.factor(year),
+#'   time = "year", #<
+#'   data = pcod_2011, mesh = mesh,
+#'   family = tweedie(link = "log")
 #' )
+#' fit
 #'
-#' # Specifying the basis dimension via `k =`:
-#' m_gam <- sdmTMB(log(density) ~ s(depth, k = 5),
-#'   data = pcod_gaus, mesh = mesh_gaus
+#' # Make the fields AR1:
+#' fit <- sdmTMB(
+#'   density ~ s(depth),
+#'   time = "year",
+#'   spatial = "off",
+#'   spatiotemporal = "ar1", #<
+#'   data = pcod_2011, mesh = mesh,
+#'   family = tweedie(link = "log")
 #' )
+#' fit
 #'
-#' # Separate smoother by year:
-#' m_gam <- sdmTMB(log(density) ~ s(depth, by = as.factor(year)),
-#'   data = pcod_gaus, mesh = mesh_gaus
+#' # Make the fields a random walk:
+#' fit <- sdmTMB(
+#'   density ~ s(depth),
+#'   time = "year",
+#'   spatial = "off",
+#'   spatiotemporal = "rw", #<
+#'   data = pcod_2011, mesh = mesh,
+#'   family = tweedie(link = "log")
 #' )
+#' fit
 #'
-#' # Turning off all random fields (creating a regular GLM/GAM):
-#' m_gam <- sdmTMB(log(density) ~ s(depth),
-#'   data = pcod_gaus, mesh = mesh_gaus,
-#'   spatial = "off", spatiotemporal = "off"
+#' # Depth smoothers by year:
+#' fit <- sdmTMB(
+#'   density ~ s(depth, by = as.factor(year)), #<
+#'   time = "year",
+#'   spatial = "off",
+#'   spatiotemporal = "rw",
+#'   data = pcod_2011, mesh = mesh,
+#'   family = tweedie(link = "log")
 #' )
+#' fit
 #'
-#' # With IID random intercepts:
-#' # Simulate some data:
-#' set.seed(1)
-#' x <- runif(500, -1, 1)
-#' y <- runif(500, -1, 1)
-#' loc <- data.frame(x = x, y = y)
-#' mesh_sim <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
-#' s <- sdmTMB_sim(x = x, y = y, betas = 0, time = 1L,
-#'   phi = 0.1, range = 1.4, sigma_O = 0.2, sigma_E = 0, mesh = mesh_sim)
-#' s$g <- gl(50, 10)
-#' iid_re_vals <- rnorm(50, 0, 0.3)
-#' s$observed <- s$observed + iid_re_vals[s$g]
+#' # 2D depth-year smoother:
+#' fit <- sdmTMB(
+#'   density ~ s(depth, year), #<
+#'   spatial = "off",
+#'   data = pcod_2011, mesh = mesh,
+#'   family = tweedie(link = "log")
+#' )
+#' fit
 #'
-#' # Fit it:
-#' fit <- sdmTMB(observed ~ 1 + (1 | g), mesh = mesh_sim, data = s)
-#' print(fit)
-#' tidy(fit, "ran_pars", conf.int = TRUE) # see tau_G
-#' theta <- as.list(fit$sd_report, "Estimate")
-#' plot(iid_re_vals, theta$RE)
+#' # Turn off spatial random fields:
+#' fit <- sdmTMB(
+#'   present ~ poly(log(depth)),
+#'   spatial = "off", #<
+#'   data = pcod_2011, mesh = mesh,
+#'   family = binomial()
+#' )
+#' fit
 #'
-#' \donttest{
+#' # Which, matches glm():
+#' fit_glm <- glm(
+#'   present ~ poly(log(depth)),
+#'   data = pcod_2011,
+#'   family = binomial()
+#' )
+#' summary(fit_glm)
+#' AIC(fit, fit_glm)
 #'
-#' # Spatially varying coefficient (year) example:
-#' d <- pcod_2011
-#' d$year_scaled <- as.numeric(scale(d$year))
-#' fit <- sdmTMB(density ~ depth_scaled, data = d,
-#'   mesh = mesh, family = tweedie(link = "log"),
-#'   spatial_varying = ~ 0 + year_scaled, time = "year")
-#' tidy(fit, effects = "ran_par")
+#' # Delta/hurdle binomial-Gamma model:
+#' fit_dg <- sdmTMB(
+#'   density ~ poly(log(depth)),
+#'   data = pcod_2011, mesh = mesh,
+#'   spatial = "off",
+#'   family = delta_gamma() #<
+#' )
+#' fit_dg
+#'
+#' # Delta/hurdle Poisson-link (cloglog link):
+#' fit_pg <- sdmTMB(
+#'   density ~ s(depth),
+#'   data = pcod_2011, mesh = mesh,
+#'   spatial = "off",
+#'   family = delta_poisson_link_gamma() #<
+#' )
+#' fit_pg
+#'
+#' # Delta/hurdle truncated NB2:
+#' pcod_2011$count <- round(pcod_2011$density)
+#' fit_nb2 <- sdmTMB(
+#'   count ~ s(depth),
+#'   data = pcod_2011, mesh = mesh,
+#'   spatial = "off",
+#'   family = delta_truncated_nbinom2() #<
+#' )
+#' fit_nb2
+#'
+#' # Regular NB2:
+#' fit_nb2 <- sdmTMB(
+#'   count ~ s(depth),
+#'   data = pcod_2011, mesh = mesh,
+#'   spatial = "off",
+#'   family = nbinom2() #<
+#' )
+#' fit_nb2
+#'
+#' # IID random intercepts by year:
+#' pcod_2011$fyear <- as.factor(pcod_2011$year)
+#' fit <- sdmTMB(
+#'   density ~ s(depth) + (1 | fyear), #<
+#'   data = pcod_2011, mesh = mesh,
+#'   family = tweedie(link = "log")
+#' )
+#' fit
+#'
+#' # Spatially varying coefficient of year:
+#' pcod_2011$year_scaled <- as.numeric(scale(pcod_2011$year))
+#' fit <- sdmTMB(
+#'   density ~ year_scaled,
+#'   spatial_varying = ~ 0 + year_scaled, #<
+#'   data = pcod_2011, mesh = mesh, family = tweedie(), time = "year"
+#' )
+#' fit
 #'
 #' # Time-varying effects of depth and depth squared:
-#' fit <- sdmTMB(density ~ 0 + as.factor(year),
-#'   time_varying = ~ 0 + depth_scaled + depth_scaled2,
+#' fit <- sdmTMB(
+#'   density ~ 0 + as.factor(year),
+#'   time_varying = ~ 0 + depth_scaled + depth_scaled2, #<
 #'   data = pcod_2011, time = "year", mesh = mesh,
-#'   family = tweedie(link = "log"))
+#'   family = tweedie()
+#' )
 #' print(fit)
+#' # Extract values:
+#' est <- as.list(fit$sd_report, "Estimate")
+#' se <- as.list(fit$sd_report, "Std. Error")
+#' est$b_rw_t[, , 1]
+#' se$b_rw_t[, , 1]
 #'
-#' # See the b_rw_t estimates; these are the time-varying (random walk) effects.
-#' # These could be added to tidy.sdmTMB() eventually.
-#' summary(fit$sd_report)[1:19,]
-#'
-#' # Linear breakpoint model on depth:
-#' m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) +
-#'     breakpt(depth_scaled) + depth_scaled2, data = pcod_gaus,
-#'   time = "year", mesh = mesh_gaus)
-#' print(m_pos)
-#
-# # Linear covariate on log(sigma_epsilon):
-# # First we will center the years around their mean
-# # to help with convergence. Also constrain the slope to be (-1, 1)
-# # to help convergence (estimation is done in log-space)
-# pcod_2011$year_centered <- pcod_2011$year - mean(pcod_2011$year)
-# fit <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-#   data = pcod_2011, time = "year", mesh = mesh, family = tweedie(link = "log"),
-#   epsilon_predictor = "year_centered",
-#   control = sdmTMBcontrol(lower = list(b_epsilon = -1), upper = list(b_epsilon = 1)))
-# print(fit) # sigma_E varies with time now
-#
-# # coefficient is not yet in tidy.sdmTMB:
-# as.list(fit$sd_report, "Estimate", report = TRUE)$b_epsilon
-# as.list(fit$sd_report, "Std. Error", report = TRUE)$b_epsilon
-#' }
+#' # Linear break-point effect of depth:
+#' fit <- sdmTMB(
+#'   density ~ breakpt(depth_scaled), #<
+#'   data = pcod_2011,
+#'   # spatial = "off",
+#'   mesh = mesh,
+#'   family = tweedie()
+#' )
+#' fit
 #' }
 
 sdmTMB <- function(
@@ -411,6 +469,7 @@ sdmTMB <- function(
   ) {
 
   delta <- isTRUE(family$delta)
+  n_m <- if (isTRUE(delta)) 2L else 1L
   sp_len <- length(spatiotemporal)
   spatiotemporal <- match.arg(tolower(as.character(spatiotemporal[[1]])),
     choices = c("iid", "ar1", "rw", "off", "true", "false"))
@@ -600,14 +659,16 @@ sdmTMB <- function(
     temp <- model.matrix(spatial_varying, data)
     .int <- grep("(Intercept)", colnames(temp))
     if (sum(.int) > 0) temp <- temp[,-.int,drop=FALSE]
-    if (ncol(temp) > 1L) stop("`spatial_varying` should only have 1 covariate.", call. = FALSE)
-    z_i <- as.numeric(temp[,1,drop=TRUE])
-    spatial_varying <- colnames(temp)[[1]]
-    if (abs(mean(z_i, na.rm = TRUE)) > 0.01)
-      warning("`spatial_varying` may not be mean-centered.", call. = FALSE)
+    if (ncol(temp) > 1L) message("`spatial_varying` has more than 1 covariate.", call. = FALSE)
+    if (any(grepl("Intercept", colnames(temp))))
+      stop("There appears to be an intercept in `spatial_varying`. The intercept should be omitted since it is already controlled via `spatial`. Include `~0` or `~1`.", call. = FALSE)
+    z_i <- temp
+    spatial_varying <- colnames(temp)
   } else {
-    z_i <- rep(0, nrow(data))
+    z_i <- matrix(0, nrow(data), 0L)
   }
+  n_z <- ncol(z_i)
+
   contains_offset <- check_offset(formula)
   if (contains_offset) warning("Contains offset in formula. This is deprecated. Please use the `offset` argument.", call. = FALSE)
 
@@ -817,7 +878,7 @@ sdmTMB <- function(
     proj_X_rw_ik = matrix(0, ncol = 1, nrow = 1), # dummy
     proj_year  = 0, # dummy
     proj_spatial_index = 0, # dummy
-    proj_z_i = 0, # dummy
+    proj_z_i = matrix(0, nrow = 1, ncol = n_m), # dummy
     spde_aniso = make_anisotropy_spde(spde, anisotropy),
     spde       = spde$spde$param.inla[c("M0","M1","M2")],
     barrier = as.integer(barrier),
@@ -851,16 +912,12 @@ sdmTMB <- function(
   b_thresh <- rep(0, 2)
   if (thresh$threshold_func == 2L) b_thresh <- c(0, b_thresh) # logistic
 
-
-  # TODO DELTA
-  n_m <- if (isTRUE(delta)) 2L else 1L
-
   tmb_params <- list(
     ln_H_input = c(0, 0),
     b_j        = matrix(0, ncol(X_ij), n_m),
     bs         = if (sm$has_smooths) matrix(0, nrow = ncol(sm$Xs), ncol = n_m) else array(0),
     ln_tau_O   = rep(0, n_m),
-    ln_tau_Z = rep(0, n_m),
+    ln_tau_Z = matrix(0, n_z, n_m),
     ln_tau_E   = rep(0, n_m),
     ln_kappa   = matrix(0, 2L, n_m),
     # ln_kappa   = rep(log(sqrt(8) / median(stats::dist(spde$mesh$loc))), 2),
@@ -872,7 +929,7 @@ sdmTMB <- function(
     RE         = matrix(0, sum(nobs_RE), n_m),
     b_rw_t     = array(0, dim = c(tmb_data$n_t, ncol(X_rw_ik), n_m)),
     omega_s    = matrix(0, n_s, n_m),
-    zeta_s    = matrix(0, n_s, n_m),
+    zeta_s    = array(0, dim = c(n_s, n_z, n_m)),
     epsilon_st = array(0, dim = c(n_s, tmb_data$n_t, n_m)),
     b_threshold = b_thresh,
     # b_epsilon = 0,
@@ -993,7 +1050,7 @@ sdmTMB <- function(
   }
   if (is.null(spatial_varying)) {
     tmb_map <- c(tmb_map, list(
-      ln_tau_Z = factor(rep(NA, n_m)),
+      ln_tau_Z = factor(rep(NA, n_m * n_z)),
       zeta_s = factor(rep(NA, length(tmb_params$zeta_s)))))
   }
   if (is.null(time_varying))
