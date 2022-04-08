@@ -18,6 +18,7 @@ sdmTMB is an R package that fits spatial and spatiotemporal predictive-process G
 
 -   [Installation](#installation)
 -   [Overview](#overview)
+-   [Citation](#citation)
 -   [Basic use](#basic-use)
 -   [Advanced functionality](#advanced-functionality)
     -   [Time-varying coefficients](#time-varying-coefficients)
@@ -49,20 +50,6 @@ installed, you can install sdmTMB:
 # install.packages("remotes")
 remotes::install_github("pbs-assess/sdmTMB", dependencies = TRUE)
 ```
-
-## Citation
-
-To cite sdmTMB in publications use:
-
-```r
-citation("sdmTMB")
-```
-
-Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett.
-2022. sdmTMB: an R package for fast, flexible, and
-user-friendly generalized linear mixed effects models with
-spatial and spatiotemporal random fields. bioRxiv
-2022.03.24.485545; doi: <https://doi.org/10.1101/2022.03.24.485545>
 
 ## Overview
 
@@ -119,6 +106,20 @@ for the most complete examples. Also see the vignettes (‘Articles’) on
 the [documentation
 site](https://pbs-assess.github.io/sdmTMB/index.html).
 
+## Citation
+
+To cite sdmTMB in publications use:
+
+``` r
+citation("sdmTMB")
+```
+
+Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett. 2022. sdmTMB:
+an R package for fast, flexible, and user-friendly generalized linear
+mixed effects models with spatial and spatiotemporal random fields.
+bioRxiv 2022.03.24.485545; doi:
+<https://doi.org/10.1101/2022.03.24.485545>
+
 ## Basic use
 
 An sdmTMB model requires a data frame that contains a response column,
@@ -167,7 +168,7 @@ Fit a spatial model with a smoother for depth:
 
 ``` r
 fit <- sdmTMB(
-  density ~ s(depth, k = 5),
+  density ~ s(depth),
   data = pcod,
   mesh = mesh,
   family = tweedie(link = "log"),
@@ -180,23 +181,24 @@ Print the model fit:
 ``` r
 fit
 #> Spatial model fit by ML ['sdmTMB']
-#> Formula: density ~ s(depth, k = 5)
+#> Formula: density ~ s(depth)
 #> Mesh: mesh
 #> Data: pcod
 #> Family: tweedie(link = 'log')
+#>  
 #>             coef.est coef.se
-#> (Intercept)     2.34    0.23
-#> sdepth        -26.96   21.52
+#> (Intercept)     2.37    0.21
+#> sdepth          6.17   25.17
 #> 
 #> Smooth terms:
 #>            Std. Dev.
-#> sds(depth)     34.03
+#> sds(depth)     13.93
 #> 
-#> Dispersion parameter: 12.70
+#> Dispersion parameter: 12.69
 #> Tweedie p: 1.58
-#> Matern range: 17.47
+#> Matern range: 16.39
 #> Spatial SD: 1.86
-#> ML criterion at convergence: 6403.637
+#> ML criterion at convergence: 6402.136
 #> 
 #> See ?tidy.sdmTMB to extract these values as a data frame.
 ```
@@ -217,21 +219,22 @@ tidy(fit, conf.int = TRUE)
 #> # A tibble: 1 × 5
 #>   term        estimate std.error conf.low conf.high
 #>   <chr>          <dbl>     <dbl>    <dbl>     <dbl>
-#> 1 (Intercept)     2.34     0.227     1.89      2.78
+#> 1 (Intercept)     2.37     0.215     1.95      2.79
 tidy(fit, effects = "ran_pars", conf.int = TRUE)
 #> # A tibble: 4 × 5
 #>   term      estimate std.error conf.low conf.high
 #>   <chr>        <dbl> <lgl>        <dbl>     <dbl>
-#> 1 range        17.5  NA           10.5      29.1 
+#> 1 range        16.4  NA            9.60     28.0 
 #> 2 phi          12.7  NA           11.9      13.5 
-#> 3 sigma_O       1.86 NA            1.51      2.29
-#> 4 tweedie_p     1.58 NA            1.57      1.60
+#> 3 sigma_O       1.86 NA            1.48      2.34
+#> 4 tweedie_p     1.58 NA            1.56      1.60
 ```
 
 Plot the smoother effect:
 
 ``` r
-plot_smooth(fit, ggplot = TRUE)
+plot_smooth(fit, ggplot = TRUE) + xlim(40, 400)
+#> Warning: Removed 33 row(s) containing missing values (geom_path).
 ```
 
 <img src="man/figures/README-plot-smooth-1.png" width="50%" />
@@ -249,9 +252,9 @@ head(p)
     #> # A tibble: 3 × 7
     #>       X     Y depth   est est_non_rf est_rf omega_s
     #>   <dbl> <dbl> <dbl> <dbl>      <dbl>  <dbl>   <dbl>
-    #> 1   456  5636  347. -2.32      -2.34 0.0155  0.0155
-    #> 2   458  5636  223.  2.06       2.02 0.0475  0.0475
-    #> 3   460  5636  204.  3.10       3.02 0.0796  0.0796
+    #> 1   456  5636  347. -3.06      -3.08 0.0172  0.0172
+    #> 2   458  5636  223.  2.03       1.99 0.0460  0.0460
+    #> 3   460  5636  204.  2.89       2.82 0.0747  0.0747
 
 ``` r
 ggplot(p, aes(X, Y, fill = exp(est))) + geom_raster() +
@@ -265,10 +268,21 @@ column and family:
 
 ``` r
 fit <- sdmTMB(
-  present ~ s(depth, k = 5),
+  present ~ s(depth),
   data = pcod, 
   mesh = mesh,
   family = binomial(link = "logit")
+)
+```
+
+Or a hurdle/delta model by changing the family:
+
+``` r
+fit <- sdmTMB(
+  density ~ s(depth),
+  data = pcod,
+  mesh = mesh,
+  family = delta_gamma(link1 = "logit", link2 = "log"),
 )
 ```
 
@@ -293,8 +307,8 @@ grid cell area 4 (2 x 2 km) and pass the predictions to `get_index()`:
 
 ``` r
 p_st <- predict(fit_spatiotemporal, newdata = qcs_grid, 
-  return_tmb_object = TRUE, area = 4)
-index <- get_index(p_st)
+  return_tmb_object = TRUE)
+index <- get_index(p_st, area = rep(4, nrow(qcs_grid)))
 ggplot(index, aes(year, est)) +
   geom_ribbon(aes(ymin = lwr, ymax = upr), fill = "grey90") +
   geom_line(lwd = 1, colour = "grey30") +
@@ -365,7 +379,7 @@ Spatially varying effect of time:
 pcod$year_scaled <- as.numeric(scale(pcod$year))
 fit <- sdmTMB(
   density ~ s(depth, k = 5) + year_scaled,
-  spatial_varying = ~ 0 + year_scaled, 
+  spatial_varying = ~ year_scaled, 
   data = pcod, mesh = mesh, 
   time = "year",
   family = tweedie(link = "log"),
@@ -381,7 +395,7 @@ has a mean of 0 (e.g., by including it in `formula` too).
 qcs_grid$year_scaled <- (qcs_grid$year - mean(pcod$year)) / sd(pcod$year)
 p <- predict(fit, newdata = qcs_grid) %>% 
   subset(year == 2011) # any year
-ggplot(p, aes(X, Y, fill = zeta_s)) + geom_raster() +
+ggplot(p, aes(X, Y, fill = zeta_s_year_scaled)) + geom_raster() +
   scale_fill_gradient2()
 ```
 
@@ -576,11 +590,11 @@ m_cv <- sdmTMB_cv(
 #> Set a parallel `future::plan()` to use parallel processing.
 # Sum of log likelihoods of left-out data:
 m_cv$sum_loglik
-#> [1] -6750.892
+#> [1] -7122.514
 # Expected log pointwise predictive density from left-out data:
 # (average likelihood density)
 m_cv$elpd
-#> [1] -1.008653
+#> [1] -1.005115
 ```
 
 See

@@ -117,7 +117,7 @@ Fit a spatial model with a smoother for depth:
 
 ```{r, warning=FALSE, message=FALSE}
 fit <- sdmTMB(
-  density ~ s(depth, k = 5),
+  density ~ s(depth),
   data = pcod,
   mesh = mesh,
   family = tweedie(link = "log"),
@@ -143,7 +143,7 @@ tidy(fit, effects = "ran_pars", conf.int = TRUE)
 Plot the smoother effect:
 
 ```{r plot-smooth}
-plot_smooth(fit, ggplot = TRUE)
+plot_smooth(fit, ggplot = TRUE) + xlim(40, 400)
 ```
 
 Predict on new data:
@@ -168,12 +168,23 @@ ggplot(p, aes(X, Y, fill = exp(est))) + geom_raster() +
 
 We could switch to a presence-absence model by changing the response column and family:
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 fit <- sdmTMB(
-  present ~ s(depth, k = 5),
+  present ~ s(depth),
   data = pcod, 
   mesh = mesh,
   family = binomial(link = "logit")
+)
+```
+
+Or a hurdle/delta model by changing the family:
+
+```{r, eval=TRUE}
+fit <- sdmTMB(
+  density ~ s(depth),
+  data = pcod,
+  mesh = mesh,
+  family = delta_gamma(link1 = "logit", link2 = "log"),
 )
 ```
 
@@ -193,10 +204,10 @@ fit_spatiotemporal <- sdmTMB(
 
 If we wanted to create an area-weighted standardized population index, we could predict on a grid covering the entire survey (`qcs_grid`) with grid cell area 4 (2 x 2 km) and pass the predictions to `get_index()`:
 
-```{r plot-index}
+```{r plot-index, warning=FALSE, message=FALSE}
 p_st <- predict(fit_spatiotemporal, newdata = qcs_grid, 
-  return_tmb_object = TRUE, area = 4)
-index <- get_index(p_st)
+  return_tmb_object = TRUE)
+index <- get_index(p_st, area = rep(4, nrow(qcs_grid)))
 ggplot(index, aes(year, est)) +
   geom_ribbon(aes(ymin = lwr, ymax = upr), fill = "grey90") +
   geom_line(lwd = 1, colour = "grey30") +
@@ -257,7 +268,7 @@ Spatially varying effect of time:
 pcod$year_scaled <- as.numeric(scale(pcod$year))
 fit <- sdmTMB(
   density ~ s(depth, k = 5) + year_scaled,
-  spatial_varying = ~ 0 + year_scaled, 
+  spatial_varying = ~ year_scaled, 
   data = pcod, mesh = mesh, 
   time = "year",
   family = tweedie(link = "log"),
@@ -271,7 +282,7 @@ See `zeta_s` in the output, which represents the coefficient varying in space. Y
 qcs_grid$year_scaled <- (qcs_grid$year - mean(pcod$year)) / sd(pcod$year)
 p <- predict(fit, newdata = qcs_grid) %>% 
   subset(year == 2011) # any year
-ggplot(p, aes(X, Y, fill = zeta_s)) + geom_raster() +
+ggplot(p, aes(X, Y, fill = zeta_s_year_scaled)) + geom_raster() +
   scale_fill_gradient2()
 ```
 
