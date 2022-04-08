@@ -562,7 +562,10 @@ predict.sdmTMB <- function(object, newdata = object$data,
     # The following is not an error,
     # IID and RW effects are baked into fixed effects for `newdata` in above code:
     nd$est_non_rf <- r$eta_fixed_i + r$eta_rw_i + r$eta_iid_re_i
-    nd$est_rf <- r$omega_s_A + r$epsilon_st_A_vec + r$zeta_s_A
+    nd$est_rf <- r$omega_s_A + r$epsilon_st_A_vec
+    if (!is.null(object$spatial_varying_formula))
+      stop("Prediction with `newdata = NULL` is not supported with spatially varying coefficients yet. Please provide your data to `newdata`.", call. = FALSE)
+    # + r$zeta_s_A
     nd$omega_s <- r$omega_s_A
     for (z in seq_len(dim(r$zeta_s_A)[2])) { # SVC:
       nd[[paste0("zeta_s_", object$spatial_varying[z])]] <- r$zeta_s_A[,z,1]

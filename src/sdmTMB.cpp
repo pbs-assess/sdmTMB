@@ -566,9 +566,9 @@ Type objective_function<Type>::operator()()
       // Spatially varying effects:
       if (include_spatial) {
         eta_i(i,m) += omega_s_A(i,m);  // spatial omega
-       if (spatial_covariate)
-         for (int z = 0; z < n_z; z++)
-           eta_i(i,m) += zeta_s_A(i,z,m) * z_i(i,z); // spatially varying covariate DELTA
+        if (spatial_covariate)
+          for (int z = 0; z < n_z; z++)
+            eta_i(i,m) += zeta_s_A(i,z,m) * z_i(i,z); // spatially varying covariate DELTA
       }
       epsilon_st_A_vec(i,m) = epsilon_st_A(A_spatial_index(i), year_i(i),m); // record it
       eta_i(i,m) += epsilon_st_A_vec(i,m); // spatiotemporal
