@@ -130,7 +130,7 @@ sdmTMB_simulate <- function(formula,
   assert_that(phi > 0 || is.null(phi))
   assert_that(sigma_O >= 0 || is.null(sigma_O))
   assert_that(all(sigma_E >= 0) || is.null(sigma_E))
-  assert_that(sigma_Z >= 0 || is.null(sigma_Z))
+  assert_that(all(sigma_Z >= 0) || is.null(sigma_Z))
 
   if (is.null(previous_fit)) {
     assert_that(is(mesh, "sdmTMBmesh"))
@@ -194,7 +194,7 @@ sdmTMB_simulate <- function(formula,
 
   if (is.null(previous_fit)) {
     if (is.null(sigma_O)) sigma_O <- 0
-    if (is.null(sigma_Z)) sigma_Z <- 0
+    if (is.null(sigma_Z)) sigma_Z <- matrix(0, nrow = 0L, ncol = 0L) # DELTA FIXME
     if (is.null(sigma_E)) sigma_E <- 0
   }
 
@@ -209,7 +209,7 @@ sdmTMB_simulate <- function(formula,
   }
   if (!is.null(sigma_Z) || is.null(previous_fit)) {
     tau_Z <- 1 / (sqrt(4 * pi) * kappa[1] * sigma_Z)
-    params$ln_tau_Z <- log(tau_Z)
+    params$ln_tau_Z <- matrix(log(tau_Z), nrow = nrow(sigma_Z), ncol = 1L) # DELTA FIXME
   }
   if (!is.null(sigma_E) || is.null(previous_fit)) {
     tau_E <- 1 / (sqrt(4 * pi) * kappa[2] * sigma_E)
