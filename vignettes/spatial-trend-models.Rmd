@@ -96,7 +96,7 @@ First let's look at the spatial trends.
 We will just pick out a single year to plot since they should all be the same for the slopes. Note that these are in log space. `zeta_s` are the spatially varying coefficients.
 
 ```{r}
-plot_map_raster(filter(p1, year == 2003), "zeta_s")
+plot_map_raster(filter(p1, year == 2003), "zeta_s_scaled_year")
 ```
 
 This is the spatially varying intercept:
