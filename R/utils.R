@@ -77,7 +77,7 @@ sdmTMBcontrol <- function(
   iter.max = 1e3L,
   normalize = FALSE,
   nlminb_loops = 1L,
-  newton_loops = 1L,
+  newton_loops = 0L,
   mgcv = deprecated(),
   quadratic_roots = FALSE,
   start = NULL,

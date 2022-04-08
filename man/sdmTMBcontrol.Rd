@@ -9,7 +9,7 @@ sdmTMBcontrol(
   iter.max = 1000L,
   normalize = FALSE,
   nlminb_loops = 1L,
-  newton_loops = 1L,
+  newton_loops = 0L,
   mgcv = deprecated(),
   quadratic_roots = FALSE,
   start = NULL,
