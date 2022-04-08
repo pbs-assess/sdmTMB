@@ -324,7 +324,7 @@ test_that("start works", {
     m2 <- sdmTMB(density ~ poly(depth, 2),
       data = pcod_2011,
       mesh = pcod_mesh_2011, family = tweedie(),
-      control = sdmTMBcontrol(start = list(ln_kappa = c(-1.78, -1.78))))
+      control = sdmTMBcontrol(start = list(ln_kappa = matrix(c(-1.78, -1.78), ncol = 1L))))
   }, regexp = "ln_kappa")
 })
 

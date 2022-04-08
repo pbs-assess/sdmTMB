@@ -174,7 +174,7 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   tidy(m, effects = "ran_par")
   tidy(m, effects = "ran_par", conf.int = TRUE)
 
-  cols <- c("est", "est_non_rf", "est_rf", "omega_s", "epsilon_st")
+  cols <- c("est", "est_non_rf", "est_rf", "epsilon_st")
   expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-3)
 
   m <- sdmTMB(
@@ -205,5 +205,5 @@ test_that("poly() works on newdata", {
     family = glmmTMB::tweedie(link = "log")
   )
   p2 <- predict(m2, newdata = nd)
-  expect_equal(p, p2)
+  expect_equal(p, p2, tolerance = 1e-4)
 })
