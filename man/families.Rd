@@ -87,7 +87,7 @@ delta_gamma()
 delta_lognormal()
 delta_truncated_nbinom2()
 delta_truncated_nbinom1()
-delta_gamma2()
+delta_poisson_link_gamma()
 }
 \references{
 Hilbe, J. M. (2011). Negative binomial regression. Cambridge University Press.

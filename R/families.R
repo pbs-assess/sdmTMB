@@ -247,7 +247,7 @@ delta_truncated_nbinom1 <- function(link1 = "logit", link2 = "log") {
 }
 
 #' @examples
-#' delta_gamma2()
+#' delta_poisson_link_gamma()
 #' @rdname families
 #' @details `delta_poisson_link_gamma()` is the Poisson-link (complementary
 #'   log-log) delta model (Thorson 2018).
