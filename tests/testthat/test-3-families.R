@@ -88,7 +88,8 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     s <- sdmTMB_sim(x = x, y = y, betas = 0.4, time = 1L, phi = 1.5, range = 0.8,
       sigma_O = 0.4, sigma_E = 0, seed = 1, mesh = spde, family = nbinom2())
     m <- sdmTMB(data = s, formula = observed ~ 1,
-      mesh = spde, family = nbinom2())
+      mesh = spde, family = nbinom2(),
+      control = sdmTMBcontrol(newton_loops = 1))
     expect_equal(round(tidy(m)[,"estimate"], 6), 0.274008)
   })
 
@@ -136,7 +137,9 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     set.seed(3)
     d$density <- rpois(nrow(pcod), 3)
     m <- sdmTMB(data = d, formula = density ~ 1,
-      mesh = spde, family = poisson(link = "log"))
+      mesh = spde, family = poisson(link = "log"),
+      control = sdmTMBcontrol(newton_loops = 1)
+    )
     expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
     expect_length(residuals(m), nrow(pcod))
   })
@@ -149,7 +152,8 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     spde <- make_mesh(d, c("X", "Y"), cutoff = 10)
     d$present <- ifelse(d$density > 0, 1, 0)
     m <- sdmTMB(data = d, formula = present ~ 1,
-      mesh = spde, family = binomial(link = "logit"))
+      mesh = spde, family = binomial(link = "logit"),
+      control = sdmTMBcontrol(newton_loops = 1))
     expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
     expect_length(residuals(m), nrow(d))
   })
@@ -160,13 +164,16 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     d <- pcod[pcod$year == 2017 & pcod$density > 0, ]
     spde <- make_mesh(d, c("X", "Y"), cutoff = 10)
     m <- sdmTMB(data = d, formula = density ~ 1,
-      mesh = spde, family = Gamma(link = "log"))
+      mesh = spde, family = Gamma(link = "log"),
+      spatial = "off",
+      control = sdmTMBcontrol(newton_loops = 1))
     expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
     expect_length(residuals(m), nrow(d))
     set.seed(123)
     d$test_gamma <- stats::rgamma(nrow(d), shape = 0.5, scale = 1 / 0.5)
     m <- sdmTMB(data = d, formula = test_gamma ~ 1,
-      mesh = spde, family = Gamma(link = "inverse"), spatiotemporal = "off")
+      mesh = spde, family = Gamma(link = "inverse"), spatiotemporal = "off",
+      control = sdmTMBcontrol(newton_loops = 1))
     expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
   })
 
@@ -182,6 +189,7 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
       range = 0.8, family = Beta(), phi = 4)
     m <- sdmTMB(data = s, formula = observed ~ 1,
       mesh = spde, family = Beta(link = "logit"),
+      control = sdmTMBcontrol(newton_loops = 1),
       spatial = "off")
     expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
     expect_length(residuals(m), nrow(s))

@@ -935,11 +935,11 @@ sdmTMB <- function(
     b_smooth = if (sm$has_smooths) matrix(0, sum(sm$sm_dims), n_m) else array(0),
     ln_smooth_sigma = if (sm$has_smooths) matrix(0, length(sm$sm_dims), n_m) else array(0)
   )
-  if (identical(family$link, "inverse") && family$family %in% c("Gamma", "gaussian", "student")) {
+  if (identical(family$link, "inverse") && family$family[1] %in% c("Gamma", "gaussian", "student") && !delta) {
     fam <- family
     if (family$family == "student") fam$family <- "gaussian"
     temp <- mgcv::gam(formula = formula, data = data, family = fam)
-    tmb_params$b_j <- stats::coef(temp)
+    tmb_params$b_j <- matrix(stats::coef(temp), ncol = 1L)
   }
   if (contains_offset) tmb_params$b_j[offset_pos] <- 1
 

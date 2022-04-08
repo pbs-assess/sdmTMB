@@ -499,14 +499,14 @@ predict.sdmTMB <- function(object, newdata = object$data,
           }
         }
       } else {
-        nd$est <- r$proj_eta
-        nd$est_non_rf <- r$proj_fe
-        nd$est_rf <- r$proj_rf
-        nd$omega_s <- r$proj_omega_s_A
+        nd$est <- r$proj_eta[,1]
+        nd$est_non_rf <- r$proj_fe[,1]
+        nd$est_rf <- r$proj_rf[,1]
+        nd$omega_s <- r$proj_omega_s_A[,1]
         for (z in seq_len(dim(r$proj_zeta_s_A)[2])) { # SVC:
           nd[[paste0("zeta_s_", object$spatial_varying[z])]] <- r$proj_zeta_s_A[,z,1]
         }
-        nd$epsilon_st <- r$proj_epsilon_st_A_vec
+        nd$epsilon_st <- r$proj_epsilon_st_A_vec[,1]
         if (type == "response") {
           nd$est <- object$family$linkinv[[1]](nd$est)
         }
@@ -558,19 +558,19 @@ predict.sdmTMB <- function(object, newdata = object$data,
     # object$tmb_obj$fn(lp) # call once to update internal structures?
     r <- object$tmb_obj$report(lp)
 
-    nd$est <- r$eta_i
+    nd$est <- r$eta_i[,1] # DELTA FIXME
     # The following is not an error,
     # IID and RW effects are baked into fixed effects for `newdata` in above code:
-    nd$est_non_rf <- r$eta_fixed_i + r$eta_rw_i + r$eta_iid_re_i
-    nd$est_rf <- r$omega_s_A + r$epsilon_st_A_vec
+    nd$est_non_rf <- r$eta_fixed_i[,1] + r$eta_rw_i[,1] + r$eta_iid_re_i[,1] # DELTA FIXME
+    nd$est_rf <- r$omega_s_A[,1] + r$epsilon_st_A_vec[,1] # DELTA FIXME
     if (!is.null(object$spatial_varying_formula))
       stop("Prediction with `newdata = NULL` is not supported with spatially varying coefficients yet. Please provide your data to `newdata`.", call. = FALSE)
     # + r$zeta_s_A
-    nd$omega_s <- r$omega_s_A
-    for (z in seq_len(dim(r$zeta_s_A)[2])) { # SVC:
-      nd[[paste0("zeta_s_", object$spatial_varying[z])]] <- r$zeta_s_A[,z,1]
-    }
-    nd$epsilon_st <- r$epsilon_st_A_vec
+    nd$omega_s <- r$omega_s_A[,1]# DELTA FIXME
+    # for (z in seq_len(dim(r$zeta_s_A)[2])) { # SVC:
+    #   nd[[paste0("zeta_s_", object$spatial_varying[z])]] <- r$zeta_s_A[,z,1]
+    # }
+    nd$epsilon_st <- r$epsilon_st_A_vec[,1]# DELTA FIXME
     obj <- object
   }
 

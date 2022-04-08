@@ -4,13 +4,11 @@ test_that("A model with 2 s() splines works", {
   skip_if_not_installed("INLA")
   d <- subset(pcod, year >= 2000 & density > 0)
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
-  suppressMessages({
-    m <- sdmTMB(
-      data = d,
-      formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
-      mesh = pcod_spde, spatial = "off", spatiotemporal = "off"
-    )
-  })
+  m <- sdmTMB(
+    data = d,
+    formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
+    mesh = pcod_spde, spatial = "off", spatiotemporal = "off"
+  )
   expect_equal(ncol(m$tmb_data$X_ij), 1L)
   expect_equal(length(m$tmb_data$Zs), 2L)
   # head(m$tmb_data$Zs[[1]])

@@ -327,3 +327,44 @@ test_that("start works", {
       control = sdmTMBcontrol(start = list(ln_kappa = c(-1.78, -1.78))))
   }, regexp = "ln_kappa")
 })
+
+test_that("Multiple SVC works", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+
+  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
+
+  pcod$syear <- as.numeric(scale(pcod$year))
+  fit <- sdmTMB(
+    density ~ 1,
+    spatial_varying = ~ 0 + syear + depth_scaled,
+    mesh = mesh,
+    family = delta_gamma(),
+    data = pcod
+  )
+  fit$sd_report
+  fit
+  qcs_grid$syear <- as.numeric(scale(qcs_grid$year))
+  p <- predict(fit, newdata = qcs_grid)
+  # p <- predict(fit, newdata = NULL)
+})
+
+test_that("Offset works", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+
+  pcod$offset <- rnorm(nrow(pcod))
+  fit2 <- sdmTMB(density ~ 1,
+    offset = pcod$offset,
+    data = pcod, spatial = "off",
+    family = tweedie()
+  )
+  expect_error(fit2 <- sdmTMB(density ~ 1,
+    offset = year,
+    data = pcod, spatial = "off",
+    family = tweedie()), regexp = "year"
+  )
+})
+
