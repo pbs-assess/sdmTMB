@@ -815,7 +815,7 @@ Type objective_function<Type>::operator()()
 
     // Spatial and spatiotemporal random fields:
     array<Type> proj_omega_s_A(n_p, n_m);
-    array<Type> proj_zeta_s_A(n_p, n_m);
+    array<Type> proj_zeta_s_A(n_p, n_z, n_m);
     array<Type> proj_epsilon_st_A(n_p, n_t, n_m);
     array<Type> proj_epsilon_st_A_vec(n_p, n_m);
 
@@ -830,14 +830,16 @@ Type objective_function<Type>::operator()()
     }
 
     // Spatially varying coefficients:
-    array<Type> proj_zeta_s_A_cov(n_p, n_m);
+    array<Type> proj_zeta_s_A_cov(n_p, n_z, n_m);
     proj_zeta_s_A_cov.setZero();
     proj_zeta_s_A.setZero();
     if (spatial_covariate) {
       for (int m = 0; m < n_m; m++) {
-        proj_zeta_s_A.col(m) = proj_mesh * vector<Type>(zeta_s.col(m));
-        for (int i = 0; i < n_p; i++) {
-          proj_zeta_s_A_cov(i,m) = proj_zeta_s_A(i,m) * proj_z_i(i);
+        for (int z = 0; z < n_z; z++) {
+          proj_zeta_s_A.col(m).col(z) = proj_mesh * vector<Type>(zeta_s.col(m).col(z));
+          for (int i = 0; i < n_p; i++) {
+            proj_zeta_s_A_cov(i,z,m) = proj_zeta_s_A(i,z,m) * proj_z_i(i,z);
+          }
         }
       }
     }
@@ -858,11 +860,16 @@ Type objective_function<Type>::operator()()
 
     array<Type> proj_rf(n_p, n_m);
     array<Type> proj_eta(n_p, n_m);
-    for (int m = 0; m < n_m; m++) {
-      proj_rf.col(m) = proj_omega_s_A.col(m) + proj_epsilon_st_A_vec.col(m) + proj_zeta_s_A_cov.col(m);
+    for (int m = 0; m < n_m; m++)
+      proj_rf.col(m) = proj_omega_s_A.col(m) + proj_epsilon_st_A_vec.col(m);
+
+    for (int m = 0; m < n_m; m++)
+      for (int z = 0; z < n_z; z++)
+        proj_rf.col(m) += proj_zeta_s_A_cov.col(m).col(z); // SVC effects
+
       // proj_fe includes s(), RW, and IID random effects:
+    for (int m = 0; m < n_m; m++)
       proj_eta.col(m) = proj_fe.col(m) + proj_rf.col(m);
-    }
 
     // FIXME save memory by not reporting all these or optionally so for MVN/Bayes?
     REPORT(proj_fe);            // fixed effect projections

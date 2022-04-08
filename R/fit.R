@@ -656,14 +656,11 @@ sdmTMB <- function(
   }
 
   if (!is.null(spatial_varying)) {
-    temp <- model.matrix(spatial_varying, data)
-    .int <- grep("(Intercept)", colnames(temp))
-    if (sum(.int) > 0) temp <- temp[,-.int,drop=FALSE]
-    if (ncol(temp) > 1L) message("`spatial_varying` has more than 1 covariate.", call. = FALSE)
-    if (any(grepl("Intercept", colnames(temp))))
-      stop("There appears to be an intercept in `spatial_varying`. The intercept should be omitted since it is already controlled via `spatial`. Include `~0` or `~1`.", call. = FALSE)
-    z_i <- temp
-    spatial_varying <- colnames(temp)
+    z_i <- model.matrix(spatial_varying, data)
+    .int <- grep("(Intercept)", colnames(z_i))
+    if (sum(.int) > 0) z_i <- z_i[,-.int,drop=FALSE]
+    spatial_varying_formula <- spatial_varying
+    spatial_varying <- colnames(z_i)
   } else {
     z_i <- matrix(0, nrow(data), 0L)
   }
@@ -1135,6 +1132,7 @@ sdmTMB <- function(
     tmb_map    = tmb_map,
     tmb_random = tmb_random,
     spatial_varying = spatial_varying,
+    spatial_varying_formula = spatial_varying_formula,
     reml       = reml,
     lower      = lim$lower,
     upper      = lim$upper,

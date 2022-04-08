@@ -386,11 +386,16 @@ predict.sdmTMB <- function(object, newdata = object$data,
     tmb_data$proj_spatial_index <- newdata$sdm_spatial_id - 1L
     tmb_data$proj_Zs <- sm$Zs
     tmb_data$proj_Xs <- sm$Xs
+
+    # SVC:
     if (!is.null(object$spatial_varying)) {
-      if (!object$spatial_varying %in% names(newdata))
-        stop("The `spatial_varying` column is missing from `newdata`.", call. = FALSE)
+      z_i <- model.matrix(object$spatial_varying_formula, newdata)
+      .int <- grep("(Intercept)", colnames(z_i))
+      if (sum(.int) > 0) z_i <- z_i[,-.int,drop=FALSE]
+    } else {
+      z_i <- matrix(0, nrow(newdata), 0L)
     }
-    tmb_data$proj_z_i <- if (is.null(object$spatial_varying)) 0 else newdata[[object$spatial_varying]]
+    tmb_data$proj_z_i <- z_i
 
     epsilon_covariate <- rep(0, length(unique(newdata[[object$time]])))
     if (tmb_data$est_epsilon_model) {
@@ -472,8 +477,10 @@ predict.sdmTMB <- function(object, newdata = object$data,
         nd$est_rf2 <- r$proj_rf[,2]
         nd$omega_s1 <- r$proj_omega_s_A[,1]
         nd$omega_s2 <- r$proj_omega_s_A[,2]
-        nd$zeta_s1 <- r$proj_zeta_s_A[,1]
-        nd$zeta_s2 <- r$proj_zeta_s_A[,2]
+        for (z in seq_len(dim(r$proj_zeta_s_A)[2])) { # SVC:
+          nd[[paste0("zeta_s_", object$spatial_varying[z], "1")]] <- r$proj_zeta_s_A[,z,1]
+          nd[[paste0("zeta_s_", object$spatial_varying[z], "2")]] <- r$proj_zeta_s_A[,z,2]
+        }
         nd$epsilon_st1 <- r$proj_epsilon_st_A_vec[,1]
         nd$epsilon_st2 <- r$proj_epsilon_st_A_vec[,2]
         if (type == "response") {
@@ -496,7 +503,9 @@ predict.sdmTMB <- function(object, newdata = object$data,
         nd$est_non_rf <- r$proj_fe
         nd$est_rf <- r$proj_rf
         nd$omega_s <- r$proj_omega_s_A
-        nd$zeta_s <- r$proj_zeta_s_A
+        for (z in seq_len(dim(r$proj_zeta_s_A)[2])) { # SVC:
+          nd[[paste0("zeta_s_", object$spatial_varying[z])]] <- r$proj_zeta_s_A[,z,1]
+        }
         nd$epsilon_st <- r$proj_epsilon_st_A_vec
         if (type == "response") {
           nd$est <- object$family$linkinv[[1]](nd$est)
@@ -542,7 +551,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
         "to the `newdata` argument.", call. = FALSE)
     }
     if (isTRUE(object$family$delta)) {
-      stop("Delta model prediction not implemented for `newdata = NULL` yet.", call. = FALSE)
+      stop("Delta model prediction not implemented for `newdata = NULL` yet. Please provide your data to `newdata`.", call. = FALSE)
     }
     nd <- object$data
     lp <- object$tmb_obj$env$last.par.best
@@ -555,7 +564,9 @@ predict.sdmTMB <- function(object, newdata = object$data,
     nd$est_non_rf <- r$eta_fixed_i + r$eta_rw_i + r$eta_iid_re_i
     nd$est_rf <- r$omega_s_A + r$epsilon_st_A_vec + r$zeta_s_A
     nd$omega_s <- r$omega_s_A
-    nd$zeta_s <- r$zeta_s_A
+    for (z in seq_len(dim(r$zeta_s_A)[2])) { # SVC:
+      nd[[paste0("zeta_s_", object$spatial_varying[z])]] <- r$zeta_s_A[,z,1]
+    }
     nd$epsilon_st <- r$epsilon_st_A_vec
     obj <- object
   }
