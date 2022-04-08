@@ -56,7 +56,8 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
       spatial = "off",
       family = delta_lognormal()
     )
-    fit_dln$sd_report
+    s <- as.list(fit_dln$sd_report, "Std. Error")
+    expect_true(sum(is.na(s$b_j)) == 0L)
   })
 
   test_that("delta_poisson_link_gamma() family fits", {
@@ -70,6 +71,8 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
       family = delta_poisson_link_gamma()
     )
     fit_plg$sd_report
+    s <- as.list(fit_plg$sd_report, "Std. Error")
+    expect_true(sum(is.na(s$b_j)) == 0L)
 
     p <- predict(fit_plg, newdata = qcs_grid, type = "response")
     p <- predict(fit_plg, newdata = pcod, type = "response")
@@ -86,6 +89,8 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
       data = pcod, mesh = pcod_spde, spatial = "off",
       family = delta_truncated_nbinom2()
     )
+    s <- as.list(fit_dtnb2$sd_report, "Std. Error")
+    expect_true(sum(is.na(s$b_j)) == 0L)
     fit_dtnb2$sd_report
   })
 }

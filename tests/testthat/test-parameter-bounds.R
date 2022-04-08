@@ -18,16 +18,20 @@ test_that("lower and upper work", {
       m <- sdmTMB(density ~ depth_scaled,
         data = d, mesh = pcod_spde, family = tweedie(link = "log"),
         control = sdmTMBcontrol(
+          newton_loops = 0,
           lower = list(ln_phi = 0),
           upper = list(ln_phi = 2.5)))
-    }) }, regexp = "upper")
+    })},
+    regexp = "upper")
   expect_equal(m$model$par[["ln_phi"]], 2.5, tolerance = 1e-6)
+  # FIXME NEWTON LOOPS GOING OUTSIDE BOUNDS?
 
   expect_warning({
     suppressMessages({
       m <- sdmTMB(density ~ depth_scaled,
         data = d, mesh = pcod_spde, family = tweedie(link = "log"),
         control = sdmTMBcontrol(
+          newton_loops = 0,
           lower = list(b_j = c(3, -0.46)),
           upper = list(b_j = c(3.5, -0.45))
         ))
