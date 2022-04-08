@@ -46,6 +46,7 @@ get_index <- function(obj, bias_correct = FALSE, level = 0.95, area = 1, ...)  {
 #' @param format Long or wide.
 #' @export
 get_cog <- function(obj, bias_correct = FALSE, level = 0.95, format = c("long", "wide"), area = 1, ...)  {
+  if (bias_correct) stop("Bias correction with get_cog() is temporarily disabled.")
   d <- get_generic(obj, value_name = c("cog_x", "cog_y"),
     bias_correct = bias_correct, level = level, trans = I, area = area, ...)
   d <- d[, names(d) != "trans_est", drop = FALSE]
@@ -121,10 +122,10 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   sr <- TMB::sdreport(new_obj, bias.correct = FALSE, ...)
   sr_est <- as.list(sr, "Estimate", report = TRUE)
 
-  if (bias_correct) {
-    if (value_name[1] == "cog_x") {
-      stop("Fast bias correction not yet fixed for COG.", call. = FALSE)
-    }
+  if (bias_correct && value_name[1] == "link_total") {
+    # if (value_name[1] == "cog_x") {
+      # stop("Fast bias correction not yet fixed for COG.", call. = FALSE)
+    # }
     # extract and modify parameters
     pars[[eps_name]] <- rep(0, length(sr_est$total))
     fixed <- obj$fit_obj$model$par
@@ -144,7 +145,8 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
     gradient <- new_obj2$gr(fixed)
     corrected_vals <- gradient[names(fixed) == eps_name]
   } else {
-    message("Bias correction is turned off. It is recommended to turn this on for final inference.")
+    if (value_name[1] == "link_total")
+      message("Bias correction is turned off. It is recommended to turn this on for final inference.")
   }
 
   # # need to initialize the new TMB object once?

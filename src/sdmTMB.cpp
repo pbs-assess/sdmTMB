@@ -893,6 +893,8 @@ Type objective_function<Type>::operator()()
     // Total biomass etc.:
     vector<Type> total(n_t);
     total.setZero();
+    vector<Type> mu_combined(n_p);
+    mu_combined.setZero();
 
     if (calc_index_totals || calc_cog) {
       // ------------------ Derived quantities ---------------------------------
@@ -911,11 +913,13 @@ Type objective_function<Type>::operator()()
             t1 = InverseLink(proj_eta(i,0), link(0));
             t2 = InverseLink(proj_eta(i,1), link(1));
           }
-          total(proj_year(i)) += t1 * t2 * area_i(i);
+          mu_combined(i) = t1 * t2;
+          total(proj_year(i)) += mu_combined(i) * area_i(i);
         }
       } else { // non-delta model
         for (int i = 0; i < n_p; i++) {
-          total(proj_year(i)) += InverseLink(proj_eta(i,0), link(0)) * area_i(i);
+          mu_combined(i) = InverseLink(proj_eta(i,0), link(0));
+          total(proj_year(i)) += mu_combined(i) * area_i(i);
         }
       }
       vector<Type> link_total(n_t);
@@ -942,34 +946,26 @@ Type objective_function<Type>::operator()()
           jnll += eps_index(t) * S;
         }
       }
-      // PARAMETER_ARRAY(eps_total);
-      // if (eps_total.size() > 0) {
-      //   Type S;
-      //   for (int t = 0; t < n_t; t++) {
-      //     S = newton::Tag(total(t));
-      //     jnll += eps_total(t) * S;
-      //   }
+      if (calc_cog) {
+        // Centre of gravity:
+        vector<Type> cog_x(n_t);
+        vector<Type> cog_y(n_t);
+        cog_x.setZero();
+        cog_y.setZero();
+        for (int i = 0; i < n_p; i++) {
+          cog_x(proj_year(i)) += proj_lon(i) * mu_combined(i) * area_i(i);
+          cog_y(proj_year(i)) += proj_lat(i) * mu_combined(i) * area_i(i);
+        }
+        for (int t = 0; t < n_t; t++) {
+          cog_x(t) /= total(t);
+          cog_y(t) /= total(t);
+        }
+        REPORT(cog_x);
+        ADREPORT(cog_x);
+        REPORT(cog_y);
+        ADREPORT(cog_y);
+      }
     }
-    //      if (calc_cog) {
-    //        // Centre of gravity:
-    //        vector<Type> cog_x(n_t);
-    //        vector<Type> cog_y(n_t);
-    //        cog_x.setZero();
-    //        cog_y.setZero();
-    //        for (int i = 0; i < proj_eta.size(); i++) {
-    //          cog_x(proj_year(i)) += proj_lon(i) * InverseLink(proj_eta(i), link) * area_i(i);
-    //          cog_y(proj_year(i)) += proj_lat(i) * InverseLink(proj_eta(i), link) * area_i(i);
-    //        }
-    //        for (int i = 0; i < n_t; i++) {
-    //          cog_x(i) = cog_x(i) / total(i);
-    //          cog_y(i) = cog_y(i) / total(i);
-    //        }
-    //        REPORT(cog_x);
-    //        ADREPORT(cog_x);
-    //        REPORT(cog_y);
-    //        ADREPORT(cog_y);
-    //      }
-    //    }
   }
 //
 //    if (threshold_func == 1) { // linear breakpoint model
