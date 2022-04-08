@@ -13,9 +13,8 @@ NULL
 #'   to include `0 + as.factor(year)` (or whatever the time column is called)
 #'   in the formula. IID random intercepts are possible using \pkg{lme4}
 #'   syntax, e.g., `+ (1 | g)` where `g` is a column with factor levels.
-#'   Penalized splines are possible via \pkg{mgcv} with `s()`. For delta-models,
-#'   this can also be a list, allowing each component to have different
-#'   covariates. See examples and details below.
+#'   Penalized splines are possible via \pkg{mgcv} with `s()`. See examples
+#'   and details below.
 #' @param data A data frame.
 #' @param mesh An object from [make_mesh()].
 #' @param time An optional time column name (as character). Can be left as
@@ -592,14 +591,14 @@ sdmTMB <- function(
     is.logical(multiphase),
     is.logical(map_rf), is.logical(normalize)
   )
-  if (!is.null(spatial_varying)) assert_that(class(spatial_varying) %in% c("formula","list"))
+  if (!is.null(spatial_varying)) assert_that(class(spatial_varying) == "formula")
   assert_that(is.list(priors))
-  if (!is.null(time_varying)) assert_that(class(time_varying) %in% c("formula","list"))
+  if (!is.null(time_varying)) assert_that(identical(class(time_varying), "formula"))
   assert_that(is.list(.control))
   if (!is.null(previous_fit)) assert_that(identical(class(previous_fit), "sdmTMB"))
   if (!is.null(time)) assert_that(is.character(time))
   assert_that(identical(class(spde), "sdmTMBmesh"))
-  assert_that(class(formula) %in% c("formula","list"))
+  assert_that(identical(class(formula), "formula"))
   assert_that("data.frame" %in% class(data))
   if (!is.null(map) && length(map) != length(start)) {
     warning("`length(map) != length(start)`. You likely want to specify ",
@@ -634,28 +633,15 @@ sdmTMB <- function(
   assert_that(identical(nrow(spde$loc_xy), nrow(data)),
     msg = "Number of x-y coordinates in `mesh` does not match `nrow(data)`.")
 
-  # if lists not passed in, convert them all to lists to avoid variable types later
-  reps <- ifelse(delta, 2, 1) # use same formula if not specified
-  if(class(formula) != "list") formula <- as.list(rep(c(formula),2))
-  if(class(time_varying) != "list") time_varying <- as.list(rep(c(time_varying),2))
-  if(class(spatial_varying) != "list") spatial_varying <- as.list(rep(c(spatial_varying),2))
-
   n_orig <- suppressWarnings(TMB::openmp(NULL))
   if (n_orig > 0 && .Platform$OS.type == "unix") { # openMP is supported
     TMB::openmp(n = control$parallel)
     on.exit({TMB::openmp(n = n_orig)})
   }
 
-  # thresholds not yet enabled for delta model, where formula is a list
-  if(length(formula)==1) {
-    thresh <- list(check_and_parse_thresh_params(formula, data))
-    formula <- list(thresh$formula)
-  } else {
-    thresh <- list(check_and_parse_thresh_params(formula[[1]], data),
-                   check_and_parse_thresh_params(formula[[2]], data))
-    formula <- list(thresh[[1]]$formula, thresh[[2]]$formula)
-  }
+  thresh <- check_and_parse_thresh_params(formula, data)
   original_formula <- formula
+  formula <- thresh$formula
 
   if (!is.null(extra_time)) { # for forecasting or interpolating
     if (!"xy_cols" %in% names(spde)) {
@@ -670,55 +656,36 @@ sdmTMB <- function(
   }
 
   spatial_varying_formula <- spatial_varying # save it
-  z_i <- list()
   if (!is.null(spatial_varying)) {
-    for(ii in 1:length(spatial_varying)) {
-      z_i[[ii]] <- model.matrix(spatial_varying, data)
-      .int <- grep("(Intercept)", colnames(z_i[[ii]]))
-      if (sum(.int) > 0) z_i[[ii]] <- z_i[[ii]][,-.int,drop=FALSE]
-      spatial_varying[ii] <- colnames(z_i[[ii]])
-    }
+    z_i <- model.matrix(spatial_varying, data)
+    .int <- grep("(Intercept)", colnames(z_i))
+    if (sum(.int) > 0) z_i <- z_i[,-.int,drop=FALSE]
+    spatial_varying <- colnames(z_i)
   } else {
-    for(ii in 1:length(spatial_varying)) {
-      z_i[ii] <- matrix(0, nrow(data), 0L)
-    }
+    z_i <- matrix(0, nrow(data), 0L)
   }
-  n_z <- unlist(lapply(n_z,ncol)) # vectorize n_z
+  n_z <- ncol(z_i)
 
-  split_formula <- list()
-  RE_indexes <- list()
-  nobs_RE <- list()
-  ln_tau_G_index<- list()
-  for(ii in 1:length(formula)) {
-    contains_offset <- check_offset(formula[[ii]])
-    if (contains_offset) warning("Contains offset in formula. This is deprecated. Please use the `offset` argument.", call. = FALSE)
+  contains_offset <- check_offset(formula)
+  if (contains_offset) warning("Contains offset in formula. This is deprecated. Please use the `offset` argument.", call. = FALSE)
 
-    # anything in a list here needs to be saved for tmb data
-    split_formula[[ii]] <- glmmTMB::splitForm(formula[ii])
-    RE_names <- barnames(split_formula$reTrmFormulas)
-    fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
-    RE_indexes[[ii]] <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
-    nobs_RE[[ii]] <- unname(apply(RE_indexes[[ii]], 2L, max)) + 1L
-    if (length(nobs_RE[[ii]]) == 0L) nobs_RE[[ii]] <- 0L
-    formula[[ii]] <- split_formula[[ii]]$fixedFormula
-    ln_tau_G_index[[ii]] <- unlist(lapply(seq_along(nobs_RE[[ii]]), function(i) rep(i, each = nobs_RE[[ii]][i]))) - 1L
-  }
+  split_formula <- glmmTMB::splitForm(formula)
+  RE_names <- barnames(split_formula$reTrmFormulas)
+  fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
+  RE_indexes <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
+  nobs_RE <- unname(apply(RE_indexes, 2L, max)) + 1L
+  if (length(nobs_RE) == 0L) nobs_RE <- 0L
+  formula <- split_formula$fixedFormula
+  ln_tau_G_index <- unlist(lapply(seq_along(nobs_RE), function(i) rep(i, each = nobs_RE[i]))) - 1L
 
-  X_ij = list()
-  mf <- list()
-  mt <- list()
-  sm <- list()
-  offset_pos <- list()
-  for(ii in 1:length(formula)) {
-    formula_no_sm <- remove_s_and_t2(formula[[ii]])
-    X_ij[[ii]] <- model.matrix(formula_no_sm, data)
-    mf[[ii]] <- model.frame(formula_no_sm, data)
-    mt[[ii]] <- attr(mf[[ii]], "terms")
-    # parse everything mgcv + smoothers:
-    sm[[ii]] <- parse_smoothers(formula = formula[[ii]], data = data)
-    offset_pos[[ii]] <- grep("^offset$", colnames(X_ij[ii]))
-  }
+  formula_no_sm <- remove_s_and_t2(formula)
+  X_ij <- model.matrix(formula_no_sm, data)
+  mf <- model.frame(formula_no_sm, data)
+  mt <- attr(mf, "terms")
+  # parse everything mgcv + smoothers:
+  sm <- parse_smoothers(formula = formula, data = data)
 
+  offset_pos <- grep("^offset$", colnames(X_ij))
   y_i <- model.response(mf, "numeric")
   if (family$family[1] %in% c("Gamma", "lognormal") && min(y_i) <= 0 && !delta) {
     stop("Gamma and lognormal must have response values > 0.", call. = FALSE)
@@ -730,7 +697,7 @@ sdmTMB <- function(
   # yobs could be binary
   # (yobs, weights) could be (proportions, size)
   # On the C++ side 'yobs' must be the number of successes.
-  size <- rep(1, nrow(X_ij[[1]])) # for non-binomial case
+  size <- rep(1, nrow(X_ij)) # for non-binomial case
   if (identical(family$family[1], "binomial") && !delta) {
     ## call this to catch the factor / matrix cases
     y_i <- model.response(mf, type = "any")
@@ -771,11 +738,10 @@ sdmTMB <- function(
   # offset <- as.vector(model.offset(mf))
   if (is.null(offset)) offset <- rep(0, length(y_i))
 
-  X_rw_ik <- list()
   if (!is.null(time_varying)) {
-    for(ii in 1:length(time_varying)) X_rw_ik[[ii]] <- model.matrix(time_varying, data)
+    X_rw_ik <- model.matrix(time_varying, data)
   } else {
-    for(ii in 1:length(time_varying)) X_rw_ik[[ii]] <- matrix(0, nrow = nrow(data), ncol = 1)
+    X_rw_ik <- matrix(0, nrow = nrow(data), ncol = 1)
   }
 
   # Stuff needed for spatiotemporal A matrix:
@@ -832,17 +798,17 @@ sdmTMB <- function(
   priors_b <- priors$b
   .priors <- priors
   .priors$b <- NULL # removes this in the list, so not passed in as data
-  if (nrow(priors_b) == 1L && ncol(X_ij[[1]]) > 1L) {
+  if (nrow(priors_b) == 1L && ncol(X_ij) > 1L) {
     if (!is.na(priors_b[[1]])) {
       message("Expanding `b` priors to match model matrix.")
     }
     # creates matrix that is 2 columns of NAs, rows = number of unique bs
     # Instead of passing in a 2-column matrix of NAs, pass in a matrix that
     # has means in first col and the remainder is Var-cov matrix
-    priors_b <- mvnormal(rep(NA, ncol(X_ij[[1]])))
+    priors_b <- mvnormal(rep(NA, ncol(X_ij)))
   }
   # ncol(X_ij) may occur if time varying model, no intercept
-  if (ncol(X_ij[[1]]) > 0 & !identical(nrow(priors_b), ncol(X_ij[[1]])))
+  if (ncol(X_ij) > 0 & !identical(nrow(priors_b), ncol(X_ij)))
     stop("The number of 'b' priors does not match the model matrix.", call. = FALSE)
   if (ncol(priors_b) == 2 && attributes(priors_b)$dist == "normal") {
     # normal priors passed in by user; change to MVN diagonal matrix
@@ -862,9 +828,6 @@ sdmTMB <- function(
     priors_b_Sigma <- as.matrix(Sigma[not_na, not_na])
   }
 
-  # EW got down to here. Problem is the following used to not be lists but now are vectors or lists:
-  # z_i, X_ij, mf, mt, sm, offset_pos, X_rw_ik, n_z, split_formula
-  # RE_indexes, nobs_RE, ln_tau_G_index, z_i
   if (!"A_st" %in% names(spde)) stop("`mesh` was created with an old version of `make_mesh()`.", call. = FALSE)
   if (delta) y_i <- cbind(ifelse(y_i > 0, 1, 0), ifelse(y_i > 0, y_i, NA_real_))
   if (!delta) y_i <- matrix(y_i, ncol = 1L)
