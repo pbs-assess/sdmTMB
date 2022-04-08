@@ -49,10 +49,10 @@ test_that("Model with random intercepts fits appropriately.", {
   expect_lt(nrow(.t1), nrow(.t))
 
   b <- as.list(m$sd_report, "Estimate")
-  .cor <- cor(c(RE_vals, RE_vals2), b$RE)
-  expect_identical(round(.cor, 6), 0.827327)
-  expect_identical(round(b$RE[seq_len(5)], 6),
-    c(-0.328542, 0.680869, 0.106166, -0.369494, -0.63912))
+  .cor <- cor(c(RE_vals, RE_vals2), b$RE[,1])
+  expect_equal(round(.cor, 6), 0.827327)
+  expect_equal(round(b$RE[seq_len(5)], 6),
+    c(-0.328542, 0.680869, 0.106166, -0.369494, -0.63912), tolerance = 1e-5)
 
   # missing a factor level:
   s_drop <- s[s$g != 1, , drop = FALSE]
@@ -94,11 +94,11 @@ test_that("Model with random intercepts fits appropriately.", {
   .t <- tidy(m, "ran_pars")
   m.glmmTMB <- glmmTMB::glmmTMB(data = s, formula = observed ~ 1 + (1 | g) + (1 | h))
   .v <- glmmTMB::VarCorr(m.glmmTMB)
-  expect_equal(.t$estimate[.t$term == "sigma_G"][1], sqrt(as.numeric(.v$cond$g)), tolerance = 1e-7)
-  expect_equal(.t$estimate[.t$term == "sigma_G"][2], sqrt(as.numeric(.v$cond$h)), tolerance = 1e-7)
+  expect_equal(.t$estimate[.t$term == "sigma_G"][1], sqrt(as.numeric(.v$cond$g)), tolerance = 1e-5)
+  expect_equal(.t$estimate[.t$term == "sigma_G"][2], sqrt(as.numeric(.v$cond$h)), tolerance = 1e-5)
 
   sdmTMB_re <- as.list(m$sd_report, "Estimate")
   glmmTMB_re <- glmmTMB::ranef(m.glmmTMB)$cond
   expect_equal(c(glmmTMB_re$g$`(Intercept)`, glmmTMB_re$h$`(Intercept)`),
-    sdmTMB_re$RE, tolerance = 1e-7)
+    sdmTMB_re$RE[,1], tolerance = 1e-7)
 })
