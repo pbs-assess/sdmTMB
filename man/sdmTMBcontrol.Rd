@@ -5,11 +5,11 @@
 \title{Optimization control options}
 \usage{
 sdmTMBcontrol(
-  eval.max = 2000,
-  iter.max = 1000,
+  eval.max = 2000L,
+  iter.max = 1000L,
   normalize = FALSE,
-  nlminb_loops = 1,
-  newton_loops = 0,
+  nlminb_loops = 1L,
+  newton_loops = 1L,
   mgcv = deprecated(),
   quadratic_roots = FALSE,
   start = NULL,

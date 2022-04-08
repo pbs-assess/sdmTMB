@@ -73,11 +73,11 @@ set_par_value <- function(opt, par) {
 #' # Usually used within sdmTMB(). For example:
 #' # sdmTMB(..., control = sdmTMBcontrol(profile = TRUE))
 sdmTMBcontrol <- function(
-  eval.max = 2e3,
-  iter.max = 1e3,
+  eval.max = 2e3L,
+  iter.max = 1e3L,
   normalize = FALSE,
-  nlminb_loops = 1,
-  newton_loops = 0,
+  nlminb_loops = 1L,
+  newton_loops = 1L,
   mgcv = deprecated(),
   quadratic_roots = FALSE,
   start = NULL,
