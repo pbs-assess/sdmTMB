@@ -1169,8 +1169,7 @@ sdmTMB <- function(
     if(!silent) cat("running newtonsteps\n")
     for (i in seq_len(newton_loops)) {
       g <- as.numeric(tmb_obj$gr(tmb_opt$par))
-      h <- stats::optimHess(tmb_opt$par, fn = tmb_obj$fn, gr = tmb_obj$gr,
-        upper = lim$upper, lower = lim$lower)
+      h <- stats::optimHess(tmb_opt$par, fn = tmb_obj$fn, gr = tmb_obj$gr)
       tmb_opt$par <- tmb_opt$par - solve(h, g)
       tmb_opt$objective <- tmb_obj$fn(tmb_opt$par)
     }
