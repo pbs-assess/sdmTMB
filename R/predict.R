@@ -508,7 +508,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
         }
         nd$epsilon_st <- r$proj_epsilon_st_A_vec[,1]
         if (type == "response") {
-          nd$est <- object$family$linkinv[[1]](nd$est)
+          nd$est <- object$family$linkinv(nd$est)
         }
       }
     }

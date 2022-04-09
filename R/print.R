@@ -255,6 +255,14 @@ print_footer <- function(x) {
 #' @export
 #' @import methods
 print.sdmTMB <- function(x, ...) {
+
+  # or x$tmb_obj$retape()!?
+  sink(tempfile())
+  tmp <- x$tmb_obj$fn(x$tmb_obj$par)
+  lp <- x$tmb_obj$env$last.par.best
+  r <- x$tmb_obj$report(lp)
+  sink()
+
   delta <- isTRUE(x$family$delta)
   print_header(x)
   if (delta) cat("\nDelta/hurdle model 1: -----------------------------------\n")

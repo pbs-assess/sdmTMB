@@ -593,7 +593,7 @@ Type objective_function<Type>::operator()()
         mu_i(i,m) = eta_i(i,m);
       } else if (poisson_link_delta) { // clogog, but put in logit space for robust density function:
         Type n = exp(eta_i(i,0));
-        Type p = 1 - exp(-exp(offset_i(i)) * n);
+        Type p = Type(1) - exp(-exp(offset_i(i)) * n);
         if (m == 0) mu_i(i,0) = logit(p);
         if (m == 1) mu_i(i,1) = (n/p) * exp(eta_i(i,1));
       } else {

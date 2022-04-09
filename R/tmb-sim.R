@@ -387,6 +387,10 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
     ret <- lapply(seq_len(nsim), function(i) newobj$simulate(par = new_par, complete = FALSE)$y_i)
   }
 
+  if (isTRUE(object$family$delta)) {
+    ret <- lapply(ret, function(.x) ifelse(!is.na(.x[,2]), .x[,2], .x[,1]))
+  }
+
   do.call(cbind, ret)
 }
 
@@ -432,13 +436,27 @@ dharma_residuals <- function(simulated_response, object, plot = TRUE, ...) {
   assert_that(class(object) == "sdmTMB")
   assert_that(is.logical(plot))
   assert_that(is.matrix(simulated_response))
-  assert_that(nrow(simulated_response) == length(as.numeric(object$response)))
+  assert_that(nrow(simulated_response) == nrow(object$response))
+  if (isTRUE(object$family$delta)) {
+    y <- ifelse(!is.na(object$response[,2]),
+      object$response[,2], object$response[,1])
+  } else {
+    y <- object$response[,1]
+  }
+  y <- as.numeric(y)
 
-  p <- predict(object, newdata = NULL)
-  fitted <- object$family$linkinv(p[["est_non_rf"]])
+  n_orig <- suppressWarnings(TMB::openmp(NULL))
+  if (n_orig > 0 && .Platform$OS.type == "unix") { # openMP is supported
+    TMB::openmp(n = 1L)
+    on.exit({TMB::openmp(n = n_orig)})
+  }
+
+  p <- predict(object, type = "response")
+  # fitted <- object$family$linkinv(p[["est_non_rf"]])
+  fitted <- p$est
   res <- DHARMa::createDHARMa(
     simulatedResponse = simulated_response,
-    observedResponse = as.numeric(object$response),
+    observedResponse = y,
     fittedPredictedResponse = fitted,
     ...
   )
