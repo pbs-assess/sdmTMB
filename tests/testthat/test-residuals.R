@@ -176,3 +176,37 @@ test_that("randomized quantile residuals work,", {
   expect_error(residuals(fit), regexp = "truncated_nbinom1")
   check_resids_dharma(fit)
 })
+
+test_that("residuals() works", {
+  pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
+  fit <- sdmTMB(density ~ 1, spatial = "off",
+    data = pcod, mesh = pcod_spde,
+    family = tweedie()
+  )
+  r <- residuals(fit)
+  expect_true(length(r) == nrow(pcod))
+  expect_true(sum(is.na(r)) == 0L)
+
+  fit <- sdmTMB(present ~ 1, spatial = "off",
+    data = pcod, mesh = pcod_spde,
+    family = binomial()
+  )
+  r <- residuals(fit)
+  expect_true(length(r) == nrow(pcod))
+  expect_true(sum(is.na(r)) == 0L)
+
+  fit <- sdmTMB(density ~ 1,
+    data = pcod, mesh = pcod_spde,
+    family = delta_gamma(), spatial = "off",
+    control = sdmTMBcontrol(newton_loops = 1)
+  )
+  expect_error(r <- residuals(fit), regexp = "delta")
+
+  fit <- sdmTMB(density ~ 1,
+    data = pcod, mesh = pcod_spde,
+    family = delta_poisson_link_gamma(), spatial = "off",
+    control = sdmTMBcontrol(newton_loops = 1)
+  )
+  expect_error(r <- residuals(fit), regexp = "delta")
+
+  })

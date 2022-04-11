@@ -1,6 +1,7 @@
 qres_tweedie <- function(object, y, mu) {
   p <- stats::plogis(object$model$par[["thetaf"]]) + 1
   dispersion <- exp(object$model$par[["ln_phi"]])
+
   u <- fishMod::pTweedie(q = y, p = p, mu = mu, phi = dispersion)
   if (p > 1 && p < 2)
     u[y == 0] <- stats::runif(sum(y == 0), min = 0, max = u[y == 0])
@@ -115,7 +116,11 @@ qres_beta <- function(object, y, mu) {
 #' Smith, J.Q. (1985). Diagnostic checks of non-standard time series models.
 #' Journal of Forecasting, 4, 283–291.
 residuals.sdmTMB <- function(object, type = c("mle", "sim"), ...) {
-  message("Consider using `dharma_residuals()` instead.")
+  if (isTRUE(object$family$delta)) {
+    stop("`residuals.sdmTMB()` is not setup to work with delta models yet. ",
+      "Try `dharma_residuals()`.", call. = FALSE)
+  }
+  # message("Consider using `dharma_residuals()` instead.")
   type <- match.arg(type)
   res_func <- switch(object$family$family,
     gaussian = qres_gaussian,
@@ -138,5 +143,6 @@ residuals.sdmTMB <- function(object, type = c("mle", "sim"), ...) {
     stop("`type` not implemented", call. = FALSE)
   }
   y <- object$response
+  y <- y[,1,drop=TRUE]
   res_func(object, y, mu, ...)
 }
