@@ -191,6 +191,11 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
     }
     k_folds <- length(unique(data$cv_fold))
   }
+  if(time == "_sdmTMB_time") { # undo changes above, make time NULL
+    data[["_sdmTMB_time"]] <- NULL
+    time <- NULL
+  }
+
 
   dot_args <- as.list(substitute(list(...)))[-1L]
   if ("weights" %in% names(dot_args)) {
