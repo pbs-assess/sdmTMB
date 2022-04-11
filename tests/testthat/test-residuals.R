@@ -178,6 +178,8 @@ test_that("randomized quantile residuals work,", {
 })
 
 test_that("residuals() works", {
+  skip_on_cran()
+  skip_if_not_installed("INLA")
   pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
   fit <- sdmTMB(density ~ 1, spatial = "off",
     data = pcod, mesh = pcod_spde,

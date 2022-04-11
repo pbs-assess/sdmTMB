@@ -6,7 +6,6 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
 
   test_that("Delta-Gamma family fits", {
     skip_on_cran()
-    skip_on_ci()
     skip_if_not_installed("INLA")
 
     fit_dg <- sdmTMB(density ~ 1,
@@ -48,7 +47,6 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
 
   test_that("Delta-lognormal family fits", {
     skip_on_cran()
-    skip_on_ci()
     skip_if_not_installed("INLA")
 
     fit_dln <- sdmTMB(density ~ 1,
@@ -62,7 +60,6 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
 
   test_that("delta_poisson_link_gamma() family fits", {
     skip_on_cran()
-    skip_on_ci()
     skip_if_not_installed("INLA")
 
     fit_plg <- sdmTMB(density ~ 1,
