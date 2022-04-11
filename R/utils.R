@@ -1,7 +1,3 @@
-set_par_value <- function(opt, par) {
-  as.numeric(opt$par[par == names(opt$par)])
-}
-
 #' Optimization control options
 #'
 #' [sdmTMB()] and [stats::nlminb()] control options.
@@ -101,23 +97,28 @@ sdmTMBcontrol <- function(
     parallel <- as.integer(parallel)
   }
 
-  list(
-    eval.max = eval.max,
-    iter.max = iter.max,
-    normalize = normalize,
-    nlminb_loops = nlminb_loops,
-    newton_loops = newton_loops,
-    profile = profile,
-    quadratic_roots = quadratic_roots,
-    start = start,
-    map_rf = map_rf,
-    map = map,
-    lower = lower,
-    upper = upper,
-    multiphase = multiphase,
-    parallel = parallel,
-    get_joint_precision = get_joint_precision,
-    ...)
+  out <- named_list(
+    eval.max,
+    iter.max,
+    normalize,
+    nlminb_loops,
+    newton_loops,
+    profile,
+    quadratic_roots,
+    start,
+    map_rf,
+    map,
+    lower,
+    upper,
+    multiphase,
+    parallel,
+    get_joint_precision
+  )
+  c(out, list(...))
+}
+
+set_par_value <- function(opt, par) {
+  as.numeric(opt$par[par == names(opt$par)])
 }
 
 get_convergence_diagnostics <- function(sd_report) {
@@ -139,7 +140,7 @@ get_convergence_diagnostics <- function(sd_report) {
           "Maximum final gradient: ", max(final_grads), ".", call. = FALSE)
     }
   }
-  invisible(list(final_grads = final_grads, bad_eig = bad_eig))
+  invisible(named_list(final_grads, bad_eig))
 }
 
 make_year_i <- function(x) {
@@ -256,22 +257,16 @@ remove_s_and_t2 <- function(formula) {
 
 has_no_random_effects <- function(obj) {
   "omega_s" %in% names(obj$tmb_map) &&
-    # "omega_s_trend" %in% names(obj$tmb_map) &&
     "epsilon_st" %in% names(obj$tmb_map) &&
     "b_rw_t" %in% names(obj$tmb_map) &&
     !"RE" %in% obj$tmb_random
 }
 
-# basic, from glmmTMB... keeping until figure out if need commented stuff...
+# from glmmTMB:
 get_pars <- function(object, unlist = TRUE) {
   ee <- object$tmb_obj$env
   x <- ee$last.par.best
-  # work around built-in default to parList, which
-  #  is bad if no random component
   if (length(ee$random)>0) x <- x[-ee$random]
   p <- ee$parList(x = x)
-  # if (!unlist) return(p)
-  # p <- unlist(p[names(p)!="b"])  ## drop primary RE
-  # names(p) <- gsub("[0-9]+$","",names(p)) ## remove disambiguators
   p
 }

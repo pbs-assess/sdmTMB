@@ -669,6 +669,7 @@ sdmTMB <- function(
   contains_offset <- check_offset(formula)
   if (contains_offset) warning("Contains offset in formula. This is deprecated. Please use the `offset` argument.", call. = FALSE)
 
+  # Parse random intercepts:
   split_formula <- glmmTMB::splitForm(formula)
   RE_names <- barnames(split_formula$reTrmFormulas)
   fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
@@ -685,6 +686,7 @@ sdmTMB <- function(
   # parse everything mgcv + smoothers:
   sm <- parse_smoothers(formula = formula, data = data)
 
+  # deprecated:
   offset_pos <- grep("^offset$", colnames(X_ij))
   y_i <- model.response(mf, "numeric")
   if (family$family[1] %in% c("Gamma", "lognormal") && min(y_i) <= 0 && !delta) {
@@ -724,18 +726,10 @@ sdmTMB <- function(
     }
   }
 
-  # if (!is.null(penalties)) {
-  #   assert_that(ncol(X_ij) == length(penalties),
-  #     msg = paste0("The number of fixed effects does not match the number of ",
-  #       "penalty terms. Ensure that offset terms are not in penalty vector and ",
-  #       "that any spline terms are properly accounted for."))
-  # }
-
   if (identical(family$link[1], "log") && min(y_i, na.rm = TRUE) < 0 && !delta) {
     stop("`link = 'log'` but the reponse data include values < 0.", call. = FALSE)
   }
 
-  # offset <- as.vector(model.offset(mf))
   if (is.null(offset)) offset <- rep(0, length(y_i))
 
   if (!is.null(time_varying)) {
@@ -743,18 +737,6 @@ sdmTMB <- function(
   } else {
     X_rw_ik <- matrix(0, nrow = nrow(data), ncol = 1)
   }
-
-  # Stuff needed for spatiotemporal A matrix:
-  # data$sdm_orig_id <- seq(1, nrow(data))
-  # data$sdm_x <- spde$loc_xy[,1,drop=TRUE]
-  # data$sdm_y <- spde$loc_xy[,2,drop=TRUE]
-  # fake_data <- unique(data.frame(sdm_x = data$sdm_x, sdm_y = data$sdm_y))
-  # fake_data[["sdm_spatial_id"]] <- seq(1, nrow(fake_data))
-  # data <- base::merge(data, fake_data, by = c("sdm_x", "sdm_y"),
-  #   all.x = TRUE, all.y = FALSE)
-  # data <- data[order(data$sdm_orig_id),, drop=FALSE]
-  # A_st <- INLA::inla.spde.make.A(spde$mesh,
-  #   loc = as.matrix(fake_data[, c("sdm_x", "sdm_y"), drop = FALSE]))
 
   n_s <- nrow(spde$mesh$loc)
 
@@ -1091,9 +1073,9 @@ sdmTMB <- function(
       " at specified starting value of ", start[[i]], ".")
     tmb_params[[names(start)[i]]] <- start[[i]]
   }
-  # TODO DELTA:
-  if (length(tmb_params[["ln_kappa"]]) != 2L && "ln_kappa" %in% names(start)) {
-    stop("Note that ln_kappa must be a vector of length 2. It should be the same value if `share_range = TRUE`.", call. = FALSE)
+
+  if (nrow(tmb_params[["ln_kappa"]]) != 2L && "ln_kappa" %in% names(start)) {
+    stop("Note that `ln_kappa` must be a matrix of nrow 2 and ncol models (regular=1, delta=2). It should be the same value in each row if `share_range = TRUE`.", call. = FALSE)
   }
 
   data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL
@@ -1111,7 +1093,6 @@ sdmTMB <- function(
     random = tmb_random, DLL = "sdmTMB", silent = silent)
   lim <- set_limits(tmb_obj, lower = lower, upper = upper,
     loc = spde$mesh$loc, silent = FALSE)
-
 
   out_structure <- structure(list(
     data       = data,
