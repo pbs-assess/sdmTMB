@@ -412,6 +412,7 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
 #' @seealso [simulate.sdmTMB()], [residuals.sdmTMB()]
 #'
 #' @examples
+#' if (inla_installed()) {
 #' fit <- sdmTMB(density ~ as.factor(year) + s(depth, k = 3),
 #'   data = pcod_2011, time = "year", mesh = pcod_mesh_2011,
 #'   family = tweedie(link = "log"), spatial = "off",
@@ -427,6 +428,7 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
 #' head(r)
 #' plot(r$expected, r$observed)
 #' abline(a = 0, b = 1)
+#' }
 
 dharma_residuals <- function(simulated_response, object, plot = TRUE, ...) {
   if (!requireNamespace("DHARMa", quietly = TRUE)) {

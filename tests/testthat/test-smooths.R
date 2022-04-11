@@ -218,6 +218,10 @@ test_that("Smooth plotting works", {
 })
 
 test_that("print works with s(X, Y)", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+
   d <- subset(pcod_2011, density > 0)
   m <- sdmTMB(log(density) ~ s(X, Y, k = 5), data = d, spatial = "off")
   print(m)

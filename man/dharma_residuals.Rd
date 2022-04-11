@@ -24,6 +24,7 @@ to plot the residuals yourself. See the examples.
 Get DHARMa residuals
 }
 \examples{
+if (inla_installed()) {
 fit <- sdmTMB(density ~ as.factor(year) + s(depth, k = 3),
   data = pcod_2011, time = "year", mesh = pcod_mesh_2011,
   family = tweedie(link = "log"), spatial = "off",
@@ -39,6 +40,7 @@ r <- dharma_residuals(s, fit, plot = FALSE)
 head(r)
 plot(r$expected, r$observed)
 abline(a = 0, b = 1)
+}
 }
 \seealso{
 \code{\link[=simulate.sdmTMB]{simulate.sdmTMB()}}, \code{\link[=residuals.sdmTMB]{residuals.sdmTMB()}}
