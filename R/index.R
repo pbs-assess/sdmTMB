@@ -6,6 +6,7 @@
 #' @param area Grid cell area. A vector of length `newdata` from
 #'   [predict.sdmTMB()] or a value of length 1, which will be repeated
 #'   internally to match.
+#' @param silent Silent?
 #' @param ... Passed to [TMB::sdreport()].
 #'
 #' @seealso [get_index_sims()]
@@ -35,7 +36,7 @@
 #' }
 #'
 #' @export
-get_index <- function(obj, bias_correct = FALSE, level = 0.95, area = 1, ...)  {
+get_index <- function(obj, bias_correct = FALSE, level = 0.95, area = 1, silent = TRUE, ...)  {
   d <- get_generic(obj, value_name = "link_total",
     bias_correct = bias_correct, level = level, trans = exp, area = area, ...)
   names(d)[names(d) == "trans_est"] <- "log_est"
@@ -45,7 +46,7 @@ get_index <- function(obj, bias_correct = FALSE, level = 0.95, area = 1, ...)  {
 #' @rdname get_index
 #' @param format Long or wide.
 #' @export
-get_cog <- function(obj, bias_correct = FALSE, level = 0.95, format = c("long", "wide"), area = 1, ...)  {
+get_cog <- function(obj, bias_correct = FALSE, level = 0.95, format = c("long", "wide"), area = 1, silent = TRUE, ...)  {
   if (bias_correct) stop("Bias correction with get_cog() is temporarily disabled.")
   d <- get_generic(obj, value_name = c("cog_x", "cog_y"),
     bias_correct = bias_correct, level = level, trans = I, area = area, ...)
@@ -63,7 +64,7 @@ get_cog <- function(obj, bias_correct = FALSE, level = 0.95, format = c("long", 
 }
 
 get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
-  trans = I, area = 1, ...) {
+  trans = I, area = 1, silent = TRUE, ...) {
 
   if (is.null(obj[["obj"]])) {
     stop("`obj` needs to be created with ",
@@ -116,7 +117,7 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
     map = obj$fit_obj$tmb_map,
     random = obj$fit_obj$tmb_random,
     DLL = "sdmTMB",
-    silent = TRUE
+    silent = silent
   )
 
   sr <- TMB::sdreport(new_obj, bias.correct = FALSE, ...)

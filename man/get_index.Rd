@@ -5,7 +5,14 @@
 \alias{get_cog}
 \title{Extract a relative biomass/abundance index or a center of gravity}
 \usage{
-get_index(obj, bias_correct = FALSE, level = 0.95, area = 1, ...)
+get_index(
+  obj,
+  bias_correct = FALSE,
+  level = 0.95,
+  area = 1,
+  silent = TRUE,
+  ...
+)
 
 get_cog(
   obj,
@@ -13,6 +20,7 @@ get_cog(
   level = 0.95,
   format = c("long", "wide"),
   area = 1,
+  silent = TRUE,
   ...
 )
 }
@@ -26,6 +34,8 @@ get_cog(
 \item{area}{Grid cell area. A vector of length \code{newdata} from
 \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} or a value of length 1, which will be repeated
 internally to match.}
+
+\item{silent}{Silent?}
 
 \item{...}{Passed to \code{\link[TMB:sdreport]{TMB::sdreport()}}.}
 
