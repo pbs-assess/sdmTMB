@@ -148,7 +148,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
     log_name <- c(log_name, "log_sigma_O")
     name <- c(name, "sigma_O")
   }
-  if (!x$tmb_data$spatial_only) {
+  if (!x$tmb_data$spatial_only[model]) {
     log_name <- c(log_name, "log_sigma_E")
     name <- c(name, "sigma_E")
   }
@@ -198,8 +198,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
     out_re$tweedie_p$conf.high <- plogis(est$thetaf + crit * se$thetaf) + 1
   }
 
-  r <- x$tmb_obj$report()
-  if (!is.null(r$rho) && r$rho != 0L) {
+  if ("ar1_phi" %in% names(est)) {
     ar_phi <- est$ar1_phi
     ar_phi_se <- se$ar1_phi
     rho_est <- 2 * stats::plogis(ar_phi) - 1
@@ -221,6 +220,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
   if (identical(est$ln_tau_G, 0)) out_re <- out_re[out_re$term != "sigma_G", ]
   if (identical(est$ln_tau_O, 0)) out_re <- out_re[out_re$term != "sigma_O", ]
   if (identical(est$ln_tau_Z, 0)) out_re <- out_re[out_re$term != "sigma_Z", ]
+  if (is.na(x$tmb_map$ar1_phi[model])) out_re <- out_re[out_re$term != "rho", ]
 
   if (!conf.int) {
     out_re[["conf.low"]] <- NULL

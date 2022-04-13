@@ -124,7 +124,7 @@ Type objective_function<Type>::operator()()
 
   DATA_INTEGER(normalize_in_r);
   DATA_INTEGER(flag);
-  DATA_INTEGER(share_range);
+  DATA_IVECTOR(share_range);
 
   // Prediction?
   DATA_INTEGER(do_predict);
@@ -143,8 +143,8 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(priors_b_n);
   DATA_IVECTOR(priors_b_index);
   DATA_VECTOR(priors); // all other priors as a vector
-  DATA_INTEGER(ar1_fields); // DELTA TODO currently shared...
-  DATA_INTEGER(rw_fields);  // DELTA TODO currently shared...
+  DATA_IVECTOR(ar1_fields);
+  DATA_IVECTOR(rw_fields);
   DATA_INTEGER(include_spatial); // DELTA TODO currently shared...
   DATA_INTEGER(random_walk); // DELTA TODO currently shared...
   DATA_IVECTOR(exclude_RE); // DELTA TODO currently shared...
@@ -177,7 +177,7 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(proj_z_i);
   DATA_IVECTOR(proj_spatial_index);
 
-  DATA_INTEGER(spatial_only);
+  DATA_IVECTOR(spatial_only);
   DATA_INTEGER(spatial_covariate);
 
   DATA_VECTOR(X_threshold);
@@ -336,25 +336,25 @@ Type objective_function<Type>::operator()()
   if (barrier) {
     Q_s = Q_spde(spde_barrier, exp(ln_kappa(0,0)), barrier_scaling);
     if (n_m > 1) Q_s2 = Q_spde(spde_barrier, exp(ln_kappa(0,1)), barrier_scaling);
-    if (!share_range) Q_st = Q_spde(spde_barrier, exp(ln_kappa(1,0)), barrier_scaling);
-    if (!share_range && n_m > 1) Q_st2 = Q_spde(spde_barrier, exp(ln_kappa(1,1)), barrier_scaling);
+    if (!share_range(0)) Q_st = Q_spde(spde_barrier, exp(ln_kappa(1,0)), barrier_scaling);
+    if (!share_range(1) && n_m > 1) Q_st2 = Q_spde(spde_barrier, exp(ln_kappa(1,1)), barrier_scaling);
   } else {
     if (anisotropy) {
       if (n_m > 1) error("anisotropy not implemented for delta models yet"); // DELTA TODO
       matrix<Type> H = sdmTMB::MakeH(ln_H_input);
       Q_s = R_inla::Q_spde(spde_aniso, exp(ln_kappa(0,0)), H);
-      if (!share_range) Q_st = R_inla::Q_spde(spde_aniso, exp(ln_kappa(1,0)), H);
+      if (!share_range(0)) Q_st = R_inla::Q_spde(spde_aniso, exp(ln_kappa(1,0)), H);
       REPORT(H);
     }
     if (!anisotropy) {
       Q_s = R_inla::Q_spde(spde, exp(ln_kappa(0,0)));
-      if (!share_range) Q_st = R_inla::Q_spde(spde, exp(ln_kappa(1,0)));
+      if (!share_range(0)) Q_st = R_inla::Q_spde(spde, exp(ln_kappa(1,0)));
       if (n_m > 1) Q_s2 = R_inla::Q_spde(spde, exp(ln_kappa(0,1)));
-      if (!share_range && n_m > 1) Q_st2 = R_inla::Q_spde(spde, exp(ln_kappa(1,1)));
+      if (!share_range(1) && n_m > 1) Q_st2 = R_inla::Q_spde(spde, exp(ln_kappa(1,1)));
     }
   }
-  if (share_range) Q_st = Q_s;
-  if (share_range) Q_st2 = Q_s2;
+  if (share_range(0)) Q_st = Q_s;
+  if (share_range(1)) Q_st2 = Q_s2;
 
   bool s = true;
   if (normalize_in_r) s = false;
@@ -402,8 +402,8 @@ Type objective_function<Type>::operator()()
     } else {
       Q_temp = Q_st2;
     }
-    if (!spatial_only) {
-      if (!ar1_fields && !rw_fields) {
+    if (!spatial_only(m)) {
+      if (!ar1_fields(m) && !rw_fields(m)) {
         for (int t = 0; t < n_t; t++)
           // PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
           PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E(m)))(epsilon_st.col(m).col(t));
@@ -415,14 +415,14 @@ Type objective_function<Type>::operator()()
           }
         }
       } else {
-        if (ar1_fields) {
+        if (ar1_fields(m)) {
           PARALLEL_REGION jnll += SCALE(SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)), 1./exp(ln_tau_E(m)))(epsilon_st.col(m));
           if (sim_re(1)) {
             array<Type> epsilon_st_tmp(epsilon_st.col(m).rows(),n_t);
             SIMULATE {SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)).simulate(epsilon_st_tmp);
             epsilon_st.col(m) = epsilon_st_tmp / exp(ln_tau_E(m));}
           }
-        } else if (rw_fields) {
+        } else if (rw_fields(m)) {
           for (int t = 0; t < n_t; t++)
             // PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
             PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E(m)))(epsilon_st.col(m).col(t));
@@ -485,13 +485,19 @@ Type objective_function<Type>::operator()()
   array<Type> zeta_s_A(n_i, n_z, n_m);
   array<Type> epsilon_st_A(n_i, n_t, n_m);
   array<Type> epsilon_st_A_vec(n_i, n_m);
+  omega_s_A.setZero();
+  omega_s_A.setZero();
+  epsilon_st_A.setZero();
+  epsilon_st_A_vec.setZero();
 
   for (int m = 0; m < n_m; m++) {
     for (int t = 0; t < n_t; t++)
-      epsilon_st_A.col(m).col(t) = A_st * vector<Type>(epsilon_st.col(m).col(t));
-    if (rw_fields) {
+      if (!spatial_only(m)) epsilon_st_A.col(m).col(t) =
+        A_st * vector<Type>(epsilon_st.col(m).col(t));
+    if (rw_fields(m)) {
       for (int t = 1; t < n_t; t++)
-        epsilon_st_A.col(m).col(t) = epsilon_st_A.col(m).col(t - 1) + epsilon_st_A.col(m).col(t);
+        if (!spatial_only(m)) epsilon_st_A.col(m).col(t) =
+          epsilon_st_A.col(m).col(t - 1) + epsilon_st_A.col(m).col(t);
     }
     omega_s_A.col(m) = A_st * vector<Type>(omega_s.col(m));
     for (int z = 0; z < n_z; z++)
@@ -822,7 +828,7 @@ Type objective_function<Type>::operator()()
     for (int m = 0; m < n_m; m++) {
       for (int t = 0; t < n_t; t++)
         proj_epsilon_st_A.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
-      if (rw_fields) {
+      if (rw_fields(m)) {
         for (int t = 1; t < n_t; t++)
           proj_epsilon_st_A.col(m).col(t) = proj_epsilon_st_A.col(m).col(t - 1) + proj_epsilon_st_A.col(m).col(t);
       }
@@ -905,15 +911,17 @@ Type objective_function<Type>::operator()()
       if (n_m > 1) { // delta model
         for (int i = 0; i < n_p; i++) {
           if (poisson_link_delta) {
-            Type n = exp(proj_eta(i,0));
-            Type p = 1 - exp(-n);
-            t1 = p;
-            t2 = (n/p) * exp(proj_eta(i,1));
+            // Type n = exp(proj_eta(i,0));
+            // Type p = 1 - exp(-n);
+            // t1 = p;
+            // t2 = (n/p) * exp(proj_eta(i,1));
+            mu_combined(i) = exp(proj_eta(i,0) + proj_eta(i,1)); // prevent numerical issues
+            // error("Index from Poisson-link delta model not tested yet.");
           } else {
             t1 = InverseLink(proj_eta(i,0), link(0));
             t2 = InverseLink(proj_eta(i,1), link(1));
+            mu_combined(i) = t1 * t2;
           }
-          mu_combined(i) = t1 * t2;
           total(proj_year(i)) += mu_combined(i) * area_i(i);
         }
       } else { // non-delta model
@@ -929,7 +937,8 @@ Type objective_function<Type>::operator()()
         link_tmp = link(0);
       }
       for (int i = 0; i < n_t; i++) {
-        link_total(i) = Link(total(i), link_tmp);
+        if (poisson_link_delta) link_total(i) = log(total(i));
+        if (!poisson_link_delta) link_total(i) = Link(total(i), link_tmp);
       }
       if (calc_index_totals) {
         REPORT(link_total);

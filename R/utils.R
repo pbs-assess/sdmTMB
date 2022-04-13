@@ -140,7 +140,8 @@ get_convergence_diagnostics <- function(sd_report) {
           "Maximum final gradient: ", max(final_grads), ".", call. = FALSE)
     }
   }
-  invisible(named_list(final_grads, bad_eig))
+  pdHess <- isTRUE(sd_report$pdHess)
+  invisible(named_list(final_grads, bad_eig, pdHess))
 }
 
 make_year_i <- function(x) {

@@ -15,7 +15,7 @@ print_model_info <- function(x) {
   delta <- isTRUE(x$family$delta)
   spatial_only <- as.logical(x$tmb_data$spatial_only)
   fit_by <- if (isTRUE(x$reml)) "REML" else "ML"
-  if (spatial_only) {
+  if (all(spatial_only)) {
     title <- paste0("Spatial model fit by ", fit_by, " ['sdmTMB']\n")
   } else {
     title <- paste0("Spatiotemporal model fit by ", fit_by, " ['sdmTMB']\n")
@@ -152,7 +152,7 @@ print_range <- function(x, m = 1) {
     return(NULL)
   }
   range <- mround(range, 2L)
-  range_text <- if (x$tmb_data$share_range) {
+  range_text <- if (x$tmb_data$share_range[m]) {
     paste0("Matern range: ", range[1], "\n")
   } else {
     paste0(

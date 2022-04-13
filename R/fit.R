@@ -468,41 +468,62 @@ sdmTMB <- function(
   ...
   ) {
 
+
   delta <- isTRUE(family$delta)
   n_m <- if (isTRUE(delta)) 2L else 1L
-  sp_len <- length(spatiotemporal)
-  spatiotemporal <- match.arg(tolower(as.character(spatiotemporal[[1]])),
-    choices = c("iid", "ar1", "rw", "off", "true", "false"))
-  if (spatiotemporal == "true") spatiotemporal <- "iid"
-  if (spatiotemporal == "false") spatiotemporal <- "off"
-  spatiotemporal <- match.arg(tolower(spatiotemporal), choices = c("iid", "ar1", "rw", "off"))
-  if (is.null(time) && spatiotemporal != "off" && sp_len == 1L) {
-    stop("`spatiotemporal` is set but the `time` argument is missing.", call. = FALSE)
-  }
-  if (is_present(spatial_only)) {
-    deprecate_warn("0.0.20", "sdmTMB(spatial_only)", "sdmTMB(spatiotemporal)", details = "`spatiotemporal = 'off'` (or `time = NULL`) is equivalent to `spatial_only = TRUE`.")
-  } else {
-    if (is.null(time) || spatiotemporal == "off") {
-      spatial_only <- TRUE
-    } else {
-      spatial_only <- FALSE
+
+  check_spatiotemporal_arg <- function(x, .which = 1) {
+    sp_len <- length(x)
+    .spatiotemporal <- tolower(as.character(x[[.which]]))
+    assert_that(.spatiotemporal %in% c("iid", "ar1", "rw", "off", "true", "false"),
+      msg = "`spatiotemporal` argument value not valid")
+    if (.spatiotemporal == "true") .spatiotemporal <- "iid"
+    if (.spatiotemporal == "false") .spatiotemporal <- "off"
+    .spatiotemporal <- match.arg(tolower(.spatiotemporal), choices = c("iid", "ar1", "rw", "off"))
+    if (is.null(time) && .spatiotemporal != "off" && sp_len >= 1) {
+      stop("`spatiotemporal` is set but the `time` argument is missing.", call. = FALSE)
     }
+    .spatiotemporal
   }
-  if (is_present(fields)) {
-    deprecate_warn("0.0.20", "sdmTMB(fields)", "sdmTMB(spatiotemporal)")
-    spatiotemporal <- tolower(fields)
-  }
-  if (is_present(include_spatial)) {
-    deprecate_warn("0.0.20", "sdmTMB(include_spatial)", "sdmTMB(spatial)")
+
+  if (!missing(spatiotemporal)) {
+    if (delta && !is.list(spatiotemporal)) {
+      spatiotemporal <- rep(spatiotemporal[[1]], 2L)
+    }
+    spatiotemporal <- vapply(seq_along(spatiotemporal),
+      function(i) check_spatiotemporal_arg(spatiotemporal, i), FUN.VALUE = character(1L))
   } else {
+    if (is.null(time))
+      spatiotemporal <- rep("off", n_m)
+    else
+      spatiotemporal <- rep("iid", n_m)
+  }
+
+  # if (is_present(spatial_only)) {
+  #   deprecate_warn("0.0.20", "sdmTMB(spatial_only)", "sdmTMB(spatiotemporal)", details = "`spatiotemporal = 'off'` (or `time = NULL`) is equivalent to `spatial_only = TRUE`.")
+  #} else {
+
+  if (is.null(time)) {
+    spatial_only <- rep(TRUE, n_m)
+  } else {
+    spatial_only <- ifelse(spatiotemporal == "off", TRUE, FALSE)
+  }
+  # }
+  # if (is_present(fields)) {
+  #   deprecate_warn("0.0.20", "sdmTMB(fields)", "sdmTMB(spatiotemporal)")
+  #   spatiotemporal <- tolower(fields)
+  # }
+  # if (is_present(include_spatial)) {
+  #   deprecate_warn("0.0.20", "sdmTMB(include_spatial)", "sdmTMB(spatial)")
+  #} else {
     if (!is.logical(spatial[[1]])) spatial <- match.arg(tolower(spatial), choices = c("on", "off"))
     if (identical(spatial, "on") || isTRUE(spatial)) {
       include_spatial <- TRUE
     } else {
       include_spatial <- FALSE
     }
-  }
-  if (!include_spatial && spatiotemporal == "off" || !include_spatial && spatial_only) {
+  # }
+  if (!include_spatial && all(spatiotemporal == "off") || !include_spatial && all(spatial_only)) {
     # message("Both spatial and spatiotemporal fields are set to 'off'.")
     control$map_rf <- TRUE
     if (missing(mesh)) {
@@ -510,6 +531,11 @@ sdmTMB <- function(
       mesh <- make_mesh(data, c("sdmTMB_X_", "sdmTMB_Y_"), cutoff = 1)
     }
   }
+
+  share_range <- unlist(share_range)
+  if (length(share_range) == 1L) share_range <- rep(share_range, n_m)
+  share_range[spatiotemporal == "off"] <- TRUE
+
   if (is_present(spde)) {
     deprecate_warn("0.0.20", "sdmTMB(spde)", "sdmTMB(mesh)")
   } else {
@@ -557,10 +583,7 @@ sdmTMB <- function(
   dots <- list(...)
 
   if ("ar1_fields" %in% names(dots)) {
-    deprecate_warn("0.0.20", "sdmTMB(ar1_fields)", "sdmTMB(spatiotemporal)",
-      details = "For now, setting `spatiotemporal = 'AR1'` for you.")
-    spatiotemporal <- if (dots$ar1_fields) "ar1" else "iid"
-    dots$ar1_fields <- NULL
+    lifecycle::deprecate_stop("0.0.20", "sdmTMB(ar1_fields)", "sdmTMB(spatiotemporal)")
   }
   if ("penalties" %in% names(dots)) {
     stop("`penalties` are now specified via the `priors` argument.",
@@ -583,8 +606,8 @@ sdmTMB <- function(
       "`sdmTMBcontrol()` list.", call. = FALSE)
   }
 
-  ar1_fields <- identical("ar1", tolower(spatiotemporal))
-  rw_fields <- identical("rw", tolower(spatiotemporal))
+  ar1_fields <- spatiotemporal == "ar1"
+  rw_fields <- spatiotemporal == "rw"
   assert_that(
     is.logical(reml), is.logical(anisotropy), is.logical(share_range), is.logical(silent),
     is.logical(silent),
@@ -813,6 +836,7 @@ sdmTMB <- function(
   if (!"A_st" %in% names(spde)) stop("`mesh` was created with an old version of `make_mesh()`.", call. = FALSE)
   if (delta) y_i <- cbind(ifelse(y_i > 0, 1, 0), ifelse(y_i > 0, y_i, NA_real_))
   if (!delta) y_i <- matrix(y_i, ncol = 1L)
+
   tmb_data <- list(
     y_i        = y_i,
     n_t        = length(unique(data[[time]])),
@@ -823,8 +847,8 @@ sdmTMB <- function(
     sim_re     = if ("sim_re" %in% names(experimental)) as.integer(experimental$sim_re) else rep(0L, 6),
     A_spatial_index = spde$sdm_spatial_id - 1L,
     year_i     = make_year_i(data[[time]]),
-    ar1_fields = if (spatial_only) 0L else as.integer(ar1_fields),
-    rw_fields = if (spatial_only) 0L else as.integer(rw_fields),
+    ar1_fields = ar1_fields,
+    rw_fields =  rw_fields,
     X_ij       = X_ij,
     X_rw_ik    = X_rw_ik,
     Zs         = sm$Zs, # optional smoother basis function matrices
@@ -930,8 +954,7 @@ sdmTMB <- function(
   tmb_map$ln_phi <- rep(1, n_m)
   if (!anisotropy)
     tmb_map <- c(tmb_map, list(ln_H_input = factor(rep(NA, 2))))
-  if (!ar1_fields)
-    tmb_map <- c(tmb_map, list(ar1_phi = factor(rep(NA, n_m))))
+  tmb_map$ar1_phi <- factor(rep(NA, n_m))
   if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson"))
     tmb_map$ln_phi[1] <- factor(NA)
   if (delta) {
@@ -944,7 +967,7 @@ sdmTMB <- function(
 
   if (!"tweedie" %in% family$family)
     tmb_map <- c(tmb_map, list(thetaf = as.factor(NA)))
-  if (spatial_only)
+  if (all(spatial_only))
     tmb_map <- c(tmb_map, list(
       ln_tau_E   = factor(rep(NA, n_m)),
       epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
@@ -1009,7 +1032,7 @@ sdmTMB <- function(
       tmb_params$ln_phi <- set_par_value(tmb_opt1, "ln_phi")
   }
 
-  if (spatial_only) {
+  if (all(spatial_only)) {
     tmb_random <- "omega_s"
   } else {
     if (include_spatial) {
@@ -1038,6 +1061,12 @@ sdmTMB <- function(
       list(ln_tau_V = factor(rep(NA, n_m)))
     )
 
+  tmb_map$ar1_phi <- rep(NA, n_m)
+  for (i in seq_along(spatiotemporal)) {
+    if (spatiotemporal[i] == "ar1") tmb_map$ar1_phi[i] <- i
+  }
+  tmb_map$ar1_phi <- as.factor(as.integer(as.factor(tmb_map$ar1_phi)))
+
   if (nobs_RE[[1]] > 0) tmb_random <- c(tmb_random, "RE")
   if (reml) tmb_random <- c(tmb_random, "b_j")
 
@@ -1065,8 +1094,17 @@ sdmTMB <- function(
   if (isTRUE(map_rf)) tmb_map <- map_off_rf(tmb_map, tmb_params)
   tmb_map <- c(map, tmb_map)
 
-  if (share_range && !delta) tmb_map <- c(tmb_map, list(ln_kappa = as.factor(rep(1, length(tmb_params$ln_kappa)))))
-  if (share_range && delta) tmb_map <- c(tmb_map, list(ln_kappa = as.factor(c(1, 1, 2, 2))))
+  # if (share_range && !delta) tmb_map <- c(tmb_map, list(ln_kappa = as.factor(rep(1, length(tmb_params$ln_kappa)))))
+  # if (share_range && delta) tmb_map <- c(tmb_map, list(ln_kappa = as.factor(c(1, 1, 2, 2))))
+
+  # deal with kappa mapping:
+  tmb_map$ln_kappa <- matrix(seq_len(length(tmb_params$ln_kappa)),
+    nrow(tmb_params$ln_kappa), ncol(tmb_params$ln_kappa))
+  for (m in seq_len(n_m)) {
+    if (share_range[m]) tmb_map$ln_kappa[,m] <- tmb_map$ln_kappa[1,m]
+    if (spatiotemporal[m] == "off") tmb_map$ln_kappa[,m] <- NA
+  }
+  tmb_map$ln_kappa <- as.factor(as.integer(as.factor(tmb_map$ln_kappa)))
 
   for (i in seq_along(start)) {
     message("Initiating ", names(start)[i],
@@ -1085,6 +1123,21 @@ sdmTMB <- function(
     tmb_map <- c(tmb_map, list(b_smooth = factor(NA)))
     tmb_map <- c(tmb_map, list(bs = factor(NA)))
     tmb_map <- c(tmb_map, list(ln_smooth_sigma = factor(NA)))
+  }
+
+  # FIXME: generalize ; DELTA
+  if (delta && "off" %in% spatiotemporal) {
+    tmb_map$epsilon_st <- array(
+      seq_len(length(tmb_params$epsilon_st)),
+      dim = dim(tmb_params$epsilon_st)
+    )
+    tmb_map$ln_tau_E <- seq_len(length(tmb_params$ln_tau_E))
+    for (i in which(spatiotemporal == "off")) {
+      tmb_map$epsilon_st[,,i] <- NA
+      tmb_map$ln_tau_E[i] <- NA
+    }
+    tmb_map$epsilon_st <- as.factor(tmb_map$epsilon_st)
+    tmb_map$ln_tau_E <- as.factor(tmb_map$ln_tau_E)
   }
 
   tmb_obj <- TMB::MakeADFun(
