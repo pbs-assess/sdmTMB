@@ -59,6 +59,20 @@ test_that("share_range mapping works with delta models", {
     share_range = TRUE,
   )
   expect_identical(fit$tmb_map$ln_kappa, as.factor(c(NA, NA, NA, NA)))
+
+  # spatial models:
+  fit <- sdmTMB(density ~ 1,
+    data = pcod, mesh = pcod_spde,
+    do_fit = TRUE, family = tweedie()
+  )
+  expect_identical(fit$tmb_map$ln_kappa, as.factor(c(1, 1)))
+
+  fit <- sdmTMB(density ~ 1,
+    data = pcod, mesh = pcod_spde,
+    do_fit = TRUE, family = delta_gamma()
+  )
+  expect_identical(fit$tmb_map$ln_kappa, as.factor(c(1, 1, 2, 2)))
+
 })
 
 test_that("spatiotemporal field mapping/specification works with delta models", {

@@ -109,7 +109,7 @@ NULL
 #' @importFrom mgcv s t2
 #' @importFrom stats gaussian model.frame model.matrix as.formula
 #'   model.response terms model.offset
-#' @importFrom lifecycle deprecated is_present deprecate_warn
+#' @importFrom lifecycle deprecated is_present deprecate_warn deprecate_stop
 #'
 #' @return
 #' An object (list) of class `sdmTMB`. Useful elements include:
@@ -501,9 +501,9 @@ sdmTMB <- function(
       spatiotemporal <- rep("iid", n_m)
   }
 
-  # if (is_present(spatial_only)) {
-  #   deprecate_warn("0.0.20", "sdmTMB(spatial_only)", "sdmTMB(spatiotemporal)", details = "`spatiotemporal = 'off'` (or `time = NULL`) is equivalent to `spatial_only = TRUE`.")
-  #} else {
+  if (is_present(spatial_only)) {
+    deprecate_stop("0.0.20", "sdmTMB(spatial_only)", "sdmTMB(spatiotemporal)", details = "`spatiotemporal = 'off'` (or `time = NULL`) is equivalent to `spatial_only = TRUE`.")
+  }
 
   if (is.null(time)) {
     spatial_only <- rep(TRUE, n_m)
@@ -511,20 +511,19 @@ sdmTMB <- function(
     spatial_only <- ifelse(spatiotemporal == "off", TRUE, FALSE)
   }
   # }
-  # if (is_present(fields)) {
-  #   deprecate_warn("0.0.20", "sdmTMB(fields)", "sdmTMB(spatiotemporal)")
-  #   spatiotemporal <- tolower(fields)
-  # }
-  # if (is_present(include_spatial)) {
-  #   deprecate_warn("0.0.20", "sdmTMB(include_spatial)", "sdmTMB(spatial)")
-  #} else {
+  if (is_present(fields)) {
+    deprecate_stop("0.0.20", "sdmTMB(fields)", "sdmTMB(spatiotemporal)")
+  }
+  if (is_present(include_spatial)) {
+    deprecate_stop("0.0.20", "sdmTMB(include_spatial)", "sdmTMB(spatial)")
+  } else {
     if (!is.logical(spatial[[1]])) spatial <- match.arg(tolower(spatial), choices = c("on", "off"))
     if (identical(spatial, "on") || isTRUE(spatial)) {
       include_spatial <- TRUE
     } else {
       include_spatial <- FALSE
     }
-  # }
+  }
   if (!include_spatial && all(spatiotemporal == "off") || !include_spatial && all(spatial_only)) {
     # message("Both spatial and spatiotemporal fields are set to 'off'.")
     control$map_rf <- TRUE
@@ -1104,7 +1103,8 @@ sdmTMB <- function(
     nrow(tmb_params$ln_kappa), ncol(tmb_params$ln_kappa))
   for (m in seq_len(n_m)) {
     if (share_range[m]) tmb_map$ln_kappa[,m] <- tmb_map$ln_kappa[1,m]
-    if (spatiotemporal[m] == "off") tmb_map$ln_kappa[,m] <- NA
+    if (spatiotemporal[m] == "off" && !include_spatial) tmb_map$ln_kappa[,m] <- NA
+    if (spatiotemporal[m] == "off" && include_spatial) tmb_map$ln_kappa[,m] <- m
   }
   tmb_map$ln_kappa <- as.factor(as.integer(as.factor(tmb_map$ln_kappa)))
 
