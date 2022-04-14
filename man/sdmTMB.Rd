@@ -67,16 +67,18 @@ see the 'Binomial families' in the Details section below.}
 \item{spatiotemporal}{Estimate the spatiotemporal random fields as \code{'IID'}
 (independent and identically distributed; default), stationary \code{'AR1'}
 (first-order autoregressive), as a random walk (\code{'RW'}), or as fixed at 0
-\code{'off'}. Will be set to \code{'off'} if \code{time = NULL}. Note that the
-spatiotemporal standard deviation represents the marginal steady-state
-standard deviation of the process in the case of the AR1. I.e., it is
-scaled according to the correlation. See the \href{https://kaskr.github.io/adcomp/classAR1__t.html}{TMB documentation}. If the AR1
+\code{'off'}. Will be set to \code{'off'} if \code{time = NULL}. If a delta model, can be
+a list. E.g., \code{list('off', 'ar1')}. Note that the spatiotemporal standard
+deviation represents the marginal steady-state standard deviation of the
+process in the case of the AR1. I.e., it is scaled according to the
+correlation. See the \href{https://kaskr.github.io/adcomp/classAR1__t.html}{TMB documentation}. If the AR1
 correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
-may wish to switch to the random walk \code{"RW"}. Capitalization is ignored. \code{TRUE}
-gets converted to \code{'iid'} and \code{FALSE} gets converted to \code{off}.}
+may wish to switch to the random walk \code{"RW"}. Capitalization is ignored.
+\code{TRUE} gets converted to \code{'iid'} and \code{FALSE} gets converted to \code{off}.}
 
 \item{share_range}{Logical: estimate a shared spatial and spatiotemporal
-range parameter (\code{TRUE}) or independent range parameters (\code{FALSE}).}
+range parameter (\code{TRUE}) or independent range parameters (\code{FALSE}).
+If a delta model, can be a list. E.g., \code{list(TRUE, FALSE)}.}
 
 \item{time_varying}{An optional one-sided formula describing covariates that
 should be modelled as a random walk through time. Be careful not to include

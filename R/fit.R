@@ -35,16 +35,18 @@ NULL
 #' @param spatiotemporal Estimate the spatiotemporal random fields as `'IID'`
 #'   (independent and identically distributed; default), stationary `'AR1'`
 #'   (first-order autoregressive), as a random walk (`'RW'`), or as fixed at 0
-#'   `'off'`. Will be set to `'off'` if `time = NULL`. Note that the
-#'   spatiotemporal standard deviation represents the marginal steady-state
-#'   standard deviation of the process in the case of the AR1. I.e., it is
-#'   scaled according to the correlation. See the [TMB
+#'   `'off'`. Will be set to `'off'` if `time = NULL`. If a delta model, can be
+#'   a list. E.g., `list('off', 'ar1')`. Note that the spatiotemporal standard
+#'   deviation represents the marginal steady-state standard deviation of the
+#'   process in the case of the AR1. I.e., it is scaled according to the
+#'   correlation. See the [TMB
 #'   documentation](https://kaskr.github.io/adcomp/classAR1__t.html). If the AR1
 #'   correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
-#'   may wish to switch to the random walk `"RW"`. Capitalization is ignored. `TRUE`
-#'   gets converted to `'iid'` and `FALSE` gets converted to `off`.
+#'   may wish to switch to the random walk `"RW"`. Capitalization is ignored.
+#'   `TRUE` gets converted to `'iid'` and `FALSE` gets converted to `off`.
 #' @param share_range Logical: estimate a shared spatial and spatiotemporal
 #'   range parameter (`TRUE`) or independent range parameters (`FALSE`).
+#'   If a delta model, can be a list. E.g., `list(TRUE, FALSE)`.
 #' @param time_varying An optional one-sided formula describing covariates that
 #'   should be modelled as a random walk through time. Be careful not to include
 #'   covariates (including the intercept) in both the main and time-varying
