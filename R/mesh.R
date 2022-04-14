@@ -75,7 +75,7 @@ make_mesh <- function(data, xy_cols,
 
   if (max(data[[xy_cols[1]]]) > 1e4 || max(data[[xy_cols[2]]] > 1e4)) {
     warning("The x or y column values are fairly large.\n",
-      "This can cause estimation problems since the spatial range\n",
+      "This can cause estimation problems because the spatial range\n",
       "is dependent on the scale of the coordinates.\n",
       "Consider scaling the x and y coordinates.\n",
       "For example, try working in UTM km instead of UTM m by divided by 1000.",
