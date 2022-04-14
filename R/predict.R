@@ -580,12 +580,14 @@ predict.sdmTMB <- function(object, newdata = object$data,
     nd$omega_s2 <- NULL
     nd$omega_s <- NULL
   }
-  if (object$tmb_data$spatial_only[1]) {
+  if (as.logical(object$tmb_data$spatial_only)[1]) {
     nd$epsilon_st1 <- NULL
     nd$epsilon_st <- NULL
   }
-  if (object$tmb_data$spatial_only[2]) {
-    nd$epsilon_st2 <- NULL
+  if (isTRUE(object$family$delta)) {
+    if (as.logical(object$tmb_data$spatial_only)[2]) {
+      nd$epsilon_st2 <- NULL
+    }
   }
   if (!object$tmb_data$spatial_covariate) {
     nd$zeta_s1 <- NULL
