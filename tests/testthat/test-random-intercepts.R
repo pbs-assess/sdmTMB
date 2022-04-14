@@ -90,7 +90,7 @@ test_that("Model with random intercepts fits appropriately.", {
 
   # random ints match glmmTMB exactly:
   m <- sdmTMB(data = s,
-    formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde, control = sdmTMBcontrol(map_rf = TRUE))
+    formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde, spatial = "off")
   .t <- tidy(m, "ran_pars")
   m.glmmTMB <- glmmTMB::glmmTMB(data = s, formula = observed ~ 1 + (1 | g) + (1 | h))
   .v <- glmmTMB::VarCorr(m.glmmTMB)

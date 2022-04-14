@@ -44,25 +44,25 @@ test_that("Depreciated args work/throw warnings/stops", {
 
 })
 
-test_that("spatial = off and spatiotemporal = off triggers map_rf", {
-  skip_on_cran()
-  skip_on_ci()
-  skip_if_not_installed("INLA")
-  m1 <- sdmTMB(
-    formula = density ~ 1,
-    data = pcod_2011,
-    spatial = "off",
-    spatiotemporal = "off",
-    mesh = pcod_mesh_2011
-  )
-  m2 <- sdmTMB(
-    formula = density ~ 1,
-    data = pcod_2011,
-    control = sdmTMBcontrol(map_rf = TRUE),
-    mesh = pcod_mesh_2011
-  )
-  expect_equal(m1$model$par, m2$model$par)
-})
+# test_that("spatial = off and spatiotemporal = off triggers map_rf", {
+#   skip_on_cran()
+#   skip_on_ci()
+#   skip_if_not_installed("INLA")
+#   m1 <- sdmTMB(
+#     formula = density ~ 1,
+#     data = pcod_2011,
+#     spatial = "off",
+#     spatiotemporal = "off",
+#     mesh = pcod_mesh_2011
+#   )
+#   m2 <- sdmTMB(
+#     formula = density ~ 1,
+#     data = pcod_2011,
+#     control = sdmTMBcontrol(map_rf = TRUE),
+#     mesh = pcod_mesh_2011
+#   )
+#   expect_equal(m1$model$par, m2$model$par)
+# })
 
 test_that("spde/mesh args work", {
   skip_on_cran()

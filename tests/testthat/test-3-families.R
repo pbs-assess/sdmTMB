@@ -28,6 +28,7 @@ test_that("The supplementary families work with appropriate links", {
   expect_error(class(student(link = banana)))
 })
 
+set.seed(1)
 x <- stats::runif(100, -1, 1)
 y <- stats::runif(100, -1, 1)
 loc <- data.frame(x = x, y = y)
@@ -51,7 +52,7 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     spde <- make_mesh(s, c("x", "y"), n_knots = 50, type = "kmeans")
     m <- sdmTMB(data = s, formula = observed ~ 1, mesh = spde,
       family = student(link = "identity", df = 7),
-      control = sdmTMBcontrol(map_rf = TRUE)
+      spatial = "off", spatiotemporal = "off"
     )
     expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
     expect_length(residuals(m), nrow(s))
@@ -106,7 +107,7 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
 
     m_sdmTMB <- sdmTMB(data = s, formula = observed ~ 1,
       mesh = spde, family = nbinom1(),
-      control = sdmTMBcontrol(map_rf = TRUE))
+      spatial = "off")
     m_glmmTMB <- glmmTMB::glmmTMB(data = s, formula = observed ~ 1,
       family = glmmTMB::nbinom1())
     expect_equal(m_glmmTMB$fit$par[[1]], m_sdmTMB$model$par[[1]], tolerance = 0.00001)
@@ -115,14 +116,14 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     s_trunc <- subset(s, observed > 0)
     spde <- make_mesh(s_trunc, c("x", "y"), n_knots = 80, type = "kmeans")
     m_sdmTMB <- sdmTMB(data = s_trunc, formula = observed ~ 1,
-      mesh = spde, family = truncated_nbinom2(), control = sdmTMBcontrol(map_rf = TRUE))
+      mesh = spde, family = truncated_nbinom2(), spatial = "off")
     m_glmmTMB <- glmmTMB::glmmTMB(data = s_trunc, formula = observed ~ 1,
       family = glmmTMB::truncated_nbinom2())
     expect_equal(m_glmmTMB$fit$par[[1]], m_sdmTMB$model$par[[1]], tolerance = 0.00001)
     expect_equal(m_glmmTMB$fit$par[[2]], m_sdmTMB$model$par[[2]], tolerance = 0.00001)
 
     m_sdmTMB <- sdmTMB(data = s_trunc, formula = observed ~ 1,
-      mesh = spde, family = truncated_nbinom1(), control = sdmTMBcontrol(map_rf = TRUE))
+      mesh = spde, family = truncated_nbinom1(), spatial = "off")
     m_glmmTMB <- glmmTMB::glmmTMB(data = s_trunc, formula = observed ~ 1,
       family = glmmTMB::truncated_nbinom1())
     expect_equal(m_glmmTMB$fit$par[[1]], m_sdmTMB$model$par[[1]], tolerance = 0.00001)
@@ -242,7 +243,7 @@ test_that("Censored Poisson fits", {
     data = sim_dat, formula = observed ~ 1,
     mesh = mesh, family = censored_poisson(link = "log"),
     experimental = list(lwr = lwr, upr = upr),
-    control = sdmTMBcontrol(map_rf = TRUE)
+    spatial = "off"
   )
 
   # right-censored version
@@ -254,7 +255,7 @@ test_that("Censored Poisson fits", {
     data = sim_dat, formula = observed ~ 1,
     mesh = mesh, family = censored_poisson(link = "log"),
     experimental = list(lwr = lwr, upr = upr),
-    control = sdmTMBcontrol(map_rf = TRUE)
+    spatial = "off"
   )
 
   # interval-censored tough example
@@ -268,7 +269,7 @@ test_that("Censored Poisson fits", {
     data = sim_dat, formula = observed ~ 1,
     mesh = mesh, family = censored_poisson(link = "log"),
     experimental = list(lwr = lwr, upr = upr),
-    control = sdmTMBcontrol(map_rf = TRUE)
+    spatial = "off"
   )
   expect_true(all(!is.na(summary(m_interval_cens_pois$sd_report)[, "Std. Error"])))
 

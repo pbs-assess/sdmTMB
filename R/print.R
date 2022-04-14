@@ -20,7 +20,7 @@ print_model_info <- function(x) {
   } else {
     title <- paste0("Spatiotemporal model fit by ", fit_by, " ['sdmTMB']\n")
   }
-  if (x$control$map_rf) {
+  if (all(!x$tmb_data$include_spatial) && all(x$tmb_data$spatial_only)) {
     title <- paste0("Model fit by ", fit_by, " ['sdmTMB']\n")
   }
 
@@ -160,7 +160,7 @@ print_range <- function(x, m = 1) {
       "Matern range (spatiotemporal): ", range[2], "\n"
     )
   }
-  if (x$control$map_rf) {
+  if (all(!x$tmb_data$include_spatial) && all(x$tmb_data$spatial_only)) {
     range_text <- NULL
   }
   range_text

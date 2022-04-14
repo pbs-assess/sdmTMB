@@ -216,7 +216,7 @@ test_that("profile option works", {
   expect_equal(bp$estimate, b$estimate, tolerance = 0.05)
 })
 
-test_that("The `map_rf` argument works.", {
+test_that("The mapping off spatial and spatiotemporal fields works.", {
   skip_on_cran()
   skip_on_ci()
   skip_if_not_installed("INLA")
@@ -229,7 +229,7 @@ test_that("The `map_rf` argument works.", {
   p <- predict(m)
   m.map <- sdmTMB(density ~ 0 + as.factor(year),
     data = d, time = "year", mesh = pcod_spde,
-    family = tweedie(link = "log"), control = sdmTMBcontrol(map_rf = TRUE)
+    family = tweedie(link = "log"), spatial = "off", spatiotemporal = "off"
   )
   p.map <- predict(m.map)
 
@@ -242,7 +242,7 @@ test_that("The `map_rf` argument works.", {
   dpos <- d[d$density > 0, ]
   pcod_spde <- make_mesh(dpos, c("X", "Y"), cutoff = 50)
   m.sdmTMB.map <- sdmTMB(log(density) ~ depth, data = dpos,
-    family = gaussian(), control = sdmTMBcontrol(map_rf = TRUE),
+    family = gaussian(), spatial = "off", spatiotemporal = "off",
     mesh = pcod_spde)
   m.stats.glm <- stats::lm(log(density) ~ depth, data = dpos)
   m.glmmTMB <- glmmTMB::glmmTMB(log(density) ~ depth, data = dpos)
@@ -256,7 +256,7 @@ test_that("The `map_rf` argument works.", {
   pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
   pcod_spde <- make_mesh(pcod_binom, c("X", "Y"), cutoff = 50)
   m.sdmTMB.map <- sdmTMB(present ~ depth, data = pcod_binom,
-    family = binomial(link = "logit"), control = sdmTMBcontrol(map_rf = TRUE), mesh = pcod_spde)
+    family = binomial(link = "logit"), spatial = "off", spatiotemporal = "off", mesh = pcod_spde)
   m.stats.glm <- stats::glm(present ~ depth, data = pcod_binom,
     family = binomial(link = "logit"))
   m.glmmTMB <- glmmTMB::glmmTMB(present ~ depth, data = pcod_binom,

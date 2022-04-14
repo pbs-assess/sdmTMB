@@ -107,7 +107,7 @@ test_that("A model with by in spline (and s(x, y)) works", {
   spde <- make_mesh(dat, c("X", "Y"), cutoff = 0.1)
   m <- sdmTMB(y ~ s(x2, by = x1),
     data = dat,
-    mesh = spde, control = sdmTMBcontrol(map_rf = TRUE)
+    mesh = spde,spatial = "off"
   )
   p <- predict(m, newdata = NULL)
   plot(p$est, p_mgcv)
@@ -119,7 +119,7 @@ test_that("A model with by in spline (and s(x, y)) works", {
   p_mgcv <- predict(m_mgcv)
   m <- sdmTMB(y ~ s(x2, x1),
     data = dat,
-    mesh = spde, control = sdmTMBcontrol(map_rf = TRUE)
+    mesh = spde, spatial = "off"
   )
   p <- predict(m, newdata = NULL)
   plot(p$est, p_mgcv)
@@ -132,7 +132,7 @@ test_that("A model with by in spline (and s(x, y)) works", {
   # t2(x, y)
   expect_error(m <- sdmTMB(y ~ t2(x2, x1),
     data = dat,
-    mesh = spde, control = sdmTMBcontrol(map_rf = TRUE)
+    mesh = spde, spatial = "off"
   ), regexp = "t2") # t2() intentionally `stop()`ed for now; newdata prediction issues
 
   # Factor `by' variable example (with a spurious covariate x0)
@@ -145,7 +145,7 @@ test_that("A model with by in spline (and s(x, y)) works", {
   spde <- make_mesh(dat, c("X", "Y"), cutoff = 0.1)
   m <- sdmTMB(y ~ fac + s(x2, by = fac) + s(x0),
     data = dat,
-    mesh = spde, control = sdmTMBcontrol(map_rf = TRUE)
+    mesh = spde, spatial = "off"
   )
   p <- predict(m, newdata = NULL)
   plot(p$est, p_mgcv)

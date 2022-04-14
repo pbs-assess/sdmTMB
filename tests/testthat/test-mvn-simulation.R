@@ -6,7 +6,7 @@ test_that("rmvnorm sim prediction works with no random effects", {
     data = pcod_2011,
     formula = density ~ 0 + as.factor(year),
     mesh = pcod_mesh_2011, family = tweedie(link = "log"),
-    control = sdmTMBcontrol(map_rf = TRUE)
+    spatial = "off", spatiotemporal = "off"
   )
   set.seed(1)
   p <- predict(m, newdata = qcs_grid[qcs_grid$year >= 2011, ], nsim = 30L)

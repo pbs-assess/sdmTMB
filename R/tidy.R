@@ -211,7 +211,8 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
     ii <- ii + 1
   }
 
-  if (x$control$map_rf) out_re$range <- NULL
+  if (all(!x$tmb_data$include_spatial) && all(x$tmb_data$spatial_only)) out_re$range <- NULL
+
   out_re <- do.call("rbind", out_re)
   row.names(out_re) <- NULL
 

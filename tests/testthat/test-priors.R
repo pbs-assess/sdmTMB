@@ -77,33 +77,33 @@ test_that("Additional priors work", {
   m_norm <- sdmTMB(density ~ 1,
     data = d, mesh = pcod_spde, family = tweedie(link = "log"),
     priors = sdmTMBpriors(b = normal(0, 10)),
-    control = sdmTMBcontrol(map_rf = TRUE)
+    spatial = "off", spatiotemporal = "off"
   )
 
   # univariate normal priors
   m_norm <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     data = d, mesh = pcod_spde, family = tweedie(link = "log"),
     priors = sdmTMBpriors(b = normal(rep(0, 6), rep(1, 6))),
-    control = sdmTMBcontrol(map_rf = TRUE)
+    spatial = "off", spatiotemporal = "off"
   )
   expect_identical(class(m_norm), "sdmTMB")
   m_mvn <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     data = d, mesh = pcod_spde, family = tweedie(link = "log"),
     priors = sdmTMBpriors(b = mvnormal(rep(0, 6), diag(1, 6))),
-    control = sdmTMBcontrol(map_rf = TRUE)
+    spatial = "off", spatiotemporal = "off"
   )
   expect_identical(class(m_mvn), "sdmTMB")
   m_mvn_na <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     data = d, mesh = pcod_spde, family = tweedie(link = "log"),
     priors = sdmTMBpriors(b = mvnormal(c(NA, 0, 0, 0, 0, 0), diag(1, 6))),
-    control = sdmTMBcontrol(map_rf = TRUE)
+    spatial = "off", spatiotemporal = "off"
   )
   expect_identical(class(m_mvn_na), "sdmTMB")
 
   m_norm_na <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     data = d, mesh = pcod_spde, family = tweedie(link = "log"),
     priors = sdmTMBpriors(b = normal(c(NA, rep(0, 5)), c(NA, rep(1, 5)))),
-    control = sdmTMBcontrol(map_rf = TRUE)
+    spatial = "off", spatiotemporal = "off"
   )
   expect_identical(class(m_norm_na), "sdmTMB")
 

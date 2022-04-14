@@ -100,10 +100,10 @@ NULL
 #' can be one of the following: "trend" (default, fits a linear model without random effects),
 #' "re" (fits a model with random effects in epsilon_st, but no trend), and "trend-re" (a model
 #' that includes both the trend and random effects)
-#' @param fields **Depreciated.** Replaced by `spatiotemporal`.
-#' @param include_spatial **Depreciated.** Replaced by `spatial`.
-#' @param spatial_only **Depreciated.** Replaced by `spatiotemporal = "off"`.
-#' @param spde **Depreciated.** Replaced by `mesh`.
+#' @param fields **Deprecated.** Replaced by `spatiotemporal`.
+#' @param include_spatial **Deprecated.** Replaced by `spatial`.
+#' @param spatial_only **Deprecated.** Replaced by `spatiotemporal = "off"`.
+#' @param spde **Deprecated.** Replaced by `mesh`.
 #' @param ... Not currently used.
 #' @importFrom methods as is
 #' @importFrom mgcv s t2
@@ -526,7 +526,7 @@ sdmTMB <- function(
   }
   if (!include_spatial && all(spatiotemporal == "off") || !include_spatial && all(spatial_only)) {
     # message("Both spatial and spatiotemporal fields are set to 'off'.")
-    control$map_rf <- TRUE
+    # control$map_rf <- TRUE
     if (missing(mesh)) {
       data$sdmTMB_X_ <- data$sdmTMB_Y_ <- stats::runif(nrow(data))
       mesh <- make_mesh(data, c("sdmTMB_X_", "sdmTMB_Y_"), cutoff = 1)
@@ -576,7 +576,6 @@ sdmTMB <- function(
   quadratic_roots <- control$quadratic_roots
   start <- control$start
   multiphase <- control$multiphase
-  map_rf <- control$map_rf
   map <- control$map
   lower <- control$lower
   upper <- control$upper
@@ -593,7 +592,7 @@ sdmTMB <- function(
   }
   dot_checks <- c("lower", "upper", "profile", "parallel",
     "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",
-    "newton_loops", "start", "map", "map_rf", "get_joint_precision", "normalize")
+    "newton_loops", "start", "map", "get_joint_precision", "normalize")
   .control <- control
   for (i in dot_checks) .control[[i]] <- NULL # what's left should be for nlminb
   dot_old <- dot_checks %in% names(dots)
@@ -613,7 +612,7 @@ sdmTMB <- function(
     is.logical(reml), is.logical(anisotropy), is.logical(share_range), is.logical(silent),
     is.logical(silent),
     is.logical(multiphase),
-    is.logical(map_rf), is.logical(normalize)
+     is.logical(normalize)
   )
   if (!is.null(spatial_varying)) assert_that(class(spatial_varying) == "formula")
   assert_that(is.list(priors))
@@ -1092,7 +1091,7 @@ sdmTMB <- function(
   tmb_data$normalize_in_r <- as.integer(normalize)
 
   if (!is.null(previous_fit)) tmb_map <- previous_fit$tmb_map
-  if (isTRUE(map_rf)) tmb_map <- map_off_rf(tmb_map, tmb_params)
+  # if (isTRUE(map_rf)) tmb_map <- map_off_rf(tmb_map, tmb_params)
   tmb_map <- c(map, tmb_map)
 
   # if (share_range && !delta) tmb_map <- c(tmb_map, list(ln_kappa = as.factor(rep(1, length(tmb_params$ln_kappa)))))

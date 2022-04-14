@@ -13,10 +13,8 @@
 #'   [stats::optimHess()] after running [stats::nlminb()]. Sometimes aids
 #'   convergence.
 #' @param mgcv Parse the formula with [mgcv::gam()]?
-#' @param map_rf Map all the random fields to 0 to turn the model into a
-#'   classical GLM or GLMM without spatial or spatiotemporal components?
-#'   Note this is not accounted for in `print()` or `tidy.sdmTMB()`;
-#'   some parameters will still appear but their values can be ignored.
+#' @param map_rf **Deprecated** use `spatial = 'off', spatiotemporal = 'off'` in
+#'   [sdmTMB()].
 #' @param map A named list with factor `NA`s specifying parameter values that
 #'   should be fixed at a constant value. See the documentation in
 #'   [TMB::MakeADFun()]. This should usually be used with `start` to specify the
@@ -77,7 +75,7 @@ sdmTMBcontrol <- function(
   mgcv = deprecated(),
   quadratic_roots = FALSE,
   start = NULL,
-  map_rf = FALSE,
+  map_rf = deprecated(),
   map = NULL,
   lower = NULL,
   upper = NULL,
@@ -90,6 +88,10 @@ sdmTMBcontrol <- function(
   if (is_present(mgcv)) {
     deprecate_warn("0.0.20", "sdmTMBcontrol(mgcv)",
       details = "`mgcv` argument no longer does anything.")
+  }
+
+  if (is_present(map_rf)) {
+    deprecate_stop("0.0.22", "sdmTMBcontrol(map_rf)", "sdmTMB(spatial = 'off', spatiotemporal = 'off')")
   }
 
   if (!is.null(parallel)) {
@@ -106,7 +108,6 @@ sdmTMBcontrol <- function(
     profile,
     quadratic_roots,
     start,
-    map_rf,
     map,
     lower,
     upper,
