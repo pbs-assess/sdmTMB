@@ -1113,6 +1113,9 @@ sdmTMB <- function(
     tmb_params[[names(start)[i]]] <- start[[i]]
   }
 
+  if (!is.matrix(tmb_params[["ln_kappa"]]) && "ln_kappa" %in% names(start)) {
+    stop("Note that `ln_kappa` must be a matrix of nrow 2 and ncol models (regular=1, delta=2). It should be the same value in each row if `share_range = TRUE`.", call. = FALSE)
+  }
   if (nrow(tmb_params[["ln_kappa"]]) != 2L && "ln_kappa" %in% names(start)) {
     stop("Note that `ln_kappa` must be a matrix of nrow 2 and ncol models (regular=1, delta=2). It should be the same value in each row if `share_range = TRUE`.", call. = FALSE)
   }

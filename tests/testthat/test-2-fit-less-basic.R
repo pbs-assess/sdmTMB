@@ -233,8 +233,8 @@ test_that("The mapping off spatial and spatiotemporal fields works.", {
   )
   p.map <- predict(m.map)
 
-  expect_true(all(p.map$omega_s == 0))
-  expect_true(all(p.map$epsilon_st == 0))
+  expect_true(is.na(m.map$tmb_map$ln_tau_E))
+  expect_true(is.na(m.map$tmb_map$ln_tau_O))
   expect_true(!identical(p$est, p.map$est))
   expect_true(length(unique(p.map$est)) == length(unique(d$year)))
 
@@ -287,7 +287,7 @@ test_that("Random walk fields work", {
     data = d, time = "year", mesh = pcod_spde,
     family = tweedie(link = "log"), spatiotemporal = "RW"
   )
-  expect_identical(m_rw$tmb_data$rw_fields, 1L)
+  expect_identical(m_rw$tmb_data$rw_fields, TRUE)
   p_rw <- predict(m_rw)
 
   # close to AR1 with high rho:
@@ -298,8 +298,8 @@ test_that("Random walk fields work", {
       start = list(ar1_phi = qlogis((0.99 + 1) / 2)),
       map = list(ar1_phi = factor(NA)))
   )
-  expect_identical(m_ar1$tmb_data$ar1_fields, 1L)
-  expect_identical(m_ar1$tmb_data$rw_fields, 0L)
+  expect_identical(m_ar1$tmb_data$ar1_fields, TRUE)
+  expect_identical(m_ar1$tmb_data$rw_fields, FALSE)
   p_ar1 <- predict(m_ar1)
 
   expect_gt(stats::cor(p_ar1$est, p_rw$est), 0.95)
