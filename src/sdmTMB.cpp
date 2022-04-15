@@ -94,14 +94,14 @@ Type objective_function<Type>::operator()()
 
   // Vectors of real data
   DATA_ARRAY(y_i);      // response
-  DATA_MATRIX(X_ij);     // model matrix
+  DATA_STRUCT(X_ij, sdmTMB::LOM_t); //DATA_MATRIX(X_ij);     // array of model matrices
   DATA_MATRIX(z_i);      // model matrix for spatial covariate effect
   DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
   DATA_STRUCT(Zs, sdmTMB::LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
   DATA_STRUCT(proj_Zs, sdmTMB::LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
-  DATA_MATRIX(Xs); // smoother linear effect matrix
-  DATA_MATRIX(proj_Xs); // smoother linear effect matrix
+  DATA_STRUCT(Xs, sdmTMB::LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
+  DATA_STRUCT(proj_Xs, sdmTMB::LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
 
   // DATA_VECTOR_INDICATOR(keep, y_i); // https://rdrr.io/cran/TMB/man/oneStepPredict.html
   DATA_VECTOR(weights_i); // optional weights
@@ -508,11 +508,11 @@ Type objective_function<Type>::operator()()
   // ------------------ Linear predictor ---------------------------------------
 
   // DELTA DONE?
-  array<Type> eta_fixed_i(X_ij.rows(), n_m);
-  for (int m = 0; m < n_m; m++) eta_fixed_i.col(m) = X_ij * vector<Type>(b_j.col(m));
+  array<Type> eta_fixed_i(X_ij(1).rows(), n_m); // TODO: don't hardcode X_ij(1) -- this should be ragged or the max of X_ij(1:2)
+  for (int m = 0; m < n_m; m++) eta_fixed_i.col(m) = X_ij(m) * vector<Type>(b_j.col(m));// TODO: don't hardcode X_ij(1)
 
   // p-splines/smoothers
-  array<Type> eta_smooth_i(X_ij.rows(), n_m);
+  array<Type> eta_smooth_i(X_ij(1).rows(), n_m);// TODO: don't hardcode X_ij(1)
   eta_smooth_i.setZero();
   if (has_smooths) {
     for (int m = 0; m < n_m; m++) {
