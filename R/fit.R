@@ -604,14 +604,15 @@ sdmTMB <- function(
     is.logical(reml), is.logical(anisotropy), is.logical(share_range),
     is.logical(silent), is.logical(multiphase), is.logical(normalize)
   )
-  if (!is.null(spatial_varying)) assert_that(class(spatial_varying) == "formula")
-  assert_that(is.list(priors))
-  if (!is.null(time_varying)) assert_that(identical(class(time_varying), "formula"))
-  assert_that(is.list(.control))
+
+  if (!is.null(spatial_varying)) assert_that(class(spatial_varying) %in% c("formula","list"))
+  if (!is.null(time_varying)) assert_that(class(time_varying) %in% c("formula","list"))
   if (!is.null(previous_fit)) assert_that(identical(class(previous_fit), "sdmTMB"))
+  assert_that(is.list(priors))
+  assert_that(is.list(.control))
   if (!is.null(time)) assert_that(is.character(time))
   assert_that(identical(class(spde), "sdmTMBmesh"))
-  assert_that(identical(class(formula), "formula"))
+  assert_that(class(formula) %in% c("formula","list"))
   assert_that("data.frame" %in% class(data))
   if (!is.null(map) && length(map) != length(start)) {
     warning("`length(map) != length(start)`. You likely want to specify ",
@@ -652,9 +653,16 @@ sdmTMB <- function(
     on.exit({TMB::openmp(n = n_orig)})
   }
 
-  thresh <- check_and_parse_thresh_params(formula, data)
+  # thresholds not yet enabled for delta model, where formula is a list
+  if(class(formula)=="formula") {
+    thresh <- list(check_and_parse_thresh_params(formula, data))
+    formula <- list(thresh[[1]]$formula)
+  } else {
+    thresh <- list(check_and_parse_thresh_params(formula[[1]], data),
+                   check_and_parse_thresh_params(formula[[2]], data))
+    formula <- list(thresh[[1]]$formula, thresh[[2]]$formula)
+  }
   original_formula <- formula
-  formula <- thresh$formula
 
   if (!is.null(extra_time)) { # for forecasting or interpolating
     if (!"xy_cols" %in% names(spde)) {
@@ -679,24 +687,64 @@ sdmTMB <- function(
   }
   n_z <- ncol(z_i)
 
-  contains_offset <- check_offset(formula) # deprecated check
+  contains_offset <- check_offset(formula[[1]]) # deprecated check
 
   # Parse random intercepts:
-  split_formula <- glmmTMB::splitForm(formula)
-  RE_names <- barnames(split_formula$reTrmFormulas)
-  fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
-  RE_indexes <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
-  nobs_RE <- unname(apply(RE_indexes, 2L, max)) + 1L
-  if (length(nobs_RE) == 0L) nobs_RE <- 0L
-  formula <- split_formula$fixedFormula
-  ln_tau_G_index <- unlist(lapply(seq_along(nobs_RE), function(i) rep(i, each = nobs_RE[i]))) - 1L
+  # split_formula <- glmmTMB::splitForm(formula[[1]])
+  # RE_names <- barnames(split_formula$reTrmFormulas)
+  # fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
+  # RE_indexes <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
+  # nobs_RE <- unname(apply(RE_indexes, 2L, max)) + 1L
+  # if (length(nobs_RE) == 0L) nobs_RE <- 0L
+  # formula <- split_formula$fixedFormula
+  # ln_tau_G_index <- unlist(lapply(seq_along(nobs_RE), function(i) rep(i, each = nobs_RE[i]))) - 1L
+  #
+  # formula_no_sm <- remove_s_and_t2(formula)
+  # X_ij <- model.matrix(formula_no_sm, data)
+  # mf <- model.frame(formula_no_sm, data)
+  # mt <- attr(mf, "terms")
+  # # parse everything mgcv + smoothers:
+  # sm <- parse_smoothers(formula = formula, data = data)
 
-  formula_no_sm <- remove_s_and_t2(formula)
-  X_ij <- model.matrix(formula_no_sm, data)
-  mf <- model.frame(formula_no_sm, data)
-  mt <- attr(mf, "terms")
-  # parse everything mgcv + smoothers:
-  sm <- parse_smoothers(formula = formula, data = data)
+  split_formula <- list() # passed to out structure, not TMB
+  RE_indexes <- list() # ncols passed into TMB
+  nobs_RE <- list() # ncols passed into TMB
+  ln_tau_G_index<- list() # passed into TMB
+  X_ij = list() # main effects, passed into TMB
+  mf <- list()
+  mt <- list()
+  sm <- list()
+  #offset_pos <- list()
+
+  for(ii in 1:length(formula)) {
+    contains_offset <- check_offset(formula[[ii]])
+    #if (!is.null(contains_offset) & contains_offset) warning("Contains offset in formula. This is deprecated. Please use the `offset` argument.", call. = FALSE)
+
+    # anything in a list here needs to be saved for tmb data
+    split_formula[[ii]] <- glmmTMB::splitForm(formula[ii])
+    RE_names <- barnames(split_formula$reTrmFormulas)
+    fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
+    RE_indexes[[ii]] <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
+    nobs_RE[[ii]] <- unname(apply(RE_indexes[[ii]], 2L, max)) + 1L
+    if (length(nobs_RE[[ii]]) == 0L) nobs_RE[[ii]] <- 0L
+    formula[[ii]] <- split_formula[[ii]]$fixedFormula
+    ln_tau_G_index[[ii]] <- unlist(lapply(seq_along(nobs_RE[[ii]]), function(i) rep(i, each = nobs_RE[[ii]][i]))) - 1L
+
+    formula_no_sm <- remove_s_and_t2(formula[[ii]][[1]])
+    X_ij[[ii]] <- model.matrix(formula_no_sm, data)
+    mf[[ii]] <- model.frame(formula_no_sm, data)
+    mt[[ii]] <- attr(mf[[ii]], "terms")
+    # parse everything mgcv + smoothers:
+    sm[[ii]] <- parse_smoothers(formula = formula[[ii]][[1]], data = data)
+    #offset_pos[[ii]] <- grep("^offset$", colnames(X_ij[ii]))
+  }
+  split_formula <- split_formula[[1]] # Delete this and next 7 lines as smooths / random effects added
+  RE_indexes <- RE_indexes[[1]]
+  nobs_RE <- nobs_RE[[1]]
+  ln_tau_G_index <- ln_tau_G_index[[1]]
+  mf <- mf[[1]]
+  mt <- mt[[1]]
+  sm <- sm[[1]]
 
   y_i <- model.response(mf, "numeric")
   if (family$family[1] %in% c("Gamma", "lognormal") && min(y_i) <= 0 && !delta) {
@@ -709,7 +757,7 @@ sdmTMB <- function(
   # yobs could be binary
   # (yobs, weights) could be (proportions, size)
   # On the C++ side 'yobs' must be the number of successes.
-  size <- rep(1, nrow(X_ij)) # for non-binomial case
+  size <- rep(1, nrow(X_ij[[1]])) # for non-binomial case TODO: change hard coded index
   if (identical(family$family[1], "binomial") && !delta) {
     ## call this to catch the factor / matrix cases
     y_i <- model.response(mf, type = "any")
@@ -790,17 +838,17 @@ sdmTMB <- function(
   priors_b <- priors$b
   .priors <- priors
   .priors$b <- NULL # removes this in the list, so not passed in as data
-  if (nrow(priors_b) == 1L && ncol(X_ij) > 1L) {
+  if (nrow(priors_b) == 1L && ncol(X_ij[[1]]) > 1L) { # TODO change hard coded index on X_ij
     if (!is.na(priors_b[[1]])) {
       message("Expanding `b` priors to match model matrix.")
     }
     # creates matrix that is 2 columns of NAs, rows = number of unique bs
     # Instead of passing in a 2-column matrix of NAs, pass in a matrix that
     # has means in first col and the remainder is Var-cov matrix
-    priors_b <- mvnormal(rep(NA, ncol(X_ij)))
+    priors_b <- mvnormal(rep(NA, ncol(X_ij[[1]])))# TODO change hard coded index on X_ij
   }
   # ncol(X_ij) may occur if time varying model, no intercept
-  if (ncol(X_ij) > 0 & !identical(nrow(priors_b), ncol(X_ij)))
+  if (ncol(X_ij[[1]]) > 0 & !identical(nrow(priors_b), ncol(X_ij[[1]])))# TODO change hard coded index on X_ij
     stop("The number of 'b' priors does not match the model matrix.", call. = FALSE)
   if (ncol(priors_b) == 2 && attributes(priors_b)$dist == "normal") {
     # normal priors passed in by user; change to MVN diagonal matrix
@@ -824,6 +872,10 @@ sdmTMB <- function(
   if (delta) y_i <- cbind(ifelse(y_i > 0, 1, 0), ifelse(y_i > 0, y_i, NA_real_))
   if (!delta) y_i <- matrix(y_i, ncol = 1L)
 
+  # TODO: make this cleaner
+  X_ij_array <- array(data = NA, dim = c(nrow(X_ij[[1]]), ncol(X_ij[[1]]), n_m))
+  for(i in 1:n_m) X_ij_array[,,i] <- X_ij[[i]]
+
   tmb_data <- list(
     y_i        = y_i,
     n_t        = length(unique(data[[time]])),
@@ -836,7 +888,7 @@ sdmTMB <- function(
     year_i     = make_year_i(data[[time]]),
     ar1_fields = ar1_fields,
     rw_fields =  rw_fields,
-    X_ij       = X_ij,
+    X_ij       = X_ij_array,
     X_rw_ik    = X_rw_ik,
     Zs         = sm$Zs, # optional smoother basis function matrices
     Xs         = sm$Xs, # optional smoother linear effect matrix
@@ -882,9 +934,9 @@ sdmTMB <- function(
     spatial_only = as.integer(spatial_only),
     spatial_covariate = as.integer(!is.null(spatial_varying)),
     calc_quadratic_range = as.integer(quadratic_roots),
-    X_threshold = thresh$X_threshold,
+    X_threshold = thresh[[1]]$X_threshold, # TODO: don't hardcode index thresh[[1]]
     proj_X_threshold = 0, # dummy
-    threshold_func = thresh$threshold_func,
+    threshold_func = thresh[[1]]$threshold_func,# TODO: don't hardcode index thresh[[1]]
     RE_indexes = RE_indexes,
     proj_RE_indexes = matrix(0, ncol = 0, nrow = 1), # dummy
     nobs_RE = nobs_RE,
@@ -900,11 +952,11 @@ sdmTMB <- function(
   )
 
   b_thresh <- rep(0, 2)
-  if (thresh$threshold_func == 2L) b_thresh <- c(0, b_thresh) # logistic
+  if (thresh[[1]]$threshold_func == 2L) b_thresh <- c(0, b_thresh) # logistic #TODO: change hard coding on index of thresh[[1]]
 
   tmb_params <- list(
     ln_H_input = c(0, 0),
-    b_j        = matrix(0, ncol(X_ij), n_m),
+    b_j        = matrix(0, ncol(X_ij[[1]]), n_m), # TODO: verify this hard coding is ok
     bs         = if (sm$has_smooths) matrix(0, nrow = ncol(sm$Xs), ncol = n_m) else array(0),
     ln_tau_O   = rep(0, n_m),
     ln_tau_Z = matrix(0, n_z, n_m),
