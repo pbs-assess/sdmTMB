@@ -13,7 +13,7 @@ sdmTMBcontrol(
   mgcv = deprecated(),
   quadratic_roots = FALSE,
   start = NULL,
-  map_rf = FALSE,
+  map_rf = deprecated(),
   map = NULL,
   lower = NULL,
   upper = NULL,
@@ -59,10 +59,8 @@ can see the necessary structure by fitting the model once and inspecting
 \code{your_model$tmb_obj$env$parList()}. Elements of \code{start} that are specified
 will replace the default starting values.}
 
-\item{map_rf}{Map all the random fields to 0 to turn the model into a
-classical GLM or GLMM without spatial or spatiotemporal components?
-Note this is not accounted for in \code{print()} or \code{tidy.sdmTMB()};
-some parameters will still appear but their values can be ignored.}
+\item{map_rf}{\strong{Deprecated} use \verb{spatial = 'off', spatiotemporal = 'off'} in
+\code{\link[=sdmTMB]{sdmTMB()}}.}
 
 \item{map}{A named list with factor \code{NA}s specifying parameter values that
 should be fixed at a constant value. See the documentation in
