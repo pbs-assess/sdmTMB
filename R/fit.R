@@ -472,21 +472,7 @@ sdmTMB <- function(
 
 
   delta <- isTRUE(family$delta)
-  n_m <- if (isTRUE(delta)) 2L else 1L
-
-  check_spatiotemporal_arg <- function(x, .which = 1) {
-    sp_len <- length(x)
-    .spatiotemporal <- tolower(as.character(x[[.which]]))
-    assert_that(.spatiotemporal %in% c("iid", "ar1", "rw", "off", "true", "false"),
-      msg = "`spatiotemporal` argument value not valid")
-    if (.spatiotemporal == "true") .spatiotemporal <- "iid"
-    if (.spatiotemporal == "false") .spatiotemporal <- "off"
-    .spatiotemporal <- match.arg(tolower(.spatiotemporal), choices = c("iid", "ar1", "rw", "off"))
-    if (is.null(time) && .spatiotemporal != "off" && sp_len >= 1) {
-      stop("`spatiotemporal` is set but the `time` argument is missing.", call. = FALSE)
-    }
-    .spatiotemporal
-  }
+  n_m <- if (delta) 2L else 1L
 
   if (!missing(spatiotemporal)) {
     if (delta && !is.list(spatiotemporal)) {
@@ -520,8 +506,10 @@ sdmTMB <- function(
     if (!is.logical(spatial[[1]])) spatial <- match.arg(tolower(spatial), choices = c("on", "off"))
     if (identical(spatial, "on") || isTRUE(spatial)) {
       include_spatial <- TRUE
+      spatial <- "on"
     } else {
       include_spatial <- FALSE
+      spatial <- "off"
     }
   }
   if (!include_spatial && all(spatiotemporal == "off") || !include_spatial && all(spatial_only)) {
@@ -609,10 +597,8 @@ sdmTMB <- function(
   ar1_fields <- spatiotemporal == "ar1"
   rw_fields <- spatiotemporal == "rw"
   assert_that(
-    is.logical(reml), is.logical(anisotropy), is.logical(share_range), is.logical(silent),
-    is.logical(silent),
-    is.logical(multiphase),
-     is.logical(normalize)
+    is.logical(reml), is.logical(anisotropy), is.logical(share_range),
+    is.logical(silent), is.logical(multiphase), is.logical(normalize)
   )
   if (!is.null(spatial_varying)) assert_that(class(spatial_varying) == "formula")
   assert_that(is.list(priors))
@@ -689,8 +675,7 @@ sdmTMB <- function(
   }
   n_z <- ncol(z_i)
 
-  contains_offset <- check_offset(formula)
-  if (contains_offset) warning("Contains offset in formula. This is deprecated. Please use the `offset` argument.", call. = FALSE)
+  contains_offset <- check_offset(formula) # deprecated check
 
   # Parse random intercepts:
   split_formula <- glmmTMB::splitForm(formula)
@@ -709,8 +694,6 @@ sdmTMB <- function(
   # parse everything mgcv + smoothers:
   sm <- parse_smoothers(formula = formula, data = data)
 
-  # deprecated:
-  offset_pos <- grep("^offset$", colnames(X_ij))
   y_i <- model.response(mf, "numeric")
   if (family$family[1] %in% c("Gamma", "lognormal") && min(y_i) <= 0 && !delta) {
     stop("Gamma and lognormal must have response values > 0.", call. = FALSE)
@@ -947,42 +930,8 @@ sdmTMB <- function(
     temp <- mgcv::gam(formula = formula, data = data, family = fam)
     tmb_params$b_j <- matrix(stats::coef(temp), ncol = 1L)
   }
-  if (contains_offset) tmb_params$b_j[offset_pos] <- 1
-
-  # Mapping off params as needed:
-  tmb_map <- list()
-  tmb_map$ln_phi <- rep(1, n_m)
-  if (!anisotropy)
-    tmb_map <- c(tmb_map, list(ln_H_input = factor(rep(NA, 2))))
-  tmb_map$ar1_phi <- factor(rep(NA, n_m))
-  if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson"))
-    tmb_map$ln_phi[1] <- factor(NA)
-  if (delta) {
-    if (family$family[[2]] %in% c("binomial", "poisson", "censored_poisson"))
-      tmb_map$ln_phi[2] <- factor(NA)
-    else
-      tmb_map$ln_phi[2] <- 2
-  }
-  tmb_map$ln_phi <- as.factor(tmb_map$ln_phi)
-
-  if (!"tweedie" %in% family$family)
-    tmb_map <- c(tmb_map, list(thetaf = as.factor(NA)))
-  if (all(spatial_only))
-    tmb_map <- c(tmb_map, list(
-      ln_tau_E   = factor(rep(NA, n_m)),
-      epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
-
-  if (delta && contains_offset) stop("`offset` in formula is deprecated in favour of the `offset` argument. For delta models, the `offset` argument must be used.", call. = FALSE)
-  if (contains_offset) { # fix offset param to 1 to be an offset:
-    b_j_map <- seq_along(tmb_params$b_j)
-    b_j_map[offset_pos] <- NA
-    tmb_map <- c(tmb_map, list(b_j = as.factor(b_j_map)))
-  }
 
   if (delta && !is.null(thresh$threshold_parameter)) stop("Offsets not implemented with threshold models yet!") # TODO DELTA
-  if (is.null(thresh$threshold_parameter)) {
-    tmb_map <- c(tmb_map, list(b_threshold = factor(rep(NA, 2))))
-  }
 
 ##  # optional models on spatiotemporal sd parameter
 ##  if (est_epsilon_re == 0L) {
@@ -992,82 +941,77 @@ sdmTMB <- function(
 ##  if (est_epsilon_model == 0L) {
 ##    tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
 ##  }
+  tmb_map <- map_all_params(tmb_params)
+  tmb_map$b_j <- NULL
+  if (family$family[[1]] == "tweedie") tmb_map$thetaf <- NULL
+  tmb_map$ln_phi <- rep(1, n_m)
+  if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson"))
+    tmb_map$ln_phi[1] <- factor(NA)
+  if (delta) {
+    if (family$family[[2]] %in% c("binomial", "poisson", "censored_poisson"))
+      tmb_map$ln_phi[2] <- factor(NA)
+    else
+      tmb_map$ln_phi[2] <- 2
+  }
+  tmb_map$ln_phi <- as.factor(tmb_map$ln_phi)
+  if (!is.null(thresh$threshold_parameter)) tmb_map$b_threshold <- NULL
 
   if (multiphase && is.null(previous_fit) && do_fit) {
-    not_phase1 <- c(tmb_map, list(
-      ln_tau_O   = factor(rep(NA, n_m)),
-      ln_tau_E   = factor(rep(NA, n_m)),
-      ln_tau_V   = factor(rep(NA, length(tmb_params$ln_tau_V))),
-      ln_tau_G   = factor(rep(NA, length(tmb_params$ln_tau_G))),
-      ln_tau_Z   = factor(rep(NA, length(tmb_params$ln_tau_Z))),
-      zeta_s     = factor(rep(NA, length(tmb_params$zeta_s))),
-      ln_kappa   = factor(rep(NA, length(tmb_params$ln_kappa))),
-      ln_H_input = factor(rep(NA, 2)),
-      b_rw_t     = factor(rep(NA, length(tmb_params$b_rw_t))),
-      RE         = factor(rep(NA, length(tmb_params$RE))),
-      omega_s    = factor(rep(NA, length(tmb_params$omega_s))),
-      b_smooth = factor(rep(NA, length(tmb_params$b_smooth))),
-      ln_smooth_sigma = factor(rep(NA, length(tmb_params$ln_smooth_sigma))),
-      epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
     tmb_obj1 <- TMB::MakeADFun(
       data = tmb_data, parameters = tmb_params,
-      map = not_phase1, DLL = "sdmTMB", silent = silent)
+      map = tmb_map, DLL = "sdmTMB", silent = silent)
 
     lim <- set_limits(tmb_obj1, lower = lower, upper = upper, silent = TRUE)
     tmb_opt1 <- stats::nlminb(
       start = tmb_obj1$par, objective = tmb_obj1$fn,
       lower = lim$lower, upper = lim$upper,
       gradient = tmb_obj1$gr, control = .control)
-
-##    # Set starting values based on phase 1:
-##    if (isFALSE(contains_offset))
-##      tmb_params$b_j <- set_par_value(tmb_opt1, "b_j") # TODO DELTA
-##    else
-##      tmb_params$b_j[-offset_pos] <- set_par_value(tmb_opt1, "b_j") # TODO DELTA
-
-    if (family$family[[1]] == "tweedie")
-      tmb_params$thetaf <- set_par_value(tmb_opt1, "thetaf")
-    if (!family$family[[1]] %in% c("binomial", "poisson", "censored_poisson") && !delta)  # no dispersion param
-      tmb_params$ln_phi <- set_par_value(tmb_opt1, "ln_phi")
+    # Set starting values based on phase 1:
+    tmb_params <- tmb_obj1$env$parList()
+    # often causes optimization problems if set from phase 1!?
+    tmb_params$b_threshold <- rep(0, length(tmb_params$b_threshold))
   }
 
-  if (all(spatial_only)) {
-    tmb_random <- "omega_s"
-  } else {
-    if (include_spatial) {
-      tmb_random <- c("omega_s", "epsilon_st")
-    } else {
-      tmb_random <- "epsilon_st"
-    }
+  unmap <- function(x, v) {
+    for (i in v) x[[i]] <- NULL
+    x
   }
-  if (!is.null(spatial_varying)) tmb_random <- c(tmb_random, "zeta_s")
-  if (!is.null(time_varying)) tmb_random <- c(tmb_random, "b_rw_t")
-  if(est_epsilon_re) tmb_random <- c(tmb_random, "epsilon_re")
 
-  if (!include_spatial) {
-    tmb_map <- c(tmb_map, list(
-      ln_tau_O = factor(rep(NA, n_m)),
-      omega_s  = factor(rep(NA, length(tmb_params$omega_s)))))
+  tmb_random <- c()
+  if (spatial == "on") {
+    tmb_random <- c(tmb_random, "omega_s")
+    tmb_map <- unmap(tmb_map, c("omega_s", "ln_tau_O"))
   }
-  if (is.null(spatial_varying)) {
-    tmb_map <- c(tmb_map, list(
-      ln_tau_Z = factor(rep(NA, n_m * n_z)),
-      zeta_s = factor(rep(NA, length(tmb_params$zeta_s)))))
+  if (!all(spatiotemporal == "off")) {
+    tmb_random <- c(tmb_random, "epsilon_st")
+    tmb_map <- unmap(tmb_map, c("ln_tau_E", "epsilon_st"))
   }
-  if (is.null(time_varying))
-    tmb_map <- c(tmb_map,
-      list(b_rw_t = factor(rep(NA, length(tmb_params$b_rw_t)))),
-      list(ln_tau_V = factor(rep(NA, n_m)))
-    )
+  if (!is.null(spatial_varying)) {
+    tmb_random <- c(tmb_random, "zeta_s")
+    tmb_map <- unmap(tmb_map, c("zeta_s", "ln_tau_Z"))
+  }
+  if (anisotropy) tmb_map <- unmap(tmb_map, "ln_H_input")
+  if (!is.null(time_varying)) {
+    tmb_random <- c(tmb_random, "b_rw_t")
+    tmb_map <- unmap(tmb_map, c("b_rw_t", "ln_tau_V"))
+  }
+  if (est_epsilon_re) {
+    tmb_random <- c(tmb_random, "epsilon_re")
+    tmb_map <- unmap(tmb_map, c("epsilon_re"))
+    # FIXME more!?
+  }
 
-  tmb_map$ar1_phi <- rep(NA, n_m)
+  tmb_map$ar1_phi <- as.numeric(tmb_map$ar1_phi) # strip factors
   for (i in seq_along(spatiotemporal)) {
     if (spatiotemporal[i] == "ar1") tmb_map$ar1_phi[i] <- i
   }
   tmb_map$ar1_phi <- as.factor(as.integer(as.factor(tmb_map$ar1_phi)))
 
-  if (nobs_RE[[1]] > 0) tmb_random <- c(tmb_random, "RE")
+  if (nobs_RE[[1]] > 0) {
+    tmb_random <- c(tmb_random, "RE")
+    tmb_map <- unmap(tmb_map, c("ln_tau_G", "RE"))
+  }
   if (reml) tmb_random <- c(tmb_random, "b_j")
 
 ##  if (est_epsilon_model >= 2) {
@@ -1077,11 +1021,7 @@ sdmTMB <- function(
 
   if (sm$has_smooths) {
     tmb_random <- c(tmb_random, "b_smooth") # smooth random effects
-    # warning(
-    #   "Detected a `s()` smoother. Smoothers are penalized in sdmTMB as\n",
-    #   "of version 0.0.19, but used to be unpenalized.\n",
-    #   "You no longer need to specify `k` since the degree of wiggliness\n",
-    #   "is determined by the data.", call. = FALSE)
+    tmb_map <- unmap(tmb_map, c("b_smooth", "ln_smooth_sigma", "bs"))
   }
 
   if (!is.null(previous_fit)) {
@@ -1091,13 +1031,9 @@ sdmTMB <- function(
   tmb_data$normalize_in_r <- as.integer(normalize)
 
   if (!is.null(previous_fit)) tmb_map <- previous_fit$tmb_map
-  # if (isTRUE(map_rf)) tmb_map <- map_off_rf(tmb_map, tmb_params)
   tmb_map <- c(map, tmb_map)
 
-  # if (share_range && !delta) tmb_map <- c(tmb_map, list(ln_kappa = as.factor(rep(1, length(tmb_params$ln_kappa)))))
-  # if (share_range && delta) tmb_map <- c(tmb_map, list(ln_kappa = as.factor(c(1, 1, 2, 2))))
-
-  # deal with kappa mapping:
+  # kappa mapping:
   tmb_map$ln_kappa <- matrix(seq_len(length(tmb_params$ln_kappa)),
     nrow(tmb_params$ln_kappa), ncol(tmb_params$ln_kappa))
   for (m in seq_len(n_m)) {
@@ -1123,13 +1059,7 @@ sdmTMB <- function(
   data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL
   data$sdmTMB_X_ <- data$sdmTMB_Y_ <- NULL
 
-  if (!tmb_data$has_smooths) {
-    tmb_map <- c(tmb_map, list(b_smooth = factor(NA)))
-    tmb_map <- c(tmb_map, list(bs = factor(NA)))
-    tmb_map <- c(tmb_map, list(ln_smooth_sigma = factor(NA)))
-  }
-
-  # FIXME: generalize ; DELTA
+  # delta spatiotemporal mapping:
   if (delta && "off" %in% spatiotemporal) {
     tmb_map$epsilon_st <- array(
       seq_len(length(tmb_params$epsilon_st)),
@@ -1193,7 +1123,7 @@ sdmTMB <- function(
     lower = lim$lower, upper = lim$upper, control = .control)
 
   if (nlminb_loops > 1) {
-    if(!silent) cat("running extra nlminb loops\n")
+    if (!silent) cat("running extra nlminb loops\n")
     for (i in seq(2, nlminb_loops, length = max(0, nlminb_loops - 1))) {
       temp <- tmb_opt[c("iterations", "evaluations")]
       tmb_opt <- stats::nlminb(
@@ -1204,7 +1134,7 @@ sdmTMB <- function(
     }
   }
   if (newton_loops > 0) {
-    if(!silent) cat("running newtonsteps\n")
+    if (!silent) cat("running newtonsteps\n")
     for (i in seq_len(newton_loops)) {
       g <- as.numeric(tmb_obj$gr(tmb_opt$par))
       h <- stats::optimHess(tmb_opt$par, fn = tmb_obj$fn, gr = tmb_obj$gr)
@@ -1225,18 +1155,6 @@ sdmTMB <- function(
     bad_eig    = conv$bad_eig,
     pos_def_hessian = sd_report$pdHess))
   `class<-`(out, "sdmTMB")
-}
-
-map_off_rf <- function(.map, tmb_params) {
-  .map$ln_tau_O <- as.factor(rep(NA, length(tmb_params$ln_tau_O)))
-  .map$ln_tau_E <- as.factor(rep(NA, length(tmb_params$ln_tau_E)))
-  .map$ln_tau_Z <- as.factor(rep(NA, length(tmb_params$ln_tau_Z)))
-  .map$zeta_s <- factor(rep(NA, length(tmb_params$zeta_s)))
-  .map$ln_kappa <- factor(rep(NA, length(tmb_params$ln_kappa)))
-  .map$ln_H_input <- factor(rep(NA, length(tmb_params$ln_H_input)))
-  .map$omega_s <- factor(rep(NA, length(tmb_params$omega_s)))
-  .map$epsilon_st <- factor(rep(NA, length(tmb_params$epsilon_st)))
-  .map
 }
 
 check_bounds <- function(.par, lower, upper) {
@@ -1298,3 +1216,27 @@ set_limits <- function(tmb_obj, lower, upper, loc = NULL, silent = TRUE) {
   # }
   list(lower = .lower, upper = .upper)
 }
+
+check_spatiotemporal_arg <- function(x, .which = 1) {
+  sp_len <- length(x)
+  .spatiotemporal <- tolower(as.character(x[[.which]]))
+  assert_that(.spatiotemporal %in% c("iid", "ar1", "rw", "off", "true", "false"),
+    msg = "`spatiotemporal` argument value not valid")
+  if (.spatiotemporal == "true") .spatiotemporal <- "iid"
+  if (.spatiotemporal == "false") .spatiotemporal <- "off"
+  .spatiotemporal <- match.arg(tolower(.spatiotemporal), choices = c("iid", "ar1", "rw", "off"))
+  if (is.null(time) && .spatiotemporal != "off" && sp_len >= 1) {
+    stop("`spatiotemporal` is set but the `time` argument is missing.", call. = FALSE)
+  }
+  .spatiotemporal
+}
+
+map_all_params <- function(x) {
+  m <- list()
+  nm <- names(x)
+  for (i in seq_along(x)) {
+    m[[i]]<- factor(rep(NA, length(x[[i]])))
+  }
+ stats::setNames(m, names(x))
+}
+
