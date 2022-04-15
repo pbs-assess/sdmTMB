@@ -873,8 +873,9 @@ sdmTMB <- function(
   if (!delta) y_i <- matrix(y_i, ncol = 1L)
 
   # TODO: make this cleaner
-  X_ij_array <- array(data = NA, dim = c(nrow(X_ij[[1]]), ncol(X_ij[[1]]), n_m))
-  for(i in 1:n_m) X_ij_array[,,i] <- X_ij[[i]]
+  X_ij_list <- list()
+  #X_ij_array <- array(data = NA, dim = c(nrow(X_ij[[1]]), ncol(X_ij[[1]]), n_m))
+  for(i in 1:n_m) X_ij_list[[i]] <- X_ij[[i]]
 
   tmb_data <- list(
     y_i        = y_i,
@@ -888,7 +889,7 @@ sdmTMB <- function(
     year_i     = make_year_i(data[[time]]),
     ar1_fields = ar1_fields,
     rw_fields =  rw_fields,
-    X_ij       = X_ij_array,
+    X_ij       = X_ij_list,
     X_rw_ik    = X_rw_ik,
     Zs         = sm$Zs, # optional smoother basis function matrices
     Xs         = sm$Xs, # optional smoother linear effect matrix
