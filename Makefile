@@ -22,7 +22,7 @@ install:
 	$(R) CMD INSTALL --preclean --no-multiarch --with-keep.source .
 
 cran-check:
-	$(R) CMD check --as-cran $(TARBALL)
+	echo "devtools::check(\".\")" | $(R) --slave
 
 build-parallel:
 	rsync -qav --exclude='build' --exclude='.git' --exclude='*.tar.gz' --exclude='*.o' --exclude='*.so' --exclude='inst/*.rds' --exclude='.Rproj.user' . build
