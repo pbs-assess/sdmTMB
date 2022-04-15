@@ -118,8 +118,7 @@ test_that("A linear threshold model fits", {
   d <- subset(pcod, year >= 2011) # subset for speed
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ 0 + as.factor(year) + breakpt(depth_scaled), data = d,
-    mesh = pcod_spde, family = tweedie(link = "log"),
-    time = "year")
+    mesh = pcod_spde, family = tweedie(link = "log"), spatial = "off")
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
 })
 
