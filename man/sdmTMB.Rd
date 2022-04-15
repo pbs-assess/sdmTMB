@@ -11,7 +11,7 @@ sdmTMB(
   time = NULL,
   family = gaussian(link = "identity"),
   spatial = c("on", "off"),
-  spatiotemporal = c("IID", "AR1", "RW", "off"),
+  spatiotemporal = c("iid", "ar1", "rw", "off"),
   share_range = TRUE,
   time_varying = NULL,
   spatial_varying = NULL,
@@ -34,8 +34,7 @@ sdmTMB(
 )
 }
 \arguments{
-\item{formula}{Model formula. See the Details section below for how to specify
-offsets and threshold parameters. For index standardization, you may wish
+\item{formula}{Model formula.  For index standardization, you may wish
 to include \code{0 + as.factor(year)} (or whatever the time column is called)
 in the formula. IID random intercepts are possible using \pkg{lme4}
 syntax, e.g., \code{+ (1 | g)} where \code{g} is a column with factor levels.
@@ -58,8 +57,12 @@ one of the index or center of gravity functions over time.}
 \code{\link[sdmTMB:families]{truncated_nbinom1()}},
 \code{\link[sdmTMB:families]{censored_poisson()}},
 \code{\link[sdmTMB:families]{student()}}, and
-\code{\link[sdmTMB:families]{tweedie()}}]. For binomial family options,
-see the 'Binomial families' in the Details section below.}
+\code{\link[sdmTMB:families]{tweedie()}}]. Supports the delta/hurdle models:
+\code{\link[sdmTMB:families]{delta_gamma()}},
+\code{\link[sdmTMB:families]{delta_lognormal()}}, and
+\code{\link[sdmTMB:families]{delta_truncated_nbinom2()}},
+For binomial family options, see the 'Binomial families' in the Details
+section below.}
 
 \item{spatial}{Estimate spatial random fields? Options are
 \code{'on'} / \code{'off'} or \code{TRUE} / \code{FALSE}.}
@@ -145,13 +148,13 @@ that includes both the trend and random effects)}
 \item{do_fit}{Fit the model (\code{TRUE}) or return the processed data without
 fitting (\code{FALSE})?}
 
-\item{spatial_only}{\strong{Depreciated.} Replaced by \code{spatiotemporal = "off"}.}
+\item{spatial_only}{\strong{Deprecated.} Replaced by \code{spatiotemporal = "off"}.}
 
-\item{fields}{\strong{Depreciated.} Replaced by \code{spatiotemporal}.}
+\item{fields}{\strong{Deprecated.} Replaced by \code{spatiotemporal}.}
 
-\item{include_spatial}{\strong{Depreciated.} Replaced by \code{spatial}.}
+\item{include_spatial}{\strong{Deprecated.} Replaced by \code{spatial}.}
 
-\item{spde}{\strong{Depreciated.} Replaced by \code{mesh}.}
+\item{spde}{\strong{Deprecated.} Replaced by \code{mesh}.}
 
 \item{...}{Not currently used.}
 }
@@ -255,7 +258,7 @@ You will need to specify the \code{time} argument. See \code{\link[=get_index]{g
 \strong{Regularization and priors}
 
 You can achieve regularization via penalties (priors) on the fixed effect
-parameters. See \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}. These should not include \code{offset} terms.
+parameters. See \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}.
 You can fit the model once without penalties and inspect the element
 \code{head(your_model$tmb_data$X_ij)} if you want to see how the formula is
 translated to the fixed effect model matrix.
@@ -296,7 +299,7 @@ p <- predict(fit, newdata = subset(qcs_grid, year == 2017))
 
 # Add spatiotemporal random fields:
 fit <- sdmTMB(
-  density ~ 1 + s(depth) + as.factor(year),
+  density ~ 0 + as.factor(year),
   time = "year", #<
   data = pcod_2011, mesh = mesh,
   family = tweedie(link = "log")

@@ -8,8 +8,7 @@ NULL
 #' This can be useful for (dynamic) species distribution models and relative
 #' abundance index standardization among many other uses.
 #'
-#' @param formula Model formula. See the Details section below for how to specify
-#'   offsets and threshold parameters. For index standardization, you may wish
+#' @param formula Model formula.  For index standardization, you may wish
 #'   to include `0 + as.factor(year)` (or whatever the time column is called)
 #'   in the formula. IID random intercepts are possible using \pkg{lme4}
 #'   syntax, e.g., `+ (1 | g)` where `g` is a column with factor levels.
@@ -28,8 +27,12 @@ NULL
 #'   \code{\link[sdmTMB:families]{truncated_nbinom1()}},
 #'   \code{\link[sdmTMB:families]{censored_poisson()}},
 #'   \code{\link[sdmTMB:families]{student()}}, and
-#'   \code{\link[sdmTMB:families]{tweedie()}}]. For binomial family options,
-#'   see the 'Binomial families' in the Details section below.
+#'   \code{\link[sdmTMB:families]{tweedie()}}]. Supports the delta/hurdle models:
+#'   \code{\link[sdmTMB:families]{delta_gamma()}},
+#'   \code{\link[sdmTMB:families]{delta_lognormal()}}, and
+#'   \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}},
+#'   For binomial family options, see the 'Binomial families' in the Details
+#'   section below.
 #' @param spatial Estimate spatial random fields? Options are
 #'   `'on'` / `'off'` or `TRUE` / `FALSE`.
 #' @param spatiotemporal Estimate the spatiotemporal random fields as `'IID'`
@@ -205,7 +208,7 @@ NULL
 #' **Regularization and priors**
 #'
 #' You can achieve regularization via penalties (priors) on the fixed effect
-#' parameters. See [sdmTMBpriors()]. These should not include `offset` terms.
+#' parameters. See [sdmTMBpriors()].
 #' You can fit the model once without penalties and inspect the element
 #' `head(your_model$tmb_data$X_ij)` if you want to see how the formula is
 #' translated to the fixed effect model matrix.
@@ -294,7 +297,7 @@ NULL
 #'
 #' # Add spatiotemporal random fields:
 #' fit <- sdmTMB(
-#'   density ~ 1 + s(depth) + as.factor(year),
+#'   density ~ 0 + as.factor(year),
 #'   time = "year", #<
 #'   data = pcod_2011, mesh = mesh,
 #'   family = tweedie(link = "log")
@@ -448,7 +451,7 @@ sdmTMB <- function(
   time = NULL,
   family = gaussian(link = "identity"),
   spatial = c("on", "off"),
-  spatiotemporal = c("IID", "AR1", "RW", "off"),
+  spatiotemporal = c("iid", "ar1", "rw", "off"),
   share_range = TRUE,
   time_varying = NULL,
   spatial_varying = NULL,
