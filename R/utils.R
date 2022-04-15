@@ -151,8 +151,10 @@ make_year_i <- function(x) {
 }
 
 check_offset <- function(formula) {
-  any(grepl("^offset$",
+  .check <- any(grepl("^offset$",
     gsub(" ", "", unlist(strsplit(as.character(formula), "\\+")))))
+  if (.check)
+    stop("Contains offset in formula. This is deprecated. Please use the `offset` argument.", call. = FALSE) 
 }
 
 check_and_parse_thresh_params <- function(formula, data) {
