@@ -230,13 +230,20 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
   if ("version" %in% names(object)) {
     check_sdmTMB_version(object$version)
   } else {
-    stop("This looks like a very old version of a model fit. Re-fit the model before predicting with it.",
-      call. = FALSE)
+    stop("\n",
+         "This looks like a very old version of a model fit.\n",
+         "Re-fit the model before predicting with it.",
+      call. = FALSE
+    )
   }
   if (!"xy_cols" %in% names(object$spde)) {
-    warning("It looks like this model was fit with make_spde(). ",
-    "Using `xy_cols`, but future versions of sdmTMB may not be compatible with this.",
-    "Please replace make_spde() with make_mesh().", call. = FALSE)
+    warning(
+      "It looks like this model was fit with make_spde().\n",
+      "Using `xy_cols`, but future versions of sdmTMB\n",
+      "may not be compatible with this.\n",
+      "Please replace make_spde() with make_mesh().", 
+      call. = FALSE
+    )
   } else {
     xy_cols <- object$spde$xy_cols
   }
@@ -267,10 +274,12 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
 
   if (!is.null(newdata)) {
     if (any(!xy_cols %in% names(newdata)) && isFALSE(pop_pred))
-      stop("`xy_cols` (the column names for the x and y coordinates) ",
-        "are not in `newdata`. Did you miss specifying the argument ",
-        "`xy_cols` to match your data? The newer `make_mesh()` ",
-        "(vs. `make_spde()`) takes care of this for you.", call. = FALSE
+      stop("\n",
+        "`xy_cols` (the column names for the x and y coordinates)\n",
+        "are not in `newdata`. Did you miss specifying the argument\n",
+        "`xy_cols` to match your data? The newer `make_mesh()`\n",
+        "(vs. `make_spde()`) takes care of this for you.",
+        call. = FALSE
       )
 
     if (object$time == "_sdmTMB_time") newdata[[object$time]] <- 0L
@@ -280,17 +289,19 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     new_data_time <- as.numeric(sort(unique(newdata[[object$time]])))
 
     if (!all(new_data_time %in% original_time))
-      stop("Some new time elements were found in `newdata`. ",
-        "For now, make sure only time elements from the original dataset ",
-        "are present. If you would like to predict on new time elements, see ",
-        "the `extra_time` argument in `?predict.sdmTMB`.",
+      stop("\n",
+        "Some new time elements were found in `newdata`.\n",
+        "For now, make sure only time elements from the original dataset\n",
+        "are present. If you would like to predict on new time elements,\n",
+        "see the `extra_time` argument in `?predict.sdmTMB`.",
         call. = FALSE
       )
 
     if (!identical(new_data_time, original_time) & isFALSE(pop_pred)) {
-      stop("The time elements in `newdata` are not identical to those ",
-        "in the original dataset. For now, please predict on all time ",
-        "elements and filter out those you don't need after. Please ",
+      stop("\n",
+        "The time elements in `newdata` are not identical to those\n",
+        "in the original dataset. For now, please predict on all time\n",
+        "elements and filter out those you don't need after. Please\n",
         "let us know on the GitHub issues if this is important to you.",
         call. = FALSE
       )
@@ -309,8 +320,11 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     }
 
     if (sum(is.na(new_data_time)) > 0)
-      stop("There is at least one NA value in the time column. ",
-        "Please remove it.", call. = FALSE)
+      stop("\n",
+        "There is at least one NA value in the time column.\n",
+        "Please remove it.",
+        call. = FALSE
+      )
 
     newdata$sdm_orig_id <- seq(1, nrow(newdata))
     fake_newdata <- unique(newdata[,xy_cols])
@@ -358,7 +372,11 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
       proj_X_rw_ik <- matrix(0, ncol = 1, nrow = 1) # dummy
 
     if (length(area) != nrow(proj_X_ij) && length(area) != 1L) {
-      stop("`area` should be of the same length as `nrow(newdata)` or of length 1.", call. = FALSE)
+      stop("\n",
+        "`area` should be of the same length as\n",
+        "`nrow(newdata)` or of length 1.",
+        call. = FALSE
+      )
     }
 
     tmb_data$proj_X_threshold <- thresh$X_threshold
@@ -380,7 +398,10 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     tmb_data$proj_Xs <- sm$Xs
     if (!is.null(object$spatial_varying)) {
       if (!object$spatial_varying %in% names(newdata))
-        stop("The `spatial_varying` column is missing from `newdata`.", call. = FALSE)
+        stop("\n",
+          "The `spatial_varying` column is missing from `newdata`.",
+          call. = FALSE
+        )
     }
     tmb_data$proj_z_i <- if (is.null(object$spatial_varying)) 0 else newdata[[object$spatial_varying]]
 
@@ -432,7 +453,10 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
     }
     if (!is.null(tmbstan_model)) {
       if (!"stanfit" %in% class(tmbstan_model))
-        stop("tmbstan_model must be output from tmbstan::tmbstan().", call. = FALSE)
+        stop("\n",
+          "tmbstan_model must be output from tmbstan::tmbstan().",
+          call. = FALSE
+        )
       t_draws <- extract_mcmc(tmbstan_model)
       r <- apply(t_draws, 2L, new_tmb_obj$report)
     }
@@ -496,9 +520,12 @@ predict.sdmTMB <- function(object, newdata = object$data, se_fit = FALSE,
 
   } else { # We are not dealing with new data:
     if (se_fit) {
-      warning("Standard errors have not been implemented yet unless you ",
-        "supply `newdata`. In the meantime you could supply your original data frame ",
-        "to the `newdata` argument.", call. = FALSE)
+      warning(
+        "Standard errors have not been implemented yet unless you\n",
+        "supply `newdata`. In the meantime you could supply your\n",
+        "original data frame to the `newdata` argument.",
+        call. = FALSE
+      )
     }
     nd <- object$data
     lp <- object$tmb_obj$env$last.par.best
@@ -556,10 +583,11 @@ check_time_class <- function(object, newdata) {
   cls2 <- class(newdata[[object$time]])
   if (!identical(cls1, cls2)) {
     if (!identical(sort(c(cls1, cls2)), c("integer", "numeric"))) {
-      stop(
-        "Class of fitted time column (", cls1, ") does not match class of ",
+      stop("\n",
+        "Class of fitted time column (", cls1, ") does not match class of\n",
         "`newdata` time column (", cls2 ,").",
-        call. = FALSE)
+        call. = FALSE
+      )
     }
   }
 }
