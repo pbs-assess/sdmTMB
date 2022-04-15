@@ -482,7 +482,8 @@ sdmTMB <- function(
       spatiotemporal <- rep(spatiotemporal[[1]], 2L)
     }
     spatiotemporal <- vapply(seq_along(spatiotemporal),
-      function(i) check_spatiotemporal_arg(spatiotemporal, i), FUN.VALUE = character(1L))
+      function(i) check_spatiotemporal_arg(
+        spatiotemporal, time = time, .which = i), FUN.VALUE = character(1L))
   } else {
     if (is.null(time))
       spatiotemporal <- rep("off", n_m)
@@ -1220,7 +1221,7 @@ set_limits <- function(tmb_obj, lower, upper, loc = NULL, silent = TRUE) {
   list(lower = .lower, upper = .upper)
 }
 
-check_spatiotemporal_arg <- function(x, .which = 1) {
+check_spatiotemporal_arg <- function(x, time, .which = 1) {
   sp_len <- length(x)
   .spatiotemporal <- tolower(as.character(x[[.which]]))
   assert_that(.spatiotemporal %in% c("iid", "ar1", "rw", "off", "true", "false"),
