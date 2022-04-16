@@ -957,7 +957,8 @@ sdmTMB <- function(
 
   tmb_params <- list(
     ln_H_input = c(0, 0),
-    b_j        = matrix(0, ncol(X_ij[[1]]), n_m), # TODO: verify this hard coding is ok
+    b_j        = rep(0, ncol(X_ij[[1]])), # TODO: verify ok
+    b_j2       = if (delta) rep(0, ncol(X_ij[[2]])) else numeric(0), # TODO: verify ok
     bs         = if (sm$has_smooths) matrix(0, nrow = ncol(sm$Xs), ncol = n_m) else array(0),
     ln_tau_O   = rep(0, n_m),
     ln_tau_Z = matrix(0, n_z, n_m),
@@ -985,7 +986,7 @@ sdmTMB <- function(
     fam <- family
     if (family$family == "student") fam$family <- "gaussian"
     temp <- mgcv::gam(formula = formula, data = data, family = fam)
-    tmb_params$b_j <- matrix(stats::coef(temp), ncol = 1L)
+    tmb_params$b_j <- stats::coef(temp)
   }
 
   if (delta && !is.null(thresh$threshold_parameter)) stop("Offsets not implemented with threshold models yet!") # TODO DELTA
@@ -1000,6 +1001,7 @@ sdmTMB <- function(
 ##  }
   tmb_map <- map_all_params(tmb_params)
   tmb_map$b_j <- NULL
+  if (delta) tmb_map$b_j2 <- NULL
   if (family$family[[1]] == "tweedie") tmb_map$thetaf <- NULL
   tmb_map$ln_phi <- rep(1, n_m)
   if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson"))
@@ -1070,6 +1072,7 @@ sdmTMB <- function(
     tmb_map <- unmap(tmb_map, c("ln_tau_G", "RE"))
   }
   if (reml) tmb_random <- c(tmb_random, "b_j")
+  if (reml && delta) tmb_random <- c(tmb_random, "b_j2")
 
 ##  if (est_epsilon_model >= 2) {
 ##    # model 2 = re model, model 3 = loglinear-re
@@ -1130,6 +1133,9 @@ sdmTMB <- function(
     tmb_map$epsilon_st <- as.factor(tmb_map$epsilon_st)
     tmb_map$ln_tau_E <- as.factor(tmb_map$ln_tau_E)
   }
+
+  if (control$profile && delta)
+    stop("Profile not yet working with delta models.", call. = FALSE)
 
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,

@@ -100,8 +100,8 @@ Type objective_function<Type>::operator()()
 
   DATA_STRUCT(Zs, sdmTMB::LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
   DATA_STRUCT(proj_Zs, sdmTMB::LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
-  DATA_STRUCT(Xs, sdmTMB::LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
-  DATA_STRUCT(proj_Xs, sdmTMB::LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
+  DATA_MATRIX(Xs); // smoother linear effect matrix
+  DATA_MATRIX(proj_Xs); // smoother linear effect matrix
 
   // DATA_VECTOR_INDICATOR(keep, y_i); // https://rdrr.io/cran/TMB/man/oneStepPredict.html
   DATA_VECTOR(weights_i); // optional weights
@@ -202,7 +202,8 @@ Type objective_function<Type>::operator()()
 
   // Parameters
   // Fixed effects
-  PARAMETER_ARRAY(b_j);  // fixed effect parameters
+  PARAMETER_VECTOR(b_j);  // fixed effect parameters
+  PARAMETER_VECTOR(b_j2);  // fixed effect parameters delta2 part
   PARAMETER_ARRAY(bs); // smoother linear effects
   PARAMETER_VECTOR(ln_tau_O);    // spatial process
   PARAMETER_ARRAY(ln_tau_Z);    // optional spatially varying covariate process
@@ -508,11 +509,14 @@ Type objective_function<Type>::operator()()
   // ------------------ Linear predictor ---------------------------------------
 
   // DELTA DONE?
-  array<Type> eta_fixed_i(X_ij(1).rows(), n_m); // TODO: don't hardcode X_ij(1) -- this should be ragged or the max of X_ij(1:2)
-  for (int m = 0; m < n_m; m++) eta_fixed_i.col(m) = X_ij(m) * vector<Type>(b_j.col(m));// TODO: don't hardcode X_ij(1)
+  array<Type> eta_fixed_i(n_i, n_m);
+  for (int m = 0; m < n_m; m++) {
+    if (m == 0) eta_fixed_i.col(m) = X_ij(m) * b_j;
+    if (m == 1) eta_fixed_i.col(m) = X_ij(m) * b_j2;
+  }
 
   // p-splines/smoothers
-  array<Type> eta_smooth_i(X_ij(1).rows(), n_m);// TODO: don't hardcode X_ij(1)
+  array<Type> eta_smooth_i(n_i, n_m);
   eta_smooth_i.setZero();
   if (has_smooths) {
     for (int m = 0; m < n_m; m++) {
@@ -724,7 +728,7 @@ Type objective_function<Type>::operator()()
     if (priors_b_n > 0) {
       vector<Type> b_j_subset(priors_b_n),b_mean_subset(priors_b_n);
       for(int j = 0; j < priors_b_n; j++) {
-        b_j_subset(j) = b_j(priors_b_index(j),m);
+        b_j_subset(j) = b_j(priors_b_index(j),m); // TODO DELTAX2 no longer a matrix!!
         b_mean_subset(j) = priors_b_mean(j);
       }
       jnll += neg_log_dmvnorm(b_j_subset - b_mean_subset);
@@ -752,7 +756,7 @@ Type objective_function<Type>::operator()()
     int n_p = proj_X_ij.rows(); // n 'p'redicted newdata
     // DELTA DONE
     array<Type> proj_fe(n_p, n_m);
-    for (int m = 0; m < n_m; m++) proj_fe.col(m) = proj_X_ij * vector<Type>(b_j.col(m));
+    for (int m = 0; m < n_m; m++) proj_fe.col(m) = proj_X_ij * vector<Type>(b_j.col(m)); // TODO DELTAX2
 
     //      // add threshold effect if specified
     //      // DELTA TODO
