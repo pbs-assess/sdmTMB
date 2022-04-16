@@ -612,7 +612,7 @@ sdmTMB <- function(
   assert_that(is.list(.control))
   if (!is.null(time)) assert_that(is.character(time))
   assert_that(identical(class(spde), "sdmTMBmesh"))
-  assert_that(class(formula) %in% c("formula","list"))
+  assert_that(class(formula) %in% c("formula", "list"))
   assert_that("data.frame" %in% class(data))
   if (!is.null(map) && length(map) != length(start)) {
     warning("`length(map) != length(start)`. You likely want to specify ",
@@ -716,7 +716,7 @@ sdmTMB <- function(
   sm <- list()
   #offset_pos <- list()
 
-  for(ii in 1:length(formula)) {
+  for (ii in seq_along(formula)) {
     contains_offset <- check_offset(formula[[ii]])
     #if (!is.null(contains_offset) & contains_offset) warning("Contains offset in formula. This is deprecated. Please use the `offset` argument.", call. = FALSE)
 
@@ -742,11 +742,17 @@ sdmTMB <- function(
   RE_indexes <- RE_indexes[[1]]
   nobs_RE <- nobs_RE[[1]]
   ln_tau_G_index <- ln_tau_G_index[[1]]
-  mf <- mf[[1]]
-  mt <- mt[[1]]
+  # mf <- mf[[1]]
+  # mt <- mt[[1]]
   sm <- sm[[1]]
 
-  y_i <- model.response(mf, "numeric")
+  y_i <- model.response(mf[[1]], "numeric")
+  if (delta) {
+    y_i2 <- model.response(mf[[2]], "numeric")
+    if (!identical(y_i, y_i2))
+      stop("Response variable should be the same in both parts of the delta formula.", call. = FALSE)
+  }
+
   if (family$family[1] %in% c("Gamma", "lognormal") && min(y_i) <= 0 && !delta) {
     stop("Gamma and lognormal must have response values > 0.", call. = FALSE)
   }
@@ -875,7 +881,7 @@ sdmTMB <- function(
   # TODO: make this cleaner
   X_ij_list <- list()
   #X_ij_array <- array(data = NA, dim = c(nrow(X_ij[[1]]), ncol(X_ij[[1]]), n_m))
-  for(i in 1:n_m) X_ij_list[[i]] <- X_ij[[i]]
+  for (i in seq_len(n_m)) X_ij_list[[i]] <- X_ij[[i]]
 
   tmb_data <- list(
     y_i        = y_i,
@@ -985,7 +991,7 @@ sdmTMB <- function(
   if (identical(family$link, "inverse") && family$family[1] %in% c("Gamma", "gaussian", "student") && !delta) {
     fam <- family
     if (family$family == "student") fam$family <- "gaussian"
-    temp <- mgcv::gam(formula = formula, data = data, family = fam)
+    temp <- mgcv::gam(formula = formula[[1]], data = data, family = fam)
     tmb_params$b_j <- stats::coef(temp)
   }
 
@@ -1170,11 +1176,10 @@ sdmTMB <- function(
     priors     = priors,
     nlminb_control = .control,
     control  = control,
-    contrasts  = attr(X_ij[[1]], "contrasts"),
-    contrasts2  = if (delta) attr(X_ij[[2]], "contrasts") else NULL,
-    terms  = attr(mf, "terms"),
+    contrasts  = lapply(X_ij, attr, which = "contrasts"),
+    terms  = lapply(mf, attr, which = "terms"),
     extra_time = extra_time,
-    xlevels    = stats::.getXlevels(mt, mf),
+    xlevels    = lapply(seq_along(mf), function(i) stats::.getXlevels(mt[[i]], mf[[i]])),
     call       = match.call(expand.dots = TRUE),
     version    = utils::packageVersion("sdmTMB")),
     class      = "sdmTMB")

@@ -332,17 +332,25 @@ predict.sdmTMB <- function(object, newdata = object$data,
     proj_mesh <- INLA::inla.spde.make.A(object$spde$mesh,
       loc = as.matrix(newdata[,xy_cols, drop = FALSE]))
 
-    # this formula has breakpt() etc. in it:
-    thresh <- check_and_parse_thresh_params(object$formula, newdata)
-    formula <- thresh$formula # this one does not
+    if (class(object$formula) == "formula") {
+      # this formula has breakpt() etc. in it:
+      thresh <- list(check_and_parse_thresh_params(formula, newdata))
+      formula <- list(thresh[[1]]$formula) # this one does not
+    } else {
+      thresh <- list(check_and_parse_thresh_params(object$formula[[1]], newdata),
+        check_and_parse_thresh_params(object$formula[[2]], newdata))
+      formula <- list(thresh[[1]]$formula, thresh[[2]]$formula)
+    }
 
     nd <- newdata
-    response <- get_response(object$formula)
+    response <- get_response(object$formula[[1]])
     sdmTMB_fake_response <- FALSE
     if (!response %in% names(nd)) {
       nd[[response]] <- 0 # fake for model.matrix
       sdmTMB_fake_response <- TRUE
     }
+
+    if (!"mgcv" %in% names(object)) object[["mgcv"]] <- FALSE
 
     # deal with prediction IID random intercepts:
     RE_names <- barnames(object$split_formula$reTrmFormulas)
@@ -350,27 +358,32 @@ predict.sdmTMB <- function(object, newdata = object$data,
     # fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
     proj_RE_indexes <- vapply(RE_names, function(x) as.integer(nd[[x]]) - 1L, rep(1L, nrow(nd)))
 
-    if (!"mgcv" %in% names(object)) object[["mgcv"]] <- FALSE
-    f2 <- remove_s_and_t2(object$split_formula$fixedFormula)
-    tt <- stats::terms(f2)
-    attr(tt, "predvars") <- attr(object$terms, "predvars")
-    Terms <- stats::delete.response(tt)
-    mf <- model.frame(Terms, newdata, xlev = object$xlevels)
-    proj_X_ij <- model.matrix(Terms, mf, contrasts.arg = object$contrasts)
+    proj_X_ij <- list()
+    for (i in seq_along(object$formula)) {
+      # f2 <- remove_s_and_t2(object$split_formula$fixedFormula[[1]]) # FIXME DELTA hardcoded to 1
+      f2 <- remove_s_and_t2(object$formula[[i]]) # FIXME DELTA this should be object$split_formula$fixedFormula !!!
+      tt <- stats::terms(f2)
+      attr(tt, "predvars") <- attr(object$terms, "predvars")
+      Terms <- stats::delete.response(tt)
+      mf <- model.frame(Terms, newdata, xlev = object$xlevels[[i]])
+      proj_X_ij[[i]] <- model.matrix(Terms, mf, contrasts.arg = object$contrasts[[i]])
+    }
 
-    sm <- parse_smoothers(object$formula, data = object$data, newdata = nd)
+    # TODO DELTA hardcoded to 1:
+    sm <- parse_smoothers(object$formula[[1]], data = object$data, newdata = nd)
 
     if (!is.null(object$time_varying))
       proj_X_rw_ik <- model.matrix(object$time_varying, data = nd)
     else
       proj_X_rw_ik <- matrix(0, ncol = 1, nrow = 1) # dummy
 
+
     if (length(area) != nrow(proj_X_ij) && length(area) != 1L) {
       stop("`area` should be of the same length as `nrow(newdata)` or of length 1.", call. = FALSE)
     }
 
-    tmb_data$proj_X_threshold <- thresh$X_threshold
-    tmb_data$area_i <- if (length(area) == 1L) rep(area, nrow(proj_X_ij)) else area
+    tmb_data$proj_X_threshold <- thresh[[1]]$X_threshold # TODO DELTA HARDCODED TO 1
+    tmb_data$area_i <- if (length(area) == 1L) rep(area, nrow(proj_X_ij[[1]])) else area
     tmb_data$proj_mesh <- proj_mesh
     tmb_data$proj_X_ij <- proj_X_ij
     tmb_data$proj_X_rw_ik <- proj_X_rw_ik
