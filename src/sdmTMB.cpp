@@ -171,7 +171,7 @@ Type objective_function<Type>::operator()()
 
   // Projections
   DATA_SPARSE_MATRIX(proj_mesh);
-  DATA_MATRIX(proj_X_ij);
+  DATA_STRUCT(proj_X_ij, sdmTMB::LOM_t);
   DATA_MATRIX(proj_X_rw_ik);
   DATA_FACTOR(proj_year);
   DATA_MATRIX(proj_z_i);
@@ -753,10 +753,13 @@ Type objective_function<Type>::operator()()
   // ------------------ Predictions on new data --------------------------------
 
   if (do_predict) {
-    int n_p = proj_X_ij.rows(); // n 'p'redicted newdata
+    int n_p = proj_X_ij(0).rows(); // n 'p'redicted newdata
     // DELTA DONE
     array<Type> proj_fe(n_p, n_m);
-    for (int m = 0; m < n_m; m++) proj_fe.col(m) = proj_X_ij * vector<Type>(b_j.col(m)); // TODO DELTAX2
+    for (int m = 0; m < n_m; m++) {
+      if (m == 0) proj_fe.col(m) = proj_X_ij(m) * b_j;
+      if (m == 1) proj_fe.col(m) = proj_X_ij(m) * b_j2;
+    }
 
     //      // add threshold effect if specified
     //      // DELTA TODO

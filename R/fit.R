@@ -917,7 +917,7 @@ sdmTMB <- function(
     share_range = as.integer(share_range),
     include_spatial = as.integer(include_spatial),
     proj_mesh  = Matrix::Matrix(0, 1, 1, doDiag = FALSE), # dummy
-    proj_X_ij  = matrix(0, ncol = 1, nrow = 1), # dummy
+    proj_X_ij  = list(matrix(0, ncol = 1, nrow = 1)), # dummy
     proj_X_rw_ik = matrix(0, ncol = 1, nrow = 1), # dummy
     proj_year  = 0, # dummy
     proj_spatial_index = 0, # dummy
@@ -1170,7 +1170,8 @@ sdmTMB <- function(
     priors     = priors,
     nlminb_control = .control,
     control  = control,
-    contrasts  = attr(X_ij, "contrasts"),
+    contrasts  = attr(X_ij[[1]], "contrasts"),
+    contrasts2  = if (delta) attr(X_ij[[2]], "contrasts") else NULL,
     terms  = attr(mf, "terms"),
     extra_time = extra_time,
     xlevels    = stats::.getXlevels(mt, mf),
