@@ -175,6 +175,7 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     m <- sdmTMB(data = d, formula = test_gamma ~ 1,
       mesh = spde, family = Gamma(link = "inverse"), spatiotemporal = "off",
       control = sdmTMBcontrol(newton_loops = 1))
+  })
 
   test_that("Beta fits", {
     skip_on_ci()

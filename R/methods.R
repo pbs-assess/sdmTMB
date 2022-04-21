@@ -14,8 +14,9 @@ mround <- function(x, digits) {
 #' @importFrom stats nobs
 #' @export
 #' @noRd
-nobs.sdmTMB <- function(object, ...)
-  sum(!is.na(object$data[all.vars(object$formula)[1]]))
+nobs.sdmTMB <- function(object, ...) {
+    sum(!is.na(object$data[all.vars(object$formula[[1]])[1]]))
+}
 
 #' Extract the log likelihood of a sdmTMB model
 #'

@@ -669,7 +669,7 @@ sdmTMB <- function(
 
   if (!is.null(extra_time)) { # for forecasting or interpolating
     if (!"xy_cols" %in% names(spde)) {
-      nice_stop("Please use make_mesh() instead of the deprecated make_mesh() to use `extra_time`.")
+      nice_stop("Please use `make_mesh()` instead of the deprecated `make_spde()` to use `extra_time`.")
     }
     data <- expand_time(df = data, time_slices = extra_time, time_column = time)
     weights <- data$weight_sdmTMB
@@ -981,7 +981,7 @@ sdmTMB <- function(
   if (identical(family$link, "inverse") && family$family[1] %in% c("Gamma", "gaussian", "student") && !delta) {
     fam <- family
     if (family$family == "student") fam$family <- "gaussian"
-    temp <- mgcv::gam(formula = formula[[1]][[1]], data = data, family = fam)
+    temp <- mgcv::gam(formula = formula[[1]], data = data, family = fam)
     tmb_params$b_j <- stats::coef(temp)
   }
 
