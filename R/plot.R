@@ -71,6 +71,8 @@ plot_anisotropy <- function(object) {
 plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
                         ggplot = FALSE, rug = TRUE, return_data = FALSE) {
   se <- TRUE
+  if (isTRUE(object$delta))
+    stop("This function doesn't work with delta models yet", call. = FALSE)
 
   assert_that(class(object) == "sdmTMB")
   assert_that(is.logical(ggplot))
@@ -90,7 +92,8 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
       stop("ggplot2 not installed", call. = FALSE)
     }
   }
-  sm <- parse_smoothers(object$formula, object$data)
+
+  sm <- parse_smoothers(object$formula[[1]], object$data)
   sm_names <- unlist(lapply(sm$Zs, function(x) attr(x, "s.label")))
   sm_names <- gsub("\\)$", "", gsub("s\\(", "", sm_names))
 
@@ -110,7 +113,7 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
   names(nd)[1] <- sel_name
 
   dat <- object$data
-  .t <- terms(object$formula)
+  .t <- terms(object$formula[[1]])
   .t <- labels(.t)
   checks <- c("^as\\.factor\\(", "^factor\\(")
   for (ch in checks) {

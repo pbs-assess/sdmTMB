@@ -705,8 +705,8 @@ sdmTMB <- function(
     contains_offset <- check_offset(formula[[ii]])
 
     # anything in a list here needs to be saved for tmb data
-    split_formula[[ii]] <- glmmTMB::splitForm(formula[ii])
-    RE_names <- barnames(split_formula[[i]]$reTrmFormulas)
+    split_formula[[ii]] <- glmmTMB::splitForm(formula[ii][[1]])
+    RE_names <- barnames(split_formula[[ii]]$reTrmFormulas)
     fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
     RE_indexes[[ii]] <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
     nobs_RE[[ii]] <- unname(apply(RE_indexes[[ii]], 2L, max)) + 1L
@@ -714,12 +714,12 @@ sdmTMB <- function(
     formula[[ii]] <- split_formula[[ii]]$fixedFormula
     ln_tau_G_index[[ii]] <- unlist(lapply(seq_along(nobs_RE[[ii]]), function(i) rep(i, each = nobs_RE[[ii]][i]))) - 1L
 
-    formula_no_sm <- remove_s_and_t2(formula[[ii]][[1]])
+    formula_no_sm <- remove_s_and_t2(formula[[ii]])
     X_ij[[ii]] <- model.matrix(formula_no_sm, data)
     mf[[ii]] <- model.frame(formula_no_sm, data)
     mt[[ii]] <- attr(mf[[ii]], "terms")
     # parse everything mgcv + smoothers:
-    sm[[ii]] <- parse_smoothers(formula = formula[[ii]][[1]], data = data)
+    sm[[ii]] <- parse_smoothers(formula = formula[[ii]], data = data)
   }
 
   if (delta) {

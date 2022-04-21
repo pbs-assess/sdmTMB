@@ -109,7 +109,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
   }
 
   # grab fixed effects:
-  .formula <- x$split_formula[[model]]$fixedFormula[[1]]
+  .formula <- x$split_formula[[model]]$fixedFormula
   .formula <- remove_s_and_t2(.formula)
   if (!"mgcv" %in% names(x)) x[["mgcv"]] <- FALSE
   fe_names <- colnames(model.matrix(.formula, x$data))
