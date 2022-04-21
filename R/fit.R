@@ -723,14 +723,14 @@ sdmTMB <- function(
 
   if (delta) {
     if (any(unlist(lapply(nobs_RE, function(.x) .x > 0)))) {
-      if (formula[[1]] != formula[[2]]) {
+      if (original_formula[[1]] != original_formula[[2]]) {
         nice_stop("For now, if delta models contain random intercepts, both ",
           "components must have the same main-effects formula.")
       }
     }
     if (any(unlist(lapply(sm, `[[`, "has_smooths")))) {
-      if (formula[[1]] != formula[[2]]) {
-        nice_stop("For now, if delta models contain smoothers, both ",
+      if (original_formula[[1]] != original_formula[[2]]) {
+        nice_warning("For now, if delta models contain smoothers, both ",
           "components must have the same main-effects formula.")
       }
     }

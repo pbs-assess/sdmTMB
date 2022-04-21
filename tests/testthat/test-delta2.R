@@ -250,4 +250,28 @@ test_that("delta models work with different main effects", {
     },
     regexp = "smooth"
   )
+
+  # diff random intercepts throw an error for now
+  expect_error(
+    {
+      pcod_2011$fyear <- as.factor(pcod_2011$year)
+      fit <- sdmTMB(
+        formula = list(density ~ 1 + (1 | fyear), density ~ 1),
+        data = pcod_2011,
+        mesh = mesh,
+        spatial = "off",
+        family = delta_gamma()
+      )
+    },
+    regexp = "random intercepts"
+  )
+
+  # OK:
+  fit <- sdmTMB(
+    formula = list(density ~ 1 + (1 | fyear), density ~ 1 + (1 | fyear)),
+    data = pcod_2011,
+    mesh = mesh,
+    spatial = "off",
+    family = delta_gamma()
+  )
 })
