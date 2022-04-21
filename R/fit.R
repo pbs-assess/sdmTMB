@@ -724,9 +724,9 @@ sdmTMB <- function(
 
   if (delta) {
     if (any(unlist(lapply(sm, `[[`, "has_smooths")))) {
-      if (formula[[1]][[1]] != formula[[2]][[1]]) {
-        stop("For now, if delta models contain smoothers, both\n",
-          "components must have the same main-effects formula.", call. = FALSE)
+      if (formula[[1]] != formula[[2]]) {
+        nice_stop("For now, if delta models contain smoothers, both ",
+          "components must have the same main-effects formula.")
       }
     }
   }
