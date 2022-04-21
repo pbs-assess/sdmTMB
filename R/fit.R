@@ -757,7 +757,7 @@ sdmTMB <- function(
   size <- rep(1, nrow(X_ij[[1]])) # for non-binomial case TODO: change hard coded index
   if (identical(family$family[1], "binomial") && !delta) {
     ## call this to catch the factor / matrix cases
-    y_i <- model.response(mf, type = "any")
+    y_i <- model.response(mf[[1]], type = "any")
     if (is.factor(y_i)) {
       ## following glm, ‘success’ is interpreted as the factor not
       ## having the first level (and hence usually of having the
@@ -982,7 +982,7 @@ sdmTMB <- function(
   if (identical(family$link, "inverse") && family$family[1] %in% c("Gamma", "gaussian", "student") && !delta) {
     fam <- family
     if (family$family == "student") fam$family <- "gaussian"
-    temp <- mgcv::gam(formula = formula[[1]], data = data, family = fam)
+    temp <- mgcv::gam(formula = formula[[1]][[1]], data = data, family = fam)
     tmb_params$b_j <- stats::coef(temp)
   }
 

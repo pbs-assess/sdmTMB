@@ -93,11 +93,11 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
       call. = FALSE)
   }
 
-  if (length(area) != nrow(obj$pred_tmb_data$proj_X_ij) && length(area) != 1L) {
+  if (length(area) != nrow(obj$pred_tmb_data$proj_X_ij[[1]]) && length(area) != 1L) {
     stop("`area` should be of the same length as `nrow(newdata)` or of length 1.", call. = FALSE)
   }
   if (length(area) == 1L)
-    area <- rep(area, nrow(obj$pred_tmb_data$proj_X_ij))
+    area <- rep(area, nrow(obj$pred_tmb_data$proj_X_ij[[1]]))
 
   tmb_data <- obj$pred_tmb_data
   tmb_data$area_i <- area

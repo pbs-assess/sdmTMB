@@ -332,9 +332,9 @@ predict.sdmTMB <- function(object, newdata = object$data,
     proj_mesh <- INLA::inla.spde.make.A(object$spde$mesh,
       loc = as.matrix(newdata[,xy_cols, drop = FALSE]))
 
-    if (class(object$formula) == "formula") {
+    if (length(object$formula) == 1L) {
       # this formula has breakpt() etc. in it:
-      thresh <- list(check_and_parse_thresh_params(formula, newdata))
+      thresh <- list(check_and_parse_thresh_params(object$formula[[1]], newdata))
       formula <- list(thresh[[1]]$formula) # this one does not
     } else {
       thresh <- list(check_and_parse_thresh_params(object$formula[[1]], newdata),
@@ -378,7 +378,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
       proj_X_rw_ik <- matrix(0, ncol = 1, nrow = 1) # dummy
 
 
-    if (length(area) != nrow(proj_X_ij) && length(area) != 1L) {
+    if (length(area) != nrow(proj_X_ij[[1]]) && length(area) != 1L) {
       stop("`area` should be of the same length as `nrow(newdata)` or of length 1.", call. = FALSE)
     }
 
