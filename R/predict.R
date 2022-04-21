@@ -353,17 +353,16 @@ predict.sdmTMB <- function(object, newdata = object$data,
     if (!"mgcv" %in% names(object)) object[["mgcv"]] <- FALSE
 
     # deal with prediction IID random intercepts:
-    RE_names <- barnames(object$split_formula$reTrmFormulas)
+    RE_names <- barnames(object$split_formula[[1]]$reTrmFormulas) # TODO DELTA HARDCODED TO 1 here; fine for now
     ## not checking so that not all factors need to be in prediction:
     # fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
     proj_RE_indexes <- vapply(RE_names, function(x) as.integer(nd[[x]]) - 1L, rep(1L, nrow(nd)))
 
     proj_X_ij <- list()
     for (i in seq_along(object$formula)) {
-      # f2 <- remove_s_and_t2(object$split_formula$fixedFormula[[1]]) # FIXME DELTA hardcoded to 1
-      f2 <- remove_s_and_t2(object$formula[[i]]) # FIXME DELTA this should be object$split_formula$fixedFormula !!!
+      f2 <- remove_s_and_t2(object$split_formula[[i]]$fixedFormula)
       tt <- stats::terms(f2)
-      attr(tt, "predvars") <- attr(object$terms, "predvars")
+      attr(tt, "predvars") <- attr(object$terms[[i]], "predvars")
       Terms <- stats::delete.response(tt)
       mf <- model.frame(Terms, newdata, xlev = object$xlevels[[i]])
       proj_X_ij[[i]] <- model.matrix(Terms, mf, contrasts.arg = object$contrasts[[i]])
