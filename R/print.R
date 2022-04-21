@@ -86,7 +86,7 @@ print_smooth_effects <- function(x, m = 1) {
   if (x$tmb_data$has_smooths) {
     bs_se <- round(sr_se$bs[, m], 2L)
     bs <- round(sr_est$bs[, m], 2L)
-    sm <- parse_smoothers(formula = x$formula, data = x$data)
+    sm <- parse_smoothers(formula = x$formula[[m]], data = x$data)
     sm_names <- unlist(lapply(sm$Zs, function(x) attr(x, "s.label")))
     sm_names <- gsub("\\)$", "", gsub("s\\(", "", sm_names))
     sm_names_bs <- paste0("s", sm_names)

@@ -9,7 +9,7 @@ test_that("A model with 2 s() splines works", {
     formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
     mesh = pcod_spde, spatial = "off", spatiotemporal = "off"
   )
-  expect_equal(ncol(m$tmb_data$X_ij), 1L)
+  expect_equal(ncol(m$tmb_data$X_ij[[1]]), 1L)
   expect_equal(length(m$tmb_data$Zs), 2L)
   # head(m$tmb_data$Zs[[1]])
   # head(m$tmb_data$Zs[[2]])

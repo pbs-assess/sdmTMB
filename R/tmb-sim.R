@@ -180,7 +180,7 @@ sdmTMB_simulate <- function(formula,
 
   if (!is.null(B)) {
     n_covariates <- length(B)
-    assert_that(ncol(fit$tmb_data$X_ij) == length(B),
+    assert_that(ncol(fit$tmb_data$X_ij[[1]]) == length(B),
       msg = paste0(
         "Number of specified fixed-effect `B` parameters does ",
         "not match model matrix columns implied by the formula."

@@ -154,7 +154,7 @@ check_offset <- function(formula) {
   .check <- any(grepl("^offset$",
     gsub(" ", "", unlist(strsplit(as.character(formula), "\\+")))))
   if (.check)
-    stop("Contains offset in formula. This is deprecated. Please use the `offset` argument.", call. = FALSE) 
+    stop("Contains offset in formula. This is deprecated. Please use the `offset` argument.", call. = FALSE)
 }
 
 check_and_parse_thresh_params <- function(formula, data) {
@@ -273,4 +273,16 @@ get_pars <- function(object, unlist = TRUE) {
   if (length(ee$random)>0) x <- x[-ee$random]
   p <- ee$parList(x = x)
   p
+}
+
+nice_stop = function(...) {
+  stop(strwrap(paste0(...), prefix = " ", initial = ""), call. = FALSE)
+}
+
+nice_warning = function(...) {
+  warning(strwrap(paste0(...), prefix = " ", initial = ""), call. = FALSE)
+}
+
+nice_message = function(...) {
+  message(strwrap(paste0(...), prefix = " ", initial = ""), call. = FALSE)
 }

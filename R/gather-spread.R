@@ -43,6 +43,9 @@ spread_sims <- function(object, nsim = 200, n_sims = deprecated()) {
     stop("TMB::sdreport() must be run with the joint precision returned.", call. = FALSE)
   }
 
+  if (isTRUE(object$delta)) {
+    nice_stop("This function isn't yet set up for delta models.")
+  }
   if (is_present(n_sims)) {
     deprecate_warn("0.0.21", "spread_sims(n_sims)", "spread_sims(nsim)")
   } else {
@@ -52,20 +55,20 @@ spread_sims <- function(object, nsim = 200, n_sims = deprecated()) {
   samps <- rmvnorm_prec(object$tmb_obj$env$last.par.best, tmb_sd, n_sims)
   pars <- c(tmb_sd$par.fixed, tmb_sd$par.random)
   pn <- names(pars)
-  pn <- c(pn[pn == "b_j"], pn[pn != "b_j"]) # if REML, must move b_j to beginning:
+
+  pn <- c(pn[pn == "b_j"], pn[pn == "b_j2"], pn[!pn %in% c("b_j", "b_j2")]) # if REML, must move b_j to beginning:
   par_fixed <- names(tmb_sd$par.fixed)
   if (object$reml) par_fixed <- c("b_j", par_fixed)
   pars <- pars[pn %in% par_fixed]
   samps <- samps[pn %in% par_fixed, , drop = FALSE]
   pn <- pn[pn %in% par_fixed]
-  .formula <- object$split_formula$fixedFormula
+  .formula <- object$split_formula[[1]]$fixedFormula # TODO DELTA HARDCODED TO 1!
   if (isFALSE(object$mgcv)) {
     fe_names <- colnames(model.matrix(.formula, object$data))
   } else {
     fe_names <- colnames(model.matrix(mgcv::gam(.formula, data = object$data)))
   }
-
-  fe_names <- fe_names[!fe_names == "offset"]
+  fe_names <- tidy(object)$term
   row.names(samps) <- pn
   row.names(samps)[row.names(samps) == "b_j"] <- fe_names
   out <- as.data.frame(t(samps))
