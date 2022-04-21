@@ -692,23 +692,6 @@ sdmTMB <- function(
 
   contains_offset <- check_offset(formula[[1]]) # deprecated check
 
-  # Parse random intercepts:
-  # split_formula <- glmmTMB::splitForm(formula[[1]])
-  # RE_names <- barnames(split_formula$reTrmFormulas)
-  # fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
-  # RE_indexes <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
-  # nobs_RE <- unname(apply(RE_indexes, 2L, max)) + 1L
-  # if (length(nobs_RE) == 0L) nobs_RE <- 0L
-  # formula <- split_formula$fixedFormula
-  # ln_tau_G_index <- unlist(lapply(seq_along(nobs_RE), function(i) rep(i, each = nobs_RE[i]))) - 1L
-  #
-  # formula_no_sm <- remove_s_and_t2(formula)
-  # X_ij <- model.matrix(formula_no_sm, data)
-  # mf <- model.frame(formula_no_sm, data)
-  # mt <- attr(mf, "terms")
-  # # parse everything mgcv + smoothers:
-  # sm <- parse_smoothers(formula = formula, data = data)
-
   split_formula <- list() # passed to out structure, not TMB
   RE_indexes <- list() # ncols passed into TMB
   nobs_RE <- list() # ncols passed into TMB
@@ -717,11 +700,9 @@ sdmTMB <- function(
   mf <- list()
   mt <- list()
   sm <- list()
-  #offset_pos <- list()
 
   for (ii in seq_along(formula)) {
     contains_offset <- check_offset(formula[[ii]])
-    #if (!is.null(contains_offset) & contains_offset) warning("Contains offset in formula. This is deprecated. Please use the `offset` argument.", call. = FALSE)
 
     # anything in a list here needs to be saved for tmb data
     split_formula[[ii]] <- glmmTMB::splitForm(formula[ii])
@@ -739,14 +720,21 @@ sdmTMB <- function(
     mt[[ii]] <- attr(mf[[ii]], "terms")
     # parse everything mgcv + smoothers:
     sm[[ii]] <- parse_smoothers(formula = formula[[ii]][[1]], data = data)
-    #offset_pos[[ii]] <- grep("^offset$", colnames(X_ij[ii]))
   }
+
+  if (delta) {
+    if (any(unlist(lapply(sm, `[[`, "has_smooths")))) {
+      if (formula[[1]][[1]] != formula[[2]][[1]]) {
+        stop("For now, if delta models contain smoothers, both\n",
+          "components must have the same main-effects formula.", call. = FALSE)
+      }
+    }
+  }
+
   # split_formula <- split_formula[[1]] # Delete this and next 7 lines as smooths / random effects added
   RE_indexes <- RE_indexes[[1]]
   nobs_RE <- nobs_RE[[1]]
   ln_tau_G_index <- ln_tau_G_index[[1]]
-  # mf <- mf[[1]]
-  # mt <- mt[[1]]
   sm <- sm[[1]]
 
   y_i <- model.response(mf[[1]], "numeric")
