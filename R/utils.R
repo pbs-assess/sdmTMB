@@ -154,17 +154,17 @@ check_offset <- function(formula) {
   .check <- any(grepl("^offset$",
     gsub(" ", "", unlist(strsplit(as.character(formula), "\\+")))))
   if (.check)
-    stop("Contains offset in formula. This is deprecated. Please use the `offset` argument.", call. = FALSE)
+    nice_stop("Contains offset in formula. This is deprecated. Please use the `offset` argument.")
 }
 
 check_and_parse_thresh_params <- function(formula, data) {
   terms <- stats::terms(formula)
   terms_labels <- attr(terms, "term.labels")
   if (any(grepl("linear_thresh", terms_labels)) && any(grepl("logistic_thresh", terms_labels))) {
-    stop("Please include only a linear (`breakpt`) *or* a logistic threshold.", call. = FALSE)
+    nice_stop("Please include only a linear (`breakpt`) *or* a logistic threshold.")
   }
   if (sum(grepl("linear_thresh", terms_labels)) > 1 || sum(grepl("logistic_thresh", terms_labels)) > 1) {
-    stop("Please include only a *single* threshold variable.", call. = FALSE)
+    nice_stop("Please include only a *single* threshold variable.")
   }
   threshold_parameter <- NULL
   if (any(grepl("breakpt", terms_labels))) {
@@ -181,10 +181,10 @@ check_and_parse_thresh_params <- function(formula, data) {
   }
   if (!is.null(threshold_parameter)) {
     if (length(threshold_parameter) > 1) {
-      stop("`threshold_parameter` must be a single variable name.", call. = FALSE)
+      nice_stop("`threshold_parameter` must be a single variable name.")
     }
     if (!threshold_parameter %in% names(data)) {
-      stop("`threshold_parameter` is not a column in the `data` data frame.", call. = FALSE)
+      nice_stop("`threshold_parameter` is not a column in the `data` data frame.")
     }
   }
 
@@ -284,5 +284,5 @@ nice_warning = function(...) {
 }
 
 nice_message = function(...) {
-  message(strwrap(paste0(...), prefix = " ", initial = ""), call. = FALSE)
+  message(strwrap(paste0(...), prefix = " ", initial = ""))
 }

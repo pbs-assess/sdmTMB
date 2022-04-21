@@ -72,7 +72,7 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
                         ggplot = FALSE, rug = TRUE, return_data = FALSE) {
   se <- TRUE
   if (isTRUE(object$delta))
-    stop("This function doesn't work with delta models yet", call. = FALSE)
+    nice_stop("This function doesn't work with delta models yet")
 
   assert_that(class(object) == "sdmTMB")
   assert_that(is.logical(ggplot))
@@ -89,7 +89,7 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
 
   if (ggplot) {
     if (!requireNamespace("ggplot2", quietly = TRUE)) {
-      stop("ggplot2 not installed", call. = FALSE)
+      nice_stop("ggplot2 not installed")
     }
   }
 
@@ -103,7 +103,7 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
 
   all_names <- c(sm_names, fe_names)
   if (select > length(sm_names)) {
-    stop("`select` is greater than the number of smooths", call. = FALSE)
+    nice_stop("`select` is greater than the number of smooths")
   }
   sel_name <- sm_names[select]
   non_select_names <- all_names[!all_names %in% sel_name]

@@ -578,9 +578,9 @@ sdmTMB <- function(
     lifecycle::deprecate_stop("0.0.20", "sdmTMB(ar1_fields)", "sdmTMB(spatiotemporal)")
   }
   if ("penalties" %in% names(dots)) {
-    stop("`penalties` are now specified via the `priors` argument.",
-      "E.g., `priors = sdmTMBpriors(b = normal(c(0, 0), c(1, 1)))`",
-      "for 2 fixed effects.", call. = FALSE)
+    nice_stop("`penalties` are now specified via the `priors` argument. ",
+      "E.g., `priors = sdmTMBpriors(b = normal(c(0, 0), c(1, 1)))` ",
+      "for 2 fixed effects.")
   }
   dot_checks <- c("lower", "upper", "profile", "parallel",
     "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",

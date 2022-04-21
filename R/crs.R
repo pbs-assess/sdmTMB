@@ -39,15 +39,15 @@ add_utm_columns <- function(dat,
                             utm_crs = get_crs(dat, ll_names),
                             units = c("km", "m")) {
   if (!requireNamespace("sf", quietly = TRUE)) {
-    stop("The sf package must be installed to use this function.", call. = FALSE)
+    nice_stop("The sf package must be installed to use this function.")
   }
 
   assert_that(length(ll_names) == 2L)
   assert_that(all(ll_names %in% names(dat)))
   units <- match.arg(units)
   if (any(utm_names %in% names(dat))) {
-    stop("`utm_names` were found in `names(dat)`. ",
-      "Remove them or choose different `utm_names`.", call. = FALSE
+    nice_stop("`utm_names` were found in `names(dat)`. ",
+      "Remove them or choose different `utm_names`."
     )
   }
   if (grepl("lat", ll_names[1]) || grepl("lon", ll_names[2])) {

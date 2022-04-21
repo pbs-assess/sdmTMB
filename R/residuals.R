@@ -117,8 +117,8 @@ qres_beta <- function(object, y, mu) {
 #' Journal of Forecasting, 4, 283–291.
 residuals.sdmTMB <- function(object, type = c("mle", "sim"), ...) {
   if (isTRUE(object$family$delta)) {
-    stop("`residuals.sdmTMB()` is not setup to work with delta models yet. ",
-      "Try `dharma_residuals()`.", call. = FALSE)
+    nice_stop("`residuals.sdmTMB()` is not setup to work with delta models yet. ",
+      "Try `dharma_residuals()`.")
   }
   # message("Consider using `dharma_residuals()` instead.")
   type <- match.arg(type)
@@ -133,14 +133,14 @@ residuals.sdmTMB <- function(object, type = c("mle", "sim"), ...) {
     poisson  = qres_pois,
     student  = qres_student,
     lognormal  = qres_lognormal,
-    stop(paste(object$family$family, "not yet supported."), call. = FALSE)
+    nice_stop(paste(object$family$family, "not yet supported."))
   )
   if (type == "mle") {
     mu <- object$family$linkinv(predict(object, newdata = NULL)$est)
   } else if (type == "sim") {
     mu <- object$family$linkinv(predict(object, nsim = 1L)[, 1L, drop = TRUE])
   } else {
-    stop("`type` not implemented", call. = FALSE)
+    nice_stop("`type` not implemented")
   }
   y <- object$response
   y <- y[,1,drop=TRUE]

@@ -61,7 +61,7 @@
 #' @export
 extract_mcmc <- function(object) {
   if (!requireNamespace("rstan", quietly = TRUE)) {
-    stop("rstan must be installed to use `extract_mcmc()`.", call. = FALSE)
+    nice_stop("rstan must be installed to use `extract_mcmc()`.")
   }
   post <- rstan::extract(object)
   p_names <- names(post)[-length(names(post))] # exclude "lp__"

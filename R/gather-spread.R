@@ -40,7 +40,7 @@
 
 spread_sims <- function(object, nsim = 200, n_sims = deprecated()) {
   if (!"jointPrecision" %in% names(object$sd_report)) {
-    stop("TMB::sdreport() must be run with the joint precision returned.", call. = FALSE)
+    nice_stop("TMB::sdreport() must be run with the joint precision returned.")
   }
 
   if (isTRUE(object$delta)) {

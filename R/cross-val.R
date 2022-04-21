@@ -57,9 +57,8 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
     Gamma = ll_gamma,
     nbinom1 = ll_nbinom1,
     nbinom2 = ll_nbinom2,
-    stop(object$family$family, " not yet implemented. ",
-      "Please file an issue on GitHub.",
-      call. = FALSE
+    nice_stop(object$family$family, " not yet implemented. ",
+      "Please file an issue on GitHub."
     )
   )
   family_func(object, withheld_y, withheld_mu)
@@ -179,22 +178,22 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
     }
     if (length(fold_ids) == 1L && is.character(fold_ids)) {
       if (!fold_ids %in% names(data)) {
-        stop("Name of fold identifier not found in data.", call. = FALSE)
+        nice_stop("Name of fold identifier not found in data.")
       }
       data$cv_fold <- data[[fold_ids]]
     }
     if (length(fold_ids) > 1 && length(fold_ids) < nrow(data)) {
-      stop("Dimension of `fold_ids` doesn't match data and is not a named variable.")
+      nice_stop("Dimension of `fold_ids` doesn't match data and is not a named variable.")
     }
     if (length(which(is.na(data$cv_fold))) > 0) {
-      stop("NAs found in `fold_ids`; please check `fold_ids` are specified correctly.")
+      nice_stop("NAs found in `fold_ids`; please check `fold_ids` are specified correctly.")
     }
     k_folds <- length(unique(data$cv_fold))
   }
 
   dot_args <- as.list(substitute(list(...)))[-1L]
   if ("weights" %in% names(dot_args)) {
-    stop("`weights` cannot be specified within sdmTMB_cv().", call. = FALSE)
+    nice_stop("`weights` cannot be specified within sdmTMB_cv().")
   }
 
   if (k_folds > 1) {

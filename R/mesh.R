@@ -61,42 +61,40 @@ make_mesh <- function(data, xy_cols,
                       mesh = NULL) {
 
   if (!requireNamespace("INLA", quietly = TRUE)) {
-    stop("INLA must be installed to use this function.", call. = FALSE)
+    nice_stop("INLA must be installed to use this function.")
   }
 
   if (missing(xy_cols) || is.numeric(xy_cols) || is.numeric(data)) {
-    stop("It looks like you are using an old format of make_mesh(). ",
+    nice_stop("It looks like you are using an old format of make_mesh(). ",
       "The function now uses `data` and `xy_cols` arguments ",
       "to enable carrying through the x and y column names ",
-      "to the predict function. Please update your code.",
-      call. = FALSE
+      "to the predict function. Please update your code."
     )
   }
 
   if (max(data[[xy_cols[1]]]) > 1e4 || max(data[[xy_cols[2]]] > 1e4)) {
-    warning("The x or y column values are fairly large.\n",
-      "This can cause estimation problems since the spatial range\n",
-      "is dependent on the scale of the coordinates.\n",
-      "Consider scaling the x and y coordinates.\n",
-      "For example, try working in UTM km instead of UTM m by divided by 1000.",
-      call. = FALSE)
+    nice_warning("The x or y column values are fairly large. ",
+      "This can cause estimation problems since the spatial range ",
+      "is dependent on the scale of the coordinates. ",
+      "Consider scaling the x and y coordinates. ",
+      "For example, try working in UTM km instead of UTM m by divided by 1000.")
   }
   type <- match.arg(type)
   if (!missing(n_knots) && type == "cutoff") {
-    stop("`n_knots` specified but `type = 'cutoff'. ",
+    nice_stop("`n_knots` specified but `type = 'cutoff'. ",
       "The default mesh type now uses a `cutoff` ",
       "intead of the number of knots. You can obtain the previous default ",
-      "mesh type with `type = 'kmeans'`.", call. = FALSE)
+      "mesh type with `type = 'kmeans'`.")
   }
 
   if (!missing(cutoff) && missing(n_knots)) {
     type <- "cutoff"
   }
   if (missing(cutoff) && type == "cutoff" && is.null(mesh)) {
-    stop("You need to specify the `cutoff` argument.", call. = FALSE)
+    nice_stop("You need to specify the `cutoff` argument.")
   }
   if (missing(n_knots) && type != "cutoff" && is.null(mesh)) {
-    stop("You need to specify the `n_knots` argument.", call. = FALSE)
+    nice_stop("You need to specify the `n_knots` argument.")
   }
   loc_xy <- as.matrix(data[, xy_cols, drop = FALSE])
   loc_centers <- NA
@@ -104,9 +102,8 @@ make_mesh <- function(data, xy_cols,
   if (is.null(mesh)) {
     if (type == "kmeans") {
       if (n_knots >= nrow(loc_xy)) {
-        warning(
-          "Reducing `n_knots` to be one less than the number of data points.",
-          call. = FALSE
+        nice_warning(
+          "Reducing `n_knots` to be one less than the number of data points."
         )
         n_knots <- nrow(loc_xy) - 1
       }
@@ -362,10 +359,10 @@ add_barrier_mesh <- function(spde_obj, barrier_sf, range_fraction = 0.2,
                              proj_scaling = 1, plot = FALSE) {
 
   if (!requireNamespace("INLA", quietly = TRUE)) {
-    stop("INLA must be installed to use this function.", call. = FALSE)
+    nice_stop("INLA must be installed to use this function.")
   }
   if (!requireNamespace("sf", quietly = TRUE)) {
-    stop("The sf package must be installed to use this function.", call. = FALSE)
+    nice_stop("The sf package must be installed to use this function.")
   }
 
   assert_that(

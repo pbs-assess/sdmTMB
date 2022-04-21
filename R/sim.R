@@ -103,7 +103,7 @@ sdmTMB_sim <- function(mesh,
                        size = NULL) {
 
   if (!requireNamespace("INLA", quietly = TRUE)) {
-    stop("INLA must be installed to use this function.", call. = FALSE)
+    nice_stop("INLA must be installed to use this function.")
   }
   assert_that(is.numeric(x), is.numeric(y))
   assert_that(is.null(dim(x)), is.null(dim(y)))
@@ -121,7 +121,7 @@ sdmTMB_sim <- function(mesh,
   if (!is.null(X)) assert_that(time_steps * length(x) == nrow(X))
 
   if (!missing(thetaf)) {
-    stop("Please use 'tweedie_p' instead of 'thetaf' in `sdmTMB_sim()`.", call. = FALSE)
+    nice_stop("Please use 'tweedie_p' instead of 'thetaf' in `sdmTMB_sim()`.")
   }
 
   if (is(mesh, "sdmTMBmesh")) {
@@ -138,7 +138,7 @@ sdmTMB_sim <- function(mesh,
 
   # test whether sigma_E_zero
   if (length(sigma_E) %in% c(1L, time_steps) == FALSE) {
-    stop("Error: sigma_E must be a scalar or of length time_steps", call. = FALSE)
+    nice_stop("Error: sigma_E must be a scalar or of length time_steps")
   }
   if (length(sigma_E) == 1L) sigma_E <- rep(sigma_E, time_steps)
   sigma_E_zero <- length(which(sigma_E == 0)) == time_steps
@@ -215,7 +215,7 @@ sdmTMB_sim <- function(mesh,
     poisson   = stats::rpois(N, lambda = d$mu),
     student   = rstudent(N, d$mu, sigma = phi, nu = df),
     lognormal = stats::rlnorm(N, meanlog = log(d$mu) - (phi^2) / 2, sdlog = phi),
-    stop("Family not found.", call. = FALSE)
+    nice_stop("Family not found.")
   )
 
   if (n_covariates > 0) {
@@ -249,7 +249,7 @@ rspde2 <- function(coords, mesh, sigma = 1, range, variance = sigma^2, alpha = 2
                    seed = 0L, return.attributes = FALSE) {
   theta <- c(-0.5 * log(4 * pi * variance * kappa^2), log(kappa))
   if (missing(mesh)) {
-    stop("`mesh` must be specified.", call. = FALSE)
+    nice_stop("`mesh` must be specified.")
   }
   else {
     attributes <- list(mesh = mesh)
@@ -267,7 +267,7 @@ rspde2 <- function(coords, mesh, sigma = 1, range, variance = sigma^2, alpha = 2
       )
     )
   } else {
-    stop("`n` must be 1.", call. = FALSE)
+    nice_stop("`n` must be 1.")
   }
   result <- drop(result)
   result <- as.matrix(result)

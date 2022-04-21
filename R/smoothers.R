@@ -19,14 +19,14 @@ get_smooth_terms <- function(terms) {
   x1 <- grep("s\\(", terms)
   x2 <- grep("t2\\(", terms)
   if (length(x2) > 0L)
-    stop("t2() smoothers are not yet supported due to issues with prediction on newdata.", call. = FALSE)
+    nice_stop("t2() smoothers are not yet supported due to issues with prediction on newdata.")
   x1
 }
 
 parse_smoothers <- function(formula, data, newdata = NULL) {
   terms <- all_terms(formula)
   if (!is.null(newdata)) {
-    if (any(grepl("t2\\(", terms))) stop("Prediction on newdata with t2() still has issues.", call. = FALSE)
+    if (any(grepl("t2\\(", terms))) nice_stop("Prediction on newdata with t2() still has issues.")
   }
   smooth_i <- get_smooth_terms(terms)
   basis <- list()
