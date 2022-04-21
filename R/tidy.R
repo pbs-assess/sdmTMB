@@ -35,22 +35,9 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
       msg = "`conf.level` must be length 1 and between 0 and 1")
   }
 
-  .formula <- x$split_formula$fixedFormula
-  .formula <- remove_s_and_t2(.formula)
-  if (!"mgcv" %in% names(x)) x[["mgcv"]] <- FALSE
-  fe_names <- colnames(model.matrix(.formula, x$data))
 
-  se_rep <- as.list(x$sd_report, "Std. Error", report = TRUE)
-  est_rep <- as.list(x$sd_report, "Estimate", report = TRUE)
-  se <- as.list(x$sd_report, "Std. Error", report = FALSE)
-  est <- as.list(x$sd_report, "Estimate", report = FALSE)
-  b_j <- est$b_j[!fe_names == "offset",model,drop=TRUE]
-  b_j_se <- se$b_j[!fe_names == "offset",model,drop=TRUE]
-  fe_names <- fe_names[!fe_names == "offset"]
-  out <- data.frame(term = fe_names, estimate = b_j, std.error = b_j_se, stringsAsFactors = FALSE)
   crit <- stats::qnorm(1 - (1 - conf.level) / 2)
   if (exponentiate) trans <- exp else trans <- I
-  if (exponentiate) out$estimate <- trans(out$estimate)
 
   delta <- isTRUE(x$family$delta)
   assert_that(is.numeric(model))
@@ -58,26 +45,10 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
   if (delta) assert_that(model %in% c(1, 2), msg = "`model` must be 1 or 2.")
   if (!delta) assert_that(model == 1, msg = "Only one model: `model` must be 1.")
 
-  if (x$tmb_data$threshold_func > 0) {
-    if (delta) stop("not implemented for threshold delta models yet.")
-    if (x$threshold_function == 1L) {
-      par_name <- paste0(x$threshold_parameter, c("-slope", "-breakpt"))
-    } else {
-      par_name <- paste0(x$threshold_parameter, c("-s50", "-s95", "-smax"))
-    }
-    out <- rbind(
-      out,
-      data.frame(
-        term = par_name, estimate = est$b_threshold,
-        std.error = se$b_threshold, stringsAsFactors = FALSE
-      )
-    )
-  }
-
-  if (conf.int) {
-    out$conf.low <- as.numeric(trans(out$estimate - crit * out$std.error))
-    out$conf.high <- as.numeric(trans(out$estimate + crit * out$std.error))
-  }
+  se_rep <- as.list(x$sd_report, "Std. Error", report = TRUE)
+  est_rep <- as.list(x$sd_report, "Estimate", report = TRUE)
+  se <- as.list(x$sd_report, "Std. Error", report = FALSE)
+  est <- as.list(x$sd_report, "Estimate", report = FALSE)
 
   se <- c(se, se_rep)
   est <- c(est, est_rep)
@@ -93,7 +64,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
   se$ln_H_input <- NULL
 
   subset_pars <- function(p, model) {
-    p$b_j <- p$b_j[,model]
+    p$b_j <- if (model == 1) p$b_j else p$b_j2
     p$ln_tau_O <- p$ln_tau_O[model]
     p$ln_tau_Z <- p$ln_tau_Z[model]
     p$ln_tau_E <- p$ln_tau_E[model]
@@ -135,6 +106,39 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
     est$sigma_E <- est$sigma_E[1]
     se$log_sigma_E <- se$log_sigma_E[1]
     est$log_sigma_E <- est$log_sigma_E[1]
+  }
+
+  # grab fixed effects:
+  .formula <- x$split_formula[[model]]$fixedFormula[[1]]
+  .formula <- remove_s_and_t2(.formula)
+  if (!"mgcv" %in% names(x)) x[["mgcv"]] <- FALSE
+  fe_names <- colnames(model.matrix(.formula, x$data))
+
+  b_j <- est$b_j[!fe_names == "offset", drop = TRUE]
+  b_j_se <- se$b_j[!fe_names == "offset", drop = TRUE]
+  fe_names <- fe_names[!fe_names == "offset"]
+  out <- data.frame(term = fe_names, estimate = b_j, std.error = b_j_se, stringsAsFactors = FALSE)
+  if (exponentiate) out$estimate <- trans(out$estimate)
+
+  if (x$tmb_data$threshold_func > 0) {
+    if (delta) stop("not implemented for threshold delta models yet.")
+    if (x$threshold_function == 1L) {
+      par_name <- paste0(x$threshold_parameter, c("-slope", "-breakpt"))
+    } else {
+      par_name <- paste0(x$threshold_parameter, c("-s50", "-s95", "-smax"))
+    }
+    out <- rbind(
+      out,
+      data.frame(
+        term = par_name, estimate = est$b_threshold,
+        std.error = se$b_threshold, stringsAsFactors = FALSE
+      )
+    )
+  }
+
+  if (conf.int) {
+    out$conf.low <- as.numeric(trans(out$estimate - crit * out$std.error))
+    out$conf.high <- as.numeric(trans(out$estimate + crit * out$std.error))
   }
 
   out_re <- list()

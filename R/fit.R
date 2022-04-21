@@ -654,9 +654,12 @@ sdmTMB <- function(
   }
 
   # thresholds not yet enabled for delta model, where formula is a list
-  if(class(formula)=="formula") {
+  if (class(formula) == "formula") {
     thresh <- list(check_and_parse_thresh_params(formula, data))
-    formula <- list(thresh[[1]]$formula)
+    if (delta)
+      formula <- list(thresh[[1]]$formula, thresh[[1]]$formula)
+    else
+      formula <- list(thresh[[1]]$formula)
   } else {
     thresh <- list(check_and_parse_thresh_params(formula[[1]], data),
                    check_and_parse_thresh_params(formula[[2]], data))
@@ -722,7 +725,7 @@ sdmTMB <- function(
 
     # anything in a list here needs to be saved for tmb data
     split_formula[[ii]] <- glmmTMB::splitForm(formula[ii])
-    RE_names <- barnames(split_formula$reTrmFormulas)
+    RE_names <- barnames(split_formula[[i]]$reTrmFormulas)
     fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
     RE_indexes[[ii]] <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
     nobs_RE[[ii]] <- unname(apply(RE_indexes[[ii]], 2L, max)) + 1L
@@ -738,7 +741,7 @@ sdmTMB <- function(
     sm[[ii]] <- parse_smoothers(formula = formula[[ii]][[1]], data = data)
     #offset_pos[[ii]] <- grep("^offset$", colnames(X_ij[ii]))
   }
-  split_formula <- split_formula[[1]] # Delete this and next 7 lines as smooths / random effects added
+  # split_formula <- split_formula[[1]] # Delete this and next 7 lines as smooths / random effects added
   RE_indexes <- RE_indexes[[1]]
   nobs_RE <- nobs_RE[[1]]
   ln_tau_G_index <- ln_tau_G_index[[1]]
