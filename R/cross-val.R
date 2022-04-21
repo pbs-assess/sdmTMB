@@ -253,7 +253,7 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
     predicted <- predicted_obj$data
     # cv_data <- data[weights == 0, , drop = FALSE]
     cv_data$cv_predicted <- object$family$linkinv(predicted$est)
-    response <- get_response(object$formula)
+    response <- get_response(object$formula[[1]])
     withheld_y <- predicted[[response]]
     withheld_mu <- cv_data$cv_predicted
 
