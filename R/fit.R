@@ -1130,6 +1130,8 @@ sdmTMB <- function(
     tmb_map$ln_tau_E <- as.factor(tmb_map$ln_tau_E)
   }
 
+  if (tmb_data$threshold_func > 0) tmb_map$b_threshold <- NULL
+
   if (control$profile && delta)
     nice_stop("Profile not yet working with delta models.")
 
@@ -1147,8 +1149,8 @@ sdmTMB <- function(
     formula    = original_formula,
     split_formula = split_formula,
     time_varying = time_varying,
-    threshold_parameter = thresh$threshold_parameter,
-    threshold_function = thresh$threshold_func,
+    threshold_parameter = thresh[[1]]$threshold_parameter,
+    threshold_function = thresh[[1]]$threshold_func,
     epsilon_predictor = epsilon_predictor,
     time       = time,
     family     = family,
