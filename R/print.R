@@ -119,7 +119,7 @@ print_smooth_effects <- function(x, m = 1) {
 print_iid_re <- function(x, m = 1) {
   .tidy <- tidy(x, "ran_pars", model = m)
   if ("sigma_G" %in% .tidy$term) {
-    re_int_names <- barnames(x$split_formula$reTrmFormulas)
+    re_int_names <- barnames(x$split_formula[[1]]$reTrmFormulas) # TODO DELTA HARDCODED TO 1
     re_int_mat <- matrix(NA_real_, nrow = length(re_int_names), ncol = 1L)
     re_int_mat[, 1L] <- round(.tidy$estimate[.tidy$term == "sigma_G"], 2L)
     rownames(re_int_mat) <- re_int_names
