@@ -28,6 +28,8 @@ print_model_info <- function(x) {
 
   if (deparse(x$call$time) != "NULL") {
     time <- paste0("Time column: ", deparse(x$call$time), "\n")
+    time <- gsub('\\"', "", time)
+    time <- gsub("\\'", "", time)
   } else {
     time <- NULL
   }
@@ -56,6 +58,7 @@ print_model_info <- function(x) {
     delta,
     spatial_only,
     title,
+    time,
     mesh,
     formula,
     data,
@@ -201,6 +204,7 @@ print_header <- function(x) {
   cat(info$title)
   cat(info$formula)
   cat(info$mesh)
+  cat(info$time)
   cat(info$data)
   cat(info$overall_family)
 }
