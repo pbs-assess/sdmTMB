@@ -1,6 +1,7 @@
 #' Plot anisotropy
 #'
 #' @param object An object from [sdmTMB()].
+#' @param model Which model if a delta model.
 #'
 #' @export
 #' @rdname plot_anisotropy
@@ -21,10 +22,11 @@
 #'   plot_anisotropy(m)
 #' }
 #' }
-plot_anisotropy <- function(object) {
+plot_anisotropy <- function(object, model = 1) {
   stopifnot(identical(class(object), "sdmTMB"))
-  report <- object$tmb_obj$report()
-  eig <- eigen(report$H)
+  report <- object$tmb_obj$report(object$tmb_obj$env$last.par.best)
+  if (model == 1) eig <- eigen(report$H)
+  if (model == 2) eig <- eigen(report$H2)
   dat <- data.frame(
     x0 = c(0, 0),
     y0 = c(0, 0),
@@ -33,7 +35,8 @@ plot_anisotropy <- function(object) {
   )
   plot(0,
     xlim = range(c(dat$x0, dat$x1)),
-    ylim = range(c(dat$y0, dat$y1)), type = "n", asp = 1, xlab = "", ylab = ""
+    ylim = range(c(dat$y0, dat$y1)),
+    type = "n", asp = 1, xlab = "", ylab = ""
   )
   graphics::arrows(dat$x0, dat$y0, dat$x1, dat$y1)
   invisible(list(eig = eig, dat = dat, H = report$H))
