@@ -958,7 +958,7 @@ sdmTMB <- function(
   if (thresh[[1]]$threshold_func == 2L) b_thresh <- c(0, b_thresh) # logistic #TODO: change hard coding on index of thresh[[1]]
 
   tmb_params <- list(
-    ln_H_input = c(0, 0),
+    ln_H_input = matrix(0, nrow = 2L, ncol = n_m),
     b_j        = rep(0, ncol(X_ij[[1]])), # TODO: verify ok
     b_j2       = if (delta) rep(0, ncol(X_ij[[2]])) else numeric(0), # TODO: verify ok
     bs         = if (sm$has_smooths) matrix(0, nrow = ncol(sm$Xs), ncol = n_m) else array(0),

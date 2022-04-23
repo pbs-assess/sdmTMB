@@ -161,7 +161,7 @@ Type objective_function<Type>::operator()()
   // SPDE objects from R-INLA
   DATA_STRUCT(spde_aniso, spde_aniso_t);
   DATA_STRUCT(spde, spde_t);
-  PARAMETER_VECTOR(ln_H_input);
+  PARAMETER_ARRAY(ln_H_input);
   DATA_INTEGER(anisotropy);
 
   // Barrier
@@ -341,11 +341,16 @@ Type objective_function<Type>::operator()()
     if (!share_range(1) && n_m > 1) Q_st2 = Q_spde(spde_barrier, exp(ln_kappa(1,1)), barrier_scaling);
   } else {
     if (anisotropy) {
-      if (n_m > 1) error("anisotropy not implemented for delta models yet"); // DELTA TODO
-      matrix<Type> H = sdmTMB::MakeH(ln_H_input);
+      matrix<Type> H = sdmTMB::MakeH(vector<Type>(ln_H_input.col(0)));
       Q_s = R_inla::Q_spde(spde_aniso, exp(ln_kappa(0,0)), H);
       if (!share_range(0)) Q_st = R_inla::Q_spde(spde_aniso, exp(ln_kappa(1,0)), H);
       REPORT(H);
+      if (n_m > 1) {
+        matrix<Type> H2 = sdmTMB::MakeH(vector<Type>(ln_H_input.col(1)));
+        Q_s2 = R_inla::Q_spde(spde_aniso, exp(ln_kappa(0,1)), H2);
+        if (!share_range(1)) Q_st2 = R_inla::Q_spde(spde_aniso, exp(ln_kappa(1,1)), H2);
+        REPORT(H2);
+      }
     }
     if (!anisotropy) {
       Q_s = R_inla::Q_spde(spde, exp(ln_kappa(0,0)));
