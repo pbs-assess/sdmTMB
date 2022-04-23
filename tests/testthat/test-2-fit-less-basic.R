@@ -375,6 +375,10 @@ test_that("More esoteric prediction options work", {
     data = pcod_2011, mesh = pcod_mesh_2011,
     family = delta_gamma()
   )
+  expect_error(p <- predict(fit, nsim = 5, delta_prediction = "aaa"),
+    regexp = "arg"
+  )
+
   p <- predict(fit, nsim = 5, delta_prediction = "combined")
   head(p)
   p <- predict(fit, nsim = 5, delta_prediction = "1")
@@ -388,8 +392,10 @@ test_that("More esoteric prediction options work", {
   head(p)
   expect_true(all(p > 0))
 
-  p <- predict(fit, nsim = 5, delta_prediction = "2",
-    return_tmb_report = TRUE)
+  p <- predict(fit,
+    nsim = 5, delta_prediction = "2",
+    return_tmb_report = TRUE
+  )
   expect_length(p, 5L)
 
   fit <- sdmTMB(
