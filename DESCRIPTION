@@ -37,11 +37,13 @@ Imports:
     generics,
     lifecycle,
     glmmTMB,
+    glue,
     graphics,
     Matrix,
     methods,
     mgcv,
     mvtnorm,
+    rlang,
     stats,
     TMB (>= 1.8.0)
 Suggests:

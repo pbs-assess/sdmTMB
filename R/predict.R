@@ -230,12 +230,13 @@ predict.sdmTMB <- function(object, newdata = object$data,
   if ("version" %in% names(object)) {
     check_sdmTMB_version(object$version)
   } else {
-    nice_stop("This looks like a very old version of a model fit. Re-fit the model before predicting with it.")
+    abort(c("This looks like a very old version of a model fit.",
+        "Re-fit the model before predicting with it."))
   }
   if (!"xy_cols" %in% names(object$spde)) {
-    warning("It looks like this model was fit with make_spde(). ",
+    warn(c("It looks like this model was fit with make_spde().",
     "Using `xy_cols`, but future versions of sdmTMB may not be compatible with this.",
-    "Please replace make_spde() with make_mesh().", call. = FALSE)
+    "Please replace make_spde() with make_mesh()."))
   } else {
     xy_cols <- object$spde$xy_cols
   }
@@ -274,11 +275,9 @@ predict.sdmTMB <- function(object, newdata = object$data,
 
   if (!is.null(newdata)) {
     if (any(!xy_cols %in% names(newdata)) && isFALSE(pop_pred))
-      nice_stop("`xy_cols` (the column names for the x and y coordinates) ",
-        "are not in `newdata`. Did you miss specifying the argument ",
-        "`xy_cols` to match your data? The newer `make_mesh()` ",
-        "(vs. `make_spde()`) takes care of this for you."
-      )
+      abort(c("`xy_cols` (the column names for the x and y coordinates) are not in `newdata`.",
+          "Did you miss specifying the argument `xy_cols` to match your data?",
+          "The newer `make_mesh()` (vs. `make_spde()`) takes care of this for you."))
 
     if (object$time == "_sdmTMB_time") newdata[[object$time]] <- 0L
 
@@ -287,18 +286,16 @@ predict.sdmTMB <- function(object, newdata = object$data,
     new_data_time <- as.numeric(sort(unique(newdata[[object$time]])))
 
     if (!all(new_data_time %in% original_time))
-      nice_stop("Some new time elements were found in `newdata`. ",
-        "For now, make sure only time elements from the original dataset ",
-        "are present. If you would like to predict on new time elements, see ",
-        "the `extra_time` argument in `?predict.sdmTMB`."
+      abort(c("Some new time elements were found in `newdata`. ",
+        "For now, make sure only time elements from the original dataset are present.",
+        "If you would like to predict on new time elements,",
+        "see the `extra_time` argument in `?predict.sdmTMB`.")
       )
 
     if (!identical(new_data_time, original_time) & isFALSE(pop_pred)) {
-      nice_stop("The time elements in `newdata` are not identical to those ",
-        "in the original dataset. For now, please predict on all time ",
-        "elements and filter out those you don't need after. Please ",
-        "let us know on the GitHub issues if this is important to you."
-      )
+      abort(c("The time elements in `newdata` are not identical to those in the original dataset.",
+          "For now, please predict on all time elements and filter out those you don't need after.",
+          "Please let us know on the GitHub issues tracker if this is important to you."))
     }
 
     # If making population predictions (with standard errors), we don't need
@@ -314,8 +311,8 @@ predict.sdmTMB <- function(object, newdata = object$data,
     }
 
     if (sum(is.na(new_data_time)) > 0)
-      nice_stop("There is at least one NA value in the time column. ",
-        "Please remove it.")
+      abort(c("There is at least one NA value in the time column.",
+        "Please remove it."))
 
     # newdata$sdm_orig_id <- seq(1, nrow(newdata))
     # fake_newdata <- unique(newdata[,xy_cols])
@@ -375,7 +372,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
 
 
     if (length(area) != nrow(proj_X_ij[[1]]) && length(area) != 1L) {
-      nice_stop("`area` should be of the same length as `nrow(newdata)` or of length 1.")
+      abort("`area` should be of the same length as `nrow(newdata)` or of length 1.")
     }
 
     tmb_data$proj_X_threshold <- thresh[[1]]$X_threshold # TODO DELTA HARDCODED TO 1
@@ -454,7 +451,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
     }
     if (!is.null(tmbstan_model)) {
       if (!"stanfit" %in% class(tmbstan_model))
-        nice_stop("tmbstan_model must be output from tmbstan::tmbstan().")
+        abort("tmbstan_model must be output from tmbstan::tmbstan().")
       t_draws <- extract_mcmc(tmbstan_model)
       r <- apply(t_draws, 2L, new_tmb_obj$report)
     }
@@ -560,7 +557,8 @@ predict.sdmTMB <- function(object, newdata = object$data,
         "to the `newdata` argument.")
     }
     if (isTRUE(object$family$delta)) {
-      nice_stop("Delta model prediction not implemented for `newdata = NULL` yet. Please provide your data to `newdata`.")
+      abort(c("Delta model prediction not implemented for `newdata = NULL` yet.",
+          "Please provide your data to `newdata`."))
     }
     nd <- object$data
     lp <- object$tmb_obj$env$last.par.best
@@ -573,7 +571,8 @@ predict.sdmTMB <- function(object, newdata = object$data,
     nd$est_non_rf <- r$eta_fixed_i[,1] + r$eta_rw_i[,1] + r$eta_iid_re_i[,1] # DELTA FIXME
     nd$est_rf <- r$omega_s_A[,1] + r$epsilon_st_A_vec[,1] # DELTA FIXME
     if (!is.null(object$spatial_varying_formula))
-      nice_stop("Prediction with `newdata = NULL` is not supported with spatially varying coefficients yet. Please provide your data to `newdata`.")
+      abort(c("Prediction with `newdata = NULL` is not supported with spatially varying coefficients yet.",
+          "Please provide your data to `newdata`."))
     # + r$zeta_s_A
     nd$omega_s <- r$omega_s_A[,1]# DELTA FIXME
     # for (z in seq_len(dim(r$zeta_s_A)[2])) { # SVC:

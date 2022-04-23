@@ -109,6 +109,8 @@ NULL
 #' @param spde **Deprecated.** Replaced by `mesh`.
 #' @param ... Not currently used.
 #' @importFrom methods as is
+#' @importFrom rlang abort warn inform
+#' @importFrom glue glue
 #' @importFrom mgcv s t2
 #' @importFrom stats gaussian model.frame model.matrix as.formula
 #'   model.response terms model.offset
@@ -477,7 +479,15 @@ sdmTMB <- function(
   delta <- isTRUE(family$delta)
   n_m <- if (delta) 2L else 1L
 
+  if (!missing(spatial)) {
+    if (length(spatial) > 1 && !is.list(spatial)) {
+      abort("`spatial` should be a single value or a list")
+    }
+  }
   if (!missing(spatiotemporal)) {
+    if (length(spatiotemporal) > 1 && !is.list(spatiotemporal)) {
+      abort("`spatiotemporal` should be a single value or a list")
+    }
     if (delta && !is.list(spatiotemporal)) {
       spatiotemporal <- rep(spatiotemporal[[1]], 2L)
     }
@@ -575,12 +585,11 @@ sdmTMB <- function(
   dots <- list(...)
 
   if ("ar1_fields" %in% names(dots)) {
-    lifecycle::deprecate_stop("0.0.20", "sdmTMB(ar1_fields)", "sdmTMB(spatiotemporal)")
+    deprecate_stop("0.0.20", "sdmTMB(ar1_fields)", "sdmTMB(spatiotemporal)")
   }
   if ("penalties" %in% names(dots)) {
-    nice_stop("`penalties` are now specified via the `priors` argument. ",
-      "E.g., `priors = sdmTMBpriors(b = normal(c(0, 0), c(1, 1)))` ",
-      "for 2 fixed effects.")
+    abort("`penalties` are now specified via the `priors` argument. ",
+      "E.g., `priors = sdmTMBpriors(b = normal(c(0, 0), c(1, 1)))` for 2 fixed effects.")
   }
   dot_checks <- c("lower", "upper", "profile", "parallel",
     "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",
@@ -635,12 +644,11 @@ sdmTMB <- function(
     data[[time]] <- 0L
   } else {
     if (sum(is.na(data[[time]])) > 1)
-      nice_stop("There is at least one NA value in the time column. ",
-        "Please remove it.")
+      abort("There is at least one NA value in the time column. Please remove it.")
   }
   if (is.factor(data[[time]])) {
     if (length(levels(data[[time]])) > length(unique(data[[time]]))) {
-      nice_stop("The time column is a factor and there are extra factor levels. ",
+      abort("The time column is a factor and there are extra factor levels. ",
         "Please remove these or turn your time column into an integer.")
     }
   }
@@ -669,7 +677,7 @@ sdmTMB <- function(
 
   if (!is.null(extra_time)) { # for forecasting or interpolating
     if (!"xy_cols" %in% names(spde)) {
-      nice_stop("Please use `make_mesh()` instead of the deprecated `make_spde()` to use `extra_time`.")
+      abort("Please use `make_mesh()` instead of the deprecated `make_spde()` to use `extra_time`.")
     }
     data <- expand_time(df = data, time_slices = extra_time, time_column = time)
     weights <- data$weight_sdmTMB
@@ -724,14 +732,16 @@ sdmTMB <- function(
   if (delta) {
     if (any(unlist(lapply(nobs_RE, function(.x) .x > 0)))) {
       if (original_formula[[1]] != original_formula[[2]]) {
-        nice_stop("For now, if delta models contain random intercepts, both ",
+        msg <- glue("For now, if delta models contain random intercepts, both ",
           "components must have the same main-effects formula.")
+        abort(msg)
       }
     }
     if (any(unlist(lapply(sm, `[[`, "has_smooths")))) {
       if (original_formula[[1]] != original_formula[[2]]) {
-        nice_warning("For now, if delta models contain smoothers, both ",
-          "components must have the same main-effects formula.")
+        msg <- glue("For now, if delta models contain smoothers, both components ",
+            "must have the same main-effects formula.")
+        abort(msg)
       }
     }
   }
@@ -746,11 +756,11 @@ sdmTMB <- function(
   if (delta) {
     y_i2 <- model.response(mf[[2]], "numeric")
     if (!identical(y_i, y_i2))
-      nice_stop("Response variable should be the same in both parts of the delta formula.")
+      abort("Response variable should be the same in both parts of the delta formula.")
   }
 
   if (family$family[1] %in% c("Gamma", "lognormal") && min(y_i) <= 0 && !delta) {
-    nice_stop("Gamma and lognormal must have response values > 0.")
+    abort("Gamma and lognormal must have response values > 0.")
   }
 
   # This is taken from approach in glmmTMB to match how they handle binomial
@@ -787,7 +797,7 @@ sdmTMB <- function(
   }
 
   if (identical(family$link[1], "log") && min(y_i, na.rm = TRUE) < 0 && !delta) {
-    nice_stop("`link = 'log'` but the reponse data include values < 0.")
+    abort("`link = 'log'` but the reponse data include values < 0.")
   }
 
   if (is.null(offset)) offset <- rep(0, length(y_i))
@@ -851,7 +861,7 @@ sdmTMB <- function(
   }
   # ncol(X_ij) may occur if time varying model, no intercept
   if (ncol(X_ij[[1]]) > 0 & !identical(nrow(priors_b), ncol(X_ij[[1]])))# TODO change hard coded index on X_ij
-    nice_stop("The number of 'b' priors does not match the model matrix.")
+    abort("The number of 'b' priors does not match the model matrix.")
   if (ncol(priors_b) == 2 && attributes(priors_b)$dist == "normal") {
     # normal priors passed in by user; change to MVN diagonal matrix
     # as.numeric() here prevents diag(NA) taking on factor
@@ -870,7 +880,7 @@ sdmTMB <- function(
     priors_b_Sigma <- as.matrix(Sigma[not_na, not_na])
   }
 
-  if (!"A_st" %in% names(spde)) nice_stop("`mesh` was created with an old version of `make_mesh()`.")
+  if (!"A_st" %in% names(spde)) abort("`mesh` was created with an old version of `make_mesh()`.")
   if (delta) y_i <- cbind(ifelse(y_i > 0, 1, 0), ifelse(y_i > 0, y_i, NA_real_))
   if (!delta) y_i <- matrix(y_i, ncol = 1L)
 
@@ -991,7 +1001,7 @@ sdmTMB <- function(
     tmb_params$b_j <- stats::coef(temp)
   }
 
-  if (delta && !is.null(thresh$threshold_parameter)) nice_stop("Offsets not implemented with threshold models yet!") # TODO DELTA
+  if (delta && !is.null(thresh$threshold_parameter)) abort("Thresholds not implemented with delta models yet.") # TODO DELTA
 
 ##  # optional models on spatiotemporal sd parameter
 ##  if (est_epsilon_re == 0L) {
@@ -1093,7 +1103,6 @@ sdmTMB <- function(
   tmb_data$normalize_in_r <- as.integer(normalize)
 
   if (!is.null(previous_fit)) tmb_map <- previous_fit$tmb_map
-  tmb_map <- c(map, tmb_map)
 
   # kappa mapping:
   tmb_map$ln_kappa <- matrix(seq_len(length(tmb_params$ln_kappa)),
@@ -1106,16 +1115,21 @@ sdmTMB <- function(
   tmb_map$ln_kappa <- as.factor(as.integer(as.factor(tmb_map$ln_kappa)))
 
   for (i in seq_along(start)) {
-    message("Initiating ", names(start)[i],
-      " at specified starting value of ", start[[i]], ".")
+    inform(c(i = paste0("Initiating `", names(start)[i],
+      "` at specified starting value(s) of:"),
+      paste0("  ", paste(round(start[[i]], 3), collapse = ", "))))
     tmb_params[[names(start)[i]]] <- start[[i]]
   }
 
   if (!is.matrix(tmb_params[["ln_kappa"]]) && "ln_kappa" %in% names(start)) {
-    nice_stop("Note that `ln_kappa` must be a matrix of nrow 2 and ncol models (regular=1, delta=2). It should be the same value in each row if `share_range = TRUE`.")
+      msg <- c("Note that `ln_kappa` must be a matrix of nrow 2 and ncol models (regular=1, delta=2).",
+        "It should be the same value in each row if `share_range = TRUE`.")
+    abort(msg)
   }
   if (nrow(tmb_params[["ln_kappa"]]) != 2L && "ln_kappa" %in% names(start)) {
-    nice_stop("Note that `ln_kappa` must be a matrix of nrow 2 and ncol models (regular=1, delta=2). It should be the same value in each row if `share_range = TRUE`.")
+      msg <- c("Note that `ln_kappa` must be a matrix of nrow 2 and ncol models (regular=1, delta=2).",
+        "It should be the same value in each row if `share_range = TRUE`.")
+    abort(msg)
   }
 
   data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL
@@ -1139,11 +1153,22 @@ sdmTMB <- function(
   if (tmb_data$threshold_func > 0) tmb_map$b_threshold <- NULL
 
   if (control$profile && delta)
-    nice_stop("Profile not yet working with delta models.")
+    abort("Profile not yet working with delta models.")
+
+  for (i in seq_along(map)) { # user supplied
+    inform(c(i = paste0("Fixing (mapping) `", names(map)[i],
+      "` at specified starting value(s) of:"),
+      paste0("  ",
+        paste(round(tmb_params[[names(map)[i]]], 3), collapse = ", "))))
+  }
+  tmb_map <- c(map, tmb_map) # add user-supplied mapping
+
+  prof <- c("b_j")
+  if (delta) prof <- c(prof, "b_j2")
 
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
-    profile = if (control$profile) "b_j" else NULL,
+    profile = if (control$profile) prof else NULL,
     random = tmb_random, DLL = "sdmTMB", silent = silent)
   lim <- set_limits(tmb_obj, lower = lower, upper = upper,
     loc = spde$mesh$loc, silent = FALSE)
@@ -1293,7 +1318,7 @@ check_spatiotemporal_arg <- function(x, time, .which = 1) {
   if (.spatiotemporal == "false") .spatiotemporal <- "off"
   .spatiotemporal <- match.arg(tolower(.spatiotemporal), choices = c("iid", "ar1", "rw", "off"))
   if (is.null(time) && .spatiotemporal != "off" && sp_len >= 1) {
-    nice_stop("`spatiotemporal` is set but the `time` argument is missing.")
+    abort("`spatiotemporal` is set but the `time` argument is missing.")
   }
   .spatiotemporal
 }

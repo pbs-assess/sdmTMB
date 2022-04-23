@@ -275,14 +275,17 @@ get_pars <- function(object, unlist = TRUE) {
   p
 }
 
-nice_stop = function(...) {
+nice_stop <- function(...) {
+  # cli::cli_abort(paste0(...), call = NULL, wrap = TRUE)
   stop(strwrap(paste0(...), prefix = " ", initial = ""), call. = FALSE)
 }
 
-nice_warning = function(...) {
+nice_warning <- function(...) {
+  # cli::cli_warn(paste0(...), wrap = TRUE)
   warning(strwrap(paste0(...), prefix = " ", initial = ""), call. = FALSE)
 }
 
-nice_message = function(...) {
+nice_message <- function(...) {
+  # cli::cli_inform(paste0(...), wrap = TRUE)
   message(strwrap(paste0(...), prefix = " ", initial = ""))
 }
