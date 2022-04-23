@@ -15,8 +15,10 @@
   re_form_iid = NULL,
   nsim = 0,
   sims = deprecated(),
-  sims_var = "est",
   tmbstan_model = NULL,
+  sims_var = "est",
+  delta_prediction = c("combined", "1", "2"),
+  return_tmb_report = FALSE,
   ...
 )
 }
@@ -63,16 +65,28 @@ uncertainty on predictions in space with sdmTMB.}
 
 \item{sims}{\strong{Deprecated}. Please use \code{nsim} instead.}
 
+\item{tmbstan_model}{A model fit with \code{\link[tmbstan:tmbstan]{tmbstan::tmbstan()}}. See
+\code{\link[=extract_mcmc]{extract_mcmc()}} for more details and an example. If specified, the
+predict function will return a matrix of a similar form as if \code{nsim > 0}
+but representing Bayesian posterior samples from the Stan model.}
+
 \item{sims_var}{\strong{Experimental.} Which TMB reported variable from the model
 should be extracted from the joint precision matrix simulation draws?
 Defaults to the link-space predictions. Options include: \code{"omega_s"},
 \code{"zeta_s"}, \code{"epsilon_st"}, and \code{"est_rf"} (as described below).
 Other options will be passed verbatim.}
 
-\item{tmbstan_model}{A model fit with \code{\link[tmbstan:tmbstan]{tmbstan::tmbstan()}}. See
-\code{\link[=extract_mcmc]{extract_mcmc()}} for more details and an example. If specified, the
-predict function will return a matrix of a similar form as if \code{nsim > 0}
-but representing Bayesian posterior samples from the Stan model.}
+\item{delta_prediction}{Type of prediction if a delta/hurdle model:
+\code{"combined"} returns the combined prediction from both components on
+the response scale; \code{"1"} or \code{"2"} return the first or second model
+component only on the link or response scale depending on the argument
+\code{type}.}
+
+\item{return_tmb_report}{Logical: return the output from the TMB
+report? For regular prediction this is all the reported variables
+at the MLE parameter values. For \code{nsim > 0} or when \code{tmbstan_model}
+is supplied, this is a list where each element is a sample and the
+contents of each element is the output of the report for that sample.}
 
 \item{...}{Not implemented.}
 }

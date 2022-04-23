@@ -369,3 +369,46 @@ test_that("Offset works", {
   )
 })
 
+test_that("More esoteric prediction options work", {
+  fit <- sdmTMB(
+    density ~ depth_scaled,
+    data = pcod_2011, mesh = pcod_mesh_2011,
+    family = delta_gamma()
+  )
+  p <- predict(fit, nsim = 5, delta_prediction = "combined")
+  head(p)
+  p <- predict(fit, nsim = 5, delta_prediction = "1")
+  head(p)
+  p <- predict(fit, nsim = 5, delta_prediction = "1", type = "response")
+  head(p)
+  expect_true(all(p <= 1 & p >= 0))
+  p <- predict(fit, nsim = 5, delta_prediction = "2")
+  head(p)
+  p <- predict(fit, nsim = 5, delta_prediction = "2", type = "response")
+  head(p)
+  expect_true(all(p > 0))
+
+  p <- predict(fit, nsim = 5, delta_prediction = "2",
+    return_tmb_report = TRUE)
+  expect_length(p, 5L)
+
+  fit <- sdmTMB(
+    density ~ depth_scaled,
+    data = pcod_2011, mesh = pcod_mesh_2011,
+    family = tweedie()
+  )
+  p <- predict(fit, nsim = 5)
+  p <- predict(fit, nsim = 5, type = "response")
+  head(p)
+  expect_true(all(p > 0))
+})
+
+test_that("update works", {
+  fit <- sdmTMB(
+    density ~ depth_scaled,
+    data = pcod_2011, mesh = pcod_mesh_2011,
+    family = tweedie()
+  )
+  fit2 <- update(fit)
+  expect_equal(fit$model, fit2$model)
+})

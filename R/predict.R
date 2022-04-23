@@ -48,6 +48,16 @@
 #'   [extract_mcmc()] for more details and an example. If specified, the
 #'   predict function will return a matrix of a similar form as if `nsim > 0`
 #'   but representing Bayesian posterior samples from the Stan model.
+#' @param delta_prediction Type of prediction if a delta/hurdle model:
+#'   `"combined"` returns the combined prediction from both components on
+#'   the response scale; `"1"` or `"2"` return the first or second model
+#'   component only on the link or response scale depending on the argument
+#'   `type`.
+#' @param return_tmb_report Logical: return the output from the TMB
+#'   report? For regular prediction this is all the reported variables
+#'   at the MLE parameter values. For `nsim > 0` or when `tmbstan_model`
+#'   is supplied, this is a list where each element is a sample and the
+#'   contents of each element is the output of the report for that sample.
 #' @param ... Not implemented.
 #'
 #' @return
@@ -225,7 +235,12 @@ predict.sdmTMB <- function(object, newdata = object$data,
   se_fit = FALSE,
   return_tmb_object = FALSE,
   area = deprecated(), re_form = NULL, re_form_iid = NULL, nsim = 0,
-  sims = deprecated(), sims_var = "est", tmbstan_model = NULL, ...) {
+  sims = deprecated(),
+  tmbstan_model = NULL,
+  sims_var = "est",
+  delta_prediction = c("combined", "1", "2"),
+  return_tmb_report = FALSE,
+  ...) {
 
   if ("version" %in% names(object)) {
     check_sdmTMB_version(object$version)
@@ -451,11 +466,12 @@ predict.sdmTMB <- function(object, newdata = object$data,
     }
     if (!is.null(tmbstan_model)) {
       if (!"stanfit" %in% class(tmbstan_model))
-        abort("tmbstan_model must be output from tmbstan::tmbstan().")
+        abort("`tmbstan_model` must be output from `tmbstan::tmbstan()`.")
       t_draws <- extract_mcmc(tmbstan_model)
       r <- apply(t_draws, 2L, new_tmb_obj$report)
     }
     if (!is.null(tmbstan_model) || sims > 0) {
+      if (return_tmb_report) return(r)
       .var <-  switch(sims_var,
         "est" = "proj_eta",
         "est_rf" = "proj_rf",
@@ -464,7 +480,34 @@ predict.sdmTMB <- function(object, newdata = object$data,
         "epsilon_st" = "proj_epsilon_st_A_vec",
         sims_var)
       out <- lapply(r, `[[`, .var)
-      out <- do.call("cbind", out)
+
+      if (isTRUE(object$family$delta)) {
+        predtype <- match.arg(delta_prediction)
+        if (predtype %in% c("1", "combined")) {
+          out1 <- lapply(out, function(x) x[, 1L, drop = TRUE])
+          out1 <- do.call("cbind", out1)
+        }
+        if (predtype %in% c("2", "combined")) {
+          out2 <- lapply(out, function(x) x[, 2L, drop = TRUE])
+          out2 <- do.call("cbind", out2)
+        }
+        if (predtype == "combined") {
+          out <- object$family$linkinv[[1]](out1) *
+            object$family$linkinv[[2]](out2)
+        } else if (predtype == "1") {
+          out <- out1
+          if (type == "response") out <- object$family$linkinv[[1]](out)
+        } else if (predtype == "2") {
+          out <- out2
+          if (type == "response") out <- object$family$linkinv[[2]](out)
+        } else {
+          abort("`delta_prediction` type not valid.")
+        }
+      } else { # not a delta model:
+        out <- do.call("cbind", out)
+        if (type == "response") out <- object$family$linkinv(out)
+      }
+
       rownames(out) <- nd[[object$time]] # for use in index calcs
       attr(out, "time") <- object$time
       return(out)
@@ -472,6 +515,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
 
     lp <- new_tmb_obj$env$last.par.best
     r <- new_tmb_obj$report(lp)
+    if (return_tmb_report) return(r)
 
     if (isFALSE(pop_pred)) {
       if (isTRUE(object$family$delta)) {
