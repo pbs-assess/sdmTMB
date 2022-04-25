@@ -276,6 +276,8 @@ sdmTMB_simulate <- function(formula,
 #'   effects (this only simulates observation error). `~0` or `NA` to simulate
 #'   new random affects (smoothers, which internally are random effects, will
 #'   not be simulated as new).
+#' @param model If a delta/hurdle model, which model to simulate from?
+#'   `NA` = combined, `1` = first model, `2` = second mdoel.
 #' @param tmbstan_model An optional model fit via [tmbstan::tmbstan()]. If
 #'   provided the parameters will be drawn from the MCMC samples and new
 #'   observation error will be added. See the example in [extract_mcmc()].
@@ -348,6 +350,7 @@ sdmTMB_simulate <- function(formula,
 
 simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
                             params = c("mle", "mvn"),
+                            model = c(NA, 1, 2),
                             re_form = NULL, tmbstan_model = NULL, ...) {
   set.seed(seed)
   params <- tolower(params)
@@ -388,7 +391,15 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
   }
 
   if (isTRUE(object$family$delta)) {
-    ret <- lapply(ret, function(.x) ifelse(!is.na(.x[,2]), .x[,2], .x[,1]))
+    if (is.na(model[[1]])) {
+      ret <- lapply(ret, function(.x) ifelse(!is.na(.x[,2]), .x[,2], .x[,1]))
+    } else if (model[[1]] == 1) {
+      ret <- lapply(ret, function(.x) .x[,1])
+    } else if (model[[1]] == 2) {
+      ret <- lapply(ret, function(.x) ifelse(!is.na(.x[,2]), .x[,2], NA))
+    } else {
+      abort("`model` argument isn't valid; should be NA, 1, or 2.")
+    }
   }
 
   do.call(cbind, ret)

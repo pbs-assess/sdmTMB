@@ -17,7 +17,7 @@
   sims = deprecated(),
   tmbstan_model = NULL,
   sims_var = "est",
-  delta_prediction = c("combined", "1", "2"),
+  model = c(NA, 1, 2),
   return_tmb_report = FALSE,
   ...
 )
@@ -76,9 +76,9 @@ Defaults to the link-space predictions. Options include: \code{"omega_s"},
 \code{"zeta_s"}, \code{"epsilon_st"}, and \code{"est_rf"} (as described below).
 Other options will be passed verbatim.}
 
-\item{delta_prediction}{Type of prediction if a delta/hurdle model:
-\code{"combined"} returns the combined prediction from both components on
-the response scale; \code{"1"} or \code{"2"} return the first or second model
+\item{model}{Type of prediction if a delta/hurdle model:
+\code{NA} returns the combined prediction from both components on
+the response scale; \code{1} or \code{2} return the first or second model
 component only on the link or response scale depending on the argument
 \code{type}.}
 

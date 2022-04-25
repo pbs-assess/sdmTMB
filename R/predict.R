@@ -48,9 +48,9 @@
 #'   [extract_mcmc()] for more details and an example. If specified, the
 #'   predict function will return a matrix of a similar form as if `nsim > 0`
 #'   but representing Bayesian posterior samples from the Stan model.
-#' @param delta_prediction Type of prediction if a delta/hurdle model:
-#'   `"combined"` returns the combined prediction from both components on
-#'   the response scale; `"1"` or `"2"` return the first or second model
+#' @param model Type of prediction if a delta/hurdle model:
+#'   `NA` returns the combined prediction from both components on
+#'   the response scale; `1` or `2` return the first or second model
 #'   component only on the link or response scale depending on the argument
 #'   `type`.
 #' @param return_tmb_report Logical: return the output from the TMB
@@ -238,7 +238,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
   sims = deprecated(),
   tmbstan_model = NULL,
   sims_var = "est",
-  delta_prediction = c("combined", "1", "2"),
+  model = c(NA, 1, 2),
   return_tmb_report = FALSE,
   ...) {
 
@@ -482,26 +482,28 @@ predict.sdmTMB <- function(object, newdata = object$data,
       out <- lapply(r, `[[`, .var)
 
       if (isTRUE(object$family$delta)) {
-        predtype <- match.arg(delta_prediction)
-        if (predtype %in% c("1", "combined")) {
+        assert_that(model[[1]] %in% c(NA, 1, 2),
+          msg = "`model` argument not valid; should be one of NA, 1, 2")
+        predtype <- as.integer(model[[1]])
+        if (predtype %in% c(1L, NA)) {
           out1 <- lapply(out, function(x) x[, 1L, drop = TRUE])
           out1 <- do.call("cbind", out1)
         }
-        if (predtype %in% c("2", "combined")) {
+        if (predtype %in% c(2L, NA)) {
           out2 <- lapply(out, function(x) x[, 2L, drop = TRUE])
           out2 <- do.call("cbind", out2)
         }
-        if (predtype == "combined") {
+        if (is.na(predtype)) {
           out <- object$family$linkinv[[1]](out1) *
             object$family$linkinv[[2]](out2)
-        } else if (predtype == "1") {
+        } else if (predtype == 1L) {
           out <- out1
           if (type == "response") out <- object$family$linkinv[[1]](out)
-        } else if (predtype == "2") {
+        } else if (predtype == 2L) {
           out <- out2
           if (type == "response") out <- object$family$linkinv[[2]](out)
         } else {
-          abort("`delta_prediction` type not valid.")
+          abort("`model` type not valid.")
         }
       } else { # not a delta model:
         out <- do.call("cbind", out)

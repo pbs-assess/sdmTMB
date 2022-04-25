@@ -624,8 +624,8 @@ sdmTMB <- function(
   assert_that(class(formula) %in% c("formula", "list"))
   assert_that("data.frame" %in% class(data))
   if (!is.null(map) && length(map) != length(start)) {
-    warning("`length(map) != length(start)`. You likely want to specify ",
-      "`start` values if you are setting the `map` argument.", call. = FALSE)
+    warn(c("`length(map) != length(start)`.",
+      "You likely want to specify `start` values if you are setting the `map` argument."))
   }
   if (family$family[1] == "censored_poisson") {
     assert_that("lwr" %in% names(experimental) && "upr" %in% names(experimental),

@@ -375,25 +375,28 @@ test_that("More esoteric prediction options work", {
     data = pcod_2011, mesh = pcod_mesh_2011,
     family = delta_gamma()
   )
-  expect_error(p <- predict(fit, nsim = 5, delta_prediction = "aaa"),
-    regexp = "arg"
+  expect_error(p <- predict(fit, nsim = 5, model = "aaa"),
+    regexp = "model"
+  )
+  expect_error(p <- predict(fit, nsim = 5, model = 99),
+    regexp = "model"
   )
 
-  p <- predict(fit, nsim = 5, delta_prediction = "combined")
+  p <- predict(fit, nsim = 5, model = NA)
   head(p)
-  p <- predict(fit, nsim = 5, delta_prediction = "1")
+  p <- predict(fit, nsim = 5, model = 1)
   head(p)
-  p <- predict(fit, nsim = 5, delta_prediction = "1", type = "response")
+  p <- predict(fit, nsim = 5, model = 1, type = "response")
   head(p)
   expect_true(all(p <= 1 & p >= 0))
-  p <- predict(fit, nsim = 5, delta_prediction = "2")
+  p <- predict(fit, nsim = 5, model = 2)
   head(p)
-  p <- predict(fit, nsim = 5, delta_prediction = "2", type = "response")
+  p <- predict(fit, nsim = 5, model = 2, type = "response")
   head(p)
   expect_true(all(p > 0))
 
   p <- predict(fit,
-    nsim = 5, delta_prediction = "2",
+    nsim = 5, model = 2,
     return_tmb_report = TRUE
   )
   expect_length(p, 5L)
