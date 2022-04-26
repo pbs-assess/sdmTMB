@@ -49,3 +49,16 @@ extractAIC.sdmTMB <- function(fit, scale, k = 2, ...) {
   edf <- attr(L, "df")
   return(c(edf, c(-2 * L + k * edf)))
 }
+
+#' @export
+family.sdmTMB <- function (object, ...) {
+  object$family
+}
+
+#' @export
+formula.sdmTMB <- function (object, ...) {
+  if (length(m$formula) > 1L)
+    m$formula
+  else
+    m$formula[[1]]
+}
