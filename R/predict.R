@@ -276,6 +276,14 @@ predict.sdmTMB <- function(object, newdata = object$data,
     on.exit({TMB::openmp(n = n_orig)})
   }
 
+  sys_calls <- unlist(lapply(sys.calls(), deparse)) # retrieve function that called this
+  vr <- check_visreg(sys_calls)
+  visreg_df <- vr$visreg_df
+  if (visreg_df) {
+    re_form <- vr$re_form
+    se_fit <- vr$se_fit
+  }
+
   # from glmmTMB:
   pop_pred <- (!is.null(re_form) && ((re_form == ~0) || identical(re_form, NA)))
   pop_pred_iid <- (!is.null(re_form_iid) && ((re_form_iid == ~0) || identical(re_form_iid, NA)))
@@ -585,6 +593,16 @@ predict.sdmTMB <- function(object, newdata = object$data,
       nd$est_se <- d$se
     }
 
+    if (pop_pred) {
+      if (!se_fit) {
+        if (isTRUE(object$family$delta)) {
+          abort("re_form = NA or ~0 and se_fit = FALSE not finished yet for delta models.")
+        } else {
+          nd$est <- r$proj_fe[,1,drop=TRUE] # FIXME re_form_iid??
+        }
+      }
+    }
+
     if ("sdmTMB_fake_year" %in% names(nd)) {
       nd <- nd[!nd$sdmTMB_fake_year,,drop=FALSE]
       nd$sdmTMB_fake_year <- NULL
@@ -649,10 +667,20 @@ predict.sdmTMB <- function(object, newdata = object$data,
     nd$zeta_s <- NULL
   }
 
-  if (return_tmb_object)
+  if (return_tmb_object) {
     return(list(data = nd, report = r, obj = obj, fit_obj = object, pred_tmb_data = tmb_data))
-  else
-    return(nd)
+  } else {
+    if (visreg_df) {
+      # for visreg & related, return consistent objects with lm(), gam() etc.
+      if (isTRUE(se_fit)) {
+        return(list(fit = nd$est, se.fit = nd$est_se))
+      } else {
+        return(nd$est)
+      }
+    } else {
+      return(nd) # data frame by default
+    }
+  }
 }
 
 # https://stackoverflow.com/questions/13217322/how-to-reliably-get-dependent-variable-name-from-formula-object
@@ -695,4 +723,20 @@ check_time_class <- function(object, newdata) {
         call. = FALSE)
     }
   }
+}
+
+check_visreg <- function(sys_calls) {
+  visreg_df <- FALSE
+  re_form <- NULL
+  se_fit <- FALSE
+  if (any(substr(sys_calls, 1, 6) == "visreg")) {
+    visreg_df <- TRUE
+    re_form <- NA
+    if (any(sys_calls == "residuals(fit)")) visreg_df <- FALSE
+    # turn on standard error if in a function call
+    indx <- which(substr(sys_calls, 1, 10) == "visregPred")
+    if (length(indx) > 0 && any(unlist(strsplit(sys_calls[indx], ",")) == " se.fit = TRUE"))
+      se_fit <- TRUE
+  }
+  named_list(visreg_df, se_fit, re_form)
 }

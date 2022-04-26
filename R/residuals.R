@@ -3,8 +3,9 @@ qres_tweedie <- function(object, y, mu) {
   dispersion <- exp(object$model$par[["ln_phi"]])
 
   u <- fishMod::pTweedie(q = y, p = p, mu = mu, phi = dispersion)
-  if (p > 1 && p < 2)
+  if (p > 1 && p < 2) {
     u[y == 0] <- stats::runif(sum(y == 0), min = 0, max = u[y == 0])
+  }
   stats::qnorm(u)
 }
 
@@ -72,12 +73,12 @@ qres_gaussian <- function(object, y, mu) {
 
 qres_lognormal <- function(object, y, mu) {
   dispersion <- exp(object$model$par[["ln_phi"]])
-  u <- stats::plnorm(q = y, meanlog = log(mu) - (dispersion^2)/2, sdlog = dispersion)
+  u <- stats::plnorm(q = y, meanlog = log(mu) - (dispersion^2) / 2, sdlog = dispersion)
   stats::qnorm(u)
 }
 
 # https://en.wikipedia.org/wiki/Location%E2%80%93scale_family
-pt_ls <- function(q, df, mu, sigma) stats::pt((q - mu)/sigma, df)
+pt_ls <- function(q, df, mu, sigma) stats::pt((q - mu) / sigma, df)
 
 qres_student <- function(object, y, mu) {
   dispersion <- exp(object$model$par[["ln_phi"]])
@@ -102,12 +103,13 @@ qres_beta <- function(object, y, mu) {
 #' site](https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html).
 #'
 #' @param object An [sdmTMB()] model
-#' @param type Type of residual. Residual at the MLE or based on simulations
-#'   from the joint precision matrix are available.
+#' @param type Type of residual.
+#' @param mu_type Type of mean estimate. Residual at the MLE or based on
+#'   simulations from the joint precision matrix.
 #' @param ... Passed to residual function. Only `n` works for binomial.
 #' @export
 #' @importFrom stats predict
-#' @return A vector of randomized quantile residuals.
+#' @return A vector of residuals.
 #' @seealso [dharma_residuals()]
 #' @references
 #' Dunn, P.K. & Smyth, G.K. (1996). Randomized Quantile Residuals. Journal of
@@ -115,13 +117,22 @@ qres_beta <- function(object, y, mu) {
 #'
 #' Smith, J.Q. (1985). Diagnostic checks of non-standard time series models.
 #' Journal of Forecasting, 4, 283–291.
-residuals.sdmTMB <- function(object, type = c("mle", "sim"), ...) {
+residuals.sdmTMB <- function(object,
+                             type = c("randomized-quantile", "response"),
+                             mu_type = c("mle", "sim"),
+                             ...) {
   if (isTRUE(object$family$delta)) {
-    nice_stop("`residuals.sdmTMB()` is not setup to work with delta models yet. ",
-      "Try `dharma_residuals()`.")
+    nice_stop(
+      "`residuals.sdmTMB()` is not setup to work with delta models yet. ",
+      "Try `dharma_residuals()`."
+    )
   }
+  # inform(c("`residuals.sdmTMB()` now returns response residuals by default.",
+  #   "Use `type = 'randomized-quantile'` for randomized quantile residuals."))
   # message("Consider using `dharma_residuals()` instead.")
   type <- match.arg(type)
+  mu_type <- match.arg(mu_type)
+
   res_func <- switch(object$family$family,
     gaussian = qres_gaussian,
     binomial = qres_binomial,
@@ -135,14 +146,22 @@ residuals.sdmTMB <- function(object, type = c("mle", "sim"), ...) {
     lognormal  = qres_lognormal,
     nice_stop(paste(object$family$family, "not yet supported."))
   )
-  if (type == "mle") {
+  if (mu_type == "mle") {
     mu <- object$family$linkinv(predict(object, newdata = NULL)$est)
-  } else if (type == "sim") {
+  } else if (mu_type == "sim") {
     mu <- object$family$linkinv(predict(object, nsim = 1L)[, 1L, drop = TRUE])
   } else {
-    nice_stop("`type` not implemented")
+    abort("`mu_type` not implemented")
   }
   y <- object$response
-  y <- y[,1,drop=TRUE]
-  res_func(object, y, mu, ...)
+  y <- y[, 1, drop = TRUE] # in case delta
+
+  if (type == "response") {
+    r <- y - mu
+  } else if (type == "randomized-quantile") {
+    r <- res_func(object, y, mu, ...)
+  } else {
+    abort("`type` not implemented")
+  }
+  r
 }

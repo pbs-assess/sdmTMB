@@ -4,18 +4,25 @@
 \alias{residuals.sdmTMB}
 \title{Residuals method for sdmTMB models}
 \usage{
-\method{residuals}{sdmTMB}(object, type = c("mle", "sim"), ...)
+\method{residuals}{sdmTMB}(
+  object,
+  type = c("randomized-quantile", "response"),
+  mu_type = c("mle", "sim"),
+  ...
+)
 }
 \arguments{
 \item{object}{An \code{\link[=sdmTMB]{sdmTMB()}} model}
 
-\item{type}{Type of residual. Residual at the MLE or based on simulations
-from the joint precision matrix are available.}
+\item{type}{Type of residual.}
+
+\item{mu_type}{Type of mean estimate. Residual at the MLE or based on
+simulations from the joint precision matrix.}
 
 \item{...}{Passed to residual function. Only \code{n} works for binomial.}
 }
 \value{
-A vector of randomized quantile residuals.
+A vector of residuals.
 }
 \description{
 These residuals are randomized quantile residuals (Dunn & Smyth 1996), which
