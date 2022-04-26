@@ -51,14 +51,14 @@ extractAIC.sdmTMB <- function(fit, scale, k = 2, ...) {
 }
 
 #' @export
-family.sdmTMB <- function (object, ...) {
-  object$family
+family.sdmTMB <- function (x, ...) {
+  x$family
 }
 
 #' @export
-formula.sdmTMB <- function (object, ...) {
-  if (length(m$formula) > 1L)
-    m$formula
+formula.sdmTMB <- function (x, ...) {
+  if (length(x$formula) > 1L)
+    x$formula
   else
-    m$formula[[1]]
+    x$formula[[1]]
 }
