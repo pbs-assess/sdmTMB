@@ -45,26 +45,12 @@ We extend the generalized linear mixed models (GLMMs) familiar to ecologists to 
 * spatially varying coefficient models (SVCs)
 * interpolation or forecasting over missing or future time slices
 * a wide range of families: all standard R families plus `tweedie()`, `nbinom1()`, `nbinom2()`, `lognormal()`, and `student()`, plus some truncated and censored families
+* delta/hurdle models including `delta_gamma()`, `delta_lognormal()`, and `delta_truncated_nbinom2()`
 
 Estimation is performed in sdmTMB via maximum marginal likelihood with the objective function calculated in TMB and minimized in R via `stats::nlminb()` with the random effects integrated over via the Laplace approximation.
 The sdmTMB package also allows for models to be passed to Stan via tmbstan, allowing for Bayesian model estimation.
 
-<!-- sdmTMB: -->
-
-<!-- - Fits GLMMs with spatial, spatiotemporal, spatial and spatiotemporal, or AR1 spatiotemporal Gaussian Markov random fields with TMB.  -->
-<!-- - Uses formula interfaces for fixed effects and any time-varying effects (dynamic regression) (e.g. `formula = y ~ 1 + x1 + (1 | g), time_varying = ~ 0 + x2`), where `y` is the response, `1` represents an intercept, `0` omits an intercept, `x1` is a covariate with a constant effect, `(1 | g)` is a random intercept across groups `g`, and `x2` is a covariate with a time-varying effect. -->
-<!-- - Can fit spatially varying coefficients as a random field (e.g. `spatial_varying = ~ 0 + x3`). -->
-<!-- - Can handle GAMs (generalized additive models) with penalized smoothers from mgcv. E.g., `y ~ s(x)`. -->
-<!-- - Can handle linear breakpoint or logistic threshold fixed effects: `y ~ breakpt(x1)` or `y ~ logistic(x2)`. -->
-<!-- - Uses a `family(link)` format similar to `glm()`, lme4, or glmmTMB. This includes Gaussian, Poisson, negative binomial, gamma, binomial, lognormal, Student-t, and Tweedie distributions with identity, log, inverse, and logit links. E.g., `family = tweedie(link = "log")`. -->
-<!-- - Has `predict()` and `residuals()` methods. The residuals are randomized-quantile residuals similar to those implemented in the [DHARMa](https://cran.r-project.org/package=DHARMa) package. The `predict()` function can take a `newdata` argument similar to `lm()` or `glm()` etc. The predictions are bilinear interpolated predictive-process predictions (i.e., they make smooth pretty maps). -->
-<!-- - Has a simulation function `simulate()` for simulating from existing fits (e.g., for DHARMa), `sdmTMB_simulate()` for generating simulated data from scratch, and `sdmTMB_cv()` for cross-validation testing of model accuracy or comparing across model configurations. -->
-<!-- - Includes functionality for estimating the centre of gravity or total biomass by time step for index standardization. -->
-<!-- - Can optionally allow for anisotropy in the random fields (spatial correlation that is directionally dependent) and barriers (e.g., land for ocean species) to spatial correlation. -->
-<!-- - Can interpolate over missing time slices or forecast onto future time slices. -->
-<!-- - Can generate an SPDE predictive-process mesh or can take any standard R-INLA mesh created externally as input. -->
-
-See [`?sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB.html) and [`?predict.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/predict.sdmTMB.html) for the most complete examples. Also see the vignettes ('Articles') on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html).
+See [`?sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB.html) and [`?predict.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/predict.sdmTMB.html) for the most complete examples. Also see the vignettes ('Articles') on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html) and the preprint and appendices linked to below.
 
 ## Citation
 
@@ -79,6 +65,22 @@ Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett.
 user-friendly generalized linear mixed effects models with
 spatial and spatiotemporal random fields. bioRxiv
 2022.03.24.485545; doi: <https://doi.org/10.1101/2022.03.24.485545>
+
+## Related software
+
+sdmTMB is heavily inspired by the [VAST](https://github.com/James-Thorson-NOAA/VAST) R package:
+
+Thorson, J.T. 2019. Guidance for decisions using the Vector Autoregressive Spatio-Temporal (VAST) package in stock, ecosystem, habitat and climate assessments. Fisheries Research 210: 143–161. <https://doi.org/10.1016/j.fishres.2018.10.013>.
+
+and the [glmmTMB](https://github.com/glmmTMB/glmmTMB) R package:
+
+Brooks, M.E., Kristensen, K., van Benthem, K.J., Magnusson, A., Berg, C.W., Nielsen, A., Skaug, H.J., Maechler, M., and Bolker, B.M. 2017. glmmTMB balances speed and flexibility among packages for zero-inflated generalized linear mixed modeling. The R Journal 9(2): 378–400. <https://doi.org/10.32614/rj-2017-066>.
+
+[INLA](https://www.r-inla.org/) and [inlabru](https://sites.google.com/inlabru.org/inlabru) can fit many of the same models as sdmTMB (and many more) in an approximate Bayesian inference framework.
+
+[mgcv](https://cran.r-project.org/package=mgcv) can fit similar SPDE-based Gaussian random field models with code included in [Miller et al. (2019)](https://doi.org/10.1007/s13253-019-00377-z).
+
+A table in the [sdmTMB preprint](https://doi.org/10.1101/2022.03.24.485545) describes functionality and timing comparisons between sdmTMB, VAST, INLA/inlabru, and mgcv and the discussion makes suggestions about when you might choose one package over another.
 
 ## Basic use
 
