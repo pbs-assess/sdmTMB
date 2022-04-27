@@ -733,7 +733,8 @@ Type objective_function<Type>::operator()()
     if (priors_b_n > 0) {
       vector<Type> b_j_subset(priors_b_n),b_mean_subset(priors_b_n);
       for(int j = 0; j < priors_b_n; j++) {
-        b_j_subset(j) = b_j(priors_b_index(j),m); // TODO DELTAX2 no longer a matrix!!
+        if (m == 0) b_j_subset(j) = b_j(priors_b_index(j));
+        if (m == 1) b_j_subset(j) = b_j2(priors_b_index(j));
         b_mean_subset(j) = priors_b_mean(j);
       }
       jnll += neg_log_dmvnorm(b_j_subset - b_mean_subset);
