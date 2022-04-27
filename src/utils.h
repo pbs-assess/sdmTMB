@@ -66,7 +66,7 @@ struct LOM_t : vector<matrix<Type> > {
 };
 
 // Function to import barrier-SPDE code
-// From Olav Nikolai Breivik and Hans Skaug via VAST
+// From Olav Nikolai Breivik and Hans Skaug:
 template <class Type>
 struct spde_barrier_t {
   vector<Type> C0;

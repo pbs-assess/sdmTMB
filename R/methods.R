@@ -50,9 +50,10 @@ extractAIC.sdmTMB <- function(fit, scale, k = 2, ...) {
   return(c(edf, c(-2 * L + k * edf)))
 }
 
+#' @importFrom stats family
 #' @export
-family.sdmTMB <- function (x, ...) {
-  x$family
+family.sdmTMB <- function (object, ...) {
+  object$family
 }
 
 #' @export
