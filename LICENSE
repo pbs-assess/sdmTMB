@@ -8,7 +8,8 @@ these components are included below):
 - VAST, https://github.com/James-Thorson-NOAA/VAST
 - glmmTMB, https://github.com/glmmTMB/glmmTMB
 - SPDE barrier implementation, https://github.com/skaug/tmb-case-studies
-
+- mgcv, https://CRAN.R-project.org/package=mgcv
+- brms, https://CRAN.R-project.org/package=brms
 
 Licenses:
 
@@ -689,7 +690,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 
 
 
-SPDE barrier implementation license
+1. SPDE barrier implementation
+2. Function to aid prediction from smooths from mgcv documentation smooth2random()
+3. brms code snippets used to construct penalized smoother matrices with mgcv tools
 ----------------------------------------------------------------------
 
                     GNU GENERAL PUBLIC LICENSE

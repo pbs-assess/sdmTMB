@@ -2,57 +2,52 @@ Type: Package
 Package: sdmTMB
 Title: Spatiotemporal Species Distribution GLMMs with 'TMB'
 Version: 0.0.23.9000
-Authors@R:
-    c(person(given = c("Sean", "C."),
-             family = "Anderson",
-             role = c("aut", "cre"),
-             email = "sean.anderson@dfo-mpo.gc.ca",
-             comment = c(ORCID = "0000-0001-9563-1937")),
-      person(given = c("Eric", "J."),
-             family = "Ward",
-             role = "aut",
-             comment = c(ORCID = "0000-0002-4359-0296")),
-      person(given = c("Lewis", "A.", "K."),
-             family = "Barnett",
-             role = "aut",
-             comment = c(ORCID = "0000-0002-9381-8375")),
-      person(given = c("Philina", "A."),
-             family = "English",
-             role = "aut",
-             comment = c(ORCID = "0000-0003-2992-6782")),
-      person(given = c("Joe"),
-             family = "Watson",
-             role = "ctb",
-             comment = "Censored Poisson implementation"),
-      person(given = c("James", "T."),
-             family = "Thorson",
-             role = c("ctb", "cph"),
-             comment = c(ORCID = "0000-0001-7415-1010", 
-               "VAST library author https://github.com/James-Thorson-NOAA/VAST")),
-      person(given = c("Cole", "C."),
-             family = "Monnahan",
-             role = c("ctb", "cph"),
-             comment = c(ORCID = "0000-0003-0871-6700", 
-               "VAST library contributor https://github.com/James-Thorson-NOAA/VAST", 
-               "Author of joint precision matrix simulation code")),
-      person(family = "glmmTMB authors",
-             role = c("ctb", "cph"),
-             comment = "glmmTMB authors listed in https://github.com/glmmTMB/glmmTMB/blob/master/glmmTMB/DESCRIPTION"),
-      person(given = c("Olav", "Nikolai"),
-             family = "Breivik",
-             role = c("ctb", "cph"),
-             comment = "SPDE barrier implementation from https://github.com/skaug/tmb-case-studies"),
-      person(given = c("Hans", "J."),
-             family = "Skaug",
-             role = c("ctb", "cph"),
-             comment = "SPDE barrier implementation from https://github.com/skaug/tmb-case-studies")
-      )
+Authors@R: c(
+    person(c("Sean", "C."), "Anderson", , "sean.anderson@dfo-mpo.gc.ca", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-9563-1937")),
+    person(c("Eric", "J."), "Ward", role = "aut",
+           comment = c(ORCID = "0000-0002-4359-0296")),
+    person(c("Lewis", "A.", "K."), "Barnett", role = "aut",
+           comment = c(ORCID = "0000-0002-9381-8375")),
+    person(c("Philina", "A."), "English", role = "aut",
+           comment = c(ORCID = "0000-0003-2992-6782")),
+    person("Joe", "Watson", role = "ctb",
+           comment = "Censored Poisson implementation"),
+    person(c("James", "T."), "Thorson", role = c("ctb", "cph"),
+           comment = c(ORCID = "0000-0001-7415-1010", "VAST author: general structure of original TMB model template")),
+    person(c("Cole", "C."), "Monnahan", role = c("ctb", "cph"),
+           comment = c(ORCID = "0000-0003-0871-6700", "VAST contributor")),
+    person("Mollie", "Brooks", role = c("ctb", "cph"),
+           comment = c(ORCID = "0000-0001-6963-8326", "glmmTMB author")),
+    person("Ben", "Bolker", role = c("ctb", "cph"),
+           comment = c(ORCID = "0000-0002-2127-0443", "glmmTMB author")),
+    person("Kasper", "Kristensen", role = c("ctb", "cph"),
+           comment = "TMB/glmmTMB author"),
+    person("Martin", "Maechler", role = c("ctb", "cph"),
+           comment = c(ORCID = "0000-0002-8685-9910", "glmmTMB author")),
+    person("Arni", "Magnusson", role = c("ctb", "cph"),
+           comment = c(ORCID = "0000-0003-2769-6741", "glmmTMB author")),
+    person(c("Hans", "J."), "Skaug", role = c("ctb", "cph"),
+           comment = "glmmTMB author and SPDE barrier implementation"),
+    person("Anders", "Nielsen", role = c("ctb", "cph"),
+           comment = c(ORCID = "0000-0001-9683-9262", "glmmTMB author")),
+    person("Casper", "Berg", role = c("ctb", "cph"),
+           comment = c(ORCID = "0000-0002-3812-5269", "glmmTMB author")),
+    person("Koen", "van Bentham", role = c("ctb", "cph"),
+           comment = "glmmTMB author"),
+    person(c("Olav", "Nikolai"), "Breivik", role = c("ctb", "cph"),
+           comment = "SPDE barrier implementation"),
+    person("Simon", "Wood", role = c("ctb", "cph"),
+           comment = "mgcv author: prediction from smooths via mgcv documentation"),
+    person("Paul-Christian", "Bürkner", role = c("ctb", "cph"),
+           comment = "brms author: smoother matrix parsing")
+  )
 Description: The 'sdmTMB' package implements spatiotemporal
     predictive-process GLMMs (Generalized Linear Mixed Effect Models)
     using 'TMB', 'INLA', and Gaussian Markov random fields. One common
     application is for spatial or spatiotemporal species distribution
     models (SDMs).
-License: GPL (>= 3) | LICENSE
+License: GPL-3 | file LICENSE
 URL: https://pbs-assess.github.io/sdmTMB/index.html
 BugReports: https://github.com/pbs-assess/sdmTMB/issues
 Depends:
@@ -92,7 +87,7 @@ LinkingTo:
     TMB
 VignetteBuilder:
     knitr
-Additional_repositories:https://inla.r-inla-download.org/R/stable
+Additional_repositories: https://inla.r-inla-download.org/R/stable
 ByteCompile: true
 Config/testthat/edition: 3
 Config/testthat/parallel: true
