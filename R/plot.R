@@ -8,6 +8,7 @@
 #'
 #' @return A plot of eigenvectors illustrating the estimated anisotropy. A list
 #'   of the plotted data is invisibly returned.
+#' @references Code adapted from VAST
 #' @examples
 #' \donttest{
 #' if (inla_installed()) {

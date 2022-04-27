@@ -33,3 +33,6 @@ if (inla_installed()) {
 }
 }
 }
+\references{
+Code adapted from VAST
+}
