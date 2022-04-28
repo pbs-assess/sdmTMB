@@ -183,7 +183,7 @@ qres_beta <- function(object, y, mu) {
 residuals.sdmTMB <- function(object,
   type = c("randomized-quantile", "mle-mcmc-rq", "response"),
   mu_type = c("mle", "sim"),
-  mcmc_iter = 200, mcmc_warmup = 199,
+  mcmc_iter = 501, mcmc_warmup = 499,
   print_stan_model = FALSE,
   ...) {
   if (isTRUE(object$family$delta)) {
