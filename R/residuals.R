@@ -10,7 +10,8 @@ qres_tweedie <- function(object, y, mu) {
 }
 
 qres_binomial <- function(object, y, mu, n = NULL) {
-  p <- object$family$linkinv(mu) # robust binomial in link space!
+  # p <- object$family$linkinv(mu) # robust binomial in link space!
+  p <- mu
   if (is.null(n)) n <- rep(1, length(y))
   y <- n * y
   a <- stats::pbinom(y - 1, n, p)
@@ -96,30 +97,94 @@ qres_beta <- function(object, y, mu) {
 
 #' Residuals method for sdmTMB models
 #'
-#' These residuals are randomized quantile residuals (Dunn & Smyth 1996), which
-#' are also known as probability integral transform (PIT) residuals (Smith
-#' 1985). See the residual-checking vignette: `browseVignettes("sdmTMB")` or [on
-#' the documentation
+#' See the residual-checking vignette: `browseVignettes("sdmTMB")` or [on the
+#' documentation
 #' site](https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html).
 #'
 #' @param object An [sdmTMB()] model
-#' @param type Type of residual.
+#' @param type Type of residual. See details.
 #' @param mu_type Type of mean estimate. Residual at the MLE or based on
 #'   simulations from the joint precision matrix.
+#' @param mcmc_iter Iterations for MCMC residuals. Will take the last one.
+#' @param mcmc_warmup Warmup for MCMC residuals.
+#' @param print_stan_model Print the Stan model from MCMC residuals?
 #' @param ... Passed to residual function. Only `n` works for binomial.
 #' @export
 #' @importFrom stats predict
 #' @return A vector of residuals.
 #' @seealso [dharma_residuals()]
+#' @details
+#'
+#' Types of residuals currently supported:
+#'
+#' `"randomized-quantile"` refers to randomized quantile residuals
+#' (Dunn & Smyth 1996), which are also known as probability integral transform
+#' (PIT) residuals (Smith 1985). Under model assumptions, these should be
+#' distributed as standard normal with the following caveat: the Laplace approximation used
+#' for the latent/random effects can cause these residuals to deviate from
+#' the standard normal assumption even if the model is consistent with the data.
+#'
+#' `"mle-mcmc-rq"` refers to randomized quantile residuals where the fixed
+#' effects are fixed at their MLE (maximum likelihoood estimate) values and the
+#' random effects are sampled with MCMC via tmbstan/Stan. As proposed in
+#' Thygesen et al. (2017) and used in Rufener et al. (2021). Under model
+#' assumptions, these should be distributed as standard normal. These residuals
+#' are theoretically preferred over the regular Laplace approximated
+#' randomized-quantile residuals, but will be considerably slower to calculate.
+#'
+#' `"response"` refers to response residuals: observed minus predicted.
+#'
 #' @references
 #' Dunn, P.K. & Smyth, G.K. (1996). Randomized Quantile Residuals. Journal of
 #' Computational and Graphical Statistics, 5, 236–244.
 #'
 #' Smith, J.Q. (1985). Diagnostic checks of non-standard time series models.
 #' Journal of Forecasting, 4, 283–291.
+#'
+#' Rufener, M.-C., Kristensen, K., Nielsen, J.R., and Bastardie, F. 2021.
+#' Bridging the gap between commercial fisheries and survey data to model the
+#' spatiotemporal dynamics of marine species. Ecological Applications. e02453.
+#' \doi{10.1002/eap.2453}
+#'
+#' Thygesen, U.H., Albertsen, C.M., Berg, C.W., Kristensen, K., and Nielsen, A.
+#' 2017. Validation of ecological state space models using the Laplace
+#' approximation. Environ Ecol Stat 24(2): 317–339.
+#' \doi{10.1007/s10651-017-0372-4}
+#'
+#' @examples
+#' if (inla_installed() &&
+#'     require("tmbstan", quietly = TRUE) &&
+#'     require("rstan", quietly = TRUE)) {
+#'
+#'   mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 10)
+#'   fit <- sdmTMB(
+#'     present ~ as.factor(year) + poly(depth, 3),
+#'     data = pcod_2011, mesh = mesh,
+#'     family = binomial()
+#'   )
+#'
+#'   # response residuals will be not be normally distributed unless
+#'   # the family is Gaussian:
+#'   r0 <- residuals(fit, type = "response")
+#'   qqnorm(r0)
+#'   qqline(r0)
+#'
+#'   # quick but can have issues because of Laplace approximation:
+#'   r1 <- residuals(fit, type = "randomized-quantile")
+#'   qqnorm(r1)
+#'   qqline(r1)
+#'
+#'   # MCMC-based with fixed effects at MLEs; best but slowest:
+#'   r2 <- residuals(fit, type = "mle-mcmc-rq")
+#'   qqnorm(r2)
+#'   qqline(r2)
+#' }
+
 residuals.sdmTMB <- function(object,
-                             type = c("randomized-quantile", "response"),
+                             type = c("randomized-quantile", "mle-mcmc-rq", "response"),
                              mu_type = c("mle", "sim"),
+                             mcmc_iter = 200, mcmc_warmup = 199,
+                             print_stan_model = FALSE,
                              ...) {
   if (isTRUE(object$family$delta)) {
     nice_stop(
@@ -157,9 +222,41 @@ residuals.sdmTMB <- function(object,
   y <- y[, 1, drop = TRUE] # in case delta
 
   if (type == "response") {
-    r <- y - mu
+      r <- y - mu
   } else if (type == "randomized-quantile") {
     r <- res_func(object, y, mu, ...)
+  } else if (type == "mle-mcmc-rq") {
+
+    if (!requireNamespace("rstan", quietly = TRUE))
+      abort("rstan must be installed.")
+    if (!requireNamespace("tmbstan", quietly = TRUE))
+      abort("tmbstan must be installed.")
+
+    assert_that(is.numeric(mcmc_iter))
+    assert_that(is.numeric(mcmc_warmup))
+    assert_that(mcmc_warmup < mcmc_iter)
+    # from https://github.com/mcruf/LGNB/blob/8aba1ee2df045c2eb45e124d5a753e8f1c6e865a/R/Validation_and_Residuals.R
+    # get names of random effects in the model
+    if (mu_type == "sim") inform("`mu_type == 'sim'` ignored with MCMC residuals.")
+    obj <- object$tmb_obj
+    random <- unique(names(obj$env$par[obj$env$random]))
+    # get (logical) non random effects indices:
+    pl <- as.list(object$sd_report, "Estimate")
+    fixed <- !(names(pl) %in% random)
+    # fix non-random parameters to their estimated values:
+    map <- lapply(pl[fixed], function(x) factor(rep(NA, length(x))))
+    # construct corresponding new function object:
+    obj <- TMB::MakeADFun(obj$env$data, pl, map = map, DLL = "sdmTMB")
+    # run MCMC to get posterior sample of random effects given data:
+    samp <- tmbstan::tmbstan(obj, chains = 1L, iter = mcmc_iter, warmup = mcmc_warmup)
+    if (print_stan_model) print(samp)
+    temp <- object
+    temp$tmb_obj <- obj
+    temp$tmb_map <- map
+    pred <- predict(temp, tmbstan_model = samp)
+    pred <- as.numeric(pred[, ncol(pred), drop = TRUE])
+    mu <- object$family$linkinv(pred)
+    r <- res_func(temp, y, mu, ...)
   } else {
     abort("`type` not implemented")
   }
