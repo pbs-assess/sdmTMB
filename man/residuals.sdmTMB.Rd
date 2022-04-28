@@ -4,23 +4,86 @@
 \alias{residuals.sdmTMB}
 \title{Residuals method for sdmTMB models}
 \usage{
-\method{residuals}{sdmTMB}(object, type = c("mle", "sim"), ...)
+\method{residuals}{sdmTMB}(
+  object,
+  type = c("randomized-quantile", "mle-mcmc-rq", "response"),
+  mu_type = c("mle", "sim"),
+  mcmc_iter = 200,
+  mcmc_warmup = 199,
+  print_stan_model = FALSE,
+  ...
+)
 }
 \arguments{
 \item{object}{An \code{\link[=sdmTMB]{sdmTMB()}} model}
 
-\item{type}{Type of residual. Residual at the MLE or based on simulations
-from the joint precision matrix are available.}
+\item{type}{Type of residual. See details.}
+
+\item{mu_type}{Type of mean estimate. Residual at the MLE or based on
+simulations from the joint precision matrix.}
+
+\item{mcmc_iter}{Iterations for MCMC residuals. Will take the last one.}
+
+\item{mcmc_warmup}{Warmup for MCMC residuals.}
+
+\item{print_stan_model}{Print the Stan model from MCMC residuals?}
 
 \item{...}{Passed to residual function. Only \code{n} works for binomial.}
 }
 \value{
-A vector of randomized quantile residuals.
+A vector of residuals.
 }
 \description{
-These residuals are randomized quantile residuals (Dunn & Smyth 1996), which
-are also known as probability integral transform (PIT) residuals (Smith
-1985). See the residual-checking vignette: \code{browseVignettes("sdmTMB")} or \href{https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html}{on the documentation site}.
+See the residual-checking vignette: \code{browseVignettes("sdmTMB")} or \href{https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html}{on the documentation site}.
+}
+\details{
+Types of residuals currently supported:
+
+\code{"randomized-quantile"} refers to randomized quantile residuals
+(Dunn & Smyth 1996), which are also known as probability integral transform
+(PIT) residuals (Smith 1985). Under model assumptions, these should be
+distributed as standard normal with the following caveat: the Laplace approximation used
+for the latent/random effects can cause these residuals to deviate from
+the standard normal assumption even if the model is consistent with the data.
+
+\code{"mle-mcmc-rq"} refers to randomized quantile residuals where the fixed
+effects are fixed at their MLE (maximum likelihoood estimate) values and the
+random effects are sampled with MCMC via tmbstan/Stan. As proposed in
+Thygesen et al. (2017) and used in Rufener et al. (2021). Under model
+assumptions, these should be distributed as standard normal. These residuals
+are theoretically preferred over the regular Laplace approximated
+randomized-quantile residuals, but will be considerably slower to calculate.
+
+\code{"response"} refers to response residuals: observed minus predicted.
+}
+\examples{
+if (inla_installed() &&
+    require("tmbstan", quietly = TRUE) &&
+    require("rstan", quietly = TRUE)) {
+
+  mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 10)
+  fit <- sdmTMB(
+    present ~ as.factor(year) + poly(depth, 3),
+    data = pcod_2011, mesh = mesh,
+    family = binomial()
+  )
+
+  # response residuals will be not be normally distributed unless
+  # the family is Gaussian:
+  r0 <- residuals(fit, type = "response")
+  qqnorm(r0)
+  qqline(r0)
+
+  # quick but can have issues because of Laplace approximation:
+  r1 <- residuals(fit, type = "randomized-quantile")
+  qqnorm(r1)
+  qqline(r1)
+
+  # MCMC-based with fixed effects at MLEs; best but slowest:
+  r2 <- residuals(fit, type = "mle-mcmc-rq")
+  qqnorm(r2)
+  qqline(r2)
+}
 }
 \references{
 Dunn, P.K. & Smyth, G.K. (1996). Randomized Quantile Residuals. Journal of
@@ -28,6 +91,16 @@ Computational and Graphical Statistics, 5, 236–244.
 
 Smith, J.Q. (1985). Diagnostic checks of non-standard time series models.
 Journal of Forecasting, 4, 283–291.
+
+Rufener, M.-C., Kristensen, K., Nielsen, J.R., and Bastardie, F. 2021.
+Bridging the gap between commercial fisheries and survey data to model the
+spatiotemporal dynamics of marine species. Ecological Applications. e02453.
+\doi{10.1002/eap.2453}
+
+Thygesen, U.H., Albertsen, C.M., Berg, C.W., Kristensen, K., and Nielsen, A.
+2017. Validation of ecological state space models using the Laplace
+approximation. Environ Ecol Stat 24(2): 317–339.
+\doi{10.1007/s10651-017-0372-4}
 }
 \seealso{
 \code{\link[=dharma_residuals]{dharma_residuals()}}
