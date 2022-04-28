@@ -187,9 +187,9 @@ residuals.sdmTMB <- function(object,
   print_stan_model = FALSE,
   ...) {
   if (isTRUE(object$family$delta)) {
-    nice_stop(
+    stop(
       "`residuals.sdmTMB()` is not setup to work with delta models yet. ",
-      "Try `dharma_residuals()`."
+      "Try `dharma_residuals()`.", call. = FALSE
     )
   }
   # inform(c("`residuals.sdmTMB()` now returns response residuals by default.",
@@ -209,7 +209,7 @@ residuals.sdmTMB <- function(object,
     poisson  = qres_pois,
     student  = qres_student,
     lognormal  = qres_lognormal,
-    nice_stop(paste(object$family$family, "not yet supported."))
+    stop(paste(object$family$family, "not yet supported."), call. = FALSE)
   )
   if (mu_type == "mle") {
     mu <- object$family$linkinv(predict(object, newdata = NULL)$est)
