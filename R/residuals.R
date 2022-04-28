@@ -237,7 +237,7 @@ residuals.sdmTMB <- function(object,
     assert_that(mcmc_warmup < mcmc_iter)
     # from https://github.com/mcruf/LGNB/blob/8aba1ee2df045c2eb45e124d5a753e8f1c6e865a/R/Validation_and_Residuals.R
     # get names of random effects in the model
-    if (mu_type == "sim") inform("`mu_type == 'sim'` ignored with MCMC residuals.")
+    if (mu_type == "sim") message("`mu_type == 'sim'` ignored with MCMC residuals.")
     obj <- object$tmb_obj
     random <- unique(names(obj$env$par[obj$env$random]))
     # get (logical) non random effects indices:
