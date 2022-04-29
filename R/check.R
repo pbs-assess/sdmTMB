@@ -22,17 +22,24 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
   hessian_ok <- eigen_values_ok <- gradients_ok <- se_magnitude_ok <- FALSE
   nlminb_ok <- FALSE
 
+  simplify_msg <- "Try simplifying the model, adjusting the mesh, or adding priors"
+
   if (identical(fit$model$convergence, 0L)) {
     msg <- "Non-linear minimizer suggests successful convergence"
     cli::cli_alert_success(msg)
     nlminb_ok <- TRUE
+  } else {
+    msg <- "Non-linear minimizer did not converge: do not trust this model!"
+    cli::cli_alert_danger(msg)
+    cli::cli_alert_info(simplify_msg)
+    cat("\n")
   }
 
-  simplify_msg <- "Try simplifying the model, adjusting the mesh, or adding priors"
   if (isFALSE(fit$pos_def_hessian)) {
     msg <- "Non-positive-definite Hessian matrix: model may not have converged"
     cli::cli_alert_danger(msg)
     cli::cli_alert_info(simplify_msg)
+    cat("\n")
   } else {
     msg <- "Hessian matrix is positive definite"
     cli::cli_alert_success(msg)
@@ -43,6 +50,7 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
     msg <- "Extreme or very small eigen values detected: model may not have converged"
     cli::cli_alert_danger(msg)
     cli::cli_alert_info(simplify_msg)
+    cat("\n")
   } else {
     msg <- "No extreme or very small eigen values detected"
     cli::cli_alert_success(msg)
@@ -61,6 +69,7 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
       cli::cli_alert_info(msg)
       msg <- "Or refit with `control = sdmTMBcontrol(newton_loops = 1)`"
       cli::cli_alert_info(msg)
+      cat("\n")
     }
   }
 
@@ -83,6 +92,7 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
       cli::cli_alert_danger(c("`", np[i], paste0("` standard error is NA")))
       par_message(np[i])
       cli::cli_alert_info(simplify_msg)
+      cat("\n")
       se_na_ok <- FALSE
     }
   }
@@ -113,6 +123,7 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
       cli::cli_alert_danger(c("`", names(se_big)[i], msg))
       par_message(names(se_big)[i])
       cli::cli_alert_info(simplify_msg)
+      cat("\n")
     }
   }
   if (all(unlist(lapply(se_big, is.null)))) {
@@ -134,6 +145,7 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
         par_message(par_message(np[i]))
         msg <- "Consider omitting this part of the model"
         cli::cli_alert_info(msg)
+        cat("\n")
         sigmas_ok <- FALSE
       }
     }
@@ -153,6 +165,7 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
       cli::cli_alert_danger(msg)
       cli::cli_alert_info(simplify_msg)
       cli::cli_alert_info("Also make sure your spatial coordinates are not too big or small (e.g., work in UTM km instead of UTM m)", wrap = TRUE)
+      cat("\n")
       range_ok <- FALSE
     } else {
       nr <- length(grep("range", b$term))
@@ -203,3 +216,4 @@ par_message <- function(par) {
     cli::cli_alert_info(msg)
   }
 }
+
