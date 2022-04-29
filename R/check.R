@@ -17,7 +17,7 @@
 #'   sanity(fit)
 #' }
 
-sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.01) {
+sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
 
   hessian_ok <- eigen_values_ok <- gradients_ok <- se_magnitude_ok <- FALSE
   nlminb_ok <- FALSE
@@ -57,7 +57,9 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.01) {
         "`", np[i],
         paste0("` gradient > ", gradient_thresh)
       ))
-      msg <- "See `?run_extra_optimization` or `?sdmTMBcontrol`"
+      msg <- "See `?run_extra_optimization()`"
+      cli::cli_alert_info(msg)
+      msg <- "Or refit with `control = sdmTMBcontrol(newton_loops = 1)`"
       cli::cli_alert_info(msg)
     }
   }
@@ -79,6 +81,7 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.01) {
   for (i in seq_along(se)) {
     if (is.na(se[i])) {
       cli::cli_alert_danger(c("`", np[i], paste0("` standard error is NA")))
+      par_message(np[i])
       cli::cli_alert_info(simplify_msg)
       se_ok <- FALSE
     }
@@ -96,7 +99,7 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.01) {
   too_big <- function(est, se) {
     if (any(!is.na(se))) {
       ratio <- se[!is.na(se)] / abs(est[!is.na(se)])
-      if (any(ratio > se_ratio)) TRUE
+      if (any(ratio > se_ratio)) return(TRUE)
     }
   }
   se_big <- mapply(too_big, est, se)
@@ -104,6 +107,7 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.01) {
     if (isTRUE(se_big[[i]])) {
       msg <- "` standard error may be large (> 10x parameter estimate)"
       cli::cli_alert_danger(c("`", names(se_big)[i], msg))
+      par_message(names(se_big)[i])
       cli::cli_alert_info(simplify_msg)
     }
   }
@@ -123,6 +127,7 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.01) {
       if (b$estimate[i] < 1e-3) {
         msg <- "` is smaller than 0.001"
         cli::cli_alert_danger(c("`", b$term[i], msg))
+        par_message(par_message(np[i]))
         msg <- "Consider omitting this part of the model"
         cli::cli_alert_info(msg)
         sigmas_ok <- FALSE
@@ -141,4 +146,30 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.01) {
   all_ok <- all(unlist(ret))
   ret <- c(ret, all_ok = all_ok)
   invisible(ret)
+}
+
+par_df <- function() {
+  data.frame(
+    internal = c("ln_tau_O", "ln_tau_E", "ln_tau_G", "ln_tau_V", "ln_tau_Z", "ln_kappa"),
+    external = c("sigma_O", "sigma_E", "sigma_G", "sigma_V", "sigma_Z", "range"),
+    meaning = c(
+      "spatial standard deviation",
+      "spatiotemporal standard deviation",
+      "random intercept standard deviation",
+      "time-varying coefficient standard deviation",
+      "spatially varying coefficient standard deviation",
+      "distance at which data are effectively independent"
+      ),
+    stringsAsFactors = FALSE
+  )
+}
+
+par_message <- function(par) {
+  df <- par_df()
+  if (par %in% df$internal) {
+    par_clean <- df$external[df$internal == par]
+    meaning <- df$meaning[df$internal == par]
+    cli::cli_alert_info(paste0("`", par, "` is an internal parameter affecting `", par_clean, "`"))
+    cli::cli_alert_info(paste0("`", par_clean, "` is the ", meaning))
+  }
 }
