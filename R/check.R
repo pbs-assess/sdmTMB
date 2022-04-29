@@ -77,16 +77,16 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
   fixed_se <- !names(se) %in% random
   se <- se[fixed_se]
   np <- names(se)
-  se_ok <- TRUE
+  se_na_ok <- TRUE
   for (i in seq_along(se)) {
     if (is.na(se[i])) {
       cli::cli_alert_danger(c("`", np[i], paste0("` standard error is NA")))
       par_message(np[i])
       cli::cli_alert_info(simplify_msg)
-      se_ok <- FALSE
+      se_na_ok <- FALSE
     }
   }
-  if (se_ok) {
+  if (se_na_ok) {
     msg <- "No fixed-effect standard errors are NA"
     cli::cli_alert_success(msg)
   }
@@ -143,9 +143,28 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
     cli::cli_alert_success(msg)
   }
 
+  r1 <- diff(range(fit$data$X))
+  r2 <- diff(range(fit$data$Y))
+  r <- max(r1, r2)
+  range_ok <- TRUE
+  if ("range" %in% b$term) {
+    if (max(b$estimate[b$term == "range"]) > r) {
+      msg <- "A `range` parameter looks fairly large (> greatest distance in data)"
+      cli::cli_alert_danger(msg)
+      cli::cli_alert_info(simplify_msg)
+      cli::cli_alert_info("Also make sure your spatial coordinates are not too big or small (e.g., work in UTM km instead of UTM m)", wrap = TRUE)
+      range_ok <- FALSE
+    } else {
+      nr <- length(grep("range", b$term))
+      if (nr == 1L) msg <- "Range parameter doesn't look unreasonably large"
+      if (nr > 1L) msg <- "Range parameters don't look unreasonably large"
+      cli::cli_alert_success(msg)
+    }
+  }
+
   ret <- named_list(
-    hessian_ok, eigen_values_ok, nlminb_ok,
-    gradients_ok, se_magnitude_ok, se_ok, sigmas_ok
+    hessian_ok, eigen_values_ok, nlminb_ok, range_ok,
+    gradients_ok, se_magnitude_ok, se_na_ok, sigmas_ok
   )
   all_ok <- all(unlist(ret))
   ret <- c(ret, all_ok = all_ok)
@@ -175,5 +194,12 @@ par_message <- function(par) {
     meaning <- df$meaning[df$internal == par]
     cli::cli_alert_info(paste0("`", par, "` is an internal parameter affecting `", par_clean, "`"))
     cli::cli_alert_info(paste0("`", par_clean, "` is the ", meaning))
+  }
+
+  if (par %in% "bs") {
+    msg <- "`bs` is an internal parameter presenting the linear compoment of a smoother"
+    cli::cli_alert_info(msg)
+    msg <- "It's not uncommon for this parameter to have large standard errors,\nwhich can possibly be ignored if the rest of the model looks OK"
+    cli::cli_alert_info(msg)
   }
 }
