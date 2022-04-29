@@ -105,7 +105,11 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
   se_big <- mapply(too_big, est, se)
   for (i in seq_along(se_big)) {
     if (isTRUE(se_big[[i]])) {
-      msg <- "` standard error may be large (> 10x parameter estimate)"
+      msg <- paste0(
+        "` standard error may be large (> ",
+        se_ratio,
+        "x parameter estimate)"
+      )
       cli::cli_alert_danger(c("`", names(se_big)[i], msg))
       par_message(names(se_big)[i])
       cli::cli_alert_info(simplify_msg)
