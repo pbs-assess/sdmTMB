@@ -568,7 +568,7 @@ Type objective_function<Type>::operator()()
   for (int m = 0; m < n_m; m++) {
     for (int i = 0; i < n_i; i++) {
       eta_i(i,m) = eta_fixed_i(i,m) + eta_smooth_i(i,m);
-      if ((n_m == 2 && m == 2) || n_m == 1) {
+      if ((n_m == 2 && m == 1) || n_m == 1) {
         if (!poisson_link_delta) eta_i(i,m) += offset_i(i);
       }
       if (random_walk) {
