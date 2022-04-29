@@ -55,6 +55,7 @@ Depends:
 Imports:
     assertthat,
     clisymbols,
+    cli,
     fishMod,
     generics,
     glmmTMB,
