@@ -4,7 +4,7 @@
 \alias{sanity}
 \title{Sanity check of sdmTMB model}
 \usage{
-sanity(fit, se_ratio = 10, gradient_thresh = 0.01)
+sanity(fit, se_ratio = 10, gradient_thresh = 0.001)
 }
 \arguments{
 \item{fit}{Fitted model from \code{\link[=sdmTMB]{sdmTMB()}}}

@@ -76,13 +76,13 @@ Suggests:
     ggplot2,
     INLA,
     knitr,
-    rgdal,
     rmarkdown,
     rstan,
     sf,
     splancs,
     testthat,
-    tmbstan
+    tmbstan,
+    visreg
 LinkingTo:
     RcppEigen,
     TMB

@@ -502,14 +502,14 @@ predict.sdmTMB <- function(object, newdata = object$data,
           out2 <- do.call("cbind", out2)
         }
         if (is.na(predtype)) {
-          out <- object$family$linkinv[[1]](out1) *
-            object$family$linkinv[[2]](out2)
+          out <- object$family[[1]]$linkinv(out1) *
+            object$family[[2]]$linkinv(out2)
         } else if (predtype == 1L) {
           out <- out1
-          if (type == "response") out <- object$family$linkinv[[1]](out)
+          if (type == "response") out <- object$family[[1]]$linkinv(out)
         } else if (predtype == 2L) {
           out <- out2
-          if (type == "response") out <- object$family$linkinv[[2]](out)
+          if (type == "response") out <- object$family[[2]]$linkinv(out)
         } else {
           abort("`model` type not valid.")
         }
@@ -544,8 +544,8 @@ predict.sdmTMB <- function(object, newdata = object$data,
         nd$epsilon_st1 <- r$proj_epsilon_st_A_vec[,1]
         nd$epsilon_st2 <- r$proj_epsilon_st_A_vec[,2]
         if (type == "response") {
-          nd$est1 <- object$family$linkinv[[1]](nd$est1)
-          nd$est2 <- object$family$linkinv[[2]](nd$est2)
+          nd$est1 <- object$family[[1]]$linkinv(nd$est1)
+          nd$est2 <- object$family[[2]]$linkinv(nd$est2)
           if (object$tmb_data$poisson_link_delta) {
             .n <- nd$est1 # expected group density (already exp())
             .p <- 1 - exp(-.n) # expected encounter rate
@@ -578,29 +578,38 @@ predict.sdmTMB <- function(object, newdata = object$data,
 
     obj <- new_tmb_obj
 
+    if ("visreg_model" %in% names(object)) {
+      model <- object$visreg_model
+    } else {
+      model <- 1L
+    }
+
     if (se_fit) {
       sr <- TMB::sdreport(new_tmb_obj, bias.correct = FALSE)
-      ssr <- summary(sr, "report")
+      sr_est_rep <- as.list(sr, "Estimate", report = TRUE)
+      sr_se_rep <- as.list(sr, "Std. Error", report = TRUE)
       if (pop_pred) {
-        proj_eta <- ssr[row.names(ssr) == "proj_fe", , drop = FALSE]
+        proj_eta <- sr_est_rep[["proj_fe"]]
+        se <- sr_se_rep[["proj_fe"]]
       } else {
-        proj_eta <- ssr[row.names(ssr) == "proj_eta", , drop = FALSE]
+        proj_eta <- sr_est_rep[["proj_eta"]]
+        se <- sr_se_rep[["proj_eta"]]
       }
-      row.names(proj_eta) <- NULL
-      d <- as.data.frame(proj_eta)
-      names(d) <- c("est", "se")
-      nd$est <- d$est
-      nd$est_se <- d$se
+      proj_eta <- proj_eta[,model,drop=TRUE]
+      se <- se[,model,drop=TRUE]
+      nd$est <- proj_eta
+      nd$est_se <- se
     }
 
     if (pop_pred) {
       if (!se_fit) {
-        if (isTRUE(object$family$delta)) {
-          abort("re_form = NA or ~0 and se_fit = FALSE not finished yet for delta models.")
-        } else {
-          nd$est <- r$proj_fe[,1,drop=TRUE] # FIXME re_form_iid??
-        }
+        nd$est <- r$proj_fe[,model,drop=TRUE] # FIXME re_form_iid??
       }
+    }
+
+    orig_dat <- object$tmb_data$y_i
+    if (model == 2L && nrow(nd) == nrow(orig_dat)) {
+      nd <- nd[!is.na(orig_dat[,2]),,drop=FALSE]
     }
 
     if ("sdmTMB_fake_year" %in% names(nd)) {
@@ -729,7 +738,7 @@ check_visreg <- function(sys_calls) {
   visreg_df <- FALSE
   re_form <- NULL
   se_fit <- FALSE
-  if (any(substr(sys_calls, 1, 6) == "visreg")) {
+  if (any(grepl("setupV", substr(sys_calls, 1, 7)))) {
     visreg_df <- TRUE
     re_form <- NA
     if (any(sys_calls == "residuals(fit)")) visreg_df <- FALSE

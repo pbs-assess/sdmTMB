@@ -446,7 +446,7 @@ dharma_residuals <- function(simulated_response, object, plot = TRUE, ...) {
     nice_stop("DHARMa must be installed to use this function.")
   }
 
-  assert_that(class(object) == "sdmTMB")
+  assert_that(inherits(object, "sdmTMB"))
   assert_that(is.logical(plot))
   assert_that(is.matrix(simulated_response))
   assert_that(nrow(simulated_response) == nrow(object$response))

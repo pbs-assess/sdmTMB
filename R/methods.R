@@ -53,13 +53,22 @@ extractAIC.sdmTMB <- function(fit, scale, k = 2, ...) {
 #' @importFrom stats family
 #' @export
 family.sdmTMB <- function (object, ...) {
-  object$family
+  if ("visreg_model" %in% names(object)) {
+    return(object$family[[object$visreg_model]])
+  } else {
+    return(object$family)
+  }
 }
 
 #' @export
 formula.sdmTMB <- function (x, ...) {
-  if (length(x$formula) > 1L)
-    x$formula
-  else
-    x$formula[[1]]
+  if (length(x$formula) > 1L) {
+    if ("visreg_model" %in% names(x)) {
+      return(x$formula[[x$visreg_model]])
+    } else {
+      return(x$formula)
+    }
+  } else {
+    return(x$formula[[1]])
+  }
 }
