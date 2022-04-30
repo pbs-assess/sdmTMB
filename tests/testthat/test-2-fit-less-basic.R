@@ -370,6 +370,9 @@ test_that("Offset works", {
 })
 
 test_that("More esoteric prediction options work", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
   fit <- sdmTMB(
     density ~ depth_scaled,
     data = pcod_2011, mesh = pcod_mesh_2011,
@@ -413,6 +416,9 @@ test_that("More esoteric prediction options work", {
 })
 
 test_that("update works", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
   fit <- sdmTMB(
     density ~ depth_scaled,
     data = pcod_2011, mesh = pcod_mesh_2011,

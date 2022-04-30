@@ -24,7 +24,7 @@
 #' }
 #' }
 plot_anisotropy <- function(object, model = 1) {
-  stopifnot(identical(class(object), "sdmTMB"))
+  stopifnot(inherits(object, "sdmTMB"))
   report <- object$tmb_obj$report(object$tmb_obj$env$last.par.best)
   if (model == 1) eig <- eigen(report$H)
   if (model == 2) eig <- eigen(report$H2)
@@ -78,7 +78,7 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
   if (isTRUE(object$delta))
     nice_stop("This function doesn't work with delta models yet")
 
-  assert_that(class(object) == "sdmTMB")
+  assert_that(inherits(object, "sdmTMB"))
   assert_that(is.logical(ggplot))
   assert_that(is.logical(return_data))
   assert_that(is.logical(se))

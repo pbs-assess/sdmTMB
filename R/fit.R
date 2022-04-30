@@ -620,9 +620,9 @@ sdmTMB <- function(
   assert_that(is.list(priors))
   assert_that(is.list(.control))
   if (!is.null(time)) assert_that(is.character(time))
-  assert_that(identical(class(spde), "sdmTMBmesh"))
+  assert_that(inherits(spde, "sdmTMBmesh"))
   assert_that(class(formula) %in% c("formula", "list"))
-  assert_that("data.frame" %in% class(data))
+  assert_that(inherits(data, "data.frame"))
   if (!is.null(map) && length(map) != length(start)) {
     warn(c("`length(map) != length(start)`.",
       "You likely want to specify `start` values if you are setting the `map` argument."))
@@ -662,7 +662,7 @@ sdmTMB <- function(
   }
 
   # thresholds not yet enabled for delta model, where formula is a list
-  if (class(formula) == "formula") {
+  if (inherits(formula, "formula")) {
     thresh <- list(check_and_parse_thresh_params(formula, data))
     if (delta)
       formula <- list(thresh[[1]]$formula, thresh[[1]]$formula)

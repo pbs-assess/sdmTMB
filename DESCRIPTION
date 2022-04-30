@@ -76,7 +76,6 @@ Suggests:
     ggplot2,
     INLA,
     knitr,
-    rgdal,
     rmarkdown,
     rstan,
     sf,
