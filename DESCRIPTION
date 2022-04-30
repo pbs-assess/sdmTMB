@@ -82,7 +82,8 @@ Suggests:
     sf,
     splancs,
     testthat,
-    tmbstan
+    tmbstan,
+    visreg
 LinkingTo:
     RcppEigen,
     TMB

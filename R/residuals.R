@@ -108,6 +108,7 @@ qres_beta <- function(object, y, mu) {
 #' @param mcmc_iter Iterations for MCMC residuals. Will take the last one.
 #' @param mcmc_warmup Warmup for MCMC residuals.
 #' @param print_stan_model Print the Stan model from MCMC residuals?
+#' @param model Which delta/hurdle model component?
 #' @param ... Passed to residual function. Only `n` works for binomial.
 #' @export
 #' @importFrom stats predict
@@ -185,20 +186,37 @@ residuals.sdmTMB <- function(object,
                              mu_type = c("mle", "sim"),
                              mcmc_iter = 200, mcmc_warmup = 199,
                              print_stan_model = FALSE,
+                             model = c(1, 2),
                              ...) {
-  if (isTRUE(object$family$delta)) {
-    nice_stop(
-      "`residuals.sdmTMB()` is not setup to work with delta models yet. ",
-      "Try `dharma_residuals()`."
-    )
+  # if (isTRUE(object$family$delta)) {
+  #   nice_stop(
+  #     "`residuals.sdmTMB()` is not setup to work with delta models yet. ",
+  #     "Try `dharma_residuals()`."
+  #   )
+  # }
+
+  model <- as.integer(model[[1]])
+  if ("visreg_model" %in% names(object)) {
+    model <- object$visreg_model
   }
+
   # inform(c("`residuals.sdmTMB()` now returns response residuals by default.",
   #   "Use `type = 'randomized-quantile'` for randomized quantile residuals."))
   # message("Consider using `dharma_residuals()` instead.")
   type <- match.arg(type)
   mu_type <- match.arg(mu_type)
 
-  res_func <- switch(object$family$family,
+  fam <- object$family$family
+  nd <- NULL
+  est_column <- "est"
+  linkinv <- object$family$linkinv
+  if (isTRUE(object$family$delta)) {
+    fam <- fam[[model]]
+    linkinv <-  object$family[[model]]$linkinv
+    nd <- object$data
+    est_column <- if (model == 1L) "est1" else "est2"
+  }
+  res_func <- switch(fam,
     gaussian = qres_gaussian,
     binomial = qres_binomial,
     tweedie  = qres_tweedie,
@@ -209,17 +227,22 @@ residuals.sdmTMB <- function(object,
     poisson  = qres_pois,
     student  = qres_student,
     lognormal  = qres_lognormal,
-    nice_stop(paste(object$family$family, "not yet supported."))
+    nice_stop(paste(fam, "not yet supported."))
   )
+
   if (mu_type == "mle") {
-    mu <- object$family$linkinv(predict(object, newdata = NULL)$est)
+    mu <- linkinv(predict(object, newdata = nd)[[est_column]])
   } else if (mu_type == "sim") {
-    mu <- object$family$linkinv(predict(object, nsim = 1L)[, 1L, drop = TRUE])
+    mu <- linkinv(predict(object, nsim = 1L, model = model)[, 1L, drop = TRUE])
   } else {
     abort("`mu_type` not implemented")
   }
   y <- object$response
-  y <- y[, 1, drop = TRUE] # in case delta
+  y <- y[, model, drop = TRUE] # in case delta
+  # e.g., visreg, prediction has already removed NA mu:
+  if (sum(is.na(y)) > 0 && length(mu) < length(y)) {
+    y <- y[!is.na(y)]
+  }
 
   if (type == "response") {
       r <- y - mu
@@ -253,9 +276,9 @@ residuals.sdmTMB <- function(object,
     temp <- object
     temp$tmb_obj <- obj
     temp$tmb_map <- map
-    pred <- predict(temp, tmbstan_model = samp)
+    pred <- predict(temp, tmbstan_model = samp, model = model)
     pred <- as.numeric(pred[, ncol(pred), drop = TRUE])
-    mu <- object$family$linkinv(pred)
+    mu <- linkinv(pred)
     r <- res_func(temp, y, mu, ...)
   } else {
     abort("`type` not implemented")

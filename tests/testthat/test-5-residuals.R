@@ -199,16 +199,26 @@ test_that("residuals() works", {
 
   fit <- sdmTMB(density ~ 1,
     data = pcod, mesh = pcod_spde,
-    family = delta_gamma(), spatial = "off",
+    family = delta_gamma(), spatial = "on",
     control = sdmTMBcontrol(newton_loops = 1)
   )
-  expect_error(r <- residuals(fit), regexp = "delta")
+  r <- residuals(fit)
+  r <- residuals(fit, model = 1)
+  qqnorm(r)
+  set.seed(1)
+  r <- residuals(fit, model = 2)
+  qqnorm(r[!is.na(r)])
 
-  fit <- sdmTMB(density ~ 1,
-    data = pcod, mesh = pcod_spde,
-    family = delta_poisson_link_gamma(), spatial = "off",
+  # matches the Gamma positive-only model:
+  pos <- subset(pcod, density > 0)
+  mesh <- make_mesh(pos, c("X", "Y"), mesh = pcod_spde$mesh)
+  fit2 <- sdmTMB(density ~ 1,
+    data = pos, mesh = mesh,
+    family = Gamma(link = "log"), spatial = "on",
     control = sdmTMBcontrol(newton_loops = 1)
   )
-  expect_error(r <- residuals(fit), regexp = "delta")
+  set.seed(1)
+  rpos <- residuals(fit2)
+  expect_equal(as.double(r[!is.na(r)]), rpos)
 
   })

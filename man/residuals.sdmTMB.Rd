@@ -11,6 +11,7 @@
   mcmc_iter = 200,
   mcmc_warmup = 199,
   print_stan_model = FALSE,
+  model = c(1, 2),
   ...
 )
 }
@@ -27,6 +28,8 @@ simulations from the joint precision matrix.}
 \item{mcmc_warmup}{Warmup for MCMC residuals.}
 
 \item{print_stan_model}{Print the Stan model from MCMC residuals?}
+
+\item{model}{Which delta/hurdle model component?}
 
 \item{...}{Passed to residual function. Only \code{n} works for binomial.}
 }
