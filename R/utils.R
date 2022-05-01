@@ -244,7 +244,9 @@ check_valid_factor_levels <- function(x, .name = "") {
 #'
 #' @export
 inla_installed <- function() {
-  requireNamespace("INLA", quietly = TRUE)
+  r1 <- requireNamespace("INLA", quietly = TRUE)
+  r2 <- requireNamespace("rgdal", quietly = TRUE)
+  r1 && r2
 }
 
 remove_s_and_t2 <- function(formula) {
