@@ -45,8 +45,9 @@ test_that("randomized quantile residuals work,", {
     r <- residuals(fit)
     qqnorm(r)
     qqline(r)
-    # p <- stats::shapiro.test(r)
-    # expect_gt(p$p.value, 0.05)
+    p <- stats::shapiro.test(r)
+    expect_gt(p$p.value, 0.01)
+    invisible(r)
   }
   check_resids_dharma <- function(fit) {
     set.seed(1)
@@ -59,6 +60,7 @@ test_that("randomized quantile residuals work,", {
     family = gaussian(),
     data = d, mesh = mesh
   )
+  check_resids(fit)
   check_resids(fit)
   check_resids_dharma(fit)
 
