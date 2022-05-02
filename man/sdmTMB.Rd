@@ -25,29 +25,25 @@ sdmTMB(
   priors = sdmTMBpriors(),
   previous_fit = NULL,
   experimental = NULL,
-  do_fit = TRUE,
-  spatial_only = deprecated(),
-  fields = deprecated(),
-  include_spatial = deprecated(),
-  spde = deprecated(),
-  ...
+  do_fit = TRUE
 )
 }
 \arguments{
-\item{formula}{Model formula.  For index standardization, you may wish
-to include \code{0 + as.factor(year)} (or whatever the time column is called)
-in the formula. IID random intercepts are possible using \pkg{lme4}
-syntax, e.g., \code{+ (1 | g)} where \code{g} is a column with factor levels.
-Penalized splines are possible via \pkg{mgcv} with \code{s()}. See examples
-and details below.}
+\item{formula}{Model formula. IID random intercepts are possible using
+\pkg{lme4} syntax, e.g., \code{+ (1 | g)} where \code{g} is a column of class
+character or factor representing groups. Penalized splines are possible via
+\pkg{mgcv} with \code{s()}. Optionally a list for delta (hurdle) models.  See
+examples and details below. For index standardization, see details section
+below.}
 
 \item{data}{A data frame.}
 
 \item{mesh}{An object from \code{\link[=make_mesh]{make_mesh()}}.}
 
 \item{time}{An optional time column name (as character). Can be left as
-\code{NULL} for a model with only spatial random fields unless you wish to use
-one of the index or center of gravity functions over time.}
+\code{NULL} for a model with only spatial random fields; however, if the data
+are actually spatiotemporal and you wish to use \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}}
+downstream, supply the time argument.}
 
 \item{family}{The family and link. Supports \code{\link[=gaussian]{gaussian()}}, \code{\link[=Gamma]{Gamma()}},
 \code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, \code{\link[sdmTMB:families]{Beta()}},
@@ -61,11 +57,11 @@ one of the index or center of gravity functions over time.}
 \code{\link[sdmTMB:families]{delta_gamma()}},
 \code{\link[sdmTMB:families]{delta_lognormal()}}, and
 \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}},
-For binomial family options, see the 'Binomial families' in the Details
+For binomial family options, see 'Binomial families' in the Details
 section below.}
 
-\item{spatial}{Estimate spatial random fields? Options are
-\code{'on'} / \code{'off'} or \code{TRUE} / \code{FALSE}.}
+\item{spatial}{Estimate spatial random fields? Options are \code{'on'} / \code{'off'}
+or \code{TRUE} / \code{FALSE}. Optionaly a list for delta models, e.g. \code{list('on', 'off')}.}
 
 \item{spatiotemporal}{Estimate the spatiotemporal random fields as \code{'IID'}
 (independent and identically distributed; default), stationary \code{'AR1'}
@@ -77,25 +73,27 @@ process in the case of the AR1. I.e., it is scaled according to the
 correlation. See the \href{https://kaskr.github.io/adcomp/classAR1__t.html}{TMB documentation}. If the AR1
 correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
 may wish to switch to the random walk \code{"RW"}. Capitalization is ignored.
-\code{TRUE} gets converted to \code{'iid'} and \code{FALSE} gets converted to \code{off}.}
+\code{TRUE} gets converted to \code{'IID'} and \code{FALSE} gets converted to \code{off}.}
 
 \item{share_range}{Logical: estimate a shared spatial and spatiotemporal
-range parameter (\code{TRUE}) or independent range parameters (\code{FALSE}).
-If a delta model, can be a list. E.g., \code{list(TRUE, FALSE)}.}
+range parameter (\code{TRUE}) or independent range parameters (\code{FALSE}). If a
+delta model, can be a list. E.g., \code{list(TRUE, FALSE)}.}
 
 \item{time_varying}{An optional one-sided formula describing covariates that
 should be modelled as a random walk through time. Be careful not to include
 covariates (including the intercept) in both the main and time-varying
-formula. I.e., at least one should have \code{~ 0} or \code{~ -1}.}
+formula. I.e., at least one should have \code{~ 0} or \code{~ -1}. Structure must
+currently be shared in delta models.}
 
-\item{spatial_varying}{An optional one-sided formula \strong{with a single
-predictor} of a coefficient that should varying in space as a random
-field. Note that you may want to include a fixed effect for the same
-variable to improve interpretability. If the (scaled) time column, will
-represent a local-time-trend model. See \doi{10.1111/ecog.05176} and the
-\href{https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.
+\item{spatial_varying}{An optional one-sided formula of a coefficients that
+should varying in space as random fields. Note that you likely want to
+include a fixed effect for the same variable to improve interpretability
+since the random field is assumed to have a mean of 0.
+If the (scaled) time column, will represent a local-time-trend model. See
+\doi{10.1111/ecog.05176} and the \href{https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.
 Note this predictor should be centered to have mean zero and have a
-standard deviation of approximately 1 (scale by the SD).}
+standard deviation of approximately 1 (scale by the SD). Structure must
+currently be shared in delta models.}
 
 \item{weights}{A numeric vector representing optional likelihood weights for
 the conditional model. Implemented as in \pkg{glmmTMB}: weights do not have
@@ -105,56 +103,37 @@ a name of the variable in the data frame. See the Details section below.}
 
 \item{offset}{A numeric vector representing the model offset. In delta/hurdle
 models, this applies only to the positive component. Usually a log
-transformed variable. Not used in any prediction.}
+transformed variable. \emph{Not included in any prediction.}}
 
 \item{extra_time}{Optional extra time slices (e.g., years) to include for
-interpolation or forecasting with the predict function. See the
-Details section below.}
+interpolation or forecasting with the predict function. See the Details
+section below.}
 
 \item{reml}{Logical: use REML (restricted maximum likelihood) estimation
-rather than maximum likelihood? Internally, this adds the fixed effects
-to the list of random effects to integrate over.}
+rather than maximum likelihood? Internally, this adds the fixed effects to
+the list of random effects to integrate over.}
 
-\item{silent}{Silent or include optimization details?}
+\item{silent}{Silent or include optimization details? Helpful to set to
+\code{FALSE} for models that take a while to fit.}
 
-\item{anisotropy}{Logical: allow for anisotropy? See \code{\link[=plot_anisotropy]{plot_anisotropy()}}.}
+\item{anisotropy}{Logical: allow for anisotropy? See \code{\link[=plot_anisotropy]{plot_anisotropy()}}.
+Must be shared across delta models.}
 
 \item{control}{Optimization control options via \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}.}
 
-\item{priors}{Optional penalties/priors via \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}.}
+\item{priors}{Optional penalties/priors via \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}. Must currently
+be shared across delta models.}
 
 \item{previous_fit}{A previously fitted sdmTMB model to initialize the
-optimization with. Can greatly speed up fitting. Note that the data and
-model must be set up \emph{exactly} the same way. However, the \code{weights} argument
-can change, which can be useful for cross-validation.}
+optimization with. Can greatly speed up fitting. Note that the model must
+be set up \emph{exactly} the same way. However, the \code{weights} argument can
+change, which can be useful for cross-validation.}
 
-\item{experimental}{A named list for esoteric or in-development options.
-Here be dragons.
-(Experimental) A column name (as character) of a
-predictor of a linear trend (in log space) of the spatiotemporal standard
-deviation. By default, this is \code{NULL} and fits a model with a constant
-spatiotemporal variance. However, this argument can also be a character
-name in the original data frame (a covariate that ideally has been
-standardized to have mean 0 and standard deviation = 1). Because the
-spatiotemporal field varies by time step, the standardization should be
-done by time. If the name of a predictor is included, a log-linear model is
-fit where the predictor is used to model effects on the standard deviation,
-e.g. \code{log(sd(i)) = B0 + B1 * epsilon_predictor(i)}. The 'epsilon_model' argument may also
-be specified. This is the name of the model to use to modeling time-varying epsilon. This
-can be one of the following: "trend" (default, fits a linear model without random effects),
-"re" (fits a model with random effects in epsilon_st, but no trend), and "trend-re" (a model
-that includes both the trend and random effects)}
+\item{experimental}{A named list for esoteric or in-development options. Here
+be dragons.}
 
 \item{do_fit}{Fit the model (\code{TRUE}) or return the processed data without
 fitting (\code{FALSE})?}
-
-\item{spatial_only}{\strong{Deprecated.} Replaced by \code{spatiotemporal = "off"}.}
-
-\item{fields}{\strong{Deprecated.} Replaced by \code{spatiotemporal}.}
-
-\item{include_spatial}{\strong{Deprecated.} Replaced by \code{spatial}.}
-
-\item{spde}{\strong{Deprecated.} Replaced by \code{mesh}.}
 
 \item{...}{Not currently used.}
 }
@@ -166,7 +145,7 @@ An object (list) of class \code{sdmTMB}. Useful elements include:
 \item \code{model}: output from \code{\link[stats:nlminb]{stats::nlminb()}}
 \item \code{data}: the fitted data
 \item \code{mesh}: the object that was supplied to the \code{mesh} argmument
-\item \code{family}: the family object, which includes the inverse link function
+\item \code{family}: the family object, which includes the inverse link function as \code{family$linkinv()}
 \item \code{tmb_params}: The parameters list passed to \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}
 \item \code{tmb_map}: The 'map' list passed to \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}
 \item \code{tmb_data}: The data list passed to \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}
@@ -174,18 +153,18 @@ An object (list) of class \code{sdmTMB}. Useful elements include:
 }
 }
 \description{
-Fit a spatial or spatiotemporal Gaussian random field GLMM with TMB using
-the SPDE approach.
-This can be useful for (dynamic) species distribution models and relative
-abundance index standardization among many other uses.
+Fit a spatial or spatiotemporal Gaussian random field generalized linear
+mixed effects model (GLMM) with R package TMB (Template Model Builder) and
+the SPDE (stochastic partial differential equation) approach. This can be
+useful for (dynamic) species distribution models and relative abundance index
+standardization among many other uses.
 }
 \details{
 \strong{Model description}
 
-For now, see the
-\href{https://pbs-assess.github.io/sdmTMB/articles/model-description.html}{model description}
-vignette for a start. There are also descriptions of particular models in
-Anderson et al. (2019) and Barnett et al. (2020) (see reference list below).
+See the \href{https://pbs-assess.github.io/sdmTMB/articles/model-description.html}{model description}
+vignette or the relevant appendix of the preprint on sdmTMB:
+\doi{10.1101/2022.03.24.485545}
 
 \strong{Binomial families}
 
@@ -224,7 +203,8 @@ function of the 50\% and 95\% values. This is similar to length- or size-based
 selectivity in fisheries, and is parameterized by the points at which f(x) =
 0.5 or 0.95. See the vignette.
 
-Note that only a single threshold covariate can be included.
+Note that only a single threshold covariate can be included and threshold
+models are not yet implemented for the delta families.
 
 See the
 \href{https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html}{threshold vignette}.
@@ -258,10 +238,35 @@ You will need to specify the \code{time} argument. See \code{\link[=get_index]{g
 \strong{Regularization and priors}
 
 You can achieve regularization via penalties (priors) on the fixed effect
-parameters. See \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}.
-You can fit the model once without penalties and inspect the element
+parameters. See \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}. You can fit the model once without
+penalties and look at the output of \code{print(your_model)} or \code{tidy(your_model)}
+or fit the model with \code{do_fit = FALSE} and inspect
 \code{head(your_model$tmb_data$X_ij)} if you want to see how the formula is
 translated to the fixed effect model matrix.
+
+\strong{Delta/hurdle models}
+
+Delta models (also known as hurdle models) can be fit as two separate models
+or at the same time by using an appropriate delta family. E.g.:
+\code{\link[sdmTMB:families]{delta_gamma()}},
+\code{\link[sdmTMB:families]{delta_lognormal()}}, and
+\code{\link[sdmTMB:families]{delta_truncated_nbinom2()}}.
+If fit with a delta family, by default the formula, spatial, and
+spatiotemporal structure etc. will be shared between the two model
+components. Some elements can be specified independently for the two models
+using a list format. These include \code{formula}, \code{spatial}, \code{spatiotemporal},
+\code{share_range}. The first element of the list is for the binomial component
+and the second element is for the positive component (e.g., Gamma).
+Other elements must be shared for now (e.g., spatially varying coefficients,
+time-varying coefficients). Furthermore, there are currently limitations if
+specifying two formulas as a list: the two formulas cannot have smoothers,
+threshold effects, or random intercepts. For now, these must be specificed
+through a single formula that is shared across the two models.
+
+The main advantage of specifying such models using a delta family is (1)
+coding simplicity and (2) calculation of uncertainty on derived quantities
+such as an index of abundance with \code{\link[=get_index]{get_index()}} using the generalized delta
+method within TMB.
 }
 \examples{
 if (inla_installed()) {
@@ -368,12 +373,22 @@ AIC(fit, fit_glm)
 
 # Delta/hurdle binomial-Gamma model:
 fit_dg <- sdmTMB(
-  density ~ poly(log(depth)),
+  density ~ poly(log(depth), 2),
   data = pcod_2011, mesh = mesh,
   spatial = "off",
   family = delta_gamma() #<
 )
 fit_dg
+
+# Delta model with different formulas and spatial structure:
+fit_dg <- sdmTMB(
+  density ~ list(depth_scaled, poly(depth_scaled, 2)), #<
+  data = pcod_2011, mesh = mesh,
+  spatial = c("off", "on"), #<
+  family = delta_gamma()
+)
+fit_dg
+
 
 # Delta/hurdle Poisson-link (cloglog link):
 fit_pg <- sdmTMB(
@@ -447,27 +462,48 @@ fit
 }
 }
 \references{
-Main reference introducing the package to cite when using sdmTMB:
+\emph{Main reference introducing the package to cite when using sdmTMB:}
 
 Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett. 2022. sdmTMB: an R
 package for fast, flexible, and user-friendly generalized linear mixed effects
 models with spatial and spatiotemporal random fields.
 bioRxiv 2022.03.24.485545; \doi{10.1101/2022.03.24.485545}.
 
-Reference for local trends:
+\emph{Reference for local trends:}
 
 Barnett, L.A.K., E.J. Ward, S.C. Anderson. Improving estimates of species
 distribution change by incorporating local trends. Ecography. 44(3):427-439.
 \doi{10.1111/ecog.05176}.
 
-Further explanation of the model and application to calculating climate
-velocities:
+\emph{Further explanation of the model and application to calculating climate
+velocities:}
 
 English, P., E.J. Ward, C.N. Rooper, R.E. Forrest, L.A. Rogers, K.L. Hunter,
 A.M. Edwards, B.M. Connors, S.C. Anderson. 2021. Contrasting climate velocity
 impacts in warm and cool locations show that effects of marine warming are
 worse in already warmer temperate waters. In press at Fish and Fisheries.
 \doi{10.1111/faf.12613}.
+
+\emph{Discussion of and illustration of some decision points when fitting these
+models:}
+
+Commander, C.J.C., Barnett, L.A.K., Ward, E.J., Anderson, S.C., and
+Essington, T.E. 2022. The shadow model: how and why small choices in
+spatially explicit species distribution models affect predictions. PeerJ 10:
+e12783. \doi{10.7717/peerj.12783}.
+
+\emph{Application and description of the threshold/break-point models:}
+
+Essington, T.E. S.C. Anderson, L.A.K. Barnett, H.M. Berger, S.A. Siedlecki,
+E.J. Ward. Advancing statistical models to reveal the effect of dissolved
+oxygen on the spatial distribution of marine taxa using thresholds and a
+physiologically based index. In press at Ecography. \doi{10.1111/ecog.06249}.
+
+\emph{Application to fish body condition}:
+
+Lindmark, M., S.C. Anderson, M. Gogina, M. Casini. Evaluating drivers of
+spatiotemporal individual condition of a bottom-associated marine fish.
+bioRxiv 2022.04.19.488709. \doi{10.1101/2022.04.19.488709}.
 
 Code for implementing the barrier-SPDE written by Olav Nikolai Breivik and
 Hans Skaug.

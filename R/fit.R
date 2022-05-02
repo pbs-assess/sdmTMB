@@ -3,22 +3,24 @@ NULL
 
 #' Fit a spatial or spatiotemporal GLMM with TMB
 #'
-#' Fit a spatial or spatiotemporal Gaussian random field GLMM with TMB using
-#' the SPDE approach.
-#' This can be useful for (dynamic) species distribution models and relative
-#' abundance index standardization among many other uses.
+#' Fit a spatial or spatiotemporal Gaussian random field generalized linear
+#' mixed effects model (GLMM) with R package TMB (Template Model Builder) and
+#' the SPDE (stochastic partial differential equation) approach. This can be
+#' useful for (dynamic) species distribution models and relative abundance index
+#' standardization among many other uses.
 #'
-#' @param formula Model formula.  For index standardization, you may wish
-#'   to include `0 + as.factor(year)` (or whatever the time column is called)
-#'   in the formula. IID random intercepts are possible using \pkg{lme4}
-#'   syntax, e.g., `+ (1 | g)` where `g` is a column with factor levels.
-#'   Penalized splines are possible via \pkg{mgcv} with `s()`. See examples
-#'   and details below.
+#' @param formula Model formula. IID random intercepts are possible using
+#'   \pkg{lme4} syntax, e.g., `+ (1 | g)` where `g` is a column of class
+#'   character or factor representing groups. Penalized splines are possible via
+#'   \pkg{mgcv} with `s()`. Optionally a list for delta (hurdle) models.  See
+#'   examples and details below. For index standardization, see details section
+#'   below.
 #' @param data A data frame.
 #' @param mesh An object from [make_mesh()].
 #' @param time An optional time column name (as character). Can be left as
-#'   `NULL` for a model with only spatial random fields unless you wish to use
-#'   one of the index or center of gravity functions over time.
+#'   `NULL` for a model with only spatial random fields; however, if the data
+#'   are actually spatiotemporal and you wish to use [get_index()] or [get_cog()]
+#'   downstream, supply the time argument.
 #' @param family The family and link. Supports [gaussian()], [Gamma()],
 #'   [binomial()], [poisson()], \code{\link[sdmTMB:families]{Beta()}},
 #'   \code{\link[sdmTMB:families]{nbinom2()}},
@@ -31,10 +33,11 @@ NULL
 #'   \code{\link[sdmTMB:families]{delta_gamma()}},
 #'   \code{\link[sdmTMB:families]{delta_lognormal()}}, and
 #'   \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}},
-#'   For binomial family options, see the 'Binomial families' in the Details
+#'   For binomial family options, see 'Binomial families' in the Details
 #'   section below.
-#' @param spatial Estimate spatial random fields? Options are
-#'   `'on'` / `'off'` or `TRUE` / `FALSE`.
+#' @param spatial Estimate spatial random fields? Options are `'on'` / `'off'`
+#'   or `TRUE` / `FALSE`. Optionaly a list for delta models, e.g. `list('on',
+#'   'off')`.
 #' @param spatiotemporal Estimate the spatiotemporal random fields as `'IID'`
 #'   (independent and identically distributed; default), stationary `'AR1'`
 #'   (first-order autoregressive), as a random walk (`'RW'`), or as fixed at 0
@@ -46,23 +49,25 @@ NULL
 #'   documentation](https://kaskr.github.io/adcomp/classAR1__t.html). If the AR1
 #'   correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
 #'   may wish to switch to the random walk `"RW"`. Capitalization is ignored.
-#'   `TRUE` gets converted to `'iid'` and `FALSE` gets converted to `off`.
+#'   `TRUE` gets converted to `'IID'` and `FALSE` gets converted to `off`.
 #' @param share_range Logical: estimate a shared spatial and spatiotemporal
-#'   range parameter (`TRUE`) or independent range parameters (`FALSE`).
-#'   If a delta model, can be a list. E.g., `list(TRUE, FALSE)`.
+#'   range parameter (`TRUE`) or independent range parameters (`FALSE`). If a
+#'   delta model, can be a list. E.g., `list(TRUE, FALSE)`.
 #' @param time_varying An optional one-sided formula describing covariates that
 #'   should be modelled as a random walk through time. Be careful not to include
 #'   covariates (including the intercept) in both the main and time-varying
-#'   formula. I.e., at least one should have `~ 0` or `~ -1`.
-#' @param spatial_varying An optional one-sided formula **with a single
-#'   predictor** of a coefficient that should varying in space as a random
-#'   field. Note that you may want to include a fixed effect for the same
-#'   variable to improve interpretability. If the (scaled) time column, will
-#'   represent a local-time-trend model. See \doi{10.1111/ecog.05176} and the
-#'   [spatial trends
+#'   formula. I.e., at least one should have `~ 0` or `~ -1`. Structure must
+#'   currently be shared in delta models.
+#' @param spatial_varying An optional one-sided formula of a coefficients that
+#'   should varying in space as random fields. Note that you likely want to
+#'   include a fixed effect for the same variable to improve interpretability
+#'   since the random field is assumed to have a mean of 0.
+#'   If the (scaled) time column, will represent a local-time-trend model. See
+#'   \doi{10.1111/ecog.05176} and the [spatial trends
 #'   vignette](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html).
-#'    Note this predictor should be centered to have mean zero and have a
-#'   standard deviation of approximately 1 (scale by the SD).
+#'   Note this predictor should be centered to have mean zero and have a
+#'   standard deviation of approximately 1 (scale by the SD). Structure must
+#'   currently be shared in delta models.
 #' @param weights A numeric vector representing optional likelihood weights for
 #'   the conditional model. Implemented as in \pkg{glmmTMB}: weights do not have
 #'   to sum to one and are not internally modified. Can also be used for trials
@@ -70,43 +75,43 @@ NULL
 #'   a name of the variable in the data frame. See the Details section below.
 #' @param offset A numeric vector representing the model offset. In delta/hurdle
 #'   models, this applies only to the positive component. Usually a log
-#'   transformed variable. Not used in any prediction.
+#'   transformed variable. *Not included in any prediction.*
 #' @param extra_time Optional extra time slices (e.g., years) to include for
-#'   interpolation or forecasting with the predict function. See the
-#'   Details section below.
+#'   interpolation or forecasting with the predict function. See the Details
+#'   section below.
 #' @param reml Logical: use REML (restricted maximum likelihood) estimation
-#'   rather than maximum likelihood? Internally, this adds the fixed effects
-#'   to the list of random effects to integrate over.
-#' @param silent Silent or include optimization details?
+#'   rather than maximum likelihood? Internally, this adds the fixed effects to
+#'   the list of random effects to integrate over.
+#' @param silent Silent or include optimization details? Helpful to set to
+#'   `FALSE` for models that take a while to fit.
 #' @param anisotropy Logical: allow for anisotropy? See [plot_anisotropy()].
+#'   Must be shared across delta models.
 #' @param control Optimization control options via [sdmTMBcontrol()].
-#' @param priors Optional penalties/priors via [sdmTMBpriors()].
+#' @param priors Optional penalties/priors via [sdmTMBpriors()]. Must currently
+#'   be shared across delta models.
 #' @param previous_fit A previously fitted sdmTMB model to initialize the
-#'   optimization with. Can greatly speed up fitting. Note that the data and
-#'   model must be set up *exactly* the same way. However, the `weights` argument
-#'   can change, which can be useful for cross-validation.
+#'   optimization with. Can greatly speed up fitting. Note that the model must
+#'   be set up *exactly* the same way. However, the `weights` argument can
+#'   change, which can be useful for cross-validation.
 #' @param do_fit Fit the model (`TRUE`) or return the processed data without
 #'   fitting (`FALSE`)?
-#' @param experimental A named list for esoteric or in-development options.
-#'    Here be dragons.
-#'   (Experimental) A column name (as character) of a
-#'   predictor of a linear trend (in log space) of the spatiotemporal standard
-#'   deviation. By default, this is `NULL` and fits a model with a constant
-#'   spatiotemporal variance. However, this argument can also be a character
-#'   name in the original data frame (a covariate that ideally has been
-#'   standardized to have mean 0 and standard deviation = 1). Because the
-#'   spatiotemporal field varies by time step, the standardization should be
-#'   done by time. If the name of a predictor is included, a log-linear model is
-#'   fit where the predictor is used to model effects on the standard deviation,
-#'   e.g. `log(sd(i)) = B0 + B1 * epsilon_predictor(i)`. The 'epsilon_model' argument may also
-#' be specified. This is the name of the model to use to modeling time-varying epsilon. This
-#' can be one of the following: "trend" (default, fits a linear model without random effects),
-#' "re" (fits a model with random effects in epsilon_st, but no trend), and "trend-re" (a model
-#' that includes both the trend and random effects)
-#' @param fields **Deprecated.** Replaced by `spatiotemporal`.
-#' @param include_spatial **Deprecated.** Replaced by `spatial`.
-#' @param spatial_only **Deprecated.** Replaced by `spatiotemporal = "off"`.
-#' @param spde **Deprecated.** Replaced by `mesh`.
+#' @param experimental A named list for esoteric or in-development options. Here
+#'   be dragons.
+#   (Experimental) A column name (as character) of a predictor of a
+#   linear trend (in log space) of the spatiotemporal standard deviation. By
+#   default, this is `NULL` and fits a model with a constant spatiotemporal
+#   variance. However, this argument can also be a character name in the
+#   original data frame (a covariate that ideally has been standardized to have
+#   mean 0 and standard deviation = 1). Because the spatiotemporal field varies
+#   by time step, the standardization should be done by time. If the name of a
+#   predictor is included, a log-linear model is fit where the predictor is
+#   used to model effects on the standard deviation, e.g. `log(sd(i)) = B0 + B1
+#   * epsilon_predictor(i)`. The 'epsilon_model' argument may also be
+#   specified. This is the name of the model to use to modeling time-varying
+#   epsilon. This can be one of the following: "trend" (default, fits a linear
+#   model without random effects), "re" (fits a model with random effects in
+#   epsilon_st, but no trend), and "trend-re" (a model that includes both the
+#   trend and random effects)
 #' @param ... Not currently used.
 #' @importFrom methods as is
 #' @importFrom rlang abort warn inform
@@ -124,7 +129,7 @@ NULL
 #' * `model`: output from [stats::nlminb()]
 #' * `data`: the fitted data
 #' * `mesh`: the object that was supplied to the `mesh` argmument
-#' * `family`: the family object, which includes the inverse link function
+#' * `family`: the family object, which includes the inverse link function as `family$linkinv()`
 #' * `tmb_params`: The parameters list passed to [TMB::MakeADFun()]
 #' * `tmb_map`: The 'map' list passed to [TMB::MakeADFun()]
 #' * `tmb_data`: The data list passed to [TMB::MakeADFun()]
@@ -134,10 +139,9 @@ NULL
 #'
 #' **Model description**
 #'
-#' For now, see the
-#' [model description](https://pbs-assess.github.io/sdmTMB/articles/model-description.html)
-#' vignette for a start. There are also descriptions of particular models in
-#' Anderson et al. (2019) and Barnett et al. (2020) (see reference list below).
+#' See the [model description](https://pbs-assess.github.io/sdmTMB/articles/model-description.html)
+#' vignette or the relevant appendix of the preprint on sdmTMB:
+#' \doi{10.1101/2022.03.24.485545}
 #'
 #' **Binomial families**
 #'
@@ -176,7 +180,8 @@ NULL
 #' selectivity in fisheries, and is parameterized by the points at which f(x) =
 #' 0.5 or 0.95. See the vignette.
 #'
-#' Note that only a single threshold covariate can be included.
+#' Note that only a single threshold covariate can be included and threshold
+#' models are not yet implemented for the delta families.
 #'
 #' See the
 #' [threshold vignette](https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html).
@@ -210,34 +215,80 @@ NULL
 #' **Regularization and priors**
 #'
 #' You can achieve regularization via penalties (priors) on the fixed effect
-#' parameters. See [sdmTMBpriors()].
-#' You can fit the model once without penalties and inspect the element
+#' parameters. See [sdmTMBpriors()]. You can fit the model once without
+#' penalties and look at the output of `print(your_model)` or `tidy(your_model)`
+#' or fit the model with `do_fit = FALSE` and inspect
 #' `head(your_model$tmb_data$X_ij)` if you want to see how the formula is
 #' translated to the fixed effect model matrix.
 #'
+#' **Delta/hurdle models**
+#'
+#' Delta models (also known as hurdle models) can be fit as two separate models
+#' or at the same time by using an appropriate delta family. E.g.:
+#'   \code{\link[sdmTMB:families]{delta_gamma()}},
+#'   \code{\link[sdmTMB:families]{delta_lognormal()}}, and
+#'   \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}}.
+#' If fit with a delta family, by default the formula, spatial, and
+#' spatiotemporal structure etc. will be shared between the two model
+#' components. Some elements can be specified independently for the two models
+#' using a list format. These include `formula`, `spatial`, `spatiotemporal`,
+#' `share_range`. The first element of the list is for the binomial component
+#' and the second element is for the positive component (e.g., Gamma).
+#' Other elements must be shared for now (e.g., spatially varying coefficients,
+#' time-varying coefficients). Furthermore, there are currently limitations if
+#' specifying two formulas as a list: the two formulas cannot have smoothers,
+#' threshold effects, or random intercepts. For now, these must be specificed
+#' through a single formula that is shared across the two models.
+#'
+#' The main advantage of specifying such models using a delta family is (1)
+#' coding simplicity and (2) calculation of uncertainty on derived quantities
+#' such as an index of abundance with [get_index()] using the generalized delta
+#' method within TMB.
+#'
 #' @references
 #'
-#' Main reference introducing the package to cite when using sdmTMB:
+#' *Main reference introducing the package to cite when using sdmTMB:*
 #'
 #' Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett. 2022. sdmTMB: an R
 #' package for fast, flexible, and user-friendly generalized linear mixed effects
 #' models with spatial and spatiotemporal random fields.
 #' bioRxiv 2022.03.24.485545; \doi{10.1101/2022.03.24.485545}.
 #'
-#' Reference for local trends:
+#' *Reference for local trends:*
 #'
 #' Barnett, L.A.K., E.J. Ward, S.C. Anderson. Improving estimates of species
 #' distribution change by incorporating local trends. Ecography. 44(3):427-439.
 #' \doi{10.1111/ecog.05176}.
 #'
-#' Further explanation of the model and application to calculating climate
-#' velocities:
+#' *Further explanation of the model and application to calculating climate
+#' velocities:*
 #'
 #' English, P., E.J. Ward, C.N. Rooper, R.E. Forrest, L.A. Rogers, K.L. Hunter,
 #' A.M. Edwards, B.M. Connors, S.C. Anderson. 2021. Contrasting climate velocity
 #' impacts in warm and cool locations show that effects of marine warming are
 #' worse in already warmer temperate waters. In press at Fish and Fisheries.
 #' \doi{10.1111/faf.12613}.
+#'
+#' *Discussion of and illustration of some decision points when fitting these
+#' models:*
+#'
+#' Commander, C.J.C., Barnett, L.A.K., Ward, E.J., Anderson, S.C., and
+#' Essington, T.E. 2022. The shadow model: how and why small choices in
+#' spatially explicit species distribution models affect predictions. PeerJ 10:
+#' e12783. \doi{10.7717/peerj.12783}.
+#'
+#' *Application and description of the threshold/break-point models:*
+#'
+#' Essington, T.E. S.C. Anderson, L.A.K. Barnett, H.M. Berger, S.A. Siedlecki,
+#' E.J. Ward. Advancing statistical models to reveal the effect of dissolved
+#' oxygen on the spatial distribution of marine taxa using thresholds and a
+#' physiologically based index. In press at Ecography. \doi{10.1111/ecog.06249}.
+#'
+#' *Application to fish body condition*:
+#'
+#' Lindmark, M., S.C. Anderson, M. Gogina, M. Casini. Evaluating drivers of
+#' spatiotemporal individual condition of a bottom-associated marine fish.
+#' bioRxiv 2022.04.19.488709. \doi{10.1101/2022.04.19.488709}.
 #'
 #' Code for implementing the barrier-SPDE written by Olav Nikolai Breivik and
 #' Hans Skaug.
@@ -368,12 +419,22 @@ NULL
 #'
 #' # Delta/hurdle binomial-Gamma model:
 #' fit_dg <- sdmTMB(
-#'   density ~ poly(log(depth)),
+#'   density ~ poly(log(depth), 2),
 #'   data = pcod_2011, mesh = mesh,
 #'   spatial = "off",
 #'   family = delta_gamma() #<
 #' )
 #' fit_dg
+#'
+#' # Delta model with different formulas and spatial structure:
+#' fit_dg <- sdmTMB(
+#'   density ~ list(depth_scaled, poly(depth_scaled, 2)), #<
+#'   data = pcod_2011, mesh = mesh,
+#'   spatial = c("off", "on"), #<
+#'   family = delta_gamma()
+#' )
+#' fit_dg
+#'
 #'
 #' # Delta/hurdle Poisson-link (cloglog link):
 #' fit_pg <- sdmTMB(
@@ -467,12 +528,7 @@ sdmTMB <- function(
   priors = sdmTMBpriors(),
   previous_fit = NULL,
   experimental = NULL,
-  do_fit = TRUE,
-  spatial_only = deprecated(),
-  fields = deprecated(),
-  include_spatial = deprecated(),
-  spde = deprecated(),
-  ...
+  do_fit = TRUE
   ) {
 
 
@@ -501,31 +557,19 @@ sdmTMB <- function(
       spatiotemporal <- rep("iid", n_m)
   }
 
-  if (is_present(spatial_only)) {
-    deprecate_stop("0.0.20", "sdmTMB(spatial_only)", "sdmTMB(spatiotemporal)", details = "`spatiotemporal = 'off'` (or `time = NULL`) is equivalent to `spatial_only = TRUE`.")
-  }
-
   if (is.null(time)) {
     spatial_only <- rep(TRUE, n_m)
   } else {
     spatial_only <- ifelse(spatiotemporal == "off", TRUE, FALSE)
   }
-  # }
-  if (is_present(fields)) {
-    deprecate_stop("0.0.20", "sdmTMB(fields)", "sdmTMB(spatiotemporal)")
-  }
-  if (is_present(include_spatial)) {
-    deprecate_stop("0.0.20", "sdmTMB(include_spatial)", "sdmTMB(spatial)")
+
+  if (is.list(spatial)) {
+    spatial <- vapply(spatial, parse_spatial_arg, FUN.VALUE = character(1L))
   } else {
-    if (!is.logical(spatial[[1]])) spatial <- match.arg(tolower(spatial), choices = c("on", "off"))
-    if (identical(spatial, "on") || isTRUE(spatial)) {
-      include_spatial <- TRUE
-      spatial <- "on"
-    } else {
-      include_spatial <- FALSE
-      spatial <- "off"
-    }
+    spatial <- rep(parse_spatial_arg(spatial), n_m)
   }
+  include_spatial <- "on" %in% spatial
+
   if (!include_spatial && all(spatiotemporal == "off") || !include_spatial && all(spatial_only)) {
     # message("Both spatial and spatiotemporal fields are set to 'off'.")
     # control$map_rf <- TRUE
@@ -539,11 +583,7 @@ sdmTMB <- function(
   if (length(share_range) == 1L) share_range <- rep(share_range, n_m)
   share_range[spatiotemporal == "off"] <- TRUE
 
-  if (is_present(spde)) {
-    deprecate_warn("0.0.20", "sdmTMB(spde)", "sdmTMB(mesh)")
-  } else {
-    spde <- mesh
-  }
+  spde <- mesh
   epsilon_model <- NULL
   epsilon_predictor <- NULL
   if (!is.null(experimental)) {
@@ -582,35 +622,28 @@ sdmTMB <- function(
   lower <- control$lower
   upper <- control$upper
   get_joint_precision <- control$get_joint_precision
-  dots <- list(...)
-  if (length(list(...)) > 0) {
-    warn(c("Found additional arguments, which will be ignored.",
-      "Did you mispell an argument?"
-    ))
-  }
+  # dots <- list(...)
+  # if (length(list(...)) > 0) {
+  #   warn(c("Found additional arguments, which will be ignored.",
+  #     "Did you mispell an argument?"
+  #   ))
+  # }
 
-  if ("ar1_fields" %in% names(dots)) {
-    deprecate_stop("0.0.20", "sdmTMB(ar1_fields)", "sdmTMB(spatiotemporal)")
-  }
-  if ("penalties" %in% names(dots)) {
-    abort("`penalties` are now specified via the `priors` argument. ",
-      "E.g., `priors = sdmTMBpriors(b = normal(c(0, 0), c(1, 1)))` for 2 fixed effects.")
-  }
   dot_checks <- c("lower", "upper", "profile", "parallel",
     "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",
     "newton_loops", "start", "map", "get_joint_precision", "normalize")
   .control <- control
   for (i in dot_checks) .control[[i]] <- NULL # what's left should be for nlminb
-  dot_old <- dot_checks %in% names(dots)
-  if (any(dot_old)) {
-    stop("The ", if (sum(dot_old) > 1) "arguments" else "argument", " `",
-      paste(dot_checks[dot_old], collapse = "`, `"),
-      "` ", if (sum(dot_old) > 1) "were" else "was",
-      " found in the call to `sdmTMB()`.\n",
-      if (sum(dot_old) > 1) "These are " else "This is ",
-      "now passed through the `control` argument via the\n",
-      "`sdmTMBcontrol()` list.", call. = FALSE)
-  }
+  # dot_old <- dot_checks %in% names(dots)
+  # if (any(dot_old)) {
+  #   stop("The ", if (sum(dot_old) > 1) "arguments" else "argument", " `",
+  #     paste(dot_checks[dot_old], collapse = "`, `"),
+  #     "` ", if (sum(dot_old) > 1) "were" else "was",
+  #     " found in the call to `sdmTMB()`.\n",
+  #     if (sum(dot_old) > 1) "These are " else "This is ",
+  #     "now passed through the `control` argument via the\n",
+  #     "`sdmTMBcontrol()` list.", call. = FALSE)
+  # }
 
   ar1_fields <- spatiotemporal == "ar1"
   rw_fields <- spatiotemporal == "rw"
@@ -681,9 +714,6 @@ sdmTMB <- function(
   original_formula <- formula
 
   if (!is.null(extra_time)) { # for forecasting or interpolating
-    if (!"xy_cols" %in% names(spde)) {
-      abort("Please use `make_mesh()` instead of the deprecated `make_spde()` to use `extra_time`.")
-    }
     data <- expand_time(df = data, time_slices = extra_time, time_column = time)
     weights <- data$weight_sdmTMB
     spde$loc_xy <- as.matrix(data[,spde$xy_cols,drop=FALSE])
@@ -1368,3 +1398,4 @@ parse_spatial_arg <- function(spatial) {
     spatial <- "off"
   }
   spatial
+}

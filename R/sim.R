@@ -14,7 +14,7 @@
 #'   `NULL`, will be set to standard normal draws.
 #' @param betas A vector of beta values (design-matrix fixed-effect coefficient
 #'   values). If a random walk (`sigma_V > 0`), these are the starting values.
-#' @param family Family as in [sdmTMB()].
+#' @param family Any *non-delta/hurdle* family as in [sdmTMB()].
 #' @param time_steps The number of time steps.
 #' @param rho Spatiotemporal correlation between years; should be between -1 and
 #'   1.
@@ -119,6 +119,10 @@ sdmTMB_sim <- function(mesh,
   if (!is.null(betas) && !is.null(X)) assert_that(ncol(X) == length(betas))
   assert_that(length(betas) == length(sigma_V))
   if (!is.null(X)) assert_that(time_steps * length(x) == nrow(X))
+
+  if (isTRUE(family$delta)) {
+    abort("Family must not be a delta family.")
+  }
 
   if (!missing(thetaf)) {
     nice_stop("Please use 'tweedie_p' instead of 'thetaf' in `sdmTMB_sim()`.")

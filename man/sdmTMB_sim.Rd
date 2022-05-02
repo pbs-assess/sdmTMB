@@ -43,7 +43,7 @@ sdmTMB_sim(
 \item{betas}{A vector of beta values (design-matrix fixed-effect coefficient
 values). If a random walk (\code{sigma_V > 0}), these are the starting values.}
 
-\item{family}{Family as in \code{\link[=sdmTMB]{sdmTMB()}}.}
+\item{family}{Any \emph{non-delta/hurdle} family as in \code{\link[=sdmTMB]{sdmTMB()}}.}
 
 \item{rho}{Spatiotemporal correlation between years; should be between -1 and
 1.}
