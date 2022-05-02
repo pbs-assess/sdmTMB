@@ -1056,7 +1056,7 @@ sdmTMB <- function(
   }
 
   tmb_random <- c()
-  if (spatial == "on") {
+  if (any(spatial == "on")) {
     tmb_random <- c(tmb_random, "omega_s")
     tmb_map <- unmap(tmb_map, c("omega_s", "ln_tau_O"))
   }
@@ -1115,8 +1115,8 @@ sdmTMB <- function(
     nrow(tmb_params$ln_kappa), ncol(tmb_params$ln_kappa))
   for (m in seq_len(n_m)) {
     if (share_range[m]) tmb_map$ln_kappa[,m] <- tmb_map$ln_kappa[1,m]
-    if (spatiotemporal[m] == "off" && !include_spatial) tmb_map$ln_kappa[,m] <- NA
-    if (spatiotemporal[m] == "off" && include_spatial) tmb_map$ln_kappa[,m] <- m
+    if (spatiotemporal[m] == "off" && spatial[m] == "off") tmb_map$ln_kappa[,m] <- NA
+    if (spatiotemporal[m] == "off" && spatial[m] == "on") tmb_map$ln_kappa[,m] <- m
   }
   tmb_map$ln_kappa <- as.factor(as.integer(as.factor(tmb_map$ln_kappa)))
 
@@ -1154,6 +1154,20 @@ sdmTMB <- function(
     }
     tmb_map$epsilon_st <- as.factor(tmb_map$epsilon_st)
     tmb_map$ln_tau_E <- as.factor(tmb_map$ln_tau_E)
+  }
+  # delta spatial mapping:
+  if (delta && "off" %in% spatial) {
+    tmb_map$omega_s <- array(
+      seq_len(length(tmb_params$omega_s)),
+      dim = dim(tmb_params$omega_s)
+    )
+    tmb_map$ln_tau_O <- seq_len(length(tmb_params$ln_tau_O))
+    for (i in which(spatial == "off")) {
+      tmb_map$omega_s[,i] <- NA
+      tmb_map$ln_tau_O[i] <- NA
+    }
+    tmb_map$omega_s <- as.factor(tmb_map$omega_s)
+    tmb_map$ln_tau_O <- as.factor(tmb_map$ln_tau_O)
   }
 
   if (tmb_data$threshold_func > 0) tmb_map$b_threshold <- NULL
@@ -1198,6 +1212,8 @@ sdmTMB <- function(
     tmb_map    = tmb_map,
     tmb_random = tmb_random,
     spatial_varying = spatial_varying,
+    spatial = spatial,
+    spatiotemporal = spatiotemporal,
     spatial_varying_formula = spatial_varying_formula,
     reml       = reml,
     lower      = lim$lower,
@@ -1342,3 +1358,13 @@ map_all_params <- function(x) {
  stats::setNames(m, names(x))
 }
 
+parse_spatial_arg <- function(spatial) {
+  if (!is.logical(spatial[[1]])) {
+    spatial <- match.arg(tolower(spatial), choices = c("on", "off"))
+  }
+  if (identical(spatial, "on") || isTRUE(spatial)) {
+    spatial <- "on"
+  } else {
+    spatial <- "off"
+  }
+  spatial

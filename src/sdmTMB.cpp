@@ -145,8 +145,8 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(priors); // all other priors as a vector
   DATA_IVECTOR(ar1_fields);
   DATA_IVECTOR(rw_fields);
-  DATA_INTEGER(include_spatial); // DELTA TODO currently shared...
-  DATA_INTEGER(random_walk); // DELTA TODO currently shared...
+  DATA_INTEGER(include_spatial);
+  DATA_INTEGER(random_walk);
   DATA_IVECTOR(exclude_RE); // DELTA TODO currently shared...
 
   DATA_VECTOR(proj_lon);
