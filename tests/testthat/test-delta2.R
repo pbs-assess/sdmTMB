@@ -323,6 +323,13 @@ test_that("Offset works with delta models", {
     family = delta_gamma()
   )
 
+  pcod$offset2 <- log(1)
+  fit_dg_off0 <- sdmTMB(density ~ 1,
+    offset = pcod$offset2,
+    data = pcod, spatial = "off",
+    family = delta_gamma()
+  )
+
   b1 <- tidy(fit1)$estimate[1]
   b_dg1 <- tidy(fit_dg)$estimate[1]
   b_dg1_offset <- tidy(fit_dg_off)$estimate[1]
@@ -331,7 +338,10 @@ test_that("Offset works with delta models", {
   b2_offset <- tidy(fit2_off)$estimate[1]
   dg2 <- tidy(fit_dg, model = 2)$estimate[1]
   dg2_offset <- tidy(fit_dg_off, model = 2)$estimate[1]
+  dg2_offset0 <- tidy(fit_dg_off0, model = 2)$estimate[1]
 
+  # the offset is doing something for pos part of delta model
+  expect_false(((dg2_offset-dg2) == 0))
   # binomial and delta model 1 without offset are same
   expect_equal(b_dg1, b1, tolerance = 1e-5)
   # offset doesn't affect binomial part of delta-Gamma
@@ -340,4 +350,7 @@ test_that("Offset works with delta models", {
   expect_equal(dg2, b2, tolerance = 1e-5)
   # offset in Gamma part same in delta gamma as separate model:
   expect_equal(dg2_offset, b2_offset, tolerance = 1e-5)
+
+  # the offset of 0 is same as no offset
+  expect_equal(dg2_offset0, dg2, tolerance = 1e-8)
 })
