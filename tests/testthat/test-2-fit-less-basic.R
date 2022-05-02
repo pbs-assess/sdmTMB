@@ -351,24 +351,6 @@ test_that("Multiple SVC works", {
   # p <- predict(fit, newdata = NULL)
 })
 
-test_that("Offset works", {
-  skip_on_cran()
-  skip_on_ci()
-  skip_if_not_installed("INLA")
-
-  pcod$offset <- rnorm(nrow(pcod))
-  fit2 <- sdmTMB(density ~ 1,
-    offset = pcod$offset,
-    data = pcod, spatial = "off",
-    family = tweedie()
-  )
-  expect_error(fit2 <- sdmTMB(density ~ 1,
-    offset = year,
-    data = pcod, spatial = "off",
-    family = tweedie()), regexp = "year"
-  )
-})
-
 test_that("More esoteric prediction options work", {
   skip_on_cran()
   skip_on_ci()
