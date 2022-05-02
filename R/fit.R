@@ -801,6 +801,7 @@ sdmTMB <- function(
   }
 
   if (is.null(offset)) offset <- rep(0, length(y_i))
+  assert_that(length(offset) == length(y_i), msg = "Offset doesn't match length of data")
 
   if (!is.null(time_varying)) {
     X_rw_ik <- model.matrix(time_varying, data)
