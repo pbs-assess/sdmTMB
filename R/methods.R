@@ -26,9 +26,12 @@ nobs.sdmTMB <- function(object, ...) {
 #' @noRd
 logLik.sdmTMB <- function(object, ...) {
   val <- -object$model$objective
-
   nobs <- nobs.sdmTMB(object)
   df <- length(object$model$par) # fixed effects only
+  if (isTRUE(object$reml)) {
+    s <- as.list(object$sd_report, "Estimate")
+    df <- df + length(s$b_j) + length(s$b_j2)
+  }
   structure(val,
     nobs = nobs, nall = nobs, df = df,
     class = "logLik"
