@@ -583,6 +583,11 @@ sdmTMB <- function(
   upper <- control$upper
   get_joint_precision <- control$get_joint_precision
   dots <- list(...)
+  if (length(list(...)) > 0) {
+    warn(c("Found additional arguments, which will be ignored.",
+      "Did you mispell an argument?"
+    ))
+  }
 
   if ("ar1_fields" %in% names(dots)) {
     deprecate_stop("0.0.20", "sdmTMB(ar1_fields)", "sdmTMB(spatiotemporal)")
