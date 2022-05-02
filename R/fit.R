@@ -1211,9 +1211,13 @@ sdmTMB <- function(
 
   if (normalize) tmb_obj <- TMB::normalize(tmb_obj, flag = "flag", value = 0)
 
-  tmb_opt <- stats::nlminb(
-    start = tmb_obj$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
-    lower = lim$lower, upper = lim$upper, control = .control)
+  if (length(tmb_obj$par)) {
+    tmb_opt <- stats::nlminb(
+      start = tmb_obj$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
+      lower = lim$lower, upper = lim$upper, control = .control)
+  } else {
+    tmb_opt <- list(par = tmb_obj$par, objective = tmb_obj$fn(tmb_obj$par))
+  }
 
   if (nlminb_loops > 1) {
     if (!silent) cat("running extra nlminb loops\n")
