@@ -13,14 +13,16 @@ test_that("Depreciated args work/throw warnings/stops", {
     do_fit = FALSE
   ), regexp = "fields")
 
-  expect_error(m3 <- sdmTMB(
-    formula = density ~ 1,
-    data = pcod_2011,
-    ar1_fields = TRUE,
-    time = "year",
-    mesh = pcod_mesh_2011,
-    do_fit = FALSE
-  ), "ar1_fields")
+  expect_warning({
+    expect_error(m3 <- sdmTMB(
+      formula = density ~ 1,
+      data = pcod_2011,
+      ar1_fields = TRUE,
+      time = "year",
+      mesh = pcod_mesh_2011,
+      do_fit = FALSE
+    ), "ar1_fields")
+  })
 
   # spatial_only
   expect_error(m1 <- sdmTMB(
