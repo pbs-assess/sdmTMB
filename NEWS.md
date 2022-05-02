@@ -41,15 +41,15 @@
 
 *  Add `censored_poisson(link = 'log')` family; implemented by @joenomiddlename
 
-* `fields` in `sdmTMB()` is now depreciated and replaced by `spatiotemporal`.
+* `fields` in `sdmTMB()` is now deprecated and replaced by `spatiotemporal`.
 
-* `include_spatial` in `sdmTMB()` is now depreciated and replaced by `spatial`.
+* `include_spatial` in `sdmTMB()` is now deprecated and replaced by `spatial`.
 
-* `spatial_only` in `sdmTMB()` is now depreciated and replaced by `spatiotemporal`. 
+* `spatial_only` in `sdmTMB()` is now deprecated and replaced by `spatiotemporal`. 
    E.g. `spatial_only = TRUE` is now `spatiotemporal = 'off'` or leaving 
    `time = NULL`.
    
-* `spde` in `sdmTMB()` is now depreciated and replaced by `mesh`.
+* `spde` in `sdmTMB()` is now deprecated and replaced by `mesh`.
 
 * `sdmTMB_simulate()` is new and will likely replace `sdmTMB_sim()` eventually. 
   `sdmTMB_simulate()` is set up to take a formula and a data frame and is easier
@@ -235,7 +235,7 @@
   random walk or AR1 process (add any missing years to `extra_time`).
 
 * `make_spde()` is now replaced with `make_mesh()` and `make_spde()` has been
-  soft depreciated. `make_mesh()` carries through the x and y column names to
+  soft deprecated. `make_mesh()` carries through the x and y column names to
   the predict function and is more in line with the tidyverse style of taking a
   data frame first.
 
