@@ -608,8 +608,8 @@ predict.sdmTMB <- function(object, newdata = object$data,
     }
 
     orig_dat <- object$tmb_data$y_i
-    if (model == 2L && nrow(nd) == nrow(orig_dat)) {
-      nd <- nd[!is.na(orig_dat[,2]),,drop=FALSE]
+    if (model == 2L && nrow(nd) == nrow(orig_dat) && visreg_df) {
+      nd <- nd[!is.na(orig_dat[,2]),,drop=FALSE] # drop NAs from delta positive component
     }
 
     if ("sdmTMB_fake_year" %in% names(nd)) {
