@@ -114,7 +114,6 @@ NULL
 #   trend and random effects)
 #' @param ... Not currently used.
 #' @importFrom methods as is
-#' @importFrom rlang abort warn inform
 #' @importFrom cli cli_abort cli_warn cli_inform
 #' @importFrom glue glue
 #' @importFrom mgcv s t2
