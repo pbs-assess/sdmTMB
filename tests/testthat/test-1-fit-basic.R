@@ -137,8 +137,19 @@ test_that("A spatiotemporal version works with predictions on new data points", 
     data = d,
     formula = density ~ 0 + as.factor(year),
     time = "year", mesh = pcod_spde, family = tweedie(link = "log"),
+    spatiotemporal = TRUE,
     spatial = FALSE
   )
+  # returns error if time is missing
+  expect_error({
+    mx <- sdmTMB(
+      data = d,
+      formula = density ~ 0 + as.factor(year),
+      mesh = pcod_spde, family = tweedie(link = "log"),
+      spatiotemporal = TRUE,
+      spatial = FALSE
+    )
+  })
   # Predictions at original data locations:
   predictions <- predict(m)
   predictions$resids <- residuals(m) # randomized quantile residuals
