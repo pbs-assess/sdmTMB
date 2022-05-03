@@ -74,6 +74,76 @@ test_that("share_range mapping works with delta models", {
   expect_identical(fit$tmb_map$ln_kappa, as.factor(c(1, 1, 2, 2)))
 })
 
+test_that("spatial field mapping/specification works with delta models", {
+  skip_on_cran()
+  skip_if_not_installed("INLA")
+
+  pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
+
+  fit1 <- sdmTMB(density ~ 1,
+                data = pcod, mesh = pcod_spde,
+                spatial = "on",
+                family = delta_gamma()
+  )
+  s1 <- as.list(fit1$sd_report, "Estimate")
+  s1$ln_tau_O
+
+  fit2 <- sdmTMB(density ~ 1,
+                data = pcod, mesh = pcod_spde,
+                spatial = list("on","on"),
+                family = delta_gamma()
+  )
+  s2 <- as.list(fit2$sd_report, "Estimate")
+  s2$ln_tau_O
+  expect_equal(s1, s2)
+
+  fit3 <- sdmTMB(density ~ 1,
+                data = pcod, mesh = pcod_spde,
+                spatial = "off",
+                family = delta_gamma()
+  )
+  s3 <- as.list(fit3$sd_report, "Estimate")
+  s3$ln_tau_O
+
+  fit4 <- sdmTMB(density ~ 1,
+                data = pcod, mesh = pcod_spde,
+                spatial = list("off","on"),
+                family = delta_gamma()
+  )
+  s4 <- as.list(fit4$sd_report, "Estimate")
+  s4$ln_tau_O
+  expect_equal(s4$ln_tau_O[1], 0)
+  expect_equal(s4$ln_tau_O[2], s2$ln_tau_O[2], tolerance = 0.01)
+
+
+  pcod_spde2 <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
+  fit5 <- sdmTMB(density ~ 1,
+                data = pcod, mesh = pcod_spde2, spatial = list("on", "on"),
+                time = "year", family = delta_gamma(),
+                spatiotemporal = list("off", "iid")
+  )
+
+  s <- as.list(fit5$sd_report, "Estimate")
+  expect_gt(s$ln_tau_O[1], 0)
+  expect_gt(s$ln_tau_O[2], 0)
+  expect_equal(s$ln_tau_E[1], 0)
+  expect_gt(s$ln_tau_E[2], 0)
+  expect_output(print(fit), regexp = "Spatiotemporal model")
+  expect_output(print(fit), regexp = "Spatiotemporal SD")
+
+  fit6 <- sdmTMB(density ~ 1,
+                data = pcod, mesh = pcod_spde, spatial = list("off", "on"),
+                time = "year", family = delta_gamma(),
+                spatiotemporal = list("off", "off")
+  )
+  s6 <- as.list(fit6$sd_report, "Estimate")
+  expect_equal(s6$ln_tau_O[1], 0)
+  expect_gt(abs(s6$ln_tau_O[2]), 0)
+  expect_equal(s6$ln_tau_E[1], 0)
+  expect_equal(s6$ln_tau_E[2], 0)
+  expect_output(print(fit6), regexp = "Spatial model")
+})
+
 test_that("spatiotemporal field mapping/specification works with delta models", {
   skip_on_cran()
   skip_if_not_installed("INLA")
