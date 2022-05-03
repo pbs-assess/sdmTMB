@@ -6,7 +6,6 @@ test_that("REML works", {
   set.seed(1)
 
   pcod$year_f <- as.factor(pcod$year)
-  # pcod_pos <- subset(pcod, density > 0)
 
   fit_glmm <- glmmTMB::glmmTMB(present ~ 1 + (1 | year_f),
     data = pcod,
@@ -15,7 +14,7 @@ test_that("REML works", {
 
   fit_glmm_reml <- glmmTMB::glmmTMB(present ~ 1 + (1 | year_f),
     data = pcod,
-    REML = T,
+    REML = TRUE,
     family = binomial()
   )
 
@@ -28,19 +27,19 @@ test_that("REML works", {
   expect_error({
     fit_sdm_wrong <- sdmTMB(present ~ 1 + (1 | year_f),
       data = pcod, spatial = "off",
-      REML = T,
+      REML = TRUE,
       family = binomial()
     )
   })
 
   fit_sdm_reml <- sdmTMB(present ~ 1 + (1 | year_f),
     data = pcod, spatial = "off",
-    reml = T,
+    reml = TRUE,
     family = binomial()
   )
 
 
-  AIC(fit_glmm, fit_glmm_reml, fit_sdm, fit_sdm_reml)
+  AIC(fit_glmm, fit_sdm, fit_glmm_reml, fit_sdm_reml)
 
   # check that the AIC calculations match
   expect_equal(AIC(fit_glmm), AIC(fit_sdm), tolerance = 1e-8)
@@ -96,14 +95,14 @@ test_that("REML works for delta models", {
 
   fit_glmm_reml <- glmmTMB::glmmTMB(density ~ 1 + (1 | year_f),
     data = pcod_pos,
-    REML = T,
+    REML = TRUE,
     family = Gamma("log")
   )
 
   fit_sdm_reml <- sdmTMB(density ~ 1 + (1 | year_f),
     data = pcod_pos,
     spatial = "off",
-    reml = T,
+    reml = TRUE,
     family = Gamma("log")
   )
 
@@ -131,7 +130,7 @@ test_that("REML works for delta models", {
   # now try delta models
   fit_dg_reml <- sdmTMB(density ~ 1 + (1 | year_f),
     data = pcod, spatial = "off",
-    reml = T,
+    reml = TRUE,
     family = delta_gamma()
   )
 
@@ -140,10 +139,11 @@ test_that("REML works for delta models", {
   expect_equal(b3_reml, b2_reml, tolerance = 1e-6)
 
   # sigma_G match delta model 2 with REML
-  b2_reml_re <- tidy(fit_sdm_reml, effects = "ran_pars")$estimate[2]
-  b3_reml_re <- tidy(fit_dg_reml, effects = "ran_pars", model = 2)$estimate[2]
+  b2_reml_re <- tidy(fit_sdm_reml, effects = "ran_pars")
+  b3_reml_re <- tidy(fit_dg_reml, effects = "ran_pars", model = 2)
 
-  expect_equal(b3_reml_re, b2_reml_re, tolerance = 1e-6)
+  expect_equal(b3_reml_re$estimate[b3_reml_re$term=="sigma_G"],
+               b2_reml_re$estimate[b2_reml_re$term=="sigma_G"], tolerance = 1e-6)
 
   # REML is still doing something with delta models with spatial fields
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
@@ -156,7 +156,7 @@ test_that("REML works for delta models", {
   fit_dg2_reml <- sdmTMB(density ~ 1 + (1 | year_f),
     data = pcod,
     spatial = "on", mesh = mesh,
-    reml = T,
+    reml = TRUE,
     family = delta_gamma()
   )
 
@@ -166,8 +166,9 @@ test_that("REML works for delta models", {
   # effect of reml on fixed effects in delta model
   expect_false((abs(b4_reml - b4) < 0.01))
 
-  b4_re <- tidy(fit_dg2, effects = "ran_pars", conf.int = T, model = 2)$estimate[4]
-  b4_reml_re <- tidy(fit_dg2_reml, effects = "ran_pars", conf.int = T, model = 2)$estimate[4]
+  b4_re <- tidy(fit_dg2, effects = "ran_pars", conf.int = T, model = 2)#$estimate[4]
+  b4_reml_re <- tidy(fit_dg2_reml, effects = "ran_pars", conf.int = T, model = 2)#$estimate[4]
+
   # effect of reml on sigma_G in delta model
-  expect_false((abs(b4_reml_re - b4_re) < 0.01))
+  expect_false((abs(b4_reml_re$estimate[b4_reml_re$term=="sigma_G"] - b4_re$estimate[b4_re$term=="sigma_G"]) < 0.01))
 })

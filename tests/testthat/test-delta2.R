@@ -81,34 +81,34 @@ test_that("spatial field mapping/specification works with delta models", {
   pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 
   fit1 <- sdmTMB(density ~ 1,
-                data = pcod, mesh = pcod_spde,
-                spatial = "on",
-                family = delta_gamma()
+    data = pcod, mesh = pcod_spde,
+    spatial = "on",
+    family = delta_gamma()
   )
   s1 <- as.list(fit1$sd_report, "Estimate")
   s1$ln_tau_O
 
   fit2 <- sdmTMB(density ~ 1,
-                data = pcod, mesh = pcod_spde,
-                spatial = list("on","on"),
-                family = delta_gamma()
+    data = pcod, mesh = pcod_spde,
+    spatial = list("on", "on"),
+    family = delta_gamma()
   )
   s2 <- as.list(fit2$sd_report, "Estimate")
   s2$ln_tau_O
   expect_equal(s1, s2)
 
   fit3 <- sdmTMB(density ~ 1,
-                data = pcod, mesh = pcod_spde,
-                spatial = "off",
-                family = delta_gamma()
+    data = pcod, mesh = pcod_spde,
+    spatial = "off",
+    family = delta_gamma()
   )
   s3 <- as.list(fit3$sd_report, "Estimate")
   s3$ln_tau_O
 
   fit4 <- sdmTMB(density ~ 1,
-                data = pcod, mesh = pcod_spde,
-                spatial = list("off","on"),
-                family = delta_gamma()
+    data = pcod, mesh = pcod_spde,
+    spatial = list("off", "on"),
+    family = delta_gamma()
   )
   s4 <- as.list(fit4$sd_report, "Estimate")
   s4$ln_tau_O
@@ -118,9 +118,9 @@ test_that("spatial field mapping/specification works with delta models", {
 
   pcod_spde2 <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
   fit5 <- sdmTMB(density ~ 1,
-                data = pcod, mesh = pcod_spde2, spatial = list("on", "on"),
-                time = "year", family = delta_gamma(),
-                spatiotemporal = list("off", "iid")
+    data = pcod, mesh = pcod_spde2, spatial = list("on", "on"),
+    time = "year", family = delta_gamma(),
+    spatiotemporal = list("off", "iid")
   )
 
   s <- as.list(fit5$sd_report, "Estimate")
@@ -132,9 +132,9 @@ test_that("spatial field mapping/specification works with delta models", {
   expect_output(print(fit5), regexp = "Spatiotemporal SD")
 
   fit6 <- sdmTMB(density ~ 1,
-                data = pcod, mesh = pcod_spde, spatial = list("off", "on"),
-                time = "year", family = delta_gamma(),
-                spatiotemporal = list("off", "off")
+    data = pcod, mesh = pcod_spde, spatial = list("off", "on"),
+    time = "year", family = delta_gamma(),
+    spatiotemporal = list("off", "off")
   )
   s6 <- as.list(fit6$sd_report, "Estimate")
   expect_equal(s6$ln_tau_O[1], 0)
@@ -400,6 +400,7 @@ test_that("Offset works with delta models", {
     family = delta_gamma()
   )
 
+  # intercept only models so order not an issue
   b1 <- tidy(fit1)$estimate[1]
   b_dg1 <- tidy(fit_dg)$estimate[1]
   b_dg1_offset <- tidy(fit_dg_off)$estimate[1]
@@ -411,7 +412,7 @@ test_that("Offset works with delta models", {
   dg2_offset0 <- tidy(fit_dg_off0, model = 2)$estimate[1]
 
   # the offset is doing something for pos part of delta model
-  expect_false(((dg2_offset-dg2) == 0))
+  expect_false(((dg2_offset - dg2) == 0))
   # binomial and delta model 1 without offset are same
   expect_equal(b_dg1, b1, tolerance = 1e-5)
   # offset doesn't affect binomial part of delta-Gamma

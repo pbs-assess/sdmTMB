@@ -5,15 +5,15 @@ test_that("Offset works", {
 
   pcod$offset <- rnorm(nrow(pcod))
   fit2 <- sdmTMB(density ~ 1,
-                 offset = pcod$offset,
-                 data = pcod, spatial = "off",
-                 family = tweedie()
+    offset = pcod$offset,
+    data = pcod, spatial = "off",
+    family = tweedie()
   )
   expect_error(fit2 <- sdmTMB(density ~ 1,
-                              offset = year,
-                              data = pcod, spatial = "off",
-                              family = tweedie()), regexp = "year"
-  )
+    offset = year,
+    data = pcod, spatial = "off",
+    family = tweedie()
+  ), regexp = "year")
 })
 
 
@@ -27,38 +27,38 @@ test_that("Offset matches glmmTMB", {
   pcod_pos <- subset(pcod, density > 0)
 
   fit1 <- glmmTMB::glmmTMB(density ~ 1,
-                 data = pcod_pos,
-                 family = Gamma(link = "log")
+    data = pcod_pos,
+    family = Gamma(link = "log")
   )
 
   fit1_off <- glmmTMB::glmmTMB(density ~ 1,
-                           offset = pcod_pos$offset,
-                           data = pcod_pos,
-                           family = Gamma(link = "log")
+    offset = pcod_pos$offset,
+    data = pcod_pos,
+    family = Gamma(link = "log")
   )
 
   pcod_pos$offset2 <- log(1)
   fit1_off0 <- glmmTMB::glmmTMB(density ~ 1,
-                      offset = pcod_pos$offset2,
-                      data = pcod_pos,
-                      family = Gamma(link = "log")
+    offset = pcod_pos$offset2,
+    data = pcod_pos,
+    family = Gamma(link = "log")
   )
 
   fit2 <- sdmTMB(density ~ 1,
-                 data = pcod_pos, spatial = "off",
-                 family = Gamma(link = "log")
+    data = pcod_pos, spatial = "off",
+    family = Gamma(link = "log")
   )
 
   fit2_off <- sdmTMB(density ~ 1,
-                     offset = pcod_pos$offset,
-                     data = pcod_pos, spatial = "off",
-                     family = Gamma(link = "log")
+    offset = pcod_pos$offset,
+    data = pcod_pos, spatial = "off",
+    family = Gamma(link = "log")
   )
 
   fit2_off0 <- sdmTMB(density ~ 1,
-                      offset = pcod_pos$offset2,
-                      data = pcod_pos, spatial = "off",
-                      family = Gamma(link = "log")
+    offset = pcod_pos$offset2,
+    data = pcod_pos, spatial = "off",
+    family = Gamma(link = "log")
   )
 
   b1 <- summary(fit1)$coefficients$cond[1]
@@ -78,5 +78,5 @@ test_that("Offset matches glmmTMB", {
   expect_equal(b2_offset0, b2, tolerance = 1e-8)
 
   # the offset is doing something
-  expect_false(((b2_offset-b2) == 0))
+  expect_false(((b2_offset - b2) == 0))
 })
