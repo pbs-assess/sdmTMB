@@ -178,40 +178,6 @@ censored_poisson <- function(link = "log") {
     linkinv = stats$linkinv)
 }
 
-.make_delta_family <- function(link1 = "logit", link2 = "log",
-  ok_links = c("logit", "log")) {
-
-}
-
-.make_delta <- function(link1, link2, valid_links = c("logit", "log"),
-  family = c("binomial", "Gamma"), clean_name = "") {
-  linktemp1 <- substitute(link1, parent.frame())
-  linktemp2 <- substitute(link2, parent.frame())
-  if (!is.character(linktemp1)) linktemp1 <- deparse(linktemp1)
-  if (!is.character(linktemp2)) linktemp2 <- deparse(linktemp2)
-
-  okLinks <- valid_links[1]
-  if (linktemp1 %in% okLinks)
-    stats1 <- stats::make.link(linktemp1)
-  else if (is.character(link1))
-    stats1 <- stats::make.link(link1)
-
-  okLinks <- valid_links[2]
-  if (linktemp2 %in% okLinks)
-    stats2 <- stats::make.link(linktemp2)
-  else if (is.character(link1))
-    stats2 <- stats::make.link(link2)
-
-  list(
-    family = family,
-    link = c(linktemp1, linktemp2),
-    linkfun = list(stats1$linkfun, stats2$linkfun),
-    linkinv = list(stats1$linkinv, stats2$linkinv),
-    delta = TRUE,
-    clean_name = clean_name
-  )
-}
-
 #' @param link1 Link for first part of delta/hurdle model.
 #' @param link2 Link for second part of delta/hurdle model.
 #' @export

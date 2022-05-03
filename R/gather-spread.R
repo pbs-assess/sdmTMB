@@ -128,18 +128,3 @@ rmvnorm_prec <- function(mu, tmb_sd, n_sims) {
   z <- as.matrix(z)
   mu + z
 }
-
-rmvnorm_prec_random <- function(obj, tmb_sd, n_sims) {
-  mu <- tmb_sd$par.random
-  z <- matrix(stats::rnorm(length(mu) * n_sims), ncol = n_sims)
-  jp <- obj$env$spHess(obj$env$last.par.best, random = TRUE)
-  L <- Matrix::Cholesky(jp, super = TRUE)
-  z <- Matrix::solve(L, z, system = "Lt")
-  z <- Matrix::solve(L, z, system = "Pt")
-  z <- as.matrix(z)
-  out <- mu + z
-  fe_mat <- matrix(unname(tmb_sd$par.fixed),
-    ncol = n_sims,
-    nrow = length(tmb_sd$par.fixed))
-  rbind(fe_mat, out)
-}

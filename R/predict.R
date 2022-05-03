@@ -462,13 +462,8 @@ predict.sdmTMB <- function(object, newdata = object$data,
           sigma = sd_report$cov.fixed))
         row.names(t_draws) <- NULL
       } else {
-        # if (!mvn_mle) {
-          t_draws <- rmvnorm_prec(mu = new_tmb_obj$env$last.par.best,
-            tmb_sd = sd_report, n_sims = sims)
-        # } else {
-        #   t_draws <- rmvnorm_prec_random(new_tmb_obj,
-        #     tmb_sd = sd_report, n_sims = sims)
-        # }
+        t_draws <- rmvnorm_prec(mu = new_tmb_obj$env$last.par.best,
+          tmb_sd = sd_report, n_sims = sims)
       }
       r <- apply(t_draws, 2L, new_tmb_obj$report)
     }
