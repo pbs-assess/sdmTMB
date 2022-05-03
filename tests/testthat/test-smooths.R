@@ -1,3 +1,18 @@
+
+# https://github.com/pbs-assess/sdmTMB/issues/60
+test_that("smoothers with 'bs = re' error", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  expect_error({
+    m <- sdmTMB(
+      density ~ s(depth_scaled, bs = "re"),
+      data = pcod_2011,
+      mesh = pcod_mesh_2011, spatial = "off"
+    )
+  }, regexp = "re")
+})
+
 test_that("A model with 2 s() splines works", {
   skip_on_cran()
   skip_on_ci()
