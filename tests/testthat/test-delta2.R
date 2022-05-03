@@ -128,8 +128,8 @@ test_that("spatial field mapping/specification works with delta models", {
   expect_gt(abs(s$ln_tau_O[2]), 0)
   expect_equal(s$ln_tau_E[1], 0)
   expect_gt(abs(s$ln_tau_E[2]), 0)
-  expect_output(print(fit), regexp = "Spatiotemporal model")
-  expect_output(print(fit), regexp = "Spatiotemporal SD")
+  expect_output(print(fit5), regexp = "Spatiotemporal model")
+  expect_output(print(fit5), regexp = "Spatiotemporal SD")
 
   fit6 <- sdmTMB(density ~ 1,
                 data = pcod, mesh = pcod_spde, spatial = list("off", "on"),
