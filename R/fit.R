@@ -445,22 +445,12 @@ NULL
 #'
 #' # Delta model with different formulas and spatial structure:
 #' fit_dg <- sdmTMB(
-#'   density ~ list(depth_scaled, poly(depth_scaled, 2)), #<
+#'   list(density ~ depth_scaled, density ~ poly(depth_scaled, 2)), #<
 #'   data = pcod_2011, mesh = mesh,
 #'   spatial = list("off", "on"), #<
 #'   family = delta_gamma()
 #' )
 #' fit_dg
-#'
-#'
-#' # Delta/hurdle Poisson-link (cloglog link):
-#' fit_pg <- sdmTMB(
-#'   density ~ s(depth),
-#'   data = pcod_2011, mesh = mesh,
-#'   spatial = "off",
-#'   family = delta_poisson_link_gamma() #<
-#' )
-#' fit_pg
 #'
 #' # Delta/hurdle truncated NB2:
 #' pcod_2011$count <- round(pcod_2011$density)

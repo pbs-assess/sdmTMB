@@ -399,7 +399,7 @@ fit_dg
 
 # Delta model with different formulas and spatial structure:
 fit_dg <- sdmTMB(
-  density ~ list(depth_scaled, poly(depth_scaled, 2)), #<
+  list(density ~ depth_scaled, density ~ poly(depth_scaled, 2)), #<
   data = pcod_2011, mesh = mesh,
   spatial = list("off", "on"), #<
   family = delta_gamma()
