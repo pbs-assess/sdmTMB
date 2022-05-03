@@ -315,14 +315,22 @@ NULL
 #' @export
 #'
 #' @examples
-#' if (inla_installed()) {
+#' if (inla_installed() &&
+#'   require("visreg", quietly = TRUE) &&
+#'   require("ggplot2", quietly = TRUE)
+#' ) {
 #'
-#' # Build a fairly coarse mesh for example speed:
+#' library(sdmTMB)
+#'
+#' # Build an SPDE mesh with INLA:
 #' mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
-#' # `cutoff = 10` or `15` might make more sense in applied situations
-#' # `cutoff` is the minimum distance between mesh vertices in units of the
-#' # x and y coordinates.
-#' # Or build any mesh in INLA and pass it to the `mesh` argument.
+#' # * this example uses a fairly coarse mesh so these examples run quickly
+#' # * `cutoff` is the minimum distance between mesh vertices in units of the
+#' #   x and y coordinates
+#' # * `cutoff = 10` or `cutoff = 15` might make more sense in applied situations
+#' #   for this dataset
+#' # * or build any mesh in INLA and pass it to the `mesh` argument in `make_mesh()`
+#' # * not needed if you will be turning off all spatial/spatiotemporal random fields
 #'
 #' # Quick mesh plot:
 #' plot(mesh)
@@ -341,12 +349,21 @@ NULL
 #' tidy(fit, conf.int = TRUE)
 #' tidy(fit, effects = "ran_par", conf.int = TRUE)
 #'
-#' # Check maximum gradient is small:
-#' max(fit$gradients)
+#' # Perform several 'sanity' checks:
+#' sanity(fit)
 #'
-#' # Predict; see ?predict.sdmTMB
+#' # Visualize depth effect: (see ?visreg_delta)
+#' visreg::visreg(fit, xvar = "depth") # link space; randomized quantile residuals
+#' visreg::visreg(fit, xvar = "depth", scale = "response")
+#' visreg::visreg(fit, xvar = "depth", scale = "response", gg = TRUE, rug = FALSE)
+#'
+#' # Predict on the fitted data; see ?predict.sdmTMB
 #' p <- predict(fit)
-#' p <- predict(fit, newdata = subset(qcs_grid, year == 2017))
+#'
+#' # Predict on new data:
+#' nd <- subset(qcs_grid, year == 2017)
+#' p <- predict(fit, newdata = nd)
+#' head(p)
 #'
 #' # Add spatiotemporal random fields:
 #' fit <- sdmTMB(
@@ -430,7 +447,7 @@ NULL
 #' fit_dg <- sdmTMB(
 #'   density ~ list(depth_scaled, poly(depth_scaled, 2)), #<
 #'   data = pcod_2011, mesh = mesh,
-#'   spatial = c("off", "on"), #<
+#'   spatial = list("off", "on"), #<
 #'   family = delta_gamma()
 #' )
 #' fit_dg
