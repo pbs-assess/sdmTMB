@@ -42,20 +42,22 @@ See the residual-checking vignette: \code{browseVignettes("sdmTMB")} or \href{ht
 \details{
 Types of residuals currently supported:
 
-\code{"randomized-quantile"} refers to randomized quantile residuals
-(Dunn & Smyth 1996), which are also known as probability integral transform
-(PIT) residuals (Smith 1985). Under model assumptions, these should be
-distributed as standard normal with the following caveat: the Laplace approximation used
-for the latent/random effects can cause these residuals to deviate from
-the standard normal assumption even if the model is consistent with the data.
+\code{"randomized-quantile"} refers to randomized quantile residuals (Dunn
+& Smyth 1996), which are also known as probability integral transform (PIT)
+residuals (Smith 1985). Under model assumptions, these should be
+distributed as standard normal with the following caveat: the Laplace
+approximation used for the latent/random effects can cause these residuals
+to deviate from the standard normal assumption even if the model is
+consistent with the data.
 
 \code{"mle-mcmc-rq"} refers to randomized quantile residuals where the fixed
-effects are fixed at their MLE (maximum likelihoood estimate) values and the
-random effects are sampled with MCMC via tmbstan/Stan. As proposed in
+effects are fixed at their MLE (maximum likelihoood estimate) values and
+the random effects are sampled with MCMC via tmbstan/Stan. As proposed in
 Thygesen et al. (2017) and used in Rufener et al. (2021). Under model
-assumptions, these should be distributed as standard normal. These residuals
-are theoretically preferred over the regular Laplace approximated
-randomized-quantile residuals, but will be considerably slower to calculate.
+assumptions, these should be distributed as standard normal. These
+residuals are theoretically preferred over the regular Laplace approximated
+randomized-quantile residuals, but will be considerably slower to
+calculate.
 
 \code{"response"} refers to response residuals: observed minus predicted.
 }

@@ -1,4 +1,4 @@
-
+# from glmmTMB:
 named_list <- function(...) {
   L <- list(...)
   snm <- sapply(substitute(list(...)), deparse)[-1L]
@@ -262,7 +262,7 @@ print.sdmTMB <- function(x, ...) {
 
   # or x$tmb_obj$retape()!?
   sink(tempfile())
-  tmp <- x$tmb_obj$fn(x$tmb_obj$par)
+  tmp <- x$tmb_obj$fn(x$tmb_obj$par) # FIXME needed?
   lp <- x$tmb_obj$env$last.par.best
   r <- x$tmb_obj$report(lp)
   sink()
@@ -277,8 +277,4 @@ print.sdmTMB <- function(x, ...) {
   }
   if (delta) cat("\n")
   print_footer(x)
-
-  # main <- print_main_effects(x, m = m)
-  # tv <- print_time_varying(x, m = m)
-  # invisible(list(fe = main, tv = tv))
 }

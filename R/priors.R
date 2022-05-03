@@ -91,7 +91,6 @@ sdmTMBpriors <- function(
   )
 }
 
-#'
 #' @param location Location parameter(s).
 #' @param scale Scale parameter. For `normal()`/`halfnormal()`: standard
 #'   deviation(s). For `mvnormal()`: variance-covariance matrix.

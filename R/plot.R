@@ -8,7 +8,7 @@
 #'
 #' @return A plot of eigenvectors illustrating the estimated anisotropy. A list
 #'   of the plotted data is invisibly returned.
-#' @references Code adapted from VAST
+#' @references Code adapted from VAST R package
 #' @examples
 #' \donttest{
 #' if (inla_installed()) {
@@ -74,9 +74,15 @@ plot_anisotropy <- function(object, model = 1) {
 #' }
 plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
                         ggplot = FALSE, rug = TRUE, return_data = FALSE) {
+  msg <- c(
+    "This function will likely be deprecated.",
+    "Consider using `visreg::visreg()` or `visreg_delta()`.",
+    "See ?visreg_delta() for examples."
+  )
+  cli_inform(msg)
   se <- TRUE
   if (isTRUE(object$delta))
-    nice_stop("This function doesn't work with delta models yet")
+    cli_stop("This function doesn't work with delta models yet")
 
   assert_that(inherits(object, "sdmTMB"))
   assert_that(is.logical(ggplot))
@@ -93,7 +99,7 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
 
   if (ggplot) {
     if (!requireNamespace("ggplot2", quietly = TRUE)) {
-      nice_stop("ggplot2 not installed")
+      cli_abort("ggplot2 not installed")
     }
   }
 
@@ -107,7 +113,7 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
 
   all_names <- c(sm_names, fe_names)
   if (select > length(sm_names)) {
-    nice_stop("`select` is greater than the number of smooths")
+    cli_abort("`select` is greater than the number of smooths")
   }
   sel_name <- sm_names[select]
   non_select_names <- all_names[!all_names %in% sel_name]

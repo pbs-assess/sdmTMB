@@ -10,6 +10,7 @@ these components are included below):
 - SPDE barrier implementation, https://github.com/skaug/tmb-case-studies
 - mgcv, https://CRAN.R-project.org/package=mgcv
 - brms, https://CRAN.R-project.org/package=brms
+- TMB anisotropy R implementation, https://github.com/kaskr/adcomp/tree/master/tmb_examples
 
 Licenses:
 
@@ -693,6 +694,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 1. SPDE barrier implementation
 2. Function to aid prediction from smooths from mgcv documentation smooth2random()
 3. brms code snippets used to construct penalized smoother matrices with mgcv tools
+4. TMB anisotropy R implementation from TMB examples folder
 ----------------------------------------------------------------------
 
                     GNU GENERAL PUBLIC LICENSE

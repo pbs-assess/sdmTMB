@@ -76,7 +76,7 @@ get_index <- function(obj, bias_correct = FALSE, level = 0.95, area = 1, silent 
 #' @param format Long or wide.
 #' @export
 get_cog <- function(obj, bias_correct = FALSE, level = 0.95, format = c("long", "wide"), area = 1, silent = TRUE, ...)  {
-  if (bias_correct) nice_stop("Bias correction with get_cog() is temporarily disabled.")
+  if (bias_correct) cli_abort("Bias correction with get_cog() is temporarily disabled.")
   d <- get_generic(obj, value_name = c("cog_x", "cog_y"),
     bias_correct = bias_correct, level = level, trans = I, area = area, ...)
   d <- d[, names(d) != "trans_est", drop = FALSE]
@@ -96,17 +96,17 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   trans = I, area = 1, silent = TRUE, ...) {
 
   if (is.null(obj[["obj"]])) {
-    nice_stop("`obj` needs to be created with ",
-      "`sdmTMB(..., return_tmb_object = TRUE).`")
+    cli_abort(paste0("`obj` needs to be created with ",
+      "`sdmTMB(..., return_tmb_object = TRUE).`"))
   }
   test <- suppressWarnings(tryCatch(obj$obj$report(obj$obj$env$last.par),
     error = function(e) NA))
   if (all(is.na(test)))
-    nice_stop("It looks like the model was built with an older version of sdmTMB. ",
-      "Please refit with the current version.")
+    cli_abort(c("It looks like the model was built with an older version of sdmTMB. ",
+      "Please refit with the current version."))
 
   if (bias_correct && obj$fit_obj$control$parallel > 1) {
-    nice_warning("Bias correction can be slower with multiple cores; using 1 core.")
+    cli_warn("Bias correction can be slower with multiple cores; using 1 core.")
     obj$fit_obj$control$parallel <- 1L
   }
   n_orig <- suppressWarnings(TMB::openmp(NULL))
@@ -117,12 +117,12 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   predicted_time <- sort(unique(obj$data[[obj$fit_obj$time]]))
   fitted_time <- sort(unique(obj$fit_obj$data[[obj$fit_obj$time]]))
   if (!all(fitted_time %in% predicted_time)) {
-    nice_stop("Some of the fitted time elements were not predicted\n",
-      "on with `predict.sdmTMB()`. Please include all time elements.")
+    cli_abort(paste0("Some of the fitted time elements were not predicted ",
+      "on with `predict.sdmTMB()`. Please include all time elements."))
   }
 
   if (length(area) != nrow(obj$pred_tmb_data$proj_X_ij[[1]]) && length(area) != 1L) {
-    nice_stop("`area` should be of the same length as `nrow(newdata)` or of length 1.")
+    cli_abort("`area` should be of the same length as `nrow(newdata)` or of length 1.")
   }
   if (length(area) == 1L)
     area <- rep(area, nrow(obj$pred_tmb_data$proj_X_ij[[1]]))

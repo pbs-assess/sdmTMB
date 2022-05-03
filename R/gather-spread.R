@@ -40,11 +40,11 @@
 
 spread_sims <- function(object, nsim = 200, n_sims = deprecated()) {
   if (!"jointPrecision" %in% names(object$sd_report)) {
-    nice_stop("TMB::sdreport() must be run with the joint precision returned.")
+    cli_abort("TMB::sdreport() must be run with the joint precision returned.")
   }
 
   if (isTRUE(object$delta)) {
-    nice_stop("This function isn't yet set up for delta models.")
+    cli_abort("This function isn't yet set up for delta models.")
   }
   if (is_present(n_sims)) {
     deprecate_warn("0.0.21", "spread_sims(n_sims)", "spread_sims(nsim)")
@@ -62,6 +62,9 @@ spread_sims <- function(object, nsim = 200, n_sims = deprecated()) {
   pars <- pars[pn %in% par_fixed]
   samps <- samps[pn %in% par_fixed, , drop = FALSE]
   pn <- pn[pn %in% par_fixed]
+  if (isTRUE(object$family$delta)) {
+    cli_warn("If your delta model has 2 formulas, this function is only using the first")
+  }
   .formula <- object$split_formula[[1]]$fixedFormula # TODO DELTA HARDCODED TO 1!
   if (isFALSE(object$mgcv)) {
     fe_names <- colnames(model.matrix(.formula, object$data))

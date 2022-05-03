@@ -116,7 +116,7 @@ sdmTMB_simulate <- function(formula,
                             seed = sample.int(1e6, 1),
                             ...) {
   if (!requireNamespace("INLA", quietly = TRUE)) {
-    nice_stop("INLA must be installed to use this function.")
+    cli_abort("INLA must be installed to use this function.")
   }
 
   if (!is.null(previous_fit)) mesh <- previous_fit$spde
@@ -443,7 +443,7 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
 
 dharma_residuals <- function(simulated_response, object, plot = TRUE, ...) {
   if (!requireNamespace("DHARMa", quietly = TRUE)) {
-    nice_stop("DHARMa must be installed to use this function.")
+    cli_abort("DHARMa must be installed to use this function.")
   }
 
   assert_that(inherits(object, "sdmTMB"))

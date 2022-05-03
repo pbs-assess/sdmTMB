@@ -245,11 +245,11 @@ predict.sdmTMB <- function(object, newdata = object$data,
   if ("version" %in% names(object)) {
     check_sdmTMB_version(object$version)
   } else {
-    abort(c("This looks like a very old version of a model fit.",
+    cli_abort(c("This looks like a very old version of a model fit.",
         "Re-fit the model before predicting with it."))
   }
   if (!"xy_cols" %in% names(object$spde)) {
-    warn(c("It looks like this model was fit with make_spde().",
+    cli_warn(c("It looks like this model was fit with make_spde().",
     "Using `xy_cols`, but future versions of sdmTMB may not be compatible with this.",
     "Please replace make_spde() with make_mesh()."))
   } else {
@@ -298,7 +298,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
 
   if (!is.null(newdata)) {
     if (any(!xy_cols %in% names(newdata)) && isFALSE(pop_pred))
-      abort(c("`xy_cols` (the column names for the x and y coordinates) are not in `newdata`.",
+      cli_abort(c("`xy_cols` (the column names for the x and y coordinates) are not in `newdata`.",
           "Did you miss specifying the argument `xy_cols` to match your data?",
           "The newer `make_mesh()` (vs. `make_spde()`) takes care of this for you."))
 
@@ -309,14 +309,14 @@ predict.sdmTMB <- function(object, newdata = object$data,
     new_data_time <- as.numeric(sort(unique(newdata[[object$time]])))
 
     if (!all(new_data_time %in% original_time))
-      abort(c("Some new time elements were found in `newdata`. ",
+      cli_abort(c("Some new time elements were found in `newdata`. ",
         "For now, make sure only time elements from the original dataset are present.",
         "If you would like to predict on new time elements,",
         "see the `extra_time` argument in `?predict.sdmTMB`.")
       )
 
     if (!identical(new_data_time, original_time) & isFALSE(pop_pred)) {
-      abort(c("The time elements in `newdata` are not identical to those in the original dataset.",
+      cli_abort(c("The time elements in `newdata` are not identical to those in the original dataset.",
           "For now, please predict on all time elements and filter out those you don't need after.",
           "Please let us know on the GitHub issues tracker if this is important to you."))
     }
@@ -334,7 +334,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
     }
 
     if (sum(is.na(new_data_time)) > 0)
-      abort(c("There is at least one NA value in the time column.",
+      cli_abort(c("There is at least one NA value in the time column.",
         "Please remove it."))
 
     # newdata$sdm_orig_id <- seq(1, nrow(newdata))
@@ -395,7 +395,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
 
 
     if (length(area) != nrow(proj_X_ij[[1]]) && length(area) != 1L) {
-      abort("`area` should be of the same length as `nrow(newdata)` or of length 1.")
+      cli_abort("`area` should be of the same length as `nrow(newdata)` or of length 1.")
     }
 
     tmb_data$proj_X_threshold <- thresh[[1]]$X_threshold # TODO DELTA HARDCODED TO 1
@@ -469,7 +469,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
     }
     if (!is.null(tmbstan_model)) {
       if (!"stanfit" %in% class(tmbstan_model))
-        abort("`tmbstan_model` must be output from `tmbstan::tmbstan()`.")
+        cli_abort("`tmbstan_model` must be output from `tmbstan::tmbstan()`.")
       t_draws <- extract_mcmc(tmbstan_model)
       r <- apply(t_draws, 2L, new_tmb_obj$report)
     }
@@ -506,7 +506,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
           out <- out2
           if (type == "response") out <- object$family[[2]]$linkinv(out)
         } else {
-          abort("`model` type not valid.")
+          cli_abort("`model` type not valid.")
         }
       } else { # not a delta model:
         out <- do.call("cbind", out)
@@ -620,12 +620,12 @@ predict.sdmTMB <- function(object, newdata = object$data,
 
   } else { # We are not dealing with new data:
     if (se_fit) {
-      nice_warning("Standard errors have not been implemented yet unless you ",
+      cli_warn(paste0("Standard errors have not been implemented yet unless you ",
         "supply `newdata`. In the meantime you could supply your original data frame ",
-        "to the `newdata` argument.")
+        "to the `newdata` argument."))
     }
     if (isTRUE(object$family$delta)) {
-      abort(c("Delta model prediction not implemented for `newdata = NULL` yet.",
+      cli_abort(c("Delta model prediction not implemented for `newdata = NULL` yet.",
           "Please provide your data to `newdata`."))
     }
     nd <- object$data
@@ -639,7 +639,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
     nd$est_non_rf <- r$eta_fixed_i[,1] + r$eta_rw_i[,1] + r$eta_iid_re_i[,1] # DELTA FIXME
     nd$est_rf <- r$omega_s_A[,1] + r$epsilon_st_A_vec[,1] # DELTA FIXME
     if (!is.null(object$spatial_varying_formula))
-      abort(c("Prediction with `newdata = NULL` is not supported with spatially varying coefficients yet.",
+      cli_abort(c("Prediction with `newdata = NULL` is not supported with spatially varying coefficients yet.",
           "Please provide your data to `newdata`."))
     # + r$zeta_s_A
     nd$omega_s <- r$omega_s_A[,1]# DELTA FIXME
@@ -705,14 +705,14 @@ remove_9000 <- function(x) {
 check_sdmTMB_version <- function(version) {
   if (remove_9000(utils::packageVersion("sdmTMB")) >
     remove_9000(version)) {
-    warning(
-      "The installed version of sdmTMB is newer than the version\n",
-      "that was used to fit this model. It is possible new parameters\n",
-      "have been added to the TMB model since you fit this model and\n",
-      "that prediction will fail. We recommend you fit and predict\n",
-      "from an sdmTMB model with the same version.",
-      call. = FALSE
-    )
+    msg <- paste0(
+      "The installed version of sdmTMB is newer than the version ",
+      "that was used to fit this model. It is possible new parameters ",
+      "have been added to the TMB model since you fit this model and ",
+      "that prediction will fail. We recommend you fit and predict ",
+      "from an sdmTMB model with the same version."
+      )
+    cli_warn(msg)
   }
 }
 
@@ -721,10 +721,11 @@ check_time_class <- function(object, newdata) {
   cls2 <- class(newdata[[object$time]])
   if (!identical(cls1, cls2)) {
     if (!identical(sort(c(cls1, cls2)), c("integer", "numeric"))) {
-      stop(
-        "Class of fitted time column (", cls1, ") does not match\nclass of ",
-        "`newdata` time column (", cls2 ,").",
-        call. = FALSE)
+      msg <- paste0(
+        "Class of fitted time column (", cls1, ") does not match class of ",
+        "`newdata` time column (", cls2 ,")."
+        )
+      cli_abort(msg)
     }
   }
 }

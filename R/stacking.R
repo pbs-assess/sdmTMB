@@ -63,7 +63,7 @@ sdmTMB_stacking <- function(model_list, include_folds = NULL) {
   flds_chk <- lapply(flds[seq(2, length(flds))], function(x) identical(flds[[1]], x))
   flds_same <- all(unlist(flds_chk))
   if (!flds_same) {
-    nice_stop("Not all models used the same folds.")
+    cli_abort("Not all models used the same folds.")
   }
 
   # the only quantity we need is the log likelihood

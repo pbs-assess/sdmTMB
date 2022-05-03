@@ -34,5 +34,5 @@ if (inla_installed()) {
 }
 }
 \references{
-Code adapted from VAST
+Code adapted from VAST R package
 }

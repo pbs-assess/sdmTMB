@@ -154,17 +154,17 @@ check_offset <- function(formula) {
   .check <- any(grepl("^offset$",
     gsub(" ", "", unlist(strsplit(as.character(formula), "\\+")))))
   if (.check)
-    nice_stop("Contains offset in formula. This is deprecated. Please use the `offset` argument.")
+    cli_abort("Contains offset in formula. This is deprecated. Please use the `offset` argument.")
 }
 
 check_and_parse_thresh_params <- function(formula, data) {
   terms <- stats::terms(formula)
   terms_labels <- attr(terms, "term.labels")
   if (any(grepl("linear_thresh", terms_labels)) && any(grepl("logistic_thresh", terms_labels))) {
-    nice_stop("Please include only a linear (`breakpt`) *or* a logistic threshold.")
+    cli_abort("Please include only a linear (`breakpt`) *or* a logistic threshold.")
   }
   if (sum(grepl("linear_thresh", terms_labels)) > 1 || sum(grepl("logistic_thresh", terms_labels)) > 1) {
-    nice_stop("Please include only a *single* threshold variable.")
+    cli_abort("Please include only a *single* threshold variable.")
   }
   threshold_parameter <- NULL
   if (any(grepl("breakpt", terms_labels))) {
@@ -181,10 +181,10 @@ check_and_parse_thresh_params <- function(formula, data) {
   }
   if (!is.null(threshold_parameter)) {
     if (length(threshold_parameter) > 1) {
-      nice_stop("`threshold_parameter` must be a single variable name.")
+      cli_abort("`threshold_parameter` must be a single variable name.")
     }
     if (!threshold_parameter %in% names(data)) {
-      nice_stop("`threshold_parameter` is not a column in the `data` data frame.")
+      cli_abort("`threshold_parameter` is not a column in the `data` data frame.")
     }
   }
 
@@ -275,19 +275,4 @@ get_pars <- function(object, unlist = TRUE) {
   if (length(ee$random)>0) x <- x[-ee$random]
   p <- ee$parList(x = x)
   p
-}
-
-nice_stop <- function(...) {
-  # cli::cli_abort(paste0(...), call = NULL, wrap = TRUE)
-  stop(strwrap(paste0(...), prefix = " ", initial = ""), call. = FALSE)
-}
-
-nice_warning <- function(...) {
-  # cli::cli_warn(paste0(...), wrap = TRUE)
-  warning(strwrap(paste0(...), prefix = " ", initial = ""), call. = FALSE)
-}
-
-nice_message <- function(...) {
-  # cli::cli_inform(paste0(...), wrap = TRUE)
-  message(strwrap(paste0(...), prefix = " ", initial = ""))
 }

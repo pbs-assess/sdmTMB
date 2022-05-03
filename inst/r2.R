@@ -46,12 +46,12 @@ VarE/(VarF + VarO + VarE + VarR)
 r2.sdmTMB <- function(x, which_fixef = NULL) {
 
   if (!is(fit, "sdmTMB")) {
-    nice_stop("x must be a model of class sdmTMB.")
+    cli_abort("x must be a model of class sdmTMB.")
   }
   if (!identical(x$family$family, "gaussian"))
-    nice_stop("r2.sdmTMB() currently only works for Gaussian models.")
+    cli_abort("r2.sdmTMB() currently only works for Gaussian models.")
   if (!is.null(x$spatial_varying)) {
-    nice_stop("r2.sdmTMB() currently does not work with spatially varying coefficient models.")
+    cli_abort("r2.sdmTMB() currently does not work with spatially varying coefficient models.")
   }
 
   fe <- fixef(fit)

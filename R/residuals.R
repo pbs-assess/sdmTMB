@@ -118,20 +118,22 @@ qres_beta <- function(object, y, mu) {
 #'
 #' Types of residuals currently supported:
 #'
-#' `"randomized-quantile"` refers to randomized quantile residuals
-#' (Dunn & Smyth 1996), which are also known as probability integral transform
-#' (PIT) residuals (Smith 1985). Under model assumptions, these should be
-#' distributed as standard normal with the following caveat: the Laplace approximation used
-#' for the latent/random effects can cause these residuals to deviate from
-#' the standard normal assumption even if the model is consistent with the data.
+#' `"randomized-quantile"` refers to randomized quantile residuals (Dunn
+#' & Smyth 1996), which are also known as probability integral transform (PIT)
+#' residuals (Smith 1985). Under model assumptions, these should be
+#' distributed as standard normal with the following caveat: the Laplace
+#' approximation used for the latent/random effects can cause these residuals
+#' to deviate from the standard normal assumption even if the model is
+#' consistent with the data.
 #'
 #' `"mle-mcmc-rq"` refers to randomized quantile residuals where the fixed
-#' effects are fixed at their MLE (maximum likelihoood estimate) values and the
-#' random effects are sampled with MCMC via tmbstan/Stan. As proposed in
+#' effects are fixed at their MLE (maximum likelihoood estimate) values and
+#' the random effects are sampled with MCMC via tmbstan/Stan. As proposed in
 #' Thygesen et al. (2017) and used in Rufener et al. (2021). Under model
-#' assumptions, these should be distributed as standard normal. These residuals
-#' are theoretically preferred over the regular Laplace approximated
-#' randomized-quantile residuals, but will be considerably slower to calculate.
+#' assumptions, these should be distributed as standard normal. These
+#' residuals are theoretically preferred over the regular Laplace approximated
+#' randomized-quantile residuals, but will be considerably slower to
+#' calculate.
 #'
 #' `"response"` refers to response residuals: observed minus predicted.
 #'
@@ -188,21 +190,24 @@ residuals.sdmTMB <- function(object,
                              print_stan_model = FALSE,
                              model = c(1, 2),
                              ...) {
-  # if (isTRUE(object$family$delta)) {
-  #   nice_stop(
-  #     "`residuals.sdmTMB()` is not setup to work with delta models yet. ",
-  #     "Try `dharma_residuals()`."
-  #   )
-  # }
 
   model <- as.integer(model[[1]])
   if ("visreg_model" %in% names(object)) {
     model <- object$visreg_model
   }
 
-  # inform(c("`residuals.sdmTMB()` now returns response residuals by default.",
-  #   "Use `type = 'randomized-quantile'` for randomized quantile residuals."))
-  # message("Consider using `dharma_residuals()` instead.")
+  msg1 <- paste0(
+    "residuals.sdmTMB() returns randomized quantile residuals based on random ",
+    "effects from the Laplace approximation. These are fast to compute but have ",
+    "known statistical issues."
+    )
+  msg2 <- paste0(
+    "We recommend calculating residuals with `type = 'mle-mcmc-rq'` to sample ",
+    "from random effect posterior ",
+    "with MCMC conditional on the fixed effects at their ",
+    "MLE (maximum likelihood estimate). This will be slower but more reliable."
+  )
+
   type <- match.arg(type)
   mu_type <- match.arg(mu_type)
 
@@ -227,7 +232,7 @@ residuals.sdmTMB <- function(object,
     poisson  = qres_pois,
     student  = qres_student,
     lognormal  = qres_lognormal,
-    nice_stop(paste(fam, "not yet supported."))
+    cli_abort(paste(fam, "not yet supported."))
   )
 
   if (mu_type == "mle") {

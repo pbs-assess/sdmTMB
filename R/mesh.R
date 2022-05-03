@@ -61,40 +61,48 @@ make_mesh <- function(data, xy_cols,
                       mesh = NULL) {
 
   if (!requireNamespace("INLA", quietly = TRUE)) {
-    nice_stop("INLA must be installed to use this function.")
+    cli_abort("INLA must be installed to use this function.")
   }
 
   if (missing(xy_cols) || is.numeric(xy_cols) || is.numeric(data)) {
-    nice_stop("It looks like you are using an old format of make_mesh(). ",
+    msg <- paste0(
+      "It looks like you are using an old format of make_mesh(). ",
       "The function now uses `data` and `xy_cols` arguments ",
       "to enable carrying through the x and y column names ",
       "to the predict function. Please update your code."
     )
+    cli_abort(msg)
   }
 
   if (max(data[[xy_cols[1]]]) > 1e4 || max(data[[xy_cols[2]]] > 1e4)) {
-    nice_warning("The x or y column values are fairly large. ",
+    msg <- paste0(
+      "The x or y column values are fairly large. ",
       "This can cause estimation problems since the spatial range ",
       "is dependent on the scale of the coordinates. ",
       "Consider scaling the x and y coordinates. ",
-      "For example, try working in UTM km instead of UTM m by divided by 1000.")
+      "For example, try working in UTM km instead of UTM m by divided by 1000."
+      )
+    cli_warn(msg)
   }
   type <- match.arg(type)
   if (!missing(n_knots) && type == "cutoff") {
-    nice_stop("`n_knots` specified but `type = 'cutoff'. ",
+    msg <- paste0(
+      "`n_knots` specified but `type = 'cutoff'. ",
       "The default mesh type now uses a `cutoff` ",
       "intead of the number of knots. You can obtain the previous default ",
-      "mesh type with `type = 'kmeans'`.")
+      "mesh type with `type = 'kmeans'`."
+      )
+    cli_abort(msg)
   }
 
   if (!missing(cutoff) && missing(n_knots)) {
     type <- "cutoff"
   }
   if (missing(cutoff) && type == "cutoff" && is.null(mesh)) {
-    nice_stop("You need to specify the `cutoff` argument.")
+    cli_stop("You need to specify the `cutoff` argument.")
   }
   if (missing(n_knots) && type != "cutoff" && is.null(mesh)) {
-    nice_stop("You need to specify the `n_knots` argument.")
+    cli_stop("You need to specify the `n_knots` argument.")
   }
   loc_xy <- as.matrix(data[, xy_cols, drop = FALSE])
   loc_centers <- NA
@@ -102,7 +110,7 @@ make_mesh <- function(data, xy_cols,
   if (is.null(mesh)) {
     if (type == "kmeans") {
       if (n_knots >= nrow(loc_xy)) {
-        nice_warning(
+        cli_warn(
           "Reducing `n_knots` to be one less than the number of data points."
         )
         n_knots <- nrow(loc_xy) - 1
@@ -123,23 +131,12 @@ make_mesh <- function(data, xy_cols,
   spde <- INLA::inla.spde2.matern(mesh)
   A <- INLA::inla.spde.make.A(mesh, loc = loc_xy)
 
-  # # A_st matrix (by station)
-  # data$sdm_orig_id <- seq(1, nrow(data))
-  # data$sdm_x <- loc_xy[,1,drop=TRUE]
-  # data$sdm_y <- loc_xy[,2,drop=TRUE]
-  # fake_data <- unique(data.frame(sdm_x = data$sdm_x, sdm_y = data$sdm_y))
   fake_data <- data
   fake_data[["sdm_spatial_id"]] <- seq(1, nrow(fake_data))
-  # data <- base::merge(data, fake_data, by = c("sdm_x", "sdm_y"),
-  #   all.x = TRUE, all.y = FALSE)
-  # data <- data[order(data$sdm_orig_id),, drop=FALSE]
-  # A_st <- INLA::inla.spde.make.A(spde$mesh,
-  #   loc = as.matrix(fake_data[, c("sdm_x", "sdm_y"), drop = FALSE]))
-  A_st <- A
 
   structure(list(
     loc_xy = loc_xy, xy_cols = xy_cols, mesh = mesh, spde = spde,
-    loc_centers = loc_centers, A_st = A_st,
+    loc_centers = loc_centers, A_st = A,
     sdm_spatial_id = fake_data$sdm_spatial_id
   ), class = "sdmTMBmesh")}
 
@@ -359,10 +356,10 @@ add_barrier_mesh <- function(spde_obj, barrier_sf, range_fraction = 0.2,
                              proj_scaling = 1, plot = FALSE) {
 
   if (!requireNamespace("INLA", quietly = TRUE)) {
-    nice_stop("INLA must be installed to use this function.")
+    cli_abort("INLA must be installed to use this function.")
   }
   if (!requireNamespace("sf", quietly = TRUE)) {
-    nice_stop("The sf package must be installed to use this function.")
+    cli_abort("The sf package must be installed to use this function.")
   }
 
   assert_that(

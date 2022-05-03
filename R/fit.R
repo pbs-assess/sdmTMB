@@ -115,6 +115,7 @@ NULL
 #' @param ... Not currently used.
 #' @importFrom methods as is
 #' @importFrom rlang abort warn inform
+#' @importFrom cli cli_abort cli_warn cli_inform
 #' @importFrom glue glue
 #' @importFrom mgcv s t2
 #' @importFrom stats gaussian model.frame model.matrix as.formula
@@ -537,12 +538,12 @@ sdmTMB <- function(
 
   if (!missing(spatial)) {
     if (length(spatial) > 1 && !is.list(spatial)) {
-      abort("`spatial` should be a single value or a list")
+      cli_abort("`spatial` should be a single value or a list")
     }
   }
   if (!missing(spatiotemporal)) {
     if (length(spatiotemporal) > 1 && !is.list(spatiotemporal)) {
-      abort("`spatiotemporal` should be a single value or a list")
+      cli_abort("`spatiotemporal` should be a single value or a list")
     }
     if (delta && !is.list(spatiotemporal)) {
       spatiotemporal <- rep(spatiotemporal[[1]], 2L)
@@ -622,28 +623,13 @@ sdmTMB <- function(
   lower <- control$lower
   upper <- control$upper
   get_joint_precision <- control$get_joint_precision
-  # dots <- list(...)
-  # if (length(list(...)) > 0) {
-  #   warn(c("Found additional arguments, which will be ignored.",
-  #     "Did you mispell an argument?"
-  #   ))
-  # }
 
   dot_checks <- c("lower", "upper", "profile", "parallel",
     "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",
     "newton_loops", "start", "map", "get_joint_precision", "normalize")
   .control <- control
+  # FIXME; automate this from sdmTMcontrol args?
   for (i in dot_checks) .control[[i]] <- NULL # what's left should be for nlminb
-  # dot_old <- dot_checks %in% names(dots)
-  # if (any(dot_old)) {
-  #   stop("The ", if (sum(dot_old) > 1) "arguments" else "argument", " `",
-  #     paste(dot_checks[dot_old], collapse = "`, `"),
-  #     "` ", if (sum(dot_old) > 1) "were" else "was",
-  #     " found in the call to `sdmTMB()`.\n",
-  #     if (sum(dot_old) > 1) "These are " else "This is ",
-  #     "now passed through the `control` argument via the\n",
-  #     "`sdmTMBcontrol()` list.", call. = FALSE)
-  # }
 
   ar1_fields <- spatiotemporal == "ar1"
   rw_fields <- spatiotemporal == "rw"
@@ -662,7 +648,7 @@ sdmTMB <- function(
   assert_that(class(formula) %in% c("formula", "list"))
   assert_that(inherits(data, "data.frame"))
   if (!is.null(map) && length(map) != length(start)) {
-    warn(c("`length(map) != length(start)`.",
+    cli_warn(c("`length(map) != length(start)`.",
       "You likely want to specify `start` values if you are setting the `map` argument."))
   }
   if (family$family[1] == "censored_poisson") {
@@ -682,11 +668,11 @@ sdmTMB <- function(
     data[[time]] <- 0L
   } else {
     if (sum(is.na(data[[time]])) > 1)
-      abort("There is at least one NA value in the time column. Please remove it.")
+      cli_abort("There is at least one NA value in the time column. Please remove it.")
   }
   if (is.factor(data[[time]])) {
     if (length(levels(data[[time]])) > length(unique(data[[time]]))) {
-      abort("The time column is a factor and there are extra factor levels. ",
+      cli_abort("The time column is a factor and there are extra factor levels. ",
         "Please remove these or turn your time column into an integer.")
     }
   }
@@ -769,14 +755,14 @@ sdmTMB <- function(
       if (original_formula[[1]] != original_formula[[2]]) {
         msg <- glue("For now, if delta models contain random intercepts, both ",
           "components must have the same main-effects formula.")
-        abort(msg)
+        cli_abort(msg)
       }
     }
     if (any(unlist(lapply(sm, `[[`, "has_smooths")))) {
       if (original_formula[[1]] != original_formula[[2]]) {
         msg <- glue("For now, if delta models contain smoothers, both components ",
             "must have the same main-effects formula.")
-        abort(msg)
+        cli_abort(msg)
       }
     }
   }
@@ -791,11 +777,11 @@ sdmTMB <- function(
   if (delta) {
     y_i2 <- model.response(mf[[2]], "numeric")
     if (!identical(y_i, y_i2))
-      abort("Response variable should be the same in both parts of the delta formula.")
+      cli_abort("Response variable should be the same in both parts of the delta formula.")
   }
 
   if (family$family[1] %in% c("Gamma", "lognormal") && min(y_i) <= 0 && !delta) {
-    abort("Gamma and lognormal must have response values > 0.")
+    cli_abort("Gamma and lognormal must have response values > 0.")
   }
 
   # This is taken from approach in glmmTMB to match how they handle binomial
@@ -832,7 +818,7 @@ sdmTMB <- function(
   }
 
   if (identical(family$link[1], "log") && min(y_i, na.rm = TRUE) < 0 && !delta) {
-    abort("`link = 'log'` but the reponse data include values < 0.")
+    cli_abort("`link = 'log'` but the reponse data include values < 0.")
   }
 
   if (is.null(offset)) offset <- rep(0, length(y_i))
@@ -848,7 +834,7 @@ sdmTMB <- function(
 
   barrier <- "spde_barrier" %in% names(spde)
   if (barrier && anisotropy) {
-    warning("Using a barrier mesh; therefore, anistropy will be disabled.", call. = FALSE)
+    cli_warn("Using a barrier mesh; therefore, anistropy will be disabled.")
     anisotropy <- FALSE
   }
   df <- if (family$family[1] == "student" && "df" %in% names(family)) family$df else 3
@@ -897,7 +883,7 @@ sdmTMB <- function(
   }
   # ncol(X_ij) may occur if time varying model, no intercept
   if (ncol(X_ij[[1]]) > 0 & !identical(nrow(priors_b), ncol(X_ij[[1]])))# TODO change hard coded index on X_ij
-    abort("The number of 'b' priors does not match the model matrix.")
+    cli_abort("The number of 'b' priors does not match the model matrix.")
   if (ncol(priors_b) == 2 && attributes(priors_b)$dist == "normal") {
     # normal priors passed in by user; change to MVN diagonal matrix
     # as.numeric() here prevents diag(NA) taking on factor
@@ -916,7 +902,7 @@ sdmTMB <- function(
     priors_b_Sigma <- as.matrix(Sigma[not_na, not_na])
   }
 
-  if (!"A_st" %in% names(spde)) abort("`mesh` was created with an old version of `make_mesh()`.")
+  if (!"A_st" %in% names(spde)) cli_abort("`mesh` was created with an old version of `make_mesh()`.")
   if (delta) y_i <- cbind(ifelse(y_i > 0, 1, 0), ifelse(y_i > 0, y_i, NA_real_))
   if (!delta) y_i <- matrix(y_i, ncol = 1L)
 
@@ -1037,7 +1023,7 @@ sdmTMB <- function(
     tmb_params$b_j <- stats::coef(temp)
   }
 
-  if (delta && !is.null(thresh$threshold_parameter)) abort("Thresholds not implemented with delta models yet.") # TODO DELTA
+  if (delta && !is.null(thresh$threshold_parameter)) cli_abort("Thresholds not implemented with delta models yet.") # TODO DELTA
 
 ##  # optional models on spatiotemporal sd parameter
 ##  if (est_epsilon_re == 0L) {
@@ -1151,7 +1137,7 @@ sdmTMB <- function(
   tmb_map$ln_kappa <- as.factor(as.integer(as.factor(tmb_map$ln_kappa)))
 
   for (i in seq_along(start)) {
-    inform(c(i = paste0("Initiating `", names(start)[i],
+    cli_inform(c(i = paste0("Initiating `", names(start)[i],
       "` at specified starting value(s) of:"),
       paste0("  ", paste(round(start[[i]], 3), collapse = ", "))))
     tmb_params[[names(start)[i]]] <- start[[i]]
@@ -1160,12 +1146,12 @@ sdmTMB <- function(
   if (!is.matrix(tmb_params[["ln_kappa"]]) && "ln_kappa" %in% names(start)) {
       msg <- c("Note that `ln_kappa` must be a matrix of nrow 2 and ncol models (regular=1, delta=2).",
         "It should be the same value in each row if `share_range = TRUE`.")
-    abort(msg)
+    cli_abort(msg)
   }
   if (nrow(tmb_params[["ln_kappa"]]) != 2L && "ln_kappa" %in% names(start)) {
       msg <- c("Note that `ln_kappa` must be a matrix of nrow 2 and ncol models (regular=1, delta=2).",
         "It should be the same value in each row if `share_range = TRUE`.")
-    abort(msg)
+    cli_abort(msg)
   }
 
   data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL
@@ -1203,10 +1189,10 @@ sdmTMB <- function(
   if (tmb_data$threshold_func > 0) tmb_map$b_threshold <- NULL
 
   if (control$profile && delta)
-    abort("Profile not yet working with delta models.")
+    cli_abort("Profile not yet working with delta models.")
 
   for (i in seq_along(map)) { # user supplied
-    inform(c(i = paste0("Fixing (mapping) `", names(map)[i],
+    cli_inform(c(i = paste0("Fixing (mapping) `", names(map)[i],
       "` at specified starting value(s) of:"),
       paste0("  ",
         paste(round(tmb_params[[names(map)[i]]], 3), collapse = ", "))))
@@ -1374,7 +1360,7 @@ check_spatiotemporal_arg <- function(x, time, .which = 1) {
   if (.spatiotemporal == "false") .spatiotemporal <- "off"
   .spatiotemporal <- match.arg(tolower(.spatiotemporal), choices = c("iid", "ar1", "rw", "off"))
   if (is.null(time) && .spatiotemporal != "off" && sp_len >= 1) {
-    abort("`spatiotemporal` is set but the `time` argument is missing.")
+    cli_abort("`spatiotemporal` is set but the `time` argument is missing.")
   }
   .spatiotemporal
 }
