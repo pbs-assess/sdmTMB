@@ -124,10 +124,10 @@ test_that("spatial field mapping/specification works with delta models", {
   )
 
   s <- as.list(fit5$sd_report, "Estimate")
-  expect_gt(s$ln_tau_O[1], 0)
-  expect_gt(s$ln_tau_O[2], 0)
+  expect_gt(abs(s$ln_tau_O[1]), 0)
+  expect_gt(abs(s$ln_tau_O[2]), 0)
   expect_equal(s$ln_tau_E[1], 0)
-  expect_gt(s$ln_tau_E[2], 0)
+  expect_gt(abs(s$ln_tau_E[2]), 0)
   expect_output(print(fit), regexp = "Spatiotemporal model")
   expect_output(print(fit), regexp = "Spatiotemporal SD")
 
@@ -172,7 +172,7 @@ test_that("spatiotemporal field mapping/specification works with delta models", 
     spatiotemporal = list("iid", "off")
   )
   s <- as.list(fit$sd_report, "Estimate")
-  expect_gt(s$ln_tau_E[1], 0)
+  expect_gt(abs(s$ln_tau_E[1]), 0)
   expect_equal(s$ln_tau_E[2], 0)
   expect_output(print(fit), regexp = "Spatiotemporal model")
   expect_output(print(fit), regexp = "Spatiotemporal SD")
@@ -183,7 +183,7 @@ test_that("spatiotemporal field mapping/specification works with delta models", 
     spatiotemporal = list("off", "iid")
   )
   s <- as.list(fit$sd_report, "Estimate")
-  expect_gt(s$ln_tau_E[2], 0)
+  expect_gt(abs(s$ln_tau_E[2]), 0)
   expect_equal(s$ln_tau_E[1], 0)
   print(fit)
 
@@ -204,7 +204,7 @@ test_that("spatiotemporal field mapping/specification works with delta models", 
     spatiotemporal = list("ar1", "off")
   )
   s <- as.list(fit$sd_report, "Estimate")
-  expect_gt(s$ar1_phi[1], 0)
+  expect_gt(abs(s$ar1_phi[1]), 0)
   expect_equal(s$ar1_phi[2], 0)
   expect_identical(fit$tmb_map$ar1_phi, as.factor(c(1, NA)))
   tidy(fit, "ran_pars", model = 1)
@@ -218,7 +218,7 @@ test_that("spatiotemporal field mapping/specification works with delta models", 
     spatiotemporal = list("off", "ar1")
   )
   s <- as.list(fit$sd_report, "Estimate")
-  expect_gt(s$ar1_phi[2], 0)
+  expect_gt(abs(s$ar1_phi[2]), 0)
   expect_equal(s$ar1_phi[1], 0)
   expect_identical(fit$tmb_map$ar1_phi, as.factor(c(NA, 1)))
   print(fit)
@@ -230,7 +230,7 @@ test_that("spatiotemporal field mapping/specification works with delta models", 
     spatiotemporal = list("rw", "off")
   )
   s <- as.list(fit$sd_report, "Estimate")
-  expect_gt(s$ln_tau_E[1], 0)
+  expect_gt(abs(s$ln_tau_E[1]), 0)
   expect_equal(s$ln_tau_E[2], 0)
 
   fit <- sdmTMB(density ~ 1,
