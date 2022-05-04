@@ -114,7 +114,6 @@ NULL
 #   trend and random effects)
 #' @importFrom methods as is
 #' @importFrom cli cli_abort cli_warn cli_inform
-#' @importFrom glue glue
 #' @importFrom mgcv s t2
 #' @importFrom stats gaussian model.frame model.matrix as.formula
 #'   model.response terms model.offset
@@ -758,14 +757,14 @@ sdmTMB <- function(
   if (delta) {
     if (any(unlist(lapply(nobs_RE, function(.x) .x > 0)))) {
       if (original_formula[[1]] != original_formula[[2]]) {
-        msg <- glue("For now, if delta models contain random intercepts, both ",
+        msg <- paste0("For now, if delta models contain random intercepts, both ",
           "components must have the same main-effects formula.")
         cli_abort(msg)
       }
     }
     if (any(unlist(lapply(sm, `[[`, "has_smooths")))) {
       if (original_formula[[1]] != original_formula[[2]]) {
-        msg <- glue("For now, if delta models contain smoothers, both components ",
+        msg <- paste0("For now, if delta models contain smoothers, both components ",
             "must have the same main-effects formula.")
         cli_abort(msg)
       }
