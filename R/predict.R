@@ -450,7 +450,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
     # need to initialize the new TMB object once:
     new_tmb_obj$fn(old_par)
 
-    if (sims > 0) {
+    if (sims > 0 && is.null(tmbstan_model)) {
       if (!"jointPrecision" %in% names(object$sd_report) && !has_no_random_effects(object)) {
         message("Rerunning TMB::sdreport() with `getJointPrecision = TRUE`.")
         sd_report <- TMB::sdreport(object$tmb_obj, getJointPrecision = TRUE)
@@ -471,6 +471,13 @@ predict.sdmTMB <- function(object, newdata = object$data,
       if (!"stanfit" %in% class(tmbstan_model))
         cli_abort("`tmbstan_model` must be output from `tmbstan::tmbstan()`.")
       t_draws <- extract_mcmc(tmbstan_model)
+      if (nsim > 0) {
+        if (nsim > ncol(t_draws)) {
+          cli_abort("`nsim` must be <= number of MCMC samples.")
+        } else {
+          t_draws <- t_draws[,seq(ncol(t_draws) - nsim + 1, ncol(t_draws)), drop = FALSE]
+        }
+      }
       r <- apply(t_draws, 2L, new_tmb_obj$report)
     }
     if (!is.null(tmbstan_model) || sims > 0) {
