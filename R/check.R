@@ -142,7 +142,7 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
       if (b$estimate[i] < 1e-3) {
         msg <- "` is smaller than 0.001"
         cli::cli_alert_danger(c("`", b$term[i], msg))
-        par_message(par_message(np[i]))
+        par_message(b$term[i])
         msg <- "Consider omitting this part of the model"
         cli::cli_alert_info(msg)
         cat("\n")
