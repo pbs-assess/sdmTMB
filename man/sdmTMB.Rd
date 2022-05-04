@@ -134,8 +134,6 @@ be dragons.}
 
 \item{do_fit}{Fit the model (\code{TRUE}) or return the processed data without
 fitting (\code{FALSE})?}
-
-\item{...}{Not currently used.}
 }
 \value{
 An object (list) of class \code{sdmTMB}. Useful elements include:
@@ -405,16 +403,6 @@ fit_dg <- sdmTMB(
   family = delta_gamma()
 )
 fit_dg
-
-
-# Delta/hurdle Poisson-link (cloglog link):
-fit_pg <- sdmTMB(
-  density ~ s(depth),
-  data = pcod_2011, mesh = mesh,
-  spatial = "off",
-  family = delta_poisson_link_gamma() #<
-)
-fit_pg
 
 # Delta/hurdle truncated NB2:
 pcod_2011$count <- round(pcod_2011$density)

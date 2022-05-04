@@ -99,10 +99,10 @@ make_mesh <- function(data, xy_cols,
     type <- "cutoff"
   }
   if (missing(cutoff) && type == "cutoff" && is.null(mesh)) {
-    cli_stop("You need to specify the `cutoff` argument.")
+    cli_abort("You need to specify the `cutoff` argument.")
   }
   if (missing(n_knots) && type != "cutoff" && is.null(mesh)) {
-    cli_stop("You need to specify the `n_knots` argument.")
+    cli_abort("You need to specify the `n_knots` argument.")
   }
   loc_xy <- as.matrix(data[, xy_cols, drop = FALSE])
   loc_centers <- NA

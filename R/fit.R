@@ -112,7 +112,6 @@ NULL
 #   model without random effects), "re" (fits a model with random effects in
 #   epsilon_st, but no trend), and "trend-re" (a model that includes both the
 #   trend and random effects)
-#' @param ... Not currently used.
 #' @importFrom methods as is
 #' @importFrom cli cli_abort cli_warn cli_inform
 #' @importFrom glue glue

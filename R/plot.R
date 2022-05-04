@@ -82,7 +82,7 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
   cli_inform(msg)
   se <- TRUE
   if (isTRUE(object$delta))
-    cli_stop("This function doesn't work with delta models yet")
+    cli_abort("This function doesn't work with delta models yet")
 
   assert_that(inherits(object, "sdmTMB"))
   assert_that(is.logical(ggplot))

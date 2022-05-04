@@ -398,7 +398,7 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
     } else if (model[[1]] == 2) {
       ret <- lapply(ret, function(.x) ifelse(!is.na(.x[,2]), .x[,2], NA))
     } else {
-      abort("`model` argument isn't valid; should be NA, 1, or 2.")
+      cli_abort("`model` argument isn't valid; should be NA, 1, or 2.")
     }
   }
 

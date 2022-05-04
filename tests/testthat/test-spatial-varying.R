@@ -1,8 +1,3 @@
-# might also want to add this stop to fit function
-# if (is_present(spatially_varying)) {
-#     abort("`spatially_varying` is not an argument, did you mean `spatial_varying`?")
-# }
-
 test_that("Spatially-varying coefficients are estimated correctly for binomial and delta models", {
   skip_on_cran()
   skip_on_ci()
