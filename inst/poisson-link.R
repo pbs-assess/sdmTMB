@@ -38,10 +38,10 @@ nll_poisson_link <- function(par) {
   # y_rate: rate data (e.g. kg/hr)
 
   y_present <- ifelse(y_rate > 0, 1, 0)
-  n_i <- exp(par[1] + par[2] * x_i)
-  w_i <- exp(par[3] + par[4] * x_i)
+  n_i <- exp(par[1] + par[2] * x_i) # group density
+  w_i <- exp(par[3] + par[4] * x_i) # biomass per group
 
-  p_i <- 1 - exp(-a_i * n_i)
+  p_i <- 1 - exp(-a_i * n_i) # encounter probability
   r_i <- (n_i / p_i) * w_i
 
   nll1 <- -sum(dbinom(y_present, size = 1, prob = p_i, log = TRUE))

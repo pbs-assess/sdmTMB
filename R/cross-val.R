@@ -57,10 +57,9 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
     Gamma = ll_gamma,
     nbinom1 = ll_nbinom1,
     nbinom2 = ll_nbinom2,
-    stop(object$family$family, " not yet implemented. ",
-      "Please file an issue on GitHub.",
-      call. = FALSE
-    )
+    cli_abort(paste0(object$family$family, " not yet implemented. ",
+      "Please file an issue on GitHub."
+    ))
   )
   family_func(object, withheld_y, withheld_mu)
 }
@@ -145,7 +144,7 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
   k_folds = 8, fold_ids = NULL, parallel = TRUE,
   use_initial_fit = FALSE, spde = deprecated(),
   ...) {
-  if (k_folds < 1) stop("`k_folds` must be >= 1.", call. = FALSE)
+  if (k_folds < 1) cli_abort("`k_folds` must be >= 1.")
 
   if (is_present(spde)) {
     deprecate_warn("0.0.20", "sdmTMB_cv(spde)", "sdmTMB_cv(mesh)")
@@ -153,8 +152,6 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
     spde <- mesh
   }
   data[["_sdm_order_"]] <- seq_len(nrow(data))
-  # stopifnot(!missing(mesh_args) || !missing(spde))
-  # stopifnot(!(!missing(mesh_args) && !missing(spde)))
   constant_mesh <- missing(mesh_args)
   if (missing(mesh_args)) mesh_args <- NULL
   if (missing(spde)) spde <- NULL
@@ -179,15 +176,15 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
     }
     if (length(fold_ids) == 1L && is.character(fold_ids)) {
       if (!fold_ids %in% names(data)) {
-        stop("Name of fold identifier not found in data.", call. = FALSE)
+        cli_abort("Name of fold identifier not found in data.")
       }
       data$cv_fold <- data[[fold_ids]]
     }
     if (length(fold_ids) > 1 && length(fold_ids) < nrow(data)) {
-      stop("Dimension of `fold_ids` doesn't match data and is not a named variable.")
+      cli_abort("Dimension of `fold_ids` doesn't match data and is not a named variable.")
     }
     if (length(which(is.na(data$cv_fold))) > 0) {
-      stop("NAs found in `fold_ids`; please check `fold_ids` are specified correctly.")
+      cli_abort("NAs found in `fold_ids`; please check `fold_ids` are specified correctly.")
     }
     k_folds <- length(unique(data$cv_fold))
   }
@@ -199,7 +196,7 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
 
   dot_args <- as.list(substitute(list(...)))[-1L]
   if ("weights" %in% names(dot_args)) {
-    stop("`weights` cannot be specified within sdmTMB_cv().", call. = FALSE)
+    cli_abort("`weights` cannot be specified within sdmTMB_cv().")
   }
 
   if (k_folds > 1) {
@@ -254,11 +251,9 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
     cv_data <- data[data$cv_fold == k, , drop = FALSE]
     # predict for withheld data:
     predicted_obj <- predict(object, newdata = cv_data, return_tmb_obj = TRUE)
-    # predicted <- predicted_obj$data[weights == 0, , drop = FALSE]
     predicted <- predicted_obj$data
-    # cv_data <- data[weights == 0, , drop = FALSE]
     cv_data$cv_predicted <- object$family$linkinv(predicted$est)
-    response <- get_response(object$formula)
+    response <- get_response(object$formula[[1]])
     withheld_y <- predicted[[response]]
     withheld_mu <- cv_data$cv_predicted
 

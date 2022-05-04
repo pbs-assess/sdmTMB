@@ -63,14 +63,14 @@ test_that("A time-varying model fits and predicts appropriately", {
     dplyr::summarize(b_t = unique(b), .groups = "drop") %>%
     dplyr::pull(b_t)
   r <- m$tmb_obj$report()
-  b_t_fit <- r$b_rw_t
+  b_t_fit <- r$b_rw_t[,,1]
   plot(b_t, b_t_fit, asp = 1);abline(a = 0, b = 1)
   expect_equal(mean((b_t- b_t_fit)^2), 0, tolerance = 1e-4)
   p <- predict(m)
   plot(p$est, s$observed, asp = 1);abline(a = 0, b = 1)
   expect_equal(mean((p$est - s$observed)^2), 0, tolerance = 0.01)
 
-  cols <- c("est", "est_non_rf", "est_rf", "omega_s", "epsilon_st")
+  cols <- c("est", "est_non_rf", "est_rf", "epsilon_st")
   p_nd <- predict(m, newdata = s)
   expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-4)
 })
@@ -118,8 +118,7 @@ test_that("A linear threshold model fits", {
   d <- subset(pcod, year >= 2011) # subset for speed
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ 0 + as.factor(year) + breakpt(depth_scaled), data = d,
-    mesh = pcod_spde, family = tweedie(link = "log"),
-    time = "year")
+    mesh = pcod_spde, family = tweedie(link = "log"), spatial = "off")
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
 })
 
@@ -216,7 +215,7 @@ test_that("profile option works", {
   expect_equal(bp$estimate, b$estimate, tolerance = 0.05)
 })
 
-test_that("The `map_rf` argument works.", {
+test_that("The mapping off spatial and spatiotemporal fields works.", {
   skip_on_cran()
   skip_on_ci()
   skip_if_not_installed("INLA")
@@ -229,12 +228,12 @@ test_that("The `map_rf` argument works.", {
   p <- predict(m)
   m.map <- sdmTMB(density ~ 0 + as.factor(year),
     data = d, time = "year", mesh = pcod_spde,
-    family = tweedie(link = "log"), control = sdmTMBcontrol(map_rf = TRUE)
+    family = tweedie(link = "log"), spatial = "off", spatiotemporal = "off"
   )
   p.map <- predict(m.map)
 
-  expect_true(all(p.map$omega_s == 0))
-  expect_true(all(p.map$epsilon_st == 0))
+  expect_true(is.na(m.map$tmb_map$ln_tau_E))
+  expect_true(is.na(m.map$tmb_map$ln_tau_O))
   expect_true(!identical(p$est, p.map$est))
   expect_true(length(unique(p.map$est)) == length(unique(d$year)))
 
@@ -242,7 +241,7 @@ test_that("The `map_rf` argument works.", {
   dpos <- d[d$density > 0, ]
   pcod_spde <- make_mesh(dpos, c("X", "Y"), cutoff = 50)
   m.sdmTMB.map <- sdmTMB(log(density) ~ depth, data = dpos,
-    family = gaussian(), control = sdmTMBcontrol(map_rf = TRUE),
+    family = gaussian(), spatial = "off", spatiotemporal = "off",
     mesh = pcod_spde)
   m.stats.glm <- stats::lm(log(density) ~ depth, data = dpos)
   m.glmmTMB <- glmmTMB::glmmTMB(log(density) ~ depth, data = dpos)
@@ -256,7 +255,7 @@ test_that("The `map_rf` argument works.", {
   pcod_binom$present <- ifelse(pcod_binom$density > 0, 1L, 0L)
   pcod_spde <- make_mesh(pcod_binom, c("X", "Y"), cutoff = 50)
   m.sdmTMB.map <- sdmTMB(present ~ depth, data = pcod_binom,
-    family = binomial(link = "logit"), control = sdmTMBcontrol(map_rf = TRUE), mesh = pcod_spde)
+    family = binomial(link = "logit"), spatial = "off", spatiotemporal = "off", mesh = pcod_spde)
   m.stats.glm <- stats::glm(present ~ depth, data = pcod_binom,
     family = binomial(link = "logit"))
   m.glmmTMB <- glmmTMB::glmmTMB(present ~ depth, data = pcod_binom,
@@ -287,7 +286,7 @@ test_that("Random walk fields work", {
     data = d, time = "year", mesh = pcod_spde,
     family = tweedie(link = "log"), spatiotemporal = "RW"
   )
-  expect_identical(m_rw$tmb_data$rw_fields, 1L)
+  expect_identical(m_rw$tmb_data$rw_fields, TRUE)
   p_rw <- predict(m_rw)
 
   # close to AR1 with high rho:
@@ -298,8 +297,8 @@ test_that("Random walk fields work", {
       start = list(ar1_phi = qlogis((0.99 + 1) / 2)),
       map = list(ar1_phi = factor(NA)))
   )
-  expect_identical(m_ar1$tmb_data$ar1_fields, 1L)
-  expect_identical(m_ar1$tmb_data$rw_fields, 0L)
+  expect_identical(m_ar1$tmb_data$ar1_fields, TRUE)
+  expect_identical(m_ar1$tmb_data$rw_fields, FALSE)
   p_ar1 <- predict(m_ar1)
 
   expect_gt(stats::cor(p_ar1$est, p_rw$est), 0.95)
@@ -324,6 +323,89 @@ test_that("start works", {
     m2 <- sdmTMB(density ~ poly(depth, 2),
       data = pcod_2011,
       mesh = pcod_mesh_2011, family = tweedie(),
-      control = sdmTMBcontrol(start = list(ln_kappa = c(-1.78, -1.78))))
+      control = sdmTMBcontrol(start = list(ln_kappa = matrix(c(-1.78, -1.78), ncol = 1L))))
   }, regexp = "ln_kappa")
+})
+
+test_that("Multiple SVC works", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+
+  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
+
+  pcod$syear <- as.numeric(scale(pcod$year))
+  fit <- sdmTMB(
+    density ~ 1,
+    spatial_varying = ~ 0 + syear + depth_scaled,
+    mesh = mesh,
+    family = delta_gamma(),
+    data = pcod
+  )
+  fit$sd_report
+  s <- as.list(fit$sd_report, "Std. Error")
+  expect_true(sum(is.na(s$b_j)) == 0L)
+  fit
+  qcs_grid$syear <- as.numeric(scale(qcs_grid$year))
+  p <- predict(fit, newdata = qcs_grid)
+  # p <- predict(fit, newdata = NULL)
+})
+
+test_that("More esoteric prediction options work", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  fit <- sdmTMB(
+    density ~ depth_scaled,
+    data = pcod_2011, mesh = pcod_mesh_2011,
+    family = delta_gamma()
+  )
+  expect_error(p <- predict(fit, nsim = 5, model = "aaa"),
+    regexp = "model"
+  )
+  expect_error(p <- predict(fit, nsim = 5, model = 99),
+    regexp = "model"
+  )
+
+  p <- predict(fit, nsim = 5, model = NA)
+  head(p)
+  p <- predict(fit, nsim = 5, model = 1)
+  head(p)
+  p <- predict(fit, nsim = 5, model = 1, type = "response")
+  head(p)
+  expect_true(all(p <= 1 & p >= 0))
+  p <- predict(fit, nsim = 5, model = 2)
+  head(p)
+  p <- predict(fit, nsim = 5, model = 2, type = "response")
+  head(p)
+  expect_true(all(p > 0))
+
+  p <- predict(fit,
+    nsim = 5, model = 2,
+    return_tmb_report = TRUE
+  )
+  expect_length(p, 5L)
+
+  fit <- sdmTMB(
+    density ~ depth_scaled,
+    data = pcod_2011, mesh = pcod_mesh_2011,
+    family = tweedie()
+  )
+  p <- predict(fit, nsim = 5)
+  p <- predict(fit, nsim = 5, type = "response")
+  head(p)
+  expect_true(all(p > 0))
+})
+
+test_that("update works", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  fit <- sdmTMB(
+    density ~ depth_scaled,
+    data = pcod_2011, mesh = pcod_mesh_2011,
+    family = tweedie()
+  )
+  fit2 <- update(fit)
+  expect_equal(fit$model, fit2$model)
 })

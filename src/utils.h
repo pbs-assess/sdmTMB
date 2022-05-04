@@ -66,7 +66,7 @@ struct LOM_t : vector<matrix<Type> > {
 };
 
 // Function to import barrier-SPDE code
-// From Olav Nikolai Breivik and Hans Skaug via VAST
+// From Olav Nikolai Breivik and Hans Skaug:
 template <class Type>
 struct spde_barrier_t {
   vector<Type> C0;
@@ -125,6 +125,7 @@ matrix<Type> MakeH(vector<Type> x) {
   return H;
 }
 
+// FIXME no longer needed!?
 template <class Type>
 vector<Type> RepeatVector(vector<Type> x, int times) {
   int n = x.size() * times;
@@ -247,6 +248,12 @@ double rtruncated_nbinom(double alpha, int k, double mu) {
         return x;
     }
   }
+}
+
+template<class Type>
+Type calc_rf_sigma(Type ln_tau, Type ln_kappa) {
+  Type sigma = 1 / sqrt(Type(4.) * M_PI * exp(Type(2.) * ln_tau + Type(2.) * ln_kappa));
+  return sigma;
 }
 
 }  // namespace sdmTMB

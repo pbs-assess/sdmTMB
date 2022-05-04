@@ -19,14 +19,14 @@ get_smooth_terms <- function(terms) {
   x1 <- grep("s\\(", terms)
   x2 <- grep("t2\\(", terms)
   if (length(x2) > 0L)
-    stop("t2() smoothers are not yet supported due to issues with prediction on newdata.", call. = FALSE)
+    cli_abort("t2() smoothers are not yet supported due to issues with prediction on newdata.")
   x1
 }
 
 parse_smoothers <- function(formula, data, newdata = NULL) {
   terms <- all_terms(formula)
   if (!is.null(newdata)) {
-    if (any(grepl("t2\\(", terms))) stop("Prediction on newdata with t2() still has issues.", call. = FALSE)
+    if (any(grepl("t2\\(", terms))) cli_abort("Prediction on newdata with t2() still has issues.")
   }
   smooth_i <- get_smooth_terms(terms)
   basis <- list()
@@ -38,6 +38,7 @@ parse_smoothers <- function(formula, data, newdata = NULL) {
     ns <- 0
     ns_Xf <- 0
     for (i in seq_along(smterms)) {
+      if (grepl('bs\\=\\"re', smterms[i])) stop("Error: bs = 're' is not currently supported for smooths")
       obj <- eval(str2expression(smterms[i]))
       basis[[i]] <- mgcv::smoothCon(
         object = obj, data = data,

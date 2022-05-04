@@ -5,13 +5,22 @@
 \alias{get_cog}
 \title{Extract a relative biomass/abundance index or a center of gravity}
 \usage{
-get_index(obj, bias_correct = FALSE, level = 0.95, ...)
+get_index(
+  obj,
+  bias_correct = FALSE,
+  level = 0.95,
+  area = 1,
+  silent = TRUE,
+  ...
+)
 
 get_cog(
   obj,
   bias_correct = FALSE,
   level = 0.95,
   format = c("long", "wide"),
+  area = 1,
+  silent = TRUE,
   ...
 )
 }
@@ -21,6 +30,12 @@ get_cog(
 \item{bias_correct}{Should bias correction be implemented \code{\link[TMB:sdreport]{TMB::sdreport()}}?}
 
 \item{level}{The confidence level.}
+
+\item{area}{Grid cell area. A vector of length \code{newdata} from
+\code{\link[=predict.sdmTMB]{predict.sdmTMB()}} or a value of length 1, which will be repeated
+internally to match.}
+
+\item{silent}{Silent?}
 
 \item{...}{Passed to \code{\link[TMB:sdreport]{TMB::sdreport()}}.}
 
@@ -53,6 +68,33 @@ cog
 }
 }
 
+}
+\references{
+Geostatistical random-field model-based indices of abundance
+(along with many newer papers):
+
+Shelton, A.O., Thorson, J.T., Ward, E.J., and Feist, B.E. 2014. Spatial
+semiparametric models improve estimates of species abundance and
+distribution. Canadian Journal of Fisheries and Aquatic Sciences 71(11):
+1655--1666. \doi{10.1139/cjfas-2013-0508}
+
+Thorson, J.T., Shelton, A.O., Ward, E.J., and Skaug, H.J. 2015.
+Geostatistical delta-generalized linear mixed models improve precision for
+estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
+72(5): 1297–1310. \doi{10.1093/icesjms/fsu243}
+
+Geostatistical model-based centre of gravity:
+
+Thorson, J.T., Pinsky, M.L., and Ward, E.J. 2016. Model-based inference for
+estimating shifts in species distribution, area occupied and centre of
+gravity. Methods Ecol Evol 7(8): 990–1002. \doi{10.1111/2041-210X.12567}
+
+Bias correction:
+
+Thorson, J.T., and Kristensen, K. 2016. Implementing a generic method for
+bias correction in statistical models using random effects, with spatial and
+population dynamics examples. Fisheries Research 175: 66–74.
+\doi{10.1016/j.fishres.2015.11.016}
 }
 \seealso{
 \code{\link[=get_index_sims]{get_index_sims()}}

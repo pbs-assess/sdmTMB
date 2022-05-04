@@ -3,22 +3,24 @@ NULL
 
 #' Fit a spatial or spatiotemporal GLMM with TMB
 #'
-#' Fit a spatial or spatiotemporal Gaussian Markov random field GLMM with TMB.
-#' This can be useful for (dynamic) species distribution models and relative
-#' abundance index standardization among many other uses.
+#' Fit a spatial or spatiotemporal Gaussian random field generalized linear
+#' mixed effects model (GLMM) with R package TMB (Template Model Builder) and
+#' the SPDE (stochastic partial differential equation) approach. This can be
+#' useful for (dynamic) species distribution models and relative abundance index
+#' standardization among many other uses.
 #'
-#' @param formula Model formula. See the Details section below for how to specify
-#'   offsets and threshold parameters. For index standardization, you may wish
-#'   to include `0 + as.factor(year)` (or whatever the time column is called)
-#'   in the formula. IID random intercepts are possible using \pkg{lme4}
-#'   syntax, e.g., `+ (1 | g)` where `g` is a column with factor levels.
-#'   Penalized splines are possible via \pkg{mgcv} with `s()`. See examples
-#'   and details below.
+#' @param formula Model formula. IID random intercepts are possible using
+#'   \pkg{lme4} syntax, e.g., `+ (1 | g)` where `g` is a column of class
+#'   character or factor representing groups. Penalized splines are possible via
+#'   \pkg{mgcv} with `s()`. Optionally a list for delta (hurdle) models.  See
+#'   examples and details below. For index standardization, see details section
+#'   below.
 #' @param data A data frame.
 #' @param mesh An object from [make_mesh()].
 #' @param time An optional time column name (as character). Can be left as
-#'   `NULL` for a model with only spatial random fields unless you wish to use
-#'   one of the index or center of gravity functions over time.
+#'   `NULL` for a model with only spatial random fields; however, if the data
+#'   are actually spatiotemporal and you wish to use [get_index()] or [get_cog()]
+#'   downstream, supply the time argument.
 #' @param family The family and link. Supports [gaussian()], [Gamma()],
 #'   [binomial()], [poisson()], \code{\link[sdmTMB:families]{Beta()}},
 #'   \code{\link[sdmTMB:families]{nbinom2()}},
@@ -27,83 +29,96 @@ NULL
 #'   \code{\link[sdmTMB:families]{truncated_nbinom1()}},
 #'   \code{\link[sdmTMB:families]{censored_poisson()}},
 #'   \code{\link[sdmTMB:families]{student()}}, and
-#'   \code{\link[sdmTMB:families]{tweedie()}}]. For binomial family options,
-#'   see the 'Binomial families' in the Details section below.
-#' @param spatial Estimate spatial random fields? Options are
-#'   `'on'` / `'off'` or `TRUE` / `FALSE`.
+#'   \code{\link[sdmTMB:families]{tweedie()}}]. Supports the delta/hurdle models:
+#'   \code{\link[sdmTMB:families]{delta_gamma()}},
+#'   \code{\link[sdmTMB:families]{delta_lognormal()}}, and
+#'   \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}},
+#'   For binomial family options, see 'Binomial families' in the Details
+#'   section below.
+#' @param spatial Estimate spatial random fields? Options are `'on'` / `'off'`
+#'   or `TRUE` / `FALSE`. Optionaly a list for delta models, e.g. `list('on',
+#'   'off')`.
 #' @param spatiotemporal Estimate the spatiotemporal random fields as `'IID'`
 #'   (independent and identically distributed; default), stationary `'AR1'`
 #'   (first-order autoregressive), as a random walk (`'RW'`), or as fixed at 0
-#'   `'off'`. Will be set to `'off'` if `time = NULL`. Note that the
-#'   spatiotemporal standard deviation represents the marginal steady-state
-#'   standard deviation of the process in the case of the AR1. I.e., it is
-#'   scaled according to the correlation. See the [TMB
+#'   `'off'`. Will be set to `'off'` if `time = NULL`. If a delta model, can be
+#'   a list. E.g., `list('off', 'ar1')`. Note that the spatiotemporal standard
+#'   deviation represents the marginal steady-state standard deviation of the
+#'   process in the case of the AR1. I.e., it is scaled according to the
+#'   correlation. See the [TMB
 #'   documentation](https://kaskr.github.io/adcomp/classAR1__t.html). If the AR1
 #'   correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
-#'   may wish to switch to the random walk `"RW"`. Capitalization is ignored. `TRUE`
-#'   gets converted to `'iid'` and `FALSE` gets converted to `off`.
+#'   may wish to switch to the random walk `"RW"`. Capitalization is ignored.
+#'   `TRUE` gets converted to `'IID'` and `FALSE` gets converted to `off`.
 #' @param share_range Logical: estimate a shared spatial and spatiotemporal
-#'   range parameter (`TRUE`) or independent range parameters (`FALSE`).
+#'   range parameter (`TRUE`) or independent range parameters (`FALSE`). If a
+#'   delta model, can be a list. E.g., `list(TRUE, FALSE)`.
 #' @param time_varying An optional one-sided formula describing covariates that
 #'   should be modelled as a random walk through time. Be careful not to include
 #'   covariates (including the intercept) in both the main and time-varying
-#'   formula. I.e., at least one should have `~ 0` or `~ -1`.
-#' @param spatial_varying An optional one-sided formula **with a single
-#'   predictor** of a coefficient that should varying in space as a random
-#'   field. Note that you may want to include a fixed effect for the same
-#'   variable to improve interpretability. If the (scaled) time column, will
-#'   represent a local-time-trend model. See \doi{10.1111/ecog.05176} and the
-#'   [spatial trends
+#'   formula. I.e., at least one should have `~ 0` or `~ -1`. Structure must
+#'   currently be shared in delta models.
+#' @param spatial_varying An optional one-sided formula of a coefficients that
+#'   should varying in space as random fields. Note that you likely want to
+#'   include a fixed effect for the same variable to improve interpretability
+#'   since the random field is assumed to have a mean of 0.
+#'   If the (scaled) time column, will represent a local-time-trend model. See
+#'   \doi{10.1111/ecog.05176} and the [spatial trends
 #'   vignette](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html).
-#'    Note this predictor should be centered to have mean zero and have a
-#'   standard deviation of approximately 1 (scale by the SD).
-#' @param weights Optional likelihood weights for the conditional model.
-#'   Implemented as in \pkg{glmmTMB}. Weights do not have to sum
-#'   to one and are not internally modified. Can also be used for trials with
-#'   the binomial family; the weights argument needs to be a vector and not a name
-#'   of the variable in the dataframe. See the Details section below.
+#'   Note this predictor should be centered to have mean zero and have a
+#'   standard deviation of approximately 1 (scale by the SD). Structure must
+#'   currently be shared in delta models.
+#' @param weights A numeric vector representing optional likelihood weights for
+#'   the conditional model. Implemented as in \pkg{glmmTMB}: weights do not have
+#'   to sum to one and are not internally modified. Can also be used for trials
+#'   with the binomial family; the weights argument needs to be a vector and not
+#'   a name of the variable in the data frame. See the Details section below.
+#' @param offset A numeric vector representing the model offset. In delta/hurdle
+#'   models, this applies only to the positive component. Usually a log
+#'   transformed variable. *Not included in any prediction.*
 #' @param extra_time Optional extra time slices (e.g., years) to include for
-#'   interpolation or forecasting with the predict function. See the
-#'   Details section below.
+#'   interpolation or forecasting with the predict function. See the Details
+#'   section below.
 #' @param reml Logical: use REML (restricted maximum likelihood) estimation
-#'   rather than maximum likelihood? Internally, this adds the fixed effects
-#'   to the list of random effects to integrate over.
-#' @param silent Silent or include optimization details?
+#'   rather than maximum likelihood? Internally, this adds the fixed effects to
+#'   the list of random effects to integrate over.
+#' @param silent Silent or include optimization details? Helpful to set to
+#'   `FALSE` for models that take a while to fit.
 #' @param anisotropy Logical: allow for anisotropy? See [plot_anisotropy()].
+#'   Must be shared across delta models.
 #' @param control Optimization control options via [sdmTMBcontrol()].
-#' @param priors Optional penalties/priors via [sdmTMBpriors()].
+#' @param priors Optional penalties/priors via [sdmTMBpriors()]. Must currently
+#'   be shared across delta models.
 #' @param previous_fit A previously fitted sdmTMB model to initialize the
-#'   optimization with. Can greatly speed up fitting. Note that the data and
-#'   model must be set up *exactly* the same way. However, the `weights` argument
-#'   can change, which can be useful for cross-validation.
+#'   optimization with. Can greatly speed up fitting. Note that the model must
+#'   be set up *exactly* the same way. However, the `weights` argument can
+#'   change, which can be useful for cross-validation.
 #' @param do_fit Fit the model (`TRUE`) or return the processed data without
 #'   fitting (`FALSE`)?
-#' @param experimental A named list for esoteric or in-development options.
-#'    Here be dragons.
-#'   (Experimental) A column name (as character) of a
-#'   predictor of a linear trend (in log space) of the spatiotemporal standard
-#'   deviation. By default, this is `NULL` and fits a model with a constant
-#'   spatiotemporal variance. However, this argument can also be a character
-#'   name in the original data frame (a covariate that ideally has been
-#'   standardized to have mean 0 and standard deviation = 1). Because the
-#'   spatiotemporal field varies by time step, the standardization should be
-#'   done by time. If the name of a predictor is included, a log-linear model is
-#'   fit where the predictor is used to model effects on the standard deviation,
-#'   e.g. `log(sd(i)) = B0 + B1 * epsilon_predictor(i)`. The 'epsilon_model' argument may also
-#' be specified. This is the name of the model to use to modeling time-varying epsilon. This
-#' can be one of the following: "trend" (default, fits a linear model without random effects),
-#' "re" (fits a model with random effects in epsilon_st, but no trend), and "trend-re" (a model
-#' that includes both the trend and random effects)
-#' @param fields **Depreciated.** Replaced by `spatiotemporal`.
-#' @param include_spatial **Depreciated.** Replaced by `spatial`.
-#' @param spatial_only **Depreciated.** Replaced by `spatiotemporal = "off"`.
-#' @param spde **Depreciated.** Replaced by `mesh`.
-#' @param ... Not currently used.
+#' @param experimental A named list for esoteric or in-development options. Here
+#'   be dragons.
+#   (Experimental) A column name (as character) of a predictor of a
+#   linear trend (in log space) of the spatiotemporal standard deviation. By
+#   default, this is `NULL` and fits a model with a constant spatiotemporal
+#   variance. However, this argument can also be a character name in the
+#   original data frame (a covariate that ideally has been standardized to have
+#   mean 0 and standard deviation = 1). Because the spatiotemporal field varies
+#   by time step, the standardization should be done by time. If the name of a
+#   predictor is included, a log-linear model is fit where the predictor is
+#   used to model effects on the standard deviation, e.g. `log(sd(i)) = B0 + B1
+#   * epsilon_predictor(i)`. The 'epsilon_model' argument may also be
+#   specified. This is the name of the model to use to modeling time-varying
+#   epsilon. This can be one of the following: "trend" (default, fits a linear
+#   model without random effects), "re" (fits a model with random effects in
+#   epsilon_st, but no trend), and "trend-re" (a model that includes both the
+#   trend and random effects)
 #' @importFrom methods as is
+#' @importFrom cli cli_abort cli_warn cli_inform
+#' @importFrom glue glue
 #' @importFrom mgcv s t2
 #' @importFrom stats gaussian model.frame model.matrix as.formula
 #'   model.response terms model.offset
-#' @importFrom lifecycle deprecated is_present deprecate_warn
+#' @importFrom lifecycle deprecated is_present deprecate_warn deprecate_stop
 #'
 #' @return
 #' An object (list) of class `sdmTMB`. Useful elements include:
@@ -113,7 +128,7 @@ NULL
 #' * `model`: output from [stats::nlminb()]
 #' * `data`: the fitted data
 #' * `mesh`: the object that was supplied to the `mesh` argmument
-#' * `family`: the family object, which includes the inverse link function
+#' * `family`: the family object, which includes the inverse link function as `family$linkinv()`
 #' * `tmb_params`: The parameters list passed to [TMB::MakeADFun()]
 #' * `tmb_map`: The 'map' list passed to [TMB::MakeADFun()]
 #' * `tmb_data`: The data list passed to [TMB::MakeADFun()]
@@ -123,16 +138,9 @@ NULL
 #'
 #' **Model description**
 #'
-#' For now, see the
-#' [model description](https://pbs-assess.github.io/sdmTMB/articles/model-description.html)
-#' vignette for a start. There are also descriptions of particular models in
-#' Anderson et al. (2019) and Barnett et al. (2020) (see reference list below).
-#'
-#' **Offsets**
-#'
-#' In the model formula, an offset can be included by including `+ offset` in
-#' the model formula (a reserved word). The offset will be included in any
-#' prediction. `offset` must be a column in `data`.
+#' See the [model description](https://pbs-assess.github.io/sdmTMB/articles/model-description.html)
+#' vignette or the relevant appendix of the preprint on sdmTMB:
+#' \doi{10.1101/2022.03.24.485545}
 #'
 #' **Binomial families**
 #'
@@ -171,7 +179,8 @@ NULL
 #' selectivity in fisheries, and is parameterized by the points at which f(x) =
 #' 0.5 or 0.95. See the vignette.
 #'
-#' Note that only a single threshold covariate can be included.
+#' Note that only a single threshold covariate can be included and threshold
+#' models are not yet implemented for the delta families.
 #'
 #' See the
 #' [threshold vignette](https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html).
@@ -205,35 +214,80 @@ NULL
 #' **Regularization and priors**
 #'
 #' You can achieve regularization via penalties (priors) on the fixed effect
-#' parameters. See [sdmTMBpriors()]. These should not include `offset` terms.
-#' You can fit the model once without penalties and inspect the element
+#' parameters. See [sdmTMBpriors()]. You can fit the model once without
+#' penalties and look at the output of `print(your_model)` or `tidy(your_model)`
+#' or fit the model with `do_fit = FALSE` and inspect
 #' `head(your_model$tmb_data$X_ij)` if you want to see how the formula is
 #' translated to the fixed effect model matrix.
 #'
+#' **Delta/hurdle models**
+#'
+#' Delta models (also known as hurdle models) can be fit as two separate models
+#' or at the same time by using an appropriate delta family. E.g.:
+#'   \code{\link[sdmTMB:families]{delta_gamma()}},
+#'   \code{\link[sdmTMB:families]{delta_lognormal()}}, and
+#'   \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}}.
+#' If fit with a delta family, by default the formula, spatial, and
+#' spatiotemporal structure etc. will be shared between the two model
+#' components. Some elements can be specified independently for the two models
+#' using a list format. These include `formula`, `spatial`, `spatiotemporal`,
+#' `share_range`. The first element of the list is for the binomial component
+#' and the second element is for the positive component (e.g., Gamma).
+#' Other elements must be shared for now (e.g., spatially varying coefficients,
+#' time-varying coefficients). Furthermore, there are currently limitations if
+#' specifying two formulas as a list: the two formulas cannot have smoothers,
+#' threshold effects, or random intercepts. For now, these must be specificed
+#' through a single formula that is shared across the two models.
+#'
+#' The main advantage of specifying such models using a delta family is (1)
+#' coding simplicity and (2) calculation of uncertainty on derived quantities
+#' such as an index of abundance with [get_index()] using the generalized delta
+#' method within TMB.
+#'
 #' @references
 #'
-#' Main reference/report introducing the package. We plan to write a paper
-#' to cite in the near future:
+#' *Main reference introducing the package to cite when using sdmTMB:*
 #'
-#' Anderson, S.C., E.A. Keppel, A.M. Edwards, 2019. A reproducible data synopsis
-#' for over 100 species of British Columbia groundfish. DFO Can. Sci. Advis. Sec.
-#' Res. Doc. 2019/041. vii + 321 p.
-#' <https://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2019/2019_041-eng.html>
+#' Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett. 2022. sdmTMB: an R
+#' package for fast, flexible, and user-friendly generalized linear mixed effects
+#' models with spatial and spatiotemporal random fields.
+#' bioRxiv 2022.03.24.485545; \doi{10.1101/2022.03.24.485545}.
 #'
-#' Reference for local trends:
+#' *Reference for local trends:*
 #'
 #' Barnett, L.A.K., E.J. Ward, S.C. Anderson. Improving estimates of species
 #' distribution change by incorporating local trends. Ecography. 44(3):427-439.
 #' \doi{10.1111/ecog.05176}.
 #'
-#' Further explanation of the model and application to calculating climate
-#' velocities:
+#' *Further explanation of the model and application to calculating climate
+#' velocities:*
 #'
 #' English, P., E.J. Ward, C.N. Rooper, R.E. Forrest, L.A. Rogers, K.L. Hunter,
 #' A.M. Edwards, B.M. Connors, S.C. Anderson. 2021. Contrasting climate velocity
 #' impacts in warm and cool locations show that effects of marine warming are
 #' worse in already warmer temperate waters. In press at Fish and Fisheries.
 #' \doi{10.1111/faf.12613}.
+#'
+#' *Discussion of and illustration of some decision points when fitting these
+#' models:*
+#'
+#' Commander, C.J.C., Barnett, L.A.K., Ward, E.J., Anderson, S.C., and
+#' Essington, T.E. 2022. The shadow model: how and why small choices in
+#' spatially explicit species distribution models affect predictions. PeerJ 10:
+#' e12783. \doi{10.7717/peerj.12783}.
+#'
+#' *Application and description of the threshold/break-point models:*
+#'
+#' Essington, T.E. S.C. Anderson, L.A.K. Barnett, H.M. Berger, S.A. Siedlecki,
+#' E.J. Ward. Advancing statistical models to reveal the effect of dissolved
+#' oxygen on the spatial distribution of marine taxa using thresholds and a
+#' physiologically based index. In press at Ecography. \doi{10.1111/ecog.06249}.
+#'
+#' *Application to fish body condition*:
+#'
+#' Lindmark, M., S.C. Anderson, M. Gogina, M. Casini. Evaluating drivers of
+#' spatiotemporal individual condition of a bottom-associated marine fish.
+#' bioRxiv 2022.04.19.488709. \doi{10.1101/2022.04.19.488709}.
 #'
 #' Code for implementing the barrier-SPDE written by Olav Nikolai Breivik and
 #' Hans Skaug.
@@ -260,123 +314,203 @@ NULL
 #' @export
 #'
 #' @examples
-#' if (inla_installed()) {
+#' if (inla_installed() &&
+#'   require("visreg", quietly = TRUE) &&
+#'   require("ggplot2", quietly = TRUE)
+#' ) {
 #'
-#' # A coarse mesh for example speed:
-#' mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 25)
+#' library(sdmTMB)
+#'
+#' # Build an SPDE mesh with INLA:
+#' mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
+#' # * this example uses a fairly coarse mesh so these examples run quickly
+#' # * `cutoff` is the minimum distance between mesh vertices in units of the
+#' #   x and y coordinates
+#' # * `cutoff = 10` or `cutoff = 15` might make more sense in applied situations
+#' #   for this dataset
+#' # * or build any mesh in INLA and pass it to the `mesh` argument in `make_mesh()`
+#' # * not needed if you will be turning off all spatial/spatiotemporal random fields
+#'
+#' # Quick mesh plot:
 #' plot(mesh)
+#' # Or:
+#' # ggplot2::ggplot() + inlabru::gg(mesh$mesh)
 #'
-#' # Tweedie:
-#' fit <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-#'   data = pcod_2011, time = "year", mesh = mesh, family = tweedie(link = "log"))
-#' print(fit)
+#' # Fit a Tweedie spatial random field GLMM with a smoother for depth:
+#' fit <- sdmTMB(
+#'   density ~ s(depth),
+#'   data = pcod_2011, mesh = mesh,
+#'   family = tweedie(link = "log")
+#' )
+#' fit
+#'
+#' # Extract coefficients:
 #' tidy(fit, conf.int = TRUE)
 #' tidy(fit, effects = "ran_par", conf.int = TRUE)
 #'
-#' # Bernoulli:
-#' pcod_binom <- pcod_2011
-#' m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'   data = pcod_binom, time = "year", mesh = mesh,
-#'   family = binomial(link = "logit"))
-#' print(m_bin)
+#' # Perform several 'sanity' checks:
+#' sanity(fit)
 #'
-#' # Fit a spatial-only model (by not specifying `time` or setting
-#' # `spatiotemporal = 'off'`):
+#' # Visualize depth effect: (see ?visreg_delta)
+#' visreg::visreg(fit, xvar = "depth") # link space; randomized quantile residuals
+#' visreg::visreg(fit, xvar = "depth", scale = "response")
+#' visreg::visreg(fit, xvar = "depth", scale = "response", gg = TRUE, rug = FALSE)
+#'
+#' # Predict on the fitted data; see ?predict.sdmTMB
+#' p <- predict(fit)
+#'
+#' # Predict on new data:
+#' nd <- subset(qcs_grid, year == 2017)
+#' p <- predict(fit, newdata = nd)
+#' head(p)
+#'
+#' # Add spatiotemporal random fields:
 #' fit <- sdmTMB(
-#'   density ~ depth_scaled + depth_scaled2, data = pcod_2011,
-#'   mesh = mesh, family = tweedie(link = "log"))
-#' print(fit)
-#'
-#' # Gaussian:
-#' pcod_gaus <- subset(pcod_2011, density > 0 & year >= 2013)
-#' mesh_gaus <- make_mesh(pcod_gaus, c("X", "Y"), cutoff = 20)
-#' m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-#'   data = pcod_gaus, mesh = mesh_gaus)
-#' print(m_pos)
-#'
-#' # With penalized smoothers via mgcv:
-#' m_gam <- sdmTMB(log(density) ~ s(depth),
-#'   data = pcod_gaus, mesh = mesh_gaus
+#'   density ~ 0 + as.factor(year),
+#'   time = "year", #<
+#'   data = pcod_2011, mesh = mesh,
+#'   family = tweedie(link = "log")
 #' )
+#' fit
 #'
-#' # Specifying the basis dimension via `k =`:
-#' m_gam <- sdmTMB(log(density) ~ s(depth, k = 5),
-#'   data = pcod_gaus, mesh = mesh_gaus
+#' # Make the fields AR1:
+#' fit <- sdmTMB(
+#'   density ~ s(depth),
+#'   time = "year",
+#'   spatial = "off",
+#'   spatiotemporal = "ar1", #<
+#'   data = pcod_2011, mesh = mesh,
+#'   family = tweedie(link = "log")
 #' )
+#' fit
 #'
-#' # Separate smoother by year:
-#' m_gam <- sdmTMB(log(density) ~ s(depth, by = as.factor(year)),
-#'   data = pcod_gaus, mesh = mesh_gaus
+#' # Make the fields a random walk:
+#' fit <- sdmTMB(
+#'   density ~ s(depth),
+#'   time = "year",
+#'   spatial = "off",
+#'   spatiotemporal = "rw", #<
+#'   data = pcod_2011, mesh = mesh,
+#'   family = tweedie(link = "log")
 #' )
+#' fit
 #'
-#' # Turning off all random fields (creating a regular GLM/GAM):
-#' m_gam <- sdmTMB(log(density) ~ s(depth),
-#'   data = pcod_gaus, mesh = mesh_gaus,
-#'   spatial = "off", spatiotemporal = "off"
+#' # Depth smoothers by year:
+#' fit <- sdmTMB(
+#'   density ~ s(depth, by = as.factor(year)), #<
+#'   time = "year",
+#'   spatial = "off",
+#'   spatiotemporal = "rw",
+#'   data = pcod_2011, mesh = mesh,
+#'   family = tweedie(link = "log")
 #' )
+#' fit
 #'
-#' # With IID random intercepts:
-#' # Simulate some data:
-#' set.seed(1)
-#' x <- runif(500, -1, 1)
-#' y <- runif(500, -1, 1)
-#' loc <- data.frame(x = x, y = y)
-#' mesh_sim <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
-#' s <- sdmTMB_sim(x = x, y = y, betas = 0, time = 1L,
-#'   phi = 0.1, range = 1.4, sigma_O = 0.2, sigma_E = 0, mesh = mesh_sim)
-#' s$g <- gl(50, 10)
-#' iid_re_vals <- rnorm(50, 0, 0.3)
-#' s$observed <- s$observed + iid_re_vals[s$g]
+#' # 2D depth-year smoother:
+#' fit <- sdmTMB(
+#'   density ~ s(depth, year), #<
+#'   spatial = "off",
+#'   data = pcod_2011, mesh = mesh,
+#'   family = tweedie(link = "log")
+#' )
+#' fit
 #'
-#' # Fit it:
-#' fit <- sdmTMB(observed ~ 1 + (1 | g), mesh = mesh_sim, data = s)
-#' print(fit)
-#' tidy(fit, "ran_pars", conf.int = TRUE) # see tau_G
-#' theta <- as.list(fit$sd_report, "Estimate")
-#' plot(iid_re_vals, theta$RE)
+#' # Turn off spatial random fields:
+#' fit <- sdmTMB(
+#'   present ~ poly(log(depth)),
+#'   spatial = "off", #<
+#'   data = pcod_2011, mesh = mesh,
+#'   family = binomial()
+#' )
+#' fit
 #'
-#' \donttest{
+#' # Which, matches glm():
+#' fit_glm <- glm(
+#'   present ~ poly(log(depth)),
+#'   data = pcod_2011,
+#'   family = binomial()
+#' )
+#' summary(fit_glm)
+#' AIC(fit, fit_glm)
 #'
-#' # Spatially varying coefficient (year) example:
-#' d <- pcod_2011
-#' d$year_scaled <- as.numeric(scale(d$year))
-#' fit <- sdmTMB(density ~ depth_scaled, data = d,
-#'   mesh = mesh, family = tweedie(link = "log"),
-#'   spatial_varying = ~ 0 + year_scaled, time = "year")
-#' tidy(fit, effects = "ran_par")
+#' # Delta/hurdle binomial-Gamma model:
+#' fit_dg <- sdmTMB(
+#'   density ~ poly(log(depth), 2),
+#'   data = pcod_2011, mesh = mesh,
+#'   spatial = "off",
+#'   family = delta_gamma() #<
+#' )
+#' fit_dg
+#'
+#' # Delta model with different formulas and spatial structure:
+#' fit_dg <- sdmTMB(
+#'   list(density ~ depth_scaled, density ~ poly(depth_scaled, 2)), #<
+#'   data = pcod_2011, mesh = mesh,
+#'   spatial = list("off", "on"), #<
+#'   family = delta_gamma()
+#' )
+#' fit_dg
+#'
+#' # Delta/hurdle truncated NB2:
+#' pcod_2011$count <- round(pcod_2011$density)
+#' fit_nb2 <- sdmTMB(
+#'   count ~ s(depth),
+#'   data = pcod_2011, mesh = mesh,
+#'   spatial = "off",
+#'   family = delta_truncated_nbinom2() #<
+#' )
+#' fit_nb2
+#'
+#' # Regular NB2:
+#' fit_nb2 <- sdmTMB(
+#'   count ~ s(depth),
+#'   data = pcod_2011, mesh = mesh,
+#'   spatial = "off",
+#'   family = nbinom2() #<
+#' )
+#' fit_nb2
+#'
+#' # IID random intercepts by year:
+#' pcod_2011$fyear <- as.factor(pcod_2011$year)
+#' fit <- sdmTMB(
+#'   density ~ s(depth) + (1 | fyear), #<
+#'   data = pcod_2011, mesh = mesh,
+#'   family = tweedie(link = "log")
+#' )
+#' fit
+#'
+#' # Spatially varying coefficient of year:
+#' pcod_2011$year_scaled <- as.numeric(scale(pcod_2011$year))
+#' fit <- sdmTMB(
+#'   density ~ year_scaled,
+#'   spatial_varying = ~ 0 + year_scaled, #<
+#'   data = pcod_2011, mesh = mesh, family = tweedie(), time = "year"
+#' )
+#' fit
 #'
 #' # Time-varying effects of depth and depth squared:
-#' fit <- sdmTMB(density ~ 0 + as.factor(year),
-#'   time_varying = ~ 0 + depth_scaled + depth_scaled2,
+#' fit <- sdmTMB(
+#'   density ~ 0 + as.factor(year),
+#'   time_varying = ~ 0 + depth_scaled + depth_scaled2, #<
 #'   data = pcod_2011, time = "year", mesh = mesh,
-#'   family = tweedie(link = "log"))
+#'   family = tweedie()
+#' )
 #' print(fit)
+#' # Extract values:
+#' est <- as.list(fit$sd_report, "Estimate")
+#' se <- as.list(fit$sd_report, "Std. Error")
+#' est$b_rw_t[, , 1]
+#' se$b_rw_t[, , 1]
 #'
-#' # See the b_rw_t estimates; these are the time-varying (random walk) effects.
-#' # These could be added to tidy.sdmTMB() eventually.
-#' summary(fit$sd_report)[1:19,]
-#'
-#' # Linear breakpoint model on depth:
-#' m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) +
-#'     breakpt(depth_scaled) + depth_scaled2, data = pcod_gaus,
-#'   time = "year", mesh = mesh_gaus)
-#' print(m_pos)
-#
-# # Linear covariate on log(sigma_epsilon):
-# # First we will center the years around their mean
-# # to help with convergence. Also constrain the slope to be (-1, 1)
-# # to help convergence (estimation is done in log-space)
-# pcod_2011$year_centered <- pcod_2011$year - mean(pcod_2011$year)
-# fit <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-#   data = pcod_2011, time = "year", mesh = mesh, family = tweedie(link = "log"),
-#   epsilon_predictor = "year_centered",
-#   control = sdmTMBcontrol(lower = list(b_epsilon = -1), upper = list(b_epsilon = 1)))
-# print(fit) # sigma_E varies with time now
-#
-# # coefficient is not yet in tidy.sdmTMB:
-# as.list(fit$sd_report, "Estimate", report = TRUE)$b_epsilon
-# as.list(fit$sd_report, "Std. Error", report = TRUE)$b_epsilon
-#' }
+#' # Linear break-point effect of depth:
+#' fit <- sdmTMB(
+#'   density ~ breakpt(depth_scaled), #<
+#'   data = pcod_2011,
+#'   # spatial = "off",
+#'   mesh = mesh,
+#'   family = tweedie()
+#' )
+#' fit
 #' }
 
 sdmTMB <- function(
@@ -386,11 +520,12 @@ sdmTMB <- function(
   time = NULL,
   family = gaussian(link = "identity"),
   spatial = c("on", "off"),
-  spatiotemporal = c("IID", "AR1", "RW", "off"),
+  spatiotemporal = c("iid", "ar1", "rw", "off"),
   share_range = TRUE,
   time_varying = NULL,
   spatial_varying = NULL,
   weights = NULL,
+  offset = NULL,
   extra_time = NULL,
   reml = FALSE,
   silent = TRUE,
@@ -399,59 +534,62 @@ sdmTMB <- function(
   priors = sdmTMBpriors(),
   previous_fit = NULL,
   experimental = NULL,
-  do_fit = TRUE,
-  spatial_only = deprecated(),
-  fields = deprecated(),
-  include_spatial = deprecated(),
-  spde = deprecated(),
-  ...
+  do_fit = TRUE
   ) {
 
-  sp_len <- length(spatiotemporal)
-  spatiotemporal <- match.arg(tolower(as.character(spatiotemporal[[1]])),
-    choices = c("iid", "ar1", "rw", "off", "true", "false"))
-  if (spatiotemporal == "true") spatiotemporal <- "iid"
-  if (spatiotemporal == "false") spatiotemporal <- "off"
-  spatiotemporal <- match.arg(tolower(spatiotemporal), choices = c("iid", "ar1", "rw", "off"))
-  if (is.null(time) && spatiotemporal != "off" && sp_len == 1L) {
-    stop("`spatiotemporal` is set but the `time` argument is missing.", call. = FALSE)
-  }
-  if (is_present(spatial_only)) {
-    deprecate_warn("0.0.20", "sdmTMB(spatial_only)", "sdmTMB(spatiotemporal)", details = "`spatiotemporal = 'off'` (or `time = NULL`) is equivalent to `spatial_only = TRUE`.")
-  } else {
-    if (is.null(time) || spatiotemporal == "off") {
-      spatial_only <- TRUE
-    } else {
-      spatial_only <- FALSE
+
+  delta <- isTRUE(family$delta)
+  n_m <- if (delta) 2L else 1L
+
+  if (!missing(spatial)) {
+    if (length(spatial) > 1 && !is.list(spatial)) {
+      cli_abort("`spatial` should be a single value or a list")
     }
   }
-  if (is_present(fields)) {
-    deprecate_warn("0.0.20", "sdmTMB(fields)", "sdmTMB(spatiotemporal)")
-    spatiotemporal <- tolower(fields)
-  }
-  if (is_present(include_spatial)) {
-    deprecate_warn("0.0.20", "sdmTMB(include_spatial)", "sdmTMB(spatial)")
-  } else {
-    if (!is.logical(spatial[[1]])) spatial <- match.arg(tolower(spatial), choices = c("on", "off"))
-    if (identical(spatial, "on") || isTRUE(spatial)) {
-      include_spatial <- TRUE
-    } else {
-      include_spatial <- FALSE
+  if (!missing(spatiotemporal)) {
+    if (length(spatiotemporal) > 1 && !is.list(spatiotemporal)) {
+      cli_abort("`spatiotemporal` should be a single value or a list")
     }
+    if (delta && !is.list(spatiotemporal)) {
+      spatiotemporal <- rep(spatiotemporal[[1]], 2L)
+    }
+    spatiotemporal <- vapply(seq_along(spatiotemporal),
+      function(i) check_spatiotemporal_arg(
+        spatiotemporal, time = time, .which = i), FUN.VALUE = character(1L))
+  } else {
+    if (is.null(time))
+      spatiotemporal <- rep("off", n_m)
+    else
+      spatiotemporal <- rep("iid", n_m)
   }
-  if (!include_spatial && spatiotemporal == "off" || !include_spatial && spatial_only) {
+
+  if (is.null(time)) {
+    spatial_only <- rep(TRUE, n_m)
+  } else {
+    spatial_only <- ifelse(spatiotemporal == "off", TRUE, FALSE)
+  }
+
+  if (is.list(spatial)) {
+    spatial <- vapply(spatial, parse_spatial_arg, FUN.VALUE = character(1L))
+  } else {
+    spatial <- rep(parse_spatial_arg(spatial), n_m)
+  }
+  include_spatial <- "on" %in% spatial
+
+  if (!include_spatial && all(spatiotemporal == "off") || !include_spatial && all(spatial_only)) {
     # message("Both spatial and spatiotemporal fields are set to 'off'.")
-    control$map_rf <- TRUE
+    # control$map_rf <- TRUE
     if (missing(mesh)) {
       data$sdmTMB_X_ <- data$sdmTMB_Y_ <- stats::runif(nrow(data))
       mesh <- make_mesh(data, c("sdmTMB_X_", "sdmTMB_Y_"), cutoff = 1)
     }
   }
-  if (is_present(spde)) {
-    deprecate_warn("0.0.20", "sdmTMB(spde)", "sdmTMB(mesh)")
-  } else {
-    spde <- mesh
-  }
+
+  share_range <- unlist(share_range)
+  if (length(share_range) == 1L) share_range <- rep(share_range, n_m)
+  share_range[spatiotemporal == "off"] <- TRUE
+
+  spde <- mesh
   epsilon_model <- NULL
   epsilon_predictor <- NULL
   if (!is.null(experimental)) {
@@ -486,62 +624,39 @@ sdmTMB <- function(
   quadratic_roots <- control$quadratic_roots
   start <- control$start
   multiphase <- control$multiphase
-  map_rf <- control$map_rf
   map <- control$map
   lower <- control$lower
   upper <- control$upper
   get_joint_precision <- control$get_joint_precision
-  dots <- list(...)
 
-  if ("ar1_fields" %in% names(dots)) {
-    deprecate_warn("0.0.20", "sdmTMB(ar1_fields)", "sdmTMB(spatiotemporal)",
-      details = "For now, setting `spatiotemporal = 'AR1'` for you.")
-    spatiotemporal <- if (dots$ar1_fields) "ar1" else "iid"
-    dots$ar1_fields <- NULL
-  }
-  if ("penalties" %in% names(dots)) {
-    stop("`penalties` are now specified via the `priors` argument.",
-      "E.g., `priors = sdmTMBpriors(b = normal(c(0, 0), c(1, 1)))`",
-      "for 2 fixed effects.", call. = FALSE)
-  }
   dot_checks <- c("lower", "upper", "profile", "parallel",
     "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",
-    "newton_loops", "start", "map", "map_rf", "get_joint_precision", "normalize")
+    "newton_loops", "start", "map", "get_joint_precision", "normalize")
   .control <- control
+  # FIXME; automate this from sdmTMcontrol args?
   for (i in dot_checks) .control[[i]] <- NULL # what's left should be for nlminb
-  dot_old <- dot_checks %in% names(dots)
-  if (any(dot_old)) {
-    stop("The ", if (sum(dot_old) > 1) "arguments" else "argument", " `",
-      paste(dot_checks[dot_old], collapse = "`, `"),
-      "` ", if (sum(dot_old) > 1) "were" else "was",
-      " found in the call to `sdmTMB()`.\n",
-      if (sum(dot_old) > 1) "These are " else "This is ",
-      "now passed through the `control` argument via the\n",
-      "`sdmTMBcontrol()` list.", call. = FALSE)
-  }
 
-  ar1_fields <- identical("ar1", tolower(spatiotemporal))
-  rw_fields <- identical("rw", tolower(spatiotemporal))
+  ar1_fields <- spatiotemporal == "ar1"
+  rw_fields <- spatiotemporal == "rw"
   assert_that(
-    is.logical(reml), is.logical(anisotropy), is.logical(share_range), is.logical(silent),
-    is.logical(silent),
-    is.logical(multiphase),
-    is.logical(map_rf), is.logical(normalize)
+    is.logical(reml), is.logical(anisotropy), is.logical(share_range),
+    is.logical(silent), is.logical(multiphase), is.logical(normalize)
   )
-  if (!is.null(spatial_varying)) assert_that(class(spatial_varying) == "formula")
-  assert_that(is.list(priors))
-  if (!is.null(time_varying)) assert_that(identical(class(time_varying), "formula"))
-  assert_that(is.list(.control))
+
+  if (!is.null(spatial_varying)) assert_that(class(spatial_varying) %in% c("formula","list"))
+  if (!is.null(time_varying)) assert_that(class(time_varying) %in% c("formula","list"))
   if (!is.null(previous_fit)) assert_that(identical(class(previous_fit), "sdmTMB"))
+  assert_that(is.list(priors))
+  assert_that(is.list(.control))
   if (!is.null(time)) assert_that(is.character(time))
-  assert_that(identical(class(spde), "sdmTMBmesh"))
-  assert_that(identical(class(formula), "formula"))
-  assert_that("data.frame" %in% class(data))
+  assert_that(inherits(spde, "sdmTMBmesh"))
+  assert_that(class(formula) %in% c("formula", "list"))
+  assert_that(inherits(data, "data.frame"))
   if (!is.null(map) && length(map) != length(start)) {
-    warning("`length(map) != length(start)`. You likely want to specify ",
-      "`start` values if you are setting the `map` argument.", call. = FALSE)
+    cli_warn(c("`length(map) != length(start)`.",
+      "You likely want to specify `start` values if you are setting the `map` argument."))
   }
-  if (family$family == "censored_poisson") {
+  if (family$family[1] == "censored_poisson") {
     assert_that("lwr" %in% names(experimental) && "upr" %in% names(experimental),
       msg = "`lwr` and `upr` must be specified in `experimental` as elements of a named list to use the censored Poisson likelihood.")
     assert_that(length(lwr) == nrow(data) && length(upr) == nrow(data))
@@ -558,13 +673,12 @@ sdmTMB <- function(
     data[[time]] <- 0L
   } else {
     if (sum(is.na(data[[time]])) > 1)
-      stop("There is at least one NA value in the time column. ",
-        "Please remove it.", call. = FALSE)
+      cli_abort("There is at least one NA value in the time column. Please remove it.")
   }
   if (is.factor(data[[time]])) {
     if (length(levels(data[[time]])) > length(unique(data[[time]]))) {
-      stop("The time column is a factor and there are extra factor levels.",
-        "Please remove these or turn your time column into an integer.", call. = FALSE)
+      cli_abort("The time column is a factor and there are extra factor levels. ",
+        "Please remove these or turn your time column into an integer.")
     }
   }
   assert_that(identical(nrow(spde$loc_xy), nrow(data)),
@@ -576,15 +690,21 @@ sdmTMB <- function(
     on.exit({TMB::openmp(n = n_orig)})
   }
 
-  thresh <- check_and_parse_thresh_params(formula, data)
+  # thresholds not yet enabled for delta model, where formula is a list
+  if (inherits(formula, "formula")) {
+    thresh <- list(check_and_parse_thresh_params(formula, data))
+    if (delta)
+      formula <- list(thresh[[1]]$formula, thresh[[1]]$formula)
+    else
+      formula <- list(thresh[[1]]$formula)
+  } else {
+    thresh <- list(check_and_parse_thresh_params(formula[[1]], data),
+                   check_and_parse_thresh_params(formula[[2]], data))
+    formula <- list(thresh[[1]]$formula, thresh[[2]]$formula)
+  }
   original_formula <- formula
-  formula <- thresh$formula
 
   if (!is.null(extra_time)) { # for forecasting or interpolating
-    if (!"xy_cols" %in% names(spde)) {
-      stop("Please use make_mesh() instead of the deprecated make_mesh() to use `extra_time`.",
-        call. = FALSE)
-    }
     data <- expand_time(df = data, time_slices = extra_time, time_column = time)
     weights <- data$weight_sdmTMB
     spde$loc_xy <- as.matrix(data[,spde$xy_cols,drop=FALSE])
@@ -592,40 +712,81 @@ sdmTMB <- function(
     spde$sdm_spatial_id <- seq(1, nrow(data)) # FIXME
   }
 
+  spatial_varying_formula <- spatial_varying # save it
   if (!is.null(spatial_varying)) {
-    temp <- model.matrix(spatial_varying, data)
-    .int <- grep("(Intercept)", colnames(temp))
-    if (sum(.int) > 0) temp <- temp[,-.int,drop=FALSE]
-    if (ncol(temp) > 1L) stop("`spatial_varying` should only have 1 covariate.", call. = FALSE)
-    z_i <- as.numeric(temp[,1,drop=TRUE])
-    spatial_varying <- colnames(temp)[[1]]
-    if (abs(mean(z_i, na.rm = TRUE)) > 0.01)
-      warning("`spatial_varying` may not be mean-centered.", call. = FALSE)
+    z_i <- model.matrix(spatial_varying, data)
+    .int <- grep("(Intercept)", colnames(z_i))
+    if (sum(.int) > 0) z_i <- z_i[,-.int,drop=FALSE]
+    spatial_varying <- colnames(z_i)
   } else {
-    z_i <- rep(0, nrow(data))
+    z_i <- matrix(0, nrow(data), 0L)
   }
-  contains_offset <- check_offset(formula)
+  n_z <- ncol(z_i)
 
-  split_formula <- glmmTMB::splitForm(formula)
-  RE_names <- barnames(split_formula$reTrmFormulas)
-  fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
-  RE_indexes <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
-  nobs_RE <- unname(apply(RE_indexes, 2L, max)) + 1L
-  if (length(nobs_RE) == 0L) nobs_RE <- 0L
-  formula <- split_formula$fixedFormula
-  ln_tau_G_index <- unlist(lapply(seq_along(nobs_RE), function(i) rep(i, each = nobs_RE[i]))) - 1L
+  contains_offset <- check_offset(formula[[1]]) # deprecated check
 
-  formula_no_sm <- remove_s_and_t2(formula)
-  X_ij <- model.matrix(formula_no_sm, data)
-  mf <- model.frame(formula_no_sm, data)
-  mt <- attr(mf, "terms")
-  # parse everything mgcv + smoothers:
-  sm <- parse_smoothers(formula = formula, data = data)
+  split_formula <- list() # passed to out structure, not TMB
+  RE_indexes <- list() # ncols passed into TMB
+  nobs_RE <- list() # ncols passed into TMB
+  ln_tau_G_index<- list() # passed into TMB
+  X_ij = list() # main effects, passed into TMB
+  mf <- list()
+  mt <- list()
+  sm <- list()
 
-  offset_pos <- grep("^offset$", colnames(X_ij))
-  y_i <- model.response(mf, "numeric")
-  if (family$family %in% c("Gamma", "lognormal") && min(y_i) <= 0) {
-    stop("Gamma and lognormal must have response values > 0.", call. = FALSE)
+  for (ii in seq_along(formula)) {
+    contains_offset <- check_offset(formula[[ii]])
+
+    # anything in a list here needs to be saved for tmb data
+    split_formula[[ii]] <- glmmTMB::splitForm(formula[ii][[1]])
+    RE_names <- barnames(split_formula[[ii]]$reTrmFormulas)
+    fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
+    RE_indexes[[ii]] <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
+    nobs_RE[[ii]] <- unname(apply(RE_indexes[[ii]], 2L, max)) + 1L
+    if (length(nobs_RE[[ii]]) == 0L) nobs_RE[[ii]] <- 0L
+    formula[[ii]] <- split_formula[[ii]]$fixedFormula
+    ln_tau_G_index[[ii]] <- unlist(lapply(seq_along(nobs_RE[[ii]]), function(i) rep(i, each = nobs_RE[[ii]][i]))) - 1L
+
+    formula_no_sm <- remove_s_and_t2(formula[[ii]])
+    X_ij[[ii]] <- model.matrix(formula_no_sm, data)
+    mf[[ii]] <- model.frame(formula_no_sm, data)
+    mt[[ii]] <- attr(mf[[ii]], "terms")
+    # parse everything mgcv + smoothers:
+    sm[[ii]] <- parse_smoothers(formula = formula[[ii]], data = data)
+  }
+
+  if (delta) {
+    if (any(unlist(lapply(nobs_RE, function(.x) .x > 0)))) {
+      if (original_formula[[1]] != original_formula[[2]]) {
+        msg <- glue("For now, if delta models contain random intercepts, both ",
+          "components must have the same main-effects formula.")
+        cli_abort(msg)
+      }
+    }
+    if (any(unlist(lapply(sm, `[[`, "has_smooths")))) {
+      if (original_formula[[1]] != original_formula[[2]]) {
+        msg <- glue("For now, if delta models contain smoothers, both components ",
+            "must have the same main-effects formula.")
+        cli_abort(msg)
+      }
+    }
+  }
+
+  # split_formula <- split_formula[[1]] # Delete this and next 7 lines as smooths / random effects added
+  RE_indexes <- RE_indexes[[1]]
+  nobs_RE <- nobs_RE[[1]]
+  ln_tau_G_index <- ln_tau_G_index[[1]]
+  sm <- sm[[1]]
+
+  y_i <- model.response(mf[[1]], "numeric")
+  if (delta) {
+    y_i2 <- model.response(mf[[2]], "numeric")
+    if (!identical(y_i, y_i2))
+      cli_abort("Response variable should be the same in both parts of the delta formula.")
+  }
+
+  if (family$family[1] %in% c("Gamma", "lognormal") && min(y_i) <= 0 && !delta) {
+    cli_abort("Gamma and lognormal must have response values > 0.")
   }
 
   # This is taken from approach in glmmTMB to match how they handle binomial
@@ -634,10 +795,10 @@ sdmTMB <- function(
   # yobs could be binary
   # (yobs, weights) could be (proportions, size)
   # On the C++ side 'yobs' must be the number of successes.
-  size <- rep(1, nrow(X_ij)) # for non-binomial case
-  if (identical(family$family, "binomial")) {
+  size <- rep(1, nrow(X_ij[[1]])) # for non-binomial case TODO: change hard coded index
+  if (identical(family$family[1], "binomial") && !delta) {
     ## call this to catch the factor / matrix cases
-    y_i <- model.response(mf, type = "any")
+    y_i <- model.response(mf[[1]], type = "any")
     if (is.factor(y_i)) {
       ## following glm, ‘success’ is interpreted as the factor not
       ## having the first level (and hence usually of having the
@@ -661,19 +822,12 @@ sdmTMB <- function(
     }
   }
 
-  # if (!is.null(penalties)) {
-  #   assert_that(ncol(X_ij) == length(penalties),
-  #     msg = paste0("The number of fixed effects does not match the number of ",
-  #       "penalty terms. Ensure that offset terms are not in penalty vector and ",
-  #       "that any spline terms are properly accounted for."))
-  # }
-
-  if (identical(family$link, "log") && min(y_i, na.rm = TRUE) < 0) {
-    stop("`link = 'log'` but the reponse data include values < 0.", call. = FALSE)
+  if (identical(family$link[1], "log") && min(y_i, na.rm = TRUE) < 0 && !delta) {
+    cli_abort("`link = 'log'` but the reponse data include values < 0.")
   }
 
-  offset <- as.vector(model.offset(mf))
   if (is.null(offset)) offset <- rep(0, length(y_i))
+  assert_that(length(offset) == length(y_i), msg = "Offset doesn't match length of data")
 
   if (!is.null(time_varying)) {
     X_rw_ik <- model.matrix(time_varying, data)
@@ -681,26 +835,14 @@ sdmTMB <- function(
     X_rw_ik <- matrix(0, nrow = nrow(data), ncol = 1)
   }
 
-  # Stuff needed for spatiotemporal A matrix:
-  # data$sdm_orig_id <- seq(1, nrow(data))
-  # data$sdm_x <- spde$loc_xy[,1,drop=TRUE]
-  # data$sdm_y <- spde$loc_xy[,2,drop=TRUE]
-  # fake_data <- unique(data.frame(sdm_x = data$sdm_x, sdm_y = data$sdm_y))
-  # fake_data[["sdm_spatial_id"]] <- seq(1, nrow(fake_data))
-  # data <- base::merge(data, fake_data, by = c("sdm_x", "sdm_y"),
-  #   all.x = TRUE, all.y = FALSE)
-  # data <- data[order(data$sdm_orig_id),, drop=FALSE]
-  # A_st <- INLA::inla.spde.make.A(spde$mesh,
-  #   loc = as.matrix(fake_data[, c("sdm_x", "sdm_y"), drop = FALSE]))
-
   n_s <- nrow(spde$mesh$loc)
 
   barrier <- "spde_barrier" %in% names(spde)
   if (barrier && anisotropy) {
-    warning("Using a barrier mesh; therefore, anistropy will be disabled.", call. = FALSE)
+    cli_warn("Using a barrier mesh; therefore, anistropy will be disabled.")
     anisotropy <- FALSE
   }
-  df <- if (family$family == "student" && "df" %in% names(family)) family$df else 3
+  df <- if (family$family[1] == "student" && "df" %in% names(family)) family$df else 3
 
   est_epsilon_model <- 0L
   epsilon_covariate <- rep(0, length(unique(data[[time]])))
@@ -735,18 +877,18 @@ sdmTMB <- function(
   priors_b <- priors$b
   .priors <- priors
   .priors$b <- NULL # removes this in the list, so not passed in as data
-  if (nrow(priors_b) == 1L && ncol(X_ij) > 1L) {
+  if (nrow(priors_b) == 1L && ncol(X_ij[[1]]) > 1L) { # TODO change hard coded index on X_ij
     if (!is.na(priors_b[[1]])) {
       message("Expanding `b` priors to match model matrix.")
     }
     # creates matrix that is 2 columns of NAs, rows = number of unique bs
     # Instead of passing in a 2-column matrix of NAs, pass in a matrix that
     # has means in first col and the remainder is Var-cov matrix
-    priors_b <- mvnormal(rep(NA, ncol(X_ij)))
+    priors_b <- mvnormal(rep(NA, ncol(X_ij[[1]])))# TODO change hard coded index on X_ij
   }
   # ncol(X_ij) may occur if time varying model, no intercept
-  if (ncol(X_ij) > 0 & !identical(nrow(priors_b), ncol(X_ij)))
-    stop("The number of 'b' priors does not match the model matrix.", call. = FALSE)
+  if (ncol(X_ij[[1]]) > 0 & !identical(nrow(priors_b), ncol(X_ij[[1]])))# TODO change hard coded index on X_ij
+    cli_abort("The number of 'b' priors does not match the model matrix.")
   if (ncol(priors_b) == 2 && attributes(priors_b)$dist == "normal") {
     # normal priors passed in by user; change to MVN diagonal matrix
     # as.numeric() here prevents diag(NA) taking on factor
@@ -765,19 +907,28 @@ sdmTMB <- function(
     priors_b_Sigma <- as.matrix(Sigma[not_na, not_na])
   }
 
-  if (!"A_st" %in% names(spde)) stop("`mesh` was created with an old version of `make_mesh()`.", call. = FALSE)
+  if (!"A_st" %in% names(spde)) cli_abort("`mesh` was created with an old version of `make_mesh()`.")
+  if (delta) y_i <- cbind(ifelse(y_i > 0, 1, 0), ifelse(y_i > 0, y_i, NA_real_))
+  if (!delta) y_i <- matrix(y_i, ncol = 1L)
+
+  # TODO: make this cleaner
+  X_ij_list <- list()
+  #X_ij_array <- array(data = NA, dim = c(nrow(X_ij[[1]]), ncol(X_ij[[1]]), n_m))
+  for (i in seq_len(n_m)) X_ij_list[[i]] <- X_ij[[i]]
+
   tmb_data <- list(
-    y_i        = c(y_i),
+    y_i        = y_i,
     n_t        = length(unique(data[[time]])),
     z_i        = z_i,
     offset_i   = offset,
+    proj_offset_i = 0,
     A_st       = spde$A_st,
     sim_re     = if ("sim_re" %in% names(experimental)) as.integer(experimental$sim_re) else rep(0L, 6),
     A_spatial_index = spde$sdm_spatial_id - 1L,
     year_i     = make_year_i(data[[time]]),
-    ar1_fields = if (spatial_only) 0L else as.integer(ar1_fields),
-    rw_fields = if (spatial_only) 0L else as.integer(rw_fields),
-    X_ij       = X_ij,
+    ar1_fields = ar1_fields,
+    rw_fields =  rw_fields,
+    X_ij       = X_ij_list,
     X_rw_ik    = X_rw_ik,
     Zs         = sm$Zs, # optional smoother basis function matrices
     Xs         = sm$Xs, # optional smoother linear effect matrix
@@ -805,11 +956,11 @@ sdmTMB <- function(
     share_range = as.integer(share_range),
     include_spatial = as.integer(include_spatial),
     proj_mesh  = Matrix::Matrix(0, 1, 1, doDiag = FALSE), # dummy
-    proj_X_ij  = matrix(0, ncol = 1, nrow = 1), # dummy
+    proj_X_ij  = list(matrix(0, ncol = 1, nrow = 1)), # dummy
     proj_X_rw_ik = matrix(0, ncol = 1, nrow = 1), # dummy
     proj_year  = 0, # dummy
     proj_spatial_index = 0, # dummy
-    proj_z_i = 0, # dummy
+    proj_z_i = matrix(0, nrow = 1, ncol = n_m), # dummy
     spde_aniso = make_anisotropy_spde(spde, anisotropy),
     spde       = spde$spde$param.inla[c("M0","M1","M2")],
     barrier = as.integer(barrier),
@@ -823,9 +974,9 @@ sdmTMB <- function(
     spatial_only = as.integer(spatial_only),
     spatial_covariate = as.integer(!is.null(spatial_varying)),
     calc_quadratic_range = as.integer(quadratic_roots),
-    X_threshold = thresh$X_threshold,
+    X_threshold = thresh[[1]]$X_threshold, # TODO: don't hardcode index thresh[[1]]
     proj_X_threshold = 0, # dummy
-    threshold_func = thresh$threshold_func,
+    threshold_func = thresh[[1]]$threshold_func,# TODO: don't hardcode index thresh[[1]]
     RE_indexes = RE_indexes,
     proj_RE_indexes = matrix(0, ncol = 0, nrow = 1), # dummy
     nobs_RE = nobs_RE,
@@ -836,166 +987,140 @@ sdmTMB <- function(
     est_epsilon_re = as.integer(est_epsilon_re),
     has_smooths = as.integer(sm$has_smooths),
     upr = upr,
-    lwr = lwr
+    lwr = lwr,
+    poisson_link_delta = as.integer(isTRUE(family$type == "poisson_link_delta"))
   )
 
   b_thresh <- rep(0, 2)
-  if (thresh$threshold_func == 2L) b_thresh <- c(0, b_thresh) # logistic
+  if (thresh[[1]]$threshold_func == 2L) b_thresh <- c(0, b_thresh) # logistic #TODO: change hard coding on index of thresh[[1]]
 
   tmb_params <- list(
-    ln_H_input = c(0, 0),
-    b_j        = rep(0, ncol(X_ij)),
-    bs         = rep(0, if (sm$has_smooths) ncol(sm$Xs) else 0),
-    ln_tau_O   = 0,
-    ln_tau_Z = 0,
-    ln_tau_E   = 0,
-    ln_kappa   = rep(0, 2),
+    ln_H_input = matrix(0, nrow = 2L, ncol = n_m),
+    b_j        = rep(0, ncol(X_ij[[1]])), # TODO: verify ok
+    b_j2       = if (delta) rep(0, ncol(X_ij[[2]])) else numeric(0), # TODO: verify ok
+    bs         = if (sm$has_smooths) matrix(0, nrow = ncol(sm$Xs), ncol = n_m) else array(0),
+    ln_tau_O   = rep(0, n_m),
+    ln_tau_Z = matrix(0, n_z, n_m),
+    ln_tau_E   = rep(0, n_m),
+    ln_kappa   = matrix(0, 2L, n_m),
     # ln_kappa   = rep(log(sqrt(8) / median(stats::dist(spde$mesh$loc))), 2),
     thetaf     = 0,
-    ln_phi     = 0,
-    ln_tau_V   = rep(0, ncol(X_rw_ik)),
-    ar1_phi    = 0,
-    ln_tau_G   = rep(0, ncol(RE_indexes)),
-    RE         = rep(0, sum(nobs_RE)),
-    b_rw_t     = matrix(0, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)),
-    omega_s    = rep(0, n_s),
-    zeta_s    = rep(0, n_s),
-    epsilon_st = matrix(0, nrow = n_s, ncol = tmb_data$n_t),
+    ln_phi     = rep(0, n_m),
+    ln_tau_V   = matrix(0, ncol(X_rw_ik), n_m),
+    ar1_phi    = rep(0, n_m),
+    ln_tau_G   = matrix(0, ncol(RE_indexes), n_m),
+    RE         = matrix(0, sum(nobs_RE), n_m),
+    b_rw_t     = array(0, dim = c(tmb_data$n_t, ncol(X_rw_ik), n_m)),
+    omega_s    = matrix(0, n_s, n_m),
+    zeta_s    = array(0, dim = c(n_s, n_z, n_m)),
+    epsilon_st = array(0, dim = c(n_s, tmb_data$n_t, n_m)),
     b_threshold = b_thresh,
-    b_epsilon = 0,
-    ln_epsilon_re_sigma = 0,
-    epsilon_re = rep(0, tmb_data$n_t),
-    b_smooth = rep(0, if (sm$has_smooths) sum(sm$sm_dims) else 0),
-    ln_smooth_sigma = rep(0, if (sm$has_smooths) length(sm$sm_dims) else 0)
+    # b_epsilon = 0,
+    # ln_epsilon_re_sigma = 0,
+    # epsilon_re = rep(0, tmb_data$n_t),
+    b_smooth = if (sm$has_smooths) matrix(0, sum(sm$sm_dims), n_m) else array(0),
+    ln_smooth_sigma = if (sm$has_smooths) matrix(0, length(sm$sm_dims), n_m) else array(0)
   )
-  if (identical(family$link, "inverse") && family$family %in% c("Gamma", "gaussian", "student")) {
+  if (identical(family$link, "inverse") && family$family[1] %in% c("Gamma", "gaussian", "student") && !delta) {
     fam <- family
     if (family$family == "student") fam$family <- "gaussian"
-    temp <- mgcv::gam(formula = formula, data = data, family = fam)
+    temp <- mgcv::gam(formula = formula[[1]], data = data, family = fam)
     tmb_params$b_j <- stats::coef(temp)
   }
-  if (contains_offset) tmb_params$b_j[offset_pos] <- 1
 
-  # Mapping off params as needed:
-  tmb_map <- list()
-  if (!anisotropy)
-    tmb_map <- c(tmb_map, list(ln_H_input = factor(rep(NA, 2))))
-  if (!ar1_fields)
-    tmb_map <- c(tmb_map, list(ar1_phi = as.factor(NA)))
-  if (family$family %in% c("binomial", "poisson", "censored_poisson"))
-    tmb_map <- c(tmb_map, list(ln_phi = as.factor(NA)))
-  if (family$family != "tweedie")
-    tmb_map <- c(tmb_map, list(thetaf = as.factor(NA)))
-  if (spatial_only)
-    tmb_map <- c(tmb_map, list(
-      ln_tau_E   = as.factor(NA),
-      epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
+  if (delta && !is.null(thresh$threshold_parameter)) cli_abort("Thresholds not implemented with delta models yet.") # TODO DELTA
 
-  if (contains_offset) { # fix offset param to 1 to be an offset:
-    b_j_map <- seq_along(tmb_params$b_j)
-    b_j_map[offset_pos] <- NA
-    tmb_map <- c(tmb_map, list(b_j = as.factor(b_j_map)))
+##  # optional models on spatiotemporal sd parameter
+##  if (est_epsilon_re == 0L) {
+##    tmb_map <- c(tmb_map, list(ln_epsilon_re_sigma = as.factor(NA),
+##      epsilon_re = factor(rep(NA, tmb_data$n_t))))
+##  }
+##  if (est_epsilon_model == 0L) {
+##    tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
+##  }
+  tmb_map <- map_all_params(tmb_params)
+  tmb_map$b_j <- NULL
+  if (delta) tmb_map$b_j2 <- NULL
+  if (family$family[[1]] == "tweedie") tmb_map$thetaf <- NULL
+  tmb_map$ln_phi <- rep(1, n_m)
+  if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson"))
+    tmb_map$ln_phi[1] <- factor(NA)
+  if (delta) {
+    if (family$family[[2]] %in% c("binomial", "poisson", "censored_poisson"))
+      tmb_map$ln_phi[2] <- factor(NA)
+    else
+      tmb_map$ln_phi[2] <- 2
   }
-
-  if (is.null(thresh$threshold_parameter)) {
-    tmb_map <- c(tmb_map, list(b_threshold = factor(rep(NA, 2))))
-  }
-
-  # optional models on spatiotemporal sd parameter
-  if (est_epsilon_re == 0L) {
-    tmb_map <- c(tmb_map, list(ln_epsilon_re_sigma = as.factor(NA),
-      epsilon_re = factor(rep(NA, tmb_data$n_t))))
-  }
-  if (est_epsilon_model == 0L) {
-    tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
-  }
-  if (est_epsilon_slope == 0L) {
-    tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
-  }
+  tmb_map$ln_phi <- as.factor(tmb_map$ln_phi)
+  if (!is.null(thresh$threshold_parameter)) tmb_map$b_threshold <- NULL
 
   if (multiphase && is.null(previous_fit) && do_fit) {
-    not_phase1 <- c(tmb_map, list(
-      ln_tau_O   = as.factor(NA),
-      ln_tau_E   = as.factor(NA),
-      ln_tau_V   = factor(rep(NA, ncol(X_rw_ik))),
-      ln_tau_G   = factor(rep(NA, length(tmb_params$ln_tau_G))),
-      ln_tau_Z   = as.factor(NA),
-      zeta_s     = factor(rep(NA, length(tmb_params$zeta_s))),
-      ln_kappa   = factor(rep(NA, 2)),
-      ln_H_input = factor(rep(NA, 2)),
-      b_rw_t     = factor(rep(NA, length(tmb_params$b_rw_t))),
-      RE         = factor(rep(NA, length(tmb_params$RE))),
-      omega_s    = factor(rep(NA, length(tmb_params$omega_s))),
-      b_smooth = factor(rep(NA, length(tmb_params$b_smooth))),
-      ln_smooth_sigma = factor(rep(NA, length(tmb_params$ln_smooth_sigma))),
-      epsilon_st = factor(rep(NA, length(tmb_params$epsilon_st)))))
 
     tmb_obj1 <- TMB::MakeADFun(
       data = tmb_data, parameters = tmb_params,
-      map = not_phase1, DLL = "sdmTMB", silent = silent)
+      map = tmb_map, DLL = "sdmTMB", silent = silent)
 
     lim <- set_limits(tmb_obj1, lower = lower, upper = upper, silent = TRUE)
     tmb_opt1 <- stats::nlminb(
       start = tmb_obj1$par, objective = tmb_obj1$fn,
       lower = lim$lower, upper = lim$upper,
       gradient = tmb_obj1$gr, control = .control)
-
     # Set starting values based on phase 1:
-    if (isFALSE(contains_offset))
-      tmb_params$b_j <- set_par_value(tmb_opt1, "b_j")
-    else
-      tmb_params$b_j[-offset_pos] <- set_par_value(tmb_opt1, "b_j")
-
-    if (family$family == "tweedie")
-      tmb_params$thetaf <- set_par_value(tmb_opt1, "thetaf")
-    if (!family$family %in% c("binomial", "poisson", "censored_poisson"))  # no dispersion param
-      tmb_params$ln_phi <- set_par_value(tmb_opt1, "ln_phi")
+    tmb_params <- tmb_obj1$env$parList()
+    # often causes optimization problems if set from phase 1!?
+    tmb_params$b_threshold <- rep(0, length(tmb_params$b_threshold))
   }
 
-  if (spatial_only) {
-    tmb_random <- "omega_s"
-  } else {
-    if (include_spatial) {
-      tmb_random <- c("omega_s", "epsilon_st")
-    } else {
-      tmb_random <- "epsilon_st"
-    }
+  unmap <- function(x, v) {
+    for (i in v) x[[i]] <- NULL
+    x
   }
-  if (!is.null(spatial_varying)) tmb_random <- c(tmb_random, "zeta_s")
-  if (!is.null(time_varying)) tmb_random <- c(tmb_random, "b_rw_t")
-  if(est_epsilon_re) tmb_random <- c(tmb_random, "epsilon_re")
 
-  if (!include_spatial) {
-    tmb_map <- c(tmb_map, list(
-      ln_tau_O = as.factor(NA),
-      omega_s  = factor(rep(NA, length(tmb_params$omega_s)))))
+  tmb_random <- c()
+  if (any(spatial == "on")) {
+    tmb_random <- c(tmb_random, "omega_s")
+    tmb_map <- unmap(tmb_map, c("omega_s", "ln_tau_O"))
   }
-  if (is.null(spatial_varying)) {
-    tmb_map <- c(tmb_map, list(
-      ln_tau_Z = as.factor(NA),
-      zeta_s = factor(rep(NA, length(tmb_params$zeta_s)))))
+  if (!all(spatiotemporal == "off")) {
+    tmb_random <- c(tmb_random, "epsilon_st")
+    tmb_map <- unmap(tmb_map, c("ln_tau_E", "epsilon_st"))
   }
-  if (is.null(time_varying))
-    tmb_map <- c(tmb_map,
-      list(b_rw_t = as.factor(matrix(NA, nrow = tmb_data$n_t, ncol = ncol(X_rw_ik)))),
-      list(ln_tau_V = as.factor(NA))
-    )
+  if (!is.null(spatial_varying)) {
+    tmb_random <- c(tmb_random, "zeta_s")
+    tmb_map <- unmap(tmb_map, c("zeta_s", "ln_tau_Z"))
+  }
+  if (anisotropy) tmb_map <- unmap(tmb_map, "ln_H_input")
+  if (!is.null(time_varying)) {
+    tmb_random <- c(tmb_random, "b_rw_t")
+    tmb_map <- unmap(tmb_map, c("b_rw_t", "ln_tau_V"))
+  }
+  if (est_epsilon_re) {
+    tmb_random <- c(tmb_random, "epsilon_re")
+    tmb_map <- unmap(tmb_map, c("epsilon_re"))
+    # FIXME more!?
+  }
 
-  if (nobs_RE[[1]] > 0) tmb_random <- c(tmb_random, "RE")
+  tmb_map$ar1_phi <- as.numeric(tmb_map$ar1_phi) # strip factors
+  for (i in seq_along(spatiotemporal)) {
+    if (spatiotemporal[i] == "ar1") tmb_map$ar1_phi[i] <- i
+  }
+  tmb_map$ar1_phi <- as.factor(as.integer(as.factor(tmb_map$ar1_phi)))
+
+  if (nobs_RE[[1]] > 0) {
+    tmb_random <- c(tmb_random, "RE")
+    tmb_map <- unmap(tmb_map, c("ln_tau_G", "RE"))
+  }
   if (reml) tmb_random <- c(tmb_random, "b_j")
+  if (reml && delta) tmb_random <- c(tmb_random, "b_j2")
 
-  if (est_epsilon_model >= 2) {
-    # model 2 = re model, model 3 = loglinear-re
-    tmb_random <- c(tmb_random, "epsilon_rw")
-  }
+##  if (est_epsilon_model >= 2) {
+##    # model 2 = re model, model 3 = loglinear-re
+##    tmb_random <- c(tmb_random, "epsilon_rw")
+##  }
 
   if (sm$has_smooths) {
     tmb_random <- c(tmb_random, "b_smooth") # smooth random effects
-    # warning(
-    #   "Detected a `s()` smoother. Smoothers are penalized in sdmTMB as\n",
-    #   "of version 0.0.19, but used to be unpenalized.\n",
-    #   "You no longer need to specify `k` since the degree of wiggliness\n",
-    #   "is determined by the data.", call. = FALSE)
+    tmb_map <- unmap(tmb_map, c("b_smooth", "ln_smooth_sigma", "bs"))
   }
 
   if (!is.null(previous_fit)) {
@@ -1005,25 +1130,86 @@ sdmTMB <- function(
   tmb_data$normalize_in_r <- as.integer(normalize)
 
   if (!is.null(previous_fit)) tmb_map <- previous_fit$tmb_map
-  if (isTRUE(map_rf)) tmb_map <- map_off_rf(tmb_map, tmb_params)
-  tmb_map <- c(map, tmb_map)
-  if (share_range) tmb_map <- c(tmb_map, list(ln_kappa = factor(c(1L, 1L))))
+
+  # kappa mapping:
+  tmb_map$ln_kappa <- matrix(seq_len(length(tmb_params$ln_kappa)),
+    nrow(tmb_params$ln_kappa), ncol(tmb_params$ln_kappa))
+  for (m in seq_len(n_m)) {
+    if (share_range[m]) tmb_map$ln_kappa[,m] <- tmb_map$ln_kappa[1,m]
+    if (spatiotemporal[m] == "off" && spatial[m] == "off") tmb_map$ln_kappa[,m] <- NA
+    if (spatiotemporal[m] == "off" && spatial[m] == "on") tmb_map$ln_kappa[,m] <- m
+  }
+  tmb_map$ln_kappa <- as.factor(as.integer(as.factor(tmb_map$ln_kappa)))
 
   for (i in seq_along(start)) {
-    message("Initiating ", names(start)[i],
-      " at specified starting value of ", start[[i]], ".")
+    cli_inform(c(i = paste0("Initiating `", names(start)[i],
+      "` at specified starting value(s) of:"),
+      paste0("  ", paste(round(start[[i]], 3), collapse = ", "))))
     tmb_params[[names(start)[i]]] <- start[[i]]
   }
-  if (length(tmb_params[["ln_kappa"]]) != 2L && "ln_kappa" %in% names(start)) {
-    stop("Note that ln_kappa must be a vector of length 2. It should be the same value if `share_range = TRUE`.", call. = FALSE)
+
+  if (!is.matrix(tmb_params[["ln_kappa"]]) && "ln_kappa" %in% names(start)) {
+      msg <- c("Note that `ln_kappa` must be a matrix of nrow 2 and ncol models (regular=1, delta=2).",
+        "It should be the same value in each row if `share_range = TRUE`.")
+    cli_abort(msg)
+  }
+  if (nrow(tmb_params[["ln_kappa"]]) != 2L && "ln_kappa" %in% names(start)) {
+      msg <- c("Note that `ln_kappa` must be a matrix of nrow 2 and ncol models (regular=1, delta=2).",
+        "It should be the same value in each row if `share_range = TRUE`.")
+    cli_abort(msg)
   }
 
   data$sdm_x <- data$sdm_y <- data$sdm_orig_id <- data$sdm_spatial_id <- NULL
   data$sdmTMB_X_ <- data$sdmTMB_Y_ <- NULL
 
+  # delta spatiotemporal mapping:
+  if (delta && "off" %in% spatiotemporal) {
+    tmb_map$epsilon_st <- array(
+      seq_len(length(tmb_params$epsilon_st)),
+      dim = dim(tmb_params$epsilon_st)
+    )
+    tmb_map$ln_tau_E <- seq_len(length(tmb_params$ln_tau_E))
+    for (i in which(spatiotemporal == "off")) {
+      tmb_map$epsilon_st[,,i] <- NA
+      tmb_map$ln_tau_E[i] <- NA
+    }
+    tmb_map$epsilon_st <- as.factor(tmb_map$epsilon_st)
+    tmb_map$ln_tau_E <- as.factor(tmb_map$ln_tau_E)
+  }
+  # delta spatial mapping:
+  if (delta && "off" %in% spatial) {
+    tmb_map$omega_s <- array(
+      seq_len(length(tmb_params$omega_s)),
+      dim = dim(tmb_params$omega_s)
+    )
+    tmb_map$ln_tau_O <- seq_len(length(tmb_params$ln_tau_O))
+    for (i in which(spatial == "off")) {
+      tmb_map$omega_s[,i] <- NA
+      tmb_map$ln_tau_O[i] <- NA
+    }
+    tmb_map$omega_s <- as.factor(tmb_map$omega_s)
+    tmb_map$ln_tau_O <- as.factor(tmb_map$ln_tau_O)
+  }
+
+  if (tmb_data$threshold_func > 0) tmb_map$b_threshold <- NULL
+
+  if (control$profile && delta)
+    cli_abort("Profile not yet working with delta models.")
+
+  for (i in seq_along(map)) { # user supplied
+    cli_inform(c(i = paste0("Fixing (mapping) `", names(map)[i],
+      "` at specified starting value(s) of:"),
+      paste0("  ",
+        paste(round(tmb_params[[names(map)[i]]], 3), collapse = ", "))))
+  }
+  tmb_map <- c(map, tmb_map) # add user-supplied mapping
+
+  prof <- c("b_j")
+  if (delta) prof <- c(prof, "b_j2")
+
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
-    profile = if (control$profile) "b_j" else NULL,
+    profile = if (control$profile) prof else NULL,
     random = tmb_random, DLL = "sdmTMB", silent = silent)
   lim <- set_limits(tmb_obj, lower = lower, upper = upper,
     loc = spde$mesh$loc, silent = FALSE)
@@ -1035,8 +1221,8 @@ sdmTMB <- function(
     formula    = original_formula,
     split_formula = split_formula,
     time_varying = time_varying,
-    threshold_parameter = thresh$threshold_parameter,
-    threshold_function = thresh$threshold_func,
+    threshold_parameter = thresh[[1]]$threshold_parameter,
+    threshold_function = thresh[[1]]$threshold_func,
     epsilon_predictor = epsilon_predictor,
     time       = time,
     family     = family,
@@ -1047,16 +1233,19 @@ sdmTMB <- function(
     tmb_map    = tmb_map,
     tmb_random = tmb_random,
     spatial_varying = spatial_varying,
+    spatial = spatial,
+    spatiotemporal = spatiotemporal,
+    spatial_varying_formula = spatial_varying_formula,
     reml       = reml,
     lower      = lim$lower,
     upper      = lim$upper,
     priors     = priors,
     nlminb_control = .control,
     control  = control,
-    contrasts  = attr(X_ij, "contrasts"),
-    terms  = attr(mf, "terms"),
+    contrasts  = lapply(X_ij, attr, which = "contrasts"),
+    terms  = lapply(mf, attr, which = "terms"),
     extra_time = extra_time,
-    xlevels    = stats::.getXlevels(mt, mf),
+    xlevels    = lapply(seq_along(mf), function(i) stats::.getXlevels(mt[[i]], mf[[i]])),
     call       = match.call(expand.dots = TRUE),
     version    = utils::packageVersion("sdmTMB")),
     class      = "sdmTMB")
@@ -1064,12 +1253,16 @@ sdmTMB <- function(
 
   if (normalize) tmb_obj <- TMB::normalize(tmb_obj, flag = "flag", value = 0)
 
-  tmb_opt <- stats::nlminb(
-    start = tmb_obj$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
-    lower = lim$lower, upper = lim$upper, control = .control)
+  if (length(tmb_obj$par)) {
+    tmb_opt <- stats::nlminb(
+      start = tmb_obj$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
+      lower = lim$lower, upper = lim$upper, control = .control)
+  } else {
+    tmb_opt <- list(par = tmb_obj$par, objective = tmb_obj$fn(tmb_obj$par))
+  }
 
   if (nlminb_loops > 1) {
-    if(!silent) cat("running extra nlminb loops\n")
+    if (!silent) cat("running extra nlminb loops\n")
     for (i in seq(2, nlminb_loops, length = max(0, nlminb_loops - 1))) {
       temp <- tmb_opt[c("iterations", "evaluations")]
       tmb_opt <- stats::nlminb(
@@ -1080,11 +1273,10 @@ sdmTMB <- function(
     }
   }
   if (newton_loops > 0) {
-    if(!silent) cat("running newtonsteps\n")
+    if (!silent) cat("running newtonsteps\n")
     for (i in seq_len(newton_loops)) {
       g <- as.numeric(tmb_obj$gr(tmb_opt$par))
-      h <- stats::optimHess(tmb_opt$par, fn = tmb_obj$fn, gr = tmb_obj$gr,
-        upper = lim$upper, lower = lim$lower)
+      h <- stats::optimHess(tmb_opt$par, fn = tmb_obj$fn, gr = tmb_obj$gr)
       tmb_opt$par <- tmb_opt$par - solve(h, g)
       tmb_opt$objective <- tmb_obj$fn(tmb_opt$par)
     }
@@ -1102,18 +1294,6 @@ sdmTMB <- function(
     bad_eig    = conv$bad_eig,
     pos_def_hessian = sd_report$pdHess))
   `class<-`(out, "sdmTMB")
-}
-
-map_off_rf <- function(.map, tmb_params) {
-  .map$ln_tau_O <- as.factor(NA)
-  .map$ln_tau_E <- as.factor(NA)
-  .map$ln_tau_Z <- as.factor(NA)
-  .map$zeta_s <- factor(rep(NA, length(tmb_params$zeta_s)))
-  .map$ln_kappa <- factor(rep(NA, 2))
-  .map$ln_H_input <- factor(rep(NA, 2))
-  .map$omega_s <- factor(rep(NA, length(tmb_params$omega_s)))
-  .map$epsilon_st <- factor(rep(NA, length(tmb_params$epsilon_st)))
-  .map
 }
 
 check_bounds <- function(.par, lower, upper) {
@@ -1174,4 +1354,39 @@ set_limits <- function(tmb_obj, lower, upper, loc = NULL, silent = TRUE) {
   #   }
   # }
   list(lower = .lower, upper = .upper)
+}
+
+check_spatiotemporal_arg <- function(x, time, .which = 1) {
+  sp_len <- length(x)
+  .spatiotemporal <- tolower(as.character(x[[.which]]))
+  assert_that(.spatiotemporal %in% c("iid", "ar1", "rw", "off", "true", "false"),
+    msg = "`spatiotemporal` argument value not valid")
+  if (.spatiotemporal == "true") .spatiotemporal <- "iid"
+  if (.spatiotemporal == "false") .spatiotemporal <- "off"
+  .spatiotemporal <- match.arg(tolower(.spatiotemporal), choices = c("iid", "ar1", "rw", "off"))
+  if (is.null(time) && .spatiotemporal != "off" && sp_len >= 1) {
+    cli_abort("`spatiotemporal` is set but the `time` argument is missing.")
+  }
+  .spatiotemporal
+}
+
+map_all_params <- function(x) {
+  m <- list()
+  nm <- names(x)
+  for (i in seq_along(x)) {
+    m[[i]]<- factor(rep(NA, length(x[[i]])))
+  }
+ stats::setNames(m, names(x))
+}
+
+parse_spatial_arg <- function(spatial) {
+  if (!is.logical(spatial[[1]])) {
+    spatial <- match.arg(tolower(spatial), choices = c("on", "off"))
+  }
+  if (identical(spatial, "on") || isTRUE(spatial)) {
+    spatial <- "on"
+  } else {
+    spatial <- "off"
+  }
+  spatial
 }

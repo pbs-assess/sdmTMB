@@ -43,7 +43,7 @@ sdmTMB_sim(
 \item{betas}{A vector of beta values (design-matrix fixed-effect coefficient
 values). If a random walk (\code{sigma_V > 0}), these are the starting values.}
 
-\item{family}{Family as in \code{\link[=sdmTMB]{sdmTMB()}}.}
+\item{family}{Any \emph{non-delta/hurdle} family as in \code{\link[=sdmTMB]{sdmTMB()}}.}
 
 \item{rho}{Spatiotemporal correlation between years; should be between -1 and
 1.}
@@ -88,7 +88,7 @@ A data frame where:
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
 
-\strong{Note we are considering depreciating this function in favour of \code{\link[=sdmTMB_simulate]{sdmTMB_simulate()}},
+\strong{Note we are considering deprecating this function in favour of \code{\link[=sdmTMB_simulate]{sdmTMB_simulate()}},
 which is more flexible and faster.}
 }
 \examples{

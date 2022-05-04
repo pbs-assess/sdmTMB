@@ -3,7 +3,7 @@
 #' @description
 #' `r lifecycle::badge("deprecated")`
 #'
-#' **Note we are considering depreciating this function in favour of [sdmTMB_simulate()],
+#' **Note we are considering deprecating this function in favour of [sdmTMB_simulate()],
 #' which is more flexible and faster.**
 #'
 #' @param mesh Output from [make_mesh()] or a mesh directly from INLA.
@@ -14,7 +14,7 @@
 #'   `NULL`, will be set to standard normal draws.
 #' @param betas A vector of beta values (design-matrix fixed-effect coefficient
 #'   values). If a random walk (`sigma_V > 0`), these are the starting values.
-#' @param family Family as in [sdmTMB()].
+#' @param family Any *non-delta/hurdle* family as in [sdmTMB()].
 #' @param time_steps The number of time steps.
 #' @param rho Spatiotemporal correlation between years; should be between -1 and
 #'   1.
@@ -103,7 +103,7 @@ sdmTMB_sim <- function(mesh,
                        size = NULL) {
 
   if (!requireNamespace("INLA", quietly = TRUE)) {
-    stop("INLA must be installed to use this function.", call. = FALSE)
+    cli_abort("INLA must be installed to use this function.")
   }
   assert_that(is.numeric(x), is.numeric(y))
   assert_that(is.null(dim(x)), is.null(dim(y)))
@@ -120,8 +120,12 @@ sdmTMB_sim <- function(mesh,
   assert_that(length(betas) == length(sigma_V))
   if (!is.null(X)) assert_that(time_steps * length(x) == nrow(X))
 
+  if (isTRUE(family$delta)) {
+    cli_abort("Family must not be a delta family.")
+  }
+
   if (!missing(thetaf)) {
-    stop("Please use 'tweedie_p' instead of 'thetaf' in `sdmTMB_sim()`.", call. = FALSE)
+    cli_abort("Please use 'tweedie_p' instead of 'thetaf' in `sdmTMB_sim()`.")
   }
 
   if (is(mesh, "sdmTMBmesh")) {
@@ -138,7 +142,7 @@ sdmTMB_sim <- function(mesh,
 
   # test whether sigma_E_zero
   if (length(sigma_E) %in% c(1L, time_steps) == FALSE) {
-    stop("Error: sigma_E must be a scalar or of length time_steps", call. = FALSE)
+    cli_abort("Error: sigma_E must be a scalar or of length time_steps")
   }
   if (length(sigma_E) == 1L) sigma_E <- rep(sigma_E, time_steps)
   sigma_E_zero <- length(which(sigma_E == 0)) == time_steps
@@ -215,7 +219,7 @@ sdmTMB_sim <- function(mesh,
     poisson   = stats::rpois(N, lambda = d$mu),
     student   = rstudent(N, d$mu, sigma = phi, nu = df),
     lognormal = stats::rlnorm(N, meanlog = log(d$mu) - (phi^2) / 2, sdlog = phi),
-    stop("Family not found.", call. = FALSE)
+    cli_abort("Family not found.")
   )
 
   if (n_covariates > 0) {
@@ -249,7 +253,7 @@ rspde2 <- function(coords, mesh, sigma = 1, range, variance = sigma^2, alpha = 2
                    seed = 0L, return.attributes = FALSE) {
   theta <- c(-0.5 * log(4 * pi * variance * kappa^2), log(kappa))
   if (missing(mesh)) {
-    stop("`mesh` must be specified.", call. = FALSE)
+    cli_abort("`mesh` must be specified.")
   }
   else {
     attributes <- list(mesh = mesh)
@@ -267,7 +271,7 @@ rspde2 <- function(coords, mesh, sigma = 1, range, variance = sigma^2, alpha = 2
       )
     )
   } else {
-    stop("`n` must be 1.", call. = FALSE)
+    cli_abort("`n` must be 1.")
   }
   result <- drop(result)
   result <- as.matrix(result)

@@ -116,7 +116,7 @@ sdmTMB_simulate <- function(formula,
                             seed = sample.int(1e6, 1),
                             ...) {
   if (!requireNamespace("INLA", quietly = TRUE)) {
-    stop("INLA must be installed to use this function.", call. = FALSE)
+    cli_abort("INLA must be installed to use this function.")
   }
 
   if (!is.null(previous_fit)) stop("`previous_fit` is deprecated. See `simulate.sdmTMB()`", call. = FALSE)
@@ -131,7 +131,7 @@ sdmTMB_simulate <- function(formula,
   assert_that(phi > 0 || is.null(phi))
   assert_that(sigma_O >= 0 || is.null(sigma_O))
   assert_that(all(sigma_E >= 0) || is.null(sigma_E))
-  assert_that(sigma_Z >= 0 || is.null(sigma_Z))
+  assert_that(all(sigma_Z >= 0) || is.null(sigma_Z))
 
   if (is.null(previous_fit)) {
     assert_that(is(mesh, "sdmTMBmesh"))
@@ -183,7 +183,7 @@ sdmTMB_simulate <- function(formula,
 
   if (!is.null(B)) {
     n_covariates <- length(B)
-    assert_that(ncol(fit$tmb_data$X_ij) == length(B),
+    assert_that(ncol(fit$tmb_data$X_ij[[1]]) == length(B),
       msg = paste0(
         "Number of specified fixed-effect `B` parameters does ",
         "not match model matrix columns implied by the formula."
@@ -197,14 +197,14 @@ sdmTMB_simulate <- function(formula,
 
   if (is.null(previous_fit)) {
     if (is.null(sigma_O)) sigma_O <- 0
-    if (is.null(sigma_Z)) sigma_Z <- 0
+    if (is.null(sigma_Z)) sigma_Z <- matrix(0, nrow = 0L, ncol = 0L) # DELTA FIXME
     if (is.null(sigma_E)) sigma_E <- 0
   }
 
   if (length(range) == 1L) range <- rep(range, 2)
 
   kappa <- sqrt(8) / range
-  params$ln_kappa <- log(kappa)
+  params$ln_kappa <- matrix(log(kappa), ncol = 1L) # TODO DELTA
 
   if (!is.null(sigma_O) || is.null(previous_fit)) {
     tau_O <- 1 / (sqrt(4 * pi) * kappa[1] * sigma_O)
@@ -212,14 +212,14 @@ sdmTMB_simulate <- function(formula,
   }
   if (!is.null(sigma_Z) || is.null(previous_fit)) {
     tau_Z <- 1 / (sqrt(4 * pi) * kappa[1] * sigma_Z)
-    params$ln_tau_Z <- log(tau_Z)
+    params$ln_tau_Z <- matrix(log(tau_Z), nrow = nrow(sigma_Z), ncol = 1L) # DELTA FIXME
   }
   if (!is.null(sigma_E) || is.null(previous_fit)) {
     tau_E <- 1 / (sqrt(4 * pi) * kappa[2] * sigma_E)
     params$ln_tau_E <- log(tau_E)
   }
 
-  if (!is.null(B)) params$b_j <- B
+  if (!is.null(B)) params$b_j <- matrix(B, ncol = 1L) # TODO DELTA
   if (!is.null(phi)) params$ln_phi <- log(phi)
   if (!is.null(rho)) {
     if (rho != 0) tmb_data$ar1_fields <- 1L
@@ -279,6 +279,8 @@ sdmTMB_simulate <- function(formula,
 #'   effects (this only simulates observation error). `~0` or `NA` to simulate
 #'   new random affects (smoothers, which internally are random effects, will
 #'   not be simulated as new).
+#' @param model If a delta/hurdle model, which model to simulate from?
+#'   `NA` = combined, `1` = first model, `2` = second mdoel.
 #' @param tmbstan_model An optional model fit via [tmbstan::tmbstan()]. If
 #'   provided the parameters will be drawn from the MCMC samples and new
 #'   observation error will be added. See the example in [extract_mcmc()].
@@ -351,6 +353,7 @@ sdmTMB_simulate <- function(formula,
 
 simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
                             params = c("mle", "mvn"),
+                            model = c(NA, 1, 2),
                             re_form = NULL, tmbstan_model = NULL, ...) {
   set.seed(seed)
   params <- tolower(params)
@@ -390,6 +393,18 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
     ret <- lapply(seq_len(nsim), function(i) newobj$simulate(par = new_par, complete = FALSE)$y_i)
   }
 
+  if (isTRUE(object$family$delta)) {
+    if (is.na(model[[1]])) {
+      ret <- lapply(ret, function(.x) ifelse(!is.na(.x[,2]), .x[,2], .x[,1]))
+    } else if (model[[1]] == 1) {
+      ret <- lapply(ret, function(.x) .x[,1])
+    } else if (model[[1]] == 2) {
+      ret <- lapply(ret, function(.x) ifelse(!is.na(.x[,2]), .x[,2], NA))
+    } else {
+      cli_abort("`model` argument isn't valid; should be NA, 1, or 2.")
+    }
+  }
+
   do.call(cbind, ret)
 }
 
@@ -411,6 +426,7 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
 #' @seealso [simulate.sdmTMB()], [residuals.sdmTMB()]
 #'
 #' @examples
+#' if (inla_installed()) {
 #' fit <- sdmTMB(density ~ as.factor(year) + s(depth, k = 3),
 #'   data = pcod_2011, time = "year", mesh = pcod_mesh_2011,
 #'   family = tweedie(link = "log"), spatial = "off",
@@ -426,22 +442,37 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
 #' head(r)
 #' plot(r$expected, r$observed)
 #' abline(a = 0, b = 1)
+#' }
 
 dharma_residuals <- function(simulated_response, object, plot = TRUE, ...) {
   if (!requireNamespace("DHARMa", quietly = TRUE)) {
-    stop("DHARMa must be installed to use this function.", call. = FALSE)
+    cli_abort("DHARMa must be installed to use this function.")
   }
 
-  assert_that(class(object) == "sdmTMB")
+  assert_that(inherits(object, "sdmTMB"))
   assert_that(is.logical(plot))
   assert_that(is.matrix(simulated_response))
-  assert_that(nrow(simulated_response) == length(as.numeric(object$response)))
+  assert_that(nrow(simulated_response) == nrow(object$response))
+  if (isTRUE(object$family$delta)) {
+    y <- ifelse(!is.na(object$response[,2]),
+      object$response[,2], object$response[,1])
+  } else {
+    y <- object$response[,1]
+  }
+  y <- as.numeric(y)
 
-  p <- predict(object, newdata = NULL)
-  fitted <- object$family$linkinv(p[["est_non_rf"]])
+  n_orig <- suppressWarnings(TMB::openmp(NULL))
+  if (n_orig > 0 && .Platform$OS.type == "unix") { # openMP is supported
+    TMB::openmp(n = 1L)
+    on.exit({TMB::openmp(n = n_orig)})
+  }
+
+  p <- predict(object, type = "response")
+  # fitted <- object$family$linkinv(p[["est_non_rf"]])
+  fitted <- p$est
   res <- DHARMa::createDHARMa(
     simulatedResponse = simulated_response,
-    observedResponse = as.numeric(object$response),
+    observedResponse = y,
     fittedPredictedResponse = fitted,
     ...
   )

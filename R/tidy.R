@@ -8,6 +8,7 @@
 #' @param conf.level Confidence level for CI.
 #' @param exponentiate Whether to exponentiate the fixed-effect coefficient
 #'   estimates and confidence intervals.
+#' @param model Which model to tidy if a delta model (1 or 2).
 #' @param ... Extra arguments (not used).
 #'
 #' @return A data frame
@@ -22,7 +23,7 @@
 #' @importFrom stats plogis
 #' @examples
 #' # See ?sdmTMB
-tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
+tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
                  conf.int = FALSE, conf.level = 0.95, exponentiate = FALSE, ...) {
   effects <- match.arg(effects)
   assert_that(is.logical(exponentiate))
@@ -34,45 +35,57 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
       msg = "`conf.level` must be length 1 and between 0 and 1")
   }
 
-  .formula <- x$split_formula$fixedFormula
-  .formula <- remove_s_and_t2(.formula)
-  if (!"mgcv" %in% names(x)) x[["mgcv"]] <- FALSE
-  fe_names <- colnames(model.matrix(.formula, x$data))
+
+  crit <- stats::qnorm(1 - (1 - conf.level) / 2)
+  if (exponentiate) trans <- exp else trans <- I
+
+  delta <- isTRUE(x$family$delta)
+  assert_that(is.numeric(model))
+  assert_that(length(model) == 1L)
+  if (delta) assert_that(model %in% c(1, 2), msg = "`model` must be 1 or 2.")
+  if (!delta) assert_that(model == 1, msg = "Only one model: `model` must be 1.")
 
   se_rep <- as.list(x$sd_report, "Std. Error", report = TRUE)
   est_rep <- as.list(x$sd_report, "Estimate", report = TRUE)
   se <- as.list(x$sd_report, "Std. Error", report = FALSE)
   est <- as.list(x$sd_report, "Estimate", report = FALSE)
-  b_j <- est$b_j[!fe_names == "offset"]
-  b_j_se <- se$b_j[!fe_names == "offset"]
-  fe_names <- fe_names[!fe_names == "offset"]
-  out <- data.frame(term = fe_names, estimate = b_j, std.error = b_j_se, stringsAsFactors = FALSE)
-  crit <- stats::qnorm(1 - (1 - conf.level) / 2)
-  if (exponentiate) trans <- exp else trans <- I
-  if (exponentiate) out$estimate <- trans(out$estimate)
-
-  if (x$tmb_data$threshold_func > 0) {
-    if (x$threshold_function == 1L) {
-      par_name <- paste0(x$threshold_parameter, c("-slope", "-breakpt"))
-    } else {
-      par_name <- paste0(x$threshold_parameter, c("-s50", "-s95", "-smax"))
-    }
-    out <- rbind(
-      out,
-      data.frame(
-        term = par_name, estimate = est$b_threshold,
-        std.error = se$b_threshold, stringsAsFactors = FALSE
-      )
-    )
-  }
-
-  if (conf.int) {
-    out$conf.low <- as.numeric(trans(out$estimate - crit * out$std.error))
-    out$conf.high <- as.numeric(trans(out$estimate + crit * out$std.error))
-  }
 
   se <- c(se, se_rep)
   est <- c(est, est_rep)
+  # cleanup:
+  est$epsilon_st <- NULL
+  est$zeta_s <- NULL
+  est$omega_s <- NULL
+  est$ln_H_input <- NULL
+
+  se$epsilon_st <- NULL
+  se$zeta_s <- NULL
+  se$omega_s <- NULL
+  se$ln_H_input <- NULL
+
+  subset_pars <- function(p, model) {
+    p$b_j <- if (model == 1) p$b_j else p$b_j2
+    p$ln_tau_O <- p$ln_tau_O[model]
+    p$ln_tau_Z <- p$ln_tau_Z[model]
+    p$ln_tau_E <- p$ln_tau_E[model]
+    p$ln_kappa <- p$ln_kappa[,model]
+    p$ln_phi <- p$ln_phi[model]
+    p$ln_tau_V <- p$ln_tau_V[,model]
+    p$ar1_phi <- p$ar1_phi[model]
+    p$ln_tau_G <- p$ln_tau_G[,model]
+    p$log_sigma_O <- p$log_sigma_O[model]
+    p$log_sigma_E <- p$log_sigma_E[model]
+    p$log_sigma_Z <- p$log_sigma_Z[,model]
+    p$log_range <- p$log_range[,model]
+    p
+  }
+  est <- subset_pars(est, model)
+  se <- subset_pars(se, model)
+
+  if (x$family$family[[model]] %in% c("binomial", "poisson")) {
+    se$ln_phi <- NULL
+    est$ln_phi <- NULL
+  }
 
   # not ADREPORTed for speed:
   optional_assign <- function(est, from, to) {
@@ -95,6 +108,39 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
     est$log_sigma_E <- est$log_sigma_E[1]
   }
 
+  # grab fixed effects:
+  .formula <- x$split_formula[[model]]$fixedFormula
+  .formula <- remove_s_and_t2(.formula)
+  if (!"mgcv" %in% names(x)) x[["mgcv"]] <- FALSE
+  fe_names <- colnames(model.matrix(.formula, x$data))
+
+  b_j <- est$b_j[!fe_names == "offset", drop = TRUE]
+  b_j_se <- se$b_j[!fe_names == "offset", drop = TRUE]
+  fe_names <- fe_names[!fe_names == "offset"]
+  out <- data.frame(term = fe_names, estimate = b_j, std.error = b_j_se, stringsAsFactors = FALSE)
+  if (exponentiate) out$estimate <- trans(out$estimate)
+
+  if (x$tmb_data$threshold_func > 0) {
+    if (delta) stop("not implemented for threshold delta models yet.")
+    if (x$threshold_function == 1L) {
+      par_name <- paste0(x$threshold_parameter, c("-slope", "-breakpt"))
+    } else {
+      par_name <- paste0(x$threshold_parameter, c("-s50", "-s95", "-smax"))
+    }
+    out <- rbind(
+      out,
+      data.frame(
+        term = par_name, estimate = est$b_threshold,
+        std.error = se$b_threshold, stringsAsFactors = FALSE
+      )
+    )
+  }
+
+  if (conf.int) {
+    out$conf.low <- as.numeric(trans(out$estimate - crit * out$std.error))
+    out$conf.high <- as.numeric(trans(out$estimate + crit * out$std.error))
+  }
+
   out_re <- list()
   log_name <- c("log_range")
   name <- c("range")
@@ -106,7 +152,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
     log_name <- c(log_name, "log_sigma_O")
     name <- c(name, "sigma_O")
   }
-  if (!x$tmb_data$spatial_only) {
+  if (!x$tmb_data$spatial_only[model]) {
     log_name <- c(log_name, "log_sigma_E")
     name <- c(name, "sigma_E")
   }
@@ -125,7 +171,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
 
   j <- 0
   if (!"log_range" %in% names(est)) {
-    warning("This model was fit with an old version of sdmTMB. Some parameters may not be available to the tidy() method. Re-fit the model with the current version of sdmTMB if you need access to any missing parameters.", call. = FALSE)
+    cli_warn("This model was fit with an old version of sdmTMB. Some parameters may not be available to the tidy() method. Re-fit the model with the current version of sdmTMB if you need access to any missing parameters.")
   }
   for (i in name) {
     j <- j + 1
@@ -148,7 +194,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   discard <- unlist(lapply(out_re, function(x) length(x) == 1L)) # e.g. old models and phi
   out_re[discard] <- NULL
 
-  if (x$family$family == "tweedie") {
+  if ("tweedie" %in% x$family$family) {
     out_re$tweedie_p <- data.frame(
       term = "tweedie_p", estimate = plogis(est$thetaf) + 1,
       std.error = NA, stringsAsFactors = FALSE)
@@ -156,8 +202,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
     out_re$tweedie_p$conf.high <- plogis(est$thetaf + crit * se$thetaf) + 1
   }
 
-  r <- x$tmb_obj$report()
-  if (!is.null(r$rho) && r$rho != 0L) {
+  if ("ar1_phi" %in% names(est)) {
     ar_phi <- est$ar1_phi
     ar_phi_se <- se$ar1_phi
     rho_est <- 2 * stats::plogis(ar_phi) - 1
@@ -170,7 +215,8 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
     ii <- ii + 1
   }
 
-  if (x$control$map_rf) out_re$range <- NULL
+  if (all(!x$tmb_data$include_spatial) && all(x$tmb_data$spatial_only)) out_re$range <- NULL
+
   out_re <- do.call("rbind", out_re)
   row.names(out_re) <- NULL
 
@@ -179,6 +225,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"),
   if (identical(est$ln_tau_G, 0)) out_re <- out_re[out_re$term != "sigma_G", ]
   if (identical(est$ln_tau_O, 0)) out_re <- out_re[out_re$term != "sigma_O", ]
   if (identical(est$ln_tau_Z, 0)) out_re <- out_re[out_re$term != "sigma_Z", ]
+  if (is.na(x$tmb_map$ar1_phi[model])) out_re <- out_re[out_re$term != "rho", ]
 
   if (!conf.int) {
     out_re[["conf.low"]] <- NULL

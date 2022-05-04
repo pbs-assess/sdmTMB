@@ -13,3 +13,5 @@ _pkgdown.yml
 *.html
 doc
 README_cache/*
+/doc/
+/Meta/

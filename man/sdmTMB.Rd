@@ -11,11 +11,12 @@ sdmTMB(
   time = NULL,
   family = gaussian(link = "identity"),
   spatial = c("on", "off"),
-  spatiotemporal = c("IID", "AR1", "RW", "off"),
+  spatiotemporal = c("iid", "ar1", "rw", "off"),
   share_range = TRUE,
   time_varying = NULL,
   spatial_varying = NULL,
   weights = NULL,
+  offset = NULL,
   extra_time = NULL,
   reml = FALSE,
   silent = TRUE,
@@ -24,30 +25,25 @@ sdmTMB(
   priors = sdmTMBpriors(),
   previous_fit = NULL,
   experimental = NULL,
-  do_fit = TRUE,
-  spatial_only = deprecated(),
-  fields = deprecated(),
-  include_spatial = deprecated(),
-  spde = deprecated(),
-  ...
+  do_fit = TRUE
 )
 }
 \arguments{
-\item{formula}{Model formula. See the Details section below for how to specify
-offsets and threshold parameters. For index standardization, you may wish
-to include \code{0 + as.factor(year)} (or whatever the time column is called)
-in the formula. IID random intercepts are possible using \pkg{lme4}
-syntax, e.g., \code{+ (1 | g)} where \code{g} is a column with factor levels.
-Penalized splines are possible via \pkg{mgcv} with \code{s()}. See examples
-and details below.}
+\item{formula}{Model formula. IID random intercepts are possible using
+\pkg{lme4} syntax, e.g., \code{+ (1 | g)} where \code{g} is a column of class
+character or factor representing groups. Penalized splines are possible via
+\pkg{mgcv} with \code{s()}. Optionally a list for delta (hurdle) models.  See
+examples and details below. For index standardization, see details section
+below.}
 
 \item{data}{A data frame.}
 
 \item{mesh}{An object from \code{\link[=make_mesh]{make_mesh()}}.}
 
 \item{time}{An optional time column name (as character). Can be left as
-\code{NULL} for a model with only spatial random fields unless you wish to use
-one of the index or center of gravity functions over time.}
+\code{NULL} for a model with only spatial random fields; however, if the data
+are actually spatiotemporal and you wish to use \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}}
+downstream, supply the time argument.}
 
 \item{family}{The family and link. Supports \code{\link[=gaussian]{gaussian()}}, \code{\link[=Gamma]{Gamma()}},
 \code{\link[=binomial]{binomial()}}, \code{\link[=poisson]{poisson()}}, \code{\link[sdmTMB:families]{Beta()}},
@@ -57,96 +53,87 @@ one of the index or center of gravity functions over time.}
 \code{\link[sdmTMB:families]{truncated_nbinom1()}},
 \code{\link[sdmTMB:families]{censored_poisson()}},
 \code{\link[sdmTMB:families]{student()}}, and
-\code{\link[sdmTMB:families]{tweedie()}}]. For binomial family options,
-see the 'Binomial families' in the Details section below.}
+\code{\link[sdmTMB:families]{tweedie()}}]. Supports the delta/hurdle models:
+\code{\link[sdmTMB:families]{delta_gamma()}},
+\code{\link[sdmTMB:families]{delta_lognormal()}}, and
+\code{\link[sdmTMB:families]{delta_truncated_nbinom2()}},
+For binomial family options, see 'Binomial families' in the Details
+section below.}
 
-\item{spatial}{Estimate spatial random fields? Options are
-\code{'on'} / \code{'off'} or \code{TRUE} / \code{FALSE}.}
+\item{spatial}{Estimate spatial random fields? Options are \code{'on'} / \code{'off'}
+or \code{TRUE} / \code{FALSE}. Optionaly a list for delta models, e.g. \code{list('on', 'off')}.}
 
 \item{spatiotemporal}{Estimate the spatiotemporal random fields as \code{'IID'}
 (independent and identically distributed; default), stationary \code{'AR1'}
 (first-order autoregressive), as a random walk (\code{'RW'}), or as fixed at 0
-\code{'off'}. Will be set to \code{'off'} if \code{time = NULL}. Note that the
-spatiotemporal standard deviation represents the marginal steady-state
-standard deviation of the process in the case of the AR1. I.e., it is
-scaled according to the correlation. See the \href{https://kaskr.github.io/adcomp/classAR1__t.html}{TMB documentation}. If the AR1
+\code{'off'}. Will be set to \code{'off'} if \code{time = NULL}. If a delta model, can be
+a list. E.g., \code{list('off', 'ar1')}. Note that the spatiotemporal standard
+deviation represents the marginal steady-state standard deviation of the
+process in the case of the AR1. I.e., it is scaled according to the
+correlation. See the \href{https://kaskr.github.io/adcomp/classAR1__t.html}{TMB documentation}. If the AR1
 correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
-may wish to switch to the random walk \code{"RW"}. Capitalization is ignored. \code{TRUE}
-gets converted to \code{'iid'} and \code{FALSE} gets converted to \code{off}.}
+may wish to switch to the random walk \code{"RW"}. Capitalization is ignored.
+\code{TRUE} gets converted to \code{'IID'} and \code{FALSE} gets converted to \code{off}.}
 
 \item{share_range}{Logical: estimate a shared spatial and spatiotemporal
-range parameter (\code{TRUE}) or independent range parameters (\code{FALSE}).}
+range parameter (\code{TRUE}) or independent range parameters (\code{FALSE}). If a
+delta model, can be a list. E.g., \code{list(TRUE, FALSE)}.}
 
 \item{time_varying}{An optional one-sided formula describing covariates that
 should be modelled as a random walk through time. Be careful not to include
 covariates (including the intercept) in both the main and time-varying
-formula. I.e., at least one should have \code{~ 0} or \code{~ -1}.}
+formula. I.e., at least one should have \code{~ 0} or \code{~ -1}. Structure must
+currently be shared in delta models.}
 
-\item{spatial_varying}{An optional one-sided formula \strong{with a single
-predictor} of a coefficient that should varying in space as a random
-field. Note that you may want to include a fixed effect for the same
-variable to improve interpretability. If the (scaled) time column, will
-represent a local-time-trend model. See \doi{10.1111/ecog.05176} and the
-\href{https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.
+\item{spatial_varying}{An optional one-sided formula of a coefficients that
+should varying in space as random fields. Note that you likely want to
+include a fixed effect for the same variable to improve interpretability
+since the random field is assumed to have a mean of 0.
+If the (scaled) time column, will represent a local-time-trend model. See
+\doi{10.1111/ecog.05176} and the \href{https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.
 Note this predictor should be centered to have mean zero and have a
-standard deviation of approximately 1 (scale by the SD).}
+standard deviation of approximately 1 (scale by the SD). Structure must
+currently be shared in delta models.}
 
-\item{weights}{Optional likelihood weights for the conditional model.
-Implemented as in \pkg{glmmTMB}. Weights do not have to sum
-to one and are not internally modified. Can also be used for trials with
-the binomial family; the weights argument needs to be a vector and not a name
-of the variable in the dataframe. See the Details section below.}
+\item{weights}{A numeric vector representing optional likelihood weights for
+the conditional model. Implemented as in \pkg{glmmTMB}: weights do not have
+to sum to one and are not internally modified. Can also be used for trials
+with the binomial family; the weights argument needs to be a vector and not
+a name of the variable in the data frame. See the Details section below.}
+
+\item{offset}{A numeric vector representing the model offset. In delta/hurdle
+models, this applies only to the positive component. Usually a log
+transformed variable. \emph{Not included in any prediction.}}
 
 \item{extra_time}{Optional extra time slices (e.g., years) to include for
-interpolation or forecasting with the predict function. See the
-Details section below.}
+interpolation or forecasting with the predict function. See the Details
+section below.}
 
 \item{reml}{Logical: use REML (restricted maximum likelihood) estimation
-rather than maximum likelihood? Internally, this adds the fixed effects
-to the list of random effects to integrate over.}
+rather than maximum likelihood? Internally, this adds the fixed effects to
+the list of random effects to integrate over.}
 
-\item{silent}{Silent or include optimization details?}
+\item{silent}{Silent or include optimization details? Helpful to set to
+\code{FALSE} for models that take a while to fit.}
 
-\item{anisotropy}{Logical: allow for anisotropy? See \code{\link[=plot_anisotropy]{plot_anisotropy()}}.}
+\item{anisotropy}{Logical: allow for anisotropy? See \code{\link[=plot_anisotropy]{plot_anisotropy()}}.
+Must be shared across delta models.}
 
 \item{control}{Optimization control options via \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}.}
 
-\item{priors}{Optional penalties/priors via \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}.}
+\item{priors}{Optional penalties/priors via \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}. Must currently
+be shared across delta models.}
 
 \item{previous_fit}{A previously fitted sdmTMB model to initialize the
-optimization with. Can greatly speed up fitting. Note that the data and
-model must be set up \emph{exactly} the same way. However, the \code{weights} argument
-can change, which can be useful for cross-validation.}
+optimization with. Can greatly speed up fitting. Note that the model must
+be set up \emph{exactly} the same way. However, the \code{weights} argument can
+change, which can be useful for cross-validation.}
 
-\item{experimental}{A named list for esoteric or in-development options.
-Here be dragons.
-(Experimental) A column name (as character) of a
-predictor of a linear trend (in log space) of the spatiotemporal standard
-deviation. By default, this is \code{NULL} and fits a model with a constant
-spatiotemporal variance. However, this argument can also be a character
-name in the original data frame (a covariate that ideally has been
-standardized to have mean 0 and standard deviation = 1). Because the
-spatiotemporal field varies by time step, the standardization should be
-done by time. If the name of a predictor is included, a log-linear model is
-fit where the predictor is used to model effects on the standard deviation,
-e.g. \code{log(sd(i)) = B0 + B1 * epsilon_predictor(i)}. The 'epsilon_model' argument may also
-be specified. This is the name of the model to use to modeling time-varying epsilon. This
-can be one of the following: "trend" (default, fits a linear model without random effects),
-"re" (fits a model with random effects in epsilon_st, but no trend), and "trend-re" (a model
-that includes both the trend and random effects)}
+\item{experimental}{A named list for esoteric or in-development options. Here
+be dragons.}
 
 \item{do_fit}{Fit the model (\code{TRUE}) or return the processed data without
 fitting (\code{FALSE})?}
-
-\item{spatial_only}{\strong{Depreciated.} Replaced by \code{spatiotemporal = "off"}.}
-
-\item{fields}{\strong{Depreciated.} Replaced by \code{spatiotemporal}.}
-
-\item{include_spatial}{\strong{Depreciated.} Replaced by \code{spatial}.}
-
-\item{spde}{\strong{Depreciated.} Replaced by \code{mesh}.}
-
-\item{...}{Not currently used.}
 }
 \value{
 An object (list) of class \code{sdmTMB}. Useful elements include:
@@ -156,7 +143,7 @@ An object (list) of class \code{sdmTMB}. Useful elements include:
 \item \code{model}: output from \code{\link[stats:nlminb]{stats::nlminb()}}
 \item \code{data}: the fitted data
 \item \code{mesh}: the object that was supplied to the \code{mesh} argmument
-\item \code{family}: the family object, which includes the inverse link function
+\item \code{family}: the family object, which includes the inverse link function as \code{family$linkinv()}
 \item \code{tmb_params}: The parameters list passed to \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}
 \item \code{tmb_map}: The 'map' list passed to \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}
 \item \code{tmb_data}: The data list passed to \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}
@@ -164,23 +151,18 @@ An object (list) of class \code{sdmTMB}. Useful elements include:
 }
 }
 \description{
-Fit a spatial or spatiotemporal Gaussian Markov random field GLMM with TMB.
-This can be useful for (dynamic) species distribution models and relative
-abundance index standardization among many other uses.
+Fit a spatial or spatiotemporal Gaussian random field generalized linear
+mixed effects model (GLMM) with R package TMB (Template Model Builder) and
+the SPDE (stochastic partial differential equation) approach. This can be
+useful for (dynamic) species distribution models and relative abundance index
+standardization among many other uses.
 }
 \details{
 \strong{Model description}
 
-For now, see the
-\href{https://pbs-assess.github.io/sdmTMB/articles/model-description.html}{model description}
-vignette for a start. There are also descriptions of particular models in
-Anderson et al. (2019) and Barnett et al. (2020) (see reference list below).
-
-\strong{Offsets}
-
-In the model formula, an offset can be included by including \code{+ offset} in
-the model formula (a reserved word). The offset will be included in any
-prediction. \code{offset} must be a column in \code{data}.
+See the \href{https://pbs-assess.github.io/sdmTMB/articles/model-description.html}{model description}
+vignette or the relevant appendix of the preprint on sdmTMB:
+\doi{10.1101/2022.03.24.485545}
 
 \strong{Binomial families}
 
@@ -219,7 +201,8 @@ function of the 50\% and 95\% values. This is similar to length- or size-based
 selectivity in fisheries, and is parameterized by the points at which f(x) =
 0.5 or 0.95. See the vignette.
 
-Note that only a single threshold covariate can be included.
+Note that only a single threshold covariate can be included and threshold
+models are not yet implemented for the delta families.
 
 See the
 \href{https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html}{threshold vignette}.
@@ -253,139 +236,279 @@ You will need to specify the \code{time} argument. See \code{\link[=get_index]{g
 \strong{Regularization and priors}
 
 You can achieve regularization via penalties (priors) on the fixed effect
-parameters. See \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}. These should not include \code{offset} terms.
-You can fit the model once without penalties and inspect the element
+parameters. See \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}. You can fit the model once without
+penalties and look at the output of \code{print(your_model)} or \code{tidy(your_model)}
+or fit the model with \code{do_fit = FALSE} and inspect
 \code{head(your_model$tmb_data$X_ij)} if you want to see how the formula is
 translated to the fixed effect model matrix.
+
+\strong{Delta/hurdle models}
+
+Delta models (also known as hurdle models) can be fit as two separate models
+or at the same time by using an appropriate delta family. E.g.:
+\code{\link[sdmTMB:families]{delta_gamma()}},
+\code{\link[sdmTMB:families]{delta_lognormal()}}, and
+\code{\link[sdmTMB:families]{delta_truncated_nbinom2()}}.
+If fit with a delta family, by default the formula, spatial, and
+spatiotemporal structure etc. will be shared between the two model
+components. Some elements can be specified independently for the two models
+using a list format. These include \code{formula}, \code{spatial}, \code{spatiotemporal},
+\code{share_range}. The first element of the list is for the binomial component
+and the second element is for the positive component (e.g., Gamma).
+Other elements must be shared for now (e.g., spatially varying coefficients,
+time-varying coefficients). Furthermore, there are currently limitations if
+specifying two formulas as a list: the two formulas cannot have smoothers,
+threshold effects, or random intercepts. For now, these must be specificed
+through a single formula that is shared across the two models.
+
+The main advantage of specifying such models using a delta family is (1)
+coding simplicity and (2) calculation of uncertainty on derived quantities
+such as an index of abundance with \code{\link[=get_index]{get_index()}} using the generalized delta
+method within TMB.
 }
 \examples{
-if (inla_installed()) {
+if (inla_installed() &&
+  require("visreg", quietly = TRUE) &&
+  require("ggplot2", quietly = TRUE)
+) {
 
-# A coarse mesh for example speed:
-mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 25)
+library(sdmTMB)
+
+# Build an SPDE mesh with INLA:
+mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
+# * this example uses a fairly coarse mesh so these examples run quickly
+# * `cutoff` is the minimum distance between mesh vertices in units of the
+#   x and y coordinates
+# * `cutoff = 10` or `cutoff = 15` might make more sense in applied situations
+#   for this dataset
+# * or build any mesh in INLA and pass it to the `mesh` argument in `make_mesh()`
+# * not needed if you will be turning off all spatial/spatiotemporal random fields
+
+# Quick mesh plot:
 plot(mesh)
+# Or:
+# ggplot2::ggplot() + inlabru::gg(mesh$mesh)
 
-# Tweedie:
-fit <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-  data = pcod_2011, time = "year", mesh = mesh, family = tweedie(link = "log"))
-print(fit)
+# Fit a Tweedie spatial random field GLMM with a smoother for depth:
+fit <- sdmTMB(
+  density ~ s(depth),
+  data = pcod_2011, mesh = mesh,
+  family = tweedie(link = "log")
+)
+fit
+
+# Extract coefficients:
 tidy(fit, conf.int = TRUE)
 tidy(fit, effects = "ran_par", conf.int = TRUE)
 
-# Bernoulli:
-pcod_binom <- pcod_2011
-m_bin <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  data = pcod_binom, time = "year", mesh = mesh,
-  family = binomial(link = "logit"))
-print(m_bin)
+# Perform several 'sanity' checks:
+sanity(fit)
 
-# Fit a spatial-only model (by not specifying `time` or setting
-# `spatiotemporal = 'off'`):
+# Visualize depth effect: (see ?visreg_delta)
+visreg::visreg(fit, xvar = "depth") # link space; randomized quantile residuals
+visreg::visreg(fit, xvar = "depth", scale = "response")
+visreg::visreg(fit, xvar = "depth", scale = "response", gg = TRUE, rug = FALSE)
+
+# Predict on the fitted data; see ?predict.sdmTMB
+p <- predict(fit)
+
+# Predict on new data:
+nd <- subset(qcs_grid, year == 2017)
+p <- predict(fit, newdata = nd)
+head(p)
+
+# Add spatiotemporal random fields:
 fit <- sdmTMB(
-  density ~ depth_scaled + depth_scaled2, data = pcod_2011,
-  mesh = mesh, family = tweedie(link = "log"))
-print(fit)
-
-# Gaussian:
-pcod_gaus <- subset(pcod_2011, density > 0 & year >= 2013)
-mesh_gaus <- make_mesh(pcod_gaus, c("X", "Y"), cutoff = 20)
-m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  data = pcod_gaus, mesh = mesh_gaus)
-print(m_pos)
-
-# With penalized smoothers via mgcv:
-m_gam <- sdmTMB(log(density) ~ s(depth),
-  data = pcod_gaus, mesh = mesh_gaus
+  density ~ 0 + as.factor(year),
+  time = "year", #<
+  data = pcod_2011, mesh = mesh,
+  family = tweedie(link = "log")
 )
+fit
 
-# Specifying the basis dimension via `k =`:
-m_gam <- sdmTMB(log(density) ~ s(depth, k = 5),
-  data = pcod_gaus, mesh = mesh_gaus
+# Make the fields AR1:
+fit <- sdmTMB(
+  density ~ s(depth),
+  time = "year",
+  spatial = "off",
+  spatiotemporal = "ar1", #<
+  data = pcod_2011, mesh = mesh,
+  family = tweedie(link = "log")
 )
+fit
 
-# Separate smoother by year:
-m_gam <- sdmTMB(log(density) ~ s(depth, by = as.factor(year)),
-  data = pcod_gaus, mesh = mesh_gaus
+# Make the fields a random walk:
+fit <- sdmTMB(
+  density ~ s(depth),
+  time = "year",
+  spatial = "off",
+  spatiotemporal = "rw", #<
+  data = pcod_2011, mesh = mesh,
+  family = tweedie(link = "log")
 )
+fit
 
-# Turning off all random fields (creating a regular GLM/GAM):
-m_gam <- sdmTMB(log(density) ~ s(depth),
-  data = pcod_gaus, mesh = mesh_gaus,
-  spatial = "off", spatiotemporal = "off"
+# Depth smoothers by year:
+fit <- sdmTMB(
+  density ~ s(depth, by = as.factor(year)), #<
+  time = "year",
+  spatial = "off",
+  spatiotemporal = "rw",
+  data = pcod_2011, mesh = mesh,
+  family = tweedie(link = "log")
 )
+fit
 
-# With IID random intercepts:
-# Simulate some data:
-set.seed(1)
-x <- runif(500, -1, 1)
-y <- runif(500, -1, 1)
-loc <- data.frame(x = x, y = y)
-mesh_sim <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
-s <- sdmTMB_sim(x = x, y = y, betas = 0, time = 1L,
-  phi = 0.1, range = 1.4, sigma_O = 0.2, sigma_E = 0, mesh = mesh_sim)
-s$g <- gl(50, 10)
-iid_re_vals <- rnorm(50, 0, 0.3)
-s$observed <- s$observed + iid_re_vals[s$g]
+# 2D depth-year smoother:
+fit <- sdmTMB(
+  density ~ s(depth, year), #<
+  spatial = "off",
+  data = pcod_2011, mesh = mesh,
+  family = tweedie(link = "log")
+)
+fit
 
-# Fit it:
-fit <- sdmTMB(observed ~ 1 + (1 | g), mesh = mesh_sim, data = s)
-print(fit)
-tidy(fit, "ran_pars", conf.int = TRUE) # see tau_G
-theta <- as.list(fit$sd_report, "Estimate")
-plot(iid_re_vals, theta$RE)
+# Turn off spatial random fields:
+fit <- sdmTMB(
+  present ~ poly(log(depth)),
+  spatial = "off", #<
+  data = pcod_2011, mesh = mesh,
+  family = binomial()
+)
+fit
 
-\donttest{
+# Which, matches glm():
+fit_glm <- glm(
+  present ~ poly(log(depth)),
+  data = pcod_2011,
+  family = binomial()
+)
+summary(fit_glm)
+AIC(fit, fit_glm)
 
-# Spatially varying coefficient (year) example:
-d <- pcod_2011
-d$year_scaled <- as.numeric(scale(d$year))
-fit <- sdmTMB(density ~ depth_scaled, data = d,
-  mesh = mesh, family = tweedie(link = "log"),
-  spatial_varying = ~ 0 + year_scaled, time = "year")
-tidy(fit, effects = "ran_par")
+# Delta/hurdle binomial-Gamma model:
+fit_dg <- sdmTMB(
+  density ~ poly(log(depth), 2),
+  data = pcod_2011, mesh = mesh,
+  spatial = "off",
+  family = delta_gamma() #<
+)
+fit_dg
+
+# Delta model with different formulas and spatial structure:
+fit_dg <- sdmTMB(
+  list(density ~ depth_scaled, density ~ poly(depth_scaled, 2)), #<
+  data = pcod_2011, mesh = mesh,
+  spatial = list("off", "on"), #<
+  family = delta_gamma()
+)
+fit_dg
+
+# Delta/hurdle truncated NB2:
+pcod_2011$count <- round(pcod_2011$density)
+fit_nb2 <- sdmTMB(
+  count ~ s(depth),
+  data = pcod_2011, mesh = mesh,
+  spatial = "off",
+  family = delta_truncated_nbinom2() #<
+)
+fit_nb2
+
+# Regular NB2:
+fit_nb2 <- sdmTMB(
+  count ~ s(depth),
+  data = pcod_2011, mesh = mesh,
+  spatial = "off",
+  family = nbinom2() #<
+)
+fit_nb2
+
+# IID random intercepts by year:
+pcod_2011$fyear <- as.factor(pcod_2011$year)
+fit <- sdmTMB(
+  density ~ s(depth) + (1 | fyear), #<
+  data = pcod_2011, mesh = mesh,
+  family = tweedie(link = "log")
+)
+fit
+
+# Spatially varying coefficient of year:
+pcod_2011$year_scaled <- as.numeric(scale(pcod_2011$year))
+fit <- sdmTMB(
+  density ~ year_scaled,
+  spatial_varying = ~ 0 + year_scaled, #<
+  data = pcod_2011, mesh = mesh, family = tweedie(), time = "year"
+)
+fit
 
 # Time-varying effects of depth and depth squared:
-fit <- sdmTMB(density ~ 0 + as.factor(year),
-  time_varying = ~ 0 + depth_scaled + depth_scaled2,
+fit <- sdmTMB(
+  density ~ 0 + as.factor(year),
+  time_varying = ~ 0 + depth_scaled + depth_scaled2, #<
   data = pcod_2011, time = "year", mesh = mesh,
-  family = tweedie(link = "log"))
+  family = tweedie()
+)
 print(fit)
+# Extract values:
+est <- as.list(fit$sd_report, "Estimate")
+se <- as.list(fit$sd_report, "Std. Error")
+est$b_rw_t[, , 1]
+se$b_rw_t[, , 1]
 
-# See the b_rw_t estimates; these are the time-varying (random walk) effects.
-# These could be added to tidy.sdmTMB() eventually.
-summary(fit$sd_report)[1:19,]
-
-# Linear breakpoint model on depth:
-m_pos <- sdmTMB(log(density) ~ 0 + as.factor(year) +
-    breakpt(depth_scaled) + depth_scaled2, data = pcod_gaus,
-  time = "year", mesh = mesh_gaus)
-print(m_pos)
-}
+# Linear break-point effect of depth:
+fit <- sdmTMB(
+  density ~ breakpt(depth_scaled), #<
+  data = pcod_2011,
+  # spatial = "off",
+  mesh = mesh,
+  family = tweedie()
+)
+fit
 }
 }
 \references{
-Main reference/report introducing the package. We plan to write a paper
-to cite in the near future:
+\emph{Main reference introducing the package to cite when using sdmTMB:}
 
-Anderson, S.C., E.A. Keppel, A.M. Edwards, 2019. A reproducible data synopsis
-for over 100 species of British Columbia groundfish. DFO Can. Sci. Advis. Sec.
-Res. Doc. 2019/041. vii + 321 p.
-\url{https://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2019/2019_041-eng.html}
+Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett. 2022. sdmTMB: an R
+package for fast, flexible, and user-friendly generalized linear mixed effects
+models with spatial and spatiotemporal random fields.
+bioRxiv 2022.03.24.485545; \doi{10.1101/2022.03.24.485545}.
 
-Reference for local trends:
+\emph{Reference for local trends:}
 
 Barnett, L.A.K., E.J. Ward, S.C. Anderson. Improving estimates of species
 distribution change by incorporating local trends. Ecography. 44(3):427-439.
 \doi{10.1111/ecog.05176}.
 
-Further explanation of the model and application to calculating climate
-velocities:
+\emph{Further explanation of the model and application to calculating climate
+velocities:}
 
 English, P., E.J. Ward, C.N. Rooper, R.E. Forrest, L.A. Rogers, K.L. Hunter,
 A.M. Edwards, B.M. Connors, S.C. Anderson. 2021. Contrasting climate velocity
 impacts in warm and cool locations show that effects of marine warming are
 worse in already warmer temperate waters. In press at Fish and Fisheries.
 \doi{10.1111/faf.12613}.
+
+\emph{Discussion of and illustration of some decision points when fitting these
+models:}
+
+Commander, C.J.C., Barnett, L.A.K., Ward, E.J., Anderson, S.C., and
+Essington, T.E. 2022. The shadow model: how and why small choices in
+spatially explicit species distribution models affect predictions. PeerJ 10:
+e12783. \doi{10.7717/peerj.12783}.
+
+\emph{Application and description of the threshold/break-point models:}
+
+Essington, T.E. S.C. Anderson, L.A.K. Barnett, H.M. Berger, S.A. Siedlecki,
+E.J. Ward. Advancing statistical models to reveal the effect of dissolved
+oxygen on the spatial distribution of marine taxa using thresholds and a
+physiologically based index. In press at Ecography. \doi{10.1111/ecog.06249}.
+
+\emph{Application to fish body condition}:
+
+Lindmark, M., S.C. Anderson, M. Gogina, M. Casini. Evaluating drivers of
+spatiotemporal individual condition of a bottom-associated marine fish.
+bioRxiv 2022.04.19.488709. \doi{10.1101/2022.04.19.488709}.
 
 Code for implementing the barrier-SPDE written by Olav Nikolai Breivik and
 Hans Skaug.

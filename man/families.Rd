@@ -11,6 +11,11 @@
 \alias{student}
 \alias{tweedie}
 \alias{censored_poisson}
+\alias{delta_gamma}
+\alias{delta_lognormal}
+\alias{delta_truncated_nbinom2}
+\alias{delta_truncated_nbinom1}
+\alias{delta_poisson_link_gamma}
 \title{Additional families}
 \usage{
 Beta(link = "logit")
@@ -30,11 +35,25 @@ student(link = "identity", df = 3)
 tweedie(link = "log")
 
 censored_poisson(link = "log")
+
+delta_gamma(link1 = "logit", link2 = "log")
+
+delta_lognormal(link1 = "logit", link2 = "log")
+
+delta_truncated_nbinom2(link1 = "logit", link2 = "log")
+
+delta_truncated_nbinom1(link1 = "logit", link2 = "log")
+
+delta_poisson_link_gamma(link1 = "log", link2 = "log")
 }
 \arguments{
-\item{link}{The link.}
+\item{link}{Link.}
 
 \item{df}{Student-t degrees of freedom fixed value parameter.}
+
+\item{link1}{Link for first part of delta/hurdle model.}
+
+\item{link2}{Link for second part of delta/hurdle model.}
 }
 \value{
 A list with elements \code{family}, \code{link}, \code{linkfun}, and \code{linkinv}.
@@ -50,6 +69,9 @@ The \code{nbinom1} negative binomial parameterization lets the variance grow
 linearly with the mean (Hilbe 2011).
 
 The degrees of freedom parameter is currently not estimated and is fixed at \code{df}.
+
+\code{delta_poisson_link_gamma()} is the Poisson-link (complementary
+log-log) delta model (Thorson 2018).
 }
 \examples{
 Beta(link = "logit")
@@ -61,7 +83,17 @@ truncated_nbinom1(link = "log")
 student(link = "identity")
 tweedie(link = "log")
 censored_poisson(link = "log")
+delta_gamma()
+delta_lognormal()
+delta_truncated_nbinom2()
+delta_truncated_nbinom1()
+delta_poisson_link_gamma()
 }
 \references{
 Hilbe, J. M. (2011). Negative binomial regression. Cambridge University Press.
+
+Thorson, J. T. (2018). Three problems with the conventional delta-model for
+biomass sampling data, and a computationally efficient alternative. Canadian
+Journal of Fisheries and Aquatic Sciences, 75(9), 1369-1382.
+\doi{10.1139/cjfas-2017-0266}
 }

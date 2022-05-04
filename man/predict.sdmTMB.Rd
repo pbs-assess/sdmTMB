@@ -7,15 +7,18 @@
 \method{predict}{sdmTMB}(
   object,
   newdata = object$data,
+  type = c("link", "response"),
   se_fit = FALSE,
   return_tmb_object = FALSE,
-  area = 1,
+  area = deprecated(),
   re_form = NULL,
   re_form_iid = NULL,
   nsim = 0,
   sims = deprecated(),
-  sims_var = "est",
   tmbstan_model = NULL,
+  sims_var = "est",
+  model = c(NA, 1, 2),
+  return_tmb_report = FALSE,
   ...
 )
 }
@@ -28,6 +31,8 @@ column (if this is a spatiotemporal model) with the same name as in the
 fitted data. There should be predictor data for each year in the original
 data set.}
 
+\item{type}{Should the \code{est} column be in link (default) or response space?}
+
 \item{se_fit}{Should standard errors on predictions at the new locations
 given by \code{newdata} be calculated? Warning: the current implementation can
 be very slow for large data sets or high-resolution projections. A \emph{much}
@@ -38,10 +43,7 @@ on the simulations from the joint precision matrix.}
 list format output. Necessary for the \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}}
 functions.}
 
-\item{area}{A vector of areas for survey grid cells. Only necessary if the
-output will be passed to \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}} and not all grid
-cells are of area 1. Should be the same length as the number of rows of
-\code{newdata}. If length 1, will be repeated to match the rows of data.}
+\item{area}{\strong{Deprecated}. Please use \code{area} in \code{\link[=get_index]{get_index()}}.}
 
 \item{re_form}{\code{NULL} to specify including all spatial/spatiotemporal random
 effects in predictions. \code{~0} or \code{NA} for population-level predictions. Note
@@ -63,16 +65,28 @@ uncertainty on predictions in space with sdmTMB.}
 
 \item{sims}{\strong{Deprecated}. Please use \code{nsim} instead.}
 
+\item{tmbstan_model}{A model fit with \code{\link[tmbstan:tmbstan]{tmbstan::tmbstan()}}. See
+\code{\link[=extract_mcmc]{extract_mcmc()}} for more details and an example. If specified, the
+predict function will return a matrix of a similar form as if \code{nsim > 0}
+but representing Bayesian posterior samples from the Stan model.}
+
 \item{sims_var}{\strong{Experimental.} Which TMB reported variable from the model
 should be extracted from the joint precision matrix simulation draws?
 Defaults to the link-space predictions. Options include: \code{"omega_s"},
 \code{"zeta_s"}, \code{"epsilon_st"}, and \code{"est_rf"} (as described below).
 Other options will be passed verbatim.}
 
-\item{tmbstan_model}{A model fit with \code{\link[tmbstan:tmbstan]{tmbstan::tmbstan()}}. See
-\code{\link[=extract_mcmc]{extract_mcmc()}} for more details and an example. If specified, the
-predict function will return a matrix of a similar form as if \code{nsim > 0}
-but representing Bayesian posterior samples from the Stan model.}
+\item{model}{Type of prediction if a delta/hurdle model:
+\code{NA} returns the combined prediction from both components on
+the response scale; \code{1} or \code{2} return the first or second model
+component only on the link or response scale depending on the argument
+\code{type}.}
+
+\item{return_tmb_report}{Logical: return the output from the TMB
+report? For regular prediction this is all the reported variables
+at the MLE parameter values. For \code{nsim > 0} or when \code{tmbstan_model}
+is supplied, this is a list where each element is a sample and the
+contents of each element is the output of the report for that sample.}
 
 \item{...}{Not implemented.}
 }

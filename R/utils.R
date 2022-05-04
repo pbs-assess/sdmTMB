@@ -1,7 +1,3 @@
-set_par_value <- function(opt, par) {
-  as.numeric(opt$par[par == names(opt$par)])
-}
-
 #' Optimization control options
 #'
 #' [sdmTMB()] and [stats::nlminb()] control options.
@@ -17,10 +13,8 @@ set_par_value <- function(opt, par) {
 #'   [stats::optimHess()] after running [stats::nlminb()]. Sometimes aids
 #'   convergence.
 #' @param mgcv Parse the formula with [mgcv::gam()]?
-#' @param map_rf Map all the random fields to 0 to turn the model into a
-#'   classical GLM or GLMM without spatial or spatiotemporal components?
-#'   Note this is not accounted for in `print()` or `tidy.sdmTMB()`;
-#'   some parameters will still appear but their values can be ignored.
+#' @param map_rf **Deprecated** use `spatial = 'off', spatiotemporal = 'off'` in
+#'   [sdmTMB()].
 #' @param map A named list with factor `NA`s specifying parameter values that
 #'   should be fixed at a constant value. See the documentation in
 #'   [TMB::MakeADFun()]. This should usually be used with `start` to specify the
@@ -73,15 +67,15 @@ set_par_value <- function(opt, par) {
 #' # Usually used within sdmTMB(). For example:
 #' # sdmTMB(..., control = sdmTMBcontrol(profile = TRUE))
 sdmTMBcontrol <- function(
-  eval.max = 2e3,
-  iter.max = 1e3,
+  eval.max = 2e3L,
+  iter.max = 1e3L,
   normalize = FALSE,
-  nlminb_loops = 1,
-  newton_loops = 0,
+  nlminb_loops = 1L,
+  newton_loops = 0L,
   mgcv = deprecated(),
   quadratic_roots = FALSE,
   start = NULL,
-  map_rf = FALSE,
+  map_rf = deprecated(),
   map = NULL,
   lower = NULL,
   upper = NULL,
@@ -96,28 +90,36 @@ sdmTMBcontrol <- function(
       details = "`mgcv` argument no longer does anything.")
   }
 
+  if (is_present(map_rf)) {
+    deprecate_stop("0.0.22", "sdmTMBcontrol(map_rf)", "sdmTMB(spatial = 'off', spatiotemporal = 'off')")
+  }
+
   if (!is.null(parallel)) {
     assert_that(!is.na(parallel), parallel > 0)
     parallel <- as.integer(parallel)
   }
 
-  list(
-    eval.max = eval.max,
-    iter.max = iter.max,
-    normalize = normalize,
-    nlminb_loops = nlminb_loops,
-    newton_loops = newton_loops,
-    profile = profile,
-    quadratic_roots = quadratic_roots,
-    start = start,
-    map_rf = map_rf,
-    map = map,
-    lower = lower,
-    upper = upper,
-    multiphase = multiphase,
-    parallel = parallel,
-    get_joint_precision = get_joint_precision,
-    ...)
+  out <- named_list(
+    eval.max,
+    iter.max,
+    normalize,
+    nlminb_loops,
+    newton_loops,
+    profile,
+    quadratic_roots,
+    start,
+    map,
+    lower,
+    upper,
+    multiphase,
+    parallel,
+    get_joint_precision
+  )
+  c(out, list(...))
+}
+
+set_par_value <- function(opt, par) {
+  as.numeric(opt$par[par == names(opt$par)])
 }
 
 get_convergence_diagnostics <- function(sd_report) {
@@ -139,7 +141,8 @@ get_convergence_diagnostics <- function(sd_report) {
           "Maximum final gradient: ", max(final_grads), ".", call. = FALSE)
     }
   }
-  invisible(list(final_grads = final_grads, bad_eig = bad_eig))
+  pdHess <- isTRUE(sd_report$pdHess)
+  invisible(named_list(final_grads, bad_eig, pdHess))
 }
 
 make_year_i <- function(x) {
@@ -148,18 +151,20 @@ make_year_i <- function(x) {
 }
 
 check_offset <- function(formula) {
-  any(grepl("^offset$",
+  .check <- any(grepl("^offset$",
     gsub(" ", "", unlist(strsplit(as.character(formula), "\\+")))))
+  if (.check)
+    cli_abort("Contains offset in formula. This is deprecated. Please use the `offset` argument.")
 }
 
 check_and_parse_thresh_params <- function(formula, data) {
   terms <- stats::terms(formula)
   terms_labels <- attr(terms, "term.labels")
   if (any(grepl("linear_thresh", terms_labels)) && any(grepl("logistic_thresh", terms_labels))) {
-    stop("Please include only a linear (`breakpt`) *or* a logistic threshold.", call. = FALSE)
+    cli_abort("Please include only a linear (`breakpt`) *or* a logistic threshold.")
   }
   if (sum(grepl("linear_thresh", terms_labels)) > 1 || sum(grepl("logistic_thresh", terms_labels)) > 1) {
-    stop("Please include only a *single* threshold variable.", call. = FALSE)
+    cli_abort("Please include only a *single* threshold variable.")
   }
   threshold_parameter <- NULL
   if (any(grepl("breakpt", terms_labels))) {
@@ -176,10 +181,10 @@ check_and_parse_thresh_params <- function(formula, data) {
   }
   if (!is.null(threshold_parameter)) {
     if (length(threshold_parameter) > 1) {
-      stop("`threshold_parameter` must be a single variable name.", call. = FALSE)
+      cli_abort("`threshold_parameter` must be a single variable name.")
     }
     if (!threshold_parameter %in% names(data)) {
-      stop("`threshold_parameter` is not a column in the `data` data frame.", call. = FALSE)
+      cli_abort("`threshold_parameter` is not a column in the `data` data frame.")
     }
   }
 
@@ -239,7 +244,9 @@ check_valid_factor_levels <- function(x, .name = "") {
 #'
 #' @export
 inla_installed <- function() {
-  requireNamespace("INLA", quietly = TRUE)
+  r1 <- requireNamespace("INLA", quietly = TRUE)
+  r2 <- requireNamespace("rgdal", quietly = TRUE)
+  r1 && r2
 }
 
 remove_s_and_t2 <- function(formula) {
@@ -256,22 +263,16 @@ remove_s_and_t2 <- function(formula) {
 
 has_no_random_effects <- function(obj) {
   "omega_s" %in% names(obj$tmb_map) &&
-    # "omega_s_trend" %in% names(obj$tmb_map) &&
     "epsilon_st" %in% names(obj$tmb_map) &&
     "b_rw_t" %in% names(obj$tmb_map) &&
     !"RE" %in% obj$tmb_random
 }
 
-# basic, from glmmTMB... keeping until figure out if need commented stuff...
+# from glmmTMB:
 get_pars <- function(object, unlist = TRUE) {
   ee <- object$tmb_obj$env
   x <- ee$last.par.best
-  # work around built-in default to parList, which
-  #  is bad if no random component
   if (length(ee$random)>0) x <- x[-ee$random]
   p <- ee$parList(x = x)
-  # if (!unlist) return(p)
-  # p <- unlist(p[names(p)!="b"])  ## drop primary RE
-  # names(p) <- gsub("[0-9]+$","",names(p)) ## remove disambiguators
   p
 }

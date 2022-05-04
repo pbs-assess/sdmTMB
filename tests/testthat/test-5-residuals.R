@@ -45,8 +45,9 @@ test_that("randomized quantile residuals work,", {
     r <- residuals(fit)
     qqnorm(r)
     qqline(r)
-    # p <- stats::shapiro.test(r)
-    # expect_gt(p$p.value, 0.05)
+    p <- stats::shapiro.test(r)
+    expect_gt(p$p.value, 0.01)
+    invisible(r)
   }
   check_resids_dharma <- function(fit) {
     set.seed(1)
@@ -59,6 +60,7 @@ test_that("randomized quantile residuals work,", {
     family = gaussian(),
     data = d, mesh = mesh
   )
+  check_resids(fit)
   check_resids(fit)
   check_resids_dharma(fit)
 
@@ -176,3 +178,49 @@ test_that("randomized quantile residuals work,", {
   expect_error(residuals(fit), regexp = "truncated_nbinom1")
   check_resids_dharma(fit)
 })
+
+test_that("residuals() works", {
+  skip_on_cran()
+  skip_if_not_installed("INLA")
+  pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
+  fit <- sdmTMB(density ~ 1, spatial = "off",
+    data = pcod, mesh = pcod_spde,
+    family = tweedie()
+  )
+  r <- residuals(fit)
+  expect_true(length(r) == nrow(pcod))
+  expect_true(sum(is.na(r)) == 0L)
+
+  fit <- sdmTMB(present ~ 1, spatial = "off",
+    data = pcod, mesh = pcod_spde,
+    family = binomial()
+  )
+  r <- residuals(fit)
+  expect_true(length(r) == nrow(pcod))
+  expect_true(sum(is.na(r)) == 0L)
+
+  fit <- sdmTMB(density ~ 1,
+    data = pcod, mesh = pcod_spde,
+    family = delta_gamma(), spatial = "on",
+    control = sdmTMBcontrol(newton_loops = 1)
+  )
+  r <- residuals(fit)
+  r <- residuals(fit, model = 1)
+  qqnorm(r)
+  set.seed(1)
+  r <- residuals(fit, model = 2)
+  qqnorm(r[!is.na(r)])
+
+  # matches the Gamma positive-only model:
+  pos <- subset(pcod, density > 0)
+  mesh <- make_mesh(pos, c("X", "Y"), mesh = pcod_spde$mesh)
+  fit2 <- sdmTMB(density ~ 1,
+    data = pos, mesh = mesh,
+    family = Gamma(link = "log"), spatial = "on",
+    control = sdmTMBcontrol(newton_loops = 1)
+  )
+  set.seed(1)
+  rpos <- residuals(fit2)
+  expect_equal(as.double(r[!is.na(r)]), rpos)
+
+  })

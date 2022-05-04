@@ -1,12 +1,14 @@
 #' Plot anisotropy
 #'
 #' @param object An object from [sdmTMB()].
+#' @param model Which model if a delta model.
 #'
 #' @export
 #' @rdname plot_anisotropy
 #'
 #' @return A plot of eigenvectors illustrating the estimated anisotropy. A list
 #'   of the plotted data is invisibly returned.
+#' @references Code adapted from VAST R package
 #' @examples
 #' \donttest{
 #' if (inla_installed()) {
@@ -21,10 +23,11 @@
 #'   plot_anisotropy(m)
 #' }
 #' }
-plot_anisotropy <- function(object) {
-  stopifnot(identical(class(object), "sdmTMB"))
-  report <- object$tmb_obj$report()
-  eig <- eigen(report$H)
+plot_anisotropy <- function(object, model = 1) {
+  stopifnot(inherits(object, "sdmTMB"))
+  report <- object$tmb_obj$report(object$tmb_obj$env$last.par.best)
+  if (model == 1) eig <- eigen(report$H)
+  if (model == 2) eig <- eigen(report$H2)
   dat <- data.frame(
     x0 = c(0, 0),
     y0 = c(0, 0),
@@ -33,7 +36,8 @@ plot_anisotropy <- function(object) {
   )
   plot(0,
     xlim = range(c(dat$x0, dat$x1)),
-    ylim = range(c(dat$y0, dat$y1)), type = "n", asp = 1, xlab = "", ylab = ""
+    ylim = range(c(dat$y0, dat$y1)),
+    type = "n", asp = 1, xlab = "", ylab = ""
   )
   graphics::arrows(dat$x0, dat$y0, dat$x1, dat$y1)
   invisible(list(eig = eig, dat = dat, H = report$H))
@@ -70,9 +74,17 @@ plot_anisotropy <- function(object) {
 #' }
 plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
                         ggplot = FALSE, rug = TRUE, return_data = FALSE) {
+  msg <- c(
+    "This function will likely be deprecated.",
+    "Consider using `visreg::visreg()` or `visreg_delta()`.",
+    "See ?visreg_delta() for examples."
+  )
+  cli_inform(msg)
   se <- TRUE
+  if (isTRUE(object$delta))
+    cli_abort("This function doesn't work with delta models yet")
 
-  assert_that(class(object) == "sdmTMB")
+  assert_that(inherits(object, "sdmTMB"))
   assert_that(is.logical(ggplot))
   assert_that(is.logical(return_data))
   assert_that(is.logical(se))
@@ -87,10 +99,11 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
 
   if (ggplot) {
     if (!requireNamespace("ggplot2", quietly = TRUE)) {
-      stop("ggplot2 not installed", call. = FALSE)
+      cli_abort("ggplot2 not installed")
     }
   }
-  sm <- parse_smoothers(object$formula, object$data)
+
+  sm <- parse_smoothers(object$formula[[1]], object$data)
   sm_names <- unlist(lapply(sm$Zs, function(x) attr(x, "s.label")))
   sm_names <- gsub("\\)$", "", gsub("s\\(", "", sm_names))
 
@@ -100,7 +113,7 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
 
   all_names <- c(sm_names, fe_names)
   if (select > length(sm_names)) {
-    stop("`select` is greater than the number of smooths", call. = FALSE)
+    cli_abort("`select` is greater than the number of smooths")
   }
   sel_name <- sm_names[select]
   non_select_names <- all_names[!all_names %in% sel_name]
@@ -110,7 +123,7 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
   names(nd)[1] <- sel_name
 
   dat <- object$data
-  .t <- terms(object$formula)
+  .t <- terms(object$formula[[1]])
   .t <- labels(.t)
   checks <- c("^as\\.factor\\(", "^factor\\(")
   for (ch in checks) {

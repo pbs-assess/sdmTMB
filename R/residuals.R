@@ -100,6 +100,7 @@ qres_beta <- function(object, y, mu) {
 #' See the residual-checking vignette: `browseVignettes("sdmTMB")` or [on the
 #' documentation
 #' site](https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html).
+#' See notes about types of residuals in 'Details' section below.
 #'
 #' @param object An [sdmTMB()] model
 #' @param type Type of residual. See details.
@@ -108,6 +109,7 @@ qres_beta <- function(object, y, mu) {
 #' @param mcmc_iter Iterations for MCMC residuals. Will take the last one.
 #' @param mcmc_warmup Warmup for MCMC residuals.
 #' @param print_stan_model Print the Stan model from MCMC residuals?
+#' @param model Which delta/hurdle model component?
 #' @param ... Passed to residual function. Only `n` works for binomial.
 #' @export
 #' @importFrom stats predict
@@ -117,22 +119,30 @@ qres_beta <- function(object, y, mu) {
 #'
 #' Types of residuals currently supported:
 #'
-#' `"randomized-quantile"` refers to randomized quantile residuals
-#' (Dunn & Smyth 1996), which are also known as probability integral transform
-#' (PIT) residuals (Smith 1985). Under model assumptions, these should be
-#' distributed as standard normal with the following caveat: the Laplace approximation used
-#' for the latent/random effects can cause these residuals to deviate from
-#' the standard normal assumption even if the model is consistent with the data.
+#' **`"randomized-quantile"`** refers to randomized quantile residuals (Dunn &
+#' Smyth 1996), which are also known as probability integral transform (PIT)
+#' residuals (Smith 1985). Under model assumptions, these should be distributed
+#' as standard normal with the following caveat: the Laplace approximation used
+#' for the latent/random effects can cause these residuals to deviate from the
+#' standard normal assumption even if the model is consistent with the data
+#' (Thygesen et al. 2017). Therefore, **these residuals are fast to calculate
+#' but can be unreliable.**
 #'
-#' `"mle-mcmc-rq"` refers to randomized quantile residuals where the fixed
+#' **`"mle-mcmc-rq"`** refers to randomized quantile residuals where the fixed
 #' effects are fixed at their MLE (maximum likelihoood estimate) values and the
 #' random effects are sampled with MCMC via tmbstan/Stan. As proposed in
 #' Thygesen et al. (2017) and used in Rufener et al. (2021). Under model
-#' assumptions, these should be distributed as standard normal. These residuals
-#' are theoretically preferred over the regular Laplace approximated
-#' randomized-quantile residuals, but will be considerably slower to calculate.
+#' assumptions, these should be distributed as standard normal. **These
+#' residuals are theoretically preferred over the regular Laplace approximated
+#' randomized-quantile residuals, but will be considerably slower to
+#' calculate.**
 #'
-#' `"response"` refers to response residuals: observed minus predicted.
+#' Ideally MCMC is run until convergence and then the last iteration can be
+#' used for residuals. MCMC samples are defined by `mcmc_iter - mcmc_warmup`.
+#' The Stan model can be printed with `print_stan_model = TRUE` to check.
+#' The defaults may not be sufficient for many models.
+#'
+#' **`"response"`** refers to response residuals: observed minus predicted.
 #'
 #' @references
 #' Dunn, P.K. & Smyth, G.K. (1996). Randomized Quantile Residuals. Journal of
@@ -175,30 +185,45 @@ qres_beta <- function(object, y, mu) {
 #'   qqline(r1)
 #'
 #'   # MCMC-based with fixed effects at MLEs; best but slowest:
-#'   r2 <- residuals(fit, type = "mle-mcmc-rq")
+#'   set.seed(2938)
+#'   r2 <- residuals(fit, type = "mle-mcmc-rq", mcmc_iter = 101, mcmc_warmup = 100)
 #'   qqnorm(r2)
 #'   qqline(r2)
 #' }
 
 residuals.sdmTMB <- function(object,
-  type = c("randomized-quantile", "mle-mcmc-rq", "response"),
-  mu_type = c("mle", "sim"),
-  mcmc_iter = 501, mcmc_warmup = 499,
-  print_stan_model = FALSE,
-  ...) {
-  if (isTRUE(object$family$delta)) {
-    stop(
-      "`residuals.sdmTMB()` is not setup to work with delta models yet. ",
-      "Try `dharma_residuals()`.", call. = FALSE
-    )
+                             type = c("randomized-quantile", "mle-mcmc-rq", "response"),
+                             mu_type = c("mle", "sim"),
+                             mcmc_iter = 500, mcmc_warmup = 250,
+                             print_stan_model = FALSE,
+                             model = c(1, 2),
+                             ...) {
+
+  model <- as.integer(model[[1]])
+  if ("visreg_model" %in% names(object)) {
+    model <- object$visreg_model
   }
-  # inform(c("`residuals.sdmTMB()` now returns response residuals by default.",
-  #   "Use `type = 'randomized-quantile'` for randomized quantile residuals."))
-  # message("Consider using `dharma_residuals()` instead.")
+
   type <- match.arg(type)
+  msg <- c(
+    "We recommend using the slower `type = 'mle-mcmc-rq'` for final inference.",
+    "See the ?residuals.sdmTMB 'Details' section."
+  )
+  if (type == "randomized-quantile") cli_inform(msg)
+
   mu_type <- match.arg(mu_type)
 
-  res_func <- switch(object$family$family,
+  fam <- object$family$family
+  nd <- NULL
+  est_column <- "est"
+  linkinv <- object$family$linkinv
+  if (isTRUE(object$family$delta)) {
+    fam <- fam[[model]]
+    linkinv <-  object$family[[model]]$linkinv
+    nd <- object$data
+    est_column <- if (model == 1L) "est1" else "est2"
+  }
+  res_func <- switch(fam,
     gaussian = qres_gaussian,
     binomial = qres_binomial,
     tweedie  = qres_tweedie,
@@ -209,35 +234,40 @@ residuals.sdmTMB <- function(object,
     poisson  = qres_pois,
     student  = qres_student,
     lognormal  = qres_lognormal,
-    stop(paste(object$family$family, "not yet supported."), call. = FALSE)
+    cli_abort(paste(fam, "not yet supported."))
   )
+
   if (mu_type == "mle") {
-    mu <- object$family$linkinv(predict(object, newdata = NULL)$est)
+    mu <- linkinv(predict(object, newdata = nd)[[est_column]])
   } else if (mu_type == "sim") {
-    mu <- object$family$linkinv(predict(object, nsim = 1L)[, 1L, drop = TRUE])
+    mu <- linkinv(predict(object, nsim = 1L, model = model)[, 1L, drop = TRUE])
   } else {
-    abort("`mu_type` not implemented")
+    cli_abort("`mu_type` not implemented")
   }
   y <- object$response
-  # y <- y[, 1, drop = TRUE] # in case delta
+  y <- y[, model, drop = TRUE] # in case delta
+  # e.g., visreg, prediction has already removed NA mu:
+  if (sum(is.na(y)) > 0 && length(mu) < length(y)) {
+    y <- y[!is.na(y)]
+  }
 
   if (type == "response") {
-    r <- y - mu
+      r <- y - mu
   } else if (type == "randomized-quantile") {
     r <- res_func(object, y, mu, ...)
   } else if (type == "mle-mcmc-rq") {
 
     if (!requireNamespace("rstan", quietly = TRUE))
-      abort("rstan must be installed.")
+      cli_abort("rstan must be installed.")
     if (!requireNamespace("tmbstan", quietly = TRUE))
-      abort("tmbstan must be installed.")
+      cli_abort("tmbstan must be installed.")
 
     assert_that(is.numeric(mcmc_iter))
     assert_that(is.numeric(mcmc_warmup))
     assert_that(mcmc_warmup < mcmc_iter)
     # from https://github.com/mcruf/LGNB/blob/8aba1ee2df045c2eb45e124d5a753e8f1c6e865a/R/Validation_and_Residuals.R
     # get names of random effects in the model
-    if (mu_type == "sim") message("`mu_type == 'sim'` ignored with MCMC residuals.")
+    if (mu_type == "sim") cli_inform("`mu_type == 'sim'` ignored with MCMC residuals.")
     obj <- object$tmb_obj
     random <- unique(names(obj$env$par[obj$env$random]))
     # get (logical) non random effects indices:
@@ -253,12 +283,12 @@ residuals.sdmTMB <- function(object,
     temp <- object
     temp$tmb_obj <- obj
     temp$tmb_map <- map
-    pred <- predict(temp, tmbstan_model = samp)
-    pred <- as.numeric(pred[, ncol(pred), drop = TRUE])
-    mu <- object$family$linkinv(pred)
+    pred <- predict(temp, tmbstan_model = samp, model = model, nsim = 1L) # only use last
+    # pred <- as.numeric(pred[, ncol(pred), drop = TRUE])
+    mu <- linkinv(pred)
     r <- res_func(temp, y, mu, ...)
   } else {
-    abort("`type` not implemented")
+    cli_abort("`type` not implemented")
   }
   r
 }

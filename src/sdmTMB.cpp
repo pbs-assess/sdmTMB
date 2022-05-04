@@ -81,21 +81,21 @@ Type objective_function<Type>::operator()()
   using namespace density;
   using namespace Eigen;
 
-  #ifdef _OPENMP
-    this -> max_parallel_regions = omp_get_max_threads();
-    // std::cout << "OpenMP max_parallel_regions=" << this -> max_parallel_regions << "\n";
-  #else
-    this -> max_parallel_regions = 1;
-    // std::cout << "no OpenMP (max_parallel_regions=1)\n";
-  #endif
+#ifdef _OPENMP
+  this -> max_parallel_regions = omp_get_max_threads();
+  // std::cout << "OpenMP max_parallel_regions=" << this -> max_parallel_regions << "\n";
+#else
+  this -> max_parallel_regions = 1;
+  // std::cout << "no OpenMP (max_parallel_regions=1)\n";
+#endif
 
   // Set max number of OpenMP threads to help us optimize faster (as in glmmTMB)
   // max_parallel_regions = omp_get_max_threads();
 
   // Vectors of real data
-  DATA_VECTOR(y_i);      // response
-  DATA_MATRIX(X_ij);     // model matrix
-  DATA_VECTOR(z_i);      // numeric vector for spatial covariate effect
+  DATA_ARRAY(y_i);      // response
+  DATA_STRUCT(X_ij, sdmTMB::LOM_t); //DATA_MATRIX(X_ij);     // array of model matrices
+  DATA_MATRIX(z_i);      // model matrix for spatial covariate effect
   DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
   DATA_STRUCT(Zs, sdmTMB::LOM_t); // [L]ist [O]f (basis function matrices) [Matrices]
@@ -103,9 +103,10 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(Xs); // smoother linear effect matrix
   DATA_MATRIX(proj_Xs); // smoother linear effect matrix
 
-  DATA_VECTOR_INDICATOR(keep, y_i); // https://rdrr.io/cran/TMB/man/oneStepPredict.html
+  // DATA_VECTOR_INDICATOR(keep, y_i); // https://rdrr.io/cran/TMB/man/oneStepPredict.html
   DATA_VECTOR(weights_i); // optional weights
-  // DATA_VECTOR(offset_i); // optional offset
+  DATA_VECTOR(offset_i); // optional offset
+  // DATA_VECTOR(proj_offset_i); // optional offset
 
   DATA_INTEGER(n_t);  // number of years
 
@@ -123,7 +124,7 @@ Type objective_function<Type>::operator()()
 
   DATA_INTEGER(normalize_in_r);
   DATA_INTEGER(flag);
-  DATA_INTEGER(share_range);
+  DATA_IVECTOR(share_range);
 
   // Prediction?
   DATA_INTEGER(do_predict);
@@ -134,7 +135,7 @@ Type objective_function<Type>::operator()()
   // Calculate total summed by year (e.g. biomass)?
   DATA_INTEGER(calc_index_totals);
   DATA_INTEGER(calc_cog);
-  DATA_INTEGER(calc_quadratic_range);
+  // DATA_INTEGER(calc_quadratic_range); // DELTA TODO
   DATA_VECTOR(area_i); // area per prediction grid cell for index standardization
 
   DATA_VECTOR(priors_b_mean);
@@ -142,25 +143,25 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(priors_b_n);
   DATA_IVECTOR(priors_b_index);
   DATA_VECTOR(priors); // all other priors as a vector
-  DATA_INTEGER(ar1_fields);
-  DATA_INTEGER(rw_fields);
+  DATA_IVECTOR(ar1_fields);
+  DATA_IVECTOR(rw_fields);
   DATA_INTEGER(include_spatial);
   DATA_INTEGER(random_walk);
-  DATA_IVECTOR(exclude_RE);
+  DATA_IVECTOR(exclude_RE); // DELTA TODO currently shared...
 
   DATA_VECTOR(proj_lon);
   DATA_VECTOR(proj_lat);
 
   // Distribution
-  DATA_INTEGER(family);
-  DATA_INTEGER(link);
+  DATA_IVECTOR(family);
+  DATA_IVECTOR(link);
   DATA_SCALAR(df);  // Student-t DF
   DATA_VECTOR(size); // binomial, via glmmTMB
 
   // SPDE objects from R-INLA
   DATA_STRUCT(spde_aniso, spde_aniso_t);
   DATA_STRUCT(spde, spde_t);
-  PARAMETER_VECTOR(ln_H_input);
+  PARAMETER_ARRAY(ln_H_input);
   DATA_INTEGER(anisotropy);
 
   // Barrier
@@ -170,22 +171,22 @@ Type objective_function<Type>::operator()()
 
   // Projections
   DATA_SPARSE_MATRIX(proj_mesh);
-  DATA_MATRIX(proj_X_ij);
+  DATA_STRUCT(proj_X_ij, sdmTMB::LOM_t);
   DATA_MATRIX(proj_X_rw_ik);
   DATA_FACTOR(proj_year);
-  DATA_VECTOR(proj_z_i);
+  DATA_MATRIX(proj_z_i);
   DATA_IVECTOR(proj_spatial_index);
 
-  DATA_INTEGER(spatial_only);
+  DATA_IVECTOR(spatial_only);
   DATA_INTEGER(spatial_covariate);
 
   DATA_VECTOR(X_threshold);
   DATA_VECTOR(proj_X_threshold);
   DATA_INTEGER(threshold_func);
   // optional model for nonstationary st variance
-  DATA_INTEGER(est_epsilon_model);
-  DATA_INTEGER(est_epsilon_slope);
-  DATA_INTEGER(est_epsilon_re);
+  // DATA_INTEGER(est_epsilon_model); // DELTA TODO
+  // DATA_INTEGER(est_epsilon_slope); // DELTA TODO
+  // DATA_INTEGER(est_epsilon_re); // DELTA TODO
   DATA_VECTOR(epsilon_predictor);
 
   // optional stuff for penalized regression splines
@@ -196,43 +197,48 @@ Type objective_function<Type>::operator()()
 
   DATA_VECTOR(lwr); // lower bound for censpois on counts
   DATA_VECTOR(upr); // upper bound for censpois on counts
+  DATA_INTEGER(poisson_link_delta); // logical
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
   // Fixed effects
   PARAMETER_VECTOR(b_j);  // fixed effect parameters
-  PARAMETER_VECTOR(bs); // smoother linear effects
-  PARAMETER(ln_tau_O);    // spatial process
-  PARAMETER(ln_tau_Z);    // optional spatially varying covariate process
-  PARAMETER(ln_tau_E);    // spatio-temporal process
-  PARAMETER_VECTOR(ln_kappa);    // Matern parameter
+  PARAMETER_VECTOR(b_j2);  // fixed effect parameters delta2 part
+  PARAMETER_ARRAY(bs); // smoother linear effects
+  PARAMETER_VECTOR(ln_tau_O);    // spatial process
+  PARAMETER_ARRAY(ln_tau_Z);    // optional spatially varying covariate process
+  PARAMETER_VECTOR(ln_tau_E);    // spatio-temporal process
+  PARAMETER_ARRAY(ln_kappa);    // Matern parameter
 
   PARAMETER(thetaf);           // tweedie only
-  PARAMETER(ln_phi);           // sigma / dispersion / etc.
-  PARAMETER_VECTOR(ln_tau_V);  // random walk sigma
-  PARAMETER(ar1_phi);          // AR1 fields correlation
-  PARAMETER_VECTOR(ln_tau_G);  // random intercept sigmas
-  PARAMETER_VECTOR(RE);        // random intercept deviations
+  PARAMETER_VECTOR(ln_phi);           // sigma / dispersion / etc.
+  PARAMETER_ARRAY(ln_tau_V);  // random walk sigma
+  PARAMETER_VECTOR(ar1_phi);          // AR1 fields correlation
+  PARAMETER_ARRAY(ln_tau_G);  // random intercept sigmas
+  PARAMETER_ARRAY(RE);        // random intercept deviations
   // Random effects
   PARAMETER_ARRAY(b_rw_t);  // random walk effects
-  PARAMETER_VECTOR(omega_s);    // spatial effects; n_s length
-  PARAMETER_VECTOR(zeta_s);    // spatial effects on covariate; n_s length
-  PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t matrix
-  PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3)
-  PARAMETER(b_epsilon); // slope coefficient for log-linear model on epsilon
-  PARAMETER(ln_epsilon_re_sigma);
-  PARAMETER_VECTOR(epsilon_re);
-  PARAMETER_VECTOR(b_smooth);  // P-spline smooth parameters
-  PARAMETER_VECTOR(ln_smooth_sigma);  // variances of spline REs if included
+  PARAMETER_ARRAY(omega_s);    // spatial effects; n_s length
+  PARAMETER_ARRAY(zeta_s);    // spatial effects on covariate; n_s length, n_z cols, n_m
+  PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t by n_m array
+  PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3) // DELTA TODO
+  // PARAMETER(b_epsilon); // slope coefficient for log-linear model on epsilon DELTA TODO
+  // PARAMETER(ln_epsilon_re_sigma); // DELTA TODO
+  // PARAMETER_VECTOR(epsilon_re); // DELTA TODO
+  PARAMETER_ARRAY(b_smooth);  // P-spline smooth parameters
+  PARAMETER_ARRAY(ln_smooth_sigma);  // variances of spline REs if included
 
   // Joint negative log-likelihood
-  Type jnll = 0;
+  Type jnll = 0.;
 
   // ------------------ End of parameters --------------------------------------
 
-  int n_i = y_i.size();   // number of observations
+  // DELTA DONE
+  int n_i = y_i.rows();   // number of observations
+  int n_m = y_i.cols();   // number of models (delta)
   int n_RE = RE_indexes.cols();  // number of random effect intercepts
 
+  // DELTA TODO
   // ------------------ Derived variables -------------------------------------------------
   Type s_slope, s_cut, s50, s95, s_max;
   // these are for linear model
@@ -244,169 +250,202 @@ Type objective_function<Type>::operator()()
     s_max = b_threshold(2);
   }
 
-  Type rho = sdmTMB::minus_one_to_one(ar1_phi);
-  Type phi = exp(ln_phi);
+  // DELTA DONE
+  vector<Type> rho(n_m);
+  for (int m = 0; m < n_m; m++) rho(m) = sdmTMB::minus_one_to_one(ar1_phi(m));
+  vector<Type> phi = exp(ln_phi);
 
   // ------------------ Geospatial ---------------------------------------------
 
+  // DELTA DONE
   // Matern:
-  vector<Type> range(2);
-  range(0) = sqrt(Type(8.)) / exp(ln_kappa(0));
-  range(1) = sqrt(Type(8.)) / exp(ln_kappa(1));
+  array<Type> range(2,n_m);
+  for (int m = 0; m < n_m; m++) {
+    for (int r = 0; r < 2; r++) {
+      range(r,m) = sqrt(Type(8.)) / exp(ln_kappa(r,m));
+    }
+  }
 
+  // DELTA DONE
+  vector<Type> sigma_O(n_m);
+  int n_z = ln_tau_Z.rows();
+  array<Type> sigma_Z(n_z, n_m);
   if (include_spatial) {
-    Type sigma_O = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_O +
-      Type(2.0) * ln_kappa(0)));
-    Type sigma_Z = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_Z +
-      Type(2.0) * ln_kappa(0)));
-    Type log_sigma_O = log(sigma_O);
+    for (int m = 0; m < n_m; m++) {
+      sigma_O(m) = sdmTMB::calc_rf_sigma(ln_tau_O(m), ln_kappa(0,m));
+      for (int z = 0; z < n_z; z++) {
+        sigma_Z(z,m) = sdmTMB::calc_rf_sigma(ln_tau_Z(z,m), ln_kappa(0,m));
+      }
+    }
+    vector<Type> log_sigma_O = log(sigma_O);
     ADREPORT(log_sigma_O);
     REPORT(sigma_O);
-    Type log_sigma_Z = log(sigma_Z);
+    array<Type> log_sigma_Z(n_z,n_m); // for SE
+    for (int z = 0; z < n_z; z++)
+      for (int m = 0; m < n_m; m++)
+        log_sigma_Z(z,m) = log(sigma_Z(z,m));
     ADREPORT(log_sigma_Z);
     REPORT(sigma_Z);
   }
 
+  // TODO can we not always run this for speed?
+  vector<Type> sigma_E(n_m);
+  for (int m = 0; m < n_m; m++) {
+    sigma_E(m) = sdmTMB::calc_rf_sigma(ln_tau_E(m), ln_kappa(1,m));
+  }
+
   // optional non-stationary model on epsilon
-  vector<Type> sigma_E(n_t);
-  vector<Type> ln_tau_E_vec(n_t);
+  //  vector<Type> sigma_E(n_t);
+  //  vector<Type> ln_tau_E_vec(n_t);
   //Type b_epsilon;
-  if (!est_epsilon_model) { // constant model
-    for (int i = 0; i < n_t; i++) {
-      sigma_E(i) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa(1)));
-      ln_tau_E_vec(i) = ln_tau_E;
-    }
-  }
-  if (est_epsilon_model) { // loglinear model
-    // epsilon_intcpt is the intercept parameter, derived from ln_tau_E.
-    // For models with time as covariate, this is interpreted as sigma when covariate = 0.
-    Type epsilon_intcpt = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa(1)));
-    Type log_epsilon_intcpt = log(epsilon_intcpt);
-    Type log_epsilon_temp = 0.0;
-    Type epsilon_cnst = - log(Type(4.0) * M_PI) / Type(2.0) - ln_kappa(1);
-    if(est_epsilon_re) {
-      //jnll -= dnorm(exp(ln_epsilon_re_sigma), Type(0.2), Type(1), true);
-      for(int i = 0; i < n_t; i++) {
-        jnll -= dnorm(epsilon_re(i), Type(0), exp(ln_epsilon_re_sigma), true);
-      }
-    }
+  //  if (!est_epsilon_model) { // constant model
+  //    for (int i = 0; i < n_t; i++) {
+  //      sigma_E(i) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa(1)));
+  //      ln_tau_E_vec(i) = ln_tau_E;
+  //    }
+  //  }
+  //  if (est_epsilon_model) { // loglinear model
+  //    // epsilon_intcpt is the intercept parameter, derived from ln_tau_E.
+  //    // For models with time as covariate, this is interpreted as sigma when covariate = 0.
+  //    Type epsilon_intcpt = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa(1)));
+  //    Type log_epsilon_intcpt = log(epsilon_intcpt);
+  //    Type log_epsilon_temp = 0.0;
+  //    Type epsilon_cnst = - log(Type(4.0) * M_PI) / Type(2.0) - ln_kappa(1);
+  //    if(est_epsilon_re) {
+  //      //jnll -= dnorm(exp(ln_epsilon_re_sigma), Type(0.2), Type(1), true);
+  //      for(int i = 0; i < n_t; i++) {
+  //        jnll -= dnorm(epsilon_re(i), Type(0), exp(ln_epsilon_re_sigma), true);
+  //      }
+  //    }
+  //
+  //    for(int i = 0; i < n_t; i++) {
+  //      log_epsilon_temp = log_epsilon_intcpt;
+  //      if(est_epsilon_slope) log_epsilon_temp += b_epsilon * epsilon_predictor(i);
+  //      if(est_epsilon_re) log_epsilon_temp += epsilon_re(i);
+  //      sigma_E(i) = exp(log_epsilon_temp); // log-linear model
+  //      ln_tau_E_vec(i) = -log_epsilon_temp + epsilon_cnst;
+  //    }
+  //  }
 
-    for(int i = 0; i < n_t; i++) {
-      log_epsilon_temp = log_epsilon_intcpt;
-      if(est_epsilon_slope) log_epsilon_temp += b_epsilon * epsilon_predictor(i);
-      if(est_epsilon_re) log_epsilon_temp += epsilon_re(i);
-      sigma_E(i) = exp(log_epsilon_temp); // log-linear model
-      ln_tau_E_vec(i) = -log_epsilon_temp + epsilon_cnst;
-    }
-  }
-
+  // DELTA DONE
   Eigen::SparseMatrix<Type> Q_s; // Precision matrix
   Eigen::SparseMatrix<Type> Q_st; // Precision matrix
+  Eigen::SparseMatrix<Type> Q_s2; // Precision matrix
+  Eigen::SparseMatrix<Type> Q_st2; // Precision matrix
 
+  // DELTA DONE
   if (barrier) {
-    Q_s = Q_spde(spde_barrier, exp(ln_kappa(0)), barrier_scaling);
-    if (!share_range) Q_st = Q_spde(spde_barrier, exp(ln_kappa(1)), barrier_scaling);
+    Q_s = Q_spde(spde_barrier, exp(ln_kappa(0,0)), barrier_scaling);
+    if (n_m > 1) Q_s2 = Q_spde(spde_barrier, exp(ln_kappa(0,1)), barrier_scaling);
+    if (!share_range(0)) Q_st = Q_spde(spde_barrier, exp(ln_kappa(1,0)), barrier_scaling);
+    if (!share_range(1) && n_m > 1) Q_st2 = Q_spde(spde_barrier, exp(ln_kappa(1,1)), barrier_scaling);
   } else {
     if (anisotropy) {
-      matrix<Type> H = sdmTMB::MakeH(ln_H_input);
-      Q_s = R_inla::Q_spde(spde_aniso, exp(ln_kappa(0)), H);
-      if (!share_range) Q_st = R_inla::Q_spde(spde_aniso, exp(ln_kappa(1)), H);
+      matrix<Type> H = sdmTMB::MakeH(vector<Type>(ln_H_input.col(0)));
+      Q_s = R_inla::Q_spde(spde_aniso, exp(ln_kappa(0,0)), H);
+      if (!share_range(0)) Q_st = R_inla::Q_spde(spde_aniso, exp(ln_kappa(1,0)), H);
       REPORT(H);
+      if (n_m > 1) {
+        matrix<Type> H2 = sdmTMB::MakeH(vector<Type>(ln_H_input.col(1)));
+        Q_s2 = R_inla::Q_spde(spde_aniso, exp(ln_kappa(0,1)), H2);
+        if (!share_range(1)) Q_st2 = R_inla::Q_spde(spde_aniso, exp(ln_kappa(1,1)), H2);
+        REPORT(H2);
+      }
     }
     if (!anisotropy) {
-      Q_s = R_inla::Q_spde(spde, exp(ln_kappa(0)));
-      if (!share_range) Q_st = R_inla::Q_spde(spde, exp(ln_kappa(1)));
+      Q_s = R_inla::Q_spde(spde, exp(ln_kappa(0,0)));
+      if (!share_range(0)) Q_st = R_inla::Q_spde(spde, exp(ln_kappa(1,0)));
+      if (n_m > 1) Q_s2 = R_inla::Q_spde(spde, exp(ln_kappa(0,1)));
+      if (!share_range(1) && n_m > 1) Q_st2 = R_inla::Q_spde(spde, exp(ln_kappa(1,1)));
     }
   }
-  if (share_range) Q_st = Q_s;
+  if (share_range(0)) Q_st = Q_s;
+  if (share_range(1)) Q_st2 = Q_s2;
 
   bool s = true;
   if (normalize_in_r) s = false;
 
   // Spatial (intercept) random effects:
-  if (include_spatial) {
-    // jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
-    PARALLEL_REGION jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
-    if (sim_re(0)) {
-      SIMULATE {
-        GMRF(Q_s, s).simulate(omega_s);
-        omega_s *= 1. / exp(ln_tau_O);
+  // DELTA DONE
+  for (int m = 0; m < n_m; m++) {
+    Eigen::SparseMatrix<Type> Q_temp; // Precision matrix
+    if (include_spatial) {
+      // jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
+      if (m == 0) {
+        Q_temp = Q_s;
+      } else {
+        Q_temp = Q_s2;
       }
-    }
-    if (spatial_covariate) {
-      PARALLEL_REGION jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_Z))(zeta_s);
-      if (sim_re(3)) {
+      PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_O(m)))(omega_s.col(m));
+      if (sim_re(0)) {
+        vector<Type> omega_s_tmp(omega_s.rows());
         SIMULATE {
-          GMRF(Q_s, s).simulate(zeta_s);
-          zeta_s *= 1. / exp(ln_tau_Z);
+          GMRF(Q_temp, s).simulate(omega_s_tmp);
+          omega_s.col(m) = omega_s_tmp / exp(ln_tau_O(m));
+        }
+      }
+      if (spatial_covariate) {
+        for (int z = 0; z < n_z; z++) {
+          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_Z(z,m)))(zeta_s.col(m).col(z));
+          if (sim_re(3)) {
+            vector<Type> zeta_s_tmp(zeta_s.col(m).rows());
+            SIMULATE {
+              GMRF(Q_s, s).simulate(zeta_s_tmp);
+              zeta_s.col(m).col(z) = zeta_s_tmp / exp(ln_tau_Z(z,m));
+            }
+          }
         }
       }
     }
   }
 
+  // DELTA DONE? not simulate
   // Spatiotemporal random effects:
-  vector<Type> epsilon_st_tmp(epsilon_st.rows());
-  epsilon_st_tmp.setZero();
-  if (!spatial_only) {
-    if (!ar1_fields && !rw_fields) {
-      for (int t = 0; t < n_t; t++)
-        PARALLEL_REGION jnll += SCALE(GMRF(Q_st, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
-      if (sim_re(1)) {
-        for (int t = 0; t < n_t; t++) { // untested!!
-          SIMULATE {
-            GMRF(Q_st, s).simulate(epsilon_st_tmp);
-            epsilon_st.col(t) = epsilon_st_tmp / exp(ln_tau_E_vec(t));
-          }
-        }
-      }
+  for (int m = 0; m < n_m; m++) {
+    Eigen::SparseMatrix<Type> Q_temp; // Precision matrix
+    if (m == 0) {
+      Q_temp = Q_st;
     } else {
-      if (est_epsilon_model) { // time-varying epsilon sd
-        if (sim_re(1)) error("Simulation not implemented for time-varying epsilon SD yet.");
-        if (ar1_fields) {
-          PARALLEL_REGION jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
-          for (int t = 1; t < n_t; t++) {
-            PARALLEL_REGION jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(t)))((epsilon_st.col(t) -
-              rho * epsilon_st.col(t - 1))/sqrt(1. - rho * rho));
+      Q_temp = Q_st2;
+    }
+    if (!spatial_only(m)) {
+      if (!ar1_fields(m) && !rw_fields(m)) {
+        for (int t = 0; t < n_t; t++)
+          // PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
+          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E(m)))(epsilon_st.col(m).col(t));
+        if (sim_re(1)) {
+          for (int t = 0; t < n_t; t++) {
+            vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
+            SIMULATE {GMRF(Q_temp, s).simulate(epsilon_st_tmp);
+            epsilon_st.col(m).col(t) = epsilon_st_tmp / exp(ln_tau_E(m));}
           }
-          int n_rows=epsilon_st.cols();
-          int m_cols=epsilon_st.size()/n_rows;
-          // This penalty added to match Kasper's AR1_t() implementation
-          PARALLEL_REGION jnll += Type((n_rows-1)*m_cols) * log(sqrt(Type(1)-rho*rho));
-        } else if (rw_fields) {
-          PARALLEL_REGION jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
-          for (int t = 1; t < n_t; t++) {
-            PARALLEL_REGION jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(t)))(epsilon_st.col(t) - epsilon_st.col(t - 1));
-          }
-        } else {
-          error("Field type not implemented.");
         }
-      } else { // constant epsilon sd, keep calculations as is
-        if (ar1_fields) {
-          PARALLEL_REGION jnll += SCALE(SEPARABLE(AR1(rho), GMRF(Q_st, s)), 1./exp(ln_tau_E))(epsilon_st);
+      } else {
+        if (ar1_fields(m)) {
+          PARALLEL_REGION jnll += SCALE(SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)), 1./exp(ln_tau_E(m)))(epsilon_st.col(m));
           if (sim_re(1)) {
-            SIMULATE {
-              SEPARABLE(AR1(rho), GMRF(Q_st, s)).simulate(epsilon_st);
-              epsilon_st *= 1./exp(ln_tau_E);
-            }
+            array<Type> epsilon_st_tmp(epsilon_st.col(m).rows(),n_t);
+            SIMULATE {SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)).simulate(epsilon_st_tmp);
+            epsilon_st.col(m) = epsilon_st_tmp / exp(ln_tau_E(m));}
           }
-        } else if (rw_fields) {
+        } else if (rw_fields(m)) {
           for (int t = 0; t < n_t; t++)
-            PARALLEL_REGION jnll += SCALE(GMRF(Q_st, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
+            // PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
+            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E(m)))(epsilon_st.col(m).col(t));
           // jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
           // for (int t = 1; t < n_t; t++) {
           //   jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(t) - epsilon_st.col(t - 1));
           // }
           if (sim_re(1)) {
-            for (int t = 0; t < n_t; t++) { // untested!!
-              SIMULATE {
-                GMRF(Q_st, s).simulate(epsilon_st_tmp);
-                epsilon_st_tmp *= 1./exp(ln_tau_E);
-                if (t == 0) {
-                  epsilon_st.col(0) = epsilon_st_tmp;
-                } else {
-                  epsilon_st.col(t) = epsilon_st.col(t-1) + epsilon_st_tmp;
-                }
-              }
+            for (int t = 0; t < n_t; t++) {
+               vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
+               SIMULATE {GMRF(Q_st, s).simulate(epsilon_st_tmp);}
+               epsilon_st_tmp *= 1./exp(ln_tau_E(m));
+               if (t == 0) {
+                 epsilon_st.col(m).col(0) = epsilon_st_tmp;
+               } else {
+                 epsilon_st.col(m).col(t) = epsilon_st.col(m).col(t-1) + epsilon_st_tmp;
+               }
             }
           }
         } else {
@@ -419,20 +458,27 @@ Type objective_function<Type>::operator()()
 
   // ------------------ Probability of random effects --------------------------
 
+
+  // DELTA DONE
   // IID random intercepts:
-  for (int g = 0; g < RE.size(); g++) {
-    PARALLEL_REGION jnll -= dnorm(RE(g), Type(0.0), exp(ln_tau_G(ln_tau_G_index(g))), true);
-    if (sim_re(3)) SIMULATE{RE(g) = rnorm(Type(0), exp(ln_tau_G(ln_tau_G_index(g))));
+  for (int m = 0; m < n_m; m++) {
+    for (int g = 0; g < RE.rows(); g++) {
+      PARALLEL_REGION jnll -= dnorm(RE(g,m), Type(0), exp(ln_tau_G(ln_tau_G_index(g), m)), true);
+      if (sim_re(3)) SIMULATE{RE(g,m) = rnorm(Type(0), exp(ln_tau_G(ln_tau_G_index(g),m)));
+      }
     }
   }
 
+  // DELTA DONE
   // Random walk effects (dynamic regression):
   if (random_walk) {
-    for (int k = 0; k < X_rw_ik.cols(); k++) {
-      // flat prior on the initial value... then:
-      for (int t = 1; t < n_t; t++) {
-        PARALLEL_REGION jnll += -dnorm(b_rw_t(t, k), b_rw_t(t - 1, k), exp(ln_tau_V(k)), true);
-        if (sim_re(4)) SIMULATE{b_rw_t(t, k) = rnorm(b_rw_t(t - 1, k), exp(ln_tau_V(k)));}
+    for (int m = 0; m < n_m; m++) {
+      for (int k = 0; k < X_rw_ik.cols(); k++) {
+        // flat prior on the initial value... then:
+        for (int t = 1; t < n_t; t++) {
+          PARALLEL_REGION jnll += -dnorm(b_rw_t(t, k, m), b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)), true);
+          if (sim_re(4)) SIMULATE{b_rw_t(t, k, m) = rnorm(b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)));}
+        }
       }
     }
   }
@@ -440,94 +486,134 @@ Type objective_function<Type>::operator()()
 
   // Here we are projecting the spatiotemporal and spatial random effects to the
   // locations of the data using the INLA 'A' matrices.
-  array<Type> epsilon_st_A(A_st.rows(), n_t);
-  for (int i = 0; i < n_t; i++)
-    epsilon_st_A.col(i) = A_st * vector<Type>(epsilon_st.col(i));
-  if (rw_fields) {
-    for (int i = 1; i < n_t; i++)
-      epsilon_st_A.col(i) = epsilon_st_A.col(i - 1) + epsilon_st_A.col(i);
+  // DELTA DONE
+  array<Type> omega_s_A(n_i, n_m);
+  array<Type> zeta_s_A(n_i, n_z, n_m);
+  array<Type> epsilon_st_A(n_i, n_t, n_m);
+  array<Type> epsilon_st_A_vec(n_i, n_m);
+  omega_s_A.setZero();
+  omega_s_A.setZero();
+  epsilon_st_A.setZero();
+  epsilon_st_A_vec.setZero();
+
+  for (int m = 0; m < n_m; m++) {
+    for (int t = 0; t < n_t; t++)
+      if (!spatial_only(m)) epsilon_st_A.col(m).col(t) =
+        A_st * vector<Type>(epsilon_st.col(m).col(t));
+    if (rw_fields(m)) {
+      for (int t = 1; t < n_t; t++)
+        if (!spatial_only(m)) epsilon_st_A.col(m).col(t) =
+          epsilon_st_A.col(m).col(t - 1) + epsilon_st_A.col(m).col(t);
+    }
+    omega_s_A.col(m) = A_st * vector<Type>(omega_s.col(m));
+    for (int z = 0; z < n_z; z++)
+      zeta_s_A.col(m).col(z) = A_st * vector<Type>(zeta_s.col(m).col(z));
   }
 
-  vector<Type> omega_s_A = A_st * omega_s;
-  vector<Type> zeta_s_A = A_st * zeta_s;
-  vector<Type> epsilon_st_A_vec(n_i);
 
   // ------------------ Linear predictor ---------------------------------------
 
-  vector<Type> eta_fixed_i = X_ij * b_j;
+  // DELTA DONE?
+  array<Type> eta_fixed_i(n_i, n_m);
+  for (int m = 0; m < n_m; m++) {
+    if (m == 0) eta_fixed_i.col(m) = X_ij(m) * b_j;
+    if (m == 1) eta_fixed_i.col(m) = X_ij(m) * b_j2;
+  }
 
   // p-splines/smoothers
-  vector<Type> eta_smooth_i(X_ij.rows());
+  array<Type> eta_smooth_i(n_i, n_m);
   eta_smooth_i.setZero();
   if (has_smooths) {
-    for (int s = 0; s < b_smooth_start.size(); s++) { // iterate over # of smooth elements
-      vector<Type> beta_s(Zs(s).cols());
-      beta_s.setZero();
-      for (int j = 0; j < beta_s.size(); j++) {
-        beta_s(j) = b_smooth(b_smooth_start(s) + j);
-        PARALLEL_REGION jnll -= dnorm(beta_s(j), Type(0), exp(ln_smooth_sigma(s)), true);
-        if (sim_re(5)) SIMULATE{beta_s(j) = rnorm(Type(0), exp(ln_smooth_sigma(s)));}
+    for (int m = 0; m < n_m; m++) {
+      for (int s = 0; s < b_smooth_start.size(); s++) { // iterate over # of smooth elements
+        array<Type> beta_s(Zs(s).cols(),n_m);
+        beta_s.setZero();
+        for (int j = 0; j < beta_s.rows(); j++) {
+          beta_s(j,m) = b_smooth(b_smooth_start(s) + j,m);
+          PARALLEL_REGION jnll -= dnorm(beta_s(j,m), Type(0), exp(ln_smooth_sigma(s,m)), true);
+          if (sim_re(5)) SIMULATE{beta_s(j,m) = rnorm(Type(0), exp(ln_smooth_sigma(s,m)));}
+        }
+        eta_smooth_i.col(m) += Zs(s) * vector<Type>(beta_s.col(m));
       }
-      eta_smooth_i += Zs(s) * beta_s;
+      eta_smooth_i.col(m) += Xs * vector<Type>(bs.col(m));
     }
-    eta_smooth_i += Xs * bs;
   }
 
   // add threshold effect if specified
+  // DELTA TODO
   if (threshold_func > 0) {
+    if (n_m > 1) error("Threshold delta models not finished."); // DELTA TODO
     if (threshold_func == 1) {
       // linear
       for (int i = 0; i < n_i; i++) {
-        eta_fixed_i(i) += sdmTMB::linear_threshold(X_threshold(i), s_slope, s_cut);
+        eta_fixed_i(i,0) += sdmTMB::linear_threshold(X_threshold(i), s_slope, s_cut);
       }
     } else {
       // logistic
       for (int i = 0; i < n_i; i++) {
-        eta_fixed_i(i) += sdmTMB::logistic_threshold(X_threshold(i), s50, s95, s_max);
+        eta_fixed_i(i,0) += sdmTMB::logistic_threshold(X_threshold(i), s50, s95, s_max);
       }
     }
   }
 
-  vector<Type> mu_i(n_i), eta_i(n_i), eta_rw_i(n_i), eta_iid_re_i(n_i);
+  // DELTA done
+  matrix<Type> mu_i(n_i,n_m), eta_i(n_i,n_m), eta_rw_i(n_i,n_m), eta_iid_re_i(n_i,n_m);
   eta_rw_i.setZero();
   eta_iid_re_i.setZero();
   mu_i.setZero();
   eta_i.setZero();
 
-  for (int i = 0; i < n_i; i++) {
-    eta_i(i) = eta_fixed_i(i) + eta_smooth_i(i); // + offset_i(i);
-    if (random_walk) {
-      for (int k = 0; k < X_rw_ik.cols(); k++) {
-        eta_rw_i(i) += X_rw_ik(i, k) * b_rw_t(year_i(i), k); // record it
-        eta_i(i) += eta_rw_i(i);
+  // DELTA done
+  // combine parts:
+  for (int m = 0; m < n_m; m++) {
+    for (int i = 0; i < n_i; i++) {
+      eta_i(i,m) = eta_fixed_i(i,m) + eta_smooth_i(i,m);
+      if ((n_m == 2 && m == 1) || n_m == 1) {
+        if (!poisson_link_delta) eta_i(i,m) += offset_i(i);
       }
-    }
-
-    // Spatially varying effects:
-    if (include_spatial) {
-      eta_i(i) += omega_s_A(i);  // spatial
-      if (spatial_covariate)
-        eta_i(i) += zeta_s_A(i) * z_i(i); // spatially varying covariate
-    }
-    epsilon_st_A_vec(i) = epsilon_st_A(A_spatial_index(i), year_i(i)); // record it
-    eta_i(i) += epsilon_st_A_vec(i); // spatiotemporal
-
-    // IID random intercepts:
-    int temp = 0;
-    for (int k = 0; k < n_RE; k++) {
-      if (k == 0) eta_iid_re_i(i) += RE(RE_indexes(i, k)); // record it
-      if (k > 0) {
-        temp += nobs_RE(k - 1);
-        eta_iid_re_i(i) += RE(RE_indexes(i, k) + temp); // record it
+      if (random_walk) {
+        for (int k = 0; k < X_rw_ik.cols(); k++) {
+          eta_rw_i(i,m) += X_rw_ik(i, k) * b_rw_t(year_i(i), k, m); // record it
+          eta_i(i,m) += eta_rw_i(i,m);
+        }
       }
-    }
-    eta_i(i) += eta_iid_re_i(i);
 
-    if (family == 1 && link == 2) {
-      // binomial(link = "logit"); don't touch (using robust density function in logit space)
-      mu_i(i) = eta_i(i);
-    } else {
-      mu_i(i) = InverseLink(eta_i(i), link);
+      // Spatially varying effects:
+      if (include_spatial) {
+        eta_i(i,m) += omega_s_A(i,m);  // spatial omega
+        if (spatial_covariate)
+          for (int z = 0; z < n_z; z++)
+            eta_i(i,m) += zeta_s_A(i,z,m) * z_i(i,z); // spatially varying covariate DELTA
+      }
+      epsilon_st_A_vec(i,m) = epsilon_st_A(A_spatial_index(i), year_i(i),m); // record it
+      eta_i(i,m) += epsilon_st_A_vec(i,m); // spatiotemporal
+
+      // IID random intercepts:
+      int temp = 0;
+      for (int k = 0; k < n_RE; k++) {
+        if (k == 0) eta_iid_re_i(i,m) += RE(RE_indexes(i, k),m); // record it
+        if (k > 0) {
+          temp += nobs_RE(k - 1);
+          eta_iid_re_i(i,m) += RE(RE_indexes(i, k) + temp,m); // record it
+        }
+      }
+      eta_i(i,m) += eta_iid_re_i(i,m);
+
+      // bool poisson_link_delta = false;
+      // if (n_m > 1) if (family(0) == 1 && family(1) == 4 && link(0) == 1 && link(1) == 1)
+      //     poisson_link_delta = true;
+
+      if (family(m) == 1 && link(m) == 2) {
+        // binomial(link = "logit"); don't touch (using robust density function in logit space)
+        mu_i(i,m) = eta_i(i,m);
+      } else if (poisson_link_delta) { // clogog, but put in logit space for robust density function:
+        Type n = exp(eta_i(i,0));
+        Type p = Type(1) - exp(-exp(offset_i(i)) * n);
+        if (m == 0) mu_i(i,0) = logit(p);
+        if (m == 1) mu_i(i,1) = (n/p) * exp(eta_i(i,1));
+      } else {
+        mu_i(i,m) = InverseLink(eta_i(i,m), link(m));
+      }
     }
   }
 
@@ -539,94 +625,97 @@ Type objective_function<Type>::operator()()
 
   Type s1, s2, s3, lognzprob, tmp_ll;
   REPORT(phi);
-  for (int i = 0; i < n_i; i++) PARALLEL_REGION {
-    if (!sdmTMB::isNA(y_i(i))) {
-      switch (family) {
-      case gaussian_family:
-        tmp_ll = dnorm(y_i(i), mu_i(i), phi, true);
-        SIMULATE{y_i(i) = rnorm(mu_i(i), phi);}
-        break;
-      case tweedie_family:
-        s1 = invlogit(thetaf) + Type(1.0);
-        if (!sdmTMB::isNA(priors(12))) jnll -= dnorm(s1, priors(12), priors(13), true);
-        tmp_ll = dtweedie(y_i(i), mu_i(i), phi, s1, true);
-        SIMULATE{y_i(i) = rtweedie(mu_i(i), phi, s1);}
-        break;
-      case binomial_family:  // in logit space not inverse logit
-        tmp_ll = dbinom_robust(y_i(i), size(i), mu_i(i), true);
-        SIMULATE{y_i(i) = rbinom(size(i), InverseLink(mu_i(i), link));}
-        break;
-      case poisson_family:
-        tmp_ll = dpois(y_i(i), mu_i(i), true);
-        SIMULATE{y_i(i) = rpois(mu_i(i));}
-        break;
-      case censored_poisson_family:
-        tmp_ll = sdmTMB::dcenspois(y_i(i), mu_i(i), lwr(i), upr(i), true);
-        SIMULATE{y_i(i) = rpois(mu_i(i));}
-        break;
-      case Gamma_family:
-        s1 = exp(ln_phi);         // shape
-        s2 = mu_i(i) / s1;        // scale
-        tmp_ll = dgamma(y_i(i), s1, s2, true);
-        SIMULATE{y_i(i) = rgamma(s1, s2);}
-        // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
-        // tmp_ll = dgamma(y_i(i), s1, mu_i(i) / s1, true);
-        break;
-      case nbinom2_family:
-        s1 = log(mu_i(i)); // log(mu_i)
-        s2 = 2. * s1 - ln_phi; // log(var - mu)
-        tmp_ll = dnbinom_robust(y_i(i), s1, s2, true);
-        SIMULATE { // from glmmTMB
-          s1 = mu_i(i);
-          s2 = mu_i(i) * (Type(1) + mu_i(i) / phi);
-          y_i(i) = rnbinom2(s1, s2);
+  for (int m = 0; m < n_m; m++) PARALLEL_REGION {
+    for (int i = 0; i < n_i; i++) {
+      if (!sdmTMB::isNA(y_i(i,m))) {
+        switch (family(m)) {
+          case gaussian_family:
+            tmp_ll = dnorm(y_i(i,m), mu_i(i,m), phi(m), true);
+            SIMULATE{y_i(i,m) = rnorm(mu_i(i,m), phi(m));}
+            break;
+          case tweedie_family:
+            s1 = invlogit(thetaf) + Type(1.0);
+            if (!sdmTMB::isNA(priors(12))) jnll -= dnorm(s1, priors(12), priors(13), true);
+            tmp_ll = dtweedie(y_i(i,m), mu_i(i,m), phi(m), s1, true);
+            SIMULATE{y_i(i,m) = rtweedie(mu_i(i,m), phi(m), s1);}
+            break;
+          case binomial_family:  // in logit space not inverse logit
+            tmp_ll = dbinom_robust(y_i(i,m), size(i), mu_i(i,m), true);
+            // SIMULATE{y_i(i,m) = rbinom(size(i), InverseLink(mu_i(i,m), link(m)));}
+            SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));} // FIXME hardcoded invlogit
+            break;
+          case poisson_family:
+            tmp_ll = dpois(y_i(i,m), mu_i(i,m), true);
+            SIMULATE{y_i(i,m) = rpois(mu_i(i,m));}
+            break;
+          case censored_poisson_family:
+            tmp_ll = sdmTMB::dcenspois(y_i(i,m), mu_i(i,m), lwr(i), upr(i), true);
+            SIMULATE{y_i(i,m) = rpois(mu_i(i,m));}
+            break;
+          case Gamma_family:
+            s1 = exp(ln_phi(m));        // shape
+            s2 = mu_i(i,m) / s1;        // scale
+            tmp_ll = dgamma(y_i(i,m), s1, s2, true);
+            SIMULATE{y_i(i,m) = rgamma(s1, s2);}
+            // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
+            // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
+            break;
+          case nbinom2_family:
+            s1 = log(mu_i(i,m)); // log(mu_i)
+            s2 = 2. * s1 - ln_phi(m); // log(var - mu)
+            tmp_ll = dnbinom_robust(y_i(i,m), s1, s2, true);
+            SIMULATE { // from glmmTMB
+              s1 = mu_i(i,m);
+              s2 = mu_i(i,m) * (Type(1) + mu_i(i,m) / phi(m));
+              y_i(i,m) = rnbinom2(s1, s2);
+            }
+            break;
+          case truncated_nbinom2_family:
+            s1 = log(mu_i(i,m)); // log(mu_i)
+            s2 = 2. * s1 - ln_phi(m); // log(var - mu)
+            tmp_ll = dnbinom_robust(y_i(i,m), s1, s2, true);
+            s3 = logspace_add(Type(0), s1 - ln_phi(m));
+            lognzprob = logspace_sub(Type(0), -phi(m) * s3);
+            tmp_ll -= lognzprob;
+            tmp_ll = zt_lik_nearzero(y_i(i,m), tmp_ll); // from glmmTMB
+            SIMULATE{y_i(i,m) = sdmTMB::rtruncated_nbinom(asDouble(phi(m)), 0, asDouble(mu_i(i,m)));}
+            break;
+          case nbinom1_family:
+            s1 = log(mu_i(i,m));
+            s2 = s1 + ln_phi(m);
+            tmp_ll = dnbinom_robust(y_i(i,m), s1, s2, true);
+            SIMULATE {y_i(i,m) = rnbinom2(mu_i(i,m), mu_i(i,m) * (Type(1) + phi(m)));}
+            break;
+          case truncated_nbinom1_family:
+            s1 = log(mu_i(i,m));
+            s2 = s1 + ln_phi(m);
+            tmp_ll = dnbinom_robust(y_i(i,m), s1, s2, true);
+            s3 = logspace_add(Type(0), ln_phi(m));
+            lognzprob = logspace_sub(Type(0), -mu_i(i,m) / phi(m) * s3); // 1-prob(0)
+            tmp_ll -= lognzprob;
+            tmp_ll = zt_lik_nearzero(y_i(i,m), tmp_ll);
+            SIMULATE{y_i(i,m) = sdmTMB::rtruncated_nbinom(asDouble(mu_i(i,m)/phi(m)), 0, asDouble(mu_i(i,m)));}
+            break;
+          case lognormal_family:
+            tmp_ll = sdmTMB::dlnorm(y_i(i,m), log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
+            SIMULATE{y_i(i,m) = exp(rnorm(log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m)));}
+            break;
+          case student_family:
+            tmp_ll = sdmTMB::dstudent(y_i(i,m), mu_i(i,m), exp(ln_phi(m)), df, true);
+            SIMULATE{y_i(i,m) = mu_i(i,m) + phi(m) * rt(df);}
+            break;
+          case Beta_family: // Ferrari and Cribari-Neto 2004; betareg package
+            s1 = mu_i(i,m) * phi(m);
+            s2 = (Type(1) - mu_i(i,m)) * phi(m);
+            tmp_ll = dbeta(y_i(i,m), s1, s2, true);
+            SIMULATE{y_i(i,m) = rbeta(s1, s2);}
+            break;
+          default:
+            error("Family not implemented.");
         }
-        break;
-      case truncated_nbinom2_family:
-        s1 = log(mu_i(i)); // log(mu_i)
-        s2 = 2. * s1 - ln_phi; // log(var - mu)
-        tmp_ll = dnbinom_robust(y_i(i), s1, s2, true);
-        s3 = logspace_add(Type(0), s1 - ln_phi);
-        lognzprob = logspace_sub(Type(0), -phi * s3);
-        tmp_ll -= lognzprob;
-        tmp_ll = zt_lik_nearzero(y_i(i), tmp_ll); // from glmmTMB
-        SIMULATE{y_i(i) = sdmTMB::rtruncated_nbinom(asDouble(phi), 0, asDouble(mu_i(i)));}
-        break;
-      case nbinom1_family:
-        s1 = log(mu_i(i));
-        s2 = s1 + ln_phi;
-        tmp_ll = dnbinom_robust(y_i(i), s1, s2, true);
-        SIMULATE {y_i(i) = rnbinom2(mu_i(i), mu_i(i) * (Type(1) + phi));}
-        break;
-      case truncated_nbinom1_family:
-        s1 = log(mu_i(i));
-        s2 = s1 + ln_phi;
-        tmp_ll = dnbinom_robust(y_i(i), s1, s2, true);
-        s3 = logspace_add(Type(0), ln_phi);
-        lognzprob = logspace_sub(Type(0), -mu_i(i) / phi * s3); // 1-prob(0)
-        tmp_ll -= lognzprob;
-        tmp_ll = zt_lik_nearzero(y_i(i), tmp_ll);
-        SIMULATE{y_i(i) = sdmTMB::rtruncated_nbinom(asDouble(mu_i(i)/phi), 0, asDouble(mu_i(i)));}
-        break;
-      case lognormal_family:
-        tmp_ll = sdmTMB::dlnorm(y_i(i), log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi, true);
-        SIMULATE{y_i(i) = exp(rnorm(log(mu_i(i)) - pow(phi, Type(2)) / Type(2), phi));}
-        break;
-      case student_family:
-        tmp_ll = sdmTMB::dstudent(y_i(i), mu_i(i), exp(ln_phi), df, true);
-        SIMULATE{y_i(i) = mu_i(i) + phi * rt(df);}
-        break;
-      case Beta_family: // Ferrari and Cribari-Neto 2004; betareg package
-        s1 = mu_i(i) * phi;
-        s2 = (Type(1) - mu_i(i)) * phi;
-        tmp_ll = dbeta(y_i(i), s1, s2, true);
-        SIMULATE{y_i(i) = rbeta(s1, s2);}
-        break;
-      default:
-        error("Family not implemented.");
+        tmp_ll *= weights_i(i);
+        jnll -= tmp_ll; // * keep
       }
-      tmp_ll *= weights_i(i);
-      jnll -= keep(i) * tmp_ll;
     }
   }
 
@@ -637,26 +726,32 @@ Type objective_function<Type>::operator()()
   // Apply nll on residual. Note that other univariate densities are positive
   // log-likelihoods but the dmvnorm is negative.
   // We're accumulating the neg LL, which is why this is a + sign.
-  if(priors_b_n > 0) {
-    vector<Type> b_j_subset(priors_b_n),b_mean_subset(priors_b_n);
-    for(int j = 0; j < priors_b_n; j++) {
-      b_j_subset(j) = b_j(priors_b_index(j));
-      b_mean_subset(j) = priors_b_mean(j);
-    }
-    jnll += neg_log_dmvnorm(b_j_subset - b_mean_subset);
-  }
 
-  // start vector of priors:
-  if (!sdmTMB::isNA(priors(0)) && !sdmTMB::isNA(priors(1)) && !sdmTMB::isNA(priors(2)) && !sdmTMB::isNA(priors(3))) {
-    // std::cout << "Using spatial PC prior" << "\n";
-    jnll -= sdmTMB::pc_prior_matern(ln_tau_O, ln_kappa(0), priors(0), priors(1), priors(2), priors(3), true);
+  // DELTA TODO split b_j priors!?
+  // otherwise done
+  for (int m = 0; m < n_m; m++) {
+    if (priors_b_n > 0) {
+      vector<Type> b_j_subset(priors_b_n),b_mean_subset(priors_b_n);
+      for(int j = 0; j < priors_b_n; j++) {
+        if (m == 0) b_j_subset(j) = b_j(priors_b_index(j));
+        if (m == 1) b_j_subset(j) = b_j2(priors_b_index(j));
+        b_mean_subset(j) = priors_b_mean(j);
+      }
+      jnll += neg_log_dmvnorm(b_j_subset - b_mean_subset);
+    }
+
+    // start vector of priors:
+    if (!sdmTMB::isNA(priors(0)) && !sdmTMB::isNA(priors(1)) && !sdmTMB::isNA(priors(2)) && !sdmTMB::isNA(priors(3))) {
+      // std::cout << "Using spatial PC prior" << "\n";
+      jnll -= sdmTMB::pc_prior_matern(ln_tau_O(m), ln_kappa(0,m), priors(0), priors(1), priors(2), priors(3), true);
+    }
+    if (!sdmTMB::isNA(priors(4)) && !sdmTMB::isNA(priors(5)) && !sdmTMB::isNA(priors(6)) && !sdmTMB::isNA(priors(7))) {
+      // std::cout << "Using spatiotemporal PC prior" << "\n";
+      jnll -= sdmTMB::pc_prior_matern(ln_tau_E(m), ln_kappa(1,m), priors(4), priors(5), priors(6), priors(7), true);
+    }
+    if (!sdmTMB::isNA(priors(8))) jnll -= dnorm(phi(m), priors(8), priors(9), true);
+    if (!sdmTMB::isNA(priors(10))) jnll -= dnorm(rho(m), priors(10), priors(11), true);
   }
-  if (!sdmTMB::isNA(priors(4)) && !sdmTMB::isNA(priors(5)) && !sdmTMB::isNA(priors(6)) && !sdmTMB::isNA(priors(7))) {
-    // std::cout << "Using spatiotemporal PC prior" << "\n";
-    jnll -= sdmTMB::pc_prior_matern(ln_tau_E, ln_kappa(1), priors(4), priors(5), priors(6), priors(7), true);
-  }
-  if (!sdmTMB::isNA(priors(8))) jnll -= dnorm(phi, priors(8), priors(9), true);
-  if (!sdmTMB::isNA(priors(10))) jnll -= dnorm(rho, priors(10), priors(11), true);
 
   // Jacobians for Stan:
   // FIXME
@@ -664,112 +759,143 @@ Type objective_function<Type>::operator()()
   // ------------------ Predictions on new data --------------------------------
 
   if (do_predict) {
-    vector<Type> proj_fe = proj_X_ij * b_j;
-    // add threshold effect if specified
-    if (threshold_func > 0) {
-      if (threshold_func == 1) {
-        // linear
-        for (int i = 0; i < proj_X_ij.rows(); i++) {
-          proj_fe(i) = proj_fe(i) + sdmTMB::linear_threshold(proj_X_threshold(i), s_slope, s_cut);
-        }
-      } else {
-        // logistic
-        for (int i = 0; i < proj_X_ij.rows(); i++) {
-          proj_fe(i) = proj_fe(i) + sdmTMB::logistic_threshold(proj_X_threshold(i), s50, s95, s_max);
-        }
-      }
+    int n_p = proj_X_ij(0).rows(); // n 'p'redicted newdata
+    // DELTA DONE
+    array<Type> proj_fe(n_p, n_m);
+    for (int m = 0; m < n_m; m++) {
+      if (m == 0) proj_fe.col(m) = proj_X_ij(m) * b_j;
+      if (m == 1) proj_fe.col(m) = proj_X_ij(m) * b_j2;
     }
 
+    //      // add threshold effect if specified
+    //      // DELTA TODO
+    //      if (threshold_func > 0) {
+    //        if (threshold_func == 1) {
+    //          // linear
+    //          for (int i = 0; i < n_p; i++) {
+    //            proj_fe(i) = proj_fe(i) + sdmTMB::linear_threshold(proj_X_threshold(i), s_slope, s_cut);
+    //          }
+    //        } else {
+    //          // logistic
+    //          for (int i = 0; i < n_p; i++) {
+    //            proj_fe(i) = proj_fe(i) + sdmTMB::logistic_threshold(proj_X_threshold(i), s50, s95, s_max);
+    //          }
+    //        }
+    //      }
+
     // Smoothers:
-    vector<Type> proj_smooth_i(proj_X_ij.rows());
+    array<Type> proj_smooth_i(n_p, n_m);
     proj_smooth_i.setZero();
     if (has_smooths) {
-      for (int s = 0; s < b_smooth_start.size(); s++) { // iterate over # of smooth elements
-        vector<Type> beta_s(proj_Zs(s).cols());
-        beta_s.setZero();
-        for (int j = 0; j < beta_s.size(); j++) {
-          beta_s(j) = b_smooth(b_smooth_start(s) + j);
+      for (int m = 0; m < n_m; m++) {
+        for (int s = 0; s < b_smooth_start.size(); s++) { // iterate over # of smooth elements
+          array<Type> beta_s(proj_Zs(s).cols(),n_m);
+          beta_s.setZero();
+          for (int j = 0; j < beta_s.rows(); j++) {
+            beta_s(j,m) = b_smooth(b_smooth_start(s) + j,m);
+          }
+          proj_smooth_i.col(m) += proj_Zs(s) * vector<Type>(beta_s.col(m));
         }
-        proj_smooth_i += proj_Zs(s) * beta_s;
+        proj_smooth_i.col(m) += proj_Xs * vector<Type>(bs.col(m));
+        proj_fe.col(m) += proj_smooth_i.col(m);
       }
-      proj_smooth_i += proj_Xs * bs;
-    }
-    for (int i = 0; i < proj_X_ij.rows(); i++) {
-      proj_fe(i) += proj_smooth_i(i);
     }
 
     // IID random intercepts:
-    vector<Type> proj_iid_re_i(proj_X_ij.rows());
+    array<Type> proj_iid_re_i(n_p,n_m);
     proj_iid_re_i.setZero();
-    for (int i = 0; i < proj_X_ij.rows(); i++) {
-      int temp = 0;
-      for (int k = 0; k < n_RE; k++) {
-        if (k == 0 && !exclude_RE(0)) proj_iid_re_i(i) += RE(proj_RE_indexes(i, k));
-        if (k > 0) {
-          temp += nobs_RE(k - 1);
-          if (!exclude_RE(k)) proj_iid_re_i(i) += RE(proj_RE_indexes(i, k) + temp);
+    for (int m = 0; m < n_m; m++) {
+      for (int i = 0; i < n_p; i++) {
+        int temp = 0;
+        for (int k = 0; k < n_RE; k++) {
+          if (k == 0 && !exclude_RE(0)) proj_iid_re_i(i,m) += RE(proj_RE_indexes(i, k),m);
+          if (k > 0) {
+            temp += nobs_RE(k - 1);
+            if (!exclude_RE(k)) proj_iid_re_i(i,m) += RE(proj_RE_indexes(i, k) + temp,m);
+          }
         }
+        proj_fe(i) += proj_iid_re_i(i,m);
       }
-      proj_fe(i) += proj_iid_re_i(i);
     }
 
     // Random walk covariates:
-    vector<Type> proj_rw_i(proj_X_ij.rows());
+    array<Type> proj_rw_i(n_p,n_m);
     proj_rw_i.setZero();
     if (random_walk) {
-      for (int i = 0; i < proj_X_rw_ik.rows(); i++) {
-        for (int k = 0; k < proj_X_rw_ik.cols(); k++) {
-          proj_rw_i(i) += proj_X_rw_ik(i, k) * b_rw_t(proj_year(i), k);
-          proj_fe(i) += proj_rw_i(i);
+      for (int m = 0; m < n_m; m++) {
+        for (int i = 0; i < proj_X_rw_ik.rows(); i++) {
+          for (int k = 0; k < proj_X_rw_ik.cols(); k++) {
+            proj_rw_i(i,m) += proj_X_rw_ik(i, k) * b_rw_t(proj_year(i), k, m);
+            proj_fe(i) += proj_rw_i(i,m);
+          }
         }
       }
     }
 
     // Spatial and spatiotemporal random fields:
-    vector<Type> proj_re_sp = proj_mesh * omega_s;
-    vector<Type> proj_re_sp_st_all = sdmTMB::RepeatVector(proj_re_sp, n_t);
-    array<Type> proj_re_st_temp(proj_mesh.rows(), n_t);
-    array<Type> proj_re_st(proj_mesh.rows(), n_t);
-    for (int i = 0; i < n_t; i++) {
-      proj_re_st_temp.col(i) = proj_mesh * vector<Type>(epsilon_st.col(i));
-      proj_re_st.col(i) = proj_re_st_temp.col(i);
-    }
-    if (rw_fields) {
-      for (int i = 1; i < n_t; i++)
-        proj_re_st.col(i) = proj_re_st.col(i - 1) + proj_re_st.col(i);
+    array<Type> proj_omega_s_A(n_p, n_m);
+    array<Type> proj_zeta_s_A(n_p, n_z, n_m);
+    array<Type> proj_epsilon_st_A(n_p, n_t, n_m);
+    array<Type> proj_epsilon_st_A_vec(n_p, n_m);
+
+    for (int m = 0; m < n_m; m++) {
+      for (int t = 0; t < n_t; t++)
+        proj_epsilon_st_A.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
+      if (rw_fields(m)) {
+        for (int t = 1; t < n_t; t++)
+          proj_epsilon_st_A.col(m).col(t) = proj_epsilon_st_A.col(m).col(t - 1) + proj_epsilon_st_A.col(m).col(t);
+      }
+      proj_omega_s_A.col(m) = proj_mesh * vector<Type>(omega_s.col(m));
     }
 
     // Spatially varying coefficients:
-    vector<Type> proj_re_sp_cov(proj_X_ij.rows());
-    vector<Type> proj_re_sp_slopes(proj_X_ij.rows());
-    proj_re_sp_cov.setZero();
-    proj_re_sp_slopes.setZero();
+    array<Type> proj_zeta_s_A_cov(n_p, n_z, n_m);
+    proj_zeta_s_A_cov.setZero();
+    proj_zeta_s_A.setZero();
     if (spatial_covariate) {
-      vector<Type> proj_re_sp_slopes_all = proj_mesh * zeta_s;
-      for (int i = 0; i < proj_X_ij.rows(); i++) {
-        proj_re_sp_cov(i) = proj_re_sp_slopes_all(proj_spatial_index(i)) * proj_z_i(i);
-        proj_re_sp_slopes(i) = proj_re_sp_slopes_all(proj_spatial_index(i));
+      for (int m = 0; m < n_m; m++) {
+        for (int z = 0; z < n_z; z++) {
+          proj_zeta_s_A.col(m).col(z) = proj_mesh * vector<Type>(zeta_s.col(m).col(z));
+          for (int i = 0; i < n_p; i++) {
+            proj_zeta_s_A_cov(i,z,m) = proj_zeta_s_A(i,z,m) * proj_z_i(i,z);
+          }
+        }
       }
     }
 
     // Pick out the appropriate spatial and/or or spatiotemporal values:
-    vector<Type> proj_re_st_vector(proj_X_ij.rows());
-    vector<Type> proj_re_sp_st(proj_X_ij.rows());
-    proj_re_st_vector.setZero();
-    proj_re_sp_st.setZero();
-    for (int i = 0; i < proj_X_ij.rows(); i++) {
-      proj_re_sp_st(i) = proj_re_sp_st_all(proj_spatial_index(i));
-      proj_re_st_vector(i) = proj_re_st(proj_spatial_index(i), proj_year(i));
+    for (int m = 0; m < n_m; m++) {
+      for (int i = 0; i < n_p; i++) {
+        // FIXME proj_spatial_index doing nothing; same in fitting; is now 1:N
+        proj_epsilon_st_A_vec(i,m) = proj_epsilon_st_A(proj_spatial_index(i), proj_year(i),m);
+      }
     }
 
-    vector<Type> proj_rf = proj_re_sp_st + proj_re_st_vector + proj_re_sp_cov;
-    vector<Type> proj_eta = proj_fe + proj_rf; // proj_fe includes RW and IID random effects
+    // for (int m = 0; m < n_m; m++) {
+    //   for (int i = 0; i < n_i; i++) {
+    //     if ((n_m == 2 && m == 2) || n_m == 1) proj_fe(i,m) += proj_offset_i(i);
+    //   }
+    // }
 
+    array<Type> proj_rf(n_p, n_m);
+    array<Type> proj_eta(n_p, n_m);
+    for (int m = 0; m < n_m; m++)
+      proj_rf.col(m) = proj_omega_s_A.col(m) + proj_epsilon_st_A_vec.col(m);
+
+    for (int m = 0; m < n_m; m++)
+      for (int z = 0; z < n_z; z++)
+        proj_rf.col(m) += proj_zeta_s_A_cov.col(m).col(z); // SVC effects
+
+      // proj_fe includes s(), RW, and IID random effects:
+    for (int m = 0; m < n_m; m++)
+      proj_eta.col(m) = proj_fe.col(m) + proj_rf.col(m);
+
+    // FIXME save memory by not reporting all these or optionally so for MVN/Bayes?
     REPORT(proj_fe);            // fixed effect projections
-    REPORT(proj_re_sp_st);      // spatial random effect projections
-    REPORT(proj_re_st_vector);  // spatiotemporal random effect projections
-    REPORT(proj_re_sp_slopes);  // spatial slope projections
-    REPORT(proj_re_sp_cov);     // spatial covariate projections
+    REPORT(proj_omega_s_A);     // spatial random effect projections
+    REPORT(proj_epsilon_st_A_vec);  // spatiotemporal random effect projections
+    REPORT(proj_zeta_s_A);      // spatial slope projections
+    // REPORT(proj_zeta_s_A_cov);  // spatial slope * covariate projections
     REPORT(proj_eta);           // combined projections (in link space)
     REPORT(proj_rf);            // combined random field projections
     REPORT(proj_rw_i);          // random walk projections
@@ -786,100 +912,148 @@ Type objective_function<Type>::operator()()
     // Total biomass etc.:
     vector<Type> total(n_t);
     total.setZero();
+    vector<Type> mu_combined(n_p);
+    mu_combined.setZero();
 
     if (calc_index_totals || calc_cog) {
       // ------------------ Derived quantities ---------------------------------
+      Type t1;
+      Type t2;
+      int link_tmp;
 
-      for (int i = 0; i < proj_eta.size(); i++) {
-        total(proj_year(i)) += InverseLink(proj_eta(i), link) * area_i(i);
+      if (n_m > 1) { // delta model
+        for (int i = 0; i < n_p; i++) {
+          if (poisson_link_delta) {
+            // Type n = exp(proj_eta(i,0));
+            // Type p = 1 - exp(-n);
+            // t1 = p;
+            // t2 = (n/p) * exp(proj_eta(i,1));
+            mu_combined(i) = exp(proj_eta(i,0) + proj_eta(i,1)); // prevent numerical issues
+            // error("Index from Poisson-link delta model not tested yet.");
+          } else {
+            t1 = InverseLink(proj_eta(i,0), link(0));
+            t2 = InverseLink(proj_eta(i,1), link(1));
+            mu_combined(i) = t1 * t2;
+          }
+          total(proj_year(i)) += mu_combined(i) * area_i(i);
+        }
+      } else { // non-delta model
+        for (int i = 0; i < n_p; i++) {
+          mu_combined(i) = InverseLink(proj_eta(i,0), link(0));
+          total(proj_year(i)) += mu_combined(i) * area_i(i);
+        }
       }
       vector<Type> link_total(n_t);
+      if (n_m > 1) {
+        link_tmp = link(1); // 2nd link should always be log/exp in this case
+      } else {
+        link_tmp = link(0);
+      }
       for (int i = 0; i < n_t; i++) {
-        link_total(i) = Link(total(i), link);
+        if (poisson_link_delta) link_total(i) = log(total(i));
+        if (!poisson_link_delta) link_total(i) = Link(total(i), link_tmp);
       }
       if (calc_index_totals) {
         REPORT(link_total);
         ADREPORT(link_total);
+        ADREPORT(total);
       }
-      // PARAMETER_ARRAY(eps_total);
-      // if (eps_total.size() > 0) {
-      //   Type S;
-      //   for (int t = 0; t < n_t; t++) {
-      //     S = newton::Tag(total(t));
-      //     jnll += eps_total(t) * S;
-      //   }
+
+      // Low-rank sparse hessian bias-correction
+      PARAMETER_VECTOR(eps_index);
+      if (eps_index.size() > 0) {
+        Type S;
+        for (int t=0; t < n_t; t++) {
+          S = total(t); // Set lowrank tag on S = sum(exp(x))
+          jnll += eps_index(t) * S;
+        }
+      }
+      if (calc_cog) {
+        // Centre of gravity:
+        vector<Type> cog_x(n_t);
+        vector<Type> cog_y(n_t);
+        cog_x.setZero();
+        cog_y.setZero();
+        for (int i = 0; i < n_p; i++) {
+          cog_x(proj_year(i)) += proj_lon(i) * mu_combined(i) * area_i(i);
+          cog_y(proj_year(i)) += proj_lat(i) * mu_combined(i) * area_i(i);
+        }
+        for (int t = 0; t < n_t; t++) {
+          cog_x(t) /= total(t);
+          cog_y(t) /= total(t);
+        }
+        REPORT(cog_x);
+        ADREPORT(cog_x);
+        REPORT(cog_y);
+        ADREPORT(cog_y);
+      }
     }
-    if (calc_cog) {
-      // Centre of gravity:
-      vector<Type> cog_x(n_t);
-      vector<Type> cog_y(n_t);
-      cog_x.setZero();
-      cog_y.setZero();
-      for (int i = 0; i < proj_eta.size(); i++) {
-        cog_x(proj_year(i)) += proj_lon(i) * InverseLink(proj_eta(i), link) * area_i(i);
-        cog_y(proj_year(i)) += proj_lat(i) * InverseLink(proj_eta(i), link) * area_i(i);
-      }
-      for (int i = 0; i < n_t; i++) {
-        cog_x(i) = cog_x(i) / total(i);
-        cog_y(i) = cog_y(i) / total(i);
-      }
-      REPORT(cog_x);
-      ADREPORT(cog_x);
-      REPORT(cog_y);
-      ADREPORT(cog_y);
+  }
+//
+//    if (threshold_func == 1) { // linear breakpoint model
+//      REPORT(s_slope);
+//      ADREPORT(s_slope);
+//      REPORT(s_cut);
+//      ADREPORT(s_cut);
+//    }
+//    if (threshold_func == 2) { // logistic function model
+//      REPORT(s50);
+//      ADREPORT(s50);
+//      REPORT(s95);
+//      ADREPORT(s95);
+//      REPORT(s_max);
+//      ADREPORT(s_max);
+//    }
+//    if (calc_quadratic_range && b_j(1) < Type(0)) {
+//      vector<Type> quadratic_roots = sdmTMB::GetQuadraticRoots(b_j(1), b_j(0), Type(0.05));
+//      Type quadratic_low = quadratic_roots(0);
+//      Type quadratic_hi = quadratic_roots(1);
+//      Type quadratic_range = quadratic_roots(1) - quadratic_roots(0);
+//      if (quadratic_range < 0) quadratic_range = quadratic_range * -1.;
+//      Type quadratic_peak = quadratic_roots(2);
+//      Type quadratic_reduction = quadratic_roots(3);
+//
+//      REPORT(quadratic_low);
+//      REPORT(quadratic_hi);
+//      REPORT(quadratic_range);
+//      REPORT(quadratic_peak);
+//      REPORT(quadratic_reduction);
+//
+//      ADREPORT(quadratic_low);
+//      ADREPORT(quadratic_hi);
+//      ADREPORT(quadratic_range);
+//      ADREPORT(quadratic_peak);
+//      ADREPORT(quadratic_reduction);
+//    }
+  ////  if (est_epsilon_slope) {
+  ////    REPORT(b_epsilon);
+  ////    ADREPORT(b_epsilon);
+  ////  }
+  //  // if(est_epsilon_re) {
+  //  //   REPORT(ln_epsilon_re_sigma);
+  //  //   ADREPORT(ln_epsilon_re_sigma);
+  //  // }
+  //
+  //  // ------------------ Reporting ----------------------------------------------
+
+  //  vector<Type> log_sigma_E(n_t);
+  //  for (int i = 0; i < n_t; i++) {
+  //    log_sigma_E(i) = log(sigma_E(i));
+  //  }
+
+  // FIXME save memory by not reporting all these or optionally so for MVN/Bayes?
+
+
+  array<Type> log_range(range.rows(),range.cols()); // for SE
+  for (int i = 0; i < range.rows(); i++) {
+    for (int m = 0; m < range.cols(); m++) {
+      log_range(i,m) = log(range(i,m));
     }
   }
 
-  if (threshold_func == 1) { // linear breakpoint model
-    REPORT(s_slope);
-    ADREPORT(s_slope);
-    REPORT(s_cut);
-    ADREPORT(s_cut);
-  }
-  if (threshold_func == 2) { // logistic function model
-    REPORT(s50);
-    ADREPORT(s50);
-    REPORT(s95);
-    ADREPORT(s95);
-    REPORT(s_max);
-    ADREPORT(s_max);
-  }
-  if (calc_quadratic_range && b_j(1) < Type(0)) {
-    vector<Type> quadratic_roots = sdmTMB::GetQuadraticRoots(b_j(1), b_j(0), Type(0.05));
-    Type quadratic_low = quadratic_roots(0);
-    Type quadratic_hi = quadratic_roots(1);
-    Type quadratic_range = quadratic_roots(1) - quadratic_roots(0);
-    if (quadratic_range < 0) quadratic_range = quadratic_range * -1.;
-    Type quadratic_peak = quadratic_roots(2);
-    Type quadratic_reduction = quadratic_roots(3);
 
-    REPORT(quadratic_low);
-    REPORT(quadratic_hi);
-    REPORT(quadratic_range);
-    REPORT(quadratic_peak);
-    REPORT(quadratic_reduction);
-
-    ADREPORT(quadratic_low);
-    ADREPORT(quadratic_hi);
-    ADREPORT(quadratic_range);
-    ADREPORT(quadratic_peak);
-    ADREPORT(quadratic_reduction);
-  }
-  if (est_epsilon_slope) {
-    REPORT(b_epsilon);
-    ADREPORT(b_epsilon);
-  }
-  if(est_epsilon_re) {
-    REPORT(ln_epsilon_re_sigma);
-    ADREPORT(ln_epsilon_re_sigma);
-  }
-
-  // ------------------ Reporting ----------------------------------------------
-
-  vector<Type> log_sigma_E(n_t);
-  for (int i = 0; i < n_t; i++) {
-    log_sigma_E(i) = log(sigma_E(i));
-  }
+  // array<Type> log_range = log(range);
+  vector<Type> log_sigma_E = log(sigma_E);
   ADREPORT(log_sigma_E);      // log spatio-temporal SD
   REPORT(sigma_E);      // spatio-temporal SD
   REPORT(epsilon_st_A_vec);   // spatio-temporal effects; vector
@@ -893,19 +1067,18 @@ Type objective_function<Type>::operator()()
   REPORT(eta_iid_re_i); // IID intercept random effect estimates
   REPORT(rho);          // AR1 correlation in -1 to 1 space
   REPORT(range);        // Matern approximate distance at 10% correlation
-  vector<Type> log_range = log(range); // for SE
+  REPORT(log_range);  // log Matern approximate distance at 10% correlation
   ADREPORT(log_range);  // log Matern approximate distance at 10% correlation
   REPORT(b_smooth);     // smooth coefficients for penalized splines
   REPORT(ln_smooth_sigma); // standard deviations of smooth random effects, in log-space
   SIMULATE {
     REPORT(y_i);
-    REPORT(omega_s)
-    REPORT(omega_s_A)
-    REPORT(epsilon_st)
-    REPORT(epsilon_st_A_vec)
-    REPORT(zeta_s)
-    REPORT(zeta_s_A)
+    REPORT(omega_s);
+    REPORT(omega_s_A);
+    REPORT(epsilon_st);
+    REPORT(epsilon_st_A_vec);
+    REPORT(zeta_s);
+    REPORT(zeta_s_A);
   }
-
   return jnll;
 }

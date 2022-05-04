@@ -40,9 +40,12 @@
 
 spread_sims <- function(object, nsim = 200, n_sims = deprecated()) {
   if (!"jointPrecision" %in% names(object$sd_report)) {
-    stop("TMB::sdreport() must be run with the joint precision returned.", call. = FALSE)
+    cli_abort("TMB::sdreport() must be run with the joint precision returned.")
   }
 
+  if (isTRUE(object$delta)) {
+    cli_abort("This function isn't yet set up for delta models.")
+  }
   if (is_present(n_sims)) {
     deprecate_warn("0.0.21", "spread_sims(n_sims)", "spread_sims(nsim)")
   } else {
@@ -52,20 +55,23 @@ spread_sims <- function(object, nsim = 200, n_sims = deprecated()) {
   samps <- rmvnorm_prec(object$tmb_obj$env$last.par.best, tmb_sd, n_sims)
   pars <- c(tmb_sd$par.fixed, tmb_sd$par.random)
   pn <- names(pars)
-  pn <- c(pn[pn == "b_j"], pn[pn != "b_j"]) # if REML, must move b_j to beginning:
+
+  pn <- c(pn[pn == "b_j"], pn[pn == "b_j2"], pn[!pn %in% c("b_j", "b_j2")]) # if REML, must move b_j to beginning:
   par_fixed <- names(tmb_sd$par.fixed)
   if (object$reml) par_fixed <- c("b_j", par_fixed)
   pars <- pars[pn %in% par_fixed]
   samps <- samps[pn %in% par_fixed, , drop = FALSE]
   pn <- pn[pn %in% par_fixed]
-  .formula <- object$split_formula$fixedFormula
+  if (isTRUE(object$family$delta)) {
+    cli_warn("If your delta model has 2 formulas, this function is only using the first")
+  }
+  .formula <- object$split_formula[[1]]$fixedFormula # TODO DELTA HARDCODED TO 1!
   if (isFALSE(object$mgcv)) {
     fe_names <- colnames(model.matrix(.formula, object$data))
   } else {
     fe_names <- colnames(model.matrix(mgcv::gam(.formula, data = object$data)))
   }
-
-  fe_names <- fe_names[!fe_names == "offset"]
+  fe_names <- tidy(object)$term
   row.names(samps) <- pn
   row.names(samps)[row.names(samps) == "b_j"] <- fe_names
   out <- as.data.frame(t(samps))
@@ -124,19 +130,4 @@ rmvnorm_prec <- function(mu, tmb_sd, n_sims) {
   z <- Matrix::solve(L, z, system = "Pt")
   z <- as.matrix(z)
   mu + z
-}
-
-rmvnorm_prec_random <- function(obj, tmb_sd, n_sims) {
-  mu <- tmb_sd$par.random
-  z <- matrix(stats::rnorm(length(mu) * n_sims), ncol = n_sims)
-  jp <- obj$env$spHess(obj$env$last.par.best, random = TRUE)
-  L <- Matrix::Cholesky(jp, super = TRUE)
-  z <- Matrix::solve(L, z, system = "Lt")
-  z <- Matrix::solve(L, z, system = "Pt")
-  z <- as.matrix(z)
-  out <- mu + z
-  fe_mat <- matrix(unname(tmb_sd$par.fixed),
-    ncol = n_sims,
-    nrow = length(tmb_sd$par.fixed))
-  rbind(fe_mat, out)
 }

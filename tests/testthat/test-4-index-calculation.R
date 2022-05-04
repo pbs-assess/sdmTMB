@@ -19,8 +19,8 @@ test_that("get_index(), get_index_sims(), and get_cog() work", {
   expect_equal(class(ind), "data.frame")
 
   ind_corrected <- get_index(predictions, bias_correct = TRUE)
-  cached <- c(263131.7738, 390965.6367, 432988.7341, 119184.5699, 192717.7117,
-    338393.0779, 341000.346, 405631.4672, 195346.191)
+  cached <- c(259275.869, 385596.993, 428192.403, 116533.436, 189156.419,
+    333697.54, 336522.903, 400682.008, 191430.747)
   expect_lt(sum(abs(ind_corrected$est - cached) / cached), 1e-03)
   expect_gt(mean(ind_corrected$est - ind$est), 0)
 

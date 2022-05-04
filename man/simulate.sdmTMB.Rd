@@ -9,6 +9,7 @@
   nsim = 1L,
   seed = sample.int(1e+06, 1L),
   params = c("mle", "mvn"),
+  model = c(NA, 1, 2),
   re_form = NULL,
   tmbstan_model = NULL,
   ...
@@ -25,6 +26,9 @@
 the Maximum Likelihood Estimate (\code{"mle"}) or from new draws from the joint
 precision matrix assuming they are multivariate normal distributed
 (\code{"mvn"}).}
+
+\item{model}{If a delta/hurdle model, which model to simulate from?
+\code{NA} = combined, \code{1} = first model, \code{2} = second mdoel.}
 
 \item{re_form}{\code{NULL} to specify a simulation conditional on fitted random
 effects (this only simulates observation error). \code{~0} or \code{NA} to simulate

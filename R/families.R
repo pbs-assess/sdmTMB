@@ -2,7 +2,7 @@
 #'
 #' Additional families compatible with [sdmTMB()].
 #'
-#' @param link The link.
+#' @param link Link.
 #' @export
 #' @rdname families
 #' @name Families
@@ -176,4 +176,86 @@ censored_poisson <- function(link = "log") {
 
   list(family = "censored_poisson", link = linktemp, linkfun = stats$linkfun,
     linkinv = stats$linkinv)
+}
+
+#' @param link1 Link for first part of delta/hurdle model.
+#' @param link2 Link for second part of delta/hurdle model.
+#' @export
+#' @importFrom stats Gamma binomial
+#' @examples
+#' delta_gamma()
+#' @rdname families
+delta_gamma <- function(link1 = "logit", link2 = "log") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "logit")
+  f2 <- Gamma(link = "log")
+  list(f1, f2, delta = TRUE, link = c("logit", "log"),
+    family = c("binomial", "Gamma"),
+    clean_name = "delta_gamma(link1 = 'logit', link2 = 'log')")
+}
+
+#' @export
+#' @examples
+#' delta_lognormal()
+#' @rdname families
+delta_lognormal <- function(link1 = "logit", link2 = "log") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "logit")
+  f2 <- lognormal(link = "log")
+  list(f1, f2, delta = TRUE, link = c("logit", "log"),
+    family = c("binomial", "lognormal"),
+    clean_name = "delta_lognormal(link1 = 'logit', link2 = 'log')")
+}
+
+#' @export
+#' @examples
+#' delta_truncated_nbinom2()
+#' @rdname families
+delta_truncated_nbinom2 <- function(link1 = "logit", link2 = "log") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "logit")
+  f2 <- truncated_nbinom2(link = "log")
+  list(f1, f2, delta = TRUE, link = c("logit", "log"),
+    family = c("binomial", "truncated_nbinom2"),
+    clean_name = "delta_truncated_nbinom2(link1 = 'logit', link2 = 'log')")
+}
+
+#' @export
+#' @examples
+#' delta_truncated_nbinom1()
+#' @rdname families
+delta_truncated_nbinom1 <- function(link1 = "logit", link2 = "log") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "logit")
+  f2 <- truncated_nbinom1(link = "log")
+  list(f1, f2, delta = TRUE, link = c("logit", "log"),
+    family = c("binomial", "truncated_nbinom1"),
+    clean_name = "delta_truncated_nbinom1(link1 = 'logit', link2 = 'log')")
+}
+
+#' @examples
+#' delta_poisson_link_gamma()
+#' @rdname families
+#' @details `delta_poisson_link_gamma()` is the Poisson-link (complementary
+#'   log-log) delta model (Thorson 2018).
+#' @references
+#' Thorson, J. T. (2018). Three problems with the conventional delta-model for
+#' biomass sampling data, and a computationally efficient alternative. Canadian
+#' Journal of Fisheries and Aquatic Sciences, 75(9), 1369-1382.
+#' \doi{10.1139/cjfas-2017-0266}
+#' @export
+delta_poisson_link_gamma <- function(link1 = "log", link2 = "log") {
+  cli_inform("`delta_poisson_link_gamma()` is experimental and not all functions work with it")
+  cli_inform("Index calculations may not be correct with the `delta_poisson_link_gamma()` family yet")
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "log")
+  f2 <- truncated_nbinom1(link = "log")
+  list(f1, f2, delta = TRUE, link = c("log", "log"),
+    family = c("binomial", "Gamma"), type = "poisson_link_delta",
+    clean_name = "delta_poisson_link_gamma(link1 = 'logit', link2 = 'log')")
 }

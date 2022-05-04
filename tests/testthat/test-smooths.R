@@ -1,17 +1,30 @@
+
+# https://github.com/pbs-assess/sdmTMB/issues/60
+test_that("smoothers with 'bs = re' error", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  expect_error({
+    m <- sdmTMB(
+      density ~ s(depth_scaled, bs = "re"),
+      data = pcod_2011,
+      mesh = pcod_mesh_2011, spatial = "off"
+    )
+  }, regexp = "re")
+})
+
 test_that("A model with 2 s() splines works", {
   skip_on_cran()
   skip_on_ci()
   skip_if_not_installed("INLA")
   d <- subset(pcod, year >= 2000 & density > 0)
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
-  suppressMessages({
-    m <- sdmTMB(
-      data = d,
-      formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
-      mesh = pcod_spde, spatial = "off", spatiotemporal = "off"
-    )
-  })
-  expect_equal(ncol(m$tmb_data$X_ij), 1L)
+  m <- sdmTMB(
+    data = d,
+    formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
+    mesh = pcod_spde, spatial = "off", spatiotemporal = "off"
+  )
+  expect_equal(ncol(m$tmb_data$X_ij[[1]]), 1L)
   expect_equal(length(m$tmb_data$Zs), 2L)
   # head(m$tmb_data$Zs[[1]])
   # head(m$tmb_data$Zs[[2]])
@@ -109,7 +122,7 @@ test_that("A model with by in spline (and s(x, y)) works", {
   spde <- make_mesh(dat, c("X", "Y"), cutoff = 0.1)
   m <- sdmTMB(y ~ s(x2, by = x1),
     data = dat,
-    mesh = spde, control = sdmTMBcontrol(map_rf = TRUE)
+    mesh = spde,spatial = "off"
   )
   p <- predict(m, newdata = NULL)
   plot(p$est, p_mgcv)
@@ -121,7 +134,7 @@ test_that("A model with by in spline (and s(x, y)) works", {
   p_mgcv <- predict(m_mgcv)
   m <- sdmTMB(y ~ s(x2, x1),
     data = dat,
-    mesh = spde, control = sdmTMBcontrol(map_rf = TRUE)
+    mesh = spde, spatial = "off"
   )
   p <- predict(m, newdata = NULL)
   plot(p$est, p_mgcv)
@@ -134,7 +147,7 @@ test_that("A model with by in spline (and s(x, y)) works", {
   # t2(x, y)
   expect_error(m <- sdmTMB(y ~ t2(x2, x1),
     data = dat,
-    mesh = spde, control = sdmTMBcontrol(map_rf = TRUE)
+    mesh = spde, spatial = "off"
   ), regexp = "t2") # t2() intentionally `stop()`ed for now; newdata prediction issues
 
   # Factor `by' variable example (with a spurious covariate x0)
@@ -147,7 +160,7 @@ test_that("A model with by in spline (and s(x, y)) works", {
   spde <- make_mesh(dat, c("X", "Y"), cutoff = 0.1)
   m <- sdmTMB(y ~ fac + s(x2, by = fac) + s(x0),
     data = dat,
-    mesh = spde, control = sdmTMBcontrol(map_rf = TRUE)
+    mesh = spde, spatial = "off"
   )
   p <- predict(m, newdata = NULL)
   plot(p$est, p_mgcv)
@@ -173,13 +186,11 @@ test_that("Smooth plotting works", {
   skip_if_not_installed("INLA")
   d <- subset(pcod, year >= 2000 & density > 0)
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
-  suppressMessages({
-    m <- sdmTMB(
-      data = d,
-      formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
-      mesh = pcod_spde, spatial = "off", spatiotemporal = "off"
-    )
-  })
+  m <- sdmTMB(
+    data = d,
+    formula = log(density) ~ s(depth_scaled) + s(year, k = 5),
+    mesh = pcod_spde, spatial = "off", spatiotemporal = "off"
+  )
 
   plot_smooth(m)
   plot_smooth(m, level = 0.4)
@@ -191,13 +202,12 @@ test_that("Smooth plotting works", {
   out <- plot_smooth(m, return_data = TRUE)
   expect_equal(class(out), "data.frame")
 
-  suppressMessages({
-    m <- sdmTMB(
-      data = d,
-      formula = log(density) ~ s(depth_scaled) + year,
-      mesh = pcod_spde, spatial = "off", spatiotemporal = "off"
-    )
-  })
+  m <- sdmTMB(
+    data = d,
+    formula = log(density) ~ s(depth_scaled) + year,
+    mesh = pcod_spde, spatial = "off", spatiotemporal = "off",
+    control = sdmTMBcontrol(newton_loops = 1)
+  )
 
   plot_smooth(m, select = 1)
   expect_error(plot_smooth(m, select = 2), regexp = "select")
@@ -223,6 +233,10 @@ test_that("Smooth plotting works", {
 })
 
 test_that("print works with s(X, Y)", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+
   d <- subset(pcod_2011, density > 0)
   m <- sdmTMB(log(density) ~ s(X, Y, k = 5), data = d, spatial = "off")
   print(m)

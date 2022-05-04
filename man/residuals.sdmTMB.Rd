@@ -8,9 +8,10 @@
   object,
   type = c("randomized-quantile", "mle-mcmc-rq", "response"),
   mu_type = c("mle", "sim"),
-  mcmc_iter = 501,
-  mcmc_warmup = 499,
+  mcmc_iter = 500,
+  mcmc_warmup = 250,
   print_stan_model = FALSE,
+  model = c(1, 2),
   ...
 )
 }
@@ -28,6 +29,8 @@ simulations from the joint precision matrix.}
 
 \item{print_stan_model}{Print the Stan model from MCMC residuals?}
 
+\item{model}{Which delta/hurdle model component?}
+
 \item{...}{Passed to residual function. Only \code{n} works for binomial.}
 }
 \value{
@@ -35,26 +38,35 @@ A vector of residuals.
 }
 \description{
 See the residual-checking vignette: \code{browseVignettes("sdmTMB")} or \href{https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html}{on the documentation site}.
+See notes about types of residuals in 'Details' section below.
 }
 \details{
 Types of residuals currently supported:
 
-\code{"randomized-quantile"} refers to randomized quantile residuals
-(Dunn & Smyth 1996), which are also known as probability integral transform
-(PIT) residuals (Smith 1985). Under model assumptions, these should be
-distributed as standard normal with the following caveat: the Laplace approximation used
-for the latent/random effects can cause these residuals to deviate from
-the standard normal assumption even if the model is consistent with the data.
+\strong{\code{"randomized-quantile"}} refers to randomized quantile residuals (Dunn &
+Smyth 1996), which are also known as probability integral transform (PIT)
+residuals (Smith 1985). Under model assumptions, these should be distributed
+as standard normal with the following caveat: the Laplace approximation used
+for the latent/random effects can cause these residuals to deviate from the
+standard normal assumption even if the model is consistent with the data
+(Thygesen et al. 2017). Therefore, \strong{these residuals are fast to calculate
+but can be unreliable.}
 
-\code{"mle-mcmc-rq"} refers to randomized quantile residuals where the fixed
+\strong{\code{"mle-mcmc-rq"}} refers to randomized quantile residuals where the fixed
 effects are fixed at their MLE (maximum likelihoood estimate) values and the
 random effects are sampled with MCMC via tmbstan/Stan. As proposed in
 Thygesen et al. (2017) and used in Rufener et al. (2021). Under model
-assumptions, these should be distributed as standard normal. These residuals
-are theoretically preferred over the regular Laplace approximated
-randomized-quantile residuals, but will be considerably slower to calculate.
+assumptions, these should be distributed as standard normal. \strong{These
+residuals are theoretically preferred over the regular Laplace approximated
+randomized-quantile residuals, but will be considerably slower to
+calculate.}
 
-\code{"response"} refers to response residuals: observed minus predicted.
+Ideally MCMC is run until convergence and then the last iteration can be
+used for residuals. MCMC samples are defined by \code{mcmc_iter - mcmc_warmup}.
+The Stan model can be printed with \code{print_stan_model = TRUE} to check.
+The defaults may not be sufficient for many models.
+
+\strong{\code{"response"}} refers to response residuals: observed minus predicted.
 }
 \examples{
 if (inla_installed() &&
@@ -80,7 +92,8 @@ if (inla_installed() &&
   qqline(r1)
 
   # MCMC-based with fixed effects at MLEs; best but slowest:
-  r2 <- residuals(fit, type = "mle-mcmc-rq")
+  set.seed(2938)
+  r2 <- residuals(fit, type = "mle-mcmc-rq", mcmc_iter = 101, mcmc_warmup = 100)
   qqnorm(r2)
   qqline(r2)
 }

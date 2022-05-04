@@ -4,10 +4,12 @@
 \alias{plot_anisotropy}
 \title{Plot anisotropy}
 \usage{
-plot_anisotropy(object)
+plot_anisotropy(object, model = 1)
 }
 \arguments{
 \item{object}{An object from \code{\link[=sdmTMB]{sdmTMB()}}.}
+
+\item{model}{Which model if a delta model.}
 }
 \value{
 A plot of eigenvectors illustrating the estimated anisotropy. A list
@@ -30,4 +32,7 @@ if (inla_installed()) {
   plot_anisotropy(m)
 }
 }
+}
+\references{
+Code adapted from VAST R package
 }
