@@ -303,6 +303,12 @@ predict.sdmTMB <- function(object, newdata = object$data,
           "The newer `make_mesh()` (vs. `make_spde()`) takes care of this for you."))
 
     if (object$time == "_sdmTMB_time") newdata[[object$time]] <- 0L
+    if (visreg_df) {
+      if (!object$time %in% names(newdata)) {
+        # cli_inform("Using the most recent year")
+        newdata[[object$time]] <- max(object$data[[object$time]], na.rm = TRUE)
+      }
+    }
 
     check_time_class(object, newdata)
     original_time <- as.numeric(sort(unique(object$data[[object$time]])))

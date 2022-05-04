@@ -204,12 +204,18 @@ residuals.sdmTMB <- function(object,
     model <- object$visreg_model
   }
 
+  # retrieve function that called this:
+  sys_calls <- unlist(lapply(sys.calls(), deparse))
+  visreg_call <- any(grepl("setupV", substr(sys_calls, 1, 7)))
+
   type <- match.arg(type)
-  msg <- c(
-    "We recommend using the slower `type = 'mle-mcmc-rq'` for final inference.",
-    "See the ?residuals.sdmTMB 'Details' section."
-  )
-  if (type == "randomized-quantile") cli_inform(msg)
+  if (!visreg_call) {
+    msg <- c(
+      "We recommend using the slower `type = 'mle-mcmc-rq'` for final inference.",
+      "See the ?residuals.sdmTMB 'Details' section."
+    )
+    if (type == "randomized-quantile") cli_inform(msg)
+  }
 
   mu_type <- match.arg(mu_type)
 
