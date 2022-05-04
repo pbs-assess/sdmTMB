@@ -1,7 +1,7 @@
 Type: Package
 Package: sdmTMB
-Title: Spatiotemporal Species Distribution GLMMs with 'TMB'
-Version: 0.0.23.9000
+Title: Spatial and Spatiotemporal GLMMs with 'TMB' using the SPDE Approach
+Version: 0.0.24.9000
 Authors@R: c(
     person(c("Sean", "C."), "Anderson", , "sean.anderson@dfo-mpo.gc.ca", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-9563-1937")),
@@ -42,11 +42,11 @@ Authors@R: c(
     person("Paul-Christian", "Bürkner", role = c("ctb", "cph"),
            comment = "brms author: smoother matrix parsing")
   )
-Description: The 'sdmTMB' package implements spatiotemporal
-    predictive-process GLMMs (Generalized Linear Mixed Effect Models)
-    using 'TMB', 'INLA', and Gaussian Markov random fields. One common
-    application is for spatial or spatiotemporal species distribution
-    models (SDMs).
+Description: Implements spatial and spatiotemporal predictive-process GLMMs
+    (Generalized Linear Mixed Effect Models) using 'TMB', 'INLA', and the SPDE
+    approximation to Gaussian random fields. One common application is for
+    spatially explicit (and optionally dynamic) species distribution models
+    (SDMs). See Anderson et al. (2022) <doi:10.1101/2022.03.24.485545>.
 License: GPL-3 | file LICENSE
 URL: https://pbs-assess.github.io/sdmTMB/index.html
 BugReports: https://github.com/pbs-assess/sdmTMB/issues
@@ -59,7 +59,6 @@ Imports:
     fishMod,
     generics,
     glmmTMB,
-    glue,
     graphics,
     lifecycle,
     Matrix,

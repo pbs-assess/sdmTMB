@@ -1,5 +1,53 @@
 # sdmTMB
 
+# sdmTMB 0.0.24.9000
+
+* Add support for 'delta' (or 'hurdle') models. See examples and documentation
+  in `?sdmTMB`. This has resulted in a substantial restructuring of the
+  internal model code. By default both model components (e.g., binomial & Gamma)
+  share the same formula, spatial, and spatiotemporal structure, but these
+  can be separated by supplying argument values in lists where the first
+  element corresponds to the first model and the second element corresponds to
+  the second model (with some limitations as described in `?sdmTMB`
+  documentation 'Details').
+
+* Add support for multiple spatially varying coefficients (used to be limited to
+  a single variable).
+
+* Add compatibility with the 'visreg' package for visualizing conditional
+  effects of parameters. See `?visreg_delta` for examples.
+
+* Add MCMC residual type to `residuals.sdmTMB()`. These are a 'better' residuals
+  but slower to calculate. See documentation 'Details' in `?residuals.sdmTMB`.
+
+* Make `offset` an argument in `sdmTMB()`. Using the reserved word `offset` in
+  the formula is now deprecated.
+
+* Add `sanity()` function to perform some basic sanity checks on model fits.
+
+* Make an `sdmTMB()` model object compatible with `update()` method.
+
+* Remove several deprecated arguments.
+
+* Overhaul examples in `?sdmTMB`.
+
+* Use faster "low-rank sparse hessian bias-correction" TMB bias correction.
+
+* Add parallel processing support. See `parallel` argument in `sdmTMBcontrol`.
+  By default, grabs value of `sdmTMB.cores` option. E.g.
+  `options(sdmTMB.cores = 4)`. Only currently enabled on Mac/Linux.
+  Using too many cores can be much slower than 1 core.
+  
+* Use 'cli' package `cli_abort()`/`cli_warn()`/`cli_inform()` over
+  `stop()`/`warning()`/`message()`.
+
+* Add many unit tests.
+
+# sdmTMB 0.0.23.9000
+
+* A package version number that was used for internal testing in the 'delta'
+  branch by several people.
+
 # sdmTMB 0.0.22.9001
 
 * Switch to TMBad library for ~3-fold speedup(!)
