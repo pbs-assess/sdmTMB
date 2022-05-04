@@ -200,6 +200,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
       std.error = NA, stringsAsFactors = FALSE)
     out_re$tweedie_p$conf.low <- plogis(est$thetaf - crit * se$thetaf) + 1
     out_re$tweedie_p$conf.high <- plogis(est$thetaf + crit * se$thetaf) + 1
+    ii <- ii + 1
   }
 
   if ("ar1_phi" %in% names(est)) {

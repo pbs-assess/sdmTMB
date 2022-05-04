@@ -52,6 +52,10 @@ installed, you can install sdmTMB:
 remotes::install_github("pbs-assess/sdmTMB", dependencies = TRUE)
 ```
 
+If you have problems installing INLA, try [installing it
+directly](https://www.r-inla.org/download-install) first. *Note that as
+of May 4, 2022, INLA hasn’t been updated for R 4.2 yet.*
+
 ## Overview
 
 Analyzing geostatistical data (coordinate-referenced observations from
@@ -252,14 +256,36 @@ tidy(fit, effects = "ran_pars", conf.int = TRUE)
 #> 4 tweedie_p     1.58 NA            1.56      1.60
 ```
 
-Plot the smoother effect:
+Run some basic sanity checks on our model:
 
 ``` r
-plot_smooth(fit, ggplot = TRUE) + xlim(40, 400)
-#> Warning: Removed 33 row(s) containing missing values (geom_path).
+sanity(fit)
+#> ✓ Non-linear minimizer suggests successful convergence
+#> ✓ Hessian matrix is positive definite
+#> ✓ No extreme or very small eigen values detected
+#> ✓ No gradients with respect to fixed effects are >= 0.001
+#> ✓ No fixed-effect standard errors are NA
+#> ✓ No fixed-effect standard errors look unreasonably large
+#> ✓ No sigma parameters are < 0.001
+#> ✓ Range parameter doesn't look unreasonably large
 ```
 
-<img src="man/figures/README-plot-smooth-1.png" width="50%" />
+Use the visreg package to plot the smoother effect in link space with
+randomized quantile partial residuals:
+
+``` r
+visreg::visreg(fit, xvar = "depth", xlim = c(50, 500))
+```
+
+<img src="man/figures/README-plot-visreg-link-1.png" width="50%" />
+
+Or on the response scale:
+
+``` r
+visreg::visreg(fit, xvar = "depth", scale = "response", xlim = c(50, 300), nn = 200)
+```
+
+<img src="man/figures/README-plot-visreg-response-1.png" width="50%" />
 
 Predict on new data:
 
@@ -275,7 +301,7 @@ head(p)
     #>       X     Y depth   est est_non_rf est_rf omega_s
     #>   <dbl> <dbl> <dbl> <dbl>      <dbl>  <dbl>   <dbl>
     #> 1   456  5636  347. -3.06      -3.08 0.0172  0.0172
-    #> 2   458  5636  223.  2.03       1.99 0.0460  0.0460
+    #> 2   458  5636  223.  2.03       1.99 0.0459  0.0459
     #> 3   460  5636  204.  2.89       2.82 0.0747  0.0747
 
 ``` r
@@ -612,11 +638,11 @@ m_cv <- sdmTMB_cv(
 #> Set a parallel `future::plan()` to use parallel processing.
 # Sum of log likelihoods of left-out data:
 m_cv$sum_loglik
-#> [1] -7122.514
+#> [1] -7122.779
 # Expected log pointwise predictive density from left-out data:
 # (average likelihood density)
 m_cv$elpd
-#> [1] -1.005115
+#> [1] -1.005114
 ```
 
 See
