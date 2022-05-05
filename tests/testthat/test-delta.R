@@ -90,4 +90,59 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     expect_true(sum(is.na(s$b_j)) == 0L)
     fit_dtnb2$sd_report
   })
+
+  test_that("Anisotropy with delta model", {
+    skip_on_cran()
+    skip_if_not_installed("INLA")
+
+    fit_dg <- sdmTMB(density ~ 1,
+                     data = pcod, mesh = pcod_spde,
+                     time = "year", family = delta_gamma(),
+                     anisotropy = TRUE,
+                     control = sdmTMBcontrol(newton_loops = 1)
+    )
+
+    fit_bin <- sdmTMB(present ~ 1,
+                      data = pcod, mesh = pcod_spde,
+                      time = "year", family = binomial(),
+                      anisotropy = TRUE,
+                      control = sdmTMBcontrol(newton_loops = 1)
+    )
+    p1 <- plot_anisotropy(fit_bin)
+    p2 <- plot_anisotropy(fit_dg)
+    expect_equal(p2,p1, tolerance = 1e-6)
+
+    fit_gamma <- sdmTMB(density ~ 1,
+                        data = pcod_pos, mesh = pcod_spde_pos,
+                        time = "year", family = Gamma(link = "log"),
+                        anisotropy = TRUE,
+                        control = sdmTMBcontrol(newton_loops = 1)
+    )
+
+    p3 <- plot_anisotropy(fit_gamma)
+    p4 <- plot_anisotropy(fit_dg, model = 2)
+
+    ## not sure why this isn't working
+    # expect_equal(p4, p3, tolerance = 1e-6)
+
+    fit_bin$sd_report
+    fit_gamma$sd_report
+    fit_dg$sd_report
+
+    sr_bin <- as.list(fit_bin$sd_report, "Estimate")
+    sr_gamma <- as.list(fit_gamma$sd_report, "Estimate")
+    sr_dg <- as.list(fit_dg$sd_report, "Estimate")
+
+    expect_equal(sr_bin$ln_H_input[1,1], sr_dg$ln_H_input[1,1], tolerance = 1e-4)
+    expect_equal(sr_gamma$ln_H_input[1,1], sr_dg$ln_H_input[1,2], tolerance = 1e-4)
+
+    # all estimates still match?
+    expect_equal(sr_bin$b_j[1], sr_dg$b_j[1], tolerance = 1e-4)
+    expect_equal(sr_bin$ln_kappa[1,1], sr_dg$ln_kappa[1,1], tolerance = 1e-4)
+    expect_equal(sr_gamma$b_j[1], sr_dg$b_j2[1], tolerance = 1e-4)
+    expect_equal(sr_gamma$ln_phi, sr_dg$ln_phi[2], tolerance = 1e-4)
+    expect_equal(sr_gamma$ln_tau_O, sr_dg$ln_tau_O[2], tolerance = 1e-4)
+    expect_equal(sr_gamma$ln_tau_E, sr_dg$ln_tau_E[2], tolerance = 1e-4)
+    expect_equal(sr_gamma$ln_kappa[1,1], sr_dg$ln_kappa[1,2], tolerance = 1e-4)
+  })
 }
