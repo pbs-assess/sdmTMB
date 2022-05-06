@@ -123,12 +123,12 @@ The complete sdmTMB model can be written as
 $$
 \begin{aligned}
 \mathbb{E}[y_{\s,t}] &= \mu_{\s,t},\\
-\mu_{\bm{s},t} &=
-f^{-1} \left( \bm{X}^{\mathrm{main}}_{\bm{s},t} \bm{\beta} +
+\mu_{\boldsymbol{s},t} &=
+f^{-1} \left( \boldsymbol{X}^{\mathrm{main}}_{\boldsymbol{s},t} \boldsymbol{\beta} +
 O_{\s,t} +
 \alpha_g +
-\bm{X}^{\mathrm{tvc}}_{\bm{s},t} \bm{\gamma_t} +
-\bm{X}^{\mathrm{svc}}_{\bm{s},t} \zeta_{\bm{s}} +
+\boldsymbol{X}^{\mathrm{tvc}}_{\boldsymbol{s},t} \boldsymbol{\gamma_t} +
+\boldsymbol{X}^{\mathrm{svc}}_{\boldsymbol{s},t} \zeta_{\boldsymbol{s}} +
 \omega_{\s} +
 \epsilon_{\s,t} \right),
 \end{aligned}
@@ -139,14 +139,14 @@ where
 * $y_{\s,t}$ represents the response data at point $\s$ and time $t$;
 * $\mu$ represents the mean;
 * $f$ represents a link function (e.g., log or logit) and $f^{-1}$ represents its inverse;
-* $\bm{X}^{\mathrm{main}}$, $\bm{X}^{\mathrm{tvc}}$, and $\bm{X}^{\mathrm{svc}}$ represent design matrices (the superscript identifiers 'main' = main effects, 'tvc' = time varying coefficients, and 'svc' = spatially varying coefficients);
-* $\bm{\beta}$ represents a vector of fixed-effect coefficients;
+* $\boldsymbol{X}^{\mathrm{main}}$, $\boldsymbol{X}^{\mathrm{tvc}}$, and $\boldsymbol{X}^{\mathrm{svc}}$ represent design matrices (the superscript identifiers 'main' = main effects, 'tvc' = time varying coefficients, and 'svc' = spatially varying coefficients);
+* $\boldsymbol{\beta}$ represents a vector of fixed-effect coefficients;
 * $O_{\s,t}$ represents an offset: a covariate (usually log transformed) with a coefficient fixed at one;
 * $\alpha_{g}$ represents random intercepts by group $g$, $\alpha_{g}\sim \mathrm{N}(0,\sigma^2_\alpha)$;
 * $\gamma_{t}$ represents time-varying coefficients (a random walk), $\gamma_{t} \sim \mathrm{N}(\gamma_{t-1},\sigma^2_\gamma)$;
-* $\zeta_{\bm{s}}$ represents spatially varying coefficients (a random field), $\zeta_{\s} \sim \mathrm{MVN}(\bm{0},\bm{\Sigma}_\zeta)$;
-* $\omega_{\bm{s}}$ represents a spatial component (a random field), $\omega_{\s} \sim \mathrm{MVN}(\bm{0},\bm{\Sigma}_\omega)$; and
-* $\epsilon_{\s,t}$ represents a spatiotemporal component (a random field), $\epsilon_{\s,t} \sim \mathrm{MVN}(\bm{0},\bm{\Sigma}_{\epsilon})$.
+* $\zeta_{\boldsymbol{s}}$ represents spatially varying coefficients (a random field), $\zeta_{\s} \sim \mathrm{MVN}(\boldsymbol{0},\boldsymbol{\Sigma}_\zeta)$;
+* $\omega_{\boldsymbol{s}}$ represents a spatial component (a random field), $\omega_{\s} \sim \mathrm{MVN}(\boldsymbol{0},\boldsymbol{\Sigma}_\omega)$; and
+* $\epsilon_{\s,t}$ represents a spatiotemporal component (a random field), $\epsilon_{\s,t} \sim \mathrm{MVN}(\boldsymbol{0},\boldsymbol{\Sigma}_{\epsilon})$.
 
 A single sdmTMB model will rarely, if ever, contain all of the above components. Next, we will split the model to describe the various parts in more detail using '$\ldots$' to represent the other optional components.
 
@@ -154,11 +154,11 @@ A single sdmTMB model will rarely, if ever, contain all of the above components.
 
 $$
 \begin{aligned}
-\mu_{\bm{s},t} &= f^{-1} \left( \bm{X}^{\mathrm{main}}_{\bm{s},t} \bm{\beta} \ldots \right)
+\mu_{\boldsymbol{s},t} &= f^{-1} \left( \boldsymbol{X}^{\mathrm{main}}_{\boldsymbol{s},t} \boldsymbol{\beta} \ldots \right)
 \end{aligned}
 $$
 
-Within `sdmTMB()`, $\bm{X}^{\mathrm{main}}_{\bm{s},t} \bm{\beta}$ is defined by the `formula` argument and represents the main-effect model matrix and a corresponding vector of coefficients. This main effect formula can contain optional penalized smoothers or non-linear functions as defined below.
+Within `sdmTMB()`, $\boldsymbol{X}^{\mathrm{main}}_{\boldsymbol{s},t} \boldsymbol{\beta}$ is defined by the `formula` argument and represents the main-effect model matrix and a corresponding vector of coefficients. This main effect formula can contain optional penalized smoothers or non-linear functions as defined below.
 
 ### Smoothers
 
@@ -206,7 +206,7 @@ Spatial random fields, $\omega_{\s}$, are included if `spatial = 'on'` (or `TRUE
 
 $$
 \begin{aligned}
-\mu_{\bm{s},t} &= f^{-1} \left( \ldots + \omega_{\s} + \ldots \right),\\
+\mu_{\boldsymbol{s},t} &= f^{-1} \left( \ldots + \omega_{\s} + \ldots \right),\\
 \boldsymbol{\omega} &\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_\omega \right),\\
 \end{aligned}
 $$
@@ -235,7 +235,7 @@ IID spatiotemporal random fields (`spatiotemporal = 'iid'`) can be represented a
 
 $$
 \begin{aligned}
-\mu_{\bm{s},t} &= f^{-1} \left( \ldots + \epsilon_{\s,t} + \ldots \right),\\
+\mu_{\boldsymbol{s},t} &= f^{-1} \left( \ldots + \epsilon_{\s,t} + \ldots \right),\\
 \boldsymbol{\epsilon_{t}} &\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right).
 \end{aligned}
 $$
@@ -290,13 +290,13 @@ Parameters can be modelled as time varying (a random walk) according to the form
 
 $$
 \begin{aligned}
-  \mu_{\s,t} &= f^{-1} \left( \ldots +  \bm{X}^{\mathrm{tvc}}_{\s,t} \bm{\gamma_{t}} + \ldots \right),\\
+  \mu_{\s,t} &= f^{-1} \left( \ldots +  \boldsymbol{X}^{\mathrm{tvc}}_{\s,t} \boldsymbol{\gamma_{t}} + \ldots \right),\\
   \gamma_{t=1} &\sim \operatorname{Uniform} \left(-\infty, \infty \right),\\
   \gamma_{t>1} &\sim \operatorname{Normal} \left(\gamma_{t-1}, \sigma^2_{\gamma} \right),
 \end{aligned}
 $$
 
-where $\bm{\gamma_t}$ is an optional vector of time-varying regression parameters and $\bm{X}^{\mathrm{tvc}}_{\s,t}$ is the corresponding model matrix with covariate values.
+where $\boldsymbol{\gamma_t}$ is an optional vector of time-varying regression parameters and $\boldsymbol{X}^{\mathrm{tvc}}_{\s,t}$ is the corresponding model matrix with covariate values.
 This is defined via the `time_varying` argument, assuming that the `time` argument is also supplied a column name.
 For example, `time_varying ~ 0 + x`.
 The first value is given an implicit uniform prior.
@@ -309,13 +309,13 @@ Spatially varying coefficient models are defined as
 
 $$
 \begin{aligned}
-  \mu_{\s,t} &= f^{-1} \left( \ldots + \bm{X}^{\mathrm{svc}}_{\s, t} \zeta_{\bm{s}} + \ldots \right),\\
+  \mu_{\s,t} &= f^{-1} \left( \ldots + \boldsymbol{X}^{\mathrm{svc}}_{\s, t} \zeta_{\boldsymbol{s}} + \ldots \right),\\
   \boldsymbol{\zeta} &\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_\zeta \right),
 \end{aligned}
 $$
 
 where $\boldsymbol{\zeta}$ is a random field representing a spatially varying coefficient.
-Usually, $\bm{X}^{\mathrm{svc}}_{\s, t}$ would represent a prediction matrix that is constant spatially for a given time $t$ as defined by a one-sided formula supplied to `spatial_varying`.
+Usually, $\boldsymbol{X}^{\mathrm{svc}}_{\s, t}$ would represent a prediction matrix that is constant spatially for a given time $t$ as defined by a one-sided formula supplied to `spatial_varying`.
 For example `spatial_varying = ~ 0 + x`, where `0` omits the intercept.
 
 The random fields are parameterized internally with a sparse precision matrix ($\boldsymbol{Q}_\zeta$)
