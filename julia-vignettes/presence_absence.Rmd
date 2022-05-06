@@ -12,8 +12,8 @@ vignette: >
 ```{r setup, include = FALSE, cache=FALSE}
 dplyr_installed <- require("dplyr", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
-inla_installed <- require("INLA", quietly = TRUE)
-pkgs <- dplyr_installed && ggplot_installed && inla_installed
+patstat.data_installed <- require("spatstat.data", quietly = TRUE)
+pkgs <- dplyr_installed && ggplot_installed && spatstat.data_installed
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
