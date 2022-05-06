@@ -1,10 +1,11 @@
+
 test_that("barrier mesh", {
   skip_on_cran()
   skip_on_ci()
+  skip_if_not_installed("INLA")
+  skip_if_not_installed("sf")
+  skip_if_not_installed("dplyr")
 
-if (require("sf", quietly = TRUE) &&
-    require("dplyr", quietly = TRUE) &&
-    require("INLA", quietly = TRUE)) {
 
   crs_utm9 <- 3156 # Pick a projection, here UTM9
   st_crs(bc_coast) <- 4326 # 'WGS84'; necessary on some installs
@@ -94,6 +95,4 @@ if (require("sf", quietly = TRUE) &&
   expect_gt(t2$estimate[t2$term=="sigma_O"], t1$estimate[t1$term=="sigma_O"])
   # not sure what we would expect sigma_E to do?
   # expect_??(t2$estimate[t2$term=="sigma_E"], t1$estimate[t1$term=="sigma_E"])
-
-}
 })
