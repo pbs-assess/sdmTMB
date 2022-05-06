@@ -57,8 +57,7 @@ subscripts <- tibble::tribble(
   "$t$", "Index for time",
   "$g$", "Group"
 )
-knitr::kable(subscripts, caption = "Subscript notation", escape = FALSE, format = "latex", booktabs = TRUE) %>%
-  kableExtra::kable_styling(latex_options = "hold_position")
+knitr::kable(subscripts, caption = "Subscript notation", escape = FALSE, format = "latex", booktabs = TRUE)
 ```
 
 ```{r symbols, results='asis'}
