@@ -240,7 +240,8 @@ sdmTMB_simulate <- function(formula,
 
   newobj <- TMB::MakeADFun(
     data = tmb_data, map = fit$tmb_map,
-    random = fit$tmb_random, parameters = params, DLL = "sdmTMB"
+    random = fit$tmb_random, parameters = params, DLL = "sdmTMB",
+    checkParameterOrder = FALSE
   )
 
   set.seed(seed)
