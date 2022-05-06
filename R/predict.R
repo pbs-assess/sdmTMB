@@ -234,7 +234,8 @@ predict.sdmTMB <- function(object, newdata = object$data,
   type = c("link", "response"),
   se_fit = FALSE,
   return_tmb_object = FALSE,
-  area = deprecated(), re_form = NULL, re_form_iid = NULL, nsim = 0,
+  area = deprecated(),
+  re_form = NULL, re_form_iid = NULL, nsim = 0,
   sims = deprecated(),
   tmbstan_model = NULL,
   sims_var = "est",
@@ -257,7 +258,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
   }
 
   if (is_present(area)) {
-    deprecate_warn("0.0.22", "predict.sdmTMB(area)", "get_index(area)")
+    deprecate_stop("0.0.22", "predict.sdmTMB(area)", "get_index(area)")
   } else {
     area <- 1
   }
