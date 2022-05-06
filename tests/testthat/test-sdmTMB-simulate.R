@@ -211,12 +211,12 @@ test_that("sdmTMB_simulate works for different spatiotemporal field types", {
 
 
   ## test RW
-  expect_error(# NOT SURE WAY THIS DOESN'T CONVERGE BUT ONE BELOW DOES?
-  t <- test_sim(rho = 1,
-                sigma_O = 0.7, # needs larger sigma to be able to estimate it along with an AR1
-                sigma_E = 0.2,
-                model_type = "RW")
-  )
+  # # NOT SURE WAY THIS DOESN'T CONVERGE BUT ONE BELOW DOES?
+  # t <- test_sim(rho = 1,
+  #               sigma_O = 0.7, # needs larger sigma to be able to estimate it along with an AR1
+  #               sigma_E = 0.2,
+  #               model_type = "RW")
+  #
   t <- test_sim(rho = 0.99,
                 sigma_O = 0.7, # needs larger sigma to be able to estimate it along with an AR1
                 sigma_E = 0.2,
