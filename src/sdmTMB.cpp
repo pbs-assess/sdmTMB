@@ -372,10 +372,8 @@ Type objective_function<Type>::operator()()
           // This penalty added to match Kasper's AR1_t() implementation
           PARALLEL_REGION jnll += Type((n_rows-1)*m_cols) * log(sqrt(Type(1)-rho*rho));
         } else if (rw_fields) {
-          PARALLEL_REGION jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(0)))(epsilon_st.col(0));
-          for (int t = 1; t < n_t; t++) {
-            PARALLEL_REGION jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E_vec(t)))(epsilon_st.col(t) - epsilon_st.col(t - 1));
-          }
+          for (int t = 0; t < n_t; t++)
+            PARALLEL_REGION jnll += SCALE(GMRF(Q_st, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
         } else {
           error("Field type not implemented.");
         }
@@ -389,10 +387,6 @@ Type objective_function<Type>::operator()()
         } else if (rw_fields) {
           for (int t = 0; t < n_t; t++)
             PARALLEL_REGION jnll += SCALE(GMRF(Q_st, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
-          // jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
-          // for (int t = 1; t < n_t; t++) {
-          //   jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(t) - epsilon_st.col(t - 1));
-          // }
           if (sim_re(1)) {
             for (int t = 0; t < n_t; t++) { // untested!!
               vector<Type> epsilon_st_tmp(epsilon_st.rows());

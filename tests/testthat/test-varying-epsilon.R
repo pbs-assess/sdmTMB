@@ -26,9 +26,8 @@ test_that("Epsilon models work with RW spatiotemporal fields", {
     time = "year",
     mesh = pcod_spde,
     family = tweedie(link = "log"),
-    epsilon_predictor = "dummy",
+    experimental = list(epsilon_predictor = "dummy", epsilon_model = "trend"),
     control = sdmTMBcontrol(
-      lower = list(b_epsilon = -1), upper = list(b_epsilon = 1),
       map = list(b_epsilon = factor(NA)), start = list(b_epsilon = 0)
     ),
     spatiotemporal = "RW"
@@ -66,14 +65,13 @@ test_that("Epsilon models work with AR1 spatiotemporal fields", {
     time = "year",
     mesh = pcod_spde,
     family = tweedie(link = "log"),
-    epsilon_predictor = "dummy",
+    experimental = list(epsilon_predictor = "dummy", epsilon_model = "trend"),
     control = sdmTMBcontrol(
-      lower = list(b_epsilon = -1), upper = list(b_epsilon = 1),
-      map = list(b_epsilon = factor(NA)), start = list(b_epsilon = 0)
+    map = list(b_epsilon = factor(NA)), start = list(b_epsilon = 0)
     ),
     spatiotemporal = "AR1"
   )
 
-  expect_equal(tidy(m1, "ran_par")$estimate, tidy(m2, "ran_par")$estimate, tolerance = 0.001)
+  expect_equal(m1$model$par[['ar1_phi']],m2$model$par[['ar1_phi']], tolerance = 0.0001)
   expect_equal(logLik(m1)[1], logLik(m2)[1])
 })
