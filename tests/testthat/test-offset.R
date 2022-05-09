@@ -80,3 +80,23 @@ test_that("Offset matches glmmTMB", {
   # the offset is doing something
   expect_false(((b2_offset - b2) == 0))
 })
+
+test_that("Offset works with extra_time", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  pcod$offset <- rnorm(nrow(pcod))
+  mesh <- make_mesh(pcod, xy_cols = c("X", "Y"), n_knots = 80)
+  fit <- sdmTMB(density ~ 1,
+    offset = pcod$offset,
+    mesh = mesh,
+    time = "year",
+    extra_time = c(2006L, 2008L, 2010L, 2012L, 2014L, 2016L),
+    data = pcod, spatial = "off",
+    spatiotemporal = "ar1",
+    family = tweedie()
+  )
+  expect_true(inherits(fit, "sdmTMB"))
+  b <- tidy(fit, "ran_pars")
+  expect_equal(round(b$estimate[b$term == "rho"], 2), 0.87)
+})
