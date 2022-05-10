@@ -284,6 +284,7 @@ test_that("Random walk fields work", {
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 15)
   m_rw <- sdmTMB(density ~ 1,
     data = d, time = "year", mesh = pcod_spde,
+    control = sdmTMBcontrol(newton_loops = 1),
     family = tweedie(link = "log"), spatiotemporal = "RW"
   )
   expect_identical(m_rw$tmb_data$rw_fields, TRUE)
@@ -294,14 +295,15 @@ test_that("Random walk fields work", {
     data = d, time = "year", mesh = pcod_spde,
     family = tweedie(link = "log"), spatiotemporal = "AR1",
     control = sdmTMBcontrol(
-      start = list(ar1_phi = qlogis((0.99 + 1) / 2)),
+      newton_loops = 1,
+      start = list(ar1_phi = qlogis((0.98 + 1) / 2)),
       map = list(ar1_phi = factor(NA)))
   )
   expect_identical(m_ar1$tmb_data$ar1_fields, TRUE)
   expect_identical(m_ar1$tmb_data$rw_fields, FALSE)
   p_ar1 <- predict(m_ar1)
 
-  expect_gt(stats::cor(p_ar1$est, p_rw$est), 0.95)
+  expect_gt(stats::cor(p_ar1$est, p_rw$est), 0.9)
 })
 
 

@@ -85,6 +85,7 @@ test_that("Offset works with extra_time", {
   skip_on_cran()
   skip_on_ci()
   skip_if_not_installed("INLA")
+  set.seed(1)
   pcod$offset <- rnorm(nrow(pcod))
   mesh <- make_mesh(pcod, xy_cols = c("X", "Y"), n_knots = 80)
   fit <- sdmTMB(density ~ 1,
@@ -98,5 +99,5 @@ test_that("Offset works with extra_time", {
   )
   expect_true(inherits(fit, "sdmTMB"))
   b <- tidy(fit, "ran_pars")
-  expect_equal(round(b$estimate[b$term == "rho"], 2), 0.87)
+  expect_equal(round(b$estimate[b$term == "rho"], 2), 0.91)
 })
