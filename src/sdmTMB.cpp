@@ -89,9 +89,6 @@ Type objective_function<Type>::operator()()
   // std::cout << "no OpenMP (max_parallel_regions=1)\n";
 #endif
 
-  // Set max number of OpenMP threads to help us optimize faster (as in glmmTMB)
-  // max_parallel_regions = omp_get_max_threads();
-
   // Vectors of real data
   DATA_ARRAY(y_i);      // response
   DATA_STRUCT(X_ij, sdmTMB::LOM_t); //DATA_MATRIX(X_ij);     // array of model matrices
@@ -331,13 +328,11 @@ Type objective_function<Type>::operator()()
   //    }
   //  }
 
-  // DELTA DONE
   Eigen::SparseMatrix<Type> Q_s; // Precision matrix
   Eigen::SparseMatrix<Type> Q_st; // Precision matrix
   Eigen::SparseMatrix<Type> Q_s2; // Precision matrix
   Eigen::SparseMatrix<Type> Q_st2; // Precision matrix
 
-  // DELTA DONE
   if (barrier) {
     Q_s = Q_spde(spde_barrier, exp(ln_kappa(0,0)), barrier_scaling);
     if (n_m > 1) Q_s2 = Q_spde(spde_barrier, exp(ln_kappa(0,1)), barrier_scaling);
@@ -370,11 +365,9 @@ Type objective_function<Type>::operator()()
   if (normalize_in_r) s = false;
 
   // Spatial (intercept) random effects:
-  // DELTA DONE
   for (int m = 0; m < n_m; m++) {
     Eigen::SparseMatrix<Type> Q_temp; // Precision matrix
     if (include_spatial) {
-      // jnll += SCALE(GMRF(Q_s, s), 1. / exp(ln_tau_O))(omega_s);
       if (m == 0) {
         Q_temp = Q_s;
       } else {
@@ -403,7 +396,6 @@ Type objective_function<Type>::operator()()
     }
   }
 
-  // DELTA DONE? not simulate
   // Spatiotemporal random effects:
   for (int m = 0; m < n_m; m++) {
     Eigen::SparseMatrix<Type> Q_temp; // Precision matrix
@@ -490,8 +482,6 @@ Type objective_function<Type>::operator()()
 
   // ------------------ Probability of random effects --------------------------
 
-
-  // DELTA DONE
   // IID random intercepts:
   for (int m = 0; m < n_m; m++) {
     for (int g = 0; g < RE.rows(); g++) {
@@ -501,7 +491,6 @@ Type objective_function<Type>::operator()()
     }
   }
 
-  // DELTA DONE
   // Random walk effects (dynamic regression):
   if (random_walk) {
     for (int m = 0; m < n_m; m++) {
@@ -518,7 +507,6 @@ Type objective_function<Type>::operator()()
 
   // Here we are projecting the spatiotemporal and spatial random effects to the
   // locations of the data using the INLA 'A' matrices.
-  // DELTA DONE
   array<Type> omega_s_A(n_i, n_m);
   array<Type> zeta_s_A(n_i, n_z, n_m);
   array<Type> epsilon_st_A(n_i, n_t, n_m);
@@ -537,16 +525,15 @@ Type objective_function<Type>::operator()()
       zeta_s_A.col(m).col(z) = A_st * vector<Type>(zeta_s.col(m).col(z));
   }
 
-
   // ------------------ Linear predictor ---------------------------------------
 
-  // DELTA DONE?
   array<Type> eta_fixed_i(n_i, n_m);
   for (int m = 0; m < n_m; m++) {
     if (m == 0) eta_fixed_i.col(m) = X_ij(m) * b_j;
     if (m == 1) eta_fixed_i.col(m) = X_ij(m) * b_j2;
   }
 
+  // FIXME delta must be same in 2 components:
   // p-splines/smoothers
   array<Type> eta_smooth_i(n_i, n_m);
   eta_smooth_i.setZero();
@@ -583,14 +570,12 @@ Type objective_function<Type>::operator()()
     }
   }
 
-  // DELTA done
   matrix<Type> mu_i(n_i,n_m), eta_i(n_i,n_m), eta_rw_i(n_i,n_m), eta_iid_re_i(n_i,n_m);
   eta_rw_i.setZero();
   eta_iid_re_i.setZero();
   mu_i.setZero();
   eta_i.setZero();
 
-  // DELTA done
   // combine parts:
   for (int m = 0; m < n_m; m++) {
     for (int i = 0; i < n_i; i++) {
@@ -794,21 +779,21 @@ Type objective_function<Type>::operator()()
       if (m == 1) proj_fe.col(m) = proj_X_ij(m) * b_j2;
     }
 
-    //      // add threshold effect if specified
-    //      // DELTA TODO
-    //      if (threshold_func > 0) {
-    //        if (threshold_func == 1) {
-    //          // linear
-    //          for (int i = 0; i < n_p; i++) {
-    //            proj_fe(i) = proj_fe(i) + sdmTMB::linear_threshold(proj_X_threshold(i), s_slope, s_cut);
-    //          }
-    //        } else {
-    //          // logistic
-    //          for (int i = 0; i < n_p; i++) {
-    //            proj_fe(i) = proj_fe(i) + sdmTMB::logistic_threshold(proj_X_threshold(i), s50, s95, s_max);
-    //          }
-    //        }
-    //      }
+    // add threshold effect if specified
+    // DELTA TODO
+    if (threshold_func > 0) {
+      if (threshold_func == 1) {
+        // linear
+        for (int i = 0; i < n_p; i++) {
+          proj_fe(i,0) += sdmTMB::linear_threshold(proj_X_threshold(i), s_slope, s_cut);
+        }
+      } else {
+        // logistic
+        for (int i = 0; i < n_p; i++) {
+          proj_fe(i,0) += sdmTMB::logistic_threshold(proj_X_threshold(i), s50, s95, s_max);
+        }
+      }
+    }
 
     // Smoothers:
     array<Type> proj_smooth_i(n_p, n_m);

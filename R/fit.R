@@ -691,17 +691,19 @@ sdmTMB <- function(
 
   # thresholds not yet enabled for delta model, where formula is a list
   if (inherits(formula, "formula")) {
+    original_formula <- replicate(n_m, list(formula))
     thresh <- list(check_and_parse_thresh_params(formula, data))
-    if (delta)
+    if (delta) {
       formula <- list(thresh[[1]]$formula, thresh[[1]]$formula)
-    else
+    } else {
       formula <- list(thresh[[1]]$formula)
+    }
   } else {
+    original_formula <- formula
     thresh <- list(check_and_parse_thresh_params(formula[[1]], data),
                    check_and_parse_thresh_params(formula[[2]], data))
     formula <- list(thresh[[1]]$formula, thresh[[2]]$formula)
   }
-  original_formula <- formula
 
   if (!is.null(extra_time)) { # for forecasting or interpolating
     data[["__sdmTMB_offset__"]] <- offset
@@ -1057,7 +1059,7 @@ sdmTMB <- function(
       tmb_map$ln_phi[2] <- 2
   }
   tmb_map$ln_phi <- as.factor(tmb_map$ln_phi)
-  if (!is.null(thresh$threshold_parameter)) tmb_map$b_threshold <- NULL
+  if (!is.null(thresh[[1]]$threshold_parameter)) tmb_map$b_threshold <- NULL
 
   if (multiphase && is.null(previous_fit) && do_fit) {
 

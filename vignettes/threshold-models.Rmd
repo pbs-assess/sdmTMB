@@ -72,7 +72,7 @@ We can visualize the effect:
 
 ```{r logistic-eff}
 nd <- data.frame(
-  depth_scaled = seq(min(pcod$depth_scaled) + 0.2, 
+  depth_scaled = seq(min(pcod$depth_scaled) + 0.5, 
     max(pcod$depth_scaled) - 0.2, length.out = 100), 
   year = 2015L # a chosen year
 )
