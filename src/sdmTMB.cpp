@@ -760,21 +760,21 @@ Type objective_function<Type>::operator()()
       if (m == 1) proj_fe.col(m) = proj_X_ij(m) * b_j2;
     }
 
-    //      // add threshold effect if specified
-    //      // DELTA TODO
-    //      if (threshold_func > 0) {
-    //        if (threshold_func == 1) {
-    //          // linear
-    //          for (int i = 0; i < n_p; i++) {
-    //            proj_fe(i) = proj_fe(i) + sdmTMB::linear_threshold(proj_X_threshold(i), s_slope, s_cut);
-    //          }
-    //        } else {
-    //          // logistic
-    //          for (int i = 0; i < n_p; i++) {
-    //            proj_fe(i) = proj_fe(i) + sdmTMB::logistic_threshold(proj_X_threshold(i), s50, s95, s_max);
-    //          }
-    //        }
-    //      }
+    // add threshold effect if specified
+    // DELTA TODO
+    if (threshold_func > 0) {
+      if (threshold_func == 1) {
+        // linear
+        for (int i = 0; i < n_p; i++) {
+          proj_fe(i,0) += sdmTMB::linear_threshold(proj_X_threshold(i), s_slope, s_cut);
+        }
+      } else {
+        // logistic
+        for (int i = 0; i < n_p; i++) {
+          proj_fe(i,0) += sdmTMB::logistic_threshold(proj_X_threshold(i), s50, s95, s_max);
+        }
+      }
+    }
 
     // Smoothers:
     array<Type> proj_smooth_i(n_p, n_m);
