@@ -509,7 +509,7 @@ Type objective_function<Type>::operator()()
         // flat prior on the initial value... then:
         for (int t = 1; t < n_t; t++) {
           PARALLEL_REGION jnll += -dnorm(b_rw_t(t, k, m), b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)), true);
-          if (sim_re(4)) SIMULATE{b_rw_t(t, k, m) = rnorm(b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)));}
+          if (sim_re(4) && simulate_t(t)) SIMULATE{b_rw_t(t, k, m) = rnorm(b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)));}
         }
       }
     }
