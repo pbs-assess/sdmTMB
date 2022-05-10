@@ -263,7 +263,7 @@ test_that("The mapping off spatial and spatiotemporal fields works.", {
   b1 <- as.numeric(unclass(glmmTMB::fixef(m.glmmTMB))$cond)
   b2 <- tidy(m.sdmTMB.map)$estimate
   b3 <- as.numeric(coef(m.stats.glm))
-  expect_equal(b1, b2, tolerance = 1e-7)
+  expect_equal(b1, b2, tolerance = 1e-6)
   expect_equal(b3, b2, tolerance = 1e-6)
 })
 
