@@ -29,6 +29,8 @@ Assuming you have a [C++ compiler](https://support.rstudio.com/hc/en-us/articles
 remotes::install_github("pbs-assess/sdmTMB", dependencies = TRUE)
 ```
 
+If you have problems installing INLA, try [installing it directly](https://www.r-inla.org/download-install) first. *Note that as of May 4, 2022, INLA hasn't been updated for R 4.2 yet.*
+
 ## Overview
 
 Analyzing geostatistical data (coordinate-referenced observations from some underlying spatial process) is becoming increasingly common in ecology.
@@ -142,10 +144,22 @@ tidy(fit, conf.int = TRUE)
 tidy(fit, effects = "ran_pars", conf.int = TRUE)
 ```
 
-Plot the smoother effect:
+Run some basic sanity checks on our model:
 
-```{r plot-smooth}
-plot_smooth(fit, ggplot = TRUE) + xlim(40, 400)
+```{r}
+sanity(fit)
+```
+
+Use the visreg package to plot the smoother effect in link space with randomized quantile partial residuals:
+
+```{r plot-visreg-link}
+visreg::visreg(fit, xvar = "depth", xlim = c(50, 500))
+```
+
+Or on the response scale:
+
+```{r plot-visreg-response, warning=FALSE}
+visreg::visreg(fit, xvar = "depth", scale = "response", xlim = c(50, 300), nn = 200)
 ```
 
 Predict on new data:

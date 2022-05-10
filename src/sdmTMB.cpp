@@ -415,7 +415,6 @@ Type objective_function<Type>::operator()()
     if (!spatial_only(m)) {
       if (!ar1_fields(m) && !rw_fields(m)) {
         for (int t = 0; t < n_t; t++)
-          // PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
           PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E(m)))(epsilon_st.col(m).col(t));
         if (sim_re(1)) {
           for (int t = 0; t < n_t; t++) {
@@ -461,13 +460,10 @@ Type objective_function<Type>::operator()()
             }
           }
         } else if (rw_fields(m)) {
-          for (int t = 0; t < n_t; t++)
-            // PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E_vec(t)))(epsilon_st.col(t));
-            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E(m)))(epsilon_st.col(m).col(t));
-          // jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(0));
-          // for (int t = 1; t < n_t; t++) {
-          //   jnll += SCALE(GMRF(Q_st, s), 1./exp(ln_tau_E))(epsilon_st.col(t) - epsilon_st.col(t - 1));
-          // }
+          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1./exp(ln_tau_E(m)))(epsilon_st.col(m).col(0));
+          for (int t = 1; t < n_t; t++) {
+            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1./exp(ln_tau_E(m)))(epsilon_st.col(m).col(t) - epsilon_st.col(m).col(t - 1));
+          }
           if (sim_re(1)) {
             for (int t = 0; t < n_t; t++) {
               if (simulate_t(t)) {
@@ -536,11 +532,6 @@ Type objective_function<Type>::operator()()
     for (int t = 0; t < n_t; t++)
       if (!spatial_only(m)) epsilon_st_A.col(m).col(t) =
         A_st * vector<Type>(epsilon_st.col(m).col(t));
-    if (rw_fields(m)) {
-      for (int t = 1; t < n_t; t++)
-        if (!spatial_only(m)) epsilon_st_A.col(m).col(t) =
-          epsilon_st_A.col(m).col(t - 1) + epsilon_st_A.col(m).col(t);
-    }
     omega_s_A.col(m) = A_st * vector<Type>(omega_s.col(m));
     for (int z = 0; z < n_z; z++)
       zeta_s_A.col(m).col(z) = A_st * vector<Type>(zeta_s.col(m).col(z));

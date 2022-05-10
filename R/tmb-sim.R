@@ -222,8 +222,12 @@ sdmTMB_simulate <- function(formula,
   if (!is.null(B)) params$b_j <- matrix(B, ncol = 1L) # TODO DELTA
   if (!is.null(phi)) params$ln_phi <- log(phi)
   if (!is.null(rho)) {
-    if (rho != 0) tmb_data$ar1_fields <- 1L
-    params$ar1_phi <- stats::qlogis((rho + 1) / 2)
+    if (rho != 0 && rho < 1) {
+      tmb_data$ar1_fields <- 1L
+      params$ar1_phi <- stats::qlogis((rho + 1) / 2)
+    } else if (rho == 1) {
+      tmb_data$rw_fields <- 1L
+    }
   }
   if (!is.null(df)) tmb_data$df <- df
   if (!is.null(tweedie_p)) params$thetaf <- stats::qlogis(tweedie_p - 1)
@@ -240,7 +244,8 @@ sdmTMB_simulate <- function(formula,
 
   newobj <- TMB::MakeADFun(
     data = tmb_data, map = fit$tmb_map,
-    random = fit$tmb_random, parameters = params, DLL = "sdmTMB"
+    random = fit$tmb_random, parameters = params, DLL = "sdmTMB",
+    checkParameterOrder = FALSE
   )
 
   set.seed(seed)

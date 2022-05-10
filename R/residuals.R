@@ -104,11 +104,10 @@ qres_beta <- function(object, y, mu) {
 #'
 #' @param object An [sdmTMB()] model
 #' @param type Type of residual. See details.
-#' @param mu_type Type of mean estimate. Residual at the MLE or based on
-#'   simulations from the joint precision matrix.
 #' @param mcmc_iter Iterations for MCMC residuals. Will take the last one.
 #' @param mcmc_warmup Warmup for MCMC residuals.
 #' @param print_stan_model Print the Stan model from MCMC residuals?
+#' @param stan_args A list of arguments that will be passed to [rstan::sampling()].
 #' @param model Which delta/hurdle model component?
 #' @param ... Passed to residual function. Only `n` works for binomial.
 #' @export
@@ -119,7 +118,7 @@ qres_beta <- function(object, y, mu) {
 #'
 #' Types of residuals currently supported:
 #'
-#' **`"randomized-quantile"`** refers to randomized quantile residuals (Dunn &
+#' **`"mle-laplace"`** refers to randomized quantile residuals (Dunn &
 #' Smyth 1996), which are also known as probability integral transform (PIT)
 #' residuals (Smith 1985). Under model assumptions, these should be distributed
 #' as standard normal with the following caveat: the Laplace approximation used
@@ -128,7 +127,7 @@ qres_beta <- function(object, y, mu) {
 #' (Thygesen et al. 2017). Therefore, **these residuals are fast to calculate
 #' but can be unreliable.**
 #'
-#' **`"mle-mcmc-rq"`** refers to randomized quantile residuals where the fixed
+#' **`"mle-mcmc"`** refers to randomized quantile residuals where the fixed
 #' effects are fixed at their MLE (maximum likelihoood estimate) values and the
 #' random effects are sampled with MCMC via tmbstan/Stan. As proposed in
 #' Thygesen et al. (2017) and used in Rufener et al. (2021). Under model
@@ -141,6 +140,10 @@ qres_beta <- function(object, y, mu) {
 #' used for residuals. MCMC samples are defined by `mcmc_iter - mcmc_warmup`.
 #' The Stan model can be printed with `print_stan_model = TRUE` to check.
 #' The defaults may not be sufficient for many models.
+#'
+#' **`"mvn-laplace"`** is the same as `"mle-laplace"` except the parameters are
+#' based on simulations drawn from the assumed multivariate normal distribution
+#' (using the joint precision matrix).
 #'
 #' **`"response"`** refers to response residuals: observed minus predicted.
 #'
@@ -180,22 +183,30 @@ qres_beta <- function(object, y, mu) {
 #'   qqline(r0)
 #'
 #'   # quick but can have issues because of Laplace approximation:
-#'   r1 <- residuals(fit, type = "randomized-quantile")
+#'   r1 <- residuals(fit, type = "mle-laplace")
 #'   qqnorm(r1)
 #'   qqline(r1)
 #'
 #'   # MCMC-based with fixed effects at MLEs; best but slowest:
 #'   set.seed(2938)
-#'   r2 <- residuals(fit, type = "mle-mcmc-rq", mcmc_iter = 101, mcmc_warmup = 100)
+#'   r2 <- residuals(fit, type = "mle-mcmc", mcmc_iter = 101, mcmc_warmup = 100)
 #'   qqnorm(r2)
 #'   qqline(r2)
+#'
+#'   # Example of passing control arguments to rstan::sampling():
+#'   # 11 iterations used for a quick example; don't do this normally
+#'   stan_args <- list(control = list(adapt_delta = 0.9, max_treedepth = 12))
+#'   r3 <- residuals(
+#'     fit, type = "mle-mcmc", mcmc_iter = 11, mcmc_warmup = 10,
+#'     stan_args = stan_args
+#'   )
 #' }
 
 residuals.sdmTMB <- function(object,
-                             type = c("randomized-quantile", "mle-mcmc-rq", "response"),
-                             mu_type = c("mle", "sim"),
+                             type = c("mle-laplace", "mle-mcmc", "mvn-laplace", "response"),
                              mcmc_iter = 500, mcmc_warmup = 250,
                              print_stan_model = FALSE,
+                             stan_args = NULL,
                              model = c(1, 2),
                              ...) {
 
@@ -204,14 +215,18 @@ residuals.sdmTMB <- function(object,
     model <- object$visreg_model
   }
 
-  type <- match.arg(type)
-  msg <- c(
-    "We recommend using the slower `type = 'mle-mcmc-rq'` for final inference.",
-    "See the ?residuals.sdmTMB 'Details' section."
-  )
-  if (type == "randomized-quantile") cli_inform(msg)
+  # retrieve function that called this:
+  sys_calls <- unlist(lapply(sys.calls(), deparse))
+  visreg_call <- any(grepl("setupV", substr(sys_calls, 1, 7)))
 
-  mu_type <- match.arg(mu_type)
+  type <- match.arg(type)
+  if (!visreg_call) {
+    msg <- c(
+      "We recommend using the slower `type = 'mle-mcmc'` for final inference.",
+      "See the ?residuals.sdmTMB 'Details' section."
+    )
+    if (type == "randomized-quantile") cli_inform(msg)
+  }
 
   fam <- object$family$family
   nd <- NULL
@@ -237,26 +252,15 @@ residuals.sdmTMB <- function(object,
     cli_abort(paste(fam, "not yet supported."))
   )
 
-  if (mu_type == "mle") {
-    mu <- linkinv(predict(object, newdata = nd)[[est_column]])
-  } else if (mu_type == "sim") {
+  if (type == "mle-laplace" || type == "response") {
+    mu <- tryCatch({linkinv(predict(object, newdata = nd)[[est_column]])}, # newdata = NULL; fast
+      error = function(e) NA)
+    if (is.na(mu[[1]])) {
+      mu <- linkinv(predict(object, newdata = object$data)[[est_column]]) # not newdata = NULL
+    }
+  } else if (type == "mvn-laplace") {
     mu <- linkinv(predict(object, nsim = 1L, model = model)[, 1L, drop = TRUE])
-  } else {
-    cli_abort("`mu_type` not implemented")
-  }
-  y <- object$response
-  y <- y[, model, drop = TRUE] # in case delta
-  # e.g., visreg, prediction has already removed NA mu:
-  if (sum(is.na(y)) > 0 && length(mu) < length(y)) {
-    y <- y[!is.na(y)]
-  }
-
-  if (type == "response") {
-      r <- y - mu
-  } else if (type == "randomized-quantile") {
-    r <- res_func(object, y, mu, ...)
-  } else if (type == "mle-mcmc-rq") {
-
+  } else if (type == "mle-mcmc") {
     if (!requireNamespace("rstan", quietly = TRUE))
       cli_abort("rstan must be installed.")
     if (!requireNamespace("tmbstan", quietly = TRUE))
@@ -267,9 +271,15 @@ residuals.sdmTMB <- function(object,
     assert_that(mcmc_warmup < mcmc_iter)
     # from https://github.com/mcruf/LGNB/blob/8aba1ee2df045c2eb45e124d5a753e8f1c6e865a/R/Validation_and_Residuals.R
     # get names of random effects in the model
-    if (mu_type == "sim") cli_inform("`mu_type == 'sim'` ignored with MCMC residuals.")
     obj <- object$tmb_obj
     random <- unique(names(obj$env$par[obj$env$random]))
+    if (isTRUE(object$reml)) {
+      msg <- c(
+        "Please refit your model with `reml = FALSE` to use MCMC-MLE residuals.",
+        "You can use `fit_ml <- update(your_reml_fit, reml = FALSE)` to do this."
+      )
+      cli_abort(msg)
+    }
     # get (logical) non random effects indices:
     pl <- as.list(object$sd_report, "Estimate")
     fixed <- !(names(pl) %in% random)
@@ -278,17 +288,37 @@ residuals.sdmTMB <- function(object,
     # construct corresponding new function object:
     obj <- TMB::MakeADFun(obj$env$data, pl, map = map, DLL = "sdmTMB")
     # run MCMC to get posterior sample of random effects given data:
-    samp <- tmbstan::tmbstan(obj, chains = 1L, iter = mcmc_iter, warmup = mcmc_warmup)
+
+    args <- list(obj = obj, chains = 1L, iter = mcmc_iter, warmup = mcmc_warmup)
+    args <- c(args, stan_args)
+
+    samp <- do.call(tmbstan::tmbstan, args)
     if (print_stan_model) print(samp)
-    temp <- object
-    temp$tmb_obj <- obj
-    temp$tmb_map <- map
-    pred <- predict(temp, tmbstan_model = samp, model = model, nsim = 1L) # only use last
+    obj_mle <- object
+    obj_mle$tmb_obj <- obj
+    obj_mle$tmb_map <- map
+    pred <- predict(obj_mle, tmbstan_model = samp, model = model, nsim = 1L) # only use last
     # pred <- as.numeric(pred[, ncol(pred), drop = TRUE])
     mu <- linkinv(pred)
-    r <- res_func(temp, y, mu, ...)
   } else {
-    cli_abort("`type` not implemented")
+    cli_abort("residual type not implemented")
+  }
+
+  y <- object$response
+  y <- y[, model, drop = TRUE] # in case delta
+  # e.g., visreg, prediction has already removed NA mu:
+  if (sum(is.na(y)) > 0 && length(mu) < length(y)) {
+    y <- y[!is.na(y)]
+  }
+
+  if (type == "response") {
+    r <- y - mu
+  } else if (type == "mle-laplace" || type == "mvn-laplace") {
+    r <- res_func(object, y, mu, ...)
+  } else if (type == "mle-mcmc") {
+    r <- res_func(obj_mle, y, mu, ...)
+  } else {
+    cli_abort("residual type not implemented")
   }
   r
 }

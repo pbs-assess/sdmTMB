@@ -1,5 +1,9 @@
 # sdmTMB
 
+# sdmTMB 0.0.24.9001
+
+* Fix bug in `sanity()` message with small random field SDs.
+
 # sdmTMB 0.0.24.9000
 
 * Add support for 'delta' (or 'hurdle') models. See examples and documentation

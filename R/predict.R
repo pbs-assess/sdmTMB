@@ -234,7 +234,8 @@ predict.sdmTMB <- function(object, newdata = object$data,
   type = c("link", "response"),
   se_fit = FALSE,
   return_tmb_object = FALSE,
-  area = deprecated(), re_form = NULL, re_form_iid = NULL, nsim = 0,
+  area = deprecated(),
+  re_form = NULL, re_form_iid = NULL, nsim = 0,
   sims = deprecated(),
   tmbstan_model = NULL,
   sims_var = "est",
@@ -257,7 +258,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
   }
 
   if (is_present(area)) {
-    deprecate_warn("0.0.22", "predict.sdmTMB(area)", "get_index(area)")
+    deprecate_stop("0.0.22", "predict.sdmTMB(area)", "get_index(area)")
   } else {
     area <- 1
   }
@@ -303,6 +304,12 @@ predict.sdmTMB <- function(object, newdata = object$data,
           "The newer `make_mesh()` (vs. `make_spde()`) takes care of this for you."))
 
     if (object$time == "_sdmTMB_time") newdata[[object$time]] <- 0L
+    if (visreg_df) {
+      if (!object$time %in% names(newdata)) {
+        # cli_inform("Using the most recent year")
+        newdata[[object$time]] <- max(object$data[[object$time]], na.rm = TRUE)
+      }
+    }
 
     check_time_class(object, newdata)
     original_time <- as.numeric(sort(unique(object$data[[object$time]])))

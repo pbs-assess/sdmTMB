@@ -6,11 +6,11 @@
 \usage{
 \method{residuals}{sdmTMB}(
   object,
-  type = c("randomized-quantile", "mle-mcmc-rq", "response"),
-  mu_type = c("mle", "sim"),
+  type = c("mle-laplace", "mle-mcmc", "mvn-laplace", "response"),
   mcmc_iter = 500,
   mcmc_warmup = 250,
   print_stan_model = FALSE,
+  stan_args = NULL,
   model = c(1, 2),
   ...
 )
@@ -20,14 +20,13 @@
 
 \item{type}{Type of residual. See details.}
 
-\item{mu_type}{Type of mean estimate. Residual at the MLE or based on
-simulations from the joint precision matrix.}
-
 \item{mcmc_iter}{Iterations for MCMC residuals. Will take the last one.}
 
 \item{mcmc_warmup}{Warmup for MCMC residuals.}
 
 \item{print_stan_model}{Print the Stan model from MCMC residuals?}
+
+\item{stan_args}{A list of arguments that will be passed to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}}.}
 
 \item{model}{Which delta/hurdle model component?}
 
@@ -43,7 +42,7 @@ See notes about types of residuals in 'Details' section below.
 \details{
 Types of residuals currently supported:
 
-\strong{\code{"randomized-quantile"}} refers to randomized quantile residuals (Dunn &
+\strong{\code{"mle-laplace"}} refers to randomized quantile residuals (Dunn &
 Smyth 1996), which are also known as probability integral transform (PIT)
 residuals (Smith 1985). Under model assumptions, these should be distributed
 as standard normal with the following caveat: the Laplace approximation used
@@ -52,7 +51,7 @@ standard normal assumption even if the model is consistent with the data
 (Thygesen et al. 2017). Therefore, \strong{these residuals are fast to calculate
 but can be unreliable.}
 
-\strong{\code{"mle-mcmc-rq"}} refers to randomized quantile residuals where the fixed
+\strong{\code{"mle-mcmc"}} refers to randomized quantile residuals where the fixed
 effects are fixed at their MLE (maximum likelihoood estimate) values and the
 random effects are sampled with MCMC via tmbstan/Stan. As proposed in
 Thygesen et al. (2017) and used in Rufener et al. (2021). Under model
@@ -65,6 +64,10 @@ Ideally MCMC is run until convergence and then the last iteration can be
 used for residuals. MCMC samples are defined by \code{mcmc_iter - mcmc_warmup}.
 The Stan model can be printed with \code{print_stan_model = TRUE} to check.
 The defaults may not be sufficient for many models.
+
+\strong{\code{"mvn-laplace"}} is the same as \code{"mle-laplace"} except the parameters are
+based on simulations drawn from the assumed multivariate normal distribution
+(using the joint precision matrix).
 
 \strong{\code{"response"}} refers to response residuals: observed minus predicted.
 }
@@ -87,15 +90,23 @@ if (inla_installed() &&
   qqline(r0)
 
   # quick but can have issues because of Laplace approximation:
-  r1 <- residuals(fit, type = "randomized-quantile")
+  r1 <- residuals(fit, type = "mle-laplace")
   qqnorm(r1)
   qqline(r1)
 
   # MCMC-based with fixed effects at MLEs; best but slowest:
   set.seed(2938)
-  r2 <- residuals(fit, type = "mle-mcmc-rq", mcmc_iter = 101, mcmc_warmup = 100)
+  r2 <- residuals(fit, type = "mle-mcmc", mcmc_iter = 101, mcmc_warmup = 100)
   qqnorm(r2)
   qqline(r2)
+
+  # Example of passing control arguments to rstan::sampling():
+  # 11 iterations used for a quick example; don't do this normally
+  stan_args <- list(control = list(adapt_delta = 0.9, max_treedepth = 12))
+  r3 <- residuals(
+    fit, type = "mle-mcmc", mcmc_iter = 11, mcmc_warmup = 10,
+    stan_args = stan_args
+  )
 }
 }
 \references{
