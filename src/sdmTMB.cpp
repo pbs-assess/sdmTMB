@@ -164,6 +164,8 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(ln_H_input);
   DATA_INTEGER(anisotropy);
 
+  DATA_INTEGER(ar1experiment);
+
   // Barrier
   DATA_INTEGER(barrier);
   DATA_STRUCT(spde_barrier, sdmTMB::spde_barrier_t);
@@ -194,10 +196,12 @@ Type objective_function<Type>::operator()()
   DATA_IVECTOR(b_smooth_start);
 
   DATA_IVECTOR(sim_re); // sim random effects? 0,1; order: omega, epsilon, zeta, IID, RW, smoothers
+  DATA_IVECTOR(simulate_t); // sim this specific time step? (used for forecasting)
 
   DATA_VECTOR(lwr); // lower bound for censpois on counts
   DATA_VECTOR(upr); // upper bound for censpois on counts
   DATA_INTEGER(poisson_link_delta); // logical
+
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -415,18 +419,46 @@ Type objective_function<Type>::operator()()
           PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E(m)))(epsilon_st.col(m).col(t));
         if (sim_re(1)) {
           for (int t = 0; t < n_t; t++) {
-            vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
-            SIMULATE {GMRF(Q_temp, s).simulate(epsilon_st_tmp);
-            epsilon_st.col(m).col(t) = epsilon_st_tmp / exp(ln_tau_E(m));}
+            if (simulate_t(t)) {
+              vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
+              SIMULATE {GMRF(Q_temp, s).simulate(epsilon_st_tmp);
+                epsilon_st.col(m).col(t) = epsilon_st_tmp / exp(ln_tau_E(m));}
+            }
           }
         }
       } else {
         if (ar1_fields(m)) {
-          PARALLEL_REGION jnll += SCALE(SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)), 1./exp(ln_tau_E(m)))(epsilon_st.col(m));
+          // PARALLEL_REGION jnll += SCALE(SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)), 1./exp(ln_tau_E(m)))(epsilon_st.col(m));
+          // Split out by year so we can turn on/off simulation by year and model covariates of ln_tau_E:
+          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E(m)))(epsilon_st.col(m).col(0));
+          for (int t = 1; t < n_t; t++) {
+            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. /exp(ln_tau_E(m)))((epsilon_st.col(m).col(t) -
+              rho(m) * epsilon_st.col(m).col(t - 1))/sqrt(1. - rho(m) * rho(m)));
+          }
+          Type n_cols = epsilon_st.col(m).cols();
+          Type n_rows = epsilon_st.col(m).rows();
+          // Penalty to match TMB AR1_t() implementation:
+          PARALLEL_REGION jnll += Type((n_cols - 1.) * n_rows) * log(sqrt(1. - rho(m) * rho(m)));
           if (sim_re(1)) {
-            array<Type> epsilon_st_tmp(epsilon_st.col(m).rows(),n_t);
-            SIMULATE {SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)).simulate(epsilon_st_tmp);
-            epsilon_st.col(m) = epsilon_st_tmp / exp(ln_tau_E(m));}
+            // array<Type> epsilon_st_tmp(epsilon_st.col(m).rows(),n_t);
+            // SIMULATE {SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)).simulate(epsilon_st_tmp);
+            //   epsilon_st.col(m) = epsilon_st_tmp / exp(ln_tau_E(m));}
+            for (int t = 0; t < n_t; t++) {
+              if (simulate_t(t)) {
+                vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
+                SIMULATE {
+                  GMRF(Q_temp, s).simulate(epsilon_st_tmp);
+                  epsilon_st_tmp *= 1./exp(ln_tau_E(m));
+                  // https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html
+                  Type ar1_scaler = sqrt(1. - rho(m) * rho(m));
+                  if (t == 0) {
+                    epsilon_st.col(m).col(0) = epsilon_st_tmp; // no scaling of first step
+                  } else {
+                    epsilon_st.col(m).col(t) = rho(m) * epsilon_st.col(m).col(t-1) + epsilon_st_tmp * ar1_scaler;
+                  }
+                }
+              }
+            }
           }
         } else if (rw_fields(m)) {
           for (int t = 0; t < n_t; t++)
@@ -438,14 +470,18 @@ Type objective_function<Type>::operator()()
           // }
           if (sim_re(1)) {
             for (int t = 0; t < n_t; t++) {
-               vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
-               SIMULATE {GMRF(Q_st, s).simulate(epsilon_st_tmp);}
-               epsilon_st_tmp *= 1./exp(ln_tau_E(m));
-               if (t == 0) {
-                 epsilon_st.col(m).col(0) = epsilon_st_tmp;
-               } else {
-                 epsilon_st.col(m).col(t) = epsilon_st.col(m).col(t-1) + epsilon_st_tmp;
-               }
+              if (simulate_t(t)) {
+                vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
+                SIMULATE {
+                  GMRF(Q_temp, s).simulate(epsilon_st_tmp);
+                  epsilon_st_tmp *= 1./exp(ln_tau_E(m));
+                  if (t == 0) {
+                    epsilon_st.col(m).col(0) = epsilon_st_tmp;
+                  } else {
+                    epsilon_st.col(m).col(t) = epsilon_st.col(m).col(t-1) + epsilon_st_tmp;
+                  }
+                }
+              }
             }
           }
         } else {

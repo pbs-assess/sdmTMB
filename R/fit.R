@@ -915,9 +915,10 @@ sdmTMB <- function(
   #X_ij_array <- array(data = NA, dim = c(nrow(X_ij[[1]]), ncol(X_ij[[1]]), n_m))
   for (i in seq_len(n_m)) X_ij_list[[i]] <- X_ij[[i]]
 
+  n_t <- length(unique(data[[time]]))
   tmb_data <- list(
     y_i        = y_i,
-    n_t        = length(unique(data[[time]])),
+    n_t        = n_t,
     z_i        = z_i,
     offset_i   = offset,
     proj_offset_i = 0,
@@ -926,6 +927,8 @@ sdmTMB <- function(
     A_spatial_index = spde$sdm_spatial_id - 1L,
     year_i     = make_year_i(data[[time]]),
     ar1_fields = ar1_fields,
+    ar1experiment = 1L,
+    simulate_t = rep(1L, n_t),
     rw_fields =  rw_fields,
     X_ij       = X_ij_list,
     X_rw_ik    = X_rw_ik,
