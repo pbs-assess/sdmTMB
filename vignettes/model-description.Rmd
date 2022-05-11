@@ -50,7 +50,6 @@ This appendix uses the following notation conventions, which generally follows t
 We include tables of all major indices (Table \@ref(tab:indices)) and symbols (Table \@ref(tab:symbols)).
 
 ```{r indices}
-library(magrittr)
 subscripts <- tibble::tribble(
   ~Symbol, ~Description,
   "$\\s$", "Index for space; a vector of x and y coordinates",
