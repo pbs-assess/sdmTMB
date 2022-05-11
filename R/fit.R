@@ -1392,7 +1392,7 @@ parse_spatial_arg <- function(spatial) {
 }
 
 check_irregalar_time <- function(data, time, spatiotemporal, time_varying) {
-  if (spatiotemporal %in% c("ar1", "rw") || !is.null(time_varying)) {
+  if (c("ar1", "rw") %in% spatiotemporal || !is.null(time_varying)) {
     ti <- sort(unique(data[[time]]))
     if (length(unique(diff(ti))) > 1L) {
       missed <- find_missing_time(data[[time]])
