@@ -40,9 +40,8 @@
 #' \doi{10.1016/j.fishres.2015.11.016}
 
 #'
-#' @examples
+#' @examplesIf inla_installed()
 #' \donttest{
-#' if (inla_installed()) {
 #' # Use a small number of knots for this example to make it fast:
 #' pcod_spde <- make_mesh(pcod, c("X", "Y"), n_knots = 60, type = "kmeans")
 #' m <- sdmTMB(
@@ -61,7 +60,6 @@
 #'
 #' cog <- get_cog(predictions)
 #' cog
-#' }
 #' }
 #'
 #' @export

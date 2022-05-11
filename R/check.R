@@ -7,15 +7,16 @@
 #' @return An invisible named list of checks
 #' @export
 #'
-#' @examples
-#' if (inla_installed()) {
-#'   fit <- sdmTMB(
-#'     present ~ s(depth),
-#'     data = pcod_2011, mesh = pcod_mesh_2011,
-#'     family = binomial()
-#'   )
-#'   sanity(fit)
-#' }
+#' @examplesIf inla_installed()
+#' fit <- sdmTMB(
+#'   present ~ s(depth),
+#'   data = pcod_2011, mesh = pcod_mesh_2011,
+#'   family = binomial()
+#' )
+#' sanity(fit)
+#'
+#' s <- sanity(fit)
+#' s
 
 sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
 

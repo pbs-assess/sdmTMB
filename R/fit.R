@@ -312,11 +312,7 @@ NULL
 #'
 #' @export
 #'
-#' @examples
-#' if (inla_installed() &&
-#'   require("visreg", quietly = TRUE) &&
-#'   require("ggplot2", quietly = TRUE)
-#' ) {
+#' @examplesIf inla_installed() && require("visreg", quietly = TRUE) && ggplot2_installed()
 #'
 #' library(sdmTMB)
 #'
@@ -510,7 +506,6 @@ NULL
 #'   family = tweedie()
 #' )
 #' fit
-#' }
 
 sdmTMB <- function(
   formula,
@@ -1420,3 +1415,4 @@ find_missing_time <- function(x) {
     allx <- seq(min(ti), max(ti), by = mindiff)
     setdiff(allx, ti)
   }
+}

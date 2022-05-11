@@ -92,8 +92,7 @@
 #'
 #' @export
 #'
-#' @examples
-#' if (require("ggplot2", quietly = TRUE) && inla_installed()) {
+#' @examplesIf ggplot2_installed() && inla_installed()
 #'
 #' d <- pcod_2011
 #' mesh <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
@@ -109,6 +108,7 @@
 #'
 #' predictions$resids <- residuals(m) # randomized quantile residuals
 #'
+#' library(ggplot2)
 #' ggplot(predictions, aes(X, Y, col = resids)) + scale_colour_gradient2() +
 #'   geom_point() + facet_wrap(~year)
 #' hist(predictions$resids)
@@ -213,7 +213,7 @@
 #' nd$year_scaled <- (nd$year - mean(d$year)) / sd(d$year)
 #' p <- predict(m, newdata = nd)
 #'
-#' plot_map(p, "zeta_s") +
+#' plot_map(subset(p, year == 2003), "zeta_s_year_scaled") + # pick any year
 #'   ggtitle("Spatial slopes") +
 #'   scale_fill_gradient2()
 #'
@@ -228,7 +228,6 @@
 #' plot_map(p, "exp(est)") +
 #'   ggtitle("Prediction (fixed effects + all random effects)") +
 #'   scale_fill_viridis_c(trans = "sqrt")
-#' }
 
 predict.sdmTMB <- function(object, newdata = object$data,
   type = c("link", "response"),
