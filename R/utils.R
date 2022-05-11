@@ -243,10 +243,20 @@ check_valid_factor_levels <- function(x, .name = "") {
 #' Check if INLA installed (i.e., not on CRAN)
 #'
 #' @export
+#' @rdname inla_installed
+#' @keywords internal
 inla_installed <- function() {
   r1 <- requireNamespace("INLA", quietly = TRUE)
   r2 <- requireNamespace("rgdal", quietly = TRUE)
   r1 && r2
+}
+
+#' Check if ggplot2 installed
+#'
+#' @export
+#' @keywords internal
+ggplot2_installed <- function() {
+  requireNamespace("ggplot2", quietly = TRUE)
 }
 
 remove_s_and_t2 <- function(formula) {
