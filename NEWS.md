@@ -2,6 +2,13 @@
 
 # sdmTMB 0.0.24.9001
 
+* Enable random walk random field TMB simulation in `sdmTMB_simulate()`.
+
+* Add check for irregular time with AR1 or random walk processes.
+
+* Fix bugs introduced by delta model code (offsets with `extra_time` and
+  threshold model prediction).
+  
 * Fix bug in `sanity()` message with small random field SDs.
 
 # sdmTMB 0.0.24.9000
