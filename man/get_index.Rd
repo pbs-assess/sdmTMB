@@ -45,8 +45,8 @@ internally to match.}
 Extract a relative biomass/abundance index or a center of gravity
 }
 \examples{
+\dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 \donttest{
-if (inla_installed()) {
 # Use a small number of knots for this example to make it fast:
 pcod_spde <- make_mesh(pcod, c("X", "Y"), n_knots = 60, type = "kmeans")
 m <- sdmTMB(
@@ -66,8 +66,7 @@ ggplot(ind, aes(year, est)) + geom_line() +
 cog <- get_cog(predictions)
 cog
 }
-}
-
+\dontshow{\}) # examplesIf}
 }
 \references{
 Geostatistical random-field model-based indices of abundance

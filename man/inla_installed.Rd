@@ -9,3 +9,4 @@ inla_installed()
 \description{
 Check if INLA installed (i.e., not on CRAN)
 }
+\keyword{internal}

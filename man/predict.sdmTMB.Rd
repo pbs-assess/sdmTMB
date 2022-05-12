@@ -130,7 +130,7 @@ Make predictions from an sdmTMB model; can predict on the original or new
 data.
 }
 \examples{
-if (require("ggplot2", quietly = TRUE) && inla_installed()) {
+\dontshow{if (ggplot2_installed() && inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 
 d <- pcod_2011
 mesh <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
@@ -146,6 +146,7 @@ head(predictions)
 
 predictions$resids <- residuals(m) # randomized quantile residuals
 
+library(ggplot2)
 ggplot(predictions, aes(X, Y, col = resids)) + scale_colour_gradient2() +
   geom_point() + facet_wrap(~year)
 hist(predictions$resids)
@@ -250,7 +251,7 @@ nd <- qcs_grid
 nd$year_scaled <- (nd$year - mean(d$year)) / sd(d$year)
 p <- predict(m, newdata = nd)
 
-plot_map(p, "zeta_s") +
+plot_map(subset(p, year == 2003), "zeta_s_year_scaled") + # pick any year
   ggtitle("Spatial slopes") +
   scale_fill_gradient2()
 
@@ -265,5 +266,5 @@ plot_map(p, "exp(est_non_rf)") +
 plot_map(p, "exp(est)") +
   ggtitle("Prediction (fixed effects + all random effects)") +
   scale_fill_viridis_c(trans = "sqrt")
-}
+\dontshow{\}) # examplesIf}
 }
