@@ -80,6 +80,7 @@ Suggests:
     sf,
     splancs,
     testthat,
+    tibble,
     tmbstan,
     visreg
 LinkingTo:
