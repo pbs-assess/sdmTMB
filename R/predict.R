@@ -50,7 +50,7 @@
 #'   but representing Bayesian posterior samples from the Stan model.
 #' @param model Type of prediction if a delta/hurdle model:
 #'   `NA` returns the combined prediction from both components on
-#'   the response scale; `1` or `2` return the first or second model
+#'   the link scale for the positive component; `1` or `2` return the first or second model
 #'   component only on the link or response scale depending on the argument
 #'   `type`.
 #' @param return_tmb_report Logical: return the output from the TMB
