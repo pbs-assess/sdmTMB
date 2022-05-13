@@ -102,8 +102,9 @@ test_that("get_index_sims works", {
   p_response <- predict(m, newdata = qcs_grid_2011, nsim = 200L, type = "response")
   expect_match(attr(p_response,"link"), "response")
   expect_warning(get_index_sims(p_response))
-
-  x_response <- get_index_sims(p_response, agg_function = function(x) sum(x))
+  suppressWarnings(
+    x_response <- get_index_sims(p_response, agg_function = function(x) sum(x))
+    )
   x_sims2 <- get_index_sims(p)
   # x_response$est
   # x_sims2$est
