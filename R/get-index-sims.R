@@ -28,7 +28,7 @@
 #' @param est_function Function to summarize the estimate (the expected value).
 #'   `mean()` would be an alternative to `median()`.
 #' @param agg_function Function to aggregate samples within each time slice.
-#'   Assuming a log link, the `sum(exp(x) * area)` default makes sense.
+#'   Assuming a log link, the `sum(exp(x))` default makes sense.
 #'
 #' @seealso [get_index()]
 #'
@@ -74,8 +74,10 @@ get_index_sims <- function(obj,
                            level = 0.95,
                            return_sims = FALSE,
                            area = rep(1, nrow(obj)),
-                           est_function = stats::median,
-                           agg_function = function(x) sum(exp(x))) {
+                           # area_function = function(x) x + log(area),
+                           agg_function = function(x) sum(exp(x)),
+                           est_function = stats::median
+                           ) {
   assert_that(is.matrix(obj), !is.null(attr(obj, "time")),
     msg = paste0("`obj` should be matrix output from `predict.sdmTMB()` ",
       "with the `nsim > 0` or a matrix with a `time` attribute."))
@@ -87,8 +89,15 @@ get_index_sims <- function(obj,
   assert_that(sum(is.na(area)) == 0L)
   assert_that(all(area >= 0))
 
+  if (!(attr(obj,"link") == "log")) {
+    cli_warn(c("Default `agg_function` and `area_function` apply to ",
+      "values provided that are in log space. This matrix may be of ",
+      "`type` = `response` or in a different link space."))
+  }
+
   .time_attr <- attr(obj, "time")
   obj <- apply(obj, 2L, function(x) x + log(area))
+  # obj <- apply(obj, 2L, area_function)
 
   .t <- as.numeric(rownames(obj))
   yrs <- sort(unique(.t))
