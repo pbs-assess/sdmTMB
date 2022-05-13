@@ -10,6 +10,7 @@ get_index_sims(
   return_sims = FALSE,
   area = rep(1, nrow(obj)),
   est_function = stats::median,
+  area_function = function(x, area) x + log(area),
   agg_function = function(x) sum(exp(x))
 )
 }
@@ -29,6 +30,8 @@ other words, the function assumes a log link, which typically makes sense.}
 
 \item{est_function}{Function to summarize the estimate (the expected value).
 \code{mean()} would be an alternative to \code{median()}.}
+
+\item{area_function}{Function to apply area weighting.}
 
 \item{agg_function}{Function to aggregate samples within each time slice.
 Assuming a log link, the \code{sum(exp(x) * area)} default makes sense.}
@@ -88,6 +91,12 @@ if (require("ggplot2", quietly = TRUE)) {
     geom_violin()
 }
 
+# Demo custom functions if working in natural space:
+ind <- get_index_sims(
+  exp(p),
+  agg_function = function(x) sum(x),
+  area_function = function(x, area) x * area
+)
 }
 }
 \seealso{

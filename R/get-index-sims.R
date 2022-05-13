@@ -27,6 +27,7 @@
 #'   other words, the function assumes a log link, which typically makes sense.
 #' @param est_function Function to summarize the estimate (the expected value).
 #'   `mean()` would be an alternative to `median()`.
+#' @param area_function Function to apply area weighting.
 #' @param agg_function Function to aggregate samples within each time slice.
 #'   Assuming a log link, the `sum(exp(x))` default makes sense.
 #'
@@ -69,15 +70,20 @@
 #'     geom_violin()
 #' }
 #'
+#' # Demo custom functions if working in natural space:
+#' ind <- get_index_sims(
+#'   exp(p),
+#'   agg_function = function(x) sum(x),
+#'   area_function = function(x, area) x * area
+#' )
 #' }
 get_index_sims <- function(obj,
                            level = 0.95,
                            return_sims = FALSE,
                            area = rep(1, nrow(obj)),
-                           # area_function = function(x) x + log(area),
-                           agg_function = function(x) sum(exp(x)),
-                           est_function = stats::median
-                           ) {
+                           est_function = stats::median,
+                           area_function = function(x, area) x + log(area),
+                           agg_function = function(x) sum(exp(x))) {
   assert_that(is.matrix(obj), !is.null(attr(obj, "time")),
     msg = paste0("`obj` should be matrix output from `predict.sdmTMB()` ",
       "with the `nsim > 0` or a matrix with a `time` attribute."))
@@ -96,8 +102,7 @@ get_index_sims <- function(obj,
   }
 
   .time_attr <- attr(obj, "time")
-  obj <- apply(obj, 2L, function(x) x + log(area))
-  # obj <- apply(obj, 2L, area_function)
+  obj <- apply(obj, 2L, function(x) area_function(x, area))
 
   .t <- as.numeric(rownames(obj))
   yrs <- sort(unique(.t))
