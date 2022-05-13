@@ -96,6 +96,27 @@ test_that("get_index_sims works", {
   expect_lt(xpi2$est[1], xpi$est[1])
   expect_equal(xpi2$est[-1], xpi$est[-1])
 
+  # check that index still works with type = response
+  expect_match(attr(p,"link"), "log")
+
+  p_response <- predict(m, newdata = qcs_grid_2011, nsim = 200L, type = "response")
+  expect_match(attr(p_response,"link"), "response")
+  expect_warning(get_index_sims(p_response))
+
+  x_response <- get_index_sims(p_response, agg_function = function(x) sum(x))
+  x_sims2 <- get_index_sims(p)
+  # x_response$est
+  # x_sims2$est
+  expect_equal(mean(x_response$est/x_sims2$est), 1, tolerance = 0.01)
+
+  # # check that area still works with type = response
+  # xpi2_response <- get_index_sims(p_response,
+  #                                 area = areas,
+  #                                 area_function = function(x) x,
+  #                                 agg_function = function(x) sum(x * area))
+  # expect_equal(mean(xpi2$est[-1]/xpi2_response$est[-1]), 1, tolerance = 0.01)
+  # expect_equal(xpi2$est[1]/xpi2_response$est[1], 1, tolerance = 0.01)
+
   # arg checking:
   expect_error(get_index_sims(3))
   expect_error(get_index_sims(level = 1.1))
