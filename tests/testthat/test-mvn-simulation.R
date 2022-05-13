@@ -16,6 +16,11 @@ test_that("rmvnorm sim prediction works with no random effects", {
   .mean <- apply(p, 1, mean)
   expect_gt(sd(p[1, , drop = TRUE]), 0.1)
   expect_gt(cor(.mean, p1$est), 0.99)
+
+  # still works with type = "response"
+  p2 <- predict(m, newdata = qcs_grid[qcs_grid$year >= 2011, ], nsim = 30L, type = "response")
+  .mean2 <- apply(p2, 1, mean)
+  expect_gt(cor(.mean2, exp(p1$est)), 0.99)
 })
 
 test_that("rmvnorm sim prediction works", {
