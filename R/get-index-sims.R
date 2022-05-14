@@ -28,8 +28,11 @@
 #' @param est_function Function to summarize the estimate (the expected value).
 #'   `mean()` would be an alternative to `median()`.
 #' @param area_function Function to apply area weighting.
+#'   Assuming a log link, the `function(x, area) x + log(area)` default makes sense.
+#'   If in natural space, `function(x, area) x * area` makes sense.
 #' @param agg_function Function to aggregate samples within each time slice.
-#'   Assuming a log link, the `sum(exp(x))` default makes sense.
+#'   Assuming a log link, the `function(x) sum(exp(x))` default makes sense.
+#'   If in natural space, `function(x) sum(x)` makes sense.
 #'
 #' @seealso [get_index()]
 #'

@@ -31,10 +31,13 @@ other words, the function assumes a log link, which typically makes sense.}
 \item{est_function}{Function to summarize the estimate (the expected value).
 \code{mean()} would be an alternative to \code{median()}.}
 
-\item{area_function}{Function to apply area weighting.}
+\item{area_function}{Function to apply area weighting.
+Assuming a log link, the \code{function(x, area) x + log(area)} default makes sense.
+If in natural space, \code{function(x, area) x * area} makes sense.}
 
 \item{agg_function}{Function to aggregate samples within each time slice.
-Assuming a log link, the \code{sum(exp(x) * area)} default makes sense.}
+Assuming a log link, the \code{function(x) sum(exp(x))} default makes sense.
+If in natural space, \code{function(x) sum(x)} makes sense.}
 }
 \value{
 A data frame. If \code{return_sims = FALSE}:
