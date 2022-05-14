@@ -111,12 +111,14 @@ test_that("get_index_sims works", {
   expect_equal(mean(x_response$est/x_sims2$est), 1, tolerance = 0.01)
 
   # # check that area still works with type = response
-  # xpi2_response <- get_index_sims(p_response,
-  #                                 area = areas,
-  #                                 area_function = function(x) x,
-  #                                 agg_function = function(x) sum(x * area))
-  # expect_equal(mean(xpi2$est[-1]/xpi2_response$est[-1]), 1, tolerance = 0.01)
-  # expect_equal(xpi2$est[1]/xpi2_response$est[1], 1, tolerance = 0.01)
+  suppressWarnings(
+  xpi2_response <- get_index_sims(p_response,
+                                  area = areas,
+                                  area_function = function(x, area) x * area,
+                                  agg_function = function(x) sum(x ))
+  )
+  expect_equal(mean(xpi2$est[-1]/xpi2_response$est[-1]), 1, tolerance = 0.01)
+  expect_equal(xpi2$est[1]/xpi2_response$est[1], 1, tolerance = 0.05)
 
   # arg checking:
   expect_error(get_index_sims(3))
@@ -126,4 +128,105 @@ test_that("get_index_sims works", {
   expect_error(get_index_sims(area = rep(NA, nrow(p))))
   expect_error(get_index_sims(est_function = 3))
   expect_error(get_index_sims(agg_function = 3))
+})
+
+test_that("rmvnorm sim prediction works", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
+  m <- sdmTMB(
+    data = pcod,
+    formula = density ~ 0 + as.factor(year),
+    mesh = mesh, family = tweedie(link = "log"))
+  set.seed(1)
+  p <- predict(m, newdata = qcs_grid, nsim = 15L)
+  p1 <- predict(m, newdata = qcs_grid)
+  expect_identical(class(p)[[1]], "matrix")
+  expect_identical(ncol(p), 15L)
+
+  # expect_equal(round(p[1:2, 1:10], 5),
+  #   structure(c(1.71569, 1.83575, -1.33492, -1.27293, 0.38908, 0.70163,
+  #     1.45686, 1.60475, 2.30503, 2.1425, 1.34876, 1.33194, 4.38547,
+  #     4.14214, 1.29596, 1.0981, 0.50995, 0.37118, 1.85081, 1.80129), .Dim = c(2L,
+  #       10L), .Dimnames = list(c("0", "0"), NULL)))
+
+  .mean <- apply(p, 1, mean)
+  .sd <- apply(p, 1, sd)
+  expect_gt(cor(.mean, p1$est), 0.99)
+})
+
+test_that("predict link attribute and get_index_sims work with delta", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  m <- sdmTMB(density ~ 0 + as.factor(year),
+              data = pcod_2011, mesh = pcod_mesh_2011, family = delta_gamma(),
+              time = "year", spatiotemporal = "off"
+  )
+  qcs_grid_2011 <- subset(qcs_grid, year >= 2011)
+  set.seed(1029)
+
+  p <- predict(m, newdata = qcs_grid_2011, nsim = 200L, model = 1)
+  expect_equal(ncol(p), 200L)
+  expect_equal(nrow(p), nrow(qcs_grid_2011))
+  expect_match(attr(p,"link"), "logit")
+  range(p)
+  expect_lt(min(p),0)
+
+  p <- predict(m, newdata = qcs_grid_2011, nsim = 200L, model = 2)
+  expect_equal(ncol(p), 200L)
+  expect_equal(nrow(p), nrow(qcs_grid_2011))
+  expect_match(attr(p,"link"), "log")
+  expect_no_match(attr(p,"link"), "logit")
+  range(p)
+  expect_gt(min(p),0)
+
+  p1 <- predict(m, newdata = qcs_grid_2011, nsim = 200L, model = 1, type = "response")
+  expect_equal(ncol(p1), 200L)
+  expect_equal(nrow(p1), nrow(qcs_grid_2011))
+  expect_no_match(attr(p1,"link"), "log")
+  expect_no_match(attr(p1,"link"), "logit")
+  expect_match(attr(p1,"link"), "response")
+
+  p2 <- predict(m, newdata = qcs_grid_2011, nsim = 200L, model = 2, type = "response")
+  expect_equal(ncol(p2), 200L)
+  expect_equal(nrow(p2), nrow(qcs_grid_2011))
+  expect_no_match(attr(p2,"link"), "log")
+  expect_no_match(attr(p2,"link"), "logit")
+  expect_match(attr(p2,"link"), "response")
+
+  p3 <- predict(m, newdata = qcs_grid_2011, nsim = 200L, type = "response")
+  expect_equal(ncol(p3), 200L)
+  expect_equal(nrow(p3), nrow(qcs_grid_2011))
+  expect_no_match(attr(p3,"link"), "log")
+  expect_no_match(attr(p3,"link"), "logit")
+  expect_match(attr(p3,"link"), "response")
+
+  # check the predictions in response space are indeed in the correct ranges
+  expect_lt(max(p1),1)
+  expect_gt(min(p1),0)
+  expect_gt(min(p2),1)
+  expect_lt(min(p3),1)
+  expect_gt(min(p3),0)
+  expect_lt(max(p3),max(p2))
+
+  p <- predict(m, newdata = qcs_grid_2011, nsim = 200L)
+  expect_equal(ncol(p), 200L)
+  expect_equal(nrow(p), nrow(qcs_grid_2011))
+  expect_match(attr(p,"link"), "log")
+  expect_no_match(attr(p,"link"), "logit")
+  range(p)
+  expect_lt(min(p),0)
+
+  x <- get_index_sims(p)
+  expect_equal(nrow(x), length(unique(qcs_grid_2011$year)))
+  expect_true(sum(is.na(x$se)) == 0L)
+
+  p_regular <- predict(m, newdata = qcs_grid_2011, return_tmb_object = TRUE)
+  x_regular <- get_index(p_regular, bias_correct = T)
+
+  x_sims <- get_index_sims(p, return_sims = TRUE)
+  expect_equal(nrow(x_sims), nrow(x) * ncol(p))
+  expect_equal(mean(x$est/x_regular$est), 1, tolerance = 0.05)
 })
