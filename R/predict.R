@@ -535,7 +535,15 @@ predict.sdmTMB <- function(object, newdata = object$data,
         attr(out, "link") <- "response"
       } else {
         if(isTRUE(object$family$delta)){
-          attr(out, "link") <- object$family[[2]]$link
+          if (is.na(predtype)) {
+            attr(out, "link") <- object$family[[2]]$link
+          } else if (predtype == 1L) {
+            attr(out, "link") <- object$family[[1]]$link
+          } else if (predtype == 2L) {
+            attr(out, "link") <- object$family[[2]]$link
+          } else {
+            cli_abort("`model` type not valid.")
+          }
         } else {
           attr(out, "link") <- object$family$link
         }
