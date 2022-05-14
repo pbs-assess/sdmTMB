@@ -20,12 +20,15 @@ An invisible named list of checks
 Sanity check of sdmTMB model
 }
 \examples{
-if (inla_installed()) {
-  fit <- sdmTMB(
-    present ~ s(depth),
-    data = pcod_2011, mesh = pcod_mesh_2011,
-    family = binomial()
-  )
-  sanity(fit)
-}
+\dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+fit <- sdmTMB(
+  present ~ s(depth),
+  data = pcod_2011, mesh = pcod_mesh_2011,
+  family = binomial()
+)
+sanity(fit)
+
+s <- sanity(fit)
+s
+\dontshow{\}) # examplesIf}
 }

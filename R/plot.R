@@ -9,20 +9,16 @@
 #' @return A plot of eigenvectors illustrating the estimated anisotropy. A list
 #'   of the plotted data is invisibly returned.
 #' @references Code adapted from VAST R package
-#' @examples
-#' \donttest{
-#' if (inla_installed()) {
-#'   d <- pcod
-#'   m <- sdmTMB(
-#'     data = d,
-#'     formula = density ~ 0 + as.factor(year),
-#'     time = "year", mesh = make_mesh(d, c("X", "Y"), n_knots = 80, type = "kmeans"),
-#'     family = tweedie(link = "log"), anisotropy = TRUE,
-#'     spatial = "off"
-#'   )
-#'   plot_anisotropy(m)
-#' }
-#' }
+#' @examplesIf inla_installed()
+#' fit <- sdmTMB(
+#'   data = pcod_2011,
+#'   formula = density ~ 1,
+#'   mesh = make_mesh(pcod_2011, c("X", "Y"), n_knots = 80, type = "kmeans"),
+#'   family = tweedie(link = "log"),
+#'   anisotropy = TRUE #<
+#' )
+#' plot_anisotropy(fit)
+
 plot_anisotropy <- function(object, model = 1) {
   stopifnot(inherits(object, "sdmTMB"))
   report <- object$tmb_obj$report(object$tmb_obj$env$last.par.best)

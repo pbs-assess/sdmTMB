@@ -263,7 +263,7 @@ test_that("The mapping off spatial and spatiotemporal fields works.", {
   b1 <- as.numeric(unclass(glmmTMB::fixef(m.glmmTMB))$cond)
   b2 <- tidy(m.sdmTMB.map)$estimate
   b3 <- as.numeric(coef(m.stats.glm))
-  expect_equal(b1, b2, tolerance = 1e-7)
+  expect_equal(b1, b2, tolerance = 1e-6)
   expect_equal(b3, b2, tolerance = 1e-6)
 })
 
@@ -399,7 +399,7 @@ test_that("More esoteric prediction options work", {
   expect_true(all(p > 0))
 })
 
-test_that("update works", {
+test_that("update() works", {
   skip_on_cran()
   skip_on_ci()
   skip_if_not_installed("INLA")
@@ -410,4 +410,42 @@ test_that("update works", {
   )
   fit2 <- update(fit)
   expect_equal(fit$model, fit2$model)
+})
+
+test_that("Irregular time gets detected", {
+  skip_on_cran()
+  skip_if_not_installed("INLA")
+
+  mesh <- make_mesh(pcod, c("X", "Y"), n_knots = 50)
+  expect_message({
+    fit <- sdmTMB(density ~ 1, time = "year",
+      data = pcod, mesh = mesh,
+      family = tweedie(), spatiotemporal = "ar1",
+      do_fit = FALSE
+    )
+  }, regexp = "irregular time")
+  expect_message({
+    fit <- sdmTMB(density ~ 1, time = "year",
+      data = pcod, mesh = mesh,
+      family = tweedie(), spatiotemporal = "ar1",
+      do_fit = FALSE
+    )
+  }, regexp = "c\\(2006, 2008, 2010, 2012, 2014, 2016\\)")
+
+  expect_silent({
+    fit <- sdmTMB(density ~ 1, time = "year",
+      data = pcod, mesh = mesh,
+      family = tweedie(), spatiotemporal = "ar1",
+      extra_time = c(2006, 2008, 2010, 2012, 2014, 2016),
+      do_fit = FALSE
+    )
+  })
+})
+
+test_that("find_missing_time works", {
+  expect_identical(find_missing_time(c(1, 3, 4)), 2)
+  expect_identical(find_missing_time(c(1, 3, 4, 5, 7)), c(2, 6))
+  expect_identical(find_missing_time(c(1, 2, 3)), numeric(0))
+  expect_identical(find_missing_time(c(1, 4, 3)), 2)
+  expect_identical(find_missing_time(c(1L, 4L, 3L)), 2L)
 })

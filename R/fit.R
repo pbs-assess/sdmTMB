@@ -312,11 +312,7 @@ NULL
 #'
 #' @export
 #'
-#' @examples
-#' if (inla_installed() &&
-#'   require("visreg", quietly = TRUE) &&
-#'   require("ggplot2", quietly = TRUE)
-#' ) {
+#' @examplesIf inla_installed() && require("visreg", quietly = TRUE) && ggplot2_installed()
 #'
 #' library(sdmTMB)
 #'
@@ -510,7 +506,6 @@ NULL
 #'   family = tweedie()
 #' )
 #' fit
-#' }
 
 sdmTMB <- function(
   formula,
@@ -715,6 +710,7 @@ sdmTMB <- function(
     spde$A_st <- INLA::inla.spde.make.A(spde$mesh, loc = spde$loc_xy)
     spde$sdm_spatial_id <- seq(1, nrow(data)) # FIXME
   }
+  check_irregalar_time(data, time, spatiotemporal, time_varying)
 
   spatial_varying_formula <- spatial_varying # save it
   if (!is.null(spatial_varying)) {
@@ -1396,4 +1392,30 @@ parse_spatial_arg <- function(spatial) {
     spatial <- "off"
   }
   spatial
+}
+
+check_irregalar_time <- function(data, time, spatiotemporal, time_varying) {
+  if (any(spatiotemporal %in% c("ar1", "rw")) || !is.null(time_varying)) {
+    ti <- sort(unique(data[[time]]))
+    if (length(unique(diff(ti))) > 1L) {
+      missed <- find_missing_time(data[[time]])
+      msg <- c(
+        "Detected irregular time spacing with an AR(1) or random walk process.",
+        "Consider filling in the missing time slices with `extra_time`.",
+        if (length(missed)) {
+          paste0("`extra_time = c(", paste(missed, collapse = ", "), ")`")
+        }
+      )
+      cli_inform(msg)
+    }
+  }
+}
+
+find_missing_time <- function(x) {
+  if (!is.factor(x)) {
+    ti <- sort(unique(x))
+    mindiff <- min(diff(ti))
+    allx <- seq(min(ti), max(ti), by = mindiff)
+    setdiff(allx, ti)
+  }
 }

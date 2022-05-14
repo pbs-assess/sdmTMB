@@ -3,7 +3,7 @@
 #' @param x Output from [sdmTMB()].
 #' @param effects A character vector including one or more of "fixed"
 #'   (fixed-effect parameters), "ran_pars" (standard deviations, spatial range,
-#'   and other random effect terms).
+#'   and other random effect and dispersion terms).
 #' @param conf.int Include a confidence interval?
 #' @param conf.level Confidence level for CI.
 #' @param exponentiate Whether to exponentiate the fixed-effect coefficient
@@ -15,14 +15,26 @@
 #' @details
 #' Follows the conventions of the \pkg{broom} and \pkg{broom.mixed} packages.
 #'
-#' Note that the standard errors for variance terms are not in natural
-#' and not log space and so are a very rough approximation.
+#' Currently, `effects = "ran_pars"` also includes dispersion-related terms
+#' (e.g., `phi`), which are not actually random effects.
+#'
+#' Standard errors for variance terms fit in log space (e.g., variance
+#' terms) are omitted to avoid confusion. Confidence intervals are still
+#' available.
+#'
 #' @export
 #'
 #' @importFrom assertthat assert_that
 #' @importFrom stats plogis
-#' @examples
-#' # See ?sdmTMB
+#' @examplesIf inla_installed()
+#' fit <- sdmTMB(density ~ poly(depth_scaled, 2, raw = TRUE),
+#'   data = pcod_2011, mesh = pcod_mesh_2011,
+#'   family = tweedie()
+#' )
+#' tidy(fit)
+#' tidy(fit, conf.int = TRUE)
+#' tidy(fit, "ran_pars", conf.int = TRUE)
+
 tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
                  conf.int = FALSE, conf.level = 0.95, exponentiate = FALSE, ...) {
   effects <- match.arg(effects)
