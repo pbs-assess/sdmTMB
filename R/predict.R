@@ -513,7 +513,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
         if (is.na(predtype)) {
           out <- object$family[[1]]$linkinv(out1) *
             object$family[[2]]$linkinv(out2)
-          if (type != "response") out <- object$family[[2]]$link(out) # transform combined back into link space
+          if (type != "response") out <- object$family[[2]]$linkfun(out) # transform combined back into link space
         } else if (predtype == 1L) {
           out <- out1
           if (type == "response") out <- object$family[[1]]$linkinv(out)
