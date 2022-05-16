@@ -1,0 +1,157 @@
+---
+title: "Visualization Options with visreg and ggeffects"
+author: "Julia Indivero, Sean Anderson, Lewis Barnett, Philina English, Eric Ward"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Presence Data with sdmTMB}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE, cache=FALSE}
+dplyr_installed <- require("dplyr", quietly = TRUE)
+ggplot_installed <- require("ggplot2", quietly = TRUE)
+visreg_installed <- require("visreg", quietly=TRUE)
+ggeffects_installed <- require("ggeffects", quietly=TRUE)
+pkgs <- dplyr_installed && ggplot_installed &&visreg_installed && ggeffects_installed
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.asp = 0.618,
+  eval = identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
+)
+```
+
+```{r}
+library(sdmTMB)
+library(ggplot2)
+library(visreg)
+library(ggeffects)
+```
+
+We can visually inspect the model output from `sdmTMB` using the package [visreg]https://cran.r-project.org/web/packages/visreg/index.html].
+
+We will fit a model of Pacific cod biomass with spatial and spatio-temporal effects:
+```{r}
+pcod$fyear <- as.factor(pcod$year)
+  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
+  fit <- sdmTMB(
+    density ~ 0 + fyear + poly(depth_scaled, 2),
+    data = pcod, 
+    mesh = mesh,
+    time = "year",
+    spatial = "on",
+    spatiotemporal = "iid",
+    family = tweedie()
+  )
+```
+
+Plot the smoother effect in link spa with randomized quantile partial residuals
+```{r}
+visreg(fit, xvar = "depth_scaled")
+```
+
+Response scale
+```{r}
+visreg(fit, xvar = "depth_scaled", scale="response", nn=200)
+```
+
+
+With a delta model...
+```{r}
+fit2 <- sdmTMB(
+  formula = density ~ 0 + as.factor(year) + s(depth),
+  data = dat2,
+  mesh = mesh2,
+  time = "year",
+  family = Gamma(link = "log"),
+  spatiotemporal = "iid",
+  spatial = "on"
+)
+```
+
+Inspect the effect of the smoothed covariate
+```{r}
+s1 <- plot_smooth(m1, ggplot = TRUE)
+#> This function will likely be deprecated.
+#> Consider using `visreg::visreg()` or `visreg_delta()`.
+#> See ?visreg_delta() for examples.
+s1 + xlim(min(pcod$depth), max(pcod$depth))
+```
+
+```{r}
+if (inla_installed() &&
+  require("ggplot2", quietly = TRUE) &&
+  require("visreg", quietly = TRUE)) {
+
+  pcod_2011$fyear <- as.factor(pcod_2011$year)
+  fit <- sdmTMB(
+    density ~ s(depth_scaled) + fyear,
+    data = pcod_2011, mesh = pcod_mesh_2011,
+    spatial = "off",
+    family = tweedie()
+  )
+  visreg::visreg(fit, xvar = "depth_scaled")
+  visreg::visreg(fit, xvar = "fyear")
+  visreg::visreg(fit, xvar = "depth_scaled", scale = "response")
+  visreg::visreg2d(fit, xvar = "fyear", yvar = "depth_scaled")
+  v <- visreg::visreg(fit, xvar = "depth_scaled")
+  head(v$fit)
+  # now use ggplot2 etc. if desired
+
+  # Delta model example:
+  fit_dg <- sdmTMB(
+    density ~ s(depth_scaled, year, k = 8),
+    data = pcod_2011, mesh = pcod_mesh_2011,
+    spatial = "off",
+    family = delta_gamma()
+  )
+  visreg_delta(fit_dg, xvar = "depth_scaled", model = 1, gg = TRUE)
+  visreg_delta(fit_dg, xvar = "depth_scaled", model = 2, gg = TRUE)
+  visreg_delta(fit_dg,
+    xvar = "depth_scaled", model = 1,
+    scale = "response", gg = TRUE
+  )
+  visreg_delta(fit_dg,
+    xvar = "depth_scaled", model = 2,
+    scale = "response"
+  )
+  visreg_delta(fit_dg,
+    xvar = "depth_scaled", model = 2,
+    scale = "response", gg = TRUE, rug = FALSE
+  )
+  visreg2d_delta(fit_dg,
+    xvar = "depth_scaled", yvar = "year",
+    model = 2, scale = "response"
+  )
+  visreg2d_delta(fit_dg,
+    xvar = "depth_scaled", yvar = "year",
+    model = 1, scale = "response", plot.type = "persp"
+  )
+  visreg2d_delta(fit_dg,
+    xvar = "depth_scaled", yvar = "year",
+    model = 2, scale = "response", plot.type = "gg"
+  )
+}
+```
+
+Surface plots
+
+
+
+[ggeffects]https://cran.r-project.org/web/packages/ggeffects/index.html.
+```{r}
+sdmTMB(present ~poly(depth,2),
+       #present~depth,
+       data=pcod_2011, mesh=pcod_mesh_2011,
+       spatial="off",
+       family=binomial()
+       )
+
+g <- ggeffect(fit, "depth [0:500 by=1]")
+plot(g)
+```
+
