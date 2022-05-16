@@ -75,11 +75,21 @@ test_that("VAST logit-link delta-gamma", {
     control=sdmTMBcontrol(newton_loops=1)
   )
 
-  #Metrics to compare
+  ##Metrics to compare
+  #AIC
   expect_equal(fit$parameter_estimates$AIC, fit2$AIC, tolerance=)
-  expect_equal()  #annual index
+  #Index
+  expect_equal()
+  #Parameter estimates
+  #Predictions
+  #Center of gravity
   })
 
+
+
+
+
+##
 test_that("VAST tweedie", {
   ##VAST setup
   install.packages("devtools")
