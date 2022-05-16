@@ -111,7 +111,7 @@ terms.sdmTMB <- function(x, ...) {
 #' @export
 #' @noRd
 Effect.sdmTMB <- function(focal.predictors, mod, ...) {
-  if (!requireNamespace("effects")) {
+  if (!requireNamespace("effects", quietly = TRUE)) {
     cli_abort("Please install the effects package")
   }
 

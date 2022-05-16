@@ -70,6 +70,7 @@ Imports:
 Suggests:
     DHARMa,
     dplyr,
+    effects (>= 4.0-1),
     future.apply,
     ggplot2,
     INLA,
