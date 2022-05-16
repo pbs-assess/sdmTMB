@@ -55,7 +55,25 @@ To plot the smoother effect of depth using visreg...
 
 ```
 
+Trying with another model:
+```{r}
+pcod$fyear <- as.factor(pcod$year)
+  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
+  fit <- sdmTMB(
+    density ~ 0 + fyear + poly(depth_scaled, 2),
+    data = pcod, 
+    mesh = mesh,
+    time = "year",
+    spatial = "on",
+    spatiotemporal = "iid",
+    family = tweedie()
+  )
+```
 
+And plot...
+```{r}
+visreg(fit, xvar = "depth_scaled")
+```
 
 
 
@@ -108,25 +126,6 @@ To plot the smoother effect of depth using visreg...
 }
 ```
 
-
-```{r}
-pcod$fyear <- as.factor(pcod$year)
-  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
-  fit <- sdmTMB(
-    density ~ 0 + fyear + poly(depth_scaled, 2),
-    data = pcod, 
-    mesh = mesh,
-    time = "year",
-    spatial = "on",
-    spatiotemporal = "iid",
-    family = tweedie()
-  )
-```
-
-Plot the smoother effect in link space with randomized quantile partial residuals
-```{r}
-visreg(fit, xvar = "depth_scaled")
-```
 
 Response scale
 ```{r}
