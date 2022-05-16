@@ -161,8 +161,6 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(ln_H_input);
   DATA_INTEGER(anisotropy);
 
-  DATA_INTEGER(ar1experiment);
-
   // Barrier
   DATA_INTEGER(barrier);
   DATA_STRUCT(spde_barrier, sdmTMB::spde_barrier_t);

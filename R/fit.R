@@ -928,7 +928,6 @@ sdmTMB <- function(
     A_spatial_index = spde$sdm_spatial_id - 1L,
     year_i     = make_year_i(data[[time]]),
     ar1_fields = ar1_fields,
-    ar1experiment = 1L,
     simulate_t = rep(1L, n_t),
     rw_fields =  rw_fields,
     X_ij       = X_ij_list,
