@@ -98,12 +98,17 @@ get_index_sims <- function(obj,
   assert_that(sum(is.na(area)) == 0L)
   assert_that(all(area >= 0))
 
+  if(length(attributes(obj))>3) {
   if (!(attr(obj,"link") == "log")) {
     cli_warn(c("Default `agg_function` and `area_function` apply to ",
       "values provided that are in log space. This matrix may be of ",
       "`type` = `response` or in a different link space."))
   }
-
+  } else {
+    cli_warn(c("Your predictions appear to be lacking a link attribute, so be ",
+               "sure to check that the area_ and agg_ functions are",
+               "appropriate."))
+  }
   .time_attr <- attr(obj, "time")
   obj <- apply(obj, 2L, function(x) area_function(x, area))
 

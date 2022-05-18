@@ -128,6 +128,10 @@ test_that("get_index_sims works", {
   expect_error(get_index_sims(area = rep(NA, nrow(p))))
   expect_error(get_index_sims(est_function = 3))
   expect_error(get_index_sims(agg_function = 3))
+
+  # check that doesn't fail when attribute is missing, but does give warning
+  attr(p,"link") <- NULL
+  expect_warning(get_index_sims(p))
 })
 
 test_that("rmvnorm sim prediction works", {
