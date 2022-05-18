@@ -4,7 +4,7 @@ author: "Julia Indivero, Sean Anderson, Lewis Barnett, Philina English, Eric War
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Presence Data with sdmTMB}
+  %\VignetteIndexEntry{Visualization Options with visreg and ggeffects}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -25,70 +25,80 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r}
+```{r echo=FALSE}
+install.packages("visreg")
+remotes::install_github("pbs-assess/sdmTMB", force = TRUE)
 library(sdmTMB)
 library(ggplot2)
 library(visreg)
 library(ggeffects)
 ```
 
-We can visually inspect the model output from `sdmTMB` using the package [visreg]https://cran.r-project.org/web/packages/visreg/index.html].
+We can use the package [visreg]https://cran.r-project.org/web/packages/visreg/index.html] to visually inspect the model output from `sdmTMB` by comparing the effects of explanatory variables in the model on the response variable.
 
-To start, we will fit a model of Pacific cod biomass using the built-in data for years 2011 with a spatial smoother on scaled depth and fixed effect of year.
+To start, we will use the Pacific cod biomass for years 2011 for this example. We will fit a model with a spatial smoother on scaled depth and fixed effect of year using a Tweedie distribution.
 
 ```{r}
-  pcod_2011$fyear <- as.factor(pcod_2011$year)
-  fit <- sdmTMB(
-    density ~ s(depth_scaled) + fyear,
-    data = pcod_2011, 
-    mesh = pcod_mesh_2011,
-    spatial = "off",
-    family = tweedie()
-  )
-  
-```
-
-To plot the smoother effect of depth using visreg...
-```{r}
-
- visreg(fit, xvar = "depth_scaled")
-
-```
-
-Trying with another model:
-```{r}
+#pcod_2011$fyear <- as.factor(pcod_2011$year)
 pcod$fyear <- as.factor(pcod$year)
-  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
+mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
   fit <- sdmTMB(
-    density ~ 0 + fyear + poly(depth_scaled, 2),
-    data = pcod, 
-    mesh = mesh,
-    time = "year",
+    #density ~ 0 + poly(depth_scaled, 2) + fyear,
+    density ~0 + s(depth_scaled) + fyear,
+    time="year",
+    #data = pcod_2011, 
+    data=pcod,
+    #mesh = pcod_mesh_2011,
+    mesh=mesh,
     spatial = "on",
-    spatiotemporal = "iid",
-    family = tweedie()
+    spatiotemporal="iid",
+    family = tweedie(link="log")
   )
 ```
 
-And plot...
+We can then plot the effect of depth using `visreg` in log space:
 ```{r}
-visreg(fit, xvar = "depth_scaled")
+visreg(fit, xvar = "depth_scaled", type="conditional")
 ```
 
-
-
-#Still working on all this stuff down here
-
+We also can look at the effect separately in each year, either in separate plots or overlaid on the same plot
 ```{r}
-  visreg::visreg(fit, xvar = "fyear")
-  visreg::visreg(fit, xvar = "depth_scaled", scale = "response")
-  visreg::visreg2d(fit, xvar = "fyear", yvar = "depth_scaled")
-  v <- visreg::visreg(fit, xvar = "depth_scaled")
-  head(v$fit)
+visreg(fit, xvar="depth_scaled", by="fyear")
+visreg(fit, xvar="depth_scaled", by="fyear", overlay=TRUE)
+```
+
+And at the effect of depth in the real space, rather than log space:
+```{r}
+visreg(fit, xvar = "depth_scaled", scale = "response")
+```
+
+Partial residuals
+```{r}
+visreg(fit, xvar = "depth_scaled", type="conditional", partial=TRUE)
+```
+
+Not currently working: contrast plot
+```{r}
+#visreg(fit, xvar = "fyear", type="contrast")
+```
+
+`visreg` can also be used to visualize the fixed effect of year:
+```{r}
+visreg(fit, xvar = "fyear")
+```
+
+And to simultaneously compare both depth and year with a two-dimensional contour plot:
+```{r}
+  visreg2d(fit, xvar = "fyear", yvar = "depth_scaled")
+```
+
+Still need to figure this out: Can be linked to ggplot2 to use ggplot formatting?
+```{r}
+ v <- visreg(fit, xvar = "depth_scaled")
   # now use ggplot2 etc. if desired
-
 ```
 
+`visreg` can also be used to plot the output of delta models from `sdmTMB` by using similar code for the previous `visreg` plots, but specifying `model=1` for the encounter model, and `model=2` for the positive catch rate model.
 ```{r}
   # Delta model example:
   fit_dg <- sdmTMB(
@@ -97,6 +107,7 @@ visreg(fit, xvar = "depth_scaled")
     spatial = "off",
     family = delta_gamma()
   )
+
   visreg_delta(fit_dg, xvar = "depth_scaled", model = 1, gg = TRUE)
   visreg_delta(fit_dg, xvar = "depth_scaled", model = 2, gg = TRUE)
   visreg_delta(fit_dg,
@@ -124,12 +135,6 @@ visreg(fit, xvar = "depth_scaled")
     model = 2, scale = "response", plot.type = "gg"
   )
 }
-```
-
-
-Response scale
-```{r}
-visreg(fit, xvar = "depth_scaled", scale="response", nn=200)
 ```
 
 
@@ -161,7 +166,7 @@ Surface plots
 
 [ggeffects]https://cran.r-project.org/web/packages/ggeffects/index.html.
 ```{r}
-sdmTMB(present ~poly(depth,2),
+fit <- sdmTMB(present ~poly(depth,2),
        #present~depth,
        data=pcod_2011, mesh=pcod_mesh_2011,
        spatial="off",
@@ -171,4 +176,3 @@ sdmTMB(present ~poly(depth,2),
 g <- ggeffect(fit, "depth [0:500 by=1]")
 plot(g)
 ```
-
