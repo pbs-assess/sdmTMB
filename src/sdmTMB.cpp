@@ -134,6 +134,7 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(calc_cog);
   // DATA_INTEGER(calc_quadratic_range); // DELTA TODO
   DATA_VECTOR(area_i); // area per prediction grid cell for index standardization
+  DATA_INTEGER(short_newdata); // logical: is `newdata` a short version not expanded by year?
 
   DATA_VECTOR(priors_b_mean);
   DATA_MATRIX(priors_b_Sigma); // beta priors matrix
@@ -769,7 +770,8 @@ Type objective_function<Type>::operator()()
   // ------------------ Predictions on new data --------------------------------
 
   if (do_predict) {
-    int n_p = proj_X_ij(0).rows(); // n 'p'redicted newdata
+    int n_p = proj_X_ij(0).rows(); // n 'p'redicted newdata (if `short_newdata`: is one time slice)
+    int n_p_rf = proj_year.size(); // n 'p'redicted newdata for random effects (always all time slices)
     // DELTA DONE
     array<Type> proj_fe(n_p, n_m);
     for (int m = 0; m < n_m; m++) {
@@ -811,42 +813,42 @@ Type objective_function<Type>::operator()()
       }
     }
 
-    // IID random intercepts:
+//    // IID random intercepts:
     array<Type> proj_iid_re_i(n_p,n_m);
     proj_iid_re_i.setZero();
-    for (int m = 0; m < n_m; m++) {
-      for (int i = 0; i < n_p; i++) {
-        int temp = 0;
-        for (int k = 0; k < n_RE; k++) {
-          if (k == 0 && !exclude_RE(0)) proj_iid_re_i(i,m) += RE(proj_RE_indexes(i, k),m);
-          if (k > 0) {
-            temp += nobs_RE(k - 1);
-            if (!exclude_RE(k)) proj_iid_re_i(i,m) += RE(proj_RE_indexes(i, k) + temp,m);
-          }
-        }
-        proj_fe(i) += proj_iid_re_i(i,m);
-      }
-    }
-
-    // Random walk covariates:
-    array<Type> proj_rw_i(n_p,n_m);
+//    for (int m = 0; m < n_m; m++) {
+//      for (int i = 0; i < n_p; i++) {
+//        int temp = 0;
+//        for (int k = 0; k < n_RE; k++) {
+//          if (k == 0 && !exclude_RE(0)) proj_iid_re_i(i,m) += RE(proj_RE_indexes(i, k),m);
+//          if (k > 0) {
+//            temp += nobs_RE(k - 1);
+//            if (!exclude_RE(k)) proj_iid_re_i(i,m) += RE(proj_RE_indexes(i, k) + temp,m);
+//          }
+//        }
+//        proj_fe(i) += proj_iid_re_i(i,m);
+//      }
+//    }
+//
+//    // Random walk covariates:
+    array<Type> proj_rw_i(n_p_rf,n_m); // FIXME n_p_rf for now
     proj_rw_i.setZero();
-    if (random_walk) {
-      for (int m = 0; m < n_m; m++) {
-        for (int i = 0; i < proj_X_rw_ik.rows(); i++) {
-          for (int k = 0; k < proj_X_rw_ik.cols(); k++) {
-            proj_rw_i(i,m) += proj_X_rw_ik(i, k) * b_rw_t(proj_year(i), k, m);
-            proj_fe(i) += proj_rw_i(i,m);
-          }
-        }
-      }
-    }
+//    if (random_walk) {
+//      for (int m = 0; m < n_m; m++) {
+//        for (int i = 0; i < proj_X_rw_ik.rows(); i++) {
+//          for (int k = 0; k < proj_X_rw_ik.cols(); k++) {
+//            proj_rw_i(i,m) += proj_X_rw_ik(i, k) * b_rw_t(proj_year(i), k, m);
+//            proj_fe(i) += proj_rw_i(i,m);
+//          }
+//        }
+//      }
+//    }
 
     // Spatial and spatiotemporal random fields:
-    array<Type> proj_omega_s_A(n_p, n_m);
-    array<Type> proj_zeta_s_A(n_p, n_z, n_m);
-    array<Type> proj_epsilon_st_A(n_p, n_t, n_m);
-    array<Type> proj_epsilon_st_A_vec(n_p, n_m);
+    array<Type> proj_omega_s_A(n_p_rf, n_m);
+    array<Type> proj_zeta_s_A(n_p_rf, n_z, n_m);
+    array<Type> proj_epsilon_st_A(n_p_rf, n_t, n_m);
+    array<Type> proj_epsilon_st_A_vec(n_p_rf, n_m);
 
     for (int m = 0; m < n_m; m++) {
       for (int t = 0; t < n_t; t++)
@@ -859,7 +861,7 @@ Type objective_function<Type>::operator()()
     }
 
     // Spatially varying coefficients:
-    array<Type> proj_zeta_s_A_cov(n_p, n_z, n_m);
+    array<Type> proj_zeta_s_A_cov(n_p_rf, n_z, n_m); // FIXME currently n_p_rf, could be n_p for flexibility
     proj_zeta_s_A_cov.setZero();
     proj_zeta_s_A.setZero();
     if (spatial_covariate) {
@@ -875,7 +877,7 @@ Type objective_function<Type>::operator()()
 
     // Pick out the appropriate spatial and/or or spatiotemporal values:
     for (int m = 0; m < n_m; m++) {
-      for (int i = 0; i < n_p; i++) {
+      for (int i = 0; i < n_p_rf; i++) {
         // FIXME proj_spatial_index doing nothing; same in fitting; is now 1:N
         proj_epsilon_st_A_vec(i,m) = proj_epsilon_st_A(proj_spatial_index(i), proj_year(i),m);
       }
@@ -887,8 +889,7 @@ Type objective_function<Type>::operator()()
     //   }
     // }
 
-    array<Type> proj_rf(n_p, n_m);
-    array<Type> proj_eta(n_p, n_m);
+    array<Type> proj_rf(n_p_rf, n_m);
     for (int m = 0; m < n_m; m++)
       proj_rf.col(m) = proj_omega_s_A.col(m) + proj_epsilon_st_A_vec.col(m);
 
@@ -896,9 +897,23 @@ Type objective_function<Type>::operator()()
       for (int z = 0; z < n_z; z++)
         proj_rf.col(m) += proj_zeta_s_A_cov.col(m).col(z); // SVC effects
 
-      // proj_fe includes s(), RW, and IID random effects:
-    for (int m = 0; m < n_m; m++)
-      proj_eta.col(m) = proj_fe.col(m) + proj_rf.col(m);
+    // proj_fe includes s(), RW, and IID random effects:
+    array<Type> proj_eta(n_p_rf, n_m);
+    if (!short_newdata) {
+      for (int m = 0; m < n_m; m++) {
+        proj_eta.col(m) = proj_fe.col(m) + proj_rf.col(m);
+      }
+    } else { // main effect component needs to be expanded to time to match random effects:
+      for (int m = 0; m < n_m; m++) {
+        int p = 0;
+        for (int t = 0; t < n_t; t++) {
+          for (int i = 0; i < n_p; i++) {
+            proj_eta(p,m) = proj_fe(i,m) + proj_rf(p,m);
+            p += 1;
+          }
+        }
+      }
+    }
 
     // FIXME save memory by not reporting all these or optionally so for MVN/Bayes?
     REPORT(proj_fe);            // fixed effect projections

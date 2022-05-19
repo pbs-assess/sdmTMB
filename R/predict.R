@@ -242,18 +242,19 @@ predict.sdmTMB <- function(object, newdata = object$data,
   model = c(NA, 1, 2),
   return_tmb_report = FALSE,
   return_tmb_data = FALSE,
+  newdata_small = NULL,
   ...) {
 
   if ("version" %in% names(object)) {
     check_sdmTMB_version(object$version)
   } else {
     cli_abort(c("This looks like a very old version of a model fit.",
-        "Re-fit the model before predicting with it."))
+      "Re-fit the model before predicting with it."))
   }
   if (!"xy_cols" %in% names(object$spde)) {
     cli_warn(c("It looks like this model was fit with make_spde().",
-    "Using `xy_cols`, but future versions of sdmTMB may not be compatible with this.",
-    "Please replace make_spde() with make_mesh()."))
+      "Using `xy_cols`, but future versions of sdmTMB may not be compatible with this.",
+      "Please replace make_spde() with make_mesh()."))
   } else {
     xy_cols <- object$spde$xy_cols
   }
@@ -298,6 +299,12 @@ predict.sdmTMB <- function(object, newdata = object$data,
   tmb_data <- object$tmb_data
   tmb_data$do_predict <- 1L
 
+  if (!is.null(newdata_small)) {
+    newdata <- newdata_small
+    small_data <- TRUE
+  } else {
+    small_data <- FALSE
+  }
   if (!is.null(newdata)) {
     if (any(!xy_cols %in% names(newdata)) && isFALSE(pop_pred))
       cli_abort(c("`xy_cols` (the column names for the x and y coordinates) are not in `newdata`.",
@@ -312,21 +319,26 @@ predict.sdmTMB <- function(object, newdata = object$data,
       }
     }
 
-    check_time_class(object, newdata)
-    original_time <- as.numeric(sort(unique(object$data[[object$time]])))
-    new_data_time <- as.numeric(sort(unique(newdata[[object$time]])))
+    if (!small_data) {
+      check_time_class(object, newdata)
+      original_time <- as.numeric(sort(unique(object$data[[object$time]])))
+      new_data_time <- as.numeric(sort(unique(newdata[[object$time]])))
 
-    if (!all(new_data_time %in% original_time))
-      cli_abort(c("Some new time elements were found in `newdata`. ",
-        "For now, make sure only time elements from the original dataset are present.",
-        "If you would like to predict on new time elements,",
-        "see the `extra_time` argument in `?predict.sdmTMB`.")
-      )
+      if (!all(new_data_time %in% original_time))
+        cli_abort(c("Some new time elements were found in `newdata`. ",
+          "For now, make sure only time elements from the original dataset are present.",
+          "If you would like to predict on new time elements,",
+          "see the `extra_time` argument in `?predict.sdmTMB`.")
+        )
 
-    if (!identical(new_data_time, original_time) & isFALSE(pop_pred)) {
-      cli_abort(c("The time elements in `newdata` are not identical to those in the original dataset.",
+      if (!identical(new_data_time, original_time) & isFALSE(pop_pred)) {
+        cli_abort(c("The time elements in `newdata` are not identical to those in the original dataset.",
           "For now, please predict on all time elements and filter out those you don't need after.",
           "Please let us know on the GitHub issues tracker if this is important to you."))
+      }
+      if (sum(is.na(new_data_time)) > 0)
+        cli_abort(c("There is at least one NA value in the time column.",
+          "Please remove it."))
     }
 
     # If making population predictions (with standard errors), we don't need
@@ -340,10 +352,6 @@ predict.sdmTMB <- function(object, newdata = object$data,
         }
       }
     }
-
-    if (sum(is.na(new_data_time)) > 0)
-      cli_abort(c("There is at least one NA value in the time column.",
-        "Please remove it."))
 
     # newdata$sdm_orig_id <- seq(1, nrow(newdata))
     # fake_newdata <- unique(newdata[,xy_cols])
@@ -396,11 +404,12 @@ predict.sdmTMB <- function(object, newdata = object$data,
     # TODO DELTA hardcoded to 1:
     sm <- parse_smoothers(object$formula[[1]], data = object$data, newdata = nd)
 
-    if (!is.null(object$time_varying))
+    if (!is.null(object$time_varying)) {
+      if (small_data) cli_abort("Time-varying coefficients not yet set up with `newdata_small`.") # FIXME
       proj_X_rw_ik <- model.matrix(object$time_varying, data = nd)
-    else
+    } else {
       proj_X_rw_ik <- matrix(0, ncol = 1, nrow = 1) # dummy
-
+    }
 
     if (length(area) != nrow(proj_X_ij[[1]]) && length(area) != 1L) {
       cli_abort("`area` should be of the same length as `nrow(newdata)` or of length 1.")
@@ -412,7 +421,13 @@ predict.sdmTMB <- function(object, newdata = object$data,
     tmb_data$proj_X_ij <- proj_X_ij
     tmb_data$proj_X_rw_ik <- proj_X_rw_ik
     tmb_data$proj_RE_indexes <- proj_RE_indexes
-    tmb_data$proj_year <- make_year_i(nd[[object$time]])
+    if (!small_data) {
+      tmb_data$proj_year <- make_year_i(nd[[object$time]])
+    } else {
+      time_vals <- sort(unique(object$data[[object$time]]))
+      time_vals <- rep(time_vals, each = nrow(newdata))
+      tmb_data$proj_year <- make_year_i(time_vals)
+    }
     tmb_data$proj_lon <- newdata[[xy_cols[[1]]]]
     tmb_data$proj_lat <- newdata[[xy_cols[[2]]]]
     tmb_data$calc_se <- as.integer(se_fit)
@@ -423,9 +438,11 @@ predict.sdmTMB <- function(object, newdata = object$data,
     tmb_data$proj_spatial_index <- newdata$sdm_spatial_id - 1L
     tmb_data$proj_Zs <- sm$Zs
     tmb_data$proj_Xs <- sm$Xs
+    tmb_data$short_newdata <- as.integer(small_data)
 
     # SVC:
     if (!is.null(object$spatial_varying)) {
+      if (small_data) cli_abort("Spatially varying coefficients not yet set up with `newdata_small`.") # FIXME
       z_i <- model.matrix(object$spatial_varying_formula, newdata)
       .int <- grep("(Intercept)", colnames(z_i))
       if (sum(.int) > 0) z_i <- z_i[,-.int,drop=FALSE]
