@@ -143,7 +143,10 @@ memory and time when working with large datasets or projection grids.
 If \code{TRUE}, then \code{predict_args} must have a \code{newdata} element supplied
 and \code{area} can be supplied to \code{index_args}.}
 
-\item{predict_args}{A list of arguments to pass to \code{\link[=get_index]{get_index()}} if
+\item{predict_args}{A list of arguments to pass to \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} if
+\code{do_index = TRUE}.}
+
+\item{index_args}{A list of arguments to pass to \code{\link[=get_index]{get_index()}} if
 \code{do_index = TRUE}. Currently, only \code{area} is supported. Bias correction
 can be done when calling \code{\link[=get_index]{get_index()}} on the resulting fitted object.}
 }

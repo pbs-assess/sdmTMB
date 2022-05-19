@@ -101,7 +101,7 @@ NULL
 #'   and `area` can be supplied to `index_args`.
 #' @param predict_args A list of arguments to pass to [predict.sdmTMB()] if
 #'   `do_index = TRUE`.
-#' @param predict_args A list of arguments to pass to [get_index()] if
+#' @param index_args A list of arguments to pass to [get_index()] if
 #'   `do_index = TRUE`. Currently, only `area` is supported. Bias correction
 #'   can be done when calling [get_index()] on the resulting fitted object.
 #' @param experimental A named list for esoteric or in-development options. Here
