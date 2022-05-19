@@ -58,6 +58,7 @@
 #'   at the MLE parameter values. For `nsim > 0` or when `tmbstan_model`
 #'   is supplied, this is a list where each element is a sample and the
 #'   contents of each element is the output of the report for that sample.
+#' @param return_tmb_data Logical: return formatted data for TMB? Used internally.
 #' @param ... Not implemented.
 #'
 #' @return
@@ -240,6 +241,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
   sims_var = "est",
   model = c(NA, 1, 2),
   return_tmb_report = FALSE,
+  return_tmb_data = FALSE,
   ...) {
 
   if ("version" %in% names(object)) {
@@ -442,6 +444,10 @@ predict.sdmTMB <- function(object, newdata = object$data,
       }
     }
     tmb_data$epsilon_predictor <- epsilon_covariate
+
+    if (return_tmb_data) {
+      return(tmb_data)
+    }
 
     new_tmb_obj <- TMB::MakeADFun(
       data = tmb_data,

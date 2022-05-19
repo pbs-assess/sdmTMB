@@ -19,6 +19,7 @@
   sims_var = "est",
   model = c(NA, 1, 2),
   return_tmb_report = FALSE,
+  return_tmb_data = FALSE,
   ...
 )
 }
@@ -87,6 +88,8 @@ report? For regular prediction this is all the reported variables
 at the MLE parameter values. For \code{nsim > 0} or when \code{tmbstan_model}
 is supplied, this is a list where each element is a sample and the
 contents of each element is the output of the report for that sample.}
+
+\item{return_tmb_data}{Logical: return formatted data for TMB? Used internally.}
 
 \item{...}{Not implemented.}
 }

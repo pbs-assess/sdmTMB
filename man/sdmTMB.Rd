@@ -25,7 +25,10 @@ sdmTMB(
   priors = sdmTMBpriors(),
   previous_fit = NULL,
   experimental = NULL,
-  do_fit = TRUE
+  do_fit = TRUE,
+  do_index = FALSE,
+  predict_args = NULL,
+  index_args = NULL
 )
 }
 \arguments{
@@ -134,6 +137,15 @@ be dragons.}
 
 \item{do_fit}{Fit the model (\code{TRUE}) or return the processed data without
 fitting (\code{FALSE})?}
+
+\item{do_index}{Do index standardization calculations while fitting? Saves
+memory and time when working with large datasets or projection grids.
+If \code{TRUE}, then \code{predict_args} must have a \code{newdata} element supplied
+and \code{area} can be supplied to \code{index_args}.}
+
+\item{predict_args}{A list of arguments to pass to \code{\link[=get_index]{get_index()}} if
+\code{do_index = TRUE}. Currently, only \code{area} is supported. Bias correction
+can be done when calling \code{\link[=get_index]{get_index()}} on the resulting fitted object.}
 }
 \value{
 An object (list) of class \code{sdmTMB}. Useful elements include:

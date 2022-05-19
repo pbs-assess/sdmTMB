@@ -95,6 +95,15 @@ NULL
 #'   change, which can be useful for cross-validation.
 #' @param do_fit Fit the model (`TRUE`) or return the processed data without
 #'   fitting (`FALSE`)?
+#' @param do_index Do index standardization calculations while fitting? Saves
+#'   memory and time when working with large datasets or projection grids.
+#'   If `TRUE`, then `predict_args` must have a `newdata` element supplied
+#'   and `area` can be supplied to `index_args`.
+#' @param predict_args A list of arguments to pass to [predict.sdmTMB()] if
+#'   `do_index = TRUE`.
+#' @param predict_args A list of arguments to pass to [get_index()] if
+#'   `do_index = TRUE`. Currently, only `area` is supported. Bias correction
+#'   can be done when calling [get_index()] on the resulting fitted object.
 #' @param experimental A named list for esoteric or in-development options. Here
 #'   be dragons.
 #   (Experimental) A column name (as character) of a predictor of a
@@ -528,7 +537,10 @@ sdmTMB <- function(
   priors = sdmTMBpriors(),
   previous_fit = NULL,
   experimental = NULL,
-  do_fit = TRUE
+  do_fit = TRUE,
+  do_index = FALSE,
+  predict_args = NULL,
+  index_args = NULL
   ) {
 
 
@@ -942,6 +954,7 @@ sdmTMB <- function(
     do_predict = 0L,
     calc_se    = 0L,
     pop_pred   = 0L,
+    short_newdata = 0L,
     exclude_RE = rep(0L, ncol(RE_indexes)),
     weights_i  = if (!is.null(weights)) weights else rep(1, length(y_i)),
     area_i     = rep(1, length(y_i)),
@@ -1209,12 +1222,7 @@ sdmTMB <- function(
   prof <- c("b_j")
   if (delta) prof <- c(prof, "b_j2")
 
-  tmb_obj <- TMB::MakeADFun(
-    data = tmb_data, parameters = tmb_params, map = tmb_map,
-    profile = if (control$profile) prof else NULL,
-    random = tmb_random, DLL = "sdmTMB", silent = silent)
-  lim <- set_limits(tmb_obj, lower = lower, upper = upper,
-    loc = spde$mesh$loc, silent = FALSE)
+
 
   out_structure <- structure(list(
     data       = data,
@@ -1231,7 +1239,6 @@ sdmTMB <- function(
     response   = y_i,
     tmb_data   = tmb_data,
     tmb_params = tmb_params,
-    tmb_obj    = tmb_obj,
     tmb_map    = tmb_map,
     tmb_random = tmb_random,
     spatial_varying = spatial_varying,
@@ -1239,8 +1246,6 @@ sdmTMB <- function(
     spatiotemporal = spatiotemporal,
     spatial_varying_formula = spatial_varying_formula,
     reml       = reml,
-    lower      = lim$lower,
-    upper      = lim$upper,
     priors     = priors,
     nlminb_control = .control,
     control  = control,
@@ -1251,6 +1256,51 @@ sdmTMB <- function(
     call       = match.call(expand.dots = TRUE),
     version    = utils::packageVersion("sdmTMB")),
     class      = "sdmTMB")
+
+  if (do_index) {
+    args <- list(object = out_structure, return_tmb_data = TRUE)
+    args <- c(args, predict_args)
+    tmb_data <- do.call(predict.sdmTMB, args)
+    if (!"newdata" %in% names(predict_args)) {
+      cli_warn("`newdata` must be supplied if `do_index = TRUE`.")
+    }
+    if (!"bias_correct" %in% names(index_args)) {
+      cli_warn("`bias_correct` must be done later with `get_index(..., bias_correct = TRUE)`.")
+      index_args$bias_correct <- NULL
+    }
+    if (!"area" %in% names(index_args)) {
+      cli_warn("`area` not supplied to `index_args` but `do_index = TRUE`. Using `area = 1`.")
+      if (is.null(index_args)) index_args <- list()
+      index_args[["area"]] <- 1
+    }
+    if (length(index_args$area) == 1L) {
+      tmb_data$area_i <- rep(index_args[["area"]], nrow(predict_args[["newdata"]]))
+    } else {
+      if (length(index_args$area) != nrow(predict_args[["newdata"]]))
+        cli_abort("`area` length does not match `nrow(newdata)`.")
+      tmb_data$area_i <- index_args[["area"]]
+    }
+    tmb_data$calc_index_totals <- 1L
+    tmb_params[["eps_index"]] <- numeric(0) # for bias correction
+    out_structure$do_index <- TRUE
+  } else {
+    out_structure$do_index <- FALSE
+  }
+
+  tmb_obj <- TMB::MakeADFun(
+    data = tmb_data, parameters = tmb_params, map = tmb_map,
+    profile = if (control$profile) prof else NULL,
+    random = tmb_random, DLL = "sdmTMB", silent = silent)
+  lim <- set_limits(tmb_obj, lower = lower, upper = upper,
+    loc = spde$mesh$loc, silent = FALSE)
+
+  out_structure$tmb_obj <- tmb_obj
+  out_structure$tmb_obj <- tmb_obj
+  out_structure$tmb_data <- tmb_data
+  out_structure$tmb_params <- tmb_params
+  out_structure$lower <- lim$lower
+  out_structure$upper <- lim$upper
+
   if (!do_fit) return(out_structure)
 
   if (normalize) tmb_obj <- TMB::normalize(tmb_obj, flag = "flag", value = 0)
