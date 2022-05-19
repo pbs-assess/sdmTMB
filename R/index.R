@@ -146,6 +146,9 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
     silent = silent
   )
 
+  old_par <- obj$fit_obj$model$par
+  new_obj$fn(old_par) # (sometimes) need to initialize the new TMB object once!
+
   sr <- TMB::sdreport(new_obj, bias.correct = FALSE, ...)
   sr_est <- as.list(sr, "Estimate", report = TRUE)
 
