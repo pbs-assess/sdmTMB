@@ -1264,7 +1264,7 @@ sdmTMB <- function(
     if (!"newdata" %in% names(predict_args)) {
       cli_warn("`newdata` must be supplied if `do_index = TRUE`.")
     }
-    if (!"bias_correct" %in% names(index_args)) {
+    if ("bias_correct" %in% names(index_args)) {
       cli_warn("`bias_correct` must be done later with `get_index(..., bias_correct = TRUE)`.")
       index_args$bias_correct <- NULL
     }
