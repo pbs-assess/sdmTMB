@@ -7,9 +7,11 @@ test_that("barrier mesh", {
   skip_if_not_installed("dplyr")
 
 
+  library(dplyr)
+  library(sf)
   crs_utm9 <- 3156 # Pick a projection, here UTM9
-  st_crs(bc_coast) <- 4326 # 'WGS84'; necessary on some installs
-  bc_coast <- st_transform(bc_coast, crs_utm9)
+  sf::st_crs(bc_coast) <- 4326 # 'WGS84'; necessary on some installs
+  bc_coast <- sf::st_transform(bc_coast, crs_utm9)
 
   # Project our survey data coordinates:
   survey <- pcod_2011 %>% select(lon, lat, density) %>%
