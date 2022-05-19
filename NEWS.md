@@ -1,5 +1,9 @@
 # sdmTMB
 
+# sdmTMB 0.0.24.9005
+
+* Fix bug where in rare cases `get_index()` would return gibberish small values.
+
 # sdmTMB 0.0.24.9001
 
 * Enable random walk random field TMB simulation in `sdmTMB_simulate()`.
