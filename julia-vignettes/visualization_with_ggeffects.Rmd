@@ -12,8 +12,8 @@ vignette: >
 ```{r setup, include = FALSE, cache=FALSE}
 dplyr_installed <- require("dplyr", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
-visreg_installed <- require("visreg", quietly=TRUE)
 ggeffects_installed <- require("ggeffects", quietly=TRUE)
+prediction_installed <- require("prediction", quietly=TRUE)
 pkgs <- dplyr_installed && ggplot_installed &&visreg_installed && ggeffects_installed
 
 knitr::opts_chunk$set(
@@ -25,148 +25,26 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r echo=FALSE}
-install.packages("visreg")
-remotes::install_github("pbs-assess/sdmTMB", force = TRUE)
+The package [ggeffects]https://cran.r-project.org/web/packages/ggeffects/index.html. can similarly be used to plot marginal effects from an `sdmTMB` model
+
+First, switch to the 'dev' branch of sdmTMB (for now anyway)
+```{r}
+remove.packages("sdmTMB")
+remotes::install_github("pbs-assess/sdmTMB", ref = "dev")
+
+# or restart your R session some other way...
+rstudioapi::restartSession()
+
+install.packages("prediction")
+library(prediction)
 library(sdmTMB)
-library(ggplot2)
-library(visreg)
 library(ggeffects)
-```
 
-We can use the package [visreg]https://cran.r-project.org/web/packages/visreg/index.html] to visually inspect the model output from `sdmTMB` by comparing the effects of explanatory variables in the model on the response variable.
-
-To start, we will use the Pacific cod biomass for years 2011 for this example. We will fit a model with a spatial smoother on scaled depth and fixed effect of year using a Tweedie distribution.
-
-```{r}
-#pcod_2011$fyear <- as.factor(pcod_2011$year)
-pcod$fyear <- as.factor(pcod$year)
-mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
-  fit <- sdmTMB(
-    #density ~ 0 + poly(depth_scaled, 2) + fyear,
-    density ~0 + s(depth_scaled) + fyear,
-    time="year",
-    #data = pcod_2011, 
-    data=pcod,
-    #mesh = pcod_mesh_2011,
-    mesh=mesh,
-    spatial = "on",
-    spatiotemporal="iid",
-    family = tweedie(link="log")
-  )
-```
-
-We can then plot the effect of depth using `visreg` in log space:
-```{r}
-visreg(fit, xvar = "depth_scaled", type="conditional")
-```
-
-We also can look at the effect separately in each year, either in separate plots or overlaid on the same plot
-```{r}
-visreg(fit, xvar="depth_scaled", by="fyear")
-visreg(fit, xvar="depth_scaled", by="fyear", overlay=TRUE)
-```
-
-And at the effect of depth in the real space, rather than log space:
-```{r}
-visreg(fit, xvar = "depth_scaled", scale = "response")
-```
-
-Partial residuals
-```{r}
-visreg(fit, xvar = "depth_scaled", type="conditional", partial=TRUE)
-```
-
-Not currently working: contrast plot
-```{r}
-#visreg(fit, xvar = "fyear", type="contrast")
-```
-
-`visreg` can also be used to visualize the fixed effect of year:
-```{r}
-visreg(fit, xvar = "fyear")
-```
-
-And to simultaneously compare both depth and year with a two-dimensional contour plot:
-```{r}
-  visreg2d(fit, xvar = "fyear", yvar = "depth_scaled")
-```
-
-Still need to figure this out: Can be linked to ggplot2 to use ggplot formatting?
-```{r}
- v <- visreg(fit, xvar = "depth_scaled")
-  # now use ggplot2 etc. if desired
-```
-
-`visreg` can also be used to plot the output of delta models from `sdmTMB` by using similar code for the previous `visreg` plots, but specifying `model=1` for the encounter model, and `model=2` for the positive catch rate model.
-```{r}
-  # Delta model example:
-  fit_dg <- sdmTMB(
-    density ~ s(depth_scaled, year, k = 8),
-    data = pcod_2011, mesh = pcod_mesh_2011,
-    spatial = "off",
-    family = delta_gamma()
-  )
-
-  visreg_delta(fit_dg, xvar = "depth_scaled", model = 1, gg = TRUE)
-  visreg_delta(fit_dg, xvar = "depth_scaled", model = 2, gg = TRUE)
-  visreg_delta(fit_dg,
-    xvar = "depth_scaled", model = 1,
-    scale = "response", gg = TRUE
-  )
-  visreg_delta(fit_dg,
-    xvar = "depth_scaled", model = 2,
-    scale = "response"
-  )
-  visreg_delta(fit_dg,
-    xvar = "depth_scaled", model = 2,
-    scale = "response", gg = TRUE, rug = FALSE
-  )
-  visreg2d_delta(fit_dg,
-    xvar = "depth_scaled", yvar = "year",
-    model = 2, scale = "response"
-  )
-  visreg2d_delta(fit_dg,
-    xvar = "depth_scaled", yvar = "year",
-    model = 1, scale = "response", plot.type = "persp"
-  )
-  visreg2d_delta(fit_dg,
-    xvar = "depth_scaled", yvar = "year",
-    model = 2, scale = "response", plot.type = "gg"
-  )
-}
 ```
 
 
-With a delta model...
 ```{r}
-fit2 <- sdmTMB(
-  formula = density ~ 0 + as.factor(year) + s(depth),
-  data = pcod,
-  mesh = mesh,
-  time = "year",
-  family = Gamma(link = "log"),
-  spatiotemporal = "iid",
-  spatial = "on"
-)
-```
-
-Inspect the effect of the smoothed covariate
-```{r}
-s1 <- plot_smooth(m1, ggplot = TRUE)
-#> This function will likely be deprecated.
-#> Consider using `visreg::visreg()` or `visreg_delta()`.
-#> See ?visreg_delta() for examples.
-s1 + xlim(min(pcod$depth), max(pcod$depth))
-```
-
-Surface plots
-
-
-
-[ggeffects]https://cran.r-project.org/web/packages/ggeffects/index.html.
-```{r}
-fit <- sdmTMB(present ~poly(depth,2),
+fit <- sdmTMB(present ~poly(depth,2)+fyear,
        #present~depth,
        data=pcod_2011, mesh=pcod_mesh_2011,
        spatial="off",
@@ -176,3 +54,57 @@ fit <- sdmTMB(present ~poly(depth,2),
 g <- ggeffect(fit, "depth [0:500 by=1]")
 plot(g)
 ```
+
+```{r}
+
+g2 <- ggeffect(fit, "fyear")
+plot(g2)     
+```
+ 
+```{r}
+pcod_2011$fyear <- as.factor(pcod_2011$year)
+fit3 <- sdmTMB(density ~poly(depth,2)+fyear,
+       #present~depth,
+       data=pcod_2011, mesh=pcod_mesh_2011,
+       spatial="off",
+       family=tweedie()
+       )
+
+g <- ggeffect(fit3, "depth [0:500 by=1]")
+plot(g)
+g2 <- ggeffect(fit,"depth [0:500 by=1]", )
+ggplot(g, aes(x, predicted, color=fyear))+geom_line()
+```
+
+
+
+```{r}
+# make fake predictor(s) and sampling locations:
+N = 300
+predictor_dat <- data.frame(
+  X = runif(N), Y = runif(N),
+  log_depth = rnorm(N,mean=2,sd=1), 
+  year = rep(1:6, each = 50),
+  hour = sample(1:24, size = N, replace=T)
+)
+predictor_dat$hour_effect = 0.2 * sin(2*pi/365*predictor_dat$hour)
+predictor_dat$log_depth2 = predictor_dat$log_depth^2
+
+mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.1)
+
+sim_dat <- sdmTMB_simulate(
+  formula = ~ hour_effect + log_depth + log_depth2,
+  data = predictor_dat,
+  time = "year",
+  mesh = mesh,
+  family = gaussian(),
+  range = 0.5,
+  sigma_E = 0.1,
+  phi = 0.1,
+  sigma_O = 0.2,
+  seed = 42,
+  B = c(0.2, -0.4, 0.02) # hour effect, linear depth, quadratic depth
+)
+
+```
+
