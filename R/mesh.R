@@ -367,7 +367,8 @@ add_barrier_mesh <- function(spde_obj, barrier_sf, range_fraction = 0.2,
     range_fraction > 0, length(range_fraction) == 1
   )
   assert_that(is.numeric(proj_scaling), length(proj_scaling) == 1)
-  assert_that("sf" %in% class(barrier_sf))
+  assert_that(length(grep("*POLYGON", class(barrier_sf$geometry))) != 0,
+              msg = "The sf object must contain polygons defining the barriers.")
   assert_that("sdmTMBmesh" %in% class(spde_obj))
   assert_that(is.logical(plot))
 
