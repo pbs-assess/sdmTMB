@@ -10,7 +10,10 @@ test_that("barrier mesh", {
   library(dplyr)
   library(sf)
   crs_utm9 <- 3156 # Pick a projection, here UTM9
+
+  suppressWarnings(
   sf::st_crs(bc_coast) <- 4326 # 'WGS84'; necessary on some installs
+  )
   bc_coast <- sf::st_transform(bc_coast, crs_utm9)
 
   # Project our survey data coordinates:
