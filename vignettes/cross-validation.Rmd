@@ -2,6 +2,7 @@
 title: "Cross-validation for model evaluation and comparison"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
+bibliography: 'refs.bib'
 vignette: >
   %\VignetteIndexEntry{Cross-validation for model evaluation and comparison}
   %\VignetteEngine{knitr::rmarkdown}
@@ -32,7 +33,7 @@ library(sdmTMB)
 
 Cross-validation is one of the best approaches that can be used to quantify model performance and compare sdmTMB models with different structures (unlike AIC, this approach will also factor in uncertainty in random effects). Arguably the most challenging decision in implementing cross-validation is how to specify the folds (each fold representing a subset of data that is in turn held out and used as a test set). Folds may vary in number and how data are partitioned, and will likely be slightly different for each application.
 
-The goals of some sdmTMB applications may be focused on spatial prediction; these include making prediction to new spatial regions (e.g. unsampled areas or areas not sampled in every year). For these types of models we recommend exploring folds using the `blockCV` or `spatialsample` packages. In general, these spatial sampling approaches assign observations that are spatially autocorrelated to the same fold. Accounting for the spatial correlation can lead to better estimates of covariate effects, as well as prediction errors.
+The goals of some sdmTMB applications may be focused on spatial prediction; these include making prediction to new spatial regions (e.g. unsampled areas or areas not sampled in every year). For these types of models we recommend exploring folds using the `blockCV` or `spatialsample` packages [@silge_2021; @valavi_2019]. In general, these spatial sampling approaches assign observations that are spatially autocorrelated to the same fold. Accounting for the spatial correlation can lead to better estimates of covariate effects, as well as prediction errors.
 
 Alternatively, the goals of an analysis with sdmTMB may be to evaluate the predictive accuracy of a model in time (e.g. a missing survey year, or prediction to future years). For retrospective analyses, all points within a year may be assigned to a fold (or groups of years to the same fold). In contrast, models that are forward looking would use Leave Future Out Cross-Validation (LFOCV). In LFOCV, data up to year $t$ are used to predict observations at $t+1$, etc.  
 
@@ -205,7 +206,7 @@ m2$elpd
   
 ### Model ensembling  
 
-Finally, instead of identifying single "best" models, we may be interested in doing model averaging. In the sdmTMB package, we've implemented the model stacking procedure described by Yao et al. (2018) in the `stacking` function. This procedure uses optimization to find the normalized weights that maximize the total log-likelihood across models (other metrics may also be used). Inputs to the function are a list of models, where each list element is the output of a call to `sdmTMB_cv`:
+Finally, instead of identifying single "best" models, we may be interested in doing model averaging. In the sdmTMB package, we've implemented the model stacking procedure described by [@yao_2018] in the `stacking` function. This procedure uses optimization to find the normalized weights that maximize the total log-likelihood across models (other metrics may also be used). Inputs to the function are a list of models, where each list element is the output of a call to `sdmTMB_cv`:
 
 ```{r ex7, eval=FALSE}
 weights <- sdmTMB_stacking(model_list)
@@ -217,14 +218,4 @@ By default this calculation uses data from each fold. If instead, we had split t
 weights <- sdmTMB_stacking(model_list, include_folds = 1)
 ```
 
-
 ### References  
-
-Silge, J. 2021. spatialsample: Spatial Resampling Infrastructure, R package version 0.1.0. url = {https://CRAN.R-project.org/package=spatialsample
-
-Valavi R., J. Elith, J. Lahoz-Monfort, and G. Guillera-Arroita. 2019. blockCV: An R
-package for generating spatially or environmentally separated folds
-for k-fold cross-validation of species distribution models. Methods in 
-Ecology and Evolution, 10:225 -- 232. https://doi.org/10.1111/2041-210X.13107
-  
-Yao, Y., A. Vehtari, D. Simpson, and A. Gelman. 2018. Using stacking to average Bayesian predictive distributions. Bayesian Analysis, 13:917 -- 1007. https://doi.org/10.1214/17-BA1091
