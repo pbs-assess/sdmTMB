@@ -770,6 +770,7 @@ Type objective_function<Type>::operator()()
 
   if (do_predict) {
     int n_p = proj_X_ij(0).rows(); // n 'p'redicted newdata
+    int n_p_mesh = proj_X_ij(0).rows(); // n 'p'redicted mesh (less than n_p if duplicate locations)
     // DELTA DONE
     array<Type> proj_fe(n_p, n_m);
     for (int m = 0; m < n_m; m++) {
@@ -842,11 +843,16 @@ Type objective_function<Type>::operator()()
       }
     }
 
-    // Spatial and spatiotemporal random fields:
+    // Spatial and spatiotemporal random fields (by unique location):
+    array<Type> proj_omega_s_A_unique(n_p_mesh, n_m);
+    array<Type> proj_zeta_s_A_unique(n_p_mesh, n_z, n_m);
+    array<Type> proj_epsilon_st_A(n_p_mesh, n_t, n_m);
+
+    // Expanded to full length:
     array<Type> proj_omega_s_A(n_p, n_m);
     array<Type> proj_zeta_s_A(n_p, n_z, n_m);
-    array<Type> proj_epsilon_st_A(n_p, n_t, n_m);
     array<Type> proj_epsilon_st_A_vec(n_p, n_m);
+    proj_zeta_s_A.setZero(); // may not get filled
 
     for (int m = 0; m < n_m; m++) {
       for (int t = 0; t < n_t; t++)
@@ -855,20 +861,19 @@ Type objective_function<Type>::operator()()
         for (int t = 1; t < n_t; t++)
           proj_epsilon_st_A.col(m).col(t) = proj_epsilon_st_A.col(m).col(t - 1) + proj_epsilon_st_A.col(m).col(t);
       }
-      proj_omega_s_A.col(m) = proj_mesh * vector<Type>(omega_s.col(m));
+      proj_omega_s_A_unique.col(m) = proj_mesh * vector<Type>(omega_s.col(m));
     }
 
     // Spatially varying coefficients:
     array<Type> proj_zeta_s_A_cov(n_p, n_z, n_m);
     proj_zeta_s_A_cov.setZero();
-    proj_zeta_s_A.setZero();
     if (spatial_covariate) {
       for (int m = 0; m < n_m; m++) {
         for (int z = 0; z < n_z; z++) {
-          proj_zeta_s_A.col(m).col(z) = proj_mesh * vector<Type>(zeta_s.col(m).col(z));
-          for (int i = 0; i < n_p; i++) {
-            proj_zeta_s_A_cov(i,z,m) = proj_zeta_s_A(i,z,m) * proj_z_i(i,z);
-          }
+          proj_zeta_s_A_unique.col(m).col(z) = proj_mesh * vector<Type>(zeta_s.col(m).col(z));
+          // for (int i = 0; i < n_p_mesh; i++) {
+          //   proj_zeta_s_A_cov_unique(i,z,m) = proj_zeta_s_A_unique(i,z,m) * proj_z_i(i,z);
+          // }
         }
       }
     }
@@ -876,8 +881,21 @@ Type objective_function<Type>::operator()()
     // Pick out the appropriate spatial and/or or spatiotemporal values:
     for (int m = 0; m < n_m; m++) {
       for (int i = 0; i < n_p; i++) {
-        // FIXME proj_spatial_index doing nothing; same in fitting; is now 1:N
+        proj_omega_s_A(i,m) = proj_omega_s_A_unique(proj_spatial_index(i),m);
         proj_epsilon_st_A_vec(i,m) = proj_epsilon_st_A(proj_spatial_index(i), proj_year(i),m);
+        for (int z = 0; z < n_z; z++) {
+          proj_zeta_s_A(i,z,m) = proj_zeta_s_A_unique(proj_spatial_index(i),z,m);
+        }
+      }
+    }
+
+    if (spatial_covariate) {
+      for (int m = 0; m < n_m; m++) {
+        for (int z = 0; z < n_z; z++) {
+          for (int i = 0; i < n_p; i++) {
+            proj_zeta_s_A_cov(i,z,m) = proj_zeta_s_A(i,z,m) * proj_z_i(i,z);
+          }
+        }
       }
     }
 

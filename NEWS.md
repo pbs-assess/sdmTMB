@@ -2,6 +2,9 @@
 
 # sdmTMB 0.0.24.9005
 
+* Use unique locations on prediction for huge speedups on large `newdata`
+  gridded data.
+
 * Fix bug where in rare cases `get_index()` would return gibberish small values.
 
 # sdmTMB 0.0.24.9001
