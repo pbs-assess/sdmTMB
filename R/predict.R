@@ -346,14 +346,14 @@ predict.sdmTMB <- function(object, newdata = object$data,
         "Please remove it."))
 
     newdata$sdm_orig_id <- seq(1L, nrow(newdata))
-    if (!requireNamespace("dplyr", quietly = TRUE)) { # faster
+    if (requireNamespace("dplyr", quietly = TRUE)) { # faster
       unique_newdata <- dplyr::distinct(newdata[, xy_cols, drop = FALSE])
     } else {
       unique_newdata <- unique(newdata[, xy_cols, drop = FALSE])
     }
     unique_newdata[["sdm_spatial_id"]] <- seq(1, nrow(unique_newdata)) - 1L
     # newdata$sdm_spatial_id <- seq(1, nrow(newdata)) - 1L
-    if (!requireNamespace("dplyr", quietly = TRUE)) { # much faster
+    if (requireNamespace("dplyr", quietly = TRUE)) { # much faster
       newdata <- dplyr::left_join(newdata, unique_newdata, by = xy_cols)
     } else {
       newdata <- base::merge(newdata, unique_newdata, by = xy_cols,
