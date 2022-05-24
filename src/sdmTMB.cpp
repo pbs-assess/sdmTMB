@@ -853,13 +853,21 @@ Type objective_function<Type>::operator()()
     array<Type> proj_zeta_s_A(n_p, n_z, n_m);
     array<Type> proj_epsilon_st_A_vec(n_p, n_m);
     proj_zeta_s_A.setZero(); // may not get filled
+    proj_epsilon_st_A.setZero();
 
     for (int m = 0; m < n_m; m++) {
-      for (int t = 0; t < n_t; t++)
-        proj_epsilon_st_A.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
-      if (rw_fields(m)) {
-        for (int t = 1; t < n_t; t++)
-          proj_epsilon_st_A.col(m).col(t) = proj_epsilon_st_A.col(m).col(t - 1) + proj_epsilon_st_A.col(m).col(t);
+      if (!rw_fields(m)) { // iid or ar1
+        for (int t = 0; t < n_t; t++) {
+          proj_epsilon_st_A.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
+        }
+      } else { // rw
+        for (int t = 0; t < n_t; t++) {
+          if (t == 0) {
+            proj_epsilon_st_A.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
+          } else {
+            proj_epsilon_st_A.col(m).col(t) = proj_epsilon_st_A.col(m).col(t-1) + proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
+          }
+        }
       }
       proj_omega_s_A_unique.col(m) = proj_mesh * vector<Type>(omega_s.col(m));
     }
