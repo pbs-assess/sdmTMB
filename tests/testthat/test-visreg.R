@@ -114,19 +114,19 @@ test_that("visreg works", {
   # works with RW models
   ## nope. currently crashes R
 
-  # fit_rw <- sdmTMB(
-  #   density ~ 0 + as.factor(year) + poly(depth_scaled, 2),
-  #   data = pcod_2011, mesh = pcod_mesh_2011,
-  #   time = "year",
-  #   spatial = "on",
-  #   spatiotemporal = "rw",
-  #   family = tweedie()
-  # )
-  # visreg::visreg(fit_rw, xvar = "depth_scaled", nn = 10)
+  fit_rw <- sdmTMB(
+    density ~ 0 + fyear + poly(depth_scaled, 2),
+    data = pcod_2011, mesh = pcod_mesh_2011,
+    time = "year",
+    spatial = "on",
+    spatiotemporal = "rw",
+    family = tweedie()
+  )
+  visreg::visreg(fit_rw, xvar = "depth_scaled", nn = 10)
 
   # works with ar1 models
   fit_ar1 <- sdmTMB(
-    density ~ 0 + as.factor(year) + poly(depth_scaled, 2),
+    density ~ 0 + fyear + poly(depth_scaled, 2),
     data = pcod_2011, mesh = pcod_mesh_2011,
     time = "year",
     spatial = "on",
