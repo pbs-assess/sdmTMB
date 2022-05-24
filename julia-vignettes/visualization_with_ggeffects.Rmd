@@ -14,7 +14,8 @@ dplyr_installed <- require("dplyr", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
 ggeffects_installed <- require("ggeffects", quietly=TRUE)
 prediction_installed <- require("prediction", quietly=TRUE)
-pkgs <- dplyr_installed && ggplot_installed &&visreg_installed && ggeffects_installed
+sdmTMB_installed <- require("sdmTMB", quietly=TRUE)
+pkgs <- dplyr_installed && ggplot_installed && visreg_installed && ggeffects_installed
 
 knitr::opts_chunk$set(
   collapse = TRUE,
