@@ -1,3 +1,25 @@
+# modified from glmmTMB:
+add_to_family <- function(x) {
+  # x <- c(x, list(link = link), make.link(link))
+  # Effect.default/glm.fit
+  if (is.null(x$aic)) {
+    x <- c(x, list(aic = function(...) NA_real_))
+  }
+  if (is.null(x$initialize)) {
+    x <- c(x, list(initialize = expression({
+      mustart <- y + 0.1
+    })))
+  }
+  if (is.null(x$dev.resids)) {
+    # can't return NA, glm.fit is unhappy
+    x <- c(x, list(dev.resids = function(y, mu, wt) {
+      rep(0, length(y))
+    }))
+  }
+  class(x) <- "family"
+  x
+}
+
 #' Additional families
 #'
 #' Additional families compatible with [sdmTMB()].
@@ -156,8 +178,8 @@ tweedie <- function(link = "log") {
   else if (is.character(link))
     stats <- stats::make.link(link)
 
-  list(family = "tweedie", link = linktemp, linkfun = stats$linkfun,
-    linkinv = stats$linkinv)
+  x <- c(list(family = "tweedie", link = linktemp), stats)
+  add_to_family(x)
 }
 
 #' @export
