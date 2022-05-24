@@ -75,7 +75,7 @@ We can add in data points
 plot(g, add.data=TRUE)
 ```
 
-We can also use `ggeffect` to plot multiple variables by listing variables in `terms=c()`, with the first variable listed indicating the variable to be plotted on the x-axis, and the remaining listed terms (up to four total) indicating the groups. Adding `facet=TRUE` will show each year as a separate plot, instead of overlain on one plot.
+We can also use `ggeffect` to plot multiple variables by listing in `terms=c()`, with the first term listed indicating the variable to be plotted on the x-axis, and the remaining listed terms (up to four total) indicating the groups. Adding `facet=TRUE` will show each year as a separate plot, instead of overlain on one plot.
 ```{r}
 dat <- ggeffect(fit, terms= c("depth", "fyear"))
 plot(dat)
@@ -91,8 +91,8 @@ We can also use `ggplot` for creating plots by calling the ggeffects object `dat
 ggplot(dat, aes(x, predicted, colour=group))+geom_line()
 ```
 
+Plotting using `visreg` with density, rather than presence-only, as the response variable is similar, for instance--
 ```{r echo=FALSE, include=FALSE}
-#With density data? (not currently working--getting error about not being able to find mu.eta)
 fit2 <- sdmTMB(density ~depth +fyear,
        data=pcod, 
        mesh=mesh,
@@ -101,10 +101,36 @@ fit2 <- sdmTMB(density ~depth +fyear,
        )
 
 g2 <- ggeffect(fit2,"depth [0:500 by=1]")
+plot(g2)
+plot(g2, add.dat=T)
 ```
 
+
 ```{r echo=FALSE, include=FALSE}
-#Is there a way to plot spatial and spatio-temporal variation?
+#Plotting spatial and spatio-temporal effects--way to plot in ggeffects?
+fit3 <- sdmTMB(density ~depth +fyear,
+       data=pcod, 
+       time="year",
+       mesh=mesh,
+       spatial="on",
+       spatiotemporal=T,
+       family=tweedie()
+       )
+
+predictions<- predict(fit3, newdata = fit$data, return_tmb_object = TRUE)
+plot_map <- function(dat, column) {
+  ggplot(dat, aes_string("X", "Y", fill = column)) +
+    geom_raster() +
+    facet_wrap(~year) +
+    coord_fixed()
+}
+plot_map(predictions$data, "omega_s") +
+  ggtitle("Spatial random effects only") +
+  scale_fill_gradient2()
+
+plot_map(predictions$data, "epsilon_st") +
+  ggtitle("Spatiotemporal random effects only") +
+  scale_fill_gradient2()
 ```
 
 #Example using simulated data with multiple continuous explanatory variables
@@ -138,24 +164,43 @@ sim_dat <- sdmTMB_simulate(
   seed = 42,
   B = c(0.2, -0.4, 0.02) # hour effect, linear depth, quadratic depth
 )
-#Not working because observed has negatives
 fit3 <- sdmTMB(
        observed ~ 0+hour_effect +log_depth + log_depth2,
        data=sim_dat, 
        mesh=mesh,
        spatial="on",
        time="year",
-       family=tweedie()
+       family=gaussian()
        )
 ```
 
-
 ```{r}
-#Plotting, once get fit working
-#g3 <- ggeffect(fit3, "hour_effect")
-#plot(g)
+g3 <- ggeffect(fit3, "hour_effect")
+plot(g3)
+g4 <- ggeffect(fit3, "log_depth")
+plot(g4)
 ```
 
+For plotting two continuous variables, `ggeffects` will make the non-target variable discrete by selecting different levels.
+```{r}
+g5 <- ggeffect(fit3, terms=c("log_depth", "hour_effect"))
+plot(g5, facet=T)
+```
+
+To specify the levels rather than letting `ggeffects` choose them, use brackets with the selected values within the term list, for instance
+
+```{r}
+g6 <- ggeffect(fit3, terms=c("log_depth", "hour_effect [0,1,2]"))
+plot(g6)
+```
+
+For plotting more than two continuous variables, 
+
+```{r}
+#Still need to finish up this example:
+g7 <- ggeffect(fit3, terms=c("log_depth", "hour_effect [0,1,2]", "log_depth2"))
+plot(g7, facet=T)
+```
 
 ```{r}
 #Example that has residuals
