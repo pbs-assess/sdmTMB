@@ -69,29 +69,11 @@ visreg(fit, xvar = "depth_scaled", scale = "response")
 visreg(fit, xvar = "fyear")
 ```
 
-Note that for plotting in `visreg`, categorical variables like year need to be designated as a factor in the dataframe, as in the example above, rather than in the model formula. For instance, while designating year as a character in the dataframe and a factor in the model will work for some models, e.g.
+Note that for plotting in `visreg`, categorical variables like year need to be designated as a factor in the dataframe, as in the example above, rather than in the model formula. For instance, while designating year as a character in the dataframe and a factor in the model will work for some models, it will not be able to be plotted in `visreg` for delta models. For this reason, we suggest that it is safer to not use `as.factor` in the model formula.
+
+We can also simultaneously compare both depth and year with a two-dimensional contour plot.
 ```{r}
-pcod_2011$fyear <- as.character(pcod_2011$year)
-fit <- sdmTMB(
-  density ~ s(depth_scaled) + as.factor(fyear),
-  data = pcod_2011, mesh = pcod_mesh_2011,
-  family = tweedie()
-)
-visreg::visreg(fit, xvar = "fyear")
-```
-
-Designating year as a factor only in the model formula, but keeping it numeric in the dataframe, will not be able to be plotted in `visreg` for delta models. For this reason, we suggest that it is safer to not use `as.factor` in the model formula.
-
-fit <- sdmTMB(
-  density ~ s(depth_scaled) + as.factor(year),
-  data = pcod_2011, mesh = pcod_mesh_2011,
-  family = tweedie()
-)
-visreg::visreg(fit, xvar = "year")
-
-And to simultaneously compare both depth and year with a two-dimensional contour plot.
-```{r}
-  visreg2d(fit, xvar = "fyear", yvar = "depth_scaled")
+visreg2d(fit, xvar = "fyear", yvar = "depth_scaled")
 ```
 
 `visreg` can also be used to plot the output of delta models from `sdmTMB` by using similar code for the previous `visreg` plots, but specifying `model=1` for the encounter model, and `model=2` for the positive catch rate model. For example,
@@ -113,3 +95,4 @@ Partial residuals can be included by setting `partial=TRUE`
 ```{r}
 visreg(fit, xvar = "depth_scaled", type="conditional", partial=TRUE)
 ```
+
