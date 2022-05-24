@@ -96,3 +96,47 @@ Partial residuals can be included by setting `partial=TRUE`
 visreg(fit, xvar = "depth_scaled", type="conditional", partial=TRUE)
 ```
 
+For a model with multiple continuous variables, for instance, this example with simulated data
+```{r}
+N = 300
+predictor_dat <- data.frame(
+  X = runif(N), Y = runif(N),
+  log_depth = rnorm(N,mean=2,sd=1), 
+  year = rep(1:6, each = 50),
+  hour = sample(1:24, size = N, replace=T)
+)
+predictor_dat$hour_effect = 0.2 * sin(2*pi/365*predictor_dat$hour)
+predictor_dat$log_depth2 = predictor_dat$log_depth^2
+
+#Make mesh
+mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.1)
+
+#Simulate data
+sim_dat <- sdmTMB_simulate(
+  formula = ~ 0 + hour_effect + log_depth + log_depth2,
+  data = predictor_dat,
+  time = "year",
+  mesh = mesh,
+  family = gaussian(),
+  range = 0.5,
+  sigma_E = 0.1,
+  phi = 0.1,
+  sigma_O = 0.2,
+  seed = 42,
+  B = c(0.2, -0.4, 0.02) # hour effect, linear depth, quadratic depth
+)
+fit3 <- sdmTMB(
+       observed ~ 0+hour_effect +log_depth + log_depth2,
+       data=sim_dat, 
+       mesh=mesh,
+       spatial="on",
+       time="year",
+       family=gaussian()
+       )
+```
+
+We can similarly use `visreg` to visualize how the two variable interact to effect the response
+```{r}
+visreg2d(fit3, xvar = "hour_effect", yvar = "log_depth")
+```
+
