@@ -1086,11 +1086,6 @@ sdmTMB <- function(
     tmb_params$b_threshold <- rep(0, length(tmb_params$b_threshold))
   }
 
-  unmap <- function(x, v) {
-    for (i in v) x[[i]] <- NULL
-    x
-  }
-
   tmb_random <- c()
   if (any(spatial == "on")) {
     tmb_random <- c(tmb_random, "omega_s")
@@ -1112,7 +1107,6 @@ sdmTMB <- function(
   if (est_epsilon_re) {
     tmb_random <- c(tmb_random, "epsilon_re")
     tmb_map <- unmap(tmb_map, c("epsilon_re"))
-    # FIXME more!?
   }
 
   tmb_map$ar1_phi <- as.numeric(tmb_map$ar1_phi) # strip factors
@@ -1204,6 +1198,10 @@ sdmTMB <- function(
     }
     tmb_map$omega_s <- as.factor(tmb_map$omega_s)
     tmb_map$ln_tau_O <- as.factor(tmb_map$ln_tau_O)
+  }
+
+  if (anisotropy && delta && !"ln_H_input" %in% map) {
+    tmb_map$ln_H_input <- factor(c(1, 2, 1, 2)) # share anistropy as in VAST
   }
 
   if (tmb_data$threshold_func > 0) tmb_map$b_threshold <- NULL
@@ -1314,7 +1312,7 @@ sdmTMB <- function(
   }
 
   if (nlminb_loops > 1) {
-    if (!silent) cat("running extra nlminb loops\n")
+    if (!silent) cli_inform("running extra nlminb loops\n")
     for (i in seq(2, nlminb_loops, length = max(0, nlminb_loops - 1))) {
       temp <- tmb_opt[c("iterations", "evaluations")]
       tmb_opt <- stats::nlminb(
@@ -1325,7 +1323,7 @@ sdmTMB <- function(
     }
   }
   if (newton_loops > 0) {
-    if (!silent) cat("running newtonsteps\n")
+    if (!silent) cli_inform("running newtonsteps\n")
     for (i in seq_len(newton_loops)) {
       g <- as.numeric(tmb_obj$gr(tmb_opt$par))
       h <- stats::optimHess(tmb_opt$par, fn = tmb_obj$fn, gr = tmb_obj$gr)
@@ -1467,4 +1465,9 @@ find_missing_time <- function(x) {
     allx <- seq(min(ti), max(ti), by = mindiff)
     setdiff(allx, ti)
   }
+}
+
+unmap <- function(x, v) {
+  for (i in v) x[[i]] <- NULL
+  x
 }
