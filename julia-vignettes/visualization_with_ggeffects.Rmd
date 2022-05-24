@@ -1,10 +1,10 @@
 ---
-title: "Visualization Options with visreg and ggeffects"
+title: "Visualization Options with ggeffects"
 author: "Julia Indivero, Sean Anderson, Lewis Barnett, Philina English, Eric Ward"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Visualization Options with visreg and ggeffects}
+  %\VignetteIndexEntry{Visualization Options with ggeffects}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -25,7 +25,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-The package [ggeffects]https://cran.r-project.org/web/packages/ggeffects/index.html. can similarly be used to plot marginal effects from an `sdmTMB` model
+The package [ggeffects]https://cran.r-project.org/web/packages/ggeffects/index.html can be used to plot predictions from an `sdmTMB` model while holding certain variables constant, allowing us to see the marginal effects of the other variables (see [this vignette]https://strengejacke.github.io/ggeffects/articles/introduction_marginal_effects.html) for more information.
 
 First, switch to the 'dev' branch of sdmTMB (for now anyway)
 ```{r}
@@ -42,42 +42,54 @@ library(ggeffects)
 
 ```
 
+#Example with Pacific cod presence
+To start, we will use the Pacific cod data for this example. We will fit a model of fish presence with covariates of depth and a fixed effect of year using a Tweedie distribution.
 
 ```{r}
+pcod$fyear <- as.factor(pcod$year)
+mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 fit <- sdmTMB(present ~poly(depth,2)+fyear,
        #present~depth,
-       data=pcod_2011, mesh=pcod_mesh_2011,
+       data=pcod, 
+       mesh=mesh,
        spatial="off",
        family=binomial()
        )
+```
+
+We can then use  `ggeffect=` to see the effect of depth on the probability of Pacific cod being present. We can control what range and interval of depths are predicted within the function (e.g. `[0:500 by=1]`).
+```{r}
 
 g <- ggeffect(fit, "depth [0:500 by=1]")
 plot(g)
 ```
 
+We can also plot the effects of each year.
 ```{r}
-
 g2 <- ggeffect(fit, "fyear")
 plot(g2)     
 ```
  
+With density data? (not working)
 ```{r}
-pcod_2011$fyear <- as.factor(pcod_2011$year)
-fit3 <- sdmTMB(density ~poly(depth,2)+fyear,
-       #present~depth,
-       data=pcod_2011, mesh=pcod_mesh_2011,
+fit2 <- sdmTMB(density ~depth +fyear,
+       data=pcod, 
+       mesh=mesh,
        spatial="off",
        family=tweedie()
        )
 
-g <- ggeffect(fit3, "depth [0:500 by=1]")
+g3 <- ggpredict(fit3, "depth [0:500 by=1]")
 plot(g)
 g2 <- ggeffect(fit,"depth [0:500 by=1]", )
 ggplot(g, aes(x, predicted, color=fyear))+geom_line()
 ```
 
+Is there a way to plot spatial and spatio-temporal variation?
 
 
+
+#Example using simulated data with multiple continuous explanatory variables
 ```{r}
 # make fake predictor(s) and sampling locations:
 N = 300
@@ -93,7 +105,7 @@ predictor_dat$log_depth2 = predictor_dat$log_depth^2
 mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.1)
 
 sim_dat <- sdmTMB_simulate(
-  formula = ~ hour_effect + log_depth + log_depth2,
+  formula = ~ 0 + hour_effect + log_depth + log_depth2,
   data = predictor_dat,
   time = "year",
   mesh = mesh,
@@ -106,5 +118,24 @@ sim_dat <- sdmTMB_simulate(
   B = c(0.2, -0.4, 0.02) # hour effect, linear depth, quadratic depth
 )
 
+```
+
+
+```{r}
+fit3 <- sdmTMB(
+       observed ~ 0+hour_effect +log_depth + log_depth2,
+       data=sim_dat, 
+       mesh=mesh,
+       spatial="on",
+       time="year",
+       family=
+       )
+```
+
+```{r}
+g <- ggeffect(fit3, "log_depth")
+g2 <- ggeffect(fit3, "hour_effect ")
+plot(g)
+plot(g2)
 ```
 
