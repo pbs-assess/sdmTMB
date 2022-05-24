@@ -38,7 +38,7 @@ We will use the Pacific cod biomass for this example. We will fit a model with s
 pcod$fyear <- as.factor(pcod$year)
 mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
   fit <- sdmTMB(
-    density ~0 + s(depth_scaled) + fyear,
+    density ~0 + depth_scaled + fyear,
     time="year",
     data=pcod,
     mesh=mesh,
@@ -92,15 +92,4 @@ And to simultaneously compare both depth and year with a two-dimensional contour
 Partial residuals can be included by setting `partial=TRUE`
 ```{r}
 visreg(fit, xvar = "depth_scaled", type="conditional", partial=TRUE)
-```
-
-```{r echo=FALSE, include=FALSE}
-#contrast plots not currently working
-visreg(fit, xvar = "fyear", type="contrast")
-```
-
-```{r echo=FALSE, include=FALSE}
-#Linking to ggplot2 for editing plots not working yet
- v <- visreg(fit, xvar = "depth_scaled")
-
 ```
