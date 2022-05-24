@@ -1,14 +1,14 @@
 test_that("Families return a name to list with the correct names", {
   .names <- c("family", "link", "linkfun", "linkinv")
-  expect_named(student(link = "identity"), c(.names, "df"))
-  expect_named(lognormal(link = "log"), .names)
-  expect_named(tweedie(link = "log"), .names)
-  expect_named(nbinom2(link = "log"), .names)
+  expect_true(all(.names %in% names(student(link = "identity"))))
+  expect_true(all(.names %in% names(lognormal(link = "log"))))
+  expect_true(all(.names %in% names(tweedie(link = "log"))))
+  expect_true(all(.names %in% names(nbinom2(link = "log"))))
 })
 
 test_that("The supplementary families work with appropriate links", {
-  expect_identical(class(tweedie(link = "log")), "list")
-  expect_identical(class(tweedie(link = log)), "list")
+  expect_identical(class(tweedie(link = "log")), "family")
+  expect_identical(class(tweedie(link = log)), "family")
   expect_error(class(tweedie(link = "banana")))
   expect_error(class(tweedie(link = banana)))
 
