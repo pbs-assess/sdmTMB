@@ -28,19 +28,20 @@ knitr::opts_chunk$set(
 
 The package [ggeffects]https://cran.r-project.org/web/packages/ggeffects/index.html can be used to plot predictions from an `sdmTMB` model while holding certain variables constant, allowing us to see the marginal effects of the other variables (see [this vignette]https://strengejacke.github.io/ggeffects/articles/introduction_marginal_effects.html) for more information.
 
-First, switch to the 'dev' branch of sdmTMB (for now anyway)
-```{r}
+```{r echo=FALSE, include=FALSE}
+#First, switch to the 'dev' branch of sdmTMB (for now anyway)
 remove.packages("sdmTMB")
 remotes::install_github("pbs-assess/sdmTMB", ref = "dev")
 
 # or restart your R session some other way...
 rstudioapi::restartSession()
 
-install.packages("prediction")
+```
+
+```{r}
 library(prediction)
 library(sdmTMB)
 library(ggeffects)
-
 ```
 
 #Example with Pacific cod presence
@@ -50,7 +51,6 @@ To start, we will use the Pacific cod data for this example. We will fit a model
 pcod$fyear <- as.factor(pcod$year)
 mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 fit <- sdmTMB(present ~poly(depth,2)+fyear,
-       #present~depth,
        data=pcod, 
        mesh=mesh,
        spatial="off",
@@ -58,9 +58,8 @@ fit <- sdmTMB(present ~poly(depth,2)+fyear,
        )
 ```
 
-We can then use  `ggeffect=` to see the effect of depth on the probability of Pacific cod being present. We can control what range and interval of depths are predicted within the function (e.g. `[0:500 by=1]`).
+We can then use `ggeffect` to see the effect of depth on the probability of Pacific cod being present. We can control what range and interval of depths are predicted within the function (e.g. `[0:500 by=1]`).
 ```{r}
-
 g <- ggeffect(fit, "depth [0:500 by=1]")
 plot(g)
 ```
@@ -70,9 +69,30 @@ We can also plot the effects of each year.
 g2 <- ggeffect(fit, "fyear")
 plot(g2)     
 ```
- 
-With density data? (not working)
+
+We can add in data points
 ```{r}
+plot(g, add.data=TRUE)
+```
+
+We can also use `ggeffect` to plot multiple variables by listing variables in `terms=c()`, with the first variable listed indicating the variable to be plotted on the x-axis, and the remaining listed terms (up to four total) indicating the groups. Adding `facet=TRUE` will show each year as a separate plot, instead of overlain on one plot.
+```{r}
+dat <- ggeffect(fit, terms= c("depth", "fyear"))
+plot(dat)
+```
+
+Adding `facet=TRUE` will show each year as a separate plot, instead of overlain on one plot.
+```{r}
+plot(dat, facet=TRUE)
+```
+
+We can also use `ggplot` for creating plots by calling the ggeffects object `dat` as the dataframe.
+```{r}
+ggplot(dat, aes(x, predicted, colour=group))+geom_line()
+```
+
+```{r echo=FALSE, include=FALSE}
+#With density data? (not currently working--getting error about not being able to find mu.eta)
 fit2 <- sdmTMB(density ~depth +fyear,
        data=pcod, 
        mesh=mesh,
@@ -80,15 +100,12 @@ fit2 <- sdmTMB(density ~depth +fyear,
        family=tweedie()
        )
 
-g3 <- ggpredict(fit3, "depth [0:500 by=1]")
-plot(g)
-g2 <- ggeffect(fit,"depth [0:500 by=1]", )
-ggplot(g, aes(x, predicted, color=fyear))+geom_line()
+g2 <- ggeffect(fit2,"depth [0:500 by=1]")
 ```
 
-Is there a way to plot spatial and spatio-temporal variation?
-
-
+```{r echo=FALSE, include=FALSE}
+#Is there a way to plot spatial and spatio-temporal variation?
+```
 
 #Example using simulated data with multiple continuous explanatory variables
 ```{r}
@@ -121,7 +138,6 @@ sim_dat <- sdmTMB_simulate(
 
 ```
 
-
 ```{r}
 fit3 <- sdmTMB(
        observed ~ 0+hour_effect +log_depth + log_depth2,
@@ -129,14 +145,20 @@ fit3 <- sdmTMB(
        mesh=mesh,
        spatial="on",
        time="year",
-       family=
+       family=tweedie()
        )
 ```
 
 ```{r}
-g <- ggeffect(fit3, "log_depth")
-g2 <- ggeffect(fit3, "hour_effect ")
+g3 <- ggeffect(fit3, "hour_effect")
 plot(g)
-plot(g2)
+```
+
+
+3
+```{r}
+#Example that has residuals
+#plot(g, residuals=T, residuals.line=T)
+
 ```
 
