@@ -108,6 +108,7 @@ g2 <- ggeffect(fit2,"depth [0:500 by=1]")
 ```
 
 #Example using simulated data with multiple continuous explanatory variables
+We will simulate data to show an example of using `ggeffects` to plot models with multiple continuous variables
 ```{r}
 # make fake predictor(s) and sampling locations:
 N = 300
@@ -120,8 +121,10 @@ predictor_dat <- data.frame(
 predictor_dat$hour_effect = 0.2 * sin(2*pi/365*predictor_dat$hour)
 predictor_dat$log_depth2 = predictor_dat$log_depth^2
 
+#Make mesh
 mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.1)
 
+#Simulate data
 sim_dat <- sdmTMB_simulate(
   formula = ~ 0 + hour_effect + log_depth + log_depth2,
   data = predictor_dat,
@@ -135,10 +138,7 @@ sim_dat <- sdmTMB_simulate(
   seed = 42,
   B = c(0.2, -0.4, 0.02) # hour effect, linear depth, quadratic depth
 )
-
-```
-
-```{r}
+#Not working because observed has negatives
 fit3 <- sdmTMB(
        observed ~ 0+hour_effect +log_depth + log_depth2,
        data=sim_dat, 
@@ -149,13 +149,14 @@ fit3 <- sdmTMB(
        )
 ```
 
+
 ```{r}
-g3 <- ggeffect(fit3, "hour_effect")
-plot(g)
+#Plotting, once get fit working
+#g3 <- ggeffect(fit3, "hour_effect")
+#plot(g)
 ```
 
 
-3
 ```{r}
 #Example that has residuals
 #plot(g, residuals=T, residuals.line=T)
