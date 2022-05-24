@@ -38,7 +38,7 @@ We will use the Pacific cod biomass for this example. We will fit a model with s
 pcod$fyear <- as.factor(pcod$year)
 mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
   fit <- sdmTMB(
-    density ~0 + depth_scaled + fyear,
+    density ~0 + s(depth_scaled) + fyear,
     time="year",
     data=pcod,
     mesh=mesh,
