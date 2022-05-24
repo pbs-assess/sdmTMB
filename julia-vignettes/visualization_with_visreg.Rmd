@@ -64,10 +64,30 @@ And at the effect of depth in the response scale, rather than link space.
 visreg(fit, xvar = "depth_scaled", scale = "response")
 ```
 
-`visreg` can also be used to visualize the fixed effect of year.
+`visreg` can also be used to visualize just the fixed effect of year.
 ```{r}
 visreg(fit, xvar = "fyear")
 ```
+
+Note that for plotting in `visreg`, categorical variables like year need to be designated as a factor in the dataframe, as in the example above, rather than in the model formula. For instance, while designating year as a character in the dataframe and a factor in the model will work for some models, e.g.
+```{r}
+pcod_2011$fyear <- as.character(pcod_2011$year)
+fit <- sdmTMB(
+  density ~ s(depth_scaled) + as.factor(fyear),
+  data = pcod_2011, mesh = pcod_mesh_2011,
+  family = tweedie()
+)
+visreg::visreg(fit, xvar = "fyear")
+```
+
+Designating year as a factor only in the model formula, but keeping it numeric in the dataframe, will not be able to be plotted in `visreg` for delta models. For this reason, we suggest that it is safer to not use `as.factor` in the model formula.
+
+fit <- sdmTMB(
+  density ~ s(depth_scaled) + as.factor(year),
+  data = pcod_2011, mesh = pcod_mesh_2011,
+  family = tweedie()
+)
+visreg::visreg(fit, xvar = "year")
 
 And to simultaneously compare both depth and year with a two-dimensional contour plot.
 ```{r}
