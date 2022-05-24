@@ -77,11 +77,12 @@ test_that("visreg works", {
   mean(abs(v1$res$visregRes))
 
 
-  # with smoother and tweedie
+  # with smoother, tweedie, and reml
   fit <- sdmTMB(
     density ~ s(depth_scaled) + fyear,
     data = pcod_2011, mesh = pcod_mesh_2011,
     spatial = "off",
+    reml = T,
     family = tweedie()
   )
   visreg::visreg(fit, xvar = "depth_scaled", nn = 10)
@@ -96,7 +97,7 @@ test_that("visreg works", {
   pcod$fyear <- as.factor(pcod$year)
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
   fit <- sdmTMB(
-    density ~ 0 + fyear + poly(depth_scaled, 2),
+    density ~ 1 + poly(depth_scaled, 2) + (1|fyear),
     data = pcod, mesh = mesh,
     time = "year",
     spatial = "on",
@@ -110,6 +111,30 @@ test_that("visreg works", {
   visreg::visreg(fit, xvar = "depth_scaled", scale = "response", nn = 10)
   visreg::visreg2d(fit, xvar = "fyear", yvar = "depth_scaled")
 
+  # works with RW models
+  ## nope. currently crashes R
+
+  # fit_rw <- sdmTMB(
+  #   density ~ 0 + as.factor(year) + poly(depth_scaled, 2),
+  #   data = pcod_2011, mesh = pcod_mesh_2011,
+  #   time = "year",
+  #   spatial = "on",
+  #   spatiotemporal = "rw",
+  #   family = tweedie()
+  # )
+  # visreg::visreg(fit_rw, xvar = "depth_scaled", nn = 10)
+
+  # works with ar1 models
+  fit_ar1 <- sdmTMB(
+    density ~ 0 + as.factor(year) + poly(depth_scaled, 2),
+    data = pcod_2011, mesh = pcod_mesh_2011,
+    time = "year",
+    spatial = "on",
+    spatiotemporal = "ar1",
+    family = tweedie()
+  )
+
+  visreg::visreg(fit_ar1, xvar = "depth_scaled", nn = 10)
 
   # Delta model example:
   fit_dg <- sdmTMB(

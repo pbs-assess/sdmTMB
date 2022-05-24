@@ -449,6 +449,8 @@ predict.sdmTMB <- function(object, newdata = object$data,
       return(tmb_data)
     }
 
+# browser()
+# TODO: when fields are a RW, visreg call crashes R here...
     new_tmb_obj <- TMB::MakeADFun(
       data = tmb_data,
       parameters = get_pars(object),
