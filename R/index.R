@@ -172,7 +172,7 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
       map = obj$fit_obj$tmb_map,
       random = obj$fit_obj$tmb_random,
       DLL = "sdmTMB",
-      silent = TRUE
+      silent = silent
     )
     gradient <- new_obj2$gr(fixed)
     corrected_vals <- gradient[names(fixed) == eps_name]
