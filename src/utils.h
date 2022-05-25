@@ -144,7 +144,7 @@ vector<Type> RepeatVector(vector<Type> x, int times) {
 template <class Type>
 Type pc_prior_matern(Type logtau, Type logkappa, Type matern_range,
                      Type matern_SD, Type range_prob, Type SD_prob,
-                     int give_log = 0) {
+                     int give_log = 0, int share_range = 0) {
   Type d = 2.;  // dimension
   Type dhalf = d / 2.;
   Type lam1 = -log(range_prob) * pow(matern_range, dhalf);
@@ -154,7 +154,8 @@ Type pc_prior_matern(Type logtau, Type logkappa, Type matern_range,
   Type range_ll = log(dhalf) + log(lam1) + log(pow(range, -1. - dhalf)) -
                   lam1 * pow(range, -dhalf);
   Type sigma_ll = log(lam2) - lam2 * sigma;
-  Type penalty = range_ll + sigma_ll;
+  Type penalty = sigma_ll;
+  if(share_range) penalty += range_ll;
   // std::cout << "PC penalty: " << penalty << "\n";
   if (give_log)
     return penalty;

@@ -51,7 +51,7 @@ NULL
 #'   may wish to switch to the random walk `"RW"`. Capitalization is ignored.
 #'   `TRUE` gets converted to `'IID'` and `FALSE` gets converted to `off`.
 #' @param share_range Logical: estimate a shared spatial and spatiotemporal
-#'   range parameter (`TRUE`) or independent range parameters (`FALSE`). If a
+#'   range parameter (`TRUE`, default) or independent range parameters (`FALSE`). If a
 #'   delta model, can be a list. E.g., `list(TRUE, FALSE)`.
 #' @param time_varying An optional one-sided formula describing covariates that
 #'   should be modelled as a random walk through time. Be careful not to include
@@ -104,6 +104,9 @@ NULL
 #' @param index_args A list of arguments to pass to [get_index()] if
 #'   `do_index = TRUE`. Currently, only `area` is supported. Bias correction
 #'   can be done when calling [get_index()] on the resulting fitted object.
+#' @param bayesian A boolean (default `FALSE`) indicating whether the model will be
+#' passed to Stan. If `TRUE`, the PC prior on the range is only implemented once
+#' for models with shared ranges
 #' @param experimental A named list for esoteric or in-development options. Here
 #'   be dragons.
 #   (Experimental) A column name (as character) of a predictor of a
@@ -540,7 +543,8 @@ sdmTMB <- function(
   do_fit = TRUE,
   do_index = FALSE,
   predict_args = NULL,
-  index_args = NULL
+  index_args = NULL,
+  bayesian = FALSE
   ) {
 
 
@@ -1003,7 +1007,8 @@ sdmTMB <- function(
     has_smooths = as.integer(sm$has_smooths),
     upr = upr,
     lwr = lwr,
-    poisson_link_delta = as.integer(isTRUE(family$type == "poisson_link_delta"))
+    poisson_link_delta = as.integer(isTRUE(family$type == "poisson_link_delta"),
+    stan_flag = as.integer(bayesian))
   )
 
   b_thresh <- rep(0, 2)

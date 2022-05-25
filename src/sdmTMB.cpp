@@ -197,6 +197,7 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(upr); // upper bound for censpois on counts
   DATA_INTEGER(poisson_link_delta); // logical
 
+  DATA_INTEGER(stan_flag); // logical whether to pass the model to Stan
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -753,11 +754,16 @@ Type objective_function<Type>::operator()()
     // start vector of priors:
     if (!sdmTMB::isNA(priors(0)) && !sdmTMB::isNA(priors(1)) && !sdmTMB::isNA(priors(2)) && !sdmTMB::isNA(priors(3))) {
       // std::cout << "Using spatial PC prior" << "\n";
-      jnll -= sdmTMB::pc_prior_matern(ln_tau_O(m), ln_kappa(0,m), priors(0), priors(1), priors(2), priors(3), true);
+      jnll -= sdmTMB::pc_prior_matern(ln_tau_O(m), ln_kappa(0,m), priors(0), priors(1), priors(2), priors(3), true, false);
     }
     if (!sdmTMB::isNA(priors(4)) && !sdmTMB::isNA(priors(5)) && !sdmTMB::isNA(priors(6)) && !sdmTMB::isNA(priors(7))) {
       // std::cout << "Using spatiotemporal PC prior" << "\n";
-      jnll -= sdmTMB::pc_prior_matern(ln_tau_E(m), ln_kappa(1,m), priors(4), priors(5), priors(6), priors(7), true);
+      if(share_range(m) && stan_flag) {
+        // if range is shared and model is being passed to Stan, don't fit the range component 2x
+        jnll -= sdmTMB::pc_prior_matern(ln_tau_E(m), ln_kappa(1,m), priors(4), priors(5), priors(6), priors(7), true, true);
+      } else {
+        jnll -= sdmTMB::pc_prior_matern(ln_tau_E(m), ln_kappa(1,m), priors(4), priors(5), priors(6), priors(7), true, false);
+      }
     }
     if (!sdmTMB::isNA(priors(8))) jnll -= dnorm(phi(m), priors(8), priors(9), true);
     if (!sdmTMB::isNA(priors(10))) jnll -= dnorm(rho(m), priors(10), priors(11), true);
