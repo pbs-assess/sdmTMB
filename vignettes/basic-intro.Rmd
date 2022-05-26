@@ -177,12 +177,16 @@ ggplot(pcod, aes(X, Y, col = resids)) +
   coord_fixed()
 ```
 
-Those were fast to calculate but can look 'off' even when the model is consistent with the data. MCMC-based residuals are more reliable but slow. In practice you would like want more `mcmc_iter` and `mcmc_warmup`. Total samples is `mcmc_iter - mcmc_warmup`. We will also just use the spatial model here so the vignette builds quickly.
+Those were fast to calculate but can look 'off' even when the model is consistent with the data. 
+MCMC-based residuals are more reliable but slow. 
+In practice you would like want more `mcmc_iter` and `mcmc_warmup`. 
+Total samples is `mcmc_iter - mcmc_warmup`. 
+We will also just use the spatial model here so the vignette builds quickly.
 
 ```{r residuals-mcmc, fig.width = 8}
 r <- residuals(m1, "mle-mcmc", mcmc_warmup = 100, mcmc_iter = 101)
-qqnorm(pcod$resids_mcmc)
-qqline(pcod$resids_mcmc)
+qqnorm(r)
+qqline(r)
 ```
 
 See `?residuals.sdmTMB()`.
