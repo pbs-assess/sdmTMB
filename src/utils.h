@@ -155,7 +155,7 @@ Type pc_prior_matern(Type logtau, Type logkappa, Type matern_range,
                   lam1 * pow(range, -dhalf);
   Type sigma_ll = log(lam2) - lam2 * sigma;
   Type penalty = sigma_ll;
-  if(share_range) penalty += range_ll;
+  if (!share_range) penalty += range_ll;
   // std::cout << "PC penalty: " << penalty << "\n";
   if (give_log)
     return penalty;

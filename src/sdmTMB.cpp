@@ -758,7 +758,7 @@ Type objective_function<Type>::operator()()
     }
     if (!sdmTMB::isNA(priors(4)) && !sdmTMB::isNA(priors(5)) && !sdmTMB::isNA(priors(6)) && !sdmTMB::isNA(priors(7))) {
       // std::cout << "Using spatiotemporal PC prior" << "\n";
-      if(share_range(m)) {
+      if (share_range(m)) {
         // if range is shared and model is being passed to Stan, don't fit the range component 2x
         jnll -= sdmTMB::pc_prior_matern(ln_tau_E(m), ln_kappa(1,m), priors(4), priors(5), priors(6), priors(7), true, true);
       } else {
