@@ -104,9 +104,9 @@ NULL
 #' @param index_args A list of arguments to pass to [get_index()] if
 #'   `do_index = TRUE`. Currently, only `area` is supported. Bias correction
 #'   can be done when calling [get_index()] on the resulting fitted object.
-#' @param bayesian A boolean (default `FALSE`) indicating whether the model will be
-#' passed to Stan. If `TRUE`, the PC prior on the range is only implemented once
-#' for models with shared ranges
+#' @param bayesian Logical indicating if the model will be passed to
+#'   \pkg{tmbstan}. If `TRUE`, Jacobian adjustments are applied to account for
+#'   parameter transformations when priors are applied.
 #' @param experimental A named list for esoteric or in-development options. Here
 #'   be dragons.
 #   (Experimental) A column name (as character) of a predictor of a

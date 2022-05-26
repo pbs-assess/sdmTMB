@@ -151,9 +151,9 @@ and \code{area} can be supplied to \code{index_args}.}
 \code{do_index = TRUE}. Currently, only \code{area} is supported. Bias correction
 can be done when calling \code{\link[=get_index]{get_index()}} on the resulting fitted object.}
 
-\item{bayesian}{A boolean (default \code{FALSE}) indicating whether the model will be
-passed to Stan. If \code{TRUE}, the PC prior on the range is only implemented once
-for models with shared ranges}
+\item{bayesian}{Logical indicating if the model will be passed to
+\pkg{tmbstan}. If \code{TRUE}, Jacobian adjustments are applied to account for
+parameter transformations when priors are applied.}
 }
 \value{
 An object (list) of class \code{sdmTMB}. Useful elements include:
