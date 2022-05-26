@@ -47,7 +47,7 @@ This appendix uses the following notation conventions, which generally follows t
 
 * where possible, notation has been chosen to match VAST [@thorson2019] to maintain consistency (e.g., $\boldsymbol{\omega}$ for spatial fields and $\boldsymbol{\epsilon}_t$ for spatiotemporal fields).
 
-We include tables of all major indices (Table \@ref(tab:indices)) and symbols (Table \@ref(tab:symbols)).
+We include tables of all major indices (Table 1) and symbols (Table 2).
 
 ```{r indices}
 subscripts <- tibble::tribble(
@@ -56,7 +56,7 @@ subscripts <- tibble::tribble(
   "$t$", "Index for time",
   "$g$", "Group"
 )
-knitr::kable(subscripts, caption = "Subscript notation", escape = FALSE, format = "latex", booktabs = TRUE)
+knitr::kable(subscripts, caption = "Table 1: Subscript notation", escape = FALSE, booktabs = TRUE)
 ```
 
 ```{r symbols, results='asis'}
@@ -98,7 +98,7 @@ symbols <- tibble::tribble(
   "$\\boldsymbol{A}$", "\\texttt{A}", "Sparse projection matrix to interpolate between knot and data locations",
   "$\\boldsymbol{H}$", "\\texttt{H}", "2-parameter rotation matrix used to define anisotropy"
 )
-knitr::kable(symbols, caption = "Symbol notation, code representation (in model output or in model template code), and descriptions.", escape = FALSE, format = "latex", booktabs = TRUE,
+knitr::kable(symbols, caption = "Table 2: Symbol notation, code representation (in model output or in model template code), and descriptions.", escape = FALSE, booktabs = TRUE,
    linesep = c(
     rep('', 7), # y, mean etc.
     '\\addlinespace',
@@ -537,7 +537,7 @@ $$
 \boldsymbol{\epsilon}_t^* = \boldsymbol{A} \boldsymbol{\epsilon}_t.
 $$
 
-## Anisoptropy
+## Anisotropy
 
 TMB allows for anisotropy, where spatial covariance may be asymmetric with respect to latitude and longitude ([full details](https://kaskr.github.io/adcomp/namespaceR__inla.html)). Anisotropy can be turned on or off with the logical `anisotropy` argument to `sdmTMB()`. There are a number of ways to implement anisotropic covariance [@fuglstad2015a], and we adopt a 2-parameter rotation matrix $\textbf{H}$. The elements of $\textbf{H}$ are defined by the parameter vector $\boldsymbol{x}$ so that $H_{1,1} = x_{1}$, $H_{1,2} = H_{2,1} = x_{2}$ and $H_{2,2} = (1 + x_{2}^2) / x_{1}$.
 
