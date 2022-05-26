@@ -22,13 +22,15 @@ knitr::opts_chunk$set(
 )
 ```
 
+**Note that this vignette was written prior to built-in delta/hurdle models in sdmTMB. You can now use a delta family such as `family = delta_gamma()`. This vignette will be updated soon.**
+
 ```{r packages, message=FALSE, warning=TRUE}
 library(ggplot2)
 library(dplyr)
 library(sdmTMB)
 ```
 
-sdmTMB does not have built-in hurdle models (also called delta models), but we can fit the two components separately and combine the predictions. 
+sdmTMB didn't used to have built-in hurdle models (also called delta models), but we could fit the two components separately and combine the predictions. 
 In this case, our delta-Gamma model involves fitting a binomial presence-absence model (`family = binomial(link = "logit")`) and then a model for the positive catches only with a Gamma observation distribution and a log link (`Gamma(link = "log")`).
 We could also use a `lognormal(link = "log")` family.
 Hurdle models are more appropriate than something like a Tweedie when there are differences in the processes controlling presence vs. abundance, or when greater flexibility to account for dispersion is required.
