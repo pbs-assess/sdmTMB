@@ -47,8 +47,8 @@ In LFOCV, data up to year $t$ are used to predict observations at $t+1$, etc.
 
 # Cross validation in sdmTMB
 
-Cross validation in sdmTMB is implemented using the `sdmTMB_cv` function, with the `k_folds` argument specifying the number of folds (defaults to 8).
-The function uses parallelization by default, but this can be turned off with the `parallel` argument.
+Cross validation in sdmTMB is implemented using the `sdmTMB_cv()` function, with the `k_folds` argument specifying the number of folds (defaults to 8).
+The function uses parallelization by default a `future::plan()` is set, but this can be turned off with the `parallel` argument.
 
 ```{r ex0}
 data(pcod)
@@ -74,7 +74,6 @@ In the above example, folds are assigned randomly---but these can be modified to
 Without getting into the complexities of the `blockCV` or `spatialsample` packages, we could simply use `kmeans` to generate spatial clusters, e.g.
 
 ```{r ex2, eval = FALSE}
-
 clust <- kmeans(pcod[, c("X", "Y")], 20)$cluster
 
 m_cv <- sdmTMB_cv(
@@ -103,9 +102,6 @@ m_cv <- sdmTMB_cv(
 )
 ```
 
-<!-- The `sdmTMB_cv()` function is intended to fit a model multiple times using the same fold IDs and data. -->
-<!-- In an application with a single split, e.g. 10% of the data being used as a test set, this may be overkill---but this approach may be worthwhile to avoid coding mistakes with likelihood calculations. For example, -->
-
 # Measuring model performance
 
 Lots of measures of predictive accuracy can be used to evaluate model performance.
@@ -114,7 +110,6 @@ The latter (ELPD) is a measure of the predictive ability of the model for new ob
 These can be accessed as below, and inspecting the quantities across folds may help elucidate whether there are particular folds that are difficult to predict.
 
 ```{r ex4, eval = FALSE}
-
 m_cv <- sdmTMB_cv(
   density ~ 0 + s(depth_scaled) + fyear,
   data = pcod,
@@ -225,7 +220,6 @@ m2$sum_loglik
 m1$elpd
 m2$elpd
 ```
-
 
 # Model ensembling
 
