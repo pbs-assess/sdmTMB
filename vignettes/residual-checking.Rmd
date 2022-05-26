@@ -29,7 +29,7 @@ knitr::opts_chunk$set(
 library(sdmTMB)
 ```
 
-Start with some data simulated from scratch. We will simulate from an NB2 negative binomial observation model, a spatial random field, an intercept, and one predictor named 'a1' that will have a linear effect on the observed data.
+We will start with some data simulated from scratch. We will simulate from an NB2 negative binomial observation model, a spatial random field, an intercept, and one predictor named 'a1' that will have a linear effect on the observed data.
 
 ```{r}
 set.seed(1)
@@ -87,13 +87,10 @@ These types of residuals are known to have statistical issues for state-space mo
 
 One-step-ahead residuals (Thygesen et al. 2017) are one option to fix this problem (although slow to calculate). Another option is to take a draw from the posterior with MCMC (e.g., Rufener et al. 2021). Also see <https://kaskr.github.io/adcomp/_book/Validation.html>
 
-Here we will draw MCMC predictions and calculate residuals. We will only take a single draw for speed:
+Here we will draw MCMC predictions and calculate residuals. The fixed effects will be fixed at their maximum likelihood estimates (MLE) and the random effects will be sampled. We will only take a single draw for speed:
 
 ```{r}
-stan_fit <- tmbstan::tmbstan(fit_nb2$tmb_obj, iter = 100, warmup = 99, chains = 1)
-stan_eta <- predict(fit_nb2, tmbstan_model = stan_fit)
-stan_mu <- as.numeric(fit_nb2$family$linkinv(stan_eta))
-mcmc_res <- sdmTMB:::qres_nbinom2(fit_nb2, y = dat$observed, mu = stan_mu)
+mcmc_res <- residuals(fit_nb2, type = "mle-mcmc", mcmc_iter = 201, mcmc_warmup = 200)
 qqnorm(mcmc_res);qqline(mcmc_res)
 ```
 
@@ -123,7 +120,14 @@ sum(s_nb2 == 0)/length(s_nb2)
 
 There are obviously too few zeros in the data simulated from the Poisson model.
 
-Use the residuals with DHARMa:
+Plot DHARMa residuals:
+
+```{r}
+simulate(fit_pois, nsim = 300) %>% 
+  dharma_residuals(fit_pois)
+```
+
+We could also do that manually, which lets us use other DHARMa tools:
 
 ```{r}
 # My reading of DHARMa documation is that the predicted response for the 
@@ -145,19 +149,11 @@ In the QQ residual plots we clearly see evidence of over dispersion compared to 
 Lets try with the correct model:
 
 ```{r}
-pred_fixed <- fit_nb2$family$linkinv(predict(fit_nb2)$est_non_rf)
-r_nb2 <- DHARMa::createDHARMa(
-  simulatedResponse = s_nb2,
-  observedResponse = dat$observed,
-  fittedPredictedResponse = pred_fixed
-)
-plot(r_nb2)
-DHARMa::testResiduals(r_nb2)
-DHARMa::testSpatialAutocorrelation(r_nb2, x = dat$X, y = dat$Y)
-DHARMa::testZeroInflation(r_nb2)
+simulate(fit_nb2, nsim = 300) %>% 
+  dharma_residuals(fit_nb2)
 ```
 
-Everything looks fine.
+Everything looks fine. But, again, the MCMC-based residuals above are likely the best approach.
 
 What about the model where we were missing a predictor?
 
@@ -218,16 +214,6 @@ plot(r_nb2)
 ```
 
 These also look OK.
-
-We could also perform our simulation with parameters drawn from the Stan model fit:
-
-```{r}
-# simulate from a Stan model fit with new observation error:
-# make sure `nsim` is <= number of samples from rstan
-s5 <- simulate(fit_nb2, nsim = 1, tmbstan_model = stan_fit)
-```
-
-This last option, while slower since the Stan model must be sampled from, is likely the best approach.
 
 For help interpreting the DHARMa residual plots, see `vignette("DHARMa", package="DHARMa")`.
 
