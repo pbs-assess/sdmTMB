@@ -28,13 +28,13 @@ library(dplyr)
 library(sdmTMB)
 ```
 
-In this vignette, we describe the basic steps to fitting a spatial or spatiotemporal GLMM with sdmTMB. This type of model can be useful for (dynamic) species distribution models and relative abundance index standardization among many other uses. See the [model description](https://pbs-assess.github.io/sdmTMB/articles/model-description.html) for full model structure and equations.
+In this vignette, we describe the basic steps to fitting a spatial or spatiotemporal GLMM with sdmTMB. This type of model can be useful for (dynamic, i.e. changing through time) species distribution models and relative abundance index standardization among many other uses. See the [model description](https://pbs-assess.github.io/sdmTMB/articles/model-description.html) for full model structure and equations.
 
 We will use built-in package data for Pacific cod from a fisheries independent trawl survey.
 
 - The density units are kg/km^2^ as calculated from catch biomass, net characteristics, and time on bottom.
-- X and Y are coordinates in UTM zone 9.
-- Depth was centred and scaled by its standard deviation.
+- X and Y are coordinates in UTM zone 9. We could add these to a new dataset with `sdmTMB::add_utm_columns()`.
+- Depth was centered and scaled by its standard deviation so that coefficient sizes weren't too big or small.
 - There are columns for depth (`depth_scaled`) and depth squared (`depth_scaled2`).
 
 ```{r glimpse-pcod}
@@ -42,12 +42,11 @@ glimpse(pcod)
 ```
 
 The most basic model structure possible in sdmTMB replicates a GLM as can be fit with `glm()` or a GLMM as can be fit with lme4 or glmmTMB, for example.
-However, sdmTMB is meant for spatial models, so first we must create the spatial mesh even if we won't actually include any spatial random effects in our example.  
 The spatial components in sdmTMB are included as random fields using a triangulated mesh with vertices, known as knots, used to approximate the spatial variability in observations. 
 Bilinear interpolation is used to approximate a continuous spatial field (Rue et al., 2009; Lindgren et al., 2011) from the estimated values of the spatial surface at these knot locations to other locations including those of actual observations.
 These spatial random effects are assumed to be drawn from Gaussian Markov random fields (e.g., Cressie & Wikle, 2011; Lindgren et al., 2011) with covariance matrices that are constrained by Matérn covariance functions (Cressie & Wikle, 2011).
 
-There are different options for creating the spatial mesh (see [make_mesh() function description] (https://pbs-assess.github.io/sdmTMB/reference/make_mesh.html). 
+There are different options for creating the spatial mesh (see `sdmTMB::make_mesh()`). 
 We will start with a relatively coarse mesh for a balance between speed and accuracy (`cutoff = 10`, where cutoff is in the units of X and Y (km here) and represents the minimum distance between knots before a new mesh vertex is added). 
 Smaller values create meshes with more knots.
 You will likely want to use a higher resolution mesh (more knots) in applied scenarios, but care must be taken to avoid overfitting.
@@ -64,7 +63,7 @@ We will start with a logistic regression of Pacific cod presence in tows as a fu
 m <- sdmTMB(
   data = pcod,
   formula = present ~ depth_scaled + depth_scaled2,
-  mesh = mesh,
+  mesh = mesh, # can be omitted for a non-spatial model
   family = binomial(link = "logit"),
   spatial = "off"
 )
@@ -169,15 +168,24 @@ We can inspect randomized quantile residuals:
 
 ```{r residuals, fig.width = 8}
 pcod$resids <- residuals(m3) # randomized quantile residuals
-hist(pcod$resids)
 qqnorm(pcod$resids)
-abline(a = 0, b = 1)
+qqline(pcod$resids)
 ggplot(pcod, aes(X, Y, col = resids)) +
   scale_colour_gradient2() +
   geom_point() +
   facet_wrap(~year) +
   coord_fixed()
 ```
+
+Those were fast to calculate but can look 'off' even when the model is consistent with the data. MCMC-based residuals are more reliable but slow. In practice you would like want more `mcmc_iter` and `mcmc_warmup`. Total samples is `mcmc_iter - mcmc_warmup`. We will also just use the spatial model here so the vignette builds quickly.
+
+```{r residuals-mcmc, fig.width = 8}
+r <- residuals(m1, "mle-mcmc", mcmc_warmup = 100, mcmc_iter = 101)
+qqnorm(pcod$resids_mcmc)
+qqline(pcod$resids_mcmc)
+```
+
+See `?residuals.sdmTMB()`.
 
 ## Spatial predictions
 
@@ -193,7 +201,7 @@ Now we will make the predictions on new data:
 predictions <- predict(m3, newdata = qcs_grid)
 ```
 
-Let's make a small function to make maps.
+Let's make a small function to help make maps.
 
 ```{r plot-map}
 plot_map <- function(dat, column) {
@@ -205,7 +213,7 @@ plot_map <- function(dat, column) {
 
 There are four kinds of predictions that we get out of the model. 
 
-First we will show the predictions that incorporate all fixed effects and random effects:
+First, we will show the predictions that incorporate all fixed effects and random effects:
 
 ```{r plot-all-effects, fig.width = 8}
 plot_map(predictions, "exp(est)") +
@@ -228,7 +236,8 @@ plot_map(predictions, "exp(est_non_rf)") +
   ggtitle("Prediction (fixed effects only)")
 ```
 
-We can look at the spatial random effects that represent consistent deviations in space through time that are not accounted for by our fixed effects. In other words, these deviations represent consistent biotic and abiotic factors that are affecting biomass density but are not accounted for in the model.
+We can look at the spatial random effects that represent consistent deviations in space through time that are not accounted for by our fixed effects. 
+In other words, these deviations represent consistent biotic and abiotic factors that are affecting biomass density but are not accounted for in the model.
 
 ```{r plot-spatial-effects, fig.width = 6}
 plot_map(predictions, "omega_s") +
@@ -236,7 +245,8 @@ plot_map(predictions, "omega_s") +
   ggtitle("Spatial random effects only")
 ```
 
-And finally we can look at the spatiotemporal random effects that represent deviation from the fixed effect predictions and the spatial random effect deviations. These represent biotic and abiotic factors that are changing through time and are not accounted for in the model.
+And finally we can look at the spatiotemporal random effects that represent deviation from the fixed effect predictions and the spatial random effect deviations. 
+These represent biotic and abiotic factors that are changing through time and are not accounted for in the model.
 
 ```{r plot-spatiotemporal-effects, fig.width = 8}
 plot_map(predictions, "epsilon_st") +
@@ -245,27 +255,20 @@ plot_map(predictions, "epsilon_st") +
   ggtitle("Spatiotemporal random effects only")
 ```
 
-We can also estimate the uncertainty in our spatiotemporal density predictions using simulations from the joint precision matrix by setting `sims` `> 0` in the predict function. Here we generate 100 estimates and use `apply()` to calculate a median estimate, upper and lower confidence intervals, and a CV.  
+We can also estimate the uncertainty in our spatiotemporal density predictions using simulations from the joint precision matrix by setting `nsim > 0` in the predict function. 
+Here we generate 100 estimates and use `apply()` to calculate upper and lower confidence intervals, a standard deviation, and a coefficient of variation (CV).  
 
 ```{r sim-cv}
 sim <- predict(m3, newdata = qcs_grid, nsim = 100)
 sim_last <- sim[qcs_grid$year == max(qcs_grid$year), ] # just plot last year
 pred_last <- predictions[predictions$year == max(qcs_grid$year), ]
-pred_last$median <- apply(exp(sim_last), 1, median)
 pred_last$lwr <- apply(exp(sim_last), 1, quantile, probs = 0.025)
 pred_last$upr <- apply(exp(sim_last), 1, quantile, probs = 0.975)
+pred_last$sd <- round(apply(exp(sim_last), 1, function(x) sd(x)), 2)
 pred_last$cv <- round(apply(exp(sim_last), 1, function(x) sd(x) / mean(x)), 2)
 ```
 
-Plot the median estimated biomass densities for the last year:
-
-```{r plot-median, fig.width = 6}
-ggplot(pred_last, aes(X, Y, fill = median)) +
-  geom_raster() +
-  scale_fill_viridis_c(trans = "sqrt")
-```
-
-And then the CV on the estimates: 
+Plot the CV on the estimates:
 
 ```{r plot-cv, fig.width = 6}
 ggplot(pred_last, aes(X, Y, fill = cv)) +
@@ -297,6 +300,16 @@ ggplot(p, aes(depth_scaled, exp(est),
   scale_x_continuous(labels = function(x) round(exp(x * pcod$depth_sd[1] + pcod$depth_mean[1]))) +
   coord_cartesian(expand = F) +
   labs(x = "Depth (m)", y = "Biomass density (kg/km2)")
+```
+
+We could also do this with the visreg package. This version is in link space and the residuals are partial randomized quantile residuals. See the `scale` argument in visreg for response scale plots.
+
+```{r visreg}
+visreg::visreg(m3, "depth_scaled")
+```
+
+```{r ggeffects}
+# ggeffects::ggeffect(m3) %>% plot()
 ```
 
 ### Time-varying effects
