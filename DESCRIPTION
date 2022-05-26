@@ -73,6 +73,7 @@ Suggests:
     effects (>= 4.0-1),
     future.apply,
     ggplot2,
+    ggforce,
     INLA,
     knitr,
     rgdal,
