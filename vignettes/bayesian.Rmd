@@ -13,7 +13,8 @@ vignette: >
 dplyr_installed <- require("dplyr", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
 inla_installed <- requireNamespace("INLA", quietly = TRUE)
-pkgs <- dplyr_installed && ggplot_installed && inla_installed
+tmbstan <- requireNamespace("tmbstan", quietly = TRUE)
+pkgs <- dplyr_installed && ggplot_installed && inla_installed && tmbstan
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -40,12 +41,13 @@ pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 
 ```{r fit, message = FALSE, warning = FALSE}
 fit <- sdmTMB(density ~ 0 + as.factor(year),
-  data = pcod, 
-  mesh = pcod_spde, 
-  family = tweedie(link = "log"), 
+  data = pcod,
+  mesh = pcod_spde,
+  family = tweedie(link = "log"),
   time = "year",
-  spatial="off",
-  spatiotemporal = "off")
+  spatial = "off",
+  spatiotemporal = "off"
+)
 ```
 
 The `$tmb_obj` can then be passed to `tmbstan`. Here, 1000 iterations and 1 MCMC chain is probably too small -- but is used for the sake of speed (takes ~ 1 minute).   
@@ -62,7 +64,7 @@ plot(fit_stan)
 
 ```{r genfig1, echo=FALSE, eval=FALSE}
 plot(fit_stan)
-ggsave("vignettes/fig_1.png", height=7, width=7)
+ggsave("vignettes/fig_1.png", height = 7, width = 7)
 ```
 
 
@@ -74,14 +76,16 @@ As a more complex example, we'll fit a spatiotemporal model with a quadratic of 
 
 ```{r fitm2, eval=FALSE}
 fit <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  data = pcod, 
-  mesh = pcod_spde, 
-  family = binomial(link = "logit"), 
+  data = pcod,
+  mesh = pcod_spde,
+  family = binomial(link = "logit"),
   time = "year",
   spatiotemporal = "iid",
   priors = sdmTMBpriors(
     matern_s = pc_matern(range_gt = 5, sigma_lt = 1),
-    matern_st = pc_matern(range_gt = 5, sigma_lt = 1)))
+    matern_st = pc_matern(range_gt = 5, sigma_lt = 1)
+  )
+)
 ```
 
 Evaluating this full model will take some time (4000 iterations on 1 chain takes about ~ 10 minutes). For real applications we have to run this on multiple chains, and for lots of iterations. 
@@ -91,8 +95,8 @@ fit_stan <- tmbstan(fit$tmb_obj, iter = 4000, chains = 1)
 ```
 
 ```{r savefig2, echo=FALSE, eval=FALSE}
-plot(fit_stan, pars = c("ln_tau_O", "ln_tau_E","ln_kappa"))
-ggsave("fig_2.png", height=7, width=7)
+plot(fit_stan, pars = c("ln_tau_O", "ln_tau_E", "ln_kappa"))
+ggsave("fig_2.png", height = 7, width = 7)
 ```
 
 As before we can make basic plots with `bayesplot`,   
@@ -110,17 +114,17 @@ pars <- rstan::extract(fit_stan)
 We can also make some diagnostic plots showing the tradeoff between different variances. For example, with the 
 
 ```{r fig3, eval = FALSE, echo=TRUE}
-p <- bayesplot::mcmc_hex(fit_stan, pars = c("ln_tau_O", "ln_tau_E")) + 
-  bayesplot::plot_bg(fill = "gray95") + 
+p <- bayesplot::mcmc_hex(fit_stan, pars = c("ln_tau_O", "ln_tau_E")) +
+  bayesplot::plot_bg(fill = "gray95") +
   bayesplot::panel_bg(fill = "gray70")
 ```
 
 ```{r savefig3, eval = FALSE, echo=FALSE}
-p <- bayesplot::mcmc_hex(fit_stan, pars = c("ln_tau_O", "ln_tau_E")) + 
-  bayesplot::plot_bg(fill = "gray95") + 
+p <- bayesplot::mcmc_hex(fit_stan, pars = c("ln_tau_O", "ln_tau_E")) +
+  bayesplot::plot_bg(fill = "gray95") +
   bayesplot::panel_bg(fill = "gray70")
 p
-ggsave("fig_3.png", height=7, width=7)
+ggsave("fig_3.png", height = 7, width = 7)
 ```  
   
 ```{r showfig3, echo=FALSE, out.width = "80%", out.height = "80%"}
@@ -137,7 +141,7 @@ p
 ```{r savefig4, eval = FALSE, echo=FALSE}
 p <- bayesplot::mcmc_trace(fit_stan, pars = c("ln_tau_O", "ln_tau_E"))
 p
-ggsave("fig_4.png", height=7, width=7)
+ggsave("fig_4.png", height = 7, width = 7)
 ```
 
 
