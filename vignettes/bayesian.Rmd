@@ -3,6 +3,7 @@ title: "Bayesian estimation with sdmTMB"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: 'refs.bib'
+csl: 'mee.csl'
 vignette: >
   %\VignetteIndexEntry{Bayesian estimation with sdmTMB}
   %\VignetteEngine{knitr::rmarkdown}
@@ -14,7 +15,9 @@ dplyr_installed <- require("dplyr", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
 inla_installed <- requireNamespace("INLA", quietly = TRUE)
 tmbstan <- requireNamespace("tmbstan", quietly = TRUE)
-pkgs <- dplyr_installed && ggplot_installed && inla_installed && tmbstan
+rstan <- requireNamespace("rstan", quietly = TRUE)
+bayesplot <- requireNamespace("bayesplot", quietly = TRUE)
+pkgs <- dplyr_installed && ggplot_installed && inla_installed && tmbstan && rstan && bayesplot
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -24,131 +27,387 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r packages, message=FALSE, warning=TRUE}
+If this vignette is viewed on CRAN, a rendered version is available at <https://pbs-assess.github.io/sdmTMB/articles/bayesian.html>.
+
+```{r packages, message=FALSE, warning=FALSE}
 library(ggplot2)
 library(dplyr)
 library(sdmTMB)
+library(rstan) # for plot() method
 ```
 
-Bayesian estimation is possible with sdmTMB by passing fitted models to `tmbstan` [@monnahan2018]. All sampling is then done using Stan [@standev_2021], and output is returned as a `stanfit` object. 
+Bayesian estimation is possible with sdmTMB by passing fitted models to `tmbstan::tmbstan()` [@monnahan2018].
+All sampling is then done using Stan [@standev_2021], and output is returned as a `stanfit` object.
 
-As a simple example, we'll fit a non-spatial model 
+As a simple example, we'll fit a non-spatial model:
 
-```{r data}
-data(pcod)
-pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
+```{r mesh1}
+pcod_mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 ```
 
 ```{r fit, message = FALSE, warning = FALSE}
 fit <- sdmTMB(density ~ 0 + as.factor(year),
   data = pcod,
-  mesh = pcod_spde,
+  mesh = pcod_mesh,
   family = tweedie(link = "log"),
-  time = "year",
-  spatial = "off",
-  spatiotemporal = "off"
+  spatial = "off"
 )
 ```
 
-The `$tmb_obj` can then be passed to `tmbstan`. Here, 1000 iterations and 1 MCMC chain is probably too small -- but is used for the sake of speed (takes ~ 1 minute).   
-```{r fitstan, eval = FALSE}
-fit_stan <- tmbstan(fit$tmb_obj, iter = 1000, chains = 1)
+The `$tmb_obj` element can then be passed to `tmbstan`.
+Here, 300 iterations and 2 chains is likely too small---but is used for the sake of speed (takes ~ 45 seconds).
+
+```{r fitstan, message=FALSE, warning=FALSE}
+options(mc.cores = parallel::detectCores()) # use rstan parallel processing
+fit_stan <- tmbstan::tmbstan(fit$tmb_obj, iter = 300, chains = 2)
+fit_stan
 ```
 
-Lots of plotting and diagnostics can be done with this, and by default all `stanfit` objects can be passed to bayesplot [@gabry_2019], e.g.
+There are many options for plotting and diagnostics that be done with fitted model; all `stanfit` objects can be passed to bayesplot [@gabry_2019]:
 
-```{r plotstan, eval=FALSE}
-library(bayesplot)
-plot(fit_stan)
+```{r plotstan}
+plot(fit_stan) # must `library(rstan)` first
+bayesplot::mcmc_areas(fit_stan, regex_pars = "^b")
+bayesplot::mcmc_trace(fit_stan, regex_pars = "^b")
 ```
 
-```{r genfig1, echo=FALSE, eval=FALSE}
-plot(fit_stan)
-ggsave("vignettes/fig_1.png", height = 7, width = 7)
+# Fixing parameters at their MLE
+
+Sometimes some of the spatial correlation parameters can be challenging to estimate.
+One option is to apply penalized complexity (PC) priors with `sdmTMBpriors()` to the Matérn parameters.
+Another option, which can also be used in conjunction with the priors, is to fix one or more parameters at their maximum likelihood estimate (MLE) values.
+Frequently, fixing the parameter `ln_kappa` can help convergence [e.g., @monnahan_2021].
+This estimated parameter is transformed into the range estimate, so it controls the rate of spatial correlation decay.
+
+Here we will demonstrate this using a simulated dataset.
+
+```{r}
+predictor_dat <- data.frame(
+  X = runif(500), Y = runif(500),
+  a1 = rnorm(500)
+)
+mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.1)
+# plot(mesh)
+# mesh$mesh$n
+sim_dat <- sdmTMB_simulate(
+  formula = ~a1,
+  data = predictor_dat,
+  mesh = mesh,
+  family = gaussian(),
+  range = 0.5,
+  phi = 0.2,
+  sigma_O = 0.2,
+  seed = 42,
+  B = c(1, -0.4) # B0 = intercept, B1 = a1 slope
+)
 ```
 
+Visualize our simulated data:
 
-```{r showfig1, echo=FALSE, out.width = "80%", out.height = "80%"}
-knitr::include_graphics("fig_1.png")
+```{r}
+ggplot(sim_dat, aes(X, Y, colour = observed, size = abs(observed))) +
+  geom_point() +
+  scale_color_viridis_c()
 ```
 
-As a more complex example, we'll fit a spatiotemporal model with a quadratic of depth to Pacific cod using a presence-absence response. One major difference between this example and the model above is that we also implement penalized complexity (PC) priors on the range and variance of the Matern correlation (using `sdmTMBpriors()`). Without the prior, the MCMC sampling won't converge (and takes a long time to run).
+Fit a spatial random field GLMM:
 
-```{r fitm2, eval=FALSE}
-fit <- sdmTMB(present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
-  data = pcod,
-  mesh = pcod_spde,
-  family = binomial(link = "logit"),
-  time = "year",
-  spatiotemporal = "iid",
+```{r, message = FALSE, warning = FALSE}
+fit <- sdmTMB(
+  observed ~ a1,
+  data = sim_dat,
+  mesh = mesh,
+  family = gaussian(),
+  spatial = "on",
   priors = sdmTMBpriors(
-    matern_s = pc_matern(range_gt = 5, sigma_lt = 1),
-    matern_st = pc_matern(range_gt = 5, sigma_lt = 1)
+    b = normal(location = c(0, 0), scale = c(5, 1))
   )
 )
+fit
 ```
 
-Evaluating this full model will take some time (4000 iterations on 1 chain takes about ~ 10 minutes). For real applications we have to run this on multiple chains, and for lots of iterations. 
+Now we will rebuild the fitted object with fixed ('mapped') `ln_kappa` parameters using the `update()` function.
+We'll use `do_fit = FALSE` to avoid actually fitting the updated model since it's not necessary.
 
-```{r fitstan2, eval = FALSE}
-fit_stan <- tmbstan(fit$tmb_obj, iter = 4000, chains = 1)
+```{r}
+# grab the internal parameter list at estimated values:
+pars <- sdmTMB::get_pars(fit)
+# create a 'map' vector for TMB
+# factor NA values cause TMB to fix or map the parameter at the starting value:
+kappa_map <- factor(rep(NA, length(pars$ln_kappa)))
+
+# rebuild model updating some elements:
+fit_mle <- update(
+  fit,
+  control = sdmTMBcontrol(
+    start = list(
+      ln_kappa = pars$ln_kappa #<
+    ),
+    map = list(
+      ln_kappa = kappa_map #<
+    )
+  ),
+  do_fit = FALSE #<
+)
 ```
 
-```{r savefig2, echo=FALSE, eval=FALSE}
-plot(fit_stan, pars = c("ln_tau_O", "ln_tau_E", "ln_kappa"))
-ggsave("fig_2.png", height = 7, width = 7)
+Now we can pass our model to tmbstan.
+Again, we are only using 1000 iterations and 2 chains so this vignette builds quickly.
+In practice, you will likely want to use more (e.g., 2000 iterations, 4 chains).
+
+```{r, message=FALSE, warning=FALSE}
+fit_stan <- tmbstan::tmbstan(
+  fit_mle$tmb_obj,
+  iter = 1000, chains = 2,
+  seed = 9278 # ensures repeatability
+)
+fit_stan
 ```
 
-As before we can make basic plots with `bayesplot`,   
+The `Rhat` values look reasonable (< 1.05).
+The `n_eff` (number of effective samples) looks reasonable for inference about the mean for all parameters except the intercept (`b_j[1]`).
+We could try running for more iterations and chains and/or placing priors on this and other parameters as described below (highly recommended).
 
-```{r showfig2, echo=FALSE, out.width = "80%", out.height = "80%"}
-knitr::include_graphics("fig_2.png")
+Now we can use various functions to visualize the posterior:
+
+```{r}
+plot(fit_stan)
+pars_plot <- c("b_j[1]", "b_j[2]", "ln_tau_O", "omega_s[1]")
+
+bayesplot::mcmc_trace(fit_stan, pars = pars_plot)
+bayesplot::mcmc_pairs(fit_stan, pars = pars_plot, off_diag_fun = "hex")
 ```
 
-and extract raw parameter estimates with `rstan::extract()`,
+# Posterior predictive checks
 
-```{r getpars, eval=FALSE}
-pars <- rstan::extract(fit_stan)
+We can perform posterior predictive checks to assess whether our model can generate predictive data that are consistent with the observations.
+For this, we can make use of `simulate.sdmTMB()` while passing in our Stan model.
+`simulate()` will take draws from the joint parameter posterior and add observation error.
+
+```{r}
+set.seed(19292)
+s <- simulate(fit_mle, tmbstan_model = fit_stan, nsim = 50)
+bayesplot::pp_check(
+  sim_dat$observed,
+  yrep = t(s),
+  fun = bayesplot::ppc_dens_overlay
+)
 ```
 
-We can also make some diagnostic plots showing the tradeoff between different variances. For example, with the 
+See `?bayesplot::pp_check`.
+The solid line represents the density of the observed data and the light blue lines represent the density of 50 posterior predictive simulations.
+In this case, the simulated data seem consistent with the observed data.
 
-```{r fig3, eval = FALSE, echo=TRUE}
-p <- bayesplot::mcmc_hex(fit_stan, pars = c("ln_tau_O", "ln_tau_E")) +
-  bayesplot::plot_bg(fill = "gray95") +
-  bayesplot::panel_bg(fill = "gray70")
+# Plotting predictions
+
+We can make predictions with our Bayesian model by supplying it to the `tmbstan_model` argument in `predict.sdmTMB()`.
+
+```{r}
+pred <- predict(fit_mle, tmbstan_model = fit_stan)
 ```
 
-```{r savefig3, eval = FALSE, echo=FALSE}
-p <- bayesplot::mcmc_hex(fit_stan, pars = c("ln_tau_O", "ln_tau_E")) +
-  bayesplot::plot_bg(fill = "gray95") +
-  bayesplot::panel_bg(fill = "gray70")
-p
-ggsave("fig_3.png", height = 7, width = 7)
-```  
-  
-```{r showfig3, echo=FALSE, out.width = "80%", out.height = "80%"}
-knitr::include_graphics("fig_3.png")
+The output is a matrix where each row corresponds to a row of predicted data and each column corresponds to a sample.
+
+```{r}
+dim(pred)
 ```
 
-The MCMC traces look ok (Rhat < 1.05) but this is also a case where it would be good to compare with more chains.  
+We can summarize these draws in various ways to visualize them:
 
-```{r fig4, eval = FALSE, echo=TRUE}
-p <- bayesplot::mcmc_trace(fit_stan, pars = c("ln_tau_O", "ln_tau_E"))
-p
+```{r}
+sim_dat$post_mean <- apply(pred, 1, mean)
+sim_dat$post_sd <- apply(pred, 1, sd)
+
+ggplot(sim_dat, aes(X, Y, colour = post_mean, size = abs(post_mean))) +
+  geom_point() +
+  scale_color_viridis_c()
+
+ggplot(sim_dat, aes(X, Y, colour = post_sd, size = post_sd)) +
+  geom_point() +
+  scale_color_viridis_c()
 ```
 
-```{r savefig4, eval = FALSE, echo=FALSE}
-p <- bayesplot::mcmc_trace(fit_stan, pars = c("ln_tau_O", "ln_tau_E"))
-p
-ggsave("fig_4.png", height = 7, width = 7)
+Or predict on a grid for a given value of `a1`:
+
+```{r}
+nd <- expand.grid(
+  X = seq(0, 1, length.out = 15),
+  Y = seq(0, 1, length.out = 15),
+  a1 = 0
+)
+pred <- predict(fit_mle, newdata = nd, tmbstan_model = fit_stan)
+
+nd$post_mean <- apply(pred, 1, mean)
+nd$post_sd <- apply(pred, 1, sd)
+
+ggplot(nd, aes(X, Y, fill = post_mean)) +
+  geom_raster() +
+  scale_fill_viridis_c()
+
+ggplot(nd, aes(X, Y, fill = post_sd)) +
+  geom_raster() +
+  scale_fill_viridis_c()
+```
+
+# Extracting parameter posterior samples
+
+We can extract posterior samples with `rstan::extract()`,
+
+```{r post-extract}
+post <- rstan::extract(fit_stan)
+```
+
+The result is a list where each element corresponds to a parameter or set of parameters:
+
+```{r}
+names(post)
+hist(post$b_j[, 1])
+```
+
+As an example of calculating a derived parameter, here we will calculate the marginal spatial random field standard deviation:
+
+```{r}
+ln_kappa <- get_pars(fit_mle)$ln_kappa[1] # 2 elements since 2nd would be for spatiotemporal
+ln_tau_O <- post$ln_tau_O
+sigma_O <- 1 / sqrt(4 * pi * exp(2 * ln_tau_O + 2 * ln_kappa))
+hist(sigma_O)
+```
+
+# Applying priors
+
+In the above examples we did not use any priors.
+In that case, the priors are implied as uniform on the internal parameter space.
+However, sdmTMB provides the option of applying priors.
+Here we will show an example of applying a Normal(0, 5) (mean, SD) prior on the intercept and a Normal(0, 1) prior on the slope parameter.
+We could guess at the model matrix structure based on our formula, but we can verify it by looking at the internal model matrix from the previous fit (using `do_fit = FALSE` would save time if you didn't want to fit it the first time).
+
+```{r}
+head(fit$tmb_data$X_ij[[1]])
+```
+
+Each column corresponds to the order of the `b` priors:
+
+```{r}
+fit_priors <- sdmTMB(
+  observed ~ a1,
+  data = sim_dat,
+  mesh = mesh,
+  family = gaussian(),
+  spatial = "on",
+  priors = sdmTMBpriors(
+    b = normal(location = c(0, 0), scale = c(5, 1))
+  )
+)
+fit_priors
+```
+
+Then we can use this model as above.
+Optionally we could use `update()` to fix parameters before passing the `$tmb_obj` element to `tmbstan::tmbstan()`.
+
+# Extracting the posterior of other predicted elements
+
+By default `predict.sdmTMB()` returns the overall prediction in link space when a tmbstan model is passed in.
+If instead we want some other element that we might find in the usual data frame returned by `predict.sdmTMB()` when applied to a regular sdmTMB model, we can specify that through the `sims_var` argument.
+
+For example, let's extract the spatial random field values `"omega_s"`. Other options are documented in `?predict.sdmTMB()`.
+
+```{r}
+fit_pred <- predict(
+  fit_mle,
+  newdata = nd,
+  tmbstan_model = fit_stan,
+  sims_var = "omega_s" #<
+)
+
+nd$spatial_rf_mean <- apply(fit_pred, 1, mean)
+nd$spatial_rf_sd <- apply(fit_pred, 1, sd)
+
+ggplot(nd, aes(X, Y, fill = spatial_rf_mean)) +
+  geom_raster() +
+  scale_fill_gradient2()
+
+ggplot(nd, aes(X, Y, fill = spatial_rf_sd)) +
+  geom_raster() +
+  scale_fill_gradient2()
 ```
 
 
-```{r showfig4, echo=FALSE, out.width = "80%", out.height = "80%"}
-knitr::include_graphics("fig_4.png")
+<!-- As a more complex example, we'll fit a spatial model with a quadratic effect of depth to Pacific cod using a presence-absence response.  -->
+<!-- One major difference between this example and the model above is that we also implement penalized complexity (PC) priors on the range and variance of the Matérn correlation (using `sdmTMB::sdmTMBpriors()`).  -->
+<!-- Without the prior, the MCMC sampling won't converge (and takes a long time to run). -->
+
+```{r fitm2, eval=FALSE, include=FALSE}
+# fit <- sdmTMB(
+#   present ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+#   data = pcod,
+#   mesh = pcod_mesh,
+#   family = binomial(link = "logit"),
+#   priors = sdmTMBpriors(
+#     matern_s = pc_matern(range_gt = 5, sigma_lt = 1)
+#   )
+# )
 ```
 
-### References  
-  
-  
+<!-- Evaluating this full model will take some time (400 iterations on 4 chains takes about ~ 10 minutes). For real applications we have to run this on multiple chains, and for lots of iterations.  -->
+
+```{r fitstan2, eval = FALSE, include=FALSE}
+# fit_stan <- tmbstan::tmbstan(fit$tmb_obj, iter = 1000, chains = 4)
+```
+
+```{r savefig2, echo=FALSE, eval=FALSE, include=FALSE}
+# plot(fit_stan, pars = c("ln_tau_O", "ln_tau_E", "ln_kappa"))
+# ggsave("vignettes/bayes_fig_2.png", height = 7, width = 7, dpi = 72)
+```
+
+<!-- As before we can make basic plots with `bayesplot`,    -->
+
+```{r showfig2, echo=FALSE, out.width = "80%", out.height = "80%", include=FALSE}
+# knitr::include_graphics("vignettes/bayes_fig_2.png")
+```
+
+<!-- and extract raw parameter estimates with `rstan::extract()`, -->
+
+```{r extract, eval=FALSE, include=FALSE}
+# pars <- rstan::extract(fit_stan)
+```
+
+<!-- We can also make some diagnostic plots showing the trade-off between different variances. -->
+<!-- For example, with the  -->
+
+```{r fig3, eval = FALSE, echo=TRUE, include=FALSE}
+# p <- bayesplot::mcmc_hex(fit_stan, pars = c("ln_tau_O", "ln_tau_E")) +
+#   bayesplot::plot_bg(fill = "gray95") +
+#   bayesplot::panel_bg(fill = "gray70")
+```
+
+```{r savefig3, eval = FALSE, echo=FALSE, include=FALSE}
+# p <- bayesplot::mcmc_hex(fit_stan, pars = c("ln_tau_O", "ln_tau_E")) +
+#   bayesplot::plot_bg(fill = "gray95") +
+#   bayesplot::panel_bg(fill = "gray70")
+# p
+# ggsave("vignettes/bayes_fig_3.png", height = 7, width = 7)
+```
+
+```{r showfig3, echo=FALSE, out.width = "80%", out.height = "80%", include=FALSE}
+# knitr::include_graphics("vignettes/bayes_fig_3.png")
+```
+
+<!-- The MCMC traces look OK (Rhat < 1.05) but this is also a case where it would be good to compare with more iterations.   -->
+
+```{r fig4, eval = FALSE, echo=TRUE, include=FALSE}
+# p <- bayesplot::mcmc_trace(fit_stan, pars = c("ln_tau_O", "ln_tau_E"))
+# p
+```
+
+```{r savefig4, eval = FALSE, echo=FALSE, include=FALSE}
+# p <- bayesplot::mcmc_trace(fit_stan, pars = c("ln_tau_O", "ln_tau_E"))
+# p
+# ggsave("vignettes/bayes_fig_4.png", height = 7, width = 7)
+```
+
+
+```{r showfig4, echo=FALSE, out.width = "80%", out.height = "80%", include=FALSE}
+# knitr::include_graphics("vignettes/bayes_fig_4.png")
+```
+
+# References
