@@ -65,8 +65,6 @@
 #' @return
 #' A named list with values for the specified priors.
 #'
-#' @details
-#'
 #' @export
 sdmTMBpriors <- function(
   matern_s = pc_matern(range_gt = NA, sigma_lt = NA),

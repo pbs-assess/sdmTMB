@@ -100,8 +100,6 @@ without a PC prior and then constraining the model from there. A better
 option would be to simulate from a model with a given range and sigma to
 choose reasonable values for the system or base the prior on knowledge from a
 model fit to a similar system but with more spatial information in the data.
-
-
 }
 \examples{
 normal(0, 1)
