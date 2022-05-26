@@ -1007,8 +1007,8 @@ sdmTMB <- function(
     has_smooths = as.integer(sm$has_smooths),
     upr = upr,
     lwr = lwr,
-    poisson_link_delta = as.integer(isTRUE(family$type == "poisson_link_delta"),
-    stan_flag = as.integer(bayesian))
+    poisson_link_delta = as.integer(isTRUE(family$type == "poisson_link_delta")),
+    stan_flag = as.integer(bayesian)
   )
 
   b_thresh <- rep(0, 2)
