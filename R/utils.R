@@ -278,11 +278,22 @@ has_no_random_effects <- function(obj) {
     !"RE" %in% obj$tmb_random
 }
 
-# from glmmTMB:
-get_pars <- function(object, unlist = TRUE) {
+#' Get TMB parameter list
+#'
+#' @param object Fit from [sdmTMB()]
+#'
+#' @return A named list of parameter values
+#'
+#' @examples
+#' fit <- sdmTMB(present ~ 1, data = pcod_2011, family = binomial(), spatial = "off")
+#' pars <- sdmTMB:::get_pars(fit)
+#' names(pars)
+#' @export
+get_pars <- function(object) {
+  # based on glmmTMB:
   ee <- object$tmb_obj$env
   x <- ee$last.par.best
-  if (length(ee$random)>0) x <- x[-ee$random]
+  if (length(ee$random) > 0) x <- x[-ee$random]
   p <- ee$parList(x = x)
   p
 }
