@@ -68,6 +68,7 @@ Imports:
     stats,
     TMB (>= 1.8.0)
 Suggests:
+    bayesplot,
     DHARMa,
     dplyr,
     future.apply,
@@ -95,5 +96,5 @@ Config/testthat/parallel: true
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.0
 SystemRequirements: GNU make
