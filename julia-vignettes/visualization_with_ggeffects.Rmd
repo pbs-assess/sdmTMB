@@ -15,7 +15,8 @@ ggplot_installed <- require("ggplot2", quietly = TRUE)
 ggeffects_installed <- require("ggeffects", quietly=TRUE)
 prediction_installed <- require("prediction", quietly=TRUE)
 sdmTMB_installed <- require("sdmTMB", quietly=TRUE)
-pkgs <- dplyr_installed && ggplot_installed && visreg_installed && ggeffects_installed
+pkgs <- dplyr_installed && ggplot_installed && visreg_installed && 
+  ggeffects_installed && prediction_installed
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -27,16 +28,6 @@ knitr::opts_chunk$set(
 ```
 
 The package [ggeffects]https://cran.r-project.org/web/packages/ggeffects/index.html can be used to plot predictions from an `sdmTMB` model while holding certain variables constant, allowing us to see the marginal effects of the other variables (see [this vignette]https://strengejacke.github.io/ggeffects/articles/introduction_marginal_effects.html) for more information.
-
-```{r echo=FALSE, include=FALSE}
-#First, switch to the 'dev' branch of sdmTMB (for now anyway)
-remove.packages("sdmTMB")
-remotes::install_github("pbs-assess/sdmTMB", ref = "dev")
-
-# or restart your R session some other way...
-rstudioapi::restartSession()
-
-```
 
 ```{r}
 library(prediction)
@@ -117,18 +108,18 @@ fit3 <- sdmTMB(density ~depth +fyear,
        family=tweedie()
        )
 
-predictions<- predict(fit3, newdata = fit$data, return_tmb_object = TRUE)
+predictions<- predict(fit3, newdata = fit$data)
 plot_map <- function(dat, column) {
   ggplot(dat, aes_string("X", "Y", fill = column)) +
     geom_raster() +
     facet_wrap(~year) +
     coord_fixed()
 }
-plot_map(predictions$data, "omega_s") +
+plot_map(predictions, "omega_s") +
   ggtitle("Spatial random effects only") +
   scale_fill_gradient2()
 
-plot_map(predictions$data, "epsilon_st") +
+plot_map(predictions, "epsilon_st") +
   ggtitle("Spatiotemporal random effects only") +
   scale_fill_gradient2()
 ```
