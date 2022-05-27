@@ -68,6 +68,7 @@ Imports:
     stats,
     TMB (>= 1.8.0)
 Suggests:
+    bayesplot,
     DHARMa,
     dplyr,
     effects (>= 4.0-1),
