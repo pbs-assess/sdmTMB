@@ -10,8 +10,8 @@ set.seed(123)
 
 # make fake predictor(s) (a1) and sampling locations:
 predictor_dat <- data.frame(
-  X = runif(1000), Y = runif(1000),
-  a1 = rnorm(1000), year = 1
+  X = runif(3000), Y = runif(3000),
+  year = 1
 )
 mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.05)
 n_s <- nrow(mesh$mesh$loc)
@@ -69,3 +69,5 @@ fit2
 
 sdr1 = sdreport(obj1)
 sdr2 = sdreport(obj2)
+
+# need to add 3rd case with Jacobian adj

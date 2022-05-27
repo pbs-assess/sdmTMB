@@ -61,5 +61,7 @@ template<class Type>
 
   REPORT(pred);
   ADREPORT(pred);
+  REPORT(range);
+  ADREPORT(range);
   return jnll;
 }

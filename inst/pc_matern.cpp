@@ -26,7 +26,7 @@ template<class Type>
 
   int n_i = y.rows();   // number of observations
 
-  //Type range = sqrt(Type(8.)) / exp(ln_kappa); // range as derived parameter
+  Type range = sqrt(Type(8.)) / exp(ln_kappa); // range as derived parameter
   Eigen::SparseMatrix<Type> Q_s; // Precision matrix
   Q_s = R_inla::Q_spde(spde, exp(ln_kappa));
   Type jnll = 0;
@@ -59,5 +59,7 @@ template<class Type>
 
   REPORT(pred);
   ADREPORT(pred);
+  REPORT(range);
+  ADREPORT(range);
   return jnll;
 }
