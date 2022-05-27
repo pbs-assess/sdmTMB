@@ -10,10 +10,10 @@ set.seed(123)
 
 # make fake predictor(s) (a1) and sampling locations:
 predictor_dat <- data.frame(
-  X = runif(300), Y = runif(300),
-  a1 = rnorm(300), year = 1
+  X = runif(1000), Y = runif(1000),
+  a1 = rnorm(1000), year = 1
 )
-mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.1)
+mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.05)
 n_s <- nrow(mesh$mesh$loc)
 
 sim_dat <- sdmTMB_simulate(
@@ -24,7 +24,7 @@ sim_dat <- sdmTMB_simulate(
   family = gaussian(),
   range = 0.1,
   sigma_E = 0.0,
-  phi = 0.001,
+  phi = 0.04,
   sigma_O = 0.2,
   seed = 42,
   B = c(2) # B0 = intercept, B1 = a1 slope
@@ -46,11 +46,11 @@ compile("inst/pc_matern.cpp")
 dyn.load(dynlib("inst/pc_matern"))
 
 data <- dat
-parameters <- list(B0 = 0, ln_tau_O = 0, ln_kappa = 0, ln_sigma=-5,
+parameters <- list(B0 = 0, ln_tau_O = 0, ln_kappa = 0, ln_sigma=0,
                    omega_s = matrix(0,n_s, 1))
 obj1 <- MakeADFun(data, parameters, DLL = "pc_matern", hessian = TRUE)
-fit1 <- nlminb(obj$par, objective = obj$fn, gradient = obj$gr,
-              control=list(eval.max=4000, iter.max=4000))
+fit1 <- nlminb(obj1$par, objective = obj1$fn, gradient = obj1$gr,
+              control=list(eval.max=10000, iter.max=10000))
 fit1
 
 # with prior -- this estimates B0 well, but struggles with ln_tau_O and kappa
@@ -63,7 +63,7 @@ data$range_prob <- 0.05
 data$matern_SD <- 0.01 # less than this is SD_prob
 data$SD_prob <- 0.05
 obj2 <- MakeADFun(data, parameters, DLL = "pc_matern_prior", hessian = TRUE)
-fit2 <- nlminb(obj$par, objective = obj$fn, gradient = obj$gr,
+fit2 <- nlminb(obj2$par, objective = obj2$fn, gradient = obj2$gr,
               control=list(eval.max=4000, iter.max=4000))
 fit2
 
