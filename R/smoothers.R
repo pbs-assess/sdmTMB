@@ -80,6 +80,10 @@ parse_smoothers <- function(formula, data, newdata = NULL) {
 s2rPred <- function(sm, re, data) {
   ## Function to aid prediction from smooths represented as type==2
   ## random effects. re must be the result of smooth2random(sm,...,type=2).
+  if (!all(sm$term %in% colnames(data))) {
+    cli_abort(paste("A smoother term is missing from 'newdata':",
+      sm$term[!sm$term %in% colnames(data)]))
+  }
   X <- mgcv::PredictMat(sm, data) ## get prediction matrix for new data
   ## transform to r.e. parameterization
   if (!is.null(re$trans.U)) {

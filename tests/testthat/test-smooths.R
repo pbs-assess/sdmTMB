@@ -301,3 +301,26 @@ test_that("smoothers with 'bs = cr' work", {
   abline(0, 1)
   expect_gt(cor(p$est, p1), 0.999)
 })
+
+test_that("prediction with smoothers error helpfully if missing variable", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  suppressWarnings({
+    m <- sdmTMB(
+      density ~ s(year, k = 3) + s(depth_scaled),
+      data = pcod_2011,
+      mesh = pcod_mesh_2011, spatial = "off"
+    )
+  })
+  nd <- data.frame(year = 2007)
+  expect_error({
+    p <- predict(m, newdata = nd, re_form = NA, se_fit = TRUE)
+  }, regexp = "depth_scaled")
+
+  nd <- data.frame(aaa = 2007)
+  expect_error({
+    p <- predict(m, newdata = nd, re_form = NA, se_fit = TRUE)
+  }, regexp = "year")
+})
+
