@@ -205,7 +205,7 @@ plot(fit_stan)
 pars_plot <- c("b_j[1]", "b_j[2]", "ln_tau_O", "omega_s[1]")
 
 bayesplot::mcmc_trace(fit_stan, pars = pars_plot)
-bayesplot::mcmc_pairs(fit_stan, pars = pars_plot, off_diag_fun = "hex")
+bayesplot::mcmc_pairs(fit_stan, pars = pars_plot)
 ```
 
 # Posterior predictive checks
