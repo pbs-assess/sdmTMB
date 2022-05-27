@@ -90,6 +90,7 @@ print_smooth_effects <- function(x, m = 1) {
     sm_names <- unlist(lapply(sm$Zs, function(x) attr(x, "s.label")))
     sm_names <- gsub("\\)$", "", gsub("s\\(", "", sm_names))
     sm_names_bs <- paste0("s", sm_names)
+    sm_classes <- unlist(sm$classes)
     xx <- lapply(sm_names_bs, function(.x) { # split out 2D + smooths
       n_sm <- grep(",", .x) + 1
       if (length(n_sm)) {
@@ -102,7 +103,7 @@ print_smooth_effects <- function(x, m = 1) {
     sm_names_bs <- unlist(xx)
     sm_names_sds <- paste0("sds(", sm_names, ")")
     mm_sm <- cbind(bs, bs_se)
-    row.names(mm_sm) <- sm_names_bs
+    row.names(mm_sm) <- sm_names_bs[sm_classes != "cc.smooth.spec"]
 
     smooth_sds <- round(exp(sr_est$ln_smooth_sigma[, m]), 2L)
     re_sm_mat <- matrix(NA_real_, nrow = length(smooth_sds), ncol = 1L)

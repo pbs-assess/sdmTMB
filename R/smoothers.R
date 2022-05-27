@@ -32,6 +32,8 @@ parse_smoothers <- function(formula, data, newdata = NULL) {
   basis <- list()
   Zs <- list()
   Xs <- list()
+  labels <- list()
+  classes <- list()
   if (length(smooth_i) > 0) {
     has_smooths <- TRUE
     smterms <- terms[smooth_i]
@@ -40,6 +42,8 @@ parse_smoothers <- function(formula, data, newdata = NULL) {
     for (i in seq_along(smterms)) {
       if (grepl('bs\\=\\"re', smterms[i])) stop("Error: bs = 're' is not currently supported for smooths")
       obj <- eval(str2expression(smterms[i]))
+      labels[[i]] <- obj$label
+      classes[[i]] <- attr(obj, "class")
       basis[[i]] <- mgcv::smoothCon(
         object = obj, data = data,
         knots = NULL, absorb.cons = TRUE,
@@ -67,7 +71,8 @@ parse_smoothers <- function(formula, data, newdata = NULL) {
     b_smooth_start <- 0L
     Xs <- matrix(nrow = 0L, ncol = 0L)
   }
-  list(Xs = Xs, Zs = Zs, has_smooths = has_smooths,
+  list(Xs = Xs, Zs = Zs, has_smooths = has_smooths, labels = labels,
+    classes = classes,
     sm_dims = sm_dims, b_smooth_start = b_smooth_start)
 }
 
@@ -75,6 +80,10 @@ parse_smoothers <- function(formula, data, newdata = NULL) {
 s2rPred <- function(sm, re, data) {
   ## Function to aid prediction from smooths represented as type==2
   ## random effects. re must be the result of smooth2random(sm,...,type=2).
+  if (!all(sm$term %in% colnames(data))) {
+    cli_abort(paste("A smoother term is missing from 'newdata':",
+      sm$term[!sm$term %in% colnames(data)]))
+  }
   X <- mgcv::PredictMat(sm, data) ## get prediction matrix for new data
   ## transform to r.e. parameterization
   if (!is.null(re$trans.U)) {

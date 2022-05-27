@@ -255,3 +255,72 @@ test_that("print works with s(X, Y)", {
   # m <- brms::brm(log(density) ~ s(X) + s(Y) + s(depth, year), data = d, chains = 1, iter = 800)
   # m
 })
+
+test_that("smoothers with 'bs = cc' work", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  m <- sdmTMB(
+    density ~ s(depth_scaled, bs = "cc"),
+    data = pcod_2011,
+    mesh = pcod_mesh_2011, spatial = "off"
+  )
+  p <- predict(m)
+  print(m)
+
+  m1 <- mgcv::gam(
+    density ~ s(depth_scaled, bs = "cc"),
+    data = pcod_2011
+  )
+  p1 <- predict(m1)
+
+  plot(p$est, p1)
+  abline(0, 1)
+  expect_gt(cor(p$est, p1), 0.999)
+})
+
+test_that("smoothers with 'bs = cr' work", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  m <- sdmTMB(
+    density ~ s(depth_scaled, bs = "cr"),
+    data = pcod_2011,
+    mesh = pcod_mesh_2011, spatial = "off"
+  )
+  p <- predict(m)
+  print(m)
+
+  m1 <- mgcv::gam(
+    density ~ s(depth_scaled, bs = "cr"),
+    data = pcod_2011
+  )
+  p1 <- predict(m1)
+
+  plot(p$est, p1)
+  abline(0, 1)
+  expect_gt(cor(p$est, p1), 0.999)
+})
+
+test_that("prediction with smoothers error helpfully if missing variable", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  suppressWarnings({
+    m <- sdmTMB(
+      density ~ s(year, k = 3) + s(depth_scaled),
+      data = pcod_2011,
+      mesh = pcod_mesh_2011, spatial = "off"
+    )
+  })
+  nd <- data.frame(year = 2007)
+  expect_error({
+    p <- predict(m, newdata = nd, re_form = NA, se_fit = TRUE)
+  }, regexp = "depth_scaled")
+
+  nd <- data.frame(aaa = 2007)
+  expect_error({
+    p <- predict(m, newdata = nd, re_form = NA, se_fit = TRUE)
+  }, regexp = "year")
+})
+
