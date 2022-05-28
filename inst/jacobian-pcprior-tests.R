@@ -41,7 +41,7 @@ A_st       = mesh$A_st,
 A_spatial_index = mesh$sdm_spatial_id - 1L
 )
 
-# no prior -- this estimates B0 and ln_sigma well, but struggles with ln_tau_O and kappa
+# Model 1: No PC prior
 compile("inst/pc_matern.cpp")
 dyn.load(dynlib("inst/pc_matern"))
 
@@ -50,10 +50,10 @@ parameters <- list(B0 = 0, ln_tau_O = 0, ln_kappa = 0, ln_sigma=0,
                    omega_s = matrix(0,n_s, 1))
 obj1 <- MakeADFun(data, parameters, random = "omega_s", DLL = "pc_matern", hessian = TRUE)
 fit1 <- nlminb(obj1$par, objective = obj1$fn, gradient = obj1$gr,
-              control=list(eval.max=10000, iter.max=10000))
+              control=list(eval.max=4000, iter.max=4000))
 fit1
 
-# with prior -- this estimates B0 well, but struggles with ln_tau_O and kappa
+# Model 2: Including PC prior
 compile("inst/pc_matern_prior.cpp")
 dyn.load(dynlib("inst/pc_matern_prior"))
 
@@ -67,15 +67,27 @@ fit2 <- nlminb(obj2$par, objective = obj2$fn, gradient = obj2$gr,
               control=list(eval.max=4000, iter.max=4000))
 fit2
 
+# Model 3: Including PC prior and Jacobian adjustment
+compile("inst/pc_matern_prior_jacobian.cpp")
+dyn.load(dynlib("inst/pc_matern_prior_jacobian"))
+
+obj3 <- MakeADFun(data, parameters, DLL = "pc_matern_prior_jacobian", random = "omega_s", hessian = TRUE)
+fit3 <- nlminb(obj3$par, objective = obj3$fn, gradient = obj3$gr,
+               control=list(eval.max=4000, iter.max=4000))
+fit3
+
+# Look at predictions from all models
 sdr1 = sdreport(obj1)
 sdr2 = sdreport(obj2)
+sdr3 = sdreport(obj3)
 
 # look at predictions
 sim_dat$pred_1 = sdr1$value[which(names(sdr1$value)=="pred")]
 sim_dat$pred_2 = sdr2$value[which(names(sdr2$value)=="pred")]
+sim_dat$pred_3 = sdr3$value[which(names(sdr3$value)=="pred")]
 
 # predictions are perfectly correlated with / without prior
 ggplot(sim_dat, aes(pred_1, pred_2)) +
   geom_point(alpha=0.1, col="blue")
 
-# need to add 3rd case with Jacobian adj
+cor(sim_dat[,c("pred_1","pred_2","pred_3")])
