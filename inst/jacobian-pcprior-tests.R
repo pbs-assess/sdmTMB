@@ -91,3 +91,47 @@ ggplot(sim_dat, aes(pred_1, pred_2)) +
   geom_point(alpha=0.1, col="blue")
 
 cor(sim_dat[,c("pred_1","pred_2","pred_3")])
+
+
+# sample with Stan -- first model (no prior) throws 200+ divergent transitions
+options(mc.cores = parallel::detectCores())
+m1 <- tmbstan(obj1, chains = 4, iter = 8000)
+m2 <- tmbstan(obj2, chains = 4, iter = 8000)
+m3 <- tmbstan(obj3, chains = 4, iter = 8000)
+
+save(m1,m2,m3,file="m1m2m3.rds")
+
+out <- data.frame(
+  type =
+    c("No prior", "Prior no adjustment", "Prior with adjustment")
+)
+
+out$mean_B0 <- c(mean((extract(m1)$B0)), mean((extract(m2)$B0)),
+                      mean((extract(m3)$B0)))
+out$median_B0 <- c(median((extract(m1)$B0)), median((extract(m2)$B0)),
+                      median((extract(m3)$B0)))
+out$mean_kappa <- c(mean((exp(extract(m1)$ln_kappa))), mean((exp(extract(m2)$ln_kappa))),
+                         mean((exp(extract(m3)$ln_kappa))))
+out$median_kappa <- c(median((exp(extract(m1)$ln_kappa))), median((exp(extract(m2)$ln_kappa))),
+                           median((exp(extract(m3)$ln_kappa))))
+out$mean_range <- c(mean(sqrt(8)/(exp(extract(m1)$ln_kappa))), mean(sqrt(8)/(exp(extract(m2)$ln_kappa))),
+                         mean(sqrt(8)/(exp(extract(m3)$ln_kappa))))
+out$median_range <- c(median(sqrt(8)/(exp(extract(m1)$ln_kappa))), median(sqrt(8)/(exp(extract(m2)$ln_kappa))),
+                           median(sqrt(8)/(exp(extract(m3)$ln_kappa))))
+out$mean_sigma <- c(mean((exp(extract(m1)$ln_sigma))), mean((exp(extract(m2)$ln_sigma))),
+                         mean((exp(extract(m3)$ln_sigma))))
+out$median_sigma <- c(median((exp(extract(m1)$ln_sigma))), median((exp(extract(m2)$ln_sigma))),
+                           median((exp(extract(m3)$ln_sigma))))
+#sigma_O = 1/ [exp(ln_tau_O) * (sqrt(4 * pi) * kappa[1]]
+out$mean_sigmaO <- c(mean(1/(exp(extract(m1)$ln_tau_O) * sqrt(4*pi) * exp(extract(m1)$ln_kappa))),
+                          mean(1/(exp(extract(m2)$ln_tau_O) * sqrt(4*pi) * exp(extract(m2)$ln_kappa))),
+                      mean(1/(exp(extract(m3)$ln_tau_O) * sqrt(4*pi) * exp(extract(m3)$ln_kappa))))
+out$median_sigmaO <- c(median(1/(exp(extract(m1)$ln_tau_O) * sqrt(4*pi) * exp(extract(m1)$ln_kappa))),
+                          median(1/(exp(extract(m2)$ln_tau_O) * sqrt(4*pi) * exp(extract(m2)$ln_kappa))),
+                          median(1/(exp(extract(m3)$ln_tau_O) * sqrt(4*pi) * exp(extract(m3)$ln_kappa))))
+
+# This shows:
+# B0 is off without the PC prior, estimated very well with prior, and perfectly with adjustment
+# range parameter seems consistently off
+# sigma obs is estimated well for all models
+# sigma_O is biased high for all (0.27)
