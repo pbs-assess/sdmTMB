@@ -3,14 +3,13 @@
 library(sdmTMB)
 library(TMB)
 library(tmbstan)
-options(mc.cores = 1L)
 
 # simualte spatial data from a single year
 set.seed(123)
 
 # make fake predictor(s) (a1) and sampling locations:
 predictor_dat <- data.frame(
-  X = runif(3000), Y = runif(3000),
+  X = runif(800), Y = runif(800),
   year = 1
 )
 mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.05)
@@ -95,11 +94,11 @@ cor(sim_dat[,c("pred_1","pred_2","pred_3")])
 
 # sample with Stan -- first model (no prior) throws 200+ divergent transitions
 options(mc.cores = parallel::detectCores())
-m1 <- tmbstan(obj1, chains = 4, iter = 8000)
-m2 <- tmbstan(obj2, chains = 4, iter = 8000)
-m3 <- tmbstan(obj3, chains = 4, iter = 8000)
+m1 <- tmbstan(obj1, chains = 3, iter = 5000)
+m2 <- tmbstan(obj2, chains = 3, iter = 5000)
+m3 <- tmbstan(obj3, chains = 3, iter = 5000)
 
-save(m1,m2,m3,file="m1m2m3.rds")
+#save(m1,m2,m3,file="m1m2m3.rds")
 
 out <- data.frame(
   type =

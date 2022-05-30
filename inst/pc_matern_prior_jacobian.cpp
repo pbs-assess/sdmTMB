@@ -64,9 +64,13 @@ template<class Type>
   Type C = sqrt(exp(lgamma(1.0 + dhalf)) * pow(4*M_PI, dhalf));
   jnll -= log(C) + ln_kappa;
 
+  // from calc_rf
+  Type sigma_O = 1 / sqrt(Type(4.) * M_PI * exp(Type(2.) * ln_tau_O + Type(2.) * ln_kappa));
   REPORT(pred);
   ADREPORT(pred);
   REPORT(range);
   ADREPORT(range);
+  REPORT(sigma_O);
+  ADREPORT(sigma_O);
   return jnll;
 }

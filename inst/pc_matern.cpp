@@ -56,10 +56,13 @@ template<class Type>
     pred(i) = omega_s_A(i,0) + B0;
     jnll -= dnorm(y(i), pred(i), exp(ln_sigma), true);
   }
-
+  // from calc_rf
+  Type sigma_O = 1 / sqrt(Type(4.) * M_PI * exp(Type(2.) * ln_tau_O + Type(2.) * ln_kappa));
   REPORT(pred);
   ADREPORT(pred);
   REPORT(range);
   ADREPORT(range);
+  REPORT(sigma_O);
+  ADREPORT(sigma_O);
   return jnll;
 }
