@@ -57,9 +57,9 @@ compile("inst/pc_matern_prior.cpp")
 dyn.load(dynlib("inst/pc_matern_prior"))
 
 data <- dat
-data$matern_range <- 0.3 # greater than this is range_prob
+data$matern_range <- 0.2 # greater than this is range_prob
 data$range_prob <- 0.05
-data$matern_SD <- 0.01 # less than this is SD_prob
+data$matern_SD <- 0.05 # less than this is SD_prob
 data$SD_prob <- 0.05
 obj2 <- MakeADFun(data, parameters, DLL = "pc_matern_prior", random = "omega_s", hessian = TRUE)
 fit2 <- nlminb(obj2$par, objective = obj2$fn, gradient = obj2$gr,
