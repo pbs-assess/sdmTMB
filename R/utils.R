@@ -49,14 +49,19 @@
 #'   [TMB::sdreport()]. Must be `TRUE` to use simulation-based methods in
 #'   [predict.sdmTMB()] or `[get_index_sims()]`. If not needed, setting this
 #'   `FALSE` will reduce object size.
-#' @param parallel Number of cores to use. Best set with the option
-#'   `options(sdmTMB.cores = n)`, where `n` is the number of cores.
-#'   Currently only works on Mac/Linux. Note that the models in sdmTMB
-#'   often slow down with too many cores. Ideal numbers appear to be
-#'   a bit less than half the available cores or ~3-4 on the machines
-#'   we have tested. Also propogates to prediction and index calculation.
-#'   Can we tweaked after the fact in a fitted model by modifying
-#'   `fit$control$parallel`.
+#' @param parallel Argument currently ignored. For parallel processing with 3
+#'   cores, as an example, use `TMB::openmp(n = 3, DLL = "sdmTMB")`. But be
+#'   careful, because it's not always faster with more cores and there is
+#'   definitely an upper limit.
+# Number of cores to use.
+# Best set with the option
+#   `options(sdmTMB.cores = n)`, where `n` is the number of cores.
+#   Currently only works on Mac/Linux. Note that the models in sdmTMB
+#   often slow down with too many cores. Ideal numbers appear to be
+#   a bit less than half the available cores or ~3-4 on the machines
+#   we have tested. Also propogates to prediction and index calculation.
+#   Can we tweaked after the fact in a fitted model by modifying
+#   `fit$control$parallel`.
 #' @param ... Anything else. See the 'Control parameters' section of
 #'   [stats::nlminb()].
 #'
