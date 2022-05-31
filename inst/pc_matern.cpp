@@ -30,7 +30,7 @@ template<class Type>
   Eigen::SparseMatrix<Type> Q_s; // Precision matrix
   Q_s = R_inla::Q_spde(spde, exp(ln_kappa));
   Type jnll = 0;
-  jnll += SCALE(GMRF(Q_s, false), 1. / exp(ln_tau_O))(omega_s.col(0));
+  jnll += SCALE(GMRF(Q_s, true), 1. / exp(ln_tau_O))(omega_s.col(0));
   // This is taken from utils.h in sdmTMB
   //Type d = 2.;  // dimension
   //Type dhalf = d / 2.;

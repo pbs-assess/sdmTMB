@@ -144,7 +144,7 @@ vector<Type> RepeatVector(vector<Type> x, int times) {
 template <class Type>
 Type pc_prior_matern(Type logtau, Type logkappa, Type matern_range,
                      Type matern_SD, Type range_prob, Type SD_prob,
-                     int give_log = 0, int share_range = 0) {
+                     int give_log = 0, int share_range = 0, int stan_flag = 0) {
   Type d = 2.;  // dimension
   Type dhalf = d / 2.;
   Type lam1 = -log(range_prob) * pow(matern_range, dhalf);
@@ -156,6 +156,14 @@ Type pc_prior_matern(Type logtau, Type logkappa, Type matern_range,
   Type sigma_ll = log(lam2) - lam2 * sigma;
   Type penalty = sigma_ll;
   if (!share_range) penalty += range_ll;
+
+  // Note: these signs are + (and different from inst/jacobian-pcprior-tests)
+  // because the jnll is accumulated
+  if(stan_flag) {
+    penalty += log(sqrt(8.0)) - log(pow(range,2.0)); // P(sigma)
+    Type C = sqrt(exp(lgamma(1.0 + dhalf)) * pow(4*M_PI, dhalf));
+    penalty += log(C) + logkappa;
+  }
   // std::cout << "PC penalty: " << penalty << "\n";
   if (give_log)
     return penalty;
