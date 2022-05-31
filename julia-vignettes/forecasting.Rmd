@@ -1,0 +1,391 @@
+---
+title: "Forecasting with sdmTMB"
+author: "Julia Indivero, Sean Anderson, Lewis Barnett, Philina English, Eric Ward"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Forecasting with sdmTMB}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+
+```{r setup, include = FALSE, cache=FALSE}
+dplyr_installed <- require("dplyr", quietly = TRUE)
+ggplot_installed <- require("ggplot2", quietly = TRUE)
+visreg_installed <- require("visreg", quietly=TRUE)
+sdmTMB_installed <- require("sdmTMB", quietly=TRUE)
+pkgs <- dplyr_installed && ggplot_installed && visreg_installed && sdmTMB_installed
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.asp = 0.618,
+  eval = identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
+)
+```
+
+```{r echo=FALSE}
+library(sdmTMB)
+library(ggplot2)
+library(visreg)
+```
+
+---
+title: "Forecasting with sdmTMB"
+subtitle: "NOAA PSAW Seminar Series"
+author: ""
+institute: ""
+date: "March 9, 2022"
+output:
+  xaringan::moon_reader:
+    css: ["xaringan-themer.css", "theme.css"]
+    lib_dir: libs
+    nature:
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+<!-- Build with: xaringan::inf_mr() -->
+
+```{r preamble, include=FALSE, cache=FALSE}
+source(here::here("noaa-psaw-2022/preamble.R"))
+do.call(knitr::opts_chunk$set, knitr_opts)
+```
+
+```{r libs, include=FALSE}
+library(dplyr)
+library(sdmTMB)
+library(ggplot2)
+```
+
+# Types of prediction we might be interested in 
+
+* Time  
+  * e.g., interpolating over missed survey year
+  * e.g., forecasting future year
+  
+* Extrapolating in space
+  * e.g., unsampled area (MPA, area beyond existing domain)
+
+---
+
+class: center, middle, inverse
+
+# Forecasting in time
+
+---
+
+
+# Predicting to missing/future years
+
+* Need a model for time: e.g., can't predict with years as factors
+
+* Options: 
+  * AR(1) or random walk random fields
+  * Time-varying intercept
+  * Smoother on year (`s(year)`)
+  * Ignore time (fixed)
+  * Some combination of these
+
+---
+
+# AR(1) spatiotemporal field
+
+```{r pcod-mesh}
+mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
+```
+
+.small[
+```{r fit-ar1, echo=TRUE, eval=TRUE, results='hide'}
+# missing and forecasted years:
+extra_years <- c(
+  2006, 2008, 2010, 2012, 2014, 2016,
+  2018:2025
+)
+fit_ar1 <- sdmTMB(
+  density ~ depth_scaled + depth_scaled2,
+  time = "year",
+  extra_time = extra_years, #<<
+  spatiotemporal = "AR1", #<<
+  data = pcod,
+  mesh = mesh,
+  family = tweedie(link = "log"),
+  spatial = "off",
+  silent = FALSE
+)
+```
+]
+
+---
+
+# Random walk spatiotemporal field
+
+.small[
+```{r fit-rw, echo=TRUE, eval=TRUE, results='hide'}
+fit_rw <- sdmTMB(
+  density ~ depth_scaled + depth_scaled2,
+  time = "year",
+  extra_time = extra_years, #<<
+  spatiotemporal = "RW", #<<
+  data = pcod,
+  mesh = mesh,
+  family = tweedie(link = "log"),
+  spatial = "off",
+  silent = FALSE
+)
+```
+]
+
+---
+
+# Random walk intercept + AR(1) fields
+
+.small[
+```{r, fit-rw-ar1, echo=TRUE, eval=TRUE, results='hide'}
+fit_rw_ar1 <- sdmTMB(
+  density ~ 0 + depth_scaled + depth_scaled2,
+  time = "year",
+  time_varying = ~1, #<<
+  extra_time = extra_years, #<<
+  spatiotemporal = "AR1", #<<
+  data = pcod,
+  mesh = mesh,
+  family = tweedie(link = "log"),
+  spatial = "off",
+  silent = FALSE
+)
+```
+]
+
+---
+
+# Smoother on year + AR(1) fields
+
+.small[
+```{r, fit-sm, echo=TRUE, eval=TRUE, results='hide'}
+fit_sm <- sdmTMB(
+  density ~ s(year) + depth_scaled + depth_scaled2, #<<
+  time = "year",
+  extra_time = extra_years, #<<
+  spatiotemporal = "AR1", #<<
+  data = pcod,
+  mesh = mesh,
+  family = tweedie(link = "log"),
+  spatial = "off",
+  silent = FALSE
+)
+```
+]
+
+---
+
+# Comparing predicted density at a point in space
+
+.xsmall[Vertical dashed lines indicate observations]
+
+```{r pred-all}
+newdf <- data.frame(
+  year = unique(fit_ar1$data$year),
+  X = mean(pcod$X),
+  Y = mean(pcod$Y),
+  depth_scaled = mean(pcod$depth_scaled),
+  depth_scaled2 = mean(pcod$depth_scaled)^2
+)
+fits <- list(fit_ar1, fit_rw, fit_rw_ar1, fit_sm)
+names(fits) <- c("AR1-fields", "RW-fields", "RW-time, AR1-fields", "s(year), AR1-fields")
+set.seed(123)
+preds <- purrr::map(fits, ~ predict(.x, newdf, nsim = 50L))
+preds_df <- purrr::map_dfr(preds, function(.x) {
+  reshape2::melt(.x, value.name = "est") %>%
+    rename(year = Var1, iter = Var2)
+}, .id = "type")
+pred_df <- purrr::map_dfr(fits, ~ predict(.x, newdf, se_fit = TRUE), .id = "type")
+```
+
+```{r plot-time-comparison, fig.asp=0.62}
+set.seed(1922)
+iters <- sample(1:max(preds_df$iter), 12L)
+ggplot(pred_df, aes(year, exp(est), ymin = exp(est - 2 * est_se), ymax = exp(est + 2 * est_se))) +
+  geom_ribbon(alpha = 0.2) +
+  geom_line(lwd = 1) +
+  scale_y_log10() +
+  facet_wrap(vars(type)) +
+  geom_vline(xintercept = unique(pcod$year), lty = 2, alpha = 0.2) +
+  theme(panel.grid = element_blank()) +
+  geom_line(aes(year, exp(est), group = iter),
+    alpha = 0.4,
+    data = filter(preds_df, iter %in% iters), inherit.aes = FALSE, lwd = 0.5
+  ) +
+  ylab("Fish density (log-distributed axis)") + xlab("")
+```
+
+---
+
+# AR(1) spatiotemporal fields evolve towards mean zero
+
+```{r pred-ar1-plot-eps}
+one_yr <- dplyr::filter(qcs_grid, year == 2017)
+grid <- purrr::map_dfr(unique(fit_ar1$data$year), function(i) {
+  one_yr$year <- i
+  one_yr
+})
+p_ar1 <- predict(fit_ar1, newdata = grid)
+ggplot(p_ar1, aes(X, Y, fill = epsilon_st)) +
+  geom_raster() +
+  facet_wrap(~year) +
+  scale_fill_gradient2() +
+  coord_fixed()
+```
+
+---
+
+# Random walk fields do not evolve towards mean
+
+```{r pred-rw-plot-eps}
+p_rw <- predict(fit_rw, newdata = grid)
+ggplot(p_rw, aes(X, Y, fill = epsilon_st)) +
+  geom_raster() +
+  facet_wrap(~year) +
+  scale_fill_gradient2() +
+  coord_fixed()
+```
+
+---
+
+# Spatiotemporal field uncertainty grows without data
+
+(Here AR(1) fields; random walk similar.)
+
+```{r eps-se}
+eps_est <- predict(fit_ar1, newdata = grid, nsim = 100, sims_var = "proj_re_st_vector")
+grid$se <- apply(eps_est, 1, sd)
+ggplot(grid, aes(X, Y, fill = se)) +
+  geom_raster() +
+  facet_wrap(~year) +
+  coord_fixed() +
+  labs(fill = "Standard error\nof spatiotemporal field")
+```
+
+---
+
+# Forecasting and interpolating in time summary
+
+* Use `extra_time` argument to fill in or forecast  
+  .xsmall[(a more flexible interface for forecasting may be forthcoming)]
+* Need a model for time
+* AR(1) field processes revert towards mean
+* Random walk field processes do not revert towards mean
+* Smoothers should be used with caution when forecasting  
+  .xsmall[(they continue whatever the basis functions were doing)]
+
+---
+
+class: center, middle, inverse
+
+# Spatial extrapolation
+
+---
+
+# Previously explored BEI tree dataset
+
+```{r bei, echo=FALSE, eval=TRUE}
+dat <- data.frame(
+  x = spatstat.data::bei$x,
+  y = spatstat.data::bei$y
+)
+ggplot(dat, aes(x, y)) +
+  geom_point(col = "darkblue", alpha = 0.1) +
+  coord_cartesian(expand = FALSE)
+```
+
+---
+
+# Mesh more uncertain in unsampled areas
+
+```{r bei2}
+# scale controls resolution
+scale <- 50
+dat$x <- scale * floor(dat$x / scale)
+dat$y <- scale * floor(dat$y / scale)
+
+dat <- dplyr::group_by(dat, x, y) %>%
+  dplyr::summarise(n = n())
+
+mesh <- make_mesh(
+  dat,
+  xy_cols = c("x", "y"),
+  cutoff = 80 # min. distance between knots in X-Y units
+)
+# mesh$mesh$n # extract number of vertices/knots
+
+# quick visualization of mesh
+plot(mesh)
+```
+
+---
+
+# Re-fitting the model  
+
+Intercept only, 1 time slice  
+
+```{r fit-model, echo=TRUE}
+fit <- sdmTMB(
+  n ~ 1,
+  data = dat,
+  mesh = mesh,
+  family = truncated_nbinom2(link = "log"),
+)
+```
+
+---
+
+# Predict to grid  
+
+* Slower, but include `se_fit = TRUE`
+* Could also use `predict(..., nsim = 500)` and summarize matrix
+
+```{r pred-fit, echo=TRUE, eval=TRUE}
+# makes all combinations of x and y:
+newdf <- expand.grid(
+  x = seq(min(dat$x), max(dat$x), 5),
+  y = seq(min(dat$y), max(dat$y), 5)
+)
+p <- predict(fit,
+  newdata = newdf, se_fit = TRUE
+)
+```
+
+---
+ 
+# Visualizing uncertainty
+
+* Why is uncertainty higher at vertices?  
+  * Fewer neighbors, e.g. [this tutorial](https://ourcodingclub.github.io/tutorials/spatial-modelling-inla/)
+  
+```{r vis-vert}
+ggplot() +
+  inlabru::gg(mesh$mesh) +
+  geom_point(data = p, aes(x = x, y = y, col = est_se)) +
+  coord_equal()
+```
+
+---
+ 
+# Predicting outside the survey domain
+
+* Predict into border area
+
+```{r pred-fit2, echo=FALSE, eval=TRUE}
+# makes all combinations of x and y:
+newdf <- expand.grid(
+  x = seq(min(dat$x) - 100, max(dat$x) + 100, 5),
+  y = seq(min(dat$y) - 100, max(dat$y) + 100, 5)
+)
+p <- predict(fit,
+  newdata = newdf, se_fit = TRUE
+)
+ggplot() +
+  inlabru::gg(mesh$mesh) + #<<
+  geom_point(data = p, aes(x = x, y = y, col = est_se)) +
+  coord_equal()
+```
