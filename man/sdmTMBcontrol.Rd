@@ -87,14 +87,10 @@ can dramatically speed up model fit if there are many fixed effects.}}
 \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} or \verb{[get_index_sims()]}. If not needed, setting this
 \code{FALSE} will reduce object size.}
 
-\item{parallel}{Number of cores to use. Best set with the option
-\code{options(sdmTMB.cores = n)}, where \code{n} is the number of cores.
-Currently only works on Mac/Linux. Note that the models in sdmTMB
-often slow down with too many cores. Ideal numbers appear to be
-a bit less than half the available cores or ~3-4 on the machines
-we have tested. Also propogates to prediction and index calculation.
-Can we tweaked after the fact in a fitted model by modifying
-\code{fit$control$parallel}.}
+\item{parallel}{Argument currently ignored. For parallel processing with 3
+cores, as an example, use \code{TMB::openmp(n = 3, DLL = "sdmTMB")}. But be
+careful, because it's not always faster with more cores and there is
+definitely an upper limit.}
 
 \item{...}{Anything else. See the 'Control parameters' section of
 \code{\link[stats:nlminb]{stats::nlminb()}}.}
