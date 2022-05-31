@@ -752,17 +752,19 @@ Type objective_function<Type>::operator()()
     }
 
     // start vector of priors:
+    bool pc_adj = false;
+    if (stan_flag) pc_adj = true;
     if (!sdmTMB::isNA(priors(0)) && !sdmTMB::isNA(priors(1)) && !sdmTMB::isNA(priors(2)) && !sdmTMB::isNA(priors(3))) {
       // std::cout << "Using spatial PC prior" << "\n";
-      jnll -= sdmTMB::pc_prior_matern(ln_tau_O(m), ln_kappa(0,m), priors(0), priors(1), priors(2), priors(3), true, false);
+      jnll -= sdmTMB::pc_prior_matern(ln_tau_O(m), ln_kappa(0,m), priors(0), priors(1), priors(2), priors(3), true, false, pc_adj);
     }
     if (!sdmTMB::isNA(priors(4)) && !sdmTMB::isNA(priors(5)) && !sdmTMB::isNA(priors(6)) && !sdmTMB::isNA(priors(7))) {
       // std::cout << "Using spatiotemporal PC prior" << "\n";
       if (share_range(m)) {
         // if range is shared and model is being passed to Stan, don't fit the range component 2x
-        jnll -= sdmTMB::pc_prior_matern(ln_tau_E(m), ln_kappa(1,m), priors(4), priors(5), priors(6), priors(7), true, true);
+        jnll -= sdmTMB::pc_prior_matern(ln_tau_E(m), ln_kappa(1,m), priors(4), priors(5), priors(6), priors(7), true, true, pc_adj);
       } else {
-        jnll -= sdmTMB::pc_prior_matern(ln_tau_E(m), ln_kappa(1,m), priors(4), priors(5), priors(6), priors(7), true, false);
+        jnll -= sdmTMB::pc_prior_matern(ln_tau_E(m), ln_kappa(1,m), priors(4), priors(5), priors(6), priors(7), true, false, pc_adj);
       }
     }
     if (!sdmTMB::isNA(priors(8))) jnll -= dnorm(phi(m), priors(8), priors(9), true);
