@@ -270,11 +270,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
 
   type <- match.arg(type)
 
-  n_orig <- suppressWarnings(TMB::openmp(NULL))
-  if (n_orig > 0 && .Platform$OS.type == "unix") { # openMP is supported
-    TMB::openmp(n = object$control$parallel)
-    on.exit({TMB::openmp(n = n_orig)})
-  }
+  # FIXME parallel setup here?
 
   sys_calls <- unlist(lapply(sys.calls(), deparse)) # retrieve function that called this
   vr <- check_visreg(sys_calls)

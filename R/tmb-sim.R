@@ -466,11 +466,7 @@ dharma_residuals <- function(simulated_response, object, plot = TRUE, ...) {
   }
   y <- as.numeric(y)
 
-  n_orig <- suppressWarnings(TMB::openmp(NULL))
-  if (n_orig > 0 && .Platform$OS.type == "unix") { # openMP is supported
-    TMB::openmp(n = 1L)
-    on.exit({TMB::openmp(n = n_orig)})
-  }
+  # FIXME parallel setup here?
 
   p <- predict(object, type = "response")
   # fitted <- object$family$linkinv(p[["est_non_rf"]])

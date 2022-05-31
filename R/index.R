@@ -107,11 +107,9 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
     cli_warn("Bias correction can be slower with multiple cores; using 1 core.")
     obj$fit_obj$control$parallel <- 1L
   }
-  n_orig <- suppressWarnings(TMB::openmp(NULL))
-  if (n_orig > 0 && .Platform$OS.type == "unix") { # openMP is supported
-    TMB::openmp(n = obj$fit_obj$control$parallel)
-    on.exit({TMB::openmp(n = n_orig)})
-  }
+
+  # FIXME parallel setup here?
+
   predicted_time <- sort(unique(obj$data[[obj$fit_obj$time]]))
   fitted_time <- sort(unique(obj$fit_obj$data[[obj$fit_obj$time]]))
   if (!all(fitted_time %in% predicted_time)) {

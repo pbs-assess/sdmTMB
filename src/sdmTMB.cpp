@@ -81,14 +81,6 @@ Type objective_function<Type>::operator()()
   using namespace density;
   using namespace Eigen;
 
-#ifdef _OPENMP
-  this -> max_parallel_regions = omp_get_max_threads();
-  // std::cout << "OpenMP max_parallel_regions=" << this -> max_parallel_regions << "\n";
-#else
-  this -> max_parallel_regions = 1;
-  // std::cout << "no OpenMP (max_parallel_regions=1)\n";
-#endif
-
   // Vectors of real data
   DATA_ARRAY(y_i);      // response
   DATA_STRUCT(X_ij, sdmTMB::LOM_t); //DATA_MATRIX(X_ij);     // array of model matrices
