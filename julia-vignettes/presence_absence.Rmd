@@ -37,12 +37,19 @@ This example of modeling presence-absence will use data on the locations of 3605
 
 # Data
 ## Presence data
+
+These data come from the `spatstat` package, and consist of point locations of 3605 trees on Barro Colorado Island (Panama). From `spatstat`, *the data files kindly supplied by Rasmus Waagepetersen*  
+
+The data are stored in the `bei` dataframe,  
+
 ```{r dat}
 dat <- data.frame(
   x = spatstat.data::bei$x,
   y = spatstat.data::bei$y
 )
 ```
+
+The distribution of trees is obviously not uniform and the middle of the map has very few trees.  
 
 ```{r plot-trees, fig.asp=0.5, echo=FALSE}
 ggplot(dat, aes(x, y)) +
@@ -51,32 +58,36 @@ ggplot(dat, aes(x, y)) +
 ```
 
 ## Generate pseudo-absences 
-To generate zeroes, we use quadrature points ([Renner et al. 2015](https://doi.org/10.1111/2041-210X.12352)). We have to decide:  
+
+There are several approaches to generating pseduo-absences from these data. We first use a method called quadrature points ([Renner et al. 2015](https://doi.org/10.1111/2041-210X.12352)). For this method, we have to decide:  
 1. Distribution of zeroes  
-- Regularly spaced  
+- Regularly spaced (e.g. on a grid or lattice?)
 - Random  
-- Higher density where environmental variability is high  
-2. How many zeroes  
+- Higher density where environmental variability is high  (suggestion by Renner et al. 2015)
+2. How many zeroes to generate?    
 - Large enough so that predictive performance does not change as more are added  
 
 Here, we will use a uniform grid strategy to create ~5000 points. To test whether the number of pseudo-absences is sufficient, `res` can be decreased, and model performance can be compared. For instance, to increase the number of pseudo-absences to ~20,000 points, we could change `res <- 5`. In this example, increasing the number of zeroes to ~20,000 only marginally improves model performance, so 5,000 zeroes is sufficient. 
 
 ```{r make-zeros, echo = TRUE}
 res <- 10 #Determines resolution: lower value will increase number of zeroes generated
+
+# zeros is generated on a grid for this example, but other strategies could be used
 zeros <- expand.grid(
   x = seq(0, 1000, by = res),
   y = seq(0, 500, by = res)
 )
 ```
 
-Then, we combine the presence and pseudo-absence data.
+Then, we combine the presence and pseudo-absence data, and use `$present` to separate occurrences from pseudo-absences.  
+
 ```{r bind-dat, echo=TRUE}
 dat$present <- 1
 zeros$present <- 0
 all_dat <- rbind(dat, zeros)
 ```
 
-Then we can create the mesh. The resolution of mesh can be changed with the `cutoff` value, which determines the minimum distance between knots in X-Y units. Increasing the cutoff will decrease the resolution of the mesh. In this example, a higher resolution mesh of `cutoff=15` marginally improved model performance over `cutoff=25`.
+Next we can create the mesh. The resolution of mesh can be changed with the `cutoff` value, which determines the minimum distance between locations in X-Y units. Increasing the cutoff will decrease the resolution of the mesh. In this example, a higher resolution mesh of `cutoff=15` marginally improved model performance over `cutoff=25`.
 
 ```{r mesh, message=FALSE, results=FALSE}
 mesh <- make_mesh(
@@ -85,6 +96,8 @@ mesh <- make_mesh(
   cutoff = 15 # min. distance between knots in X-Y units
 )
 ```
+
+The dimensions of the mesh (or number of vertices or knots) can be accessed with `mesh$mesh$n`. A cutoff distance of 15 yields ~ 1399 knots, and a cutoff distance of 25 yields a mesh with 624 knots. 
 
 Blue dots are data, red grid dots are quadrature points, and grey triangles are from the SPDE mesh.
 ```{r mesh-viz, fig.asp=0.5, echo=FALSE}
@@ -103,9 +116,9 @@ ggplot() +
 # Model Options
 ## 1) Infinitely Weighted Logistic Regression (IWLR) and sdmTMB  
 
-We can use an Infinitely Weighted Logistic Regression [Fithian & Hastie (2013)](https://doi.org/10.1214/13-AOAS667) for the model.
+Several approaches exist for estimating a model with pseudo-absences. These are similar, but have different likelihood models. First, we can use an Infinitely Weighted Logistic Regression [Fithian & Hastie (2013)](https://doi.org/10.1214/13-AOAS667) for the model.
 
-First we calculate weights.
+The first step is to calculate weights. Weights will be 1 for true occurrences and a very large number (`nW`) for pseudo-absences.  
 ```{r make-iwlr, echo=TRUE}
 nW <- 1.0e6
 all_dat$wt <- nW^(1 - all_dat$present)
@@ -126,12 +139,13 @@ We can inspect the model output.
 ```{r inspect1, echo=TRUE}
 summary(fit)
 ```
-However, the intercept and log-likelihood can be affected by `nW` ([Renner et al. 2015](https://doi.org/10.1111/2041-210X.12352))
+
+A criticism of this approach is that the intercept and log-likelihood can be affected by `nW` ([Renner et al. 2015](https://doi.org/10.1111/2041-210X.12352))
 
 ## 2) Downweighted Poisson Regression (DWPR)  
 Another option is the Downweighted Poisson Regression, which is similar to IWLR but uses different weights and doesn't have the same arbitrary effects on intercept and likelihood  
 
-First we re-calculate weights:
+First we re-calculate weights (note they're differnt than IWLR):
 ```{r make-dwpr, echo=TRUE}
 # small values at presence locations
 all_dat$wt <- 1e-6
