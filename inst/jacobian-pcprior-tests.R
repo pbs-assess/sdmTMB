@@ -4,7 +4,7 @@ library(sdmTMB)
 library(TMB)
 library(tmbstan)
 
-# simualte spatial data from a single year
+# simulate spatial data from a single year
 set.seed(123)
 
 # make fake predictor(s) (a1) and sampling locations:
@@ -92,9 +92,9 @@ ggplot(sim_dat, aes(pred_1, pred_2)) +
 cor(sim_dat[,c("pred_1","pred_2","pred_3")])
 
 
-# sample with Stan -- first model (no prior) throws 200+ divergent transitions
+# sample with Stan -- first model (no prior) throws ~ 200 divergent transitions
 options(mc.cores = parallel::detectCores())
-m1 <- tmbstan(obj1, chains = 3, iter = 5000)
+#m1 <- tmbstan(obj1, chains = 3, iter = 5000)
 m2 <- tmbstan(obj2, chains = 3, iter = 5000)
 m3 <- tmbstan(obj3, chains = 3, iter = 5000)
 
@@ -102,31 +102,26 @@ m3 <- tmbstan(obj3, chains = 3, iter = 5000)
 
 out <- data.frame(
   type =
-    c("No prior", "Prior no adjustment", "Prior with adjustment")
+    c("Prior no adjustment", "Prior with adjustment")
 )
 
-out$mean_B0 <- c(mean((extract(m1)$B0)), mean((extract(m2)$B0)),
-                      mean((extract(m3)$B0)))
-out$median_B0 <- c(median((extract(m1)$B0)), median((extract(m2)$B0)),
-                      median((extract(m3)$B0)))
-out$mean_kappa <- c(mean((exp(extract(m1)$ln_kappa))), mean((exp(extract(m2)$ln_kappa))),
-                         mean((exp(extract(m3)$ln_kappa))))
-out$median_kappa <- c(median((exp(extract(m1)$ln_kappa))), median((exp(extract(m2)$ln_kappa))),
+out$mean_B0 <- c(mean((extract(m2)$B0)), mean((extract(m3)$B0)))
+out$median_B0 <- c(median((extract(m2)$B0)), median((extract(m3)$B0)))
+out$mean_kappa <- c(mean((exp(extract(m2)$ln_kappa))), mean((exp(extract(m3)$ln_kappa))))
+out$median_kappa <- c(median((exp(extract(m2)$ln_kappa))),
                            median((exp(extract(m3)$ln_kappa))))
-out$mean_range <- c(mean(sqrt(8)/(exp(extract(m1)$ln_kappa))), mean(sqrt(8)/(exp(extract(m2)$ln_kappa))),
+out$mean_range <- c(mean(sqrt(8)/(exp(extract(m2)$ln_kappa))),
                          mean(sqrt(8)/(exp(extract(m3)$ln_kappa))))
-out$median_range <- c(median(sqrt(8)/(exp(extract(m1)$ln_kappa))), median(sqrt(8)/(exp(extract(m2)$ln_kappa))),
+out$median_range <- c(median(sqrt(8)/(exp(extract(m2)$ln_kappa))),
                            median(sqrt(8)/(exp(extract(m3)$ln_kappa))))
-out$mean_sigma <- c(mean((exp(extract(m1)$ln_sigma))), mean((exp(extract(m2)$ln_sigma))),
+out$mean_sigma <- c(mean((exp(extract(m2)$ln_sigma))),
                          mean((exp(extract(m3)$ln_sigma))))
-out$median_sigma <- c(median((exp(extract(m1)$ln_sigma))), median((exp(extract(m2)$ln_sigma))),
+out$median_sigma <- c(median((exp(extract(m2)$ln_sigma))),
                            median((exp(extract(m3)$ln_sigma))))
 #sigma_O = 1/ [exp(ln_tau_O) * (sqrt(4 * pi) * kappa[1]]
-out$mean_sigmaO <- c(mean(1/(exp(extract(m1)$ln_tau_O) * sqrt(4*pi) * exp(extract(m1)$ln_kappa))),
-                          mean(1/(exp(extract(m2)$ln_tau_O) * sqrt(4*pi) * exp(extract(m2)$ln_kappa))),
+out$mean_sigmaO <- c(mean(1/(exp(extract(m2)$ln_tau_O) * sqrt(4*pi) * exp(extract(m2)$ln_kappa))),
                       mean(1/(exp(extract(m3)$ln_tau_O) * sqrt(4*pi) * exp(extract(m3)$ln_kappa))))
-out$median_sigmaO <- c(median(1/(exp(extract(m1)$ln_tau_O) * sqrt(4*pi) * exp(extract(m1)$ln_kappa))),
-                          median(1/(exp(extract(m2)$ln_tau_O) * sqrt(4*pi) * exp(extract(m2)$ln_kappa))),
+out$median_sigmaO <- c(median(1/(exp(extract(m2)$ln_tau_O) * sqrt(4*pi) * exp(extract(m2)$ln_kappa))),
                           median(1/(exp(extract(m3)$ln_tau_O) * sqrt(4*pi) * exp(extract(m3)$ln_kappa))))
 
 # This shows:
