@@ -44,7 +44,9 @@ Here we will cover using sdmTMB for forecasting data in space and time to unsamp
 
 # Forecasting time: Predicting for future years and interpolating over missed survey years
 
-Predicting for future years and interpolating over missed survey years require a similar method, so we will cover them both here. To forecast in time, either future years or missed years, we need a model for time, meaning that we can't predict with years as factors. The options for including time in the model are-
+Predicting for future years and interpolating over missed survey years require a similar method, so we will cover them both here. To forecast in time, either future years or missed years, we need a model for time, meaning that we can't predict with years as factors. Like with other predictions of random effects to new levels, year effects can be modeled as random (as can the spatiotemporal fields) -- but the mean will be used to predict new levels.  
+
+The options for including time in the model are-
   * AR(1) or random walk random fields
   * Time-varying intercept
   * Smoother on year (`s(year)`)
@@ -58,13 +60,13 @@ First, we need to make our mesh.
 mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
 ```
 
-Next, we need to create a list of the years that we want to forecast or interpolate. Our data only includes years 2003--2005, 2007, 2009, 2011, 2013, 2015, and 2017. 
+Next, we need to create a list of the years that we want to forecast or interpolate. The DFO survey in this region only includes years 2003--2005, 2007, 2009, 2011, 2013, 2015, and 2017. 
 ```{r}
 data <- pcod
 years <- unique(data$year)
 ```
 
-To use the model to fill in cod density for the unsampled years, we will create a list of the years we want added to fill in 2003--2017. To predict for future years, we will also add in years for after the data period (i.e. after 2017) for however many years we want to forecast into the future. For this example, we will predict years 2018--2025. We will name the list `extra_years`.
+To use the model to fill in Pacific cod density for the unsampled years, we will create a list of the years we want added to fill in 2003--2017. To predict for future years, we will also add in years for after the data period (i.e. after 2017) for however many years we want to forecast into the future. For this example, we will predict years 2018--2025. We will name the list `extra_years`.
 ```{r fit-ar1, echo=TRUE, eval=TRUE, results='hide'}
 extra_years <- c(
   2006, 2008, 2010, 2012, 2014, 2016, #missing years
@@ -72,7 +74,7 @@ extra_years <- c(
 )
 ```
 
-Then, we will fit a model of cod density that includes depth variables. The argument `extra_time` in the `sdmTMB` function is how we will add in forecasting.
+Then, we will fit a model of Pacific cod density that includes depth variables. The argument `extra_time` in the `sdmTMB` function is how we will add in forecasting.
 
 We also will need to set the argument `time` to `time="year"`. 
 
@@ -81,7 +83,7 @@ In this example, we will also turn off spatial variation (`spatial="off"`).
 We then have different options for including time in the model.
 
 ### AR(1) spatiotemporal field
-To include spatio-temporal variation as an AR(1) process, set, `spatiotemporal="AR1"`
+To include spatio-temporal variation as an AR(1) process, we can specify  `spatiotemporal="AR1"`
 ```{r ar1, message=FALSE, warning=FALSE, results='hide'}
 fit_ar1 <- sdmTMB(
   density ~ depth_scaled + depth_scaled2,
@@ -113,7 +115,7 @@ fit_rw <- sdmTMB(
 ```
 
 ### Random walk intercept + AR(1) fields
-We can also include both a random walk intercept and an AR(1) process by removing the intercept by adding `0` to the model equation and including the argument `time_varying = ~1`
+We can also include a random walk on the intercept as a random walk by removing the intercept (adding `0` to the model equation) and including the argument `time_varying = ~1`
 ```{r fit-rw-ar1, message=FALSE, warning=FALSE, results='hide'}
 fit_rw_ar1 <- sdmTMB(
   density ~ 0 + depth_scaled + depth_scaled2, #Remove intercept with 0
@@ -148,9 +150,9 @@ fit_sm <- sdmTMB(
 ###Deciding between methods
 In deciding which method (AR(1), RW, etc) to use for including time in the model, it is important to know that-
 * AR(1) field processes revert towards mean
-* Random walk field processes do not revert towards mean
+* Random walk processes (in the mean or time varying parameters) do not revert towards mean
 * Smoothers should be used with caution, because they continue whatever the basis functions were doing
-* Spatiotemporal field uncertainty grows without data, for both AR(1) and Random Walk processes
+* Uncertainties in prediction for random walks, AR(1) processes, and smoothers (here, p-splines) increase the further away we get from data. 
 
 We can visualize the differences between these methods by comparing predicted density at a single point in space over all forecasted years.
 ```{r pred-all, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
@@ -214,7 +216,7 @@ ggplot(p_rw, aes(X, Y, fill = epsilon_st)) +
   coord_fixed()
 ```
 
-We can also visualize how the spatiotemporal field uncertainty grows without data by mapping the standatd error of the spatio-temporal field. We see how the standard error increases in predicting future years (2018--2025), but is less for interpolated years between years that do have data (e.g. 2006, 2008). Here we show with the AR(1) process, but increasing uncertainty with less data similarly occurs in both the AR(1) and random walk methods.
+We can also visualize how the spatiotemporal field uncertainty grows without data by mapping the standard error of the spatio-temporal field. We see how the standard error increases in predicting future years (2018--2025), but is less for interpolated years between years that do have data (e.g. 2006, 2008). Here we show with the AR(1) process, but increasing uncertainty with less data similarly occurs in both the AR(1) and random walk methods.
 ```{r eps-se}
 eps_est <- predict(fit_ar1, newdata = grid, nsim = 100)
 grid$se <- apply(eps_est, 1, sd)
