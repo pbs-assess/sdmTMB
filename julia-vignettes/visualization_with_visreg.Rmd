@@ -1,10 +1,10 @@
 ---
-title: "Visualizing conditional effects using visreg"
+title: "Visualizing sdmTMB conditional effects using visreg"
 author: "Julia Indivero, Sean Anderson, Lewis Barnett, Philina English, Eric Ward"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Visualizing conditional effects using visreg}
+  %\VignetteIndexEntry{Visualizing sdmTMB conditional effects using visreg}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
