@@ -11,9 +11,10 @@ vignette: >
 
 ```{r setup, include = FALSE, cache=FALSE}
 ggplot_installed <- require("ggplot2", quietly = TRUE)
+dplyr_installed <- require("dplyr", quietly = TRUE)
 spatstat_installed <- require("spatstat.data", quietly = TRUE)
 # FIXME copy in these data? otherwise, need in suggests in description
-pkgs <- ggplot_installed && spatstat_installed
+pkgs <- ggplot_installed && spatstat_installed && dplyr_installed
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -31,40 +32,49 @@ library(ggplot2)
 library(spatstat.data)
 ```
 
----
-# Types of forecasting
+Here we will cover using sdmTMB for forecasting data in time or extrapolating spatially to unsampled areas. 
+These forecasting approaches have multiple applications, including,
 
-Here we will cover using sdmTMB for forecasting data in space and time to unsampled areas or years. These forecasting approaches have multiple applications, including,
-* predicting for future years,
-* interpolating over missed survey years
-* extrapolating in space to unsampled areas (e.g. an MPA, area beyond existing domain)
+* predicting for future years
+* interpolating over missed years
+* extrapolating in space to unsampled areas (e.g., an area beyond the existing domain)
 * interpolating in space within the existing spatial domain 
 
-# Forecasting time: Predicting for future years and interpolating over missed survey years
+# Forecasting: predicting for future time and interpolating over missed time slices
 
-Predicting for future years and interpolating over missed survey years require a similar method, so we will cover them both here. To forecast in time, either future years or missed years, we need a model for time, meaning that we can't predict with years as factors. Like with other predictions of random effects to new levels, year effects can be modeled as random (as can the spatiotemporal fields) -- but the mean will be used to predict new levels.  
+Predicting for future time and interpolating over missed time requires a similar method, so we will cover them both here. 
+To forecast in time, either future or missed time, we need a model for time.
+As an example, we can't predict with years as factors below because the model won't know what value to assign to years without data. 
 
-The options for including time in the model are-
+The options for including time in the model include:
+
   * AR(1) or random walk random fields
-  * Time-varying intercept
-  * Smoother on year (`s(year)`)
-  * Ignore time (fixed)
+  * Random walk intercepts
+  * Smoothers on the time variable (e.g., `s(year)`)
+  * Ignoring time (fixed)
   * Some combination of these
 
 We will use the Pacific cod data to show how to implement each of these options. 
 
 First, we need to make our mesh.
+
 ```{r pcod-mesh}
-mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
+mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 ```
 
-Next, we need to create a list of the years that we want to forecast or interpolate. The DFO survey in this region only includes years 2003--2005, 2007, 2009, 2011, 2013, 2015, and 2017. 
+Next, we need to create a list of the years that we want to forecast or interpolate. 
+The DFO survey in this region only includes years 2003, 2004, 2005, 2007, 2009, 2011, 2013, 2015, and 2017. 
+
 ```{r}
 data <- pcod
 years <- unique(data$year)
 ```
 
-To use the model to fill in Pacific cod density for the unsampled years, we will create a list of the years we want added to fill in 2003--2017. To predict for future years, we will also add in years for after the data period (i.e. after 2017) for however many years we want to forecast into the future. For this example, we will predict years 2018--2025. We will name the list `extra_years`.
+To use the model to fill in Pacific cod density for the unsampled years, we will create a list of the years we want added to fill in from 2003--2017. 
+To predict for future years, we will also add in years for after the observed data (i.e., after 2017) for however many years we want to forecast into the future. 
+For this example, we will predict on years 2018--2025. 
+We will name the vector of extra years `extra_years`.
+
 ```{r fit-ar1, echo=TRUE, eval=TRUE, results='hide'}
 extra_years <- c(
   2006, 2008, 2010, 2012, 2014, 2016, # missing years
@@ -72,32 +82,36 @@ extra_years <- c(
 )
 ```
 
-Then, we will fit a model of Pacific cod density that includes depth variables. The argument `extra_time` in the `sdmTMB` function is how we will add in forecasting.
+Then, we will fit a model of Pacific cod density that includes depth variables. 
+The argument `extra_time` in the `sdmTMB()` function is how we will add in interpolation and forecasting.
+We also will need to set the argument `time` to `time = "year"`. 
 
-We also will need to set the argument `time` to `time="year"`. 
-
-In this example, we will also turn off spatial variation (`spatial="off"`).
+In this example, we will choose to turn off spatial random fields (`spatial = "off"`), so we are only including spatiotemporal random fields.
 
 We then have different options for including time in the model.
 
 ### AR(1) spatiotemporal field
-To include spatio-temporal variation as an AR(1) process, we can specify  `spatiotemporal="AR1"`
+
+To include spatiotemporal variation as an AR(1) process, we can specify  `spatiotemporal = "AR1"`:
+
 ```{r ar1, message=FALSE, warning=FALSE, results='hide'}
 fit_ar1 <- sdmTMB(
   density ~ depth_scaled + depth_scaled2,
   time = "year",
-  extra_time = extra_years, # Add in our list of extra years to be forecasted
-  spatiotemporal = "AR1", # Here is where we can set spatio-temporal process
+  extra_time = extra_years, #<< our list of extra years to be included
+  spatiotemporal = "AR1", #<< setting an AR(1) spatiotemporal process
   data = pcod,
   mesh = mesh,
   family = tweedie(link = "log"),
   spatial = "off",
-  silent = FALSE
+  silent = FALSE #< monitor progress
 )
 ```
 
 ### Random walk spatiotemporal field
-Or, we can set spatio-temporal variation to a random walk with `spatiotemporal="RW"`
+
+Or, we can set spatiotemporal variation to a random walk with `spatiotemporal = "RW"`:
+
 ```{r fit-rw, message=FALSE, warning=FALSE, results='hide'}
 fit_rw <- sdmTMB(
   density ~ depth_scaled + depth_scaled2,
@@ -113,13 +127,15 @@ fit_rw <- sdmTMB(
 ```
 
 ### Random walk intercept + AR(1) fields
-We can also include a random walk on the intercept as a random walk by removing the intercept (adding `0` to the model equation) and including the argument `time_varying = ~1`
+
+We can also model the intercept as a random walk by removing the intercept from the main formula (adding `0` to the model equation) and including the argument `time_varying = ~1`:
+
 ```{r fit-rw-ar1, message=FALSE, warning=FALSE, results='hide'}
 fit_rw_ar1 <- sdmTMB(
-  density ~ 0 + depth_scaled + depth_scaled2, # Remove intercept with 0
+  density ~ 0 + depth_scaled + depth_scaled2, #<< remove intercept with 0
   time = "year",
-  time_varying = ~1, #<<
-  extra_time = extra_years, #<<
+  time_varying = ~1, #<< instead include the intercept here as a random walk
+  extra_time = extra_years,
   spatiotemporal = "AR1", #<<
   data = pcod,
   mesh = mesh,
@@ -130,10 +146,12 @@ fit_rw_ar1 <- sdmTMB(
 ```
 
 ### Smoother on year + AR(1) fields
-We can also add a smoother on year as a variable in the model equation with `s(year)` in the model equation and keeping `spatiotemporal="AR1"`
+
+We can also add a smoother on year as a variable in the model equation with `s(year)` in the model equation and keeping `spatiotemporal="AR1"`:
+
 ```{r, fit-sm, results='hide', message=FALSE, warning=FALSE}
 fit_sm <- sdmTMB(
-  density ~ s(year) + depth_scaled + depth_scaled2, # Add smoother on year
+  density ~ s(year) + depth_scaled + depth_scaled2, #<< add smoother on year
   time = "year",
   extra_time = extra_years, #<<
   spatiotemporal = "AR1", #<<
@@ -145,14 +163,17 @@ fit_sm <- sdmTMB(
 )
 ```
 
-###Deciding between methods
-In deciding which method (AR(1), RW, etc) to use for including time in the model, it is important to know that-
+### Deciding between methods
+
+In deciding which method (AR(1), RW, etc) to use for including time in the model, it is important to know that
+
 * AR(1) field processes revert towards mean
-* Random walk processes (in the mean or time varying parameters) do not revert towards mean
+* Random walk processes (in the mean or time varying parameters) do not revert towards the mean
 * Smoothers should be used with caution, because they continue whatever the basis functions were doing
-* Uncertainties in prediction for random walks, AR(1) processes, and smoothers (here, p-splines) increase the further away we get from data. 
+* Uncertainties in prediction for random walks, AR(1) processes, and smoothers (here, p-splines) increase the further away we get from data 
 
 We can visualize the differences between these methods by comparing predicted density at a single point in space over all forecasted years.
+
 ```{r pred-all, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 newdf <- data.frame(
   year = unique(fit_ar1$data$year),
@@ -164,12 +185,19 @@ newdf <- data.frame(
 fits <- list(fit_ar1, fit_rw, fit_rw_ar1, fit_sm)
 names(fits) <- c("AR1-fields", "RW-fields", "RW-time, AR1-fields", "s(year), AR1-fields")
 set.seed(123)
-preds <- purrr::map(fits, ~ predict(.x, newdf, nsim = 50L))
-preds_df <- purrr::map_dfr(preds, function(.x) {
+preds <- lapply(fits, function(.x) predict(.x, newdf, nsim = 50L))
+preds_df <- lapply(seq_along(preds), function(i) {
+  .x <- preds[[i]]
   reshape2::melt(.x, value.name = "est") %>%
-    rename(year = Var1, iter = Var2)
-}, .id = "type")
-pred_df <- purrr::map_dfr(fits, ~ predict(.x, newdf, se_fit = TRUE), .id = "type")
+    dplyr::rename(year = Var1, iter = Var2) %>% 
+    dplyr::mutate(type = names(fits)[i])
+})
+pred_df <- lapply(seq_along(fits), function(i) {
+  .x <- fits[[i]]
+  dplyr::mutate(predict(.x, newdf, se_fit = TRUE), type = names(fits)[i])
+})
+preds_df <- do.call("rbind", preds_df)
+pred_df <- do.call("rbind", pred_df)
 ```
 
 ```{r plot-time-comparison, echo=FALSE, fig.asp=0.62}
@@ -184,16 +212,17 @@ ggplot(pred_df, aes(year, exp(est), ymin = exp(est - 2 * est_se), ymax = exp(est
   theme(panel.grid = element_blank()) +
   geom_line(aes(year, exp(est), group = iter),
     alpha = 0.4,
-    data = filter(preds_df, iter %in% iters), inherit.aes = FALSE, lwd = 0.5
+    data = dplyr::filter(preds_df, iter %in% iters), inherit.aes = FALSE, lwd = 0.5
   ) +
   ylab("Fish density (log-distributed axis)") +
   xlab("")
 ```
 
 We can see how AR(1) spatiotemporal fields evolve towards mean zero by mapping the magnitude of the spatio-temporal term epsilon over the entire period 2003--2025
+
 ```{r pred-ar1-plot-eps, echo=FALSE}
 one_yr <- dplyr::filter(qcs_grid, year == 2017)
-grid <- purrr::map_dfr(unique(fit_ar1$data$year), function(i) {
+grid <- purrr::map_dfr(unique(fit_ar1$data$year), function(i) { # FIXME remove purrr or add to suggests!
   one_yr$year <- i
   one_yr
 })
@@ -206,6 +235,7 @@ ggplot(p_ar1, aes(X, Y, fill = epsilon_st)) +
 ```
 
 While random walk fields do not evolve towards the mean
+
 ```{r pred-rw-plot-eps, echo=FALSE}
 p_rw <- predict(fit_rw, newdata = grid)
 ggplot(p_rw, aes(X, Y, fill = epsilon_st)) +
@@ -215,7 +245,11 @@ ggplot(p_rw, aes(X, Y, fill = epsilon_st)) +
   coord_fixed()
 ```
 
-We can also visualize how the spatiotemporal field uncertainty grows without data by mapping the standard error of the spatio-temporal field. We see how the standard error increases in predicting future years (2018--2025), but is less for interpolated years between years that do have data (e.g. 2006, 2008). Here we show with the AR(1) process, but increasing uncertainty with less data similarly occurs in both the AR(1) and random walk methods.
+We can also visualize how the spatiotemporal field uncertainty grows without data by mapping the standard error of the spatio-temporal field. 
+We see how the standard error increases in predicting future years (2018--2025), but is less for interpolated years between years that do have data (e.g. 
+2006, 2008). 
+Here we show with the AR(1) process, but increasing uncertainty with less data similarly occurs in both the AR(1) and random walk methods.
+
 ```{r eps-se}
 eps_est <- predict(fit_ar1, newdata = grid, nsim = 100)
 grid$se <- apply(eps_est, 1, sd)
@@ -226,11 +260,13 @@ ggplot(grid, aes(X, Y, fill = se)) +
   labs(fill = "Standard error\nof spatiotemporal field")
 ```
 
----
 # Forecasting space: Interpolating in space to unsampled areas within 
-We can also use forecasting techniques in sdmTMB to interpolate predicted values to unsampled areas within the geographic extent of the data. For this example, we will use the data on the locations of 3605 trees in a 1000 by 500 metre rectangular sampling region from the [the spatst.data package](https://rdrr.io/cran/spatstat.data/man/bei.html)
 
-First we will create a dataframe of the x and y coordinates from the tree dataset, and we can map the locations
+We can also interpolate predicted values to unsampled areas within the geographic extent of the data. 
+For this example, we will use the data on the locations of 3605 trees in a 1000 by 500 m rectangular sampling region from the [the spatst.data package](https://CRAN.R-project.org/package=spatstat.data)
+
+First we will create a data frame of the x and y coordinates from the tree dataset, and we can map the locations
+
 ```{r bei}
 dat <- data.frame(
   x = spatstat.data::bei$x,
@@ -241,7 +277,11 @@ ggplot(dat, aes(x, y)) +
   coord_cartesian(expand = FALSE)
 ```
 
-We first re-format the data to create density observations. We re-scale the x and y coordinates, using the size of the scale value to control the resolution (i.e. increasing the scale value will decrease the resolution). Then we can add a column in our dataframe of tree density by adding the number of trees in each location that we created with the scale function. Then, we create the mesh and can visualize it by plotting. 
+We first re-format the data to create density observations. 
+We re-scale the x and y coordinates, using the size of the scale value to control the resolution (i.e., increasing the scale value will decrease the resolution). 
+Then we can add a column in our data frame of tree density by adding the number of trees in each location that we created with the scale function. 
+Then, we create the mesh and can visualize it by plotting. 
+
 ```{r bei2, message=FALSE, warning=FALSE, results='hide'}
 # scale controls resolution
 scale <- 50
@@ -260,6 +300,7 @@ plot(mesh)
 ```
 
 Then, we can fit the model of tree density, with only an intercept and only one time slice
+
 ```{r fit-model}
 fit <- sdmTMB(n ~ 1,
   data = dat,
@@ -268,11 +309,16 @@ fit <- sdmTMB(n ~ 1,
 )
 ```
 
-Next, we can predict to unsampled areas within the geographic extent of our data. We first expand the grid by adding in x and y coordinates between existing coordinates in our dataset. Here, we will add in points at intervals of 5 for x and y. This value controls the resolution of predicted data. Increasing the value will decrease the resolution of spatial predictions. 
+Next, we can predict to unsampled areas within the geographic extent of our data. 
+We first expand the grid by adding in x and y coordinates between existing coordinates in our dataset. 
+Here, we will add in points at intervals of 5 for x and y. 
+This value controls the resolution of predicted data. 
+Increasing the value will decrease the resolution of spatial predictions. 
 
 In this example, we include `se_fit = TRUE` in the predict function to generate standard errors, though this can slow down computation time.
 
 We can map the predicted tree density at each of our interpolated points compared to the locations of our data to see the increased resolution by forecasting with this method
+
 ```{r pred-fit, echo=TRUE, eval=TRUE}
 # makes all combinations of x and y:
 newdf <- expand.grid(
@@ -290,6 +336,7 @@ ggplot(p, aes(x, y)) +
 ```
 
 We can also use add the argument `nsim = 500` when predicting and then summarize predicted densities from all simulations in a matrix
+
 ```{r}
 p2 <- predict(fit, newdata = newdf, nsim = 500)
 newdf$p2 <- apply(p2, 1, mean)
@@ -299,7 +346,9 @@ ggplot(newdf, aes(x, y)) +
   labs(fill = "tree density")
 ```
 
-We can also visualize uncertainty in the forecasts by mapping the standard error of predicted densities at each point in space. We see that uncertainty is higher at vertices. This is because there are fewer neighbors, e.g. [this tutorial](https://ourcodingclub.github.io/tutorials/spatial-modelling-inla/)
+We can also visualize uncertainty in the forecasts by mapping the standard error of predicted densities at each point in space. 
+We see that uncertainty is higher at vertices. 
+This is because there are fewer neighbors, e.g. [this tutorial](https://ourcodingclub.github.io/tutorials/spatial-modelling-inla/)
   
 ```{r vis-vert}
 ggplot() +
@@ -311,9 +360,12 @@ ggplot() +
 
 ### Extrapolating outside the survey domain
 
-We can also forecast spatially to outside of the geographic extent of the data. For instance, we can predict into a border area. To do so, we expand the x and y coordinates to values above and below the extent of the coordinates in the data. Here, we expand the geographic domain by 100 in all directions, and keep the resolution at 5.
+We can also forecast spatially to outside of the geographic extent of the data. 
+For instance, we can predict into a border area. 
+To do so, we expand the x and y coordinates to values above and below the extent of the coordinates in the data. Here, we expand the geographic domain by 100 in all directions, and keep the resolution at 5.
 
 Then, we can use the same model fit to predict to the expanded geographic domain.
+
 ```{r pred-fit2, echo=FALSE, eval=TRUE}
 # makes all combinations of x and y:
 newdf <- expand.grid(
