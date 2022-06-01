@@ -10,12 +10,10 @@ vignette: >
 ---
 
 ```{r setup, include = FALSE, cache=FALSE}
-dplyr_installed <- require("dplyr", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
-sdmTMB_installed <- require("sdmTMB", quietly=TRUE)
-spatstat_installed <- require("spatstat.data", quietly=TRUE)
-
-pkgs <- dplyr_installed && ggplot_installed && sdmTMB_installed && spatstat_installed
+spatstat_installed <- require("spatstat.data", quietly = TRUE)
+# FIXME copy in these data? otherwise, need in suggests in description
+pkgs <- ggplot_installed && spatstat_installed
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -69,8 +67,8 @@ years <- unique(data$year)
 To use the model to fill in Pacific cod density for the unsampled years, we will create a list of the years we want added to fill in 2003--2017. To predict for future years, we will also add in years for after the data period (i.e. after 2017) for however many years we want to forecast into the future. For this example, we will predict years 2018--2025. We will name the list `extra_years`.
 ```{r fit-ar1, echo=TRUE, eval=TRUE, results='hide'}
 extra_years <- c(
-  2006, 2008, 2010, 2012, 2014, 2016, #missing years
-  2018:2025 #predicted future years
+  2006, 2008, 2010, 2012, 2014, 2016, # missing years
+  2018:2025 # predicted future years
 )
 ```
 
@@ -88,8 +86,8 @@ To include spatio-temporal variation as an AR(1) process, we can specify  `spati
 fit_ar1 <- sdmTMB(
   density ~ depth_scaled + depth_scaled2,
   time = "year",
-  extra_time = extra_years, #Add in our list of extra years to be forecasted
-  spatiotemporal = "AR1", #Here is where we can set spatio-temporal process
+  extra_time = extra_years, # Add in our list of extra years to be forecasted
+  spatiotemporal = "AR1", # Here is where we can set spatio-temporal process
   data = pcod,
   mesh = mesh,
   family = tweedie(link = "log"),
@@ -118,7 +116,7 @@ fit_rw <- sdmTMB(
 We can also include a random walk on the intercept as a random walk by removing the intercept (adding `0` to the model equation) and including the argument `time_varying = ~1`
 ```{r fit-rw-ar1, message=FALSE, warning=FALSE, results='hide'}
 fit_rw_ar1 <- sdmTMB(
-  density ~ 0 + depth_scaled + depth_scaled2, #Remove intercept with 0
+  density ~ 0 + depth_scaled + depth_scaled2, # Remove intercept with 0
   time = "year",
   time_varying = ~1, #<<
   extra_time = extra_years, #<<
@@ -135,7 +133,7 @@ fit_rw_ar1 <- sdmTMB(
 We can also add a smoother on year as a variable in the model equation with `s(year)` in the model equation and keeping `spatiotemporal="AR1"`
 ```{r, fit-sm, results='hide', message=FALSE, warning=FALSE}
 fit_sm <- sdmTMB(
-  density ~ s(year) + depth_scaled + depth_scaled2, #Add smoother on year
+  density ~ s(year) + depth_scaled + depth_scaled2, # Add smoother on year
   time = "year",
   extra_time = extra_years, #<<
   spatiotemporal = "AR1", #<<
@@ -188,7 +186,8 @@ ggplot(pred_df, aes(year, exp(est), ymin = exp(est - 2 * est_se), ymax = exp(est
     alpha = 0.4,
     data = filter(preds_df, iter %in% iters), inherit.aes = FALSE, lwd = 0.5
   ) +
-  ylab("Fish density (log-distributed axis)") + xlab("")
+  ylab("Fish density (log-distributed axis)") +
+  xlab("")
 ```
 
 We can see how AR(1) spatiotemporal fields evolve towards mean zero by mapping the magnitude of the spatio-temporal term epsilon over the entire period 2003--2025
@@ -284,9 +283,9 @@ p <- predict(fit,
   newdata = newdf, se_fit = TRUE
 )
 
-ggplot(p, aes(x,y))+
-  geom_raster(data=p, aes(x, y, fill = est)) +
-  geom_point(data=dat, aes(x,y))+
+ggplot(p, aes(x, y)) +
+  geom_raster(data = p, aes(x, y, fill = est)) +
+  geom_point(data = dat, aes(x, y)) +
   labs(fill = "tree density")
 ```
 
@@ -294,9 +293,9 @@ We can also use add the argument `nsim = 500` when predicting and then summarize
 ```{r}
 p2 <- predict(fit, newdata = newdf, nsim = 500)
 newdf$p2 <- apply(p2, 1, mean)
-ggplot(newdf, aes(x,y))+
-  geom_raster(data=newdf, aes(x, y, fill = p2)) +
-  geom_point(data=dat, aes(x,y))+
+ggplot(newdf, aes(x, y)) +
+  geom_raster(data = newdf, aes(x, y, fill = p2)) +
+  geom_point(data = dat, aes(x, y)) +
   labs(fill = "tree density")
 ```
 
@@ -306,7 +305,7 @@ We can also visualize uncertainty in the forecasts by mapping the standard error
 ggplot() +
   inlabru::gg(mesh$mesh) +
   geom_point(data = p, aes(x = x, y = y, col = est_se)) +
-  coord_equal()+
+  coord_equal() +
   labs(col = "Standard error\nof spatiotemporal field")
 ```
 
@@ -324,8 +323,8 @@ newdf <- expand.grid(
 p3 <- predict(fit,
   newdata = newdf, se_fit = TRUE
 )
-ggplot(p3, aes(x,y))+
-  geom_raster(data=p3, aes(x, y, fill = est)) +
-  geom_point(data=dat, aes(x,y))+
-  labs(fill="tree density")
+ggplot(p3, aes(x, y)) +
+  geom_raster(data = p3, aes(x, y, fill = est)) +
+  geom_point(data = dat, aes(x, y)) +
+  labs(fill = "tree density")
 ```
