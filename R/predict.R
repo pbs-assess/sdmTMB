@@ -331,8 +331,10 @@ predict.sdmTMB <- function(object, newdata = object$data,
     if (pop_pred) {
       for (i in c(1, 2)) {
         if (!xy_cols[[i]] %in% names(newdata)) {
-          newdata[[xy_cols[[i]]]] <- mean(object$data[[xy_cols[[i]]]], na.rm = TRUE)
-          fake_spatial_added <- TRUE
+          suppressWarnings({
+            newdata[[xy_cols[[i]]]] <- mean(object$data[[xy_cols[[i]]]], na.rm = TRUE)
+            fake_spatial_added <- TRUE
+          })
         }
       }
     }
