@@ -1,19 +1,18 @@
 ---
-title: "Visualizing model effects using visreg"
+title: "Visualizing conditional effects using visreg"
 author: "Julia Indivero, Sean Anderson, Lewis Barnett, Philina English, Eric Ward"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Visualization Options with visreg and ggeffects}
+  %\VignetteIndexEntry{Visualizing conditional effects using visreg}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+---
 
 ```{r setup, include = FALSE, cache=FALSE}
-dplyr_installed <- require("dplyr", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
-visreg_installed <- require("visreg", quietly=TRUE)
-sdmTMB_installed <- require("sdmTMB", quietly=TRUE)
-pkgs <- dplyr_installed && ggplot_installed && visreg_installed && sdmTMB_installed
+visreg_installed <- require("visreg", quietly = TRUE)
+pkgs <- ggplot_installed && visreg_installed
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -27,116 +26,116 @@ knitr::opts_chunk$set(
 ```{r echo=FALSE}
 library(sdmTMB)
 library(ggplot2)
+theme_set(theme_light())
 library(visreg)
+set.seed(1)
 ```
 
-We can use the package [visreg]https://cran.r-project.org/web/packages/visreg/index.html] to visually inspect the model output from `sdmTMB` by comparing the effects of explanatory variables in the model on the response variable.
+We can use the [visreg](https://CRAN.R-project.org/package=visreg) package to visually inspect the conditional effects of explanatory variables in sdmTMB models.
 
-We will use the Pacific cod biomass for this example. We will fit a model with scaled depth and fixed effect of year using a Tweedie distribution.
+We will use the built-in Pacific cod survey data for this example.
+We will fit a model with scaled depth and a factor effect of year using a Tweedie distribution.
 
 ```{r}
-pcod$fyear <- as.factor(pcod$year)
-mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
-  fit <- sdmTMB(
-    density ~0 + s(depth_scaled) + fyear,
-    time="year",
-    data=pcod,
-    mesh=mesh,
-    spatial = "on",
-    spatiotemporal="iid",
-    family = tweedie(link="log")
-  )
+pcod_2011$fyear <- as.factor(pcod_2011$year)
+mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
+fit <- sdmTMB(
+  density ~ 0 + s(depth_scaled) + fyear,
+  data = pcod_2011,
+  mesh = mesh,
+  spatial = "off", # off for vignette building speed
+  family = tweedie(link = "log")
+)
 ```
 
-We can then plot the effect of depth in link space. This shows the value of depth on the x-axis and the change in response on the y-axis, holding all other variables constant.
+We can then plot the effect of depth in link space. 
+This shows the value of depth on the x-axis and the change in response on the y-axis, holding all other variables constant.
+
 ```{r}
-visreg(fit, xvar = "depth_scaled", type="conditional")
+visreg(fit, xvar = "depth_scaled")
 ```
 
-We also can look at the effect of depth in each year separately, either in separate plots or overlaid on the same plot.
+Note that by default, randomized quantile residuals are included. 
+These should be normally distributed in link space if the model is consistent with the data.
+These can be turned off with `partial = FALSE`
+
+The default, visreg plot uses base graphics.
+We can set `gg = TRUE` to get a ggplot version:
+
 ```{r}
-visreg(fit, xvar="depth_scaled", by="fyear")
-visreg(fit, xvar="depth_scaled", by="fyear", overlay=TRUE)
+g <- visreg(fit, xvar = "depth_scaled", gg = TRUE)
+g + xlab("Depth scaled")
 ```
 
-And at the effect of depth in the response scale, rather than link space.
+We can also grab the underlying data it creates and make our own plot:
+
+```{r}
+d <- visreg(fit, xvar = "depth_scaled", plot = FALSE)
+head(d$fit)
+g <- ggplot(d$fit, aes(x = depth_scaled, y = visregFit)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = visregLwr, ymax = visregUpr), alpha = 0.5)
+
+# residuals are in d$res
+head(d$res)
+
+g + geom_point(aes(y = visregRes), data = d$res, size = 1, alpha = 0.4)
+```
+
+We can look at the effect of depth in each year separately, either in separate plots or overlaid on the same plot.
+
+```{r}
+visreg(fit, xvar = "depth_scaled", by = "fyear", gg = TRUE)
+visreg(fit, xvar = "depth_scaled", by = "fyear", overlay = TRUE, gg = TRUE)
+```
+
+And at the effect of depth on the response scale, rather than link (log) scale.
+
 ```{r}
 visreg(fit, xvar = "depth_scaled", scale = "response")
 ```
 
-`visreg` can also be used to visualize just the fixed effect of year.
+In this case, visreg add "rug" lines indicating the where the data were observed along the x-axis variable.
+
+`visreg()` can also be used to visualize just the categorical effect of year.
+
 ```{r}
 visreg(fit, xvar = "fyear")
 ```
 
-Note that for plotting in `visreg`, categorical variables like year need to be designated as a factor in the dataframe, as in the example above, rather than in the model formula. For instance, while designating year as a character in the dataframe and a factor in the model will work for some models, it will not be able to be plotted in `visreg` for delta models. For this reason, we suggest that it is safer to not use `as.factor` in the model formula.
-
 We can also simultaneously compare both depth and year with a two-dimensional contour plot.
+
 ```{r}
 visreg2d(fit, xvar = "fyear", yvar = "depth_scaled")
 ```
 
-`visreg` can also be used to plot the output of delta models from `sdmTMB` by using similar code for the previous `visreg` plots, but specifying `model=1` for the encounter model, and `model=2` for the positive catch rate model. For example,
-```{r}
-  # Delta model example:
-  fit_dg <- sdmTMB(
-    density ~ s(depth_scaled, year, k = 8),
-    data = pcod_2011, 
-    mesh = pcod_mesh_2011,
-    spatial = "off",
-    family = delta_gamma()
-  )
+`visreg2d()` is different from `visreg()` in that it doesn't take a `gg` argument.
+Instead, it takes `plot.type = c("image", "persp", "rgl", "gg")`.
+For example:
 
-  visreg_delta(fit_dg, xvar = "depth_scaled", model = 1, gg = TRUE)
-  visreg_delta(fit_dg, xvar = "depth_scaled", model = 2, gg = TRUE)
+```{r}
+visreg2d(fit, xvar = "fyear", yvar = "depth_scaled", plot.type = "gg")
 ```
 
-Partial residuals can be included by setting `partial=TRUE`
 ```{r}
-visreg(fit, xvar = "depth_scaled", type="conditional", partial=TRUE)
+visreg2d(fit, xvar = "fyear", yvar = "depth_scaled", plot.type = "persp")
 ```
 
-For a model with multiple continuous variables, for instance, this example with simulated data
+## Delta models
+
+`visreg()` can also be used to plot the output of delta models from `sdmTMB()` by using similar code for the previous plots, but using the sdmTMB wrapper function `visreg_delta()` and specifying `model = 1` for the encounter (0 vs. non-zero) model or `model = 2` for the positive component model (e.g., Gamma, lognormal). For example:
+
 ```{r}
-N = 300
-predictor_dat <- data.frame(
-  X = runif(N), Y = runif(N),
-  log_depth = rnorm(N,mean=2,sd=1), 
-  year = rep(1:6, each = 50),
-  hour = sample(1:24, size = N, replace=T)
+fit_dg <- sdmTMB(
+  density ~ s(depth_scaled, year, k = 8),
+  data = pcod_2011,
+  mesh = pcod_mesh_2011,
+  spatial = "off", # for vignette speed
+  family = delta_gamma()
 )
-predictor_dat$hour_effect = 0.2 * sin(2*pi/365*predictor_dat$hour)
-predictor_dat$log_depth2 = predictor_dat$log_depth^2
 
-#Make mesh
-mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.1)
-
-#Simulate data
-sim_dat <- sdmTMB_simulate(
-  formula = ~ 0 + hour_effect + log_depth + log_depth2,
-  data = predictor_dat,
-  time = "year",
-  mesh = mesh,
-  family = gaussian(),
-  range = 0.5,
-  sigma_E = 0.1,
-  phi = 0.1,
-  sigma_O = 0.2,
-  seed = 42,
-  B = c(0.2, -0.4, 0.02) # hour effect, linear depth, quadratic depth
-)
-fit3 <- sdmTMB(
-       observed ~ 0+hour_effect +log_depth + log_depth2,
-       data=sim_dat, 
-       mesh=mesh,
-       spatial="on",
-       time="year",
-       family=gaussian()
-       )
+visreg_delta(fit_dg, xvar = "depth_scaled", model = 1, gg = TRUE)
+visreg_delta(fit_dg, xvar = "depth_scaled", model = 2, gg = TRUE)
 ```
 
-We can similarly use `visreg` to visualize how the two variable interact to effect the response
-```{r}
-visreg2d(fit3, xvar = "hour_effect", yvar = "log_depth")
-```
-
+Note that for plotting with `visreg_delta()`, categorical variables like year need to be designated as a factor in the data frame, as in the example above with `fyear`, rather than in the model formula (e.g., `+ as.factor(year)`).
