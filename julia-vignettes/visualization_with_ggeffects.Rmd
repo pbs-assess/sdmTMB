@@ -13,9 +13,9 @@ vignette: >
 dplyr_installed <- require("dplyr", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
 ggeffects_installed <- require("ggeffects", quietly = TRUE)
-prediction_installed <- require("prediction", quietly = TRUE)
-pkgs <- dplyr_installed && ggplot_installed && visreg_installed &&
-  ggeffects_installed && prediction_installed
+effects_installed <- require("effects", quietly = TRUE)
+pkgs <- dplyr_installed && ggplot_installed && 
+  ggeffects_installed && effects_installed
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -28,14 +28,26 @@ knitr::opts_chunk$set(
 
 The package [ggeffects](https://CRAN.R-project.org/package=ggeffects) can be used to plot marginal effects of given predictor variables in sdmTMB models.
 
+A major advantage to this approach over visreg, is that ggeffects calculates marginal effects with the effects package using the parameter covariance matrix. 
+This is nearly instant compared to visreg, which has to calculate conditional effects by calculating predictions with TMB.
+
+A disadvantage to using ggeffects is that it will only work for regular linear effects in the main model formula. I.e., it will not work with smoothers (internally these are random effects) or breakpoint (`breakpt()`) effects.
+
+Another important distinction is that `ggeffects::ggeffect()` is plotting **marginal** effects. 
+This means the effects are "marginalized" or "averaged" over the other fixed effects.
+`visreg::visreg()` is plotting **conditional** effects.
+This means they are conditional on the other predictors being set to certain values.
+`ggeffects::ggpredict()` also does conditional effects, but this has not yet been set up in sdmTMB.
+
 ```{r}
-library(prediction)
 library(sdmTMB)
 library(ggeffects)
 ```
 
-#Example with Pacific cod presence
-To start, we will use the Pacific cod data for this example. We will fit a model of fish presence with covariates of depth and a fixed effect of year using a Tweedie distribution.
+# Example with Pacific cod presence
+
+To start, we will use the Pacific cod example data. 
+We will fit a model of fish presence/absence with covariates of depth and a fixed effect of year using a Tweedie distribution.
 
 ```{r}
 pcod$fyear <- as.factor(pcod$year)
@@ -43,157 +55,94 @@ mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 fit <- sdmTMB(present ~ poly(depth, 2) + fyear,
   data = pcod,
   mesh = mesh,
-  spatial = "off",
+  spatial = "on",
   family = binomial()
 )
 ```
 
-We can then use `ggeffect` to see the effect of depth on the probability of Pacific cod being present. We can control what range and interval of depths are predicted within the function (e.g. `[0:500 by=1]`).
+We can then use `ggeffects::ggeffect()` to see the effect of depth on the probability of Pacific cod being present. 
+We can control what range and interval of depths are predicted within the function (e.g. `[0:500 by=1]`).
+
 ```{r}
 g <- ggeffect(fit, "depth [0:500 by=1]")
 plot(g)
 ```
 
 We can also plot the effects of each year.
+
 ```{r}
 g2 <- ggeffect(fit, "fyear")
 plot(g2)
 ```
 
 We can add in data points
+
 ```{r}
 plot(g, add.data = TRUE)
 ```
 
-We can also use `ggeffect` to plot multiple variables by listing in `terms=c()`, with the first term listed indicating the variable to be plotted on the x-axis, and the remaining listed terms (up to four total) indicating the groups. Adding `facet=TRUE` will show each year as a separate plot, instead of overlain on one plot.
+We can also use `ggeffect` to plot multiple variables by listing them in `terms = c()`, with the first term listed indicating the variable to be plotted on the x-axis, and the remaining listed terms (up to four total) indicating the groups. 
+Adding `facet = TRUE` will show each year as a separate plot, instead of overlain on one plot.
+
 ```{r}
-dat <- ggeffect(fit, terms = c("depth", "fyear"))
+dat <- ggeffect(fit, terms = c("depth [0:350 by=5]", "fyear"))
 plot(dat)
 ```
 
-Adding `facet=TRUE` will show each year as a separate plot, instead of overlain on one plot.
+Adding `facet = TRUE` will show each year as a separate plot, instead of overlain on one plot.
+
 ```{r}
 plot(dat, facet = TRUE)
 ```
 
-We can also use `ggplot` for creating plots by calling the ggeffects object `dat` as the dataframe.
+We can also use make our own ggplot plot by calling the ggeffects object `dat` as the data frame.
+
 ```{r}
 ggplot(dat, aes(x, predicted, colour = group)) +
   geom_line()
 ```
 
-Plotting using `visreg` with density, rather than presence-only, as the response variable is similar, for instance--
+Plotting using with a continuous response (here `density`) rather than presence-only is similar.
+For instance:
+
 ```{r echo=FALSE, include=FALSE}
-fit2 <- sdmTMB(density ~ depth + fyear,
+fit2 <- sdmTMB(density ~ poly(depth_scaled, 2) + fyear,
+  data = pcod,
+  mesh = mesh,
+  spatial = "on",
+  family = tweedie()
+)
+
+g2 <- ggeffect(fit2, "depth_scaled [-3:2.7 by=0.05]")
+plot(g2)
+
+# note the high density values dwarf the fitted curve here
+plot(g2, add.dat = TRUE)
+```
+
+We can fit a model with an interaction of two continuous variables:
+
+```{r echo=FALSE, include=FALSE}
+pcod$numeric_year <- pcod$year - min(pcod$year) + 1
+fit3 <- sdmTMB(density ~ poly(depth_scaled, 2) * numeric_year,
   data = pcod,
   mesh = mesh,
   spatial = "off",
   family = tweedie()
 )
-
-g2 <- ggeffect(fit2, "depth [0:500 by=1]")
-plot(g2)
-plot(g2, add.dat = T)
 ```
 
-
-```{r echo=FALSE, include=FALSE}
-# Plotting spatial and spatio-temporal effects--way to plot in ggeffects?
-fit3 <- sdmTMB(density ~ depth + fyear,
-  data = pcod,
-  time = "year",
-  mesh = mesh,
-  spatial = "on",
-  spatiotemporal = T,
-  family = tweedie()
-)
-
-predictions <- predict(fit3, newdata = fit$data)
-plot_map <- function(dat, column) {
-  ggplot(dat, aes_string("X", "Y", fill = column)) +
-    geom_raster() +
-    facet_wrap(~year) +
-    coord_fixed()
-}
-plot_map(predictions, "omega_s") +
-  ggtitle("Spatial random effects only") +
-  scale_fill_gradient2()
-
-plot_map(predictions, "epsilon_st") +
-  ggtitle("Spatiotemporal random effects only") +
-  scale_fill_gradient2()
-```
-
-#Example using simulated data with multiple continuous explanatory variables
-We will simulate data to show an example of using `ggeffects` to plot models with multiple continuous variables
-```{r}
-# make fake predictor(s) and sampling locations:
-N <- 300
-predictor_dat <- data.frame(
-  X = runif(N), Y = runif(N),
-  log_depth = rnorm(N, mean = 2, sd = 1),
-  year = rep(1:6, each = 50),
-  hour = sample(1:24, size = N, replace = T)
-)
-predictor_dat$hour_effect <- 0.2 * sin(2 * pi / 365 * predictor_dat$hour)
-predictor_dat$log_depth2 <- predictor_dat$log_depth^2
-
-# Make mesh
-mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.1)
-
-# Simulate data
-sim_dat <- sdmTMB_simulate(
-  formula = ~ 0 + hour_effect + log_depth + log_depth2,
-  data = predictor_dat,
-  time = "year",
-  mesh = mesh,
-  family = gaussian(),
-  range = 0.5,
-  sigma_E = 0.1,
-  phi = 0.1,
-  sigma_O = 0.2,
-  seed = 42,
-  B = c(0.2, -0.4, 0.02) # hour effect, linear depth, quadratic depth
-)
-fit3 <- sdmTMB(
-  observed ~ 0 + hour_effect + log_depth + log_depth2,
-  data = sim_dat,
-  mesh = mesh,
-  spatial = "on",
-  time = "year",
-  family = gaussian()
-)
-```
+For plotting two continuous variables, `ggeffect()` will make the non-target (2nd) variable discrete by selecting different levels.
 
 ```{r}
-g3 <- ggeffect(fit3, "hour_effect")
-plot(g3)
-g4 <- ggeffect(fit3, "log_depth")
-plot(g4)
+g5 <- ggeffect(fit3, terms = c("depth_scaled [-3:2.7 by=0.01]", "numeric_year"))
+plot(g5)
+plot(g5, facet = TRUE)
 ```
 
-For plotting two continuous variables, `ggeffects` will make the non-target variable discrete by selecting different levels.
-```{r}
-g5 <- ggeffect(fit3, terms = c("log_depth", "hour_effect"))
-plot(g5, facet = T)
-```
-
-To specify the levels rather than letting `ggeffects` choose them, use brackets with the selected values within the term list, for instance
+To specify the levels rather than letting `ggeffect()` choose them, use brackets with the selected values within the term list, for instance
 
 ```{r}
-g6 <- ggeffect(fit3, terms = c("log_depth", "hour_effect [0,1,2]"))
+g6 <- ggeffect(fit3, terms = c("depth_scaled [-3:2.7 by=0.01]", "numeric_year [1,7,15]"))
 plot(g6)
-```
-
-For plotting more than two continuous variables, 
-
-```{r}
-# Still need to finish up this example:
-g7 <- ggeffect(fit3, terms = c("log_depth", "hour_effect [0,1,2]", "log_depth2"))
-plot(g7, facet = T)
-```
-
-```{r}
-# Example that has residuals
-# plot(g, residuals=T, residuals.line=T)
 ```
