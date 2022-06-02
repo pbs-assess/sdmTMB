@@ -791,7 +791,7 @@ Type objective_function<Type>::operator()()
 
   if (do_predict) {
     int n_p = proj_X_ij(0).rows(); // n 'p'redicted newdata
-    int n_p_mesh = proj_X_ij(0).rows(); // n 'p'redicted mesh (less than n_p if duplicate locations)
+    int n_p_mesh = proj_mesh.rows(); // n 'p'redicted mesh (less than n_p if duplicate locations)
     // DELTA DONE
     array<Type> proj_fe(n_p, n_m);
     for (int m = 0; m < n_m; m++) {
