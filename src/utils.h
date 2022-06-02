@@ -265,4 +265,32 @@ Type calc_rf_sigma(Type ln_tau, Type ln_kappa) {
   return sigma;
 }
 
+// from glmmTMB distrib.h
+extern "C" {
+  /* See 'R-API: entry points to C-code' (Writing R-extensions) */
+  double Rf_logspace_sub (double logx, double logy);
+  void   Rf_pnorm_both(double x, double *cum, double *ccum, int i_tail, int log_p);
+}
+
+// from glmmTMB distrib.h
+TMB_ATOMIC_VECTOR_FUNCTION(
+  // ATOMIC_NAME
+  logit_invcloglog
+  ,
+    // OUTPUT_DIM
+    1,
+    // ATOMIC_DOUBLE
+    ty[0] = Rf_logspace_sub(exp(tx[0]), 0.);
+,
+  // ATOMIC_REVERSE
+  px[0] = exp( logspace_add(tx[0], tx[0]-ty[0]) ) * py[0];
+)
+
+template<class Type>
+Type logit_invcloglog(Type x) {
+  CppAD::vector<Type> tx(1);
+  tx[0] = x;
+  return logit_invcloglog(tx)[0];
+}
+
 }  // namespace sdmTMB

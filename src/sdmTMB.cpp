@@ -23,7 +23,8 @@ enum valid_link {
   identity_link = 0,
   log_link      = 1,
   logit_link    = 2,
-  inverse_link  = 3
+  inverse_link  = 3,
+  cloglog_link  = 4
 };
 
 template <class Type>
@@ -43,10 +44,30 @@ Type InverseLink(Type eta, int link)
   case inverse_link:
     out = Type(1.0) / eta;
     break;
+  case cloglog_link:
+    out = Type(1) - exp(-exp(eta));
+    break;
   default:
     error("Link not implemented.");
   }
   return out;
+}
+
+// logit transformed inverse_linkfun without losing too much accuracy
+template<class Type>
+Type LogitInverseLink(Type eta, int link) {
+  Type ans;
+  switch (link) {
+  case logit_link:
+    ans = eta;
+    break;
+  case cloglog_link:
+    ans = sdmTMB::logit_invcloglog(eta);
+    break;
+  default:
+    ans = logit(InverseLink(eta, link));
+  }
+  return ans;
 }
 
 template <class Type>
@@ -606,9 +627,9 @@ Type objective_function<Type>::operator()()
       // if (n_m > 1) if (family(0) == 1 && family(1) == 4 && link(0) == 1 && link(1) == 1)
       //     poisson_link_delta = true;
 
-      if (family(m) == 1 && link(m) == 2) {
+      if (family(m) == 1) { // binomial
         // binomial(link = "logit"); don't touch (using robust density function in logit space)
-        mu_i(i,m) = eta_i(i,m);
+        mu_i(i,m) = LogitInverseLink(eta_i(i,m), link(m));
       } else if (poisson_link_delta) { // clogog, but put in logit space for robust density function:
         Type n = exp(eta_i(i,0));
         Type p = Type(1) - exp(-exp(offset_i(i)) * n);
@@ -642,10 +663,10 @@ Type objective_function<Type>::operator()()
             tmp_ll = dtweedie(y_i(i,m), mu_i(i,m), phi(m), s1, true);
             SIMULATE{y_i(i,m) = rtweedie(mu_i(i,m), phi(m), s1);}
             break;
-          case binomial_family:  // in logit space not inverse logit
+          case binomial_family:
             tmp_ll = dbinom_robust(y_i(i,m), size(i), mu_i(i,m), true);
             // SIMULATE{y_i(i,m) = rbinom(size(i), InverseLink(mu_i(i,m), link(m)));}
-            SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));} // FIXME hardcoded invlogit
+            SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));} // hardcoded invlogit b/c mu_i in logit space
             break;
           case poisson_family:
             tmp_ll = dpois(y_i(i,m), mu_i(i,m), true);
