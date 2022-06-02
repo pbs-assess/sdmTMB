@@ -578,9 +578,9 @@ sdmTMB <- function(
     spatial_only <- rep(TRUE, n_m)
   } else {
     spatial_only <- ifelse(spatiotemporal == "off", TRUE, FALSE)
-    if(all(spatiotemporal == "off")) {
-      cli_abort("Time needs to be null if spatiotemporal fields are not included")
-    }
+    # if(all(spatiotemporal == "off")) {
+    #   cli_abort("Time needs to be null if spatiotemporal fields are not included")
+    # }
   }
 
   if (is.list(spatial)) {
