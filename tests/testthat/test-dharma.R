@@ -22,15 +22,15 @@ test_that("simulate() and dharma_residuals() work", {
   expect_equal(nrow(s), nrow(pcod))
   dharma_residuals(s, fit)
 
-  fit <- sdmTMB(density ~ 1,
-    data = pcod, mesh = mesh,
-    spatial = "off",
-    family = delta_poisson_link_gamma()
-  )
-  s <- simulate(fit, nsim = 100)
-  expect_equal(ncol(s), 100)
-  expect_equal(nrow(s), nrow(pcod))
-  dharma_residuals(s, fit)
+  # fit <- sdmTMB(density ~ 1,
+  #   data = pcod, mesh = mesh,
+  #   spatial = "off",
+  #   family = delta_poisson_link_gamma()
+  # )
+  # s <- simulate(fit, nsim = 100)
+  # expect_equal(ncol(s), 100)
+  # expect_equal(nrow(s), nrow(pcod))
+  # dharma_residuals(s, fit)
 
   s <- simulate(fit, nsim = 100, params = "mvn")
   expect_equal(ncol(s), 100)
