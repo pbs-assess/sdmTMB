@@ -58,23 +58,23 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     expect_true(sum(is.na(s$b_j)) == 0L)
   })
 
-  test_that("delta_poisson_link_gamma() family fits", {
-    skip_on_cran()
-    skip_if_not_installed("INLA")
-
-    fit_plg <- sdmTMB(density ~ 1,
-      data = pcod, mesh = pcod_spde,
-      spatial = "off",
-      family = delta_poisson_link_gamma()
-    )
-    fit_plg$sd_report
-    s <- as.list(fit_plg$sd_report, "Std. Error")
-    expect_true(sum(is.na(s$b_j)) == 0L)
-
-    p <- predict(fit_plg, newdata = qcs_grid, type = "response")
-    p <- predict(fit_plg, newdata = pcod, type = "response")
-    expect_error(p <- predict(fit_plg, newdata = NULL, type = "response"))
-  })
+  # test_that("delta_poisson_link_gamma() family fits", {
+  #   skip_on_cran()
+  #   skip_if_not_installed("INLA")
+  #
+  #   fit_plg <- sdmTMB(density ~ 1,
+  #     data = pcod, mesh = pcod_spde,
+  #     spatial = "off",
+  #     family = delta_poisson_link_gamma()
+  #   )
+  #   fit_plg$sd_report
+  #   s <- as.list(fit_plg$sd_report, "Std. Error")
+  #   expect_true(sum(is.na(s$b_j)) == 0L)
+  #
+  #   p <- predict(fit_plg, newdata = qcs_grid, type = "response")
+  #   p <- predict(fit_plg, newdata = pcod, type = "response")
+  #   expect_error(p <- predict(fit_plg, newdata = NULL, type = "response"))
+  # })
 
   test_that("delta_truncated_nbinom2 family fits", {
     skip_on_cran()
@@ -95,12 +95,17 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     skip_on_cran()
     skip_if_not_installed("INLA")
 
-    fit_dg <- sdmTMB(density ~ 1,
-                     data = pcod, mesh = pcod_spde,
-                     time = "year", family = delta_gamma(),
-                     anisotropy = TRUE,
-                     control = sdmTMBcontrol(newton_loops = 1)
-    )
+    suppressWarnings({
+      fit_dg <- sdmTMB(density ~ 1,
+        data = pcod, mesh = pcod_spde,
+        time = "year", family = delta_gamma(),
+        anisotropy = TRUE,
+        control = sdmTMBcontrol(
+          newton_loops = 1,
+          map = list(ln_H_input = factor(c(1L, 2L, 3L, 4L)))
+        )
+      )
+    })
 
     fit_bin <- sdmTMB(present ~ 1,
                       data = pcod, mesh = pcod_spde,

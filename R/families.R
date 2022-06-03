@@ -271,7 +271,7 @@ delta_truncated_nbinom1 <- function(link1 = "logit", link2 = "log") {
 #' \doi{10.1139/cjfas-2017-0266}
 #' @export
 delta_poisson_link_gamma <- function(link1 = "log", link2 = "log") {
-  cli_inform("`delta_poisson_link_gamma()` is experimental and not all functions work with it")
+  cli_abort("`delta_poisson_link_gamma()` is experimental and not all functions work with it")
   cli_inform("Index calculations may not be correct with the `delta_poisson_link_gamma()` family yet")
   link1 <- match.arg(link1)
   link2 <- match.arg(link2)
