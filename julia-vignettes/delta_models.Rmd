@@ -29,44 +29,48 @@ library(dplyr)
 library(sdmTMB)
 ```
 
-sdmTMB has the capability for built-in hurdle models (also called delta models). Hurdle models could also be implemented by fitting the two components separately and combining the predictions.
+sdmTMB has the capability for built-in hurdle models (also called delta models). 
+Hurdle models could also be implemented by fitting the two components separately and combining the predictions.
 
 Hurdle models are more appropriate than something like a Tweedie when there are differences in the processes controlling presence vs. abundance, or when greater flexibility to account for dispersion is required. 
 
-Built-in hurdle models can be specified in the `family=()` argument within the `sdmTMB()` function. The options include:
+Built-in hurdle models can be specified with the `family` argument within the `sdmTMB()` function. Current options include:
 
-1. Delta-Gamma model: `family=delta_gamma()`  
-This fits a binomial presence-absence model (ie `family = binomial(link = "logit")`) and then a model for the positive catches only with a Gamma observation distribution and a log link (ie `family= Gamma(link = "log")`)
+1. Delta-Gamma: `family = delta_gamma(link1 = "logit", link2 = "log")`.
+This fits a binomial presence-absence model (i.e., `family = binomial(link = "logit")`) and then a model for the positive catches only with a Gamma observation distribution and a log link (i.e., `family = Gamma(link = "log")`). Here and with other delta models, the `link1` and `link2` can be omitted and left at their default values.
 
-2.A delta-lognormal model: `family=delta_lognormal()`
-This fits a binomial presence-absence model (ie `family = binomial(link = "logit")`) and then a model for the positive catches only with a lognormal observation distribution and a log link (ie `family= lognormal(link = "log")`
+2. Delta-lognormal: `family = delta_lognormal()`.
+This fits a binomial presence-absence model (i.e., `family = binomial(link = "logit")`) and then a model for the positive catches only with a lognormal observation distribution and a log link (i.e., `family = lognormal(link = "log")`
 
-3. A Poisson-link delta model: `family=delta_poisson_link_gamma()`
-This fits a binomial presence-absence model (`family = binomial(link = "logit")`) and then a model for the positive catches only with a Poisson observation distribution and a log link 
+<!-- 3. A Poisson-link delta model: `family = delta_poisson_link_gamma()` -->
+<!-- This fits a binomial presence-absence model (`family = binomial(link = "logit")`) and then a model for the positive catches only with a Poisson observation distribution and a log link  -->
 
-4. Delta-binomial model: `family=delta_truncated_nbinom2()`
-This fits a binomial presence-absence model (`family = binomial(link = "logit")`) and zero-inflated count data and a `family=truncated_nbinom(link = "log")` or `family=truncated_nbinom2(link = "log")` distribution for positive catches
+3. Delta-truncated-negative-binomial: `family = delta_truncated_nbinom2()` or `family = delta_truncated_nbinom2()`.
+This fits a binomial presence-absence model (`family = binomial(link = "logit")`) and a `family = truncated_nbinom2(link = "log")` or `family = truncated_nbinom1(link = "log")` distribution for positive catches.
 
 To summarize the built-in delta models and the separate components:
 Model Type         |Built-in delta function            | Presence-absence model            | Positive catch model                  |
 -------------------|-----------------------------------|-----------------------------------|---------------------------------------|
-Delta-gamma        |`family=delta_gamma()`             |`family = binomial(link = "logit")`| `family = Gamma(link = "log")`        |
-Delta-lognormal    |`family=delta_lognormal()`         |`family = binomial(link = "logit")`| `family = lognormal(link = "log")`    |
-Poisson-link delta |`family=delta_poisson_link_gamma()`|`family = binomial(link = "logit")`| `family = lognormal(link = "log")` n  |
-Delta-binomial     |`family=delta_truncated_nbinom2()` |`family = binomial(link = "logit")`|`family=truncated_nbinom(link = "log")`|
+Delta-gamma        |`family = delta_gamma()`             |`family = binomial(link = "logit")`| `family = Gamma(link = "log")`        |
+Delta-lognormal    |`family = delta_lognormal()`         |`family = binomial(link = "logit")`| `family = lognormal(link = "log")`    |
+Poisson-link delta |`family = delta_poisson_link_gamma()`|`family = binomial(link = "logit")`| `family = lognormal(link = "log")` n  |
+Delta-NB     |`family = delta_truncated_nbinom2()` |`family = binomial(link = "logit")`|`family = truncated_nbinom(link = "log")`|
 
 
 # Example of fitting with built-in delta model
+
 Here, we will show an example of fitting each of the delta model types with the built-in features, as well as how to build each model component separately and then combine.
 
 We will use a dataset built into the sdmTMB package: trawl survey data for Pacific Cod in Queen Charlotte Sound, British Columbia, Canada. The density units are kg/km^2^. Here, X and Y are coordinates in UTM zone 9.
 
 We will first create a mesh that we will use for all the models.
+
 ```{r}
 pcod_mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
 ```
 
 Then we can fit a model of Pacific cod density using a delta-gamma model, including a smoothed effect of depth.
+
 ```{r}
  fit_dg <- sdmTMB(density ~ 1 + s(depth),
                      data = pcod, 
@@ -76,18 +80,37 @@ Then we can fit a model of Pacific cod density using a delta-gamma model, includ
     )
 ```
 
-To specify the settings for spatial and spatio-temporal effects in each model component, create a list of settings within the `spatial=()` and `spatiotemporal=()` arguments, ie `spatial=list("setting for presence-absence model, "setting for positive catch model")`. For example, we could turn spatial and spatiotemporal effects off for the presence-absence model but include spatial effects for the positive catch model and include spatio-temporal effects as a random walk. See 
+To specify the settings for spatial and spatio-temporal effects in each model component, create a list of settings within the `spatial` and `spatiotemporal` arguments, i.e., `spatial = list("setting for presence-absence model, "setting for positive catch model")`.
+For example, we could turn spatial and spatiotemporal effects off for the presence-absence model but include spatial effects for the positive catch model and include spatiotemporal effects as a random walk.
 
 ```{r}
- fit_dg2 <- sdmTMB(density ~ 1 + s(depth),
-                     data = pcod, 
-                    mesh = pcod_mesh,
-                    time = "year",
-                  spatial = list("off", "on"),
-                  spatiotemporal = list("off", "rw"),
-                    family = delta_gamma()
-    )
+fit_dg2 <- sdmTMB(density ~ 1 + s(depth),
+  data = pcod, 
+  mesh = pcod_mesh,
+  time = "year",
+  spatial = list("off", "on"),
+  spatiotemporal = list("off", "rw"),
+  family = delta_gamma()
+)
+```
 
+We could similarly specify a different equation for each component of the model. 
+TODO: note limitations here.
+For instance, we could include the effect of depth for only the positive catch model, and remove it for the presence-absence model.
+
+```{r}
+fit_dg3 <- sdmTMB(
+  list(
+    density ~ 1, #<
+    density ~ poly(depth, 2) #<
+  ),
+  data = pcod, 
+  mesh = pcod_mesh,
+  time = "year",
+  spatial = list("off", "on"),
+  spatiotemporal = list("off", "rw"),
+  family = delta_gamma()
+)
 ```
 
 We could similarly specify a different equation for each component of the model. For instance, we could include the effect of depth for only the positive catch model, and remove it for the presence-absence model.
@@ -97,6 +120,7 @@ We could similarly specify a different equation for each component of the model.
 ```
 
 We can then predict density in either log space or transformed into the response scale.
+
 ```{r}
 p <- predict(fit_dg, newdata = qcs_grid)
 p_response <- predict(fit_dg, newdata = qcs_grid, type = "response")
@@ -108,12 +132,13 @@ ind_dg <- get_index(p, bias_correct = FALSE)
 ```
 
 We can plot the effect of depth using the package `visreg` by specifying each model component with `model=1` for the presence-absence model or `model=2`for the positive catch model. See the vignettes on using [visreg](link) and [ggeffects](link) for more information about plotting effects from sdmTMB models.
+
 ```{r}
 visreg_delta(fit_dg, xvar = "depth", model = 1, gg = TRUE)
 visreg_delta(fit_dg, xvar = "depth", model = 2, gg = TRUE)
 
-#Will it work with ggeffects package?
 ```
+<!-- TODO Will it work with ggeffects package? -->
 
 The built-in delta models can also be evaluated with the `residuals` functions in sdmTMB. See [documentation here] (https://rdrr.io/github/pbs-assess/sdmTMB/man/residuals.sdmTMB.html) for additional options for residuals in sdmTMB
 ```{r, echo=F, message=F, results='hide, warning=F}
