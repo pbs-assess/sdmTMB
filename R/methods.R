@@ -103,6 +103,8 @@ terms.sdmTMB <- function(x, ...) {
 #'
 #' @inheritParams effects::Effect
 #'
+#' @importFrom stats formula poisson
+#'
 #' @rawNamespace if(getRversion() >= "3.6.0") {
 #'   S3method(effects::Effect, sdmTMB)
 #' } else {

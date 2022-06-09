@@ -15,7 +15,6 @@
 \alias{delta_lognormal}
 \alias{delta_truncated_nbinom2}
 \alias{delta_truncated_nbinom1}
-\alias{delta_poisson_link_gamma}
 \title{Additional families}
 \usage{
 Beta(link = "logit")
@@ -43,8 +42,6 @@ delta_lognormal(link1 = "logit", link2 = "log")
 delta_truncated_nbinom2(link1 = "logit", link2 = "log")
 
 delta_truncated_nbinom1(link1 = "logit", link2 = "log")
-
-delta_poisson_link_gamma(link1 = "log", link2 = "log")
 }
 \arguments{
 \item{link}{Link.}
@@ -69,9 +66,6 @@ The \code{nbinom1} negative binomial parameterization lets the variance grow
 linearly with the mean (Hilbe 2011).
 
 The degrees of freedom parameter is currently not estimated and is fixed at \code{df}.
-
-\code{delta_poisson_link_gamma()} is the Poisson-link (complementary
-log-log) delta model (Thorson 2018).
 }
 \examples{
 Beta(link = "logit")
@@ -87,13 +81,7 @@ delta_gamma()
 delta_lognormal()
 delta_truncated_nbinom2()
 delta_truncated_nbinom1()
-delta_poisson_link_gamma()
 }
 \references{
 Hilbe, J. M. (2011). Negative binomial regression. Cambridge University Press.
-
-Thorson, J. T. (2018). Three problems with the conventional delta-model for
-biomass sampling data, and a computationally efficient alternative. Canadian
-Journal of Fisheries and Aquatic Sciences, 75(9), 1369-1382.
-\doi{10.1139/cjfas-2017-0266}
 }
