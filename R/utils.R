@@ -284,7 +284,7 @@ has_no_random_effects <- function(obj) {
 #'
 #' @return A named list of parameter values
 #'
-#' @examples
+#' @examplesIf inla_installed()
 #' fit <- sdmTMB(present ~ 1, data = pcod_2011, family = binomial(), spatial = "off")
 #' pars <- sdmTMB:::get_pars(fit)
 #' names(pars)
