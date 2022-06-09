@@ -287,7 +287,7 @@ such as an index of abundance with \code{\link[=get_index]{get_index()}} using t
 method within TMB.
 }
 \examples{
-\dontshow{if (inla_installed() && require("visreg", quietly = TRUE) && ggplot2_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (inla_installed() && require("visreg", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 
 library(sdmTMB)
 

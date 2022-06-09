@@ -324,7 +324,7 @@ NULL
 #'
 #' @export
 #'
-#' @examplesIf inla_installed() && require("visreg", quietly = TRUE) && ggplot2_installed()
+#' @examplesIf inla_installed() && require("visreg", quietly = TRUE)
 #'
 #' library(sdmTMB)
 #'
