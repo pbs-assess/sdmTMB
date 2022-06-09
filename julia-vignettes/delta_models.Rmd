@@ -90,6 +90,12 @@ To specify the settings for spatial and spatio-temporal effects in each model co
 
 ```
 
+We could similarly specify a different equation for each component of the model. For instance, we could include the effect of depth for only the positive catch model, and remove it for the presence-absence model.
+
+```{r}
+
+```
+
 We can then predict density in either log space or transformed into the response scale.
 ```{r}
 p <- predict(fit_dg, newdata = qcs_grid)
