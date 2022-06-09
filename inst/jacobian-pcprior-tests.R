@@ -5,15 +5,16 @@ library(TMB)
 library(tmbstan)
 
 # simulate spatial data from a single year
-set.seed(123)
+set.seed(12345)
 
 # make fake predictor(s) (a1) and sampling locations:
 predictor_dat <- data.frame(
-  X = runif(800), Y = runif(800),
+  X = runif(70), Y = runif(70),
   year = 1
 )
-mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.05)
+mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.07)
 n_s <- nrow(mesh$mesh$loc)
+n_s
 
 sim_dat <- sdmTMB_simulate(
   formula = ~ 1,
@@ -23,9 +24,9 @@ sim_dat <- sdmTMB_simulate(
   family = gaussian(),
   range = 0.1,
   sigma_E = 0.0,
-  phi = 0.04,
+  phi = 0.05,
   sigma_O = 0.2,
-  seed = 42,
+  seed = 2142,
   B = c(2) # B0 = intercept, B1 = a1 slope
 )
 #ggplot(sim_dat, aes(X,Y, col = observed)) + geom_point()
@@ -41,16 +42,16 @@ A_spatial_index = mesh$sdm_spatial_id - 1L
 )
 
 # Model 1: No PC prior
-compile("inst/pc_matern.cpp")
-dyn.load(dynlib("inst/pc_matern"))
-
-data <- dat
+# compile("inst/pc_matern.cpp")
+# dyn.load(dynlib("inst/pc_matern"))
+#
+# data <- dat
 parameters <- list(B0 = 0, ln_tau_O = 0, ln_kappa = 0, ln_sigma=0,
                    omega_s = matrix(0,n_s, 1))
-obj1 <- MakeADFun(data, parameters, random = "omega_s", DLL = "pc_matern", hessian = TRUE)
-fit1 <- nlminb(obj1$par, objective = obj1$fn, gradient = obj1$gr,
-              control=list(eval.max=4000, iter.max=4000))
-fit1
+# obj1 <- MakeADFun(data, parameters, random = "omega_s", DLL = "pc_matern", hessian = TRUE)
+# fit1 <- nlminb(obj1$par, objective = obj1$fn, gradient = obj1$gr,
+#               control=list(eval.max=4000, iter.max=4000))
+# fit1
 
 # Model 2: Including PC prior
 compile("inst/pc_matern_prior.cpp")
@@ -76,27 +77,28 @@ fit3 <- nlminb(obj3$par, objective = obj3$fn, gradient = obj3$gr,
 fit3
 
 # Look at predictions from all models
-sdr1 = sdreport(obj1)
+# sdr1 = sdreport(obj1)
 sdr2 = sdreport(obj2)
 sdr3 = sdreport(obj3)
 
 # look at predictions
-sim_dat$pred_1 = sdr1$value[which(names(sdr1$value)=="pred")]
+# sim_dat$pred_1 = sdr1$value[which(names(sdr1$value)=="pred")]
 sim_dat$pred_2 = sdr2$value[which(names(sdr2$value)=="pred")]
 sim_dat$pred_3 = sdr3$value[which(names(sdr3$value)=="pred")]
 
 # predictions are perfectly correlated with / without prior
-ggplot(sim_dat, aes(pred_1, pred_2)) +
-  geom_point(alpha=0.1, col="blue")
+# ggplot(sim_dat, aes(pred_1, pred_2)) +
+#   geom_point(alpha=0.1, col="blue")
 
-cor(sim_dat[,c("pred_1","pred_2","pred_3")])
+# cor(sim_dat[,c("pred_1","pred_2","pred_3")])
+# cor(sim_dat[,c("pred_2","pred_3")])
 
 
 # sample with Stan -- first model (no prior) throws ~ 200 divergent transitions
 options(mc.cores = parallel::detectCores())
-#m1 <- tmbstan(obj1, chains = 3, iter = 5000)
-m2 <- tmbstan(obj2, chains = 3, iter = 5000)
-m3 <- tmbstan(obj3, chains = 3, iter = 5000)
+# m1 <- tmbstan(obj1, chains = 1, iter = 1000)
+m2 <- tmbstan(obj2, chains = 4, iter = 5000)
+m3 <- tmbstan(obj3, chains = 4, iter = 5000)
 
 #save(m1,m2,m3,file="m1m2m3.rds")
 
@@ -129,3 +131,32 @@ out$median_sigmaO <- c(median(1/(exp(extract(m2)$ln_tau_O) * sqrt(4*pi) * exp(ex
 # range parameter seems consistently off
 # sigma obs is estimated well for all models
 # sigma_O is biased high for all (0.27)
+
+# ------------------------
+# Look at MLE values for comparison:
+# - model 2 MLE should match model 3 MCMC
+
+print("order...")
+out$type
+
+r <- as.list(sdr2, what = "Estimate", report = TRUE)
+r$sigma_O
+out$mean_sigmaO
+out$median_sigmaO
+(true_sigma <- 0.2)
+
+r$range
+out$mean_range
+out$median_range
+(true_range <- 0.1)
+
+r1 <- as.list(sdr2, what = "Estimate", report = FALSE)
+exp(r1$ln_kappa)
+out$mean_kappa
+out$median_kappa
+(true_kappa <- sqrt(8) / true_range)
+
+r1$B0
+out$mean_B0
+out$median_B0
+(true_B0 <- 2)
