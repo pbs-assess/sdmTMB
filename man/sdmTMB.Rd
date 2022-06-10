@@ -303,8 +303,7 @@ mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
 
 # Quick mesh plot:
 plot(mesh)
-# Or:
-# ggplot2::ggplot() + inlabru::gg(mesh$mesh)
+# Or use ggplot2::ggplot() + inlabru::gg(mesh$mesh)
 
 # Fit a Tweedie spatial random field GLMM with a smoother for depth:
 fit <- sdmTMB(

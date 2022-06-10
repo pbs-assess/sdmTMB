@@ -23,29 +23,31 @@
 #' A vector of model weights.
 #'
 #' @examplesIf inla_installed()
-#' # Set parallel processing if desired:
-#' # library(future)
-#' # plan(multisession)
-#' # depth as quadratic:
+#' # Set parallel processing if desired. See 'Details' in ?sdmTMB_cv
+#'
+#' # Depth as quadratic:
 #' set.seed(1)
 #' m_cv_1 <- sdmTMB_cv(
 #'   density ~ 0 + depth_scaled + depth_scaled2,
 #'   data = pcod_2011, mesh = pcod_mesh_2011,
 #'   family = tweedie(link = "log"), k_folds = 2
 #' )
-#' # depth as linear:
+#' # Depth as linear:
 #' set.seed(1)
 #' m_cv_2 <- sdmTMB_cv(
 #'   density ~ 0 + depth_scaled,
 #'   data = pcod_2011, mesh = pcod_mesh_2011,
 #'   family = tweedie(link = "log"), k_folds = 2
 #' )
+#'
+#' # Only an intercept:
 #' set.seed(1)
 #' m_cv_3 <- sdmTMB_cv(
 #'   density ~ 1,
 #'   data = pcod_2011, mesh = pcod_mesh_2011,
 #'   family = tweedie(link = "log"), k_folds = 2
 #' )
+#'
 #' models <- list(m_cv_1, m_cv_2, m_cv_3)
 #' weights <- sdmTMB_stacking(models)
 #' weights
