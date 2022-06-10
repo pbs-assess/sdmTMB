@@ -104,7 +104,7 @@ Type objective_function<Type>::operator()()
 
   // Vectors of real data
   DATA_ARRAY(y_i);      // response
-  DATA_STRUCT(X_ij, sdmTMB::LOM_t); //DATA_MATRIX(X_ij);     // array of model matrices
+  DATA_STRUCT(X_ij, sdmTMB::LOM_t); // list of model matrices
   DATA_MATRIX(z_i);      // model matrix for spatial covariate effect
   DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
@@ -430,7 +430,7 @@ Type objective_function<Type>::operator()()
           }
         }
       } else {
-        if (ar1_fields(m)) {
+        if (ar1_fields(m)) { // not using separable(ar1()) so we can simulate by time step
           // PARALLEL_REGION jnll += SCALE(SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)), 1./exp(ln_tau_E(m)))(epsilon_st.col(m));
           // Split out by year so we can turn on/off simulation by year and model covariates of ln_tau_E:
           PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E(m)))(epsilon_st.col(m).col(0));
@@ -466,7 +466,8 @@ Type objective_function<Type>::operator()()
         } else if (rw_fields(m)) {
           PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1./exp(ln_tau_E(m)))(epsilon_st.col(m).col(0));
           for (int t = 1; t < n_t; t++) {
-            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1./exp(ln_tau_E(m)))(epsilon_st.col(m).col(t) - epsilon_st.col(m).col(t - 1));
+            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s),
+                1./exp(ln_tau_E(m)))(epsilon_st.col(m).col(t) - epsilon_st.col(m).col(t - 1));
           }
           if (sim_re(1)) {
             for (int t = 0; t < n_t; t++) {
@@ -509,8 +510,10 @@ Type objective_function<Type>::operator()()
       for (int k = 0; k < X_rw_ik.cols(); k++) {
         // flat prior on the initial value... then:
         for (int t = 1; t < n_t; t++) {
-          PARALLEL_REGION jnll += -dnorm(b_rw_t(t, k, m), b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)), true);
-          if (sim_re(4) && simulate_t(t)) SIMULATE{b_rw_t(t, k, m) = rnorm(b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)));}
+          PARALLEL_REGION jnll -=
+            dnorm(b_rw_t(t, k, m), b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)), true);
+          if (sim_re(4) && simulate_t(t))
+            SIMULATE{b_rw_t(t, k, m) = rnorm(b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)));}
         }
       }
     }
@@ -764,21 +767,25 @@ Type objective_function<Type>::operator()()
       jnll += neg_log_dmvnorm(b_j_subset - b_mean_subset);
     }
 
-    // start vector of priors:
-    bool pc_adj = false;
-    if (stan_flag) pc_adj = true;
-    if (!sdmTMB::isNA(priors(0)) && !sdmTMB::isNA(priors(1)) && !sdmTMB::isNA(priors(2)) && !sdmTMB::isNA(priors(3))) {
+    if (!sdmTMB::isNA(priors(0)) && !sdmTMB::isNA(priors(1)) &&
+        !sdmTMB::isNA(priors(2)) && !sdmTMB::isNA(priors(3))) {
       // std::cout << "Using spatial PC prior" << "\n";
-      jnll -= sdmTMB::pc_prior_matern(ln_tau_O(m), ln_kappa(0,m), priors(0), priors(1), priors(2), priors(3), true, false, pc_adj);
+      jnll -= sdmTMB::pc_prior_matern(
+          ln_tau_O(m), ln_kappa(0,m),
+          priors(0), priors(1), priors(2), priors(3),
+          true, /* log */
+          false, /* share range */
+          stan_flag);
     }
-    if (!sdmTMB::isNA(priors(4)) && !sdmTMB::isNA(priors(5)) && !sdmTMB::isNA(priors(6)) && !sdmTMB::isNA(priors(7))) {
+    if (!sdmTMB::isNA(priors(4)) && !sdmTMB::isNA(priors(5)) &&
+        !sdmTMB::isNA(priors(6)) && !sdmTMB::isNA(priors(7))) {
       // std::cout << "Using spatiotemporal PC prior" << "\n";
-      if (share_range(m)) {
-        // if range is shared and model is being passed to Stan, don't fit the range component 2x
-        jnll -= sdmTMB::pc_prior_matern(ln_tau_E(m), ln_kappa(1,m), priors(4), priors(5), priors(6), priors(7), true, true, pc_adj);
-      } else {
-        jnll -= sdmTMB::pc_prior_matern(ln_tau_E(m), ln_kappa(1,m), priors(4), priors(5), priors(6), priors(7), true, false, pc_adj);
-      }
+      jnll -= sdmTMB::pc_prior_matern(
+          ln_tau_E(m), ln_kappa(1,m),
+          priors(4), priors(5), priors(6), priors(7),
+          true, /* log */
+          share_range(m), stan_flag);
+    }
     }
     if (!sdmTMB::isNA(priors(8))) jnll -= dnorm(phi(m), priors(8), priors(9), true);
     if (!sdmTMB::isNA(priors(10))) jnll -= dnorm(rho(m), priors(10), priors(11), true);
@@ -792,7 +799,6 @@ Type objective_function<Type>::operator()()
   if (do_predict) {
     int n_p = proj_X_ij(0).rows(); // n 'p'redicted newdata
     int n_p_mesh = proj_mesh.rows(); // n 'p'redicted mesh (less than n_p if duplicate locations)
-    // DELTA DONE
     array<Type> proj_fe(n_p, n_m);
     for (int m = 0; m < n_m; m++) {
       if (m == 0) proj_fe.col(m) = proj_X_ij(m) * b_j;
@@ -900,9 +906,6 @@ Type objective_function<Type>::operator()()
       for (int m = 0; m < n_m; m++) {
         for (int z = 0; z < n_z; z++) {
           proj_zeta_s_A_unique.col(m).col(z) = proj_mesh * vector<Type>(zeta_s.col(m).col(z));
-          // for (int i = 0; i < n_p_mesh; i++) {
-          //   proj_zeta_s_A_cov_unique(i,z,m) = proj_zeta_s_A_unique(i,z,m) * proj_z_i(i,z);
-          // }
         }
       }
     }
@@ -1100,7 +1103,6 @@ Type objective_function<Type>::operator()()
 
   // FIXME save memory by not reporting all these or optionally so for MVN/Bayes?
 
-
   array<Type> log_range(range.rows(),range.cols()); // for SE
   for (int i = 0; i < range.rows(); i++) {
     for (int m = 0; m < range.cols(); m++) {
@@ -1108,8 +1110,6 @@ Type objective_function<Type>::operator()()
     }
   }
 
-
-  // array<Type> log_range = log(range);
   vector<Type> log_sigma_E = log(sigma_E);
   ADREPORT(log_sigma_E);      // log spatio-temporal SD
   REPORT(sigma_E);      // spatio-temporal SD
