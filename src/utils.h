@@ -159,9 +159,9 @@ Type pc_prior_matern(Type logtau, Type logkappa, Type matern_range,
 
   // Note: these signs are + (and different from inst/jacobian-pcprior-tests)
   // because the jnll is accumulated
-  if(stan_flag) {
-    penalty += log(sqrt(8.0)) - log(pow(range,2.0)); // P(sigma)
-    Type C = sqrt(exp(lgamma(1.0 + dhalf)) * pow(4*M_PI, dhalf));
+  if (stan_flag) {
+    penalty += log(sqrt(8.)) - log(pow(range, 2.)); // P(sigma)
+    Type C = sqrt(exp(lgamma(1. + dhalf)) * pow(4. * M_PI, dhalf));
     penalty += log(C) + logkappa;
   }
   // std::cout << "PC penalty: " << penalty << "\n";
