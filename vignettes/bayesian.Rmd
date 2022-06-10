@@ -125,8 +125,6 @@ fit <- sdmTMB(
 fit
 ```
 
-**Note that Jacobian adjustments are not currently made for transformed parameters, so priors should not yet be placed on standard deviation parameters and the PC prior should not be used on Matern parameters.**
-
 # Fixing a spatial correlation parameter to improve convergence
 
 Sometimes some of the spatial correlation parameters can be challenging to estimate with Stan.
