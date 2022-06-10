@@ -662,7 +662,11 @@ Type objective_function<Type>::operator()()
             break;
           case tweedie_family:
             s1 = invlogit(thetaf) + Type(1.0);
-            if (!sdmTMB::isNA(priors(12))) jnll -= dnorm(s1, priors(12), priors(13), true);
+            if (!sdmTMB::isNA(priors(12))) {
+              jnll -= dnorm(s1, priors(12), priors(13), true);
+              // derivative: https://www.wolframalpha.com/input?i=e%5Ex%2F%281%2Be%5Ex%29+%2B+1
+              if (stan_flag) jnll -= thetaf - 2 * log(1 + exp(thetaf)); // Jacobian adjustment
+            }
             tmp_ll = dtweedie(y_i(i,m), mu_i(i,m), phi(m), s1, true);
             SIMULATE{y_i(i,m) = rtweedie(mu_i(i,m), phi(m), s1);}
             break;
@@ -786,13 +790,19 @@ Type objective_function<Type>::operator()()
           true, /* log */
           share_range(m), stan_flag);
     }
+    if (!sdmTMB::isNA(priors(8))) { // phi
+      jnll -= dnorm(phi(m), priors(8), priors(9), true);
+      if (stan_flag) jnll -= ln_phi(m); // Jacobian adjustment
     }
-    if (!sdmTMB::isNA(priors(8))) jnll -= dnorm(phi(m), priors(8), priors(9), true);
-    if (!sdmTMB::isNA(priors(10))) jnll -= dnorm(rho(m), priors(10), priors(11), true);
+    if (!sdmTMB::isNA(priors(10))) { // AR1 random field rho
+      jnll -= dnorm(rho(m), priors(10), priors(11), true);
+      // Jacobian adjustment:
+      // transform = 2 * (e^x/(1+e^x)) - 1
+      // https://www.wolframalpha.com/input?i=2+*+%28e%5Ex%2F%281%2Be%5Ex%29%29+-+1
+      // log abs derivative = log((2 * exp(x)) / (1 + exp(x))^2)
+      if (stan_flag) jnll -= log(2.) + ar1_phi(m) - 2. * log(1. + exp(ar1_phi(m)));
+    }
   }
-
-  // Jacobians for Stan:
-  // FIXME
 
   // ------------------ Predictions on new data --------------------------------
 
