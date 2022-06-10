@@ -23,30 +23,60 @@ in \code{\link[=predict.sdmTMB]{predict.sdmTMB()}}.
 \dontshow{if (inla_installed() && require("tmbstan", quietly = TRUE) && ggplot2_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 
 \donttest{
-pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
-plot(pcod_spde)
+mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 35) # quite coarse
 
-# here we will fix the random field parameters at their approximate
-# MLEs (maximum likelihood estimates) from a previous fit
-# to improve speed of convergence:
-m_tmb <- sdmTMB(density ~ 0 + as.factor(year),
-  data = pcod, mesh = pcod_spde, family = tweedie(link = "log"), time = "year",
-  control = sdmTMBcontrol(start = list(ln_kappa = rep(-1.58, 2),
-    ln_tau_E = -0.15, ln_tau_O = -0.65),
-    map = list(ln_kappa = rep(factor(NA), 2),
-      ln_tau_E = factor(NA), ln_tau_O = factor(NA))))
-m_tmb
+# Fit with marginal maximum likelihood first:
 
-# will take 3-5 minutes:
+fit <- sdmTMB(
+  density ~ 0 + as.factor(year),
+  data = pcod_2011, mesh = mesh,
+  family = tweedie(link = "log"),
+  priors = sdmTMBpriors(
+    matern_s = pc_matern(range_gt = 10, sigma_lt = 5),
+    matern_st = pc_matern(range_gt = 10, sigma_lt = 5),
+    b = normal(rep(0, 4), scale = rep(10, 4)) # 4 main effects
+  ),
+  time = "year"
+)
+fit
+
+# Create a 'map' vector for TMB to 'fix' kappa at the MLE value
+# to improve speed of convergence.
+# Factor NA values cause TMB to fix or map the parameter
+# at the starting value.
+
+pars <- sdmTMB::get_pars(fit)
+kappa_map <- factor(rep(NA, length(pars$ln_kappa)))
+
+# Rebuild model updating some elements:
+fit_mle <- update(
+  fit,
+  control = sdmTMBcontrol(
+    start = list(
+      ln_kappa = pars$ln_kappa
+    ),
+    map = list(
+      ln_kappa = kappa_map
+    )
+  ),
+  do_fit = FALSE # no need to actually fit
+)
+
+
+# Will take a few minutes:
 library(tmbstan)
-m_stan <- tmbstan(m_tmb$tmb_obj, iter = 200, chains = 1)
-print(m_stan, pars = c("b_j", "thetaf", "ln_phi", "omega_s[1]", "epsilon_st[1]"))
+m_stan <- tmbstan(fit_mle$tmb_obj, iter = 100, chains = 1)
+print(
+  m_stan,
+  pars = c("b_j", "thetaf", "ln_phi", "omega_s[1]", "epsilon_st[1]")
+)
 
 post <- extract_mcmc(m_stan)
 dim(post)
 
-p <- predict(m_tmb, newdata = qcs_grid, tmbstan_model = m_stan)
-p_last <- p[qcs_grid$year == max(qcs_grid$year), ] # just plot last year
+nd <- subset(qcs_grid, year >= 2011)
+p <- predict(fit_mle, newdata = nd, tmbstan_model = m_stan)
+p_last <- p[nd$year == max(nd$year), ] # just plot last year
 pred <- qcs_grid[qcs_grid$year == max(qcs_grid$year), ]
 pred$est <- apply(exp(p_last), 1, median)
 pred$lwr <- apply(exp(p_last), 1, quantile, probs = 0.1)
