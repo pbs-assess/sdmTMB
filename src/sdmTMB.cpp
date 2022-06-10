@@ -873,26 +873,27 @@ Type objective_function<Type>::operator()()
     // Spatial and spatiotemporal random fields (by unique location):
     array<Type> proj_omega_s_A_unique(n_p_mesh, n_m);
     array<Type> proj_zeta_s_A_unique(n_p_mesh, n_z, n_m);
-    array<Type> proj_epsilon_st_A(n_p_mesh, n_t, n_m);
+    array<Type> proj_epsilon_st_A_unique(n_p_mesh, n_t, n_m);
+    proj_epsilon_st_A_unique.setZero();
 
     // Expanded to full length:
     array<Type> proj_omega_s_A(n_p, n_m);
     array<Type> proj_zeta_s_A(n_p, n_z, n_m);
     array<Type> proj_epsilon_st_A_vec(n_p, n_m);
     proj_zeta_s_A.setZero(); // may not get filled
-    proj_epsilon_st_A.setZero();
 
     for (int m = 0; m < n_m; m++) {
       if (!rw_fields(m)) { // iid or ar1
         for (int t = 0; t < n_t; t++) {
-          proj_epsilon_st_A.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
+          proj_epsilon_st_A_unique.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
         }
       } else { // rw
         for (int t = 0; t < n_t; t++) {
           if (t == 0) {
-            proj_epsilon_st_A.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
+            proj_epsilon_st_A_unique.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
           } else {
-            proj_epsilon_st_A.col(m).col(t) = proj_epsilon_st_A.col(m).col(t-1) + proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
+            proj_epsilon_st_A_unique.col(m).col(t) = proj_epsilon_st_A_unique.col(m).col(t-1) +
+              proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
           }
         }
       }
@@ -914,7 +915,7 @@ Type objective_function<Type>::operator()()
     for (int m = 0; m < n_m; m++) {
       for (int i = 0; i < n_p; i++) {
         proj_omega_s_A(i,m) = proj_omega_s_A_unique(proj_spatial_index(i),m);
-        proj_epsilon_st_A_vec(i,m) = proj_epsilon_st_A(proj_spatial_index(i), proj_year(i),m);
+        proj_epsilon_st_A_vec(i,m) = proj_epsilon_st_A_unique(proj_spatial_index(i), proj_year(i),m);
         for (int z = 0; z < n_z; z++) {
           proj_zeta_s_A(i,z,m) = proj_zeta_s_A_unique(proj_spatial_index(i),z,m);
         }
