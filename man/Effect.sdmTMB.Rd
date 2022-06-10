@@ -4,7 +4,7 @@
 \alias{Effect.sdmTMB}
 \title{Calculate effects}
 \usage{
-Effect.sdmTMB(focal.predictors, mod, ...)
+\method{Effect}{sdmTMB}(focal.predictors, mod, ...)
 }
 \arguments{
 \item{focal.predictors}{a character vector of one or more predictors in the model in any order.}
@@ -15,11 +15,4 @@ Effect.sdmTMB(focal.predictors, mod, ...)
 }
 \description{
 Used by effects package
-}
-\examples{
-\dontshow{if (inla_installed() && require("effects", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-fit <- sdmTMB(present ~ depth_scaled, data = pcod_2011, family = binomial(),
-  spatial = "off")
-effects::effect("depth_scaled", fit)
-\dontshow{\}) # examplesIf}
 }
