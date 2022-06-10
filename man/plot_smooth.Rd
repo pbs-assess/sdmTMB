@@ -30,7 +30,7 @@ plot_smooth(
 \item{return_data}{Logical: return the predicted data instead of making a plot?}
 }
 \description{
-Plot a smooth term from an sdmTMB model
+\strong{Deprecated: use \code{visreg::visreg()}. See \code{\link[=visreg_delta]{visreg_delta()}} for examples.}
 }
 \details{
 Note:

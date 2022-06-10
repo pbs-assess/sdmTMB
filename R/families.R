@@ -31,7 +31,8 @@ add_to_family <- function(x) {
 #' @name Families
 #'
 #' @return
-#' A list with elements `family`, `link`, `linkfun`, and `linkinv`.
+#' A list with elements common to standard R family objects including `family`,
+#' `link`, `linkfun`, and `linkinv`.
 #'
 #' @examples
 #' Beta(link = "logit")

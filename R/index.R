@@ -10,6 +10,15 @@
 #' @param ... Passed to [TMB::sdreport()].
 #'
 #' @seealso [get_index_sims()]
+#' @return
+#' For `get_index()`:
+#' A data frame with a columns for time, estimate, lower and upper
+#' confidence intervals, log estimate, and standard error of the log estimate.
+#'
+#' For `get_cog()`:
+#' A data frame with a columns for time, estimate (center of gravity in x and y
+#' coordinates), lower and upper confidence intervals, and standard error of
+#' center of gravity coordinates.
 #'
 #' @references
 #'
@@ -38,7 +47,6 @@
 #' bias correction in statistical models using random effects, with spatial and
 #' population dynamics examples. Fisheries Research 175: 66–74.
 #' \doi{10.1016/j.fishres.2015.11.016}
-
 #'
 #' @examplesIf inla_installed()
 #' \donttest{
@@ -209,8 +217,8 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   d$lwr <- as.numeric(trans(d$trans_est + stats::qnorm((1-level)/2) * d$se))
   d$upr <- as.numeric(trans(d$trans_est + stats::qnorm(1-(1-level)/2) * d$se))
   d[[time_name]] <- sort(unique(obj$fit_obj$data[[time_name]]))
-  d$max_gradient <- max(conv$final_grads)
-  d$bad_eig <- conv$bad_eig
-  d[,c(time_name, 'est', 'lwr', 'upr', 'trans_est', 'se', 'max_gradient', 'bad_eig'),
+  # d$max_gradient <- max(conv$final_grads)
+  # d$bad_eig <- conv$bad_eig
+  d[,c(time_name, 'est', 'lwr', 'upr', 'trans_est', 'se'),
     drop = FALSE]
 }

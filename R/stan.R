@@ -11,9 +11,9 @@
 #'
 #' @param object Output from [tmbstan::tmbstan()] run on the `tmb_obj`
 #'   element of an [sdmTMB()] model. E.g., `tmbstan(your_model$tmb_obj)`.
-#' @examples
+#' @examplesIf inla_installed() && require("tmbstan", quietly = TRUE) && ggplot2_installed()
 #'
-#' \dontrun{
+#' \donttest{
 #' pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
 #' plot(pcod_spde)
 #'

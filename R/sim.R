@@ -42,7 +42,6 @@
 #' * `observed` represents the simulated process with observation error.
 #' * `b_...` contain the beta values for each covariate used to simulate each time slice.
 #' * `cov_...` covariate values for each observation.
-
 #' @export
 #'
 #' @examples

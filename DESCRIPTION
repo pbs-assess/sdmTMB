@@ -1,7 +1,7 @@
 Type: Package
 Package: sdmTMB
-Title: Spatial and Spatiotemporal GLMMs with 'TMB' using the SPDE Approach
-Version: 0.0.24.9009
+Title: Spatial and Spatiotemporal SPDE-based GLMMs with 'TMB'
+Version: 0.0.25.9000
 Authors@R: c(
     person(c("Sean", "C."), "Anderson", , "sean.anderson@dfo-mpo.gc.ca", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-9563-1937")),
@@ -73,8 +73,9 @@ Suggests:
     dplyr,
     effects (>= 4.0-1),
     future.apply,
-    ggplot2,
+    ggeffects,
     ggforce,
+    ggplot2,
     INLA,
     knitr,
     rgdal,

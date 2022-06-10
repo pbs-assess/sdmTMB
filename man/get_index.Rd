@@ -41,6 +41,16 @@ internally to match.}
 
 \item{format}{Long or wide.}
 }
+\value{
+For \code{get_index()}:
+A data frame with a columns for time, estimate, lower and upper
+confidence intervals, log estimate, and standard error of the log estimate.
+
+For \code{get_cog()}:
+A data frame with a columns for time, estimate (center of gravity in x and y
+coordinates), lower and upper confidence intervals, and standard error of
+center of gravity coordinates.
+}
 \description{
 Extract a relative biomass/abundance index or a center of gravity
 }

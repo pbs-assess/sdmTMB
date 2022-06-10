@@ -13,8 +13,7 @@
 #' @return An updated model fit of class `sdmTMB`.
 #' @export
 #'
-#' @examples
-#' if (inla_installed()) {
+#' @examplesIf inla_installed()
 #' # Run extra optimization steps to help convergence:
 #' # (Not typically needed)
 #' fit <- sdmTMB(density ~ 0 + poly(depth, 2) + as.factor(year),
@@ -22,7 +21,6 @@
 #' fit_1 <- run_extra_optimization(fit, nlminb_loops = 0, newton_loops = 1)
 #' max(fit$gradients)
 #' max(fit_1$gradients)
-#' }
 run_extra_optimization <- function(object,
   nlminb_loops = 1,
   newton_loops = 1) {

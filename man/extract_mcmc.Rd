@@ -20,8 +20,9 @@ fully Bayesian predictions. See the \code{tmbstan_model} argument
 in \code{\link[=predict.sdmTMB]{predict.sdmTMB()}}.
 }
 \examples{
+\dontshow{if (inla_installed() && require("tmbstan", quietly = TRUE) && ggplot2_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 
-\dontrun{
+\donttest{
 pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
 plot(pcod_spde)
 
@@ -66,4 +67,5 @@ index_samples <- get_index_sims(p, return_sims = TRUE)
 ggplot(index_samples, aes(as.factor(year), .value)) +
   geom_violin()
 }
+\dontshow{\}) # examplesIf}
 }

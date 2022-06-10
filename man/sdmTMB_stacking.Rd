@@ -30,33 +30,32 @@ other approaches include the log score. We adopt the latter here, where log
 scores are used to generate the stacking of predictive distributions
 }
 \examples{
-if (inla_installed()) {
-
-  # Set parallel processing if desired:
-  # library(future)
-  # plan(multisession)
-  # depth as quadratic:
-  set.seed(1)
-  m_cv_1 <- sdmTMB_cv(
-    density ~ 0 + depth_scaled + depth_scaled2,
-    data = pcod_2011, mesh = pcod_mesh_2011,
-    family = tweedie(link = "log"), k_folds = 2
-  )
-  # depth as linear:
-  set.seed(1)
-  m_cv_2 <- sdmTMB_cv(
-    density ~ 0 + depth_scaled,
-    data = pcod_2011, mesh = pcod_mesh_2011,
-    family = tweedie(link = "log"), k_folds = 2
-  )
-  set.seed(1)
-  m_cv_3 <- sdmTMB_cv(
-    density ~ 1,
-    data = pcod_2011, mesh = pcod_mesh_2011,
-    family = tweedie(link = "log"), k_folds = 2
-  )
-  models <- list(m_cv_1, m_cv_2, m_cv_3)
-  weights <- sdmTMB_stacking(models)
-  weights
-}
+\dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+# Set parallel processing if desired:
+# library(future)
+# plan(multisession)
+# depth as quadratic:
+set.seed(1)
+m_cv_1 <- sdmTMB_cv(
+  density ~ 0 + depth_scaled + depth_scaled2,
+  data = pcod_2011, mesh = pcod_mesh_2011,
+  family = tweedie(link = "log"), k_folds = 2
+)
+# depth as linear:
+set.seed(1)
+m_cv_2 <- sdmTMB_cv(
+  density ~ 0 + depth_scaled,
+  data = pcod_2011, mesh = pcod_mesh_2011,
+  family = tweedie(link = "log"), k_folds = 2
+)
+set.seed(1)
+m_cv_3 <- sdmTMB_cv(
+  density ~ 1,
+  data = pcod_2011, mesh = pcod_mesh_2011,
+  family = tweedie(link = "log"), k_folds = 2
+)
+models <- list(m_cv_1, m_cv_2, m_cv_3)
+weights <- sdmTMB_stacking(models)
+weights
+\dontshow{\}) # examplesIf}
 }

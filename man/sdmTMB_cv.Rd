@@ -68,7 +68,7 @@ and CV log likelihood.
 Save log likelihoods of k-fold cross-validation for sdmTMB models
 }
 \examples{
-if (inla_installed()) {
+\dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 
 # Set parallel processing if desired:
@@ -106,5 +106,5 @@ m_cv3 <- sdmTMB_cv(
   fold_ids = rep(seq(1, 3), nrow(pcod))[seq(1, nrow(pcod))]
 )
 }
-}
+\dontshow{\}) # examplesIf}
 }

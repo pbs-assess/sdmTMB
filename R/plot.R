@@ -152,6 +152,8 @@ plot_anisotropy2 <- function(object, return_data = FALSE) {
 
 #' Plot a smooth term from an sdmTMB model
 #'
+#' **Deprecated: use `visreg::visreg()`. See [visreg_delta()] for examples.**
+#'
 #' @param object An [sdmTMB()] model.
 #' @param select The smoother term to plot.
 #' @param n The number of equally spaced points to evaluate the smoother along.

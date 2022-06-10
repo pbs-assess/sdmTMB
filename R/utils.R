@@ -60,6 +60,7 @@
 #' @param ... Anything else. See the 'Control parameters' section of
 #'   [stats::nlminb()].
 #'
+#' @return A list of control arguments
 #' @export
 #' @examples
 #' sdmTMBcontrol()

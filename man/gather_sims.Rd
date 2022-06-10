@@ -36,7 +36,7 @@ long-format data frame. The format matches the format in the \pkg{tidybayes}
 \code{spread_draws()} and \code{gather_draws()} functions.
 }
 \examples{
-if (inla_installed()) {
+\dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2,
   data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(),
   spatiotemporal = "AR1", time = "year")
@@ -48,5 +48,5 @@ if (require("ggplot2", quietly = TRUE)) {
   ggplot(samps, aes(.value)) + geom_histogram() +
     facet_wrap(~.variable, scales = "free_x")
 }
-}
+\dontshow{\}) # examplesIf}
 }

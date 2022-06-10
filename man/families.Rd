@@ -53,7 +53,8 @@ delta_truncated_nbinom1(link1 = "logit", link2 = "log")
 \item{link2}{Link for second part of delta/hurdle model.}
 }
 \value{
-A list with elements \code{family}, \code{link}, \code{linkfun}, and \code{linkinv}.
+A list with elements common to standard R family objects including \code{family},
+\code{link}, \code{linkfun}, and \code{linkinv}.
 }
 \description{
 Additional families compatible with \code{\link[=sdmTMB]{sdmTMB()}}.
