@@ -25,7 +25,11 @@ sdmTMB(
   priors = sdmTMBpriors(),
   previous_fit = NULL,
   experimental = NULL,
-  do_fit = TRUE
+  do_fit = TRUE,
+  do_index = FALSE,
+  predict_args = NULL,
+  index_args = NULL,
+  bayesian = FALSE
 )
 }
 \arguments{
@@ -76,7 +80,7 @@ may wish to switch to the random walk \code{"RW"}. Capitalization is ignored.
 \code{TRUE} gets converted to \code{'IID'} and \code{FALSE} gets converted to \code{off}.}
 
 \item{share_range}{Logical: estimate a shared spatial and spatiotemporal
-range parameter (\code{TRUE}) or independent range parameters (\code{FALSE}). If a
+range parameter (\code{TRUE}, default) or independent range parameters (\code{FALSE}). If a
 delta model, can be a list. E.g., \code{list(TRUE, FALSE)}.}
 
 \item{time_varying}{An optional one-sided formula describing covariates that
@@ -134,6 +138,22 @@ be dragons.}
 
 \item{do_fit}{Fit the model (\code{TRUE}) or return the processed data without
 fitting (\code{FALSE})?}
+
+\item{do_index}{Do index standardization calculations while fitting? Saves
+memory and time when working with large datasets or projection grids.
+If \code{TRUE}, then \code{predict_args} must have a \code{newdata} element supplied
+and \code{area} can be supplied to \code{index_args}.}
+
+\item{predict_args}{A list of arguments to pass to \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} if
+\code{do_index = TRUE}.}
+
+\item{index_args}{A list of arguments to pass to \code{\link[=get_index]{get_index()}} if
+\code{do_index = TRUE}. Currently, only \code{area} is supported. Bias correction
+can be done when calling \code{\link[=get_index]{get_index()}} on the resulting fitted object.}
+
+\item{bayesian}{Logical indicating if the model will be passed to
+\pkg{tmbstan}. If \code{TRUE}, Jacobian adjustments are applied to account for
+parameter transformations when priors are applied.}
 }
 \value{
 An object (list) of class \code{sdmTMB}. Useful elements include:
@@ -267,7 +287,7 @@ such as an index of abundance with \code{\link[=get_index]{get_index()}} using t
 method within TMB.
 }
 \examples{
-\dontshow{if (inla_installed() && require("visreg", quietly = TRUE) && ggplot2_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (inla_installed() && require("visreg", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 
 library(sdmTMB)
 
@@ -283,8 +303,7 @@ mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
 
 # Quick mesh plot:
 plot(mesh)
-# Or:
-# ggplot2::ggplot() + inlabru::gg(mesh$mesh)
+# Or use ggplot2::ggplot() + inlabru::gg(mesh$mesh)
 
 # Fit a Tweedie spatial random field GLMM with a smoother for depth:
 fit <- sdmTMB(

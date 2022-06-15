@@ -75,3 +75,91 @@ formula.sdmTMB <- function (x, ...) {
     return(x$formula[[1]])
   }
 }
+
+#' @importFrom stats vcov
+#' @export
+vcov.sdmTMB <- function(object, ...) {
+  vc <- object$sd_report$cov.fixed
+  rn <- rownames(vc)
+  bj <- grepl("^b_j", rn)
+  vc <- vc[bj, bj]
+  b <- tidy(object)
+  stopifnot(nrow(b) == nrow(vc))
+  rownames(vc) <- b$term
+  colnames(vc) <- b$term
+  vc
+}
+
+#' @importFrom stats terms
+#' @export
+terms.sdmTMB <- function(x, ...) {
+  # DELTA FIXME: hardcoded to model 1!
+  class(x) <- "glm" # fake
+  out <- stats::terms(x)
+  out[[1]]
+}
+
+#' Calculate effects
+#'
+#' Used by effects package
+#'
+#' @inheritParams effects::Effect
+#'
+#' @importFrom stats formula poisson
+#'
+#' @rawNamespace if(getRversion() >= "3.6.0") {
+#'   S3method(effects::Effect, sdmTMB)
+#' } else {
+#'   export(Effect.sdmTMB)
+#' }
+# @examplesIf inla_installed() && require("effects", quietly = TRUE)
+# fit <- sdmTMB(present ~ depth_scaled, data = pcod_2011, family = binomial(),
+#   spatial = "off")
+# effects::effect("depth_scaled", fit)
+Effect.sdmTMB <- function(focal.predictors, mod, ...) {
+  if (!requireNamespace("effects", quietly = TRUE)) {
+    cli_abort("Please install the effects package")
+  }
+
+  vc <- vcov(mod)
+  b <- tidy(mod)
+
+  dummyfuns <- list(
+    variance = function(mu) mu,
+    initialize = expression(mustart = y + 0.1),
+    dev.resids = function(...) stats::poisson()$dev.res(...)
+  )
+
+  fam <- family(mod)
+
+  # from glmmTMB:
+  dummyfuns <- list(
+    variance = function(mu) mu,
+    initialize = expression(mustart <- y + 0.1),
+    dev.resids = function(...) poisson()$dev.res(...)
+  )
+  for (i in names(dummyfuns)) {
+    if (is.null(fam[[i]])) fam[[i]] <- dummyfuns[[i]]
+  }
+
+  coefs <- b$estimate
+  names(coefs) <- b$term
+  args <- list(
+    call = mod$call,
+    coefficients = coefs,
+    vcov = vc,
+    family = fam,
+    formula = formula(mod)
+  )
+  effects::Effect.default(focal.predictors, mod, ..., sources = args)
+}
+
+# get_term_names <- function(model) {
+#   .names <- gsub(" ", "", labels(terms(model)))
+#   .names
+# }
+
+#' @export
+model.frame.sdmTMB <- function(formula, ...) {
+  as.data.frame(formula$data) # no tibbles!
+}

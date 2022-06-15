@@ -67,13 +67,23 @@ and CV log likelihood.
 \description{
 Save log likelihoods of k-fold cross-validation for sdmTMB models
 }
+\details{
+Parallel processing can be used by setting a \code{future::plan()}.
+
+For example:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{library(future)
+plan(multisession)
+# now use sdmTMB_cv() ...
+}\if{html}{\out{</div>}}
+}
 \examples{
-if (inla_installed()) {
+\dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 
-# Set parallel processing if desired:
-# library(future)
-# plan(multisession)
+# Set parallel processing first if desired with the future package.
+# See the Details section above.
+
 m_cv <- sdmTMB_cv(
   density ~ 0 + depth_scaled + depth_scaled2,
   data = pcod, mesh = mesh,
@@ -106,5 +116,5 @@ m_cv3 <- sdmTMB_cv(
   fold_ids = rep(seq(1, 3), nrow(pcod))[seq(1, nrow(pcod))]
 )
 }
-}
+\dontshow{\}) # examplesIf}
 }

@@ -1,3 +1,26 @@
+# modified from glmmTMB
+# extra stuff for Effects package, class, etc.
+add_to_family <- function(x) {
+  # x <- c(x, list(link = link), make.link(link))
+  # Effect.default/glm.fit
+  if (is.null(x$aic)) {
+    x <- c(x, list(aic = function(...) NA_real_))
+  }
+  if (is.null(x$initialize)) {
+    x <- c(x, list(initialize = expression({
+      mustart <- y + 0.1
+    })))
+  }
+  if (is.null(x$dev.resids)) {
+    # can't return NA, glm.fit is unhappy
+    x <- c(x, list(dev.resids = function(y, mu, wt) {
+      rep(0, length(y))
+    }))
+  }
+  class(x) <- "family"
+  x
+}
+
 #' Additional families
 #'
 #' Additional families compatible with [sdmTMB()].
@@ -8,7 +31,8 @@
 #' @name Families
 #'
 #' @return
-#' A list with elements `family`, `link`, `linkfun`, and `linkinv`.
+#' A list with elements common to standard R family objects including `family`,
+#' `link`, `linkfun`, and `linkinv`.
 #'
 #' @examples
 #' Beta(link = "logit")
@@ -21,8 +45,8 @@ Beta <- function(link = "logit") {
     stats <- stats::make.link(linktemp)
   else if (is.character(link))
     stats <- stats::make.link(link)
-  list(family = "Beta", link = linktemp, linkfun = stats$linkfun,
-    linkinv = stats$linkinv)
+  x <- c(list(family = "Beta", link = linktemp), stats)
+  add_to_family(x)
 }
 
 #' @export
@@ -38,9 +62,8 @@ lognormal <- function(link = "log") {
     stats <- stats::make.link(linktemp)
   else if (is.character(link))
     stats <- stats::make.link(link)
-
-  list(family = "lognormal", link = linktemp, linkfun = stats$linkfun,
-    linkinv = stats$linkinv)
+  x <- c(list(family = "lognormal", link = linktemp), stats)
+  add_to_family(x)
 }
 
 #' @details
@@ -61,8 +84,8 @@ nbinom2 <- function(link = "log") {
     stats <- stats::make.link(linktemp)
   else if (is.character(link))
     stats <- stats::make.link(link)
-  list(family = "nbinom2", link = linktemp, linkfun = stats$linkfun,
-    linkinv = stats$linkinv)
+  x <- c(list(family = "nbinom2", link = linktemp), stats)
+  add_to_family(x)
 }
 
 #' @details
@@ -81,8 +104,8 @@ nbinom1 <- function(link = "log") {
     stats <- stats::make.link(linktemp)
   else if (is.character(link))
     stats <- stats::make.link(link)
-  list(family = "nbinom1", link = linktemp, linkfun = stats$linkfun,
-    linkinv = stats$linkinv)
+  x <- c(list(family = "nbinom1", link = linktemp), stats)
+  add_to_family(x)
 }
 
 #' @export
@@ -138,8 +161,8 @@ student <- function(link = "identity", df = 3) {
   else if (is.character(link))
     stats <- stats::make.link(link)
 
-  list(family = "student", link = linktemp, linkfun = stats$linkfun,
-    linkinv = stats$linkinv, df = df)
+  x <- c(list(family = "student", link = linktemp, df = df), stats)
+  add_to_family(x)
 }
 
 #' @export
@@ -156,8 +179,8 @@ tweedie <- function(link = "log") {
   else if (is.character(link))
     stats <- stats::make.link(link)
 
-  list(family = "tweedie", link = linktemp, linkfun = stats$linkfun,
-    linkinv = stats$linkinv)
+  x <- c(list(family = "tweedie", link = linktemp), stats)
+  add_to_family(x)
 }
 
 #' @export
@@ -237,25 +260,25 @@ delta_truncated_nbinom1 <- function(link1 = "logit", link2 = "log") {
     clean_name = "delta_truncated_nbinom1(link1 = 'logit', link2 = 'log')")
 }
 
-#' @examples
-#' delta_poisson_link_gamma()
-#' @rdname families
-#' @details `delta_poisson_link_gamma()` is the Poisson-link (complementary
-#'   log-log) delta model (Thorson 2018).
-#' @references
-#' Thorson, J. T. (2018). Three problems with the conventional delta-model for
-#' biomass sampling data, and a computationally efficient alternative. Canadian
-#' Journal of Fisheries and Aquatic Sciences, 75(9), 1369-1382.
-#' \doi{10.1139/cjfas-2017-0266}
-#' @export
-delta_poisson_link_gamma <- function(link1 = "log", link2 = "log") {
-  cli_inform("`delta_poisson_link_gamma()` is experimental and not all functions work with it")
-  cli_inform("Index calculations may not be correct with the `delta_poisson_link_gamma()` family yet")
-  link1 <- match.arg(link1)
-  link2 <- match.arg(link2)
-  f1 <- binomial(link = "log")
-  f2 <- truncated_nbinom1(link = "log")
-  list(f1, f2, delta = TRUE, link = c("log", "log"),
-    family = c("binomial", "Gamma"), type = "poisson_link_delta",
-    clean_name = "delta_poisson_link_gamma(link1 = 'logit', link2 = 'log')")
-}
+# @examples
+# delta_poisson_link_gamma()
+# @rdname families
+# @details `delta_poisson_link_gamma()` is the Poisson-link (complementary
+#   log-log) delta model (Thorson 2018).
+# @references
+# Thorson, J. T. (2018). Three problems with the conventional delta-model for
+# biomass sampling data, and a computationally efficient alternative. Canadian
+# Journal of Fisheries and Aquatic Sciences, 75(9), 1369-1382.
+# \doi{10.1139/cjfas-2017-0266}
+# @export
+# delta_poisson_link_gamma <- function(link1 = "log", link2 = "log") {
+#   cli_abort("`delta_poisson_link_gamma()` is experimental and not all functions work with it")
+#   cli_inform("Index calculations may not be correct with the `delta_poisson_link_gamma()` family yet")
+#   link1 <- match.arg(link1)
+#   link2 <- match.arg(link2)
+#   f1 <- binomial(link = "log")
+#   f2 <- truncated_nbinom1(link = "log")
+#   list(f1, f2, delta = TRUE, link = c("log", "log"),
+#     family = c("binomial", "Gamma"), type = "poisson_link_delta",
+#     clean_name = "delta_poisson_link_gamma(link1 = 'logit', link2 = 'log')")
+# }

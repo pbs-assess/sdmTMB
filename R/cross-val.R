@@ -100,13 +100,23 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' * `converged`: Logical: all `pdHess` `TRUE`?
 #' * `max_gradients`: Max gradient per fold.
 #'
-#' @examples
-#' if (inla_installed()) {
+#' @details
+#' Parallel processing can be used by setting a `future::plan()`.
+#'
+#' For example:
+#'
+#' ```
+#' library(future)
+#' plan(multisession)
+#' # now use sdmTMB_cv() ...
+#' ```
+#'
+#' @examplesIf inla_installed()
 #' mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 #'
-#' # Set parallel processing if desired:
-#' # library(future)
-#' # plan(multisession)
+#' # Set parallel processing first if desired with the future package.
+#' # See the Details section above.
+#'
 #' m_cv <- sdmTMB_cv(
 #'   density ~ 0 + depth_scaled + depth_scaled2,
 #'   data = pcod, mesh = mesh,
@@ -138,7 +148,6 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'   family = tweedie(link = "log"),
 #'   fold_ids = rep(seq(1, 3), nrow(pcod))[seq(1, nrow(pcod))]
 #' )
-#' }
 #' }
 sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
   k_folds = 8, fold_ids = NULL, parallel = TRUE,

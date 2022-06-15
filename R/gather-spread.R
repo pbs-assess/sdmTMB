@@ -23,8 +23,7 @@
 #' * `.iteration`: the sample ID
 #' * columns for each parameter with a sample per row
 #'
-#' @examples
-#' if (inla_installed()) {
+#' @examplesIf inla_installed()
 #' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2,
 #'   data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(),
 #'   spatiotemporal = "AR1", time = "year")
@@ -35,7 +34,6 @@
 #' if (require("ggplot2", quietly = TRUE)) {
 #'   ggplot(samps, aes(.value)) + geom_histogram() +
 #'     facet_wrap(~.variable, scales = "free_x")
-#' }
 #' }
 
 spread_sims <- function(object, nsim = 200, n_sims = deprecated()) {

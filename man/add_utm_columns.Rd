@@ -49,9 +49,9 @@ range parameter estimate is not too small, which can cause computational
 issues. This depends on the the scale of your data.
 }
 \examples{
-if (require("sf", quietly = TRUE)) {
-  d <- data.frame(lat = c(52.1, 53.4), lon = c(-130.0, -131.4))
-  get_crs(d, c("lon", "lat"))
-  add_utm_columns(d, c("lon", "lat"))
-}
+\dontshow{if (require("sf", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+d <- data.frame(lat = c(52.1, 53.4), lon = c(-130.0, -131.4))
+get_crs(d, c("lon", "lat"))
+add_utm_columns(d, c("lon", "lat"))
+\dontshow{\}) # examplesIf}
 }

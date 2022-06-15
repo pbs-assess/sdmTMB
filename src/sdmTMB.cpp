@@ -23,7 +23,8 @@ enum valid_link {
   identity_link = 0,
   log_link      = 1,
   logit_link    = 2,
-  inverse_link  = 3
+  inverse_link  = 3,
+  cloglog_link  = 4
 };
 
 template <class Type>
@@ -43,10 +44,30 @@ Type InverseLink(Type eta, int link)
   case inverse_link:
     out = Type(1.0) / eta;
     break;
+  case cloglog_link:
+    out = Type(1) - exp(-exp(eta));
+    break;
   default:
     error("Link not implemented.");
   }
   return out;
+}
+
+// logit transformed inverse_linkfun without losing too much accuracy
+template<class Type>
+Type LogitInverseLink(Type eta, int link) {
+  Type ans;
+  switch (link) {
+  case logit_link:
+    ans = eta;
+    break;
+  case cloglog_link:
+    ans = sdmTMB::logit_invcloglog(eta);
+    break;
+  default:
+    ans = logit(InverseLink(eta, link));
+  }
+  return ans;
 }
 
 template <class Type>
@@ -83,7 +104,7 @@ Type objective_function<Type>::operator()()
 
   // Vectors of real data
   DATA_ARRAY(y_i);      // response
-  DATA_STRUCT(X_ij, sdmTMB::LOM_t); //DATA_MATRIX(X_ij);     // array of model matrices
+  DATA_STRUCT(X_ij, sdmTMB::LOM_t); // list of model matrices
   DATA_MATRIX(z_i);      // model matrix for spatial covariate effect
   DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
@@ -183,10 +204,13 @@ Type objective_function<Type>::operator()()
   DATA_IVECTOR(b_smooth_start);
 
   DATA_IVECTOR(sim_re); // sim random effects? 0,1; order: omega, epsilon, zeta, IID, RW, smoothers
+  DATA_IVECTOR(simulate_t); // sim this specific time step? (used for forecasting)
 
   DATA_VECTOR(lwr); // lower bound for censpois on counts
   DATA_VECTOR(upr); // upper bound for censpois on counts
   DATA_INTEGER(poisson_link_delta); // logical
+
+  DATA_INTEGER(stan_flag); // logical whether to pass the model to Stan
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -398,34 +422,65 @@ Type objective_function<Type>::operator()()
           PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E(m)))(epsilon_st.col(m).col(t));
         if (sim_re(1)) {
           for (int t = 0; t < n_t; t++) {
-            vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
-            SIMULATE {GMRF(Q_temp, s).simulate(epsilon_st_tmp);
-            epsilon_st.col(m).col(t) = epsilon_st_tmp / exp(ln_tau_E(m));}
+            if (simulate_t(t)) {
+              vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
+              SIMULATE {GMRF(Q_temp, s).simulate(epsilon_st_tmp);
+                epsilon_st.col(m).col(t) = epsilon_st_tmp / exp(ln_tau_E(m));}
+            }
           }
         }
       } else {
-        if (ar1_fields(m)) {
-          PARALLEL_REGION jnll += SCALE(SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)), 1./exp(ln_tau_E(m)))(epsilon_st.col(m));
+        if (ar1_fields(m)) { // not using separable(ar1()) so we can simulate by time step
+          // PARALLEL_REGION jnll += SCALE(SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)), 1./exp(ln_tau_E(m)))(epsilon_st.col(m));
+          // Split out by year so we can turn on/off simulation by year and model covariates of ln_tau_E:
+          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E(m)))(epsilon_st.col(m).col(0));
+          for (int t = 1; t < n_t; t++) {
+            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. /exp(ln_tau_E(m)))((epsilon_st.col(m).col(t) -
+              rho(m) * epsilon_st.col(m).col(t - 1))/sqrt(1. - rho(m) * rho(m)));
+          }
+          Type n_cols = epsilon_st.col(m).cols();
+          Type n_rows = epsilon_st.col(m).rows();
+          // Penalty to match TMB AR1_t() implementation:
+          PARALLEL_REGION jnll += Type((n_cols - 1.) * n_rows) * log(sqrt(1. - rho(m) * rho(m)));
           if (sim_re(1)) {
-            array<Type> epsilon_st_tmp(epsilon_st.col(m).rows(),n_t);
-            SIMULATE {SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)).simulate(epsilon_st_tmp);
-            epsilon_st.col(m) = epsilon_st_tmp / exp(ln_tau_E(m));}
+            // array<Type> epsilon_st_tmp(epsilon_st.col(m).rows(),n_t);
+            // SIMULATE {SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)).simulate(epsilon_st_tmp);
+            //   epsilon_st.col(m) = epsilon_st_tmp / exp(ln_tau_E(m));}
+            for (int t = 0; t < n_t; t++) {
+              if (simulate_t(t)) {
+                vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
+                SIMULATE {
+                  GMRF(Q_temp, s).simulate(epsilon_st_tmp);
+                  epsilon_st_tmp *= 1./exp(ln_tau_E(m));
+                  // https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html
+                  Type ar1_scaler = sqrt(1. - rho(m) * rho(m));
+                  if (t == 0) {
+                    epsilon_st.col(m).col(0) = epsilon_st_tmp; // no scaling of first step
+                  } else {
+                    epsilon_st.col(m).col(t) = rho(m) * epsilon_st.col(m).col(t-1) + epsilon_st_tmp * ar1_scaler;
+                  }
+                }
+              }
+            }
           }
         } else if (rw_fields(m)) {
           PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1./exp(ln_tau_E(m)))(epsilon_st.col(m).col(0));
           for (int t = 1; t < n_t; t++) {
-            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1./exp(ln_tau_E(m)))(epsilon_st.col(m).col(t) - epsilon_st.col(m).col(t - 1));
+            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s),
+                1./exp(ln_tau_E(m)))(epsilon_st.col(m).col(t) - epsilon_st.col(m).col(t - 1));
           }
           if (sim_re(1)) {
             for (int t = 0; t < n_t; t++) {
-              vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
-              SIMULATE {
-                GMRF(Q_temp, s).simulate(epsilon_st_tmp);
-                epsilon_st_tmp *= 1./exp(ln_tau_E(m));
-                if (t == 0) {
-                  epsilon_st.col(m).col(0) = epsilon_st_tmp;
-                } else {
-                  epsilon_st.col(m).col(t) = epsilon_st.col(m).col(t-1) + epsilon_st_tmp;
+              if (simulate_t(t)) {
+                vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
+                SIMULATE {
+                  GMRF(Q_temp, s).simulate(epsilon_st_tmp);
+                  epsilon_st_tmp *= 1./exp(ln_tau_E(m));
+                  if (t == 0) {
+                    epsilon_st.col(m).col(0) = epsilon_st_tmp;
+                  } else {
+                    epsilon_st.col(m).col(t) = epsilon_st.col(m).col(t-1) + epsilon_st_tmp;
+                  }
                 }
               }
             }
@@ -455,8 +510,10 @@ Type objective_function<Type>::operator()()
       for (int k = 0; k < X_rw_ik.cols(); k++) {
         // flat prior on the initial value... then:
         for (int t = 1; t < n_t; t++) {
-          PARALLEL_REGION jnll += -dnorm(b_rw_t(t, k, m), b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)), true);
-          if (sim_re(4)) SIMULATE{b_rw_t(t, k, m) = rnorm(b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)));}
+          PARALLEL_REGION jnll -=
+            dnorm(b_rw_t(t, k, m), b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)), true);
+          if (sim_re(4) && simulate_t(t))
+            SIMULATE{b_rw_t(t, k, m) = rnorm(b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)));}
         }
       }
     }
@@ -573,9 +630,9 @@ Type objective_function<Type>::operator()()
       // if (n_m > 1) if (family(0) == 1 && family(1) == 4 && link(0) == 1 && link(1) == 1)
       //     poisson_link_delta = true;
 
-      if (family(m) == 1 && link(m) == 2) {
+      if (family(m) == 1) { // binomial
         // binomial(link = "logit"); don't touch (using robust density function in logit space)
-        mu_i(i,m) = eta_i(i,m);
+        mu_i(i,m) = LogitInverseLink(eta_i(i,m), link(m));
       } else if (poisson_link_delta) { // clogog, but put in logit space for robust density function:
         Type n = exp(eta_i(i,0));
         Type p = Type(1) - exp(-exp(offset_i(i)) * n);
@@ -605,14 +662,18 @@ Type objective_function<Type>::operator()()
             break;
           case tweedie_family:
             s1 = invlogit(thetaf) + Type(1.0);
-            if (!sdmTMB::isNA(priors(12))) jnll -= dnorm(s1, priors(12), priors(13), true);
+            if (!sdmTMB::isNA(priors(12))) {
+              jnll -= dnorm(s1, priors(12), priors(13), true);
+              // derivative: https://www.wolframalpha.com/input?i=e%5Ex%2F%281%2Be%5Ex%29+%2B+1
+              if (stan_flag) jnll -= thetaf - 2 * log(1 + exp(thetaf)); // Jacobian adjustment
+            }
             tmp_ll = dtweedie(y_i(i,m), mu_i(i,m), phi(m), s1, true);
             SIMULATE{y_i(i,m) = rtweedie(mu_i(i,m), phi(m), s1);}
             break;
-          case binomial_family:  // in logit space not inverse logit
+          case binomial_family:
             tmp_ll = dbinom_robust(y_i(i,m), size(i), mu_i(i,m), true);
             // SIMULATE{y_i(i,m) = rbinom(size(i), InverseLink(mu_i(i,m), link(m)));}
-            SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));} // FIXME hardcoded invlogit
+            SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));} // hardcoded invlogit b/c mu_i in logit space
             break;
           case poisson_family:
             tmp_ll = dpois(y_i(i,m), mu_i(i,m), true);
@@ -710,27 +771,44 @@ Type objective_function<Type>::operator()()
       jnll += neg_log_dmvnorm(b_j_subset - b_mean_subset);
     }
 
-    // start vector of priors:
-    if (!sdmTMB::isNA(priors(0)) && !sdmTMB::isNA(priors(1)) && !sdmTMB::isNA(priors(2)) && !sdmTMB::isNA(priors(3))) {
+    if (!sdmTMB::isNA(priors(0)) && !sdmTMB::isNA(priors(1)) &&
+        !sdmTMB::isNA(priors(2)) && !sdmTMB::isNA(priors(3))) {
       // std::cout << "Using spatial PC prior" << "\n";
-      jnll -= sdmTMB::pc_prior_matern(ln_tau_O(m), ln_kappa(0,m), priors(0), priors(1), priors(2), priors(3), true);
+      jnll -= sdmTMB::pc_prior_matern(
+          ln_tau_O(m), ln_kappa(0,m),
+          priors(0), priors(1), priors(2), priors(3),
+          true, /* log */
+          false, /* share range */
+          stan_flag);
     }
-    if (!sdmTMB::isNA(priors(4)) && !sdmTMB::isNA(priors(5)) && !sdmTMB::isNA(priors(6)) && !sdmTMB::isNA(priors(7))) {
+    if (!sdmTMB::isNA(priors(4)) && !sdmTMB::isNA(priors(5)) &&
+        !sdmTMB::isNA(priors(6)) && !sdmTMB::isNA(priors(7))) {
       // std::cout << "Using spatiotemporal PC prior" << "\n";
-      jnll -= sdmTMB::pc_prior_matern(ln_tau_E(m), ln_kappa(1,m), priors(4), priors(5), priors(6), priors(7), true);
+      jnll -= sdmTMB::pc_prior_matern(
+          ln_tau_E(m), ln_kappa(1,m),
+          priors(4), priors(5), priors(6), priors(7),
+          true, /* log */
+          share_range(m), stan_flag);
     }
-    if (!sdmTMB::isNA(priors(8))) jnll -= dnorm(phi(m), priors(8), priors(9), true);
-    if (!sdmTMB::isNA(priors(10))) jnll -= dnorm(rho(m), priors(10), priors(11), true);
+    if (!sdmTMB::isNA(priors(8))) { // phi
+      jnll -= dnorm(phi(m), priors(8), priors(9), true);
+      if (stan_flag) jnll -= ln_phi(m); // Jacobian adjustment
+    }
+    if (!sdmTMB::isNA(priors(10))) { // AR1 random field rho
+      jnll -= dnorm(rho(m), priors(10), priors(11), true);
+      // Jacobian adjustment:
+      // transform = 2 * (e^x/(1+e^x)) - 1
+      // https://www.wolframalpha.com/input?i=2+*+%28e%5Ex%2F%281%2Be%5Ex%29%29+-+1
+      // log abs derivative = log((2 * exp(x)) / (1 + exp(x))^2)
+      if (stan_flag) jnll -= log(2.) + ar1_phi(m) - 2. * log(1. + exp(ar1_phi(m)));
+    }
   }
-
-  // Jacobians for Stan:
-  // FIXME
 
   // ------------------ Predictions on new data --------------------------------
 
   if (do_predict) {
     int n_p = proj_X_ij(0).rows(); // n 'p'redicted newdata
-    // DELTA DONE
+    int n_p_mesh = proj_mesh.rows(); // n 'p'redicted mesh (less than n_p if duplicate locations)
     array<Type> proj_fe(n_p, n_m);
     for (int m = 0; m < n_m; m++) {
       if (m == 0) proj_fe.col(m) = proj_X_ij(m) * b_j;
@@ -802,33 +880,43 @@ Type objective_function<Type>::operator()()
       }
     }
 
-    // Spatial and spatiotemporal random fields:
+    // Spatial and spatiotemporal random fields (by unique location):
+    array<Type> proj_omega_s_A_unique(n_p_mesh, n_m);
+    array<Type> proj_zeta_s_A_unique(n_p_mesh, n_z, n_m);
+    array<Type> proj_epsilon_st_A_unique(n_p_mesh, n_t, n_m);
+    proj_epsilon_st_A_unique.setZero();
+
+    // Expanded to full length:
     array<Type> proj_omega_s_A(n_p, n_m);
     array<Type> proj_zeta_s_A(n_p, n_z, n_m);
-    array<Type> proj_epsilon_st_A(n_p, n_t, n_m);
     array<Type> proj_epsilon_st_A_vec(n_p, n_m);
+    proj_zeta_s_A.setZero(); // may not get filled
 
     for (int m = 0; m < n_m; m++) {
-      for (int t = 0; t < n_t; t++)
-        proj_epsilon_st_A.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
-      if (rw_fields(m)) {
-        for (int t = 1; t < n_t; t++)
-          proj_epsilon_st_A.col(m).col(t) = proj_epsilon_st_A.col(m).col(t - 1) + proj_epsilon_st_A.col(m).col(t);
+      if (!rw_fields(m)) { // iid or ar1
+        for (int t = 0; t < n_t; t++) {
+          proj_epsilon_st_A_unique.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
+        }
+      } else { // rw
+        for (int t = 0; t < n_t; t++) {
+          if (t == 0) {
+            proj_epsilon_st_A_unique.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
+          } else {
+            proj_epsilon_st_A_unique.col(m).col(t) = proj_epsilon_st_A_unique.col(m).col(t-1) +
+              proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
+          }
+        }
       }
-      proj_omega_s_A.col(m) = proj_mesh * vector<Type>(omega_s.col(m));
+      proj_omega_s_A_unique.col(m) = proj_mesh * vector<Type>(omega_s.col(m));
     }
 
     // Spatially varying coefficients:
     array<Type> proj_zeta_s_A_cov(n_p, n_z, n_m);
     proj_zeta_s_A_cov.setZero();
-    proj_zeta_s_A.setZero();
     if (spatial_covariate) {
       for (int m = 0; m < n_m; m++) {
         for (int z = 0; z < n_z; z++) {
-          proj_zeta_s_A.col(m).col(z) = proj_mesh * vector<Type>(zeta_s.col(m).col(z));
-          for (int i = 0; i < n_p; i++) {
-            proj_zeta_s_A_cov(i,z,m) = proj_zeta_s_A(i,z,m) * proj_z_i(i,z);
-          }
+          proj_zeta_s_A_unique.col(m).col(z) = proj_mesh * vector<Type>(zeta_s.col(m).col(z));
         }
       }
     }
@@ -836,8 +924,21 @@ Type objective_function<Type>::operator()()
     // Pick out the appropriate spatial and/or or spatiotemporal values:
     for (int m = 0; m < n_m; m++) {
       for (int i = 0; i < n_p; i++) {
-        // FIXME proj_spatial_index doing nothing; same in fitting; is now 1:N
-        proj_epsilon_st_A_vec(i,m) = proj_epsilon_st_A(proj_spatial_index(i), proj_year(i),m);
+        proj_omega_s_A(i,m) = proj_omega_s_A_unique(proj_spatial_index(i),m);
+        proj_epsilon_st_A_vec(i,m) = proj_epsilon_st_A_unique(proj_spatial_index(i), proj_year(i),m);
+        for (int z = 0; z < n_z; z++) {
+          proj_zeta_s_A(i,z,m) = proj_zeta_s_A_unique(proj_spatial_index(i),z,m);
+        }
+      }
+    }
+
+    if (spatial_covariate) {
+      for (int m = 0; m < n_m; m++) {
+        for (int z = 0; z < n_z; z++) {
+          for (int i = 0; i < n_p; i++) {
+            proj_zeta_s_A_cov(i,z,m) = proj_zeta_s_A(i,z,m) * proj_z_i(i,z);
+          }
+        }
       }
     }
 
@@ -1013,7 +1114,6 @@ Type objective_function<Type>::operator()()
 
   // FIXME save memory by not reporting all these or optionally so for MVN/Bayes?
 
-
   array<Type> log_range(range.rows(),range.cols()); // for SE
   for (int i = 0; i < range.rows(); i++) {
     for (int m = 0; m < range.cols(); m++) {
@@ -1021,8 +1121,6 @@ Type objective_function<Type>::operator()()
     }
   }
 
-
-  // array<Type> log_range = log(range);
   vector<Type> log_sigma_E = log(sigma_E);
   ADREPORT(log_sigma_E);      // log spatio-temporal SD
   REPORT(sigma_E);      // spatio-temporal SD

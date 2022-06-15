@@ -50,7 +50,7 @@
 #'   but representing Bayesian posterior samples from the Stan model.
 #' @param model Type of prediction if a delta/hurdle model:
 #'   `NA` returns the combined prediction from both components on
-#'   the response scale; `1` or `2` return the first or second model
+#'   the link scale for the positive component; `1` or `2` return the first or second model
 #'   component only on the link or response scale depending on the argument
 #'   `type`.
 #' @param return_tmb_report Logical: return the output from the TMB
@@ -58,6 +58,7 @@
 #'   at the MLE parameter values. For `nsim > 0` or when `tmbstan_model`
 #'   is supplied, this is a list where each element is a sample and the
 #'   contents of each element is the output of the report for that sample.
+#' @param return_tmb_data Logical: return formatted data for TMB? Used internally.
 #' @param ... Not implemented.
 #'
 #' @return
@@ -240,6 +241,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
   sims_var = "est",
   model = c(NA, 1, 2),
   return_tmb_report = FALSE,
+  return_tmb_data = FALSE,
   ...) {
 
   if ("version" %in% names(object)) {
@@ -329,8 +331,10 @@ predict.sdmTMB <- function(object, newdata = object$data,
     if (pop_pred) {
       for (i in c(1, 2)) {
         if (!xy_cols[[i]] %in% names(newdata)) {
-          newdata[[xy_cols[[i]]]] <- mean(object$data[[xy_cols[[i]]]], na.rm = TRUE)
-          fake_spatial_added <- TRUE
+          suppressWarnings({
+            newdata[[xy_cols[[i]]]] <- mean(object$data[[xy_cols[[i]]]], na.rm = TRUE)
+            fake_spatial_added <- TRUE
+          })
         }
       }
     }
@@ -339,17 +343,24 @@ predict.sdmTMB <- function(object, newdata = object$data,
       cli_abort(c("There is at least one NA value in the time column.",
         "Please remove it."))
 
-    # newdata$sdm_orig_id <- seq(1, nrow(newdata))
-    # fake_newdata <- unique(newdata[,xy_cols])
-    # fake_newdata[["sdm_spatial_id"]] <- seq(1, nrow(fake_newdata)) - 1L
-    newdata$sdm_spatial_id <- seq(1, nrow(newdata)) # FIXME doing nothing now
-    #
-    # newdata <- base::merge(newdata, fake_newdata, by = xy_cols,
-    #   all.x = TRUE, all.y = FALSE)
-    # newdata <- newdata[order(newdata$sdm_orig_id),, drop = FALSE]
+    newdata$sdm_orig_id <- seq(1L, nrow(newdata))
 
+    if (requireNamespace("dplyr", quietly = TRUE)) { # faster
+      unique_newdata <- dplyr::distinct(newdata[, xy_cols, drop = FALSE])
+    } else {
+      unique_newdata <- unique(newdata[, xy_cols, drop = FALSE])
+    }
+    unique_newdata[["sdm_spatial_id"]] <- seq(1, nrow(unique_newdata)) - 1L
+
+    if (requireNamespace("dplyr", quietly = TRUE)) { # much faster
+      newdata <- dplyr::left_join(newdata, unique_newdata, by = xy_cols)
+    } else {
+      newdata <- base::merge(newdata, unique_newdata, by = xy_cols,
+        all.x = TRUE, all.y = FALSE)
+      newdata <- newdata[order(newdata$sdm_orig_id),, drop = FALSE]
+    }
     proj_mesh <- INLA::inla.spde.make.A(object$spde$mesh,
-      loc = as.matrix(newdata[,xy_cols, drop = FALSE]))
+      loc = as.matrix(unique_newdata[, xy_cols, drop = FALSE]))
 
     if (length(object$formula) == 1L) {
       # this formula has breakpt() etc. in it:
@@ -414,7 +425,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
     tmb_data$exclude_RE <- exclude_RE
     # tmb_data$calc_index_totals <- as.integer(!se_fit)
     # tmb_data$calc_cog <- as.integer(!se_fit)
-    tmb_data$proj_spatial_index <- newdata$sdm_spatial_id - 1L
+    tmb_data$proj_spatial_index <- newdata$sdm_spatial_id
     tmb_data$proj_Zs <- sm$Zs
     tmb_data$proj_Xs <- sm$Xs
 
@@ -439,6 +450,12 @@ predict.sdmTMB <- function(object, newdata = object$data,
     }
     tmb_data$epsilon_predictor <- epsilon_covariate
 
+    if (return_tmb_data) {
+      return(tmb_data)
+    }
+
+# browser()
+# TODO: when fields are a RW, visreg call crashes R here...
     new_tmb_obj <- TMB::MakeADFun(
       data = tmb_data,
       parameters = get_pars(object),
@@ -508,6 +525,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
         if (is.na(predtype)) {
           out <- object$family[[1]]$linkinv(out1) *
             object$family[[2]]$linkinv(out2)
+          if (type != "response") out <- object$family[[2]]$linkfun(out) # transform combined back into link space
         } else if (predtype == 1L) {
           out <- out1
           if (type == "response") out <- object$family[[1]]$linkinv(out)
@@ -524,6 +542,25 @@ predict.sdmTMB <- function(object, newdata = object$data,
 
       rownames(out) <- nd[[object$time]] # for use in index calcs
       attr(out, "time") <- object$time
+
+      if (type == "response"){
+        attr(out, "link") <- "response"
+      } else {
+        if(isTRUE(object$family$delta)){
+          if (is.na(predtype)) {
+            attr(out, "link") <- object$family[[2]]$link
+          } else if (predtype == 1L) {
+            attr(out, "link") <- object$family[[1]]$link
+          } else if (predtype == 2L) {
+            attr(out, "link") <- object$family[[2]]$link
+          } else {
+            cli_abort("`model` type not valid.")
+          }
+        } else {
+          attr(out, "link") <- object$family$link
+        }
+      }
+
       return(out)
     }
 

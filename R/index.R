@@ -10,6 +10,15 @@
 #' @param ... Passed to [TMB::sdreport()].
 #'
 #' @seealso [get_index_sims()]
+#' @return
+#' For `get_index()`:
+#' A data frame with a columns for time, estimate, lower and upper
+#' confidence intervals, log estimate, and standard error of the log estimate.
+#'
+#' For `get_cog()`:
+#' A data frame with a columns for time, estimate (center of gravity in x and y
+#' coordinates), lower and upper confidence intervals, and standard error of
+#' center of gravity coordinates.
 #'
 #' @references
 #'
@@ -38,7 +47,6 @@
 #' bias correction in statistical models using random effects, with spatial and
 #' population dynamics examples. Fisheries Research 175: 66–74.
 #' \doi{10.1016/j.fishres.2015.11.016}
-
 #'
 #' @examplesIf inla_installed()
 #' \donttest{
@@ -93,88 +101,91 @@ get_cog <- function(obj, bias_correct = FALSE, level = 0.95, format = c("long", 
 get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   trans = I, area = 1, silent = TRUE, ...) {
 
-  if (is.null(obj[["obj"]])) {
-    cli_abort(paste0("`obj` needs to be created with ",
-      "`sdmTMB(..., return_tmb_object = TRUE).`"))
+  if ((!isTRUE(obj$do_index) && value_name[1] == "link_total") || value_name[1] == "cog_x") {
+    if (is.null(obj[["obj"]])) {
+      cli_abort(paste0("`obj` needs to be created with ",
+        "`sdmTMB(..., return_tmb_object = TRUE).`"))
+    }
+    test <- suppressWarnings(tryCatch(obj$obj$report(obj$obj$env$last.par),
+      error = function(e) NA))
+    if (all(is.na(test)))
+      cli_abort(c("It looks like the model was built with an older version of sdmTMB. ",
+        "Please refit with the current version."))
+
+    if (bias_correct && obj$fit_obj$control$parallel > 1) {
+      cli_warn("Bias correction can be slower with multiple cores; using 1 core.")
+      obj$fit_obj$control$parallel <- 1L
+    }
+
+    # FIXME parallel setup here?
+
+    predicted_time <- sort(unique(obj$data[[obj$fit_obj$time]]))
+    fitted_time <- sort(unique(obj$fit_obj$data[[obj$fit_obj$time]]))
+    if (!all(fitted_time %in% predicted_time)) {
+      cli_abort(paste0("Some of the fitted time elements were not predicted ",
+        "on with `predict.sdmTMB()`. Please include all time elements."))
+    }
+
+    if (length(area) != nrow(obj$pred_tmb_data$proj_X_ij[[1]]) && length(area) != 1L) {
+      cli_abort("`area` should be of the same length as `nrow(newdata)` or of length 1.")
+    }
+    if (length(area) == 1L)
+      area <- rep(area, nrow(obj$pred_tmb_data$proj_X_ij[[1]]))
+
+    tmb_data <- obj$pred_tmb_data
+    tmb_data$area_i <- area
+    if (value_name[1] == "link_total")
+      tmb_data$calc_index_totals <- 1L
+    if (value_name[1] == "cog_x")
+      tmb_data$calc_cog <- 1L
+
+    pars <- get_pars(obj$fit_obj)
+
+    eps_name <- "eps_index" # FIXME break out into function; add for COG?
+    pars[[eps_name]] <- numeric(0)
+
+    new_obj <- TMB::MakeADFun(
+      data = tmb_data,
+      parameters = pars,
+      map = obj$fit_obj$tmb_map,
+      random = obj$fit_obj$tmb_random,
+      DLL = "sdmTMB",
+      silent = silent
+    )
+
+    old_par <- obj$fit_obj$model$par
+    new_obj$fn(old_par) # (sometimes) need to initialize the new TMB object once!
+
+    sr <- TMB::sdreport(new_obj, bias.correct = FALSE, ...)
+  } else {
+    sr <- obj$sd_report # already done in sdmTMB(do_index = TRUE)
+    pars <- get_pars(obj)
+    tmb_data <- obj$tmb_data
+    obj <- list(fit_obj = obj) # to match regular format
+    eps_name <- "eps_index"
   }
-  test <- suppressWarnings(tryCatch(obj$obj$report(obj$obj$env$last.par),
-    error = function(e) NA))
-  if (all(is.na(test)))
-    cli_abort(c("It looks like the model was built with an older version of sdmTMB. ",
-      "Please refit with the current version."))
-
-  if (bias_correct && obj$fit_obj$control$parallel > 1) {
-    cli_warn("Bias correction can be slower with multiple cores; using 1 core.")
-    obj$fit_obj$control$parallel <- 1L
-  }
-
-  # FIXME parallel setup here?
-
-  predicted_time <- sort(unique(obj$data[[obj$fit_obj$time]]))
-  fitted_time <- sort(unique(obj$fit_obj$data[[obj$fit_obj$time]]))
-  if (!all(fitted_time %in% predicted_time)) {
-    cli_abort(paste0("Some of the fitted time elements were not predicted ",
-      "on with `predict.sdmTMB()`. Please include all time elements."))
-  }
-
-  if (length(area) != nrow(obj$pred_tmb_data$proj_X_ij[[1]]) && length(area) != 1L) {
-    cli_abort("`area` should be of the same length as `nrow(newdata)` or of length 1.")
-  }
-  if (length(area) == 1L)
-    area <- rep(area, nrow(obj$pred_tmb_data$proj_X_ij[[1]]))
-
-  tmb_data <- obj$pred_tmb_data
-  tmb_data$area_i <- area
-  if (value_name[1] == "link_total")
-    tmb_data$calc_index_totals <- 1L
-  if (value_name[1] == "cog_x")
-    tmb_data$calc_cog <- 1L
-
-  pars <- get_pars(obj$fit_obj)
-
-  eps_name <- "eps_index" # FIXME break out into function; add for COG?
-  pars[[eps_name]] <- numeric(0)
-
-  new_obj <- TMB::MakeADFun(
-    data = tmb_data,
-    parameters = pars,
-    map = obj$fit_obj$tmb_map,
-    random = obj$fit_obj$tmb_random,
-    DLL = "sdmTMB",
-    silent = silent
-  )
-
-  old_par <- obj$fit_obj$model$par
-  new_obj$fn(old_par) # (sometimes) need to initialize the new TMB object once!
-
-  sr <- TMB::sdreport(new_obj, bias.correct = FALSE, ...)
   sr_est <- as.list(sr, "Estimate", report = TRUE)
 
   if (bias_correct && value_name[1] == "link_total") {
-    # if (value_name[1] == "cog_x") {
-      # stop("Fast bias correction not yet fixed for COG.", call. = FALSE)
-    # }
     # extract and modify parameters
     pars[[eps_name]] <- rep(0, length(sr_est$total))
-    fixed <- obj$fit_obj$model$par
     new_values <- rep(0, length(sr_est$total))
     names(new_values) <- rep(eps_name, length(new_values))
-    fixed <- c(fixed, new_values)
-
-    # FIXME from VAST: detect sparse + lowrank hessian ... appears to freeze with lowrank=FALSE
+    fixed <- c(obj$fit_obj$model$par, new_values)
     new_obj2 <- TMB::MakeADFun(
       data = tmb_data,
       parameters = pars,
       map = obj$fit_obj$tmb_map,
       random = obj$fit_obj$tmb_random,
       DLL = "sdmTMB",
-      silent = TRUE
+      silent = silent
     )
     gradient <- new_obj2$gr(fixed)
     corrected_vals <- gradient[names(fixed) == eps_name]
   } else {
     if (value_name[1] == "link_total")
-      message("Bias correction is turned off. It is recommended to turn this on for final inference.")
+      cli_inform(c("Bias correction is turned off.", "
+        It is recommended to turn this on for final inference."))
   }
 
   # # need to initialize the new TMB object once?
@@ -206,8 +217,8 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   d$lwr <- as.numeric(trans(d$trans_est + stats::qnorm((1-level)/2) * d$se))
   d$upr <- as.numeric(trans(d$trans_est + stats::qnorm(1-(1-level)/2) * d$se))
   d[[time_name]] <- sort(unique(obj$fit_obj$data[[time_name]]))
-  d$max_gradient <- max(conv$final_grads)
-  d$bad_eig <- conv$bad_eig
-  d[,c(time_name, 'est', 'lwr', 'upr', 'trans_est', 'se', 'max_gradient', 'bad_eig'),
+  # d$max_gradient <- max(conv$final_grads)
+  # d$bad_eig <- conv$bad_eig
+  d[,c(time_name, 'est', 'lwr', 'upr', 'trans_est', 'se'),
     drop = FALSE]
 }

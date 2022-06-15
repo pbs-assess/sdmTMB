@@ -57,6 +57,7 @@ We can inspect randomized quantile residuals:
 
 ```{r residuals, fig.width = 8}
 pcod$resids <- residuals(m) # randomized quantile residuals
+# pcod$resids <- residuals(m, type = "mle-mcmc") # better but slower
 hist(pcod$resids)
 qqnorm(pcod$resids)
 abline(a = 0, b = 1)
@@ -138,7 +139,7 @@ These are our biomass estimates:
 
 ```{r index-table, results='asis'}
 mutate(index, cv = sqrt(exp(se^2) - 1)) %>% 
-  select(-log_est, -max_gradient, -bad_eig, -se) %>%
+  select(-log_est, -se) %>%
   knitr::kable(format = "pandoc", digits = c(0, 0, 0, 0, 2))
 ```
 

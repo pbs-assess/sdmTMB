@@ -584,7 +584,7 @@ If a model is already fit, the function `sdmTMB::run_extra_optimization()` can r
 
 ## Assessing convergence
 
-Much of the guidance around diagnostics and glmmTMB also applies to sdmTMB, e.g. [the glmmTMB vignette on troubleshooting](https://cran.r-project.org/web/packages/glmmTMB/vignettes/troubleshooting.html).
+Much of the guidance around diagnostics and glmmTMB also applies to sdmTMB, e.g. [the glmmTMB vignette on troubleshooting](https://CRAN.R-project.org/package=glmmTMB).
 Optimization with `stats::nlminb()` involves specifying the number of iterations and evaluations (`eval.max` and `iter.max`) and the tolerances (`abs.tol`, `rel.tol`, `x.tol`, `xf.tol`)---a greater number of iterations and smaller tolerance thresholds increase the chance that the optimal solution is found, but more evaluations translates into longer computation time.
 Warnings of non-positive-definite Hessian matrices (accompanied by parameters with `NA`s for standard errors) often mean models are improperly specified given the data.
 Standard errors can be observed in the output of `print.sdmTMB()` or by checking `fit$sd_report`.

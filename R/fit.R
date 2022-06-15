@@ -51,7 +51,7 @@ NULL
 #'   may wish to switch to the random walk `"RW"`. Capitalization is ignored.
 #'   `TRUE` gets converted to `'IID'` and `FALSE` gets converted to `off`.
 #' @param share_range Logical: estimate a shared spatial and spatiotemporal
-#'   range parameter (`TRUE`) or independent range parameters (`FALSE`). If a
+#'   range parameter (`TRUE`, default) or independent range parameters (`FALSE`). If a
 #'   delta model, can be a list. E.g., `list(TRUE, FALSE)`.
 #' @param time_varying An optional one-sided formula describing covariates that
 #'   should be modelled as a random walk through time. Be careful not to include
@@ -95,6 +95,18 @@ NULL
 #'   change, which can be useful for cross-validation.
 #' @param do_fit Fit the model (`TRUE`) or return the processed data without
 #'   fitting (`FALSE`)?
+#' @param do_index Do index standardization calculations while fitting? Saves
+#'   memory and time when working with large datasets or projection grids.
+#'   If `TRUE`, then `predict_args` must have a `newdata` element supplied
+#'   and `area` can be supplied to `index_args`.
+#' @param predict_args A list of arguments to pass to [predict.sdmTMB()] if
+#'   `do_index = TRUE`.
+#' @param index_args A list of arguments to pass to [get_index()] if
+#'   `do_index = TRUE`. Currently, only `area` is supported. Bias correction
+#'   can be done when calling [get_index()] on the resulting fitted object.
+#' @param bayesian Logical indicating if the model will be passed to
+#'   \pkg{tmbstan}. If `TRUE`, Jacobian adjustments are applied to account for
+#'   parameter transformations when priors are applied.
 #' @param experimental A named list for esoteric or in-development options. Here
 #'   be dragons.
 #   (Experimental) A column name (as character) of a predictor of a
@@ -312,7 +324,7 @@ NULL
 #'
 #' @export
 #'
-#' @examplesIf inla_installed() && require("visreg", quietly = TRUE) && ggplot2_installed()
+#' @examplesIf inla_installed() && require("visreg", quietly = TRUE)
 #'
 #' library(sdmTMB)
 #'
@@ -328,8 +340,7 @@ NULL
 #'
 #' # Quick mesh plot:
 #' plot(mesh)
-#' # Or:
-#' # ggplot2::ggplot() + inlabru::gg(mesh$mesh)
+#' # Or use ggplot2::ggplot() + inlabru::gg(mesh$mesh)
 #'
 #' # Fit a Tweedie spatial random field GLMM with a smoother for depth:
 #' fit <- sdmTMB(
@@ -528,7 +539,11 @@ sdmTMB <- function(
   priors = sdmTMBpriors(),
   previous_fit = NULL,
   experimental = NULL,
-  do_fit = TRUE
+  do_fit = TRUE,
+  do_index = FALSE,
+  predict_args = NULL,
+  index_args = NULL,
+  bayesian = FALSE
   ) {
 
 
@@ -557,10 +572,14 @@ sdmTMB <- function(
       spatiotemporal <- rep("iid", n_m)
   }
 
+
   if (is.null(time)) {
     spatial_only <- rep(TRUE, n_m)
   } else {
     spatial_only <- ifelse(spatiotemporal == "off", TRUE, FALSE)
+    # if(all(spatiotemporal == "off")) {
+    #   cli_abort("Time needs to be null if spatiotemporal fields are not included")
+    # }
   }
 
   if (is.list(spatial)) {
@@ -912,9 +931,10 @@ sdmTMB <- function(
   #X_ij_array <- array(data = NA, dim = c(nrow(X_ij[[1]]), ncol(X_ij[[1]]), n_m))
   for (i in seq_len(n_m)) X_ij_list[[i]] <- X_ij[[i]]
 
+  n_t <- length(unique(data[[time]]))
   tmb_data <- list(
     y_i        = y_i,
-    n_t        = length(unique(data[[time]])),
+    n_t        = n_t,
     z_i        = z_i,
     offset_i   = offset,
     proj_offset_i = 0,
@@ -923,6 +943,7 @@ sdmTMB <- function(
     A_spatial_index = spde$sdm_spatial_id - 1L,
     year_i     = make_year_i(data[[time]]),
     ar1_fields = ar1_fields,
+    simulate_t = rep(1L, n_t),
     rw_fields =  rw_fields,
     X_ij       = X_ij_list,
     X_rw_ik    = X_rw_ik,
@@ -936,6 +957,7 @@ sdmTMB <- function(
     do_predict = 0L,
     calc_se    = 0L,
     pop_pred   = 0L,
+    short_newdata = 0L,
     exclude_RE = rep(0L, ncol(RE_indexes)),
     weights_i  = if (!is.null(weights)) weights else rep(1, length(y_i)),
     area_i     = rep(1, length(y_i)),
@@ -984,7 +1006,8 @@ sdmTMB <- function(
     has_smooths = as.integer(sm$has_smooths),
     upr = upr,
     lwr = lwr,
-    poisson_link_delta = as.integer(isTRUE(family$type == "poisson_link_delta"))
+    poisson_link_delta = as.integer(isTRUE(family$type == "poisson_link_delta")),
+    stan_flag = as.integer(bayesian)
   )
 
   b_thresh <- rep(0, 2)
@@ -1067,11 +1090,6 @@ sdmTMB <- function(
     tmb_params$b_threshold <- rep(0, length(tmb_params$b_threshold))
   }
 
-  unmap <- function(x, v) {
-    for (i in v) x[[i]] <- NULL
-    x
-  }
-
   tmb_random <- c()
   if (any(spatial == "on")) {
     tmb_random <- c(tmb_random, "omega_s")
@@ -1093,7 +1111,6 @@ sdmTMB <- function(
   if (est_epsilon_re) {
     tmb_random <- c(tmb_random, "epsilon_re")
     tmb_map <- unmap(tmb_map, c("epsilon_re"))
-    # FIXME more!?
   }
 
   tmb_map$ar1_phi <- as.numeric(tmb_map$ar1_phi) # strip factors
@@ -1187,6 +1204,10 @@ sdmTMB <- function(
     tmb_map$ln_tau_O <- as.factor(tmb_map$ln_tau_O)
   }
 
+  if (anisotropy && delta && !"ln_H_input" %in% map) {
+    tmb_map$ln_H_input <- factor(c(1, 2, 1, 2)) # share anistropy as in VAST
+  }
+
   if (tmb_data$threshold_func > 0) tmb_map$b_threshold <- NULL
 
   if (control$profile && delta)
@@ -1203,12 +1224,7 @@ sdmTMB <- function(
   prof <- c("b_j")
   if (delta) prof <- c(prof, "b_j2")
 
-  tmb_obj <- TMB::MakeADFun(
-    data = tmb_data, parameters = tmb_params, map = tmb_map,
-    profile = if (control$profile) prof else NULL,
-    random = tmb_random, DLL = "sdmTMB", silent = silent)
-  lim <- set_limits(tmb_obj, lower = lower, upper = upper,
-    loc = spde$mesh$loc, silent = FALSE)
+
 
   out_structure <- structure(list(
     data       = data,
@@ -1225,7 +1241,6 @@ sdmTMB <- function(
     response   = y_i,
     tmb_data   = tmb_data,
     tmb_params = tmb_params,
-    tmb_obj    = tmb_obj,
     tmb_map    = tmb_map,
     tmb_random = tmb_random,
     spatial_varying = spatial_varying,
@@ -1233,8 +1248,6 @@ sdmTMB <- function(
     spatiotemporal = spatiotemporal,
     spatial_varying_formula = spatial_varying_formula,
     reml       = reml,
-    lower      = lim$lower,
-    upper      = lim$upper,
     priors     = priors,
     nlminb_control = .control,
     control  = control,
@@ -1245,6 +1258,51 @@ sdmTMB <- function(
     call       = match.call(expand.dots = TRUE),
     version    = utils::packageVersion("sdmTMB")),
     class      = "sdmTMB")
+
+  if (do_index) {
+    args <- list(object = out_structure, return_tmb_data = TRUE)
+    args <- c(args, predict_args)
+    tmb_data <- do.call(predict.sdmTMB, args)
+    if (!"newdata" %in% names(predict_args)) {
+      cli_warn("`newdata` must be supplied if `do_index = TRUE`.")
+    }
+    if ("bias_correct" %in% names(index_args)) {
+      cli_warn("`bias_correct` must be done later with `get_index(..., bias_correct = TRUE)`.")
+      index_args$bias_correct <- NULL
+    }
+    if (!"area" %in% names(index_args)) {
+      cli_warn("`area` not supplied to `index_args` but `do_index = TRUE`. Using `area = 1`.")
+      if (is.null(index_args)) index_args <- list()
+      index_args[["area"]] <- 1
+    }
+    if (length(index_args$area) == 1L) {
+      tmb_data$area_i <- rep(index_args[["area"]], nrow(predict_args[["newdata"]]))
+    } else {
+      if (length(index_args$area) != nrow(predict_args[["newdata"]]))
+        cli_abort("`area` length does not match `nrow(newdata)`.")
+      tmb_data$area_i <- index_args[["area"]]
+    }
+    tmb_data$calc_index_totals <- 1L
+    tmb_params[["eps_index"]] <- numeric(0) # for bias correction
+    out_structure$do_index <- TRUE
+  } else {
+    out_structure$do_index <- FALSE
+  }
+
+  tmb_obj <- TMB::MakeADFun(
+    data = tmb_data, parameters = tmb_params, map = tmb_map,
+    profile = if (control$profile) prof else NULL,
+    random = tmb_random, DLL = "sdmTMB", silent = silent)
+  lim <- set_limits(tmb_obj, lower = lower, upper = upper,
+    loc = spde$mesh$loc, silent = FALSE)
+
+  out_structure$tmb_obj <- tmb_obj
+  out_structure$tmb_obj <- tmb_obj
+  out_structure$tmb_data <- tmb_data
+  out_structure$tmb_params <- tmb_params
+  out_structure$lower <- lim$lower
+  out_structure$upper <- lim$upper
+
   if (!do_fit) return(out_structure)
 
   if (normalize) tmb_obj <- TMB::normalize(tmb_obj, flag = "flag", value = 0)
@@ -1258,7 +1316,7 @@ sdmTMB <- function(
   }
 
   if (nlminb_loops > 1) {
-    if (!silent) cat("running extra nlminb loops\n")
+    if (!silent) cli_inform("running extra nlminb loops\n")
     for (i in seq(2, nlminb_loops, length = max(0, nlminb_loops - 1))) {
       temp <- tmb_opt[c("iterations", "evaluations")]
       tmb_opt <- stats::nlminb(
@@ -1269,7 +1327,7 @@ sdmTMB <- function(
     }
   }
   if (newton_loops > 0) {
-    if (!silent) cat("running newtonsteps\n")
+    if (!silent) cli_inform("running newtonsteps\n")
     for (i in seq_len(newton_loops)) {
       g <- as.numeric(tmb_obj$gr(tmb_opt$par))
       h <- stats::optimHess(tmb_opt$par, fn = tmb_obj$fn, gr = tmb_obj$gr)
@@ -1411,4 +1469,9 @@ find_missing_time <- function(x) {
     allx <- seq(min(ti), max(ti), by = mindiff)
     setdiff(allx, ti)
   }
+}
+
+unmap <- function(x, v) {
+  for (i in v) x[[i]] <- NULL
+  x
 }

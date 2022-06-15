@@ -26,33 +26,30 @@
 #'
 #' @export
 #'
-#' @examples
-#' if (inla_installed()) {
-#' sp <- make_mesh(pcod, c("X", "Y"), cutoff = 30, type = "cutoff")
-#' plot(sp)
+#' @examplesIf inla_installed()
+#' mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 30, type = "cutoff")
+#' plot(mesh)
 #'
-#' sp <- make_mesh(pcod, c("X", "Y"), cutoff = 5, type = "cutoff")
-#' plot(sp)
+#' mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 5, type = "cutoff")
+#' plot(mesh)
 #'
-#' sp <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "cutoff_search")
-#' plot(sp)
+#' mesh <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "cutoff_search")
+#' plot(mesh)
 #'
-#' sp <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
-#' plot(sp)
-#' \donttest{
+#' mesh <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
+#' plot(mesh)
+#'
 #' # Defining a mesh directly with INLA:
 #' bnd <- INLA::inla.nonconvex.hull(cbind(pcod$X, pcod$Y), convex = -0.05)
-#' mesh <- INLA::inla.mesh.2d(
+#' inla_mesh <- INLA::inla.mesh.2d(
 #'   boundary = bnd,
 #'   max.edge = c(20, 50),
 #'   offset = -0.05,
 #'   cutoff = c(2, 5),
 #'   min.angle = 10
 #' )
-#' sp2 <- make_mesh(pcod, c("X", "Y"), mesh = mesh)
-#' plot(sp2)
-#' }
-#' }
+#' mesh <- make_mesh(pcod, c("X", "Y"), mesh = inla_mesh)
+#' plot(mesh)
 make_mesh <- function(data, xy_cols,
                       type = c("kmeans", "cutoff", "cutoff_search"),
                       cutoff, n_knots,

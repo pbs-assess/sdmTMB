@@ -144,7 +144,7 @@ vector<Type> RepeatVector(vector<Type> x, int times) {
 template <class Type>
 Type pc_prior_matern(Type logtau, Type logkappa, Type matern_range,
                      Type matern_SD, Type range_prob, Type SD_prob,
-                     int give_log = 0) {
+                     int give_log = 0, int share_range = 0, int stan_flag = 0) {
   Type d = 2.;  // dimension
   Type dhalf = d / 2.;
   Type lam1 = -log(range_prob) * pow(matern_range, dhalf);
@@ -154,7 +154,16 @@ Type pc_prior_matern(Type logtau, Type logkappa, Type matern_range,
   Type range_ll = log(dhalf) + log(lam1) + log(pow(range, -1. - dhalf)) -
                   lam1 * pow(range, -dhalf);
   Type sigma_ll = log(lam2) - lam2 * sigma;
-  Type penalty = range_ll + sigma_ll;
+  Type penalty = sigma_ll;
+  if (!share_range) penalty += range_ll;
+
+  // Note: these signs are + (and different from inst/jacobian-pcprior-tests)
+  // because the jnll is accumulated
+  if (stan_flag) {
+    penalty += log(sqrt(8.)) - log(pow(range, 2.)); // P(sigma)
+    Type C = sqrt(exp(lgamma(1. + dhalf)) * pow(4. * M_PI, dhalf));
+    penalty += log(C) + logkappa;
+  }
   // std::cout << "PC penalty: " << penalty << "\n";
   if (give_log)
     return penalty;
@@ -254,6 +263,34 @@ template<class Type>
 Type calc_rf_sigma(Type ln_tau, Type ln_kappa) {
   Type sigma = 1 / sqrt(Type(4.) * M_PI * exp(Type(2.) * ln_tau + Type(2.) * ln_kappa));
   return sigma;
+}
+
+// from glmmTMB distrib.h
+extern "C" {
+  /* See 'R-API: entry points to C-code' (Writing R-extensions) */
+  double Rf_logspace_sub (double logx, double logy);
+  void   Rf_pnorm_both(double x, double *cum, double *ccum, int i_tail, int log_p);
+}
+
+// from glmmTMB distrib.h
+TMB_ATOMIC_VECTOR_FUNCTION(
+  // ATOMIC_NAME
+  logit_invcloglog
+  ,
+    // OUTPUT_DIM
+    1,
+    // ATOMIC_DOUBLE
+    ty[0] = Rf_logspace_sub(exp(tx[0]), 0.);
+,
+  // ATOMIC_REVERSE
+  px[0] = exp( logspace_add(tx[0], tx[0]-ty[0]) ) * py[0];
+)
+
+template<class Type>
+Type logit_invcloglog(Type x) {
+  CppAD::vector<Type> tx(1);
+  tx[0] = x;
+  return logit_invcloglog(tx)[0];
 }
 
 }  // namespace sdmTMB

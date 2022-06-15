@@ -39,7 +39,120 @@ plot_anisotropy <- function(object, model = 1) {
   invisible(list(eig = eig, dat = dat, H = report$H))
 }
 
+# modified from VAST:
+plot_anisotropy2 <- function(object, return_data = FALSE) {
+  stopifnot(inherits(object, "sdmTMB"))
+  report <- object$tmb_obj$report(object$tmb_obj$env$last.par.best)
+  delta <- isTRUE(object$family$delta)
+
+  eig <- eigen(report$H)
+  b <- tidy(object, "ran_pars")
+
+  ranges <- b$estimate[b$term == "range"]
+  range_s <- ranges[1]
+  range_st <- if (length(ranges) > 1) ranges[2] else ranges[1]
+
+  # FIXME: do this with much less repetition!
+  if (delta) {
+    eig2 <- eigen(report$H2)
+    b2 <- tidy(object, "ran_pars", model = 2)
+    ranges2 <- b2$estimate[b2$term == "range"]
+    range2_s <- ranges2[1]
+    range2_st <- if (length(ranges2) > 1) ranges2[2] else ranges2[1]
+  }
+
+  maj1_s <- eig$vectors[,1, drop = TRUE] * eig$values[1] * range_s
+  min1_s <- eig$vectors[,2 , drop = TRUE] * eig$values[2] * range_s
+  maj1_st <- eig$vectors[,1, drop = TRUE] * eig$values[1] * range_st
+  min1_st <- eig$vectors[,2 , drop = TRUE] * eig$values[2] * range_st
+
+  if (delta) {
+    maj2_s <- eig2$vectors[, 1, drop = TRUE] * eig2$values[1] * range2_s
+    min2_s <- eig2$vectors[, 2, drop = TRUE] * eig2$values[2] * range2_s
+    maj2_st <- eig2$vectors[, 1, drop = TRUE] * eig2$values[1] * range2_st
+    min2_st <- eig2$vectors[, 2, drop = TRUE] * eig2$values[2] * range2_st
+  }
+
+  rss <- function(V) sqrt(sum(V[1]^2 + V[2]^2))
+  get_angle <- function(m) {
+    a <- -1 * (atan(m[1] / m[2]) / (2 * pi) * 360 - 90)
+    a * (pi / 180)
+  }
+
+  angle1_s <- get_angle(maj1_s)
+  angle1_st <- get_angle(maj1_st)
+
+  if (delta) {
+    angle2_s <- get_angle(maj2_s)
+    angle2_st <- get_angle(maj2_st)
+    dat <- data.frame(
+      angle = c(angle1_s, angle1_st, angle2_s, angle2_st),
+      a = c(rss(maj1_s), rss(maj1_st), rss(maj2_s), rss(maj2_st)),
+      b = c(rss(min1_s), rss(min1_st), rss(min2_s), rss(min2_st)),
+      model = rep(object$family$family, each = 2L),
+      model_num  = rep(seq(1L, 2L), each = 2L),
+      random_field = rep(c("spatial", "spatiotemporal"), 2L),
+      stringsAsFactors = FALSE
+    )
+    dat$model <- factor(dat$model, levels = object$family$family)
+    for (i in seq(1L, 2L)) {
+      if (object$spatiotemporal[i] == "off") {
+        x <- dat$random_field == "spatiotemporal" & dat$model_num == i
+        dat <- dat[!x, , drop = FALSE]
+      }
+    }
+    for (i in seq(1L, 2L)) {
+      if (object$spatial[i] == "off") {
+        x <- dat$random_field == "spatial" & dat$model_num == i
+        dat <- dat[!x, , drop = FALSE]
+      }
+    }
+  } else {
+    dat <- data.frame(
+      angle = c(angle1_s, angle1_st),
+      a = c(rss(maj1_s), rss(maj1_st)),
+      b = c(rss(min1_s), rss(min1_st)),
+      model = object$family$family,
+      random_field = rep(c("spatial", "spatiotemporal"), 1L),
+      stringsAsFactors = FALSE
+    )
+    if (object$spatiotemporal == "off") {
+      x <- dat$random_field == "spatiotemporal"
+      dat <- dat[!x, , drop = FALSE]
+    }
+    if (object$spatial == "off") {
+      x <- dat$random_field == "spatial"
+      dat <- dat[!x, , drop = FALSE]
+    }
+  }
+
+  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+    cli_abort("ggplot2 must be installed to use this function.")
+  }
+  if (!requireNamespace("ggforce", quietly = TRUE)) {
+    cli_abort("ggforce must be installed to use this function.")
+  }
+  if (return_data) return(dat)
+  g <- ggplot2::ggplot(dat,
+    ggplot2::aes_(
+      x0 = 0, y0 = 0,
+      a = ~a, b = ~b,
+      angle = ~angle,
+      colour = `if`(delta, ~model, NULL),
+      linetype = ~random_field
+    )
+  ) +
+    ggforce::geom_ellipse() +
+    ggplot2::coord_fixed() +
+    ggplot2::labs(linetype = "Random field", colour = "Model",
+      x = object$mesh$xy_cols[1], y = object$mesh$xy_cols[2]) +
+    ggplot2::scale_colour_brewer(palette = "Dark2")
+  g
+}
+
 #' Plot a smooth term from an sdmTMB model
+#'
+#' **Deprecated: use `visreg::visreg()`. See [visreg_delta()] for examples.**
 #'
 #' @param object An [sdmTMB()] model.
 #' @param select The smoother term to plot.

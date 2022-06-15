@@ -26,12 +26,10 @@
 #' A copy of the input data frame with new columns for UTM coordinates.
 #' @export
 #'
-#' @examples
-#' if (require("sf", quietly = TRUE)) {
-#'   d <- data.frame(lat = c(52.1, 53.4), lon = c(-130.0, -131.4))
-#'   get_crs(d, c("lon", "lat"))
-#'   add_utm_columns(d, c("lon", "lat"))
-#' }
+#' @examplesIf require("sf", quietly = TRUE)
+#' d <- data.frame(lat = c(52.1, 53.4), lon = c(-130.0, -131.4))
+#' get_crs(d, c("lon", "lat"))
+#' add_utm_columns(d, c("lon", "lat"))
 add_utm_columns <- function(dat,
                             ll_names = c("longitude", "latitude"),
                             ll_crs = 4326,

@@ -27,8 +27,12 @@
 #'   other words, the function assumes a log link, which typically makes sense.
 #' @param est_function Function to summarize the estimate (the expected value).
 #'   `mean()` would be an alternative to `median()`.
+#' @param area_function Function to apply area weighting.
+#'   Assuming a log link, the `function(x, area) x + log(area)` default makes sense.
+#'   If in natural space, `function(x, area) x * area` makes sense.
 #' @param agg_function Function to aggregate samples within each time slice.
-#'   Assuming a log link, the `sum(exp(x) * area)` default makes sense.
+#'   Assuming a log link, the `function(x) sum(exp(x))` default makes sense.
+#'   If in natural space, `function(x) sum(x)` makes sense.
 #'
 #' @seealso [get_index()]
 #'
@@ -69,12 +73,19 @@
 #'     geom_violin()
 #' }
 #'
+#' # Demo custom functions if working in natural space:
+#' ind <- get_index_sims(
+#'   exp(p),
+#'   agg_function = function(x) sum(x),
+#'   area_function = function(x, area) x * area
+#' )
 #' }
 get_index_sims <- function(obj,
                            level = 0.95,
                            return_sims = FALSE,
                            area = rep(1, nrow(obj)),
                            est_function = stats::median,
+                           area_function = function(x, area) x + log(area),
                            agg_function = function(x) sum(exp(x))) {
   assert_that(is.matrix(obj), !is.null(attr(obj, "time")),
     msg = paste0("`obj` should be matrix output from `predict.sdmTMB()` ",
@@ -87,8 +98,19 @@ get_index_sims <- function(obj,
   assert_that(sum(is.na(area)) == 0L)
   assert_that(all(area >= 0))
 
+  if(length(attributes(obj))>3) {
+  if (!(attr(obj,"link") == "log")) {
+    cli_warn(c("Default `agg_function` and `area_function` apply to ",
+      "values provided that are in log space. This matrix may be of ",
+      "`type` = `response` or in a different link space."))
+  }
+  } else {
+    cli_warn(c("Your predictions appear to be lacking a link attribute, so be ",
+               "sure to check that the area_ and agg_ functions are",
+               "appropriate."))
+  }
   .time_attr <- attr(obj, "time")
-  obj <- apply(obj, 2L, function(x) x + log(area))
+  obj <- apply(obj, 2L, function(x) area_function(x, area))
 
   .t <- as.numeric(rownames(obj))
   yrs <- sort(unique(.t))

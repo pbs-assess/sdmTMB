@@ -16,7 +16,9 @@ A named list of parameter values
 Get TMB parameter list
 }
 \examples{
+\dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 fit <- sdmTMB(present ~ 1, data = pcod_2011, family = binomial(), spatial = "off")
 pars <- sdmTMB:::get_pars(fit)
 names(pars)
+\dontshow{\}) # examplesIf}
 }

@@ -19,5 +19,6 @@
   identity = 0,
   log      = 1,
   logit    = 2,
-  inverse  = 3
+  inverse  = 3,
+  cloglog  = 4
 )
