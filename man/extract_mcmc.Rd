@@ -62,7 +62,6 @@ fit_mle <- update(
   do_fit = FALSE # no need to actually fit
 )
 
-
 # Will take a few minutes:
 library(tmbstan)
 m_stan <- tmbstan(fit_mle$tmb_obj, iter = 100, chains = 1)
