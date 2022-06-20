@@ -9,6 +9,8 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+**If the code in this vignette has not been evaluated, a rendered version is available on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html) under 'Articles'.**
+
 ```{r setup, include = FALSE, cache=FALSE}
 ggplot_installed <- require("ggplot2", quietly = TRUE)
 visreg_installed <- require("visreg", quietly = TRUE)

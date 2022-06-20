@@ -9,13 +9,16 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+**If the code in this vignette has not been evaluated, a rendered version is available on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html) under 'Articles'.**
+
 ```{r setup, include = FALSE, cache=FALSE}
 dplyr_installed <- require("dplyr", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
 ggeffects_installed <- require("ggeffects", quietly = TRUE)
 effects_installed <- require("effects", quietly = TRUE)
-pkgs <- dplyr_installed && ggplot_installed && 
-  ggeffects_installed && effects_installed
+inla_installed <- requireNamespace("INLA", quietly = TRUE)
+pkgs <- dplyr_installed && ggplot_installed &&
+  ggeffects_installed && effects_installed && inla_installed
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -28,7 +31,7 @@ knitr::opts_chunk$set(
 
 The package [ggeffects](https://CRAN.R-project.org/package=ggeffects) can be used to plot marginal effects of given predictor variables in sdmTMB models.
 
-A major advantage to this approach over visreg, is that ggeffects calculates marginal effects with the effects package using the parameter covariance matrix. 
+A advantage to this approach over visreg, is that ggeffects calculates marginal effects with the effects package using the parameter covariance matrix. 
 This is nearly instant compared to visreg, which has to calculate conditional effects by calculating predictions with TMB.
 
 A disadvantage to using ggeffects is that it will only work for regular linear effects in the main model formula. I.e., it will not work with smoothers (internally these are random effects) or breakpoint (`breakpt()`) effects.
@@ -37,7 +40,7 @@ Another important distinction is that `ggeffects::ggeffect()` is plotting **marg
 This means the effects are "marginalized" or "averaged" over the other fixed effects.
 `visreg::visreg()` is plotting **conditional** effects.
 This means they are conditional on the other predictors being set to certain values.
-`ggeffects::ggpredict()` also does conditional effects, but this has not yet been set up in sdmTMB.
+`ggeffects::ggpredict()` also does conditional effects, but this has not yet been set up in sdmTMB using the CRAN version of ggeffects.
 
 ```{r}
 library(sdmTMB)
