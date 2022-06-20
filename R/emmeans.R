@@ -49,7 +49,7 @@
 NULL # don't document functions below
 
 recover_data.sdmTMB <- function(object, ...) {
-  fcall <- getCall(object)
+  fcall <- stats::getCall(object)
   if (!requireNamespace("emmeans", quietly = TRUE)) {
     cli_abort("Please install the emmeans package to use this function")
   }
@@ -68,7 +68,7 @@ emm_basis.sdmTMB <- function(object, trms, xlev, grid, ...) {
   misc <- emmeans::.std.link.labels(fam, misc)
   contrasts <- attr(model.matrix(object), "contrasts")
   contrasts <- contrasts[names(contrasts) %in% all.vars(terms(object))]
-  m <- model.frame(trms, grid, na.action = na.pass, xlev = xlev)
+  m <- model.frame(trms, grid, na.action = stats::na.pass, xlev = xlev)
   X <- model.matrix(trms, m, contrasts.arg = contrasts)
   bhat <- fixef(object)
   if (length(bhat) < ncol(X)) {
