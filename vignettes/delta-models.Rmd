@@ -74,12 +74,12 @@ pcod_mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
 Then we can fit a model of Pacific cod density using a delta-gamma model, including a smoothed effect of depth.
 
 ```{r, warning=FALSE, message=FALSE}
- fit_dg <- sdmTMB(density ~ 1 + s(depth),
-                     data = pcod, 
-                    mesh = pcod_mesh,
-                    time = "year", 
-                    family = delta_gamma()
-    )
+fit_dg <- sdmTMB(density ~ 1 + s(depth),
+  data = pcod,
+  mesh = pcod_mesh,
+  time = "year",
+  family = delta_gamma()
+)
 ```
 
 The default in built-in delta models is for the formula, spatial and spatio-temporal structure, and anisotropy to be shared between the two model components. However, some elements (`formula`, `spatial`, `spatiotemporal`, and `share_range`) can also be specified independently for each model using a list format within the function argument (see examples below). The first element of the list is for the binomial component and the second element is for the positive component (e.g., Gamma). 
@@ -89,9 +89,9 @@ Some elements must be shared for now (e.g., spatially varying coefficients, and 
 To specify the settings for spatial and spatio-temporal effects in each model component, create a list of settings within the `spatial` and `spatiotemporal` arguments, i.e., `spatial = list("setting for presence-absence model, "setting for positive catch model")`.
 For example, we could turn spatial and spatiotemporal effects off for the presence-absence model but include spatial effects for the positive catch model and include spatiotemporal effects as a random walk.
 
-```{r, warning=F, message=F, echo=F}
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
 fit_dg2 <- sdmTMB(density ~ 1 + s(depth),
-  data = pcod, 
+  data = pcod,
   mesh = pcod_mesh,
   time = "year",
   spatial = list("off", "on"), #<
@@ -109,13 +109,13 @@ However, there are currently limitations if specifying separate formulas for eac
 * random intercepts
 For now, these must be specified through a single formula that is shared across the two models. 
 
-```{r, warning=F, message=F, echo=F, results='hide'}
+```{r, warning=FALSE, message=FALSE, echo=FALSE, results='hide'}
 fit_dg3 <- sdmTMB(
   list(
     density ~ 1, #<
     density ~ poly(depth, 2) #<
   ),
-  data = pcod, 
+  data = pcod,
   mesh = pcod_mesh,
   time = "year",
   spatial = list("off", "on"),
@@ -126,26 +126,26 @@ fit_dg3 <- sdmTMB(
 
 Each model component can similarly have separate settings for `share_range`, which determines whether there is a shared spatial and spatiotemporal range parameter (`TRUE`) or independent range parameters (`FALSE`), by using a list.
 
-```{r, warning=F, message=F, echo=F, results='hide'}
- fit_dg4 <- sdmTMB(density ~ 1 + s(depth),
-                     data = pcod, 
-                    mesh = pcod_mesh,
-                    time = "year", 
-                    share_range=list(TRUE, FALSE), #<
-                    family = delta_gamma()
-    )
+```{r, warning=FALSE, message=FALSE, echo=FALSE, results='hide'}
+fit_dg4 <- sdmTMB(density ~ 1 + s(depth),
+  data = pcod,
+  mesh = pcod_mesh,
+  time = "year",
+  share_range = list(TRUE, FALSE), #<
+  family = delta_gamma()
+)
 ```
 
 Lastly, whether or not anisotropy is included in the model is determined with the logical argument `anisotropy=()` (i.e. `TRUE` or `FALSE`), and cannot be separately specified for each model. If anisotropy is included, it is by default shared across the two model components. However it can be made unique in each model component by using `sdmTMBcontrol()` and adding the argument `control=()` when fitting the model.
 
-```{r, warning=F, message=F, echo=F, results='hide}
- fit_dg5 <- sdmTMB(density ~ 1 + s(depth),
-                     data = pcod, 
-                    mesh = pcod_mesh,
-                    time = "year", 
-                   control = sdmTMBcontrol(map = list(ln_H_input = factor(c(1, 2, 3, 4)))), #<
-                    family = delta_gamma()
-    )
+```{r, warning=FALSE, message=FALSE, echo=FALSE, results='hide'}
+fit_dg5 <- sdmTMB(density ~ 1 + s(depth),
+  data = pcod,
+  mesh = pcod_mesh,
+  time = "year",
+  control = sdmTMBcontrol(map = list(ln_H_input = factor(c(1, 2, 3, 4)))), #<
+  family = delta_gamma()
+)
 ```
 
 Once we fit the delta model, we can evaluate and plot the output, diagnostics, and predictions similar to other sdmTMB models.
@@ -157,33 +157,33 @@ print(fit_dg)
 
 Using the `tidy()` function will turn the sdmTMB model output into a data frame, with the argument `model=1` or `model=2` to specify which model component to extract as a dataframe. See [`?tidy.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/tidy.sdmTMB.html) for additional arguments and options.
 ```{r}
-fit_dg_output <- tidy(fit_dg, model=1)
+fit_dg_output <- tidy(fit_dg, model = 1)
 ```
 
 We can use `predict()` to predict density in either log space (the default) or transformed into the response scale (`type = "response"`). 
 
 For built-in delta models, the default function will return estimated response and parameters for each grid cell for each model separately, notated with a 1 (for the presence/absence model) or 2 (for the positive catch model) in the column name. See [`?predict.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/tidy.sdmTMB.html) for description of values in the dataframe.
-```{r, error=F, message=F}
+```{r, error=FALSE, message=FALSE}
 p <- predict(fit_dg, newdata = qcs_grid)
 p_response <- predict(fit_dg, newdata = qcs_grid, type = "response")
 head(p)
 ```
 
 We can use the `model=()` argument to return only predictions from model 1 or model 2.
-```{r, error=F, message=F, echo=F}
-p1 <- predict(fit_dg, newdata = qcs_grid, model=1)
-p2 <- predict(fit_dg, newdata = qcs_grid, model=2)
+```{r, error=FALSE, message=FALSE, echo=FALSE}
+p1 <- predict(fit_dg, newdata = qcs_grid, model = 1)
+p2 <- predict(fit_dg, newdata = qcs_grid, model = 2)
 ```
 
 To return combined predictions from both components on the response scale, we can use `model=NA`
-```{r, error=F, message=F, echo=F}
-p_combined <- predict(fit_dg, newdata = qcs_grid, model=NA, type="response")
+```{r, error=FALSE, message=FALSE, echo=FALSE}
+p_combined <- predict(fit_dg, newdata = qcs_grid, model = NA, type = "response")
 ```
 
 We can use predictions from the built-in delta model (making sure that `return_tmb_object=T`) to get the index values using the `get_index()` function. This can be used with predictions that include both the first and second models (i.e. using the default and specifying no model=() argument) or with predictions generated using `model=NA`. The get_index() function will automatically combine predictions from the first and second model in calculating the index values. For more on modelling for the purposes of creating an index see the vignette on [Index standardization with sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html).
 
-```{r, message=F, warning=F}
-p2 <- predict(fit_dg, newdata = qcs_grid, return_tmb_object=T)
+```{r, message=FALSE, warning=FALSE}
+p2 <- predict(fit_dg, newdata = qcs_grid, return_tmb_object = T)
 ind_dg <- get_index(p2, bias_correct = FALSE)
 head(ind_dg)
 ```
@@ -196,15 +196,15 @@ visreg_delta(fit_dg, xvar = "depth", model = 2, gg = TRUE)
 <!-- TODO Will it work with ggeffects package? -->
 
 The built-in delta models can also be evaluated with the `residuals()` functions in sdmTMB. Similarly to generating predictions, we can specify which of the model components we want to return residuals for using the `model=()` argument and specifying `=1` or `=2`. See [documentation here] (https://rdrr.io/github/pbs-assess/sdmTMB/man/residuals.sdmTMB.html) for additional options for evaluating residuals in sdmTMB models. 
-```{r, echo=F, message=F, results='hide, warning=F}
-  residuals_1 <- residuals(fit_dg,type="response", model=1)
-  residuals_2 <- residuals(fit_dg,type="response", model=2)
+```{r, echo=FALSE, message=FALSE, results='hide', warning=FALSE}
+residuals_1 <- residuals(fit_dg, type = "response", model = 1)
+residuals_2 <- residuals(fit_dg, type = "response", model = 2)
 ```
 
 We can also simulate new observations from a fitted delta model. As in other functions, we can specify which model to simulate from using the argument `model=1` for only presence/absence, `model=2` for only positive catches, or `model=NA` for combined predictions. See [`?simulate.sdmTMB`](https://rdrr.io/github/pbs-assess/sdmTMB/man/simulate.sdmTMB.html) for more details on simulation options.
 
-```{r, message=F, warning=F}
-simulations <- simulate(fit_dg, nsim=5, seed=5090, model=NA)
+```{r, message=FALSE, warning=FALSE}
+simulations <- simulate(fit_dg, nsim = 5, seed = 5090, model = NA)
 ```
 
 # Delta models by fitting two components separately and combining predictions
