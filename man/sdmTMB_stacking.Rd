@@ -23,11 +23,12 @@ A vector of model weights.
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 
-This approach is described in Yao et al. 2018, Bayesian Analysis. The general
-method minimizes (or maximizes) some quantity across models. For simple
-models with normal error, this may be the root mean squared error (RMSE), but
-other approaches include the log score. We adopt the latter here, where log
-scores are used to generate the stacking of predictive distributions
+This approach is described in Yao et al. (2018) \doi{10.1214/17-BA1091}. The
+general method minimizes (or maximizes) some quantity across models. For
+simple models with normal error, this may be the root mean squared error
+(RMSE), but other approaches include the log score. We adopt the latter here,
+where log scores are used to generate the stacking of predictive
+distributions
 }
 \examples{
 \dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
@@ -60,4 +61,10 @@ models <- list(m_cv_1, m_cv_2, m_cv_3)
 weights <- sdmTMB_stacking(models)
 weights
 \dontshow{\}) # examplesIf}
+}
+\references{
+Yao, Y., Vehtari, A., Simpson, D., and Gelman, A. 2018. Using Stacking to
+Average Bayesian Predictive Distributions (with Discussion). Bayesian Analysis
+13(3): 917–1007. International Society for Bayesian Analysis.
+\doi{10.1214/17-BA1091}
 }

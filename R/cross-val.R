@@ -64,14 +64,16 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
   family_func(object, withheld_y, withheld_mu)
 }
 
-#' Save log likelihoods of k-fold cross-validation for sdmTMB models
+#' Cross validation with sdmTMB models
+#'
+#' Save log likelihoods of k-fold cross-validation for sdmTMB models.
 #'
 #' @param formula Model formula.
 #' @param data A data frame.
 #' @param mesh Output from [make_mesh()]. If supplied, the mesh will be constant
 #'   across folds.
 #' @param mesh_args Arguments for [make_mesh()]. If supplied, the mesh will be
-#'   reconstruncted for each fold.
+#'   reconstructed for each fold.
 #' @param time The name of the time column. Leave as `NULL` if this is only
 #'   spatial data.
 #' @param k_folds Number of folds.

@@ -3,12 +3,14 @@
 #' @description
 #' `r lifecycle::badge("experimental")`
 #'
-#' Optional priors/penalties on model parameters. This tesults in penalized
+#' Optional priors/penalties on model parameters. This results in penalized
 #' likelihood within TMB or can be used as priors if the model is passed to
 #' \pkg{tmbstan} (see the example in [extract_mcmc()]).
 #'
-#' **Note** that Jacobian adjustments **are not** yet made when passing to
-#' Stan for MCMC sampling. This does not affect normal TMB model fitting.
+#' **Note that Jacobian adjustments are only made if `bayesian = TRUE`** when the
+#' [sdmTMB()] model is fit. I.e., the final model will be fit with \pkg{tmbstan}
+#' and priors are specified then `bayesian` should be set to `TRUE`. Otherwise,
+#' leave `bayesian = FALSE`.
 #'
 #' @details
 #' Meant to be passed to the `priors` argument in [sdmTMB()].

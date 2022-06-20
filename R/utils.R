@@ -12,7 +12,7 @@
 #' @param newton_loops How many Newton optimization steps to try with
 #'   [stats::optimHess()] after running [stats::nlminb()]. Sometimes aids
 #'   convergence.
-#' @param mgcv Parse the formula with [mgcv::gam()]?
+#' @param mgcv **Deprecated** Parse the formula with [mgcv::gam()]?
 #' @param map_rf **Deprecated** use `spatial = 'off', spatiotemporal = 'off'` in
 #'   [sdmTMB()].
 #' @param map A named list with factor `NA`s specifying parameter values that
@@ -39,7 +39,8 @@
 #' @param profile Logical: should population-level/fixed effects be profiled
 #'   out of the likelihood? These are then appended to the random effects
 #'   vector without the Laplace approximation. See [TMB::MakeADFun()]. *This
-#'   can dramatically speed up model fit if there are many fixed effects.*
+#'   can dramatically speed up model fit if there are many fixed effects but is
+#'   experimental at this stage.*
 #' @param lower An optional named list of lower bounds within the optimization.
 #'   Parameter vectors with the same name (e.g., `b_j` or `ln_kappa` in some
 #'   cases) can be specified as a numeric vector. E.g.
@@ -67,11 +68,14 @@
 #'
 #' @return A list of control arguments
 #' @export
+#' @details
+#' Usually used within [sdmTMB()]. For example:
+#'
+#' ```
+#' sdmTMB(..., control = sdmTMBcontrol(newton_loops = 1))
+#' ```
 #' @examples
 #' sdmTMBcontrol()
-#'
-#' # Usually used within sdmTMB(). For example:
-#' # sdmTMB(..., control = sdmTMBcontrol(profile = TRUE))
 sdmTMBcontrol <- function(
   eval.max = 2e3L,
   iter.max = 1e3L,
@@ -292,7 +296,7 @@ has_no_random_effects <- function(obj) {
 #'
 #' @examplesIf inla_installed()
 #' fit <- sdmTMB(present ~ 1, data = pcod_2011, family = binomial(), spatial = "off")
-#' pars <- sdmTMB:::get_pars(fit)
+#' pars <- get_pars(fit)
 #' names(pars)
 #' @export
 get_pars <- function(object) {

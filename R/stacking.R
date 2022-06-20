@@ -3,11 +3,12 @@
 #' @description
 #' `r lifecycle::badge("experimental")`
 #'
-#' This approach is described in Yao et al. 2018, Bayesian Analysis. The general
-#' method minimizes (or maximizes) some quantity across models. For simple
-#' models with normal error, this may be the root mean squared error (RMSE), but
-#' other approaches include the log score. We adopt the latter here, where log
-#' scores are used to generate the stacking of predictive distributions
+#' This approach is described in Yao et al. (2018) \doi{10.1214/17-BA1091}. The
+#' general method minimizes (or maximizes) some quantity across models. For
+#' simple models with normal error, this may be the root mean squared error
+#' (RMSE), but other approaches include the log score. We adopt the latter here,
+#' where log scores are used to generate the stacking of predictive
+#' distributions
 #'
 #' @param model_list A list of models fit with [sdmTMB_cv()] to generate
 #'   estimates of predictive densities. You will want to set the seed
@@ -21,6 +22,13 @@
 #' @export
 #' @return
 #' A vector of model weights.
+#'
+#' @references
+#' Yao, Y., Vehtari, A., Simpson, D., and Gelman, A. 2018. Using Stacking to
+#' Average Bayesian Predictive Distributions (with Discussion). Bayesian Analysis
+#' 13(3): 917–1007. International Society for Bayesian Analysis.
+#' \doi{10.1214/17-BA1091}
+#'
 #'
 #' @examplesIf inla_installed()
 #' # Set parallel processing if desired. See 'Details' in ?sdmTMB_cv

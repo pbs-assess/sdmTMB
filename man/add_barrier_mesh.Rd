@@ -2,7 +2,7 @@
 % Please edit documentation in R/mesh.R
 \name{add_barrier_mesh}
 \alias{add_barrier_mesh}
-\title{Transform a mesh object into a barrier mesh object}
+\title{Transform a mesh object into a mesh with correlation barriers}
 \usage{
 add_barrier_mesh(
   spde_obj,
@@ -39,7 +39,7 @@ grey dot represents the center of a "normal" mesh triangle. Each red cross
 represents the center of a "barrier" mesh triangle.
 }
 \description{
-Transform a mesh object into a barrier mesh object
+Transform a mesh object into a mesh with correlation barriers
 }
 \examples{
 if (require("sf", quietly = TRUE) &&

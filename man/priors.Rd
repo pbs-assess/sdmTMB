@@ -67,12 +67,14 @@ A named list with values for the specified priors.
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 
-Optional priors/penalties on model parameters. This tesults in penalized
+Optional priors/penalties on model parameters. This results in penalized
 likelihood within TMB or can be used as priors if the model is passed to
 \pkg{tmbstan} (see the example in \code{\link[=extract_mcmc]{extract_mcmc()}}).
 
-\strong{Note} that Jacobian adjustments \strong{are not} yet made when passing to
-Stan for MCMC sampling. This does not affect normal TMB model fitting.
+\strong{Note that Jacobian adjustments are only made if \code{bayesian = TRUE}} when the
+\code{\link[=sdmTMB]{sdmTMB()}} model is fit. I.e., the final model will be fit with \pkg{tmbstan}
+and priors are specified then \code{bayesian} should be set to \code{TRUE}. Otherwise,
+leave \code{bayesian = FALSE}.
 
 \code{pc_matern()} is the Penalized Complexity prior for the Matern
 covariance function.

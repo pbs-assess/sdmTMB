@@ -239,7 +239,7 @@ make_barrier_spde <- function(spde) {
 }
 
 
-#' Transform a mesh object into a barrier mesh object
+#' Transform a mesh object into a mesh with correlation barriers
 #'
 #' @param spde_obj Output from [make_mesh()].
 #' @param barrier_sf An sf object with polygons defining the barriers. For

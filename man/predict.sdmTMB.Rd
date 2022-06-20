@@ -36,9 +36,9 @@ data set.}
 
 \item{se_fit}{Should standard errors on predictions at the new locations
 given by \code{newdata} be calculated? Warning: the current implementation can
-be very slow for large data sets or high-resolution projections. A \emph{much}
-faster option is to use the \code{nsim} argument below and calculate uncertainty
-on the simulations from the joint precision matrix.}
+be very slow for large data sets or high-resolution projections unless
+\code{re_form = NA} (omitting random fields). A faster option to approximate
+point-wise uncertainty is often to use the \code{nsim} argument.}
 
 \item{return_tmb_object}{Logical. If \code{TRUE}, will include the TMB object in a
 list format output. Necessary for the \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}}
@@ -47,22 +47,20 @@ functions.}
 \item{area}{\strong{Deprecated}. Please use \code{area} in \code{\link[=get_index]{get_index()}}.}
 
 \item{re_form}{\code{NULL} to specify including all spatial/spatiotemporal random
-effects in predictions. \code{~0} or \code{NA} for population-level predictions. Note
-that unlike lme4 or glmmTMB, this only affects what the standard errors are
-calculated on if \code{se_fit = TRUE}. This does not affect \code{\link[=get_index]{get_index()}}
-calculations.}
+effects in predictions. \code{~0} or \code{NA} for population-level predictions.
+Likely to be used in conjunction with \code{se_fit = TRUE}. This does not affect
+\code{\link[=get_index]{get_index()}} calculations.}
 
 \item{re_form_iid}{\code{NULL} to specify including all random intercepts in the
 predictions. \code{~0} or \code{NA} for population-level predictions. No other
 options (e.g., some but not all random intercepts) are implemented yet.
-Only affects predictions with \code{newdata}. This also affects \code{\link[=get_index]{get_index()}}.}
+Only affects predictions with \code{newdata}. This \emph{does} affects \code{\link[=get_index]{get_index()}}.}
 
-\item{nsim}{\strong{Experimental.} If > 0, simulate from the joint precision matrix with \code{sims}
-draws Returns a matrix of \code{nrow(data)} by \code{sim} representing the estimates
-of the linear predictor (i.e., in link space). Can be useful for deriving
-uncertainty on predictions (e.g., \code{apply(x, 1, sd)}) or propagating
-uncertainty. This is currently the fastest way to generate estimates of
-uncertainty on predictions in space with sdmTMB.}
+\item{nsim}{Experimental: If \verb{> 0}, simulate from the joint precision
+matrix with \code{nsim} draws. Returns a matrix of \code{nrow(data)} by \code{nsim}
+representing the estimates of the linear predictor (i.e., in link space).
+Can be useful for deriving uncertainty on predictions (e.g., \code{apply(x, 1, sd)}) or propagating uncertainty. This is currently the fastest way to
+generate estimates of uncertainty on predictions in space with sdmTMB.}
 
 \item{sims}{\strong{Deprecated}. Please use \code{nsim} instead.}
 
@@ -71,17 +69,16 @@ uncertainty on predictions in space with sdmTMB.}
 predict function will return a matrix of a similar form as if \code{nsim > 0}
 but representing Bayesian posterior samples from the Stan model.}
 
-\item{sims_var}{\strong{Experimental.} Which TMB reported variable from the model
+\item{sims_var}{Experimental: Which TMB reported variable from the model
 should be extracted from the joint precision matrix simulation draws?
 Defaults to the link-space predictions. Options include: \code{"omega_s"},
 \code{"zeta_s"}, \code{"epsilon_st"}, and \code{"est_rf"} (as described below).
 Other options will be passed verbatim.}
 
-\item{model}{Type of prediction if a delta/hurdle model:
-\code{NA} returns the combined prediction from both components on
-the link scale for the positive component; \code{1} or \code{2} return the first or second model
-component only on the link or response scale depending on the argument
-\code{type}.}
+\item{model}{Type of prediction if a delta/hurdle model: \code{NA} returns the
+combined prediction from both components on the link scale for the positive
+component; \code{1} or \code{2} return the first or second model component only on
+the link or response scale depending on the argument \code{type}.}
 
 \item{return_tmb_report}{Logical: return the output from the TMB
 report? For regular prediction this is all the reported variables
@@ -89,7 +86,8 @@ at the MLE parameter values. For \code{nsim > 0} or when \code{tmbstan_model}
 is supplied, this is a list where each element is a sample and the
 contents of each element is the output of the report for that sample.}
 
-\item{return_tmb_data}{Logical: return formatted data for TMB? Used internally.}
+\item{return_tmb_data}{Logical: return formatted data for TMB? Used
+internally.}
 
 \item{...}{Not implemented.}
 }
@@ -190,6 +188,9 @@ plot_map(predictions, "epsilon_st") +
 
 # Visualizing a marginal effect ----------------------------------------
 
+# See the visreg package or the ggeffects::ggeffect() function
+# To do this manually:
+
 nd <- data.frame(depth_scaled =
   seq(min(d$depth_scaled), max(d$depth_scaled), length.out = 100))
 nd$depth_scaled2 <- nd$depth_scaled^2
@@ -208,7 +209,9 @@ m_gam <- sdmTMB(
  data = d, formula = density ~ 0 + as.factor(year) + s(depth_scaled, k = 5),
  time = "year", mesh = mesh, family = tweedie(link = "log")
 )
-plot_smooth(m_gam)
+if (require("visreg", quietly = TRUE)) { # just for help docs
+  visreg::visreg(m_gam, "depth_scaled")
+}
 
 # or manually:
 nd <- data.frame(depth_scaled =

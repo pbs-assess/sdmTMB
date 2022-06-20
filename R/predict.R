@@ -16,30 +16,27 @@
 #' @param type Should the `est` column be in link (default) or response space?
 #' @param se_fit Should standard errors on predictions at the new locations
 #'   given by `newdata` be calculated? Warning: the current implementation can
-#'   be very slow for large data sets or high-resolution projections. A *much*
-#'   faster option is to use the `nsim` argument below and calculate uncertainty
-#'   on the simulations from the joint precision matrix.
+#'   be very slow for large data sets or high-resolution projections unless
+#'   `re_form = NA` (omitting random fields). A faster option to approximate
+#'   point-wise uncertainty is often to use the `nsim` argument.
 #' @param return_tmb_object Logical. If `TRUE`, will include the TMB object in a
 #'   list format output. Necessary for the [get_index()] or [get_cog()]
 #'   functions.
 #' @param re_form `NULL` to specify including all spatial/spatiotemporal random
-#'   effects in predictions. `~0` or `NA` for population-level predictions. Note
-#'   that unlike lme4 or glmmTMB, this only affects what the standard errors are
-#'   calculated on if `se_fit = TRUE`. This does not affect [get_index()]
-#'   calculations.
+#'   effects in predictions. `~0` or `NA` for population-level predictions.
+#'   Likely to be used in conjunction with `se_fit = TRUE`. This does not affect
+#'   [get_index()] calculations.
 #' @param re_form_iid `NULL` to specify including all random intercepts in the
 #'   predictions. `~0` or `NA` for population-level predictions. No other
 #'   options (e.g., some but not all random intercepts) are implemented yet.
-#'   Only affects predictions with `newdata`. This also affects [get_index()].
-#' @param nsim **Experimental.** If > 0, simulate from the joint precision matrix with `sims`
-#'   draws Returns a matrix of `nrow(data)` by `sim` representing the estimates
-#'   of the linear predictor (i.e., in link space). Can be useful for deriving
-#'   uncertainty on predictions (e.g., `apply(x, 1, sd)`) or propagating
-#'   uncertainty. This is currently the fastest way to generate estimates of
-#'   uncertainty on predictions in space with sdmTMB.
-#' @param area **Deprecated**. Please use `area` in [get_index()].
-#' @param sims **Deprecated**. Please use `nsim` instead.
-#' @param sims_var **Experimental.** Which TMB reported variable from the model
+#'   Only affects predictions with `newdata`. This *does* affects [get_index()].
+#' @param nsim Experimental: If `> 0`, simulate from the joint precision
+#'   matrix with `nsim` draws. Returns a matrix of `nrow(data)` by `nsim`
+#'   representing the estimates of the linear predictor (i.e., in link space).
+#'   Can be useful for deriving uncertainty on predictions (e.g., `apply(x, 1,
+#'   sd)`) or propagating uncertainty. This is currently the fastest way to
+#'   generate estimates of uncertainty on predictions in space with sdmTMB.
+#' @param sims_var Experimental: Which TMB reported variable from the model
 #'   should be extracted from the joint precision matrix simulation draws?
 #'   Defaults to the link-space predictions. Options include: `"omega_s"`,
 #'   `"zeta_s"`, `"epsilon_st"`, and `"est_rf"` (as described below).
@@ -48,17 +45,19 @@
 #'   [extract_mcmc()] for more details and an example. If specified, the
 #'   predict function will return a matrix of a similar form as if `nsim > 0`
 #'   but representing Bayesian posterior samples from the Stan model.
-#' @param model Type of prediction if a delta/hurdle model:
-#'   `NA` returns the combined prediction from both components on
-#'   the link scale for the positive component; `1` or `2` return the first or second model
-#'   component only on the link or response scale depending on the argument
-#'   `type`.
+#' @param model Type of prediction if a delta/hurdle model: `NA` returns the
+#'   combined prediction from both components on the link scale for the positive
+#'   component; `1` or `2` return the first or second model component only on
+#'   the link or response scale depending on the argument `type`.
 #' @param return_tmb_report Logical: return the output from the TMB
 #'   report? For regular prediction this is all the reported variables
 #'   at the MLE parameter values. For `nsim > 0` or when `tmbstan_model`
 #'   is supplied, this is a list where each element is a sample and the
 #'   contents of each element is the output of the report for that sample.
-#' @param return_tmb_data Logical: return formatted data for TMB? Used internally.
+#' @param return_tmb_data Logical: return formatted data for TMB? Used
+#'   internally.
+#' @param area **Deprecated**. Please use `area` in [get_index()].
+#' @param sims **Deprecated**. Please use `nsim` instead.
 #' @param ... Not implemented.
 #'
 #' @return
@@ -150,6 +149,9 @@
 #'
 #' # Visualizing a marginal effect ----------------------------------------
 #'
+#' # See the visreg package or the ggeffects::ggeffect() function
+#' # To do this manually:
+#'
 #' nd <- data.frame(depth_scaled =
 #'   seq(min(d$depth_scaled), max(d$depth_scaled), length.out = 100))
 #' nd$depth_scaled2 <- nd$depth_scaled^2
@@ -168,7 +170,9 @@
 #'  data = d, formula = density ~ 0 + as.factor(year) + s(depth_scaled, k = 5),
 #'  time = "year", mesh = mesh, family = tweedie(link = "log")
 #' )
-#' plot_smooth(m_gam)
+#' if (require("visreg", quietly = TRUE)) { # just for help docs
+#'   visreg::visreg(m_gam, "depth_scaled")
+#' }
 #'
 #' # or manually:
 #' nd <- data.frame(depth_scaled =

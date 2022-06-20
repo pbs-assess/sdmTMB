@@ -2,7 +2,7 @@
 % Please edit documentation in R/cross-val.R
 \name{sdmTMB_cv}
 \alias{sdmTMB_cv}
-\title{Save log likelihoods of k-fold cross-validation for sdmTMB models}
+\title{Cross validation with sdmTMB models}
 \usage{
 sdmTMB_cv(
   formula,
@@ -24,7 +24,7 @@ sdmTMB_cv(
 \item{data}{A data frame.}
 
 \item{mesh_args}{Arguments for \code{\link[=make_mesh]{make_mesh()}}. If supplied, the mesh will be
-reconstruncted for each fold.}
+reconstructed for each fold.}
 
 \item{mesh}{Output from \code{\link[=make_mesh]{make_mesh()}}. If supplied, the mesh will be constant
 across folds.}
@@ -65,7 +65,7 @@ and CV log likelihood.
 }
 }
 \description{
-Save log likelihoods of k-fold cross-validation for sdmTMB models
+Save log likelihoods of k-fold cross-validation for sdmTMB models.
 }
 \details{
 Parallel processing can be used by setting a \code{future::plan()}.

@@ -5,8 +5,7 @@
 #' \pkg{emmeans} package computes estimated marginal means for the fixed
 #' effects.
 #'
-#' @name emmeans
-#' @aliases emmeans.sdmTMB
+#' @name emmeans.sdmTMB
 #'
 #' @references
 #' \url{https://aosmith.rbind.io/2019/03/25/getting-started-with-emmeans/}

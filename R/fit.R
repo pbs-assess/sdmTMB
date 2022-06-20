@@ -13,8 +13,7 @@ NULL
 #'   \pkg{lme4} syntax, e.g., `+ (1 | g)` where `g` is a column of class
 #'   character or factor representing groups. Penalized splines are possible via
 #'   \pkg{mgcv} with `s()`. Optionally a list for delta (hurdle) models.  See
-#'   examples and details below. For index standardization, see details section
-#'   below.
+#'   examples and details below.
 #' @param data A data frame.
 #' @param mesh An object from [make_mesh()].
 #' @param time An optional time column name (as character). Can be left as
@@ -58,11 +57,11 @@ NULL
 #'   covariates (including the intercept) in both the main and time-varying
 #'   formula. I.e., at least one should have `~ 0` or `~ -1`. Structure must
 #'   currently be shared in delta models.
-#' @param spatial_varying An optional one-sided formula of a coefficients that
+#' @param spatial_varying An optional one-sided formula of coefficients that
 #'   should varying in space as random fields. Note that you likely want to
 #'   include a fixed effect for the same variable to improve interpretability
 #'   since the random field is assumed to have a mean of 0.
-#'   If the (scaled) time column, will represent a local-time-trend model. See
+#'   If a (scaled) time column is used, it will represent a local-time-trend model. See
 #'   \doi{10.1111/ecog.05176} and the [spatial trends
 #'   vignette](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html).
 #'   Note this predictor should be centered to have mean zero and have a
@@ -84,7 +83,8 @@ NULL
 #'   the list of random effects to integrate over.
 #' @param silent Silent or include optimization details? Helpful to set to
 #'   `FALSE` for models that take a while to fit.
-#' @param anisotropy Logical: allow for anisotropy? See [plot_anisotropy()].
+#' @param anisotropy Logical: allow for anisotropy (spatial correlation that is
+#'   directionally dependent)? See [plot_anisotropy()].
 #'   Must be shared across delta models.
 #' @param control Optimization control options via [sdmTMBcontrol()].
 #' @param priors Optional penalties/priors via [sdmTMBpriors()]. Must currently
@@ -512,7 +512,6 @@ NULL
 #' fit <- sdmTMB(
 #'   density ~ breakpt(depth_scaled), #<
 #'   data = pcod_2011,
-#'   # spatial = "off",
 #'   mesh = mesh,
 #'   family = tweedie()
 #' )

@@ -37,8 +37,7 @@ sdmTMB(
 \pkg{lme4} syntax, e.g., \code{+ (1 | g)} where \code{g} is a column of class
 character or factor representing groups. Penalized splines are possible via
 \pkg{mgcv} with \code{s()}. Optionally a list for delta (hurdle) models.  See
-examples and details below. For index standardization, see details section
-below.}
+examples and details below.}
 
 \item{data}{A data frame.}
 
@@ -89,11 +88,11 @@ covariates (including the intercept) in both the main and time-varying
 formula. I.e., at least one should have \code{~ 0} or \code{~ -1}. Structure must
 currently be shared in delta models.}
 
-\item{spatial_varying}{An optional one-sided formula of a coefficients that
+\item{spatial_varying}{An optional one-sided formula of coefficients that
 should varying in space as random fields. Note that you likely want to
 include a fixed effect for the same variable to improve interpretability
 since the random field is assumed to have a mean of 0.
-If the (scaled) time column, will represent a local-time-trend model. See
+If a (scaled) time column is used, it will represent a local-time-trend model. See
 \doi{10.1111/ecog.05176} and the \href{https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.
 Note this predictor should be centered to have mean zero and have a
 standard deviation of approximately 1 (scale by the SD). Structure must
@@ -120,7 +119,8 @@ the list of random effects to integrate over.}
 \item{silent}{Silent or include optimization details? Helpful to set to
 \code{FALSE} for models that take a while to fit.}
 
-\item{anisotropy}{Logical: allow for anisotropy? See \code{\link[=plot_anisotropy]{plot_anisotropy()}}.
+\item{anisotropy}{Logical: allow for anisotropy (spatial correlation that is
+directionally dependent)? See \code{\link[=plot_anisotropy]{plot_anisotropy()}}.
 Must be shared across delta models.}
 
 \item{control}{Optimization control options via \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}.}
@@ -475,7 +475,6 @@ se$b_rw_t[, , 1]
 fit <- sdmTMB(
   density ~ breakpt(depth_scaled), #<
   data = pcod_2011,
-  # spatial = "off",
   mesh = mesh,
   family = tweedie()
 )

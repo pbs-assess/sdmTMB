@@ -44,7 +44,7 @@ try increasing this to \code{2}.}
 \code{\link[stats:optim]{stats::optimHess()}} after running \code{\link[stats:nlminb]{stats::nlminb()}}. Sometimes aids
 convergence.}
 
-\item{mgcv}{Parse the formula with \code{\link[mgcv:gam]{mgcv::gam()}}?}
+\item{mgcv}{\strong{Deprecated} Parse the formula with \code{\link[mgcv:gam]{mgcv::gam()}}?}
 
 \item{quadratic_roots}{Experimental feature for internal use right now; may
 be moved to a branch. Logical: should quadratic roots be calculated? Note:
@@ -80,7 +80,8 @@ Phases are usually faster and more stable.}
 \item{profile}{Logical: should population-level/fixed effects be profiled
 out of the likelihood? These are then appended to the random effects
 vector without the Laplace approximation. See \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}. \emph{This
-can dramatically speed up model fit if there are many fixed effects.}}
+can dramatically speed up model fit if there are many fixed effects but is
+experimental at this stage.}}
 
 \item{get_joint_precision}{Logical. Passed to \code{getJointPrecision} in
 \code{\link[TMB:sdreport]{TMB::sdreport()}}. Must be \code{TRUE} to use simulation-based methods in
@@ -101,9 +102,12 @@ A list of control arguments
 \description{
 \code{\link[=sdmTMB]{sdmTMB()}} and \code{\link[stats:nlminb]{stats::nlminb()}} control options.
 }
+\details{
+Usually used within \code{\link[=sdmTMB]{sdmTMB()}}. For example:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{sdmTMB(..., control = sdmTMBcontrol(newton_loops = 1))
+}\if{html}{\out{</div>}}
+}
 \examples{
 sdmTMBcontrol()
-
-# Usually used within sdmTMB(). For example:
-# sdmTMB(..., control = sdmTMBcontrol(profile = TRUE))
 }
