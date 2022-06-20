@@ -1,0 +1,217 @@
+---
+title: "Spatial Modeling of Presence-Only Data with Adding Pseudo-Absences"
+author: "Julia Indivero, Sean Anderson, Lewis Barnett, Philina English, Eric Ward"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Presence Data with sdmTMB}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE, cache=FALSE}
+dplyr_installed <- require("dplyr", quietly = TRUE)
+ggplot_installed <- require("ggplot2", quietly = TRUE)
+patstat.data_installed <- require("spatstat.data", quietly = TRUE)
+pkgs <- dplyr_installed && ggplot_installed && spatstat.data_installed
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.asp = 0.618,
+  eval = identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
+)
+```
+
+
+```{r libs, message=FALSE, warning=FALSE}
+library(dplyr)
+library(sdmTMB)
+library(ggplot2)
+library(spatstat.data)
+```
+
+By adding pseudo-absences to presence-only data, we can estimate a spatial range that isn't sensitive to choice of raster or lattice resolution.
+
+This example of modeling presence-absence will use data on the locations of 3605 trees (species Beilschmiedia pendula) in a tropical rainforest from [the spatst.data package](https://rdrr.io/cran/spatstat.data/man/bei.html)
+
+# Data
+## Presence data
+
+These data come from the `spatstat` package, and consist of point locations of 3605 trees on Barro Colorado Island (Panama). From `spatstat`, *the data files kindly supplied by Rasmus Waagepetersen*  
+
+The data are stored in the `bei` dataframe,  
+
+```{r dat}
+dat <- data.frame(
+  x = spatstat.data::bei$x,
+  y = spatstat.data::bei$y
+)
+```
+
+The distribution of trees is obviously not uniform and the middle of the map has very few trees.  
+
+```{r plot-trees, fig.asp=0.5, echo=FALSE}
+ggplot(dat, aes(x, y)) +
+  geom_point(col = "darkblue", alpha = 0.1) +
+  coord_cartesian(expand = FALSE)
+```
+
+## Generate pseudo-absences 
+
+There are several approaches to generating pseduo-absences from these data. We first use a method called quadrature points ([Renner et al. 2015](https://doi.org/10.1111/2041-210X.12352)). For this method, we have to decide:  
+1. Distribution of zeroes  
+- Regularly spaced (e.g. on a grid or lattice?)
+- Random  
+- Higher density where environmental variability is high  (suggestion by Renner et al. 2015)
+2. How many zeroes to generate?    
+- Large enough so that predictive performance does not change as more are added  
+
+Here, we will use a uniform grid strategy to create ~5000 points. To test whether the number of pseudo-absences is sufficient, `res` can be decreased, and model performance can be compared. For instance, to increase the number of pseudo-absences to ~20,000 points, we could change `res <- 5`. In this example, increasing the number of zeroes to ~20,000 only marginally improves model performance, so 5,000 zeroes is sufficient. 
+
+```{r make-zeros, echo = TRUE}
+res <- 10 #Determines resolution: lower value will increase number of zeroes generated
+
+# zeros is generated on a grid for this example, but other strategies could be used
+zeros <- expand.grid(
+  x = seq(0, 1000, by = res),
+  y = seq(0, 500, by = res)
+)
+```
+
+Then, we combine the presence and pseudo-absence data, and use `$present` to separate occurrences from pseudo-absences.  
+
+```{r bind-dat, echo=TRUE}
+dat$present <- 1
+zeros$present <- 0
+all_dat <- rbind(dat, zeros)
+```
+
+Next we can create the mesh. The resolution of mesh can be changed with the `cutoff` value, which determines the minimum distance between locations in X-Y units. Increasing the cutoff will decrease the resolution of the mesh. In this example, a higher resolution mesh of `cutoff=15` marginally improved model performance over `cutoff=25`.
+
+```{r mesh, message=FALSE, results=FALSE}
+mesh <- make_mesh(
+  all_dat,
+  xy_cols = c("x", "y"),
+  cutoff = 15 # min. distance between knots in X-Y units
+)
+```
+
+The dimensions of the mesh (or number of vertices or knots) can be accessed with `mesh$mesh$n`. A cutoff distance of 15 yields ~ 1399 knots, and a cutoff distance of 25 yields a mesh with 624 knots. 
+
+Blue dots are data, red grid dots are quadrature points, and grey triangles are from the SPDE mesh.
+```{r mesh-viz, fig.asp=0.5, echo=FALSE}
+all_dat$fpres <- as.factor(all_dat$present)
+ggplot() +
+  inlabru::gg(mesh$mesh) +
+  geom_point(
+    data = all_dat,
+    aes(x = x, y = y, col = fpres), size = 0.1, alpha = 0.3
+  ) +
+  coord_equal() +
+  # guides(colour = guide_legend(override.aes = list(alpha = 1))) + 
+  guides(col = guide_legend(title = "Present"))
+```
+
+# Model Options
+## 1) Infinitely Weighted Logistic Regression (IWLR) and sdmTMB  
+
+Several approaches exist for estimating a model with pseudo-absences. These are similar, but have different likelihood models. First, we can use an Infinitely Weighted Logistic Regression [Fithian & Hastie (2013)](https://doi.org/10.1214/13-AOAS667) for the model.
+
+The first step is to calculate weights. Weights will be 1 for true occurrences and a very large number (`nW`) for pseudo-absences.  
+```{r make-iwlr, echo=TRUE}
+nW <- 1.0e6
+all_dat$wt <- nW^(1 - all_dat$present)
+```
+
+And use sdmTMB to fit the model.
+```{r iwlr-fit, echo = TRUE, warning=FALSE, message=FALSE}
+fit <- sdmTMB(
+  present ~ 1,
+  data = all_dat,
+  mesh = mesh,
+  family = binomial(link = "logit"),
+  weights = all_dat$wt
+)
+```
+
+We can inspect the model output.
+```{r inspect1, echo=TRUE}
+summary(fit)
+```
+
+A criticism of this approach is that the intercept and log-likelihood can be affected by `nW` ([Renner et al. 2015](https://doi.org/10.1111/2041-210X.12352))
+
+## 2) Downweighted Poisson Regression (DWPR)  
+Another option is the Downweighted Poisson Regression, which is similar to IWLR but uses different weights and doesn't have the same arbitrary effects on intercept and likelihood  
+
+First we re-calculate weights (note they're differnt than IWLR):
+```{r make-dwpr, echo=TRUE}
+# small values at presence locations
+all_dat$wt <- 1e-6
+
+# pseudo-absences: area per quadrature point
+tot_area <- diff(range(dat$x)) * diff(range(dat$y))
+n_zeros <- length(which(all_dat$present == 0))
+
+all_dat$wt <- ifelse(all_dat$present == 1,
+  1e-6, tot_area / n_zeros
+)
+```
+
+Then fit the model with the new weights and a Poisson distribution
+```{r fit-dwpr, echo=TRUE}
+fit <- sdmTMB(
+  present / wt ~ 1,
+  data = all_dat,
+  mesh = mesh,
+  family = poisson(link = "log"),
+  weights = all_dat$wt
+)
+```
+
+And inspect the output
+```{r inspect2, echo=TRUE}
+summary(fit)
+```
+
+We can plot the random spatial effects
+```{r plot-rf, echo=FALSE, fig.align="center"}
+p <- predict(fit, newdata = zeros)
+ggplot(p, aes(x, y, fill = omega_s)) +
+  geom_raster() +
+  scale_fill_gradient2() +
+  coord_fixed(expand = FALSE)
+```
+
+We can predict spatial distribution both in link (log) space:
+```{r plot-link, echo=FALSE, fig.align="center"}
+ggplot(p, aes(x, y, fill = est)) +
+  geom_raster() +
+  scale_fill_viridis_c() +
+  coord_fixed(expand = FALSE)
+```
+
+Or natural space:
+```{r plot-norm, echo=FALSE, fig.align="center"}
+ggplot(p, aes(x, y, fill = exp(est))) +
+  geom_raster() +
+  labs(fill = "Intensity\n(average point density)") +
+  scale_fill_viridis_c(trans = "sqrt") +
+  coord_fixed(expand = FALSE)
+```
+
+To evaluate the predictive performance, there are multiple options for binary data. AUC (Area Under the receiver operating characteristic curve) is a common metric, where values near 0.5 are essentially random, and values close to 1 indicate better predictive performance. We can use the package [ROCR](https://cran.rstudio.com/web/packages/ROCR/vignettes/ROCR.html).
+
+```{r auc, echo=TRUE}
+all_dat$p <- predict(fit)$est # total predictions, logit
+rocr <- ROCR::prediction(exp(all_dat$p), all_dat$present)
+ROCR::performance(rocr, measure = "auc")@y.values[[1]]
+```
+
+```{r echo=FALSE}
+AUC <- ROCR::performance(rocr, measure = "auc")@y.values[[1]]
+```
+
+
+  
