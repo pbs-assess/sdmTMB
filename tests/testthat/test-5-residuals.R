@@ -22,6 +22,7 @@ test_that("randomized quantile residuals work,", {
   skip_on_ci()
   skip_if_not_installed("INLA")
 
+  set.seed(1)
   predictor_dat <- data.frame(X = runif(2000), Y = runif(2000))
   mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.2)
 
@@ -118,6 +119,7 @@ test_that("randomized quantile residuals work,", {
   check_resids(fit)
   check_resids_dharma(fit)
 
+  set.seed(1)
   d <- sim_dat(poisson())
   fit <- sdmTMB(
     observed ~ 1,
