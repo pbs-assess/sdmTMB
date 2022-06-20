@@ -63,6 +63,23 @@ family.sdmTMB <- function (object, ...) {
   }
 }
 
+##' @importFrom nlme fixef
+#' @method fixef sdmTMB
+#' @export
+fixef.sdmTMB <- function(object, ...) {
+  .t <- tidy(object)
+  bhat <- .t$estimate
+  names(bhat) <- .t$term
+  bhat
+}
+
+#' @importFrom stats df.residual
+#' @method df.residual sdmTMB
+#' @export
+df.residual.sdmTMB <- function(object, ...) {
+  nobs(object) - length(object$model$par)
+}
+
 #' @export
 formula.sdmTMB <- function (x, ...) {
   if (length(x$formula) > 1L) {

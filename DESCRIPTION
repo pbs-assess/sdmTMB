@@ -65,6 +65,7 @@ Imports:
     methods,
     mgcv,
     mvtnorm,
+    nlme,
     stats,
     TMB (>= 1.8.0)
 Suggests:
@@ -72,6 +73,8 @@ Suggests:
     DHARMa,
     dplyr,
     effects (>= 4.0-1),
+    estimability,
+    emmeans (>= 1.4),
     future.apply,
     ggeffects,
     ggforce,
@@ -92,7 +95,7 @@ LinkingTo:
     TMB
 VignetteBuilder:
     knitr
-Additional_repositories: https://inla.r-inla-download.org/R/stable
+Additional_repositories: https://inla.r-inla-download.org/R/testing
 ByteCompile: true
 Config/testthat/edition: 3
 Config/testthat/parallel: true
