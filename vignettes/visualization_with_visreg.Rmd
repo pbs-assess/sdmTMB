@@ -12,7 +12,8 @@ vignette: >
 ```{r setup, include = FALSE, cache=FALSE}
 ggplot_installed <- require("ggplot2", quietly = TRUE)
 visreg_installed <- require("visreg", quietly = TRUE)
-pkgs <- ggplot_installed && visreg_installed
+inla_installed <- requireNamespace("INLA", quietly = TRUE)
+pkgs <- ggplot_installed && visreg_installed && inla_installed
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -59,7 +60,7 @@ Note that by default, randomized quantile residuals are included.
 These should be normally distributed in link space if the model is consistent with the data.
 These can be turned off with `partial = FALSE`
 
-The default, visreg plot uses base graphics.
+The default, a visreg plot uses base graphics.
 We can set `gg = TRUE` to get a ggplot version:
 
 ```{r}
@@ -95,7 +96,7 @@ And at the effect of depth on the response scale, rather than link (log) scale.
 visreg(fit, xvar = "depth_scaled", scale = "response")
 ```
 
-In this case, visreg add "rug" lines indicating the where the data were observed along the x-axis variable.
+In this case, visreg adds "rug" lines indicating the where the data were observed along the x-axis variable.
 
 `visreg()` can also be used to visualize just the categorical effect of year.
 
@@ -123,7 +124,8 @@ visreg2d(fit, xvar = "fyear", yvar = "depth_scaled", plot.type = "persp")
 
 ## Delta models
 
-`visreg()` can also be used to plot the output of delta models from `sdmTMB()` by using similar code for the previous plots, but using the sdmTMB wrapper function `visreg_delta()` and specifying `model = 1` for the encounter (0 vs. non-zero) model or `model = 2` for the positive component model (e.g., Gamma, lognormal). For example:
+`visreg()` can also be used to plot the output of delta models from `sdmTMB()` by using similar code for the previous plots, but using the sdmTMB wrapper function `visreg_delta()` and specifying `model = 1` for the encounter (0 vs. non-zero) model or `model = 2` for the positive component model (e.g., Gamma, lognormal). 
+For example:
 
 ```{r}
 fit_dg <- sdmTMB(
