@@ -29,7 +29,7 @@ NULL
 #'   \code{\link[sdmTMB:families]{truncated_nbinom1()}},
 #'   \code{\link[sdmTMB:families]{censored_poisson()}},
 #'   \code{\link[sdmTMB:families]{student()}}, and
-#'   \code{\link[sdmTMB:families]{tweedie()}}]. Supports the delta/hurdle models:
+#'   \code{\link[sdmTMB:families]{tweedie()}}. Supports the delta/hurdle models:
 #'   \code{\link[sdmTMB:families]{delta_gamma()}},
 #'   \code{\link[sdmTMB:families]{delta_lognormal()}}, and
 #'   \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}},

@@ -48,7 +48,7 @@ First, we will set up a column for time that is Normal(0, 1) to help with estima
 
 ```{r}
 d <- pcod
-d$scaled_year <- (pcod$year - mean(pcod$year)) / sd(pcod$year) + 3
+d$scaled_year <- (pcod$year - mean(pcod$year)) / sd(pcod$year)
 ```
 
 Now fit a model using `spatial_varying ~ 0 + scaled_year`:
