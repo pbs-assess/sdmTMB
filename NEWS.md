@@ -1,11 +1,45 @@
 # sdmTMB
 
-# sdmTMB 0.0.24.9005
+# sdmTMB 0.0.26.9000
+
+* Add support for emmeans package. See `?emmeans.sdmTMB` for examples.
+
+* Add support for effects package. The `ggeffects::ggeffect()` function
+  can be used to make fast marginal effects plots. `ggeffects::ggpredict()`
+  works with a custom fork of ggeffects. A pull request will be made shortly.
+  #101 
+
+* Add `vcov()`, `fixef()`, `df.residual`(), `formula()`, `terms()`, and
+  `model.frame()` methods.
+
+* Add support for `"cloglog"` link. Code adapted from glmmTMB for robust
+  likelihood implementation.
+
+* For delta models, by default share the anisotropy parameters as in VAST. 
+  Separate anisotropy (old behavior) can be estimated with
+  `control = sdmTMBcontrol(map = list(ln_H_input = factor(c(1, 2, 3, 4))))`
+  
+* Add experimental `do_index`, `predict_args`, and `index_args` in `sdmTMB()`.
+  These can be used to perform prediction and index calculation at the same
+  time as fitting. For very large datasets or meshes this can save time
+  compared to fitting, predicting, and index calculation in 3 separate steps
+  since the TMB AD object doesn't have to be rebuilt. This will somewhat slow
+  down the initial fitting.
+  
+* Remove `max_gradient` and `bad_eig` from `get_index()` output.
 
 * Use unique locations on prediction for huge speedups on large `newdata`
   gridded data.
 
 * Fix bug where in rare cases `get_index()` would return gibberish small values.
+
+* Add `bayesian` argument, which when `TRUE` adds Jacobian adjustments for
+  non-linear transformed parameters. This should be `TRUE` if the model 
+  will be passed to tmbstan, but `FALSE` otherwise. #95
+  
+* Add experimental and not-yet-exported `sdmTMB:::plot_anisotropy2()`.
+
+* Add many anisotropy, delta model, and index calculation unit tests.
 
 # sdmTMB 0.0.24.9001
 
