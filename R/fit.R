@@ -45,7 +45,7 @@ NULL
 #'   deviation represents the marginal steady-state standard deviation of the
 #'   process in the case of the AR1. I.e., it is scaled according to the
 #'   correlation. See the [TMB
-#'   documentation](https://kaskr.github.io/adcomp/classAR1__t.html). If the AR1
+#'   documentation](https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html). If the AR1
 #'   correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
 #'   may wish to switch to the random walk `"RW"`. Capitalization is ignored.
 #'   `TRUE` gets converted to `'IID'` and `FALSE` gets converted to `off`.

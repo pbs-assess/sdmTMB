@@ -73,7 +73,7 @@ or \code{TRUE} / \code{FALSE}. Optionaly a list for delta models, e.g. \code{lis
 a list. E.g., \code{list('off', 'ar1')}. Note that the spatiotemporal standard
 deviation represents the marginal steady-state standard deviation of the
 process in the case of the AR1. I.e., it is scaled according to the
-correlation. See the \href{https://kaskr.github.io/adcomp/classAR1__t.html}{TMB documentation}. If the AR1
+correlation. See the \href{https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html}{TMB documentation}. If the AR1
 correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
 may wish to switch to the random walk \code{"RW"}. Capitalization is ignored.
 \code{TRUE} gets converted to \code{'IID'} and \code{FALSE} gets converted to \code{off}.}
