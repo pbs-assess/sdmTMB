@@ -7,10 +7,12 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+**If the code in this vignette has not been evaluated, a rendered version is available on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html) under 'Articles'.**
+
 ```{r, include = FALSE}
 sf_installed <- require("sf", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
-inla_installed <- require("INLA", quietly = TRUE)
+inla_installed <- requireNamespace("INLA", quietly = TRUE)
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",

@@ -1,6 +1,6 @@
 ---
 title: "Fitting delta (hurdle) models with sdmTMB"
-author: "Julia Indivero, Sean Anderson, Lewis Barnett, Philina English, Eric Ward"
+author: "Julia Indivero, Philina English, Sean Anderson, Eric Ward, Lewis Barnett"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
