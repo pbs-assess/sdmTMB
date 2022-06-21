@@ -9,7 +9,6 @@ sdmTMB_simulate(
   data,
   mesh,
   family = gaussian(link = "identity"),
-  previous_fit = NULL,
   time = NULL,
   B = NULL,
   range = NULL,
@@ -21,31 +20,31 @@ sdmTMB_simulate(
   tweedie_p = NULL,
   df = NULL,
   fixed_re = list(omega_s = NULL, epsilon_st = NULL, zeta_s = NULL),
+  previous_fit = NULL,
   seed = sample.int(1e+06, 1),
   ...
 )
 }
 \arguments{
-\item{formula}{A \emph{one-sided} formula describing the fixed-effect structure.}
+\item{formula}{A \emph{one-sided} formula describing the fixed-effect structure.
+Random intercepts are not (yet) supported. Fixed effects should match
+the corresponding \code{B} argument vector of coefficient values.}
 
-\item{data}{A data frame containing the predictors described in \code{formula} and the
-time column if \code{time} is specified.}
+\item{data}{A data frame containing the predictors described in \code{formula} and
+the time column if \code{time} is specified.}
 
 \item{mesh}{Output from \code{\link[=make_mesh]{make_mesh()}}.}
 
-\item{family}{Family as in \code{\link[=sdmTMB]{sdmTMB()}}.}
-
-\item{previous_fit}{(Depreciated; please use \code{\link[=simulate.sdmTMB]{simulate.sdmTMB()}}).
-An optional previous \code{\link[=sdmTMB]{sdmTMB()}} fit to pull parameter values.
-Will be over-ruled by any non-NULL specified parameter arguments.}
+\item{family}{Family as in \code{\link[=sdmTMB]{sdmTMB()}}. Delta families are not supported.
+Instead, simulate the two component models separately and combine.}
 
 \item{time}{The time column name.}
 
 \item{B}{A vector of beta values (fixed-effect coefficient values).}
 
-\item{range}{Parameter that controls the decay of spatial correlation. If a vector
-of length 2, \code{share_range} will be set to \code{FALSE} and the spatial and spatiotemporal
-ranges will be unique.}
+\item{range}{Parameter that controls the decay of spatial correlation. If a
+vector of length 2, \code{share_range} will be set to \code{FALSE} and the spatial
+and spatiotemporal ranges will be unique.}
 
 \item{rho}{Spatiotemporal correlation between years; should be between -1 and
 1.}
@@ -66,6 +65,10 @@ ranges will be unique.}
 (e.g., previously estimated) values. Values of \code{NULL} will result
 in the random effects being simulated.}
 
+\item{previous_fit}{(\strong{Deprecated}; please use \code{\link[=simulate.sdmTMB]{simulate.sdmTMB()}}).
+An optional previous \code{\link[=sdmTMB]{sdmTMB()}} fit to pull parameter values.
+Will be over-ruled by any non-NULL specified parameter arguments.}
+
 \item{seed}{Seed number.}
 
 \item{...}{Any other arguments to pass to \code{\link[=sdmTMB]{sdmTMB()}}.}
@@ -85,16 +88,9 @@ A data frame where:
 }
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-
-\code{sdmTMB_simulate()} (vs. \code{\link[=sdmTMB_sim]{sdmTMB_sim()}}) (1) uses TMB for simulation and is
-therefore \strong{much} faster and more flexible, (2) is set up to take a formula and
-a data frame and is therefore easier to use if you want different spatial
-observations (and covariates) for each time slice. \code{\link[=sdmTMB_sim]{sdmTMB_sim()}} uses pure
-R for simulation. \code{sdmTMB_simulate()} uses TMB for simulation.
-
-\code{\link[=simulate.sdmTMB]{simulate.sdmTMB()}}, on the other hand, takes an existing fit and simulates
-new observations and optionally new random effects.
+\code{sdmTMB_simulate()} uses TMB to simulate \emph{new} data given specified parameter
+values. \code{\link[=simulate.sdmTMB]{simulate.sdmTMB()}}, on the other hand, takes an \emph{existing} model fit
+and simulates new observations and optionally new random effects.
 }
 \examples{
 if (inla_installed()) {

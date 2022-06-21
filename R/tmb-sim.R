@@ -1,27 +1,22 @@
 #' Simulate from a spatial/spatiotemporal model
 #'
-#' @description
-#' `r lifecycle::badge("experimental")`
-#'
-#' `sdmTMB_simulate()` (vs. [sdmTMB_sim()]) (1) uses TMB for simulation and is
-#' therefore **much** faster and more flexible, (2) is set up to take a formula and
-#' a data frame and is therefore easier to use if you want different spatial
-#' observations (and covariates) for each time slice. [sdmTMB_sim()] uses pure
-#' R for simulation. `sdmTMB_simulate()` uses TMB for simulation.
-#'
-#' [simulate.sdmTMB()], on the other hand, takes an existing fit and simulates
-#' new observations and optionally new random effects.
+#' `sdmTMB_simulate()` uses TMB to simulate *new* data given specified parameter
+#' values. [simulate.sdmTMB()], on the other hand, takes an *existing* model fit
+#' and simulates new observations and optionally new random effects.
 #'
 #' @param formula A *one-sided* formula describing the fixed-effect structure.
-#' @param data A data frame containing the predictors described in `formula` and the
-#'   time column if `time` is specified.
+#'   Random intercepts are not (yet) supported. Fixed effects should match
+#'   the corresponding `B` argument vector of coefficient values.
+#' @param data A data frame containing the predictors described in `formula` and
+#'   the time column if `time` is specified.
 #' @param mesh Output from [make_mesh()].
 #' @param time The time column name.
-#' @param family Family as in [sdmTMB()].
+#' @param family Family as in [sdmTMB()]. Delta families are not supported.
+#'   Instead, simulate the two component models separately and combine.
 #' @param B A vector of beta values (fixed-effect coefficient values).
-#' @param range Parameter that controls the decay of spatial correlation. If a vector
-#'  of length 2, `share_range` will be set to `FALSE` and the spatial and spatiotemporal
-#'  ranges will be unique.
+#' @param range Parameter that controls the decay of spatial correlation. If a
+#'   vector of length 2, `share_range` will be set to `FALSE` and the spatial
+#'   and spatiotemporal ranges will be unique.
 #' @param rho Spatiotemporal correlation between years; should be between -1 and
 #'   1.
 #' @param sigma_O SD of spatial process (Omega).
@@ -33,7 +28,7 @@
 #' @param fixed_re A list of optional random effects to fix at specified
 #'    (e.g., previously estimated) values. Values of `NULL` will result
 #'    in the random effects being simulated.
-#' @param previous_fit (Depreciated; please use [simulate.sdmTMB()]).
+#' @param previous_fit (**Deprecated**; please use [simulate.sdmTMB()]).
 #'   An optional previous [sdmTMB()] fit to pull parameter values.
 #'   Will be over-ruled by any non-NULL specified parameter arguments.
 #' @param seed Seed number.
@@ -101,7 +96,6 @@ sdmTMB_simulate <- function(formula,
                             data,
                             mesh,
                             family = gaussian(link = "identity"),
-                            previous_fit = NULL,
                             time = NULL,
                             B = NULL,
                             range = NULL,
@@ -113,6 +107,7 @@ sdmTMB_simulate <- function(formula,
                             tweedie_p = NULL,
                             df = NULL,
                             fixed_re = list(omega_s = NULL, epsilon_st = NULL, zeta_s = NULL),
+                            previous_fit = NULL,
                             seed = sample.int(1e6, 1),
                             ...) {
   if (!requireNamespace("INLA", quietly = TRUE)) {
