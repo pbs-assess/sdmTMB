@@ -1,6 +1,9 @@
 # sdmTMB
 
-# sdmTMB 0.0.26.9000
+# sdmTMB 0.0.26.9001
+
+* Add vignettes on visreg, ggeffects, and delta families (thanks J. Indivero!)
+  #83 #87 #89 Forecasting and presence-only vignettes to be merged in soon.
 
 * Add support for emmeans package. See `?emmeans.sdmTMB` for examples.
 
