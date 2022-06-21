@@ -30,6 +30,7 @@
 #' mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 30, type = "cutoff")
 #' plot(mesh)
 #'
+#' \donttest{
 #' mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 5, type = "cutoff")
 #' plot(mesh)
 #'
@@ -50,6 +51,7 @@
 #' )
 #' mesh <- make_mesh(pcod, c("X", "Y"), mesh = inla_mesh)
 #' plot(mesh)
+#' }
 make_mesh <- function(data, xy_cols,
                       type = c("kmeans", "cutoff", "cutoff_search"),
                       cutoff, n_knots,

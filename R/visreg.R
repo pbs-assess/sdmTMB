@@ -35,8 +35,10 @@
 #'   )
 #'   visreg::visreg(fit, xvar = "depth_scaled")
 #'   visreg::visreg(fit, xvar = "fyear")
-#'   visreg::visreg(fit, xvar = "depth_scaled", scale = "response")
 #'   visreg::visreg2d(fit, xvar = "fyear", yvar = "depth_scaled")
+#'
+#'   \donttest{
+#'   visreg::visreg(fit, xvar = "depth_scaled", scale = "response")
 #'   v <- visreg::visreg(fit, xvar = "depth_scaled")
 #'   head(v$fit)
 #'   # now use ggplot2 etc. if desired
@@ -74,6 +76,7 @@
 #'     xvar = "depth_scaled", yvar = "year",
 #'     model = 2, scale = "response", plot.type = "gg"
 #'   )
+#'   }
 #' }
 visreg_delta <- function(object, ..., model = c(1, 2)) {
   object$visreg_model <- check_model_arg(model)
