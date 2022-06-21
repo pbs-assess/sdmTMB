@@ -1,7 +1,7 @@
 Type: Package
 Package: sdmTMB
 Title: Spatial and Spatiotemporal SPDE-based GLMMs with 'TMB'
-Version: 0.0.26.9001
+Version: 0.0.26.9002
 Authors@R: c(
     person(c("Sean", "C."), "Anderson", , "sean.anderson@dfo-mpo.gc.ca", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-9563-1937")),
@@ -100,7 +100,7 @@ LinkingTo:
     TMB
 VignetteBuilder:
     knitr
-Additional_repositories: https://inla.r-inla-download.org/R/testing
+Additional_repositories: https://inla.r-inla-download.org/R/stable
 ByteCompile: true
 Config/testthat/edition: 3
 Config/testthat/parallel: true
