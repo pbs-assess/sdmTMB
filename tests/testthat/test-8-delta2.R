@@ -1,6 +1,7 @@
 test_that("share_range mapping works with delta models", {
   skip_on_cran()
   skip_if_not_installed("INLA")
+  skip_on_ci()
 
   pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
 
@@ -77,6 +78,7 @@ test_that("share_range mapping works with delta models", {
 test_that("spatial field mapping/specification works with delta models", {
   skip_on_cran()
   skip_if_not_installed("INLA")
+  skip_on_ci()
 
   pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 
@@ -147,6 +149,7 @@ test_that("spatial field mapping/specification works with delta models", {
 test_that("spatiotemporal field mapping/specification works with delta models", {
   skip_on_cran()
   skip_if_not_installed("INLA")
+  skip_on_ci()
 
   pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 
@@ -254,6 +257,7 @@ test_that("spatiotemporal field mapping/specification works with delta models", 
 test_that("delta models work with different main effects", {
   skip_on_cran()
   skip_if_not_installed("INLA")
+  skip_on_ci()
 
   mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
 
