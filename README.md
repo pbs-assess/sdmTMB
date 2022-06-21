@@ -53,8 +53,7 @@ remotes::install_github("pbs-assess/sdmTMB", dependencies = TRUE)
 ```
 
 If you have problems installing INLA, try [installing it
-directly](https://www.r-inla.org/download-install) first. *Note that as
-of May 4, 2022, INLA hasn’t been updated for R 4.2 yet.*
+directly](https://www.r-inla.org/download-install) first.
 
 ## Overview
 
