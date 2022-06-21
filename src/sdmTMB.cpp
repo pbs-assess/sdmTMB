@@ -893,19 +893,8 @@ Type objective_function<Type>::operator()()
     proj_zeta_s_A.setZero(); // may not get filled
 
     for (int m = 0; m < n_m; m++) {
-      if (!rw_fields(m)) { // iid or ar1
-        for (int t = 0; t < n_t; t++) {
-          proj_epsilon_st_A_unique.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
-        }
-      } else { // rw
-        for (int t = 0; t < n_t; t++) {
-          if (t == 0) {
-            proj_epsilon_st_A_unique.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
-          } else {
-            proj_epsilon_st_A_unique.col(m).col(t) = proj_epsilon_st_A_unique.col(m).col(t-1) +
-              proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
-          }
-        }
+      for (int t = 0; t < n_t; t++) {
+        proj_epsilon_st_A_unique.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
       }
       proj_omega_s_A_unique.col(m) = proj_mesh * vector<Type>(omega_s.col(m));
     }
