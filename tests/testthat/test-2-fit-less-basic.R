@@ -35,43 +35,44 @@ test_that("A time-varying model fits and predicts appropriately", {
   skip_on_ci()
   skip_if_not_installed("INLA")
   local_edition(2)
-  SEED <- 42
-  set.seed(SEED)
-  x <- stats::runif(60, -1, 1)
-  y <- stats::runif(60, -1, 1)
-  initial_betas <- 0.5
-  range <- 0.5
-  sigma_O <- 0
-  sigma_E <- 0.1
-  phi <- 0.1
-  sigma_V <- 0.3
-  loc <- data.frame(x = x, y = y)
-  spde <- make_mesh(loc, c("x", "y"), cutoff = 0.02)
-
-  s <- sdmTMB_sim(
-    x = x, y = y, mesh = spde, range = range,
-    betas = initial_betas, time_steps = 12L, sigma_V = sigma_V,
-    phi = phi, sigma_O = sigma_O, sigma_E = sigma_E,
-    seed = SEED
-  )
-  spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
-  m <- sdmTMB(data = s, formula = observed ~ 0, spatial = FALSE,
-    time_varying = ~ 0 + cov1, time = "time", mesh = spde)
-  expect_equal(exp(m$model$par["ln_tau_V"])[[1]], sigma_V, tolerance = 0.05)
+  # SEED <- 42
+  # set.seed(SEED)
+  # x <- stats::runif(60, -1, 1)
+  # y <- stats::runif(60, -1, 1)
+  # initial_betas <- 0.5
+  # range <- 0.5
+  # sigma_O <- 0
+  # sigma_E <- 0.1
+  # phi <- 0.1
+  # sigma_V <- 0.3
+  # loc <- data.frame(x = x, y = y)
+  # spde <- make_mesh(loc, c("x", "y"), cutoff = 0.02)
+  #
+  # s <- sdmTMB_sim(
+  #   x = x, y = y, mesh = spde, range = range,
+  #   betas = initial_betas, time_steps = 12L, sigma_V = sigma_V,
+  #   phi = phi, sigma_O = sigma_O, sigma_E = sigma_E,
+  #   seed = SEED
+  # )
+  spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
+  m <- sdmTMB(data = pcod, formula = density ~ 0, spatial = TRUE,
+    time_varying = ~ 1, time = "year", mesh = spde, family = tweedie(),
+    spatiotemporal = "off")
+  expect_equal(exp(m$model$par["ln_tau_V"])[[1]], 0.5971512, tolerance = 0.001)
   tidy(m, effects = "ran_par")
-  b_t <- dplyr::group_by(s, time) %>%
-    dplyr::summarize(b_t = unique(b), .groups = "drop") %>%
-    dplyr::pull(b_t)
-  r <- m$tmb_obj$report()
-  b_t_fit <- r$b_rw_t[,,1]
-  plot(b_t, b_t_fit, asp = 1);abline(a = 0, b = 1)
-  expect_equal(mean((b_t- b_t_fit)^2), 0, tolerance = 1e-4)
-  p <- predict(m)
-  plot(p$est, s$observed, asp = 1);abline(a = 0, b = 1)
-  expect_equal(mean((p$est - s$observed)^2), 0, tolerance = 0.01)
+  # b_t <- dplyr::group_by(s, time) %>%
+  #   dplyr::summarize(b_t = unique(b), .groups = "drop") %>%
+  #   dplyr::pull(b_t)
+  # r <- m$tmb_obj$report()
+  # b_t_fit <- r$b_rw_t[,,1]
+  # plot(b_t, b_t_fit, asp = 1);abline(a = 0, b = 1)
+  # expect_equal(mean((b_t- b_t_fit)^2), 0, tolerance = 1e-4)
+  p <- predict(m, newdata = NULL)
+  # plot(p$est, s$observed, asp = 1);abline(a = 0, b = 1)
+  # expect_equal(mean((p$est - s$observed)^2), 0, tolerance = 0.01)
 
-  cols <- c("est", "est_non_rf", "est_rf", "epsilon_st")
-  p_nd <- predict(m, newdata = s)
+  cols <- c("est", "est_non_rf", "est_rf", "omega_s")
+  p_nd <- predict(m, newdata = pcod)
   expect_equal(p[,cols], p_nd[,cols], tolerance = 1e-4)
 })
 

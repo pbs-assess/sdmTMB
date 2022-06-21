@@ -44,12 +44,11 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     range <- 0.5
     sigma_O <- 0.3
     phi <- 0.01
-    s <- sdmTMB_sim(x = x, y = y,
-      betas = initial_betas, time = 1L,
+    s <- sdmTMB_simulate(~ 1, data = loc,
+      B = initial_betas,
       phi = phi, range = range, sigma_O = sigma_O, sigma_E = 0,
       seed = 1, mesh = spde
     )
-    spde <- make_mesh(s, c("x", "y"), n_knots = 50, type = "kmeans")
     m <- sdmTMB(data = s, formula = observed ~ 1, mesh = spde,
       family = student(link = "identity", df = 7),
       spatial = "off", spatiotemporal = "off"
@@ -69,10 +68,10 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     sigma_O <- 0.3
     sigma_E <- 0
     phi <- 0.2
-    s <- sdmTMB_sim(x = x, y = y, time = 1L, mesh = spde, family = lognormal(),
-      phi = phi, range = range, sigma_O = sigma_O, sigma_E = sigma_E, seed = 1
+    s <- sdmTMB_simulate(~ 1, loc, mesh = spde, family = lognormal(),
+      B = 1,
+      phi = phi, range = range, sigma_O = sigma_O, seed = 1
     )
-    spde <- make_mesh(s, c("x", "y"), n_knots = 70, type = "kmeans")
     mlog <- sdmTMB(data = s, formula = observed ~ 1, mesh = spde,
       family = lognormal(link = "log"))
     expect_equal(exp(mlog$model$par[["ln_phi"]]), phi, tolerance = 0.1)
@@ -86,12 +85,12 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     y <- stats::runif(300, -1, 1)
     loc <- data.frame(x = x, y = y)
     spde <- make_mesh(loc, c("x", "y"), n_knots = 80, type = "kmeans")
-    s <- sdmTMB_sim(x = x, y = y, betas = 0.4, time = 1L, phi = 1.5, range = 0.8,
-      sigma_O = 0.4, sigma_E = 0, seed = 1, mesh = spde, family = nbinom2())
+    s <- sdmTMB_simulate(~ 1, loc, B = 0.4, phi = 1.5, range = 0.8,
+      sigma_O = 0.4, seed = 1, mesh = spde, family = nbinom2())
     m <- sdmTMB(data = s, formula = observed ~ 1,
       mesh = spde, family = nbinom2(),
       control = sdmTMBcontrol(newton_loops = 1))
-    expect_equal(round(tidy(m)[,"estimate"], 6), 0.274008)
+    expect_equal(round(tidy(m)[,"estimate"], 6), 0.601897)
   })
 
   test_that("Truncated NB2, truncated NB1, and regular NB1 fit", {
@@ -102,8 +101,8 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     y <- stats::runif(300, -1, 1)
     loc <- data.frame(x = x, y = y)
     spde <- make_mesh(loc, c("x", "y"), n_knots = 80, type = "kmeans")
-    s <- sdmTMB_sim(x = x, y = y, betas = 0.4, time = 1L, phi = 1.5, range = 0.8,
-      sigma_O = 0.4, sigma_E = 0, seed = 1, mesh = spde, family = nbinom2())
+    s <- sdmTMB_simulate(~ 1, loc, B = 0.4, phi = 1.5, range = 0.8,
+      sigma_O = 0.4, seed = 1, mesh = spde, family = nbinom2())
 
     m_sdmTMB <- sdmTMB(data = s, formula = observed ~ 1,
       mesh = spde, family = nbinom1(),
@@ -185,8 +184,8 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     y <- stats::runif(400, -1, 1)
     loc <- data.frame(x = x, y = y)
     spde <- make_mesh(loc, c("x", "y"), n_knots = 90, type = "kmeans")
-    s <- sdmTMB_sim(x = x, y = y, sigma_E = 0, mesh = spde, sigma_O = 0.2,
-      range = 0.8, family = Beta(), phi = 4)
+    s <- sdmTMB_simulate(~ 1, loc, mesh = spde, sigma_O = 0.2,
+      range = 0.8, family = Beta(), phi = 4, B = 1)
     m <- sdmTMB(data = s, formula = observed ~ 1,
       mesh = spde, family = Beta(link = "logit"),
       control = sdmTMBcontrol(newton_loops = 1),

@@ -2,35 +2,33 @@
 
 SEED <- 123
 set.seed(SEED)
-x <- stats::runif(100, -1, 1)
-y <- stats::runif(100, -1, 1)
+x <- stats::runif(400, -1, 1)
+y <- stats::runif(400, -1, 1)
 loc <- data.frame(x = x, y = y)
+loc$time <- rep(1:4, each = 100)
 
 test_that("sdmTMB model fit with a covariate beta", {
   local_edition(2)
   skip_if_not_installed("INLA")
-  spde <- make_mesh(loc, c("x", "y"), cutoff = 0.02)
+  spde <- make_mesh(loc, c("x", "y"), cutoff = 0.04)
   initial_betas <- 0.5
   range <- 0.1
   sigma_O <- 0.3 # SD of spatial process
   sigma_E <- 0.3 # SD of spatial process
   phi <- 0.1 # observation error
-  s <- sdmTMB_sim(
-    x = x, y = y, mesh = spde, time_steps = 6L, betas = initial_betas,
+  set.seed(1)
+  loc$cov1 <- runif(nrow(loc))
+  s <- sdmTMB_simulate(
+    ~ 0 + cov1, loc, mesh = spde, time = "time", B = initial_betas,
     phi = phi, range = range, sigma_O = sigma_O, sigma_E = sigma_E,
     seed = SEED
   )
-  # expect_equal(round(s$observed[c(1:30, 500)], 2),
-  #   round(c(-0.364045551132498, -0.0884742484390758, -0.748796917796798,
-  #   -0.0926168889732131, 0.0892802633041351, 0.92937309789911, 0.665431954199266,
-  #   -0.81477972686779, 0.474664276994187, 0.929133590564276, -0.263130711477779,
-  #   -0.115523493789406, 0.898574275118016, -0.964967397393866, -1.10224938263034,
-  #   -0.286050035282319, 0.0810888689537039, -0.149727881361854, 0.364458765137563,
-  #   0.31886147691733, -0.184284142634752, 1.27393901104861, -0.822473494638277,
-  #   -0.594882019789678, -0.515872613077436, 0.578924954453508, -0.464615318681477,
-  #   0.476914673336151, -0.52150670383694, -0.0152136800518284, -0.394972244437357
-  # ), 2))
-  spde <- make_mesh(s, c("x", "y"), cutoff = 0.02)
+  expect_equal(round(s$observed[c(1:30, 300)], 3),
+    c(-0.313, -0.408, 0.551, 0.131, 0.675, 0.904, 0.048, 0.554, 0.361,
+      0.439, 0.442, 0.532, -0.134, 0.228, 0.197, 0.403, -0.039, -0.092,
+      0.269, 0.277, 0.765, -0.724, -0.108, -0.165, 0.942, -0.085, -0.036,
+      0.631, 0.783, 0.06, 0.199)
+  )
   plot(spde)
   .t1 <- system.time({
     m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
@@ -82,7 +80,7 @@ test_that("sdmTMB model fit with a covariate beta", {
   # expect_equal(round(sort(est[,"estimate", drop = TRUE]), 3),
   #   c(0.069, 0.096, 0.338, 0.354))
   expect_equal(m$model$convergence, 0L)
-  expect_equal((p$b_j - initial_betas)^2, 0, tolerance = 0.001)
+  expect_equal((p$b_j - initial_betas)^2, 0, tolerance = 0.01)
   expect_equal((exp(p$ln_phi) - phi)^2, 0, tolerance = 0.002)
   # expect_equal((r$sigma_O - sigma_O)^2, 0, tolerance = 0.002)
   # expect_equal((r$sigma_E[1] - sigma_E)^2, 0, tolerance = 0.001)
@@ -103,6 +101,7 @@ test_that("sdmTMB model fit with a covariate beta", {
   expect_error(predict(m, newdata = nd), regexp = "class")
 
   # no fields; fake mesh:
+  set.seed(1)
   m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
     spatial = "off", spatiotemporal = "off")
   m <- sdmTMB(data = s, formula = observed ~ 0 + cov1, time = "time",
@@ -162,18 +161,19 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
   skip_on_cran()
   skip_on_ci()
   skip_if_not_installed("INLA")
-  set.seed(1)
   local_edition(2)
-  x <- stats::runif(70, -1, 1)
-  y <- stats::runif(70, -1, 1)
+  set.seed(1)
+  x <- stats::runif(500, -1, 1)
+  y <- stats::runif(500, -1, 1)
   loc <- data.frame(x = x, y = y)
-  spde <- make_mesh(loc, c("x", "y"), cutoff = 0.02)
-  dat <- sdmTMB_sim(x = x, y = y, mesh = spde,
-    time_steps = 9, rho = 0, range = 0.2,
+  loc$time <- rep(1:5, each = 100)
+  spde <- make_mesh(loc, c("x", "y"), cutoff = 0.04)
+  dat <- sdmTMB_simulate(
+    ~ 1, loc, mesh = spde,
+    time = "time", range = 0.2, B = 0,
     sigma_O = 0, sigma_E = 0.3, phi = 0.1,
     seed = 1
   )
-  spde <- make_mesh(dat, c("x", "y"), cutoff = 0.02)
   m <- sdmTMB(
     spatiotemporal = "AR1", spatial = FALSE,
     data = dat, formula = observed ~ 1, time = "time",

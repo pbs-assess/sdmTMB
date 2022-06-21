@@ -16,12 +16,18 @@ test_that("Model with random intercepts fits appropriately.", {
   y <- stats::runif(500, -1, 1)
   loc <- data.frame(x = x, y = y)
   spde <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
-  s <- sdmTMB_sim(x = x, y = y,
-    betas = 0, time = 1L,
-    phi = 0.1, range = 1.4,
-    sigma_O = 0.2, sigma_E = 0,
-    seed = 1, mesh = spde
+
+  s <- sdmTMB_simulate(
+    ~ 1,
+    data = loc,
+    mesh = spde,
+    range = 1.4,
+    phi = 0.1,
+    sigma_O = 0.2,
+    seed = 1,
+    B = 0
   )
+
   g <- rep(gl(30, 10), 999)
   set.seed(134)
   RE_vals <- rnorm(30, 0, 0.4)
@@ -50,9 +56,9 @@ test_that("Model with random intercepts fits appropriately.", {
 
   b <- as.list(m$sd_report, "Estimate")
   .cor <- cor(c(RE_vals, RE_vals2), b$RE[,1])
-  expect_equal(round(.cor, 6), 0.827327)
-  expect_equal(round(b$RE[seq_len(5)], 6),
-    c(-0.328542, 0.680869, 0.106166, -0.369494, -0.63912), tolerance = 1e-5)
+  expect_equal(round(.cor, 5), 0.8313)
+  expect_equal(round(b$RE[seq_len(5)], 5),
+    c(-0.28645, 0.68619, 0.10028, -0.31436, -0.61168), tolerance = 1e-5)
 
   # missing a factor level:
   s_drop <- s[s$g != 1, , drop = FALSE]
@@ -92,13 +98,16 @@ test_that("Model with random intercepts fits appropriately.", {
   m <- sdmTMB(data = s,
     formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde, spatial = "off")
   .t <- tidy(m, "ran_pars")
-  m.glmmTMB <- glmmTMB::glmmTMB(data = s, formula = observed ~ 1 + (1 | g) + (1 | h))
+  m.glmmTMB <- glmmTMB::glmmTMB(data = s,
+    formula = observed ~ 1 + (1 | g) + (1 | h))
   .v <- glmmTMB::VarCorr(m.glmmTMB)
-  expect_equal(.t$estimate[.t$term == "sigma_G"][1], sqrt(as.numeric(.v$cond$g)), tolerance = 1e-5)
-  expect_equal(.t$estimate[.t$term == "sigma_G"][2], sqrt(as.numeric(.v$cond$h)), tolerance = 1e-5)
+  expect_equal(.t$estimate[.t$term == "sigma_G"][1],
+    sqrt(as.numeric(.v$cond$g)), tolerance = 1e-5)
+  expect_equal(.t$estimate[.t$term == "sigma_G"][2],
+    sqrt(as.numeric(.v$cond$h)), tolerance = 1e-5)
 
   sdmTMB_re <- as.list(m$sd_report, "Estimate")
   glmmTMB_re <- glmmTMB::ranef(m.glmmTMB)$cond
   expect_equal(c(glmmTMB_re$g$`(Intercept)`, glmmTMB_re$h$`(Intercept)`),
-    sdmTMB_re$RE[,1], tolerance = 1e-7)
+    sdmTMB_re$RE[,1], tolerance = 1e-5)
 })

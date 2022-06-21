@@ -1,85 +1,85 @@
-#' Simulate from a spatial/spatiotemporal model
-#'
-#' @description
-#' `r lifecycle::badge("deprecated")`
-#'
-#' **Note we are considering deprecating this function in favour of [sdmTMB_simulate()],
-#' which is more flexible and faster.**
-#'
-#' @param mesh Output from [make_mesh()] or a mesh directly from INLA.
-#' @param x A vector of x coordinates. Should match `mesh`.
-#' @param y A vector of y coordinates. Should match `mesh`.
-#' @param range Parameter that controls the decay of spatial correlation.
-#' @param X An optional covariate design matrix. If omitted and `betas` is not
-#'   `NULL`, will be set to standard normal draws.
-#' @param betas A vector of beta values (design-matrix fixed-effect coefficient
-#'   values). If a random walk (`sigma_V > 0`), these are the starting values.
-#' @param family Any *non-delta/hurdle* family as in [sdmTMB()].
-#' @param time_steps The number of time steps.
-#' @param rho Spatiotemporal correlation between years; should be between -1 and
-#'   1.
-#' @param sigma_O SD of spatial process (Omega).
-#' @param sigma_E SD of spatiotemporal process (Epsilon). Can be scalar or
-#'   vector for time-varying model.
-#' @param sigma_V A vector of standard deviations of time-varying random walk on
-#'   parameters. Set to 0 for parameters that should not vary through time.
-#' @param phi Observation error scale parameter.
-#' @param tweedie_p Tweedie p (power) parameter; between 1 and 2.
-#' @param thetaf (Depreciated; use `tweedie_p`). Tweedie p (power) parameter;
-#'   between 1 and 2.
-#' @param df Student-t degrees of freedom.
-#' @param seed A value with which to set the random seed.
-#' @param list Logical for whether output is in list format. If `TRUE`, data is
-#'   in list element 1 and input values in element 2.
-#' @param size Specific for the binomial family, vector representing binomial N.
-#'   If not included, defaults to 1 (bernoulli)
-#'
-#' @return A data frame where:
-#' * `omega_s` represents the simulated spatial random effects.
-#' * `epsilon_st` represents the simulated spatiotemporal random effects.
-#' * `eta` is the true value in link space
-#' * `mu` is the true value in inverse link space.
-#' * `observed` represents the simulated process with observation error.
-#' * `b_...` contain the beta values for each covariate used to simulate each time slice.
-#' * `cov_...` covariate values for each observation.
-#' @export
-#'
-#' @examples
-#' \donttest{
-#' if (inla_installed()) {
-#' set.seed(42)
-#' x <- runif(50, -1, 1)
-#' y <- runif(50, -1, 1)
-#' N <- length(x)
-#' time_steps <- 6
-#' X <- model.matrix(~ x1, data.frame(x1 = rnorm(N * time_steps)))
-#' loc <- data.frame(x = x, y = y)
-#' mesh <- make_mesh(loc, xy_cols = c("x", "y"), cutoff = 0.1)
-#' s <- sdmTMB_sim(
-#'   x = x, y = y, mesh = mesh, X = X,
-#'   betas = c(0.5, 0.7), time_steps = time_steps, rho = 0.5,
-#'   phi = 0.2, range = 0.8, sigma_O = 0, sigma_E = 0.3,
-#'   seed = 123, family = gaussian()
-#' )
-#'
-#' mesh <- make_mesh(s, xy_cols = c("x", "y"), cutoff = 0.1)
-#' m <- sdmTMB(
-#'   data = s, formula = observed ~ x1,
-#'   time = "time", mesh = mesh,
-#'   spatiotemporal = "AR1", spatial = "off"
-#' )
-#' tidy(m, conf.int = TRUE)
-#' tidy(m, "ran_pars", conf.int = TRUE)
-#'
-#' # example with time-varying sigma_E (spatiotemporal variation)
-#' s <- sdmTMB_sim(
-#'   x = x, y = y, mesh = mesh, X = X,
-#'   betas = c(0.5, 0.7), time_steps = time_steps, rho = 0,
-#'   phi = 0.2, range = 0.8, sigma_O = 0,
-#'   sigma_E = seq(0.2, 1, length.out = time_steps),
-#'   seed = 123, family = gaussian())
-#' }
-#' }
+# Simulate from a spatial/spatiotemporal model
+#
+# @description
+# `r lifecycle::badge("deprecated")`
+#
+# **Note we are considering deprecating this function in favour of [sdmTMB_simulate()],
+# which is more flexible and faster.**
+#
+# @param mesh Output from [make_mesh()] or a mesh directly from INLA.
+# @param x A vector of x coordinates. Should match `mesh`.
+# @param y A vector of y coordinates. Should match `mesh`.
+# @param range Parameter that controls the decay of spatial correlation.
+# @param X An optional covariate design matrix. If omitted and `betas` is not
+#   `NULL`, will be set to standard normal draws.
+# @param betas A vector of beta values (design-matrix fixed-effect coefficient
+#   values). If a random walk (`sigma_V > 0`), these are the starting values.
+# @param family Any *non-delta/hurdle* family as in [sdmTMB()].
+# @param time_steps The number of time steps.
+# @param rho Spatiotemporal correlation between years; should be between -1 and
+#   1.
+# @param sigma_O SD of spatial process (Omega).
+# @param sigma_E SD of spatiotemporal process (Epsilon). Can be scalar or
+#   vector for time-varying model.
+# @param sigma_V A vector of standard deviations of time-varying random walk on
+#   parameters. Set to 0 for parameters that should not vary through time.
+# @param phi Observation error scale parameter.
+# @param tweedie_p Tweedie p (power) parameter; between 1 and 2.
+# @param thetaf (Depreciated; use `tweedie_p`). Tweedie p (power) parameter;
+#   between 1 and 2.
+# @param df Student-t degrees of freedom.
+# @param seed A value with which to set the random seed.
+# @param list Logical for whether output is in list format. If `TRUE`, data is
+#   in list element 1 and input values in element 2.
+# @param size Specific for the binomial family, vector representing binomial N.
+#   If not included, defaults to 1 (bernoulli)
+#
+# @return A data frame where:
+# * `omega_s` represents the simulated spatial random effects.
+# * `epsilon_st` represents the simulated spatiotemporal random effects.
+# * `eta` is the true value in link space
+# * `mu` is the true value in inverse link space.
+# * `observed` represents the simulated process with observation error.
+# * `b_...` contain the beta values for each covariate used to simulate each time slice.
+# * `cov_...` covariate values for each observation.
+# @export
+#
+# @examples
+# \donttest{
+# if (inla_installed()) {
+# set.seed(42)
+# x <- runif(50, -1, 1)
+# y <- runif(50, -1, 1)
+# N <- length(x)
+# time_steps <- 6
+# X <- model.matrix(~ x1, data.frame(x1 = rnorm(N * time_steps)))
+# loc <- data.frame(x = x, y = y)
+# mesh <- make_mesh(loc, xy_cols = c("x", "y"), cutoff = 0.1)
+# s <- sdmTMB_sim(
+#   x = x, y = y, mesh = mesh, X = X,
+#   betas = c(0.5, 0.7), time_steps = time_steps, rho = 0.5,
+#   phi = 0.2, range = 0.8, sigma_O = 0, sigma_E = 0.3,
+#   seed = 123, family = gaussian()
+# )
+#
+# mesh <- make_mesh(s, xy_cols = c("x", "y"), cutoff = 0.1)
+# m <- sdmTMB(
+#   data = s, formula = observed ~ x1,
+#   time = "time", mesh = mesh,
+#   spatiotemporal = "AR1", spatial = "off"
+# )
+# tidy(m, conf.int = TRUE)
+# tidy(m, "ran_pars", conf.int = TRUE)
+#
+# # example with time-varying sigma_E (spatiotemporal variation)
+# s <- sdmTMB_sim(
+#   x = x, y = y, mesh = mesh, X = X,
+#   betas = c(0.5, 0.7), time_steps = time_steps, rho = 0,
+#   phi = 0.2, range = 0.8, sigma_O = 0,
+#   sigma_E = seq(0.2, 1, length.out = time_steps),
+#   seed = 123, family = gaussian())
+# }
+# }
 
 sdmTMB_sim <- function(mesh,
                        x,
