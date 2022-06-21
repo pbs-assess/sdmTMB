@@ -62,6 +62,7 @@ Construct an SPDE mesh for use with sdmTMB.
 mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 30, type = "cutoff")
 plot(mesh)
 
+\donttest{
 mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 5, type = "cutoff")
 plot(mesh)
 
@@ -82,5 +83,6 @@ inla_mesh <- INLA::inla.mesh.2d(
 )
 mesh <- make_mesh(pcod, c("X", "Y"), mesh = inla_mesh)
 plot(mesh)
+}
 \dontshow{\}) # examplesIf}
 }

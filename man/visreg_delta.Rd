@@ -45,8 +45,10 @@ if (inla_installed() &&
   )
   visreg::visreg(fit, xvar = "depth_scaled")
   visreg::visreg(fit, xvar = "fyear")
-  visreg::visreg(fit, xvar = "depth_scaled", scale = "response")
   visreg::visreg2d(fit, xvar = "fyear", yvar = "depth_scaled")
+
+  \donttest{
+  visreg::visreg(fit, xvar = "depth_scaled", scale = "response")
   v <- visreg::visreg(fit, xvar = "depth_scaled")
   head(v$fit)
   # now use ggplot2 etc. if desired
@@ -84,5 +86,6 @@ if (inla_installed() &&
     xvar = "depth_scaled", yvar = "year",
     model = 2, scale = "response", plot.type = "gg"
   )
+  }
 }
 }
