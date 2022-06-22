@@ -1,7 +1,8 @@
-^Meta$
-^doc$
+^docs$
 ^codecov\.yml$
 ^README\.Rmd$
+^README\.md$
+^README\.html$
 ^header\.md$
 ^data-raw$
 ^.*\.Rproj$
@@ -15,3 +16,4 @@
 ^README_cache$
 ^cran-comments\.md$
 ^scratch$
+^CRAN-RELEASE$
