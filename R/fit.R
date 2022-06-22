@@ -218,7 +218,7 @@ NULL
 #' For index standardization, you may wish to include `0 + as.factor(year)`
 #' (or whatever the time column is called) in the formula. See a basic
 #' example of index standardization in the relevant
-#' [package vignette](https://pbs-assess.github.io/sdmTMB/articles/model-description.html).
+#' [package vignette](https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html).
 #' You will need to specify the `time` argument. See [get_index()] and/or
 #' [get_index_sims()].
 #'
@@ -229,7 +229,7 @@ NULL
 #' penalties and look at the output of `print(your_model)` or `tidy(your_model)`
 #' or fit the model with `do_fit = FALSE` and inspect
 #' `head(your_model$tmb_data$X_ij)` if you want to see how the formula is
-#' translated to the fixed effect model matrix.
+#' translated to the fixed effect model matrix. Also see the [Bayesian package vignette](https://pbs-assess.github.io/sdmTMB/articles/bayesian.html).
 #'
 #' **Delta/hurdle models**
 #'
@@ -253,7 +253,9 @@ NULL
 #' The main advantage of specifying such models using a delta family is (1)
 #' coding simplicity and (2) calculation of uncertainty on derived quantities
 #' such as an index of abundance with [get_index()] using the generalized delta
-#' method within TMB.
+#' method within TMB. Also, parameters can be shared across the models.
+#'
+#' See the [package vignette](https://pbs-assess.github.io/sdmTMB/articles/delta-models.html).
 #'
 #' @references
 #'
@@ -294,27 +296,24 @@ NULL
 #' oxygen on the spatial distribution of marine taxa using thresholds and a
 #' physiologically based index. In press at Ecography. \doi{10.1111/ecog.06249}.
 #'
-#' *Application to fish body condition*:
+#' *Application to fish body condition:*
 #'
 #' Lindmark, M., S.C. Anderson, M. Gogina, M. Casini. Evaluating drivers of
 #' spatiotemporal individual condition of a bottom-associated marine fish.
 #' bioRxiv 2022.04.19.488709. \doi{10.1101/2022.04.19.488709}.
 #'
-#' Code for implementing the barrier-SPDE written by Olav Nikolai Breivik and
-#' Hans Skaug.
-#'
-#' A number of sections of the original TMB model code were adapted from the
-#' VAST R package:
+#' *A number of sections of the original TMB model code were adapted from the
+#' VAST R package:*
 #'
 #' Thorson, J.T., 2019. Guidance for decisions using the Vector Autoregressive
 #' Spatio-Temporal (VAST) package in stock, ecosystem, habitat and climate
 #' assessments. Fish. Res. 210:143–161.
 #' \doi{10.1016/j.fishres.2018.10.013}.
 #'
-#' Code for the `family` R-to-TMB implementation, selected parameterizations of
-#' the observation distributions, general package structure inspiration, and the
+#' *Code for the `family` R-to-TMB implementation, selected parameterizations of
+#' the observation likelihoods, general package structure inspiration, and the
 #' idea behind the TMB prediction approach were adapted from the glmmTMB R
-#' package:
+#' package:*
 #'
 #' Mollie E. Brooks, Kasper Kristensen, Koen J. van Benthem, Arni Magnusson,
 #' Casper W. Berg, Anders Nielsen, Hans J. Skaug, Martin Maechler and Benjamin
@@ -322,10 +321,17 @@ NULL
 #' Zero-inflated Generalized Linear Mixed Modeling. The R Journal, 9(2):378-400.
 #' \doi{10.32614/rj-2017-066}.
 #'
+#' *Implementation of geometric anisotropy with the SPDE and use of random
+#' field GLMMs for index standardization*:
+#'
+#' Thorson, J.T., Shelton, A.O., Ward, E.J., and Skaug, H.J. 2015.
+#' Geostatistical delta-generalized linear mixed models improve precision for
+#' estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
+#' 72(5): 1297–1310. \doi{10.1093/icesjms/fsu243}.
+#'
 #' @export
 #'
 #' @examplesIf inla_installed() && require("visreg", quietly = TRUE)
-#'
 #' library(sdmTMB)
 #'
 #' # Build an SPDE mesh with INLA:
@@ -340,7 +346,6 @@ NULL
 #'
 #' # Quick mesh plot:
 #' plot(mesh)
-#' # Or use ggplot2::ggplot() + inlabru::gg(mesh$mesh)
 #'
 #' # Fit a Tweedie spatial random field GLMM with a smoother for depth:
 #' fit <- sdmTMB(
