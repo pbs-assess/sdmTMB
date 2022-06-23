@@ -3,7 +3,7 @@ Package: sdmTMB
 Title: Spatial and Spatiotemporal SPDE-Based GLMMs with 'TMB'
 Version: 0.1.0
 Authors@R: c(
-    person(c("Sean", "C."), "Anderson", , "sean.anderson@dfo-mpo.gc.ca", 
+    person(c("Sean", "C."), "Anderson", , "sean.anderson@dfo-mpo.gc.ca",
            role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-9563-1937")),
     person(c("Eric", "J."), "Ward", role = "aut",
@@ -13,13 +13,10 @@ Authors@R: c(
     person(c("Philina", "A."), "English", role = "aut",
            comment = c(ORCID = "0000-0003-2992-6782")),
     person(c("James", "T."), "Thorson", role = c("ctb", "cph"),
-           comment = c(ORCID = "0000-0001-7415-1010", 
-           "VAST author: general structure of original TMB model template",
-           "SPDE barrier and anisotropy implementation")),
-    person("Joe", "Watson", role = "ctb",
-           comment = "Censored Poisson implementation"),
+           comment = c(ORCID = "0000-0001-7415-1010", "VAST author"),
+    person("Joe", "Watson", role = "ctb", comment = "Censored Poisson"),
     person("Julia", "Indivero", role = c("ctb"),
-           comment = c("Wrote vignettes include delta models, visreg, and ggeffects.")),
+           comment = c("Vignette writing")),
     person(c("Cole", "C."), "Monnahan", role = c("ctb", "cph"),
            comment = c(ORCID = "0000-0003-0871-6700", "VAST contributor")),
     person("Mollie", "Brooks", role = c("ctb", "cph"),
@@ -33,7 +30,7 @@ Authors@R: c(
     person("Arni", "Magnusson", role = c("ctb", "cph"),
            comment = c(ORCID = "0000-0003-2769-6741", "glmmTMB author")),
     person(c("Hans", "J."), "Skaug", role = c("ctb", "cph"),
-           comment = "glmmTMB author and SPDE barrier implementation"),
+           comment = "glmmTMB author, SPDE barrier"),
     person("Anders", "Nielsen", role = c("ctb", "cph"),
            comment = c(ORCID = "0000-0001-9683-9262", "glmmTMB author")),
     person("Casper", "Berg", role = c("ctb", "cph"),
@@ -41,11 +38,11 @@ Authors@R: c(
     person("Koen", "van Bentham", role = c("ctb", "cph"),
            comment = "glmmTMB author"),
     person(c("Olav", "Nikolai"), "Breivik", role = c("ctb", "cph"),
-           comment = "SPDE barrier implementation"),
+           comment = "SPDE barrier"),
     person("Simon", "Wood", role = c("ctb", "cph"),
-           comment = "mgcv author: prediction from smooths via mgcv documentation"),
+           comment = "mgcv: smooth2random"),
     person("Paul-Christian", "Bürkner", role = c("ctb", "cph"),
-           comment = "brms author: smoother matrix parsing")
+           comment = "brms: smoother matrix parsing")
   )
 Description: Implements spatial and spatiotemporal predictive-process GLMMs
     (Generalized Linear Mixed Effect Models) using 'TMB', 'INLA', and the SPDE
