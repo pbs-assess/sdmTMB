@@ -124,15 +124,20 @@ terms.sdmTMB <- function(x, ...) {
 #'
 #' @importFrom stats formula poisson
 #'
+#' @return
+#' Output from [effects::effect()]. Can then be plotted with with associated
+#' `plot()` method.
+#'
 #' @rawNamespace if(getRversion() >= "3.6.0") {
 #'   S3method(effects::Effect, sdmTMB)
 #' } else {
 #'   export(Effect.sdmTMB)
 #' }
-# @examplesIf inla_installed() && require("effects", quietly = TRUE)
-# fit <- sdmTMB(present ~ depth_scaled, data = pcod_2011, family = binomial(),
-#   spatial = "off")
-# effects::effect("depth_scaled", fit)
+#' @examplesIf inla_installed() && require("effects", quietly = TRUE)
+#' fit <- sdmTMB(present ~ depth_scaled, data = pcod_2011, family = binomial(),
+#'   spatial = "off")
+#' effects::effect("depth_scaled", fit)
+#' plot(effects::effect("depth_scaled", fit))
 Effect.sdmTMB <- function(focal.predictors, mod, ...) {
   if (!requireNamespace("effects", quietly = TRUE)) {
     cli_abort("Please install the effects package")

@@ -13,6 +13,18 @@ Effect.sdmTMB(focal.predictors, mod, ...)
 
 \item{...}{arguments to be passed down.}
 }
+\value{
+Output from \code{\link[effects:effect]{effects::effect()}}. Can then be plotted with with associated
+\code{plot()} method.
+}
 \description{
 Used by effects package
+}
+\examples{
+\dontshow{if (inla_installed() && require("effects", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+fit <- sdmTMB(present ~ depth_scaled, data = pcod_2011, family = binomial(),
+  spatial = "off")
+effects::effect("depth_scaled", fit)
+plot(effects::effect("depth_scaled", fit))
+\dontshow{\}) # examplesIf}
 }
