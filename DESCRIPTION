@@ -13,7 +13,7 @@ Authors@R: c(
     person(c("Philina", "A."), "English", role = "aut",
            comment = c(ORCID = "0000-0003-2992-6782")),
     person(c("James", "T."), "Thorson", role = c("ctb", "cph"),
-           comment = c(ORCID = "0000-0001-7415-1010", "VAST author"),
+           comment = c(ORCID = "0000-0001-7415-1010", "VAST author")),
     person("Joe", "Watson", role = "ctb", comment = "Censored Poisson"),
     person("Julia", "Indivero", role = c("ctb"),
            comment = c("Vignette writing")),
