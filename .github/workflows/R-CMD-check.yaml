@@ -80,6 +80,7 @@ jobs:
         if: runner.os != 'macOS'
         run: |
           remotes::install_deps(dependencies = NA)
+          remotes::install_cran("knitr")
           remotes::install_cran("rcmdcheck")
         shell: Rscript {0}
 
