@@ -210,7 +210,7 @@ p2 <- predict(fit_dg, newdata = qcs_grid, return_tmb_object = TRUE)
 ind_dg <- get_index(p2, bias_correct = FALSE)
 ```
 
-We can plot conditional effects of covariates (such as depth in the example model) using the package `visreg` by specifying each model component with `model=1` for the presence-absence model or `model=2` for the positive catch model. Currently, plotting effects of built-in delta models with `ggeffects` is not supported. See the vignette on using [visreg](link) with sdmTMB for more information.
+We can plot conditional effects of covariates (such as depth in the example model) using the package `visreg` by specifying each model component with `model=1` for the presence-absence model or `model=2` for the positive catch model. Currently, plotting effects of built-in delta models with `ggeffects` is not supported. See the vignette on using [visreg](https://pbs-assess.github.io/sdmTMB/articles/visreg.html) with sdmTMB for more information.
 
 ```{r}
 visreg_delta(fit_dg, xvar = "depth", model = 1, gg = TRUE)
