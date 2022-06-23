@@ -13,10 +13,12 @@ vignette: >
 sf_installed <- require("sf", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
 inla_installed <- requireNamespace("INLA", quietly = TRUE)
+EVAL <- identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = identical(Sys.getenv("NOT_CRAN"), "true") && sf_installed && ggplot_installed && inla_installed
+  eval = EVAL,
+  purl = EVAL
 )
 ```
 

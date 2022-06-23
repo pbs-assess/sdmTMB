@@ -20,12 +20,14 @@ tmbstan <- requireNamespace("tmbstan", quietly = TRUE)
 rstan <- requireNamespace("rstan", quietly = TRUE)
 bayesplot <- requireNamespace("bayesplot", quietly = TRUE)
 pkgs <- dplyr_installed && ggplot_installed && inla_installed && tmbstan && rstan && bayesplot
+EVAL <- identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.width = 7,
   fig.asp = 0.618,
-  eval = identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
+  eval = EVAL,
+  purl = EVAL
 )
 ```
 
