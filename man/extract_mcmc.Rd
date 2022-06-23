@@ -16,7 +16,12 @@ of \code{your_model$tmb_obj$env$last.par.best}. Columns correspond to
 posterior samples. Is used internally by \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} to make
 fully Bayesian predictions. See the \code{tmbstan_model} argument
 in \code{\link[=predict.sdmTMB]{predict.sdmTMB()}}.
-
+}
+\description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+}
+\examples{
+\dontshow{if (inla_installed() && require("tmbstan", quietly = TRUE) && ggplot2_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 \donttest{
 mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 35) # quite coarse
 
@@ -91,11 +96,5 @@ index_samples <- get_index_sims(p, return_sims = TRUE)
 ggplot(index_samples, aes(as.factor(year), .value)) +
   geom_violin()
 }
-}
-\description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-}
-\examples{
-\dontshow{if (inla_installed() && require("tmbstan", quietly = TRUE) && ggplot2_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 \dontshow{\}) # examplesIf}
 }

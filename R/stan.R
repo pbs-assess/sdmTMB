@@ -5,7 +5,6 @@
 #'
 #' @param object Output from [tmbstan::tmbstan()] run on the `tmb_obj`
 #'   element of an [sdmTMB()] model. E.g., `tmbstan(your_model$tmb_obj)`.
-#' @examplesIf inla_installed() && require("tmbstan", quietly = TRUE) && ggplot2_installed()
 #'
 #' @return
 #' Returns a matrix of parameter samples. Rows correspond to the order
@@ -14,6 +13,7 @@
 #' fully Bayesian predictions. See the `tmbstan_model` argument
 #' in [predict.sdmTMB()].
 #'
+#' @examplesIf inla_installed() && require("tmbstan", quietly = TRUE) && ggplot2_installed()
 #' \donttest{
 #' mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 35) # quite coarse
 #'
