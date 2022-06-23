@@ -1,5 +1,5 @@
 ---
-title: "Intro to modelling with sdmTMB"
+title: "Introduction to modelling with sdmTMB"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
@@ -115,12 +115,12 @@ m2 <- sdmTMB(
 m2
 ```
 
-We can also model biomass density using a Tweedie distribution:
+We can also model biomass density using a Tweedie distribution. We'll switch to `poly()` notation to make some of the plotting easier.
 
 ```{r tweedie}
 m3 <- sdmTMB(
   data = pcod,
-  formula = density ~ depth_scaled + depth_scaled2,
+  formula = density ~ poly(log(depth), 2),
   mesh = mesh,
   family = tweedie(link = "log"),
   spatial = "on",
@@ -186,7 +186,7 @@ Total samples is `mcmc_iter - mcmc_warmup`.
 We will also just use the spatial model here so the vignette builds quickly.
 
 ```{r residuals-mcmc, fig.width = 8}
-r <- residuals(m1, "mle-mcmc", mcmc_warmup = 100, mcmc_iter = 101)
+r <- residuals(m3, "mle-mcmc", mcmc_warmup = 100, mcmc_iter = 101)
 qqnorm(r)
 qqline(r)
 ```
@@ -288,22 +288,21 @@ We can visualize the conditional effect of any covariates by feeding simplified 
 
 ```{r depth-eff, fig.width = 6}
 nd <- data.frame(
-  depth_scaled = seq(min(pcod$depth_scaled) + 0.2,
-    max(pcod$depth_scaled) - 0.2,
+  depth = seq(min(pcod$depth),
+    max(pcod$depth),
     length.out = 100
   ),
   year = 2015L # a chosen year
 )
-nd$depth_scaled2 <- nd$depth_scaled^2
 p <- predict(m3, newdata = nd, se_fit = TRUE, re_form = NA)
 
-ggplot(p, aes(depth_scaled, exp(est),
+ggplot(p, aes(depth, exp(est),
   ymin = exp(est - 1.96 * est_se),
   ymax = exp(est + 1.96 * est_se)
 )) +
   geom_line() +
   geom_ribbon(alpha = 0.4) +
-  scale_x_continuous(labels = function(x) round(exp(x * pcod$depth_sd[1] + pcod$depth_mean[1]))) +
+  scale_x_continuous() +
   coord_cartesian(expand = F) +
   labs(x = "Depth (m)", y = "Biomass density (kg/km2)")
 ```
@@ -311,11 +310,13 @@ ggplot(p, aes(depth_scaled, exp(est),
 We could also do this with the visreg package. This version is in link space and the residuals are partial randomized quantile residuals. See the `scale` argument in visreg for response scale plots.
 
 ```{r visreg}
-visreg::visreg(m3, "depth_scaled")
+visreg::visreg(m3, "depth")
 ```
 
+Or the ggeffects package for a *marginal* effects plot. This will also be faster since it relies on the already estimated coefficients and variance-covariance matrix.
+
 ```{r ggeffects}
-# ggeffects::ggeffect(m3) %>% plot()
+ggeffects::ggeffect(m3,  "depth [0:500 by=1]") %>% plot()
 ```
 
 ### Time-varying effects
