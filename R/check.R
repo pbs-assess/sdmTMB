@@ -143,8 +143,8 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
   sigmas_ok <- TRUE
   if (length(s)) {
     for (i in s) {
-      if (b$estimate[i] < 0.001) {
-        msg <- "` is smaller than 0.001"
+      if (b$estimate[i] < 0.01) {
+        msg <- "` is smaller than 0.01"
         cli::cli_alert_danger(c("`", b$term[i], msg))
         par_message(b$term[i])
         msg <- "Consider omitting this part of the model"
@@ -155,14 +155,14 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
     }
   }
   if (sigmas_ok) {
-    msg <- "No sigma parameters are < 0.001"
+    msg <- "No sigma parameters are < 0.01"
     cli::cli_alert_success(msg)
   }
 
   if (length(s)) {
     for (i in s) {
-      if (b$estimate[i] > 1000) {
-        msg <- "` is larger than 1000"
+      if (b$estimate[i] > 100) {
+        msg <- "` is larger than 100"
         cli::cli_alert_danger(c("`", b$term[i], msg))
         par_message(b$term[i])
         msg <- "Consider simplifying the model or adding priors"
@@ -173,7 +173,7 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
     }
   }
   if (sigmas_ok) {
-    msg <- "No sigma parameters are > 1000"
+    msg <- "No sigma parameters are > 100"
     cli::cli_alert_success(msg)
   }
 
