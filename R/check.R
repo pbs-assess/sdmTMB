@@ -114,6 +114,9 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
     }
   }
   se_big <- mapply(too_big, est, se)
+  # log vars don't make a lot of sense to check like this:
+  se_big <- se_big[grepl("^b_j", names(se_big))]
+
   for (i in seq_along(se_big)) {
     if (isTRUE(se_big[[i]])) {
       msg <- paste0(
@@ -140,7 +143,7 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
   sigmas_ok <- TRUE
   if (length(s)) {
     for (i in s) {
-      if (b$estimate[i] < 1e-3) {
+      if (b$estimate[i] < 0.001) {
         msg <- "` is smaller than 0.001"
         cli::cli_alert_danger(c("`", b$term[i], msg))
         par_message(b$term[i])
@@ -153,6 +156,24 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
   }
   if (sigmas_ok) {
     msg <- "No sigma parameters are < 0.001"
+    cli::cli_alert_success(msg)
+  }
+
+  if (length(s)) {
+    for (i in s) {
+      if (b$estimate[i] > 1000) {
+        msg <- "` is larger than 100"
+        cli::cli_alert_danger(c("`", b$term[i], msg))
+        par_message(b$term[i])
+        msg <- "Consider simplifying the model or adding priors"
+        cli::cli_alert_info(msg)
+        cat("\n")
+        sigmas_ok <- FALSE
+      }
+    }
+  }
+  if (sigmas_ok) {
+    msg <- "No sigma parameters are > 1000"
     cli::cli_alert_success(msg)
   }
 
