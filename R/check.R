@@ -113,9 +113,11 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
       if (any(ratio > se_ratio)) return(TRUE)
     }
   }
-  se_big <- mapply(too_big, est, se)
   # log vars don't make a lot of sense to check like this:
-  se_big <- se_big[grepl("^b_j", names(se_big))]
+  bji <- grepl("^b_j", names(est))
+  est <- est[bji]
+  se <- se[bji]
+  se_big <- mapply(too_big, est, se)
 
   for (i in seq_along(se_big)) {
     if (isTRUE(se_big[[i]])) {
