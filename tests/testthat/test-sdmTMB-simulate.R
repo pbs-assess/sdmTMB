@@ -57,7 +57,7 @@ test_that("sdmTMB_simulate works for different spatiotemporal field types", {
       # calculate the difference between estimate and true
       out["b0"] <- sr$b_j[1] - b0
       out["b1"] <- sr$b_j[2] - b1
-      out["phi"] <- exp(sr$ln_phi[1]) - phi
+      # out["phi"] <- exp(sr$ln_phi[1]) - phi
       out["range"] <- ty$estimate[ty$term == "range"] - mtrange
       out["rho"] <- ifelse(is.null(rho), 0,
                            ty$estimate[ty$term == "rho"] - rho)

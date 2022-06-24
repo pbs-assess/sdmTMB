@@ -67,6 +67,9 @@ NULL
 #'   Note this predictor should be centered to have mean zero and have a
 #'   standard deviation of approximately 1 (scale by the SD). Structure must
 #'   currently be shared in delta models.
+#' @param dispformula A **one sided** formula describing predictors for the
+#'   observation model dispersion. Defaults to an intercept only, which
+#'   is equivalent to a single dispersion parameter.
 #' @param weights A numeric vector representing optional likelihood weights for
 #'   the conditional model. Implemented as in \pkg{glmmTMB}: weights do not have
 #'   to sum to one and are not internally modified. Can also be used for trials
@@ -533,6 +536,7 @@ sdmTMB <- function(
   share_range = TRUE,
   time_varying = NULL,
   spatial_varying = NULL,
+  dispformula = ~ 1,
   weights = NULL,
   offset = NULL,
   extra_time = NULL,
@@ -768,6 +772,7 @@ sdmTMB <- function(
 
     formula_no_sm <- remove_s_and_t2(formula[[ii]])
     X_ij[[ii]] <- model.matrix(formula_no_sm, data)
+
     mf[[ii]] <- model.frame(formula_no_sm, data)
     mt[[ii]] <- attr(mf[[ii]], "terms")
     # parse everything mgcv + smoothers:
@@ -790,6 +795,16 @@ sdmTMB <- function(
       }
     }
   }
+
+  # Dispersion formula
+  if (!delta) {
+    if (family$family %in% c("binomial", "poisson", "censored_poisson")) {
+      if (!identical(dispformula, ~ 1))
+        cli_warn("Dispersion formula ignored; family has no dispersion parameter.")
+      dispformula <- ~ 1
+    }
+  }
+  Xdisp_ij <- model.matrix(dispformula, data)
 
   # split_formula <- split_formula[[1]] # Delete this and next 7 lines as smooths / random effects added
   RE_indexes <- RE_indexes[[1]]
@@ -950,6 +965,7 @@ sdmTMB <- function(
     simulate_t = rep(1L, n_t),
     rw_fields =  rw_fields,
     X_ij       = X_ij_list,
+    Xdisp_ij   = Xdisp_ij,
     X_rw_ik    = X_rw_ik,
     Zs         = sm$Zs, # optional smoother basis function matrices
     Xs         = sm$Xs, # optional smoother linear effect matrix
@@ -979,6 +995,7 @@ sdmTMB <- function(
     include_spatial = as.integer(include_spatial),
     proj_mesh  = Matrix::Matrix(0, 1, 1, doDiag = FALSE), # dummy
     proj_X_ij  = list(matrix(0, ncol = 1, nrow = 1)), # dummy
+    proj_Xdisp_ij  = matrix(0, ncol = 1, nrow = 1), # dummy
     proj_X_rw_ik = matrix(0, ncol = 1, nrow = 1), # dummy
     proj_year  = 0, # dummy
     proj_spatial_index = 0, # dummy
@@ -1021,6 +1038,7 @@ sdmTMB <- function(
     ln_H_input = matrix(0, nrow = 2L, ncol = n_m),
     b_j        = rep(0, ncol(X_ij[[1]])), # TODO: verify ok
     b_j2       = if (delta) rep(0, ncol(X_ij[[2]])) else numeric(0), # TODO: verify ok
+    b_disp_k   = rep(0, ncol(Xdisp_ij)),
     bs         = if (sm$has_smooths) matrix(0, nrow = ncol(sm$Xs), ncol = n_m) else array(0),
     ln_tau_O   = rep(0, n_m),
     ln_tau_Z = matrix(0, n_z, n_m),
@@ -1028,7 +1046,7 @@ sdmTMB <- function(
     ln_kappa   = matrix(0, 2L, n_m),
     # ln_kappa   = rep(log(sqrt(8) / median(stats::dist(spde$mesh$loc))), 2),
     thetaf     = 0,
-    ln_phi     = rep(0, n_m),
+    # ln_phi     = rep(0, n_m),
     ln_tau_V   = matrix(0, ncol(X_rw_ik), n_m),
     ar1_phi    = rep(0, n_m),
     ln_tau_G   = matrix(0, ncol(RE_indexes), n_m),
@@ -1065,16 +1083,14 @@ sdmTMB <- function(
   tmb_map$b_j <- NULL
   if (delta) tmb_map$b_j2 <- NULL
   if (family$family[[1]] == "tweedie") tmb_map$thetaf <- NULL
-  tmb_map$ln_phi <- rep(1, n_m)
-  if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson"))
-    tmb_map$ln_phi[1] <- factor(NA)
-  if (delta) {
-    if (family$family[[2]] %in% c("binomial", "poisson", "censored_poisson"))
-      tmb_map$ln_phi[2] <- factor(NA)
-    else
-      tmb_map$ln_phi[2] <- 2
+
+  if (!delta) {
+    if (!family$family[[1]] %in% c("binomial", "poisson", "censored_poisson"))
+      tmb_map <- unmap(tmb_map, "b_disp_k")
+  } else {
+    tmb_map <- unmap(tmb_map, "b_disp_k")
   }
-  tmb_map$ln_phi <- as.factor(tmb_map$ln_phi)
+
   if (!is.null(thresh[[1]]$threshold_parameter)) tmb_map$b_threshold <- NULL
 
   if (multiphase && is.null(previous_fit) && do_fit) {
@@ -1235,6 +1251,8 @@ sdmTMB <- function(
     spde       = spde,
     mesh       = spde,
     formula    = original_formula,
+    dispformula = dispformula,
+    has_dispformula = !identical(dispformula, ~ 1),
     split_formula = split_formula,
     time_varying = time_varying,
     threshold_parameter = thresh[[1]]$threshold_parameter,

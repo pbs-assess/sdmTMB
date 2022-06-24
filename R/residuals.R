@@ -1,8 +1,14 @@
+get_phi <- function(object) {
+  # FIXME: assumes no dispersion formula
+  r <- object$tmb_obj$report(par = object$model$par)
+  exp(r$ln_phi[[1L]])
+}
+
 qres_tweedie <- function(object, y, mu) {
   p <- stats::plogis(object$model$par[["thetaf"]]) + 1
-  dispersion <- exp(object$model$par[["ln_phi"]])
-
   u <- fishMod::pTweedie(q = y, p = p, mu = mu, phi = dispersion)
+  dispersion <- get_phi(object)
+
   if (p > 1 && p < 2) {
     u[y == 0] <- stats::runif(sum(y == 0), min = 0, max = u[y == 0])
   }
@@ -21,7 +27,7 @@ qres_binomial <- function(object, y, mu, n = NULL) {
 }
 
 qres_nbinom2 <- function(object, y, mu) {
-  phi <- exp(object$model$par[["ln_phi"]])
+  phi <- get_phi(object)
   a <- stats::pnbinom(y - 1, size = phi, mu = mu)
   b <- stats::pnbinom(y, size = phi, mu = mu)
   u <- stats::runif(n = length(y), min = a, max = b)
@@ -44,7 +50,7 @@ qnbinom1 <- function(p, mu, phi) {
 }
 
 qres_nbinom1 <- function(object, y, mu) {
-  phi <- exp(object$model$par[["ln_phi"]])
+  phi <- get_phi(object)
   a <- pnbinom1(y - 1, phi = phi, mu = mu)
   b <- pnbinom1(y, phi = phi, mu = mu)
   u <- stats::runif(n = length(y), min = a, max = b)
@@ -59,7 +65,7 @@ qres_pois <- function(object, y, mu) {
 }
 
 qres_gamma <- function(object, y, mu) {
-  phi <- exp(object$model$par[["ln_phi"]])
+  phi <- get_phi(object)
   s1 <- phi
   s2 <- mu / s1
   u <- stats::pgamma(q = y, shape = s1, scale = s2)
@@ -67,13 +73,13 @@ qres_gamma <- function(object, y, mu) {
 }
 
 qres_gaussian <- function(object, y, mu) {
-  dispersion <- exp(object$model$par[["ln_phi"]])
+  phi <- get_phi(object)
   u <- stats::pnorm(q = y, mean = mu, sd = dispersion)
   stats::qnorm(u)
 }
 
 qres_lognormal <- function(object, y, mu) {
-  dispersion <- exp(object$model$par[["ln_phi"]])
+  phi <- get_phi(object)
   u <- stats::plnorm(q = y, meanlog = log(mu) - (dispersion^2) / 2, sdlog = dispersion)
   stats::qnorm(u)
 }
@@ -82,13 +88,13 @@ qres_lognormal <- function(object, y, mu) {
 pt_ls <- function(q, df, mu, sigma) stats::pt((q - mu) / sigma, df)
 
 qres_student <- function(object, y, mu) {
-  dispersion <- exp(object$model$par[["ln_phi"]])
+  dispersion <- get_phi(object)
   u <- pt_ls(q = y, df = object$tmb_data$df, mu = mu, sigma = dispersion)
   stats::qnorm(u)
 }
 
 qres_beta <- function(object, y, mu) {
-  phi <- exp(object$model$par[["ln_phi"]])
+  phi <- get_phi(object)
   s1 <- mu * phi
   s2 <- (1 - mu) * phi
   u <- stats::pbeta(q = y, shape1 = s1, shape2 = s2)
@@ -226,6 +232,14 @@ residuals.sdmTMB <- function(object,
       "See the ?residuals.sdmTMB 'Details' section."
     )
     if (type == "randomized-quantile") cli_inform(msg)
+  }
+
+  if (isTRUE(object$has_dispformula) && type != "response") {
+    msg <- c(
+      "Randomized quantile residuals not yet set up to work with `dispformula`.",
+      "Try `type = 'response'"
+    )
+    cli_abort(msg)
   }
 
   fam <- object$family$family

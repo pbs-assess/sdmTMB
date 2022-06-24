@@ -249,7 +249,7 @@ test_that("The mapping off spatial and spatiotemporal fields works.", {
   m.glmmTMB <- glmmTMB::glmmTMB(log(density) ~ depth, data = dpos)
   .t <- tidy(m.sdmTMB.map)
   expect_equal(.t$estimate, as.numeric(coef(m.stats.glm)), tolerance = 1e-5)
-  expect_equal(exp(m.sdmTMB.map$model$par[["ln_phi"]]),
+  expect_equal(sdmTMB:::get_phi(m.sdmTMB.map),
     glmmTMB::sigma(m.glmmTMB), tolerance = 1e-5)
 
   # Bernoulli:

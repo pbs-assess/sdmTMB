@@ -105,6 +105,7 @@ Type objective_function<Type>::operator()()
   // Vectors of real data
   DATA_ARRAY(y_i);      // response
   DATA_STRUCT(X_ij, sdmTMB::LOM_t); // list of model matrices
+  DATA_MATRIX(Xdisp_ij); // dispersion model matrix
   DATA_MATRIX(z_i);      // model matrix for spatial covariate effect
   DATA_MATRIX(X_rw_ik);  // model matrix for random walk covariate(s)
 
@@ -182,6 +183,7 @@ Type objective_function<Type>::operator()()
   // Projections
   DATA_SPARSE_MATRIX(proj_mesh);
   DATA_STRUCT(proj_X_ij, sdmTMB::LOM_t);
+  DATA_MATRIX(proj_Xdisp_ij);
   DATA_MATRIX(proj_X_rw_ik);
   DATA_FACTOR(proj_year);
   DATA_MATRIX(proj_z_i);
@@ -217,6 +219,7 @@ Type objective_function<Type>::operator()()
   // Fixed effects
   PARAMETER_VECTOR(b_j);  // fixed effect parameters
   PARAMETER_VECTOR(b_j2);  // fixed effect parameters delta2 part
+  PARAMETER_VECTOR(b_disp_k);  // fixed effect parameters on dispersion
   PARAMETER_ARRAY(bs); // smoother linear effects
   PARAMETER_VECTOR(ln_tau_O);    // spatial process
   PARAMETER_ARRAY(ln_tau_Z);    // optional spatially varying covariate process
@@ -224,7 +227,6 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(ln_kappa);    // Matern parameter
 
   PARAMETER(thetaf);           // tweedie only
-  PARAMETER_VECTOR(ln_phi);           // sigma / dispersion / etc.
   PARAMETER_ARRAY(ln_tau_V);  // random walk sigma
   PARAMETER_VECTOR(ar1_phi);          // AR1 fields correlation
   PARAMETER_ARRAY(ln_tau_G);  // random intercept sigmas
@@ -266,7 +268,14 @@ Type objective_function<Type>::operator()()
   // DELTA DONE
   vector<Type> rho(n_m);
   for (int m = 0; m < n_m; m++) rho(m) = sdmTMB::minus_one_to_one(ar1_phi(m));
+  vector<Type> ln_phi = Xdisp_ij * b_disp_k;
   vector<Type> phi = exp(ln_phi);
+  REPORT(ln_phi);
+  if (b_disp_k.size() == 1) {
+    ADREPORT(ln_phi(0));
+  } else {
+    ADREPORT(ln_phi);
+  }
 
   // ------------------ Geospatial ---------------------------------------------
 
@@ -657,8 +666,8 @@ Type objective_function<Type>::operator()()
       if (!sdmTMB::isNA(y_i(i,m))) {
         switch (family(m)) {
           case gaussian_family:
-            tmp_ll = dnorm(y_i(i,m), mu_i(i,m), phi(m), true);
-            SIMULATE{y_i(i,m) = rnorm(mu_i(i,m), phi(m));}
+            tmp_ll = dnorm(y_i(i,m), mu_i(i,m), phi(i), true);
+            SIMULATE{y_i(i,m) = rnorm(mu_i(i,m), phi(i));}
             break;
           case tweedie_family:
             s1 = invlogit(thetaf) + Type(1.0);
@@ -667,8 +676,8 @@ Type objective_function<Type>::operator()()
               // derivative: https://www.wolframalpha.com/input?i=e%5Ex%2F%281%2Be%5Ex%29+%2B+1
               if (stan_flag) jnll -= thetaf - 2 * log(1 + exp(thetaf)); // Jacobian adjustment
             }
-            tmp_ll = dtweedie(y_i(i,m), mu_i(i,m), phi(m), s1, true);
-            SIMULATE{y_i(i,m) = rtweedie(mu_i(i,m), phi(m), s1);}
+            tmp_ll = dtweedie(y_i(i,m), mu_i(i,m), phi(i), s1, true);
+            SIMULATE{y_i(i,m) = rtweedie(mu_i(i,m), phi(i), s1);}
             break;
           case binomial_family:
             tmp_ll = dbinom_robust(y_i(i,m), size(i), mu_i(i,m), true);
@@ -684,7 +693,7 @@ Type objective_function<Type>::operator()()
             SIMULATE{y_i(i,m) = rpois(mu_i(i,m));}
             break;
           case Gamma_family:
-            s1 = exp(ln_phi(m));        // shape
+            s1 = exp(ln_phi(i));        // shape
             s2 = mu_i(i,m) / s1;        // scale
             tmp_ll = dgamma(y_i(i,m), s1, s2, true);
             SIMULATE{y_i(i,m) = rgamma(s1, s2);}
@@ -693,51 +702,51 @@ Type objective_function<Type>::operator()()
             break;
           case nbinom2_family:
             s1 = log(mu_i(i,m)); // log(mu_i)
-            s2 = 2. * s1 - ln_phi(m); // log(var - mu)
+            s2 = 2. * s1 - ln_phi(i); // log(var - mu)
             tmp_ll = dnbinom_robust(y_i(i,m), s1, s2, true);
             SIMULATE { // from glmmTMB
               s1 = mu_i(i,m);
-              s2 = mu_i(i,m) * (Type(1) + mu_i(i,m) / phi(m));
+              s2 = mu_i(i,m) * (Type(1) + mu_i(i,m) / phi(i));
               y_i(i,m) = rnbinom2(s1, s2);
             }
             break;
           case truncated_nbinom2_family:
             s1 = log(mu_i(i,m)); // log(mu_i)
-            s2 = 2. * s1 - ln_phi(m); // log(var - mu)
+            s2 = 2. * s1 - ln_phi(i); // log(var - mu)
             tmp_ll = dnbinom_robust(y_i(i,m), s1, s2, true);
-            s3 = logspace_add(Type(0), s1 - ln_phi(m));
-            lognzprob = logspace_sub(Type(0), -phi(m) * s3);
+            s3 = logspace_add(Type(0), s1 - ln_phi(i));
+            lognzprob = logspace_sub(Type(0), -phi(i) * s3);
             tmp_ll -= lognzprob;
             tmp_ll = zt_lik_nearzero(y_i(i,m), tmp_ll); // from glmmTMB
-            SIMULATE{y_i(i,m) = sdmTMB::rtruncated_nbinom(asDouble(phi(m)), 0, asDouble(mu_i(i,m)));}
+            SIMULATE{y_i(i,m) = sdmTMB::rtruncated_nbinom(asDouble(phi(i)), 0, asDouble(mu_i(i,m)));}
             break;
           case nbinom1_family:
             s1 = log(mu_i(i,m));
-            s2 = s1 + ln_phi(m);
+            s2 = s1 + ln_phi(i);
             tmp_ll = dnbinom_robust(y_i(i,m), s1, s2, true);
-            SIMULATE {y_i(i,m) = rnbinom2(mu_i(i,m), mu_i(i,m) * (Type(1) + phi(m)));}
+            SIMULATE {y_i(i,m) = rnbinom2(mu_i(i,m), mu_i(i,m) * (Type(1) + phi(i)));}
             break;
           case truncated_nbinom1_family:
             s1 = log(mu_i(i,m));
-            s2 = s1 + ln_phi(m);
+            s2 = s1 + ln_phi(i);
             tmp_ll = dnbinom_robust(y_i(i,m), s1, s2, true);
-            s3 = logspace_add(Type(0), ln_phi(m));
-            lognzprob = logspace_sub(Type(0), -mu_i(i,m) / phi(m) * s3); // 1-prob(0)
+            s3 = logspace_add(Type(0), ln_phi(i));
+            lognzprob = logspace_sub(Type(0), -mu_i(i,m) / phi(i) * s3); // 1-prob(0)
             tmp_ll -= lognzprob;
             tmp_ll = zt_lik_nearzero(y_i(i,m), tmp_ll);
-            SIMULATE{y_i(i,m) = sdmTMB::rtruncated_nbinom(asDouble(mu_i(i,m)/phi(m)), 0, asDouble(mu_i(i,m)));}
+            SIMULATE{y_i(i,m) = sdmTMB::rtruncated_nbinom(asDouble(mu_i(i,m)/phi(i)), 0, asDouble(mu_i(i,m)));}
             break;
           case lognormal_family:
-            tmp_ll = sdmTMB::dlnorm(y_i(i,m), log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
-            SIMULATE{y_i(i,m) = exp(rnorm(log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m)));}
+            tmp_ll = sdmTMB::dlnorm(y_i(i,m), log(mu_i(i,m)) - pow(phi(i), Type(2)) / Type(2), phi(i), true);
+            SIMULATE{y_i(i,m) = exp(rnorm(log(mu_i(i,m)) - pow(phi(i), Type(2)) / Type(2), phi(i)));}
             break;
           case student_family:
-            tmp_ll = sdmTMB::dstudent(y_i(i,m), mu_i(i,m), exp(ln_phi(m)), df, true);
-            SIMULATE{y_i(i,m) = mu_i(i,m) + phi(m) * rt(df);}
+            tmp_ll = sdmTMB::dstudent(y_i(i,m), mu_i(i,m), exp(ln_phi(i)), df, true);
+            SIMULATE{y_i(i,m) = mu_i(i,m) + phi(i) * rt(df);}
             break;
           case Beta_family: // Ferrari and Cribari-Neto 2004; betareg package
-            s1 = mu_i(i,m) * phi(m);
-            s2 = (Type(1) - mu_i(i,m)) * phi(m);
+            s1 = mu_i(i,m) * phi(i);
+            s2 = (Type(1) - mu_i(i,m)) * phi(i);
             tmp_ll = dbeta(y_i(i,m), s1, s2, true);
             SIMULATE{y_i(i,m) = rbeta(s1, s2);}
             break;
@@ -791,8 +800,10 @@ Type objective_function<Type>::operator()()
           share_range(m), stan_flag);
     }
     if (!sdmTMB::isNA(priors(8))) { // phi
-      jnll -= dnorm(phi(m), priors(8), priors(9), true);
-      if (stan_flag) jnll -= ln_phi(m); // Jacobian adjustment
+      jnll -= dnorm(phi(0), priors(8), priors(9), true);
+      if (b_disp_k.size() > 1)
+        error("Priors can't be placed on the dispersion parameter yet if a dispersion formula is used.");
+      if (stan_flag) jnll -= ln_phi(0); // Jacobian adjustment
     }
     if (!sdmTMB::isNA(priors(10))) { // AR1 random field rho
       jnll -= dnorm(rho(m), priors(10), priors(11), true);

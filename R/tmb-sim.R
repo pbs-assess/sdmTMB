@@ -215,7 +215,7 @@ sdmTMB_simulate <- function(formula,
   }
 
   if (!is.null(B)) params$b_j <- matrix(B, ncol = 1L) # TODO DELTA
-  if (!is.null(phi)) params$ln_phi <- log(phi)
+  if (!is.null(phi)) params$b_disp_k <- log(phi)
   if (!is.null(rho)) {
     if (rho != 0 && rho < 1) {
       tmb_data$ar1_fields <- 1L

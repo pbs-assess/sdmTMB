@@ -15,6 +15,7 @@ sdmTMB(
   share_range = TRUE,
   time_varying = NULL,
   spatial_varying = NULL,
+  dispformula = ~1,
   weights = NULL,
   offset = NULL,
   extra_time = NULL,
@@ -97,6 +98,10 @@ If a (scaled) time column is used, it will represent a local-time-trend model. S
 Note this predictor should be centered to have mean zero and have a
 standard deviation of approximately 1 (scale by the SD). Structure must
 currently be shared in delta models.}
+
+\item{dispformula}{A \strong{one sided} formula describing predictors for the
+observation model dispersion. Defaults to an intercept only, which
+is equivalent to a single dispersion parameter.}
 
 \item{weights}{A numeric vector representing optional likelihood weights for
 the conditional model. Implemented as in \pkg{glmmTMB}: weights do not have

@@ -74,7 +74,7 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     )
     mlog <- sdmTMB(data = s, formula = observed ~ 1, mesh = spde,
       family = lognormal(link = "log"))
-    expect_equal(exp(mlog$model$par[["ln_phi"]]), phi, tolerance = 0.1)
+    expect_equal(sdmTMB:::get_phi(mlog), phi, tolerance = 0.1)
   })
 
   test_that("NB2 fits", {

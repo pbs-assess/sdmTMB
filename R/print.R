@@ -183,6 +183,34 @@ print_other_parameters <- function(x, m = 1) {
     a
   }
 
+  # dispersion formula:
+  mm_disp <- 1L # fake
+  if (!"b_disp_k" %in% names(x$tmb_map)) {
+    e <- as.list(x$sd_report, "Estimate")
+    se <- as.list(x$sd_report, "Std. Error")
+
+    b_disp_k <- unlist(unname(e[names(e) == "b_disp_k"]))
+    if (length(b_disp_k) == 1L) {
+      phi <- mround(exp(b_disp_k), 2L)
+      phi <- paste0("Dispersion: ", phi, "\n")
+    } else {
+      sr_se <- summary(x$sd_report)[, "Std. Error"]
+      sr_est <- summary(x$sd_report)[, "Estimate"]
+
+      disp_names <- colnames(x$tmb_data$Xdisp_ij)
+      b_disp_k_se <- unname(round(sr_se[grep("b_disp_k", names(sr_se))], 2L))
+      b_disp_k <- unname(round(sr_est[grep("b_disp_k", names(sr_est))], 2L))
+
+      mm_disp <- cbind(b_disp_k, b_disp_k_se)
+      colnames(mm_disp) <- c("coef.est", "coef.se")
+      row.names(mm_disp) <- disp_names
+
+      phi <- ""
+    }
+  } else {
+    phi <- ""
+  }
+
   phi <- get_term_text("phi", "Dispersion parameter")
   tweedie_p <- get_term_text("tweedie_p", "Tweedie p")
   sigma_O <- get_term_text("sigma_O", "Spatial SD")
@@ -197,7 +225,7 @@ print_other_parameters <- function(x, m = 1) {
     sigma_Z <- ""
   }
 
-  named_list(phi, tweedie_p, sigma_O, sigma_E, sigma_Z, rho)
+  named_list(phi, tweedie_p, sigma_O, sigma_E, sigma_Z, rho, mm_disp)
 }
 
 print_header <- function(x) {
@@ -210,7 +238,7 @@ print_header <- function(x) {
   cat(info$overall_family)
 }
 
-print_one_model <- function(x, m = 1) {
+print_one_model <- function(x, m = 1, delta = FALSE) {
   info <- print_model_info(x)
   main <- print_main_effects(x, m = m)
   smooth <- print_smooth_effects(x, m = m)
@@ -243,6 +271,15 @@ print_one_model <- function(x, m = 1) {
     cat("\n")
   }
 
+  disp_text <- "Dispersion model:\n"
+  if (!delta && !identical(other$mm_disp, 1L)) {
+    cat(disp_text)
+    print(other$mm_disp)
+  }
+  if (delta && m == 2 && !identical(other$mm_disp, 1L)) {
+    cat(disp_text)
+    print(other$mm_disp)
+  }
   cat(other$phi)
   cat(other$tweedie_p)
   cat(other$rho)
@@ -270,11 +307,13 @@ print.sdmTMB <- function(x, ...) {
 
   delta <- isTRUE(x$family$delta)
   print_header(x)
-  if (delta) cat("\nDelta/hurdle model 1: -----------------------------------\n")
-  print_one_model(x, 1)
   if (delta) {
+    cat("\nDelta/hurdle model 1: -----------------------------------\n")
+    print_one_model(x, 1, delta = TRUE)
     cat("\nDelta/hurdle model 2: -----------------------------------\n")
-    print_one_model(x, 2)
+    print_one_model(x, 2, delta = TRUE)
+  } else {
+    print_one_model(x, 1, delta = FALSE)
   }
   if (delta) cat("\n")
   print_footer(x)
