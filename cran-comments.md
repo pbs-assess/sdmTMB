@@ -4,7 +4,6 @@
 
 * This is a new release.
 
-```
 Possibly misspelled words in DESCRIPTION:
   GLMMs (3:46, 49:71)
   SDMs (53:43)
@@ -13,21 +12,15 @@ Possibly misspelled words in DESCRIPTION:
   al (53:66)
   et (53:63)
   spatiotemporal (49:37)
-```
 
 * These are not misspelled.
 
-```
 Suggests or Enhances not in mainstream repositories:
   INLA
 Availability using Additional_repositories specification:
   INLA   yes   https://inla.r-inla-download.org/R/stable
-```
-
-```
-* checking Rd cross-references ... NOTE
+...
 Package unavailable to check Rd xrefs: 'INLA'
-```
   
 * This is correct and intended.
 
