@@ -162,7 +162,7 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
   if (length(s)) {
     for (i in s) {
       if (b$estimate[i] > 1000) {
-        msg <- "` is larger than 100"
+        msg <- "` is larger than 1000"
         cli::cli_alert_danger(c("`", b$term[i], msg))
         par_message(b$term[i])
         msg <- "Consider simplifying the model or adding priors"
