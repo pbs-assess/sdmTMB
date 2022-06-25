@@ -273,8 +273,6 @@ Type objective_function<Type>::operator()()
   REPORT(ln_phi);
   if (b_disp_k.size() == 1) {
     ADREPORT(ln_phi(0));
-  } else {
-    ADREPORT(ln_phi);
   }
 
   // ------------------ Geospatial ---------------------------------------------
