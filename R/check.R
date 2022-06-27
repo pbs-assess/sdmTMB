@@ -139,8 +139,15 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
   }
 
   b <- tidy(fit, conf.int = TRUE)
-  b2 <- tidy(fit, "ran_pars", conf.int = TRUE)
-  b <- rbind(b, b2)
+  br <- tidy(fit, "ran_pars", conf.int = TRUE)
+  b <- rbind(b, br)
+
+  if (isTRUE(fit$family$delta)) {
+    b2 <- tidy(fit, conf.int = TRUE, model = 2)
+    br2 <- tidy(fit, "ran_pars", conf.int = TRUE, model = 2)
+    b2 <- rbind(b2, br2)
+    b <- rbind(b, b2)
+  }
   s <- grep("sigma", b$term)
   sigmas_ok <- TRUE
   if (length(s)) {
