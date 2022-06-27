@@ -861,6 +861,11 @@ sdmTMB <- function(
     cli_warn("Using a barrier mesh; therefore, anistropy will be disabled.")
     anisotropy <- FALSE
   }
+  if (any(c(!is.na(priors$matern_s[1:2]), !is.na(priors$matern_st[1:2]))) && anisotropy) {
+    cli_warn("Using PC Matern priors; therefore, anistropy will be disabled.")
+    anisotropy <- FALSE
+  }
+
   df <- if (family$family[1] == "student" && "df" %in% names(family)) family$df else 3
 
   est_epsilon_model <- 0L
