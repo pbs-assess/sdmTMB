@@ -234,7 +234,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
   n_re_int <- length(x$split_formula[[model]]$reTrmFormulas)
   if(n_re_int > 0) {
     re_est <- as.list(x$sd_report, "Estimate")$RE
-    re_ses <- as.list(fit$sd_report, "Std. Error")$RE
+    re_ses <- as.list(x$sd_report, "Std. Error")$RE
     for(jj in 1:n_re_int) {
       # 3rd element below is piece after the bar, e.g. grouping variable
       level_names <- levels(x$data[[x$split_formula[[model]]$reTrmFormulas[[jj]][[3]]]])
