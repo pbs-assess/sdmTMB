@@ -73,6 +73,20 @@ fixef.sdmTMB <- function(object, ...) {
   bhat
 }
 
+##' @importFrom nlme ranef
+#' @method ranef sdmTMB
+#' @export
+ranef.sdmTMB <- function(object, ...) {
+  .t <- tidy(object, "ranef", conf.int = FALSE)
+  terms <- unlist(lapply(strsplit(.t$term,"_"), getElement, 1))
+  est <- .t$estimate
+  cond <- list()
+  for(i in 1:length(unique(terms))) {
+    cond[[unique(terms)[i]]] = data.frame("Intercept" = est[which(terms == unique(terms)[i])])
+  }
+  return(list(cond = cond))
+}
+
 #' @importFrom stats df.residual
 #' @method df.residual sdmTMB
 #' @export

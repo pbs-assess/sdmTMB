@@ -3,7 +3,8 @@
 #' @param x Output from [sdmTMB()].
 #' @param effects A character vector including one or more of "fixed"
 #'   (fixed-effect parameters), "ran_pars" (standard deviations, spatial range,
-#'   and other random effect and dispersion terms).
+#'   and other random effect and dispersion terms), or "ranef" (individual random
+#'   intercepts, if included -- behaves like `ranef()`).
 #' @param conf.int Include a confidence interval?
 #' @param conf.level Confidence level for CI.
 #' @param exponentiate Whether to exponentiate the fixed-effect coefficient
@@ -35,7 +36,7 @@
 #' tidy(fit, conf.int = TRUE)
 #' tidy(fit, "ran_pars", conf.int = TRUE)
 
-tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
+tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ranef"), model = 1,
                  conf.int = FALSE, conf.level = 0.95, exponentiate = FALSE, ...) {
   effects <- match.arg(effects)
   assert_that(is.logical(exponentiate))
@@ -230,38 +231,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
 
   if (all(!x$tmb_data$include_spatial) && all(x$tmb_data$spatial_only)) out_re$range <- NULL
 
-  # random intercepts
-  n_re_int <- length(x$split_formula[[model]]$reTrmFormulas)
-  if(n_re_int > 0) {
-    re_est <- as.list(x$sd_report, "Estimate")$RE
-    re_ses <- as.list(x$sd_report, "Std. Error")$RE
-    for(jj in 1:n_re_int) {
-      # 3rd element below is piece after the bar, e.g. grouping variable
-      level_names <- levels(x$data[[x$split_formula[[model]]$reTrmFormulas[[jj]][[3]]]])
-      n_levels <- length(level_names)
-      re_name <- x$split_formula[[model]]$reTrmFormulas[[jj]][[3]]
-
-      if(jj==1) {
-        start_pos <- 1
-        end_pos <- n_levels
-      } else {
-        start_pos <- end_pos + 1
-        end_pos <- start_pos + n_levels - 1
-      }
-      out_re[[ii]] <- data.frame(
-        term = paste0(re_name,"_",level_names),
-        estimate = re_est[start_pos:end_pos],
-        std.error = re_ses[start_pos:end_pos],
-        conf.low = re_est[start_pos:end_pos] - crit * re_ses[start_pos:end_pos],
-        conf.high = re_est[start_pos:end_pos] + crit * re_ses[start_pos:end_pos],
-        stringsAsFactors = FALSE
-      )
-      ii <- ii + 1
-    }
-
-  }
-
-
   out_re <- do.call("rbind", out_re)
   row.names(out_re) <- NULL
 
@@ -277,11 +246,49 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
     out_re[["conf.high"]] <- NULL
   }
 
+  # random intercepts
+  n_re_int <- length(x$split_formula[[model]]$reTrmFormulas)
+  if(n_re_int > 0) {
+    out_ranef <- list()
+    re_est <- as.list(x$sd_report, "Estimate")$RE
+    re_ses <- as.list(x$sd_report, "Std. Error")$RE
+    for(jj in 1:n_re_int) {
+      # 3rd element below is piece after the bar, e.g. grouping variable
+      level_names <- levels(x$data[[x$split_formula[[model]]$reTrmFormulas[[jj]][[3]]]])
+      n_levels <- length(level_names)
+      re_name <- x$split_formula[[model]]$reTrmFormulas[[jj]][[3]]
+
+      if(jj==1) {
+        start_pos <- 1
+        end_pos <- n_levels
+      } else {
+        start_pos <- end_pos + 1
+        end_pos <- start_pos + n_levels - 1
+      }
+      out_ranef[[jj]] <- data.frame(
+        term = paste0(re_name,"_",level_names),
+        estimate = re_est[start_pos:end_pos],
+        std.error = re_ses[start_pos:end_pos],
+        conf.low = re_est[start_pos:end_pos] - crit * re_ses[start_pos:end_pos],
+        conf.high = re_est[start_pos:end_pos] + crit * re_ses[start_pos:end_pos],
+        stringsAsFactors = FALSE
+      )
+      if (!conf.int) {
+        out_ranef[[jj]][["conf.low"]] <- NULL
+        out_ranef[[jj]][["conf.high"]] <- NULL
+      }
+    }
+    out_ranef <- do.call("rbind", out_ranef)
+    row.names(out_ranef) <- NULL
+  }
+
   out <- unique(out) # range can be duplicated
   out_re <- unique(out_re)
 
   if (effects == "fixed") {
     return(out)
+  } else if (effects == "ranef") {
+    return(out_ranef)
   } else {
     return(out_re)
   }

@@ -111,3 +111,66 @@ test_that("Model with random intercepts fits appropriately.", {
   expect_equal(c(glmmTMB_re$g$`(Intercept)`, glmmTMB_re$h$`(Intercept)`),
     sdmTMB_re$RE[,1], tolerance = 1e-5)
 })
+
+
+test_that("Tidy returns random intercepts appropriately.", {
+  skip_on_cran()
+  skip_if_not_installed("INLA")
+  skip_if_not_installed("glmmTMB")
+  set.seed(1)
+  x <- stats::runif(500, -1, 1)
+  y <- stats::runif(500, -1, 1)
+  loc <- data.frame(x = x, y = y)
+  spde <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
+
+  s <- sdmTMB_simulate(
+    ~ 1,
+    data = loc,
+    mesh = spde,
+    range = 1.4,
+    phi = 0.1,
+    sigma_O = 0.2,
+    seed = 1,
+    B = 0
+  )
+
+  g <- rep(gl(30, 10), 999)
+  set.seed(134)
+  RE_vals <- rnorm(30, 0, 0.4)
+  h <- rep(gl(40, 10), 999)
+  set.seed(1283)
+  RE_vals2 <- rnorm(40, 0, 0.2)
+  s$g <- g[seq_len(nrow(s))]
+  s$h <- h[seq_len(nrow(s))]
+  s$observed <- s$observed + RE_vals[s$g] + RE_vals2[s$h]
+
+  # with RE:
+  m <- sdmTMB(data = s, time = NULL,
+              formula = observed ~ 1 + (1 | g) + (1 | h),
+              mesh = spde,
+              spatial = "off")
+
+  ranpars <- tidy(m, "ran_pars", conf.int = TRUE)
+  expect_equal(ranpars$estimate,
+               c(0.1934564, 0.4422655, 0.1960184), tolerance = 1e-5)
+  expect_equal(ranpars$conf.low,
+               c(0.1812356, 0.3367532, 0.1414036), tolerance = 1e-5)
+  ranint <- tidy(m, "ranef", conf.int = TRUE)
+  expect_equal(ranint$estimate[1:5],
+               c(-0.2281940, 0.6663989, 0.1411399, -0.3220671, -0.6363942), tolerance = 1e-5)
+  expect_equal(ranint$conf.low[1:5],
+               c(-0.5029686,0.3915682,-0.1338101,-0.5979386,-0.9114315), tolerance = 1e-5)
+
+  # Test against same model estimated from glmmTMB
+  fit_glmmtmb <- glmmTMB::glmmTMB(data = s,
+                                formula = observed ~ 1 + (1 | g) + (1 | h))
+  expect_equal(ranef(fit_glmmtmb)$cond$g[[1]],
+               ranint$estimate[1:30], tolerance = 1e-5)
+
+  # also check that ranef returns the same thing with same names
+  expect_equal(names(ranef(fit_glmmtmb)$cond), names(ranef(m)$cond))
+
+  # and check that they return the same values
+  expect_equal(ranef(fit_glmmtmb)$cond$g[[1]], ranef(m)$cond$g[[1]], tolerance = 1e-5)
+})
+
