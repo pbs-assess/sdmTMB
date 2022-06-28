@@ -44,9 +44,9 @@ Follows the conventions of the \pkg{broom} and \pkg{broom.mixed} packages.
 Currently, \code{effects = "ran_pars"} also includes dispersion-related terms
 (e.g., \code{phi}), which are not actually random effects.
 
-Standard errors for variance terms fit in log space (e.g., variance
-terms) are omitted to avoid confusion. Confidence intervals are still
-available.
+Standard errors for spatial variance terms fit in log space (e.g., variance
+terms, range, or parameters associated with the observation error) are
+omitted to avoid confusion. Confidence intervals are still available.
 }
 \examples{
 \dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
