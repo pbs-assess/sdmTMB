@@ -107,25 +107,42 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
   fixed <- !(names(est) %in% random)
   est <- est[fixed]
   se <- se[fixed]
-  too_big <- function(est, se) {
+  too_big <- function(est, se, divide = TRUE) {
     if (any(!is.na(se))) {
-      ratio <- se[!is.na(se)] / abs(est[!is.na(se)])
-      if (any(ratio > se_ratio)) return(TRUE)
+      if (divide) {
+        ratio <- se[!is.na(se)] / abs(est[!is.na(se)])
+        if (any(ratio > se_ratio)) return(TRUE)
+      } else {
+        se_max <- max(se, na.rm = TRUE)
+        if (any(se_max > 3)) return(TRUE)
+      }
     }
   }
   # log vars don't make a lot of sense to check like this:
+
+  est <- as.list(fit$sd_report, "Estimate")
+  se <- as.list(fit$sd_report, "Std. Error")
+
   bji <- grepl("^b_j", names(est))
   est <- est[bji]
   se <- se[bji]
   se_big <- mapply(too_big, est, se)
 
+  # range and sigma pars:
+  estr <- as.list(fit$sd_report, "Estimate", report = TRUE)
+  ser <- as.list(fit$sd_report, "Std. Error", report = TRUE)
+  se_big2 <- mapply(too_big, estr, ser, divide = FALSE)
+
+  se_big <- c(se_big, se_big2)
+
   for (i in seq_along(se_big)) {
     if (isTRUE(se_big[[i]])) {
       msg <- paste0(
-        "` standard error may be large (> ",
-        se_ratio,
-        "x parameter estimate)"
-      )
+        "` standard error may be large")
+      # (> ",
+      #   se_ratio,
+      #   "x parameter estimate)"
+      # )
       cli::cli_alert_danger(c("`", names(se_big)[i], msg))
       par_message(names(se_big)[i])
       cli::cli_alert_info(simplify_msg)
