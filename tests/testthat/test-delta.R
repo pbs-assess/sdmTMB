@@ -91,6 +91,22 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     fit_dtnb2$sd_report
   })
 
+
+  test_that("delta_truncated_nbinom1 family fits", {
+    skip_on_cran()
+    skip_on_ci()
+    skip_if_not_installed("INLA")
+
+    pcod$count <- round(pcod$density)
+    fit_dtnb1 <- sdmTMB(count ~ 1,
+                        data = pcod, mesh = pcod_spde, spatial = "off",
+                        family = delta_truncated_nbinom1()
+    )
+    s <- as.list(fit_dtnb1$sd_report, "Std. Error")
+    expect_true(sum(is.na(s$b_j)) == 0L)
+    fit_dtnb1$sd_report
+  })
+
   test_that("Anisotropy with delta model", {
     skip_on_cran()
     skip_if_not_installed("INLA")
