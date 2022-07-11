@@ -168,42 +168,42 @@ test_that("TMB (custom) AR1 simulation is unbiased", {
 })
 
 
-test_that("TMB Delta simulation works", {
-  skip_on_ci()
-  skip_on_cran()
-  skip_if_not_installed("INLA")
-
-  set.seed(1)
-  predictor_dat <- data.frame(
-    X = runif(2000), Y = runif(2000),
-    a1 = rnorm(2000), year = 1
-  )
-  mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.1)
-  sim_dat <- sdmTMB_simulate(
-    formula = ~1,
-    data = predictor_dat,
-    time = "year",
-    mesh = mesh,
-    family = nbinom2(),
-    range = 0.3,
-    phi = 1,
-    sigma_O = 0.1,
-    seed = 1,
-    B = 1.5
-  )
-  sim_dat$observed[sample(1:nrow(sim_dat), size = 0.7*nrow(sim_dat), replace=T)] = 0
-  fit <- sdmTMB(observed ~ 1, sim_dat,
-                mesh = mesh,
-                family = delta_truncated_nbinom2(),
-                share_range = TRUE
-  )
-
-  sim_1 <- simulate(fit, model = 1, nsim = 100)
-  expect_equal(ncol(sim_1), 100)
-  empirical_z <- 1 - length(which(sim_dat$observed==0)) / nrow(sim_dat)
-  expect_lt(max(abs(apply(sim_1,2,mean) - empirical_z)), 0.05)
-
-  sim_2 <- simulate(fit, model = 2, nsim = 100)
-  expect_equal(ncol(sim_2), 100)
-  expect_lt(max(abs(apply(sim_2,2,mean,na.rm=T) - 5.67)), 0.65)
-})
+# test_that("TMB Delta simulation works", {
+#   skip_on_ci()
+#   skip_on_cran()
+#   skip_if_not_installed("INLA")
+#
+#   set.seed(1)
+#   predictor_dat <- data.frame(
+#     X = runif(2000), Y = runif(2000),
+#     a1 = rnorm(2000), year = 1
+#   )
+#   mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.1)
+#   sim_dat <- sdmTMB_simulate(
+#     formula = ~1,
+#     data = predictor_dat,
+#     time = "year",
+#     mesh = mesh,
+#     family = nbinom2(),
+#     range = 0.3,
+#     phi = 1,
+#     sigma_O = 0.1,
+#     seed = 1,
+#     B = 1.5
+#   )
+#   sim_dat$observed[sample(1:nrow(sim_dat), size = 0.7*nrow(sim_dat), replace=T)] = 0
+#   fit <- sdmTMB(observed ~ 1, sim_dat,
+#                 mesh = mesh,
+#                 family = delta_truncated_nbinom2(),
+#                 share_range = TRUE
+#   )
+#
+#   sim_1 <- simulate(fit, model = 1, nsim = 100)
+#   expect_equal(ncol(sim_1), 100)
+#   empirical_z <- 1 - length(which(sim_dat$observed==0)) / nrow(sim_dat)
+#   expect_lt(max(abs(apply(sim_1,2,mean) - empirical_z)), 0.05)
+#
+#   sim_2 <- simulate(fit, model = 2, nsim = 100)
+#   expect_equal(ncol(sim_2), 100)
+#   expect_lt(max(abs(apply(sim_2,2,mean,na.rm=T) - 5.67)), 0.65)
+# })
