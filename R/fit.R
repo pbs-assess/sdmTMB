@@ -596,10 +596,14 @@ sdmTMB <- function(
   if (!include_spatial && all(spatiotemporal == "off") || !include_spatial && all(spatial_only)) {
     # message("Both spatial and spatiotemporal fields are set to 'off'.")
     # control$map_rf <- TRUE
+    no_spatial <- TRUE
     if (missing(mesh)) {
-      data$sdmTMB_X_ <- data$sdmTMB_Y_ <- stats::runif(nrow(data))
-      mesh <- make_mesh(data, c("sdmTMB_X_", "sdmTMB_Y_"), cutoff = 1)
+      # data$sdmTMB_X_ <- data$sdmTMB_Y_ <- stats::runif(nrow(data))
+      # mesh <- make_mesh(data, c("sdmTMB_X_", "sdmTMB_Y_"), cutoff = 1)
+      mesh <- pcod_mesh_2011 # internal data; fake!
     }
+  } else {
+    no_spatial <- FALSE
   }
 
   share_range <- unlist(share_range)
@@ -698,8 +702,11 @@ sdmTMB <- function(
         "Please remove these or turn your time column into an integer.")
     }
   }
-  assert_that(identical(nrow(spde$loc_xy), nrow(data)),
-    msg = "Number of x-y coordinates in `mesh` does not match `nrow(data)`.")
+
+  if (!no_spatial) {
+    assert_that(identical(nrow(spde$loc_xy), nrow(data)),
+      msg = "Number of x-y coordinates in `mesh` does not match `nrow(data)`.")
+  }
 
   # FIXME parallel setup here?
 
@@ -1016,7 +1023,8 @@ sdmTMB <- function(
     upr = upr,
     lwr = lwr,
     poisson_link_delta = as.integer(isTRUE(family$type == "poisson_link_delta")),
-    stan_flag = as.integer(bayesian)
+    stan_flag = as.integer(bayesian),
+    no_spatial = no_spatial
   )
 
   b_thresh <- rep(0, 2)

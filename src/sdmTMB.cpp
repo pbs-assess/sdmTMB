@@ -158,6 +158,7 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(include_spatial);
   DATA_INTEGER(random_walk);
   DATA_IVECTOR(exclude_RE); // DELTA TODO currently shared...
+  DATA_INTEGER(no_spatial); // omit all spatial calculations
 
   DATA_VECTOR(proj_lon);
   DATA_VECTOR(proj_lat);
@@ -527,17 +528,19 @@ Type objective_function<Type>::operator()()
   array<Type> epsilon_st_A(n_i, n_t, n_m);
   array<Type> epsilon_st_A_vec(n_i, n_m);
   omega_s_A.setZero();
-  omega_s_A.setZero();
+  zeta_s_A.setZero();
   epsilon_st_A.setZero();
   epsilon_st_A_vec.setZero();
 
-  for (int m = 0; m < n_m; m++) {
-    for (int t = 0; t < n_t; t++)
-      if (!spatial_only(m)) epsilon_st_A.col(m).col(t) =
-        A_st * vector<Type>(epsilon_st.col(m).col(t));
-    omega_s_A.col(m) = A_st * vector<Type>(omega_s.col(m));
-    for (int z = 0; z < n_z; z++)
-      zeta_s_A.col(m).col(z) = A_st * vector<Type>(zeta_s.col(m).col(z));
+  if (!no_spatial) {
+    for (int m = 0; m < n_m; m++) {
+      for (int t = 0; t < n_t; t++)
+        if (!spatial_only(m)) epsilon_st_A.col(m).col(t) =
+          A_st * vector<Type>(epsilon_st.col(m).col(t));
+      omega_s_A.col(m) = A_st * vector<Type>(omega_s.col(m));
+      for (int z = 0; z < n_z; z++)
+        zeta_s_A.col(m).col(z) = A_st * vector<Type>(zeta_s.col(m).col(z));
+    }
   }
 
   // ------------------ Linear predictor ---------------------------------------
@@ -612,7 +615,7 @@ Type objective_function<Type>::operator()()
           for (int z = 0; z < n_z; z++)
             eta_i(i,m) += zeta_s_A(i,z,m) * z_i(i,z); // spatially varying covariate DELTA
       }
-      epsilon_st_A_vec(i,m) = epsilon_st_A(A_spatial_index(i), year_i(i),m); // record it
+      if (!no_spatial) epsilon_st_A_vec(i,m) = epsilon_st_A(A_spatial_index(i), year_i(i),m); // record it
       eta_i(i,m) += epsilon_st_A_vec(i,m); // spatiotemporal
 
       // IID random intercepts:
@@ -890,42 +893,47 @@ Type objective_function<Type>::operator()()
     array<Type> proj_omega_s_A(n_p, n_m);
     array<Type> proj_zeta_s_A(n_p, n_z, n_m);
     array<Type> proj_epsilon_st_A_vec(n_p, n_m);
+    proj_omega_s_A.setZero(); // may not get filled
     proj_zeta_s_A.setZero(); // may not get filled
+    proj_epsilon_st_A_vec.setZero(); // may not get filled
 
-    for (int m = 0; m < n_m; m++) {
-      for (int t = 0; t < n_t; t++) {
-        proj_epsilon_st_A_unique.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
-      }
-      proj_omega_s_A_unique.col(m) = proj_mesh * vector<Type>(omega_s.col(m));
-    }
-
-    // Spatially varying coefficients:
     array<Type> proj_zeta_s_A_cov(n_p, n_z, n_m);
     proj_zeta_s_A_cov.setZero();
-    if (spatial_covariate) {
+
+    if (!no_spatial) {
       for (int m = 0; m < n_m; m++) {
-        for (int z = 0; z < n_z; z++) {
-          proj_zeta_s_A_unique.col(m).col(z) = proj_mesh * vector<Type>(zeta_s.col(m).col(z));
+        for (int t = 0; t < n_t; t++) {
+          proj_epsilon_st_A_unique.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
+        }
+        proj_omega_s_A_unique.col(m) = proj_mesh * vector<Type>(omega_s.col(m));
+      }
+
+      // Spatially varying coefficients:
+      if (spatial_covariate) {
+        for (int m = 0; m < n_m; m++) {
+          for (int z = 0; z < n_z; z++) {
+            proj_zeta_s_A_unique.col(m).col(z) = proj_mesh * vector<Type>(zeta_s.col(m).col(z));
+          }
         }
       }
-    }
 
-    // Pick out the appropriate spatial and/or or spatiotemporal values:
-    for (int m = 0; m < n_m; m++) {
-      for (int i = 0; i < n_p; i++) {
-        proj_omega_s_A(i,m) = proj_omega_s_A_unique(proj_spatial_index(i),m);
-        proj_epsilon_st_A_vec(i,m) = proj_epsilon_st_A_unique(proj_spatial_index(i), proj_year(i),m);
-        for (int z = 0; z < n_z; z++) {
-          proj_zeta_s_A(i,z,m) = proj_zeta_s_A_unique(proj_spatial_index(i),z,m);
+      // Pick out the appropriate spatial and/or or spatiotemporal values:
+      for (int m = 0; m < n_m; m++) {
+        for (int i = 0; i < n_p; i++) {
+          proj_omega_s_A(i,m) = proj_omega_s_A_unique(proj_spatial_index(i),m);
+          proj_epsilon_st_A_vec(i,m) = proj_epsilon_st_A_unique(proj_spatial_index(i), proj_year(i),m);
+          for (int z = 0; z < n_z; z++) {
+            proj_zeta_s_A(i,z,m) = proj_zeta_s_A_unique(proj_spatial_index(i),z,m);
+          }
         }
       }
-    }
 
-    if (spatial_covariate) {
-      for (int m = 0; m < n_m; m++) {
-        for (int z = 0; z < n_z; z++) {
-          for (int i = 0; i < n_p; i++) {
-            proj_zeta_s_A_cov(i,z,m) = proj_zeta_s_A(i,z,m) * proj_z_i(i,z);
+      if (spatial_covariate) {
+        for (int m = 0; m < n_m; m++) {
+          for (int z = 0; z < n_z; z++) {
+            for (int i = 0; i < n_p; i++) {
+              proj_zeta_s_A_cov(i,z,m) = proj_zeta_s_A(i,z,m) * proj_z_i(i,z);
+            }
           }
         }
       }
