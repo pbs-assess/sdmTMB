@@ -7,7 +7,7 @@ test_that("PC prior plotting works", {
   p <- plot_pc_matern(range_gt = 0.5,
                       sigma_lt = 0.1,
                       range_prob = 0.05,
-                      sigma_prob = 0.05, show = FALSE)
+                      sigma_prob = 0.05, plot = FALSE)
   expect_true(is.matrix(p))
   expect_true(is.array(p))
   expect_equal(dim(p)[1], 201)
