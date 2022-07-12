@@ -273,7 +273,20 @@ sdmTMB_simulate <- function(formula,
   d[["eta"]] <- s$eta_i
   d[["observed"]] <- s$y_i
   d <- do.call("data.frame", d)
-  cbind(d, fit$tmb_data$X_ij)
+  d <- cbind(d, fit$tmb_data$X_ij)
+
+  tpar <- fit$threshold_parameter
+  if (tmb_data$threshold_func == 1L) {
+    d[[paste0(tpar, "-slope")]] <- threshold_coefs[[1]]
+    d[[paste0(tpar, "-breakpt")]] <- threshold_coefs[[2]]
+  }
+  if (tmb_data$threshold_func == 2L) {
+    d[[paste0(tpar, "-s50")]] <- threshold_coefs[[1]]
+    d[[paste0(tpar, "-s95")]] <- threshold_coefs[[2]]
+    d[[paste0(tpar, "-smax")]] <- threshold_coefs[[3]]
+  }
+
+  d
 }
 
 #' Simulate from a fitted sdmTMB model
