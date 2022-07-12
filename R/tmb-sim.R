@@ -25,6 +25,12 @@
 #' @param phi Observation error scale parameter (e.g., SD in Gaussian).
 #' @param tweedie_p Tweedie p (power) parameter; between 1 and 2.
 #' @param df Student-t degrees of freedom.
+#' @param threshold_coefs An optional vector of threshold coefficient values
+#'   if the `formula` includes `breakpt()` or `logistic()`. If `breakpt()`,
+#'   these are slope and cut values. If `logistic()`, these are the threshold at
+#'   which the function is 50% of the maximum, the threshold at which the
+#'   function is 95% of the maximum, and the maximum. See the model description
+#'   vignette for details.
 #' @param fixed_re A list of optional random effects to fix at specified
 #'    (e.g., previously estimated) values. Values of `NULL` will result
 #'    in the random effects being simulated.
@@ -106,6 +112,7 @@ sdmTMB_simulate <- function(formula,
                             phi = NULL,
                             tweedie_p = NULL,
                             df = NULL,
+                            threshold_coefs = NULL,
                             fixed_re = list(omega_s = NULL, epsilon_st = NULL, zeta_s = NULL),
                             previous_fit = NULL,
                             seed = sample.int(1e6, 1),
@@ -184,6 +191,15 @@ sdmTMB_simulate <- function(formula,
         "not match model matrix columns implied by the formula."
       )
     )
+  }
+
+  if (tmb_data$threshold_func > 0) {
+    if (is.null(threshold_coefs)) {
+      cli::cli_abort("Break point or logistic formula detected without `threshold_coefs` defined.")
+    }
+  }
+  if (!is.null(threshold_coefs)) {
+    params$b_threshold <- as.numeric(threshold_coefs)
   }
 
   if (!is.null(previous_fit)) {
