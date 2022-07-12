@@ -600,7 +600,7 @@ sdmTMB <- function(
     if (missing(mesh)) {
       # data$sdmTMB_X_ <- data$sdmTMB_Y_ <- stats::runif(nrow(data))
       # mesh <- make_mesh(data, c("sdmTMB_X_", "sdmTMB_Y_"), cutoff = 1)
-      mesh <- pcod_mesh_2011 # internal data; fake!
+      mesh <- sdmTMB::pcod_mesh_2011 # internal data; fake!
     }
   } else {
     no_spatial <- FALSE
