@@ -514,10 +514,10 @@ predict.sdmTMB <- function(object, newdata = object$data,
         sims_var)
       out <- lapply(r, `[[`, .var)
 
-      if (isTRUE(object$family$delta)) {
+      predtype <- as.integer(model[[1]])
+      if (isTRUE(object$family$delta) && sims_var == "est") {
         assert_that(model[[1]] %in% c(NA, 1, 2),
           msg = "`model` argument not valid; should be one of NA, 1, 2")
-        predtype <- as.integer(model[[1]])
         if (predtype %in% c(1L, NA)) {
           out1 <- lapply(out, function(x) x[, 1L, drop = TRUE])
           out1 <- do.call("cbind", out1)
@@ -539,29 +539,54 @@ predict.sdmTMB <- function(object, newdata = object$data,
         } else {
           cli_abort("`model` type not valid.")
         }
-      } else { # not a delta model:
-        out <- do.call("cbind", out)
+      } else { # not a delta model OR not sims_var = "est":
+
+        if (isTRUE(object$family$delta) && sims_var != "est" && is.na(model[[1]])) {
+          cli_warn("`model` argument was left as NA; defaulting to 1st model component.")
+          model <- 1L
+        } else {
+          model <- as.integer(model)
+        }
+        if (!isTRUE(object$family$delta)) {
+          model <- 1L
+        }
+        if (length(dim(out[[1]])) == 2L) {
+          out <- lapply(out, function(.x) .x[,model])
+          out <- do.call("cbind", out)
+        } else if (length(dim(out[[1]])) == 3L) {
+          xx <- list()
+          for (i in seq_len(dim(out[[1]])[2])) {
+            xx[[i]] <- lapply(out, function(.x) .x[,i,model])
+            xx[[i]] <- do.call("cbind", xx[[i]])
+          }
+          out <- xx
+          if (length(out) == 1L) out <- out[[1]]
+        } else {
+          cli_abort("Too many dimensions returned from model. Try `return_tmb_report = TRUE` and parse the output yourself.")
+        }
+
         if (type == "response") out <- object$family$linkinv(out)
       }
 
-      rownames(out) <- nd[[object$time]] # for use in index calcs
-      attr(out, "time") <- object$time
-
-      if (type == "response"){
-        attr(out, "link") <- "response"
-      } else {
-        if(isTRUE(object$family$delta)){
-          if (is.na(predtype)) {
-            attr(out, "link") <- object$family[[2]]$link
-          } else if (predtype == 1L) {
-            attr(out, "link") <- object$family[[1]]$link
-          } else if (predtype == 2L) {
-            attr(out, "link") <- object$family[[2]]$link
-          } else {
-            cli_abort("`model` type not valid.")
-          }
+      if (sims_var == "est") {
+        rownames(out) <- nd[[object$time]] # for use in index calcs
+        attr(out, "time") <- object$time
+        if (type == "response"){
+          attr(out, "link") <- "response"
         } else {
-          attr(out, "link") <- object$family$link
+          if(isTRUE(object$family$delta)){
+            if (is.na(predtype)) {
+              attr(out, "link") <- object$family[[2]]$link
+            } else if (predtype == 1L) {
+              attr(out, "link") <- object$family[[1]]$link
+            } else if (predtype == 2L) {
+              attr(out, "link") <- object$family[[2]]$link
+            } else {
+              cli_abort("`model` type not valid.")
+            }
+          } else {
+            attr(out, "link") <- object$family$link
+          }
         }
       }
 
