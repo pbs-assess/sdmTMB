@@ -274,6 +274,9 @@ predict.sdmTMB <- function(object, newdata = object$data,
     sims <- nsim
   }
 
+
+  assert_that(model[[1]] %in% c(NA, 1, 2),
+    msg = "`model` argument not valid; should be one of NA, 1, 2")
   type <- match.arg(type)
 
   # FIXME parallel setup here?
@@ -516,8 +519,6 @@ predict.sdmTMB <- function(object, newdata = object$data,
 
       predtype <- as.integer(model[[1]])
       if (isTRUE(object$family$delta) && sims_var == "est") {
-        assert_that(model[[1]] %in% c(NA, 1, 2),
-          msg = "`model` argument not valid; should be one of NA, 1, 2")
         if (predtype %in% c(1L, NA)) {
           out1 <- lapply(out, function(x) x[, 1L, drop = TRUE])
           out1 <- do.call("cbind", out1)
