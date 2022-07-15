@@ -561,6 +561,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
             xx[[i]] <- do.call("cbind", xx[[i]])
           }
           out <- xx
+          if (sims_var == "zeta_s") names(out) <- object$spatial_varying
           if (length(out) == 1L) out <- out[[1]]
         } else {
           cli_abort("Too many dimensions returned from model. Try `return_tmb_report = TRUE` and parse the output yourself.")
