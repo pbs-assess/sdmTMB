@@ -58,23 +58,37 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     expect_true(sum(is.na(s$b_j)) == 0L)
   })
 
-  # test_that("delta_poisson_link_gamma() family fits", {
-  #   skip_on_cran()
-  #   skip_if_not_installed("INLA")
-  #
-  #   fit_plg <- sdmTMB(density ~ 1,
-  #     data = pcod, mesh = pcod_spde,
-  #     spatial = "off",
-  #     family = delta_poisson_link_gamma()
-  #   )
-  #   fit_plg$sd_report
-  #   s <- as.list(fit_plg$sd_report, "Std. Error")
-  #   expect_true(sum(is.na(s$b_j)) == 0L)
-  #
-  #   p <- predict(fit_plg, newdata = qcs_grid, type = "response")
-  #   p <- predict(fit_plg, newdata = pcod, type = "response")
-  #   expect_error(p <- predict(fit_plg, newdata = NULL, type = "response"))
-  # })
+  test_that("delta_poisson_link_gamma() family fits", {
+    skip_on_cran()
+    skip_if_not_installed("INLA")
+
+    fit_plg <- sdmTMB(density ~ 1,
+      data = pcod, mesh = pcod_spde,
+      spatial = "off",
+      family = delta_poisson_link_gamma()
+    )
+    fit_plg$sd_report
+    s <- as.list(fit_plg$sd_report, "Std. Error")
+    expect_true(sum(is.na(s$b_j)) == 0L)
+
+    p <- predict(fit_plg, newdata = qcs_grid, type = "response")
+    p <- predict(fit_plg, newdata = pcod, type = "response")
+    expect_error(p <- predict(fit_plg, newdata = NULL, type = "response"))
+  })
+
+  test_that("delta_poisson_link_lognormal() family fits", {
+    skip_on_cran()
+    skip_if_not_installed("INLA")
+
+    fit_plg <- sdmTMB(density ~ 1,
+      data = pcod, mesh = pcod_spde,
+      spatial = "off",
+      family = delta_poisson_link_lognormal()
+    )
+    fit_plg$sd_report
+    s <- as.list(fit_plg$sd_report, "Std. Error")
+    expect_true(sum(is.na(s$b_j)) == 0L)
+  })
 
   test_that("delta_truncated_nbinom2 family fits", {
     skip_on_cran()

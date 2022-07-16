@@ -260,25 +260,39 @@ delta_truncated_nbinom1 <- function(link1 = "logit", link2 = "log") {
     clean_name = "delta_truncated_nbinom1(link1 = 'logit', link2 = 'log')")
 }
 
-# @examples
-# delta_poisson_link_gamma()
-# @rdname families
-# @details `delta_poisson_link_gamma()` is the Poisson-link (complementary
-#   log-log) delta model (Thorson 2018).
-# @references
-# Thorson, J. T. (2018). Three problems with the conventional delta-model for
-# biomass sampling data, and a computationally efficient alternative. Canadian
-# Journal of Fisheries and Aquatic Sciences, 75(9), 1369-1382.
-# \doi{10.1139/cjfas-2017-0266}
-# @export
-# delta_poisson_link_gamma <- function(link1 = "log", link2 = "log") {
-#   cli_abort("`delta_poisson_link_gamma()` is experimental and not all functions work with it")
-#   cli_inform("Index calculations may not be correct with the `delta_poisson_link_gamma()` family yet")
-#   link1 <- match.arg(link1)
-#   link2 <- match.arg(link2)
-#   f1 <- binomial(link = "log")
-#   f2 <- truncated_nbinom1(link = "log")
-#   list(f1, f2, delta = TRUE, link = c("log", "log"),
-#     family = c("binomial", "Gamma"), type = "poisson_link_delta",
-#     clean_name = "delta_poisson_link_gamma(link1 = 'logit', link2 = 'log')")
-# }
+#' @examples
+#' delta_poisson_link_gamma()
+#' @rdname families
+#' @details `delta_poisson_link_gamma()` is the Poisson-link (complementary
+#'   log-log) delta model (Thorson 2018).
+#' @references
+#' Thorson, J. T. (2018). Three problems with the conventional delta-model for
+#' biomass sampling data, and a computationally efficient alternative. Canadian
+#' Journal of Fisheries and Aquatic Sciences, 75(9), 1369-1382.
+#' \doi{10.1139/cjfas-2017-0266}
+#' @export
+delta_poisson_link_gamma <- function(link1 = "log", link2 = "log") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "log")
+  f2 <- Gamma(link = "log")
+  list(f1, f2, delta = TRUE, link = c("log", "log"),
+    family = c("binomial", "Gamma"), type = "poisson_link_delta",
+    clean_name = "delta_poisson_link_gamma(link1 = 'log', link2 = 'log')")
+}
+
+#' @examples
+#' delta_poisson_link_lognormal()
+#' @rdname families
+#' @details `delta_poisson_link_lognormal()` is the Poisson-link (complementary
+#'   log-log) delta model (Thorson 2018).
+#' @export
+delta_poisson_link_lognormal <- function(link1 = "log", link2 = "log") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "log")
+  f2 <- lognormal(link = "log")
+  list(f1, f2, delta = TRUE, link = c("log", "log"),
+    family = c("binomial", "lognormal"), type = "poisson_link_delta",
+    clean_name = "delta_poisson_link_lognormal(link1 = 'log', link2 = 'log')")
+}

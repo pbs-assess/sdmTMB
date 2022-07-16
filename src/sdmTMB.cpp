@@ -633,7 +633,7 @@ Type objective_function<Type>::operator()()
       // if (n_m > 1) if (family(0) == 1 && family(1) == 4 && link(0) == 1 && link(1) == 1)
       //     poisson_link_delta = true;
 
-      if (family(m) == 1) { // binomial
+      if (family(m) == 1 && !poisson_link_delta) { // regular binomial
         // binomial(link = "logit"); don't touch (using robust density function in logit space)
         mu_i(i,m) = LogitInverseLink(eta_i(i,m), link(m));
       } else if (poisson_link_delta) { // clogog, but put in logit space for robust density function:
@@ -992,12 +992,9 @@ Type objective_function<Type>::operator()()
       if (n_m > 1) { // delta model
         for (int i = 0; i < n_p; i++) {
           if (poisson_link_delta) {
-            // Type n = exp(proj_eta(i,0));
-            // Type p = 1 - exp(-n);
-            // t1 = p;
-            // t2 = (n/p) * exp(proj_eta(i,1));
+            // Type R1 = Type(1.) - exp(-exp(proj_eta(i,0)));
+            // Type R2 = exp(proj_eta(i,0)) / R1 * exp(proj_eta(i,1))
             mu_combined(i) = exp(proj_eta(i,0) + proj_eta(i,1)); // prevent numerical issues
-            // error("Index from Poisson-link delta model not tested yet.");
           } else {
             t1 = InverseLink(proj_eta(i,0), link(0));
             t2 = InverseLink(proj_eta(i,1), link(1));
@@ -1018,8 +1015,7 @@ Type objective_function<Type>::operator()()
         link_tmp = link(0);
       }
       for (int i = 0; i < n_t; i++) {
-        if (poisson_link_delta) link_total(i) = log(total(i));
-        if (!poisson_link_delta) link_total(i) = Link(total(i), link_tmp);
+        link_total(i) = Link(total(i), link_tmp);
       }
       if (calc_index_totals) {
         REPORT(link_total);
