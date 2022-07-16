@@ -4,7 +4,7 @@ NULL
 #' Fit a spatial or spatiotemporal GLMM with TMB
 #'
 #' Fit a spatial or spatiotemporal Gaussian random field generalized linear
-#' mixed effects model (GLMM) with R package TMB (Template Model Builder) and
+#' mixed effects model (GLMM) with the TMB (Template Model Builder) R package and
 #' the SPDE (stochastic partial differential equation) approach. This can be
 #' useful for (dynamic) species distribution models and relative abundance index
 #' standardization among many other uses.
@@ -239,10 +239,9 @@ NULL
 #'   \code{\link[sdmTMB:families]{delta_lognormal()}}, and
 #'   \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}}.
 #' If fit with a delta family, by default the formula, spatial, and
-#' spatiotemporal structure etc. will be shared between the two model
 #' components. Some elements can be specified independently for the two models
 #' using a list format. These include `formula`, `spatial`, `spatiotemporal`,
-#' `share_range`. The first element of the list is for the binomial component
+#' and `share_range`. The first element of the list is for the binomial component
 #' and the second element is for the positive component (e.g., Gamma).
 #' Other elements must be shared for now (e.g., spatially varying coefficients,
 #' time-varying coefficients). Furthermore, there are currently limitations if
