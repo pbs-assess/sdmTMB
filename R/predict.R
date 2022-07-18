@@ -300,9 +300,10 @@ predict.sdmTMB <- function(object, newdata = object$data,
 
   tmb_data <- object$tmb_data
   tmb_data$do_predict <- 1L
+  no_spatial <- as.logical(object$tmb_data$no_spatial)
 
   if (!is.null(newdata)) {
-    if (any(!xy_cols %in% names(newdata)) && isFALSE(pop_pred))
+    if (any(!xy_cols %in% names(newdata)) && isFALSE(pop_pred) && !no_spatial)
       cli_abort(c("`xy_cols` (the column names for the x and y coordinates) are not in `newdata`.",
           "Did you miss specifying the argument `xy_cols` to match your data?",
           "The newer `make_mesh()` (vs. `make_spde()`) takes care of this for you."))
@@ -352,22 +353,29 @@ predict.sdmTMB <- function(object, newdata = object$data,
 
     newdata$sdm_orig_id <- seq(1L, nrow(newdata))
 
-    if (requireNamespace("dplyr", quietly = TRUE)) { # faster
-      unique_newdata <- dplyr::distinct(newdata[, xy_cols, drop = FALSE])
-    } else {
-      unique_newdata <- unique(newdata[, xy_cols, drop = FALSE])
-    }
-    unique_newdata[["sdm_spatial_id"]] <- seq(1, nrow(unique_newdata)) - 1L
+    if (!no_spatial) {
+      if (requireNamespace("dplyr", quietly = TRUE)) { # faster
+        unique_newdata <- dplyr::distinct(newdata[, xy_cols, drop = FALSE])
+      } else {
+        unique_newdata <- unique(newdata[, xy_cols, drop = FALSE])
+      }
+      unique_newdata[["sdm_spatial_id"]] <- seq(1, nrow(unique_newdata)) - 1L
 
-    if (requireNamespace("dplyr", quietly = TRUE)) { # much faster
-      newdata <- dplyr::left_join(newdata, unique_newdata, by = xy_cols)
+      if (requireNamespace("dplyr", quietly = TRUE)) { # much faster
+        newdata <- dplyr::left_join(newdata, unique_newdata, by = xy_cols)
+      } else {
+        newdata <- base::merge(newdata, unique_newdata, by = xy_cols,
+          all.x = TRUE, all.y = FALSE)
+        newdata <- newdata[order(newdata$sdm_orig_id),, drop = FALSE]
+      }
+      proj_mesh <- INLA::inla.spde.make.A(object$spde$mesh,
+        loc = as.matrix(unique_newdata[, xy_cols, drop = FALSE]))
     } else {
-      newdata <- base::merge(newdata, unique_newdata, by = xy_cols,
-        all.x = TRUE, all.y = FALSE)
-      newdata <- newdata[order(newdata$sdm_orig_id),, drop = FALSE]
+      proj_mesh <- object$spde$A_st # fake
+      newdata[[xy_cols[1]]] <- NA_real_ # fake
+      newdata[[xy_cols[2]]] <- NA_real_ # fake
+      newdata[["sdm_spatial_id"]] <- NA_integer_ # fake
     }
-    proj_mesh <- INLA::inla.spde.make.A(object$spde$mesh,
-      loc = as.matrix(unique_newdata[, xy_cols, drop = FALSE]))
 
     if (length(object$formula) == 1L) {
       # this formula has breakpt() etc. in it:
@@ -461,8 +469,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
       return(tmb_data)
     }
 
-# browser()
-# TODO: when fields are a RW, visreg call crashes R here...
+    # TODO: when fields are a RW, visreg call crashes R here...
     new_tmb_obj <- TMB::MakeADFun(
       data = tmb_data,
       parameters = get_pars(object),
@@ -747,6 +754,11 @@ predict.sdmTMB <- function(object, newdata = object$data,
     nd$zeta_s1 <- NULL
     nd$zeta_s <- NULL
   }
+
+  if (no_spatial) nd[,xy_cols] <- NULL
+  nd[["_sdmTMB_time"]] <- NULL
+  if (no_spatial) nd[["est_rf"]] <- NULL
+  if (no_spatial) nd[["est_non_rf"]] <- NULL
 
   if (return_tmb_object) {
     return(list(data = nd, report = r, obj = obj, fit_obj = object, pred_tmb_data = tmb_data))
