@@ -1050,9 +1050,9 @@ sdmTMB <- function(
     zeta_s    = array(0, dim = c(n_s, n_z, n_m)),
     epsilon_st = array(0, dim = c(n_s, tmb_data$n_t, n_m)),
     b_threshold = b_thresh,
-    # b_epsilon = 0,
-    # ln_epsilon_re_sigma = 0,
-    # epsilon_re = rep(0, tmb_data$n_t),
+    b_epsilon = rep(0, n_m),
+    ln_epsilon_re_sigma = rep(0, n_m),
+    epsilon_re = matrix(0, tmb_data$n_t, n_m),
     b_smooth = if (sm$has_smooths) matrix(0, sum(sm$sm_dims), n_m) else array(0),
     ln_smooth_sigma = if (sm$has_smooths) matrix(0, length(sm$sm_dims), n_m) else array(0)
   )
@@ -1065,14 +1065,7 @@ sdmTMB <- function(
 
   if (delta && !is.null(thresh$threshold_parameter)) cli_abort("Thresholds not implemented with delta models yet.") # TODO DELTA
 
-##  # optional models on spatiotemporal sd parameter
-##  if (est_epsilon_re == 0L) {
-##    tmb_map <- c(tmb_map, list(ln_epsilon_re_sigma = as.factor(NA),
-##      epsilon_re = factor(rep(NA, tmb_data$n_t))))
-##  }
-##  if (est_epsilon_model == 0L) {
-##    tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
-##  }
+  # Map off parameters not needed
   tmb_map <- map_all_params(tmb_params)
   tmb_map$b_j <- NULL
   if (delta) tmb_map$b_j2 <- NULL
@@ -1088,6 +1081,21 @@ sdmTMB <- function(
   }
   tmb_map$ln_phi <- as.factor(tmb_map$ln_phi)
   if (!is.null(thresh[[1]]$threshold_parameter)) tmb_map$b_threshold <- NULL
+
+  # optional models on spatiotemporal sd parameter
+  # if (est_epsilon_re == 0L) {
+  #   tmb_map <- c(tmb_map,
+  #                list(
+  #                  ln_epsilon_re_sigma = factor(rep(NA, n_m)),
+  #                  epsilon_re = factor(rep(NA, tmb_data$n_t))
+  #                ))
+  # }
+  if (est_epsilon_re == 1L) {
+    tmb_map <- unmap(tmb_map, c("ln_epsilon_re_sigma","epsilon_re"))
+  }
+  if (est_epsilon_model == 1L) {
+     tmb_map <- unmap(tmb_map, "b_epsilon")
+  }
 
   if (multiphase && is.null(previous_fit) && do_fit) {
 
