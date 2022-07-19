@@ -199,7 +199,8 @@ sdmTMB_simulate <- function(formula,
     }
   }
   if (!is.null(threshold_coefs)) {
-    params$b_threshold <- as.numeric(threshold_coefs)
+    if(!is.matrix(threshold_coefs)) threshold_coefs <- matrix(threshold_coefs, ncol=1)
+    params$b_threshold <- threshold_coefs
   }
 
   if (!is.null(previous_fit)) {

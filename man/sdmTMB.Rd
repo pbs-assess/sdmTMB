@@ -221,8 +221,8 @@ function of the 50\% and 95\% values. This is similar to length- or size-based
 selectivity in fisheries, and is parameterized by the points at which f(x) =
 0.5 or 0.95. See the vignette.
 
-Note that only a single threshold covariate can be included and threshold
-models are not yet implemented for the delta families.
+Note that only a single threshold covariate can be included and the same covariate
+is included in both components for the delta families.
 
 See the
 \href{https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html}{threshold vignette}.

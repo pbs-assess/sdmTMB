@@ -136,7 +136,7 @@ test_that("Test that non-stationary model works without spatial field and epsilo
                             upper = list(b_epsilon = 1))
   )
   par <- fit$sd_report$value[which(names(fit$sd_report$value)=="b_epsilon")]
-  expect_equal(par, -0.05852822, tolerance = 0.002)
+  expect_equal(as.numeric(par), -0.05852822, tolerance = 0.002)
 
   par <- fit$sd_report$value[which(names(fit$sd_report$value)=="log_sigma_E")]
   expect_equal(as.numeric(par), c(1.0534572, 1.0409799, 1.0285026, 1.0035480, 0.9785934, 0.9536388, 0.9286842, 0.9037296, 0.8787750), tolerance = 0.002)
@@ -337,6 +337,6 @@ test_that("Test that non-stationary model works without spatial field and trend 
   )
 
   par <- fit$sd_report$value[which(names(fit$sd_report$value)=="b_epsilon")]
-  expect_equal(as.numeric(par), 0.005358396, tolerance = 0.002)
+  expect_equal(as.numeric(par), 0.01257052, tolerance = 0.002)
 
 })
