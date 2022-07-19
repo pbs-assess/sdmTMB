@@ -327,10 +327,10 @@ Type objective_function<Type>::operator()()
     // For models with time as covariate, this is interpreted as sigma when covariate = 0.
     for (int m = 0; m < n_m; m++) {
 
-      Type epsilon_intcpt = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E(m) + Type(2.0) * ln_kappa(1)));
+      Type epsilon_intcpt = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E(m) + Type(2.0) * ln_kappa(1,m)));
       Type log_epsilon_intcpt = log(epsilon_intcpt);
       Type log_epsilon_temp = 0.0;
-      Type epsilon_cnst = - log(Type(4.0) * M_PI) / Type(2.0) - ln_kappa(1);
+      Type epsilon_cnst = - log(Type(4.0) * M_PI) / Type(2.0) - ln_kappa(1,m);
       if(est_epsilon_re) {
         Type epsilon_re_sigma = exp(ln_epsilon_re_sigma(m));
         //jnll -= dnorm(exp(ln_epsilon_re_sigma), Type(0.2), Type(1), true);

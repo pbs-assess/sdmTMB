@@ -1093,7 +1093,7 @@ sdmTMB <- function(
   if (est_epsilon_re == 1L) {
     tmb_map <- unmap(tmb_map, c("ln_epsilon_re_sigma","epsilon_re"))
   }
-  if (est_epsilon_model == 1L) {
+  if (est_epsilon_slope == 1L) {
      tmb_map <- unmap(tmb_map, "b_epsilon")
   }
 
