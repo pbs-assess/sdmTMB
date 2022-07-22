@@ -37,8 +37,8 @@ test_that("A linear threshold *delta* model fits", {
 
   set.seed(1)
   predictor_dat <- data.frame(
-    X = runif(10000), Y = runif(10000),
-    a1 = rnorm(10000)
+    X = runif(1000), Y = runif(1000),
+    a1 = rnorm(1000)
   )
   mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.2)
   s1 <- sdmTMB_simulate(
@@ -47,11 +47,11 @@ test_that("A linear threshold *delta* model fits", {
     mesh = mesh,
     family = binomial(),
     range = 0.5,
-    phi = 0.02,
+    phi = 0.001,
     sigma_O = 0.01,
     seed = 42,
     B = 0,
-    threshold_coefs = c(0.5, 0)
+    threshold_coefs = c(0.5, 0.3)
   )
   s2 <- sdmTMB_simulate(
     formula = ~ 1 + breakpt(a1),
@@ -63,7 +63,7 @@ test_that("A linear threshold *delta* model fits", {
     sigma_O = 0.01,
     seed = 42,
     B = 0,
-    threshold_coefs = c(0.3, 0)
+    threshold_coefs = c(0.3, 0.3)
   )
 
   plot(predictor_dat$a1, s1$observed)
@@ -72,13 +72,30 @@ test_that("A linear threshold *delta* model fits", {
   s <- s1
   s$oberved <- s1$observed * s2$observed
   s$a1 <- predictor_dat$a1
+  s1$a1 <- predictor_dat$a1
+  s2$a1 <- predictor_dat$a1
 
-  suppressWarnings(
-    fit <- sdmTMB(
-      observed ~ 1 + breakpt(a1), s, mesh = mesh,
-      family = delta_gamma(),
-      spatial = "off", control = sdmTMBcontrol(newton_loops = 1L)
-    )
+  # binomial works:
+  fit1 <- sdmTMB(observed ~ breakpt(a1),
+    data = s1,
+    family = binomial(),
+    spatial = "off"
   )
+
+  # Gamma works:
+  fit2 <- sdmTMB(observed ~ breakpt(a1),
+    data = s2,
+    family = Gamma(link = "log"),
+    spatial = "off"
+  )
+
+  # non-positive-definite Hessian matrix:
+  # fit <- sdmTMB(
+  #   observed ~ breakpt(a1), s,
+  #   mesh = mesh,
+  #   family = delta_gamma(),
+  #   spatial = "off"
+  # )
+
   # print(fit) # broken
 })
