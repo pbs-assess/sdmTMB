@@ -254,11 +254,7 @@ Type objective_function<Type>::operator()()
 
   // DELTA TODO
   // ------------------ Derived variables -------------------------------------------------
-  vector<Type> s_slope(n_m);
-  vector<Type> s_cut(n_m);
-  vector<Type> s50(n_m);
-  vector<Type> s95(n_m);
-  vector<Type> s_max(n_m);
+  vector<Type> s_slope(n_m), s_cut(n_m), s50(n_m), s95(n_m), s_max(n_m);
   // these are for linear model
   for (int m = 0; m < n_m; m++) {
     s_slope(m) = b_threshold(0,m);
@@ -332,22 +328,21 @@ Type objective_function<Type>::operator()()
     // For models with time as covariate, this is interpreted as sigma when covariate = 0.
     for (int m = 0; m < n_m; m++) {
 
-      Type epsilon_intcpt = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E(m) + Type(2.0) * ln_kappa(1,m)));
+      Type epsilon_intcpt = sdmTMB::calc_rf_sigma(ln_tau_E(m), ln_kappa(1,m));
       Type log_epsilon_intcpt = log(epsilon_intcpt);
       Type log_epsilon_temp = 0.0;
       Type epsilon_cnst = - log(Type(4.0) * M_PI) / Type(2.0) - ln_kappa(1,m);
-      if(est_epsilon_re) {
+      if (est_epsilon_re) {
         Type epsilon_re_sigma = exp(ln_epsilon_re_sigma(m));
-        //jnll -= dnorm(exp(ln_epsilon_re_sigma), Type(0.2), Type(1), true);
-        for(int i = 0; i < n_t; i++) {
+        for (int i = 0; i < n_t; i++) {
           jnll -= dnorm(epsilon_re(i,m), Type(0), Type(epsilon_re_sigma), true);
         }
       }
 
       for(int i = 0; i < n_t; i++) {
         log_epsilon_temp = log_epsilon_intcpt;
-        if(est_epsilon_slope) log_epsilon_temp += b_epsilon(m) * epsilon_predictor(i);
-        if(est_epsilon_re) log_epsilon_temp += epsilon_re(i,m);
+        if (est_epsilon_slope) log_epsilon_temp += b_epsilon(m) * epsilon_predictor(i);
+        if (est_epsilon_re) log_epsilon_temp += epsilon_re(i,m);
         sigma_E(i,m) = exp(log_epsilon_temp); // log-linear model
         ln_tau_E_vec(i,m) = -log_epsilon_temp + epsilon_cnst;
       }
@@ -586,7 +581,6 @@ Type objective_function<Type>::operator()()
 
   // add threshold effect if specified
   if (threshold_func > 0) {
-    //if (n_m > 1) error("Threshold delta models not finished."); // DELTA TODO
     if (threshold_func == 1) {
       // linear
       for (int m = 0; m < n_m; m++) {
@@ -1114,7 +1108,7 @@ Type objective_function<Type>::operator()()
      REPORT(b_epsilon);
      ADREPORT(b_epsilon);
    }
-  if(est_epsilon_re) {
+  if (est_epsilon_re) {
     REPORT(ln_epsilon_re_sigma);
     ADREPORT(ln_epsilon_re_sigma);
   }
