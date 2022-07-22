@@ -48,7 +48,7 @@ test_that("A linear threshold *delta* model fits", {
     family = binomial(),
     range = 0.5,
     phi = 0.001,
-    sigma_O = 0.01,
+    sigma_O = 0.1,
     seed = 42,
     B = 0,
     threshold_coefs = c(0.5, 0.3)
@@ -60,7 +60,7 @@ test_that("A linear threshold *delta* model fits", {
     family = Gamma(link = "log"),
     range = 0.5,
     phi = 1000,
-    sigma_O = 0.01,
+    sigma_O = 0.1,
     seed = 42,
     B = 0,
     threshold_coefs = c(0.3, 0.3)
@@ -70,32 +70,53 @@ test_that("A linear threshold *delta* model fits", {
   plot(predictor_dat$a1, s2$observed)
 
   s <- s1
-  s$oberved <- s1$observed * s2$observed
+  s$observed <- s1$observed * s2$observed
   s$a1 <- predictor_dat$a1
   s1$a1 <- predictor_dat$a1
   s2$a1 <- predictor_dat$a1
+
+  ctrl <- sdmTMBcontrol(newton_loops = 1L)
 
   # binomial works:
   fit1 <- sdmTMB(observed ~ breakpt(a1),
     data = s1,
     family = binomial(),
-    spatial = "off"
+    # mesh = mesh,
+    spatial = "off",
+    control = ctrl
   )
+  print(fit1)
 
+  s2_pos <- subset(s2, s1$observed > 0)
+  # mesh2 <- make_mesh(s2_pos, xy_cols = c("X", "Y"), mesh = mesh$mesh)
   # Gamma works:
   fit2 <- sdmTMB(observed ~ breakpt(a1),
-    data = s2,
+    data = s2_pos,
     family = Gamma(link = "log"),
-    spatial = "off"
+    spatial = "off",
+    # mesh = mesh2,
+    control = ctrl
   )
+  print(fit2)
 
-  # non-positive-definite Hessian matrix:
-  # fit <- sdmTMB(
-  #   observed ~ breakpt(a1), s,
-  #   mesh = mesh,
-  #   family = delta_gamma(),
-  #   spatial = "off"
-  # )
+  fit <- sdmTMB(
+    observed ~ breakpt(a1),
+    data = s,
+    family = delta_gamma(),
+    # mesh = mesh,
+    spatial = "off",
+    control = ctrl
+  )
+  print(fit)
+  sanity(fit)
 
-  # print(fit) # broken
+  t1 <- tidy(fit1)
+  t2 <- tidy(fit2)
+  td1 <- tidy(fit, model = 1)
+  td2 <- tidy(fit, model = 2)
+
+  expect_equal(t1$estimate, td1$estimate, tolerance = 1e-5)
+  expect_equal(t2$estimate, td2$estimate, tolerance = 1e-5)
+  expect_equal(t1$std.error, td1$std.error, tolerance = 1e-5)
+  expect_equal(t2$std.error, td2$std.error, tolerance = 1e-5)
 })
