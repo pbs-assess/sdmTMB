@@ -134,7 +134,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ranef"), model = 1,
   if (exponentiate) out$estimate <- trans(out$estimate)
 
   if (x$tmb_data$threshold_func > 0) {
-    if (delta) stop("not implemented for threshold delta models yet.")
     if (x$threshold_function == 1L) {
       par_name <- paste0(x$threshold_parameter, c("-slope", "-breakpt"))
     } else {
@@ -143,8 +142,8 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ranef"), model = 1,
     out <- rbind(
       out,
       data.frame(
-        term = par_name, estimate = est$b_threshold,
-        std.error = se$b_threshold, stringsAsFactors = FALSE
+        term = par_name, estimate = est$b_threshold[,model,drop=TRUE],
+        std.error = se$b_threshold[,model,drop=TRUE], stringsAsFactors = FALSE
       )
     )
   }

@@ -190,8 +190,8 @@ NULL
 #' selectivity in fisheries, and is parameterized by the points at which f(x) =
 #' 0.5 or 0.95. See the vignette.
 #'
-#' Note that only a single threshold covariate can be included and threshold
-#' models are not yet implemented for the delta families.
+#' Note that only a single threshold covariate can be included and the same covariate
+#' is included in both components for the delta families.
 #'
 #' See the
 #' [threshold vignette](https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html).
@@ -1026,8 +1026,8 @@ sdmTMB <- function(
     no_spatial = no_spatial
   )
 
-  b_thresh <- rep(0, 2)
-  if (thresh[[1]]$threshold_func == 2L) b_thresh <- c(0, b_thresh) # logistic #TODO: change hard coding on index of thresh[[1]]
+  b_thresh <- matrix(0, 2L, n_m)
+  if (thresh[[1]]$threshold_func == 2L) b_thresh <- matrix(0, 3L, n_m) # logistic #TODO: change hard coding on index of thresh[[1]]
 
   tmb_params <- list(
     ln_H_input = matrix(0, nrow = 2L, ncol = n_m),
@@ -1049,10 +1049,10 @@ sdmTMB <- function(
     omega_s    = matrix(0, n_s, n_m),
     zeta_s    = array(0, dim = c(n_s, n_z, n_m)),
     epsilon_st = array(0, dim = c(n_s, tmb_data$n_t, n_m)),
-    b_threshold = b_thresh,
-    # b_epsilon = 0,
-    # ln_epsilon_re_sigma = 0,
-    # epsilon_re = rep(0, tmb_data$n_t),
+    b_threshold = if(thresh[[1]]$threshold_func == 2L) matrix(0, 3L, n_m) else matrix(0, 2L, n_m),
+    b_epsilon = rep(0, n_m),
+    ln_epsilon_re_sigma = rep(0, n_m),
+    epsilon_re = matrix(0, tmb_data$n_t, n_m),
     b_smooth = if (sm$has_smooths) matrix(0, sum(sm$sm_dims), n_m) else array(0),
     ln_smooth_sigma = if (sm$has_smooths) matrix(0, length(sm$sm_dims), n_m) else array(0)
   )
@@ -1063,16 +1063,9 @@ sdmTMB <- function(
     tmb_params$b_j <- stats::coef(temp)
   }
 
-  if (delta && !is.null(thresh$threshold_parameter)) cli_abort("Thresholds not implemented with delta models yet.") # TODO DELTA
+  #if (delta && !is.null(thresh$threshold_parameter)) cli_abort("Thresholds not implemented with delta models yet.") # TODO DELTA
 
-##  # optional models on spatiotemporal sd parameter
-##  if (est_epsilon_re == 0L) {
-##    tmb_map <- c(tmb_map, list(ln_epsilon_re_sigma = as.factor(NA),
-##      epsilon_re = factor(rep(NA, tmb_data$n_t))))
-##  }
-##  if (est_epsilon_model == 0L) {
-##    tmb_map <- c(tmb_map, list(b_epsilon = as.factor(NA)))
-##  }
+  # Map off parameters not needed
   tmb_map <- map_all_params(tmb_params)
   tmb_map$b_j <- NULL
   if (delta) tmb_map$b_j2 <- NULL
@@ -1089,6 +1082,21 @@ sdmTMB <- function(
   tmb_map$ln_phi <- as.factor(tmb_map$ln_phi)
   if (!is.null(thresh[[1]]$threshold_parameter)) tmb_map$b_threshold <- NULL
 
+  # optional models on spatiotemporal sd parameter
+  # if (est_epsilon_re == 0L) {
+  #   tmb_map <- c(tmb_map,
+  #                list(
+  #                  ln_epsilon_re_sigma = factor(rep(NA, n_m)),
+  #                  epsilon_re = factor(rep(NA, tmb_data$n_t))
+  #                ))
+  # }
+  if (est_epsilon_re == 1L) {
+    tmb_map <- unmap(tmb_map, c("ln_epsilon_re_sigma","epsilon_re"))
+  }
+  if (est_epsilon_slope == 1L) {
+     tmb_map <- unmap(tmb_map, "b_epsilon")
+  }
+
   if (multiphase && is.null(previous_fit) && do_fit) {
 
     tmb_obj1 <- TMB::MakeADFun(
@@ -1103,7 +1111,7 @@ sdmTMB <- function(
     # Set starting values based on phase 1:
     tmb_params <- tmb_obj1$env$parList()
     # often causes optimization problems if set from phase 1!?
-    tmb_params$b_threshold <- rep(0, length(tmb_params$b_threshold))
+    tmb_params$b_threshold <- if(thresh[[1]]$threshold_func == 2L) matrix(0, 3L, n_m) else matrix(0, 2L, n_m)
   }
 
   tmb_random <- c()
