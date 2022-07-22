@@ -585,14 +585,14 @@ Type objective_function<Type>::operator()()
       // linear
       for (int m = 0; m < n_m; m++) {
         for (int i = 0; i < n_i; i++) {
-          eta_fixed_i(i,0) += sdmTMB::linear_threshold(X_threshold(i), s_slope(m), s_cut(m));
+          eta_fixed_i(i,m) += sdmTMB::linear_threshold(X_threshold(i), s_slope(m), s_cut(m));
         }
       }
     } else {
       // logistic
       for (int m = 0; m < n_m; m++) {
         for (int i = 0; i < n_i; i++) {
-          eta_fixed_i(i,0) += sdmTMB::logistic_threshold(X_threshold(i), s50(m), s95(m), s_max(m));
+          eta_fixed_i(i,m) += sdmTMB::logistic_threshold(X_threshold(i), s50(m), s95(m), s_max(m));
         }
       }
     }
