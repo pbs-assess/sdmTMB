@@ -324,7 +324,7 @@ test_that("prediction with smoothers error helpfully if missing variable", {
   }, regexp = "year")
 })
 
-test_that("A model with s(x, bs = 'cs') prints", {
+test_that("A model with s(x, bs = 'cs') works", {
   skip_on_cran()
   skip_on_ci()
   skip_if_not_installed("INLA")
@@ -334,9 +334,137 @@ test_that("A model with s(x, bs = 'cs') prints", {
     formula = log(density) ~ s(depth_scaled, bs = "cs"),
     spatial = "off"
   )
-  m_mgcv <- mgcv::gam(density ~ s(depth_scaled, bs = "cs"), data = d)
+  print(m)
+  m_mgcv <- mgcv::gam(log(density) ~ s(depth_scaled, bs = "cs"), data = d)
   p <- predict(m)
   p2 <- predict(m_mgcv)
   # plot(p$est, p2)
   expect_gt(stats::cor(p$est, p2), 0.999)
+})
+
+test_that("A model with s(x, bs = 'cr') works", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  d <- subset(pcod, density > 0)
+  m <- sdmTMB(
+    data = d,
+    formula = log(density) ~ s(depth_scaled, bs = "cr"),
+    spatial = "off"
+  )
+  print(m)
+  m_mgcv <- mgcv::gam(log(density) ~ s(depth_scaled, bs = "cr"), data = d)
+  p <- predict(m)
+  p2 <- predict(m_mgcv)
+  # plot(p$est, p2)
+  expect_gt(stats::cor(p$est, p2), 0.999)
+})
+
+test_that("A model with s(x, bs = 'ds') works", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  d <- subset(pcod, density > 0)
+  m <- sdmTMB(
+    data = d,
+    formula = log(density) ~ s(depth_scaled, bs = "ds"),
+    spatial = "off"
+  )
+  print(m)
+  m_mgcv <- mgcv::gam(log(density) ~ s(depth_scaled, bs = "ds"), data = d)
+  p <- predict(m)
+  p2 <- predict(m_mgcv)
+  # plot(p$est, p2)
+  expect_gt(stats::cor(p$est, p2), 0.999)
+})
+
+test_that("A model with s(x, bs = 'ps') works", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  d <- subset(pcod, density > 0)
+  m <- sdmTMB(
+    data = d,
+    formula = log(density) ~ s(depth_scaled, bs = "ps"),
+    spatial = "off"
+  )
+  print(m)
+  m_mgcv <- mgcv::gam(log(density) ~ s(depth_scaled, bs = "ps"), data = d, method = "REML")
+  p <- predict(m)
+  p2 <- predict(m_mgcv)
+  plot(p$est, p2)
+  expect_gt(stats::cor(p$est, p2), 0.999)
+})
+
+test_that("A model with s(x, bs = 're') errors", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  d <- subset(pcod, density > 0)
+  expect_error(m <- sdmTMB(
+    data = d,
+    formula = log(density) ~ s(depth_scaled, bs = "re"),
+    spatial = "off"
+  ))
+})
+
+test_that("A model with s(x, bs = 'ps') works", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  d <- subset(pcod, density > 0)
+  m <- sdmTMB(
+    data = d,
+    formula = log(density) ~ s(depth_scaled, bs = "gp"),
+    spatial = "off"
+  )
+  print(m)
+  m_mgcv <- mgcv::gam(log(density) ~ s(depth_scaled, bs = "gp"), data = d, method = "REML")
+  p <- predict(m)
+  p2 <- predict(m_mgcv)
+  plot(p$est, p2)
+  expect_gt(stats::cor(p$est, p2), 0.999)
+})
+
+test_that("An fx=TRUE smoother errors out", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  d <- subset(pcod, density > 0)
+  expect_error(m <- sdmTMB(
+    data = d,
+    formula = log(density) ~ s(depth_scaled, fx = TRUE),
+    spatial = "off"
+  ))
+  expect_error(m <- sdmTMB(
+    data = d,
+    formula = log(density) ~ s(depth_scaled, fx = T),
+    spatial = "off"
+  ))
+})
+
+test_that("An m = 1 or 2 smoother works with print warnings if needed; m > 2 errors", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  d <- subset(pcod, density > 0)
+  m <- sdmTMB(
+    data = d,
+    formula = log(density) ~ s(depth_scaled, m = 1) + s(year, k = 3),
+    spatial = "off"
+  )
+  expect_warning(print(m), regexp = "Smoother")
+
+  m_mgcv <- mgcv::gam(log(density) ~ s(depth_scaled, m = 1) + s(year, k = 3), data = d, method = "REML")
+  p <- predict(m)
+  p2 <- predict(m_mgcv)
+  plot(p$est, p2)
+  expect_gt(stats::cor(p$est, p2), 0.999)
+
+  # tests show m > 2 does not match mgcv:
+  expect_error(m <- sdmTMB(
+    data = d,
+    formula = log(density) ~ s(depth_scaled, m = 3),
+    spatial = "off"
+  ), regexp = "supported")
 })

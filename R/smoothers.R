@@ -40,7 +40,12 @@ parse_smoothers <- function(formula, data, newdata = NULL) {
     ns <- 0
     ns_Xf <- 0
     for (i in seq_along(smterms)) {
-      if (grepl('bs\\=\\"re', smterms[i])) stop("Error: bs = 're' is not currently supported for smooths")
+      if (grepl('bs\\=\\"re', smterms[i])) cli_abort("bs = 're' is not currently supported for smooths")
+      if (grepl('fx\\=T', smterms[i])) cli_abort("fx = TRUE is not currently supported for smooths")
+      if (grepl('m\\=3', smterms[i])) cli_abort("m > 2 is not currently supported for smooths")
+      if (grepl('m\\=4', smterms[i])) cli_abort("m > 2 is not currently supported for smooths")
+      if (grepl('m\\=5', smterms[i])) cli_abort("m > 2 is not currently supported for smooths")
+      if (grepl('m\\=6', smterms[i])) cli_abort("m > 2 is not currently supported for smooths")
       obj <- eval(str2expression(smterms[i]))
       labels[[i]] <- obj$label
       classes[[i]] <- attr(obj, "class")
