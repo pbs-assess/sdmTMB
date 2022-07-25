@@ -324,3 +324,19 @@ test_that("prediction with smoothers error helpfully if missing variable", {
   }, regexp = "year")
 })
 
+test_that("A model with s(x, bs = 'cs') prints", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  d <- subset(pcod, density > 0)
+  m <- sdmTMB(
+    data = d,
+    formula = log(density) ~ s(depth_scaled, bs = "cs"),
+    spatial = "off"
+  )
+  m_mgcv <- mgcv::gam(density ~ s(depth_scaled, bs = "cs"), data = d)
+  p <- predict(m)
+  p2 <- predict(m_mgcv)
+  # plot(p$est, p2)
+  expect_gt(stats::cor(p$est, p2), 0.999)
+})

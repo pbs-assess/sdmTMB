@@ -103,7 +103,7 @@ print_smooth_effects <- function(x, m = 1) {
     sm_names_bs <- unlist(xx)
     sm_names_sds <- paste0("sds(", sm_names, ")")
     mm_sm <- cbind(bs, bs_se)
-    row.names(mm_sm) <- sm_names_bs[sm_classes != "cc.smooth.spec"]
+    row.names(mm_sm) <- sm_names_bs[!sm_classes %in% c("cc.smooth.spec", "cs.smooth.spec")]
 
     smooth_sds <- round(exp(sr_est$ln_smooth_sigma[, m]), 2L)
     re_sm_mat <- matrix(NA_real_, nrow = length(smooth_sds), ncol = 1L)
