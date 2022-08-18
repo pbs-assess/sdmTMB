@@ -988,7 +988,7 @@ sdmTMB <- function(
     priors = as.numeric(unlist(.priors)),
     share_range = as.integer(share_range),
     include_spatial = as.integer(include_spatial),
-    proj_mesh  = Matrix::Matrix(0, 1, 1, doDiag = FALSE), # dummy
+    proj_mesh  = Matrix::Matrix(c(0,0,2:0), 3, 5), # dummy
     proj_X_ij  = list(matrix(0, ncol = 1, nrow = 1)), # dummy
     proj_X_rw_ik = matrix(0, ncol = 1, nrow = 1), # dummy
     proj_year  = 0, # dummy
