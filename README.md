@@ -98,6 +98,10 @@ for the most complete examples. Also see the vignettes (‘Articles’) on
 the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html)
 and the preprint and appendices linked to below.
 
+## Getting help
+
+For questions about how to use sdmTMB or interpret the models, post on the [ Discussion](https://github.com/pbs-assess/sdmTMB/discussions) board. For bugs or feature requests, post in the [Issue tracker](https://github.com/pbs-assess/sdmTMB/issues).
+
 ## Citation
 
 To cite sdmTMB in publications use:
