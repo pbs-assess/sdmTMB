@@ -16,30 +16,43 @@ sdmTMB is an R package that fits spatial and spatiotemporal predictive-process G
 
 ## Table of contents
 
--   [Installation](#installation)
--   [Overview](#overview)
--   [Citation](#citation)
--   [Related software](#related-software)
--   [Basic use](#basic-use)
--   [Advanced functionality](#advanced-functionality)
-    -   [Time-varying coefficients](#time-varying-coefficients)
-    -   [Spatially varying coefficients
-        (SVC)](#spatially-varying-coefficients-svc)
-    -   [Random intercepts](#random-intercepts)
-    -   [Breakpoint and theshold
-        effects](#breakpoint-and-theshold-effects)
-    -   [Simulating data](#simulating-data)
-    -   [Sampling from the joint precision
-        matrix](#sampling-from-the-joint-precision-matrix)
-    -   [Calculating uncertainty on spatial
-        predictions](#calculating-uncertainty-on-spatial-predictions)
-    -   [Cross validation](#cross-validation)
-    -   [Priors](#priors)
-    -   [Bayesian MCMC sampling with
-        Stan](#bayesian-mcmc-sampling-with-stan)
-    -   [Turning off random fields](#turning-off-random-fields)
-    -   [Using a custom INLA mesh](#using-a-custom-inla-mesh)
-    -   [Barrier meshes](#barrier-meshes)
+- <a href="#installation" id="toc-installation">Installation</a>
+- <a href="#overview" id="toc-overview">Overview</a>
+- <a href="#getting-help" id="toc-getting-help">Getting help</a>
+- <a href="#citation" id="toc-citation">Citation</a>
+- <a href="#related-software" id="toc-related-software">Related
+  software</a>
+- <a href="#basic-use" id="toc-basic-use">Basic use</a>
+- <a href="#advanced-functionality"
+  id="toc-advanced-functionality">Advanced functionality</a>
+  - <a href="#time-varying-coefficients"
+    id="toc-time-varying-coefficients">Time-varying coefficients</a>
+  - <a href="#spatially-varying-coefficients-svc"
+    id="toc-spatially-varying-coefficients-svc">Spatially varying
+    coefficients (SVC)</a>
+  - <a href="#random-intercepts" id="toc-random-intercepts">Random
+    intercepts</a>
+  - <a href="#breakpoint-and-theshold-effects"
+    id="toc-breakpoint-and-theshold-effects">Breakpoint and theshold
+    effects</a>
+  - <a href="#simulating-data" id="toc-simulating-data">Simulating data</a>
+  - <a href="#sampling-from-the-joint-precision-matrix"
+    id="toc-sampling-from-the-joint-precision-matrix">Sampling from the
+    joint precision matrix</a>
+  - <a href="#calculating-uncertainty-on-spatial-predictions"
+    id="toc-calculating-uncertainty-on-spatial-predictions">Calculating
+    uncertainty on spatial predictions</a>
+  - <a href="#cross-validation" id="toc-cross-validation">Cross
+    validation</a>
+  - <a href="#priors" id="toc-priors">Priors</a>
+  - <a href="#bayesian-mcmc-sampling-with-stan"
+    id="toc-bayesian-mcmc-sampling-with-stan">Bayesian MCMC sampling with
+    Stan</a>
+  - <a href="#turning-off-random-fields"
+    id="toc-turning-off-random-fields">Turning off random fields</a>
+  - <a href="#using-a-custom-inla-mesh"
+    id="toc-using-a-custom-inla-mesh">Using a custom INLA mesh</a>
+  - <a href="#barrier-meshes" id="toc-barrier-meshes">Barrier meshes</a>
 
 ## Installation
 
@@ -69,20 +82,20 @@ spatial and spatiotemporal models with an SPDE approach. We extend the
 generalized linear mixed models (GLMMs) familiar to ecologists to
 include the following optional features:
 
--   spatial random fields
--   spatiotemporal random fields that may be independent by year or
-    modelled with random walks or autoregressive processes
--   smooth terms for covariates, using the familiar `s()` notation from
-    mgcv
--   breakpoint (hockey-stick) or logistic covariates
--   time-varying covariates (coefficients modelled as random walks)
--   spatially varying coefficient models (SVCs)
--   interpolation or forecasting over missing or future time slices
--   a wide range of families: all standard R families plus `tweedie()`,
-    `nbinom1()`, `nbinom2()`, `lognormal()`, and `student()`, plus some
-    truncated and censored families
--   delta/hurdle models including `delta_gamma()`, `delta_lognormal()`,
-    and `delta_truncated_nbinom2()`
+- spatial random fields
+- spatiotemporal random fields that may be independent by year or
+  modelled with random walks or autoregressive processes
+- smooth terms for covariates, using the familiar `s()` notation from
+  mgcv
+- breakpoint (hockey-stick) or logistic covariates
+- time-varying covariates (coefficients modelled as random walks)
+- spatially varying coefficient models (SVCs)
+- interpolation or forecasting over missing or future time slices
+- a wide range of families: all standard R families plus `tweedie()`,
+  `nbinom1()`, `nbinom2()`, `lognormal()`, and `student()`, plus some
+  truncated and censored families
+- delta/hurdle models including `delta_gamma()`, `delta_lognormal()`,
+  and `delta_truncated_nbinom2()`
 
 Estimation is performed in sdmTMB via maximum marginal likelihood with
 the objective function calculated in TMB and minimized in R via
@@ -100,9 +113,23 @@ and the preprint and appendices linked to below.
 
 ## Getting help
 
-For questions about how to use sdmTMB or interpret the models, post on the [ Discussion](https://github.com/pbs-assess/sdmTMB/discussions) board. For bugs or feature requests, post in the [Issue tracker](https://github.com/pbs-assess/sdmTMB/issues).
+For questions about how to use sdmTMB or interpret the models, please
+post on the [discussion
+board](https://github.com/pbs-assess/sdmTMB/discussions). If you
+[email](https://github.com/pbs-assess/sdmTMB/blob/main/DESCRIPTION) a
+question, we are likely to respond on the [discussion
+board](https://github.com/pbs-assess/sdmTMB/discussions) with an
+anonymized version of your question (and without data) if we think it
+could be helpful to others. Please let us know if you don’t want us to
+do that.
 
-[Slides](https://pbs-assess.github.io/sdmTMB-teaching/noaa-psaw-2022/) and [recordings](https://www.youtube.com/channel/UCYoFG51RjJVx7m9mZGaj-Ng/videos) from a workshop on sdmTMB.
+For bugs or feature requests, please post in the [issue
+tracker](https://github.com/pbs-assess/sdmTMB/issues).
+
+[Slides](https://pbs-assess.github.io/sdmTMB-teaching/noaa-psaw-2022/)
+and
+[recordings](https://www.youtube.com/channel/UCYoFG51RjJVx7m9mZGaj-Ng/videos)
+from a workshop on sdmTMB.
 
 ## Citation
 
@@ -265,14 +292,15 @@ Run some basic sanity checks on our model:
 
 ``` r
 sanity(fit)
-#> ✓ Non-linear minimizer suggests successful convergence
-#> ✓ Hessian matrix is positive definite
-#> ✓ No extreme or very small eigen values detected
-#> ✓ No gradients with respect to fixed effects are >= 0.001
-#> ✓ No fixed-effect standard errors are NA
-#> ✓ No fixed-effect standard errors look unreasonably large
-#> ✓ No sigma parameters are < 0.001
-#> ✓ Range parameter doesn't look unreasonably large
+#> ✔ Non-linear minimizer suggests successful convergence
+#> ✔ Hessian matrix is positive definite
+#> ✔ No extreme or very small eigen values detected
+#> ✔ No gradients with respect to fixed effects are >= 0.001
+#> ✔ No fixed-effect standard errors are NA
+#> ✔ No fixed-effect standard errors look unreasonably large
+#> ✔ No sigma parameters are < 0.01
+#> ✔ No sigma parameters are > 100
+#> ✔ Range parameter doesn't look unreasonably large
 ```
 
 Use the visreg package to plot the smoother effect in link space with
