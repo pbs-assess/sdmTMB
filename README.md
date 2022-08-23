@@ -102,6 +102,8 @@ and the preprint and appendices linked to below.
 
 For questions about how to use sdmTMB or interpret the models, post on the [ Discussion](https://github.com/pbs-assess/sdmTMB/discussions) board. For bugs or feature requests, post in the [Issue tracker](https://github.com/pbs-assess/sdmTMB/issues).
 
+[Slides](https://pbs-assess.github.io/sdmTMB-teaching/noaa-psaw-2022/) and [recordings](https://www.youtube.com/channel/UCYoFG51RjJVx7m9mZGaj-Ng/videos) from a workshop on sdmTMB.
+
 ## Citation
 
 To cite sdmTMB in publications use:
