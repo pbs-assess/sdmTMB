@@ -27,9 +27,9 @@ test_that("Test that MCMC residuals are working", {
   )
   resid_mle <- residuals(m1)
   resid_mcmc <- residuals(m1, type = "mle-mcmc", mcmc_iter = 1000)
-  expect_lt(mean(resid_mcmc), 0.01)
-  expect_equal(sd(resid_mcmc), 1.000, tolerance = 1e-3)
-  expect_equal(cor(resid_mcmc, resid_mle), 0.955, tolerance = 1e-3)
+  expect_lt(abs(mean(resid_mcmc)), 0.2)
+  expect_equal(sd(resid_mcmc), 1.000, tolerance = 1e-2)
+  expect_equal(cor(resid_mcmc, resid_mle), 0.955, tolerance = 1e-2)
 
   # binomial example from scratch/stan-testing
   set.seed(1)
@@ -49,7 +49,7 @@ test_that("Test that MCMC residuals are working", {
   stats::qqnorm(resid_mcmc)
   stats::qqline(resid_mcmc)
 
-  expect_lt(mean(resid_mcmc), 0.02)
-  expect_equal(sd(resid_mcmc), 1.013, tolerance = 1e-3)
-  expect_equal(cor(resid_mcmc, resid_mle), 0.523, tolerance = 1e-3)
+  expect_lt(abs(mean(resid_mcmc)), 0.1)
+  expect_equal(sd(resid_mcmc), 1.013, tolerance = 1e-2)
+  expect_equal(cor(resid_mcmc, resid_mle), 0.523, tolerance = 1e-2)
 })
