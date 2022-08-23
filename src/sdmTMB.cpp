@@ -295,12 +295,14 @@ Type objective_function<Type>::operator()()
     vector<Type> log_sigma_O = log(sigma_O);
     ADREPORT(log_sigma_O);
     REPORT(sigma_O);
+    ADREPORT(sigma_O);
     array<Type> log_sigma_Z(n_z,n_m); // for SE
     for (int z = 0; z < n_z; z++)
       for (int m = 0; m < n_m; m++)
         log_sigma_Z(z,m) = log(sigma_Z(z,m));
     ADREPORT(log_sigma_Z);
     REPORT(sigma_Z);
+    ADREPORT(sigma_Z);
   }
 
   // TODO can we not always run this for speed?
@@ -1128,6 +1130,7 @@ Type objective_function<Type>::operator()()
   vector<Type> log_sigma_E = log(sigma_E);
   ADREPORT(log_sigma_E);      // log spatio-temporal SD
   REPORT(sigma_E);      // spatio-temporal SD
+  ADREPORT(sigma_E);      // log spatio-temporal SD
   REPORT(epsilon_st_A_vec);   // spatio-temporal effects; vector
   REPORT(b_rw_t);   // time-varying effects
   REPORT(omega_s_A);      // spatial effects; n_s length vector
@@ -1139,6 +1142,7 @@ Type objective_function<Type>::operator()()
   REPORT(eta_iid_re_i); // IID intercept random effect estimates
   REPORT(rho);          // AR1 correlation in -1 to 1 space
   REPORT(range);        // Matern approximate distance at 10% correlation
+  ADREPORT(range);        // Matern approximate distance at 10% correlation
   REPORT(log_range);  // log Matern approximate distance at 10% correlation
   ADREPORT(log_range);  // log Matern approximate distance at 10% correlation
   REPORT(b_smooth);     // smooth coefficients for penalized splines
