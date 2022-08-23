@@ -1,5 +1,18 @@
 # sdmTMB
 
+# sdmTMB 0.1.0
+
+* Preparing for release on CRAN.
+
+* Improve robustness of model `print()` to more esoteric mgcv smoothers.
+
+* Let `sims_var` work with multiple spatially varying slopes (`zeta_s`); return
+  output in named list by coefficients. #107
+  
+* Add `threshold_coefs` to `sdmTMB_simulate()`.
+
+* Don't make a fake mesh for non-spatial model (faster).
+
 # sdmTMB 0.0.26.9001
 
 * Add vignettes on visreg, ggeffects, and delta families (thanks J. Indivero!)
