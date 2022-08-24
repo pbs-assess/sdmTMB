@@ -23,13 +23,13 @@ sdmTMB(
   anisotropy = FALSE,
   control = sdmTMBcontrol(),
   priors = sdmTMBpriors(),
+  bayesian = FALSE,
   previous_fit = NULL,
-  experimental = NULL,
   do_fit = TRUE,
   do_index = FALSE,
   predict_args = NULL,
   index_args = NULL,
-  bayesian = FALSE
+  experimental = NULL
 )
 }
 \arguments{
@@ -129,13 +129,14 @@ Must be shared across delta models.}
 \item{priors}{Optional penalties/priors via \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}. Must currently
 be shared across delta models.}
 
+\item{bayesian}{Logical indicating if the model will be passed to
+\pkg{tmbstan}. If \code{TRUE}, Jacobian adjustments are applied to account for
+parameter transformations when priors are applied.}
+
 \item{previous_fit}{A previously fitted sdmTMB model to initialize the
 optimization with. Can greatly speed up fitting. Note that the model must
 be set up \emph{exactly} the same way. However, the data and \code{weights} arguments
 can change, which can be useful for cross-validation.}
-
-\item{experimental}{A named list for esoteric or in-development options. Here
-be dragons.}
 
 \item{do_fit}{Fit the model (\code{TRUE}) or return the processed data without
 fitting (\code{FALSE})?}
@@ -153,9 +154,8 @@ supplied and \code{area} can be supplied to \code{index_args}.}
 \code{do_index = TRUE}. Currently, only \code{area} is supported. Bias correction
 can be done when calling \code{\link[=get_index]{get_index()}} on the resulting fitted object.}
 
-\item{bayesian}{Logical indicating if the model will be passed to
-\pkg{tmbstan}. If \code{TRUE}, Jacobian adjustments are applied to account for
-parameter transformations when priors are applied.}
+\item{experimental}{A named list for esoteric or in-development options. Here
+be dragons.}
 }
 \value{
 An object (list) of class \code{sdmTMB}. Useful elements include:

@@ -541,13 +541,13 @@ sdmTMB <- function(
   anisotropy = FALSE,
   control = sdmTMBcontrol(),
   priors = sdmTMBpriors(),
+  bayesian = FALSE,
   previous_fit = NULL,
-  experimental = NULL,
   do_fit = TRUE,
   do_index = FALSE,
   predict_args = NULL,
   index_args = NULL,
-  bayesian = FALSE
+  experimental = NULL
   ) {
 
 

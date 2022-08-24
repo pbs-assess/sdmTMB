@@ -7,7 +7,7 @@
 #' Make predictions from an sdmTMB model; can predict on the original or new
 #' data.
 #'
-#' @param object An object from [sdmTMB()].
+#' @param object A model fitted with [sdmTMB()].
 #' @param newdata A data frame to make predictions on. This should be a data
 #'   frame with the same predictor columns as in the fitted data and a time
 #'   column (if this is a spatiotemporal model) with the same name as in the
@@ -16,7 +16,7 @@
 #' @param type Should the `est` column be in link (default) or response space?
 #' @param se_fit Should standard errors on predictions at the new locations
 #'   given by `newdata` be calculated? Warning: the current implementation can
-#'   be very slow for large data sets or high-resolution projections unless
+#'   be slow for large data sets or high-resolution projections unless
 #'   `re_form = NA` (omitting random fields). A faster option to approximate
 #'   point-wise uncertainty is often to use the `nsim` argument.
 #' @param return_tmb_object Logical. If `TRUE`, will include the TMB object in a
@@ -237,15 +237,17 @@
 predict.sdmTMB <- function(object, newdata = object$data,
   type = c("link", "response"),
   se_fit = FALSE,
-  return_tmb_object = FALSE,
-  area = deprecated(),
-  re_form = NULL, re_form_iid = NULL, nsim = 0,
-  sims = deprecated(),
-  tmbstan_model = NULL,
+  re_form = NULL,
+  re_form_iid = NULL,
+  nsim = 0,
   sims_var = "est",
   model = c(NA, 1, 2),
+  tmbstan_model = NULL,
+  return_tmb_object = FALSE,
   return_tmb_report = FALSE,
   return_tmb_data = FALSE,
+  sims = deprecated(),
+  area = deprecated(),
   ...) {
 
   if ("version" %in% names(object)) {
