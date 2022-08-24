@@ -37,9 +37,9 @@ NULL
 #' @param spatial Estimate spatial random fields? Options are `'on'` / `'off'`
 #'   or `TRUE` / `FALSE`. Optionaly a list for delta models, e.g. `list('on',
 #'   'off')`.
-#' @param spatiotemporal Estimate the spatiotemporal random fields as `'IID'`
-#'   (independent and identically distributed; default), stationary `'AR1'`
-#'   (first-order autoregressive), as a random walk (`'RW'`), or as fixed at 0
+#' @param spatiotemporal Estimate the spatiotemporal random fields as `'iid'`
+#'   (independent and identically distributed; default), stationary `'ar1'`
+#'   (first-order autoregressive), as a random walk (`'rw'`), or as fixed at 0
 #'   `'off'`. Will be set to `'off'` if `time = NULL`. If a delta model, can be
 #'   a list. E.g., `list('off', 'ar1')`. Note that the spatiotemporal standard
 #'   deviation represents the marginal steady-state standard deviation of the
@@ -47,25 +47,26 @@ NULL
 #'   correlation. See the [TMB
 #'   documentation](https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html). If the AR1
 #'   correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
-#'   may wish to switch to the random walk `"RW"`. Capitalization is ignored.
-#'   `TRUE` gets converted to `'IID'` and `FALSE` gets converted to `off`.
+#'   may wish to switch to the random walk `'rw'`. Capitalization is ignored.
+#'   `TRUE` gets converted to `'iid'` and `FALSE` gets converted to `'off'`.
 #' @param share_range Logical: estimate a shared spatial and spatiotemporal
 #'   range parameter (`TRUE`, default) or independent range parameters (`FALSE`). If a
 #'   delta model, can be a list. E.g., `list(TRUE, FALSE)`.
 #' @param time_varying An optional one-sided formula describing covariates that
 #'   should be modelled as a random walk through time. Be careful not to include
 #'   covariates (including the intercept) in both the main and time-varying
-#'   formula. I.e., at least one should have `~ 0` or `~ -1`. Structure must
-#'   currently be shared in delta models.
+#'   formula since the first time step is estimated independently. I.e., at
+#'   least one should have `~ 0` or `~ -1`. Structure must currently be shared
+#'   in delta models.
 #' @param spatial_varying An optional one-sided formula of coefficients that
-#'   should varying in space as random fields. Note that you likely want to
-#'   include a fixed effect for the same variable to improve interpretability
-#'   since the random field is assumed to have a mean of 0.
-#'   If a (scaled) time column is used, it will represent a local-time-trend model. See
+#'   should vary in space as random fields. Note that you likely want to include
+#'   a fixed effect for the same variable to improve interpretability since the
+#'   random field is assumed to have a mean of 0. If a (scaled) time column is
+#'   used, it will represent a local-time-trend model. See
 #'   \doi{10.1111/ecog.05176} and the [spatial trends
 #'   vignette](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html).
 #'   Note this predictor should be centered to have mean zero and have a
-#'   standard deviation of approximately 1 (scale by the SD). Structure must
+#'   standard deviation of approximately 1. Structure must
 #'   currently be shared in delta models.
 #' @param weights A numeric vector representing optional likelihood weights for
 #'   the conditional model. Implemented as in \pkg{glmmTMB}: weights do not have
@@ -91,14 +92,15 @@ NULL
 #'   be shared across delta models.
 #' @param previous_fit A previously fitted sdmTMB model to initialize the
 #'   optimization with. Can greatly speed up fitting. Note that the model must
-#'   be set up *exactly* the same way. However, the `weights` argument can
-#'   change, which can be useful for cross-validation.
+#'   be set up *exactly* the same way. However, the data and `weights` arguments
+#'   can change, which can be useful for cross-validation.
 #' @param do_fit Fit the model (`TRUE`) or return the processed data without
 #'   fitting (`FALSE`)?
 #' @param do_index Do index standardization calculations while fitting? Saves
-#'   memory and time when working with large datasets or projection grids.
-#'   If `TRUE`, then `predict_args` must have a `newdata` element supplied
-#'   and `area` can be supplied to `index_args`.
+#'   memory and time when working with large datasets or projection grids since
+#'   the TMB object doesn't have to be rebuilt with [predict.sdmTMB()] and
+#'   [get_index()]. If `TRUE`, then `predict_args` must have a `newdata` element
+#'   supplied and `area` can be supplied to `index_args`.
 #' @param predict_args A list of arguments to pass to [predict.sdmTMB()] if
 #'   `do_index = TRUE`.
 #' @param index_args A list of arguments to pass to [get_index()] if
@@ -188,13 +190,10 @@ NULL
 #' `+ logistic(variable)`. This option models the relationship as a logistic
 #' function of the 50% and 95% values. This is similar to length- or size-based
 #' selectivity in fisheries, and is parameterized by the points at which f(x) =
-#' 0.5 or 0.95. See the vignette.
+#' 0.5 or 0.95. See the [threshold vignette](https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html).
 #'
 #' Note that only a single threshold covariate can be included and the same covariate
 #' is included in both components for the delta families.
-#'
-#' See the
-#' [threshold vignette](https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html).
 #'
 #' **Extra time: forecasting or interpolating**
 #'
@@ -206,7 +205,7 @@ NULL
 #' including `+ as.factor(year)` in `formula` will render a model with no data
 #' to inform the expected value in a missing year. [sdmTMB()] makes no attempt
 #' to determine if the model makes sense for forecasting or interpolation. The
-#' options `time_varying`, `spatiotemporal = "RW"`, and `spatiotemporal = "AR1"`
+#' options `time_varying`, `spatiotemporal = "rw"`, and `spatiotemporal = "ar1"`
 #' provide mechanisms to predict over missing time slices with process error.
 #'
 #' `extra_time` can also be used to fill in missing time steps for the purposes
@@ -228,8 +227,9 @@ NULL
 #' parameters. See [sdmTMBpriors()]. You can fit the model once without
 #' penalties and look at the output of `print(your_model)` or `tidy(your_model)`
 #' or fit the model with `do_fit = FALSE` and inspect
-#' `head(your_model$tmb_data$X_ij)` if you want to see how the formula is
-#' translated to the fixed effect model matrix. Also see the [Bayesian package vignette](https://pbs-assess.github.io/sdmTMB/articles/bayesian.html).
+#' `head(your_model$tmb_data$X_ij[[1]])` if you want to see how the formula is
+#' translated to the fixed effect model matrix. Also see the
+#' [Bayesian vignette](https://pbs-assess.github.io/sdmTMB/articles/bayesian.html).
 #'
 #' **Delta/hurdle models**
 #'
@@ -238,23 +238,24 @@ NULL
 #'   \code{\link[sdmTMB:families]{delta_gamma()}},
 #'   \code{\link[sdmTMB:families]{delta_lognormal()}}, and
 #'   \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}}.
-#' If fit with a delta family, by default the formula, spatial, and
-#' components. Some elements can be specified independently for the two models
+#' If fit with a delta family, by default the formula, spatial, and spatiotemporal
+#' components are shared. Some elements can be specified independently for the two models
 #' using a list format. These include `formula`, `spatial`, `spatiotemporal`,
 #' and `share_range`. The first element of the list is for the binomial component
 #' and the second element is for the positive component (e.g., Gamma).
 #' Other elements must be shared for now (e.g., spatially varying coefficients,
 #' time-varying coefficients). Furthermore, there are currently limitations if
 #' specifying two formulas as a list: the two formulas cannot have smoothers,
-#' threshold effects, or random intercepts. For now, these must be specificed
+#' threshold effects, or random intercepts. For now, these must be specified
 #' through a single formula that is shared across the two models.
 #'
-#' The main advantage of specifying such models using a delta family is (1)
-#' coding simplicity and (2) calculation of uncertainty on derived quantities
-#' such as an index of abundance with [get_index()] using the generalized delta
-#' method within TMB. Also, parameters can be shared across the models.
+#' The main advantage of specifying such models using a delta family (compared
+#' to fitting two separate models) is (1) coding simplicity and (2) calculation
+#' of uncertainty on derived quantities such as an index of abundance with
+#' [get_index()] using the generalized delta method within TMB. Also, parameters
+#' can be shared across the models.
 #'
-#' See the [package vignette](https://pbs-assess.github.io/sdmTMB/articles/delta-models.html).
+#' See the [delta-model vignette](https://pbs-assess.github.io/sdmTMB/articles/delta-models.html).
 #'
 #' @references
 #'
