@@ -26,8 +26,8 @@ Package unavailable to check Rd xrefs: 'INLA'
 
 ## Test environments
 
-* local macOS install, R 4.2.0
-* Windows (on github-actions), R 4.2.0
-* Ubuntu 20.04.4 (on github-actions), R devel
-* macOS (on github-actions), R 4.2.0
+* local macOS install, R 4.2.1
+* Windows (on github-actions), R 4.2.1
+* Ubuntu 20.04.4 (on github-actions), R 4.2.1
+* macOS (on github-actions), R 4.2.1
 * Windows (winbuilder), R devel
