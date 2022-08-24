@@ -4,6 +4,9 @@
 
 * Preparing for release on CRAN.
 
+* ADREPORT several parameters in natural space.
+  <https://github.com/pbs-assess/sdmTMB/discussions/113>
+
 * Improve robustness of model `print()` to more esoteric mgcv smoothers.
 
 * Let `sims_var` work with multiple spatially varying slopes (`zeta_s`); return
