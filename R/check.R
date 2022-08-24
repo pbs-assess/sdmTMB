@@ -134,7 +134,7 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
   se_big2 <- mapply(too_big, estr, ser, divide = FALSE)
 
   se_big <- c(se_big, se_big2)
-  ignore <- c("sigma_O", "range", "sigma_Z", "sigma_E", "total", "link_total")
+  ignore <- c("sigma_O", "range", "sigma_Z", "sigma_E", "total", "link_total", "phi", "rho")
   for (i in seq_along(ignore)) se_big[[ignore[i]]] <- NULL
 
   for (i in seq_along(se_big)) {

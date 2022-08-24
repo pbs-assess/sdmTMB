@@ -48,7 +48,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ranef"), model = 1,
       msg = "`conf.level` must be length 1 and between 0 and 1")
   }
 
-
   crit <- stats::qnorm(1 - (1 - conf.level) / 2)
   if (exponentiate) trans <- exp else trans <- I
 
@@ -70,11 +69,13 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ranef"), model = 1,
   est$zeta_s <- NULL
   est$omega_s <- NULL
   est$ln_H_input <- NULL
+  est$phi <- NULL
 
   se$epsilon_st <- NULL
   se$zeta_s <- NULL
   se$omega_s <- NULL
   se$ln_H_input <- NULL
+  se$phi <- NULL
 
   subset_pars <- function(p, model) {
     p$b_j <- if (model == 1) p$b_j else p$b_j2

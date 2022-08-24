@@ -474,6 +474,7 @@ Type objective_function<Type>::operator()()
               }
             }
           }
+          ADREPORT(rho);
         } else if (rw_fields(m)) {
           PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1./exp(ln_tau_E_vec(0,m)))(epsilon_st.col(m).col(0));
           for (int t = 1; t < n_t; t++) {
@@ -1127,6 +1128,7 @@ Type objective_function<Type>::operator()()
     }
   }
 
+  ADREPORT(phi);
   vector<Type> log_sigma_E = log(sigma_E);
   ADREPORT(log_sigma_E);      // log spatio-temporal SD
   REPORT(sigma_E);      // spatio-temporal SD
