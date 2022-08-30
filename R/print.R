@@ -37,6 +37,10 @@ print_model_info <- function(x) {
   mesh <- paste0("Mesh: ", deparse(x$call$mesh), "\n")
   data <- paste0("Data: ", deparse(x$call$data), "\n")
 
+  # From sdmTMB_cv():
+  if (length(mesh) > 1L) mesh <- NULL
+  if (length(data) > 1L) data <- NULL
+
   if ("clean_name" %in% names(x$family)) {
     overall_family <- x$family$clean_name
   } else {
