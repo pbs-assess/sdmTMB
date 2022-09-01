@@ -188,6 +188,11 @@ Type objective_function<Type>::operator()()
 
   DATA_VECTOR(lwr); // lower bound for censpois on counts
   DATA_VECTOR(upr); // upper bound for censpois on counts
+
+  //For estimating metabolic index
+  DATA_VECTOR(po2);
+  DATA_VECTOR(invt);
+  DATA_VECTOR(y);
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -217,6 +222,9 @@ Type objective_function<Type>::operator()()
   PARAMETER_VECTOR(b_smooth);  // P-spline smooth parameters
   PARAMETER_VECTOR(ln_smooth_sigma);  // variances of spline REs if included
 
+  //For estimating metabolic index
+  PARAMETER(e0);
+
   // Joint negative log-likelihood
   Type jnll = 0;
 
@@ -238,6 +246,14 @@ Type objective_function<Type>::operator()()
 
   Type rho = sdmTMB::minus_one_to_one(ar1_phi);
   Type phi = exp(ln_phi);
+
+  //For estimating metabolic index
+  vector<Type> mi(n_i);
+
+  for(int i = 0; i < n_i; i++){
+    mi(i) -= po2(i) * exp(e0 * invt(i));
+  }
+
 
   // ------------------ Geospatial ---------------------------------------------
 
