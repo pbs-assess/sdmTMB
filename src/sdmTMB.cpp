@@ -211,6 +211,10 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(upr); // upper bound for censpois on counts
   DATA_INTEGER(poisson_link_delta); // logical
 
+  //For estimating metabolic index
+  DATA_VECTOR(po2);
+  DATA_VECTOR(invt);
+
   DATA_INTEGER(stan_flag); // logical whether to pass the model to Stan
   // ------------------ Parameters ---------------------------------------------
 
@@ -242,6 +246,9 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(b_smooth);  // P-spline smooth parameters
   PARAMETER_ARRAY(ln_smooth_sigma);  // variances of spline REs if included
 
+  //For estimating metabolic index
+  PARAMETER(e0);
+
   // Joint negative log-likelihood
   Type jnll = 0.;
 
@@ -251,6 +258,12 @@ Type objective_function<Type>::operator()()
   int n_i = y_i.rows();   // number of observations
   int n_m = y_i.cols();   // number of models (delta)
   int n_RE = RE_indexes.cols();  // number of random effect intercepts
+
+  //For estimating metabolic index
+  vector<Type> mi(n_i);
+  for(int i = 0; i < n_i; i++){
+    mi(i) -= po2(i) * exp(e0 * invt(i));
+  }
 
   // DELTA TODO
   // ------------------ Derived variables -------------------------------------------------
