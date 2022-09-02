@@ -613,6 +613,7 @@ sdmTMB <- function(
   spde <- mesh
   epsilon_model <- NULL
   epsilon_predictor <- NULL
+  est_mi <- FALSE
   if (!is.null(experimental)) {
     if ("epsilon_predictor" %in% names(experimental)) {
       epsilon_predictor <- experimental$epsilon_predictor
@@ -633,6 +634,17 @@ sdmTMB <- function(
       #epsilon_predictor <- NULL
       lwr <- 0
       upr <- Inf
+    }
+
+    if("mi" %in% names(experimental)) {
+      est_mi = TRUE
+      # assume names are in data frame as mi_y, mi_po2, mi_invt
+      if("mi_y" %in% names(data) == FALSE) cli_abort("`mi_y` should be a named column in data")
+      if("mi_po2" %in% names(data) == FALSE) cli_abort("`mi_po2` should be a named column in data")
+      if("mi_invt" %in% names(data) == FALSE) cli_abort("`mi_invt` should be a named column in data")
+      mi_y <- data[["mi_y"]]
+      mi_po2 <- data[["mi_po2"]]
+      mi_invt <- data[["mi_invt"]]
     }
   } else {
     #epsilon_predictor <- NULL
@@ -1008,7 +1020,7 @@ sdmTMB <- function(
     spatial_only = as.integer(spatial_only),
     spatial_covariate = as.integer(!is.null(spatial_varying)),
     calc_quadratic_range = as.integer(quadratic_roots),
-    X_threshold = thresh[[1]]$X_threshold, # TODO: don't hardcode index thresh[[1]]
+    X_threshold = ifelse(est_mi == FALSE, thresh[[1]]$X_threshold, rep(0, length(y_i))), # TODO: don't hardcode index thresh[[1]]
     proj_X_threshold = 0, # dummy
     threshold_func = thresh[[1]]$threshold_func,# TODO: don't hardcode index thresh[[1]]
     RE_indexes = RE_indexes,

@@ -194,7 +194,7 @@ check_and_parse_thresh_params <- function(formula, data) {
       cli_abort("`threshold_parameter` must be a single variable name.")
     }
     if (!threshold_parameter %in% names(data)) {
-      cli_abort("`threshold_parameter` is not a column in the `data` data frame.")
+      if(threshold_parameter != "mi") cli_abort("`threshold_parameter` is not a column in the `data` data frame.")
     }
   }
 

@@ -262,7 +262,8 @@ Type objective_function<Type>::operator()()
   //For estimating metabolic index
   vector<Type> mi(n_i);
   for(int i = 0; i < n_i; i++){
-    mi(i) -= po2(i) * exp(e0 * invt(i));
+    mi(i) = - po2(i) * exp(e0 * invt(i));
+    X_threshold(i) = mi(i);
   }
 
   // DELTA TODO
