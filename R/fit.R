@@ -1039,8 +1039,8 @@ sdmTMB <- function(
     stan_flag = as.integer(bayesian),
     no_spatial = no_spatial,
     est_mi = as.numeric(est_mi),
-    po2 = ifelse(est_mi, mi_po2, rep(0,length(y_i))),
-    invt = ifelse(est_mi, mi_invt, rep(0,length(y_i)))
+    po2 = as.numeric(est_mi)*mi_po2 + rep(0, length(y_i)),
+    invt = as.numeric(est_mi)*mi_invt + rep(0, length(y_i))
   )
 
   b_thresh <- matrix(0, 2L, n_m)
