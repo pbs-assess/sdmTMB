@@ -1038,8 +1038,9 @@ sdmTMB <- function(
     poisson_link_delta = as.integer(isTRUE(family$type == "poisson_link_delta")),
     stan_flag = as.integer(bayesian),
     no_spatial = no_spatial,
-    po2 = mi_po2,
-    invt = mi_invt
+    est_mi = as.numeric(est_mi),
+    po2 = ifelse(est_mi, mi_po2, rep(0,length(y_i))),
+    invt = ifelse(est_mi, mi_invt, rep(0,length(y_i)))
   )
 
   b_thresh <- matrix(0, 2L, n_m)
@@ -1067,7 +1068,7 @@ sdmTMB <- function(
     epsilon_st = array(0, dim = c(n_s, tmb_data$n_t, n_m)),
     b_threshold = if(thresh[[1]]$threshold_func == 2L) matrix(0, 3L, n_m) else matrix(0, 2L, n_m),
     b_epsilon = rep(0, n_m),
-    e0 = 0,
+    neg_log_e0 = 0,
     ln_epsilon_re_sigma = rep(0, n_m),
     epsilon_re = matrix(0, tmb_data$n_t, n_m),
     b_smooth = if (sm$has_smooths) matrix(0, sum(sm$sm_dims), n_m) else array(0),
@@ -1098,7 +1099,7 @@ sdmTMB <- function(
   }
   tmb_map$ln_phi <- as.factor(tmb_map$ln_phi)
   if (!is.null(thresh[[1]]$threshold_parameter)) tmb_map$b_threshold <- NULL
-  if (est_mi) tmb_map$e0 <- NULL
+  if (est_mi) tmb_map$neg_log_e0 <- NULL
 
   # optional models on spatiotemporal sd parameter
   # if (est_epsilon_re == 0L) {

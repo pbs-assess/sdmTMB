@@ -212,6 +212,7 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(poisson_link_delta); // logical
 
   //For estimating metabolic index
+  DATA_INTEGER(est_mi); // logical
   DATA_VECTOR(po2);
   DATA_VECTOR(invt);
 
@@ -247,7 +248,7 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(ln_smooth_sigma);  // variances of spline REs if included
 
   //For estimating metabolic index
-  PARAMETER(e0);
+  PARAMETER(neg_log_e0); // unconstrained e0 blows up
 
   // Joint negative log-likelihood
   Type jnll = 0.;
@@ -260,10 +261,16 @@ Type objective_function<Type>::operator()()
   int n_RE = RE_indexes.cols();  // number of random effect intercepts
 
   //For estimating metabolic index
-  vector<Type> mi(n_i);
-  for(int i = 0; i < n_i; i++){
-    mi(i) = - po2(i) * exp(e0 * invt(i));
-    X_threshold(i) = mi(i);
+  if(est_mi) {
+    vector<Type> mi(n_i); // not sure if we need to store mi?
+    Type e0 = -exp(neg_log_e0); // force to be negative
+    for(int i = 0; i < n_i; i++){
+      mi(i) = - po2(i) * exp(e0 * invt(i));
+      X_threshold(i) = mi(i);
+    }
+    ADREPORT(neg_log_e0);
+    ADREPORT(e0);
+    REPORT(e0);
   }
 
   // DELTA TODO
