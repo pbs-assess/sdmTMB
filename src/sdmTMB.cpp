@@ -261,12 +261,11 @@ Type objective_function<Type>::operator()()
   int n_RE = RE_indexes.cols();  // number of random effect intercepts
 
   //For estimating metabolic index
+  vector<Type> mi(n_i);
   if(est_mi) {
-    vector<Type> mi(n_i); // not sure if we need to store mi?
     Type e0 = -exp(neg_log_e0); // force to be negative
     for(int i = 0; i < n_i; i++){
       mi(i) = - po2(i) * exp(e0 * invt(i));
-      X_threshold(i) = mi(i);
     }
     ADREPORT(neg_log_e0);
     ADREPORT(e0);
@@ -608,15 +607,29 @@ Type objective_function<Type>::operator()()
     if (threshold_func == 1) {
       // linear
       for (int m = 0; m < n_m; m++) {
-        for (int i = 0; i < n_i; i++) {
-          eta_fixed_i(i,m) += sdmTMB::linear_threshold(X_threshold(i), s_slope(m), s_cut(m));
+        if(est_mi) {
+          // input estimated mi index into threshold instead of X_threshold
+          for (int i = 0; i < n_i; i++) {
+            eta_fixed_i(i,m) += sdmTMB::linear_threshold(mi(i), s_slope(m), s_cut(m));
+          }
+        } else {
+          for (int i = 0; i < n_i; i++) {
+            eta_fixed_i(i,m) += sdmTMB::linear_threshold(X_threshold(i), s_slope(m), s_cut(m));
+          }
         }
       }
     } else {
       // logistic
       for (int m = 0; m < n_m; m++) {
-        for (int i = 0; i < n_i; i++) {
-          eta_fixed_i(i,m) += sdmTMB::logistic_threshold(X_threshold(i), s50(m), s95(m), s_max(m));
+        if(est_mi) {
+          // input estimated mi index into threshold instead of X_threshold
+          for (int i = 0; i < n_i; i++) {
+            eta_fixed_i(i,m) += sdmTMB::logistic_threshold(mi(i), s50(m), s95(m), s_max(m));
+          }
+        } else {
+          for (int i = 0; i < n_i; i++) {
+            eta_fixed_i(i,m) += sdmTMB::logistic_threshold(X_threshold(i), s50(m), s95(m), s_max(m));
+          }
         }
       }
     }
