@@ -262,6 +262,9 @@ Type objective_function<Type>::operator()()
 
   //For estimating metabolic index
   vector<Type> mi(n_i);
+  for(int i = 0; i < n_i; i++){
+    mi(i) = 0;
+  }
   if(est_mi) {
     Type e0 = -exp(neg_log_e0); // force to be negative
     for(int i = 0; i < n_i; i++){
