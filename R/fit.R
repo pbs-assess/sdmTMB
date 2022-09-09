@@ -962,9 +962,12 @@ sdmTMB <- function(
 
   n_t <- length(unique(data[[time]]))
 
+  X_threshold_temp <- rep(0, length(y_i))
   if(!est_mi) {
+    # if we don't estimate the e0 parameter, these are dummy values and threshold covariate is passed in (X_threshold)
     mi_po2 <- rep(0, length(y_i))
     mi_invt <- rep(0, length(y_i))
+    X_threshold_temp <- thresh[[1]]$X_threshold
   }
 
   tmb_data <- list(
@@ -1027,7 +1030,7 @@ sdmTMB <- function(
     spatial_only = as.integer(spatial_only),
     spatial_covariate = as.integer(!is.null(spatial_varying)),
     calc_quadratic_range = as.integer(quadratic_roots),
-    X_threshold = ifelse(est_mi == FALSE, thresh[[1]]$X_threshold, rep(0, length(y_i))), # TODO: don't hardcode index thresh[[1]]
+    X_threshold = X_threshold_temp, # TODO: don't hardcode index thresh[[1]]
     proj_X_threshold = 0, # dummy
     threshold_func = thresh[[1]]$threshold_func,# TODO: don't hardcode index thresh[[1]]
     RE_indexes = RE_indexes,
