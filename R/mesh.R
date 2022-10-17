@@ -211,7 +211,7 @@ make_anisotropy_spde <- function(spde, anistropy = TRUE) {
       E2 = E2,
       TV = TV - 1,
       G0 = spde$spde$param.inla$M0,
-      G0_inv = as(Matrix::diag(1 / Matrix::diag(spde$spde$param.inla$M0)), "dgTMatrix")
+      G0_inv = as(Matrix::diag(1 / Matrix::diag(spde$spde$param.inla$M0)), "TsparseMatrix")
     )
   } else {
     ret <- list(
