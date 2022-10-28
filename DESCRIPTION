@@ -53,7 +53,8 @@ Description: Implements spatial and spatiotemporal predictive-process GLMMs
     dynamic) species distribution models (SDMs). See Anderson et al. (2022)
     <doi:10.1101/2022.03.24.485545>.
 License: GPL-3 | file LICENSE
-URL: https://pbs-assess.github.io/sdmTMB/index.html
+URL: https://pbs-assess.github.io/sdmTMB/index.html,
+    https://pbs-assess.github.io/sdmTMB/
 BugReports: https://github.com/pbs-assess/sdmTMB/issues
 Depends:
     R (>= 3.5.0)
