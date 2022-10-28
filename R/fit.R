@@ -782,15 +782,17 @@ sdmTMB <- function(
     X_ij[[ii]] <- model.matrix(formula_no_sm, data)
     mf[[ii]] <- model.frame(formula_no_sm, data)
     # Check for random slopes:
-    termsfun <- function(x) {
-     # using glmTMB and lme4:::mkBlist approach
-     ff <- eval(substitute(~foo, list(foo = x[[2]])))
-     tt <- try(terms(ff, data =  mf[[ii]]), silent = TRUE)
-     tt
-   }
-    reXterms <- lapply(split_formula[[ii]]$reTrmFormulas, termsfun)
-    if (length(attr(reXterms[[1]], "term.labels")))
-      cli_abort("This model appears to have a random slope specified (e.g., y ~ (1 + b | group)). sdmTMB currently can only do random intercepts (e.g., y ~ (1 | group)).")
+    if (length(split_formula[[ii]]$reTrmFormulas)) {
+      termsfun <- function(x) {
+        # using glmTMB and lme4:::mkBlist approach
+        ff <- eval(substitute(~foo, list(foo = x[[2]])))
+        tt <- try(terms(ff, data =  mf[[ii]]), silent = TRUE)
+        tt
+      }
+      reXterms <- lapply(split_formula[[ii]]$reTrmFormulas, termsfun)
+      if (length(attr(reXterms[[1]], "term.labels")))
+        cli_abort("This model appears to have a random slope specified (e.g., y ~ (1 + b | group)). sdmTMB currently can only do random intercepts (e.g., y ~ (1 | group)).")
+    }
 
     mt[[ii]] <- attr(mf[[ii]], "terms")
     # parse everything mgcv + smoothers:
