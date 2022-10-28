@@ -62,10 +62,11 @@ Defaults to the link-space predictions. Options include: \code{"omega_s"},
 \code{"zeta_s"}, \code{"epsilon_st"}, and \code{"est_rf"} (as described below).
 Other options will be passed verbatim.}
 
-\item{model}{Type of prediction if a delta/hurdle model: \code{NA} returns the
-combined prediction from both components on the link scale for the positive
-component; \code{1} or \code{2} return the first or second model component only on
-the link or response scale depending on the argument \code{type}.}
+\item{model}{Type of prediction if a delta/hurdle model and \code{nsim > 0} or a
+\code{tmbstan_model} is supplied: \code{NA} returns the combined prediction from both
+components on the link scale for the positive component; \code{1} or \code{2} return
+the first or second model component only on the link or response scale
+depending on the argument \code{type}.}
 
 \item{tmbstan_model}{A model fit with \code{\link[tmbstan:tmbstan]{tmbstan::tmbstan()}}. See
 \code{\link[=extract_mcmc]{extract_mcmc()}} for more details and an example. If specified, the
