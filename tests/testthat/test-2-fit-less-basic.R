@@ -434,14 +434,14 @@ test_that("offset() throws an error", {
   expect_error({
     fit <- sdmTMB(
       density ~ 1 + offset(depth),
-      data = pcod_2011, mesh = mesh,
+      data = pcod_2011, mesh = pcod_mesh_2011,
       family = tweedie(link = "log")
     )
   }, regexp = "offset")
   expect_error({
     fit <- sdmTMB(
       density ~ 1 + offset(log(depth)),
-      data = pcod_2011, mesh = mesh,
+      data = pcod_2011, mesh = pcod_mesh_2011,
       family = tweedie(link = "log")
     )
   }, regexp = "offset")

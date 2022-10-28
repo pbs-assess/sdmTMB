@@ -174,7 +174,7 @@ test_that("Tidy returns random intercepts appropriately.", {
   expect_equal(ranef(fit_glmmtmb)$cond$g[[1]], ranef(m)$cond$g[[1]], tolerance = 1e-5)
 })
 
-test_that("random slopes throw an error" {
+test_that("random slopes throw an error", {
   pcod_2011$fyear <- as.factor(pcod_2011$year)
   expect_error({
     fit <- sdmTMB(
