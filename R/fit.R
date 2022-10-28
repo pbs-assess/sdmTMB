@@ -601,8 +601,6 @@ sdmTMB <- function(
     # control$map_rf <- TRUE
     no_spatial <- TRUE
     if (missing(mesh)) {
-      # data$sdmTMB_X_ <- data$sdmTMB_Y_ <- stats::runif(nrow(data))
-      # mesh <- make_mesh(data, c("sdmTMB_X_", "sdmTMB_Y_"), cutoff = 1)
       mesh <- sdmTMB::pcod_mesh_2011 # internal data; fake!
     }
   } else {
@@ -753,6 +751,8 @@ sdmTMB <- function(
   }
   n_z <- ncol(z_i)
 
+  if (any(grepl("offset\\(", formula)))
+    cli_abort("Detected `offset()` in formula. Offsets in sdmTMB must be specified via the `offset` argument.")
   contains_offset <- check_offset(formula[[1]]) # deprecated check
 
   split_formula <- list() # passed to out structure, not TMB
@@ -770,6 +770,7 @@ sdmTMB <- function(
     # anything in a list here needs to be saved for tmb data
     split_formula[[ii]] <- glmmTMB::splitForm(formula[ii][[1]])
     RE_names <- barnames(split_formula[[ii]]$reTrmFormulas)
+
     fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
     RE_indexes[[ii]] <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
     nobs_RE[[ii]] <- unname(apply(RE_indexes[[ii]], 2L, max)) + 1L
@@ -780,6 +781,17 @@ sdmTMB <- function(
     formula_no_sm <- remove_s_and_t2(formula[[ii]])
     X_ij[[ii]] <- model.matrix(formula_no_sm, data)
     mf[[ii]] <- model.frame(formula_no_sm, data)
+    # Check for random slopes:
+    termsfun <- function(x) {
+     # using glmTMB and lme4:::mkBlist approach
+     ff <- eval(substitute(~foo, list(foo = x[[2]])))
+     tt <- try(terms(ff, data =  mf[[ii]]), silent = TRUE)
+     tt
+   }
+    reXterms <- lapply(split_formula[[ii]]$reTrmFormulas, termsfun)
+    if (length(attr(reXterms[[1]], "term.labels")))
+      cli_abort("This model appears to have a random slope specified (e.g., y ~ (1 + b | group)). sdmTMB currently can only do random intercepts (e.g., y ~ (1 | group)).")
+
     mt[[ii]] <- attr(mf[[ii]], "terms")
     # parse everything mgcv + smoothers:
     sm[[ii]] <- parse_smoothers(formula = formula[[ii]], data = data)
