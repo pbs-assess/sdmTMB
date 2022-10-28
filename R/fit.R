@@ -58,6 +58,8 @@ NULL
 #'   formula since the first time step is estimated independently. I.e., at
 #'   least one should have `~ 0` or `~ -1`. Structure must currently be shared
 #'   in delta models.
+#' @param time_varying_type Type of time-varying process to apply to
+#'   `time_varying` formula.
 #' @param spatial_varying An optional one-sided formula of coefficients that
 #'   should vary in space as random fields. Note that you likely want to include
 #'   a fixed effect for the same variable to improve interpretability since the
@@ -532,6 +534,7 @@ sdmTMB <- function(
   spatiotemporal = c("iid", "ar1", "rw", "off"),
   share_range = TRUE,
   time_varying = NULL,
+  time_varying_type = c("rw", "ar1"),
   spatial_varying = NULL,
   weights = NULL,
   offset = NULL,
@@ -598,8 +601,6 @@ sdmTMB <- function(
     # control$map_rf <- TRUE
     no_spatial <- TRUE
     if (missing(mesh)) {
-      # data$sdmTMB_X_ <- data$sdmTMB_Y_ <- stats::runif(nrow(data))
-      # mesh <- make_mesh(data, c("sdmTMB_X_", "sdmTMB_Y_"), cutoff = 1)
       mesh <- sdmTMB::pcod_mesh_2011 # internal data; fake!
     }
   } else {
@@ -673,6 +674,7 @@ sdmTMB <- function(
   assert_that(inherits(spde, "sdmTMBmesh"))
   assert_that(class(formula) %in% c("formula", "list"))
   assert_that(inherits(data, "data.frame"))
+  time_varying_type <- match.arg(time_varying_type)
   if (!is.null(map) && length(map) != length(start)) {
     cli_warn(c("`length(map) != length(start)`.",
       "You likely want to specify `start` values if you are setting the `map` argument."))
@@ -749,6 +751,8 @@ sdmTMB <- function(
   }
   n_z <- ncol(z_i)
 
+  if (any(grepl("offset\\(", formula)))
+    cli_abort("Detected `offset()` in formula. Offsets in sdmTMB must be specified via the `offset` argument.")
   contains_offset <- check_offset(formula[[1]]) # deprecated check
 
   split_formula <- list() # passed to out structure, not TMB
@@ -766,6 +770,7 @@ sdmTMB <- function(
     # anything in a list here needs to be saved for tmb data
     split_formula[[ii]] <- glmmTMB::splitForm(formula[ii][[1]])
     RE_names <- barnames(split_formula[[ii]]$reTrmFormulas)
+
     fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
     RE_indexes[[ii]] <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
     nobs_RE[[ii]] <- unname(apply(RE_indexes[[ii]], 2L, max)) + 1L
@@ -776,6 +781,19 @@ sdmTMB <- function(
     formula_no_sm <- remove_s_and_t2(formula[[ii]])
     X_ij[[ii]] <- model.matrix(formula_no_sm, data)
     mf[[ii]] <- model.frame(formula_no_sm, data)
+    # Check for random slopes:
+    if (length(split_formula[[ii]]$reTrmFormulas)) {
+      termsfun <- function(x) {
+        # using glmTMB and lme4:::mkBlist approach
+        ff <- eval(substitute(~foo, list(foo = x[[2]])))
+        tt <- try(terms(ff, data =  mf[[ii]]), silent = TRUE)
+        tt
+      }
+      reXterms <- lapply(split_formula[[ii]]$reTrmFormulas, termsfun)
+      if (length(attr(reXterms[[1]], "term.labels")))
+        cli_abort("This model appears to have a random slope specified (e.g., y ~ (1 + b | group)). sdmTMB currently can only do random intercepts (e.g., y ~ (1 | group)).")
+    }
+
     mt[[ii]] <- attr(mf[[ii]], "terms")
     # parse everything mgcv + smoothers:
     sm[[ii]] <- parse_smoothers(formula = formula[[ii]], data = data)
@@ -981,7 +999,8 @@ sdmTMB <- function(
     flag = 1L, # part of TMB::normalize()
     calc_index_totals = 0L,
     calc_cog = 0L,
-    random_walk = as.integer(!is.null(time_varying)),
+    random_walk = as.integer(!is.null(time_varying) && time_varying_type == "rw"),
+    ar1_time = as.integer(!is.null(time_varying) && time_varying_type == "ar1"),
     priors_b_n = length(not_na),
     priors_b_index = not_na - 1L,
     priors_b_mean = priors_b[not_na,1],
@@ -1043,6 +1062,7 @@ sdmTMB <- function(
     thetaf     = 0,
     ln_phi     = rep(0, n_m),
     ln_tau_V   = matrix(0, ncol(X_rw_ik), n_m),
+    rho_time_unscaled = matrix(0, ncol(X_rw_ik), n_m),
     ar1_phi    = rep(0, n_m),
     ln_tau_G   = matrix(0, ncol(RE_indexes), n_m),
     RE         = matrix(0, sum(nobs_RE), n_m),
@@ -1132,6 +1152,8 @@ sdmTMB <- function(
   if (!is.null(time_varying)) {
     tmb_random <- c(tmb_random, "b_rw_t")
     tmb_map <- unmap(tmb_map, c("b_rw_t", "ln_tau_V"))
+    if (time_varying_type == "ar1")
+      tmb_map <- unmap(tmb_map, "rho_time_unscaled")
   }
   if (est_epsilon_re) {
     tmb_random <- c(tmb_random, "epsilon_re")

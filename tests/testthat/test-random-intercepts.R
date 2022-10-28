@@ -174,3 +174,34 @@ test_that("Tidy returns random intercepts appropriately.", {
   expect_equal(ranef(fit_glmmtmb)$cond$g[[1]], ranef(m)$cond$g[[1]], tolerance = 1e-5)
 })
 
+test_that("random slopes throw an error", {
+  pcod_2011$fyear <- as.factor(pcod_2011$year)
+  expect_error({
+    fit <- sdmTMB(
+      density ~ 1 + (1 + depth | fyear),
+      data = pcod_2011, mesh = pcod_mesh_2011,
+      family = tweedie(link = "log")
+    )
+  }, regexp = "slope")
+  expect_error({
+    fit <- sdmTMB(
+      density ~ 1 + (1 + depth | fyear) + (Y | fyear),
+      data = pcod_2011, mesh = pcod_mesh_2011,
+      family = tweedie(link = "log")
+    )
+  }, regexp = "slope")
+  expect_error({
+    fit <- sdmTMB(
+      density ~ 1 + (depth | fyear),
+      data = pcod_2011, mesh = pcod_mesh_2011,
+      family = tweedie(link = "log")
+    )
+  }, regexp = "slope")
+  fit <- sdmTMB( # but random intercepts still work
+    density ~ 1 + (1 | fyear),
+    data = pcod_2011, mesh = pcod_mesh_2011,
+    family = tweedie(link = "log")
+  )
+  expect_s3_class(fit, "sdmTMB")
+})
+

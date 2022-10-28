@@ -95,7 +95,6 @@ test_that("A spatially varying coefficient model fits", {
     mesh = pcod_spde, family = tweedie(link = "log"),
     spatial_varying = ~ 0 + scaled_year, time = "year")
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
-  expect_error(p <- predict(m, newdata = subset(qcs_grid, year == 2011)), regexp = "time")
   qcs_grid$scaled_year <- scale(qcs_grid$year)
   p <- predict(m, newdata = subset(qcs_grid, year >= 2011))
 })
@@ -428,4 +427,21 @@ test_that("find_missing_time works", {
   expect_identical(find_missing_time(c(1, 2, 3)), numeric(0))
   expect_identical(find_missing_time(c(1, 4, 3)), 2)
   expect_identical(find_missing_time(c(1L, 4L, 3L)), 2L)
+})
+
+test_that("offset() throws an error", {
+  expect_error({
+    fit <- sdmTMB(
+      density ~ 1 + offset(depth),
+      data = pcod_2011, mesh = pcod_mesh_2011,
+      family = tweedie(link = "log")
+    )
+  }, regexp = "offset")
+  expect_error({
+    fit <- sdmTMB(
+      density ~ 1 + offset(log(depth)),
+      data = pcod_2011, mesh = pcod_mesh_2011,
+      family = tweedie(link = "log")
+    )
+  }, regexp = "offset")
 })

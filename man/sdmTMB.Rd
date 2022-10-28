@@ -14,6 +14,7 @@ sdmTMB(
   spatiotemporal = c("iid", "ar1", "rw", "off"),
   share_range = TRUE,
   time_varying = NULL,
+  time_varying_type = c("rw", "ar1"),
   spatial_varying = NULL,
   weights = NULL,
   offset = NULL,
@@ -88,6 +89,9 @@ covariates (including the intercept) in both the main and time-varying
 formula since the first time step is estimated independently. I.e., at
 least one should have \code{~ 0} or \code{~ -1}. Structure must currently be shared
 in delta models.}
+
+\item{time_varying_type}{Type of time-varying process to apply to
+\code{time_varying} formula.}
 
 \item{spatial_varying}{An optional one-sided formula of coefficients that
 should vary in space as random fields. Note that you likely want to include

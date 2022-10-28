@@ -313,7 +313,6 @@ predict.sdmTMB <- function(object, newdata = object$data,
     if (object$time == "_sdmTMB_time") newdata[[object$time]] <- 0L
     if (visreg_df) {
       if (!object$time %in% names(newdata)) {
-        # cli_inform("Using the most recent year")
         newdata[[object$time]] <- max(object$data[[object$time]], na.rm = TRUE)
       }
     }
@@ -330,9 +329,20 @@ predict.sdmTMB <- function(object, newdata = object$data,
       )
 
     if (!identical(new_data_time, original_time) & isFALSE(pop_pred)) {
-      cli_abort(c("The time elements in `newdata` are not identical to those in the original dataset.",
-          "For now, please predict on all time elements and filter out those you don't need after.",
-          "Please let us know on the GitHub issues tracker if this is important to you."))
+      if (isTRUE(return_tmb_object) || nsim > 0)
+        cli_warn(c("The time elements in `newdata` are not identical to those in the original dataset.",
+          "This is normally fine, but may create problems for index standardization."))
+      missing_time <- original_time[!original_time %in% new_data_time]
+      fake_nd_list <- list()
+      fake_nd <- newdata[1L,,drop=FALSE]
+      for (.t in seq_along(missing_time)) {
+        fake_nd[[object$time]] <- missing_time[.t]
+        fake_nd_list[[.t]] <- fake_nd
+      }
+      fake_nd <- do.call("rbind", fake_nd_list)
+      newdata[["_sdmTMB_fake_nd_"]] <- FALSE
+      fake_nd[["_sdmTMB_fake_nd_"]] <- TRUE
+      newdata <- rbind(newdata, fake_nd)
     }
 
     # If making population predictions (with standard errors), we don't need
@@ -761,6 +771,10 @@ predict.sdmTMB <- function(object, newdata = object$data,
   nd[["_sdmTMB_time"]] <- NULL
   if (no_spatial) nd[["est_rf"]] <- NULL
   if (no_spatial) nd[["est_non_rf"]] <- NULL
+  if ("_sdmTMB_fake_nd_" %in% names(nd)) {
+    nd <- nd[!nd[["_sdmTMB_fake_nd_"]],,drop=FALSE]
+  }
+  nd[["_sdmTMB_fake_nd_"]] <- NULL
 
   if (return_tmb_object) {
     return(list(data = nd, report = r, obj = obj, fit_obj = object, pred_tmb_data = tmb_data))
