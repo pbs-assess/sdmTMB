@@ -25,7 +25,6 @@ test_that("AR1 time-varying works", {
     for (i in seq(2, length(B))) {
       B[i] <- rho * B[i-1] + sigma * devs[i]
     }
-    # plot(B, type="o")
 
     sim_dat <- sdmTMB_simulate(
       formula = ~ 0 + as.factor(year),
@@ -60,4 +59,14 @@ test_that("AR1 time-varying works", {
   expect_equal(round(mean(sigma_V_hats), 2L), ar1_scale)
   expect_equal(round(mean(rho_hats), 2L), rho)
 
+  ss <- simulate(m)
+  sim_dat$obs2 <- ss[,1]
+  m <- sdmTMB(obs2 ~ 0, data = sim_dat, mesh = mesh,
+    time = "year", spatial = 'off', time_varying_type = "ar1",
+    spatiotemporal = 'off', time_varying = ~ 1)
+
+  s <- as.list(m$sd_report, "Estimate")
+  expect_equal(dim(ss), c(4000L, 1L))
+  expect_gt(exp(s$ln_tau_V)[1,1], 0.75)
+  expect_gt(m121(s$rho_time_unscaled)[1,1], 0.65)
 })
