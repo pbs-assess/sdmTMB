@@ -95,7 +95,6 @@ test_that("A spatially varying coefficient model fits", {
     mesh = pcod_spde, family = tweedie(link = "log"),
     spatial_varying = ~ 0 + scaled_year, time = "year")
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
-  expect_error(p <- predict(m, newdata = subset(qcs_grid, year == 2011)), regexp = "time")
   qcs_grid$scaled_year <- scale(qcs_grid$year)
   p <- predict(m, newdata = subset(qcs_grid, year >= 2011))
 })
