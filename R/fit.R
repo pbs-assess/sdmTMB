@@ -58,6 +58,8 @@ NULL
 #'   formula since the first time step is estimated independently. I.e., at
 #'   least one should have `~ 0` or `~ -1`. Structure must currently be shared
 #'   in delta models.
+#' @param time_varying_type Type of time-varying process to apply to
+#'   `time_varying` formula.
 #' @param spatial_varying An optional one-sided formula of coefficients that
 #'   should vary in space as random fields. Note that you likely want to include
 #'   a fixed effect for the same variable to improve interpretability since the
@@ -532,7 +534,7 @@ sdmTMB <- function(
   spatiotemporal = c("iid", "ar1", "rw", "off"),
   share_range = TRUE,
   time_varying = NULL,
-  time_varying_type = c("rw", "ar1"), # FIXME WAS HERE
+  time_varying_type = c("rw", "ar1"),
   spatial_varying = NULL,
   weights = NULL,
   offset = NULL,
@@ -674,6 +676,7 @@ sdmTMB <- function(
   assert_that(inherits(spde, "sdmTMBmesh"))
   assert_that(class(formula) %in% c("formula", "list"))
   assert_that(inherits(data, "data.frame"))
+  time_varying_type <- match.arg(time_varying_type)
   if (!is.null(map) && length(map) != length(start)) {
     cli_warn(c("`length(map) != length(start)`.",
       "You likely want to specify `start` values if you are setting the `map` argument."))
@@ -982,9 +985,8 @@ sdmTMB <- function(
     flag = 1L, # part of TMB::normalize()
     calc_index_totals = 0L,
     calc_cog = 0L,
-    random_walk = as.integer(0L), # FIXME TEMP
-    # random_walk = as.integer(!is.null(time_varying)), # FIXME TEMP
-    ar1_time = as.integer(!is.null(time_varying)), # FIXME TEMP
+    random_walk = as.integer(!is.null(time_varying) && time_varying_type == "rw"),
+    ar1_time = as.integer(!is.null(time_varying) && time_varying_type == "ar1"),
     priors_b_n = length(not_na),
     priors_b_index = not_na - 1L,
     priors_b_mean = priors_b[not_na,1],
@@ -1135,7 +1137,9 @@ sdmTMB <- function(
   if (anisotropy) tmb_map <- unmap(tmb_map, "ln_H_input")
   if (!is.null(time_varying)) {
     tmb_random <- c(tmb_random, "b_rw_t")
-    tmb_map <- unmap(tmb_map, c("b_rw_t", "ln_tau_V", "rho_time_unscaled")) # FIXME
+    tmb_map <- unmap(tmb_map, c("b_rw_t", "ln_tau_V"))
+    if (time_varying_type == "ar1")
+      tmb_map <- unmap(tmb_map, "rho_time_unscaled")
   }
   if (est_epsilon_re) {
     tmb_random <- c(tmb_random, "epsilon_re")

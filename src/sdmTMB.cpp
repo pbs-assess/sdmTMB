@@ -538,7 +538,8 @@ Type objective_function<Type>::operator()()
           jnll += SCALE(AR1(rho_time(k, m)), exp(ln_tau_V(k, m)))(vector<Type>(b_rw_t.col(m).col(k)));
           if (sim_re(4)) {
             vector<Type> tmp(n_t);
-            AR1(rho(k, m)).simulate(tmp); // FIXME!! scale by ln_tau_V!? sim test
+            AR1(rho(k, m)).simulate(tmp);
+            tmp *= exp(ln_tau_V(k, m));
             for(int t = 0; t < n_t; t++) {
               if (simulate_t(t)) b_rw_t(t, k, m) = tmp(t);
             }
