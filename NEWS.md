@@ -1,8 +1,21 @@
 # sdmTMB
 
-# sdmTMB 0.1.0
+# sdmTMB 0.1.1
 
 * Preparing for release on CRAN.
+
+* Add time-varying AR1 option (originally was always a random walk). See 
+  `time_varying_type` argument in `?sdmTMB`.
+
+* Allow prediction on `newdata` with missing time elements. #130
+
+* Add check for `offset()` (which *does not* work in sdmTMB, use the `offset`
+  argument instead). #131
+  
+* Add check for random slopes (sdmTMB currently only does random intercepts,
+  although slopes can vary spatially). #131
+
+# sdmTMB 0.1.0
 
 * ADREPORT several parameters in natural space.
   <https://github.com/pbs-assess/sdmTMB/discussions/113>
