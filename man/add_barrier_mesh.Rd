@@ -78,7 +78,7 @@ ggplot(bc_coast) +
   geom_sf() +
   geom_sf(data = survey, size = 0.5)
 
-# Note that a barrier mesh won't don't much here for this
+# Note that a barrier mesh won't do much here for this
 # example data set, but we nonetheless use it as an example.
 
 # Prepare for making the mesh

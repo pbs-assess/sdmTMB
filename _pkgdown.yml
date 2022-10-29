@@ -2,3 +2,109 @@ url: https://pbs-assess.github.io/sdmTMB/
 template:
   bootstrap: 5
 
+reference:
+- title: internal
+  contents:
+  - bc_coast
+  - bei
+  - get_pars
+  - pcod
+  - pcod_2011
+  - pcod_mesh_2011
+  - qcs_grid
+
+- title: 'Mesh construction'
+  desc: |
+    Tools for converting coordinates into UTMs, constructing SPDE meshes prior
+    to model fitting, and adding correlation barriers.
+  contents:
+  - add_utm_columns
+  - get_crs
+  - make_mesh
+  - add_barrier_mesh
+
+- title: 'Fitting and predicting'
+  desc: |
+    Core tools for model fitting, prediction, and inspection.
+  contents:
+  - sdmTMB
+  - predict.sdmTMB
+  - tidy.sdmTMB
+  - sanity
+  - sdmTMBcontrol
+  - run_extra_optimization
+  - residuals.sdmTMB
+  - dharma_residuals
+
+- title: 'Families'
+  desc: |
+    Additional families beyond the standard R families.
+  contents:
+  - Beta
+  - lognormal
+  - nbinom2
+  - nbinom1
+  - truncated_nbinom1
+  - truncated_nbinom2
+  - student
+  - tweedie
+  - censored_poisson
+  - delta_gamma
+  - delta_lognormal
+  - delta_truncated_nbinom1
+  - delta_truncated_nbinom2
+  - delta_poisson_link_gamma
+  - delta_poisson_link_lognormal
+
+- title: 'Priors'
+  desc: |
+    Optional priors or penalties on parameters.
+  contents:
+  - sdmTMBpriors
+  - pc_matern
+  - plot_pc_matern
+  - normal
+  - halfnormal
+  - mvnormal
+
+- title: 'Simulation'
+  desc: |
+    Simulating new data with an sdmTMB model.
+  contents:
+  - simulate.sdmTMB
+  - sdmTMB_simulate
+
+- title: 'Plotting'
+  desc: |
+    Functions for plotting.
+  contents:
+  - plot_anisotropy
+  - plot_smooth
+  - plot_pc_matern
+  - visreg_delta
+  - visreg2d_delta
+
+- title: 'Cross validation'
+  desc: |
+    Functions related to cross validation.
+  contents:
+  - sdmTMB_cv
+  - sdmTMB_stacking
+
+- title: 'Derived quantities'
+  desc: |
+    Derived quantities that can be calculated from sdmTMB models.
+  contents:
+  - get_index
+  - get_index_sims
+  - get_cog
+
+- title: 'Miscellaneous parameter extraction'
+  desc: |
+    Functions for calculating effect sizes or extracting parameter samples.
+  contents:
+  - Effect.sdmTMB
+  - emmeans.sdmTMB
+  - extract_mcmc
+  - spread_sims
+  - gather_sims
