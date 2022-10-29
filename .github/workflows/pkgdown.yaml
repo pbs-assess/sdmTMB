@@ -13,7 +13,7 @@ name: pkgdown
 
 jobs:
   pkgdown:
-    runs-on: macOS-latest
+    runs-on: ubuntu-latest
     # Only restrict concurrency for non-PR jobs
     concurrency:
       group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
@@ -28,19 +28,11 @@ jobs:
         with:
           use-public-rspm: true
 
-      - name: Install extra dependencies
-        run: |
-          install.packages("INLA",repos=c(getOption("repos"),INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
-          remotes::install_cran("glmmTMB", type = "source")
-          install.packages("textshaping", type = "binary")
-          install.packages("rgdal", type = "binary")
-        shell: Rscript {0}
-
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, local::.
+          extra-packages: any::pkgdown, local::., any::rgdal, any::textshaping
           needs: website
-
+          extra-repositories: 'https://inla.r-inla-download.org/R/stable'
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
