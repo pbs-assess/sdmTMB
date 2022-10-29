@@ -27,12 +27,12 @@ jobs:
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
+          extra-repositories: 'https://inla.r-inla-download.org/R/stable'
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::pkgdown, local::., any::rgdal, any::textshaping
           needs: website
-          extra-repositories: 'https://inla.r-inla-download.org/R/stable'
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
