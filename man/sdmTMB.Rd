@@ -24,6 +24,7 @@ sdmTMB(
   anisotropy = FALSE,
   control = sdmTMBcontrol(),
   priors = sdmTMBpriors(),
+  knots = NULL,
   bayesian = FALSE,
   previous_fit = NULL,
   do_fit = TRUE,
@@ -132,6 +133,11 @@ Must be shared across delta models.}
 
 \item{priors}{Optional penalties/priors via \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}. Must currently
 be shared across delta models.}
+
+\item{knots}{Optional named list containing knot values to be used for basis
+construction of smoothing terms. See \code{\link[mgcv:gam]{mgcv::gam()}} and \code{\link[mgcv:gamm]{mgcv::gamm()}} for
+more.
+E.g., \verb{s(x, bs = 'cc', k = 4), knots = list(x = c(1, 2, 3, 4))}}
 
 \item{bayesian}{Logical indicating if the model will be passed to
 \pkg{tmbstan}. If \code{TRUE}, Jacobian adjustments are applied to account for

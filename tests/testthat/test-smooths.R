@@ -50,62 +50,43 @@ test_that("A model with 2 s() splines works", {
   expect_gt(cor(pnd_mgcv, pnd$est), 0.999)
 })
 
-# t2() needs absorb.const = FALSE to work with prediction on newdat
-# So, turning off for now.
-# test_that("A model with t2() spline works", {
-#   skip_on_cran()
-#   skip_on_ci()
-#   skip_if_not_installed("INLA")
-#   set.seed(2938)
-#   dat <- mgcv::gamSim(1, n = 400, dist = "normal", scale = 2)
-#   dat$.X <- runif(nrow(dat))
-#   dat$.Y <- runif(nrow(dat))
-#   spde <- make_mesh(dat, c(".X", ".Y"), cutoff = 0.1)
-#
-#   dat$f <- NULL
-#   dat$f0 <- NULL
-#   dat$f1 <- NULL
-#   dat$f2 <- NULL
-#   dat$f3 <- NULL
-#   dat$x3 <- NULL
-#   dat$observed <- dat$y
-#   dat$y <- NULL
-#   dat$.x0 <- dat$x0
-#   dat$.x1 <- dat$x1
-#   dat$x0 <- NULL
-#   dat$x1 <- NULL
-#   dat$x2 <- NULL
-#
-#   # head(dat)
-#
-#   m_mgcv <- mgcv::gam(observed ~ t2(.x0, .x1, k = 7),
-#     data = dat,
-#     method = "REML"
-#   )
-#   p_mgcv <- predict(m_mgcv)
-#   expect_error(m <- sdmTMB(observed ~ t2(.x0, .x1, k = 7),
-#     data = dat,
-#     mesh = spde, control = sdmTMBcontrol(map_rf = TRUE)
-#   ), regexp = "t2")
-  # p <- predict(m, newdata = NULL)
-  # plot(p$est, p_mgcv)
-  # abline(a = 0, b = 1)
-  # expect_gt(cor(p$est, p_mgcv), 0.9999)
-  # expect_equal(as.numeric(p$est), as.numeric(p_mgcv), tolerance = 0.001)
-  #
-  # pnd <- predict(m, newdata = dat)
-  # expect_error(pnd <- predict(m, newdata = dat), regexp = "t2") # FIXME not exactly right!?
-  # # expect_equal(p$est, pnd$est, tolerance = 0.001)
-  # plot(p$est, pnd$est)
-  #
-  # m <- brms::brm(observed ~ t2(x0, x1, k = 7), data = dat, chains = 1)
-  # pb <- predict(m)
-  # pbn <- predict(m, newdata = dat)
-  #
-  # plot(pb[,1], p_mgcv)
-  # plot(pbn[,1], p_mgcv)
-  # plot(pbn[,1], pb[,1])
-# })
+test_that("A model with t2() works", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  set.seed(2938)
+  dat <- mgcv::gamSim(1, n = 400, dist = "normal", scale = 2)
+
+  dat$f <- NULL
+  dat$f0 <- NULL
+  dat$f1 <- NULL
+  dat$f2 <- NULL
+  dat$f3 <- NULL
+  dat$x3 <- NULL
+  dat$observed <- dat$y
+  dat$y <- NULL
+  dat$.x0 <- dat$x0
+  dat$.x1 <- dat$x1
+  dat$x0 <- NULL
+  dat$x1 <- NULL
+  dat$x2 <- NULL
+
+  m_mgcv <- mgcv::gam(observed ~ t2(.x0, .x1, k = 9),
+    data = dat,
+    method = "REML"
+  )
+  p_mgcv <- predict(m_mgcv)
+  m <- sdmTMB(observed ~ t2(.x0, .x1, k = 9),
+    data = dat,
+    spatial = 'off'
+  )
+  p <- predict(m, newdata = NULL, re_form = NA)
+  plot(p$est, p_mgcv)
+  abline(a = 0, b = 1)
+  expect_gt(cor(p$est, p_mgcv), 0.9999)
+  expect_equal(as.numeric(p$est), as.numeric(p_mgcv), tolerance = 0.001)
+
+})
 
 test_that("A model with by in spline (and s(x, y)) works", {
   skip_on_cran()
@@ -143,12 +124,6 @@ test_that("A model with by in spline (and s(x, y)) works", {
   p2 <- predict(m, newdata = dat)
   plot(p2$est, p$est)
   expect_gt(cor(p2$est, p$est), 0.999)
-
-  # t2(x, y)
-  expect_error(m <- sdmTMB(y ~ t2(x2, x1),
-    data = dat,
-    mesh = spde, spatial = "off"
-  ), regexp = "t2") # t2() intentionally `stop()`ed for now; newdata prediction issues
 
   # Factor `by' variable example (with a spurious covariate x0)
   set.seed(1)
@@ -270,6 +245,29 @@ test_that("smoothers with 'bs = cc' work", {
 
   m1 <- mgcv::gam(
     density ~ s(depth_scaled, bs = "cc"),
+    data = pcod_2011
+  )
+  p1 <- predict(m1)
+
+  plot(p$est, p1)
+  abline(0, 1)
+  expect_gt(cor(p$est, p1), 0.999)
+})
+
+
+test_that("smoothers with 'bs = cc' work with knots specified", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  m <- sdmTMB(
+    density ~ s(depth_scaled, bs = "cc", k = 5), knots = list(depth_scaled = c(-3, -1, 0, 1, 3)),
+    data = pcod_2011, spatial = "off"
+  )
+  p <- predict(m, newdata = pcod_2011)
+  print(m)
+
+  m1 <- mgcv::gam(
+    density ~ s(depth_scaled, bs = "cc", k = 5), knots = list(depth_scaled = c(-3, -1, 0, 1, 3)),
     data = pcod_2011
   )
   p1 <- predict(m1)

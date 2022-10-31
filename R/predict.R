@@ -427,7 +427,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
     }
 
     # TODO DELTA hardcoded to 1:
-    sm <- parse_smoothers(object$formula[[1]], data = object$data, newdata = nd)
+    sm <- parse_smoothers(object$formula[[1]], data = object$data, newdata = nd, basis_prev = object$smoothers$basis_out, knots = knots)
 
     if (!is.null(object$time_varying))
       proj_X_rw_ik <- model.matrix(object$time_varying, data = nd)

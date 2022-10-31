@@ -92,6 +92,10 @@ NULL
 #' @param control Optimization control options via [sdmTMBcontrol()].
 #' @param priors Optional penalties/priors via [sdmTMBpriors()]. Must currently
 #'   be shared across delta models.
+#' @param knots Optional named list containing knot values to be used for basis
+#'   construction of smoothing terms. See [mgcv::gam()] and [mgcv::gamm()] for
+#'   more.
+#'   E.g., `s(x, bs = 'cc', k = 4), knots = list(x = c(1, 2, 3, 4))`
 #' @param previous_fit A previously fitted sdmTMB model to initialize the
 #'   optimization with. Can greatly speed up fitting. Note that the model must
 #'   be set up *exactly* the same way. However, the data and `weights` arguments
@@ -544,6 +548,7 @@ sdmTMB <- function(
   anisotropy = FALSE,
   control = sdmTMBcontrol(),
   priors = sdmTMBpriors(),
+  knots = NULL,
   bayesian = FALSE,
   previous_fit = NULL,
   do_fit = TRUE,
@@ -796,7 +801,7 @@ sdmTMB <- function(
 
     mt[[ii]] <- attr(mf[[ii]], "terms")
     # parse everything mgcv + smoothers:
-    sm[[ii]] <- parse_smoothers(formula = formula[[ii]], data = data)
+    sm[[ii]] <- parse_smoothers(formula = formula[[ii]], data = data, knots = knots)
   }
 
   if (delta) {
@@ -1285,6 +1290,7 @@ sdmTMB <- function(
     epsilon_predictor = epsilon_predictor,
     time       = time,
     family     = family,
+    smoothers = sm,
     response   = y_i,
     tmb_data   = tmb_data,
     tmb_params = tmb_params,

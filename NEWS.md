@@ -1,5 +1,15 @@
 # sdmTMB
 
+# sdmTMB 0.1.2
+
+* Fix longstanding issue with predicting on newdata with mgcv's `t2()`. 
+  Previously this was disabled because of issues. It now works as expected.
+  
+* Add `knots` argument in `sdmTMB()`, which is passed to mgcv. A common use
+  would be to specify end points in a cyclical spline 
+  (e.g., `s(x, bs = 'cc', k = 4), knots = list(x = c(1, 3, 5, 7))`) when the data don't
+  extend fully to the boundaries that should match up.
+
 # sdmTMB 0.1.1
 
 * Preparing for release on CRAN.
