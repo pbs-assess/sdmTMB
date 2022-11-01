@@ -72,13 +72,13 @@ test_that("A model with t2() works", {
   dat$x2 <- NULL
 
   m_mgcv <- mgcv::gam(observed ~ t2(.x0, .x1, k = 9),
-    data = dat,
-    method = "REML"
+                      data = dat,
+                      method = "REML"
   )
   p_mgcv <- predict(m_mgcv)
   m <- sdmTMB(observed ~ t2(.x0, .x1, k = 9),
-    data = dat,
-    spatial = 'off'
+              data = dat,
+              spatial = 'off'
   )
   p <- predict(m, newdata = NULL, re_form = NA)
   plot(p$est, p_mgcv)
@@ -87,6 +87,47 @@ test_that("A model with t2() works", {
   expect_equal(as.numeric(p$est), as.numeric(p_mgcv), tolerance = 0.001)
 
 })
+
+
+test_that("A model with dimensions specified in t2() works", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  set.seed(2938)
+  dat <- mgcv::gamSim(1, n = 400, dist = "normal", scale = 1)
+
+  dat$f <- NULL
+  dat$f0 <- NULL
+  dat$f1 <- NULL
+  dat$f2 <- NULL
+  dat$f3 <- NULL
+  #dat$x3 <- NULL
+  dat$observed <- dat$y
+  dat$y <- NULL
+  dat$.x0 <- dat$x0
+  dat$.x1 <- dat$x1
+  dat$.x2 <- dat$x2
+  #dat$x0 <- NULL
+  #dat$x1 <- NULL
+  #dat$x2 <- NULL
+
+  m_mgcv <- mgcv::gam(observed ~ t2(x0, x1, x2, d = c(2,1), k = c(5,3)),
+                      data = dat,
+                      method = "REML"
+  )
+  p_mgcv <- predict(m_mgcv)
+  m <- sdmTMB(observed ~ t2(x0, x1, x2, d = c(2,1), k = c(5,3)),
+              data = dat,
+              spatial = 'off'
+  )
+  p <- predict(m, newdata = NULL, re_form = NA)
+  plot(p$est, p_mgcv)
+  abline(a = 0, b = 1)
+  expect_gt(cor(p$est, p_mgcv), 0.9999)
+  expect_equal(as.numeric(p$est), as.numeric(p_mgcv), tolerance = 0.001)
+
+})
+
 
 test_that("A model with by in spline (and s(x, y)) works", {
   skip_on_cran()
@@ -102,8 +143,8 @@ test_that("A model with by in spline (and s(x, y)) works", {
   dat$Y <- runif(nrow(dat))
   spde <- make_mesh(dat, c("X", "Y"), cutoff = 0.1)
   m <- sdmTMB(y ~ s(x2, by = x1),
-    data = dat,
-    mesh = spde,spatial = "off"
+              data = dat,
+              mesh = spde,spatial = "off"
   )
   p <- predict(m, newdata = NULL)
   plot(p$est, p_mgcv)
@@ -114,8 +155,8 @@ test_that("A model with by in spline (and s(x, y)) works", {
   m_mgcv <- mgcv::gam(y ~ s(x2, x1), data = dat)
   p_mgcv <- predict(m_mgcv)
   m <- sdmTMB(y ~ s(x2, x1),
-    data = dat,
-    mesh = spde, spatial = "off"
+              data = dat,
+              mesh = spde, spatial = "off"
   )
   p <- predict(m, newdata = NULL)
   plot(p$est, p_mgcv)
@@ -134,8 +175,8 @@ test_that("A model with by in spline (and s(x, y)) works", {
   dat$Y <- runif(nrow(dat))
   spde <- make_mesh(dat, c("X", "Y"), cutoff = 0.1)
   m <- sdmTMB(y ~ fac + s(x2, by = fac) + s(x0),
-    data = dat,
-    mesh = spde, spatial = "off"
+              data = dat,
+              mesh = spde, spatial = "off"
   )
   p <- predict(m, newdata = NULL)
   plot(p$est, p_mgcv)
@@ -147,6 +188,7 @@ test_that("A model with by in spline (and s(x, y)) works", {
   pnd <- predict(m, newdata = dat[.s,])
   expect_equal(p$est[.s], pnd$est, tolerance = 0.001)
 })
+
 
 test_that("Formula removal of s and t2 works", {
   expect_identical(remove_s_and_t2(y ~ x + s(z)), y ~ x)
@@ -422,6 +464,25 @@ test_that("A model with s(x, bs = 'ps') works", {
   p2 <- predict(m_mgcv)
   plot(p$est, p2)
   expect_gt(stats::cor(p$est, p2), 0.999)
+})
+
+test_that("A model with s(x, bs = 'fs') works", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  d <- subset(pcod, density > 0)
+  d$yearf <- as.factor(d$year)
+  m <- sdmTMB(
+    data = d,
+    formula = log(density) ~ s(depth_scaled, by = year, bs = "fs"),
+    spatial = "off"
+  )
+  print(m)
+  m_mgcv <- mgcv::gam(log(density) ~ s(depth_scaled, by = year, bs = "fs"), data = d, method = "REML")
+  p <- predict(m)
+  p2 <- predict(m_mgcv)
+  # plot(p$est, p2)
+  expect_gt(stats::cor(p$est, p2), 0.995)
 })
 
 test_that("An fx=TRUE smoother errors out", {
