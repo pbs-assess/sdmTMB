@@ -48,12 +48,12 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
   }
 
   if (isTRUE(fit$bad_eig)) {
-    msg <- "Extreme or very small eigen values detected: model may not have converged"
+    msg <- "Extreme or very small eigenvalues detected: model may not have converged"
     cli::cli_alert_danger(msg)
     cli::cli_alert_info(simplify_msg)
     cat("\n")
   } else {
-    msg <- "No extreme or very small eigen values detected"
+    msg <- "No extreme or very small eigenvalues detected"
     cli::cli_alert_success(msg)
     eigen_values_ok <- TRUE
   }
