@@ -12,7 +12,7 @@ test_that("A logistic threshold model fits", {
   expect_true("depth_scaled-s50" %in% tidy(m)$term)
   expect_true("depth_scaled-s95" %in% tidy(m)$term)
   expect_true("depth_scaled-smax" %in% tidy(m)$term)
-  expect_equal(tidy(m)[,"estimate"], c(1.555 , 1.655 , 1.718 , 1.138, -0.979, -3.173 , 1.760), tolerance = 1e-3)
+  expect_equal(tidy(m)[,"estimate",drop=TRUE], c(1.555 , 1.655 , 1.718 , 1.138, -0.979, -3.173 , 1.760), tolerance = 1e-3)
 })
 
 test_that("A linear threshold model fits", {
@@ -27,7 +27,7 @@ test_that("A linear threshold model fits", {
 
   expect_true("depth_scaled-slope" %in% tidy(m)$term)
   expect_true("depth_scaled-breakpt" %in% tidy(m)$term)
-  expect_equal(tidy(m)[,"estimate"], c(4.798 , 4.779 , 4.768 , 4.112 , 1.085 ,-1.328), tolerance = 1e-3)
+  expect_equal(tidy(m)[,"estimate",drop=TRUE], c(4.798 , 4.779 , 4.768 , 4.112 , 1.085 ,-1.328), tolerance = 1e-3)
 })
 
 test_that("A linear threshold *delta* model fits", {

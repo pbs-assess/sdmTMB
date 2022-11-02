@@ -2,6 +2,14 @@
 
 # sdmTMB 0.1.2
 
+* Switch `effects = 'ran_vals'` for random intercept values from `tidy.sdmTMB()`
+  to match the broom.mixed package.
+
+* Make `tidy.sdmTMB()` return a tibble if the tibble package is installed. Note 
+  this could affect old code since `drop = FALSE` is the default for tibbles
+  but `drop = TRUE` is the default for data frames (i.e., tibbles always return
+  a data frame when subsetted).
+
 * Fix longstanding issue with predicting on newdata with mgcv's `t2()`. 
   Previously this was disabled because of issues. It now works as expected.
   

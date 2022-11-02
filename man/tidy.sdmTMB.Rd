@@ -6,7 +6,7 @@
 \usage{
 \method{tidy}{sdmTMB}(
   x,
-  effects = c("fixed", "ran_pars", "ranef"),
+  effects = c("fixed", "ran_pars", "ran_vals"),
   model = 1,
   conf.int = FALSE,
   conf.level = 0.95,
@@ -17,10 +17,10 @@
 \arguments{
 \item{x}{Output from \code{\link[=sdmTMB]{sdmTMB()}}.}
 
-\item{effects}{A character vector including one or more of "fixed"
-(fixed-effect parameters), "ran_pars" (standard deviations, spatial range,
-and other random effect and dispersion terms), or "ranef" (individual random
-intercepts, if included -- behaves like \code{ranef()}).}
+\item{effects}{A character value. One of \code{"fixed"} ('fixed' or main-effect
+parameters), \code{"ran_pars"} (standard deviations, spatial range, and other
+random effect and dispersion-related terms), or \code{"ran_vals"} (individual
+random intercepts, if included; behaves like \code{ranef()}).}
 
 \item{model}{Which model to tidy if a delta model (1 or 2).}
 
@@ -43,7 +43,7 @@ Turn sdmTMB model output into a tidy data frame
 Follows the conventions of the \pkg{broom} and \pkg{broom.mixed} packages.
 
 Currently, \code{effects = "ran_pars"} also includes dispersion-related terms
-(e.g., \code{phi}), which are not actually random effects.
+(e.g., \code{phi}), which are not actually associated with random effects.
 
 Standard errors for spatial variance terms fit in log space (e.g., variance
 terms, range, or parameters associated with the observation error) are
@@ -58,5 +58,12 @@ fit <- sdmTMB(density ~ poly(depth_scaled, 2, raw = TRUE),
 tidy(fit)
 tidy(fit, conf.int = TRUE)
 tidy(fit, "ran_pars", conf.int = TRUE)
+
+pcod_2011$fyear <- as.factor(pcod_2011$year)
+fit <- sdmTMB(density ~ poly(depth_scaled, 2, raw = TRUE) + (1 | fyear),
+  data = pcod_2011, mesh = pcod_mesh_2011,
+  family = tweedie()
+)
+tidy(fit, "ran_vals")
 \dontshow{\}) # examplesIf}
 }

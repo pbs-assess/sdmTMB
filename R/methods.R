@@ -77,12 +77,13 @@ fixef.sdmTMB <- function(object, ...) {
 #' @method ranef sdmTMB
 #' @export
 ranef.sdmTMB <- function(object, ...) {
-  .t <- tidy(object, "ranef", conf.int = FALSE)
+  .t <- tidy(object, "ran_vals", conf.int = FALSE)
   terms <- unlist(lapply(strsplit(.t$term,"_"), getElement, 1))
   est <- .t$estimate
   cond <- list()
-  for(i in 1:length(unique(terms))) {
-    cond[[unique(terms)[i]]] = data.frame("Intercept" = est[which(terms == unique(terms)[i])])
+  for(i in seq_along(unique(terms))) {
+    cond[[unique(terms)[i]]] =
+      data.frame("Intercept" = est[which(terms == unique(terms)[i])], stringsAsFactors = FALSE)
   }
   return(list(cond = cond))
 }

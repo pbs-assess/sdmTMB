@@ -74,7 +74,7 @@ print_model_info <- function(x) {
 }
 
 print_main_effects <- function(x, m = 1) {
-  b <- tidy(x, model = m)
+  b <- as.data.frame(tidy(x, model = m))
   b$estimate <- round(b$estimate, 2L)
   b$std.error <- round(b$std.error, 2L)
   mm <- cbind(b$estimate, b$std.error)

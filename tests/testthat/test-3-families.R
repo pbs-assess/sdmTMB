@@ -90,7 +90,7 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     m <- sdmTMB(data = s, formula = observed ~ 1,
       mesh = spde, family = nbinom2(),
       control = sdmTMBcontrol(newton_loops = 1))
-    expect_equal(round(tidy(m)[,"estimate"], 6), 0.601897)
+    expect_equal(round(tidy(m)[,"estimate", drop=TRUE], 6), 0.601897)
   })
 
   test_that("Truncated NB2, truncated NB1, and regular NB1 fit", {

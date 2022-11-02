@@ -155,7 +155,7 @@ test_that("Tidy returns random intercepts appropriately.", {
                c(0.1934564, 0.4422655, 0.1960184), tolerance = 1e-5)
   expect_equal(ranpars$conf.low,
                c(0.1812356, 0.3367532, 0.1414036), tolerance = 1e-5)
-  ranint <- tidy(m, "ranef", conf.int = TRUE)
+  ranint <- tidy(m, "ran_vals", conf.int = TRUE)
   expect_equal(ranint$estimate[1:5],
                c(-0.2281940, 0.6663989, 0.1411399, -0.3220671, -0.6363942), tolerance = 1e-5)
   expect_equal(ranint$conf.low[1:5],
