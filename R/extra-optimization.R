@@ -18,11 +18,11 @@
 #' # (Not typically needed)
 #' fit <- sdmTMB(density ~ 0 + poly(depth, 2) + as.factor(year),
 #'   data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie())
-#' fit_1 <- run_extra_optimization(fit, nlminb_loops = 0, newton_loops = 1)
+#' fit_1 <- run_extra_optimization(fit, newton_loops = 1)
 #' max(fit$gradients)
 #' max(fit_1$gradients)
 run_extra_optimization <- function(object,
-  nlminb_loops = 1,
+  nlminb_loops = 0,
   newton_loops = 1) {
   # FIXME: DRY; use this function in sdmTMB()
 
