@@ -711,10 +711,14 @@ sdmTMB <- function(
   }
 
   if (!no_spatial) {
-    assert_that(identical(nrow(spde$loc_xy), nrow(data)),
-      msg = "Number of x-y coordinates in `mesh` does not match `nrow(data)`.")
+    if (!identical(nrow(spde$loc_xy), nrow(data))) {
+      msg <- c(
+        "Number of x-y coordinates in `mesh` does not match `nrow(data)`.",
+        "Is it possible you passed a different data frame to `make_mesh()` and `sdmTMB()`?" # discussion 137
+      )
+      cli::cli_abort(msg)
+    }
   }
-
   # FIXME parallel setup here?
 
   # thresholds not yet enabled for delta model, where formula is a list
