@@ -693,7 +693,7 @@ Type objective_function<Type>::operator()()
   // close to zero: use for count data (cf binomial()$initialize)
 #define zt_lik_nearzero(x,loglik_exp) ((x < Type(0.001)) ? -INFINITY : loglik_exp)
 
-  Type s1, s2, s3, lognzprob, tmp_ll;
+  Type s1, s2, s3, lognzprob, tmp_ll, ll_1, ll_2, p_ece, ece_ratio, ll_max;
   REPORT(phi);
   for (int m = 0; m < n_m; m++) PARALLEL_REGION {
     for (int i = 0; i < n_i; i++) {
@@ -731,24 +731,6 @@ Type objective_function<Type>::operator()()
             s2 = mu_i(i,m) / s1;        // scale
             tmp_ll = dgamma(y_i(i,m), s1, s2, true);
             SIMULATE{y_i(i,m) = rgamma(s1, s2);}
-            // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
-            // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
-            break;
-          case gamma_ece_family:
-            Type p_ece = invlogit(logit_p_ece); // probability of larger event
-            s1 = exp(ln_phi(m));        // shape
-            s2 = mu_i(i,m) / s1;        // scale
-            Type ll_1 = log(Type(1.0 - p_ece)) + dgamma(y_i(i,m), s1, s2, true);
-
-            Type ece_ratio = exp(log_ratio_ece) + 1.0; // ratio of large:small values, constrained > 1.0
-            s2 = s2 * ece_ratio; // mean of large component = mean of smaller * ratio
-            Type ll_2 = log(p_ece) + dgamma(y_i(i,m), s1, s2, true);
-
-            Type ll_max = ll_1; // determine larger of ll_1 and ll_2
-            if(ll_2 > ll_1) ll_max = ll_2;
-
-            tmp_ll = ll_max + log(exp(ll_1 - ll_max) + exp(ll_2 - ll_max)); // log sum exp function
-            //SIMULATE{y_i(i,m) = rgamma(s1, s2);}
             // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
             // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
             break;
@@ -801,6 +783,31 @@ Type objective_function<Type>::operator()()
             s2 = (Type(1) - mu_i(i,m)) * phi(m);
             tmp_ll = dbeta(y_i(i,m), s1, s2, true);
             SIMULATE{y_i(i,m) = rbeta(s1, s2);}
+            break;
+          case gamma_ece_family:
+            p_ece = invlogit(logit_p_ece); // probability of larger event
+            s1 = exp(ln_phi(m));        // shape
+            s2 = mu_i(i,m) / s1;        // scale
+            ll_1 = log(Type(1.0 - p_ece)) + dgamma(y_i(i,m), s1, s2, true);
+
+            ece_ratio = exp(log_ratio_ece) + 1.0; // ratio of large:small values, constrained > 1.0
+            s3 = s2 * ece_ratio; // mean of large component = mean of smaller * ratio
+            ll_2 = log(p_ece) + dgamma(y_i(i,m), s1, s3, true);
+
+            ll_max = ll_1; // determine larger of ll_1 and ll_2
+            if(ll_2 > ll_1) ll_max = ll_2;
+
+            tmp_ll = ll_max + log(exp(ll_1 - ll_max) + exp(ll_2 - ll_max)); // log sum exp function
+
+            SIMULATE{
+              if(rbinom(Type(1),p_ece) == 0) {
+                y_i(i,m) = rgamma(s1, s2);
+              } else {
+                y_i(i,m) = rgamma(s1, s3);
+              }
+            }
+            // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
+            // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
             break;
           default:
             error("Family not implemented.");
