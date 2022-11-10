@@ -69,8 +69,8 @@ lognormal <- function(link = "log") {
 #' @export
 #' @rdname families
 #' @examples
-#' gamma_ece(link = "log")
-gamma_ece <- function(link = "log") {
+#' gamma_mix(link = "log")
+gamma_mix <- function(link = "log") {
   linktemp <- substitute(link)
   if (!is.character(linktemp))
     linktemp <- deparse(linktemp)
@@ -79,7 +79,7 @@ gamma_ece <- function(link = "log") {
     stats <- stats::make.link(linktemp)
   else if (is.character(link))
     stats <- stats::make.link(link)
-  x <- c(list(family = "gamma_ece", link = linktemp), stats)
+  x <- c(list(family = "gamma_mix", link = linktemp), stats)
   add_to_family(x)
 }
 
@@ -240,16 +240,16 @@ delta_gamma <- function(link1 = "logit", link2 = "log") {
 #' @export
 #' @importFrom stats binomial
 #' @examples
-#' delta_gamma_ece()
+#' delta_gamma_mix()
 #' @rdname families
-delta_gamma_ece <- function(link1 = "logit", link2 = "log") {
+delta_gamma_mix <- function(link1 = "logit", link2 = "log") {
   link1 <- match.arg(link1)
   link2 <- match.arg(link2)
   f1 <- binomial(link = "logit")
-  f2 <- gamma_ece(link = "log")
+  f2 <- gamma_mix(link = "log")
   list(f1, f2, delta = TRUE, link = c("logit", "log"),
        family = c("binomial", "Gamma"),
-       clean_name = "delta_gamma_ece(link1 = 'logit', link2 = 'log')")
+       clean_name = "delta_gamma_mix(link1 = 'logit', link2 = 'log')")
 }
 
 #' @export

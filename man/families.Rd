@@ -4,7 +4,7 @@
 \alias{Families}
 \alias{Beta}
 \alias{lognormal}
-\alias{gamma_ece}
+\alias{gamma_mix}
 \alias{nbinom2}
 \alias{nbinom1}
 \alias{truncated_nbinom2}
@@ -13,7 +13,7 @@
 \alias{tweedie}
 \alias{censored_poisson}
 \alias{delta_gamma}
-\alias{delta_gamma_ece}
+\alias{delta_gamma_mix}
 \alias{delta_lognormal}
 \alias{delta_truncated_nbinom2}
 \alias{delta_truncated_nbinom1}
@@ -25,7 +25,7 @@ Beta(link = "logit")
 
 lognormal(link = "log")
 
-gamma_ece(link = "log")
+gamma_mix(link = "log")
 
 nbinom2(link = "log")
 
@@ -43,7 +43,7 @@ censored_poisson(link = "log")
 
 delta_gamma(link1 = "logit", link2 = "log")
 
-delta_gamma_ece(link1 = "logit", link2 = "log")
+delta_gamma_mix(link1 = "logit", link2 = "log")
 
 delta_lognormal(link1 = "logit", link2 = "log")
 
@@ -89,7 +89,7 @@ log-log) delta model (Thorson 2018).
 \examples{
 Beta(link = "logit")
 lognormal(link = "log")
-gamma_ece(link = "log")
+gamma_mix(link = "log")
 nbinom2(link = "log")
 nbinom1(link = "log")
 truncated_nbinom2(link = "log")
@@ -98,7 +98,7 @@ student(link = "identity")
 tweedie(link = "log")
 censored_poisson(link = "log")
 delta_gamma()
-delta_gamma_ece()
+delta_gamma_mix()
 delta_lognormal()
 delta_truncated_nbinom2()
 delta_truncated_nbinom1()
