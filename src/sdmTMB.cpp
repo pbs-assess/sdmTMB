@@ -16,7 +16,8 @@ enum valid_family {
   truncated_nbinom2_family  = 9,
   nbinom1_family  = 10,
   truncated_nbinom1_family  = 11,
-  censored_poisson_family  = 12
+  censored_poisson_family  = 12,
+  gamma_ece_family = 13
 };
 
 enum valid_link {
@@ -226,6 +227,9 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(ln_kappa);    // Matern parameter
 
   PARAMETER(thetaf);           // tweedie only
+  PARAMETER(logit_p_ece);           // ECE / positive mixture only
+  PARAMETER(log_ratio_ece);           // ECE / positive mixture only
+
   PARAMETER_VECTOR(ln_phi);           // sigma / dispersion / etc.
   PARAMETER_ARRAY(ln_tau_V);  // random walk sigma
   PARAMETER_ARRAY(rho_time_unscaled); // (k, m) dimension ar1 time correlation rho -Inf to Inf
@@ -727,6 +731,24 @@ Type objective_function<Type>::operator()()
             s2 = mu_i(i,m) / s1;        // scale
             tmp_ll = dgamma(y_i(i,m), s1, s2, true);
             SIMULATE{y_i(i,m) = rgamma(s1, s2);}
+            // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
+            // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
+            break;
+          case gamma_ece_family:
+            Type p_ece = invlogit(logit_p_ece); // probability of larger event
+            s1 = exp(ln_phi(m));        // shape
+            s2 = mu_i(i,m) / s1;        // scale
+            Type ll_1 = log(Type(1.0 - p_ece)) + dgamma(y_i(i,m), s1, s2, true);
+
+            Type ece_ratio = exp(log_ratio_ece) + 1.0; // ratio of large:small values, constrained > 1.0
+            s2 = s2 * ece_ratio; // mean of large component = mean of smaller * ratio
+            Type ll_2 = log(p_ece) + dgamma(y_i(i,m), s1, s2, true);
+
+            Type ll_max = ll_1; // determine larger of ll_1 and ll_2
+            if(ll_2 > ll_1) ll_max = ll_2;
+
+            tmp_ll = ll_max + log(exp(ll_1 - ll_max) + exp(ll_2 - ll_max)); // log sum exp function
+            //SIMULATE{y_i(i,m) = rgamma(s1, s2);}
             // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
             // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
             break;

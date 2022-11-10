@@ -13,7 +13,8 @@
   truncated_nbinom2  = 9,
   nbinom1  = 10,
   truncated_nbinom1  = 11,
-  censored_poisson  = 12
+  censored_poisson  = 12,
+  gamma_ece = 13
 )
 .valid_link <- c(
   identity = 0,

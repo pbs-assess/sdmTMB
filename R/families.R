@@ -66,6 +66,23 @@ lognormal <- function(link = "log") {
   add_to_family(x)
 }
 
+#' @export
+#' @rdname families
+#' @examples
+#' gamma_ece(link = "log")
+gamma_ece <- function(link = "log") {
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("identity", "log", "inverse")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+  x <- c(list(family = "gamma_ece", link = linktemp), stats)
+  add_to_family(x)
+}
+
 #' @details
 #' The `nbinom2` negative binomial parameterization is the NB2 where the variance grows
 #' quadratically with the mean (Hilbe 2011).
@@ -216,6 +233,23 @@ delta_gamma <- function(link1 = "logit", link2 = "log") {
   list(f1, f2, delta = TRUE, link = c("logit", "log"),
     family = c("binomial", "Gamma"),
     clean_name = "delta_gamma(link1 = 'logit', link2 = 'log')")
+}
+
+#' @param link1 Link for first part of delta/hurdle model.
+#' @param link2 Link for second part of delta/hurdle model.
+#' @export
+#' @importFrom stats binomial
+#' @examples
+#' delta_gamma_ece()
+#' @rdname families
+delta_gamma_ece <- function(link1 = "logit", link2 = "log") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "logit")
+  f2 <- gamma_ece(link = "log")
+  list(f1, f2, delta = TRUE, link = c("logit", "log"),
+       family = c("binomial", "Gamma"),
+       clean_name = "delta_gamma_ece(link1 = 'logit', link2 = 'log')")
 }
 
 #' @export
