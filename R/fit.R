@@ -1110,12 +1110,10 @@ sdmTMB <- function(
     tmb_map$log_ratio_mix <- NULL
     tmb_map$logit_p_mix <- NULL
   }
-  if (!is.null(family$delta)) {
-    if(family$delta == TRUE) {
-      if(family$family[[2]] %in% c("gamma_mix","lognormal_mix")) {
-        tmb_map$log_ratio_mix <- NULL
-        tmb_map$logit_p_mix <- NULL
-      }
+  if (delta) {
+    if(family$family[[2]] %in% c("gamma_mix","lognormal_mix")) {
+      tmb_map$log_ratio_mix <- NULL
+      tmb_map$logit_p_mix <- NULL
     }
   }
   tmb_map$ln_phi <- rep(1, n_m)
