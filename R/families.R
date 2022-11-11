@@ -83,6 +83,23 @@ gamma_mix <- function(link = "log") {
   add_to_family(x)
 }
 
+#' @export
+#' @rdname families
+#' @examples
+#' lognormal_mix(link = "log")
+lognormal_mix <- function(link = "log") {
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("identity", "log", "inverse")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+  x <- c(list(family = "lognormal_mix", link = linktemp), stats)
+  add_to_family(x)
+}
+
 #' @details
 #' The `nbinom2` negative binomial parameterization is the NB2 where the variance grows
 #' quadratically with the mean (Hilbe 2011).
@@ -248,7 +265,7 @@ delta_gamma_mix <- function(link1 = "logit", link2 = "log") {
   f1 <- binomial(link = "logit")
   f2 <- gamma_mix(link = "log")
   list(f1, f2, delta = TRUE, link = c("logit", "log"),
-       family = c("binomial", "Gamma"),
+       family = c("binomial", "gamma_mix"),
        clean_name = "delta_gamma_mix(link1 = 'logit', link2 = 'log')")
 }
 
@@ -264,6 +281,20 @@ delta_lognormal <- function(link1 = "logit", link2 = "log") {
   list(f1, f2, delta = TRUE, link = c("logit", "log"),
     family = c("binomial", "lognormal"),
     clean_name = "delta_lognormal(link1 = 'logit', link2 = 'log')")
+}
+
+#' @export
+#' @examples
+#' delta_lognormal_mix()
+#' @rdname families
+delta_lognormal_mix <- function(link1 = "logit", link2 = "log") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "logit")
+  f2 <- lognormal(link = "log")
+  list(f1, f2, delta = TRUE, link = c("logit", "log"),
+       family = c("binomial", "lognormal_mix"),
+       clean_name = "delta_lognormal_mix(link1 = 'logit', link2 = 'log')")
 }
 
 #' @export

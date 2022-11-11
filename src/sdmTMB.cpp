@@ -17,7 +17,8 @@ enum valid_family {
   nbinom1_family  = 10,
   truncated_nbinom1_family  = 11,
   censored_poisson_family  = 12,
-  gamma_mix_family = 13
+  gamma_mix_family = 13,
+  lognormal_mix_family = 14
 };
 
 enum valid_link {
@@ -809,6 +810,28 @@ Type objective_function<Type>::operator()()
             // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
             // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
             break;
+        case lognormal_mix_family:
+          p_mix = invlogit(logit_p_mix); // probability of larger event
+
+          ll_1 = log(Type(1.0 - p_mix)) + sdmTMB::dlnorm(y_i(i,m), log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
+          mix_ratio = exp(log_ratio_mix) + 1.0; // ratio of large:small values, constrained > 1.0
+          ll_2 = log(p_mix) + sdmTMB::dlnorm(y_i(i,m), log(mix_ratio * mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
+
+          ll_max = ll_1; // determine larger of ll_1 and ll_2
+          if(ll_2 > ll_1) ll_max = ll_2;
+
+          tmp_ll = ll_max + log(exp(ll_1 - ll_max) + exp(ll_2 - ll_max)); // log sum exp function
+
+          SIMULATE{
+            if(rbinom(Type(1),p_mix) == 0) {
+              y_i(i,m) = exp(rnorm(log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m)));;
+            } else {
+              y_i(i,m) = exp(rnorm(log(mix_ratio * mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m)));;
+            }
+          }
+          // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
+          // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
+          break;
           default:
             error("Family not implemented.");
         }

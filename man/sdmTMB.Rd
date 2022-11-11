@@ -58,10 +58,12 @@ downstream, supply the time argument.}
 \code{\link[sdmTMB:families]{truncated_nbinom1()}},
 \code{\link[sdmTMB:families]{censored_poisson()}},
 \code{\link[sdmTMB:families]{gamma_mix()}},
+\code{\link[sdmTMB:families]{lognormal_mix()}},
 \code{\link[sdmTMB:families]{student()}}, and
 \code{\link[sdmTMB:families]{tweedie()}}. Supports the delta/hurdle models:
 \code{\link[sdmTMB:families]{delta_gamma()}},
 \code{\link[sdmTMB:families]{delta_gamma_mix()}},
+\code{\link[sdmTMB:families]{delta_lognormal_mix()}},
 \code{\link[sdmTMB:families]{delta_lognormal()}}, and
 \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}},
 For binomial family options, see 'Binomial families' in the Details

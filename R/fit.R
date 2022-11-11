@@ -28,10 +28,12 @@ NULL
 #'   \code{\link[sdmTMB:families]{truncated_nbinom1()}},
 #'   \code{\link[sdmTMB:families]{censored_poisson()}},
 #'   \code{\link[sdmTMB:families]{gamma_mix()}},
+#'   \code{\link[sdmTMB:families]{lognormal_mix()}},
 #'   \code{\link[sdmTMB:families]{student()}}, and
 #'   \code{\link[sdmTMB:families]{tweedie()}}. Supports the delta/hurdle models:
 #'   \code{\link[sdmTMB:families]{delta_gamma()}},
 #'   \code{\link[sdmTMB:families]{delta_gamma_mix()}},
+#'   \code{\link[sdmTMB:families]{delta_lognormal_mix()}},
 #'   \code{\link[sdmTMB:families]{delta_lognormal()}}, and
 #'   \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}},
 #'   For binomial family options, see 'Binomial families' in the Details
@@ -1104,9 +1106,17 @@ sdmTMB <- function(
   tmb_map$b_j <- NULL
   if (delta) tmb_map$b_j2 <- NULL
   if (family$family[[1]] == "tweedie") tmb_map$thetaf <- NULL
-  if (family$family[[1]] %in% c("gamma_mix", "delta_gamma_mix")) {
+  if (family$family[[1]] %in% c("gamma_mix", "lognormal_mix")) {
     tmb_map$log_ratio_mix <- NULL
     tmb_map$logit_p_mix <- NULL
+  }
+  if (!is.null(family$delta)) {
+    if(family$delta == TRUE) {
+      if(family$family[[2]] %in% c("gamma_mix","lognormal_mix")) {
+        tmb_map$log_ratio_mix <- NULL
+        tmb_map$logit_p_mix <- NULL
+      }
+    }
   }
   tmb_map$ln_phi <- rep(1, n_m)
   if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson"))

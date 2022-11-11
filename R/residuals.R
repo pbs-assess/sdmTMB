@@ -77,6 +77,14 @@ qres_gamma_mix <- function(object, y, mu) {
   stats::qnorm(u)
 }
 
+qres_lognormal_mix <- function(object, y, mu) {
+  p_mix <- plogis(object$model$par[["logit_p_mix"]])
+  dispersion <- exp(object$model$par[["ln_phi"]])
+  ratio <- exp(object$model$par[["log_ratio_mix"]])
+  u <- stats::plnorm(q = y, meanlog = log((1-p_mix)*mu + p_mix*ratio*mu) - (dispersion^2) / 2, sdlog = dispersion)
+  stats::qnorm(u)
+}
+
 qres_gaussian <- function(object, y, mu) {
   dispersion <- exp(object$model$par[["ln_phi"]])
   u <- stats::pnorm(q = y, mean = mu, sd = dispersion)
@@ -261,6 +269,7 @@ residuals.sdmTMB <- function(object,
     student  = qres_student,
     lognormal  = qres_lognormal,
     gamma_mix = qres_gamma_mix,
+    lognormal_mix = qres_lognormal_mix,
     cli_abort(paste(fam, "not yet supported."))
   )
 
