@@ -21,6 +21,7 @@
 \alias{delta_truncated_nbinom1}
 \alias{delta_poisson_link_gamma}
 \alias{delta_poisson_link_lognormal}
+\alias{delta_beta}
 \title{Additional families}
 \usage{
 Beta(link = "logit")
@@ -60,6 +61,8 @@ delta_truncated_nbinom1(link1 = "logit", link2 = "log")
 delta_poisson_link_gamma(link1 = "log", link2 = "log")
 
 delta_poisson_link_lognormal(link1 = "log", link2 = "log")
+
+delta_beta(link1 = "logit", link2 = "logit")
 }
 \arguments{
 \item{link}{Link.}
@@ -112,6 +115,7 @@ delta_truncated_nbinom2()
 delta_truncated_nbinom1()
 delta_poisson_link_gamma()
 delta_poisson_link_lognormal()
+delta_beta()
 }
 \references{
 Hilbe, J. M. (2011). Negative binomial regression. Cambridge University Press.

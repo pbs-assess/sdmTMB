@@ -361,3 +361,19 @@ delta_poisson_link_lognormal <- function(link1 = "log", link2 = "log") {
     family = c("binomial", "lognormal"), type = "poisson_link_delta",
     clean_name = "delta_poisson_link_lognormal(link1 = 'log', link2 = 'log')")
 }
+
+#' @param link1 Link for first part of delta/hurdle model.
+#' @param link2 Link for second part of delta/hurdle model.
+#' @export
+#' @examples
+#' delta_beta()
+#' @rdname families
+delta_beta <- function(link1 = "logit", link2 = "logit") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "logit")
+  f2 <- Beta(link = "logit")
+  list(f1, f2, delta = TRUE, link = c("logit", "logit"),
+       family = c("binomial", "Beta"),
+       clean_name = "delta_beta(link1 = 'logit', link2 = 'logit')")
+}

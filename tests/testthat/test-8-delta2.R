@@ -429,3 +429,22 @@ test_that("Offset works with delta models", {
   # the offset of 0 is same as no offset
   expect_equal(dg2_offset0, dg2, tolerance = 1e-8)
 })
+
+test_that("test that delta beta model works", {
+  skip_on_cran()
+  skip_if_not_installed("INLA")
+  skip_on_ci()
+
+  pcod_spde <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
+  pcod_2011$scaled_density <- pcod_2011$density / (1+max(pcod_2011$density))
+  fit <- sdmTMB(scaled_density ~ 1,
+                data = pcod_2011, mesh = pcod_spde, spatial = "on",
+                spatiotemporal = "off",
+                time = "year", family = delta_beta()
+  )
+  s1 = tidy(fit, effects = c("fixed"))
+  expect_equal(s1[["estimate"]], -0.1672, tolerance = 0.001)
+  s2 = tidy(fit, effects = c("ran_pars"))
+  expect_equal(s2[["estimate"]][1], 48.5, tolerance = 0.001)
+  expect_equal(s2[["estimate"]][2], 1.75, tolerance = 0.001)
+})

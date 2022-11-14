@@ -61,6 +61,7 @@ downstream, supply the time argument.}
 \code{\link[sdmTMB:families]{lognormal_mix()}},
 \code{\link[sdmTMB:families]{student()}}, and
 \code{\link[sdmTMB:families]{tweedie()}}. Supports the delta/hurdle models:
+\code{\link[sdmTMB:families]{delta_beta()}},
 \code{\link[sdmTMB:families]{delta_gamma()}},
 \code{\link[sdmTMB:families]{delta_gamma_mix()}},
 \code{\link[sdmTMB:families]{delta_lognormal_mix()}},
@@ -281,6 +282,7 @@ translated to the fixed effect model matrix. Also see the
 Delta models (also known as hurdle models) can be fit as two separate models
 or at the same time by using an appropriate delta family. E.g.:
 \code{\link[sdmTMB:families]{delta_gamma()}},
+\code{\link[sdmTMB:families]{delta_beta()}},
 \code{\link[sdmTMB:families]{delta_lognormal()}}, and
 \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}}.
 If fit with a delta family, by default the formula, spatial, and spatiotemporal
