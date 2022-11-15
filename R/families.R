@@ -252,10 +252,7 @@ delta_gamma <- function(link1 = "logit", link2 = "log") {
     clean_name = "delta_gamma(link1 = 'logit', link2 = 'log')")
 }
 
-#' @param link1 Link for first part of delta/hurdle model.
-#' @param link2 Link for second part of delta/hurdle model.
 #' @export
-#' @importFrom stats binomial
 #' @examples
 #' delta_gamma_mix()
 #' @rdname families
@@ -362,8 +359,6 @@ delta_poisson_link_lognormal <- function(link1 = "log", link2 = "log") {
     clean_name = "delta_poisson_link_lognormal(link1 = 'log', link2 = 'log')")
 }
 
-#' @param link1 Link for first part of delta/hurdle model.
-#' @param link2 Link for second part of delta/hurdle model.
 #' @export
 #' @examples
 #' delta_beta()
