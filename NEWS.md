@@ -1,5 +1,14 @@
 # sdmTMB
 
+# sdmTMB 0.1.4
+
+* Add mixture families: `gamma_mix()`, `lognormal_mix()` and associated
+  delta/hurdle families: `delta_gamma_mix()`, `delta_lognormal_mix()`. These
+  families feature a mixture of two distributions with different means but
+  shared variance parameters.
+  
+* Add `delta_beta()` family.
+
 # sdmTMB 0.1.2
 
 * Switch `effects = 'ran_vals'` for random intercept values from `tidy.sdmTMB()`
