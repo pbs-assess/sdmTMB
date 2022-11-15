@@ -116,7 +116,7 @@ Type objective_function<Type>::operator()()
   // DATA_VECTOR_INDICATOR(keep, y_i); // https://rdrr.io/cran/TMB/man/oneStepPredict.html
   DATA_VECTOR(weights_i); // optional weights
   DATA_VECTOR(offset_i); // optional offset
-  // DATA_VECTOR(proj_offset_i); // optional offset
+  DATA_VECTOR(proj_offset_i); // optional offset
 
   DATA_INTEGER(n_t);  // number of years
 
@@ -849,9 +849,11 @@ Type objective_function<Type>::operator()()
     int n_p = proj_X_ij(0).rows(); // n 'p'redicted newdata
     int n_p_mesh = proj_mesh.rows(); // n 'p'redicted mesh (less than n_p if duplicate locations)
     array<Type> proj_fe(n_p, n_m);
+
     for (int m = 0; m < n_m; m++) {
       if (m == 0) proj_fe.col(m) = proj_X_ij(m) * b_j;
-      if (m == 1) proj_fe.col(m) = proj_X_ij(m) * b_j2;
+      if (n_m == 1) proj_fe.col(m) += proj_offset_i;
+      if (m == 1) proj_fe.col(m) = proj_X_ij(m) * b_j2 + proj_offset_i;
     }
 
     // add threshold effect if specified

@@ -242,6 +242,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
   nsim = 0,
   sims_var = "est",
   model = c(NA, 1, 2),
+  offset = NULL,
   tmbstan_model = NULL,
   return_tmb_object = FALSE,
   return_tmb_report = FALSE,
@@ -434,11 +435,15 @@ predict.sdmTMB <- function(object, newdata = object$data,
     else
       proj_X_rw_ik <- matrix(0, ncol = 1, nrow = 1) # dummy
 
-
     if (length(area) != nrow(proj_X_ij[[1]]) && length(area) != 1L) {
       cli_abort("`area` should be of the same length as `nrow(newdata)` or of length 1.")
     }
 
+    if (!is.null(offset)) {
+      if (nrow(proj_X_ij[[1]]) != length(offset))
+        cli_abort("Prediction offset vector does not equal number of rows in prediction dataset.")
+    }
+    tmb_data$proj_offset_i <- if (!is.null(offset)) offset else rep(0, nrow(proj_X_ij[[1]]))
     tmb_data$proj_X_threshold <- thresh[[1]]$X_threshold # TODO DELTA HARDCODED TO 1
     tmb_data$area_i <- if (length(area) == 1L) rep(area, nrow(proj_X_ij[[1]])) else area
     tmb_data$proj_mesh <- proj_mesh
