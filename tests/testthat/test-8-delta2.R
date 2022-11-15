@@ -435,19 +435,48 @@ test_that("test that delta beta model works", {
   skip_if_not_installed("INLA")
   skip_on_ci()
 
-  pcod_2011$response <- stats::rbeta(nrow(pcod_2011), 3, 4)
-  pcod_2011$response[pcod_2011$response < 0.2] <- 0
+  set.seed(1)
+  y01 <- stats::rbinom(1000, 1, 0.5)
+  npos <- sum(y01 == 1)
+  y <- y01
+  y[y == 1] <- stats::rbeta(npos, 3, 4)
+  ypos <- y[y01 == 1]
+  dat <- data.frame(y = y)
+
   fit <- sdmTMB(
-    response ~ 1,
-    data = pcod_2011,
+    y ~ 1,
+    data = dat,
     spatial = "off",
     family = delta_beta(),
     control = sdmTMBcontrol(newton_loops = 1L)
   )
+
+  d01 <- data.frame(y = y01)
+  dpos <- data.frame(y = ypos)
+
+  m1 <- glmmTMB::glmmTMB(y ~ 1, data = d01, family = binomial())
   s1 <- tidy(fit, effects = c("fixed"))
-  expect_equal(s1[["estimate"]], 2.435636, tolerance = 0.001)
+
+  m2 <- glmmTMB::glmmTMB(y ~ 1, data = dpos, family = glmmTMB::beta_family())
   s2 <- tidy(fit, effects = c("fixed"), model = 2)
-  expect_equal(s2[["estimate"]], -0.1757629, tolerance = 0.001)
-  s3 <- tidy(fit, effects = "ran_pars", model = 2)
-  expect_equal(s3[["estimate"]], 9.864149, tolerance = 0.001)
+
+  expect_equal(s1$estimate, m1$fit$par[[1]], tolerance = 1e-4)
+  expect_equal(s2$estimate, m2$fit$par[[1]], tolerance = 1e-4)
+
+  p <- predict(fit)
+
+  p1 <- predict(m1)
+  p2 <- predict(m2)
+  p <- predict(fit, type = "response")
+  glmmTMB_est <- stats::plogis(p1)[1] * stats::plogis(p2)[1]
+  expect_equal(p$est[1], glmmTMB_est, tolerance = 1e-4)
+
+  r <- residuals(fit)
+  qqnorm(r)
+  qqline(r)
+
+  set.seed(1)
+  s <- simulate(fit)
+  expect_gte(min(s), 0)
+  expect_lte(min(s), 1)
 })
