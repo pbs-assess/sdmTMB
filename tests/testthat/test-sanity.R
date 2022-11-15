@@ -38,7 +38,7 @@ test_that("sanity() runs", {
     data = pcod_2011, mesh = pcod_mesh_2011, spatial = "off",
     family = delta_gamma()
   )
-  expect_message(s <- sanity(fit, se_ratio = 2), regexp = "may be large")
+  expect_message(s <- sanity(fit), regexp = "may be large")
   # expect_message(s <- sanity(fit, se_ratio = 2), regexp = "2x")
   expect_false(s$se_magnitude_ok)
   expect_false(s$all_ok)

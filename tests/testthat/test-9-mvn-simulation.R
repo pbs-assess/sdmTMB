@@ -200,7 +200,7 @@ test_that("predict link attribute and get_index_sims work with delta", {
   expect_no_match(attr(p2,"link"), "logit")
   expect_match(attr(p2,"link"), "response")
 
-  p3 <- predict(m, newdata = qcs_grid_2011, nsim = 50L, type = "response")
+  p3 <- predict(m, newdata = qcs_grid_2011, nsim = 50L, model = 1, type = "response")
   expect_equal(ncol(p3), 50L)
   expect_equal(nrow(p3), nrow(qcs_grid_2011))
   expect_no_match(attr(p3,"link"), "log")
@@ -252,7 +252,7 @@ test_that("rmvnorm sim prediction works with various sims_vars", {
   expect_identical(dim(p1b), c(nrow(d), 10L))
 
   m2 <- sdmTMB(
-    density ~ 1, data = d,
+    density ~ 1, data = d, control = sdmTMBcontrol(multiphase = FALSE),
     mesh = pcod_spde, family = tweedie(link = "log"),
     spatial_varying = ~ 0 + depth_mean + depth_sd,
   )

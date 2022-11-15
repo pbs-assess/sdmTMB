@@ -291,14 +291,12 @@ test_that("start works", {
   skip_on_ci()
   skip_if_not_installed("INLA")
 
-  expect_message({
     expect_error({
       m2 <- sdmTMB(density ~ poly(depth, 2),
         data = pcod_2011,
         mesh = pcod_mesh_2011, family = tweedie(),
         control = sdmTMBcontrol(start = list(ln_kappa = -1.78)))
     }, regexp = "kappa")
-  })
 
   expect_message({
     m2 <- sdmTMB(density ~ poly(depth, 2),

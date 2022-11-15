@@ -1,3 +1,5 @@
+options(Matrix.warnDeprecatedCoerce = 2)
+
 library(testthat)
 library(sdmTMB)
 

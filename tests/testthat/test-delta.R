@@ -143,9 +143,9 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
                       anisotropy = TRUE,
                       control = sdmTMBcontrol(newton_loops = 1)
     )
-    p1 <- plot_anisotropy(fit_bin)
-    p2 <- plot_anisotropy(fit_dg)
-    expect_equal(p2,p1, tolerance = 1e-6)
+    p1 <- plot_anisotropy2(fit_bin)
+    p2 <- plot_anisotropy2(fit_dg)
+    expect_equal(p2, p1, tolerance = 1e-6)
 
     fit_gamma <- sdmTMB(density ~ 1,
                         data = pcod_pos, mesh = pcod_spde_pos,
@@ -154,8 +154,8 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
                         control = sdmTMBcontrol(newton_loops = 1)
     )
 
-    p3 <- plot_anisotropy(fit_gamma)
-    p4 <- plot_anisotropy(fit_dg, model = 2)
+    p3 <- plot_anisotropy2(fit_gamma)
+    p4 <- plot_anisotropy2(fit_dg, model = 2)
 
     ## not sure why this isn't working
     # expect_equal(p4, p3, tolerance = 1e-6)

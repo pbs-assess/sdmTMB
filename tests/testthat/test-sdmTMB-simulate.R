@@ -48,7 +48,7 @@ test_that("sdmTMB_simulate works for different spatiotemporal field types", {
       spatiotemporal = model_type
     )
 
-    if (all(unlist(sanity(fit, se_ratio = 10, gradient_thresh = 0.01)))) {
+    if (all(unlist(sanity(fit, gradient_thresh = 0.01)))) {
       sr <- as.list(fit$sd_report, "Estimate")
       ty <- tidy(fit, effects = "ran_pars", conf.int = TRUE)
       out <- list()

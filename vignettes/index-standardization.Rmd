@@ -85,7 +85,7 @@ Let's make a small function to make maps.
 
 ```{r plot-map}
 plot_map <- function(dat, column) {
-  ggplot(dat, aes_string("X", "Y", fill = column)) +
+  ggplot(dat, aes(X, Y, fill = {{ column }})) +
     geom_raster() +
     facet_wrap(~year) +
     coord_fixed()
@@ -95,7 +95,7 @@ plot_map <- function(dat, column) {
 There are four kinds of predictions that we get out of the model. First we will show the predictions that incorporate all fixed effects and random effects:
 
 ```{r plot-all-effects, fig.width = 8}
-plot_map(predictions$data, "exp(est)") +
+plot_map(predictions$data, exp(est)) +
   scale_fill_viridis_c(trans = "sqrt") +
   ggtitle("Prediction (fixed effects + all random effects)")
 ```
@@ -103,7 +103,7 @@ plot_map(predictions$data, "exp(est)") +
 We can also look at just the fixed effects, here year:
 
 ```{r plot-fix-defects, fig.width = 8}
-plot_map(predictions$data, "exp(est_non_rf)") +
+plot_map(predictions$data, exp(est_non_rf)) +
   ggtitle("Prediction (fixed effects only)") +
   scale_fill_viridis_c(trans = "sqrt")
 ```
@@ -111,7 +111,7 @@ plot_map(predictions$data, "exp(est_non_rf)") +
 We can look at the spatial random effects that represent consistent deviations in space through time that are not accounted for by our fixed effects. In other words, these deviations represent consistent biotic and abiotic factors that are affecting biomass density but are not accounted for in the model.
 
 ```{r plot-spatial-effects, fig.width = 8}
-plot_map(predictions$data, "omega_s") +
+plot_map(predictions$data, omega_s) +
   ggtitle("Spatial random effects only") +
   scale_fill_gradient2()
 ```
@@ -119,7 +119,7 @@ plot_map(predictions$data, "omega_s") +
 And finally we can look at the spatiotemporal random effects that represent deviation from the fixed effect predictions and the spatial random effect deviations. These represent biotic and abiotic factors that are changing through time and are not accounted for in the model.
 
 ```{r plot-spatiotemporal-effects, fig.width = 8}
-plot_map(predictions$data, "epsilon_st") +
+plot_map(predictions$data, epsilon_st) +
   ggtitle("Spatiotemporal random effects only") +
   scale_fill_gradient2()
 ```
@@ -129,8 +129,7 @@ When we ran our `predict.sdmTBM()` function, it also returned a report from TMB 
 We will need to set the `area` argument to 4 km^2^ since our grid cells are 2 km x 2 km. If some grid cells were not fully in the survey domain (or were on land), we could feed a vector of grid areas to the `area` argument that matched the number of grid cells.
 
 ```{r get-index}
-# not bias correcting for vignette-building speed:
-index <- get_index(predictions, area = 4, bias_correct = FALSE)
+index <- get_index(predictions, area = 4, bias_correct = TRUE)
 ```
 
 ```{r plot-index}
@@ -153,7 +152,7 @@ We can also calculate an index for part of the survey domain. We'll make an inde
 qcs_grid_south <- qcs_grid[qcs_grid$Y < 5700, ]
 predictions_south <- predict(m, newdata = qcs_grid_south, 
   return_tmb_object = TRUE)
-index_south <- get_index(predictions_south, area = 4)
+index_south <- get_index(predictions_south, area = 4, bias_correct = TRUE)
 head(index_south)
 ```
 
@@ -166,32 +165,3 @@ mutate(index, region = "all") %>%
   geom_line(aes(colour = region)) +
   geom_ribbon(aes(ymin = lwr, ymax = upr, fill = region), alpha = 0.4)
 ```
-
-## Simulation-based indices
-
-An alternative is to generate our index via simulation from the joint precision matrix. This can be much faster than using `bias_correct = TRUE` in `get_index()`. Note that this approach is still preliminary. We have yet to find a situation where it does not match what you would get out of bias-corrected generalized-delta-method standard errors for this class of models, but use the approach at your own risk.
-
-```{r pred-sims}
-pred_sims <- predict(m, newdata = qcs_grid, nsim = 500)
-dim(pred_sims)
-```
-
-`pred_sims` is just a matrix with width `nsim` and a row for each row of data that was predicted on. You can process this matrix however you would like. For example, we can now calculate spatial uncertainty quickly:
-
-```{r sims-cv-plot, cache=FALSE, fig.height=4, fig.width=4, out.width="3.5in", echo=TRUE}
-qcs_grid$cv <- apply(pred_sims, 1, function(x) sd(exp(x)) / mean(exp(x)))
-ggplot(subset(qcs_grid, year == 2011), aes(X, Y, fill = cv)) + # 2011 as an example
-    geom_raster() + facet_wrap(~year) +
-    coord_fixed() + scale_fill_viridis_c(trans = "log10")
-```
-
-Calculate the index from these simulation draws:
-
-```{r index, cache=TRUE, fig.height=2.5, fig.width=4, out.width="3.5in"}
-qcs_grid$area <- 4 # all 2 x 2km
-ind_sims <- get_index_sims(pred_sims, area = qcs_grid$area)
-ggplot(ind_sims, aes(year, est)) + geom_line() +
-  geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4) +
-  ylab("Biomass (kg)")
-```
-

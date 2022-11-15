@@ -1,5 +1,14 @@
 # sdmTMB
 
+# sdmTMB 0.1.3
+
+* Tweak `sanity()` checking of standard error size.
+
+* Export previously experimental `plot_anisotropy()` function. The old
+  function is now `plot_anisotropy2()`.
+
+* Allow passing offset data through `predict.sdmTMB()` via `offset` argument.
+
 # sdmTMB 0.1.2
 
 * Switch `effects = 'ran_vals'` for random intercept values from `tidy.sdmTMB()`

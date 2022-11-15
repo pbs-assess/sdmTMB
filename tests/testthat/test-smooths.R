@@ -475,9 +475,10 @@ test_that("A model with s(x, bs = 'fs') works", {
   m <- sdmTMB(
     data = d,
     formula = log(density) ~ s(depth_scaled, by = year, bs = "fs"),
-    spatial = "off"
+    spatial = "off", control = sdmTMBcontrol(newton_loops = 1)
   )
-  print(m)
+  # FIXME:
+  suppressWarnings(print(m))
   m_mgcv <- mgcv::gam(log(density) ~ s(depth_scaled, by = year, bs = "fs"), data = d, method = "REML")
   p <- predict(m)
   p2 <- predict(m_mgcv)

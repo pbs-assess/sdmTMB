@@ -1129,17 +1129,27 @@ sdmTMB <- function(
 
   if (multiphase && is.null(previous_fit) && do_fit) {
 
+
+    original_tmb_data <- tmb_data
+    # # much faster on first phase!?
+    tmb_data$no_spatial <- 1L
+    tmb_data$include_spatial <- 0L
+    # tmb_data$spatial_only <- rep(1L, length(tmb_data$spatial_only))
+
     tmb_obj1 <- TMB::MakeADFun(
       data = tmb_data, parameters = tmb_params,
       map = tmb_map, DLL = "sdmTMB", silent = silent)
-
     lim <- set_limits(tmb_obj1, lower = lower, upper = upper, silent = TRUE)
+
     tmb_opt1 <- stats::nlminb(
       start = tmb_obj1$par, objective = tmb_obj1$fn,
       lower = lim$lower, upper = lim$upper,
       gradient = tmb_obj1$gr, control = .control)
+
+    tmb_data <- original_tmb_data # restore
     # Set starting values based on phase 1:
     tmb_params <- tmb_obj1$env$parList()
+    # tmb_data$no_spatial <- FALSE
     # often causes optimization problems if set from phase 1!?
     tmb_params$b_threshold <- if(thresh[[1]]$threshold_func == 2L) matrix(0, 3L, n_m) else matrix(0, 2L, n_m)
   }

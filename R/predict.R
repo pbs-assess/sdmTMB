@@ -49,6 +49,8 @@
 #'   combined prediction from both components on the link scale for the positive
 #'   component; `1` or `2` return the first or second model component only on
 #'   the link or response scale depending on the argument `type`.
+#' @param offset A numeric vector of optional offset values. If left at default
+#'   `NULL`, the offset is implicitly left at 0.
 #' @param return_tmb_report Logical: return the output from the TMB
 #'   report? For regular prediction this is all the reported variables
 #'   at the MLE parameter values. For `nsim > 0` or when `tmbstan_model`
@@ -120,30 +122,30 @@
 #' predictions <- predict(m, newdata = qcs_grid_2011)
 #'
 #' # A short function for plotting our predictions:
-#' plot_map <- function(dat, column = "est") {
-#'   ggplot(dat, aes_string("X", "Y", fill = column)) +
+#' plot_map <- function(dat, column = est) {
+#'   ggplot(dat, aes(X, Y, fill = {{ column }})) +
 #'     geom_raster() +
 #'     facet_wrap(~year) +
 #'     coord_fixed()
 #' }
 #'
-#' plot_map(predictions, "exp(est)") +
+#' plot_map(predictions, exp(est)) +
 #'   scale_fill_viridis_c(trans = "sqrt") +
 #'   ggtitle("Prediction (fixed effects + all random effects)")
 #'
-#' plot_map(predictions, "exp(est_non_rf)") +
+#' plot_map(predictions, exp(est_non_rf)) +
 #'   ggtitle("Prediction (fixed effects and any time-varying effects)") +
 #'   scale_fill_viridis_c(trans = "sqrt")
 #'
-#' plot_map(predictions, "est_rf") +
+#' plot_map(predictions, est_rf) +
 #'   ggtitle("All random field estimates") +
 #'   scale_fill_gradient2()
 #'
-#' plot_map(predictions, "omega_s") +
+#' plot_map(predictions, omega_s) +
 #'   ggtitle("Spatial random effects only") +
 #'   scale_fill_gradient2()
 #'
-#' plot_map(predictions, "epsilon_st") +
+#' plot_map(predictions, epsilon_st) +
 #'   ggtitle("Spatiotemporal random effects only") +
 #'   scale_fill_gradient2()
 #'
@@ -201,9 +203,9 @@
 #' qcsgrid_forecast <- rbind(qcs_grid_2011, grid2019)
 #'
 #' predictions <- predict(m, newdata = qcsgrid_forecast)
-#' plot_map(predictions, "exp(est)") +
+#' plot_map(predictions, exp(est)) +
 #'   scale_fill_viridis_c(trans = "log10")
-#' plot_map(predictions, "epsilon_st") +
+#' plot_map(predictions, epsilon_st) +
 #'   scale_fill_gradient2()
 #'
 #' # Estimating local trends ----------------------------------------------
@@ -218,19 +220,19 @@
 #' nd$year_scaled <- (nd$year - mean(d$year)) / sd(d$year)
 #' p <- predict(m, newdata = nd)
 #'
-#' plot_map(subset(p, year == 2003), "zeta_s_year_scaled") + # pick any year
+#' plot_map(subset(p, year == 2003), zeta_s_year_scaled) + # pick any year
 #'   ggtitle("Spatial slopes") +
 #'   scale_fill_gradient2()
 #'
-#' plot_map(p, "est_rf") +
+#' plot_map(p, est_rf) +
 #'   ggtitle("Random field estimates") +
 #'   scale_fill_gradient2()
 #'
-#' plot_map(p, "exp(est_non_rf)") +
+#' plot_map(p, exp(est_non_rf)) +
 #'   ggtitle("Prediction (fixed effects only)") +
 #'   scale_fill_viridis_c(trans = "sqrt")
 #'
-#' plot_map(p, "exp(est)") +
+#' plot_map(p, exp(est)) +
 #'   ggtitle("Prediction (fixed effects + all random effects)") +
 #'   scale_fill_viridis_c(trans = "sqrt")
 

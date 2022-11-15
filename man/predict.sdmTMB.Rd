@@ -14,6 +14,7 @@
   nsim = 0,
   sims_var = "est",
   model = c(NA, 1, 2),
+  offset = NULL,
   tmbstan_model = NULL,
   return_tmb_object = FALSE,
   return_tmb_report = FALSE,
@@ -66,6 +67,9 @@ Other options will be passed verbatim.}
 combined prediction from both components on the link scale for the positive
 component; \code{1} or \code{2} return the first or second model component only on
 the link or response scale depending on the argument \code{type}.}
+
+\item{offset}{A numeric vector of optional offset values. If left at default
+\code{NULL}, the offset is implicitly left at 0.}
 
 \item{tmbstan_model}{A model fit with \code{\link[tmbstan:tmbstan]{tmbstan::tmbstan()}}. See
 \code{\link[=extract_mcmc]{extract_mcmc()}} for more details and an example. If specified, the
@@ -159,30 +163,30 @@ qcs_grid_2011 <- subset(qcs_grid, year >= min(pcod_2011$year))
 predictions <- predict(m, newdata = qcs_grid_2011)
 
 # A short function for plotting our predictions:
-plot_map <- function(dat, column = "est") {
-  ggplot(dat, aes_string("X", "Y", fill = column)) +
+plot_map <- function(dat, column = est) {
+  ggplot(dat, aes(X, Y, fill = {{ column }})) +
     geom_raster() +
     facet_wrap(~year) +
     coord_fixed()
 }
 
-plot_map(predictions, "exp(est)") +
+plot_map(predictions, exp(est)) +
   scale_fill_viridis_c(trans = "sqrt") +
   ggtitle("Prediction (fixed effects + all random effects)")
 
-plot_map(predictions, "exp(est_non_rf)") +
+plot_map(predictions, exp(est_non_rf)) +
   ggtitle("Prediction (fixed effects and any time-varying effects)") +
   scale_fill_viridis_c(trans = "sqrt")
 
-plot_map(predictions, "est_rf") +
+plot_map(predictions, est_rf) +
   ggtitle("All random field estimates") +
   scale_fill_gradient2()
 
-plot_map(predictions, "omega_s") +
+plot_map(predictions, omega_s) +
   ggtitle("Spatial random effects only") +
   scale_fill_gradient2()
 
-plot_map(predictions, "epsilon_st") +
+plot_map(predictions, epsilon_st) +
   ggtitle("Spatiotemporal random effects only") +
   scale_fill_gradient2()
 
@@ -240,9 +244,9 @@ grid2019$year <- 2019L # `L` because `year` is an integer in the data
 qcsgrid_forecast <- rbind(qcs_grid_2011, grid2019)
 
 predictions <- predict(m, newdata = qcsgrid_forecast)
-plot_map(predictions, "exp(est)") +
+plot_map(predictions, exp(est)) +
   scale_fill_viridis_c(trans = "log10")
-plot_map(predictions, "epsilon_st") +
+plot_map(predictions, epsilon_st) +
   scale_fill_gradient2()
 
 # Estimating local trends ----------------------------------------------
@@ -257,19 +261,19 @@ nd <- qcs_grid
 nd$year_scaled <- (nd$year - mean(d$year)) / sd(d$year)
 p <- predict(m, newdata = nd)
 
-plot_map(subset(p, year == 2003), "zeta_s_year_scaled") + # pick any year
+plot_map(subset(p, year == 2003), zeta_s_year_scaled) + # pick any year
   ggtitle("Spatial slopes") +
   scale_fill_gradient2()
 
-plot_map(p, "est_rf") +
+plot_map(p, est_rf) +
   ggtitle("Random field estimates") +
   scale_fill_gradient2()
 
-plot_map(p, "exp(est_non_rf)") +
+plot_map(p, exp(est_non_rf)) +
   ggtitle("Prediction (fixed effects only)") +
   scale_fill_viridis_c(trans = "sqrt")
 
-plot_map(p, "exp(est)") +
+plot_map(p, exp(est)) +
   ggtitle("Prediction (fixed effects + all random effects)") +
   scale_fill_viridis_c(trans = "sqrt")
 \dontshow{\}) # examplesIf}

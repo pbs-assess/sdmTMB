@@ -4,12 +4,14 @@
 \alias{sanity}
 \title{Sanity check of sdmTMB model}
 \usage{
-sanity(fit, se_ratio = 10, gradient_thresh = 0.001)
+sanity(fit, big_sd_log10 = 3, gradient_thresh = 0.001)
 }
 \arguments{
 \item{fit}{Fitted model from \code{\link[=sdmTMB]{sdmTMB()}}}
 
-\item{se_ratio}{SE ratio to abs(parameter values) to issue warning}
+\item{big_sd_log10}{Value to check size of standard errors against. A value
+of 3 would indicate that standard errors greater than \code{10^3} should be
+flagged.}
 
 \item{gradient_thresh}{Gradient threshold to issue warning}
 }

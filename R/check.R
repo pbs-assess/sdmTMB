@@ -1,7 +1,9 @@
 #' Sanity check of sdmTMB model
 #'
 #' @param fit Fitted model from [sdmTMB()]
-#' @param se_ratio SE ratio to abs(parameter values) to issue warning
+#' @param big_sd_log10 Value to check size of standard errors against. A value
+#'   of 3 would indicate that standard errors greater than `10^3` should be
+#'   flagged.
 #' @param gradient_thresh Gradient threshold to issue warning
 #'
 #' @return An invisible named list of checks
@@ -18,7 +20,7 @@
 #' s <- sanity(fit)
 #' s
 
-sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
+sanity <- function(fit, big_sd_log10 = 3, gradient_thresh = 0.001) {
 
   hessian_ok <- eigen_values_ok <- gradients_ok <- se_magnitude_ok <- FALSE
   nlminb_ok <- FALSE
@@ -107,52 +109,34 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
   fixed <- !(names(est) %in% random)
   est <- est[fixed]
   se <- se[fixed]
-  too_big <- function(est, se, divide = TRUE) {
+
+  too_big <- function(se) {
     if (any(!is.na(se))) {
-      if (divide) {
-        ratio <- se[!is.na(se)] / abs(est[!is.na(se)])
-        if (any(ratio > se_ratio)) return(TRUE)
+      se_max <- max(se, na.rm = TRUE)
+      if (any(log10(abs(se_max)) > big_sd_log10)) {
+        return(TRUE)
       } else {
-        se_max <- max(se, na.rm = TRUE)
-        if (any(se_max > 3)) return(TRUE)
+        return(NULL)
       }
+    } else {
+      return(NULL)
     }
   }
-  # log vars don't make a lot of sense to check like this:
 
-  est <- as.list(fit$sd_report, "Estimate")
-  se <- as.list(fit$sd_report, "Std. Error")
-
-  bji <- grepl("^b_j", names(est))
-  est <- est[bji]
-  se <- se[bji]
-  se_big <- mapply(too_big, est, se)
-
-  # range and sigma pars:
-  estr <- as.list(fit$sd_report, "Estimate", report = TRUE)
-  ser <- as.list(fit$sd_report, "Std. Error", report = TRUE)
-  se_big2 <- mapply(too_big, estr, ser, divide = FALSE)
-
-  se_big <- c(se_big, se_big2)
-  ignore <- c("sigma_O", "range", "sigma_Z", "sigma_E", "total", "link_total", "phi", "rho")
-  for (i in seq_along(ignore)) se_big[[ignore[i]]] <- NULL
+  se_big <- lapply(se, too_big)
 
   for (i in seq_along(se_big)) {
     if (isTRUE(se_big[[i]])) {
-      msg <- paste0(
-        "` standard error may be large")
-      # (> ",
-      #   se_ratio,
-      #   "x parameter estimate)"
-      # )
+      msg <- paste0("` standard error may be large")
       cli::cli_alert_danger(c("`", names(se_big)[i], msg))
       par_message(names(se_big)[i])
       cli::cli_alert_info(simplify_msg)
       cat("\n")
     }
   }
+
   if (all(unlist(lapply(se_big, is.null)))) {
-    msg <- "No fixed-effect standard errors look unreasonably large"
+    msg <- "No standard errors look unreasonably large"
     cli::cli_alert_success(msg)
     se_magnitude_ok <- TRUE
   }
