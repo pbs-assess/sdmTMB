@@ -498,16 +498,16 @@ Example: `family = tweedie(link = "log")`
 This is a 2 component mixture that extends the Gamma distribution,
 
 $$
-(1 - p) \cdot \operatorname{Gamma} \left( \phi, \frac{\mu_{1}}{\phi}  \right) + p \cdot \operatorname{Gamma} \left( \phi, \frac{\mu_{2}}{\phi}  \right)
+(1 - p) \cdot \operatorname{Gamma} \left( \phi, \frac{\mu_{1}}{\phi}  \right) + p \cdot \operatorname{Gamma} \left( \phi, \frac{\mu_{2}}{\phi}  \right),
 $$ where $\phi$ represents the Gamma shape, $\mu_{1} / \phi$ represents the scale for the first (smaller component) of the distribution, $\mu_{2} / \phi$ represents the scale for the second (larger component) of the distribution, and $p$ controls the contribution of each component to the mixture (also interpreted as the probability of larger events).
 
-The mean is $(1-p) \cdot \mu_{1} + p \cdot \mu_{2}$ and variance is $(1-p) ^ 2 \cdot \mu_{1} \cdot \phi^2 + (p) ^ 2 \cdot \mu_{2} \cdot \phi^2$.
+The mean is $(1-p) \cdot \mu_{1} + p \cdot \mu_{2}$ and the variance is $(1-p) ^ 2 \cdot \mu_{1} \cdot \phi^2 + (p) ^ 2 \cdot \mu_{2} \cdot \phi^2$.
 
 Example: `family = gamma_mix(link = "log")`. See also `family = delta_gamma_mix()` for an extension incorporating this distribution with delta models. 
 
 ## Lognormal mixture
 
-This is a 2 component mixture that extends the Gamma distribution,
+This is a 2 component mixture that extends the lognormal distribution,
 
 $$
 (1 - p) \cdot \operatorname{Lognormal} \left( \log \mu_{1} - \frac{\phi^2}{2}, \phi^2 \right) + p \cdot \operatorname{Lognormal} \left( \log \mu_{2} - \frac{\phi^2}{2}, \phi^2 \right).
