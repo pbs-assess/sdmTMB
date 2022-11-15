@@ -435,16 +435,19 @@ test_that("test that delta beta model works", {
   skip_if_not_installed("INLA")
   skip_on_ci()
 
-  pcod_spde <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
-  pcod_2011$scaled_density <- pcod_2011$density / (1+max(pcod_2011$density))
-  fit <- sdmTMB(scaled_density ~ 1,
-                data = pcod_2011, mesh = pcod_spde, spatial = "on",
-                spatiotemporal = "off",
-                time = "year", family = delta_beta()
+  pcod_2011$response <- stats::rbeta(nrow(pcod_2011), 3, 4)
+  pcod_2011$response[pcod_2011$response < 0.2] <- 0
+  fit <- sdmTMB(
+    response ~ 1,
+    data = pcod_2011,
+    spatial = "off",
+    family = delta_beta(),
+    control = sdmTMBcontrol(newton_loops = 1L)
   )
-  s1 = tidy(fit, effects = c("fixed"))
-  expect_equal(s1[["estimate"]], -0.1672, tolerance = 0.001)
-  s2 = tidy(fit, effects = c("ran_pars"))
-  expect_equal(s2[["estimate"]][1], 48.5, tolerance = 0.001)
-  expect_equal(s2[["estimate"]][2], 1.75, tolerance = 0.001)
+  s1 <- tidy(fit, effects = c("fixed"))
+  expect_equal(s1[["estimate"]], 2.435636, tolerance = 0.001)
+  s2 <- tidy(fit, effects = c("fixed"), model = 2)
+  expect_equal(s2[["estimate"]], -0.1757629, tolerance = 0.001)
+  s3 <- tidy(fit, effects = "ran_pars", model = 2)
+  expect_equal(s3[["estimate"]], 9.864149, tolerance = 0.001)
 })
