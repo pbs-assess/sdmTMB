@@ -16,7 +16,9 @@ enum valid_family {
   truncated_nbinom2_family  = 9,
   nbinom1_family  = 10,
   truncated_nbinom1_family  = 11,
-  censored_poisson_family  = 12
+  censored_poisson_family  = 12,
+  gamma_mix_family = 13,
+  lognormal_mix_family = 14
 };
 
 enum valid_link {
@@ -226,6 +228,9 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(ln_kappa);    // Matern parameter
 
   PARAMETER(thetaf);           // tweedie only
+  PARAMETER(logit_p_mix);           // ECE / positive mixture only
+  PARAMETER(log_ratio_mix);           // ECE / positive mixture only
+
   PARAMETER_VECTOR(ln_phi);           // sigma / dispersion / etc.
   PARAMETER_ARRAY(ln_tau_V);  // random walk sigma
   PARAMETER_ARRAY(rho_time_unscaled); // (k, m) dimension ar1 time correlation rho -Inf to Inf
@@ -689,7 +694,7 @@ Type objective_function<Type>::operator()()
   // close to zero: use for count data (cf binomial()$initialize)
 #define zt_lik_nearzero(x,loglik_exp) ((x < Type(0.001)) ? -INFINITY : loglik_exp)
 
-  Type s1, s2, s3, lognzprob, tmp_ll;
+  Type s1, s2, s3, lognzprob, tmp_ll, ll_1, ll_2, p_mix, mix_ratio, ll_max;
   REPORT(phi);
   for (int m = 0; m < n_m; m++) PARALLEL_REGION {
     for (int i = 0; i < n_i; i++) {
@@ -780,6 +785,53 @@ Type objective_function<Type>::operator()()
             tmp_ll = dbeta(y_i(i,m), s1, s2, true);
             SIMULATE{y_i(i,m) = rbeta(s1, s2);}
             break;
+          case gamma_mix_family:
+            p_mix = invlogit(logit_p_mix); // probability of larger event
+            s1 = exp(ln_phi(m));        // shape
+            s2 = mu_i(i,m) / s1;        // scale
+            ll_1 = log(Type(1.0 - p_mix)) + dgamma(y_i(i,m), s1, s2, true);
+
+            mix_ratio = exp(log_ratio_mix) + 1.0; // ratio of large:small values, constrained > 1.0
+            s3 = s2 * mix_ratio; // mean of large component = mean of smaller * ratio
+            ll_2 = log(p_mix) + dgamma(y_i(i,m), s1, s3, true);
+
+            ll_max = ll_1; // determine larger of ll_1 and ll_2
+            if(ll_2 > ll_1) ll_max = ll_2;
+
+            tmp_ll = ll_max + log(exp(ll_1 - ll_max) + exp(ll_2 - ll_max)); // log sum exp function
+
+            SIMULATE{
+              if(rbinom(Type(1),p_mix) == 0) {
+                y_i(i,m) = rgamma(s1, s2);
+              } else {
+                y_i(i,m) = rgamma(s1, s3);
+              }
+            }
+            // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
+            // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
+            break;
+        case lognormal_mix_family:
+          p_mix = invlogit(logit_p_mix); // probability of larger event
+
+          ll_1 = log(Type(1.0 - p_mix)) + sdmTMB::dlnorm(y_i(i,m), log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
+          mix_ratio = exp(log_ratio_mix) + 1.0; // ratio of large:small values, constrained > 1.0
+          ll_2 = log(p_mix) + sdmTMB::dlnorm(y_i(i,m), log(mix_ratio) + log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
+
+          ll_max = ll_1; // determine larger of ll_1 and ll_2
+          if(ll_2 > ll_1) ll_max = ll_2;
+
+          tmp_ll = ll_max + log(exp(ll_1 - ll_max) + exp(ll_2 - ll_max)); // log sum exp function
+
+          SIMULATE{
+            if(rbinom(Type(1),p_mix) == 0) {
+              y_i(i,m) = exp(rnorm(log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m)));;
+            } else {
+              y_i(i,m) = exp(rnorm(log(mix_ratio) + log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m)));;
+            }
+          }
+          // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
+          // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
+          break;
           default:
             error("Family not implemented.");
         }
@@ -1151,6 +1203,10 @@ Type objective_function<Type>::operator()()
     }
   }
 
+  ADREPORT(logit_p_mix);
+  ADREPORT(log_ratio_mix);
+  REPORT(p_mix);
+  REPORT(mix_ratio);
   ADREPORT(phi);
   vector<Type> log_sigma_E = log(sigma_E);
   ADREPORT(log_sigma_E);      // log spatio-temporal SD

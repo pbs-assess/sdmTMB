@@ -27,9 +27,14 @@ NULL
 #'   \code{\link[sdmTMB:families]{nbinom1()}},
 #'   \code{\link[sdmTMB:families]{truncated_nbinom1()}},
 #'   \code{\link[sdmTMB:families]{censored_poisson()}},
+#'   \code{\link[sdmTMB:families]{gamma_mix()}},
+#'   \code{\link[sdmTMB:families]{lognormal_mix()}},
 #'   \code{\link[sdmTMB:families]{student()}}, and
 #'   \code{\link[sdmTMB:families]{tweedie()}}. Supports the delta/hurdle models:
+#'   \code{\link[sdmTMB:families]{delta_beta()}},
 #'   \code{\link[sdmTMB:families]{delta_gamma()}},
+#'   \code{\link[sdmTMB:families]{delta_gamma_mix()}},
+#'   \code{\link[sdmTMB:families]{delta_lognormal_mix()}},
 #'   \code{\link[sdmTMB:families]{delta_lognormal()}}, and
 #'   \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}},
 #'   For binomial family options, see 'Binomial families' in the Details
@@ -242,6 +247,7 @@ NULL
 #' Delta models (also known as hurdle models) can be fit as two separate models
 #' or at the same time by using an appropriate delta family. E.g.:
 #'   \code{\link[sdmTMB:families]{delta_gamma()}},
+#'   \code{\link[sdmTMB:families]{delta_beta()}},
 #'   \code{\link[sdmTMB:families]{delta_lognormal()}}, and
 #'   \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}}.
 #' If fit with a delta family, by default the formula, spatial, and spatiotemporal
@@ -1069,6 +1075,8 @@ sdmTMB <- function(
     ln_kappa   = matrix(0, 2L, n_m),
     # ln_kappa   = rep(log(sqrt(8) / median(stats::dist(spde$mesh$loc))), 2),
     thetaf     = 0,
+    logit_p_mix = 0,
+    log_ratio_mix = 0,
     ln_phi     = rep(0, n_m),
     ln_tau_V   = matrix(0, ncol(X_rw_ik), n_m),
     rho_time_unscaled = matrix(0, ncol(X_rw_ik), n_m),
@@ -1100,6 +1108,16 @@ sdmTMB <- function(
   tmb_map$b_j <- NULL
   if (delta) tmb_map$b_j2 <- NULL
   if (family$family[[1]] == "tweedie") tmb_map$thetaf <- NULL
+  if (family$family[[1]] %in% c("gamma_mix", "lognormal_mix")) {
+    tmb_map$log_ratio_mix <- NULL
+    tmb_map$logit_p_mix <- NULL
+  }
+  if (delta) {
+    if(family$family[[2]] %in% c("gamma_mix","lognormal_mix")) {
+      tmb_map$log_ratio_mix <- NULL
+      tmb_map$logit_p_mix <- NULL
+    }
+  }
   tmb_map$ln_phi <- rep(1, n_m)
   if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson"))
     tmb_map$ln_phi[1] <- factor(NA)

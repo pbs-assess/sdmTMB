@@ -1,11 +1,20 @@
 # sdmTMB
 
+# sdmTMB 0.1.4
+
+* Add mixture families: `gamma_mix()`, `lognormal_mix()` and associated
+  delta/hurdle families: `delta_gamma_mix()`, `delta_lognormal_mix()`. These
+  families feature a mixture of two distributions with different means but
+  shared variance parameters.
+  
+* Add `delta_beta()` family.
+
 # sdmTMB 0.1.3
 
 * Tweak `sanity()` checking of standard error size.
 
-* Export previously experimental `plot_anisotropy()` function. The old
-  function is now `plot_anisotropy2()`.
+* Export previously experimental `plot_anisotropy()` function. The old function
+is now `plot_anisotropy2()`.
 
 * Allow passing offset data through `predict.sdmTMB()` via `offset` argument.
 
@@ -24,8 +33,8 @@
   
 * Add `knots` argument in `sdmTMB()`, which is passed to mgcv. A common use
   would be to specify end points in a cyclical spline 
-  (e.g., `s(x, bs = 'cc', k = 4), knots = list(x = c(1, 3, 5, 7))`) when the data don't
-  extend fully to the boundaries that should match up.
+  (e.g., `s(x, bs = 'cc', k = 4), knots = list(x = c(1, 3, 5, 7))`) when the
+  data don't extend fully to the boundaries that should match up.
 
 # sdmTMB 0.1.1
 
