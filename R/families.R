@@ -66,6 +66,7 @@ lognormal <- function(link = "log") {
   add_to_family(x)
 }
 
+#' 2-component mixture of Gamma distributions with shared shape parameter.
 #' @export
 #' @rdname families
 #' @examples
@@ -83,6 +84,7 @@ gamma_mix <- function(link = "log") {
   add_to_family(x)
 }
 
+#' 2-component mixture of lognormal distributions with shared sdlog scale parameter.
 #' @export
 #' @rdname families
 #' @examples
