@@ -66,7 +66,8 @@ lognormal <- function(link = "log") {
   add_to_family(x)
 }
 
-#' 2-component mixture of Gamma distributions with shared shape parameter.
+#' @details The families ending in `_mix()` are 2-component mixtures where each
+#'   distribution has its own mean but a shared scale parameter.
 #' @export
 #' @rdname families
 #' @examples
@@ -84,7 +85,6 @@ gamma_mix <- function(link = "log") {
   add_to_family(x)
 }
 
-#' 2-component mixture of lognormal distributions with shared sdlog scale parameter.
 #' @export
 #' @rdname families
 #' @examples
@@ -183,7 +183,7 @@ truncated_nbinom1 <- function(link = "log") {
 #' @param df Student-t degrees of freedom fixed value parameter.
 #' @export
 #' @details
-#' The degrees of freedom parameter is currently not estimated and is fixed at `df`.
+#' For `student()`, the degrees of freedom parameter is currently not estimated and is fixed at `df`.
 #' @rdname families
 #' @examples
 #' student(link = "identity")

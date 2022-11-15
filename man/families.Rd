@@ -81,13 +81,16 @@ A list with elements common to standard R family objects including \code{family}
 Additional families compatible with \code{\link[=sdmTMB]{sdmTMB()}}.
 }
 \details{
+The families ending in \verb{_mix()} are 2-component mixtures where each
+distribution has its own mean but a shared scale parameter.
+
 The \code{nbinom2} negative binomial parameterization is the NB2 where the variance grows
 quadratically with the mean (Hilbe 2011).
 
 The \code{nbinom1} negative binomial parameterization lets the variance grow
 linearly with the mean (Hilbe 2011).
 
-The degrees of freedom parameter is currently not estimated and is fixed at \code{df}.
+For \code{student()}, the degrees of freedom parameter is currently not estimated and is fixed at \code{df}.
 
 \code{delta_poisson_link_gamma()} is the Poisson-link (complementary
 log-log) delta model (Thorson 2018).
