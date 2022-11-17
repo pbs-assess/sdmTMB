@@ -98,6 +98,9 @@ get_index_sims <- function(obj,
   assert_that(sum(is.na(area)) == 0L)
   assert_that(all(area >= 0))
 
+  cli_inform(c("We generally recommend using `get_index(..., bias_correct = TRUE)`",
+    "rather than `get_index_sims()`."))
+
   if(length(attributes(obj))>3) {
   if (!(attr(obj,"link") == "log")) {
     cli_warn(c("Default `agg_function` and `area_function` apply to ",
