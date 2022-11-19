@@ -43,7 +43,7 @@ Authors@R: c(
            comment = "mgcv: smoother prediction"),
     person("Paul-Christian", "Bürkner", role = c("ctb", "cph"),
            comment = "brms: smoother matrix parsing"),
-    person("Her Majesty the Queen in Right of Canada, as represented by the Minister of Fisheries, Oceans and the Canadian Coast Guard", 
+    person("His Majesty the King in Right of Canada, as represented by the Minister of the Department of Fisheries and Oceans",
            role = "cph")
   )
 Description: Implements spatial and spatiotemporal predictive-process GLMMs
