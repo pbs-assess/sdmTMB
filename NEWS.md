@@ -2,6 +2,10 @@
 
 # sdmTMB 0.1.4
 
+* Fix bug when using `residuals()` or `simulate()` with binomial families
+  specified via `cbind()` or `weights = N`. The binomial sample size wasn't
+  being passed through typically resulting in Inf/-Inf.
+
 * Add mixture families: `gamma_mix()`, `lognormal_mix()` and associated
   delta/hurdle families: `delta_gamma_mix()`, `delta_lognormal_mix()`. These
   families feature a mixture of two distributions with different means but

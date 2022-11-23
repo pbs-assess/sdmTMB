@@ -1,4 +1,4 @@
-qres_tweedie <- function(object, y, mu) {
+qres_tweedie <- function(object, y, mu, ...) {
   p <- stats::plogis(object$model$par[["thetaf"]]) + 1
   dispersion <- exp(object$model$par[["ln_phi"]])
 
@@ -9,18 +9,18 @@ qres_tweedie <- function(object, y, mu) {
   stats::qnorm(u)
 }
 
-qres_binomial <- function(object, y, mu, n = NULL) {
+qres_binomial <- function(object, y, mu, .n = NULL) {
   # p <- object$family$linkinv(mu) # robust binomial in link space!
   p <- mu
-  if (is.null(n)) n <- rep(1, length(y))
-  y <- n * y
-  a <- stats::pbinom(y - 1, n, p)
-  b <- stats::pbinom(y, n, p)
+  if (is.null(.n)) .n <- rep(1, length(y))
+  mu <- .n * mu
+  a <- stats::pbinom(y - 1, .n, p)
+  b <- stats::pbinom(y, .n, p)
   u <- stats::runif(n = length(y), min = pmin(a, b), max = pmax(a, b))
   stats::qnorm(u)
 }
 
-qres_nbinom2 <- function(object, y, mu) {
+qres_nbinom2 <- function(object, y, mu, ...) {
   phi <- exp(object$model$par[["ln_phi"]])
   a <- stats::pnbinom(y - 1, size = phi, mu = mu)
   b <- stats::pnbinom(y, size = phi, mu = mu)
@@ -43,7 +43,7 @@ qnbinom1 <- function(p, mu, phi) {
   stats::qnbinom(p, mu = mu, size = mu / phi)
 }
 
-qres_nbinom1 <- function(object, y, mu) {
+qres_nbinom1 <- function(object, y, mu, ...) {
   phi <- exp(object$model$par[["ln_phi"]])
   a <- pnbinom1(y - 1, phi = phi, mu = mu)
   b <- pnbinom1(y, phi = phi, mu = mu)
@@ -51,14 +51,14 @@ qres_nbinom1 <- function(object, y, mu) {
   stats::qnorm(u)
 }
 
-qres_pois <- function(object, y, mu) {
+qres_pois <- function(object, y, mu, ...) {
   a <- stats::ppois(y - 1, mu)
   b <- stats::ppois(y, mu)
   u <- stats::runif(n = length(y), min = a, max = b)
   stats::qnorm(u)
 }
 
-qres_gamma <- function(object, y, mu) {
+qres_gamma <- function(object, y, mu, ...) {
   phi <- exp(object$model$par[["ln_phi"]])
   s1 <- phi
   s2 <- mu / s1
@@ -66,7 +66,7 @@ qres_gamma <- function(object, y, mu) {
   stats::qnorm(u)
 }
 
-qres_gamma_mix <- function(object, y, mu) {
+qres_gamma_mix <- function(object, y, mu, ...) {
   p_mix <- plogis(object$model$par[["logit_p_mix"]])
   phi <- exp(object$model$par[["ln_phi"]])
   ratio <- exp(object$model$par[["log_ratio_mix"]])
@@ -77,7 +77,7 @@ qres_gamma_mix <- function(object, y, mu) {
   stats::qnorm(u)
 }
 
-qres_lognormal_mix <- function(object, y, mu) {
+qres_lognormal_mix <- function(object, y, mu, ...) {
   p_mix <- plogis(object$model$par[["logit_p_mix"]])
   dispersion <- exp(object$model$par[["ln_phi"]])
   ratio <- exp(object$model$par[["log_ratio_mix"]])
@@ -85,13 +85,13 @@ qres_lognormal_mix <- function(object, y, mu) {
   stats::qnorm(u)
 }
 
-qres_gaussian <- function(object, y, mu) {
+qres_gaussian <- function(object, y, mu, ...) {
   dispersion <- exp(object$model$par[["ln_phi"]])
   u <- stats::pnorm(q = y, mean = mu, sd = dispersion)
   stats::qnorm(u)
 }
 
-qres_lognormal <- function(object, y, mu) {
+qres_lognormal <- function(object, y, mu, ...) {
   dispersion <- exp(object$model$par[["ln_phi"]])
   u <- stats::plnorm(q = y, meanlog = log(mu) - (dispersion^2) / 2, sdlog = dispersion)
   stats::qnorm(u)
@@ -100,13 +100,13 @@ qres_lognormal <- function(object, y, mu) {
 # https://en.wikipedia.org/wiki/Location%E2%80%93scale_family
 pt_ls <- function(q, df, mu, sigma) stats::pt((q - mu) / sigma, df)
 
-qres_student <- function(object, y, mu) {
+qres_student <- function(object, y, mu, ...) {
   dispersion <- exp(object$model$par[["ln_phi"]])
   u <- pt_ls(q = y, df = object$tmb_data$df, mu = mu, sigma = dispersion)
   stats::qnorm(u)
 }
 
-qres_beta <- function(object, y, mu) {
+qres_beta <- function(object, y, mu, ...) {
   phi <- exp(object$model$par[["ln_phi"]])
   s1 <- mu * phi
   s2 <- (1 - mu) * phi
@@ -332,12 +332,16 @@ residuals.sdmTMB <- function(object,
     y <- y[!is.na(y)]
   }
 
+  # for binomial proportion with weights = N:
+  size <- object$tmb_data$size
+  prop_binomial <- !all(size == 1)
+
   if (type == "response") {
-    r <- y - mu
+    if (!prop_binomial) r <- y - mu else r <- y / size - mu
   } else if (type == "mle-laplace" || type == "mvn-laplace") {
-    r <- res_func(object, y, mu, ...)
+    r <- res_func(object, y, mu, .n = size, ...)
   } else if (type == "mle-mcmc") {
-    r <- res_func(obj_mle, y, mu, ...)
+    r <- res_func(obj_mle, y, mu, .n = size, ...)
   } else {
     cli_abort("residual type not implemented")
   }
