@@ -222,7 +222,7 @@ qres_beta <- function(object, y, mu, ...) {
 #' }
 
 residuals.sdmTMB <- function(object,
-                             type = c("mle-laplace", "mle-mcmc", "mvn-laplace", "response"),
+                             type = c("mle-laplace", "mle-mcmc", "mvn-laplace", "response", "pearson"),
                              mcmc_iter = 500, mcmc_warmup = 250,
                              print_stan_model = FALSE,
                              stan_args = NULL,
@@ -273,7 +273,7 @@ residuals.sdmTMB <- function(object,
     cli_abort(paste(fam, "not yet supported."))
   )
 
-  if (type == "mle-laplace" || type == "response") {
+  if (type %in% c("mle-laplace", "response", "pearson")) {
     mu <- tryCatch({linkinv(predict(object, newdata = nd)[[est_column]])}, # newdata = NULL; fast
       error = function(e) NA)
     if (is.na(mu[[1]])) {
@@ -342,8 +342,36 @@ residuals.sdmTMB <- function(object,
     r <- res_func(object, y, mu, .n = size, ...)
   } else if (type == "mle-mcmc") {
     r <- res_func(obj_mle, y, mu, .n = size, ...)
+  } else if (type == "pearson") {
+    if (is.null(v <- family(object)$variance)) {
+      cli_abort(c("Variance function undefined for family;",
+        "cannot compute Pearson residuals"))
+    }
+    # FIXME: add sigma function, for now just binomial
+    if (length(formals(v)) > 1)
+      cli_abort("sdmTMB currently only supports variance functions with 1 argument")
+    # vv <- switch(length(formals(v)),
+    #   v(fitted(object)),
+    #   v(fitted(object), sigma(object)),
+    #   stop("variance function should take 1 or 2 arguments"))
+    vv <- v(mu)
+    wts <- if (prop_binomial) size else object$tmb_data$weights_i
+    if (!prop_binomial) r <- y - mu else r <- y / size - mu
+    r <- r / sqrt(vv)
+    if (!is.null(wts)) r <- r * sqrt(wts)
   } else {
     cli_abort("residual type not implemented")
   }
   r
+}
+
+# from:
+# https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#testing-for-overdispersioncomputing-overdispersion-factor
+check_overdisp <- function(object) {
+  rdf <- df.residual(model)
+  rp <- residuals(model, type = "pearson")
+  pearson_chisq <- sum(rp^2)
+  prat <- pearson_chisq / rdf
+  pval <- pchisq(pearson_chisq, df = rdf, lower.tail = FALSE)
+  data.frame(chisq = pearson_chisq, ratio = prat, rdf = rdf, p = pval)
 }

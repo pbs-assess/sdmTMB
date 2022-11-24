@@ -120,6 +120,10 @@ nbinom2 <- function(link = "log") {
     stats <- stats::make.link(linktemp)
   else if (is.character(link))
     stats <- stats::make.link(link)
+
+  v <- function(mu, theta) {
+
+  }
   x <- c(list(family = "nbinom2", link = linktemp), stats)
   add_to_family(x)
 }

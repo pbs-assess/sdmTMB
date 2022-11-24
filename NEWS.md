@@ -2,6 +2,11 @@
 
 # sdmTMB 0.1.4
 
+* Add Pearson residuals for several families. `residuals(fit, type = "pearson")`
+  Useful for checking for overdispersion with N > 1 binomial or Poisson
+  families, among other uses. See the `overdisp_fun()` function at:
+  https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#testing-for-overdispersioncomputing-overdispersion-factor
+
 * Fix bug when using `residuals()` or `simulate()` with binomial families
   specified via `cbind()` or `weights = N`. The binomial sample size wasn't
   being passed through typically resulting in Inf/-Inf.

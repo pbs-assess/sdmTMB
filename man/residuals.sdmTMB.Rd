@@ -6,7 +6,7 @@
 \usage{
 \method{residuals}{sdmTMB}(
   object,
-  type = c("mle-laplace", "mle-mcmc", "mvn-laplace", "response"),
+  type = c("mle-laplace", "mle-mcmc", "mvn-laplace", "response", "pearson"),
   mcmc_iter = 500,
   mcmc_warmup = 250,
   print_stan_model = FALSE,

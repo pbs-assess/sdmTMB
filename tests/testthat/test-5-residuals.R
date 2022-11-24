@@ -226,3 +226,59 @@ test_that("residuals() works", {
   expect_equal(as.double(r[!is.na(r)]), rpos)
 
   })
+
+test_that("Pearson residuals work", {
+  # binomial proportion
+  set.seed(1)
+  w <- sample(1:9, size = 300, replace = TRUE)
+  dat <- data.frame(y = stats::rbinom(300, size = w, 0.5))
+  dat$prop <- dat$y / w
+  m <- sdmTMB(prop ~ 1, data = dat, weights = w, family = binomial(), spatial = "off")
+  m1 <- glmmTMB::glmmTMB(prop ~ 1, data = dat, weights = w, family = binomial())
+  r <- residuals(m, type = "pearson")
+  r1 <- residuals(m1, type = "pearson")
+  expect_equal(as.numeric(r), as.numeric(r1))
+
+  # binomial cbind
+  dat$y0 <- w - dat$y
+  m <- sdmTMB(cbind(y, y0) ~ 1, data = dat, family = binomial(), spatial = "off")
+  m1 <- glmmTMB::glmmTMB(cbind(y, y0) ~ 1, data = dat, family = binomial())
+  r <- residuals(m, type = "pearson")
+  r1 <- residuals(m1, type = "pearson")
+  expect_equal(as.numeric(r), as.numeric(r1))
+
+  # gaussian
+  m <- sdmTMB(prop ~ 1, data = dat, family = gaussian(), spatial = "off")
+  m1 <- glmmTMB::glmmTMB(prop ~ 1, data = dat, family = gaussian())
+  r <- residuals(m, type = "pearson")
+  r1 <- residuals(m1, type = "pearson")
+  expect_equal(as.numeric(r), as.numeric(r1))
+
+  # gamma
+  set.seed(1)
+  dat$y <- rlnorm(300, 0.4, 0.3)
+  m <- sdmTMB(y ~ 1, data = dat, family = Gamma(link = "log"), spatial = "off")
+  m1 <- glmmTMB::glmmTMB(y ~ 1, data = dat, family = Gamma(link = "log"))
+  r <- residuals(m, type = "pearson")
+  r1 <- residuals(m1, type = "pearson")
+  expect_equal(as.numeric(r), as.numeric(r1))
+
+  # poisson
+  set.seed(1)
+  dat$y <- rpois(300, 0.4)
+  m <- sdmTMB(y ~ 1, data = dat, family = poisson(link = "log"), spatial = "off")
+  m1 <- glmmTMB::glmmTMB(y ~ 1, data = dat, family = poisson(link = "log"))
+  r <- residuals(m, type = "pearson")
+  r1 <- residuals(m1, type = "pearson")
+  expect_equal(as.numeric(r), as.numeric(r1))
+
+  # FIXME: add variance functions; requires fancy environment Theta passing
+  set.seed(1)
+  dat$y <- rnbinom(300, 0.4, 0.3)
+  m <- sdmTMB(y ~ 1, data = dat, family = nbinom2(), spatial = "off")
+  # m1 <- glmmTMB::glmmTMB(y ~ 1, data = dat, family = glmmTMB::nbinom2())
+  expect_error(r <- residuals(m, type = "pearson"), regexp = "Variance")
+  # r1 <- residuals(m1, type = "pearson")
+  # expect_equal(as.numeric(r), as.numeric(r1))
+})
+

@@ -3,6 +3,7 @@
 S3method(df.residual,sdmTMB)
 S3method(extractAIC,sdmTMB)
 S3method(family,sdmTMB)
+S3method(fitted,sdmTMB)
 S3method(fixef,sdmTMB)
 S3method(formula,sdmTMB)
 S3method(logLik,sdmTMB)
