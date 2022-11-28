@@ -2,6 +2,9 @@
 
 # sdmTMB 0.1.4
 
+* Relax range parameter `sanity()` check from 1x to 1.5x the greatest
+  distance in the data.
+
 * Add Pearson residuals for several families. `residuals(fit, type = "pearson")`
   Useful for checking for overdispersion with N > 1 binomial or Poisson
   families, among other uses. See the `overdisp_fun()` function at:

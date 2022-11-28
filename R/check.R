@@ -194,8 +194,8 @@ sanity <- function(fit, big_sd_log10 = 3, gradient_thresh = 0.001) {
   r <- max(r1, r2)
   range_ok <- TRUE
   if ("range" %in% b$term) {
-    if (max(b$estimate[b$term == "range"]) > r) {
-      msg <- "A `range` parameter looks fairly large (> greatest distance in data)"
+    if (max(b$estimate[b$term == "range"]) > r * 1.5) {
+      msg <- "A `range` parameter looks fairly large (> 1.5 the greatest distance in data)"
       cli::cli_alert_danger(msg)
       cli::cli_alert_info(simplify_msg)
       cli::cli_alert_info("Also make sure your spatial coordinates are not too big or small (e.g., work in UTM km instead of UTM m)", wrap = TRUE)
