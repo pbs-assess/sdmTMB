@@ -40,7 +40,7 @@ NULL
 #'   For binomial family options, see 'Binomial families' in the Details
 #'   section below.
 #' @param spatial Estimate spatial random fields? Options are `'on'` / `'off'`
-#'   or `TRUE` / `FALSE`. Optionaly a list for delta models, e.g. `list('on',
+#'   or `TRUE` / `FALSE`. Optionally, a list for delta models, e.g. `list('on',
 #'   'off')`.
 #' @param spatiotemporal Estimate the spatiotemporal random fields as `'iid'`
 #'   (independent and identically distributed; default), stationary `'ar1'`
@@ -73,16 +73,16 @@ NULL
 #'   \doi{10.1111/ecog.05176} and the [spatial trends
 #'   vignette](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html).
 #'   Note this predictor should be centered to have mean zero and have a
-#'   standard deviation of approximately 1. Structure must
-#'   currently be shared in delta models.
+#'   standard deviation of approximately 1 and should likely also be included as
+#'   a main effect. Structure must currently be shared in delta models.
 #' @param weights A numeric vector representing optional likelihood weights for
 #'   the conditional model. Implemented as in \pkg{glmmTMB}: weights do not have
 #'   to sum to one and are not internally modified. Can also be used for trials
-#'   with the binomial family; the weights argument needs to be a vector and not
+#'   with the binomial family; the `weights` argument needs to be a vector and not
 #'   a name of the variable in the data frame. See the Details section below.
 #' @param offset A numeric vector representing the model offset. In delta/hurdle
 #'   models, this applies only to the positive component. Usually a log
-#'   transformed variable. *Not included in any prediction.*
+#'   transformed variable. The `offset` argument needs to be a vector and not a name of the variable in the data frame.
 #' @param extra_time Optional extra time slices (e.g., years) to include for
 #'   interpolation or forecasting with the predict function. See the Details
 #'   section below.
@@ -98,8 +98,7 @@ NULL
 #' @param priors Optional penalties/priors via [sdmTMBpriors()]. Must currently
 #'   be shared across delta models.
 #' @param knots Optional named list containing knot values to be used for basis
-#'   construction of smoothing terms. See [mgcv::gam()] and [mgcv::gamm()] for
-#'   more.
+#'   construction of smoothing terms. See [mgcv::gam()] and [mgcv::gamm()].
 #'   E.g., `s(x, bs = 'cc', k = 4), knots = list(x = c(1, 2, 3, 4))`
 #' @param previous_fit A previously fitted sdmTMB model to initialize the
 #'   optimization with. Can greatly speed up fitting. Note that the model must

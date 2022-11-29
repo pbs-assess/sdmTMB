@@ -71,7 +71,7 @@ For binomial family options, see 'Binomial families' in the Details
 section below.}
 
 \item{spatial}{Estimate spatial random fields? Options are \code{'on'} / \code{'off'}
-or \code{TRUE} / \code{FALSE}. Optionaly a list for delta models, e.g. \code{list('on', 'off')}.}
+or \code{TRUE} / \code{FALSE}. Optionally, a list for delta models, e.g. \code{list('on', 'off')}.}
 
 \item{spatiotemporal}{Estimate the spatiotemporal random fields as \code{'iid'}
 (independent and identically distributed; default), stationary \code{'ar1'}
@@ -106,18 +106,18 @@ random field is assumed to have a mean of 0. If a (scaled) time column is
 used, it will represent a local-time-trend model. See
 \doi{10.1111/ecog.05176} and the \href{https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.
 Note this predictor should be centered to have mean zero and have a
-standard deviation of approximately 1. Structure must
-currently be shared in delta models.}
+standard deviation of approximately 1 and should likely also be included as
+a main effect. Structure must currently be shared in delta models.}
 
 \item{weights}{A numeric vector representing optional likelihood weights for
 the conditional model. Implemented as in \pkg{glmmTMB}: weights do not have
 to sum to one and are not internally modified. Can also be used for trials
-with the binomial family; the weights argument needs to be a vector and not
+with the binomial family; the \code{weights} argument needs to be a vector and not
 a name of the variable in the data frame. See the Details section below.}
 
 \item{offset}{A numeric vector representing the model offset. In delta/hurdle
 models, this applies only to the positive component. Usually a log
-transformed variable. \emph{Not included in any prediction.}}
+transformed variable. The \code{offset} argument needs to be a vector and not a name of the variable in the data frame.}
 
 \item{extra_time}{Optional extra time slices (e.g., years) to include for
 interpolation or forecasting with the predict function. See the Details
@@ -140,8 +140,7 @@ Must be shared across delta models.}
 be shared across delta models.}
 
 \item{knots}{Optional named list containing knot values to be used for basis
-construction of smoothing terms. See \code{\link[mgcv:gam]{mgcv::gam()}} and \code{\link[mgcv:gamm]{mgcv::gamm()}} for
-more.
+construction of smoothing terms. See \code{\link[mgcv:gam]{mgcv::gam()}} and \code{\link[mgcv:gamm]{mgcv::gamm()}}.
 E.g., \verb{s(x, bs = 'cc', k = 4), knots = list(x = c(1, 2, 3, 4))}}
 
 \item{bayesian}{Logical indicating if the model will be passed to
