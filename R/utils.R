@@ -189,6 +189,12 @@ check_and_parse_thresh_params <- function(formula, data) {
     formula <- out$formula
     threshold_function <- "logistic"
   }
+  if (any(grepl("mi", terms_labels))) {
+    out <- parse_threshold_formula(formula, "mi", terms_labels)
+    threshold_parameter <- out$threshold_parameter
+    formula <- out$formula
+    threshold_function <- "mi"
+  }
   if (!is.null(threshold_parameter)) {
     if (length(threshold_parameter) > 1) {
       cli_abort("`threshold_parameter` must be a single variable name.")
@@ -199,13 +205,16 @@ check_and_parse_thresh_params <- function(formula, data) {
   }
 
   if (is.null(threshold_parameter)) {
-    X_threshold <- rep(0, nrow(data)) # just placeholder
+    X_threshold <- matrix(0, nrow = nrow(data), ncol = 0L) # just placeholder
     threshold_func <- 0L
   } else {
     X_threshold <- data[, names(data) == threshold_parameter, drop = TRUE]
     # indexed 1, 2 because 0 will tell TMB not to estimate this:
-    threshold_func <- match(threshold_function, c("linear", "logistic"))
+    threshold_func <- match(threshold_function, c("linear", "logistic", "mi"))
   }
+  # TODO: SA: need to parse input of an extra data column! and finish parsing of mi
+  # and deal with X_threshold being potentially 2 columns here on in
+  # *maybe* simplest given the niche use is to enforce columns named 'po2' and 'invtemp'?
   X_threshold <- as.numeric(unlist(X_threshold))
   list(
     formula = formula, threshold_parameter = threshold_parameter,

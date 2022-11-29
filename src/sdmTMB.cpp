@@ -194,7 +194,7 @@ Type objective_function<Type>::operator()()
   DATA_IVECTOR(spatial_only);
   DATA_INTEGER(spatial_covariate);
 
-  DATA_VECTOR(X_threshold);
+  DATA_MATRIX(X_threshold);
   DATA_VECTOR(proj_X_threshold);
   DATA_INTEGER(threshold_func);
   // optional model for nonstationary st variance
@@ -261,15 +261,22 @@ Type objective_function<Type>::operator()()
 
   // DELTA TODO
   // ------------------ Derived variables -------------------------------------------------
-  vector<Type> s_slope(n_m), s_cut(n_m), s50(n_m), s95(n_m), s_max(n_m);
-  // these are for linear model
+  vector<Type> s_slope(n_m), s_cut(n_m), s50(n_m), s95(n_m), s_max(n_m), Eo(n_m);
   for (int m = 0; m < n_m; m++) {
-    s_slope(m) = b_threshold(0,m);
-    s_cut(m) = b_threshold(1,m);
-    if (threshold_func == 2) {
+    if (threshold_func == 1) { // linear hockey stick
+      s_slope(m) = b_threshold(0,m);
+      s_cut(m) = b_threshold(1,m);
+    } else if (threshold_func == 2) { // logistic
       s50(m) = b_threshold(0,m); // threshold at which function is 50% of max
       s95(m) = b_threshold(0,m) + exp(b_threshold(1,m)); // threshold at which function is 95% of max
       s_max(m) = b_threshold(2,m);
+    } else if (threshold_func == 3) { // MI logistic model
+      s50(m) = b_threshold(0,m); // threshold at which function is 50% of max
+      s95(m) = b_threshold(1,m); // not actually s95; 'delta' here for MI model
+      s_max(m) = b_threshold(2,m);
+      Eo(m) = b_threshold(3,m);
+    } else {
+      error("Threshold function not implemented.")
     }
   }
   // DELTA DONE
@@ -610,18 +617,17 @@ Type objective_function<Type>::operator()()
 
   // add threshold effect if specified
   if (threshold_func > 0) {
-    if (threshold_func == 1) {
-      // linear
-      for (int m = 0; m < n_m; m++) {
-        for (int i = 0; i < n_i; i++) {
-          eta_fixed_i(i,m) += sdmTMB::linear_threshold(X_threshold(i), s_slope(m), s_cut(m));
-        }
-      }
-    } else {
-      // logistic
-      for (int m = 0; m < n_m; m++) {
-        for (int i = 0; i < n_i; i++) {
-          eta_fixed_i(i,m) += sdmTMB::logistic_threshold(X_threshold(i), s50(m), s95(m), s_max(m));
+    array<Type> mi(n_i,n_m);
+    mi.setZero();
+    for (int m = 0; m < n_m; m++) {
+      for (int i = 0; i < n_i; i++) {
+        if (threshold_func == 1) { // hockey stick
+          eta_fixed_i(i,m) += sdmTMB::linear_threshold(X_threshold(i,0), s_slope(m), s_cut(m), 0);
+        } else if (threshold_func == 2) { // logistic
+          eta_fixed_i(i,m) += sdmTMB::logistic_threshold(X_threshold(i,0), s50(m), s95(m), s_max(m), 0);
+        } else if (threshold_func == 3) { // MI logistic
+          mi(i,m) = X_threshold[i,0] * exp(Eo * X_threshold[i,1]);
+          eta_fixed_i(i,m) += sdmTMB::logistic_threshold(mi(i,m), s50(m), s95(m), s_max(m), 1);
         }
       }
     }
