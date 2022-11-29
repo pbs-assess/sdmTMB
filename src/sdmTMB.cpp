@@ -1168,13 +1168,17 @@ Type objective_function<Type>::operator()()
      REPORT(s_cut);
      ADREPORT(s_cut);
    }
-   if (threshold_func == 2) { // logistic function model
+   if (threshold_func == 2 || threshold_func == 3) { // logistic function model
      REPORT(s50);
      ADREPORT(s50);
      REPORT(s95);
      ADREPORT(s95);
      REPORT(s_max);
      ADREPORT(s_max);
+   }
+   if (threshold_func == 3) { // MI
+     REPORT(Eo);
+     ADREPORT(Eo);
    }
 //    if (calc_quadratic_range && b_j(1) < Type(0)) {
 //      vector<Type> quadratic_roots = sdmTMB::GetQuadraticRoots(b_j(1), b_j(0), Type(0.05));
