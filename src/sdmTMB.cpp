@@ -625,7 +625,7 @@ Type objective_function<Type>::operator()()
         if (threshold_func == 1 || threshold_func == 2) { // regular linear or logistic
           X_thresh(i,m) = X_threshold[i,0];
         } else { // MI
-          X_thresh(i,m) = X_threshold[i,0] * exp(Eo * X_threshold[i,1]);
+          X_thresh(i,m) = X_threshold[i,0] * exp(Eo(m) * X_threshold[i,1]);
           mi_logistic = 1;
         }
       }
@@ -633,9 +633,9 @@ Type objective_function<Type>::operator()()
     for (int m = 0; m < n_m; m++) {
       for (int i = 0; i < n_i; i++) {
         if (threshold_func == 1) { // hockey stick
-          eta_fixed_i(i,m) += sdmTMB::linear_threshold(X_threshold(i,0), s_slope(m), s_cut(m));
+          eta_fixed_i(i,m) += sdmTMB::linear_threshold(X_thresh(i,m), s_slope(m), s_cut(m));
         } else { // logistic
-          eta_fixed_i(i,m) += sdmTMB::logistic_threshold(X_threshold(i,0), s50(m), s95(m), s_max(m), mi_logistic);
+          eta_fixed_i(i,m) += sdmTMB::logistic_threshold(X_thresh(i,m), s50(m), s95(m), s_max(m), mi_logistic);
       }
     }
   }
