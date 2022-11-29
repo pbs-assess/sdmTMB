@@ -617,18 +617,25 @@ Type objective_function<Type>::operator()()
 
   // add threshold effect if specified
   if (threshold_func > 0) {
-    array<Type> mi(n_i,n_m);
-    mi.setZero();
+    array<Type> X_thresh(n_i,n_m);
+    X_thresh.setZero();
+    int mi_logistic = 0;
+    for (int m = 0; m < n_m; m++) {
+      for (int i = 0; i < n_i; i++) {
+        if (threshold_func == 1 || threshold_func == 2) { // regular linear or logistic
+          X_thresh(i,m) = X_threshold[i,0];
+        } else { // MI
+          X_thresh(i,m) = X_threshold[i,0] * exp(Eo * X_threshold[i,1]);
+          mi_logistic = 1;
+        }
+      }
+    }
     for (int m = 0; m < n_m; m++) {
       for (int i = 0; i < n_i; i++) {
         if (threshold_func == 1) { // hockey stick
-          eta_fixed_i(i,m) += sdmTMB::linear_threshold(X_threshold(i,0), s_slope(m), s_cut(m), 0);
-        } else if (threshold_func == 2) { // logistic
-          eta_fixed_i(i,m) += sdmTMB::logistic_threshold(X_threshold(i,0), s50(m), s95(m), s_max(m), 0);
-        } else if (threshold_func == 3) { // MI logistic
-          mi(i,m) = X_threshold[i,0] * exp(Eo * X_threshold[i,1]);
-          eta_fixed_i(i,m) += sdmTMB::logistic_threshold(mi(i,m), s50(m), s95(m), s_max(m), 1);
-        }
+          eta_fixed_i(i,m) += sdmTMB::linear_threshold(X_threshold(i,0), s_slope(m), s_cut(m));
+        } else { // logistic
+          eta_fixed_i(i,m) += sdmTMB::logistic_threshold(X_threshold(i,0), s50(m), s95(m), s_max(m), mi_logistic);
       }
     }
   }
