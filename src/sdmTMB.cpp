@@ -939,13 +939,13 @@ Type objective_function<Type>::operator()()
         if (threshold_func == 1) { // linear
           for (int m = 0; m < n_m; m++) {
             for (int i = 0; i < n_p; i++) {
-              proj_fe(i,m) += sdmTMB::linear_threshold(proj_X_thresh(i), s_slope(m), s_cut(m));
+              proj_fe(i,m) += sdmTMB::linear_threshold(proj_X_thresh(i,m), s_slope(m), s_cut(m));
             }
           }
         } else { // logistic
           for (int m = 0; m < n_m; m++) {
             for (int i = 0; i < n_p; i++) {
-              proj_fe(i,m) += sdmTMB::logistic_threshold(proj_X_thresh(i), s50(m), s95(m), s_max(m), mi_est);
+              proj_fe(i,m) += sdmTMB::logistic_threshold(proj_X_thresh(i,m), s50(m), s95(m), s_max(m), mi_est);
             }
           }
         }

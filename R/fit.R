@@ -1153,6 +1153,9 @@ sdmTMB <- function(
     tmb_data$include_spatial <- 0L
     # tmb_data$spatial_only <- rep(1L, length(tmb_data$spatial_only))
 
+    for (i in seq_along(start)) {
+      tmb_params[[names(start)[i]]] <- start[[i]]
+    }
     tmb_obj1 <- TMB::MakeADFun(
       data = tmb_data, parameters = tmb_params,
       map = tmb_map, DLL = "sdmTMB", silent = silent)

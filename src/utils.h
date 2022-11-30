@@ -215,11 +215,9 @@ Type logistic_threshold(Type x, Type s50, Type s95, Type scale, int mi) {
   // Type s95 = s50 + exp(soffset); // this done outside function
   Type pred;
   if (mi) {
-    pred = scale * (Type(1.0) /
-      (Type(1.0) + exp(-log(Type(19.0)) * (x - s50) / s95)) - Type(1.0));
+    pred = scale * (1. / (1. + exp(-log(19.) * (x - s50) / s95)) - 1.);
   } else {
-    pred = scale * Type(1.0) /
-      (Type(1.0) + exp(-log(Type(19.0)) * (x - s50) / (s95 - s50)));
+    pred = scale * (1. / (1. + exp(-log(19.) * (x - s50) / (s95 - s50))));
   }
   return pred;
 }
