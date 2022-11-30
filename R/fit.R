@@ -1042,6 +1042,7 @@ sdmTMB <- function(
     spatial_covariate = as.integer(!is.null(spatial_varying)),
     calc_quadratic_range = as.integer(quadratic_roots),
     X_threshold = thresh[[1]]$X_threshold, # TODO: don't hardcode index thresh[[1]]
+    mi_est = as.integer(thresh[[1]]$mi_est),
     proj_X_threshold = 0, # dummy
     threshold_func = thresh[[1]]$threshold_func,# TODO: don't hardcode index thresh[[1]]
     RE_indexes = RE_indexes,
@@ -1086,7 +1087,7 @@ sdmTMB <- function(
     omega_s    = matrix(0, n_s, n_m),
     zeta_s    = array(0, dim = c(n_s, n_z, n_m)),
     epsilon_st = array(0, dim = c(n_s, tmb_data$n_t, n_m)),
-    b_threshold = if(thresh[[1]]$threshold_func == 2L) matrix(0, 3L, n_m) else matrix(0, 2L, n_m),
+    b_threshold = matrix(0, thresh[[1]]$n_par, n_m),
     b_epsilon = rep(0, n_m),
     ln_epsilon_re_sigma = rep(0, n_m),
     epsilon_re = matrix(0, tmb_data$n_t, n_m),
@@ -1145,7 +1146,6 @@ sdmTMB <- function(
   }
 
   if (multiphase && is.null(previous_fit) && do_fit) {
-
 
     original_tmb_data <- tmb_data
     # # much faster on first phase!?

@@ -177,47 +177,52 @@ check_and_parse_thresh_params <- function(formula, data) {
     cli_abort("Please include only a *single* threshold variable.")
   }
   threshold_parameter <- NULL
+
+  n_par <- 0
   if (any(grepl("breakpt", terms_labels))) {
     out <- parse_threshold_formula(formula, "breakpt", terms_labels)
     threshold_parameter <- out$threshold_parameter
     formula <- out$formula
     threshold_function <- "linear"
+    n_par <- 2
   }
   if (any(grepl("logistic", terms_labels))) {
     out <- parse_threshold_formula(formula, "logistic", terms_labels)
     threshold_parameter <- out$threshold_parameter
     formula <- out$formula
     threshold_function <- "logistic"
-  }
-  if (any(grepl("mi", terms_labels))) {
-    out <- parse_threshold_formula(formula, "mi", terms_labels)
-    threshold_parameter <- out$threshold_parameter
-    formula <- out$formula
-    threshold_function <- "mi"
+    n_par <- 3
   }
   if (!is.null(threshold_parameter)) {
     if (length(threshold_parameter) > 1) {
       cli_abort("`threshold_parameter` must be a single variable name.")
     }
-    if (!threshold_parameter %in% names(data)) {
+    if (!threshold_parameter %in% c(names(data), "mi")) {
       cli_abort("`threshold_parameter` is not a column in the `data` data frame.")
     }
   }
 
+  mi_est <- isTRUE(threshold_parameter == "mi")
   if (is.null(threshold_parameter)) {
     X_threshold <- matrix(0, nrow = nrow(data), ncol = 0L) # just placeholder
     threshold_func <- 0L
   } else {
-    X_threshold <- data[, names(data) == threshold_parameter, drop = TRUE]
+    if (mi_est) {
+      found_cols <- names(data) %in% c("po2", "invtemp")
+      if (sum(found_cols) != 2)
+        cli_abort("Metabolic index calcuations require columns named 'po2' and 'invtemp'.")
+      X_threshold <- as.matrix(data[, found_cols])
+      n_par <- n_par + 1
+    } else {
+      X_threshold <- matrix(as.numeric(data[, names(data) == threshold_parameter, drop = TRUE], ncol = 1L))
+    }
     # indexed 1, 2 because 0 will tell TMB not to estimate this:
-    threshold_func <- match(threshold_function, c("linear", "logistic", "mi"))
+    threshold_func <- match(threshold_function, c("linear", "logistic"))
   }
-  # TODO: SA: need to parse input of an extra data column! and finish parsing of mi
-  # and deal with X_threshold being potentially 2 columns here on in
-  # *maybe* simplest given the niche use is to enforce columns named 'po2' and 'invtemp'?
-  X_threshold <- as.numeric(unlist(X_threshold))
+
   list(
     formula = formula, threshold_parameter = threshold_parameter,
+    mi_est = mi_est, n_par = n_par,
     threshold_func = threshold_func, X_threshold = X_threshold
   )
 }

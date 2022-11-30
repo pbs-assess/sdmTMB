@@ -197,6 +197,7 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(X_threshold);
   DATA_VECTOR(proj_X_threshold);
   DATA_INTEGER(threshold_func);
+  DATA_INTEGER(mi_est); // MI estimation?
   // optional model for nonstationary st variance
   DATA_INTEGER(est_epsilon_model);
   DATA_INTEGER(est_epsilon_slope);
@@ -270,13 +271,16 @@ Type objective_function<Type>::operator()()
       s50(m) = b_threshold(0,m); // threshold at which function is 50% of max
       s95(m) = b_threshold(0,m) + exp(b_threshold(1,m)); // threshold at which function is 95% of max
       s_max(m) = b_threshold(2,m);
-    } else if (threshold_func == 3) { // MI logistic model
-      s50(m) = b_threshold(0,m); // threshold at which function is 50% of max
-      s95(m) = b_threshold(1,m); // not actually s95; 'delta' here for MI model
-      s_max(m) = b_threshold(2,m);
-      Eo(m) = b_threshold(3,m);
     } else {
-      error("Threshold function not implemented.")
+      error("Threshold function not implemented.");
+    }
+
+    if (mi_est && threshold_func == 1) { // MI hockey stick
+      Eo(m) = b_threshold(2,m);
+    }
+    if (mi_est && threshold_func == 2) { // MI logistic model
+      s95(m) = b_threshold(1,m); // not actually s95; 'delta' here for MI model
+      Eo(m) = b_threshold(3,m);
     }
   }
   // DELTA DONE
@@ -619,14 +623,12 @@ Type objective_function<Type>::operator()()
   if (threshold_func > 0) {
     array<Type> X_thresh(n_i,n_m);
     X_thresh.setZero();
-    int mi_logistic = 0;
     for (int m = 0; m < n_m; m++) {
       for (int i = 0; i < n_i; i++) {
-        if (threshold_func == 1 || threshold_func == 2) { // regular linear or logistic
-          X_thresh(i,m) = X_threshold[i,0];
+        if (!mi_est) { // regular linear or logistic
+          X_thresh(i,m) = X_threshold(i,0);
         } else { // MI
-          X_thresh(i,m) = X_threshold[i,0] * exp(Eo(m) * X_threshold[i,1]);
-          mi_logistic = 1;
+          X_thresh(i,m) = X_threshold(i,0) * exp(Eo(m) * X_threshold(i,1));
         }
       }
     }
@@ -635,7 +637,8 @@ Type objective_function<Type>::operator()()
         if (threshold_func == 1) { // hockey stick
           eta_fixed_i(i,m) += sdmTMB::linear_threshold(X_thresh(i,m), s_slope(m), s_cut(m));
         } else { // logistic
-          eta_fixed_i(i,m) += sdmTMB::logistic_threshold(X_thresh(i,m), s50(m), s95(m), s_max(m), mi_logistic);
+          eta_fixed_i(i,m) += sdmTMB::logistic_threshold(X_thresh(i,m), s50(m), s95(m), s_max(m), mi_est);
+        }
       }
     }
   }
@@ -923,20 +926,27 @@ Type objective_function<Type>::operator()()
 
     // add threshold effect if specified
     if (threshold_func > 0) {
-      if (threshold_func == 1) {
-        // linear
-        for (int m = 0; m < n_m; m++) {
-          for (int i = 0; i < n_p; i++) {
-            // TODO: does proj_X_threshold(i) need to be dimensioned by model?
-            proj_fe(i,m) += sdmTMB::linear_threshold(proj_X_threshold(i), s_slope(m), s_cut(m));
+      array<Type> proj_X_thresh(n_i,n_m);
+      proj_X_thresh.setZero();
+      for (int m = 0; m < n_m; m++) {
+        for (int i = 0; i < n_i; i++) {
+          if (!mi_est) { // regular linear or logistic
+            proj_X_thresh(i,m) = proj_X_threshold(i,0);
+          } else { // MI
+            proj_X_thresh(i,m) = proj_X_threshold(i,0) * exp(Eo(m) * proj_X_threshold(i,1));
           }
         }
-      } else {
-        // logistic
-        for (int m = 0; m < n_m; m++) {
-          for (int i = 0; i < n_p; i++) {
-            // TODO: does proj_X_threshold(i) need to be dimensioned by model?
-            proj_fe(i,m) += sdmTMB::logistic_threshold(proj_X_threshold(i), s50(m), s95(m), s_max(m));
+        if (threshold_func == 1) { // linear
+          for (int m = 0; m < n_m; m++) {
+            for (int i = 0; i < n_p; i++) {
+              proj_fe(i,m) += sdmTMB::linear_threshold(proj_X_thresh(i), s_slope(m), s_cut(m));
+            }
+          }
+        } else { // logistic
+          for (int m = 0; m < n_m; m++) {
+            for (int i = 0; i < n_p; i++) {
+              proj_fe(i,m) += sdmTMB::logistic_threshold(proj_X_thresh(i), s50(m), s95(m), s_max(m), mi_est);
+            }
           }
         }
       }
@@ -1168,7 +1178,7 @@ Type objective_function<Type>::operator()()
      REPORT(s_cut);
      ADREPORT(s_cut);
    }
-   if (threshold_func == 2 || threshold_func == 3) { // logistic function model
+   if (threshold_func == 2) { // logistic function model
      REPORT(s50);
      ADREPORT(s50);
      REPORT(s95);
@@ -1176,7 +1186,7 @@ Type objective_function<Type>::operator()()
      REPORT(s_max);
      ADREPORT(s_max);
    }
-   if (threshold_func == 3) { // MI
+   if (mi_est) { // MI
      REPORT(Eo);
      ADREPORT(Eo);
    }
