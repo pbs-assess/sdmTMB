@@ -147,6 +147,12 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     } else {
       par_name <- paste0(x$threshold_parameter, c("-s50", "-s95", "-smax"))
     }
+    if (x$tmb_data$mi_est) {
+      par_name <- c(par_name, paste0(x$threshold_parameter, "-Eo"))
+      if (x$threshold_function == 2L) {
+        par_name[2] <- paste0(x$threshold_parameter, "-delta")
+      }
+    }
     out <- rbind(
       out,
       data.frame(
