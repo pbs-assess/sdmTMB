@@ -271,7 +271,7 @@ Type objective_function<Type>::operator()()
       s50(m) = b_threshold(0,m); // threshold at which function is 50% of max
       s95(m) = b_threshold(0,m) + exp(b_threshold(1,m)); // threshold at which function is 95% of max
       s_max(m) = b_threshold(2,m);
-    } else {
+    } else if (threshold_func > 2) {
       error("Threshold function not implemented.");
     }
 
