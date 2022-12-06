@@ -51,4 +51,20 @@ test_that("Metabolic index threshold models fit", {
   expect_gt(cor(log_mu, p$est), 0.9)
   r <- residuals(m2)
   qqnorm(r);qqline(r)
+
+  # with priors
+  m3 <- sdmTMB(y ~ logistic(mi), data = dat, spatial = "off",
+    family = lognormal(),
+    priors = sdmTMBpriors(threshold = normal(start[,1], c(0.5, 0.5, 0.5, 0.5))),
+    control = sdmTMBcontrol(start = list(b_threshold = start)))
+
+  expect_equal(m2$model$par, m3$model$par, tolerance = 0.1)
+  expect_false(identical(m2$model$par, m3$model$par))
+
+  expect_error({
+    m4 <- sdmTMB(y ~ logistic(mi), data = dat, spatial = "off",
+      family = lognormal(),
+      priors = sdmTMBpriors(threshold = normal(start[1:3,1], c(0.5, 0.5, 0.5))),
+      control = sdmTMBcontrol(start = list(b_threshold = start)))
+  }, regexp = "number of")
 })

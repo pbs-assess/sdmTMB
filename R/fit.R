@@ -970,6 +970,15 @@ sdmTMB <- function(
     priors_b_Sigma <- as.matrix(Sigma[not_na, not_na])
   }
 
+  .priors$threshold <- NULL # passed in separately
+  priors_threshold <- priors$threshold
+  if (all(is.na(priors_threshold)))
+    priors_threshold <- matrix(NA, nrow = thresh[[1]]$n_par, ncol = 2L)
+  msg <- paste0(
+    "Number of threshold priors does not match the number of threshold parameters (",
+    thresh[[1]]$n_par, ")")
+  assert_that(nrow(priors_threshold) == thresh[[1]]$n_par, msg = msg)
+
   if (!"A_st" %in% names(spde)) cli_abort("`mesh` was created with an old version of `make_mesh()`.")
   if (delta) y_i <- cbind(ifelse(y_i > 0, 1, 0), ifelse(y_i > 0, y_i, NA_real_))
   if (!delta) y_i <- matrix(y_i, ncol = 1L)
@@ -1015,6 +1024,7 @@ sdmTMB <- function(
     calc_cog = 0L,
     random_walk = as.integer(!is.null(time_varying) && time_varying_type == "rw"),
     ar1_time = as.integer(!is.null(time_varying) && time_varying_type == "ar1"),
+    priors_threshold = priors_threshold,
     priors_b_n = length(not_na),
     priors_b_index = not_na - 1L,
     priors_b_mean = priors_b[not_na,1],

@@ -154,6 +154,7 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(priors_b_Sigma); // beta priors matrix
   DATA_INTEGER(priors_b_n);
   DATA_IVECTOR(priors_b_index);
+  DATA_MATRIX(priors_threshold);
   DATA_VECTOR(priors); // all other priors as a vector
   DATA_IVECTOR(ar1_fields);
   DATA_IVECTOR(rw_fields);
@@ -909,6 +910,13 @@ Type objective_function<Type>::operator()()
       // log abs derivative = log((2 * exp(x)) / (1 + exp(x))^2)
       if (stan_flag) jnll -= log(2.) + ar1_phi(m) - 2. * log(1. + exp(ar1_phi(m)));
     }
+    for (int i = 0; i < b_threshold.rows(); i++) {
+      if (!sdmTMB::isNA(priors_threshold(i,0)) && !sdmTMB::isNA(priors_threshold(i,1))) {
+        jnll -= dnorm(b_threshold(i,m), priors_threshold(i,0), priors_threshold(i,1), true);
+      }
+    }
+
+
   }
 
   // ------------------ Predictions on new data --------------------------------

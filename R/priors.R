@@ -61,6 +61,10 @@
 #' @param tweedie_p A `normal()` prior for the Tweedie power parameter. Note the
 #'   parameter has support `1 < tweedie_p < 2` so choose a mean appropriately.
 #' @param b `normal()` priors for the main population-level 'beta' effects.
+#' @param threshold `normal()` priors for any threshold effects. For
+#'   breakpoint/hockey-stick: `s_slope`, and `s_cut`; for logistic: `s50`,
+#'   `s95`, `s_max`; if a metabolic index threshold model: add an `Eo` prior on
+#'   the end.
 #'
 #' @rdname priors
 #'
@@ -74,11 +78,13 @@ sdmTMBpriors <- function(
   phi = halfnormal(NA, NA),
   ar1_rho = normal(NA, NA),
   tweedie_p = normal(NA, NA),
-  b = normal(NA, NA)
+  b = normal(NA, NA),
+  threshold = normal(NA, NA)
 ) {
   assert_that(attr(matern_s, "dist") == "pc_matern")
   assert_that(attr(matern_st, "dist") == "pc_matern")
   assert_that(attr(phi, "dist") == "normal")
+  assert_that(attr(threshold, "dist") == "normal")
   assert_that(attr(tweedie_p, "dist") == "normal")
   assert_that(attr(b, "dist") %in% c("normal", "mvnormal"))
   list(
@@ -87,7 +93,8 @@ sdmTMBpriors <- function(
     phi = phi,
     ar1_rho = ar1_rho,
     tweedie_p = tweedie_p,
-    b = b
+    b = b,
+    threshold = threshold
   )
 }
 
