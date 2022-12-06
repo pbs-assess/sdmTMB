@@ -68,3 +68,55 @@ test_that("Metabolic index threshold models fit", {
       control = sdmTMBcontrol(start = list(b_threshold = start)))
   }, regexp = "number of")
 })
+
+test_that("MI simulation works", {
+  set.seed(123)
+  # make fake predictor(s) (a1) and sampling locations:
+  predictor_dat <- data.frame(
+    X = runif(300), Y = runif(300), a1 = rnorm(300)
+  )
+  mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.1)
+
+  beta1 <- -0.4
+  beta3 <- 0.3
+  delta <- 3
+  Eo <- 0.1
+  x50 <- 5
+
+  N <- 300
+  set.seed(123)
+  invtemp <- rnorm(N)
+  po2 <- rlnorm(N)
+  mi <- po2 * exp(Eo * invtemp)
+  log_mu <- beta1 + beta3 * (1 / (1 + exp(-log(19) * (mi - x50) / delta)) - 1)
+  mu <- exp(log_mu)
+
+  predictor_dat$po2 <- po2
+  predictor_dat$invtemp <- invtemp
+
+  tb <- numeric(4L)
+  tb[1] <- x50
+  tb[2] <- delta
+  tb[3] <- beta3
+  tb[4] <- Eo
+
+  sim_dat <- sdmTMB_simulate(
+    formula = ~ 1 + logistic(mi),
+    data = predictor_dat,
+    mesh = mesh,
+    family = lognormal(),
+    range = 0.5,
+    phi = 0.1,
+    sigma_O = 0,
+    seed = 42,
+    threshold_coefs = tb,
+    B = beta1
+  )
+
+  if (FALSE) {
+    plot(sim_dat$mu, mu)
+    abline(0, 1)
+  }
+
+  expect_equal(sim_dat$mu, mu, tolerance = 0.0001)
+})
