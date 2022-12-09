@@ -23,6 +23,7 @@ nobs.sdmTMB <- function(object, ...) {
 #' @param object The fitted sdmTMB model object
 #' @importFrom stats predict
 #' @export
+#' @noRd
 fitted.sdmTMB <- function(object, ...) {
   predict(object, type = "response")$est
 }
