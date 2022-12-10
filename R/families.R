@@ -378,3 +378,153 @@ delta_beta <- function(link1 = "logit", link2 = "logit") {
        family = c("binomial", "Beta"),
        clean_name = "delta_beta(link1 = 'logit', link2 = 'logit')")
 }
+
+#' @param thresh Std. normal distribution fixed value parameter.
+#' @export
+#' @details
+#' For `stdnorm1()`, the threshold parameter is currently not estimated and is fixed at `thresh`.
+#' @rdname families
+#' @examples
+#' stdnorm1(link = "log")
+stdnorm1 <- function(link = "log", thresh = 0) {
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("identity", "log", "inverse")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+
+  x <- c(list(family = "stdnorm1", link = linktemp, thresh = thresh), stats)
+  add_to_family(x)
+}
+
+#' @export
+#' @details
+#' For `stdnorm2()`, the threshold parameter is estimated
+#' @rdname families
+#' @examples
+#' stdnorm2(link = "log")
+stdnorm2 <- function(link = "log") {
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("identity", "log", "inverse")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+
+  x <- c(list(family = "stdnorm2", link = linktemp), stats)
+  add_to_family(x)
+}
+
+#' @param thresh Std. normal distribution fixed value parameter.
+#' @export
+#' @details
+#' For `stdnorm3()`, the threshold parameter is currently not estimated and is fixed at `thresh`.
+#' @rdname families
+#' @examples
+#' stdnorm3(link = "log")
+stdnorm3 <- function(link = "log", thresh = 0) {
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("identity", "log", "inverse")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+
+  x <- c(list(family = "stdnorm3", link = linktemp, thresh = thresh), stats)
+  add_to_family(x)
+}
+
+#' @export
+#' @details
+#' For `stdnorm4()`, the threshold parameter is estimated
+#' @rdname families
+#' @examples
+#' stdnorm4(link = "log")
+stdnorm4 <- function(link = "log") {
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("identity", "log", "inverse")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+
+  x <- c(list(family = "stdnorm4", link = linktemp), stats)
+  add_to_family(x)
+}
+
+#' @param link1 Link for first part of delta/hurdle model.
+#' @param link2 Link for second part of delta/hurdle model.
+#' @export
+#' @importFrom stats binomial
+#' @examples
+#' delta_stdnorm1()
+#' @rdname families
+delta_stdnorm1 <- function(link1 = "logit", link2 = "log") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "logit")
+  f2 <- stdnorm1(link = "log")
+  list(f1, f2, delta = TRUE, link = c("logit", "log"),
+       family = c("binomial", "stdnorm1"),
+       clean_name = "delta_stdnorm1(link1 = 'logit', link2 = 'log')")
+}
+
+#' @param link1 Link for first part of delta/hurdle model.
+#' @param link2 Link for second part of delta/hurdle model.
+#' @export
+#' @importFrom stats binomial
+#' @examples
+#' delta_stdnorm2()
+#' @rdname families
+delta_stdnorm2 <- function(link1 = "logit", link2 = "log") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "logit")
+  f2 <- stdnorm2(link = "log")
+  list(f1, f2, delta = TRUE, link = c("logit", "log"),
+       family = c("binomial", "stdnorm2"),
+       clean_name = "delta_stdnorm2(link1 = 'logit', link2 = 'log')")
+}
+
+#' @param link1 Link for first part of delta/hurdle model.
+#' @param link2 Link for second part of delta/hurdle model.
+#' @export
+#' @importFrom stats binomial
+#' @examples
+#' delta_stdnorm3()
+#' @rdname families
+delta_stdnorm3 <- function(link1 = "logit", link2 = "log") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "logit")
+  f2 <- stdnorm3(link = "log")
+  list(f1, f2, delta = TRUE, link = c("logit", "log"),
+       family = c("binomial", "stdnorm3"),
+       clean_name = "delta_stdnorm3(link1 = 'logit', link2 = 'log')")
+}
+
+#' @param link1 Link for first part of delta/hurdle model.
+#' @param link2 Link for second part of delta/hurdle model.
+#' @export
+#' @importFrom stats binomial
+#' @examples
+#' delta_stdnorm4()
+#' @rdname families
+delta_stdnorm4 <- function(link1 = "logit", link2 = "log") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "logit")
+  f2 <- stdnorm4(link = "log")
+  list(f1, f2, delta = TRUE, link = c("logit", "log"),
+       family = c("binomial", "stdnorm4"),
+       clean_name = "delta_stdnorm4(link1 = 'logit', link2 = 'log')")
+}
