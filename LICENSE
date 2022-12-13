@@ -14,19 +14,13 @@ these components are included below):
 
 Licenses:
 
-
-VAST license for the general structure of the original TMB model code.
-----------------------------------------------------------------------
-GNU GPL-3 (GNU General Public License Version 3) as included for glmmTMB.
-
-
-
-
-glmmTMB license for the family R-to-TMB implementation, selected
+1. VAST for the general structure of the original TMB model code.
+2. glmmTMB for the family R-to-TMB implementation, selected
 parameterizations of the likelihood densities (including zero-truncated
-distributions), and portions of prediction, effects methods, and emmeans
-methods.
+distributions); portions of prediction, effects methods, and emmeans
+methods; and other code fragments.
 ----------------------------------------------------------------------
+
                     GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
