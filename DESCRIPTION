@@ -1,9 +1,9 @@
 Type: Package
 Package: sdmTMB
 Title: Spatial and Spatiotemporal SPDE-Based GLMMs with 'TMB'
-Version: 0.1.4.9003
+Version: 0.1.4.9004
 Authors@R: c(
-    person(c("Sean", "C."), "Anderson", , "sean@seananderson.ca",
+    person(c("Sean", "C."), "Anderson", , "sean.anderson@dfo-mpo.gc.ca",
            role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-9563-1937")),
     person(c("Eric", "J."), "Ward", role = "aut",
