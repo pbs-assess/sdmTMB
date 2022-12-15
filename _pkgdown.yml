@@ -33,7 +33,6 @@ reference:
   - sanity
   - sdmTMBcontrol
   - run_extra_optimization
-  - fitted.sdmTMB
   - residuals.sdmTMB
   - dharma_residuals
 
