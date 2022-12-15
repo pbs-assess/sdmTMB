@@ -11,14 +11,13 @@
 #' @param newdata A data frame to make predictions on. This should be a data
 #'   frame with the same predictor columns as in the fitted data and a time
 #'   column (if this is a spatiotemporal model) with the same name as in the
-#'   fitted data. There should be predictor data for each year in the original
-#'   data set.
+#'   fitted data.
 #' @param type Should the `est` column be in link (default) or response space?
 #' @param se_fit Should standard errors on predictions at the new locations
 #'   given by `newdata` be calculated? Warning: the current implementation can
 #'   be slow for large data sets or high-resolution projections unless
 #'   `re_form = NA` (omitting random fields). A faster option to approximate
-#'   point-wise uncertainty is often to use the `nsim` argument.
+#'   point-wise uncertainty may be to use the `nsim` argument.
 #' @param return_tmb_object Logical. If `TRUE`, will include the TMB object in a
 #'   list format output. Necessary for the [get_index()] or [get_cog()]
 #'   functions.
@@ -35,7 +34,7 @@
 #'   representing the estimates of the linear predictor (i.e., in link space).
 #'   Can be useful for deriving uncertainty on predictions (e.g., `apply(x, 1,
 #'   sd)`) or propagating uncertainty. This is currently the fastest way to
-#'   generate estimates of uncertainty on predictions in space with sdmTMB.
+#'   characterize uncertainty on predictions in space with sdmTMB.
 #' @param sims_var Experimental: Which TMB reported variable from the model
 #'   should be extracted from the joint precision matrix simulation draws?
 #'   Defaults to the link-space predictions. Options include: `"omega_s"`,

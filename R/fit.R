@@ -44,7 +44,7 @@ NULL
 #'   'off')`.
 #' @param spatiotemporal Estimate the spatiotemporal random fields as `'iid'`
 #'   (independent and identically distributed; default), stationary `'ar1'`
-#'   (first-order autoregressive), as a random walk (`'rw'`), or as fixed at 0
+#'   (first-order autoregressive), a random walk (`'rw'`), or fixed at 0
 #'   `'off'`. Will be set to `'off'` if `time = NULL`. If a delta model, can be
 #'   a list. E.g., `list('off', 'ar1')`. Note that the spatiotemporal standard
 #'   deviation represents the marginal steady-state standard deviation of the
@@ -181,13 +181,13 @@ NULL
 #' using `+ s(x)`, which implements a smooth from [mgcv::s()]. \pkg{sdmTMB} uses
 #' penalized smooths, constructed via [mgcv::smooth2random()]. This is a similar
 #' approach implemented in \pkg{gamm4} and \pkg{brms}, among other packages.
-#' Within these smooths, the same syntax commonly used in [mgcv::s()] can be
-#' applied, e.g. 2-dimensional smooths may be constructed with `+ s(x, y)`;
-#' smooths can be specific to various factor levels, `+ s(x, by = group)`; the
-#' basis function dimensions may be specified, e.g. `+ s(x, k = 4)`; and various
-#' types of splines may be constructed such as cyclic splines to model
-#' seasonality, `+ s(month, bs = "cc", k = 12)`. Prior to version 0.0.18,
-#' \pkg{sdmTMB} implemented unpenalized splines.
+#' Within these smooths, the same syntax commonly used in [mgcv::s()] or
+#' [mgcv::t2()] can be applied, e.g. 2-dimensional smooths may be constructed
+#' with `+ s(x, y)` or `+ t2(x, y)`; smooths can be specific to various factor
+#' levels, `+ s(x, by = group)`; the basis function dimensions may be specified,
+#' e.g. `+ s(x, k = 4)`; and various types of splines may be constructed such as
+#' cyclic splines to model seasonality, `+ s(month, bs = "cc", k = 12)` (perhaps
+#' with the `knots` argument also be supplied).
 #'
 #' **Threshold models**
 #'
@@ -215,12 +215,13 @@ NULL
 #' including `+ as.factor(year)` in `formula` will render a model with no data
 #' to inform the expected value in a missing year. [sdmTMB()] makes no attempt
 #' to determine if the model makes sense for forecasting or interpolation. The
-#' options `time_varying`, `spatiotemporal = "rw"`, and `spatiotemporal = "ar1"`
-#' provide mechanisms to predict over missing time slices with process error.
+#' options `time_varying`, `spatiotemporal = "rw"`, `spatiotemporal = "ar1"`,
+#' or a smoother on the time column provide mechanisms to predict over missing
+#' time slices with process error.
 #'
 #' `extra_time` can also be used to fill in missing time steps for the purposes
-#' of a random walk or AR1 spatiotemporal field if their inclusion makes the gaps
-#' between time steps even.
+#' of a random walk or AR(1) process if their inclusion makes the gaps between
+#' time steps even.
 #'
 #' **Index standardization**
 #'
@@ -228,8 +229,7 @@ NULL
 #' (or whatever the time column is called) in the formula. See a basic
 #' example of index standardization in the relevant
 #' [package vignette](https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html).
-#' You will need to specify the `time` argument. See [get_index()] and/or
-#' [get_index_sims()].
+#' You will need to specify the `time` argument. See [get_index()].
 #'
 #' **Regularization and priors**
 #'
@@ -270,7 +270,7 @@ NULL
 #'
 #' @references
 #'
-#' *Main reference introducing the package to cite when using sdmTMB:*
+#' **Main reference introducing the package to cite when using sdmTMB:**
 #'
 #' Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett. 2022. sdmTMB: an R
 #' package for fast, flexible, and user-friendly generalized linear mixed effects
@@ -300,7 +300,7 @@ NULL
 #' spatially explicit species distribution models affect predictions. PeerJ 10:
 #' e12783. \doi{10.7717/peerj.12783}.
 #'
-#' *Application and description of the threshold/break-point models:*
+#' *Application and description of threshold/break-point models:*
 #'
 #' Essington, T.E. S.C. Anderson, L.A.K. Barnett, H.M. Berger, S.A. Siedlecki,
 #' E.J. Ward. Advancing statistical models to reveal the effect of dissolved

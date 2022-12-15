@@ -61,11 +61,10 @@ If \code{return_sims = TRUE}, samples from the index values in a long-format dat
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 
 Calculate a population index via simulation from the joint precision matrix.
-Compared to \code{\link[=get_index]{get_index()}}, this version can be dramatically faster
-if bias correction was turned on in \code{\link[=get_index]{get_index()}} while being approximately
-equivalent. \strong{This is an experimental function.} We have yet to find a model
-where this function fails to provide a reasonable result, but make no
-guarantees.
+Compared to \code{\link[=get_index]{get_index()}}, this version can be faster if bias correction was
+turned on in \code{\link[=get_index]{get_index()}} while being approximately equivalent. \strong{This is an
+experimental function.} This function usually works reasonably well, but we
+make no guarantees. It is recommended to use \code{\link[=get_index]{get_index()}} with \code{bias_correct = TRUE} for final inference.
 }
 \details{
 Can also be used to produce an index from a model fit with

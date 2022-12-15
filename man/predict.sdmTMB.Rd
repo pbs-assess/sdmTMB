@@ -30,8 +30,7 @@
 \item{newdata}{A data frame to make predictions on. This should be a data
 frame with the same predictor columns as in the fitted data and a time
 column (if this is a spatiotemporal model) with the same name as in the
-fitted data. There should be predictor data for each year in the original
-data set.}
+fitted data.}
 
 \item{type}{Should the \code{est} column be in link (default) or response space?}
 
@@ -39,7 +38,7 @@ data set.}
 given by \code{newdata} be calculated? Warning: the current implementation can
 be slow for large data sets or high-resolution projections unless
 \code{re_form = NA} (omitting random fields). A faster option to approximate
-point-wise uncertainty is often to use the \code{nsim} argument.}
+point-wise uncertainty may be to use the \code{nsim} argument.}
 
 \item{re_form}{\code{NULL} to specify including all spatial/spatiotemporal random
 effects in predictions. \code{~0} or \code{NA} for population-level predictions.
@@ -55,7 +54,7 @@ Only affects predictions with \code{newdata}. This \emph{does} affects \code{\li
 matrix with \code{nsim} draws. Returns a matrix of \code{nrow(data)} by \code{nsim}
 representing the estimates of the linear predictor (i.e., in link space).
 Can be useful for deriving uncertainty on predictions (e.g., \code{apply(x, 1, sd)}) or propagating uncertainty. This is currently the fastest way to
-generate estimates of uncertainty on predictions in space with sdmTMB.}
+characterize uncertainty on predictions in space with sdmTMB.}
 
 \item{sims_var}{Experimental: Which TMB reported variable from the model
 should be extracted from the joint precision matrix simulation draws?

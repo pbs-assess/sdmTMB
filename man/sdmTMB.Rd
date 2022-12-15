@@ -75,7 +75,7 @@ or \code{TRUE} / \code{FALSE}. Optionally, a list for delta models, e.g. \code{l
 
 \item{spatiotemporal}{Estimate the spatiotemporal random fields as \code{'iid'}
 (independent and identically distributed; default), stationary \code{'ar1'}
-(first-order autoregressive), as a random walk (\code{'rw'}), or as fixed at 0
+(first-order autoregressive), a random walk (\code{'rw'}), or fixed at 0
 \code{'off'}. Will be set to \code{'off'} if \code{time = NULL}. If a delta model, can be
 a list. E.g., \code{list('off', 'ar1')}. Note that the spatiotemporal standard
 deviation represents the marginal steady-state standard deviation of the
@@ -216,13 +216,13 @@ Smooth terms can be included following GAMs (generalized additive models)
 using \code{+ s(x)}, which implements a smooth from \code{\link[mgcv:s]{mgcv::s()}}. \pkg{sdmTMB} uses
 penalized smooths, constructed via \code{\link[mgcv:smooth2random]{mgcv::smooth2random()}}. This is a similar
 approach implemented in \pkg{gamm4} and \pkg{brms}, among other packages.
-Within these smooths, the same syntax commonly used in \code{\link[mgcv:s]{mgcv::s()}} can be
-applied, e.g. 2-dimensional smooths may be constructed with \code{+ s(x, y)};
-smooths can be specific to various factor levels, \code{+ s(x, by = group)}; the
-basis function dimensions may be specified, e.g. \code{+ s(x, k = 4)}; and various
-types of splines may be constructed such as cyclic splines to model
-seasonality, \code{+ s(month, bs = "cc", k = 12)}. Prior to version 0.0.18,
-\pkg{sdmTMB} implemented unpenalized splines.
+Within these smooths, the same syntax commonly used in \code{\link[mgcv:s]{mgcv::s()}} or
+\code{\link[mgcv:t2]{mgcv::t2()}} can be applied, e.g. 2-dimensional smooths may be constructed
+with \code{+ s(x, y)} or \code{+ t2(x, y)}; smooths can be specific to various factor
+levels, \code{+ s(x, by = group)}; the basis function dimensions may be specified,
+e.g. \code{+ s(x, k = 4)}; and various types of splines may be constructed such as
+cyclic splines to model seasonality, \code{+ s(month, bs = "cc", k = 12)} (perhaps
+with the \code{knots} argument also be supplied).
 
 \strong{Threshold models}
 
@@ -250,12 +250,13 @@ including extra time slices that the model remains identifiable. For example,
 including \code{+ as.factor(year)} in \code{formula} will render a model with no data
 to inform the expected value in a missing year. \code{\link[=sdmTMB]{sdmTMB()}} makes no attempt
 to determine if the model makes sense for forecasting or interpolation. The
-options \code{time_varying}, \code{spatiotemporal = "rw"}, and \code{spatiotemporal = "ar1"}
-provide mechanisms to predict over missing time slices with process error.
+options \code{time_varying}, \code{spatiotemporal = "rw"}, \code{spatiotemporal = "ar1"},
+or a smoother on the time column provide mechanisms to predict over missing
+time slices with process error.
 
 \code{extra_time} can also be used to fill in missing time steps for the purposes
-of a random walk or AR1 spatiotemporal field if their inclusion makes the gaps
-between time steps even.
+of a random walk or AR(1) process if their inclusion makes the gaps between
+time steps even.
 
 \strong{Index standardization}
 
@@ -263,8 +264,7 @@ For index standardization, you may wish to include \code{0 + as.factor(year)}
 (or whatever the time column is called) in the formula. See a basic
 example of index standardization in the relevant
 \href{https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html}{package vignette}.
-You will need to specify the \code{time} argument. See \code{\link[=get_index]{get_index()}} and/or
-\code{\link[=get_index_sims]{get_index_sims()}}.
+You will need to specify the \code{time} argument. See \code{\link[=get_index]{get_index()}}.
 
 \strong{Regularization and priors}
 
@@ -497,7 +497,7 @@ fit
 \dontshow{\}) # examplesIf}
 }
 \references{
-\emph{Main reference introducing the package to cite when using sdmTMB:}
+\strong{Main reference introducing the package to cite when using sdmTMB:}
 
 Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett. 2022. sdmTMB: an R
 package for fast, flexible, and user-friendly generalized linear mixed effects
@@ -527,7 +527,7 @@ Essington, T.E. 2022. The shadow model: how and why small choices in
 spatially explicit species distribution models affect predictions. PeerJ 10:
 e12783. \doi{10.7717/peerj.12783}.
 
-\emph{Application and description of the threshold/break-point models:}
+\emph{Application and description of threshold/break-point models:}
 
 Essington, T.E. S.C. Anderson, L.A.K. Barnett, H.M. Berger, S.A. Siedlecki,
 E.J. Ward. Advancing statistical models to reveal the effect of dissolved
