@@ -368,10 +368,10 @@ residuals.sdmTMB <- function(object,
 # from:
 # https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#testing-for-overdispersioncomputing-overdispersion-factor
 check_overdisp <- function(object) {
-  rdf <- df.residual(model)
-  rp <- residuals(model, type = "pearson")
+  rdf <- stats::df.residual(object)
+  rp <- stats::residuals(object, type = "pearson")
   pearson_chisq <- sum(rp^2)
   prat <- pearson_chisq / rdf
-  pval <- pchisq(pearson_chisq, df = rdf, lower.tail = FALSE)
+  pval <- stats::pchisq(pearson_chisq, df = rdf, lower.tail = FALSE)
   data.frame(chisq = pearson_chisq, ratio = prat, rdf = rdf, p = pval)
 }
