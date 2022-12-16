@@ -294,10 +294,10 @@ Run some basic sanity checks on our model:
 sanity(fit)
 #> ✔ Non-linear minimizer suggests successful convergence
 #> ✔ Hessian matrix is positive definite
-#> ✔ No extreme or very small eigen values detected
+#> ✔ No extreme or very small eigenvalues detected
 #> ✔ No gradients with respect to fixed effects are >= 0.001
 #> ✔ No fixed-effect standard errors are NA
-#> ✔ No fixed-effect standard errors look unreasonably large
+#> ✔ No standard errors look unreasonably large
 #> ✔ No sigma parameters are < 0.01
 #> ✔ No sigma parameters are > 100
 #> ✔ Range parameter doesn't look unreasonably large
