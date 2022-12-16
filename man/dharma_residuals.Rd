@@ -2,7 +2,7 @@
 % Please edit documentation in R/tmb-sim.R
 \name{dharma_residuals}
 \alias{dharma_residuals}
-\title{Get DHARMa residuals}
+\title{DHARMa residuals}
 \usage{
 dharma_residuals(simulated_response, object, plot = TRUE, ...)
 }
@@ -21,7 +21,12 @@ so you can set \code{plot = FALSE} and assign the output to an object if you wis
 to plot the residuals yourself. See the examples.
 }
 \description{
-Get DHARMa residuals
+Plot (and possibly return) DHARMa residuals. This is a wrapper function
+around \code{\link[DHARMa:createDHARMa]{DHARMa::createDHARMa()}} to facilitate its use with \code{\link[=sdmTMB]{sdmTMB()}} models.
+\strong{Note}: simulation testing suggests that these DHARMa residuals can suggest
+problems with model fit even with properly specified models presumably due to
+the Laplace approximation and/or spatially correlated random effects.
+Consider the slower \code{\link[=residuals.sdmTMB]{residuals.sdmTMB()}} with \code{type = "mle-mcmc"}.
 }
 \examples{
 if (inla_installed()) {

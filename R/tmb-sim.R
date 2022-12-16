@@ -438,7 +438,14 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
   do.call(cbind, ret)
 }
 
-#' Get DHARMa residuals
+#' DHARMa residuals
+#'
+#' Plot (and possibly return) DHARMa residuals. This is a wrapper function
+#' around [DHARMa::createDHARMa()] to facilitate its use with [sdmTMB()] models.
+#' **Note**: simulation testing suggests that these DHARMa residuals can suggest
+#' problems with model fit even with properly specified models presumably due to
+#' the Laplace approximation and/or spatially correlated random effects.
+#' Consider the slower [residuals.sdmTMB()] with `type = "mle-mcmc"`.
 #'
 #' @param simulated_response Output from [simulate.sdmTMB()].
 #' @param object Output from [sdmTMB()].
