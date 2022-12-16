@@ -31,3 +31,4 @@ Package unavailable to check Rd xrefs: 'INLA'
 * Ubuntu 20.04.4 (on github-actions), R devel
 * macOS (on github-actions), R 4.2.2
 * Windows (winbuilder), R devel
+* Windows Server 2022 (R-hub), R-devel, 64 bit
