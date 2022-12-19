@@ -7,18 +7,17 @@
 #' Make predictions from an sdmTMB model; can predict on the original or new
 #' data.
 #'
-#' @param object An object from [sdmTMB()].
+#' @param object A model fitted with [sdmTMB()].
 #' @param newdata A data frame to make predictions on. This should be a data
 #'   frame with the same predictor columns as in the fitted data and a time
 #'   column (if this is a spatiotemporal model) with the same name as in the
-#'   fitted data. There should be predictor data for each year in the original
-#'   data set.
+#'   fitted data.
 #' @param type Should the `est` column be in link (default) or response space?
 #' @param se_fit Should standard errors on predictions at the new locations
 #'   given by `newdata` be calculated? Warning: the current implementation can
-#'   be very slow for large data sets or high-resolution projections unless
+#'   be slow for large data sets or high-resolution projections unless
 #'   `re_form = NA` (omitting random fields). A faster option to approximate
-#'   point-wise uncertainty is often to use the `nsim` argument.
+#'   point-wise uncertainty may be to use the `nsim` argument.
 #' @param return_tmb_object Logical. If `TRUE`, will include the TMB object in a
 #'   list format output. Necessary for the [get_index()] or [get_cog()]
 #'   functions.
@@ -35,7 +34,7 @@
 #'   representing the estimates of the linear predictor (i.e., in link space).
 #'   Can be useful for deriving uncertainty on predictions (e.g., `apply(x, 1,
 #'   sd)`) or propagating uncertainty. This is currently the fastest way to
-#'   generate estimates of uncertainty on predictions in space with sdmTMB.
+#'   characterize uncertainty on predictions in space with sdmTMB.
 #' @param sims_var Experimental: Which TMB reported variable from the model
 #'   should be extracted from the joint precision matrix simulation draws?
 #'   Defaults to the link-space predictions. Options include: `"omega_s"`,
@@ -49,6 +48,8 @@
 #'   combined prediction from both components on the link scale for the positive
 #'   component; `1` or `2` return the first or second model component only on
 #'   the link or response scale depending on the argument `type`.
+#' @param offset A numeric vector of optional offset values. If left at default
+#'   `NULL`, the offset is implicitly left at 0.
 #' @param return_tmb_report Logical: return the output from the TMB
 #'   report? For regular prediction this is all the reported variables
 #'   at the MLE parameter values. For `nsim > 0` or when `tmbstan_model`
@@ -120,30 +121,30 @@
 #' predictions <- predict(m, newdata = qcs_grid_2011)
 #'
 #' # A short function for plotting our predictions:
-#' plot_map <- function(dat, column = "est") {
-#'   ggplot(dat, aes_string("X", "Y", fill = column)) +
+#' plot_map <- function(dat, column = est) {
+#'   ggplot(dat, aes(X, Y, fill = {{ column }})) +
 #'     geom_raster() +
 #'     facet_wrap(~year) +
 #'     coord_fixed()
 #' }
 #'
-#' plot_map(predictions, "exp(est)") +
+#' plot_map(predictions, exp(est)) +
 #'   scale_fill_viridis_c(trans = "sqrt") +
 #'   ggtitle("Prediction (fixed effects + all random effects)")
 #'
-#' plot_map(predictions, "exp(est_non_rf)") +
+#' plot_map(predictions, exp(est_non_rf)) +
 #'   ggtitle("Prediction (fixed effects and any time-varying effects)") +
 #'   scale_fill_viridis_c(trans = "sqrt")
 #'
-#' plot_map(predictions, "est_rf") +
+#' plot_map(predictions, est_rf) +
 #'   ggtitle("All random field estimates") +
 #'   scale_fill_gradient2()
 #'
-#' plot_map(predictions, "omega_s") +
+#' plot_map(predictions, omega_s) +
 #'   ggtitle("Spatial random effects only") +
 #'   scale_fill_gradient2()
 #'
-#' plot_map(predictions, "epsilon_st") +
+#' plot_map(predictions, epsilon_st) +
 #'   ggtitle("Spatiotemporal random effects only") +
 #'   scale_fill_gradient2()
 #'
@@ -201,9 +202,9 @@
 #' qcsgrid_forecast <- rbind(qcs_grid_2011, grid2019)
 #'
 #' predictions <- predict(m, newdata = qcsgrid_forecast)
-#' plot_map(predictions, "exp(est)") +
+#' plot_map(predictions, exp(est)) +
 #'   scale_fill_viridis_c(trans = "log10")
-#' plot_map(predictions, "epsilon_st") +
+#' plot_map(predictions, epsilon_st) +
 #'   scale_fill_gradient2()
 #'
 #' # Estimating local trends ----------------------------------------------
@@ -218,34 +219,37 @@
 #' nd$year_scaled <- (nd$year - mean(d$year)) / sd(d$year)
 #' p <- predict(m, newdata = nd)
 #'
-#' plot_map(subset(p, year == 2003), "zeta_s_year_scaled") + # pick any year
+#' plot_map(subset(p, year == 2003), zeta_s_year_scaled) + # pick any year
 #'   ggtitle("Spatial slopes") +
 #'   scale_fill_gradient2()
 #'
-#' plot_map(p, "est_rf") +
+#' plot_map(p, est_rf) +
 #'   ggtitle("Random field estimates") +
 #'   scale_fill_gradient2()
 #'
-#' plot_map(p, "exp(est_non_rf)") +
+#' plot_map(p, exp(est_non_rf)) +
 #'   ggtitle("Prediction (fixed effects only)") +
 #'   scale_fill_viridis_c(trans = "sqrt")
 #'
-#' plot_map(p, "exp(est)") +
+#' plot_map(p, exp(est)) +
 #'   ggtitle("Prediction (fixed effects + all random effects)") +
 #'   scale_fill_viridis_c(trans = "sqrt")
 
 predict.sdmTMB <- function(object, newdata = object$data,
   type = c("link", "response"),
   se_fit = FALSE,
-  return_tmb_object = FALSE,
-  area = deprecated(),
-  re_form = NULL, re_form_iid = NULL, nsim = 0,
-  sims = deprecated(),
-  tmbstan_model = NULL,
+  re_form = NULL,
+  re_form_iid = NULL,
+  nsim = 0,
   sims_var = "est",
   model = c(NA, 1, 2),
+  offset = NULL,
+  tmbstan_model = NULL,
+  return_tmb_object = FALSE,
   return_tmb_report = FALSE,
   return_tmb_data = FALSE,
+  sims = deprecated(),
+  area = deprecated(),
   ...) {
 
   if ("version" %in% names(object)) {
@@ -274,6 +278,10 @@ predict.sdmTMB <- function(object, newdata = object$data,
     sims <- nsim
   }
 
+
+  assert_that(model[[1]] %in% c(NA, 1, 2),
+    msg = "`model` argument not valid; should be one of NA, 1, 2")
+  model <- model[[1]]
   type <- match.arg(type)
 
   # FIXME parallel setup here?
@@ -297,9 +305,10 @@ predict.sdmTMB <- function(object, newdata = object$data,
 
   tmb_data <- object$tmb_data
   tmb_data$do_predict <- 1L
+  no_spatial <- as.logical(object$tmb_data$no_spatial)
 
   if (!is.null(newdata)) {
-    if (any(!xy_cols %in% names(newdata)) && isFALSE(pop_pred))
+    if (any(!xy_cols %in% names(newdata)) && isFALSE(pop_pred) && !no_spatial)
       cli_abort(c("`xy_cols` (the column names for the x and y coordinates) are not in `newdata`.",
           "Did you miss specifying the argument `xy_cols` to match your data?",
           "The newer `make_mesh()` (vs. `make_spde()`) takes care of this for you."))
@@ -307,7 +316,6 @@ predict.sdmTMB <- function(object, newdata = object$data,
     if (object$time == "_sdmTMB_time") newdata[[object$time]] <- 0L
     if (visreg_df) {
       if (!object$time %in% names(newdata)) {
-        # cli_inform("Using the most recent year")
         newdata[[object$time]] <- max(object$data[[object$time]], na.rm = TRUE)
       }
     }
@@ -324,9 +332,20 @@ predict.sdmTMB <- function(object, newdata = object$data,
       )
 
     if (!identical(new_data_time, original_time) & isFALSE(pop_pred)) {
-      cli_abort(c("The time elements in `newdata` are not identical to those in the original dataset.",
-          "For now, please predict on all time elements and filter out those you don't need after.",
-          "Please let us know on the GitHub issues tracker if this is important to you."))
+      if (isTRUE(return_tmb_object) || nsim > 0)
+        cli_warn(c("The time elements in `newdata` are not identical to those in the original dataset.",
+          "This is normally fine, but may create problems for index standardization."))
+      missing_time <- original_time[!original_time %in% new_data_time]
+      fake_nd_list <- list()
+      fake_nd <- newdata[1L,,drop=FALSE]
+      for (.t in seq_along(missing_time)) {
+        fake_nd[[object$time]] <- missing_time[.t]
+        fake_nd_list[[.t]] <- fake_nd
+      }
+      fake_nd <- do.call("rbind", fake_nd_list)
+      newdata[["_sdmTMB_fake_nd_"]] <- FALSE
+      fake_nd[["_sdmTMB_fake_nd_"]] <- TRUE
+      newdata <- rbind(newdata, fake_nd)
     }
 
     # If making population predictions (with standard errors), we don't need
@@ -349,22 +368,29 @@ predict.sdmTMB <- function(object, newdata = object$data,
 
     newdata$sdm_orig_id <- seq(1L, nrow(newdata))
 
-    if (requireNamespace("dplyr", quietly = TRUE)) { # faster
-      unique_newdata <- dplyr::distinct(newdata[, xy_cols, drop = FALSE])
-    } else {
-      unique_newdata <- unique(newdata[, xy_cols, drop = FALSE])
-    }
-    unique_newdata[["sdm_spatial_id"]] <- seq(1, nrow(unique_newdata)) - 1L
+    if (!no_spatial) {
+      if (requireNamespace("dplyr", quietly = TRUE)) { # faster
+        unique_newdata <- dplyr::distinct(newdata[, xy_cols, drop = FALSE])
+      } else {
+        unique_newdata <- unique(newdata[, xy_cols, drop = FALSE])
+      }
+      unique_newdata[["sdm_spatial_id"]] <- seq(1, nrow(unique_newdata)) - 1L
 
-    if (requireNamespace("dplyr", quietly = TRUE)) { # much faster
-      newdata <- dplyr::left_join(newdata, unique_newdata, by = xy_cols)
+      if (requireNamespace("dplyr", quietly = TRUE)) { # much faster
+        newdata <- dplyr::left_join(newdata, unique_newdata, by = xy_cols)
+      } else {
+        newdata <- base::merge(newdata, unique_newdata, by = xy_cols,
+          all.x = TRUE, all.y = FALSE)
+        newdata <- newdata[order(newdata$sdm_orig_id),, drop = FALSE]
+      }
+      proj_mesh <- INLA::inla.spde.make.A(object$spde$mesh,
+        loc = as.matrix(unique_newdata[, xy_cols, drop = FALSE]))
     } else {
-      newdata <- base::merge(newdata, unique_newdata, by = xy_cols,
-        all.x = TRUE, all.y = FALSE)
-      newdata <- newdata[order(newdata$sdm_orig_id),, drop = FALSE]
+      proj_mesh <- object$spde$A_st # fake
+      newdata[[xy_cols[1]]] <- NA_real_ # fake
+      newdata[[xy_cols[2]]] <- NA_real_ # fake
+      newdata[["sdm_spatial_id"]] <- NA_integer_ # fake
     }
-    proj_mesh <- INLA::inla.spde.make.A(object$spde$mesh,
-      loc = as.matrix(unique_newdata[, xy_cols, drop = FALSE]))
 
     if (length(object$formula) == 1L) {
       # this formula has breakpt() etc. in it:
@@ -403,18 +429,22 @@ predict.sdmTMB <- function(object, newdata = object$data,
     }
 
     # TODO DELTA hardcoded to 1:
-    sm <- parse_smoothers(object$formula[[1]], data = object$data, newdata = nd)
+    sm <- parse_smoothers(object$formula[[1]], data = object$data, newdata = nd, basis_prev = object$smoothers$basis_out)
 
     if (!is.null(object$time_varying))
       proj_X_rw_ik <- model.matrix(object$time_varying, data = nd)
     else
       proj_X_rw_ik <- matrix(0, ncol = 1, nrow = 1) # dummy
 
-
     if (length(area) != nrow(proj_X_ij[[1]]) && length(area) != 1L) {
       cli_abort("`area` should be of the same length as `nrow(newdata)` or of length 1.")
     }
 
+    if (!is.null(offset)) {
+      if (nrow(proj_X_ij[[1]]) != length(offset))
+        cli_abort("Prediction offset vector does not equal number of rows in prediction dataset.")
+    }
+    tmb_data$proj_offset_i <- if (!is.null(offset)) offset else rep(0, nrow(proj_X_ij[[1]]))
     tmb_data$proj_X_threshold <- thresh[[1]]$X_threshold # TODO DELTA HARDCODED TO 1
     tmb_data$area_i <- if (length(area) == 1L) rep(area, nrow(proj_X_ij[[1]])) else area
     tmb_data$proj_mesh <- proj_mesh
@@ -458,8 +488,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
       return(tmb_data)
     }
 
-# browser()
-# TODO: when fields are a RW, visreg call crashes R here...
+    # TODO: when fields are a RW, visreg call crashes R here...
     new_tmb_obj <- TMB::MakeADFun(
       data = tmb_data,
       parameters = get_pars(object),
@@ -514,10 +543,8 @@ predict.sdmTMB <- function(object, newdata = object$data,
         sims_var)
       out <- lapply(r, `[[`, .var)
 
-      if (isTRUE(object$family$delta)) {
-        assert_that(model[[1]] %in% c(NA, 1, 2),
-          msg = "`model` argument not valid; should be one of NA, 1, 2")
-        predtype <- as.integer(model[[1]])
+      predtype <- as.integer(model[[1]])
+      if (isTRUE(object$family$delta) && sims_var == "est") {
         if (predtype %in% c(1L, NA)) {
           out1 <- lapply(out, function(x) x[, 1L, drop = TRUE])
           out1 <- do.call("cbind", out1)
@@ -539,29 +566,55 @@ predict.sdmTMB <- function(object, newdata = object$data,
         } else {
           cli_abort("`model` type not valid.")
         }
-      } else { # not a delta model:
-        out <- do.call("cbind", out)
+      } else { # not a delta model OR not sims_var = "est":
+
+        if (isTRUE(object$family$delta) && sims_var != "est" && is.na(model[[1]])) {
+          cli_warn("`model` argument was left as NA; defaulting to 1st model component.")
+          model <- 1L
+        } else {
+          model <- as.integer(model)
+        }
+        if (!isTRUE(object$family$delta)) {
+          model <- 1L
+        }
+        if (length(dim(out[[1]])) == 2L) {
+          out <- lapply(out, function(.x) .x[,model])
+          out <- do.call("cbind", out)
+        } else if (length(dim(out[[1]])) == 3L) {
+          xx <- list()
+          for (i in seq_len(dim(out[[1]])[2])) {
+            xx[[i]] <- lapply(out, function(.x) .x[,i,model])
+            xx[[i]] <- do.call("cbind", xx[[i]])
+          }
+          out <- xx
+          if (sims_var == "zeta_s") names(out) <- object$spatial_varying
+          if (length(out) == 1L) out <- out[[1]]
+        } else {
+          cli_abort("Too many dimensions returned from model. Try `return_tmb_report = TRUE` and parse the output yourself.")
+        }
+
         if (type == "response") out <- object$family$linkinv(out)
       }
 
-      rownames(out) <- nd[[object$time]] # for use in index calcs
-      attr(out, "time") <- object$time
-
-      if (type == "response"){
-        attr(out, "link") <- "response"
-      } else {
-        if(isTRUE(object$family$delta)){
-          if (is.na(predtype)) {
-            attr(out, "link") <- object$family[[2]]$link
-          } else if (predtype == 1L) {
-            attr(out, "link") <- object$family[[1]]$link
-          } else if (predtype == 2L) {
-            attr(out, "link") <- object$family[[2]]$link
-          } else {
-            cli_abort("`model` type not valid.")
-          }
+      if (sims_var == "est") {
+        rownames(out) <- nd[[object$time]] # for use in index calcs
+        attr(out, "time") <- object$time
+        if (type == "response"){
+          attr(out, "link") <- "response"
         } else {
-          attr(out, "link") <- object$family$link
+          if(isTRUE(object$family$delta)){
+            if (is.na(predtype)) {
+              attr(out, "link") <- object$family[[2]]$link
+            } else if (predtype == 1L) {
+              attr(out, "link") <- object$family[[1]]$link
+            } else if (predtype == 2L) {
+              attr(out, "link") <- object$family[[2]]$link
+            } else {
+              cli_abort("`model` type not valid.")
+            }
+          } else {
+            attr(out, "link") <- object$family$link
+          }
         }
       }
 
@@ -626,7 +679,8 @@ predict.sdmTMB <- function(object, newdata = object$data,
     if ("visreg_model" %in% names(object)) {
       model <- object$visreg_model
     } else {
-      model <- 1L
+      if (visreg_df)
+        model <- 1L
     }
 
     if (se_fit) {
@@ -640,6 +694,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
         proj_eta <- sr_est_rep[["proj_eta"]]
         se <- sr_se_rep[["proj_eta"]]
       }
+      if (is.na(model)) model <- 1L
       proj_eta <- proj_eta[,model,drop=TRUE]
       se <- se[,model,drop=TRUE]
       nd$est <- proj_eta
@@ -648,8 +703,26 @@ predict.sdmTMB <- function(object, newdata = object$data,
 
     if (pop_pred) {
       if (!se_fit) {
-        nd$est <- r$proj_fe[,model,drop=TRUE] # FIXME re_form_iid??
+        if (isTRUE(object$family$delta)) {
+          if (type == "response") {
+            nd$est1 <- object$family[[1]]$linkinv(r$proj_fe[,1])
+            nd$est2 <- object$family[[2]]$linkinv(r$proj_fe[,2])
+            nd$est <- nd$est1 * nd$est2
+          } else {
+            nd$est1 <- r$proj_fe[,1]
+            nd$est2 <- r$proj_fe[,2]
+          }
+        } else {
+          if (type == "response") {
+            nd$est <- object$family$linkinv(r$proj_fe[,1])
+          } else {
+            nd$est <- r$proj_fe[,1]
+          }
+        }
       }
+    }
+    if (pop_pred && visreg_df) {
+      nd$est <- r$proj_fe[,model,drop=TRUE] # FIXME re_form_iid??
     }
 
     orig_dat <- object$tmb_data$y_i
@@ -720,6 +793,15 @@ predict.sdmTMB <- function(object, newdata = object$data,
     nd$zeta_s1 <- NULL
     nd$zeta_s <- NULL
   }
+
+  if (no_spatial) nd[,xy_cols] <- NULL
+  nd[["_sdmTMB_time"]] <- NULL
+  if (no_spatial) nd[["est_rf"]] <- NULL
+  if (no_spatial) nd[["est_non_rf"]] <- NULL
+  if ("_sdmTMB_fake_nd_" %in% names(nd)) {
+    nd <- nd[!nd[["_sdmTMB_fake_nd_"]],,drop=FALSE]
+  }
+  nd[["_sdmTMB_fake_nd_"]] <- NULL
 
   if (return_tmb_object) {
     return(list(data = nd, report = r, obj = obj, fit_obj = object, pred_tmb_data = tmb_data))

@@ -1,7 +1,9 @@
 #' Sanity check of sdmTMB model
 #'
 #' @param fit Fitted model from [sdmTMB()]
-#' @param se_ratio SE ratio to abs(parameter values) to issue warning
+#' @param big_sd_log10 Value to check size of standard errors against. A value
+#'   of 3 would indicate that standard errors greater than `10^3` should be
+#'   flagged.
 #' @param gradient_thresh Gradient threshold to issue warning
 #'
 #' @return An invisible named list of checks
@@ -18,7 +20,7 @@
 #' s <- sanity(fit)
 #' s
 
-sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
+sanity <- function(fit, big_sd_log10 = 3, gradient_thresh = 0.001) {
 
   hessian_ok <- eigen_values_ok <- gradients_ok <- se_magnitude_ok <- FALSE
   nlminb_ok <- FALSE
@@ -48,12 +50,12 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
   }
 
   if (isTRUE(fit$bad_eig)) {
-    msg <- "Extreme or very small eigen values detected: model may not have converged"
+    msg <- "Extreme or very small eigenvalues detected: model may not have converged"
     cli::cli_alert_danger(msg)
     cli::cli_alert_info(simplify_msg)
     cat("\n")
   } else {
-    msg <- "No extreme or very small eigen values detected"
+    msg <- "No extreme or very small eigenvalues detected"
     cli::cli_alert_success(msg)
     eigen_values_ok <- TRUE
   }
@@ -107,41 +109,54 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
   fixed <- !(names(est) %in% random)
   est <- est[fixed]
   se <- se[fixed]
-  too_big <- function(est, se) {
+
+  too_big <- function(se) {
     if (any(!is.na(se))) {
-      ratio <- se[!is.na(se)] / abs(est[!is.na(se)])
-      if (any(ratio > se_ratio)) return(TRUE)
+      se_max <- max(se, na.rm = TRUE)
+      if (any(log10(abs(se_max)) > big_sd_log10)) {
+        return(TRUE)
+      } else {
+        return(NULL)
+      }
+    } else {
+      return(NULL)
     }
   }
-  se_big <- mapply(too_big, est, se)
+
+  se_big <- lapply(se, too_big)
+
   for (i in seq_along(se_big)) {
     if (isTRUE(se_big[[i]])) {
-      msg <- paste0(
-        "` standard error may be large (> ",
-        se_ratio,
-        "x parameter estimate)"
-      )
+      msg <- paste0("` standard error may be large")
       cli::cli_alert_danger(c("`", names(se_big)[i], msg))
       par_message(names(se_big)[i])
       cli::cli_alert_info(simplify_msg)
       cat("\n")
     }
   }
+
   if (all(unlist(lapply(se_big, is.null)))) {
-    msg <- "No fixed-effect standard errors look unreasonably large"
+    msg <- "No standard errors look unreasonably large"
     cli::cli_alert_success(msg)
     se_magnitude_ok <- TRUE
   }
 
   b <- tidy(fit, conf.int = TRUE)
-  b2 <- tidy(fit, "ran_pars", conf.int = TRUE)
-  b <- rbind(b, b2)
+  br <- tidy(fit, "ran_pars", conf.int = TRUE)
+  b <- rbind(b, br)
+
+  if (isTRUE(fit$family$delta)) {
+    b2 <- tidy(fit, conf.int = TRUE, model = 2)
+    br2 <- tidy(fit, "ran_pars", conf.int = TRUE, model = 2)
+    b2 <- rbind(b2, br2)
+    b <- rbind(b, b2)
+  }
   s <- grep("sigma", b$term)
   sigmas_ok <- TRUE
   if (length(s)) {
     for (i in s) {
-      if (b$estimate[i] < 1e-3) {
-        msg <- "` is smaller than 0.001"
+      if (b$estimate[i] < 0.01) {
+        msg <- "` is smaller than 0.01"
         cli::cli_alert_danger(c("`", b$term[i], msg))
         par_message(b$term[i])
         msg <- "Consider omitting this part of the model"
@@ -152,7 +167,25 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
     }
   }
   if (sigmas_ok) {
-    msg <- "No sigma parameters are < 0.001"
+    msg <- "No sigma parameters are < 0.01"
+    cli::cli_alert_success(msg)
+  }
+
+  if (length(s)) {
+    for (i in s) {
+      if (b$estimate[i] > 100) {
+        msg <- "` is larger than 100"
+        cli::cli_alert_danger(c("`", b$term[i], msg))
+        par_message(b$term[i])
+        msg <- "Consider simplifying the model or adding priors"
+        cli::cli_alert_info(msg)
+        cat("\n")
+        sigmas_ok <- FALSE
+      }
+    }
+  }
+  if (sigmas_ok) {
+    msg <- "No sigma parameters are > 100"
     cli::cli_alert_success(msg)
   }
 
@@ -161,8 +194,8 @@ sanity <- function(fit, se_ratio = 10, gradient_thresh = 0.001) {
   r <- max(r1, r2)
   range_ok <- TRUE
   if ("range" %in% b$term) {
-    if (max(b$estimate[b$term == "range"]) > r) {
-      msg <- "A `range` parameter looks fairly large (> greatest distance in data)"
+    if (max(b$estimate[b$term == "range"]) > r * 1.5) {
+      msg <- "A `range` parameter looks fairly large (> 1.5 the greatest distance in data)"
       cli::cli_alert_danger(msg)
       cli::cli_alert_info(simplify_msg)
       cli::cli_alert_info("Also make sure your spatial coordinates are not too big or small (e.g., work in UTM km instead of UTM m)", wrap = TRUE)

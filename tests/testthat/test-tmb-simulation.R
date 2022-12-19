@@ -122,3 +122,54 @@ test_that("TMB RW simulation works", {
   expect_true(sigma_E_hat_rw > 0.07 && sigma_E_hat_rw < 1.13)
   expect_true(sigma_E_hat_rw < sigma_E_hat_ar1)
 })
+
+test_that("TMB breakpt sims work", {
+  skip_on_ci()
+  skip_on_cran()
+  skip_if_not_installed("INLA")
+
+  set.seed(1)
+  predictor_dat <- data.frame(
+    X = runif(1000), Y = runif(1000),
+    a1 = rnorm(1000)
+  )
+  mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.2)
+  sim_dat <- sdmTMB_simulate(
+    formula = ~ 1 + breakpt(a1),
+    data = predictor_dat,
+    mesh = mesh,
+    family = gaussian(),
+    range = 0.5,
+    phi = 0.02,
+    sigma_O = 0.001,
+    seed = 42,
+    B = 0,
+    threshold_coefs = c(0.3, 0)
+  )
+  plot(predictor_dat$a1, sim_dat$observed)
+  expect_lt(max(sim_dat$observed), 0.1)
+  sim_dat$a1 <- predictor_dat$a1
+  fit <- sdmTMB(observed ~ 1 + breakpt(a1), sim_dat, mesh = mesh, spatial = "off",
+    control = sdmTMBcontrol(newton_loops = 1L))
+  b <- tidy(fit)
+  expect_gt(b$estimate[b$term == "a1-breakpt"], -0.02)
+  expect_lt(b$estimate[b$term == "a1-breakpt"], 0.02)
+  expect_gt(b$estimate[b$term == "a1-slope"], 0.28)
+  expect_lt(b$estimate[b$term == "a1-slope"], 0.32)
+
+  sim_dat <- sdmTMB_simulate(
+    formula = ~ 1 + logistic(a1),
+    data = predictor_dat,
+    mesh = mesh,
+    family = gaussian(),
+    range = 0.5,
+    phi = 0.001,
+    sigma_O = 0.001,
+    seed = 42,
+    B = 0,
+    threshold_coefs = c(0.2, 0.4, 0.5)
+  )
+  plot(predictor_dat$a1, sim_dat$observed)
+  expect_lt(max(sim_dat$observed), 0.53)
+  expect_gt(min(sim_dat$observed), -0.05)
+})

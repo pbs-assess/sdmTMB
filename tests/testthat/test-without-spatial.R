@@ -1,0 +1,18 @@
+test_that("Fitting without a mesh works", {
+  skip_on_cran()
+  skip_if_not_installed("INLA")
+  set.seed(1)
+  y <- stats::rnorm(100, 1, 1)
+  x <- stats::runif(100)
+  d <- data.frame(x, y)
+  m1 <- stats::glm(y ~ x, data = d)
+  m2 <- sdmTMB(y ~ x, data = d, spatial = "off")
+  b2 <- tidy(m2)
+  expect_equal(stats::coef(m1)[[1]], b2$estimate[b2$term == "(Intercept)"], tolerance = 1e-5)
+  expect_equal(stats::coef(m1)[[2]], b2$estimate[b2$term == "x"], tolerance = 1e-5)
+  expect_error(m3 <- sdmTMB(y ~ x, data = d, spatial = "on"), regexp = "mesh")
+
+  p <- predict(m2)
+  p1 <- predict(m2, newdata = NULL)
+  expect_identical(names(p), names(p1))
+})

@@ -211,7 +211,7 @@ make_anisotropy_spde <- function(spde, anistropy = TRUE) {
       E2 = E2,
       TV = TV - 1,
       G0 = spde$spde$param.inla$M0,
-      G0_inv = as(Matrix::diag(1 / Matrix::diag(spde$spde$param.inla$M0)), "dgTMatrix")
+      G0_inv = as(Matrix::diag(1 / Matrix::diag(spde$spde$param.inla$M0)), "TsparseMatrix")
     )
   } else {
     ret <- list(
@@ -308,7 +308,7 @@ make_barrier_spde <- function(spde) {
 #'   geom_sf() +
 #'   geom_sf(data = survey, size = 0.5)
 #'
-#' # Note that a barrier mesh won't don't much here for this
+#' # Note that a barrier mesh won't do much here for this
 #' # example data set, but we nonetheless use it as an example.
 #'
 #' # Prepare for making the mesh

@@ -104,7 +104,7 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   if ((!isTRUE(obj$do_index) && value_name[1] == "link_total") || value_name[1] == "cog_x") {
     if (is.null(obj[["obj"]])) {
       cli_abort(paste0("`obj` needs to be created with ",
-        "`sdmTMB(..., return_tmb_object = TRUE).`"))
+        "`predict(..., return_tmb_object = TRUE).`"))
     }
     test <- suppressWarnings(tryCatch(obj$obj$report(obj$obj$env$last.par),
       error = function(e) NA))

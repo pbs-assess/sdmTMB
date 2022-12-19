@@ -58,23 +58,37 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     expect_true(sum(is.na(s$b_j)) == 0L)
   })
 
-  # test_that("delta_poisson_link_gamma() family fits", {
-  #   skip_on_cran()
-  #   skip_if_not_installed("INLA")
-  #
-  #   fit_plg <- sdmTMB(density ~ 1,
-  #     data = pcod, mesh = pcod_spde,
-  #     spatial = "off",
-  #     family = delta_poisson_link_gamma()
-  #   )
-  #   fit_plg$sd_report
-  #   s <- as.list(fit_plg$sd_report, "Std. Error")
-  #   expect_true(sum(is.na(s$b_j)) == 0L)
-  #
-  #   p <- predict(fit_plg, newdata = qcs_grid, type = "response")
-  #   p <- predict(fit_plg, newdata = pcod, type = "response")
-  #   expect_error(p <- predict(fit_plg, newdata = NULL, type = "response"))
-  # })
+  test_that("delta_poisson_link_gamma() family fits", {
+    skip_on_cran()
+    skip_if_not_installed("INLA")
+
+    fit_plg <- sdmTMB(density ~ 1,
+      data = pcod, mesh = pcod_spde,
+      spatial = "off",
+      family = delta_poisson_link_gamma()
+    )
+    fit_plg$sd_report
+    s <- as.list(fit_plg$sd_report, "Std. Error")
+    expect_true(sum(is.na(s$b_j)) == 0L)
+
+    p <- predict(fit_plg, newdata = qcs_grid, type = "response")
+    p <- predict(fit_plg, newdata = pcod, type = "response")
+    expect_error(p <- predict(fit_plg, newdata = NULL, type = "response"))
+  })
+
+  test_that("delta_poisson_link_lognormal() family fits", {
+    skip_on_cran()
+    skip_if_not_installed("INLA")
+
+    fit_plg <- sdmTMB(density ~ 1,
+      data = pcod, mesh = pcod_spde,
+      spatial = "off",
+      family = delta_poisson_link_lognormal()
+    )
+    fit_plg$sd_report
+    s <- as.list(fit_plg$sd_report, "Std. Error")
+    expect_true(sum(is.na(s$b_j)) == 0L)
+  })
 
   test_that("delta_truncated_nbinom2 family fits", {
     skip_on_cran()
@@ -89,6 +103,22 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     s <- as.list(fit_dtnb2$sd_report, "Std. Error")
     expect_true(sum(is.na(s$b_j)) == 0L)
     fit_dtnb2$sd_report
+  })
+
+
+  test_that("delta_truncated_nbinom1 family fits", {
+    skip_on_cran()
+    skip_on_ci()
+    skip_if_not_installed("INLA")
+
+    pcod$count <- round(pcod$density)
+    fit_dtnb1 <- sdmTMB(count ~ 1,
+                        data = pcod, mesh = pcod_spde, spatial = "off",
+                        family = delta_truncated_nbinom1()
+    )
+    s <- as.list(fit_dtnb1$sd_report, "Std. Error")
+    expect_true(sum(is.na(s$b_j)) == 0L)
+    fit_dtnb1$sd_report
   })
 
   test_that("Anisotropy with delta model", {
@@ -113,9 +143,9 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
                       anisotropy = TRUE,
                       control = sdmTMBcontrol(newton_loops = 1)
     )
-    p1 <- plot_anisotropy(fit_bin)
-    p2 <- plot_anisotropy(fit_dg)
-    expect_equal(p2,p1, tolerance = 1e-6)
+    p1 <- plot_anisotropy2(fit_bin)
+    p2 <- plot_anisotropy2(fit_dg)
+    expect_equal(p2, p1, tolerance = 1e-6)
 
     fit_gamma <- sdmTMB(density ~ 1,
                         data = pcod_pos, mesh = pcod_spde_pos,
@@ -124,8 +154,8 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
                         control = sdmTMBcontrol(newton_loops = 1)
     )
 
-    p3 <- plot_anisotropy(fit_gamma)
-    p4 <- plot_anisotropy(fit_dg, model = 2)
+    p3 <- plot_anisotropy2(fit_gamma)
+    p4 <- plot_anisotropy2(fit_dg, model = 2)
 
     ## not sure why this isn't working
     # expect_equal(p4, p3, tolerance = 1e-6)

@@ -2,32 +2,52 @@
 % Please edit documentation in R/plot.R
 \name{plot_anisotropy}
 \alias{plot_anisotropy}
-\title{Plot anisotropy}
+\alias{plot_anisotropy2}
+\title{Plot anisotropy from an sdmTMB model}
 \usage{
-plot_anisotropy(object, model = 1)
+plot_anisotropy(object, return_data = FALSE)
+
+plot_anisotropy2(object, model = 1)
 }
 \arguments{
 \item{object}{An object from \code{\link[=sdmTMB]{sdmTMB()}}.}
 
-\item{model}{Which model if a delta model.}
+\item{return_data}{Logical. Return a data frame? \code{plot_anisotropy()} only.}
+
+\item{model}{Which model if a delta model (only for \code{plot_anisotropy2()};
+\code{plot_anisotropy()} always plots both).}
 }
 \value{
-A plot of eigenvectors illustrating the estimated anisotropy. A list
-of the plotted data is invisibly returned.
+\code{plot_anisotropy()}: One or more ellipses illustrating the estimated
+anisotropy. The ellipses are centered at coordinates of zero in the space of
+the X-Y coordinates being modeled. The ellipses show the spatial and/or
+spatiotemporal range (distance at which correlation is effectively
+independent) in any direction from zero. Uses \pkg{ggplot2}.
+
+\code{plot_anisotropy2()}: A plot of eigenvectors illustrating the estimated
+anisotropy. A list of the plotted data is invisibly returned. Uses base
+graphics.
 }
 \description{
-Plot anisotropy
+Anisotropy is when spatial correlation is directionally dependent. In
+\code{\link[=sdmTMB]{sdmTMB()}}, the default spatial correlation is isotropic, but anisotropy can
+be enabled with \code{anisotropy = TRUE}. These plotting functions help visualize
+that estimated anisotropy.
 }
 \examples{
-\dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (inla_installed() && ggplot2_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+mesh <- make_mesh(pcod_2011, c("X", "Y"), n_knots = 80, type = "kmeans")
 fit <- sdmTMB(
   data = pcod_2011,
   formula = density ~ 1,
-  mesh = make_mesh(pcod_2011, c("X", "Y"), n_knots = 80, type = "kmeans"),
-  family = tweedie(link = "log"),
+  mesh = mesh,
+  family = tweedie(),
+  share_range = FALSE,
+  time = "year",
   anisotropy = TRUE #<
 )
 plot_anisotropy(fit)
+plot_anisotropy2(fit)
 \dontshow{\}) # examplesIf}
 }
 \references{

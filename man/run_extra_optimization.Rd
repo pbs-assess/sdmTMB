@@ -4,7 +4,7 @@
 \alias{run_extra_optimization}
 \title{Run extra optimization on an already fitted object}
 \usage{
-run_extra_optimization(object, nlminb_loops = 1, newton_loops = 1)
+run_extra_optimization(object, nlminb_loops = 0, newton_loops = 1)
 }
 \arguments{
 \item{object}{An object from \code{\link[=sdmTMB]{sdmTMB()}}.}
@@ -28,7 +28,7 @@ An updated model fit of class \code{sdmTMB}.
 # (Not typically needed)
 fit <- sdmTMB(density ~ 0 + poly(depth, 2) + as.factor(year),
   data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie())
-fit_1 <- run_extra_optimization(fit, nlminb_loops = 0, newton_loops = 1)
+fit_1 <- run_extra_optimization(fit, newton_loops = 1)
 max(fit$gradients)
 max(fit_1$gradients)
 \dontshow{\}) # examplesIf}

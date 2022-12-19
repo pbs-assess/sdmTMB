@@ -25,19 +25,21 @@ test_that("sanity() runs", {
   expect_message(sanity(fit), regexp = "Non-positive-definite")
 
   fit <- sdmTMB(density ~ 1, time = "year",
+    spatiotemporal = "off", spatial = "off",
     data = pcod_2011, mesh = pcod_mesh_2011,
     family = delta_gamma()
   )
   s <- sanity(fit)
   expect_true(all(unlist(s)))
 
-  fit <- sdmTMB(density ~ s(depth), time = "year",
-    data = pcod_2011, mesh = pcod_mesh_2011,
+  set.seed(1)
+  pcod_2011$depth_fake <- pcod_2011$depth + runif(nrow(pcod_2011), -0.0001, 0.0001)
+  fit <- sdmTMB(density ~ depth + depth_fake,
+    data = pcod_2011, mesh = pcod_mesh_2011, spatial = "off",
     family = delta_gamma()
   )
-  expect_message(s <- sanity(fit), regexp = "standard error")
   expect_message(s <- sanity(fit), regexp = "may be large")
-  expect_message(s <- sanity(fit, se_ratio = 9), regexp = "9x")
+  # expect_message(s <- sanity(fit, se_ratio = 2), regexp = "2x")
   expect_false(s$se_magnitude_ok)
   expect_false(s$all_ok)
 })

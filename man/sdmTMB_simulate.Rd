@@ -19,6 +19,7 @@ sdmTMB_simulate(
   phi = NULL,
   tweedie_p = NULL,
   df = NULL,
+  threshold_coefs = NULL,
   fixed_re = list(omega_s = NULL, epsilon_st = NULL, zeta_s = NULL),
   previous_fit = NULL,
   seed = sample.int(1e+06, 1),
@@ -60,6 +61,13 @@ and spatiotemporal ranges will be unique.}
 \item{tweedie_p}{Tweedie p (power) parameter; between 1 and 2.}
 
 \item{df}{Student-t degrees of freedom.}
+
+\item{threshold_coefs}{An optional vector of threshold coefficient values
+if the \code{formula} includes \code{breakpt()} or \code{logistic()}. If \code{breakpt()},
+these are slope and cut values. If \code{logistic()}, these are the threshold at
+which the function is 50\% of the maximum, the threshold at which the
+function is 95\% of the maximum, and the maximum. See the model description
+vignette for details.}
 
 \item{fixed_re}{A list of optional random effects to fix at specified
 (e.g., previously estimated) values. Values of \code{NULL} will result

@@ -1,5 +1,82 @@
 # sdmTMB
 
+# sdmTMB 0.1.4
+
+* Relax range parameter `sanity()` check from 1x to 1.5x the greatest
+  distance in the data.
+
+* Add Pearson residuals for several families. `residuals(fit, type = "pearson")`
+  Useful for checking for overdispersion with N > 1 binomial or Poisson
+  families, among other uses. See the `overdisp_fun()` function at:
+  https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#testing-for-overdispersioncomputing-overdispersion-factor
+
+* Fix bug when using `residuals()` or `simulate()` with binomial families
+  specified via `cbind()` or `weights = N`. The binomial sample size wasn't
+  being passed through typically resulting in Inf/-Inf.
+
+* Add mixture families: `gamma_mix()`, `lognormal_mix()` and associated
+  delta/hurdle families: `delta_gamma_mix()`, `delta_lognormal_mix()`. These
+  families feature a mixture of two distributions with different means but
+  shared variance parameters.
+  
+* Add `delta_beta()` family.
+
+# sdmTMB 0.1.3
+
+* Tweak `sanity()` checking of standard error size.
+
+* Export previously experimental `plot_anisotropy()` function. The old function
+is now `plot_anisotropy2()`.
+
+* Allow passing offset data through `predict.sdmTMB()` via `offset` argument.
+
+# sdmTMB 0.1.2
+
+* Switch `effects = 'ran_vals'` for random intercept values from `tidy.sdmTMB()`
+  to match the broom.mixed package.
+
+* Make `tidy.sdmTMB()` return a tibble if the tibble package is installed. Note 
+  this could affect old code since `drop = FALSE` is the default for tibbles
+  but `drop = TRUE` is the default for data frames (i.e., tibbles always return
+  a data frame when subsetted).
+
+* Fix longstanding issue with predicting on newdata with mgcv's `t2()`. 
+  Previously this was disabled because of issues. It now works as expected.
+  
+* Add `knots` argument in `sdmTMB()`, which is passed to mgcv. A common use
+  would be to specify end points in a cyclical spline 
+  (e.g., `s(x, bs = 'cc', k = 4), knots = list(x = c(1, 3, 5, 7))`) when the
+  data don't extend fully to the boundaries that should match up.
+
+# sdmTMB 0.1.1
+
+* Preparing for release on CRAN.
+
+* Add time-varying AR1 option (originally was always a random walk). See 
+  `time_varying_type` argument in `?sdmTMB`.
+
+* Allow prediction on `newdata` with missing time elements. #130
+
+* Add check for `offset()` (which *does not* work in sdmTMB, use the `offset`
+  argument instead). #131
+  
+* Add check for random slopes (sdmTMB currently only does random intercepts,
+  although slopes can vary spatially). #131
+
+# sdmTMB 0.1.0
+
+* ADREPORT several parameters in natural space.
+  <https://github.com/pbs-assess/sdmTMB/discussions/113>
+
+* Improve robustness of model `print()` to more esoteric mgcv smoothers.
+
+* Let `sims_var` work with multiple spatially varying slopes (`zeta_s`); return
+  output in named list by coefficients. #107
+  
+* Add `threshold_coefs` to `sdmTMB_simulate()`.
+
+* Don't make a fake mesh for non-spatial model (faster).
+
 # sdmTMB 0.0.26.9001
 
 * Add vignettes on visreg, ggeffects, and delta families (thanks J. Indivero!)

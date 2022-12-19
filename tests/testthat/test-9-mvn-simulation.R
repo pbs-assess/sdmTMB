@@ -200,7 +200,7 @@ test_that("predict link attribute and get_index_sims work with delta", {
   expect_no_match(attr(p2,"link"), "logit")
   expect_match(attr(p2,"link"), "response")
 
-  p3 <- predict(m, newdata = qcs_grid_2011, nsim = 50L, type = "response")
+  p3 <- predict(m, newdata = qcs_grid_2011, nsim = 50L, model = 1, type = "response")
   expect_equal(ncol(p3), 50L)
   expect_equal(nrow(p3), nrow(qcs_grid_2011))
   expect_no_match(attr(p3,"link"), "log")
@@ -233,4 +233,68 @@ test_that("predict link attribute and get_index_sims work with delta", {
   x_sims <- get_index_sims(p, return_sims = TRUE)
   expect_equal(nrow(x_sims), nrow(x) * ncol(p))
   expect_equal(mean(x$est/x_regular$est), 1, tolerance = 0.05)
+})
+
+test_that("rmvnorm sim prediction works with various sims_vars", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+
+  # https://github.com/pbs-assess/sdmTMB/issues/107
+  d <- subset(pcod, year == 2003)
+  pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 12)
+  m1 <- sdmTMB(
+    density ~ 1, data = d,
+    mesh = pcod_spde, family = tweedie(link = "log"),
+    spatial_varying = ~ 0 + depth_mean,
+  )
+  p1b <- predict(m1, nsim = 10, sims_var = 'zeta_s')
+  expect_identical(dim(p1b), c(nrow(d), 10L))
+
+  m2 <- sdmTMB(
+    density ~ 1, data = d, control = sdmTMBcontrol(multiphase = FALSE),
+    mesh = pcod_spde, family = tweedie(link = "log"),
+    spatial_varying = ~ 0 + depth_mean + depth_sd,
+  )
+  p2b <- predict(m2, nsim = 10, sims_var = 'zeta_s')
+  expect_identical(dim(p2b[[1]]), c(nrow(d), 10L))
+  expect_identical(dim(p2b[[2]]), c(nrow(d), 10L))
+  expect_identical(length(p2b), 2L)
+
+  p2b <- predict(m2, nsim = 10, sims_var = 'est_rf')
+  expect_identical(dim(p1b), c(nrow(d), 10L))
+
+  p2b <- predict(m2, nsim = 10, sims_var = 'epsilon_st')
+  expect_identical(dim(p1b), c(nrow(d), 10L))
+
+  # Delta models:
+
+  # need more data to converge:
+  d <- pcod
+  pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 10)
+  m3 <- sdmTMB(
+    density ~ 1, data = d,
+    mesh = pcod_spde, family = delta_gamma(),
+    spatial_varying = ~ 0 + depth_mean + depth_sd,
+  )
+  p3b <- predict(m3, nsim = 3, sims_var = 'zeta_s', model = 1)
+  expect_identical(dim(p3b[[1]]), c(nrow(d), 3L))
+  expect_identical(dim(p3b[[2]]), c(nrow(d), 3L))
+  expect_identical(length(p3b), 2L)
+
+  expect_warning(p3b <- predict(m3, nsim = 3, sims_var = 'zeta_s', model = NA))
+  expect_identical(dim(p3b[[1]]), c(nrow(d), 3L))
+  expect_identical(dim(p3b[[2]]), c(nrow(d), 3L))
+  expect_identical(length(p3b), 2L)
+
+  p3b <- predict(m3, nsim = 3, sims_var = 'zeta_s', model = 2)
+  expect_identical(dim(p3b[[1]]), c(nrow(d), 3L))
+  expect_identical(dim(p3b[[2]]), c(nrow(d), 3L))
+  expect_identical(length(p3b), 2L)
+
+  p3c <- predict(m3, nsim = 3, sims_var = 'omega_s', model = 1)
+  expect_identical(dim(p3c), c(nrow(d), 3L))
+
+  p3c <- predict(m3, nsim = 3, sims_var = 'epsilon_st', model = 1)
+  expect_identical(dim(p3c), c(nrow(d), 3L))
 })

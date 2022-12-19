@@ -49,8 +49,9 @@ test_that("get_index(), get_index_sims(), and get_cog() work", {
   )
   expect_lt(sum(abs(cog$est - cached) / cached), 1e-04)
 
-  # missing time:
-  .qcs_grid <- subset(qcs_grid, year != 2015)
-  expect_error(p <- predict(m, newdata = .qcs_grid, return_tmb_object = TRUE), regexp = "time")
+  cog_wide <- get_cog(predictions, bias_correct = FALSE, format="wide")
+  expect_equal(class(cog_wide), "data.frame")
+  expect_equal(names(cog_wide), c("year", "est_x", "lwr_x","upr_x", "se_x","est_y","lwr_y","upr_y","se_y"))
+  expect_equal(cog$est[which(cog$coord=="X")], cog_wide$est_x)
 })
 

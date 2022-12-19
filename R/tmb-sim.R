@@ -25,6 +25,12 @@
 #' @param phi Observation error scale parameter (e.g., SD in Gaussian).
 #' @param tweedie_p Tweedie p (power) parameter; between 1 and 2.
 #' @param df Student-t degrees of freedom.
+#' @param threshold_coefs An optional vector of threshold coefficient values
+#'   if the `formula` includes `breakpt()` or `logistic()`. If `breakpt()`,
+#'   these are slope and cut values. If `logistic()`, these are the threshold at
+#'   which the function is 50% of the maximum, the threshold at which the
+#'   function is 95% of the maximum, and the maximum. See the model description
+#'   vignette for details.
 #' @param fixed_re A list of optional random effects to fix at specified
 #'    (e.g., previously estimated) values. Values of `NULL` will result
 #'    in the random effects being simulated.
@@ -106,6 +112,7 @@ sdmTMB_simulate <- function(formula,
                             phi = NULL,
                             tweedie_p = NULL,
                             df = NULL,
+                            threshold_coefs = NULL,
                             fixed_re = list(omega_s = NULL, epsilon_st = NULL, zeta_s = NULL),
                             previous_fit = NULL,
                             seed = sample.int(1e6, 1),
@@ -186,6 +193,16 @@ sdmTMB_simulate <- function(formula,
     )
   }
 
+  if (tmb_data$threshold_func > 0) {
+    if (is.null(threshold_coefs)) {
+      cli::cli_abort("Break point or logistic formula detected without `threshold_coefs` defined.")
+    }
+  }
+  if (!is.null(threshold_coefs)) {
+    if(!is.matrix(threshold_coefs)) threshold_coefs <- matrix(threshold_coefs, ncol=1)
+    params$b_threshold <- threshold_coefs
+  }
+
   if (!is.null(previous_fit)) {
     range <- fit$tmb_obj$report()$range
   }
@@ -257,7 +274,20 @@ sdmTMB_simulate <- function(formula,
   d[["eta"]] <- s$eta_i
   d[["observed"]] <- s$y_i
   d <- do.call("data.frame", d)
-  cbind(d, fit$tmb_data$X_ij)
+  d <- cbind(d, fit$tmb_data$X_ij)
+
+  tpar <- fit$threshold_parameter
+  if (tmb_data$threshold_func == 1L) {
+    d[[paste0(tpar, "-slope")]] <- threshold_coefs[[1]]
+    d[[paste0(tpar, "-breakpt")]] <- threshold_coefs[[2]]
+  }
+  if (tmb_data$threshold_func == 2L) {
+    d[[paste0(tpar, "-s50")]] <- threshold_coefs[[1]]
+    d[[paste0(tpar, "-s95")]] <- threshold_coefs[[2]]
+    d[[paste0(tpar, "-smax")]] <- threshold_coefs[[3]]
+  }
+
+  d
 }
 
 #' Simulate from a fitted sdmTMB model
@@ -408,7 +438,14 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
   do.call(cbind, ret)
 }
 
-#' Get DHARMa residuals
+#' DHARMa residuals
+#'
+#' Plot (and possibly return) DHARMa residuals. This is a wrapper function
+#' around [DHARMa::createDHARMa()] to facilitate its use with [sdmTMB()] models.
+#' **Note**: simulation testing suggests that these DHARMa residuals can suggest
+#' problems with model fit even with properly specified models presumably due to
+#' the Laplace approximation and/or spatially correlated random effects.
+#' Consider the slower [residuals.sdmTMB()] with `type = "mle-mcmc"`.
 #'
 #' @param simulated_response Output from [simulate.sdmTMB()].
 #' @param object Output from [sdmTMB()].

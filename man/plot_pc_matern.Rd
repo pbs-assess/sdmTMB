@@ -10,7 +10,8 @@ plot_pc_matern(
   range_prob = 0.05,
   sigma_prob = 0.05,
   range_lims = c(range_gt * 0.1, range_gt * 10),
-  sigma_lims = c(0, sigma_lt * 2)
+  sigma_lims = c(0, sigma_lt * 2),
+  plot = TRUE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ with \code{1 - sigma_prob} probability.}
 \item{range_lims}{Plot range variable limits.}
 
 \item{sigma_lims}{Plot sigma variable limits.}
+
+\item{plot}{Logical controlling whether plot is drawn (defaults to \code{TRUE}).}
 }
 \value{
 A plot from \code{\link[=image]{image()}}.

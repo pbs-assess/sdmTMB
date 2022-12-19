@@ -54,6 +54,14 @@ The sdmTMB package also allows for models to be passed to Stan via tmbstan, allo
 
 See [`?sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB.html) and [`?predict.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/predict.sdmTMB.html) for the most complete examples. Also see the vignettes ('Articles') on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html) and the preprint and appendices linked to below.
 
+## Getting help
+
+For questions about how to use sdmTMB or interpret the models, please post on the [ discussion board](https://github.com/pbs-assess/sdmTMB/discussions). If you [email](https://github.com/pbs-assess/sdmTMB/blob/main/DESCRIPTION) a question, we are likely to respond on the [discussion board](https://github.com/pbs-assess/sdmTMB/discussions) with an anonymized version of your question (and without data) if we think it could be helpful to others. Please let us know if you don't want us to do that.
+
+For bugs or feature requests, please post in the [issue tracker](https://github.com/pbs-assess/sdmTMB/issues).
+
+[Slides](https://pbs-assess.github.io/sdmTMB-teaching/noaa-psaw-2022/) and [recordings](https://www.youtube.com/channel/UCYoFG51RjJVx7m9mZGaj-Ng/videos) from a workshop on sdmTMB.
+
 ## Citation
 
 To cite sdmTMB in publications use:

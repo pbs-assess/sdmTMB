@@ -213,7 +213,7 @@ Let's make a small function to help make maps.
 
 ```{r plot-map}
 plot_map <- function(dat, column) {
-  ggplot(dat, aes_string("X", "Y", fill = column)) +
+  ggplot(dat, aes(X, Y, fill = {{ column }})) +
     geom_raster() +
     coord_fixed()
 }
@@ -224,7 +224,7 @@ There are four kinds of predictions that we get out of the model.
 First, we will show the predictions that incorporate all fixed effects and random effects:
 
 ```{r plot-all-effects, fig.width = 8}
-plot_map(predictions, "exp(est)") +
+plot_map(predictions, exp(est)) +
   scale_fill_viridis_c(
     trans = "sqrt",
     # trim extreme high values to make spatial variation more visible
@@ -239,7 +239,7 @@ plot_map(predictions, "exp(est)") +
 We can also look at just the fixed effects, here only a quadratic effect of depth:
 
 ```{r plot-fix-defects, fig.width = 6}
-plot_map(predictions, "exp(est_non_rf)") +
+plot_map(predictions, exp(est_non_rf)) +
   scale_fill_viridis_c(trans = "sqrt") +
   ggtitle("Prediction (fixed effects only)")
 ```
@@ -248,7 +248,7 @@ We can look at the spatial random effects that represent consistent deviations i
 In other words, these deviations represent consistent biotic and abiotic factors that are affecting biomass density but are not accounted for in the model.
 
 ```{r plot-spatial-effects, fig.width = 6}
-plot_map(predictions, "omega_s") +
+plot_map(predictions, omega_s) +
   scale_fill_gradient2() +
   ggtitle("Spatial random effects only")
 ```
@@ -257,7 +257,7 @@ And finally we can look at the spatiotemporal random effects that represent devi
 These represent biotic and abiotic factors that are changing through time and are not accounted for in the model.
 
 ```{r plot-spatiotemporal-effects, fig.width = 8}
-plot_map(predictions, "epsilon_st") +
+plot_map(predictions, epsilon_st) +
   scale_fill_gradient2() +
   facet_wrap(~year) +
   ggtitle("Spatiotemporal random effects only")

@@ -1,9 +1,10 @@
 #' Turn sdmTMB model output into a tidy data frame
 #'
 #' @param x Output from [sdmTMB()].
-#' @param effects A character vector including one or more of "fixed"
-#'   (fixed-effect parameters), "ran_pars" (standard deviations, spatial range,
-#'   and other random effect and dispersion terms).
+#' @param effects A character value. One of `"fixed"` ('fixed' or main-effect
+#'   parameters), `"ran_pars"` (standard deviations, spatial range, and other
+#'   random effect and dispersion-related terms), or `"ran_vals"` (individual
+#'   random intercepts, if included; behaves like `ranef()`).
 #' @param conf.int Include a confidence interval?
 #' @param conf.level Confidence level for CI.
 #' @param exponentiate Whether to exponentiate the fixed-effect coefficient
@@ -16,11 +17,11 @@
 #' Follows the conventions of the \pkg{broom} and \pkg{broom.mixed} packages.
 #'
 #' Currently, `effects = "ran_pars"` also includes dispersion-related terms
-#' (e.g., `phi`), which are not actually random effects.
+#' (e.g., `phi`), which are not actually associated with random effects.
 #'
-#' Standard errors for variance terms fit in log space (e.g., variance
-#' terms) are omitted to avoid confusion. Confidence intervals are still
-#' available.
+#' Standard errors for spatial variance terms fit in log space (e.g., variance
+#' terms, range, or parameters associated with the observation error) are
+#' omitted to avoid confusion. Confidence intervals are still available.
 #'
 #' @export
 #'
@@ -34,8 +35,15 @@
 #' tidy(fit)
 #' tidy(fit, conf.int = TRUE)
 #' tidy(fit, "ran_pars", conf.int = TRUE)
+#'
+#' pcod_2011$fyear <- as.factor(pcod_2011$year)
+#' fit <- sdmTMB(density ~ poly(depth_scaled, 2, raw = TRUE) + (1 | fyear),
+#'   data = pcod_2011, mesh = pcod_mesh_2011,
+#'   family = tweedie()
+#' )
+#' tidy(fit, "ran_vals")
 
-tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
+tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model = 1,
                  conf.int = FALSE, conf.level = 0.95, exponentiate = FALSE, ...) {
   effects <- match.arg(effects)
   assert_that(is.logical(exponentiate))
@@ -46,7 +54,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
       length(conf.level) == 1,
       msg = "`conf.level` must be length 1 and between 0 and 1")
   }
-
 
   crit <- stats::qnorm(1 - (1 - conf.level) / 2)
   if (exponentiate) trans <- exp else trans <- I
@@ -69,11 +76,13 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
   est$zeta_s <- NULL
   est$omega_s <- NULL
   est$ln_H_input <- NULL
+  est$phi <- NULL
 
   se$epsilon_st <- NULL
   se$zeta_s <- NULL
   se$omega_s <- NULL
   se$ln_H_input <- NULL
+  se$phi <- NULL
 
   subset_pars <- function(p, model) {
     p$b_j <- if (model == 1) p$b_j else p$b_j2
@@ -133,7 +142,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
   if (exponentiate) out$estimate <- trans(out$estimate)
 
   if (x$tmb_data$threshold_func > 0) {
-    if (delta) stop("not implemented for threshold delta models yet.")
     if (x$threshold_function == 1L) {
       par_name <- paste0(x$threshold_parameter, c("-slope", "-breakpt"))
     } else {
@@ -142,8 +150,8 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
     out <- rbind(
       out,
       data.frame(
-        term = par_name, estimate = est$b_threshold,
-        std.error = se$b_threshold, stringsAsFactors = FALSE
+        term = par_name, estimate = est$b_threshold[,model,drop=TRUE],
+        std.error = se$b_threshold[,model,drop=TRUE], stringsAsFactors = FALSE
       )
     )
   }
@@ -245,13 +253,60 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars"), model = 1,
     out_re[["conf.high"]] <- NULL
   }
 
+  # random intercepts
+  n_re_int <- length(x$split_formula[[model]]$reTrmFormulas)
+  if (n_re_int == 0 && effects == "ran_vals") {
+    cli::cli_abort("effects = 'ran_vals' currently only works with random intercepts (e.g., `+ (1 | g)`).")
+  }
+  if (n_re_int > 0) {
+    out_ranef <- list()
+    re_est <- as.list(x$sd_report, "Estimate")$RE
+    re_ses <- as.list(x$sd_report, "Std. Error")$RE
+    for(jj in 1:n_re_int) {
+      # 3rd element below is piece after the bar, e.g. grouping variable
+      level_names <- levels(x$data[[x$split_formula[[model]]$reTrmFormulas[[jj]][[3]]]])
+      n_levels <- length(level_names)
+      re_name <- x$split_formula[[model]]$reTrmFormulas[[jj]][[3]]
+
+      if(jj==1) {
+        start_pos <- 1
+        end_pos <- n_levels
+      } else {
+        start_pos <- end_pos + 1
+        end_pos <- start_pos + n_levels - 1
+      }
+      out_ranef[[jj]] <- data.frame(
+        term = paste0(re_name,"_",level_names),
+        estimate = re_est[start_pos:end_pos],
+        std.error = re_ses[start_pos:end_pos],
+        conf.low = re_est[start_pos:end_pos] - crit * re_ses[start_pos:end_pos],
+        conf.high = re_est[start_pos:end_pos] + crit * re_ses[start_pos:end_pos],
+        stringsAsFactors = FALSE
+      )
+      if (!conf.int) {
+        out_ranef[[jj]][["conf.low"]] <- NULL
+        out_ranef[[jj]][["conf.high"]] <- NULL
+      }
+    }
+    out_ranef <- do.call("rbind", out_ranef)
+    row.names(out_ranef) <- NULL
+  }
+
   out <- unique(out) # range can be duplicated
   out_re <- unique(out_re)
 
-  if (effects == "fixed") {
-    return(out)
+  if (requireNamespace("tibble", quietly = TRUE)) {
+    frm <- tibble::as_tibble
   } else {
-    return(out_re)
+    frm <- as.data.frame
+  }
+
+  if (effects == "fixed") {
+    return(frm(out))
+  } else if (effects == "ran_vals") {
+    return(frm(out_ranef))
+  } else {
+    return(frm(out_re))
   }
 }
 

@@ -4,11 +4,11 @@
 #' `r lifecycle::badge("experimental")`
 #'
 #' Calculate a population index via simulation from the joint precision matrix.
-#' Compared to [get_index()], this version can be dramatically faster
-#' if bias correction was turned on in [get_index()] while being approximately
-#' equivalent. **This is an experimental function.** We have yet to find a model
-#' where this function fails to provide a reasonable result, but make no
-#' guarantees.
+#' Compared to [get_index()], this version can be faster if bias correction was
+#' turned on in [get_index()] while being approximately equivalent. **This is an
+#' experimental function.** This function usually works reasonably well, but we
+#' make no guarantees. It is recommended to use [get_index()] with `bias_correct
+#' = TRUE` for final inference.
 #'
 #' @details Can also be used to produce an index from a model fit with
 #'   \pkg{tmbstan}.
@@ -97,6 +97,9 @@ get_index_sims <- function(obj,
   assert_that(length(area) == nrow(obj))
   assert_that(sum(is.na(area)) == 0L)
   assert_that(all(area >= 0))
+
+  cli_inform(c("We generally recommend using `get_index(..., bias_correct = TRUE)`",
+    "rather than `get_index_sims()`."))
 
   if(length(attributes(obj))>3) {
   if (!(attr(obj,"link") == "log")) {

@@ -4,29 +4,28 @@ get_phi <- function(object) {
   exp(r$ln_phi[[1L]])
 }
 
-qres_tweedie <- function(object, y, mu) {
+qres_tweedie <- function(object, y, mu, ...) {
   p <- stats::plogis(object$model$par[["thetaf"]]) + 1
-  u <- fishMod::pTweedie(q = y, p = p, mu = mu, phi = dispersion)
   dispersion <- get_phi(object)
-
+  u <- fishMod::pTweedie(q = y, p = p, mu = mu, phi = dispersion)
   if (p > 1 && p < 2) {
     u[y == 0] <- stats::runif(sum(y == 0), min = 0, max = u[y == 0])
   }
   stats::qnorm(u)
 }
 
-qres_binomial <- function(object, y, mu, n = NULL) {
+qres_binomial <- function(object, y, mu, .n = NULL) {
   # p <- object$family$linkinv(mu) # robust binomial in link space!
   p <- mu
-  if (is.null(n)) n <- rep(1, length(y))
-  y <- n * y
-  a <- stats::pbinom(y - 1, n, p)
-  b <- stats::pbinom(y, n, p)
+  if (is.null(.n)) .n <- rep(1, length(y))
+  mu <- .n * mu
+  a <- stats::pbinom(y - 1, .n, p)
+  b <- stats::pbinom(y, .n, p)
   u <- stats::runif(n = length(y), min = pmin(a, b), max = pmax(a, b))
   stats::qnorm(u)
 }
 
-qres_nbinom2 <- function(object, y, mu) {
+qres_nbinom2 <- function(object, y, mu, ...) {
   phi <- get_phi(object)
   a <- stats::pnbinom(y - 1, size = phi, mu = mu)
   b <- stats::pnbinom(y, size = phi, mu = mu)
@@ -49,7 +48,7 @@ qnbinom1 <- function(p, mu, phi) {
   stats::qnbinom(p, mu = mu, size = mu / phi)
 }
 
-qres_nbinom1 <- function(object, y, mu) {
+qres_nbinom1 <- function(object, y, mu, ...) {
   phi <- get_phi(object)
   a <- pnbinom1(y - 1, phi = phi, mu = mu)
   b <- pnbinom1(y, phi = phi, mu = mu)
@@ -57,14 +56,14 @@ qres_nbinom1 <- function(object, y, mu) {
   stats::qnorm(u)
 }
 
-qres_pois <- function(object, y, mu) {
+qres_pois <- function(object, y, mu, ...) {
   a <- stats::ppois(y - 1, mu)
   b <- stats::ppois(y, mu)
   u <- stats::runif(n = length(y), min = a, max = b)
   stats::qnorm(u)
 }
 
-qres_gamma <- function(object, y, mu) {
+qres_gamma <- function(object, y, mu, ...) {
   phi <- get_phi(object)
   s1 <- phi
   s2 <- mu / s1
@@ -72,14 +71,33 @@ qres_gamma <- function(object, y, mu) {
   stats::qnorm(u)
 }
 
-qres_gaussian <- function(object, y, mu) {
+qres_gamma_mix <- function(object, y, mu, ...) {
+  p_mix <- plogis(object$model$par[["logit_p_mix"]])
   phi <- get_phi(object)
+  ratio <- exp(object$model$par[["log_ratio_mix"]])
+  s1 <- phi
+  s2 <- mu / s1
+  s3 <- ratio * s2
+  u <- stats::pgamma(q = y, shape = s1, scale = (1-p_mix)*s2 + p_mix*s3)
+  stats::qnorm(u)
+}
+
+qres_lognormal_mix <- function(object, y, mu, ...) {
+  p_mix <- plogis(object$model$par[["logit_p_mix"]])
+  dispersion <- get_phi(object)
+  ratio <- exp(object$model$par[["log_ratio_mix"]])
+  u <- stats::plnorm(q = y, meanlog = log((1-p_mix)*mu + p_mix*ratio*mu) - (dispersion^2) / 2, sdlog = dispersion)
+  stats::qnorm(u)
+}
+
+qres_gaussian <- function(object, y, mu, ...) {
+  dispersion <- get_phi(object)
   u <- stats::pnorm(q = y, mean = mu, sd = dispersion)
   stats::qnorm(u)
 }
 
-qres_lognormal <- function(object, y, mu) {
-  phi <- get_phi(object)
+qres_lognormal <- function(object, y, mu, ...) {
+  dispersion <- get_phi(object)
   u <- stats::plnorm(q = y, meanlog = log(mu) - (dispersion^2) / 2, sdlog = dispersion)
   stats::qnorm(u)
 }
@@ -87,13 +105,13 @@ qres_lognormal <- function(object, y, mu) {
 # https://en.wikipedia.org/wiki/Location%E2%80%93scale_family
 pt_ls <- function(q, df, mu, sigma) stats::pt((q - mu) / sigma, df)
 
-qres_student <- function(object, y, mu) {
+qres_student <- function(object, y, mu, ...) {
   dispersion <- get_phi(object)
   u <- pt_ls(q = y, df = object$tmb_data$df, mu = mu, sigma = dispersion)
   stats::qnorm(u)
 }
 
-qres_beta <- function(object, y, mu) {
+qres_beta <- function(object, y, mu, ...) {
   phi <- get_phi(object)
   s1 <- mu * phi
   s2 <- (1 - mu) * phi
@@ -209,7 +227,7 @@ qres_beta <- function(object, y, mu) {
 #' }
 
 residuals.sdmTMB <- function(object,
-                             type = c("mle-laplace", "mle-mcmc", "mvn-laplace", "response"),
+                             type = c("mle-laplace", "mle-mcmc", "mvn-laplace", "response", "pearson"),
                              mcmc_iter = 500, mcmc_warmup = 250,
                              print_stan_model = FALSE,
                              stan_args = NULL,
@@ -263,10 +281,12 @@ residuals.sdmTMB <- function(object,
     poisson  = qres_pois,
     student  = qres_student,
     lognormal  = qres_lognormal,
+    gamma_mix = qres_gamma_mix,
+    lognormal_mix = qres_lognormal_mix,
     cli_abort(paste(fam, "not yet supported."))
   )
 
-  if (type == "mle-laplace" || type == "response") {
+  if (type %in% c("mle-laplace", "response", "pearson")) {
     mu <- tryCatch({linkinv(predict(object, newdata = nd)[[est_column]])}, # newdata = NULL; fast
       error = function(e) NA)
     if (is.na(mu[[1]])) {
@@ -325,14 +345,46 @@ residuals.sdmTMB <- function(object,
     y <- y[!is.na(y)]
   }
 
+  # for binomial proportion with weights = N:
+  size <- object$tmb_data$size
+  prop_binomial <- !all(size == 1)
+
   if (type == "response") {
-    r <- y - mu
+    if (!prop_binomial) r <- y - mu else r <- y / size - mu
   } else if (type == "mle-laplace" || type == "mvn-laplace") {
-    r <- res_func(object, y, mu, ...)
+    r <- res_func(object, y, mu, .n = size, ...)
   } else if (type == "mle-mcmc") {
-    r <- res_func(obj_mle, y, mu, ...)
+    r <- res_func(obj_mle, y, mu, .n = size, ...)
+  } else if (type == "pearson") {
+    if (is.null(v <- family(object)$variance)) {
+      cli_abort(c("Variance function undefined for family;",
+        "cannot compute Pearson residuals"))
+    }
+    # FIXME: add sigma function, for now just binomial
+    if (length(formals(v)) > 1)
+      cli_abort("sdmTMB currently only supports variance functions with 1 argument")
+    # vv <- switch(length(formals(v)),
+    #   v(fitted(object)),
+    #   v(fitted(object), sigma(object)),
+    #   stop("variance function should take 1 or 2 arguments"))
+    vv <- v(mu)
+    wts <- if (prop_binomial) size else object$tmb_data$weights_i
+    if (!prop_binomial) r <- y - mu else r <- y / size - mu
+    r <- r / sqrt(vv)
+    if (!is.null(wts)) r <- r * sqrt(wts)
   } else {
     cli_abort("residual type not implemented")
   }
   r
+}
+
+# from:
+# https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#testing-for-overdispersioncomputing-overdispersion-factor
+check_overdisp <- function(object) {
+  rdf <- stats::df.residual(object)
+  rp <- stats::residuals(object, type = "pearson")
+  pearson_chisq <- sum(rp^2)
+  prat <- pearson_chisq / rdf
+  pval <- stats::pchisq(pearson_chisq, df = rdf, lower.tail = FALSE)
+  data.frame(chisq = pearson_chisq, ratio = prat, rdf = rdf, p = pval)
 }

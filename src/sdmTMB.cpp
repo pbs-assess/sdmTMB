@@ -16,7 +16,9 @@ enum valid_family {
   truncated_nbinom2_family  = 9,
   nbinom1_family  = 10,
   truncated_nbinom1_family  = 11,
-  censored_poisson_family  = 12
+  censored_poisson_family  = 12,
+  gamma_mix_family = 13,
+  lognormal_mix_family = 14
 };
 
 enum valid_link {
@@ -117,7 +119,7 @@ Type objective_function<Type>::operator()()
   // DATA_VECTOR_INDICATOR(keep, y_i); // https://rdrr.io/cran/TMB/man/oneStepPredict.html
   DATA_VECTOR(weights_i); // optional weights
   DATA_VECTOR(offset_i); // optional offset
-  // DATA_VECTOR(proj_offset_i); // optional offset
+  DATA_VECTOR(proj_offset_i); // optional offset
 
   DATA_INTEGER(n_t);  // number of years
 
@@ -158,7 +160,9 @@ Type objective_function<Type>::operator()()
   DATA_IVECTOR(rw_fields);
   DATA_INTEGER(include_spatial);
   DATA_INTEGER(random_walk);
+  DATA_INTEGER(ar1_time);
   DATA_IVECTOR(exclude_RE); // DELTA TODO currently shared...
+  DATA_INTEGER(no_spatial); // omit all spatial calculations
 
   DATA_VECTOR(proj_lon);
   DATA_VECTOR(proj_lat);
@@ -196,9 +200,9 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(proj_X_threshold);
   DATA_INTEGER(threshold_func);
   // optional model for nonstationary st variance
-  // DATA_INTEGER(est_epsilon_model); // DELTA TODO
-  // DATA_INTEGER(est_epsilon_slope); // DELTA TODO
-  // DATA_INTEGER(est_epsilon_re); // DELTA TODO
+  DATA_INTEGER(est_epsilon_model);
+  DATA_INTEGER(est_epsilon_slope);
+  DATA_INTEGER(est_epsilon_re);
   DATA_VECTOR(epsilon_predictor);
 
   // optional stuff for penalized regression splines
@@ -227,7 +231,10 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(ln_kappa);    // Matern parameter
 
   PARAMETER(thetaf);           // tweedie only
+  PARAMETER(logit_p_mix);           // ECE / positive mixture only
+  PARAMETER(log_ratio_mix);           // ECE / positive mixture only
   PARAMETER_ARRAY(ln_tau_V);  // random walk sigma
+  PARAMETER_ARRAY(rho_time_unscaled); // (k, m) dimension ar1 time correlation rho -Inf to Inf
   PARAMETER_VECTOR(ar1_phi);          // AR1 fields correlation
   PARAMETER_ARRAY(ln_tau_G);  // random intercept sigmas
   PARAMETER_ARRAY(RE);        // random intercept deviations
@@ -236,10 +243,10 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(omega_s);    // spatial effects; n_s length
   PARAMETER_ARRAY(zeta_s);    // spatial effects on covariate; n_s length, n_z cols, n_m
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t by n_m array
-  PARAMETER_VECTOR(b_threshold);  // coefficients for threshold relationship (3) // DELTA TODO
-  // PARAMETER(b_epsilon); // slope coefficient for log-linear model on epsilon DELTA TODO
-  // PARAMETER(ln_epsilon_re_sigma); // DELTA TODO
-  // PARAMETER_VECTOR(epsilon_re); // DELTA TODO
+  PARAMETER_ARRAY(b_threshold);  // coefficients for threshold relationship (3) // DELTA TODO
+  PARAMETER_VECTOR(b_epsilon); // slope coefficient for log-linear model on epsilon
+  PARAMETER_VECTOR(ln_epsilon_re_sigma);
+  PARAMETER_ARRAY(epsilon_re);
   PARAMETER_ARRAY(b_smooth);  // P-spline smooth parameters
   PARAMETER_ARRAY(ln_smooth_sigma);  // variances of spline REs if included
 
@@ -255,16 +262,17 @@ Type objective_function<Type>::operator()()
 
   // DELTA TODO
   // ------------------ Derived variables -------------------------------------------------
-  Type s_slope, s_cut, s50, s95, s_max;
+  vector<Type> s_slope(n_m), s_cut(n_m), s50(n_m), s95(n_m), s_max(n_m);
   // these are for linear model
-  s_slope = b_threshold(0);
-  s_cut = b_threshold(1);
-  if (threshold_func == 2) {
-    s50 = b_threshold(0); // threshold at which function is 50% of max
-    s95 = b_threshold(0) + exp(b_threshold(1)); // threshold at which function is 95% of max
-    s_max = b_threshold(2);
+  for (int m = 0; m < n_m; m++) {
+    s_slope(m) = b_threshold(0,m);
+    s_cut(m) = b_threshold(1,m);
+    if (threshold_func == 2) {
+      s50(m) = b_threshold(0,m); // threshold at which function is 50% of max
+      s95(m) = b_threshold(0,m) + exp(b_threshold(1,m)); // threshold at which function is 95% of max
+      s_max(m) = b_threshold(2,m);
+    }
   }
-
   // DELTA DONE
   vector<Type> rho(n_m);
   for (int m = 0; m < n_m; m++) rho(m) = sdmTMB::minus_one_to_one(ar1_phi(m));
@@ -300,52 +308,61 @@ Type objective_function<Type>::operator()()
     vector<Type> log_sigma_O = log(sigma_O);
     ADREPORT(log_sigma_O);
     REPORT(sigma_O);
+    ADREPORT(sigma_O);
     array<Type> log_sigma_Z(n_z,n_m); // for SE
     for (int z = 0; z < n_z; z++)
       for (int m = 0; m < n_m; m++)
         log_sigma_Z(z,m) = log(sigma_Z(z,m));
     ADREPORT(log_sigma_Z);
     REPORT(sigma_Z);
+    ADREPORT(sigma_Z);
   }
 
   // TODO can we not always run this for speed?
-  vector<Type> sigma_E(n_m);
-  for (int m = 0; m < n_m; m++) {
-    sigma_E(m) = sdmTMB::calc_rf_sigma(ln_tau_E(m), ln_kappa(1,m));
-  }
+  //vector<Type> sigma_E(n_m);
+  //for (int m = 0; m < n_m; m++) {
+  //  sigma_E(m) = sdmTMB::calc_rf_sigma(ln_tau_E(m), ln_kappa(1,m));
+  //}
 
   // optional non-stationary model on epsilon
-  //  vector<Type> sigma_E(n_t);
-  //  vector<Type> ln_tau_E_vec(n_t);
-  //Type b_epsilon;
-  //  if (!est_epsilon_model) { // constant model
-  //    for (int i = 0; i < n_t; i++) {
-  //      sigma_E(i) = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa(1)));
-  //      ln_tau_E_vec(i) = ln_tau_E;
-  //    }
-  //  }
-  //  if (est_epsilon_model) { // loglinear model
-  //    // epsilon_intcpt is the intercept parameter, derived from ln_tau_E.
-  //    // For models with time as covariate, this is interpreted as sigma when covariate = 0.
-  //    Type epsilon_intcpt = 1 / sqrt(Type(4.0) * M_PI * exp(Type(2.0) * ln_tau_E + Type(2.0) * ln_kappa(1)));
-  //    Type log_epsilon_intcpt = log(epsilon_intcpt);
-  //    Type log_epsilon_temp = 0.0;
-  //    Type epsilon_cnst = - log(Type(4.0) * M_PI) / Type(2.0) - ln_kappa(1);
-  //    if(est_epsilon_re) {
-  //      //jnll -= dnorm(exp(ln_epsilon_re_sigma), Type(0.2), Type(1), true);
-  //      for(int i = 0; i < n_t; i++) {
-  //        jnll -= dnorm(epsilon_re(i), Type(0), exp(ln_epsilon_re_sigma), true);
-  //      }
-  //    }
-  //
-  //    for(int i = 0; i < n_t; i++) {
-  //      log_epsilon_temp = log_epsilon_intcpt;
-  //      if(est_epsilon_slope) log_epsilon_temp += b_epsilon * epsilon_predictor(i);
-  //      if(est_epsilon_re) log_epsilon_temp += epsilon_re(i);
-  //      sigma_E(i) = exp(log_epsilon_temp); // log-linear model
-  //      ln_tau_E_vec(i) = -log_epsilon_temp + epsilon_cnst;
-  //    }
-  //  }
+  array<Type> sigma_E(n_t, n_m);
+  array<Type> ln_tau_E_vec(n_t, n_m);
+  if (!est_epsilon_model) { // constant model
+    for (int m = 0; m < n_m; m++) {
+      // do calculation once,
+      sigma_E(0,m) = sdmTMB::calc_rf_sigma(ln_tau_E(m), ln_kappa(1,m));
+      ln_tau_E_vec(0,m) = ln_tau_E(m);
+      for (int i = 1; i < n_t; i++) {
+        sigma_E(i,m) = sigma_E(0,m);
+        ln_tau_E_vec(i,m) = ln_tau_E_vec(0,m);
+      }
+    }
+  }
+  if (est_epsilon_model) { // loglinear model
+    // epsilon_intcpt is the intercept parameter, derived from ln_tau_E.
+    // For models with time as covariate, this is interpreted as sigma when covariate = 0.
+    for (int m = 0; m < n_m; m++) {
+
+      Type epsilon_intcpt = sdmTMB::calc_rf_sigma(ln_tau_E(m), ln_kappa(1,m));
+      Type log_epsilon_intcpt = log(epsilon_intcpt);
+      Type log_epsilon_temp = 0.0;
+      Type epsilon_cnst = - log(Type(4.0) * M_PI) / Type(2.0) - ln_kappa(1,m);
+      if (est_epsilon_re) {
+        Type epsilon_re_sigma = exp(ln_epsilon_re_sigma(m));
+        for (int i = 0; i < n_t; i++) {
+          jnll -= dnorm(epsilon_re(i,m), Type(0), Type(epsilon_re_sigma), true);
+        }
+      }
+
+      for(int i = 0; i < n_t; i++) {
+        log_epsilon_temp = log_epsilon_intcpt;
+        if (est_epsilon_slope) log_epsilon_temp += b_epsilon(m) * epsilon_predictor(i);
+        if (est_epsilon_re) log_epsilon_temp += epsilon_re(i,m);
+        sigma_E(i,m) = exp(log_epsilon_temp); // log-linear model
+        ln_tau_E_vec(i,m) = -log_epsilon_temp + epsilon_cnst;
+      }
+    }
+  }
 
   Eigen::SparseMatrix<Type> Q_s; // Precision matrix
   Eigen::SparseMatrix<Type> Q_st; // Precision matrix
@@ -426,13 +443,13 @@ Type objective_function<Type>::operator()()
     if (!spatial_only(m)) {
       if (!ar1_fields(m) && !rw_fields(m)) {
         for (int t = 0; t < n_t; t++)
-          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E(m)))(epsilon_st.col(m).col(t));
+          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E_vec(t,m)))(epsilon_st.col(m).col(t));
         if (sim_re(1)) {
           for (int t = 0; t < n_t; t++) {
             if (simulate_t(t)) {
               vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
               SIMULATE {GMRF(Q_temp, s).simulate(epsilon_st_tmp);
-                epsilon_st.col(m).col(t) = epsilon_st_tmp / exp(ln_tau_E(m));}
+                epsilon_st.col(m).col(t) = epsilon_st_tmp / exp(ln_tau_E_vec(t,m));}
             }
           }
         }
@@ -440,9 +457,9 @@ Type objective_function<Type>::operator()()
         if (ar1_fields(m)) { // not using separable(ar1()) so we can simulate by time step
           // PARALLEL_REGION jnll += SCALE(SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)), 1./exp(ln_tau_E(m)))(epsilon_st.col(m));
           // Split out by year so we can turn on/off simulation by year and model covariates of ln_tau_E:
-          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E(m)))(epsilon_st.col(m).col(0));
+          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E_vec(0,m)))(epsilon_st.col(m).col(0));
           for (int t = 1; t < n_t; t++) {
-            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. /exp(ln_tau_E(m)))((epsilon_st.col(m).col(t) -
+            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. /exp(ln_tau_E_vec(t,m)))((epsilon_st.col(m).col(t) -
               rho(m) * epsilon_st.col(m).col(t - 1))/sqrt(1. - rho(m) * rho(m)));
           }
           Type n_cols = epsilon_st.col(m).cols();
@@ -458,7 +475,7 @@ Type objective_function<Type>::operator()()
                 vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
                 SIMULATE {
                   GMRF(Q_temp, s).simulate(epsilon_st_tmp);
-                  epsilon_st_tmp *= 1./exp(ln_tau_E(m));
+                  epsilon_st_tmp *= 1./exp(ln_tau_E_vec(t,m));
                   // https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html
                   Type ar1_scaler = sqrt(1. - rho(m) * rho(m));
                   if (t == 0) {
@@ -470,11 +487,12 @@ Type objective_function<Type>::operator()()
               }
             }
           }
+          ADREPORT(rho);
         } else if (rw_fields(m)) {
-          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1./exp(ln_tau_E(m)))(epsilon_st.col(m).col(0));
+          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1./exp(ln_tau_E_vec(0,m)))(epsilon_st.col(m).col(0));
           for (int t = 1; t < n_t; t++) {
             PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s),
-                1./exp(ln_tau_E(m)))(epsilon_st.col(m).col(t) - epsilon_st.col(m).col(t - 1));
+                1./exp(ln_tau_E_vec(t,m)))(epsilon_st.col(m).col(t) - epsilon_st.col(m).col(t - 1));
           }
           if (sim_re(1)) {
             for (int t = 0; t < n_t; t++) {
@@ -482,7 +500,7 @@ Type objective_function<Type>::operator()()
                 vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
                 SIMULATE {
                   GMRF(Q_temp, s).simulate(epsilon_st_tmp);
-                  epsilon_st_tmp *= 1./exp(ln_tau_E(m));
+                  epsilon_st_tmp *= 1./exp(ln_tau_E_vec(t,m));
                   if (t == 0) {
                     epsilon_st.col(m).col(0) = epsilon_st_tmp;
                   } else {
@@ -512,15 +530,34 @@ Type objective_function<Type>::operator()()
   }
 
   // Random walk effects (dynamic regression):
-  if (random_walk) {
+  if (random_walk || ar1_time) {
+    array<Type> rho_time(X_rw_ik.cols(), n_m);
+    rho_time.setZero();
     for (int m = 0; m < n_m; m++) {
       for (int k = 0; k < X_rw_ik.cols(); k++) {
         // flat prior on the initial value... then:
-        for (int t = 1; t < n_t; t++) {
-          PARALLEL_REGION jnll -=
-            dnorm(b_rw_t(t, k, m), b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)), true);
-          if (sim_re(4) && simulate_t(t))
-            SIMULATE{b_rw_t(t, k, m) = rnorm(b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)));}
+        if (random_walk) {
+          for (int t = 1; t < n_t; t++) {
+            PARALLEL_REGION jnll -=
+              dnorm(b_rw_t(t, k, m), b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)), true);
+            if (sim_re(4) && simulate_t(t))
+              SIMULATE{b_rw_t(t, k, m) = rnorm(b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)));}
+          }
+        }
+        if (ar1_time) {
+          rho_time(k, m) = sdmTMB::minus_one_to_one(rho_time_unscaled(k, m));
+          jnll += SCALE(AR1(rho_time(k, m)), exp(ln_tau_V(k, m)))(vector<Type>(b_rw_t.col(m).col(k)));
+          if (sim_re(4)) {
+              // https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html
+              vector<Type> tmp(n_t);
+              Type ar1_sigma = sqrt(Type(1) - rho_time(k, m) * rho_time(k, m));
+              Type x0 = rnorm(Type(0), exp(ln_tau_V(k, m)));
+              tmp(0) = rho_time(k, m) * x0 + ar1_sigma * rnorm(Type(0), exp(ln_tau_V(k, m)));
+              for (int t = 1; t < n_t; t++)
+                tmp(t) = rho_time(k, m) * tmp(t-1) + ar1_sigma * rnorm(Type(0), exp(ln_tau_V(k, m)));
+              for(int t = 0; t < n_t; t++)
+                if (simulate_t(t)) SIMULATE{b_rw_t(t, k, m) = tmp(t);}
+          }
         }
       }
     }
@@ -534,17 +571,19 @@ Type objective_function<Type>::operator()()
   array<Type> epsilon_st_A(n_i, n_t, n_m);
   array<Type> epsilon_st_A_vec(n_i, n_m);
   omega_s_A.setZero();
-  omega_s_A.setZero();
+  zeta_s_A.setZero();
   epsilon_st_A.setZero();
   epsilon_st_A_vec.setZero();
 
-  for (int m = 0; m < n_m; m++) {
-    for (int t = 0; t < n_t; t++)
-      if (!spatial_only(m)) epsilon_st_A.col(m).col(t) =
-        A_st * vector<Type>(epsilon_st.col(m).col(t));
-    omega_s_A.col(m) = A_st * vector<Type>(omega_s.col(m));
-    for (int z = 0; z < n_z; z++)
-      zeta_s_A.col(m).col(z) = A_st * vector<Type>(zeta_s.col(m).col(z));
+  if (!no_spatial) {
+    for (int m = 0; m < n_m; m++) {
+      for (int t = 0; t < n_t; t++)
+        if (!spatial_only(m)) epsilon_st_A.col(m).col(t) =
+          A_st * vector<Type>(epsilon_st.col(m).col(t));
+      omega_s_A.col(m) = A_st * vector<Type>(omega_s.col(m));
+      for (int z = 0; z < n_z; z++)
+        zeta_s_A.col(m).col(z) = A_st * vector<Type>(zeta_s.col(m).col(z));
+    }
   }
 
   // ------------------ Linear predictor ---------------------------------------
@@ -576,18 +615,20 @@ Type objective_function<Type>::operator()()
   }
 
   // add threshold effect if specified
-  // DELTA TODO
   if (threshold_func > 0) {
-    if (n_m > 1) error("Threshold delta models not finished."); // DELTA TODO
     if (threshold_func == 1) {
       // linear
-      for (int i = 0; i < n_i; i++) {
-        eta_fixed_i(i,0) += sdmTMB::linear_threshold(X_threshold(i), s_slope, s_cut);
+      for (int m = 0; m < n_m; m++) {
+        for (int i = 0; i < n_i; i++) {
+          eta_fixed_i(i,m) += sdmTMB::linear_threshold(X_threshold(i), s_slope(m), s_cut(m));
+        }
       }
     } else {
       // logistic
-      for (int i = 0; i < n_i; i++) {
-        eta_fixed_i(i,0) += sdmTMB::logistic_threshold(X_threshold(i), s50, s95, s_max);
+      for (int m = 0; m < n_m; m++) {
+        for (int i = 0; i < n_i; i++) {
+          eta_fixed_i(i,m) += sdmTMB::logistic_threshold(X_threshold(i), s50(m), s95(m), s_max(m));
+        }
       }
     }
   }
@@ -605,7 +646,7 @@ Type objective_function<Type>::operator()()
       if ((n_m == 2 && m == 1) || n_m == 1) {
         if (!poisson_link_delta) eta_i(i,m) += offset_i(i);
       }
-      if (random_walk) {
+      if (random_walk || ar1_time) {
         for (int k = 0; k < X_rw_ik.cols(); k++) {
           eta_rw_i(i,m) += X_rw_ik(i, k) * b_rw_t(year_i(i), k, m); // record it
           eta_i(i,m) += eta_rw_i(i,m);
@@ -619,7 +660,7 @@ Type objective_function<Type>::operator()()
           for (int z = 0; z < n_z; z++)
             eta_i(i,m) += zeta_s_A(i,z,m) * z_i(i,z); // spatially varying covariate DELTA
       }
-      epsilon_st_A_vec(i,m) = epsilon_st_A(A_spatial_index(i), year_i(i),m); // record it
+      if (!no_spatial) epsilon_st_A_vec(i,m) = epsilon_st_A(A_spatial_index(i), year_i(i),m); // record it
       eta_i(i,m) += epsilon_st_A_vec(i,m); // spatiotemporal
 
       // IID random intercepts:
@@ -637,14 +678,16 @@ Type objective_function<Type>::operator()()
       // if (n_m > 1) if (family(0) == 1 && family(1) == 4 && link(0) == 1 && link(1) == 1)
       //     poisson_link_delta = true;
 
-      if (family(m) == 1) { // binomial
+      if (family(m) == 1 && !poisson_link_delta) { // regular binomial
         // binomial(link = "logit"); don't touch (using robust density function in logit space)
         mu_i(i,m) = LogitInverseLink(eta_i(i,m), link(m));
       } else if (poisson_link_delta) { // clogog, but put in logit space for robust density function:
         Type n = exp(eta_i(i,0));
-        Type p = Type(1) - exp(-exp(offset_i(i)) * n);
+        // Type p = Type(1) - exp(-exp(offset_i(i)) * n);
+        Type p = Type(1) - exp(-exp(offset_i(i) + eta_i(i,0)));
         if (m == 0) mu_i(i,0) = logit(p);
-        if (m == 1) mu_i(i,1) = (n/p) * exp(eta_i(i,1));
+        // if (m == 1) mu_i(i,1) = (n/p) * exp(eta_i(i,1));
+        if (m == 1) mu_i(i,1) = exp(log(n/p) + eta_i(i,1));
       } else {
         mu_i(i,m) = InverseLink(eta_i(i,m), link(m));
       }
@@ -657,7 +700,7 @@ Type objective_function<Type>::operator()()
   // close to zero: use for count data (cf binomial()$initialize)
 #define zt_lik_nearzero(x,loglik_exp) ((x < Type(0.001)) ? -INFINITY : loglik_exp)
 
-  Type s1, s2, s3, lognzprob, tmp_ll;
+  Type s1, s2, s3, lognzprob, tmp_ll, ll_1, ll_2, p_mix, mix_ratio, ll_max;
   REPORT(phi);
   for (int m = 0; m < n_m; m++) PARALLEL_REGION {
     for (int i = 0; i < n_i; i++) {
@@ -748,6 +791,53 @@ Type objective_function<Type>::operator()()
             tmp_ll = dbeta(y_i(i,m), s1, s2, true);
             SIMULATE{y_i(i,m) = rbeta(s1, s2);}
             break;
+          case gamma_mix_family:
+            p_mix = invlogit(logit_p_mix); // probability of larger event
+            s1 = exp(ln_phi(m));        // shape
+            s2 = mu_i(i,m) / s1;        // scale
+            ll_1 = log(Type(1.0 - p_mix)) + dgamma(y_i(i,m), s1, s2, true);
+
+            mix_ratio = exp(log_ratio_mix) + 1.0; // ratio of large:small values, constrained > 1.0
+            s3 = s2 * mix_ratio; // mean of large component = mean of smaller * ratio
+            ll_2 = log(p_mix) + dgamma(y_i(i,m), s1, s3, true);
+
+            ll_max = ll_1; // determine larger of ll_1 and ll_2
+            if(ll_2 > ll_1) ll_max = ll_2;
+
+            tmp_ll = ll_max + log(exp(ll_1 - ll_max) + exp(ll_2 - ll_max)); // log sum exp function
+
+            SIMULATE{
+              if(rbinom(Type(1),p_mix) == 0) {
+                y_i(i,m) = rgamma(s1, s2);
+              } else {
+                y_i(i,m) = rgamma(s1, s3);
+              }
+            }
+            // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
+            // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
+            break;
+        case lognormal_mix_family:
+          p_mix = invlogit(logit_p_mix); // probability of larger event
+
+          ll_1 = log(Type(1.0 - p_mix)) + sdmTMB::dlnorm(y_i(i,m), log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
+          mix_ratio = exp(log_ratio_mix) + 1.0; // ratio of large:small values, constrained > 1.0
+          ll_2 = log(p_mix) + sdmTMB::dlnorm(y_i(i,m), log(mix_ratio) + log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
+
+          ll_max = ll_1; // determine larger of ll_1 and ll_2
+          if(ll_2 > ll_1) ll_max = ll_2;
+
+          tmp_ll = ll_max + log(exp(ll_1 - ll_max) + exp(ll_2 - ll_max)); // log sum exp function
+
+          SIMULATE{
+            if(rbinom(Type(1),p_mix) == 0) {
+              y_i(i,m) = exp(rnorm(log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m)));;
+            } else {
+              y_i(i,m) = exp(rnorm(log(mix_ratio) + log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m)));;
+            }
+          }
+          // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
+          // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
+          break;
           default:
             error("Family not implemented.");
         }
@@ -819,23 +909,30 @@ Type objective_function<Type>::operator()()
     int n_p = proj_X_ij(0).rows(); // n 'p'redicted newdata
     int n_p_mesh = proj_mesh.rows(); // n 'p'redicted mesh (less than n_p if duplicate locations)
     array<Type> proj_fe(n_p, n_m);
+
     for (int m = 0; m < n_m; m++) {
       if (m == 0) proj_fe.col(m) = proj_X_ij(m) * b_j;
-      if (m == 1) proj_fe.col(m) = proj_X_ij(m) * b_j2;
+      if (n_m == 1) proj_fe.col(m) += proj_offset_i;
+      if (m == 1) proj_fe.col(m) = proj_X_ij(m) * b_j2 + proj_offset_i;
     }
 
     // add threshold effect if specified
-    // DELTA TODO
     if (threshold_func > 0) {
       if (threshold_func == 1) {
         // linear
-        for (int i = 0; i < n_p; i++) {
-          proj_fe(i,0) += sdmTMB::linear_threshold(proj_X_threshold(i), s_slope, s_cut);
+        for (int m = 0; m < n_m; m++) {
+          for (int i = 0; i < n_p; i++) {
+            // TODO: does proj_X_threshold(i) need to be dimensioned by model?
+            proj_fe(i,m) += sdmTMB::linear_threshold(proj_X_threshold(i), s_slope(m), s_cut(m));
+          }
         }
       } else {
         // logistic
-        for (int i = 0; i < n_p; i++) {
-          proj_fe(i,0) += sdmTMB::logistic_threshold(proj_X_threshold(i), s50, s95, s_max);
+        for (int m = 0; m < n_m; m++) {
+          for (int i = 0; i < n_p; i++) {
+            // TODO: does proj_X_threshold(i) need to be dimensioned by model?
+            proj_fe(i,m) += sdmTMB::logistic_threshold(proj_X_threshold(i), s50(m), s95(m), s_max(m));
+          }
         }
       }
     }
@@ -878,7 +975,7 @@ Type objective_function<Type>::operator()()
     // Random walk covariates:
     array<Type> proj_rw_i(n_p,n_m);
     proj_rw_i.setZero();
-    if (random_walk) {
+    if (random_walk || ar1_time) {
       for (int m = 0; m < n_m; m++) {
         for (int i = 0; i < proj_X_rw_ik.rows(); i++) {
           for (int k = 0; k < proj_X_rw_ik.cols(); k++) {
@@ -899,42 +996,47 @@ Type objective_function<Type>::operator()()
     array<Type> proj_omega_s_A(n_p, n_m);
     array<Type> proj_zeta_s_A(n_p, n_z, n_m);
     array<Type> proj_epsilon_st_A_vec(n_p, n_m);
+    proj_omega_s_A.setZero(); // may not get filled
     proj_zeta_s_A.setZero(); // may not get filled
+    proj_epsilon_st_A_vec.setZero(); // may not get filled
 
-    for (int m = 0; m < n_m; m++) {
-      for (int t = 0; t < n_t; t++) {
-        proj_epsilon_st_A_unique.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
-      }
-      proj_omega_s_A_unique.col(m) = proj_mesh * vector<Type>(omega_s.col(m));
-    }
-
-    // Spatially varying coefficients:
     array<Type> proj_zeta_s_A_cov(n_p, n_z, n_m);
     proj_zeta_s_A_cov.setZero();
-    if (spatial_covariate) {
+
+    if (!no_spatial) {
       for (int m = 0; m < n_m; m++) {
-        for (int z = 0; z < n_z; z++) {
-          proj_zeta_s_A_unique.col(m).col(z) = proj_mesh * vector<Type>(zeta_s.col(m).col(z));
+        for (int t = 0; t < n_t; t++) {
+          proj_epsilon_st_A_unique.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
+        }
+        proj_omega_s_A_unique.col(m) = proj_mesh * vector<Type>(omega_s.col(m));
+      }
+
+      // Spatially varying coefficients:
+      if (spatial_covariate) {
+        for (int m = 0; m < n_m; m++) {
+          for (int z = 0; z < n_z; z++) {
+            proj_zeta_s_A_unique.col(m).col(z) = proj_mesh * vector<Type>(zeta_s.col(m).col(z));
+          }
         }
       }
-    }
 
-    // Pick out the appropriate spatial and/or or spatiotemporal values:
-    for (int m = 0; m < n_m; m++) {
-      for (int i = 0; i < n_p; i++) {
-        proj_omega_s_A(i,m) = proj_omega_s_A_unique(proj_spatial_index(i),m);
-        proj_epsilon_st_A_vec(i,m) = proj_epsilon_st_A_unique(proj_spatial_index(i), proj_year(i),m);
-        for (int z = 0; z < n_z; z++) {
-          proj_zeta_s_A(i,z,m) = proj_zeta_s_A_unique(proj_spatial_index(i),z,m);
+      // Pick out the appropriate spatial and/or or spatiotemporal values:
+      for (int m = 0; m < n_m; m++) {
+        for (int i = 0; i < n_p; i++) {
+          proj_omega_s_A(i,m) = proj_omega_s_A_unique(proj_spatial_index(i),m);
+          proj_epsilon_st_A_vec(i,m) = proj_epsilon_st_A_unique(proj_spatial_index(i), proj_year(i),m);
+          for (int z = 0; z < n_z; z++) {
+            proj_zeta_s_A(i,z,m) = proj_zeta_s_A_unique(proj_spatial_index(i),z,m);
+          }
         }
       }
-    }
 
-    if (spatial_covariate) {
-      for (int m = 0; m < n_m; m++) {
-        for (int z = 0; z < n_z; z++) {
-          for (int i = 0; i < n_p; i++) {
-            proj_zeta_s_A_cov(i,z,m) = proj_zeta_s_A(i,z,m) * proj_z_i(i,z);
+      if (spatial_covariate) {
+        for (int m = 0; m < n_m; m++) {
+          for (int z = 0; z < n_z; z++) {
+            for (int i = 0; i < n_p; i++) {
+              proj_zeta_s_A_cov(i,z,m) = proj_zeta_s_A(i,z,m) * proj_z_i(i,z);
+            }
           }
         }
       }
@@ -993,12 +1095,9 @@ Type objective_function<Type>::operator()()
       if (n_m > 1) { // delta model
         for (int i = 0; i < n_p; i++) {
           if (poisson_link_delta) {
-            // Type n = exp(proj_eta(i,0));
-            // Type p = 1 - exp(-n);
-            // t1 = p;
-            // t2 = (n/p) * exp(proj_eta(i,1));
+            // Type R1 = Type(1.) - exp(-exp(proj_eta(i,0)));
+            // Type R2 = exp(proj_eta(i,0)) / R1 * exp(proj_eta(i,1))
             mu_combined(i) = exp(proj_eta(i,0) + proj_eta(i,1)); // prevent numerical issues
-            // error("Index from Poisson-link delta model not tested yet.");
           } else {
             t1 = InverseLink(proj_eta(i,0), link(0));
             t2 = InverseLink(proj_eta(i,1), link(1));
@@ -1019,8 +1118,7 @@ Type objective_function<Type>::operator()()
         link_tmp = link(0);
       }
       for (int i = 0; i < n_t; i++) {
-        if (poisson_link_delta) link_total(i) = log(total(i));
-        if (!poisson_link_delta) link_total(i) = Link(total(i), link_tmp);
+        link_total(i) = Link(total(i), link_tmp);
       }
       if (calc_index_totals) {
         REPORT(link_total);
@@ -1058,21 +1156,21 @@ Type objective_function<Type>::operator()()
       }
     }
   }
-//
-//    if (threshold_func == 1) { // linear breakpoint model
-//      REPORT(s_slope);
-//      ADREPORT(s_slope);
-//      REPORT(s_cut);
-//      ADREPORT(s_cut);
-//    }
-//    if (threshold_func == 2) { // logistic function model
-//      REPORT(s50);
-//      ADREPORT(s50);
-//      REPORT(s95);
-//      ADREPORT(s95);
-//      REPORT(s_max);
-//      ADREPORT(s_max);
-//    }
+
+   if (threshold_func == 1) { // linear breakpoint model
+     REPORT(s_slope);
+     ADREPORT(s_slope);
+     REPORT(s_cut);
+     ADREPORT(s_cut);
+   }
+   if (threshold_func == 2) { // logistic function model
+     REPORT(s50);
+     ADREPORT(s50);
+     REPORT(s95);
+     ADREPORT(s95);
+     REPORT(s_max);
+     ADREPORT(s_max);
+   }
 //    if (calc_quadratic_range && b_j(1) < Type(0)) {
 //      vector<Type> quadratic_roots = sdmTMB::GetQuadraticRoots(b_j(1), b_j(0), Type(0.05));
 //      Type quadratic_low = quadratic_roots(0);
@@ -1094,22 +1192,16 @@ Type objective_function<Type>::operator()()
 //      ADREPORT(quadratic_peak);
 //      ADREPORT(quadratic_reduction);
 //    }
-  ////  if (est_epsilon_slope) {
-  ////    REPORT(b_epsilon);
-  ////    ADREPORT(b_epsilon);
-  ////  }
-  //  // if(est_epsilon_re) {
-  //  //   REPORT(ln_epsilon_re_sigma);
-  //  //   ADREPORT(ln_epsilon_re_sigma);
-  //  // }
-  //
+   if (est_epsilon_slope) {
+     REPORT(b_epsilon);
+     ADREPORT(b_epsilon);
+   }
+  if (est_epsilon_re) {
+    REPORT(ln_epsilon_re_sigma);
+    ADREPORT(ln_epsilon_re_sigma);
+  }
+
   //  // ------------------ Reporting ----------------------------------------------
-
-  //  vector<Type> log_sigma_E(n_t);
-  //  for (int i = 0; i < n_t; i++) {
-  //    log_sigma_E(i) = log(sigma_E(i));
-  //  }
-
   // FIXME save memory by not reporting all these or optionally so for MVN/Bayes?
 
   array<Type> log_range(range.rows(),range.cols()); // for SE
@@ -1119,9 +1211,15 @@ Type objective_function<Type>::operator()()
     }
   }
 
+  ADREPORT(logit_p_mix);
+  ADREPORT(log_ratio_mix);
+  REPORT(p_mix);
+  REPORT(mix_ratio);
+  ADREPORT(phi);
   vector<Type> log_sigma_E = log(sigma_E);
   ADREPORT(log_sigma_E);      // log spatio-temporal SD
   REPORT(sigma_E);      // spatio-temporal SD
+  ADREPORT(sigma_E);      // log spatio-temporal SD
   REPORT(epsilon_st_A_vec);   // spatio-temporal effects; vector
   REPORT(b_rw_t);   // time-varying effects
   REPORT(omega_s_A);      // spatial effects; n_s length vector
@@ -1133,6 +1231,7 @@ Type objective_function<Type>::operator()()
   REPORT(eta_iid_re_i); // IID intercept random effect estimates
   REPORT(rho);          // AR1 correlation in -1 to 1 space
   REPORT(range);        // Matern approximate distance at 10% correlation
+  ADREPORT(range);        // Matern approximate distance at 10% correlation
   REPORT(log_range);  // log Matern approximate distance at 10% correlation
   ADREPORT(log_range);  // log Matern approximate distance at 10% correlation
   REPORT(b_smooth);     // smooth coefficients for penalized splines

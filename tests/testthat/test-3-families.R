@@ -90,7 +90,7 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     m <- sdmTMB(data = s, formula = observed ~ 1,
       mesh = spde, family = nbinom2(),
       control = sdmTMBcontrol(newton_loops = 1))
-    expect_equal(round(tidy(m)[,"estimate"], 6), 0.601897)
+    expect_equal(round(tidy(m)[,"estimate", drop=TRUE], 6), 0.601897)
   })
 
   test_that("Truncated NB2, truncated NB1, and regular NB1 fit", {
@@ -295,4 +295,38 @@ test_that("Censored Poisson fits", {
       mesh = mesh, family = censored_poisson(link = "log"),
     ), regexp = "lwr")
 
+})
+
+test_that("Binomial simulation/residuals works with weights argument or cbind()", {
+  set.seed(1)
+  w <- sample(1:9, size = 300, replace = TRUE)
+  dat <- data.frame(y = stats::rbinom(300, size = w, 0.5))
+  dat$prop <- dat$y / w
+  m <- sdmTMB(prop ~ 1, data = dat, weights = w, family = binomial(), spatial = "off")
+  r <- residuals(m)
+  expect_true(sum(is.infinite(r)) == 0L)
+  set.seed(1)
+  stats::qqnorm(r)
+  stats::qqline(r)
+  set.seed(1)
+  s <- simulate(m, nsim = 500)
+  expect_equal(mean(dat$y), mean(s), tolerance = 0.1)
+  expect_equal(mean(apply(s, 1, mean) - dat$y), 0, tolerance = 0.01)
+
+  # cbind() approach:
+  dat$y0 <- w - dat$y
+  m2 <- sdmTMB(cbind(y, y0) ~ 1, data = dat, family = binomial(), spatial = "off")
+
+  expect_equal(m$model$par, m2$model$par)
+
+  set.seed(1)
+  r2 <- residuals(m2)
+  expect_true(sum(is.infinite(r2)) == 0L)
+  stats::qqnorm(r2)
+  stats::qqline(r2)
+
+  set.seed(1)
+  s2 <- simulate(m2, nsim = 500)
+  expect_equal(mean(dat$y), mean(s2), tolerance = 0.1)
+  expect_equal(mean(apply(s2, 1, mean) - dat$y), 0, tolerance = 0.01)
 })

@@ -78,8 +78,8 @@ tidy(m1, "ran_pars", conf.int = TRUE)
 Let's look at the predictions and estimates of the spatially varying coefficients on a grid:
 
 ```{r}
-plot_map_raster <- function(dat, column = "est") {
-  ggplot(dat, aes_string("X", "Y", fill = column)) +
+plot_map_raster <- function(dat, column = est) {
+  ggplot(dat, aes(X, Y, fill = {{ column }})) +
     geom_raster() +
     facet_wrap(~year) +
     coord_fixed() +
@@ -100,23 +100,23 @@ First let's look at the spatial trends.
 We will just pick out a single year to plot since they should all be the same for the slopes. Note that these are in log space. `zeta_s` are the spatially varying coefficients.
 
 ```{r}
-plot_map_raster(filter(p1, year == 2003), "zeta_s_scaled_year")
+plot_map_raster(filter(p1, year == 2003), zeta_s_scaled_year)
 ```
 
 This is the spatially varying intercept:
 
 ```{r, warning=FALSE, message=FALSE}
-plot_map_raster(filter(p1, year == 2003), "omega_s") + scale_fill_gradient2()
+plot_map_raster(filter(p1, year == 2003), omega_s) + scale_fill_gradient2()
 ```
 
 These are the predictions including all fixed and random effects plotted in log space.
 
 ```{r}
-plot_map_raster(filter(p1, year == 2003), "est")
+plot_map_raster(filter(p1, year == 2003), est)
 ```
 
 And we can look at just the spatiotemporal random effects for models 2 and 3 (intercept + slope combined):
 
 ```{r}
-plot_map_raster(filter(p1, year == 2003), "est_rf")
+plot_map_raster(filter(p1, year == 2003), est_rf)
 ```

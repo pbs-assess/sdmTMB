@@ -8,7 +8,7 @@ mround <- function(x, digits) {
   sprintf(paste0("%.", digits, "f"), round(x, digits))
 }
 
-#' Extract the number of observations of a sdmTMB model
+#' Extract the number of observations of an sdmTMB model
 #'
 #' @param object The fitted sdmTMB model object
 #' @importFrom stats nobs
@@ -16,6 +16,16 @@ mround <- function(x, digits) {
 #' @noRd
 nobs.sdmTMB <- function(object, ...) {
     sum(!is.na(object$data[all.vars(object$formula[[1]])[1]]))
+}
+
+#' Get fitted values from an sdmTMB model
+#'
+#' @param object The fitted sdmTMB model object
+#' @importFrom stats predict
+#' @export
+#' @noRd
+fitted.sdmTMB <- function(object, ...) {
+  predict(object, type = "response")$est
 }
 
 #' Extract the log likelihood of a sdmTMB model
@@ -71,6 +81,21 @@ fixef.sdmTMB <- function(object, ...) {
   bhat <- .t$estimate
   names(bhat) <- .t$term
   bhat
+}
+
+##' @importFrom nlme ranef
+#' @method ranef sdmTMB
+#' @export
+ranef.sdmTMB <- function(object, ...) {
+  .t <- tidy(object, "ran_vals", conf.int = FALSE)
+  terms <- unlist(lapply(strsplit(.t$term,"_"), getElement, 1))
+  est <- .t$estimate
+  cond <- list()
+  for(i in seq_along(unique(terms))) {
+    cond[[unique(terms)[i]]] =
+      data.frame("Intercept" = est[which(terms == unique(terms)[i])], stringsAsFactors = FALSE)
+  }
+  return(list(cond = cond))
 }
 
 #' @importFrom stats df.residual

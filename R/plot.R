@@ -1,46 +1,44 @@
-#' Plot anisotropy
+#' Plot anisotropy from an sdmTMB model
+#'
+#' Anisotropy is when spatial correlation is directionally dependent. In
+#' [sdmTMB()], the default spatial correlation is isotropic, but anisotropy can
+#' be enabled with `anisotropy = TRUE`. These plotting functions help visualize
+#' that estimated anisotropy.
 #'
 #' @param object An object from [sdmTMB()].
-#' @param model Which model if a delta model.
+#' @param return_data Logical. Return a data frame? `plot_anisotropy()` only.
+#' @param model Which model if a delta model (only for `plot_anisotropy2()`;
+#'   `plot_anisotropy()` always plots both).
 #'
-#' @export
-#' @rdname plot_anisotropy
+#' @return
+#' `plot_anisotropy()`: One or more ellipses illustrating the estimated
+#' anisotropy. The ellipses are centered at coordinates of zero in the space of
+#' the X-Y coordinates being modeled. The ellipses show the spatial and/or
+#' spatiotemporal range (distance at which correlation is effectively
+#' independent) in any direction from zero. Uses \pkg{ggplot2}.
 #'
-#' @return A plot of eigenvectors illustrating the estimated anisotropy. A list
-#'   of the plotted data is invisibly returned.
+#' `plot_anisotropy2()`: A plot of eigenvectors illustrating the estimated
+#' anisotropy. A list of the plotted data is invisibly returned. Uses base
+#' graphics.
 #' @references Code adapted from VAST R package
-#' @examplesIf inla_installed()
+#' @importFrom rlang .data
+#' @examplesIf inla_installed() && ggplot2_installed()
+#' mesh <- make_mesh(pcod_2011, c("X", "Y"), n_knots = 80, type = "kmeans")
 #' fit <- sdmTMB(
 #'   data = pcod_2011,
 #'   formula = density ~ 1,
-#'   mesh = make_mesh(pcod_2011, c("X", "Y"), n_knots = 80, type = "kmeans"),
-#'   family = tweedie(link = "log"),
+#'   mesh = mesh,
+#'   family = tweedie(),
+#'   share_range = FALSE,
+#'   time = "year",
 #'   anisotropy = TRUE #<
 #' )
 #' plot_anisotropy(fit)
+#' plot_anisotropy2(fit)
 
-plot_anisotropy <- function(object, model = 1) {
-  stopifnot(inherits(object, "sdmTMB"))
-  report <- object$tmb_obj$report(object$tmb_obj$env$last.par.best)
-  if (model == 1) eig <- eigen(report$H)
-  if (model == 2) eig <- eigen(report$H2)
-  dat <- data.frame(
-    x0 = c(0, 0),
-    y0 = c(0, 0),
-    x1 = eig$vectors[1, , drop = TRUE] * eig$values,
-    y1 = eig$vectors[2, , drop = TRUE] * eig$values
-  )
-  plot(0,
-    xlim = range(c(dat$x0, dat$x1)),
-    ylim = range(c(dat$y0, dat$y1)),
-    type = "n", asp = 1, xlab = "", ylab = ""
-  )
-  graphics::arrows(dat$x0, dat$y0, dat$x1, dat$y1)
-  invisible(list(eig = eig, dat = dat, H = report$H))
-}
-
-# modified from VAST:
-plot_anisotropy2 <- function(object, return_data = FALSE) {
+#' @export
+#' @rdname plot_anisotropy
+plot_anisotropy <- function(object, return_data = FALSE) {
   stopifnot(inherits(object, "sdmTMB"))
   report <- object$tmb_obj$report(object$tmb_obj$env$last.par.best)
   delta <- isTRUE(object$family$delta)
@@ -89,6 +87,8 @@ plot_anisotropy2 <- function(object, return_data = FALSE) {
       angle = c(angle1_s, angle1_st, angle2_s, angle2_st),
       a = c(rss(maj1_s), rss(maj1_st), rss(maj2_s), rss(maj2_st)),
       b = c(rss(min1_s), rss(min1_st), rss(min2_s), rss(min2_st)),
+      maj1 = c(maj1_s, maj1_st, maj2_s, maj2_st),
+      min1 = c(min1_s, min1_st, min2_s, min2_st),
       model = rep(object$family$family, each = 2L),
       model_num  = rep(seq(1L, 2L), each = 2L),
       random_field = rep(c("spatial", "spatiotemporal"), 2L),
@@ -112,6 +112,8 @@ plot_anisotropy2 <- function(object, return_data = FALSE) {
       angle = c(angle1_s, angle1_st),
       a = c(rss(maj1_s), rss(maj1_st)),
       b = c(rss(min1_s), rss(min1_st)),
+      maj1 = c(maj1_s, maj1_st),
+      min1 = c(min1_s, min1_st),
       model = object$family$family,
       random_field = rep(c("spatial", "spatiotemporal"), 1L),
       stringsAsFactors = FALSE
@@ -126,20 +128,20 @@ plot_anisotropy2 <- function(object, return_data = FALSE) {
     }
   }
 
+  if (return_data) return(dat)
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     cli_abort("ggplot2 must be installed to use this function.")
   }
   if (!requireNamespace("ggforce", quietly = TRUE)) {
     cli_abort("ggforce must be installed to use this function.")
   }
-  if (return_data) return(dat)
   g <- ggplot2::ggplot(dat,
-    ggplot2::aes_(
+    ggplot2::aes(
       x0 = 0, y0 = 0,
-      a = ~a, b = ~b,
-      angle = ~angle,
-      colour = `if`(delta, ~model, NULL),
-      linetype = ~random_field
+      a = .data$a, b = .data$b,
+      angle = .data$angle,
+      colour = `if`(delta, .data$model, NULL),
+      linetype = .data$random_field
     )
   ) +
     ggforce::geom_ellipse() +
@@ -148,6 +150,28 @@ plot_anisotropy2 <- function(object, return_data = FALSE) {
       x = object$mesh$xy_cols[1], y = object$mesh$xy_cols[2]) +
     ggplot2::scale_colour_brewer(palette = "Dark2")
   g
+}
+
+#' @export
+#' @rdname plot_anisotropy
+plot_anisotropy2 <- function(object, model = 1) {
+  stopifnot(inherits(object, "sdmTMB"))
+  report <- object$tmb_obj$report(object$tmb_obj$env$last.par.best)
+  if (model == 1) eig <- eigen(report$H)
+  if (model == 2) eig <- eigen(report$H2)
+  dat <- data.frame(
+    x0 = c(0, 0),
+    y0 = c(0, 0),
+    x1 = eig$vectors[1, , drop = TRUE] * eig$values,
+    y1 = eig$vectors[2, , drop = TRUE] * eig$values
+  )
+  plot(0,
+    xlim = range(c(dat$x0, dat$x1)),
+    ylim = range(c(dat$y0, dat$y1)),
+    type = "n", asp = 1, xlab = "", ylab = ""
+  )
+  graphics::arrows(dat$x0, dat$y0, dat$x1, dat$y1)
+  invisible(list(eig = eig, dat = dat, H = report$H))
 }
 
 #' Plot a smooth term from an sdmTMB model
@@ -184,7 +208,7 @@ plot_anisotropy2 <- function(object, return_data = FALSE) {
 plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
                         ggplot = FALSE, rug = TRUE, return_data = FALSE) {
   msg <- c(
-    "This function will likely be deprecated.",
+    "This function may be deprecated.",
     "Consider using `visreg::visreg()` or `visreg_delta()`.",
     "See ?visreg_delta() for examples."
   )
@@ -285,8 +309,8 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
     }
     if (rug) rug(object$data[[sel_name]])
   } else {
-    g <- ggplot2::ggplot(p, ggplot2::aes_string(sel_name, "inv(est)",
-      ymin = "inv(est - qv * est_se)", ymax = "inv(est + qv * est_se)"
+    g <- ggplot2::ggplot(p, ggplot2::aes(.data[[sel_name]], inv(.data$est),
+      ymin = inv(.data$est - qv * .data$est_se), ymax = inv(.data$est + qv * .data$est_se)
     )) +
       ggplot2::geom_line() +
       ggplot2::geom_ribbon(alpha = 0.4) +
@@ -294,7 +318,7 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
     if (rug) {
       g <- g +
         ggplot2::geom_rug(
-          data = object$data, mapping = ggplot2::aes_string(x = sel_name),
+          data = object$data, mapping = ggplot2::aes(x = .data[[sel_name]]),
           sides = "b", inherit.aes = FALSE, alpha = 0.3
         )
     }

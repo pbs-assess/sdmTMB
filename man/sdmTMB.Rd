@@ -14,6 +14,7 @@ sdmTMB(
   spatiotemporal = c("iid", "ar1", "rw", "off"),
   share_range = TRUE,
   time_varying = NULL,
+  time_varying_type = c("rw", "ar1"),
   spatial_varying = NULL,
   dispformula = ~1,
   weights = NULL,
@@ -24,13 +25,14 @@ sdmTMB(
   anisotropy = FALSE,
   control = sdmTMBcontrol(),
   priors = sdmTMBpriors(),
+  knots = NULL,
+  bayesian = FALSE,
   previous_fit = NULL,
-  experimental = NULL,
   do_fit = TRUE,
   do_index = FALSE,
   predict_args = NULL,
   index_args = NULL,
-  bayesian = FALSE
+  experimental = NULL
 )
 }
 \arguments{
@@ -56,28 +58,33 @@ downstream, supply the time argument.}
 \code{\link[sdmTMB:families]{nbinom1()}},
 \code{\link[sdmTMB:families]{truncated_nbinom1()}},
 \code{\link[sdmTMB:families]{censored_poisson()}},
+\code{\link[sdmTMB:families]{gamma_mix()}},
+\code{\link[sdmTMB:families]{lognormal_mix()}},
 \code{\link[sdmTMB:families]{student()}}, and
 \code{\link[sdmTMB:families]{tweedie()}}. Supports the delta/hurdle models:
+\code{\link[sdmTMB:families]{delta_beta()}},
 \code{\link[sdmTMB:families]{delta_gamma()}},
+\code{\link[sdmTMB:families]{delta_gamma_mix()}},
+\code{\link[sdmTMB:families]{delta_lognormal_mix()}},
 \code{\link[sdmTMB:families]{delta_lognormal()}}, and
 \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}},
 For binomial family options, see 'Binomial families' in the Details
 section below.}
 
 \item{spatial}{Estimate spatial random fields? Options are \code{'on'} / \code{'off'}
-or \code{TRUE} / \code{FALSE}. Optionaly a list for delta models, e.g. \code{list('on', 'off')}.}
+or \code{TRUE} / \code{FALSE}. Optionally, a list for delta models, e.g. \code{list('on', 'off')}.}
 
-\item{spatiotemporal}{Estimate the spatiotemporal random fields as \code{'IID'}
-(independent and identically distributed; default), stationary \code{'AR1'}
-(first-order autoregressive), as a random walk (\code{'RW'}), or as fixed at 0
+\item{spatiotemporal}{Estimate the spatiotemporal random fields as \code{'iid'}
+(independent and identically distributed; default), stationary \code{'ar1'}
+(first-order autoregressive), a random walk (\code{'rw'}), or fixed at 0
 \code{'off'}. Will be set to \code{'off'} if \code{time = NULL}. If a delta model, can be
 a list. E.g., \code{list('off', 'ar1')}. Note that the spatiotemporal standard
 deviation represents the marginal steady-state standard deviation of the
 process in the case of the AR1. I.e., it is scaled according to the
 correlation. See the \href{https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html}{TMB documentation}. If the AR1
 correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
-may wish to switch to the random walk \code{"RW"}. Capitalization is ignored.
-\code{TRUE} gets converted to \code{'IID'} and \code{FALSE} gets converted to \code{off}.}
+may wish to switch to the random walk \code{'rw'}. Capitalization is ignored.
+\code{TRUE} gets converted to \code{'iid'} and \code{FALSE} gets converted to \code{'off'}.}
 
 \item{share_range}{Logical: estimate a shared spatial and spatiotemporal
 range parameter (\code{TRUE}, default) or independent range parameters (\code{FALSE}). If a
@@ -86,18 +93,22 @@ delta model, can be a list. E.g., \code{list(TRUE, FALSE)}.}
 \item{time_varying}{An optional one-sided formula describing covariates that
 should be modelled as a random walk through time. Be careful not to include
 covariates (including the intercept) in both the main and time-varying
-formula. I.e., at least one should have \code{~ 0} or \code{~ -1}. Structure must
-currently be shared in delta models.}
+formula since the first time step is estimated independently. I.e., at
+least one should have \code{~ 0} or \code{~ -1}. Structure must currently be shared
+in delta models.}
+
+\item{time_varying_type}{Type of time-varying process to apply to
+\code{time_varying} formula.}
 
 \item{spatial_varying}{An optional one-sided formula of coefficients that
-should varying in space as random fields. Note that you likely want to
-include a fixed effect for the same variable to improve interpretability
-since the random field is assumed to have a mean of 0.
-If a (scaled) time column is used, it will represent a local-time-trend model. See
+should vary in space as random fields. Note that you likely want to include
+a fixed effect for the same variable to improve interpretability since the
+random field is assumed to have a mean of 0. If a (scaled) time column is
+used, it will represent a local-time-trend model. See
 \doi{10.1111/ecog.05176} and the \href{https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.
 Note this predictor should be centered to have mean zero and have a
-standard deviation of approximately 1 (scale by the SD). Structure must
-currently be shared in delta models.}
+standard deviation of approximately 1 and should likely also be included as
+a main effect. Structure must currently be shared in delta models.}
 
 \item{dispformula}{A \strong{one sided} formula describing predictors for the
 observation model dispersion. Defaults to an intercept only, which
@@ -106,12 +117,12 @@ is equivalent to a single dispersion parameter.}
 \item{weights}{A numeric vector representing optional likelihood weights for
 the conditional model. Implemented as in \pkg{glmmTMB}: weights do not have
 to sum to one and are not internally modified. Can also be used for trials
-with the binomial family; the weights argument needs to be a vector and not
+with the binomial family; the \code{weights} argument needs to be a vector and not
 a name of the variable in the data frame. See the Details section below.}
 
 \item{offset}{A numeric vector representing the model offset. In delta/hurdle
 models, this applies only to the positive component. Usually a log
-transformed variable. \emph{Not included in any prediction.}}
+transformed variable. The \code{offset} argument needs to be a vector and not a name of the variable in the data frame.}
 
 \item{extra_time}{Optional extra time slices (e.g., years) to include for
 interpolation or forecasting with the predict function. See the Details
@@ -133,21 +144,27 @@ Must be shared across delta models.}
 \item{priors}{Optional penalties/priors via \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}. Must currently
 be shared across delta models.}
 
+\item{knots}{Optional named list containing knot values to be used for basis
+construction of smoothing terms. See \code{\link[mgcv:gam]{mgcv::gam()}} and \code{\link[mgcv:gamm]{mgcv::gamm()}}.
+E.g., \verb{s(x, bs = 'cc', k = 4), knots = list(x = c(1, 2, 3, 4))}}
+
+\item{bayesian}{Logical indicating if the model will be passed to
+\pkg{tmbstan}. If \code{TRUE}, Jacobian adjustments are applied to account for
+parameter transformations when priors are applied.}
+
 \item{previous_fit}{A previously fitted sdmTMB model to initialize the
 optimization with. Can greatly speed up fitting. Note that the model must
-be set up \emph{exactly} the same way. However, the \code{weights} argument can
-change, which can be useful for cross-validation.}
-
-\item{experimental}{A named list for esoteric or in-development options. Here
-be dragons.}
+be set up \emph{exactly} the same way. However, the data and \code{weights} arguments
+can change, which can be useful for cross-validation.}
 
 \item{do_fit}{Fit the model (\code{TRUE}) or return the processed data without
 fitting (\code{FALSE})?}
 
 \item{do_index}{Do index standardization calculations while fitting? Saves
-memory and time when working with large datasets or projection grids.
-If \code{TRUE}, then \code{predict_args} must have a \code{newdata} element supplied
-and \code{area} can be supplied to \code{index_args}.}
+memory and time when working with large datasets or projection grids since
+the TMB object doesn't have to be rebuilt with \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} and
+\code{\link[=get_index]{get_index()}}. If \code{TRUE}, then \code{predict_args} must have a \code{newdata} element
+supplied and \code{area} can be supplied to \code{index_args}.}
 
 \item{predict_args}{A list of arguments to pass to \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} if
 \code{do_index = TRUE}.}
@@ -156,9 +173,8 @@ and \code{area} can be supplied to \code{index_args}.}
 \code{do_index = TRUE}. Currently, only \code{area} is supported. Bias correction
 can be done when calling \code{\link[=get_index]{get_index()}} on the resulting fitted object.}
 
-\item{bayesian}{Logical indicating if the model will be passed to
-\pkg{tmbstan}. If \code{TRUE}, Jacobian adjustments are applied to account for
-parameter transformations when priors are applied.}
+\item{experimental}{A named list for esoteric or in-development options. Here
+be dragons.}
 }
 \value{
 An object (list) of class \code{sdmTMB}. Useful elements include:
@@ -177,7 +193,7 @@ An object (list) of class \code{sdmTMB}. Useful elements include:
 }
 \description{
 Fit a spatial or spatiotemporal Gaussian random field generalized linear
-mixed effects model (GLMM) with R package TMB (Template Model Builder) and
+mixed effects model (GLMM) with the TMB (Template Model Builder) R package and
 the SPDE (stochastic partial differential equation) approach. This can be
 useful for (dynamic) species distribution models and relative abundance index
 standardization among many other uses.
@@ -205,13 +221,13 @@ Smooth terms can be included following GAMs (generalized additive models)
 using \code{+ s(x)}, which implements a smooth from \code{\link[mgcv:s]{mgcv::s()}}. \pkg{sdmTMB} uses
 penalized smooths, constructed via \code{\link[mgcv:smooth2random]{mgcv::smooth2random()}}. This is a similar
 approach implemented in \pkg{gamm4} and \pkg{brms}, among other packages.
-Within these smooths, the same syntax commonly used in \code{\link[mgcv:s]{mgcv::s()}} can be
-applied, e.g. 2-dimensional smooths may be constructed with \code{+ s(x, y)};
-smooths can be specific to various factor levels, \code{+ s(x, by = group)}; the
-basis function dimensions may be specified, e.g. \code{+ s(x, k = 4)}; and various
-types of splines may be constructed such as cyclic splines to model
-seasonality, \code{+ s(month, bs = "cc", k = 12)}. Prior to version 0.0.18,
-\pkg{sdmTMB} implemented unpenalized splines.
+Within these smooths, the same syntax commonly used in \code{\link[mgcv:s]{mgcv::s()}} or
+\code{\link[mgcv:t2]{mgcv::t2()}} can be applied, e.g. 2-dimensional smooths may be constructed
+with \code{+ s(x, y)} or \code{+ t2(x, y)}; smooths can be specific to various factor
+levels, \code{+ s(x, by = group)}; the basis function dimensions may be specified,
+e.g. \code{+ s(x, k = 4)}; and various types of splines may be constructed such as
+cyclic splines to model seasonality, \code{+ s(month, bs = "cc", k = 12)} (perhaps
+with the \code{knots} argument also be supplied).
 
 \strong{Threshold models}
 
@@ -224,13 +240,10 @@ Similarly, a logistic-function threshold model can be included via
 \code{+ logistic(variable)}. This option models the relationship as a logistic
 function of the 50\% and 95\% values. This is similar to length- or size-based
 selectivity in fisheries, and is parameterized by the points at which f(x) =
-0.5 or 0.95. See the vignette.
+0.5 or 0.95. See the \href{https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html}{threshold vignette}.
 
-Note that only a single threshold covariate can be included and threshold
-models are not yet implemented for the delta families.
-
-See the
-\href{https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html}{threshold vignette}.
+Note that only a single threshold covariate can be included and the same covariate
+is included in both components for the delta families.
 
 \strong{Extra time: forecasting or interpolating}
 
@@ -242,12 +255,13 @@ including extra time slices that the model remains identifiable. For example,
 including \code{+ as.factor(year)} in \code{formula} will render a model with no data
 to inform the expected value in a missing year. \code{\link[=sdmTMB]{sdmTMB()}} makes no attempt
 to determine if the model makes sense for forecasting or interpolation. The
-options \code{time_varying}, \code{spatiotemporal = "RW"}, and \code{spatiotemporal = "AR1"}
-provide mechanisms to predict over missing time slices with process error.
+options \code{time_varying}, \code{spatiotemporal = "rw"}, \code{spatiotemporal = "ar1"},
+or a smoother on the time column provide mechanisms to predict over missing
+time slices with process error.
 
 \code{extra_time} can also be used to fill in missing time steps for the purposes
-of a random walk or AR1 spatiotemporal field if their inclusion makes the gaps
-between time steps even.
+of a random walk or AR(1) process if their inclusion makes the gaps between
+time steps even.
 
 \strong{Index standardization}
 
@@ -255,8 +269,7 @@ For index standardization, you may wish to include \code{0 + as.factor(year)}
 (or whatever the time column is called) in the formula. See a basic
 example of index standardization in the relevant
 \href{https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html}{package vignette}.
-You will need to specify the \code{time} argument. See \code{\link[=get_index]{get_index()}} and/or
-\code{\link[=get_index_sims]{get_index_sims()}}.
+You will need to specify the \code{time} argument. See \code{\link[=get_index]{get_index()}}.
 
 \strong{Regularization and priors}
 
@@ -264,34 +277,36 @@ You can achieve regularization via penalties (priors) on the fixed effect
 parameters. See \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}. You can fit the model once without
 penalties and look at the output of \code{print(your_model)} or \code{tidy(your_model)}
 or fit the model with \code{do_fit = FALSE} and inspect
-\code{head(your_model$tmb_data$X_ij)} if you want to see how the formula is
-translated to the fixed effect model matrix. Also see the \href{https://pbs-assess.github.io/sdmTMB/articles/bayesian.html}{Bayesian package vignette}.
+\code{head(your_model$tmb_data$X_ij[[1]])} if you want to see how the formula is
+translated to the fixed effect model matrix. Also see the
+\href{https://pbs-assess.github.io/sdmTMB/articles/bayesian.html}{Bayesian vignette}.
 
 \strong{Delta/hurdle models}
 
 Delta models (also known as hurdle models) can be fit as two separate models
 or at the same time by using an appropriate delta family. E.g.:
 \code{\link[sdmTMB:families]{delta_gamma()}},
+\code{\link[sdmTMB:families]{delta_beta()}},
 \code{\link[sdmTMB:families]{delta_lognormal()}}, and
 \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}}.
-If fit with a delta family, by default the formula, spatial, and
-spatiotemporal structure etc. will be shared between the two model
-components. Some elements can be specified independently for the two models
+If fit with a delta family, by default the formula, spatial, and spatiotemporal
+components are shared. Some elements can be specified independently for the two models
 using a list format. These include \code{formula}, \code{spatial}, \code{spatiotemporal},
-\code{share_range}. The first element of the list is for the binomial component
+and \code{share_range}. The first element of the list is for the binomial component
 and the second element is for the positive component (e.g., Gamma).
 Other elements must be shared for now (e.g., spatially varying coefficients,
 time-varying coefficients). Furthermore, there are currently limitations if
 specifying two formulas as a list: the two formulas cannot have smoothers,
-threshold effects, or random intercepts. For now, these must be specificed
+threshold effects, or random intercepts. For now, these must be specified
 through a single formula that is shared across the two models.
 
-The main advantage of specifying such models using a delta family is (1)
-coding simplicity and (2) calculation of uncertainty on derived quantities
-such as an index of abundance with \code{\link[=get_index]{get_index()}} using the generalized delta
-method within TMB. Also, parameters can be shared across the models.
+The main advantage of specifying such models using a delta family (compared
+to fitting two separate models) is (1) coding simplicity and (2) calculation
+of uncertainty on derived quantities such as an index of abundance with
+\code{\link[=get_index]{get_index()}} using the generalized delta method within TMB. Also, parameters
+can be shared across the models.
 
-See the \href{https://pbs-assess.github.io/sdmTMB/articles/delta-models.html}{package vignette}.
+See the \href{https://pbs-assess.github.io/sdmTMB/articles/delta-models.html}{delta-model vignette}.
 }
 \examples{
 \dontshow{if (inla_installed() && require("visreg", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
@@ -487,7 +502,7 @@ fit
 \dontshow{\}) # examplesIf}
 }
 \references{
-\emph{Main reference introducing the package to cite when using sdmTMB:}
+\strong{Main reference introducing the package to cite when using sdmTMB:}
 
 Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett. 2022. sdmTMB: an R
 package for fast, flexible, and user-friendly generalized linear mixed effects
@@ -517,7 +532,7 @@ Essington, T.E. 2022. The shadow model: how and why small choices in
 spatially explicit species distribution models affect predictions. PeerJ 10:
 e12783. \doi{10.7717/peerj.12783}.
 
-\emph{Application and description of the threshold/break-point models:}
+\emph{Application and description of threshold/break-point models:}
 
 Essington, T.E. S.C. Anderson, L.A.K. Barnett, H.M. Berger, S.A. Siedlecki,
 E.J. Ward. Advancing statistical models to reveal the effect of dissolved

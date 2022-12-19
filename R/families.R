@@ -66,6 +66,42 @@ lognormal <- function(link = "log") {
   add_to_family(x)
 }
 
+#' @details The families ending in `_mix()` are 2-component mixtures where each
+#'   distribution has its own mean but a shared scale parameter.
+#' @export
+#' @rdname families
+#' @examples
+#' gamma_mix(link = "log")
+gamma_mix <- function(link = "log") {
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("identity", "log", "inverse")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+  x <- c(list(family = "gamma_mix", link = linktemp), stats)
+  add_to_family(x)
+}
+
+#' @export
+#' @rdname families
+#' @examples
+#' lognormal_mix(link = "log")
+lognormal_mix <- function(link = "log") {
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("identity", "log", "inverse")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+  x <- c(list(family = "lognormal_mix", link = linktemp), stats)
+  add_to_family(x)
+}
+
 #' @details
 #' The `nbinom2` negative binomial parameterization is the NB2 where the variance grows
 #' quadratically with the mean (Hilbe 2011).
@@ -84,6 +120,10 @@ nbinom2 <- function(link = "log") {
     stats <- stats::make.link(linktemp)
   else if (is.character(link))
     stats <- stats::make.link(link)
+
+  v <- function(mu, theta) {
+
+  }
   x <- c(list(family = "nbinom2", link = linktemp), stats)
   add_to_family(x)
 }
@@ -147,7 +187,7 @@ truncated_nbinom1 <- function(link = "log") {
 #' @param df Student-t degrees of freedom fixed value parameter.
 #' @export
 #' @details
-#' The degrees of freedom parameter is currently not estimated and is fixed at `df`.
+#' For `student()`, the degrees of freedom parameter is currently not estimated and is fixed at `df`.
 #' @rdname families
 #' @examples
 #' student(link = "identity")
@@ -220,6 +260,20 @@ delta_gamma <- function(link1 = "logit", link2 = "log") {
 
 #' @export
 #' @examples
+#' delta_gamma_mix()
+#' @rdname families
+delta_gamma_mix <- function(link1 = "logit", link2 = "log") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "logit")
+  f2 <- gamma_mix(link = "log")
+  list(f1, f2, delta = TRUE, link = c("logit", "log"),
+       family = c("binomial", "gamma_mix"),
+       clean_name = "delta_gamma_mix(link1 = 'logit', link2 = 'log')")
+}
+
+#' @export
+#' @examples
 #' delta_lognormal()
 #' @rdname families
 delta_lognormal <- function(link1 = "logit", link2 = "log") {
@@ -230,6 +284,20 @@ delta_lognormal <- function(link1 = "logit", link2 = "log") {
   list(f1, f2, delta = TRUE, link = c("logit", "log"),
     family = c("binomial", "lognormal"),
     clean_name = "delta_lognormal(link1 = 'logit', link2 = 'log')")
+}
+
+#' @export
+#' @examples
+#' delta_lognormal_mix()
+#' @rdname families
+delta_lognormal_mix <- function(link1 = "logit", link2 = "log") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "logit")
+  f2 <- lognormal(link = "log")
+  list(f1, f2, delta = TRUE, link = c("logit", "log"),
+       family = c("binomial", "lognormal_mix"),
+       clean_name = "delta_lognormal_mix(link1 = 'logit', link2 = 'log')")
 }
 
 #' @export
@@ -260,25 +328,53 @@ delta_truncated_nbinom1 <- function(link1 = "logit", link2 = "log") {
     clean_name = "delta_truncated_nbinom1(link1 = 'logit', link2 = 'log')")
 }
 
-# @examples
-# delta_poisson_link_gamma()
-# @rdname families
-# @details `delta_poisson_link_gamma()` is the Poisson-link (complementary
-#   log-log) delta model (Thorson 2018).
-# @references
-# Thorson, J. T. (2018). Three problems with the conventional delta-model for
-# biomass sampling data, and a computationally efficient alternative. Canadian
-# Journal of Fisheries and Aquatic Sciences, 75(9), 1369-1382.
-# \doi{10.1139/cjfas-2017-0266}
-# @export
-# delta_poisson_link_gamma <- function(link1 = "log", link2 = "log") {
-#   cli_abort("`delta_poisson_link_gamma()` is experimental and not all functions work with it")
-#   cli_inform("Index calculations may not be correct with the `delta_poisson_link_gamma()` family yet")
-#   link1 <- match.arg(link1)
-#   link2 <- match.arg(link2)
-#   f1 <- binomial(link = "log")
-#   f2 <- truncated_nbinom1(link = "log")
-#   list(f1, f2, delta = TRUE, link = c("log", "log"),
-#     family = c("binomial", "Gamma"), type = "poisson_link_delta",
-#     clean_name = "delta_poisson_link_gamma(link1 = 'logit', link2 = 'log')")
-# }
+#' @examples
+#' delta_poisson_link_gamma()
+#' @rdname families
+#' @details `delta_poisson_link_gamma()` is the Poisson-link (complementary
+#'   log-log) delta model (Thorson 2018).
+#' @references
+#' Thorson, J. T. (2018). Three problems with the conventional delta-model for
+#' biomass sampling data, and a computationally efficient alternative. Canadian
+#' Journal of Fisheries and Aquatic Sciences, 75(9), 1369-1382.
+#' \doi{10.1139/cjfas-2017-0266}
+#' @export
+delta_poisson_link_gamma <- function(link1 = "log", link2 = "log") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "log")
+  f2 <- Gamma(link = "log")
+  list(f1, f2, delta = TRUE, link = c("log", "log"),
+    family = c("binomial", "Gamma"), type = "poisson_link_delta",
+    clean_name = "delta_poisson_link_gamma(link1 = 'log', link2 = 'log')")
+}
+
+#' @examples
+#' delta_poisson_link_lognormal()
+#' @rdname families
+#' @details `delta_poisson_link_lognormal()` is the Poisson-link (complementary
+#'   log-log) delta model (Thorson 2018).
+#' @export
+delta_poisson_link_lognormal <- function(link1 = "log", link2 = "log") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "log")
+  f2 <- lognormal(link = "log")
+  list(f1, f2, delta = TRUE, link = c("log", "log"),
+    family = c("binomial", "lognormal"), type = "poisson_link_delta",
+    clean_name = "delta_poisson_link_lognormal(link1 = 'log', link2 = 'log')")
+}
+
+#' @export
+#' @examples
+#' delta_beta()
+#' @rdname families
+delta_beta <- function(link1 = "logit", link2 = "logit") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "logit")
+  f2 <- Beta(link = "logit")
+  list(f1, f2, delta = TRUE, link = c("logit", "logit"),
+       family = c("binomial", "Beta"),
+       clean_name = "delta_beta(link1 = 'logit', link2 = 'logit')")
+}
