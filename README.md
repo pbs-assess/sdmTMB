@@ -56,9 +56,15 @@ sdmTMB is an R package that fits spatial and spatiotemporal predictive-process G
 
 ## Installation
 
+sdmTMB can be installed from CRAN:
+
+``` r
+install.packages("sdmTMB", dependencies = TRUE)
+```
+
 Assuming you have a [C++
-compiler](https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites)
-installed, you can install sdmTMB:
+compiler](https://support.posit.co/hc/en-us/articles/200486498-Package-Development-Prerequisites)
+installed, the development version can be installed:
 
 ``` r
 # install.packages("remotes")

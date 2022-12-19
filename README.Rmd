@@ -22,7 +22,13 @@ knitr::opts_chunk$set(
     
 ## Installation
 
-Assuming you have a [C++ compiler](https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites) installed, you can install sdmTMB:
+sdmTMB can be installed from CRAN:
+
+```{r, eval=FALSE}
+install.packages("sdmTMB", dependencies = TRUE)
+```
+
+Assuming you have a [C++ compiler](https://support.posit.co/hc/en-us/articles/200486498-Package-Development-Prerequisites) installed, the development version can be installed:
 
 ```{r, eval=FALSE}
 # install.packages("remotes")
