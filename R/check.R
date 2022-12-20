@@ -189,8 +189,8 @@ sanity <- function(fit, big_sd_log10 = 3, gradient_thresh = 0.001) {
     cli::cli_alert_success(msg)
   }
 
-  r1 <- diff(range(fit$data[[fit$mesh$xy_cols[1]]]))
-  r2 <- diff(range(fit$data[[fit$mesh$xy_cols[2]]]))
+  r1 <- diff(range(fit$data[[fit$spde$xy_cols[1]]]))
+  r2 <- diff(range(fit$data[[fit$spde$xy_cols[2]]]))
   r <- max(r1, r2)
   range_ok <- TRUE
   if ("range" %in% b$term) {

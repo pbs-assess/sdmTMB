@@ -1328,7 +1328,6 @@ sdmTMB <- function(
   out_structure <- structure(list(
     data       = data,
     spde       = spde,
-    mesh       = spde,
     formula    = original_formula,
     dispformula = dispformula,
     has_dispformula = !identical(dispformula, ~ 1),
@@ -1398,7 +1397,6 @@ sdmTMB <- function(
   lim <- set_limits(tmb_obj, lower = lower, upper = upper,
     loc = spde$mesh$loc, silent = FALSE)
 
-  out_structure$tmb_obj <- tmb_obj
   out_structure$tmb_obj <- tmb_obj
   out_structure$tmb_data <- tmb_data
   out_structure$tmb_params <- tmb_params
