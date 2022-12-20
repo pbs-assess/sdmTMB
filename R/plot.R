@@ -147,7 +147,7 @@ plot_anisotropy <- function(object, return_data = FALSE) {
     ggforce::geom_ellipse() +
     ggplot2::coord_fixed() +
     ggplot2::labs(linetype = "Random field", colour = "Model",
-      x = object$mesh$xy_cols[1], y = object$mesh$xy_cols[2]) +
+      x = object$spde$xy_cols[1], y = object$spde$xy_cols[2]) +
     ggplot2::scale_colour_brewer(palette = "Dark2")
   g
 }
