@@ -199,6 +199,16 @@ The parameter $s50$ is unconstrained but $s95$ is constrained to be larger than 
 These models can be fit by including `+ logistic(x)` in the model formula, where `x` is a covariate.
 The formula can contain a single logistic covariate.
 
+###Logistic threshold model: special case for Metabolic Index
+
+A logistic threshold can additionally be fit using a unique parameterization of the equation in the form
+
+$$
+s(x)=\tau + \psi\ { \left[ 1+{ e }^{ -\ln \left(19\right) \cdot \left( x-s50 \right)
+     / \left(delta) } \right] -1}^{-1},
+$$
+where delta indicates the difference between s95 and s50 (see above). In this form, the scaling parameter can be interpreted as the extent of decline in the response with x, rather than the rate of increase. Additionally, it is set up so that as x approaches infinity, x contributes nothing to the predicted response.
+
 ## Spatial random fields
 
 Spatial random fields, $\omega_{\boldsymbol{s}}$, are included if `spatial = 'on'` (or `TRUE`) and omitted if `spatial = 'off'` (or `FALSE`).
