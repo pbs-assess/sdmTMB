@@ -138,8 +138,8 @@ kelvin = 273.15 #For converting celsius to Kelvin
 boltz = 0.000086173324 #Boltzmann's constant
 tref <- 12 #Reference temperature
 
-#Calcualte inverse temperature
-env$invtemp <- (1 / boltz)  * ( 1 / (temp + 273.15) - 1 / (tref + 273.15))
+#Calculate inverse temperature
+invtemp <- (1 / boltz)  * ( 1 / (temp + 273.15) - 1 / (tref + 273.15))
 ```
 
 Then, we specify our Eo value, and calculate the metabolic index (i.e. mi)
@@ -157,13 +157,14 @@ x50 <- 5
 
 log_mu <- beta1 + beta3 * (1 / (1 + exp(-log(19) * (mi - x50) / delta)) - 1)
 mu <- exp(log_mu)
-
+sigma <- 0.05
 obs <- rlnorm(N, log_mu - 0.5 * sigma^2, sigma)
+
+dat <- data.frame(y = obs, po2 = po2, invtemp = invtemp)
 ```
 
 We can use sdmTMB to fit a model of fish density that jointly estimates the logistic threshold on metabolic index and the temperature-impacted oxygen parameter Eo. To do so, sdmTMB requires data columns "pO2" and "invtemp". We can then specify starting parameters to help improve estimation, and can fit the model using "logistic(mi) in the function. 
 ```{r}
-  dat <- data.frame(y = obs, po2 = po2, invtemp = invtemp)
 
   start <- matrix(0, ncol = 1, nrow = 4)
   start[1,1] <- x50
@@ -178,5 +179,10 @@ We can use sdmTMB to fit a model of fish density that jointly estimates the logi
               control = sdmTMBcontrol(start = list(b_threshold = start))) #Specify starting parameters
               tidy(m2)
   print(m2)
+```
+
+We can visualize the logistic threshold effect of the metabolic index on fish density...
+```{r}
+
 ```
 
