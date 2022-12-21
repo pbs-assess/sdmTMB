@@ -113,3 +113,70 @@ ggplot(p, aes(depth_scaled, exp(est),
   ymax = exp(est + 1.96 * est_se))) +
   geom_line() + geom_ribbon(alpha = 0.4)
 ```
+
+##Special Case: Logistic Threshold on Metabolic Index
+
+There additionally is an option for a unique parameterization of the logistic threshold, where the parameter delta indicates the difference between s95 and s50 (see above). In this form, the scaling parameter can be interpreted as the extent of decline in the response with x, rather than the rate of increase. Additionally, it is set up so that as x approaches infinity, x contributes nothing to the predicted response.
+
+$$
+s(x)=\tau + \psi\ { \left[ 1+{ e }^{ -\ln \left(19\right) \cdot \left( x-s50 \right)
+     / \left(delta) } \right] -1}^{-1},
+$$
+This version of the logistic function was created for use with a temperature-influenced oxygen metric based on the Metabolic Index [(see Deutsch et al. 2015)](https://pubmed.ncbi.nlm.nih.gov/26045435/), and we will use this as an example.
+
+The Metabolic Index in this case is based on environmental temperature and oxygen data, and a parameter Eo that represents the impact of temperature on oxygen tolerance. 
+
+We first simulate ocean temperature and oxygen data, and then calculate the inverse temperature.
+```{r}
+#Generate random temperature and oxygen data
+N <- 3000
+set.seed(123)
+temp <- rnorm(N)
+po2 <- rlnorm(N)
+
+kelvin = 273.15 #For converting celsius to Kelvin
+boltz = 0.000086173324 #Boltzmann's constant
+tref <- 12 #Reference temperature
+
+#Calcualte inverse temperature
+env$invtemp <- (1 / boltz)  * ( 1 / (temp + 273.15) - 1 / (tref + 273.15))
+```
+
+Then, we specify our Eo value, and calculate the metabolic index (i.e. mi)
+```{r}
+Eo <-  0.3
+mi <- po2 * exp(Eo * invtemp)
+```
+
+We will then simulate fish density data (log_mu) by specifying a slope value (beta1), a parameter for the effect of the metabolic index (beta3), and the parameters for the logistic function (delta and x50), and using a normal distribution to generate observations.
+```{r}
+beta1 <- -0.4
+beta3 <- 0.3
+delta <- 3
+x50 <- 5
+
+log_mu <- beta1 + beta3 * (1 / (1 + exp(-log(19) * (mi - x50) / delta)) - 1)
+mu <- exp(log_mu)
+
+obs <- rlnorm(N, log_mu - 0.5 * sigma^2, sigma)
+```
+
+We can use sdmTMB to fit a model of fish density that jointly estimates the logistic threshold on metabolic index and the temperature-impacted oxygen parameter Eo. To do so, sdmTMB requires data columns "pO2" and "invtemp". We can then specify starting parameters to help improve estimation, and can fit the model using "logistic(mi) in the function. 
+```{r}
+  dat <- data.frame(y = obs, po2 = po2, invtemp = invtemp)
+
+  start <- matrix(0, ncol = 1, nrow = 4)
+  start[1,1] <- x50
+  start[2,1] <- delta
+  start[3,1] <- beta3
+  start[4,1] <- Eo
+
+  m2 <- sdmTMB(y ~ logistic(mi), 
+               data = dat, 
+               spatial = "off",
+              family = lognormal(),
+              control = sdmTMBcontrol(start = list(b_threshold = start))) #Specify starting parameters
+              tidy(m2)
+  print(m2)
+```
+
