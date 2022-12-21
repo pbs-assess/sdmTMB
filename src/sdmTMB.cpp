@@ -279,9 +279,8 @@ Type objective_function<Type>::operator()()
   vector<Type> ln_phi = Xdisp_ij * b_disp_k;
   vector<Type> phi = exp(ln_phi);
   REPORT(ln_phi);
-  if (b_disp_k.size() == 1) {
-    ADREPORT(ln_phi(0));
-  }
+  if (b_disp_k.size() == 1) ADREPORT(ln_phi(0));
+  if (b_disp_k.size() == 1) ADREPORT(phi(0));
 
   // ------------------ Geospatial ---------------------------------------------
 
@@ -1215,7 +1214,6 @@ Type objective_function<Type>::operator()()
   ADREPORT(log_ratio_mix);
   REPORT(p_mix);
   REPORT(mix_ratio);
-  ADREPORT(phi);
   vector<Type> log_sigma_E = log(sigma_E);
   ADREPORT(log_sigma_E);      // log spatio-temporal SD
   REPORT(sigma_E);      // spatio-temporal SD
