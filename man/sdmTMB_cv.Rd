@@ -12,6 +12,9 @@ sdmTMB_cv(
   time = NULL,
   k_folds = 8,
   fold_ids = NULL,
+  lfocv = FALSE,
+  n_forecast = 1,
+  n_validate = 5,
   parallel = TRUE,
   use_initial_fit = FALSE,
   spde = deprecated(),
@@ -36,7 +39,17 @@ spatial data.}
 
 \item{fold_ids}{Optional vector containing user fold IDs. Can also be a
 single string, e.g. \code{"fold_id"} representing the name of the variable in
-\code{data}.}
+\code{data}. Ignored if \code{lfocv} is TRUE}
+
+\item{lfocv}{Whether to implement "Leave Future Out Cross Validation", where only
+historical data is used to predict future folds. Defaults to FALSE}
+
+\item{n_forecast}{Number of time steps to forecast (e.g. time steps
+1, ..., T used to predict T + \code{n_forecast}), defaults to 1. Ignored
+if \code{lfocv} is FALSE.}
+
+\item{n_validate}{Number of time steps to use as the validation / test set. This
+defaults to 5. Ignored if \code{lfocv} is FALSE.}
 
 \item{parallel}{If \code{TRUE} and a \code{\link[future:plan]{future::plan()}} is supplied, will be run in
 parallel.}

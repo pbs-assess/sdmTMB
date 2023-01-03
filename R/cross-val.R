@@ -79,7 +79,14 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' @param k_folds Number of folds.
 #' @param fold_ids Optional vector containing user fold IDs. Can also be a
 #'   single string, e.g. `"fold_id"` representing the name of the variable in
-#'   `data`.
+#'   `data`. Ignored if `lfocv` is TRUE
+#' @param lfocv Whether to implement "Leave Future Out Cross Validation", where only
+#' historical data is used to predict future folds. Defaults to FALSE
+#' @param n_forecast Number of time steps to forecast (e.g. time steps
+#'  1, ..., T used to predict T + `n_forecast`), defaults to 1. Ignored
+#'  if `lfocv` is FALSE.
+#' @param n_validate Number of time steps to use as the validation / test set. This
+#'  defaults to 5. Ignored if `lfocv` is FALSE.
 #' @param parallel If `TRUE` and a [future::plan()] is supplied, will be run in
 #'   parallel.
 #' @param use_initial_fit Fit the first fold and use those parameter values
@@ -152,7 +159,11 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' )
 #' }
 sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
-  k_folds = 8, fold_ids = NULL, parallel = TRUE,
+  k_folds = 8, fold_ids = NULL,
+  lfocv = FALSE,
+  n_forecast = 1,
+  n_validate = 5,
+  parallel = TRUE,
   use_initial_fit = FALSE, spde = deprecated(),
   ...) {
   if (k_folds < 1) cli_abort("`k_folds` must be >= 1.")
@@ -166,18 +177,31 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
   constant_mesh <- missing(mesh_args)
   if (missing(mesh_args)) mesh_args <- NULL
   if (missing(spde)) spde <- NULL
-
+  if(lfocv) fold_ids <- NULL
   # add column of fold_ids stratified across time steps
   if (is.null(time)) {
     time <- "_sdmTMB_time"
     data[[time]] <- 0L
   }
   if (is.null(fold_ids)) {
-    dd <- lapply(split(data, data[[time]]), function(x) {
-      x$cv_fold <- sample(rep(seq(1L, k_folds), nrow(x)), size = nrow(x))
-      x
-    })
-    data <- do.call(rbind, dd)
+    if(lfocv) {
+      if(length(unique(data[[time]])) < (n_validate + n_forecast)) {
+        cli_abort("Not enough time steps for the desired validation period. Either decrease n_validate or add more data")
+      }
+      # Create n_validate + 1 folds, ordered sequentially
+      data$cv_fold <- 1
+      t_validate = sort(unique(data[[time]]), decreasing = TRUE)
+      for(t in 1:(n_validate+n_forecast-1)) {
+        # fold id increasing order. +forecast
+        data$cv_fold[which(data[[time]] == t_validate[t])] = (n_validate - t + 1) + n_forecast
+      }
+    } else {
+      dd <- lapply(split(data, data[[time]]), function(x) {
+        x$cv_fold <- sample(rep(seq(1L, k_folds), nrow(x)), size = nrow(x))
+        x
+      })
+      data <- do.call(rbind, dd)
+    }
     fold_ids <- "cv_fold"
   } else {
     # fold_ids passed in; can be numeric, or a named column in `data`
@@ -204,7 +228,6 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
     time <- NULL
   }
 
-
   dot_args <- as.list(substitute(list(...)))[-1L]
   if ("weights" %in% names(dot_args)) {
     cli_abort("`weights` cannot be specified within sdmTMB_cv().")
@@ -216,12 +239,18 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
   } else {
     weights <- rep(1, nrow(data))
   }
+  if(lfocv) weights <- ifelse(data$cv_fold == 1L, 1, 0)
 
   if (use_initial_fit) {
     # run model on first fold to get starting values:
 
     if (!constant_mesh) {
-      dat_fit <- data[data$cv_fold != 1L, , drop = FALSE]
+      if(lfocv) {
+        dat_fit <- data[data$cv_fold == 1L, , drop = FALSE]
+      } else {
+        dat_fit <- data[data$cv_fold != 1L, , drop = FALSE]
+      }
+
       mesh_args[["data"]] <- dat_fit
       mesh <- do.call(make_mesh, mesh_args)
     } else {
@@ -235,14 +264,22 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
   }
 
   fit_func <- function(k) {
-    # data in kth fold get weight of 0:
-    weights <- ifelse(data$cv_fold == k, 0, 1)
+    if(lfocv) {
+      weights <- ifelse(data$cv_fold <= k, 1, 0)
+    } else {
+      # data in kth fold get weight of 0:
+      weights <- ifelse(data$cv_fold == k, 0, 1)
+    }
 
     if (k == 1L && use_initial_fit) {
       object <- fit1
     } else {
       if (!constant_mesh) {
-        dat_fit <- data[data$cv_fold != k, , drop = FALSE]
+        if(lfocv) {
+          dat_fit <- data[data$cv_fold <= k, , drop = FALSE]
+        } else {
+          dat_fit <- data[data$cv_fold != k, , drop = FALSE]
+        }
         mesh_args[["data"]] <- dat_fit
         mesh <- do.call(make_mesh, mesh_args)
       } else {
@@ -259,7 +296,12 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
       # }
     }
 
-    cv_data <- data[data$cv_fold == k, , drop = FALSE]
+    if(lfocv) {
+      cv_data <- data[data$cv_fold == (k + n_forecast), , drop = FALSE]
+    } else {
+      cv_data <- data[data$cv_fold == k, , drop = FALSE]
+    }
+
     # predict for withheld data:
     predicted_obj <- predict(object, newdata = cv_data, return_tmb_obj = TRUE)
     predicted <- predicted_obj$data
@@ -301,13 +343,21 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
   if (requireNamespace("future.apply", quietly = TRUE) && parallel) {
     message("Running fits with `future.apply()`.\n",
       "Set a parallel `future::plan()` to use parallel processing.")
-    out <- future.apply::future_lapply(seq_len(k_folds), fit_func, future.seed = TRUE)
+    if(lfocv) {
+      out <- future.apply::future_lapply(seq_len(n_validate), fit_func, future.seed = TRUE)
+    } else {
+      out <- future.apply::future_lapply(seq_len(k_folds), fit_func, future.seed = TRUE)
+    }
     # out <- lapply(seq_len(k_folds), fit_func)
   } else {
     message("Running fits sequentially.\n",
       "Install the future and future.apply packages,\n",
       "set a parallel `future::plan()`, and set `parallel = TRUE` to use parallel processing.")
-    out <- lapply(seq_len(k_folds), fit_func)
+    if(lfocv) {
+      out <- lapply(seq_len(n_validate), fit_func)
+    } else {
+      out <- lapply(seq_len(k_folds), fit_func)
+    }
   }
 
   models <- lapply(out, `[[`, "model")
