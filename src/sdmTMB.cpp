@@ -147,7 +147,7 @@ Type objective_function<Type>::operator()()
   // Calculate total summed by year (e.g. biomass)?
   DATA_INTEGER(calc_index_totals);
   DATA_INTEGER(calc_cog);
-  // DATA_INTEGER(calc_quadratic_range); // DELTA TODO
+  DATA_INTEGER(calc_quadratic_range); // DELTA TODO
   DATA_VECTOR(area_i); // area per prediction grid cell for index standardization
 
   DATA_VECTOR(priors_b_mean);
@@ -1163,27 +1163,55 @@ Type objective_function<Type>::operator()()
      REPORT(s_max);
      ADREPORT(s_max);
    }
-//    if (calc_quadratic_range && b_j(1) < Type(0)) {
-//      vector<Type> quadratic_roots = sdmTMB::GetQuadraticRoots(b_j(1), b_j(0), Type(0.05));
-//      Type quadratic_low = quadratic_roots(0);
-//      Type quadratic_hi = quadratic_roots(1);
-//      Type quadratic_range = quadratic_roots(1) - quadratic_roots(0);
-//      if (quadratic_range < 0) quadratic_range = quadratic_range * -1.;
-//      Type quadratic_peak = quadratic_roots(2);
-//      Type quadratic_reduction = quadratic_roots(3);
-//
-//      REPORT(quadratic_low);
-//      REPORT(quadratic_hi);
-//      REPORT(quadratic_range);
-//      REPORT(quadratic_peak);
-//      REPORT(quadratic_reduction);
-//
-//      ADREPORT(quadratic_low);
-//      ADREPORT(quadratic_hi);
-//      ADREPORT(quadratic_range);
-//      ADREPORT(quadratic_peak);
-//      ADREPORT(quadratic_reduction);
-//    }
+   if (calc_quadratic_range) {
+     // this is hard wired at 2, but could be n_m -- it's limited because
+     // b_j would need to be in an array, not separate objects
+     vector<Type> quadratic_low(2);
+     vector<Type> quadratic_hi(2);
+     vector<Type> quadratic_range(2);
+     vector<Type> quadratic_peak(2);
+     vector<Type> quadratic_reduction(2);
+
+     //for (int ii = 0; ii < n_m; ii++) {}
+     for (int ii = 0; ii < 2; ii++) {
+       quadratic_low(ii) = 0;
+       quadratic_hi(ii) = 0;
+       quadratic_range(ii) = 0;
+       quadratic_peak(ii) = 0;
+       quadratic_reduction(ii) = 0;
+     }
+     // Ideally these next 2 blocks are a loop -- but can't because b_j and b_j2 are in separate vectors
+     // If parabola is concave down, calculate the low/hi/range
+     if(b_j(1) < Type(0)) {
+        vector<Type> quadratic_roots = sdmTMB::GetQuadraticRoots(b_j(1), b_j(0), Type(0.05));
+        quadratic_low(0) = quadratic_roots(0);
+        quadratic_hi(0) = quadratic_roots(1);
+        quadratic_range(0) = quadratic_roots(1) - quadratic_roots(0);
+        if (quadratic_range(0) < 0) quadratic_range(0) = quadratic_range(0) * -1.;
+        quadratic_peak(0) = quadratic_roots(2);
+        quadratic_reduction(0) = quadratic_roots(3);
+     }
+     if(n_m > 1 && b_j2(1) < Type(0)) {
+        vector<Type> quadratic_roots = sdmTMB::GetQuadraticRoots(b_j2(1), b_j2(0), Type(0.05));
+        quadratic_low(1) = quadratic_roots(0);
+        quadratic_hi(1) = quadratic_roots(1);
+        quadratic_range(1) = quadratic_roots(1) - quadratic_roots(0);
+        if (quadratic_range(1) < 0) quadratic_range(1) = quadratic_range(1) * -1.;
+        quadratic_peak(1) = quadratic_roots(2);
+        quadratic_reduction(1) = quadratic_roots(3);
+     }
+     REPORT(quadratic_low);
+     REPORT(quadratic_hi);
+     REPORT(quadratic_range);
+     REPORT(quadratic_peak);
+     REPORT(quadratic_reduction);
+
+     ADREPORT(quadratic_low);
+     ADREPORT(quadratic_hi);
+     ADREPORT(quadratic_range);
+     ADREPORT(quadratic_peak);
+     ADREPORT(quadratic_reduction);
+   }
    if (est_epsilon_slope) {
      REPORT(b_epsilon);
      ADREPORT(b_epsilon);
