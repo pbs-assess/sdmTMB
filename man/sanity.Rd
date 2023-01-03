@@ -2,24 +2,29 @@
 % Please edit documentation in R/check.R
 \name{sanity}
 \alias{sanity}
-\title{Sanity check of sdmTMB model}
+\title{Sanity check of an sdmTMB model}
 \usage{
-sanity(fit, big_sd_log10 = 3, gradient_thresh = 0.001)
+sanity(object, big_sd_log10 = 3, gradient_thresh = 0.001)
 }
 \arguments{
-\item{fit}{Fitted model from \code{\link[=sdmTMB]{sdmTMB()}}}
+\item{object}{Fitted model from \code{\link[=sdmTMB]{sdmTMB()}}.}
 
 \item{big_sd_log10}{Value to check size of standard errors against. A value
 of 3 would indicate that standard errors greater than \code{10^3} should be
 flagged.}
 
-\item{gradient_thresh}{Gradient threshold to issue warning}
+\item{gradient_thresh}{Gradient threshold to issue warning.}
 }
 \value{
-An invisible named list of checks
+An invisible named list of checks.
 }
 \description{
-Sanity check of sdmTMB model
+Sanity check of an sdmTMB model
+}
+\details{
+If \code{object} is \code{NA}, \code{NULL}, or of class \code{"try-error"}, \code{sanity()} will
+return \code{FALSE}. This is to facilitate using \code{sanity()} on models with \code{\link[=try]{try()}}
+or \code{\link[=tryCatch]{tryCatch()}}. See the examples section.
 }
 \examples{
 \dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
@@ -32,5 +37,14 @@ sanity(fit)
 
 s <- sanity(fit)
 s
+
+# If fitting many models in a loop, you may want to wrap
+# sdmTMB() in try() to handle errors. sanity() will take an object
+# of class "try-error" and return FALSE.
+# Here, we will use stop() to simulate a failed sdmTMB() fit:
+failed_fit <- try(stop())
+s2 <- sanity(failed_fit)
+all(unlist(s))
+all(unlist(s2))
 \dontshow{\}) # examplesIf}
 }

@@ -1,13 +1,18 @@
-#' Sanity check of sdmTMB model
+#' Sanity check of an sdmTMB model
 #'
-#' @param fit Fitted model from [sdmTMB()]
+#' @param object Fitted model from [sdmTMB()].
 #' @param big_sd_log10 Value to check size of standard errors against. A value
 #'   of 3 would indicate that standard errors greater than `10^3` should be
 #'   flagged.
-#' @param gradient_thresh Gradient threshold to issue warning
+#' @param gradient_thresh Gradient threshold to issue warning.
 #'
-#' @return An invisible named list of checks
+#' @return An invisible named list of checks.
 #' @export
+#'
+#' @details
+#' If `object` is `NA`, `NULL`, or of class `"try-error"`, `sanity()` will
+#' return `FALSE`. This is to facilitate using `sanity()` on models with [try()]
+#' or [tryCatch()]. See the examples section.
 #'
 #' @examplesIf inla_installed()
 #' fit <- sdmTMB(
@@ -19,15 +24,32 @@
 #'
 #' s <- sanity(fit)
 #' s
+#'
+#' # If fitting many models in a loop, you may want to wrap
+#' # sdmTMB() in try() to handle errors. sanity() will take an object
+#' # of class "try-error" and return FALSE.
+#' # Here, we will use stop() to simulate a failed sdmTMB() fit:
+#' failed_fit <- try(stop())
+#' s2 <- sanity(failed_fit)
+#' all(unlist(s))
+#' all(unlist(s2))
 
-sanity <- function(fit, big_sd_log10 = 3, gradient_thresh = 0.001) {
+sanity <- function(object, big_sd_log10 = 3, gradient_thresh = 0.001) {
+
+  # make it easy to use output from try()
+  if (length(object) <= 1L) {
+    if (is.na(object) || is.null(object))
+      return(FALSE)
+  }
+  if (inherits(object, "try-error")) return(FALSE)
+  assert_that(inherits(object, "sdmTMB"))
 
   hessian_ok <- eigen_values_ok <- gradients_ok <- se_magnitude_ok <- FALSE
   nlminb_ok <- FALSE
 
   simplify_msg <- "Try simplifying the model, adjusting the mesh, or adding priors"
 
-  if (identical(fit$model$convergence, 0L)) {
+  if (identical(object$model$convergence, 0L)) {
     msg <- "Non-linear minimizer suggests successful convergence"
     cli::cli_alert_success(msg)
     nlminb_ok <- TRUE
@@ -38,7 +60,7 @@ sanity <- function(fit, big_sd_log10 = 3, gradient_thresh = 0.001) {
     cat("\n")
   }
 
-  if (isFALSE(fit$pos_def_hessian)) {
+  if (isFALSE(object$pos_def_hessian)) {
     msg <- "Non-positive-definite Hessian matrix: model may not have converged"
     cli::cli_alert_danger(msg)
     cli::cli_alert_info(simplify_msg)
@@ -49,7 +71,7 @@ sanity <- function(fit, big_sd_log10 = 3, gradient_thresh = 0.001) {
     hessian_ok <- TRUE
   }
 
-  if (isTRUE(fit$bad_eig)) {
+  if (isTRUE(object$bad_eig)) {
     msg <- "Extreme or very small eigenvalues detected: model may not have converged"
     cli::cli_alert_danger(msg)
     cli::cli_alert_info(simplify_msg)
@@ -60,8 +82,8 @@ sanity <- function(fit, big_sd_log10 = 3, gradient_thresh = 0.001) {
     eigen_values_ok <- TRUE
   }
 
-  g <- fit$gradients
-  np <- names(fit$model$par)
+  g <- object$gradients
+  np <- names(object$model$par)
   for (i in seq_along(g)) {
     if (g[i] > gradient_thresh) {
       cli::cli_alert_danger(c(
@@ -82,9 +104,9 @@ sanity <- function(fit, big_sd_log10 = 3, gradient_thresh = 0.001) {
     gradients_ok <- TRUE
   }
 
-  obj <- fit$tmb_obj
+  obj <- object$tmb_obj
   random <- unique(names(obj$env$par[obj$env$random]))
-  s <- summary(fit$sd_report)
+  s <- summary(object$sd_report)
   se <- s[,"Std. Error"]
   fixed_se <- !names(se) %in% random
   se <- se[fixed_se]
@@ -104,8 +126,8 @@ sanity <- function(fit, big_sd_log10 = 3, gradient_thresh = 0.001) {
     cli::cli_alert_success(msg)
   }
 
-  est <- as.list(fit$sd_report, "Estimate")
-  se <- as.list(fit$sd_report, "Std. Error")
+  est <- as.list(object$sd_report, "Estimate")
+  se <- as.list(object$sd_report, "Std. Error")
   fixed <- !(names(est) %in% random)
   est <- est[fixed]
   se <- se[fixed]
@@ -141,13 +163,13 @@ sanity <- function(fit, big_sd_log10 = 3, gradient_thresh = 0.001) {
     se_magnitude_ok <- TRUE
   }
 
-  b <- tidy(fit, conf.int = TRUE)
-  br <- tidy(fit, "ran_pars", conf.int = TRUE)
+  b <- tidy(object, conf.int = TRUE)
+  br <- tidy(object, "ran_pars", conf.int = TRUE)
   b <- rbind(b, br)
 
-  if (isTRUE(fit$family$delta)) {
-    b2 <- tidy(fit, conf.int = TRUE, model = 2)
-    br2 <- tidy(fit, "ran_pars", conf.int = TRUE, model = 2)
+  if (isTRUE(object$family$delta)) {
+    b2 <- tidy(object, conf.int = TRUE, model = 2)
+    br2 <- tidy(object, "ran_pars", conf.int = TRUE, model = 2)
     b2 <- rbind(b2, br2)
     b <- rbind(b, b2)
   }
@@ -189,8 +211,8 @@ sanity <- function(fit, big_sd_log10 = 3, gradient_thresh = 0.001) {
     cli::cli_alert_success(msg)
   }
 
-  r1 <- diff(range(fit$data[[fit$spde$xy_cols[1]]]))
-  r2 <- diff(range(fit$data[[fit$spde$xy_cols[2]]]))
+  r1 <- diff(range(object$data[[object$spde$xy_cols[1]]]))
+  r2 <- diff(range(object$data[[object$spde$xy_cols[2]]]))
   r <- max(r1, r2)
   range_ok <- TRUE
   if ("range" %in% b$term) {
