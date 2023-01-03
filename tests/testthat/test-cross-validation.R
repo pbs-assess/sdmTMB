@@ -36,6 +36,16 @@ test_that("Basic cross validation works", {
     data = d, mesh = spde, spatial = "off",
     family = sdmTMB::student(df = 9), time = "year", k_folds = 2
   )
+  expect_equal(class(x$models[[1]]), "sdmTMB")
+
+  # Try passing family as a variable -- this is per Issue #127
+  fam <- gaussian(link = "identity")
+  x <- sdmTMB_cv(
+    log_density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+    data = d, mesh = spde, spatial = "off",
+    family = fam, time = "year", k_folds = 2
+  )
+  expect_equal(class(x$models[[1]]), "sdmTMB")
 })
 
 
