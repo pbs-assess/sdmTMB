@@ -162,8 +162,8 @@ truncated_nbinom2 <- function(link = "log") {
   else if (is.character(link))
     stats <- stats::make.link(link)
 
-  list(family = "truncated_nbinom2", link = linktemp, linkfun = stats$linkfun,
-    linkinv = stats$linkinv)
+  structure(list(family = "truncated_nbinom2", link = linktemp, linkfun = stats$linkfun,
+    linkinv = stats$linkinv), class = "family")
 }
 
 #' @export
@@ -180,8 +180,8 @@ truncated_nbinom1 <- function(link = "log") {
   else if (is.character(link))
     stats <- stats::make.link(link)
 
-  list(family = "truncated_nbinom1", link = linktemp, linkfun = stats$linkfun,
-    linkinv = stats$linkinv)
+  structure(list(family = "truncated_nbinom1", link = linktemp, linkfun = stats$linkfun,
+    linkinv = stats$linkinv), class = "family")
 }
 
 #' @param df Student-t degrees of freedom fixed value parameter.
@@ -237,8 +237,8 @@ censored_poisson <- function(link = "log") {
   else if (is.character(link))
     stats <- stats::make.link(link)
 
-  list(family = "censored_poisson", link = linktemp, linkfun = stats$linkfun,
-    linkinv = stats$linkinv)
+  structure(list(family = "censored_poisson", link = linktemp, linkfun = stats$linkfun,
+    linkinv = stats$linkinv), class = "family")
 }
 
 #' @param link1 Link for first part of delta/hurdle model.
@@ -253,9 +253,9 @@ delta_gamma <- function(link1 = "logit", link2 = "log") {
   link2 <- match.arg(link2)
   f1 <- binomial(link = "logit")
   f2 <- Gamma(link = "log")
-  list(f1, f2, delta = TRUE, link = c("logit", "log"),
+  structure(list(f1, f2, delta = TRUE, link = c("logit", "log"),
     family = c("binomial", "Gamma"),
-    clean_name = "delta_gamma(link1 = 'logit', link2 = 'log')")
+    clean_name = "delta_gamma(link1 = 'logit', link2 = 'log')"), class = "family")
 }
 
 #' @export
@@ -267,9 +267,9 @@ delta_gamma_mix <- function(link1 = "logit", link2 = "log") {
   link2 <- match.arg(link2)
   f1 <- binomial(link = "logit")
   f2 <- gamma_mix(link = "log")
-  list(f1, f2, delta = TRUE, link = c("logit", "log"),
+  structure(list(f1, f2, delta = TRUE, link = c("logit", "log"),
        family = c("binomial", "gamma_mix"),
-       clean_name = "delta_gamma_mix(link1 = 'logit', link2 = 'log')")
+       clean_name = "delta_gamma_mix(link1 = 'logit', link2 = 'log')"), class = "family")
 }
 
 #' @export
@@ -281,9 +281,9 @@ delta_lognormal <- function(link1 = "logit", link2 = "log") {
   link2 <- match.arg(link2)
   f1 <- binomial(link = "logit")
   f2 <- lognormal(link = "log")
-  list(f1, f2, delta = TRUE, link = c("logit", "log"),
+  structure(list(f1, f2, delta = TRUE, link = c("logit", "log"),
     family = c("binomial", "lognormal"),
-    clean_name = "delta_lognormal(link1 = 'logit', link2 = 'log')")
+    clean_name = "delta_lognormal(link1 = 'logit', link2 = 'log')"), class = "family")
 }
 
 #' @export
@@ -295,9 +295,9 @@ delta_lognormal_mix <- function(link1 = "logit", link2 = "log") {
   link2 <- match.arg(link2)
   f1 <- binomial(link = "logit")
   f2 <- lognormal(link = "log")
-  list(f1, f2, delta = TRUE, link = c("logit", "log"),
+  structure(list(f1, f2, delta = TRUE, link = c("logit", "log"),
        family = c("binomial", "lognormal_mix"),
-       clean_name = "delta_lognormal_mix(link1 = 'logit', link2 = 'log')")
+       clean_name = "delta_lognormal_mix(link1 = 'logit', link2 = 'log')"), class = "family")
 }
 
 #' @export
@@ -309,9 +309,9 @@ delta_truncated_nbinom2 <- function(link1 = "logit", link2 = "log") {
   link2 <- match.arg(link2)
   f1 <- binomial(link = "logit")
   f2 <- truncated_nbinom2(link = "log")
-  list(f1, f2, delta = TRUE, link = c("logit", "log"),
+  structure(list(f1, f2, delta = TRUE, link = c("logit", "log"),
     family = c("binomial", "truncated_nbinom2"),
-    clean_name = "delta_truncated_nbinom2(link1 = 'logit', link2 = 'log')")
+    clean_name = "delta_truncated_nbinom2(link1 = 'logit', link2 = 'log')"), class = "family")
 }
 
 #' @export
@@ -323,9 +323,9 @@ delta_truncated_nbinom1 <- function(link1 = "logit", link2 = "log") {
   link2 <- match.arg(link2)
   f1 <- binomial(link = "logit")
   f2 <- truncated_nbinom1(link = "log")
-  list(f1, f2, delta = TRUE, link = c("logit", "log"),
+  structure(list(f1, f2, delta = TRUE, link = c("logit", "log"),
     family = c("binomial", "truncated_nbinom1"),
-    clean_name = "delta_truncated_nbinom1(link1 = 'logit', link2 = 'log')")
+    clean_name = "delta_truncated_nbinom1(link1 = 'logit', link2 = 'log')"), class = "family")
 }
 
 #' @examples
@@ -344,9 +344,9 @@ delta_poisson_link_gamma <- function(link1 = "log", link2 = "log") {
   link2 <- match.arg(link2)
   f1 <- binomial(link = "log")
   f2 <- Gamma(link = "log")
-  list(f1, f2, delta = TRUE, link = c("log", "log"),
+  structure(list(f1, f2, delta = TRUE, link = c("log", "log"),
     family = c("binomial", "Gamma"), type = "poisson_link_delta",
-    clean_name = "delta_poisson_link_gamma(link1 = 'log', link2 = 'log')")
+    clean_name = "delta_poisson_link_gamma(link1 = 'log', link2 = 'log')"), class = "family")
 }
 
 #' @examples
@@ -360,9 +360,9 @@ delta_poisson_link_lognormal <- function(link1 = "log", link2 = "log") {
   link2 <- match.arg(link2)
   f1 <- binomial(link = "log")
   f2 <- lognormal(link = "log")
-  list(f1, f2, delta = TRUE, link = c("log", "log"),
+  structure(list(f1, f2, delta = TRUE, link = c("log", "log"),
     family = c("binomial", "lognormal"), type = "poisson_link_delta",
-    clean_name = "delta_poisson_link_lognormal(link1 = 'log', link2 = 'log')")
+    clean_name = "delta_poisson_link_lognormal(link1 = 'log', link2 = 'log')"), class = "family")
 }
 
 #' @export
@@ -374,7 +374,7 @@ delta_beta <- function(link1 = "logit", link2 = "logit") {
   link2 <- match.arg(link2)
   f1 <- binomial(link = "logit")
   f2 <- Beta(link = "logit")
-  list(f1, f2, delta = TRUE, link = c("logit", "logit"),
+  structure(list(f1, f2, delta = TRUE, link = c("logit", "logit"),
        family = c("binomial", "Beta"),
-       clean_name = "delta_beta(link1 = 'logit', link2 = 'logit')")
+       clean_name = "delta_beta(link1 = 'logit', link2 = 'logit')"), class = "family")
 }
