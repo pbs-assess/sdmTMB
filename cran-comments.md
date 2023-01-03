@@ -22,7 +22,7 @@ Availability using Additional_repositories specification:
 ...
 Package unavailable to check Rd xrefs: 'INLA'
   
-* This is correct and intended.
+* This is correct and intended; INLA is not on CRAN.
 
 ## Test environments
 

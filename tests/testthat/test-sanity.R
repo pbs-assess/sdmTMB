@@ -42,4 +42,10 @@ test_that("sanity() runs", {
   # expect_message(s <- sanity(fit, se_ratio = 2), regexp = "2x")
   expect_false(s$se_magnitude_ok)
   expect_false(s$all_ok)
+
+  expect_false(sanity(NA))
+  expect_false(sanity(NULL))
+
+  x <- try(stop())
+  expect_false(sanity(x))
 })
