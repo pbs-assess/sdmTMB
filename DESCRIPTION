@@ -1,7 +1,7 @@
 Type: Package
 Package: sdmTMB
 Title: Spatial and Spatiotemporal SPDE-Based GLMMs with 'TMB'
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: c(
     person(c("Sean", "C."), "Anderson", , "sean@seananderson.ca",
            role = c("aut", "cre"),
@@ -53,7 +53,8 @@ Description: Implements spatial and spatiotemporal predictive-process GLMMs
     fields. One common application is for spatially explicit (and optionally
     dynamic) species distribution models (SDMs). See Anderson et al. (2022)
     <doi:10.1101/2022.03.24.485545>.
-License: GPL-3 | file LICENSE
+License: GPL-3
+Copyright: inst/COPYRIGHTS
 URL: https://pbs-assess.github.io/sdmTMB/index.html,
     https://pbs-assess.github.io/sdmTMB/
 BugReports: https://github.com/pbs-assess/sdmTMB/issues
