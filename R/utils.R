@@ -255,6 +255,7 @@ check_valid_factor_levels <- function(x, .name = "") {
 #' @export
 #' @rdname inla_installed
 #' @keywords internal
+#' @return Returns `TRUE` or `FALSE`.
 inla_installed <- function() {
   r1 <- requireNamespace("INLA", quietly = TRUE)
   r2 <- requireNamespace("rgdal", quietly = TRUE)
@@ -265,6 +266,7 @@ inla_installed <- function() {
 #'
 #' @export
 #' @keywords internal
+#' @return Returns `TRUE` or `FALSE`.
 ggplot2_installed <- function() {
   requireNamespace("ggplot2", quietly = TRUE)
 }

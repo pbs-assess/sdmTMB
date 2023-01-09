@@ -6,6 +6,9 @@
 \usage{
 inla_installed()
 }
+\value{
+Returns \code{TRUE} or \code{FALSE}.
+}
 \description{
 Check if INLA installed (i.e., not on CRAN)
 }

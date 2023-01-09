@@ -194,6 +194,8 @@ plot_anisotropy2 <- function(object, model = 1) {
 #' * The time element (if present) is set to its minimum value
 #' * The x and y coordinates are set to their mean values
 #'
+#' @return
+#' A plot of a smoother term.
 #' @examples
 #' if (inla_installed()) {
 #'   d <- subset(pcod, year >= 2000 & density > 0)

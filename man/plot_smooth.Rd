@@ -29,6 +29,9 @@ plot_smooth(
 
 \item{return_data}{Logical: return the predicted data instead of making a plot?}
 }
+\value{
+A plot of a smoother term.
+}
 \description{
 \strong{Deprecated: use \code{visreg::visreg()}. See \code{\link[=visreg_delta]{visreg_delta()}} for examples.}
 }

@@ -6,6 +6,9 @@
 \usage{
 ggplot2_installed()
 }
+\value{
+Returns \code{TRUE} or \code{FALSE}.
+}
 \description{
 Check if ggplot2 installed
 }
