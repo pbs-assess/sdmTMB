@@ -1,3 +1,22 @@
+## Resubmission
+
+This is a resubmission. In this version, we have fixed the following:
+
+* Added \value to .Rd files for ggplot2_installed.Rd, inla_installed.Rd,
+  plot_smooth.Rd
+  
+* Removed an internal function (R/make_enum.R) that wrote by default to 
+  the user's home filespace.
+
+> The LICENSE file is only needed if you have
+> additional restrictions to the license which
+> you have not? In that case omit the file and its
+> reference in the DESCRIPTION file.
+
+* We have moved the contents of LICENSE to inst/COPYRIGHTS, removed the
+  reference to LICENSE in DESCRIPTION, and added 'Copyright: inst/COPYRIGHTS'
+  in DESCRIPTION.
+
 ## R CMD check results
 
 0 errors | 0 warnings | 3 notes
@@ -30,4 +49,5 @@ Package unavailable to check Rd xrefs: 'INLA'
 * Windows (on github-actions), R 4.2.2
 * Ubuntu 20.04.4 (on github-actions), R devel
 * Windows (winbuilder), R devel
+* Windows (winbuilder), R release
 * Windows Server 2022 (R-hub), R-devel, 64 bit

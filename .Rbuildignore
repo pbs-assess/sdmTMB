@@ -18,3 +18,4 @@
 ^scratch$
 ^CRAN-RELEASE$
 ^Dockerfile$
+^CRAN-SUBMISSION$
