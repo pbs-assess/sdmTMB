@@ -13,9 +13,9 @@ This is a resubmission. In this version, we have fixed the following:
 > you have not? In that case omit the file and its
 > reference in the DESCRIPTION file.
 
-* We have moved the contents of LICENSE to inst/COPYRIGHTS, removed the
-  reference to LICENSE in DESCRIPTION, and added 'Copyright: inst/COPYRIGHTS'
-  in DESCRIPTION.
+* We have moved the contents of LICENSE (referencing other open source
+  software components) to inst/COPYRIGHTS, removed the reference to LICENSE
+  in DESCRIPTION, and added 'Copyright: inst/COPYRIGHTS' in DESCRIPTION.
 
 ## R CMD check results
 
