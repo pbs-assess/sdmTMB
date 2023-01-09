@@ -1,5 +1,13 @@
 # sdmTMB
 
+# sdmTMB 0.2.1
+
+* Fixes for resubmission to CRAN.
+
+# sdmTMB 0.2.0
+
+* Initial submission to CRAN.
+
 # sdmTMB 0.1.4
 
 * Relax range parameter `sanity()` check from 1x to 1.5x the greatest
