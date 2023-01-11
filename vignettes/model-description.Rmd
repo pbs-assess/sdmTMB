@@ -26,6 +26,17 @@ knitr::opts_chunk$set(
 )
 ```
 
+# Other vignettes available
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+**If this vignette is being viewed on CRAN, note that many other vignettes describing how to use sdmTMB are available on the [documentation site](https://pbs-assess.github.io/sdmTMB/) under [Articles](https://pbs-assess.github.io/sdmTMB/articles/).**
+
+</div>
+
 \newcommand{\s}{\boldsymbol{s}}
 
 \clearpage
