@@ -19,3 +19,4 @@
 ^CRAN-RELEASE$
 ^Dockerfile$
 ^CRAN-SUBMISSION$
+^vignettes/web_only$

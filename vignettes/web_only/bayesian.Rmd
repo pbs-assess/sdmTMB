@@ -2,8 +2,8 @@
 title: "Bayesian estimation with sdmTMB"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
-bibliography: 'refs.bib'
-csl: 'mee.csl'
+bibliography: '../refs.bib'
+csl: '../mee.csl'
 vignette: >
   %\VignetteIndexEntry{Bayesian estimation with sdmTMB}
   %\VignetteEngine{knitr::rmarkdown}

@@ -2,7 +2,8 @@
 title: "Cross-validation for model evaluation and comparison"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
-bibliography: 'refs.bib'
+bibliography: '../refs.bib'
+csl: '../mee.csl'
 vignette: >
   %\VignetteIndexEntry{Cross-validation for model evaluation and comparison}
   %\VignetteEngine{knitr::rmarkdown}
