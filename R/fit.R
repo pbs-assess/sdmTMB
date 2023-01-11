@@ -1020,7 +1020,7 @@ sdmTMB <- function(
     priors_b_mean = priors_b[not_na,1],
     priors_b_Sigma = priors_b_Sigma,
     priors = as.numeric(unlist(.priors)),
-    share_range = as.integer(share_range),
+    share_range = as.integer(if (length(share_range) == 1L) rep(share_range, 2L) else share_range),
     include_spatial = as.integer(include_spatial),
     proj_mesh  = Matrix::Matrix(c(0,0,2:0), 3, 5), # dummy
     proj_X_ij  = list(matrix(0, ncol = 1, nrow = 1)), # dummy
