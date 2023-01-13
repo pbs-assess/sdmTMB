@@ -44,10 +44,11 @@
 #'   [extract_mcmc()] for more details and an example. If specified, the
 #'   predict function will return a matrix of a similar form as if `nsim > 0`
 #'   but representing Bayesian posterior samples from the Stan model.
-#' @param model Type of prediction if a delta/hurdle model: `NA` returns the
-#'   combined prediction from both components on the link scale for the positive
-#'   component; `1` or `2` return the first or second model component only on
-#'   the link or response scale depending on the argument `type`.
+#' @param model Type of prediction if a delta/hurdle model *and* `nsim > 0` or a
+#'   `tmbstan_model` is supplied: `NA` returns the combined prediction from both
+#'   components on the link scale for the positive component; `1` or `2` return
+#'   the first or second model component only on the link or response scale
+#'   depending on the argument `type`.
 #' @param offset A numeric vector of optional offset values. If left at default
 #'   `NULL`, the offset is implicitly left at 0.
 #' @param return_tmb_report Logical: return the output from the TMB
