@@ -1,5 +1,12 @@
 # sdmTMB
 
+# sdmTMB 0.2.1.9000
+
+* Add anisotropy to print() #157
+
+* Disable predict(..., type = "response") for now until it is overhauled and
+  fixed. #140
+
 # sdmTMB 0.2.1
 
 * Fixes for resubmission to CRAN.
