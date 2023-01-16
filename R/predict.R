@@ -279,11 +279,16 @@ predict.sdmTMB <- function(object, newdata = object$data,
     sims <- nsim
   }
 
-
   assert_that(model[[1]] %in% c(NA, 1, 2),
     msg = "`model` argument not valid; should be one of NA, 1, 2")
   model <- model[[1]]
   type <- match.arg(type)
+  if (type == "response") {
+    msg <- paste0("predict.sdmTMB(type = 'response') detected; for now, ",
+      "please work with the default `type = 'link'` and transform ",
+      "predictions with the relevant inverse link.")
+    cli_abort(msg)
+  }
 
   # FIXME parallel setup here?
 

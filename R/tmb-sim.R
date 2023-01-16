@@ -500,9 +500,9 @@ dharma_residuals <- function(simulated_response, object, plot = TRUE, ...) {
 
   # FIXME parallel setup here?
 
-  p <- predict(object, type = "response")
+  fitted <- fitted(object)
+
   # fitted <- object$family$linkinv(p[["est_non_rf"]])
-  fitted <- p$est
   res <- DHARMa::createDHARMa(
     simulatedResponse = simulated_response,
     observedResponse = y,

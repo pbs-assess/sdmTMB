@@ -176,7 +176,7 @@ tidy(fit_dg, model = 2)
 tidy(fit_dg, model = 2, "ran_pars", conf.int = TRUE)
 ```
 
-We can use `predict()` to predict density in either log space (the default) or transformed into the response scale (`type = "response"`).
+<!-- We can use `predict()` to predict density in either log space (the default) or transformed into the response scale (`type = "response"`). -->
 
 For built-in delta models, the default function will return estimated response and parameters for each grid cell for each model separately, notated with a 1 (for the presence/absence model) or 2 (for the positive catch model) in the column name. See `predict.sdmTMB()` for a description of values in the data frame.
 
@@ -185,21 +185,21 @@ p <- predict(fit_dg, newdata = qcs_grid)
 str(p)
 ```
 
-```{r, eval=FALSE}
-p_response <- predict(fit_dg, newdata = qcs_grid, type = "response")
+```{r, eval=FALSE, echo=FALSE}
+# p_response <- predict(fit_dg, newdata = qcs_grid, type = "response")
 ```
 
-We can use the `model` argument to return only predictions from model 1 or model 2.
+<!-- We can use the `model` argument to return only predictions from model 1 or model 2. -->
 
 ```{r, error=FALSE, message=FALSE, echo=FALSE, eval=FALSE}
-p1 <- predict(fit_dg, newdata = qcs_grid, model = 1)
-p2 <- predict(fit_dg, newdata = qcs_grid, model = 2)
+# p1 <- predict(fit_dg, newdata = qcs_grid, model = 1)
+# p2 <- predict(fit_dg, newdata = qcs_grid, model = 2)
 ```
 
-To return combined predictions from both components on the response scale, we can use `model=NA`
+<!-- To return combined predictions from both components on the response scale, we can use `model=NA` -->
 
 ```{r, error=FALSE, message=FALSE, echo=FALSE, eval=FALSE}
-p_combined <- predict(fit_dg, newdata = qcs_grid, model = NA, type = "response")
+# p_combined <- predict(fit_dg, newdata = qcs_grid, model = NA, type = "response")
 ```
 
 We can use predictions from the built-in delta model (making sure that `return_tmb_object=TRUE`) to get the index values using the `get_index()` function.
