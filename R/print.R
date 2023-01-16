@@ -24,6 +24,10 @@ print_model_info <- function(x) {
     title <- paste0("Model fit by ", fit_by, " ['sdmTMB']\n")
   }
 
+  aniso <- as.logical(x$tmb_data$anisotropy)
+  # covariance <- paste0("Covariance: ", if (aniso) "anisotropic" else "isotropic", "\n")
+  covariance <- paste0(if (aniso) "anisotropic" else "isotropic")
+
   formula <- paste0("Formula: ", deparse(x$call$formula), "\n")
 
   if (deparse(x$call$time) != "NULL") {
@@ -34,7 +38,7 @@ print_model_info <- function(x) {
     time <- NULL
   }
 
-  mesh <- paste0("Mesh: ", deparse(x$call$mesh), "\n")
+  mesh <- paste0("Mesh: ", deparse(x$call$mesh), " (", covariance, " covariance)\n")
   data <- paste0("Data: ", deparse(x$call$data), "\n")
 
   # From sdmTMB_cv():
@@ -69,7 +73,8 @@ print_model_info <- function(x) {
     family1,
     family2,
     overall_family,
-    criterion
+    criterion,
+    covariance
   )
 }
 
