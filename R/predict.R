@@ -283,13 +283,6 @@ predict.sdmTMB <- function(object, newdata = object$data,
     msg = "`model` argument not valid; should be one of NA, 1, 2")
   model <- model[[1]]
   type <- match.arg(type)
-  if (type == "response") {
-    msg <- paste0("predict.sdmTMB(type = 'response') detected; for now, ",
-      "please work with the default `type = 'link'` and transform ",
-      "predictions with the relevant inverse link.")
-    cli_abort(msg)
-  }
-
   # FIXME parallel setup here?
 
   sys_calls <- unlist(lapply(sys.calls(), deparse)) # retrieve function that called this
@@ -647,7 +640,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
         }
         nd$epsilon_st1 <- r$proj_epsilon_st_A_vec[,1]
         nd$epsilon_st2 <- r$proj_epsilon_st_A_vec[,2]
-        if (type == "response") {
+        if (type == "response" && !se_fit) {
           nd$est1 <- object$family[[1]]$linkinv(nd$est1)
           nd$est2 <- object$family[[2]]$linkinv(nd$est2)
           if (object$tmb_data$poisson_link_delta) {
@@ -705,6 +698,13 @@ predict.sdmTMB <- function(object, newdata = object$data,
       se <- se[,model,drop=TRUE]
       nd$est <- proj_eta
       nd$est_se <- se
+    }
+    if (type == "response" && se_fit) {
+      msg <- paste0("predict(..., type = 'response', se_fit = TRUE) detected; ",
+        "returning the prediction 'est' in link space because the standard errors ",
+        "are calculated in link space.")
+      cli_warn(msg)
+      type <- "link"
     }
 
     if (pop_pred) {

@@ -4,10 +4,8 @@
 
 * Add anisotropy to print() #157
 
-* Disable predict(..., type = "response") for now until it is overhauled and
-  fixed. #140
-
-# sdmTMB 0.2.1
+* Fix predict(..., type = "response", se_fit = TRUE), which involves issuing
+  a warning and sticking to link space. #140
 
 * Fixes for resubmission to CRAN.
 
