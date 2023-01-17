@@ -700,8 +700,9 @@ predict.sdmTMB <- function(object, newdata = object$data,
       nd$est_se <- se
     }
     if (type == "response" && se_fit) {
+      est_name <- if (isTRUE(object$family$delta)) "'est1' and 'est2'" else "'est'"
       msg <- paste0("predict(..., type = 'response', se_fit = TRUE) detected; ",
-        "returning the prediction 'est' in link space because the standard errors ",
+        "returning the prediction ", est_name, " in link space because the standard errors ",
         "are calculated in link space.")
       cli_warn(msg)
       type <- "link"
