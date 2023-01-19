@@ -305,8 +305,14 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     return(frm(out))
   } else if (effects == "ran_vals") {
     return(frm(out_ranef))
-  } else {
+  } else if (effects == "ran_pars") {
+    if (!conf.int)
+      cli_inform("Standard errors intentionally omitted because they have been calculated in log space. Confidence intervals are available with `conf.int = TRUE`.")
+    else
+      cli_inform("Standard errors intentionally omitted because they have been calculated in log space.")
     return(frm(out_re))
+  } else {
+    cli_abort("The specified 'effects' type is not available.")
   }
 }
 
