@@ -44,7 +44,7 @@ plot_anisotropy <- function(object, return_data = FALSE) {
   delta <- isTRUE(object$family$delta)
 
   eig <- eigen(report$H)
-  b <- tidy(object, "ran_pars")
+  b <- tidy(object, "ran_pars", silent = TRUE)
 
   ranges <- b$estimate[b$term == "range"]
   range_s <- ranges[1]
@@ -53,7 +53,7 @@ plot_anisotropy <- function(object, return_data = FALSE) {
   # FIXME: do this with much less repetition!
   if (delta) {
     eig2 <- eigen(report$H2)
-    b2 <- tidy(object, "ran_pars", model = 2)
+    b2 <- tidy(object, "ran_pars", model = 2, silent = TRUE)
     ranges2 <- b2$estimate[b2$term == "range"]
     range2_s <- ranges2[1]
     range2_st <- if (length(ranges2) > 1) ranges2[2] else ranges2[1]

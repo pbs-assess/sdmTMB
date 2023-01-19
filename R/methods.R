@@ -86,7 +86,7 @@ family.sdmTMB <- function (object, ...) {
 #' @method fixef sdmTMB
 #' @export
 fixef.sdmTMB <- function(object, ...) {
-  .t <- tidy(object)
+  .t <- tidy(object, silent = TRUE)
   bhat <- .t$estimate
   names(bhat) <- .t$term
   bhat
@@ -96,7 +96,7 @@ fixef.sdmTMB <- function(object, ...) {
 #' @method ranef sdmTMB
 #' @export
 ranef.sdmTMB <- function(object, ...) {
-  .t <- tidy(object, "ran_vals", conf.int = FALSE)
+  .t <- tidy(object, "ran_vals", conf.int = FALSE, silent = TRUE)
   terms <- unlist(lapply(strsplit(.t$term,"_"), getElement, 1))
   est <- .t$estimate
   cond <- list()
@@ -134,7 +134,7 @@ vcov.sdmTMB <- function(object, ...) {
   rn <- rownames(vc)
   bj <- grepl("^b_j", rn)
   vc <- vc[bj, bj]
-  b <- tidy(object)
+  b <- tidy(object, silent = TRUE)
   stopifnot(nrow(b) == nrow(vc))
   rownames(vc) <- b$term
   colnames(vc) <- b$term
@@ -178,7 +178,7 @@ Effect.sdmTMB <- function(focal.predictors, mod, ...) {
   }
 
   vc <- vcov(mod)
-  b <- tidy(mod)
+  b <- tidy(mod, silent = TRUE)
 
   dummyfuns <- list(
     variance = function(mu) mu,

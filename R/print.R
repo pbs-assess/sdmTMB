@@ -79,7 +79,7 @@ print_model_info <- function(x) {
 }
 
 print_main_effects <- function(x, m = 1) {
-  b <- as.data.frame(tidy(x, model = m))
+  b <- as.data.frame(tidy(x, model = m, silent = TRUE))
   b$estimate <- round(b$estimate, 2L)
   b$std.error <- round(b$std.error, 2L)
   mm <- cbind(b$estimate, b$std.error)
@@ -144,7 +144,7 @@ print_smooth_effects <- function(x, m = 1) {
 }
 
 print_iid_re <- function(x, m = 1) {
-  .tidy <- tidy(x, "ran_pars", model = m)
+  .tidy <- tidy(x, "ran_pars", model = m, silent = TRUE)
   if ("sigma_G" %in% .tidy$term) {
     re_int_names <- barnames(x$split_formula[[1]]$reTrmFormulas) # TODO DELTA HARDCODED TO 1
     re_int_mat <- matrix(NA_real_, nrow = length(re_int_names), ncol = 1L)
@@ -176,11 +176,17 @@ print_time_varying <- function(x, m = 1) {
 }
 
 print_range <- function(x, m = 1) {
-  b <- tidy(x, effects = "ran_pars", model = m)
+  b <- tidy(x, effects = "ran_pars", model = m, silent = TRUE)
   range <- b$estimate[b$term == "range"]
   if (is.null(range)) {
     return(NULL)
   }
+
+  # if (as.logical(x$tmb_data$anisotropy)) {
+  #   aa <- plot_anisotropy(x, return_data = TRUE)
+  #   # range <- aa$a[aa$random_field == "spatial"]
+  # }
+
   range <- mround(range, 2L)
   range_text <- if (x$tmb_data$share_range[m]) {
     paste0("Matern range: ", range[1], "\n")
@@ -193,11 +199,15 @@ print_range <- function(x, m = 1) {
   if (x$spatial[m] == "off" && x$spatiotemporal[m] == "off") {
     range_text <- NULL
   }
+
+  if (as.logical(x$tmb_data$anisotropy)) {
+    range_text <- "Matern range: anisotropic covariance; see plot_anisotropy().\n"
+  }
   range_text
 }
 
 print_other_parameters <- function(x, m = 1) {
-  b <- tidy(x, "ran_pars", model = m)
+  b <- tidy(x, "ran_pars", model = m, silent = TRUE)
 
   get_term_text <- function(term_name = "", pretext = "") {
     if (term_name %in% b$term) {
@@ -280,7 +290,14 @@ print_one_model <- function(x, m = 1) {
 print_footer <- function(x) {
   info <- print_model_info(x)
   cat(info$criterion)
+
   cat("\nSee ?tidy.sdmTMB to extract these values as a data frame.\n")
+
+  # suppressWarnings(suppressMessages(ok <- sanity(x)$all_ok))
+  # if (!isTRUE(ok)) {
+    # cat("Possible issues detected; printing output of sanity():\n\n")
+    # sanity(x)
+  # }
 }
 
 #' @export

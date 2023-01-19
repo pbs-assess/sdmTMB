@@ -11,6 +11,7 @@
   conf.int = FALSE,
   conf.level = 0.95,
   exponentiate = FALSE,
+  silent = FALSE,
   ...
 )
 }
@@ -30,6 +31,8 @@ random intercepts, if included; behaves like \code{ranef()}).}
 
 \item{exponentiate}{Whether to exponentiate the fixed-effect coefficient
 estimates and confidence intervals.}
+
+\item{silent}{Omit any messages?}
 
 \item{...}{Extra arguments (not used).}
 }

@@ -69,7 +69,7 @@ spread_sims <- function(object, nsim = 200, n_sims = deprecated()) {
   } else {
     fe_names <- colnames(model.matrix(mgcv::gam(.formula, data = object$data)))
   }
-  fe_names <- tidy(object)$term
+  fe_names <- tidy(object, silent = TRUE)$term
   row.names(samps) <- pn
   row.names(samps)[row.names(samps) == "b_j"] <- fe_names
   out <- as.data.frame(t(samps))
