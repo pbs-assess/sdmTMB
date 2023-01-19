@@ -203,10 +203,17 @@ Now, for the purposes of this example (e.g., visualization), we want to predict 
 glimpse(qcs_grid)
 ```
 
+We can replicate our grid across all necessary years:
+
+```{r grid-replicate}
+grid_yrs <- replicate_df(qcs_grid, "year", unique(pcod$year))
+```
+
+
 Now we will make the predictions on new data:
 
 ```{r predictions}
-predictions <- predict(m3, newdata = qcs_grid)
+predictions <- predict(m3, newdata = grid_yrs)
 ```
 
 Let's make a small function to help make maps.
@@ -267,9 +274,9 @@ We can also estimate the uncertainty in our spatiotemporal density predictions u
 Here we generate 100 estimates and use `apply()` to calculate upper and lower confidence intervals, a standard deviation, and a coefficient of variation (CV).  
 
 ```{r sim-cv}
-sim <- predict(m3, newdata = qcs_grid, nsim = 100)
-sim_last <- sim[qcs_grid$year == max(qcs_grid$year), ] # just plot last year
-pred_last <- predictions[predictions$year == max(qcs_grid$year), ]
+sim <- predict(m3, newdata = grid_yrs, nsim = 100)
+sim_last <- sim[grid_yrs$year == max(grid_yrs$year), ] # just plot last year
+pred_last <- predictions[predictions$year == max(grid_yrs$year), ]
 pred_last$lwr <- apply(exp(sim_last), 1, quantile, probs = 0.025)
 pred_last$upr <- apply(exp(sim_last), 1, quantile, probs = 0.975)
 pred_last$sd <- round(apply(exp(sim_last), 1, function(x) sd(x)), 2)

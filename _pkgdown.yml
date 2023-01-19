@@ -34,6 +34,7 @@ reference:
   - run_extra_optimization
   - residuals.sdmTMB
   - dharma_residuals
+  - replicate_df
 
 - title: 'Families'
   desc: |

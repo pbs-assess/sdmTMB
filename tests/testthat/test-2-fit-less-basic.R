@@ -95,8 +95,9 @@ test_that("A spatially varying coefficient model fits", {
     mesh = pcod_spde, family = tweedie(link = "log"),
     spatial_varying = ~ 0 + scaled_year, time = "year")
   expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
-  qcs_grid$scaled_year <- scale(qcs_grid$year)
-  p <- predict(m, newdata = subset(qcs_grid, year >= 2011))
+  nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
+  nd$scaled_year <- scale(nd$year)
+  p <- predict(m, newdata = subset(nd, year >= 2011))
 })
 
 
@@ -325,8 +326,9 @@ test_that("Multiple SVC works", {
   s <- as.list(fit$sd_report, "Std. Error")
   expect_true(sum(is.na(s$b_j)) == 0L)
   fit
-  qcs_grid$syear <- as.numeric(scale(qcs_grid$year))
-  p <- predict(fit, newdata = qcs_grid)
+  nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
+  nd$syear <- as.numeric(scale(nd$year))
+  p <- predict(fit, newdata = nd)
   # p <- predict(fit, newdata = NULL)
 })
 

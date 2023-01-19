@@ -118,7 +118,7 @@
 #'
 #' # Predictions onto new data --------------------------------------------
 #'
-#' qcs_grid_2011 <- subset(qcs_grid, year >= min(pcod_2011$year))
+#' qcs_grid_2011 <- replicate_df(qcs_grid, "year", unique(pcod_2011$year))
 #' predictions <- predict(m, newdata = qcs_grid_2011)
 #'
 #' # A short function for plotting our predictions:
@@ -216,7 +216,7 @@
 #' m <- sdmTMB(data = d, formula = density ~ depth_scaled + depth_scaled2,
 #'   mesh = mesh, family = tweedie(link = "log"),
 #'   spatial_varying = ~ 0 + year_scaled, time = "year", spatiotemporal = "off")
-#' nd <- qcs_grid
+#' nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
 #' nd$year_scaled <- (nd$year - mean(d$year)) / sd(d$year)
 #' p <- predict(m, newdata = nd)
 #'

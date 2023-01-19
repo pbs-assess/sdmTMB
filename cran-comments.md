@@ -1,21 +1,21 @@
 ## Resubmission
 
-This is a resubmission. In this version, we have fixed the following:
+This is a resubmission to fix 'Additional issues' on CRAN checks:
 
-* Added \value to .Rd files for ggplot2_installed.Rd, inla_installed.Rd,
-  plot_smooth.Rd
+* Correct memory issue identified by valgrind/gcc-ASAN/clan-ASAN tests
   
-* Removed an internal function (R/make_enum.R) that wrote by default to 
-  the user's home filespace.
+* Removed 2 Latin-1 strings in package data
 
-> The LICENSE file is only needed if you have
-> additional restrictions to the license which
-> you have not? In that case omit the file and its
-> reference in the DESCRIPTION file.
+* Added 'future' and 'lme4' to Suggests to avoid 'Rd cross-references'
+  'Undeclared packages' Note.
+  
+Result: NOTE
+  installed size is 8.9Mb
+  sub-directories of 1Mb or more:
+  data 1.7Mb
+  libs 5.4Mb
 
-* We have moved the contents of LICENSE (referencing other open source
-  software components) to inst/COPYRIGHTS, removed the reference to LICENSE
-  in DESCRIPTION, and added 'Copyright: inst/COPYRIGHTS' in DESCRIPTION.
+* We removed selected vignettes to reduce installed package size. Majority of size is due to compiled code.
 
 ## R CMD check results
 

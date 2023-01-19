@@ -394,9 +394,10 @@ we could predict on a grid covering the entire survey (`qcs_grid`) with
 grid cell area 4 (2 x 2 km) and pass the predictions to `get_index()`:
 
 ``` r
-p_st <- predict(fit_spatiotemporal, newdata = qcs_grid, 
+grid_yrs <- replicate_df(qcs_grid, "year", unique(pcod$year))
+p_st <- predict(fit_spatiotemporal, newdata = grid_yrs, 
   return_tmb_object = TRUE)
-index <- get_index(p_st, area = rep(4, nrow(qcs_grid)))
+index <- get_index(p_st, area = rep(4, nrow(grid_yrs)))
 ggplot(index, aes(year, est)) +
   geom_ribbon(aes(ymin = lwr, ymax = upr), fill = "grey90") +
   geom_line(lwd = 1, colour = "grey30") +
@@ -480,9 +481,14 @@ space. You’ll want to ensure you set up your model such that it ballpark
 has a mean of 0 (e.g., by including it in `formula` too).
 
 ``` r
-qcs_grid$year_scaled <- (qcs_grid$year - mean(pcod$year)) / sd(pcod$year)
-p <- predict(fit, newdata = qcs_grid) %>% 
+grid_yrs <- replicate_df(qcs_grid, "year", unique(pcod$year))
+grid_yrs$year_scaled <- (grid_yrs$year - mean(pcod$year)) / sd(pcod$year)
+p <- predict(fit, newdata = grid_yrs) %>% 
   subset(year == 2011) # any year
+#> Warning: The installed version of sdmTMB is newer than the version that was used to fit
+#> this model. It is possible new parameters have been added to the TMB model
+#> since you fit this model and that prediction will fail. We recommend you fit
+#> and predict from an sdmTMB model with the same version.
 ggplot(p, aes(X, Y, fill = zeta_s_year_scaled)) + geom_raster() +
   scale_fill_gradient2()
 ```
@@ -759,7 +765,7 @@ Predicting with the Stan/tmbstan model:
 pred_mcmc <- predict(fit, newdata = qcs_grid, tmbstan_model = fit_mcmc)
 # Each row has 200 posterior samples for a row of the `newdata` data frame:
 dim(pred_mcmc)
-#> [1] 65826   200
+#> [1] 7314   200
 ```
 
 See

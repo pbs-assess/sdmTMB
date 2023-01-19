@@ -309,3 +309,32 @@ get_pars <- function(object) {
   p <- ee$parList(x = x)
   p
 }
+
+#' Replicate a prediction data frame over time
+#'
+#' Useful for replicating prediction grids across time slices used in model
+#' fitting.
+#'
+#' @param dat Data frame.
+#' @param time_name Name of time column in output.
+#' @param time_values Time values to replicate `dat` over.
+#'
+#' @return
+#' A data frame replicated over `time_values` with a new column based on
+#' `time_name`.
+#'
+#' @examples
+#'
+#' df <- data.frame(variable = c("a", "b"))
+#' replicate_df(df, time_name = "year", time_values = 1:3)
+#'
+#' head(qcs_grid)
+#' nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
+#' head(nd)
+#' table(nd$year)
+#' @export
+replicate_df <- function(dat, time_name, time_values) {
+  nd <- do.call("rbind", replicate(length(time_values), dat, simplify = FALSE))
+  nd[[time_name]] <- rep(time_values, each = nrow(dat))
+  nd
+}

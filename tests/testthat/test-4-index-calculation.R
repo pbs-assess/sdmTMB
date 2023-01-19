@@ -10,9 +10,10 @@ test_that("get_index(), get_index_sims(), and get_cog() work", {
     time = "year", mesh = pcod_spde, family = tweedie(link = "log")
   )
   # expect_snapshot(m)
-  predictions <- predict(m, newdata = qcs_grid, return_tmb_object = TRUE)
+  nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
+  predictions <- predict(m, newdata = nd, return_tmb_object = TRUE)
 
-  p <- predict(m, newdata = qcs_grid, return_tmb_object = FALSE)
+  p <- predict(m, newdata = nd, return_tmb_object = FALSE)
   expect_error(get_index(p), regexp = "return_tmb_object")
 
   ind <- get_index(predictions, bias_correct = FALSE)

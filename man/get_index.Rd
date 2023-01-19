@@ -64,8 +64,12 @@ m <- sdmTMB(
  formula = density ~ 0 + as.factor(year),
  time = "year", mesh = pcod_spde, family = tweedie(link = "log")
 )
+
+# make prediction grid:
+nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
+
 # Note `return_tmb_object = TRUE` and the prediction grid:
-predictions <- predict(m, newdata = qcs_grid, return_tmb_object = TRUE)
+predictions <- predict(m, newdata = nd, return_tmb_object = TRUE)
 ind <- get_index(predictions)
 
 if (require("ggplot2", quietly = TRUE)) {

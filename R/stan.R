@@ -65,7 +65,7 @@
 #' post <- extract_mcmc(m_stan)
 #' dim(post)
 #'
-#' nd <- subset(qcs_grid, year >= 2011)
+#' nd <- replicate_df(qcs_grid, "year", unique(pcod_2011$year))
 #' p <- predict(fit_mle, newdata = nd, tmbstan_model = m_stan)
 #' p_last <- p[nd$year == max(nd$year), ] # just plot last year
 #' pred <- qcs_grid[qcs_grid$year == max(qcs_grid$year), ]

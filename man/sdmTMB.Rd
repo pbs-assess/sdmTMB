@@ -344,8 +344,7 @@ visreg::visreg(fit, xvar = "depth", scale = "response", gg = TRUE, rug = FALSE)
 p <- predict(fit)
 
 # Predict on new data:
-nd <- subset(qcs_grid, year == 2017)
-p <- predict(fit, newdata = nd)
+p <- predict(fit, newdata = qcs_grid)
 head(p)
 
 # Add spatiotemporal random fields:

@@ -14,12 +14,13 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
       control = sdmTMBcontrol(newton_loops = 1)
     )
     fit_dg$sd_report
-    p <- predict(fit_dg, newdata = qcs_grid)
+    nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
+    p <- predict(fit_dg, newdata = nd)
     # head(p)
-    # p <- predict(fit_dg, newdata = qcs_grid, type = "response")
+    # p <- predict(fit_dg, newdata = nd, type = "response")
     # head(p)
 
-    p <- predict(fit_dg, newdata = qcs_grid, return_tmb_object = TRUE)
+    p <- predict(fit_dg, newdata = nd, return_tmb_object = TRUE)
     ind_dg <- get_index(p, bias_correct = FALSE)
 
     # check

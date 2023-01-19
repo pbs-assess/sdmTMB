@@ -90,7 +90,7 @@ plot_map_raster <- function(dat, column = est) {
 First, we need to predict on a grid. We also need to add a column for `scaled_year` to match the fitting:
 
 ```{r}
-nd <- qcs_grid
+nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
 nd$scaled_year <- (nd$year - mean(pcod$year)) / sd(pcod$year)
 p1 <- predict(m1, newdata = nd)
 ```

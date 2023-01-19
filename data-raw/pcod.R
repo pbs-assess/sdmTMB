@@ -27,14 +27,13 @@ grid_locs <- rename(grid_locs, depth = akima_depth)
 grid_locs$year <- NULL
 qcs_grid <- grid_locs
 
+# # Expand the prediction grid to create a slice for each time:
+# original_time <- sort(unique(dat$year))
+# nd <- do.call("rbind",
+#   replicate(length(original_time), qcs_grid, simplify = FALSE))
+# nd[["year"]] <- rep(original_time, each = nrow(qcs_grid))
 
-# Expand the prediction grid to create a slice for each time:
-original_time <- sort(unique(dat$year))
-nd <- do.call("rbind",
-  replicate(length(original_time), qcs_grid, simplify = FALSE))
-nd[["year"]] <- rep(original_time, each = nrow(qcs_grid))
-
-qcs_grid <- nd
+# qcs_grid <- nd
 usethis::use_data(qcs_grid, internal = FALSE, overwrite = TRUE)
 
 pcod_2011 <- subset(pcod, year >= 2011)

@@ -181,25 +181,26 @@ tidy(fit_dg, model = 2, "ran_pars", conf.int = TRUE)
 For built-in delta models, the default function will return estimated response and parameters for each grid cell for each model separately, notated with a 1 (for the presence/absence model) or 2 (for the positive catch model) in the column name. See `predict.sdmTMB()` for a description of values in the data frame.
 
 ```{r, error=FALSE, message=FALSE}
-p <- predict(fit_dg, newdata = qcs_grid)
+grid_yrs <- replicate_df(qcs_grid, "year", unique(pcod$year))
+p <- predict(fit_dg, newdata = grid_yrs)
 str(p)
 ```
 
 ```{r, eval=FALSE, echo=FALSE}
-# p_response <- predict(fit_dg, newdata = qcs_grid, type = "response")
+# p_response <- predict(fit_dg, newdata = grid_yrs, type = "response")
 ```
 
 <!-- We can use the `model` argument to return only predictions from model 1 or model 2. -->
 
 ```{r, error=FALSE, message=FALSE, echo=FALSE, eval=FALSE}
-# p1 <- predict(fit_dg, newdata = qcs_grid, model = 1)
-# p2 <- predict(fit_dg, newdata = qcs_grid, model = 2)
+# p1 <- predict(fit_dg, newdata = grid_yrs, model = 1)
+# p2 <- predict(fit_dg, newdata = grid_yrs, model = 2)
 ```
 
 <!-- To return combined predictions from both components on the response scale, we can use `model=NA` -->
 
 ```{r, error=FALSE, message=FALSE, echo=FALSE, eval=FALSE}
-# p_combined <- predict(fit_dg, newdata = qcs_grid, model = NA, type = "response")
+# p_combined <- predict(fit_dg, newdata = grid_yrs, model = NA, type = "response")
 ```
 
 We can use predictions from the built-in delta model (making sure that `return_tmb_object=TRUE`) to get the index values using the `get_index()` function.
@@ -208,7 +209,7 @@ The `get_index()` function will automatically combine predictions from the first
 For more on modelling for the purposes of creating an index see the vignette on [Index standardization with sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html).
 
 ```{r, message=FALSE, warning=FALSE, eval=FALSE}
-p2 <- predict(fit_dg, newdata = qcs_grid, return_tmb_object = TRUE)
+p2 <- predict(fit_dg, newdata = grid_yrs, return_tmb_object = TRUE)
 ind_dg <- get_index(p2, bias_correct = FALSE)
 ```
 
@@ -294,9 +295,9 @@ Next, we need some way of combining the predictions across the two models.
 If all we need are point predictions, we can just multiply the predictions from the two models after applying the inverse link:
 
 ```{r delta-pred-simple, echo=TRUE}
-pred <- qcs_grid # use the grid as template for saving our predictions
-p_bin <- predict(m1, newdata = qcs_grid)
-p_pos <- predict(m2, newdata = qcs_grid)
+pred <- grid_yrs # use the grid as template for saving our predictions
+p_bin <- predict(m1, newdata = grid_yrs)
+p_pos <- predict(m2, newdata = grid_yrs)
 p_bin_prob <- m1$family$linkinv(p_bin$est)
 p_pos_exp <- m2$family$linkinv(p_pos$est)
 pred$est_exp <- p_bin_prob * p_pos_exp
@@ -309,8 +310,8 @@ A larger number (say ~1000) may be appropriate for final model runs.
 
 ```{r delta-pred-sim, echo=TRUE}
 set.seed(28239)
-p_bin_sim <- predict(m1, newdata = qcs_grid, nsim = 100)
-p_pos_sim <- predict(m2, newdata = qcs_grid, nsim = 100)
+p_bin_sim <- predict(m1, newdata = grid_yrs, nsim = 100)
+p_pos_sim <- predict(m2, newdata = grid_yrs, nsim = 100)
 p_bin_prob_sim <- m1$family$linkinv(p_bin_sim)
 p_pos_exp_sim <- m2$family$linkinv(p_pos_sim)
 p_combined_sim <- p_bin_prob_sim * p_pos_exp_sim
@@ -349,13 +350,13 @@ ggplot(subset(pred, year == 2017), aes(X, Y, fill = cv)) + # 2017 as an example
 <!-- We recommend using the built-in delta model and `get_index(..., bias_correct = TRUE)` for final inference in important applications. -->
 
 ```{r get_index, eval=FALSE, echo=FALSE}
-qcs_grid$area <- 4 # all 2 x 2km
+grid_yrs$area <- 4 # all 2 x 2km
 p_log_combined <- log(p_combined_sim / 1000) # log space; convert from kg to tonnes
 attr(p_log_combined, "link") <- "log" # suppresses a warning below
 
 ind <- get_index_sims(
   p_log_combined,
-  area = qcs_grid$area
+  area = grid_yrs$area
 )
 ggplot(ind, aes(year, est)) +
   geom_line() +

@@ -9,8 +9,9 @@ test_that("rmvnorm sim prediction works with no random effects", {
     spatial = "off", spatiotemporal = "off"
   )
   set.seed(1)
-  p <- predict(m, newdata = qcs_grid[qcs_grid$year >= 2011, ], nsim = 30L)
-  p1 <- predict(m, newdata = qcs_grid[qcs_grid$year >= 2011, ])
+  nd <- replicate_df(qcs_grid, "year", unique(pcod_2011$year))
+  p <- predict(m, newdata = nd, nsim = 30L)
+  p1 <- predict(m, newdata = nd)
   expect_identical(class(p)[[1]], "matrix")
   expect_identical(ncol(p), 30L)
   .mean <- apply(p, 1, mean)
@@ -18,7 +19,7 @@ test_that("rmvnorm sim prediction works with no random effects", {
   expect_gt(cor(.mean, p1$est), 0.99)
 
   # still works with type = "response"
-  # p2 <- predict(m, newdata = qcs_grid[qcs_grid$year >= 2011, ], nsim = 30L, type = "response")
+  # p2 <- predict(m, newdata = nd[nd$year >= 2011, ], nsim = 30L, type = "response")
   # .mean2 <- apply(p2, 1, mean)
   # expect_gt(cor(.mean2, exp(p1$est)), 0.99)
 })
@@ -33,8 +34,9 @@ test_that("rmvnorm sim prediction works", {
     formula = density ~ 0 + as.factor(year),
     mesh = mesh, family = tweedie(link = "log"))
   set.seed(1)
-  p <- predict(m, newdata = qcs_grid, nsim = 15L)
-  p1 <- predict(m, newdata = qcs_grid)
+  nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
+  p <- predict(m, newdata = nd, nsim = 15L)
+  p1 <- predict(m, newdata = nd)
   expect_identical(class(p)[[1]], "matrix")
   expect_identical(ncol(p), 15L)
 
@@ -57,7 +59,7 @@ test_that("get_index_sims works", {
     data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(link = "log"),
     time = "year", spatiotemporal = "off"
   )
-  qcs_grid_2011 <- subset(qcs_grid, year >= 2011)
+  qcs_grid_2011 <- replicate_df(qcs_grid, "year", unique(pcod_2011$year))
   set.seed(1029)
   p <- predict(m, newdata = qcs_grid_2011, nsim = 200L)
   expect_equal(ncol(p), 200L)
@@ -144,8 +146,9 @@ test_that("rmvnorm sim prediction works", {
     formula = density ~ 0 + as.factor(year),
     mesh = mesh, family = tweedie(link = "log"))
   set.seed(1)
-  p <- predict(m, newdata = qcs_grid, nsim = 15L)
-  p1 <- predict(m, newdata = qcs_grid)
+  nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
+  p <- predict(m, newdata = nd, nsim = 15L)
+  p1 <- predict(m, newdata = nd)
   expect_identical(class(p)[[1]], "matrix")
   expect_identical(ncol(p), 15L)
 
@@ -168,7 +171,7 @@ test_that("predict link attribute and get_index_sims work with delta", {
               data = pcod_2011, mesh = pcod_mesh_2011, family = delta_gamma(),
               time = "year", spatiotemporal = "off"
   )
-  qcs_grid_2011 <- subset(qcs_grid, year >= 2011)
+  qcs_grid_2011 <- replicate_df(qcs_grid, "year", unique(pcod_2011$year))
   set.seed(1029)
 
   p <- predict(m, newdata = qcs_grid_2011, nsim = 50L, model = 1)
