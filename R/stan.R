@@ -68,7 +68,7 @@
 #' nd <- replicate_df(qcs_grid, "year", unique(pcod_2011$year))
 #' p <- predict(fit_mle, newdata = nd, tmbstan_model = m_stan)
 #' p_last <- p[nd$year == max(nd$year), ] # just plot last year
-#' pred <- qcs_grid[qcs_grid$year == max(qcs_grid$year), ]
+#' pred <- nd[nd$year == max(nd$year), ]
 #' pred$est <- apply(exp(p_last), 1, median)
 #' pred$lwr <- apply(exp(p_last), 1, quantile, probs = 0.1)
 #' pred$upr <- apply(exp(p_last), 1, quantile, probs = 0.9)
