@@ -1528,6 +1528,9 @@ parse_spatial_arg <- function(spatial) {
 
 check_irregalar_time <- function(data, time, spatiotemporal, time_varying) {
   if (any(spatiotemporal %in% c("ar1", "rw")) || !is.null(time_varying)) {
+    if (!is.numeric(data[[time]])) {
+      cli_abort("Time column should be integer or numeric if using AR(1) or random walk processes.")
+    }
     ti <- sort(unique(data[[time]]))
     if (length(unique(diff(ti))) > 1L) {
       missed <- find_missing_time(data[[time]])
