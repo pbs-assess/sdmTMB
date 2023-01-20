@@ -7,7 +7,7 @@ test_that("sdmTMB_simulate works for different spatiotemporal field types", {
   set.seed(123)
   predictor_dat <- data.frame(
     X = runif(2000), Y = runif(2000),
-    a1 = rnorm(2000), year = as.factor(rep(1:10, each = 200))
+    a1 = rnorm(2000), year = rep(1:10, each = 200)
   )
 
   cutoff <- 0.1
@@ -26,7 +26,6 @@ test_that("sdmTMB_simulate works for different spatiotemporal field types", {
                        sigma_O = sigma_default,
                        sigma_E = sigma_default,
                        model_type = "IID") {
-
 
     sim_dat <- sdmTMB::sdmTMB_simulate(
       formula = ~ 1 + a1,
@@ -50,7 +49,7 @@ test_that("sdmTMB_simulate works for different spatiotemporal field types", {
 
     if (all(unlist(sanity(fit, gradient_thresh = 0.01)))) {
       sr <- as.list(fit$sd_report, "Estimate")
-      ty <- tidy(fit, effects = "ran_pars", conf.int = TRUE)
+      ty <- tidy(fit, effects = "ran_pars", conf.int = TRUE, silent = TRUE)
       out <- list()
       out[["model"]] <- fit
 
@@ -85,7 +84,7 @@ test_that("sdmTMB_simulate works for different spatiotemporal field types", {
   # range error within 0.1 mesh cutoff
   expect_lt(abs(t1[["range"]]), cutoff)
   # check if CI of estimates overlaps simulation value
-  (ci <- tidy(t1[[1]], effects = "ran_pars", conf.int = TRUE))
+  (ci <- tidy(t1[[1]], effects = "ran_pars", conf.int = TRUE, silent = TRUE))
   expect_lt(sigma_default, ci$conf.high[ci$term=="sigma_O"])
   expect_gt(sigma_default, ci$conf.low[ci$term=="sigma_O"])
   expect_lt(sigma_default, ci$conf.high[ci$term=="sigma_E"])
@@ -97,7 +96,7 @@ test_that("sdmTMB_simulate works for different spatiotemporal field types", {
   expect_lt(abs(t[["b1"]]), fe_default*0.05)
   expect_lt(abs(t[["range"]]), cutoff)
   # check if CI of estimates overlaps simulation value
-  (ci <- tidy(t[[1]], effects = "ran_pars", conf.int = TRUE))
+  (ci <- tidy(t[[1]], effects = "ran_pars", conf.int = TRUE, silent = TRUE))
   expect_lt(0.4, ci$conf.high[ci$term=="sigma_O"])
   expect_gt(0.4, ci$conf.low[ci$term=="sigma_O"])
   expect_lt(0.1, ci$conf.high[ci$term=="sigma_E"])
@@ -109,7 +108,7 @@ test_that("sdmTMB_simulate works for different spatiotemporal field types", {
   expect_lt(abs(t[["b1"]]), fe_default*0.05)
   expect_lt(abs(t[["range"]]), cutoff) # just barely fails at 5%
   # check if CI of estimates overlaps simulation value
-  (ci <- tidy(t[[1]], effects = "ran_pars", conf.int = TRUE))
+  (ci <- tidy(t[[1]], effects = "ran_pars", conf.int = TRUE, silent = TRUE))
   expect_lt(0.1, ci$conf.high[ci$term=="sigma_O"])
   expect_gt(0.1, ci$conf.low[ci$term=="sigma_O"])
   expect_lt(0.3, ci$conf.high[ci$term=="sigma_E"])
@@ -122,7 +121,7 @@ test_that("sdmTMB_simulate works for different spatiotemporal field types", {
   expect_lt(abs(t[["b1"]]), fe_default*0.05)# intercept gets harder to estimate
   expect_lt(abs(t[["range"]]), cutoff)
   # check if CI of estimates overlaps simulation value
-  (ci <- tidy(t[[1]], effects = "ran_pars", conf.int = TRUE))
+  (ci <- tidy(t[[1]], effects = "ran_pars", conf.int = TRUE, silent = TRUE))
   expect_lt(0.8, ci$conf.high[ci$term=="sigma_O"])
   expect_gt(0.8, ci$conf.low[ci$term=="sigma_O"])
   expect_lt(0.4, ci$conf.high[ci$term=="sigma_E"])
@@ -137,7 +136,7 @@ test_that("sdmTMB_simulate works for different spatiotemporal field types", {
   # estimate is lower than that for the default model by the amount we've changed the range from that value
   expect_lt(abs(t[["range"]]), cutoff)
   # check if CI of estimates overlaps simulation value
-  (ci <- tidy(t[[1]], effects = "ran_pars", conf.int = TRUE))
+  (ci <- tidy(t[[1]], effects = "ran_pars", conf.int = TRUE, silent = TRUE))
   expect_lt(sigma_default, ci$conf.high[ci$term=="sigma_O"])
   expect_gt(sigma_default, ci$conf.low[ci$term=="sigma_O"])
   expect_lt(sigma_default, ci$conf.high[ci$term=="sigma_E"])
@@ -151,7 +150,7 @@ test_that("sdmTMB_simulate works for different spatiotemporal field types", {
   expect_lt(abs(t[["b1"]]), fe_default*0.05)
   expect_lt(abs(t[["range"]]), cutoff)
   # check if CI of estimates overlaps simulation value
-  (ci <- tidy(t[[1]], effects = "ran_pars", conf.int = TRUE))
+  (ci <- tidy(t[[1]], effects = "ran_pars", conf.int = TRUE, silent = TRUE))
   expect_lt(sigma_default, ci$conf.high[ci$term=="sigma_O"])
   expect_gt(sigma_default, ci$conf.low[ci$term=="sigma_O"])
   expect_lt(sigma_default, ci$conf.high[ci$term=="sigma_E"])
@@ -178,7 +177,7 @@ test_that("sdmTMB_simulate works for different spatiotemporal field types", {
   # range within 10% of true value
   expect_lt(abs(t[["range"]]), cutoff)
   # check if CI of estimates overlaps simulation value
-  (ci <- tidy(t[[1]], effects = "ran_pars", conf.int = TRUE))
+  (ci <- tidy(t[[1]], effects = "ran_pars", conf.int = TRUE, silent = TRUE))
   expect_lt(sigma_default, ci$conf.high[ci$term=="sigma_O"])
   # expect_gt(sigma_default, ci$conf.low[ci$term=="sigma_O"])
   expect_lt(sigma_default, ci$conf.high[ci$term=="sigma_E"])
@@ -203,20 +202,12 @@ test_that("sdmTMB_simulate works for different spatiotemporal field types", {
   # range within 10% of true value
   expect_lt(abs(t[["range"]]), cutoff)
   # check if CI of estimates overlaps simulation value
-  (ci <- tidy(t[[1]], effects = "ran_pars", conf.int = TRUE))
+  (ci <- tidy(t[[1]], effects = "ran_pars", conf.int = TRUE, silent = TRUE))
   expect_lt(0.7, ci$conf.high[ci$term=="sigma_O"])
   expect_gt(0.7, ci$conf.low[ci$term=="sigma_O"])
   expect_lt(0.2, ci$conf.high[ci$term=="sigma_E"])
   expect_gt(0.2, ci$conf.low[ci$term=="sigma_E"])
 
-
-  ## test RW
-  # # NOT SURE WAY THIS DOESN'T CONVERGE BUT ONE BELOW DOES?
-  # t <- test_sim(rho = 1,
-  #               sigma_O = 0.7, # needs larger sigma to be able to estimate it along with an AR1
-  #               sigma_E = 0.2,
-  #               model_type = "RW")
-  #
   t <- test_sim(rho = 0.99,
                 sigma_O = 0.7, # needs larger sigma to be able to estimate it along with an AR1
                 sigma_E = 0.2,
@@ -232,7 +223,7 @@ test_that("sdmTMB_simulate works for different spatiotemporal field types", {
   expect_lt(abs(t[["b1"]]), fe_default*0.05)
   expect_lt(abs(t[["range"]]), cutoff)
   # check if CI of estimates overlaps simulation value
-  (ci <- tidy(t[[1]], effects = "ran_pars", conf.int = TRUE))
+  (ci <- tidy(t[[1]], effects = "ran_pars", conf.int = TRUE, silent = TRUE))
   expect_lt(0.7, ci$conf.high[ci$term=="sigma_O"])
   expect_gt(0.7, ci$conf.low[ci$term=="sigma_O"])
   # expect_lt(0.2, ci$conf.high[ci$term=="sigma_E"]) # RW underestimates sigma_E?

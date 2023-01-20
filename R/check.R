@@ -163,13 +163,13 @@ sanity <- function(object, big_sd_log10 = 3, gradient_thresh = 0.001) {
     se_magnitude_ok <- TRUE
   }
 
-  b <- tidy(object, conf.int = TRUE)
-  br <- tidy(object, "ran_pars", conf.int = TRUE)
+  b <- tidy(object, conf.int = TRUE, silent = TRUE)
+  br <- tidy(object, "ran_pars", conf.int = TRUE, silent = TRUE)
   b <- rbind(b, br)
 
   if (isTRUE(object$family$delta)) {
-    b2 <- tidy(object, conf.int = TRUE, model = 2)
-    br2 <- tidy(object, "ran_pars", conf.int = TRUE, model = 2)
+    b2 <- tidy(object, conf.int = TRUE, model = 2, silent = TRUE)
+    br2 <- tidy(object, "ran_pars", conf.int = TRUE, model = 2, silent = TRUE)
     b2 <- rbind(b2, br2)
     b <- rbind(b, b2)
   }

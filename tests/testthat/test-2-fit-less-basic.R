@@ -447,6 +447,9 @@ test_that("offset() throws an error", {
 })
 
 test_that("sdmTMB throws error on AR1/RW with non-numeric time", {
+  skip_on_cran()
+  skip_if_not_installed("INLA")
+
   pcod_2011$fyear <- as.factor(pcod_2011$year)
   fit <- sdmTMB(present ~ 1, family = binomial(), spatial = 'off',
     time = "fyear", spatiotemporal = "iid", data = pcod_2011,

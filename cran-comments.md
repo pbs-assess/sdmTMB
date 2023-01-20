@@ -1,27 +1,31 @@
 ## Resubmission
 
-This is a resubmission to fix 'Additional issues' on CRAN checks:
+This is a resubmission to fix 'Additional issues' on CRAN checks. This version:
 
-* Correct memory issue identified by valgrind/gcc-ASAN/clan-ASAN tests
+* Corrects a memory issue identified by valgrind/gcc-ASAN/clan-ASAN tests
   
-* Removed 2 Latin-1 strings in package data
+* Removes 2 Latin-1 strings in package data
 
-* Added 'future' and 'lme4' to Suggests to avoid 'Rd cross-references'
-  'Undeclared packages' Note.
+* Adds 'future' and 'lme4' to Suggests to avoid 'Rd cross-references'
+  'Undeclared packages' NOTE
   
-Result: NOTE
-  installed size is 8.9Mb
-  sub-directories of 1Mb or more:
-  data 1.7Mb
-  libs 5.4Mb
+> Result: NOTE
+>   installed size is 8.9Mb
+>   sub-directories of 1Mb or more:
+>   data 1.7Mb
+>   libs 5.4Mb
 
-* We removed selected vignettes to reduce installed package size. Majority of size is due to compiled code.
+* We removed selected vignettes and reduced the size of an included dataset.
+  The majority of the size is due to compiled code.
 
+> Result: NOTE
+>     Package suggested but not available for checking: ‘INLA’
+
+* This is as intended; INLA is not on CRAN.
+    
 ## R CMD check results
 
-0 errors | 0 warnings | 3 notes
-
-* This is a new release.
+0 errors | 0 warnings | 2 notes
 
 Possibly misspelled words in DESCRIPTION:
   GLMMs (3:46, 49:71)
