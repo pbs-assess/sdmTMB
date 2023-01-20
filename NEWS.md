@@ -2,13 +2,12 @@
 
 # sdmTMB 0.2.1.9000
 
-* Add 'future' and 'lme4' to Suggests to pass CRAN checks. #158
-
-* Remove "2 marked Latin-1 strings" to pass CRAN checks. #158
+* Various minor fixes to pass CRAN checks. #158
 
 * Fix memory issue highlighted by Additional issues CRAN checks. #158
 
-* Example data `qcs_grid` is no longer replicated by year to save package space. #158
+* Example data `qcs_grid` is no longer replicated by year to save package
+  space. #158
 
 * Add message with `tidy(fit, "ran_pars")` about why SEs are NA.
 

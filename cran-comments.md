@@ -27,17 +27,6 @@ This is a resubmission to fix 'Additional issues' on CRAN checks. This version:
 
 0 errors | 0 warnings | 2 notes
 
-Possibly misspelled words in DESCRIPTION:
-  GLMMs (3:46, 49:71)
-  SDMs (53:43)
-  SPDE (3:35, 50:75)
-  Spatiotemporal (3:20)
-  al (53:66)
-  et (53:63)
-  spatiotemporal (49:37)
-
-* These are not misspelled.
-
 Suggests or Enhances not in mainstream repositories:
   INLA
 Availability using Additional_repositories specification:
@@ -46,6 +35,13 @@ Availability using Additional_repositories specification:
 Package unavailable to check Rd xrefs: 'INLA'
   
 * This is correct and intended; INLA is not on CRAN.
+
+checking installed package size ... NOTE
+    installed size is  5.5Mb
+    sub-directories of 1Mb or more:
+      libs   3.7Mb
+      
+* This is due to compiled code; we cannot reduce the size further.
 
 ## Test environments
 
