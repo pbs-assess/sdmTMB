@@ -41,15 +41,16 @@ spatial data.}
 single string, e.g. \code{"fold_id"} representing the name of the variable in
 \code{data}. Ignored if \code{lfocv} is TRUE}
 
-\item{lfocv}{Whether to implement "Leave Future Out Cross Validation", where only
-historical data is used to predict future folds. Defaults to FALSE}
+\item{lfocv}{Whether to implement leave-future-out cross validation where
+data are used to predict future folds. \code{time} argument in \code{\link[=sdmTMB]{sdmTMB()}} must
+be specified. See Details section below.}
 
-\item{n_forecast}{Number of time steps to forecast (e.g. time steps
-1, ..., T used to predict T + \code{n_forecast}), defaults to 1. Ignored
-if \code{lfocv} is FALSE.}
+\item{n_forecast}{If \code{lfocv = TRUE}, number of time steps to forecast. Time
+steps 1, ..., T are used to predict T + \code{n_forecast} and the last
+forecasted time step is used for validation. See Details section below.}
 
-\item{n_validate}{Number of time steps to use as the validation / test set. This
-defaults to 5. Ignored if \code{lfocv} is FALSE.}
+\item{n_validate}{If \code{lfocv = TRUE}, number of times to step through the
+LFOCV process. Defaults to 5. See Details section below.}
 
 \item{parallel}{If \code{TRUE} and a \code{\link[future:plan]{future::plan()}} is supplied, will be run in
 parallel.}
@@ -81,6 +82,8 @@ and CV log likelihood.
 Save log likelihoods of k-fold cross-validation for sdmTMB models.
 }
 \details{
+\strong{Parallel processing}
+
 Parallel processing can be used by setting a \code{future::plan()}.
 
 For example:
@@ -89,6 +92,23 @@ For example:
 plan(multisession)
 # now use sdmTMB_cv() ...
 }\if{html}{\out{</div>}}
+
+\strong{Leave-future-out cross validation (LFOCV)}
+
+An example of LFOCV with 9 time steps, \code{n_forecast = 1}, and \code{n_validate = 2}:
+\itemize{
+\item Fit data to time steps 1 to 7, predict and validate step 8.
+\item Fit data to time steps 1 to 8, predict and validate step 9.
+}
+
+An example of LFOCV with 9 time steps, \code{n_forecast = 2}, and \code{n_validate = 3}:
+\itemize{
+\item Fit data to time steps 1 to 5, predict and validate step 7.
+\item Fit data to time steps 1 to 6, predict and validate step 8.
+\item Fit data to time steps 1 to 7, predict and validate step 9.
+}
+
+See example below.
 }
 \examples{
 \dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
@@ -128,6 +148,23 @@ m_cv3 <- sdmTMB_cv(
   family = tweedie(link = "log"),
   fold_ids = rep(seq(1, 3), nrow(pcod))[seq(1, nrow(pcod))]
 )
+
+# LFOCV:
+m_lfocv <- sdmTMB_cv(
+  present ~ s(year, k = 4),
+  data = pcod,
+  mesh = mesh,
+  lfocv = TRUE,
+  n_forecast = 2,
+  n_validate = 3,
+  family = binomial(),
+  spatiotemporal = "off",
+  time = "year" # must be specified
+)
+
+# See how the LFOCV folds were assigned:
+example_data <- m_lfocv$models[[1]]$data
+table(example_data$cv_fold, example_data$year)
 }
 \dontshow{\}) # examplesIf}
 }

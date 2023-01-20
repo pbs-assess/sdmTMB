@@ -80,13 +80,14 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' @param fold_ids Optional vector containing user fold IDs. Can also be a
 #'   single string, e.g. `"fold_id"` representing the name of the variable in
 #'   `data`. Ignored if `lfocv` is TRUE
-#' @param lfocv Whether to implement "Leave Future Out Cross Validation", where only
-#' historical data is used to predict future folds. Defaults to FALSE
-#' @param n_forecast Number of time steps to forecast (e.g. time steps
-#'  1, ..., T used to predict T + `n_forecast`), defaults to 1. Ignored
-#'  if `lfocv` is FALSE.
-#' @param n_validate Number of time steps to use as the validation / test set. This
-#'  defaults to 5. Ignored if `lfocv` is FALSE.
+#' @param lfocv Whether to implement leave-future-out cross validation where
+#'   data are used to predict future folds. `time` argument in [sdmTMB()] must
+#'   be specified. See Details section below.
+#' @param n_forecast If `lfocv = TRUE`, number of time steps to forecast. Time
+#'   steps 1, ..., T are used to predict T + `n_forecast` and the last
+#'   forecasted time step is used for validation. See Details section below.
+#' @param n_validate If `lfocv = TRUE`, number of times to step through the
+#'   LFOCV process. Defaults to 5. See Details section below.
 #' @param parallel If `TRUE` and a [future::plan()] is supplied, will be run in
 #'   parallel.
 #' @param use_initial_fit Fit the first fold and use those parameter values
@@ -110,6 +111,8 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' * `max_gradients`: Max gradient per fold.
 #'
 #' @details
+#' **Parallel processing**
+#'
 #' Parallel processing can be used by setting a `future::plan()`.
 #'
 #' For example:
@@ -119,6 +122,21 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' plan(multisession)
 #' # now use sdmTMB_cv() ...
 #' ```
+#'
+#' **Leave-future-out cross validation (LFOCV)**
+#'
+#' An example of LFOCV with 9 time steps, `n_forecast = 1`, and `n_validate = 2`:
+#'
+#' - Fit data to time steps 1 to 7, predict and validate step 8.
+#' - Fit data to time steps 1 to 8, predict and validate step 9.
+#'
+#' An example of LFOCV with 9 time steps, `n_forecast = 2`, and `n_validate = 3`:
+#'
+#' - Fit data to time steps 1 to 5, predict and validate step 7.
+#' - Fit data to time steps 1 to 6, predict and validate step 8.
+#' - Fit data to time steps 1 to 7, predict and validate step 9.
+#'
+#' See example below.
 #'
 #' @examplesIf inla_installed()
 #' mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
@@ -157,6 +175,23 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'   family = tweedie(link = "log"),
 #'   fold_ids = rep(seq(1, 3), nrow(pcod))[seq(1, nrow(pcod))]
 #' )
+#'
+#' # LFOCV:
+#' m_lfocv <- sdmTMB_cv(
+#'   present ~ s(year, k = 4),
+#'   data = pcod,
+#'   mesh = mesh,
+#'   lfocv = TRUE,
+#'   n_forecast = 2,
+#'   n_validate = 3,
+#'   family = binomial(),
+#'   spatiotemporal = "off",
+#'   time = "year" # must be specified
+#' )
+#'
+#' # See how the LFOCV folds were assigned:
+#' example_data <- m_lfocv$models[[1]]$data
+#' table(example_data$cv_fold, example_data$year)
 #' }
 sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
   k_folds = 8, fold_ids = NULL,
@@ -164,7 +199,8 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
   n_forecast = 1,
   n_validate = 5,
   parallel = TRUE,
-  use_initial_fit = FALSE, spde = deprecated(),
+  use_initial_fit = FALSE,
+  spde = deprecated(),
   ...) {
   if (k_folds < 1) cli_abort("`k_folds` must be >= 1.")
 
@@ -184,16 +220,16 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
     data[[time]] <- 0L
   }
   if (is.null(fold_ids)) {
-    if(lfocv) {
-      if(length(unique(data[[time]])) < (n_validate + n_forecast)) {
-        cli_abort("Not enough time steps for the desired validation period. Either decrease n_validate or add more data")
+    if (lfocv) {
+      if (length(unique(data[[time]])) < (n_validate + n_forecast)) {
+        cli_abort("Not enough time steps for the desired validation period. Either decrease `n_validate` or add more data.")
       }
       # Create n_validate + 1 folds, ordered sequentially
       data$cv_fold <- 1
-      t_validate = sort(unique(data[[time]]), decreasing = TRUE)
-      for(t in 1:(n_validate+n_forecast-1)) {
-        # fold id increasing order. +forecast
-        data$cv_fold[which(data[[time]] == t_validate[t])] = (n_validate - t + 1) + n_forecast
+      t_validate <- sort(unique(data[[time]]), decreasing = TRUE)
+      for (t in seq(1, (n_validate + n_forecast - 1))) {
+        # fold id increasing order + forecast
+        data$cv_fold[data[[time]] == t_validate[t]] <- n_validate - t + 1 + n_forecast
       }
     } else {
       dd <- lapply(split(data, data[[time]]), function(x) {
@@ -223,7 +259,7 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
     }
     k_folds <- length(unique(data$cv_fold))
   }
-  if(time == "_sdmTMB_time") { # undo changes above, make time NULL
+  if (time == "_sdmTMB_time") { # undo changes above, make time NULL
     data[["_sdmTMB_time"]] <- NULL
     time <- NULL
   }
@@ -239,13 +275,13 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
   } else {
     weights <- rep(1, nrow(data))
   }
-  if(lfocv) weights <- ifelse(data$cv_fold == 1L, 1, 0)
+  if (lfocv) weights <- ifelse(data$cv_fold == 1L, 1, 0)
 
   if (use_initial_fit) {
     # run model on first fold to get starting values:
 
     if (!constant_mesh) {
-      if(lfocv) {
+      if (lfocv) {
         dat_fit <- data[data$cv_fold == 1L, , drop = FALSE]
       } else {
         dat_fit <- data[data$cv_fold != 1L, , drop = FALSE]
@@ -264,7 +300,7 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
   }
 
   fit_func <- function(k) {
-    if(lfocv) {
+    if (lfocv) {
       weights <- ifelse(data$cv_fold <= k, 1, 0)
     } else {
       # data in kth fold get weight of 0:
@@ -275,7 +311,7 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
       object <- fit1
     } else {
       if (!constant_mesh) {
-        if(lfocv) {
+        if (lfocv) {
           dat_fit <- data[data$cv_fold <= k, , drop = FALSE]
         } else {
           dat_fit <- data[data$cv_fold != k, , drop = FALSE]
@@ -296,7 +332,7 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
       # }
     }
 
-    if(lfocv) {
+    if (lfocv) {
       cv_data <- data[data$cv_fold == (k + n_forecast), , drop = FALSE]
     } else {
       cv_data <- data[data$cv_fold == k, , drop = FALSE]
@@ -343,7 +379,7 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
   if (requireNamespace("future.apply", quietly = TRUE) && parallel) {
     message("Running fits with `future.apply()`.\n",
       "Set a parallel `future::plan()` to use parallel processing.")
-    if(lfocv) {
+    if (lfocv) {
       out <- future.apply::future_lapply(seq_len(n_validate), fit_func, future.seed = TRUE)
     } else {
       out <- future.apply::future_lapply(seq_len(k_folds), fit_func, future.seed = TRUE)
@@ -353,7 +389,7 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
     message("Running fits sequentially.\n",
       "Install the future and future.apply packages,\n",
       "set a parallel `future::plan()`, and set `parallel = TRUE` to use parallel processing.")
-    if(lfocv) {
+    if (lfocv) {
       out <- lapply(seq_len(n_validate), fit_func)
     } else {
       out <- lapply(seq_len(k_folds), fit_func)
