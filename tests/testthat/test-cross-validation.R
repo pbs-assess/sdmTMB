@@ -52,19 +52,16 @@ test_that("Leave future out cross validation works", {
   skip_on_ci()
   skip_on_cran()
   skip_if_not_installed("INLA")
-  suppressWarnings(
-    suppressMessages(
-      x <- sdmTMB_cv(
-        present ~ 1,
-        data = pcod_2011,
-        mesh = pcod_mesh_2011,
-        lfocv = TRUE,
-        n_forecast = 1,
-        n_validate = 2,
-        family = binomial(),
-        time = "year"
-      )
-    ))
+  x <- sdmTMB_cv(
+    present ~ 1,
+    data = pcod_2011,
+    mesh = pcod_mesh_2011,
+    lfo = TRUE,
+    lfo_forecast = 1,
+    lfo_validations = 2,
+    family = binomial(),
+    time = "year"
+  )
   expect_equal(class(x$sum_loglik), "numeric")
   expect_equal(x$sum_loglik, sum(x$data$cv_loglik))
   expect_equal(x$sum_loglik, sum(x$fold_loglik))

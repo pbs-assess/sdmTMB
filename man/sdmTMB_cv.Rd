@@ -12,9 +12,9 @@ sdmTMB_cv(
   time = NULL,
   k_folds = 8,
   fold_ids = NULL,
-  lfocv = FALSE,
-  n_forecast = 1,
-  n_validate = 5,
+  lfo = FALSE,
+  lfo_forecast = 1,
+  lfo_validations = 5,
   parallel = TRUE,
   use_initial_fit = FALSE,
   spde = deprecated(),
@@ -39,17 +39,17 @@ spatial data.}
 
 \item{fold_ids}{Optional vector containing user fold IDs. Can also be a
 single string, e.g. \code{"fold_id"} representing the name of the variable in
-\code{data}. Ignored if \code{lfocv} is TRUE}
+\code{data}. Ignored if \code{lfo} is TRUE}
 
-\item{lfocv}{Whether to implement leave-future-out cross validation where
+\item{lfo}{Whether to implement leave-future-out (LFO) cross validation where
 data are used to predict future folds. \code{time} argument in \code{\link[=sdmTMB]{sdmTMB()}} must
 be specified. See Details section below.}
 
-\item{n_forecast}{If \code{lfocv = TRUE}, number of time steps to forecast. Time
-steps 1, ..., T are used to predict T + \code{n_forecast} and the last
+\item{lfo_forecast}{If \code{lfo = TRUE}, number of time steps to forecast. Time
+steps 1, ..., T are used to predict T + \code{lfo_forecast} and the last
 forecasted time step is used for validation. See Details section below.}
 
-\item{n_validate}{If \code{lfocv = TRUE}, number of times to step through the
+\item{lfo_validations}{If \code{lfo = TRUE}, number of times to step through the
 LFOCV process. Defaults to 5. See Details section below.}
 
 \item{parallel}{If \code{TRUE} and a \code{\link[future:plan]{future::plan()}} is supplied, will be run in
@@ -95,13 +95,13 @@ plan(multisession)
 
 \strong{Leave-future-out cross validation (LFOCV)}
 
-An example of LFOCV with 9 time steps, \code{n_forecast = 1}, and \code{n_validate = 2}:
+An example of LFOCV with 9 time steps, \code{lfo_forecast = 1}, and \code{lfo_validations = 2}:
 \itemize{
 \item Fit data to time steps 1 to 7, predict and validate step 8.
 \item Fit data to time steps 1 to 8, predict and validate step 9.
 }
 
-An example of LFOCV with 9 time steps, \code{n_forecast = 2}, and \code{n_validate = 3}:
+An example of LFOCV with 9 time steps, \code{lfo_forecast = 2}, and \code{lfo_validations = 3}:
 \itemize{
 \item Fit data to time steps 1 to 5, predict and validate step 7.
 \item Fit data to time steps 1 to 6, predict and validate step 8.
@@ -154,9 +154,9 @@ m_lfocv <- sdmTMB_cv(
   present ~ s(year, k = 4),
   data = pcod,
   mesh = mesh,
-  lfocv = TRUE,
-  n_forecast = 2,
-  n_validate = 3,
+  lfo = TRUE,
+  lfo_forecast = 2,
+  lfo_validations = 3,
   family = binomial(),
   spatiotemporal = "off",
   time = "year" # must be specified
