@@ -270,6 +270,8 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
   }
   if ("offset" %in% names(dot_args)) {
     .offset <- eval(dot_args$offset)
+    if (parallel && !is.character(.offset) && !is.null(.offset))
+      cli_abort("We recommend using a character value for 'offset' (indicating the column name) when applying parallel cross validation.")
   } else {
     .offset <- NULL
   }

@@ -80,9 +80,10 @@ NULL
 #'   to sum to one and are not internally modified. Can also be used for trials
 #'   with the binomial family; the `weights` argument needs to be a vector and not
 #'   a name of the variable in the data frame. See the Details section below.
-#' @param offset A numeric vector representing the model offset. In delta/hurdle
-#'   models, this applies only to the positive component. Usually a log
-#'   transformed variable. The `offset` argument needs to be a vector and not a name of the variable in the data frame.
+#' @param offset A numeric vector representing the model offset *or* a character
+#'   value representing the column name of the offset. In delta/hurdle models,
+#'   this applies only to the positive component. Usually a log
+#'   transformed variable.
 #' @param extra_time Optional extra time slices (e.g., years) to include for
 #'   interpolation or forecasting with the predict function. See the Details
 #'   section below.
@@ -739,6 +740,10 @@ sdmTMB <- function(
     thresh <- list(check_and_parse_thresh_params(formula[[1]], data),
                    check_and_parse_thresh_params(formula[[2]], data))
     formula <- list(thresh[[1]]$formula, thresh[[2]]$formula)
+  }
+
+  if (is.character(offset)) {
+    offset <- data[[offset]]
   }
 
   if (!is.null(extra_time)) { # for forecasting or interpolating

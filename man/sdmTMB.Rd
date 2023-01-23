@@ -115,9 +115,10 @@ to sum to one and are not internally modified. Can also be used for trials
 with the binomial family; the \code{weights} argument needs to be a vector and not
 a name of the variable in the data frame. See the Details section below.}
 
-\item{offset}{A numeric vector representing the model offset. In delta/hurdle
-models, this applies only to the positive component. Usually a log
-transformed variable. The \code{offset} argument needs to be a vector and not a name of the variable in the data frame.}
+\item{offset}{A numeric vector representing the model offset \emph{or} a character
+value representing the column name of the offset. In delta/hurdle models,
+this applies only to the positive component. Usually a log
+transformed variable.}
 
 \item{extra_time}{Optional extra time slices (e.g., years) to include for
 interpolation or forecasting with the predict function. See the Details

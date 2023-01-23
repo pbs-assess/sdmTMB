@@ -85,12 +85,24 @@ test_that("Cross validation with offsets works", {
   skip_if_not_installed("future")
   skip_if_not_installed("future.apply")
 
-  d <- pcod_2011
   set.seed(1)
+  d <- pcod_2011
   d$log_effort <- rnorm(nrow(d))
 
   library(future)
   future::plan(future::multisession)
+
+  expect_error(
+    fit_cv_off1 <- sdmTMB_cv(
+      density ~ 1,
+      data = d,
+      mesh = pcod_mesh_2011,
+      family = tweedie(),
+      spatial = "off",
+      offset = d$log_effort, #<
+      k_folds = 2,
+      parallel = TRUE #<
+    ))
 
   set.seed(1)
   fit_cv_off1 <- sdmTMB_cv(
@@ -99,7 +111,7 @@ test_that("Cross validation with offsets works", {
     mesh = pcod_mesh_2011,
     family = tweedie(),
     spatial = "off",
-    offset = d$log_effort, #<
+    offset = "log_effort", #<
     k_folds = 2,
     parallel = TRUE #<
   )
@@ -111,7 +123,7 @@ test_that("Cross validation with offsets works", {
     mesh = pcod_mesh_2011,
     family = tweedie(),
     spatial = "off",
-    offset = d$log_effort, #<
+    offset = "log_effort", #<
     k_folds = 2,
     parallel = FALSE #<
   )
@@ -123,7 +135,7 @@ test_that("Cross validation with offsets works", {
     mesh = pcod_mesh_2011,
     family = tweedie(),
     spatial = "off",
-    offset = d$log_effort, #<
+    offset = "log_effort", #<
     k_folds = 2,
     use_initial_fit = TRUE, #<
     parallel = TRUE #<
@@ -136,7 +148,7 @@ test_that("Cross validation with offsets works", {
     mesh = pcod_mesh_2011,
     family = tweedie(),
     spatial = "off",
-    offset = d$log_effort, #<
+    offset = "log_effort", #<
     k_folds = 2,
     use_initial_fit = TRUE, #<
     parallel = FALSE #<
@@ -195,7 +207,12 @@ test_that("Cross validation with offsets works", {
   expect_equal(fit_cv_off1$models[[1]]$model, fit_cv_off3$models[[1]]$model)
   expect_equal(fit_cv_off1$models[[1]]$model, fit_cv_off4$models[[1]]$model)
 
+  # with/without offset:
+  expect_false(identical(fit_cv_off1$models[[1]]$model, fit_cv_off5$models[[1]]$model))
+
   expect_equal(fit_cv_off5$models[[1]]$model, fit_cv_off6$models[[1]]$model)
   expect_equal(fit_cv_off5$models[[1]]$model, fit_cv_off7$models[[1]]$model)
   expect_equal(fit_cv_off5$models[[1]]$model, fit_cv_off8$models[[1]]$model)
+
+  future::plan(future::sequential)
 })
