@@ -268,6 +268,11 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
   if ("weights" %in% names(dot_args)) {
     cli_abort("`weights` cannot be specified within sdmTMB_cv().")
   }
+  if ("offset" %in% names(dot_args)) {
+    .offset <- eval(dot_args$offset)
+  } else {
+    .offset <- NULL
+  }
 
   if (k_folds > 1) {
     # data in kth fold get weight of 0:
@@ -293,10 +298,11 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
       mesh <- spde
       dat_fit <- data
     }
-    fit1 <- sdmTMB(
-      data = dat_fit, formula = formula, time = time, mesh = mesh,
-      weights = weights, ...
-    )
+    dot_args <- list(dot_args)[[1]]
+    dot_args$offset <- NULL
+    .args <- c(list(data = dat_fit, formula = formula, time = time, mesh = mesh,
+      weights = weights, offset = .offset), dot_args)
+    fit1 <- do.call(sdmTMB, .args)
   }
 
   fit_func <- function(k) {
@@ -323,8 +329,10 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
         dat_fit <- data
       }
       dot_args <- as.list(substitute(list(...)))[-1L] # re-evaluate here! issue #54
+      dot_args <- list(...)
+      dot_args$offset <- NULL
       args <- c(list(
-        data = dat_fit, formula = formula, time = time, mesh = mesh,
+        data = dat_fit, formula = formula, time = time, mesh = mesh, offset = .offset,
         weights = weights, previous_fit = if (use_initial_fit) fit1 else NULL), dot_args)
       object <- do.call(sdmTMB, args)
       # if (max(object$gradients) > 0.01) {

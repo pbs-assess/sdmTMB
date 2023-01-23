@@ -77,3 +77,125 @@ test_that("Leave future out cross validation works", {
   expect_equal(length(x$max_gradients), 2)
   expect_equal(cor(x$data$cv_fold[x$data$cv_fold!=1], x$data$year[x$data$cv_fold!=1]), 1.0)
 })
+
+test_that("Cross validation with offsets works", {
+  skip_on_ci()
+  skip_on_cran()
+  skip_if_not_installed("INLA")
+  skip_if_not_installed("future")
+  skip_if_not_installed("future.apply")
+
+  d <- pcod_2011
+  set.seed(1)
+  d$log_effort <- rnorm(nrow(d))
+
+  library(future)
+  future::plan(future::multisession)
+
+  set.seed(1)
+  fit_cv_off1 <- sdmTMB_cv(
+    density ~ 1,
+    data = d,
+    mesh = pcod_mesh_2011,
+    family = tweedie(),
+    spatial = "off",
+    offset = d$log_effort, #<
+    k_folds = 2,
+    parallel = TRUE #<
+  )
+
+  set.seed(1)
+  fit_cv_off2 <- sdmTMB_cv(
+    density ~ 1,
+    data = d,
+    mesh = pcod_mesh_2011,
+    family = tweedie(),
+    spatial = "off",
+    offset = d$log_effort, #<
+    k_folds = 2,
+    parallel = FALSE #<
+  )
+
+  set.seed(1)
+  fit_cv_off3 <- sdmTMB_cv(
+    density ~ 1,
+    data = d,
+    mesh = pcod_mesh_2011,
+    family = tweedie(),
+    spatial = "off",
+    offset = d$log_effort, #<
+    k_folds = 2,
+    use_initial_fit = TRUE, #<
+    parallel = TRUE #<
+  )
+
+  set.seed(1)
+  fit_cv_off4 <- sdmTMB_cv(
+    density ~ 1,
+    data = d,
+    mesh = pcod_mesh_2011,
+    family = tweedie(),
+    spatial = "off",
+    offset = d$log_effort, #<
+    k_folds = 2,
+    use_initial_fit = TRUE, #<
+    parallel = FALSE #<
+  )
+
+  # now without offset
+  set.seed(1)
+  fit_cv_off5 <- sdmTMB_cv(
+    density ~ 1,
+    data = d,
+    mesh = pcod_mesh_2011,
+    family = tweedie(),
+    spatial = "off",
+    k_folds = 2,
+    use_initial_fit = TRUE, #<
+    parallel = TRUE #<
+  )
+
+  set.seed(1)
+  fit_cv_off6 <- sdmTMB_cv(
+    density ~ 1,
+    data = d,
+    mesh = pcod_mesh_2011,
+    family = tweedie(),
+    spatial = "off",
+    k_folds = 2,
+    use_initial_fit = TRUE, #<
+    parallel = FALSE #<
+  )
+
+  set.seed(1)
+  fit_cv_off7 <- sdmTMB_cv(
+    density ~ 1,
+    data = d,
+    mesh = pcod_mesh_2011,
+    family = tweedie(),
+    spatial = "off",
+    k_folds = 2,
+    use_initial_fit = FALSE, #<
+    parallel = FALSE #<
+  )
+
+  set.seed(1)
+  fit_cv_off8 <- sdmTMB_cv(
+    density ~ 1,
+    data = d,
+    mesh = pcod_mesh_2011,
+    family = tweedie(),
+    spatial = "off",
+    k_folds = 2,
+    use_initial_fit = TRUE, #<
+    parallel = FALSE #<
+  )
+
+  expect_equal(fit_cv_off1$models[[1]]$model, fit_cv_off2$models[[1]]$model)
+  expect_equal(fit_cv_off1$models[[1]]$model, fit_cv_off3$models[[1]]$model)
+  expect_equal(fit_cv_off1$models[[1]]$model, fit_cv_off4$models[[1]]$model)
+
+  expect_equal(fit_cv_off5$models[[1]]$model, fit_cv_off6$models[[1]]$model)
+  expect_equal(fit_cv_off5$models[[1]]$model, fit_cv_off7$models[[1]]$model)
+  expect_equal(fit_cv_off5$models[[1]]$model, fit_cv_off8$models[[1]]$model)
+})
