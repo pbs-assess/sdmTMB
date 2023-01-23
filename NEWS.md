@@ -1,6 +1,4 @@
-# sdmTMB
-
-# sdmTMB 0.2.1.9000
+# sdmTMB 0.2.2
 
 * 'offset' argument can now be a character value indicating a column name. This
   is the preferred way of using an offset with parallel cross validation. #165
