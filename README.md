@@ -33,8 +33,8 @@ sdmTMB is an R package that fits spatial and spatiotemporal predictive-process G
     coefficients (SVC)</a>
   - <a href="#random-intercepts" id="toc-random-intercepts">Random
     intercepts</a>
-  - <a href="#breakpoint-and-theshold-effects"
-    id="toc-breakpoint-and-theshold-effects">Breakpoint and theshold
+  - <a href="#breakpoint-and-threshold-effects"
+    id="toc-breakpoint-and-threshold-effects">Breakpoint and threshold
     effects</a>
   - <a href="#simulating-data" id="toc-simulating-data">Simulating data</a>
   - <a href="#sampling-from-the-joint-precision-matrix"
@@ -514,7 +514,7 @@ fit <- sdmTMB(
 )
 ```
 
-### Breakpoint and theshold effects
+### Breakpoint and threshold effects
 
 ``` r
 fit <- sdmTMB(

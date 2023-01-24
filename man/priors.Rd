@@ -27,11 +27,11 @@ pc_matern(range_gt, sigma_lt, range_prob = 0.05, sigma_prob = 0.05)
 }
 \arguments{
 \item{matern_s}{A PC (Penalized Complexity) prior (\code{pc_matern()}) on the
-spatial random field Matern parameters.}
+spatial random field Matérn parameters.}
 
 \item{matern_st}{Same as \code{matern_s} but for the spatiotemporal random field.
 Note that you will likely want to set \code{share_fields = FALSE} if you choose
-to set both a spatial and spatiotemporal Matern PC prior since they both
+to set both a spatial and spatiotemporal Matérn PC prior since they both
 include a prior on the spatial range parameter.}
 
 \item{phi}{A \code{halfnormal()} prior for the dispersion parameter in the

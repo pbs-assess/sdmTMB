@@ -335,7 +335,7 @@ $$
 
 ## IID random or multi-level intercepts
 
-Multilevel/hierchical intercepts are defined as
+Multilevel/hierarchical intercepts are defined as
 
 $$
 \begin{aligned}

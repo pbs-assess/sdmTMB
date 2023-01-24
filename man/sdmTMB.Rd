@@ -179,7 +179,7 @@ An object (list) of class \code{sdmTMB}. Useful elements include:
 \item \code{gradients}: log likelihood gradients with respect to each fixed effect
 \item \code{model}: output from \code{\link[stats:nlminb]{stats::nlminb()}}
 \item \code{data}: the fitted data
-\item \code{mesh}: the object that was supplied to the \code{mesh} argmument
+\item \code{mesh}: the object that was supplied to the \code{mesh} argument
 \item \code{family}: the family object, which includes the inverse link function as \code{family$linkinv()}
 \item \code{tmb_params}: The parameters list passed to \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}
 \item \code{tmb_map}: The 'map' list passed to \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}

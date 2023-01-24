@@ -79,7 +79,10 @@ and CV log likelihood.
 }
 }
 \description{
-Save log likelihoods of k-fold cross-validation for sdmTMB models.
+Facilitates cross validation with sdmTMB models. Returns log likelihood or
+expected log predictive density (ELPD) across left-out data. Has an option
+for leave-future-out cross validation. By default creates folds randomly but
+folds can be manually assigned.
 }
 \details{
 \strong{Parallel processing}
@@ -95,13 +98,15 @@ plan(multisession)
 
 \strong{Leave-future-out cross validation (LFOCV)}
 
-An example of LFOCV with 9 time steps, \code{lfo_forecast = 1}, and \code{lfo_validations = 2}:
+An example of LFOCV with 9 time steps, \code{lfo_forecast = 1}, and
+\code{lfo_validations = 2}:
 \itemize{
 \item Fit data to time steps 1 to 7, predict and validate step 8.
 \item Fit data to time steps 1 to 8, predict and validate step 9.
 }
 
-An example of LFOCV with 9 time steps, \code{lfo_forecast = 2}, and \code{lfo_validations = 3}:
+An example of LFOCV with 9 time steps, \code{lfo_forecast = 2}, and
+\code{lfo_validations = 3}:
 \itemize{
 \item Fit data to time steps 1 to 5, predict and validate step 7.
 \item Fit data to time steps 1 to 6, predict and validate step 8.

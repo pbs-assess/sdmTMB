@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot-pc-matern.R
 \name{plot_pc_matern}
 \alias{plot_pc_matern}
-\title{Plot PC Matern priors}
+\title{Plot PC Matérn priors}
 \usage{
 plot_pc_matern(
   range_gt,
@@ -38,7 +38,7 @@ Invisibly returns the underlying matrix data. The rows are the sigmas. The
 columns are the ranges. Column and row names are provided.
 }
 \description{
-Plot PC Matern priors
+Plot PC Matérn priors
 }
 \examples{
 plot_pc_matern(range_gt = 5, sigma_lt = 1)

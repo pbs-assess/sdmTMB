@@ -76,7 +76,7 @@ sf::st_boundary(bc_coast_proj)
 ```
 
 Finally, we will combine our gridded predictions with the base map. 
-We will multiply the `X` and `Y` columns by 1000 because we worked in UTM km for model fitting (to avoid computational issues with the scale of the range paramater):
+We will multiply the `X` and `Y` columns by 1000 because we worked in UTM km for model fitting (to avoid computational issues with the scale of the range parameter):
 
 ```{r, fig.width=5, fig.height=6}
 ggplot(bc_coast_proj) + geom_sf() +

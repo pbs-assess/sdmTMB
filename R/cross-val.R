@@ -66,7 +66,10 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 
 #' Cross validation with sdmTMB models
 #'
-#' Save log likelihoods of k-fold cross-validation for sdmTMB models.
+#' Facilitates cross validation with sdmTMB models. Returns log likelihood or
+#' expected log predictive density (ELPD) across left-out data. Has an option
+#' for leave-future-out cross validation. By default creates folds randomly but
+#' folds can be manually assigned.
 #'
 #' @param formula Model formula.
 #' @param data A data frame.
@@ -125,12 +128,14 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'
 #' **Leave-future-out cross validation (LFOCV)**
 #'
-#' An example of LFOCV with 9 time steps, `lfo_forecast = 1`, and `lfo_validations = 2`:
+#' An example of LFOCV with 9 time steps, `lfo_forecast = 1`, and
+#' `lfo_validations = 2`:
 #'
 #' - Fit data to time steps 1 to 7, predict and validate step 8.
 #' - Fit data to time steps 1 to 8, predict and validate step 9.
 #'
-#' An example of LFOCV with 9 time steps, `lfo_forecast = 2`, and `lfo_validations = 3`:
+#' An example of LFOCV with 9 time steps, `lfo_forecast = 2`, and
+#' `lfo_validations = 3`:
 #'
 #' - Fit data to time steps 1 to 5, predict and validate step 7.
 #' - Fit data to time steps 1 to 6, predict and validate step 8.

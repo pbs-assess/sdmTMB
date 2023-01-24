@@ -334,7 +334,7 @@ fit <- sdmTMB(
 )
 ```
 
-### Breakpoint and theshold effects
+### Breakpoint and threshold effects
 
 ```{r, eval=FALSE}
 fit <- sdmTMB(

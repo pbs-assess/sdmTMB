@@ -1,4 +1,4 @@
-#' Plot PC Matern priors
+#' Plot PC Matérn priors
 #'
 #' @param range_gt A value one expects the spatial or spatiotemporal range is
 #'   **g**reater **t**han with `1 - range_prob` probability.

@@ -147,7 +147,7 @@ qres_beta <- function(object, y, mu, ...) {
 #' but can be unreliable.**
 #'
 #' **`"mle-mcmc"`** refers to randomized quantile residuals where the fixed
-#' effects are fixed at their MLE (maximum likelihoood estimate) values and the
+#' effects are fixed at their MLE (maximum likelihood estimate) values and the
 #' random effects are sampled with MCMC via tmbstan/Stan. As proposed in
 #' Thygesen et al. (2017) and used in Rufener et al. (2021). Under model
 #' assumptions, these should be distributed as standard normal. **These

@@ -90,12 +90,12 @@ fit_dg <- sdmTMB(density ~ 1 + s(depth),
 )
 ```
 
-The default in built-in delta models is for the formula, spatial and spatio-temporal structure, and anisotropy to be shared between the two model components.
+The default in built-in delta models is for the formula, spatial and spatiotemporal structure, and anisotropy to be shared between the two model components.
 However, some elements (`formula`, `spatial`, `spatiotemporal`, and `share_range`) can also be specified independently for each model using a list format within the function argument (see examples below).
 The first element of the list is for the binomial component and the second element is for the positive component (e.g., Gamma).
 Some elements must be shared for now (e.g., smoothers, spatially varying coefficients, and time-varying coefficients).
 
-To specify the settings for spatial and spatio-temporal effects in each model component, create a list of settings within the `spatial` and `spatiotemporal` arguments. For example, `spatial = list("on", "off"), spatiotemporal = list("off", "rw")`.
+To specify the settings for spatial and spatiotemporal effects in each model component, create a list of settings within the `spatial` and `spatiotemporal` arguments. For example, `spatial = list("on", "off"), spatiotemporal = list("off", "rw")`.
 
 ```{r, warning=FALSE, message=FALSE, echo=FALSE, eval=FALSE}
 fit_dg2 <- sdmTMB(density ~ 1 + s(depth),
