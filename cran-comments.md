@@ -1,13 +1,14 @@
 ## Resubmission
 
-This is a resubmission to fix 'Additional issues' on CRAN checks. This version:
+This is a resubmission to fix 'Additional issues' on CRAN checks as requested.
+This version:
 
 * Corrects a memory issue identified by valgrind/gcc-ASAN/clan-ASAN tests
   
-* Removes 2 Latin-1 strings in package data
+* Removes 2 Latin-1 strings in package data.
 
 * Adds 'future' and 'lme4' to Suggests to avoid 'Rd cross-references'
-  'Undeclared packages' NOTE
+  'Undeclared packages' NOTE.
   
 > Result: NOTE
 >   installed size is 8.9Mb

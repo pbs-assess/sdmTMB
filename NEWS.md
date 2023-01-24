@@ -1,15 +1,15 @@
 # sdmTMB 0.2.2
 
+* Various fixes to pass CRAN checks. #158
+
+* Fix memory issue highlighted by Additional issues CRAN checks. #158
+
 * 'offset' argument can now be a character value indicating a column name. This
   is the preferred way of using an offset with parallel cross validation. #165
 
 * Fix parallel cross validation when using an offset vector. #165
 
 * Add leave-future-out cross validation functionality. #156
-
-* Various minor fixes to pass CRAN checks. #158
-
-* Fix memory issue highlighted by Additional issues CRAN checks. #158
 
 * Example data `qcs_grid` is no longer replicated by year to save package
   space. #158
