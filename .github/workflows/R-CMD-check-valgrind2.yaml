@@ -76,8 +76,7 @@ jobs:
         env:
           _R_CHECK_CRAN_INCOMING_REMOTE_: false
           _R_CHECK_FORCE_SUGGESTS_: false
-        run: rcmdcheck::rcmdcheck(build_args = "--no-manual", "--no-build-vignettes", args = c("--use-valgrind", "--no-codoc", "--no-examples", "--no-manual", "--ignore-vignettes"), error_on = "error", check_dir = "check")
-
+        run: rcmdcheck::rcmdcheck(args = c("--use-valgrind", "--no-manual", "--as-cran", "--ignore-vignettes", "--no-build-vignettes"), build_args = c("--no-manual", "--no-build-vignettes"), error_on = "error", check_dir = "check")
         shell: Rscript {0}
 
       - name: Upload check results
