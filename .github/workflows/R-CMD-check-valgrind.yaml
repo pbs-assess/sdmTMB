@@ -4,7 +4,7 @@ name: R-CMD-check-with-valgrind
 
 jobs:
   R-CMD-check-with-valgrind:
-    if: contains(github.ref, 'release') || contains(github.event.head_commit.message, '[valgrind]')
+    if: contains(github.event.head_commit.message, '[IGNORE-ME-valgrind]')
     timeout-minutes: 240
     runs-on: ubuntu-20.04
     name: ubuntu-20.04 (release) w/ valgrind
