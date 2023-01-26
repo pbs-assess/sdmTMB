@@ -2,10 +2,12 @@
 
 This is a resubmission to fix 'Additional issues' on CRAN checks as requested.
 
-We have removed calls from the rstan package, which appear to have caused
-valgrind/gcc-ASAN/clang-ASAN errors on CRAN checks. We have tested the new
-package with valgrind on two systems and clang-ASAN on the latest Fedora
-attempting to match the CRAN setup and our checks pass.
+We were unable to reproduce the issue but have removed tangential functionality
+that used rstan, which appears to have caused valgrind/gcc-ASAN/clang-ASAN
+errors on CRAN checks.
+
+We have tested the new package with valgrind on two systems and clang-ASAN on
+the latest Fedora attempting to match the CRAN setup and our checks pass.
 
 Compared to the previously published version 0.2.1:
 

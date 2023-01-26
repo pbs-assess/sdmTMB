@@ -14,8 +14,9 @@
     `sdmTMBextra::predict_mle_mcmc()`. This only affects 
     `residuals(..., type = "mle-mcmc")`.
 
-* Move DHARMa residual helpers to separate package sdmTMBextra:
-  https://github.com/pbs-assess/sdmTMBextra to reduce heavy dependencies
+* Move `dharma_residuals()`) to separate package 
+  [sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra) to reduce heavy
+  dependencies.
   
 * See examples in the Bayesian and residuals vignettes or in the help files for
   those functions within sdmTMBextra.
