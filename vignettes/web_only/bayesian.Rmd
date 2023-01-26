@@ -31,8 +31,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-If this vignette is viewed on CRAN, a rendered version is available at <https://pbs-assess.github.io/sdmTMB/articles/bayesian.html>.
-
 ```{r packages, message=FALSE, warning=FALSE}
 library(ggplot2)
 library(dplyr)
