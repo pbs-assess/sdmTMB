@@ -14,7 +14,7 @@
     `sdmTMBextra::predict_mle_mcmc()`. This only affects 
     `residuals(..., type = "mle-mcmc")`.
 
-* Move `dharma_residuals()`) to separate package 
+* Move `dharma_residuals()` to 
   [sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra) to reduce heavy
   dependencies.
   
