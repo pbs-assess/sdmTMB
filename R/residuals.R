@@ -125,7 +125,8 @@ qres_beta <- function(object, y, mu, ...) {
 #' @param type Type of residual. See details.
 #' @param model Which delta/hurdle model component?
 #' @param mcmc_samples A vector of MCMC samples of the linear predictor in link
-#'   space. See the \pkg{sdmTMBextra} package.
+#'   space. See the
+#'   \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package.
 #' @param ... Passed to residual function. Only `n` works for binomial.
 #' @export
 #' @importFrom stats predict
@@ -152,7 +153,8 @@ qres_beta <- function(object, y, mu, ...) {
 #' randomized-quantile residuals, but will be considerably slower to
 #' calculate.**
 #'
-#' See the \pkg{sdmTMBextra} package for the function `predict_mle_mcmc()`,
+#' See the \href{https://github.com/pbs-assess/sdmTMBextra}{\pkg{sdmTMBextra}}
+#' package for the function `predict_mle_mcmc()`,
 #' which can generate the MCMC samples to pass to the `mcmc_samples` argument.
 #' Ideally MCMC is run until convergence and then the last iteration can be
 #' used for residuals. MCMC samples are defined by `mcmc_iter - mcmc_warmup`.

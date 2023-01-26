@@ -20,7 +20,8 @@
 \item{model}{Which delta/hurdle model component?}
 
 \item{mcmc_samples}{A vector of MCMC samples of the linear predictor in link
-space. See the \pkg{sdmTMBextra} package.}
+space. See the
+\href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package.}
 
 \item{...}{Passed to residual function. Only \code{n} works for binomial.}
 }
@@ -52,7 +53,8 @@ residuals are theoretically preferred over the regular Laplace approximated
 randomized-quantile residuals, but will be considerably slower to
 calculate.}
 
-See the \pkg{sdmTMBextra} package for the function \code{predict_mle_mcmc()},
+See the \href{https://github.com/pbs-assess/sdmTMBextra}{\pkg{sdmTMBextra}}
+package for the function \code{predict_mle_mcmc()},
 which can generate the MCMC samples to pass to the \code{mcmc_samples} argument.
 Ideally MCMC is run until convergence and then the last iteration can be
 used for residuals. MCMC samples are defined by \code{mcmc_iter - mcmc_warmup}.

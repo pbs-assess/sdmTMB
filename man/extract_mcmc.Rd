@@ -7,11 +7,13 @@
 extract_mcmc(object = deprecated())
 }
 \arguments{
-\item{object}{\strong{Deprecated} See the \pkg{sdmTMBextra} package.}
+\item{object}{\strong{Deprecated} See the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package.}
 }
 \value{
-Deprecated See \pkg{sdmTMBextra} package.
+Deprecated See the \pkg{sdmTMBextra} package.
+\url{https://github.com/pbs-assess/sdmTMBextra}
 }
 \description{
-Extract MCMC samples from a model fit with \pkg{tmbstan}.
+Moved to the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
+package
 }

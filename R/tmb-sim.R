@@ -312,7 +312,8 @@ sdmTMB_simulate <- function(formula,
 #' @param model If a delta/hurdle model, which model to simulate from?
 #'   `NA` = combined, `1` = first model, `2` = second mdoel.
 #' @param mcmc_samples An optional matrix of MCMC samples. See `extract_mcmc()`
-#'   in the \pkg{sdmTMBextra} package.
+#'   in the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
+#'   package.
 #' @param ... Extra arguments (not used)
 #' @return Returns a matrix; number of columns is `nsim`.
 #' @importFrom stats simulate

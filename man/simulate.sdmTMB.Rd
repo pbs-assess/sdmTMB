@@ -36,7 +36,8 @@ new random affects (smoothers, which internally are random effects, will
 not be simulated as new).}
 
 \item{mcmc_samples}{An optional matrix of MCMC samples. See \code{extract_mcmc()}
-in the \pkg{sdmTMBextra} package.}
+in the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
+package.}
 
 \item{...}{Extra arguments (not used)}
 }

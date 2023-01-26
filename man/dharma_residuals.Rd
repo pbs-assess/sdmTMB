@@ -16,8 +16,10 @@ dharma_residuals(simulated_response = deprecated(), object, plot = TRUE, ...)
 \item{...}{\strong{Deprecated} See the \pkg{sdmTMBextra} package.}
 }
 \value{
-Deprecated See \pkg{sdmTMBextra} package.
+Deprecated. See the
+\href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package.
 }
 \description{
-DHARMa residuals
+Moved to the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
+package
 }

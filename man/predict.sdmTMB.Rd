@@ -74,10 +74,11 @@ depending on the argument \code{type}.}
 
 \item{tmbstan_model}{Deprecated. See \code{mcmc_samples}.}
 
-\item{mcmc_samples}{See \code{extract_mcmc()} in the \pkg{sdmTMBextra} package for
-more details and an example. If specified, the predict function will return
-a matrix of a similar form as if \code{nsim > 0} but representing Bayesian
-posterior samples from the Stan model.}
+\item{mcmc_samples}{See \code{extract_mcmc()} in the
+\href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package for
+more details and the Bayesian vignette. If specified, the predict function
+will return a matrix of a similar form as if \code{nsim > 0} but representing
+Bayesian posterior samples from the Stan model.}
 
 \item{return_tmb_object}{Logical. If \code{TRUE}, will include the TMB object in a
 list format output. Necessary for the \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}}

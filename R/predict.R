@@ -41,10 +41,11 @@
 #'   `"zeta_s"`, `"epsilon_st"`, and `"est_rf"` (as described below).
 #'   Other options will be passed verbatim.
 #' @param tmbstan_model Deprecated. See `mcmc_samples`.
-#' @param mcmc_samples See `extract_mcmc()` in the \pkg{sdmTMBextra} package for
-#'   more details and an example. If specified, the predict function will return
-#'   a matrix of a similar form as if `nsim > 0` but representing Bayesian
-#'   posterior samples from the Stan model.
+#' @param mcmc_samples See `extract_mcmc()` in the
+#'   \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package for
+#'   more details and the Bayesian vignette. If specified, the predict function
+#'   will return a matrix of a similar form as if `nsim > 0` but representing
+#'   Bayesian posterior samples from the Stan model.
 #' @param model Type of prediction if a delta/hurdle model *and* `nsim > 0` or
 #'   `mcmc_samples` is supplied: `NA` returns the combined prediction from both
 #'   components on the link scale for the positive component; `1` or `2` return
