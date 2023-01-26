@@ -611,17 +611,6 @@ s[1:3,1:4]
 #> [3,]    0  0.00000  0.00000  0.00000
 ```
 
-Using those simulations to check DHARMa residuals:
-
-``` r
-# dharma_residuals(s, fit)
-# or with the pipe, %>%:
-simulate(fit, nsim = 500) %>% 
-  dharma_residuals(fit)
-```
-
-<img src="man/figures/README-plot-dharma-1.png" width="50%" />
-
 See the vignette on [Residual checking with
 sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html),
 [`?simulate.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/simulate.sdmTMB.html),

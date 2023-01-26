@@ -123,16 +123,13 @@ qres_beta <- function(object, y, mu, ...) {
 #'
 #' @param object An [sdmTMB()] model
 #' @param type Type of residual. See details.
-#' @param mcmc_iter Iterations for MCMC residuals. Will take the last one.
-#' @param mcmc_warmup Warmup for MCMC residuals.
-#' @param print_stan_model Print the Stan model from MCMC residuals?
-#' @param stan_args A list of arguments that will be passed to [rstan::sampling()].
 #' @param model Which delta/hurdle model component?
+#' @param mcmc_samples A vector of MCMC samples of the linear predictor in link
+#'   space. See the \pkg{sdmTMBextra} package.
 #' @param ... Passed to residual function. Only `n` works for binomial.
 #' @export
 #' @importFrom stats predict
 #' @return A vector of residuals.
-#' @seealso [dharma_residuals()]
 #' @details
 #'
 #' Types of residuals currently supported:
@@ -160,6 +157,8 @@ qres_beta <- function(object, y, mu, ...) {
 #' The Stan model can be printed with `print_stan_model = TRUE` to check.
 #' The defaults may not be sufficient for many models.
 #'
+#' See the \pkg{sdmTMBextra} package.
+#'
 #' **`"mvn-laplace"`** is the same as `"mle-laplace"` except the parameters are
 #' based on simulations drawn from the assumed multivariate normal distribution
 #' (using the joint precision matrix).
@@ -184,9 +183,7 @@ qres_beta <- function(object, y, mu, ...) {
 #' \doi{10.1007/s10651-017-0372-4}
 #'
 #' @examples
-#' if (inla_installed() &&
-#'     require("tmbstan", quietly = TRUE) &&
-#'     require("rstan", quietly = TRUE)) {
+#' if (inla_installed()) {
 #'
 #'   mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 10)
 #'   fit <- sdmTMB(
@@ -206,27 +203,13 @@ qres_beta <- function(object, y, mu, ...) {
 #'   qqnorm(r1)
 #'   qqline(r1)
 #'
-#'   # MCMC-based with fixed effects at MLEs; best but slowest:
-#'   set.seed(2938)
-#'   r2 <- residuals(fit, type = "mle-mcmc", mcmc_iter = 101, mcmc_warmup = 100)
-#'   qqnorm(r2)
-#'   qqline(r2)
-#'
-#'   # Example of passing control arguments to rstan::sampling():
-#'   # 11 iterations used for a quick example; don't do this normally
-#'   stan_args <- list(control = list(adapt_delta = 0.9, max_treedepth = 12))
-#'   r3 <- residuals(
-#'     fit, type = "mle-mcmc", mcmc_iter = 11, mcmc_warmup = 10,
-#'     stan_args = stan_args
-#'   )
+#'   # see also "mle-mcmc" residuals with the help of the sdmTMBextra package
 #' }
 
 residuals.sdmTMB <- function(object,
                              type = c("mle-laplace", "mle-mcmc", "mvn-laplace", "response", "pearson"),
-                             mcmc_iter = 500, mcmc_warmup = 250,
-                             print_stan_model = FALSE,
-                             stan_args = NULL,
                              model = c(1, 2),
+                             mcmc_samples = NULL,
                              ...) {
 
   model <- as.integer(model[[1]])
@@ -282,45 +265,9 @@ residuals.sdmTMB <- function(object,
   } else if (type == "mvn-laplace") {
     mu <- linkinv(predict(object, nsim = 1L, model = model)[, 1L, drop = TRUE])
   } else if (type == "mle-mcmc") {
-    if (!requireNamespace("rstan", quietly = TRUE))
-      cli_abort("rstan must be installed.")
-    if (!requireNamespace("tmbstan", quietly = TRUE))
-      cli_abort("tmbstan must be installed.")
-
-    assert_that(is.numeric(mcmc_iter))
-    assert_that(is.numeric(mcmc_warmup))
-    assert_that(mcmc_warmup < mcmc_iter)
-    # from https://github.com/mcruf/LGNB/blob/8aba1ee2df045c2eb45e124d5a753e8f1c6e865a/R/Validation_and_Residuals.R
-    # get names of random effects in the model
-    obj <- object$tmb_obj
-    random <- unique(names(obj$env$par[obj$env$random]))
-    if (isTRUE(object$reml)) {
-      msg <- c(
-        "Please refit your model with `reml = FALSE` to use MCMC-MLE residuals.",
-        "You can use `fit_ml <- update(your_reml_fit, reml = FALSE)` to do this."
-      )
-      cli_abort(msg)
-    }
-    # get (logical) non random effects indices:
-    pl <- as.list(object$sd_report, "Estimate")
-    fixed <- !(names(pl) %in% random)
-    # fix non-random parameters to their estimated values:
-    map <- lapply(pl[fixed], function(x) factor(rep(NA, length(x))))
-    # construct corresponding new function object:
-    obj <- TMB::MakeADFun(obj$env$data, pl, map = map, DLL = "sdmTMB")
-    # run MCMC to get posterior sample of random effects given data:
-
-    args <- list(obj = obj, chains = 1L, iter = mcmc_iter, warmup = mcmc_warmup)
-    args <- c(args, stan_args)
-
-    samp <- do.call(tmbstan::tmbstan, args)
-    if (print_stan_model) print(samp)
-    obj_mle <- object
-    obj_mle$tmb_obj <- obj
-    obj_mle$tmb_map <- map
-    pred <- predict(obj_mle, tmbstan_model = samp, model = model, nsim = 1L) # only use last
-    # pred <- as.numeric(pred[, ncol(pred), drop = TRUE])
-    mu <- linkinv(pred)
+    mcmc_samples <- as.numeric(mcmc_samples)
+    assert_that(length(mcmc_samples) == nrow(object$data))
+    mu <- linkinv(mcmc_samples)
   } else {
     cli_abort("residual type not implemented")
   }
@@ -341,7 +288,7 @@ residuals.sdmTMB <- function(object,
   } else if (type == "mle-laplace" || type == "mvn-laplace") {
     r <- res_func(object, y, mu, .n = size, ...)
   } else if (type == "mle-mcmc") {
-    r <- res_func(obj_mle, y, mu, .n = size, ...)
+    r <- res_func(object, y, mu, .n = size, ...)
   } else if (type == "pearson") {
     if (is.null(v <- family(object)$variance)) {
       cli_abort(c("Variance function undefined for family;",

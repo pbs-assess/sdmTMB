@@ -5,7 +5,7 @@
 #'
 #' Optional priors/penalties on model parameters. This results in penalized
 #' likelihood within TMB or can be used as priors if the model is passed to
-#' \pkg{tmbstan} (see the example in [extract_mcmc()]).
+#' \pkg{tmbstan} (see the Bayesian vignette).
 #'
 #' **Note that Jacobian adjustments are only made if `bayesian = TRUE`** when the
 #' [sdmTMB()] model is fit. I.e., the final model will be fit with \pkg{tmbstan}

@@ -69,7 +69,7 @@ A named list with values for the specified priors.
 
 Optional priors/penalties on model parameters. This results in penalized
 likelihood within TMB or can be used as priors if the model is passed to
-\pkg{tmbstan} (see the example in \code{\link[=extract_mcmc]{extract_mcmc()}}).
+\pkg{tmbstan} (see the Bayesian vignette).
 
 \strong{Note that Jacobian adjustments are only made if \code{bayesian = TRUE}} when the
 \code{\link[=sdmTMB]{sdmTMB()}} model is fit. I.e., the final model will be fit with \pkg{tmbstan}

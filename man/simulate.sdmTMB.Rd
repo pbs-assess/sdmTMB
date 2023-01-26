@@ -11,7 +11,7 @@
   params = c("mle", "mvn"),
   model = c(NA, 1, 2),
   re_form = NULL,
-  tmbstan_model = NULL,
+  mcmc_samples = NULL,
   ...
 )
 }
@@ -35,9 +35,8 @@ effects (this only simulates observation error). \code{~0} or \code{NA} to simul
 new random affects (smoothers, which internally are random effects, will
 not be simulated as new).}
 
-\item{tmbstan_model}{An optional model fit via \code{\link[tmbstan:tmbstan]{tmbstan::tmbstan()}}. If
-provided the parameters will be drawn from the MCMC samples and new
-observation error will be added. See the example in \code{\link[=extract_mcmc]{extract_mcmc()}}.}
+\item{mcmc_samples}{An optional matrix of MCMC samples. See \code{extract_mcmc()}
+in the \pkg{sdmTMBextra} package.}
 
 \item{...}{Extra arguments (not used)}
 }
@@ -77,20 +76,6 @@ dim(s1)
 sum(s1 == 0)/length(s1)
 sum(dat$observed == 0) / length(dat$observed)
 
-# use the residuals with DHARMa:
-if (require("DHARMa", quietly = TRUE)) {
-  pred_fixed <- fit$family$linkinv(predict(fit)$est_non_rf)
-  r <- DHARMa::createDHARMa(
-    simulatedResponse = s1,
-    observedResponse = dat$observed,
-    fittedPredictedResponse = pred_fixed
-  )
-  plot(r)
-  DHARMa::testResiduals(r)
-  DHARMa::testSpatialAutocorrelation(r, x = dat$X, y = dat$Y)
-  DHARMa::testZeroInflation(r)
-}
-
 # simulate with the parameters drawn from the joint precision matrix:
 s2 <- simulate(fit, nsim = 1, params = "MVN")
 
@@ -99,17 +84,8 @@ s3 <- simulate(fit, nsim = 1, re_form = ~ 0)
 
 # simulate with new random fields and new parameter draws:
 s3 <- simulate(fit, nsim = 1, params = "MVN", re_form = ~ 0)
-
-# simulate from a Stan model fit with new observation error:
-\donttest{
-if (require("tmbstan", quietly = TRUE)) {
-  stan_fit <- tmbstan::tmbstan(fit$tmb_obj, iter = 110, warmup = 100, chains = 1)
-  # make sure `nsim` is <= number of samples from rstan
-  s3 <- simulate(fit, nsim = 10, tmbstan_model = stan_fit)
-}
-}
 }
 }
 \seealso{
-\code{\link[=sdmTMB_simulate]{sdmTMB_simulate()}}, \code{\link[=dharma_residuals]{dharma_residuals()}}
+\code{\link[=sdmTMB_simulate]{sdmTMB_simulate()}}
 }

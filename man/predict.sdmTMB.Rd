@@ -15,7 +15,8 @@
   sims_var = "est",
   model = c(NA, 1, 2),
   offset = NULL,
-  tmbstan_model = NULL,
+  tmbstan_model = deprecated(),
+  mcmc_samples = NULL,
   return_tmb_object = FALSE,
   return_tmb_report = FALSE,
   return_tmb_data = FALSE,
@@ -62,8 +63,8 @@ Defaults to the link-space predictions. Options include: \code{"omega_s"},
 \code{"zeta_s"}, \code{"epsilon_st"}, and \code{"est_rf"} (as described below).
 Other options will be passed verbatim.}
 
-\item{model}{Type of prediction if a delta/hurdle model \emph{and} \code{nsim > 0} or a
-\code{tmbstan_model} is supplied: \code{NA} returns the combined prediction from both
+\item{model}{Type of prediction if a delta/hurdle model \emph{and} \code{nsim > 0} or
+\code{mcmc_samples} is supplied: \code{NA} returns the combined prediction from both
 components on the link scale for the positive component; \code{1} or \code{2} return
 the first or second model component only on the link or response scale
 depending on the argument \code{type}.}
@@ -71,10 +72,12 @@ depending on the argument \code{type}.}
 \item{offset}{A numeric vector of optional offset values. If left at default
 \code{NULL}, the offset is implicitly left at 0.}
 
-\item{tmbstan_model}{A model fit with \code{\link[tmbstan:tmbstan]{tmbstan::tmbstan()}}. See
-\code{\link[=extract_mcmc]{extract_mcmc()}} for more details and an example. If specified, the
-predict function will return a matrix of a similar form as if \code{nsim > 0}
-but representing Bayesian posterior samples from the Stan model.}
+\item{tmbstan_model}{Deprecated. See \code{mcmc_samples}.}
+
+\item{mcmc_samples}{See \code{extract_mcmc()} in the \pkg{sdmTMBextra} package for
+more details and an example. If specified, the predict function will return
+a matrix of a similar form as if \code{nsim > 0} but representing Bayesian
+posterior samples from the Stan model.}
 
 \item{return_tmb_object}{Logical. If \code{TRUE}, will include the TMB object in a
 list format output. Necessary for the \code{\link[=get_index]{get_index()}} or \code{\link[=get_cog]{get_cog()}}
@@ -82,7 +85,7 @@ functions.}
 
 \item{return_tmb_report}{Logical: return the output from the TMB
 report? For regular prediction this is all the reported variables
-at the MLE parameter values. For \code{nsim > 0} or when \code{tmbstan_model}
+at the MLE parameter values. For \code{nsim > 0} or when \code{mcmc_samples}
 is supplied, this is a list where each element is a sample and the
 contents of each element is the output of the report for that sample.}
 
@@ -96,7 +99,7 @@ internally.}
 \item{...}{Not implemented.}
 }
 \value{
-If \code{return_tmb_object = FALSE} (and \code{nsim = 0} and \code{tmbstan_model = NULL}):
+If \code{return_tmb_object = FALSE} (and \code{nsim = 0} and \code{mcmc_samples = NULL}):
 
 A data frame:
 \itemize{
@@ -109,7 +112,7 @@ A data frame:
 off (zero), IID, AR1, or random walk
 }
 
-If \code{return_tmb_object = TRUE} (and \code{nsim = 0} and \code{tmbstan_model = NULL}):
+If \code{return_tmb_object = TRUE} (and \code{nsim = 0} and \code{mcmc_samples = NULL}):
 
 A list:
 \itemize{
@@ -122,7 +125,7 @@ A list:
 In this case, you likely only need the \code{data} element as an end user.
 The other elements are included for other functions.
 
-If \code{nsim > 0} or \code{tmbstan_model} is not \code{NULL}:
+If \code{nsim > 0} or \code{mcmc_samples} is not \code{NULL}:
 
 A matrix:
 \itemize{

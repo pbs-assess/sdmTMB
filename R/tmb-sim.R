@@ -311,14 +311,13 @@ sdmTMB_simulate <- function(formula,
 #'   not be simulated as new).
 #' @param model If a delta/hurdle model, which model to simulate from?
 #'   `NA` = combined, `1` = first model, `2` = second mdoel.
-#' @param tmbstan_model An optional model fit via [tmbstan::tmbstan()]. If
-#'   provided the parameters will be drawn from the MCMC samples and new
-#'   observation error will be added. See the example in [extract_mcmc()].
+#' @param mcmc_samples An optional matrix of MCMC samples. See `extract_mcmc()`
+#'   in the \pkg{sdmTMBextra} package.
 #' @param ... Extra arguments (not used)
 #' @return Returns a matrix; number of columns is `nsim`.
 #' @importFrom stats simulate
 #'
-#' @seealso [sdmTMB_simulate()], [dharma_residuals()]
+#' @seealso [sdmTMB_simulate()]
 #'
 #' @export
 #' @examples
@@ -348,20 +347,6 @@ sdmTMB_simulate <- function(formula,
 #' sum(s1 == 0)/length(s1)
 #' sum(dat$observed == 0) / length(dat$observed)
 #'
-#' # use the residuals with DHARMa:
-#' if (require("DHARMa", quietly = TRUE)) {
-#'   pred_fixed <- fit$family$linkinv(predict(fit)$est_non_rf)
-#'   r <- DHARMa::createDHARMa(
-#'     simulatedResponse = s1,
-#'     observedResponse = dat$observed,
-#'     fittedPredictedResponse = pred_fixed
-#'   )
-#'   plot(r)
-#'   DHARMa::testResiduals(r)
-#'   DHARMa::testSpatialAutocorrelation(r, x = dat$X, y = dat$Y)
-#'   DHARMa::testZeroInflation(r)
-#' }
-#'
 #' # simulate with the parameters drawn from the joint precision matrix:
 #' s2 <- simulate(fit, nsim = 1, params = "MVN")
 #'
@@ -370,21 +355,12 @@ sdmTMB_simulate <- function(formula,
 #'
 #' # simulate with new random fields and new parameter draws:
 #' s3 <- simulate(fit, nsim = 1, params = "MVN", re_form = ~ 0)
-#'
-#' # simulate from a Stan model fit with new observation error:
-#' \donttest{
-#' if (require("tmbstan", quietly = TRUE)) {
-#'   stan_fit <- tmbstan::tmbstan(fit$tmb_obj, iter = 110, warmup = 100, chains = 1)
-#'   # make sure `nsim` is <= number of samples from rstan
-#'   s3 <- simulate(fit, nsim = 10, tmbstan_model = stan_fit)
-#' }
-#' }
 #' }
 
 simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
                             params = c("mle", "mvn"),
                             model = c(NA, 1, 2),
-                            re_form = NULL, tmbstan_model = NULL, ...) {
+                            re_form = NULL, mcmc_samples = NULL, ...) {
   set.seed(seed)
   params <- tolower(params)
   params <- match.arg(params, choices = c("mle", "mvn"))
@@ -404,18 +380,18 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
   )
 
   # params MLE/MVN stuff
-  if (is.null(tmbstan_model)) {
+  if (is.null(mcmc_samples)) {
     if (params == "MVN") {
       new_par <- rmvnorm_prec(object$tmb_obj$env$last.par.best, object$sd_report, nsim)
     } else {
       new_par <- object$tmb_obj$env$last.par.best
     }
   } else {
-    new_par <- extract_mcmc(tmbstan_model)
+    new_par <- mcmc_samples
   }
 
   # do the sim
-  if (params == "MVN" || !is.null(tmbstan_model)) { # we have a matrix
+  if (params == "MVN" || !is.null(mcmc_samples)) { # we have a matrix
     ret <- lapply(seq_len(nsim), function(i) {
       newobj$simulate(par = new_par[, i, drop = TRUE], complete = FALSE)$y_i
     })
@@ -437,89 +413,3 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
 
   do.call(cbind, ret)
 }
-
-#' DHARMa residuals
-#'
-#' Plot (and possibly return) DHARMa residuals. This is a wrapper function
-#' around [DHARMa::createDHARMa()] to facilitate its use with [sdmTMB()] models.
-#' **Note**: simulation testing suggests that these DHARMa residuals can suggest
-#' problems with model fit even with properly specified models presumably due to
-#' the Laplace approximation and/or spatially correlated random effects.
-#' Consider the slower [residuals.sdmTMB()] with `type = "mle-mcmc"`.
-#'
-#' @param simulated_response Output from [simulate.sdmTMB()].
-#' @param object Output from [sdmTMB()].
-#' @param plot Logical.
-#' @param ... Other arguments to pass to [DHARMa::createDHARMa()].
-# @param fitted_column The column from the output of [predict.sdmTMB()] to pass
-#   to [DHARMa::createDHARMa()]'s `fittedPredictedResponse` argument.
-#'
-#' @return
-#' A data frame of observed and expected values is invisibly returned,
-#' so you can set `plot = FALSE` and assign the output to an object if you wish
-#' to plot the residuals yourself. See the examples.
-#' @export
-#'
-#' @seealso [simulate.sdmTMB()], [residuals.sdmTMB()]
-#'
-#' @examples
-#' if (inla_installed()) {
-#' fit <- sdmTMB(density ~ as.factor(year) + s(depth, k = 3),
-#'   data = pcod_2011, time = "year", mesh = pcod_mesh_2011,
-#'   family = tweedie(link = "log"), spatial = "off",
-#'   spatiotemporal = "off")
-#'
-#' # The `simulated_response` argument is first so the output from
-#' # simulate() can be piped to dharma_residuals():
-#' # simulate(fit, nsim = 500) %>% dharma_residuals(fit)
-#'
-#' s <- simulate(fit, nsim = 500)
-#' dharma_residuals(s, fit)
-#' r <- dharma_residuals(s, fit, plot = FALSE)
-#' head(r)
-#' plot(r$expected, r$observed)
-#' abline(a = 0, b = 1)
-#' }
-
-dharma_residuals <- function(simulated_response, object, plot = TRUE, ...) {
-  if (!requireNamespace("DHARMa", quietly = TRUE)) {
-    cli_abort("DHARMa must be installed to use this function.")
-  }
-
-  assert_that(inherits(object, "sdmTMB"))
-  assert_that(is.logical(plot))
-  assert_that(is.matrix(simulated_response))
-  assert_that(nrow(simulated_response) == nrow(object$response))
-  if (isTRUE(object$family$delta)) {
-    y <- ifelse(!is.na(object$response[,2]),
-      object$response[,2], object$response[,1])
-  } else {
-    y <- object$response[,1]
-  }
-  y <- as.numeric(y)
-
-  # FIXME parallel setup here?
-
-  fitted <- fitted(object)
-
-  # fitted <- object$family$linkinv(p[["est_non_rf"]])
-  res <- DHARMa::createDHARMa(
-    simulatedResponse = simulated_response,
-    observedResponse = y,
-    fittedPredictedResponse = fitted,
-    ...
-  )
-  u <- res$scaledResiduals
-  n <- length(u)
-  m <- seq_len(n) / (n + 1)
-  z <- stats::qqplot(m, u, plot.it = FALSE)
-  if (plot) {
-    DHARMa::plotQQunif(
-      res,
-      testUniformity = FALSE,
-      testOutliers = FALSE, testDispersion = FALSE
-    )
-  }
-  invisible(data.frame(observed = z$y, expected = z$x))
-}
-

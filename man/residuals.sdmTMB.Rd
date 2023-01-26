@@ -7,11 +7,8 @@
 \method{residuals}{sdmTMB}(
   object,
   type = c("mle-laplace", "mle-mcmc", "mvn-laplace", "response", "pearson"),
-  mcmc_iter = 500,
-  mcmc_warmup = 250,
-  print_stan_model = FALSE,
-  stan_args = NULL,
   model = c(1, 2),
+  mcmc_samples = NULL,
   ...
 )
 }
@@ -20,15 +17,10 @@
 
 \item{type}{Type of residual. See details.}
 
-\item{mcmc_iter}{Iterations for MCMC residuals. Will take the last one.}
-
-\item{mcmc_warmup}{Warmup for MCMC residuals.}
-
-\item{print_stan_model}{Print the Stan model from MCMC residuals?}
-
-\item{stan_args}{A list of arguments that will be passed to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}}.}
-
 \item{model}{Which delta/hurdle model component?}
+
+\item{mcmc_samples}{A vector of MCMC samples of the linear predictor in link
+space. See the \pkg{sdmTMBextra} package.}
 
 \item{...}{Passed to residual function. Only \code{n} works for binomial.}
 }
@@ -65,6 +57,8 @@ used for residuals. MCMC samples are defined by \code{mcmc_iter - mcmc_warmup}.
 The Stan model can be printed with \code{print_stan_model = TRUE} to check.
 The defaults may not be sufficient for many models.
 
+See the \pkg{sdmTMBextra} package.
+
 \strong{\code{"mvn-laplace"}} is the same as \code{"mle-laplace"} except the parameters are
 based on simulations drawn from the assumed multivariate normal distribution
 (using the joint precision matrix).
@@ -72,9 +66,7 @@ based on simulations drawn from the assumed multivariate normal distribution
 \strong{\code{"response"}} refers to response residuals: observed minus predicted.
 }
 \examples{
-if (inla_installed() &&
-    require("tmbstan", quietly = TRUE) &&
-    require("rstan", quietly = TRUE)) {
+if (inla_installed()) {
 
   mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 10)
   fit <- sdmTMB(
@@ -94,19 +86,7 @@ if (inla_installed() &&
   qqnorm(r1)
   qqline(r1)
 
-  # MCMC-based with fixed effects at MLEs; best but slowest:
-  set.seed(2938)
-  r2 <- residuals(fit, type = "mle-mcmc", mcmc_iter = 101, mcmc_warmup = 100)
-  qqnorm(r2)
-  qqline(r2)
-
-  # Example of passing control arguments to rstan::sampling():
-  # 11 iterations used for a quick example; don't do this normally
-  stan_args <- list(control = list(adapt_delta = 0.9, max_treedepth = 12))
-  r3 <- residuals(
-    fit, type = "mle-mcmc", mcmc_iter = 11, mcmc_warmup = 10,
-    stan_args = stan_args
-  )
+  # see also "mle-mcmc" residuals with the help of the sdmTMBextra package
 }
 }
 \references{
@@ -125,7 +105,4 @@ Thygesen, U.H., Albertsen, C.M., Berg, C.W., Kristensen, K., and Nielsen, A.
 2017. Validation of ecological state space models using the Laplace
 approximation. Environ Ecol Stat 24(2): 317–339.
 \doi{10.1007/s10651-017-0372-4}
-}
-\seealso{
-\code{\link[=dharma_residuals]{dharma_residuals()}}
 }

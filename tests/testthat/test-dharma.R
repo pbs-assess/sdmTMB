@@ -11,7 +11,7 @@ test_that("simulate() and dharma_residuals() work", {
   s <- simulate(fit, nsim = 100)
   expect_equal(ncol(s), 100)
   expect_equal(nrow(s), nrow(pcod))
-  dharma_residuals(s, fit)
+  # dharma_residuals(s, fit)
 
   fit <- sdmTMB(density ~ 1,
     data = pcod, mesh = mesh,
@@ -20,7 +20,7 @@ test_that("simulate() and dharma_residuals() work", {
   s <- simulate(fit, nsim = 100)
   expect_equal(ncol(s), 100)
   expect_equal(nrow(s), nrow(pcod))
-  dharma_residuals(s, fit)
+  # dharma_residuals(s, fit)
 
   # fit <- sdmTMB(density ~ 1,
   #   data = pcod, mesh = mesh,

@@ -40,12 +40,13 @@
 #'   Defaults to the link-space predictions. Options include: `"omega_s"`,
 #'   `"zeta_s"`, `"epsilon_st"`, and `"est_rf"` (as described below).
 #'   Other options will be passed verbatim.
-#' @param tmbstan_model A model fit with [tmbstan::tmbstan()]. See
-#'   [extract_mcmc()] for more details and an example. If specified, the
-#'   predict function will return a matrix of a similar form as if `nsim > 0`
-#'   but representing Bayesian posterior samples from the Stan model.
-#' @param model Type of prediction if a delta/hurdle model *and* `nsim > 0` or a
-#'   `tmbstan_model` is supplied: `NA` returns the combined prediction from both
+#' @param tmbstan_model Deprecated. See `mcmc_samples`.
+#' @param mcmc_samples See `extract_mcmc()` in the \pkg{sdmTMBextra} package for
+#'   more details and an example. If specified, the predict function will return
+#'   a matrix of a similar form as if `nsim > 0` but representing Bayesian
+#'   posterior samples from the Stan model.
+#' @param model Type of prediction if a delta/hurdle model *and* `nsim > 0` or
+#'   `mcmc_samples` is supplied: `NA` returns the combined prediction from both
 #'   components on the link scale for the positive component; `1` or `2` return
 #'   the first or second model component only on the link or response scale
 #'   depending on the argument `type`.
@@ -53,7 +54,7 @@
 #'   `NULL`, the offset is implicitly left at 0.
 #' @param return_tmb_report Logical: return the output from the TMB
 #'   report? For regular prediction this is all the reported variables
-#'   at the MLE parameter values. For `nsim > 0` or when `tmbstan_model`
+#'   at the MLE parameter values. For `nsim > 0` or when `mcmc_samples`
 #'   is supplied, this is a list where each element is a sample and the
 #'   contents of each element is the output of the report for that sample.
 #' @param return_tmb_data Logical: return formatted data for TMB? Used
@@ -63,7 +64,7 @@
 #' @param ... Not implemented.
 #'
 #' @return
-#' If `return_tmb_object = FALSE` (and `nsim = 0` and `tmbstan_model = NULL`):
+#' If `return_tmb_object = FALSE` (and `nsim = 0` and `mcmc_samples = NULL`):
 #'
 #' A data frame:
 #' * `est`: Estimate in link space (everything is in link space)
@@ -74,7 +75,7 @@
 #' * `epsilon_st`: Spatiotemporal (intercept) random fields, could be
 #'    off (zero), IID, AR1, or random walk
 #'
-#' If `return_tmb_object = TRUE` (and `nsim = 0` and `tmbstan_model = NULL`):
+#' If `return_tmb_object = TRUE` (and `nsim = 0` and `mcmc_samples = NULL`):
 #'
 #' A list:
 #' * `data`: The data frame described above
@@ -85,7 +86,7 @@
 #' In this case, you likely only need the `data` element as an end user.
 #' The other elements are included for other functions.
 #'
-#' If `nsim > 0` or `tmbstan_model` is not `NULL`:
+#' If `nsim > 0` or `mcmc_samples` is not `NULL`:
 #'
 #' A matrix:
 #'
@@ -245,7 +246,8 @@ predict.sdmTMB <- function(object, newdata = object$data,
   sims_var = "est",
   model = c(NA, 1, 2),
   offset = NULL,
-  tmbstan_model = NULL,
+  tmbstan_model = deprecated(),
+  mcmc_samples = NULL,
   return_tmb_object = FALSE,
   return_tmb_report = FALSE,
   return_tmb_data = FALSE,
@@ -265,6 +267,10 @@ predict.sdmTMB <- function(object, newdata = object$data,
     "Please replace make_spde() with make_mesh()."))
   } else {
     xy_cols <- object$spde$xy_cols
+  }
+
+  if (is_present(tmbstan_model)) {
+    deprecate_stop("0.2.2", "predict.sdmTMB(tmbstan_model)", "predict.sdmTMB(mcmc_samples)")
   }
 
   if (is_present(area)) {
@@ -502,7 +508,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
     # need to initialize the new TMB object once:
     new_tmb_obj$fn(old_par)
 
-    if (sims > 0 && is.null(tmbstan_model)) {
+    if (sims > 0 && is.null(mcmc_samples)) {
       if (!"jointPrecision" %in% names(object$sd_report) && !has_no_random_effects(object)) {
         message("Rerunning TMB::sdreport() with `getJointPrecision = TRUE`.")
         sd_report <- TMB::sdreport(object$tmb_obj, getJointPrecision = TRUE)
@@ -519,10 +525,8 @@ predict.sdmTMB <- function(object, newdata = object$data,
       }
       r <- apply(t_draws, 2L, new_tmb_obj$report)
     }
-    if (!is.null(tmbstan_model)) {
-      if (!"stanfit" %in% class(tmbstan_model))
-        cli_abort("`tmbstan_model` must be output from `tmbstan::tmbstan()`.")
-      t_draws <- extract_mcmc(tmbstan_model)
+    if (!is.null(mcmc_samples)) {
+      t_draws <- mcmc_samples
       if (nsim > 0) {
         if (nsim > ncol(t_draws)) {
           cli_abort("`nsim` must be <= number of MCMC samples.")
@@ -532,7 +536,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
       }
       r <- apply(t_draws, 2L, new_tmb_obj$report)
     }
-    if (!is.null(tmbstan_model) || sims > 0) {
+    if (!is.null(mcmc_samples) || sims > 0) {
       if (return_tmb_report) return(r)
       .var <-  switch(sims_var,
         "est" = "proj_eta",

@@ -78,8 +78,6 @@ Imports:
     stats,
     TMB (>= 1.8.0)
 Suggests:
-    bayesplot,
-    DHARMa,
     dplyr,
     effects (>= 4.0-1),
     estimability,
@@ -94,12 +92,9 @@ Suggests:
     lme4,
     rgdal,
     rmarkdown,
-    rstan,
     sf,
-    splancs,
     testthat,
     tibble,
-    tmbstan,
     visreg
 LinkingTo:
     RcppEigen,
