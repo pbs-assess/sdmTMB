@@ -1,3 +1,25 @@
+# sdmTMB 0.3.0
+
+* Create the sdmTMBextra package to remove rstan/tmbstan helpers, which
+  were causing memory sanitizer errors on CRAN.
+  https://github.com/pbs-assess/sdmTMBextra
+  
+* The following functions are affected:
+
+  - `predict.sdmTMB()` now takes `mcmc_samples`, which is output from
+    `sdmTMBextra::extract_mcmc()`.
+  - `simulate.sdmTMB()` now takes `mcmc_samples`, which is output from
+    `sdmTMBextra::extract_mcmc()`.
+  - `residuals.sdmTMB()` now takes `mcmc_samples`, which is output
+    `sdmTMBextra::predict_mle_mcmc()`. This only affects 
+    `residuals(..., type = "mle-mcmc")`.
+
+* Move DHARMa residual helpers to separate package sdmTMBextra:
+  https://github.com/pbs-assess/sdmTMBextra to reduce heavy dependencies
+  
+* See examples in the Bayesian and residuals vignettes or in the help files for
+  those functions within sdmTMBextra.
+
 # sdmTMB 0.2.2
 
 * Various fixes to pass CRAN checks. #158
