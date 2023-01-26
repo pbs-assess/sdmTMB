@@ -182,13 +182,16 @@ ggplot(pcod, aes(X, Y, col = resids)) +
 ```
 
 Those were fast to calculate but can look 'off' even when the model is consistent with the data. 
-MCMC-based residuals are more reliable but slow. 
+MCMC-based residuals are more reliable but slow.
+We can calculate them through some help from the sdmTMBextra package. <https://github.com/pbs-assess/sdmTMBextra>.
 In practice you would like want more `mcmc_iter` and `mcmc_warmup`. 
 Total samples is `mcmc_iter - mcmc_warmup`. 
 We will also just use the spatial model here so the vignette builds quickly.
 
 ```{r residuals-mcmc, fig.width = 8}
-r <- residuals(m3, "mle-mcmc", mcmc_warmup = 100, mcmc_iter = 101)
+set.seed(123)
+samps <- sdmTMBextra::predict_mle_mcmc(m3, mcmc_warmup = 100, mcmc_iter = 101)
+r <- residuals(m3, "mle-mcmc", mcmc_samples = samps)
 qqnorm(r)
 qqline(r)
 ```

@@ -722,44 +722,8 @@ for more details.
 
 The fitted model can be passed to the tmbstan package to sample from the
 posterior with Stan. Note this can be slow for large or poorly
-identified models. See examples of fixing parameters in
-[`?extract_mcmc`](https://pbs-assess.github.io/sdmTMB/reference/extract_mcmc.html).
-
-``` r
-# only 1 chain and 400 iterations for speed:
-fit_mcmc <- tmbstan::tmbstan(fit$tmb_obj, chains = 1, iter = 400)
-```
-
-Internal parameter posteriors:
-
-``` r
-print(fit_mcmc, pars = c("b_j", "omega_s[1]"))
-#> Inference for Stan model: sdmTMB.
-#> 1 chains, each with iter=400; warmup=200; thin=1; 
-#> post-warmup draws per chain=200, total post-warmup draws=200.
-#> 
-#>             mean se_mean   sd  2.5%   25%   50%  75% 97.5% n_eff Rhat
-#> b_j         0.99    0.03 0.15  0.62  0.93  1.00 1.06  1.27    35 1.00
-#> omega_s[1] -0.07    0.03 0.23 -0.50 -0.23 -0.06 0.10  0.33    63 1.01
-#> 
-#> Samples were drawn using NUTS(diag_e).
-#> For each parameter, n_eff is a crude measure of effective sample size,
-#> and Rhat is the potential scale reduction factor on split chains (at 
-#> convergence, Rhat=1).
-```
-
-Predicting with the Stan/tmbstan model:
-
-``` r
-pred_mcmc <- predict(fit, newdata = qcs_grid, tmbstan_model = fit_mcmc)
-# Each row has 200 posterior samples for a row of the `newdata` data frame:
-dim(pred_mcmc)
-#> [1] 7314   200
-```
-
-See
-[`?extract_mcmc`](https://pbs-assess.github.io/sdmTMB/reference/extract_mcmc.html)
-for more details.
+identified models. See examples the [Bayesian
+vignette](https://pbs-assess.github.io/sdmTMB/articles/web_only/bayesian.html).
 
 ### Turning off random fields
 

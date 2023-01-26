@@ -52,12 +52,12 @@ residuals are theoretically preferred over the regular Laplace approximated
 randomized-quantile residuals, but will be considerably slower to
 calculate.}
 
+See the \pkg{sdmTMBextra} package for the function \code{predict_mle_mcmc()},
+which can generate the MCMC samples to pass to the \code{mcmc_samples} argument.
 Ideally MCMC is run until convergence and then the last iteration can be
 used for residuals. MCMC samples are defined by \code{mcmc_iter - mcmc_warmup}.
 The Stan model can be printed with \code{print_stan_model = TRUE} to check.
 The defaults may not be sufficient for many models.
-
-See the \pkg{sdmTMBextra} package.
 
 \strong{\code{"mvn-laplace"}} is the same as \code{"mle-laplace"} except the parameters are
 based on simulations drawn from the assumed multivariate normal distribution

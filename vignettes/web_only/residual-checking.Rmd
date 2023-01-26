@@ -91,10 +91,12 @@ These types of residuals are known to have statistical issues for state-space mo
 
 One-step-ahead residuals (Thygesen et al. 2017) are one option to fix this problem (although slow to calculate). Another option is to take a draw from the posterior with MCMC (e.g., Rufener et al. 2021). Also see <https://kaskr.github.io/adcomp/_book/Validation.html>
 
-Here we will draw MCMC predictions and calculate residuals. The fixed effects will be fixed at their maximum likelihood estimates (MLE) and the random effects will be sampled. We will only take a single draw for speed:
+Here we will draw MCMC predictions and calculate residuals. The fixed effects will be fixed at their maximum likelihood estimates (MLE) and the random effects will be sampled. We do this with the `sdmTMBextra::predict_mle_mcmc()` function in the sdmTMBextra package: <https://github.com/pbs-assess/sdmTMBextra>. We will only take a single draw for speed:
 
 ```{r}
-mcmc_res <- residuals(fit_nb2, type = "mle-mcmc", mcmc_iter = 201, mcmc_warmup = 200)
+set.seed(123)
+samps <- sdmTMBextra::predict_mle_mcmc(fit_nb2, mcmc_iter = 201, mcmc_warmup = 200)
+mcmc_res <- residuals(fit_nb2, type = "mle-mcmc", mcmc_samples = samps)
 qqnorm(mcmc_res);qqline(mcmc_res)
 ```
 
@@ -127,9 +129,11 @@ There are obviously too few zeros in the data simulated from the Poisson model.
 Plot DHARMa residuals:
 
 ```{r}
-# simulate(fit_pois, nsim = 300) %>% 
-  # dharma_residuals(fit_pois)
+simulate(fit_pois, nsim = 300) |> 
+  sdmTMBextra::dharma_residuals(fit_pois)
 ```
+
+We did that with the sdmTMBextra package <https://github.com/pbs-assess/sdmTMBextra>.
 
 We could also do that manually, which lets us use other DHARMa tools:
 
@@ -153,8 +157,8 @@ In the QQ residual plots we clearly see evidence of over dispersion compared to 
 Lets try with the correct model:
 
 ```{r}
-simulate(fit_nb2, nsim = 300) %>% 
-  dharma_residuals(fit_nb2)
+simulate(fit_nb2, nsim = 300) |> 
+  sdmTMBextra::dharma_residuals(fit_nb2)
 ```
 
 Everything looks fine. But, again, the MCMC-based residuals above are likely the best approach.

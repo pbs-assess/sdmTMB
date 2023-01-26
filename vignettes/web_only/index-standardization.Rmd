@@ -61,7 +61,7 @@ We can inspect randomized quantile residuals:
 
 ```{r residuals, fig.width = 8}
 pcod$resids <- residuals(m) # randomized quantile residuals
-# pcod$resids <- residuals(m, type = "mle-mcmc") # better but slower
+# Also see residuals(..., type = "mle-mcmc") which are better but slower
 hist(pcod$resids)
 qqnorm(pcod$resids)
 abline(a = 0, b = 1)

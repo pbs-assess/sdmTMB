@@ -215,10 +215,12 @@ bayesplot::mcmc_pairs(fit_stan, pars = pars_plot)
 We can perform posterior predictive checks to assess whether our model can generate predictive data that are consistent with the observations.
 For this, we can make use of `simulate.sdmTMB()` while passing in our Stan model.
 `simulate.sdmTMB()` will take draws from the joint parameter posterior and add observation error.
+We need to ensure `nsim` is less than or equal to the total number of post-warmup samples.
 
 ```{r}
 set.seed(19292)
-s <- simulate(fit_mle, tmbstan_model = fit_stan, nsim = 50)
+samps <- sdmTMBextra::extract_mcmc(fit_stan)
+s <- simulate(fit_mle, mcmc_samples = samps, nsim = 50)
 bayesplot::pp_check(
   sim_dat$observed,
   yrep = t(s),
@@ -232,10 +234,10 @@ In this case, the simulated data seem consistent with the observed data.
 
 # Plotting predictions
 
-We can make predictions with our Bayesian model by supplying it to the `tmbstan_model` argument in `predict.sdmTMB()`.
+We can make predictions with our Bayesian model by supplying the posterior samples to the `mcmc_samples` argument in `predict.sdmTMB()`.
 
 ```{r}
-pred <- predict(fit_mle, tmbstan_model = fit_stan)
+pred <- predict(fit_mle, mcmc_samples = samps)
 ```
 
 The output is a matrix where each row corresponds to a row of predicted data and each column corresponds to a sample.
@@ -267,7 +269,7 @@ nd <- expand.grid(
   Y = seq(0, 1, length.out = 70),
   a1 = 0
 )
-pred <- predict(fit_mle, newdata = nd, tmbstan_model = fit_stan)
+pred <- predict(fit_mle, newdata = nd, mcmc_samples = samps)
 
 nd$post_mean <- apply(pred, 1, mean)
 nd$post_sd <- apply(pred, 1, sd)
@@ -318,7 +320,7 @@ For example, let's extract the spatial random field values `"omega_s"`. Other op
 fit_pred <- predict(
   fit_mle,
   newdata = nd,
-  tmbstan_model = fit_stan,
+  mcmc_samples = samps,
   sims_var = "omega_s" #<
 )
 

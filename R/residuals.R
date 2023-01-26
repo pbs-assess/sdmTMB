@@ -152,12 +152,12 @@ qres_beta <- function(object, y, mu, ...) {
 #' randomized-quantile residuals, but will be considerably slower to
 #' calculate.**
 #'
+#' See the \pkg{sdmTMBextra} package for the function `predict_mle_mcmc()`,
+#' which can generate the MCMC samples to pass to the `mcmc_samples` argument.
 #' Ideally MCMC is run until convergence and then the last iteration can be
 #' used for residuals. MCMC samples are defined by `mcmc_iter - mcmc_warmup`.
 #' The Stan model can be printed with `print_stan_model = TRUE` to check.
 #' The defaults may not be sufficient for many models.
-#'
-#' See the \pkg{sdmTMBextra} package.
 #'
 #' **`"mvn-laplace"`** is the same as `"mle-laplace"` except the parameters are
 #' based on simulations drawn from the assumed multivariate normal distribution
