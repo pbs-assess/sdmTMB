@@ -93,6 +93,7 @@ Suggests:
     rgdal,
     rmarkdown,
     sf,
+    splancs,
     testthat,
     tibble,
     visreg
