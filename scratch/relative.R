@@ -2,7 +2,7 @@ library(sdmTMB) # 'scale' branch
 library(ggplot2)
 library(dplyr)
 
-if (Sys.info()[['user']] == "seananderson") {
+if (Sys.info()[["user"]] == "seananderson") {
   # dat <- readRDS("../gfsynopsis-2021/report/data-cache-april-2022/longnose-skate.rds")$survey_sets
   dat <- readRDS("../gfsynopsis-2021/report/data-cache-april-2022/yellowtail-rockfish.rds")$survey_sets
   dat <- filter(dat, survey_abbrev == "SYN QCS")
@@ -13,7 +13,7 @@ if (Sys.info()[['user']] == "seananderson") {
 }
 
 mesh <- make_mesh(dat, c("X", "Y"), cutoff = 12)
-plot(mesh)
+# plot(mesh)
 
 fit <- sdmTMB(
   density ~ 0 + as.factor(year),
@@ -22,8 +22,9 @@ fit <- sdmTMB(
   mesh = mesh,
   family = tweedie(link = "log"),
   spatial = "on",
-  spatiotemporal = "off",
-  silent = FALSE
+  spatiotemporal = "off", # fast testing
+  silent = FALSE,
+  control = sdmTMBcontrol(newton_loops = 1L)
 )
 
 nd <- replicate_df(qcs_grid, "year", unique(dat$year))
@@ -36,11 +37,15 @@ ind <- rbind(
   mutate(ind_abs, type = "absolute"),
   mutate(ind_rel, type = "relative")
 )
+ind_labs <- group_by(ind, type) |>
+  summarise(
+    lab_x = min(year) + 0.5,
+    lab_y = max(upr),
+    mean_se = paste0("Mean SE = ", round(mean(se), 2))
+  )
 
 ggplot(ind, aes(year, est, fill = type, colour = type)) +
   geom_line() +
   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4, colour = NA) +
-  facet_wrap(vars(type), scales = "free_y")
-
-group_by(ind, type) |>
-  summarise(mean_se = mean(se))
+  facet_wrap(vars(type), scales = "free_y") +
+  geom_text(aes(lab_x, lab_y, label = mean_se), data = ind_labs, colour = "black", hjust = 0)
