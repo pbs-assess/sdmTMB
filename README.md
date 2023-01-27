@@ -75,6 +75,9 @@ remotes::install_github("pbs-assess/sdmTMB", dependencies = TRUE)
 If you have problems installing INLA, try [installing it
 directly](https://www.r-inla.org/download-install) first.
 
+There are some extra utilities in the
+[sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra) package.
+
 ## Overview
 
 Analyzing geostatistical data (coordinate-referenced observations from
@@ -721,8 +724,7 @@ for more details.
 ### Bayesian MCMC sampling with Stan
 
 The fitted model can be passed to the tmbstan package to sample from the
-posterior with Stan. Note this can be slow for large or poorly
-identified models. See examples the [Bayesian
+posterior with Stan. See the [Bayesian
 vignette](https://pbs-assess.github.io/sdmTMB/articles/web_only/bayesian.html).
 
 ### Turning off random fields
