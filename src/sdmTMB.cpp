@@ -146,6 +146,7 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(pop_pred);
   // Calculate total summed by year (e.g. biomass)?
   DATA_INTEGER(calc_index_totals);
+  DATA_INTEGER(relative_index); // relative (vs. default absolute) index?
   DATA_INTEGER(calc_cog);
   // DATA_INTEGER(calc_quadratic_range); // DELTA TODO
   DATA_VECTOR(area_i); // area per prediction grid cell for index standardization
@@ -1111,6 +1112,13 @@ Type objective_function<Type>::operator()()
       }
       for (int i = 0; i < n_t; i++) {
         link_total(i) = Link(total(i), link_tmp);
+      }
+      if (relative_index) {
+        Type link_total_mean = link_total.sum() / n_t;
+        for (int t = 0; t < n_t; t++) {
+          link_total(t) = link_total(t) - link_total_mean;
+          total(t) = InverseLink(link_total(t), link_tmp);
+        }
       }
       if (calc_index_totals) {
         REPORT(link_total);

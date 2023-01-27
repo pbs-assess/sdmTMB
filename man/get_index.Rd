@@ -11,6 +11,7 @@ get_index(
   level = 0.95,
   area = 1,
   silent = TRUE,
+  relative = FALSE,
   ...
 )
 
@@ -36,6 +37,8 @@ get_cog(
 internally to match.}
 
 \item{silent}{Silent?}
+
+\item{relative}{Relative (vs. absolute) index?}
 
 \item{...}{Passed to \code{\link[TMB:sdreport]{TMB::sdreport()}}.}
 

@@ -7,6 +7,7 @@
 #'   [predict.sdmTMB()] or a value of length 1, which will be repeated
 #'   internally to match.
 #' @param silent Silent?
+#' @param relative Relative (vs. absolute) index?
 #' @param ... Passed to [TMB::sdreport()].
 #'
 #' @seealso [get_index_sims()]
@@ -75,9 +76,9 @@
 #' }
 #'
 #' @export
-get_index <- function(obj, bias_correct = FALSE, level = 0.95, area = 1, silent = TRUE, ...)  {
+get_index <- function(obj, bias_correct = FALSE, level = 0.95, area = 1, silent = TRUE, relative = FALSE, ...)  {
   d <- get_generic(obj, value_name = "link_total",
-    bias_correct = bias_correct, level = level, trans = exp, area = area, ...)
+    bias_correct = bias_correct, level = level, trans = exp, area = area, relative = relative, ...)
   names(d)[names(d) == "trans_est"] <- "log_est"
   d
 }
@@ -103,7 +104,7 @@ get_cog <- function(obj, bias_correct = FALSE, level = 0.95, format = c("long", 
 }
 
 get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
-  trans = I, area = 1, silent = TRUE, ...) {
+  trans = I, area = 1, silent = TRUE, relative = FALSE, ...) {
 
   if ((!isTRUE(obj$do_index) && value_name[1] == "link_total") || value_name[1] == "cog_x") {
     if (is.null(obj[["obj"]])) {
@@ -138,8 +139,11 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
 
     tmb_data <- obj$pred_tmb_data
     tmb_data$area_i <- area
-    if (value_name[1] == "link_total")
+    if (value_name[1] == "link_total") {
       tmb_data$calc_index_totals <- 1L
+      assert_that(is.logical(relative), length(relative) == 1L)
+      tmb_data$relative_index <- relative
+    }
     if (value_name[1] == "cog_x")
       tmb_data$calc_cog <- 1L
 

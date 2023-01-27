@@ -1016,6 +1016,7 @@ sdmTMB <- function(
     normalize_in_r = 0L, # not used first time
     flag = 1L, # part of TMB::normalize()
     calc_index_totals = 0L,
+    relative_index = 0L,
     calc_cog = 0L,
     random_walk = as.integer(!is.null(time_varying) && time_varying_type == "rw"),
     ar1_time = as.integer(!is.null(time_varying) && time_varying_type == "ar1"),
