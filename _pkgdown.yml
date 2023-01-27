@@ -33,7 +33,6 @@ reference:
   - sdmTMBcontrol
   - run_extra_optimization
   - residuals.sdmTMB
-  - dharma_residuals
   - replicate_df
 
 - title: 'Families'
@@ -105,6 +104,5 @@ reference:
   contents:
   - Effect.sdmTMB
   - emmeans.sdmTMB
-  - extract_mcmc
   - spread_sims
   - gather_sims

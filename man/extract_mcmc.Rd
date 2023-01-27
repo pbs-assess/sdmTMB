@@ -10,10 +10,16 @@ extract_mcmc(object = deprecated())
 \item{object}{\strong{Deprecated} See the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package.}
 }
 \value{
-Deprecated See the \pkg{sdmTMBextra} package.
-\url{https://github.com/pbs-assess/sdmTMBextra}
+Deprecated. See the
+\href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package.
 }
 \description{
 Moved to the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
 package
 }
+\examples{
+\dontrun{
+extract_mcmc()
+}
+}
+\keyword{internal}

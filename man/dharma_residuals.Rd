@@ -23,3 +23,9 @@ Deprecated. See the
 Moved to the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
 package
 }
+\examples{
+\dontrun{
+dharma_residuals()
+}
+}
+\keyword{internal}
