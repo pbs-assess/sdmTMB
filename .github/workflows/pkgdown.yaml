@@ -31,12 +31,11 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, local::., any::rgdal, any::textshaping
+          extra-packages: any::pkgdown, local::., any::rgdal, any::textshaping, any::remotes
           needs: website
 
       - name: Install extra packages for web-only vignettes
         run: |
-          install.packages("remotes")
           remotes::install_github("pbs-assess/sdmTMBextra", dependencies = TRUE)
         shell: Rscript {0}
 
