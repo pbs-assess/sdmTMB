@@ -36,6 +36,7 @@ jobs:
 
       - name: Install extra packages for web-only vignettes
         run: |
+          install.packages("remotes")
           remotes::install_github("pbs-assess/sdmTMBextra", dependencies = TRUE)
         shell: Rscript {0}
 
