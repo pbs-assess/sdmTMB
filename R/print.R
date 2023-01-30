@@ -182,11 +182,6 @@ print_range <- function(x, m = 1) {
     return(NULL)
   }
 
-  # if (as.logical(x$tmb_data$anisotropy)) {
-  #   aa <- plot_anisotropy(x, return_data = TRUE)
-  #   # range <- aa$a[aa$random_field == "spatial"]
-  # }
-
   range <- mround(range, 2L)
   range_text <- if (x$tmb_data$share_range[m]) {
     paste0("Matern range: ", range[1], "\n")
@@ -196,12 +191,45 @@ print_range <- function(x, m = 1) {
       "Matern range (spatiotemporal): ", range[2], "\n"
     )
   }
+
+  if (as.logical(x$tmb_data$anisotropy)) {
+    range_text <- print_anisotropy(x = x, m = m)
+  }
+
   if (x$spatial[m] == "off" && x$spatiotemporal[m] == "off") {
     range_text <- NULL
   }
 
-  if (as.logical(x$tmb_data$anisotropy)) {
-    range_text <- "Matern range: anisotropic covariance; see plot_anisotropy().\n"
+  range_text
+}
+
+print_anisotropy <- function(x, m = 1) {
+  aniso_df <- plot_anisotropy(x, return_data = TRUE)
+  aniso_df$degree <- aniso_df$angle * 180 / pi
+
+  if (isTRUE(x$family$delta)) {
+    aniso_df_sp <- aniso_df[aniso_df$random_field == "spatial" & aniso_df$model_num == m, ][1, c("a", "b", "degree")]
+    aniso_df_st <- aniso_df[aniso_df$random_field == "spatiotemporal" & aniso_df$model_num == m, ][1, c("a", "b", "degree")]
+  } else {
+    aniso_df_sp <- aniso_df[aniso_df$random_field == "spatial", ][1, c("a", "b", "degree")]
+    aniso_df_st <- aniso_df[aniso_df$random_field == "spatiotemporal", ][1, c("a", "b", "degree")]
+  }
+
+  aniso_df_sp <- mround(aniso_df_sp, 2L)
+  aniso_df_st <- mround(aniso_df_st, 2L)
+
+  range_text <- if (x$tmb_data$share_range[m]) {
+    paste0(
+      "Matern anisotropic range (spatial): ", aniso_df_sp[2], " to ",
+      aniso_df_sp[1], " at ", aniso_df_sp[3], "˚", "\n"
+    )
+  } else {
+    paste0(
+      "Matern anisotropic range (spatial): ", aniso_df_sp[2], " to ",
+      aniso_df_sp[1], " at ", aniso_df_sp[3], "˚", "\n",
+      "Matern anisotropic range (spatiotemporal): ", aniso_df_st[2], " to ",
+      aniso_df_st[1], " at ", aniso_df_st[3], "˚", "\n"
+    )
   }
   range_text
 }
@@ -293,10 +321,13 @@ print_footer <- function(x) {
 
   cat("\nSee ?tidy.sdmTMB to extract these values as a data frame.\n")
 
+  if (as.logical(x$tmb_data$anisotropy)) {
+    cat("See ?plot_anisotropy to plot the anisotropic range.\n")
+  }
   # suppressWarnings(suppressMessages(ok <- sanity(x)$all_ok))
   # if (!isTRUE(ok)) {
-    # cat("Possible issues detected; printing output of sanity():\n\n")
-    # sanity(x)
+  # cat("Possible issues detected; printing output of sanity():\n\n")
+  # sanity(x)
   # }
 }
 
