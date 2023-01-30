@@ -3,7 +3,7 @@ title: "Introduction to modelling with sdmTMB"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Intro to modelling with sdmTMB}
+  %\VignetteIndexEntry{Introduction to modelling with sdmTMB}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,7 +14,8 @@ vignette: >
 dplyr_installed <- require("dplyr", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
 inla_installed <- require("INLA", quietly = TRUE)
-pkgs <- dplyr_installed && ggplot_installed && inla_installed
+sdmTMBextra_installed <- require("sdmTMBextra", quietly = TRUE)
+pkgs <- dplyr_installed && ggplot_installed && inla_installed && sdmTMBextra_installed
 EVAL <- identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
 knitr::opts_chunk$set(
   collapse = TRUE,
