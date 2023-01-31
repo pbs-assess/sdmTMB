@@ -1113,10 +1113,18 @@ Type objective_function<Type>::operator()()
       for (int i = 0; i < n_t; i++) {
         link_total(i) = Link(total(i), link_tmp);
       }
-      if (relative_index) {
-        Type link_total_mean = link_total.sum() / n_t;
+
+      if (relative_index != 0) {
+        Type link_ref = Type(0.);
+        if (relative_index == 1) { // geometric mean
+          link_ref = link_total.sum() / n_t;
+        } else if (relative_index == 2) { // first year
+          link_ref = link_total(0);
+        } else {
+          error("Relative index type not recognized");
+        }
         for (int t = 0; t < n_t; t++) {
-          link_total(t) = link_total(t) - link_total_mean;
+          link_total(t) -= link_ref;
           total(t) = InverseLink(link_total(t), link_tmp);
         }
       }

@@ -11,7 +11,7 @@ get_index(
   level = 0.95,
   area = 1,
   silent = TRUE,
-  relative = FALSE,
+  type = c("absolute", "relative-mean", "relative-year1"),
   ...
 )
 
@@ -38,7 +38,7 @@ internally to match.}
 
 \item{silent}{Silent?}
 
-\item{relative}{Relative (vs. absolute) index?}
+\item{type}{Absolute or relative index?}
 
 \item{...}{Passed to \code{\link[TMB:sdreport]{TMB::sdreport()}}.}
 
