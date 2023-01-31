@@ -1064,6 +1064,7 @@ Type objective_function<Type>::operator()()
     REPORT(proj_rf);            // combined random field projections
     REPORT(proj_rw_i);          // random walk projections
     REPORT(proj_iid_re_i);      // IID random intercept projections
+    REPORT(b_j);
 
     if (calc_se) {
       if (pop_pred) {
