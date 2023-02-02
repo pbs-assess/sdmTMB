@@ -881,6 +881,13 @@ sdmTMB <- function(
           weights <- rep(1, length(y_i))
         }
       }
+    } # https://github.com/pbs-assess/sdmTMB/issues/172
+    if (is.logical(y_i)) {
+      msg <- paste0("We recommend against using `TRUE`/`FALSE` ",
+        "response values if you are going to use the `visreg::visreg()` ",
+        "function after. Consider converting to integer with `as.integer()`.")
+      cli_warn(msg)
+
     }
   }
 
