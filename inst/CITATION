@@ -1,15 +1,16 @@
-citHeader("To cite sdmTMB in publications use:")
-
-citEntry(
-  entry    = "Article",
-  title    = "sdmTMB: an R package for fast, flexible, and user-friendly generalized linear mixed effects models with spatial and spatiotemporal random fields",
-  author   = "Anderson, Sean C. and Ward, Eric J. and English, Philina A. and Barnett, Lewis A.K.",
-  journal  = "bioRxiv",
-  year     = "2022",
-  volume   = "2022.03.24.485545",
-  doi      = "10.1101/2022.03.24.485545",
-  url      = "https://doi.org/10.1101/2022.03.24.485545",
-  textVersion = paste(
-  "Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett. 2022. sdmTMB: an R package for fast, flexible, and user-friendly generalized linear mixed effects models with spatial and spatiotemporal random fields. bioRxiv 2022.03.24.485545; doi: https://doi.org/10.1101/2022.03.24.485545"
-  )
+bibentry(
+  bibtype = "Article",
+  title = paste0("sdmTMB: an R package for fast, flexible, and user-friendly ",
+                 "generalized linear mixed effects models with spatial and ",
+                 "spatiotemporal random fields"),
+  author = c(
+    person(c("Sean", "C."), "Anderson"),
+    person(c("Eric", "J."), "Ward"),
+    person(c("Philina", "A."), "English"),
+    person(c("Lewis", "A.", "K."), "Barnett")
+  ),
+  year = "2022",
+  journal = "bioRxiv",
+  volume = "2022.03.24.485545",
+  doi = "10.1101/2022.03.24.485545"
 )
