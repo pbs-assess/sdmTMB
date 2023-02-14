@@ -267,6 +267,12 @@ residuals.sdmTMB <- function(object,
   } else if (type == "mvn-laplace") {
     mu <- linkinv(predict(object, nsim = 1L, model = model)[, 1L, drop = TRUE])
   } else if (type == "mle-mcmc") {
+    if (is.null(mcmc_samples)) {
+      msg <- c("As of sdmTMB 0.3.0, `mcmc_samples` must be supplied to use `type = 'mle-mcmc'`.",
+        "See ?sdmTMBextra::predict_mle_mcmc after installing",
+        "remotes::install_github('pbs-assess/sdmTMBextra')")
+      cli_abort(msg)
+    }
     mcmc_samples <- as.numeric(mcmc_samples)
     assert_that(length(mcmc_samples) == nrow(object$data))
     mu <- linkinv(mcmc_samples)
