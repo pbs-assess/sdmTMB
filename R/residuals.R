@@ -214,6 +214,8 @@ residuals.sdmTMB <- function(object,
                              mcmc_samples = NULL,
                              ...) {
 
+  model_missing <- FALSE
+  if (identical(model, c(1, 2))) model_missing <- TRUE
   model <- as.integer(model[[1]])
   if ("visreg_model" %in% names(object)) {
     model <- object$visreg_model
@@ -316,6 +318,10 @@ residuals.sdmTMB <- function(object,
     if (!is.null(wts)) r <- r * sqrt(wts)
   } else {
     cli_abort("residual type not implemented")
+  }
+  if (isTRUE(object$family$delta) && is.null(mcmc_samples) && model_missing) {
+    cli_inform(paste0("These are residuals for delta model component ", model,
+      ". Use the `model` argument to select the other component."))
   }
   r
 }
