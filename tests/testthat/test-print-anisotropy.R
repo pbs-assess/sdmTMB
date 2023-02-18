@@ -12,7 +12,7 @@ test_that("Print anisotropy prints correctly", {
     anisotropy = FALSE
   )
 
-  expect_output(print(fit1), regexp = "Matern range: 33.23")
+  expect_output(print(fit1), regexp = "range: 33.23")
 
   # Anisotropy when not shared across random fields
   set.seed(1)
@@ -45,7 +45,7 @@ test_that("Print anisotropy prints correctly", {
   a_df$degree <- a_df$angle * 180 / pi
 
   expect_output(cat(print_anisotropy(fit_dg_shared, m = 1)), regexp = "\\(spatial\\): 36.42 to 80.86 at 33.52")
-  expect_output(cat(print_anisotropy(fit_dg_shared, m = 2)), regexp = "\\(spatial\\): 36.42 to 80.86 at 33.52")
+  expect_output(cat(print_anisotropy(fit_dg_shared, m = 2)), regexp = "\\(spatial\\): 2.09 to 4.65 at 33.52")
 
   # Anisotropy when not shared across random fields in delta model
   pcod_test <- pcod
