@@ -17,6 +17,8 @@ Authors@R: c(
     person("Joe", "Watson", role = "ctb", comment = "Censored Poisson"),
     person("Julia", "Indivero", role = c("ctb"),
            comment = c("Vignette writing")),
+    person(c("Jillian", "C."), "Dunic", role = c("ctb"),
+           comment = c(ORCID = "0000-0002-0729-3083")),
     person(c("Cole", "C."), "Monnahan", role = c("ctb", "cph"),
            comment = c(ORCID = "0000-0003-0871-6700", "VAST contributor")),
     person("Mollie", "Brooks", role = c("ctb", "cph"),

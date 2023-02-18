@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Add anisotropic range printing. #149 by @jdunic
+
 # sdmTMB 0.3.0
 
 * Create the sdmTMBextra package to remove rstan/tmbstan helpers, which
