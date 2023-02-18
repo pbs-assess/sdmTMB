@@ -221,14 +221,14 @@ print_anisotropy <- function(x, m = 1) {
   range_text <- if (x$tmb_data$share_range[m]) {
     paste0(
       "Matern anisotropic range (spatial): ", aniso_df_sp[2], " to ",
-      aniso_df_sp[1], " at ", aniso_df_sp[3], "˚", "\n"
+      aniso_df_sp[1], " at ", aniso_df_sp[3], "\u02da", "\n"
     )
   } else {
     paste0(
       "Matern anisotropic range (spatial): ", aniso_df_sp[2], " to ",
-      aniso_df_sp[1], " at ", aniso_df_sp[3], "˚", "\n",
+      aniso_df_sp[1], " at ", aniso_df_sp[3], "\u02da", "\n",
       "Matern anisotropic range (spatiotemporal): ", aniso_df_st[2], " to ",
-      aniso_df_st[1], " at ", aniso_df_st[3], "˚", "\n"
+      aniso_df_st[1], " at ", aniso_df_st[3], "\u02da", "\n"
     )
   }
   range_text
