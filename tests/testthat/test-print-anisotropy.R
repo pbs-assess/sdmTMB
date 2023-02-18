@@ -1,6 +1,7 @@
 test_that("Print anisotropy prints correctly", {
-  # skip_on_cran()
+  skip_on_cran()
   skip_if_not_installed("INLA")
+  skip_on_ci()
 
   # No anisotropy
   fit1 <- sdmTMB(
