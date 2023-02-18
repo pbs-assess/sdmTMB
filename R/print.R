@@ -184,11 +184,11 @@ print_range <- function(x, m = 1) {
 
   range <- mround(range, 2L)
   range_text <- if (x$tmb_data$share_range[m]) {
-    paste0("Matern range: ", range[1], "\n")
+    paste0("Mat\u00e9rn range: ", range[1], "\n")
   } else {
     paste0(
-      "Matern range (spatial): ", range[1], "\n",
-      "Matern range (spatiotemporal): ", range[2], "\n"
+      "Mat\u00e9rn range (spatial): ", range[1], "\n",
+      "Mat\u00e9rn range (spatiotemporal): ", range[2], "\n"
     )
   }
 
@@ -220,14 +220,14 @@ print_anisotropy <- function(x, m = 1) {
 
   range_text <- if (x$tmb_data$share_range[m]) {
     paste0(
-      "Matern anisotropic range (spatial): ", aniso_df_sp[2], " to ",
+      "Mat\u00e9rn anisotropic range (spatial): ", aniso_df_sp[2], " to ",
       aniso_df_sp[1], " at ", aniso_df_sp[3], "\u02da", "\n"
     )
   } else {
     paste0(
-      "Matern anisotropic range (spatial): ", aniso_df_sp[2], " to ",
+      "Mat\u00e9rn anisotropic range (spatial): ", aniso_df_sp[2], " to ",
       aniso_df_sp[1], " at ", aniso_df_sp[3], "\u02da", "\n",
-      "Matern anisotropic range (spatiotemporal): ", aniso_df_st[2], " to ",
+      "Mat\u00e9rn anisotropic range (spatiotemporal): ", aniso_df_st[2], " to ",
       aniso_df_st[1], " at ", aniso_df_st[3], "\u02da", "\n"
     )
   }
