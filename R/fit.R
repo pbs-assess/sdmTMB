@@ -1298,7 +1298,7 @@ sdmTMB <- function(
     tmb_map$ln_tau_O <- as.factor(tmb_map$ln_tau_O)
   }
 
-  if (anisotropy && delta && !"ln_H_input" %in% map) {
+  if (anisotropy && delta && !"ln_H_input" %in% names(map)) {
     tmb_map$ln_H_input <- factor(c(1, 2, 1, 2)) # share anistropy as in VAST
   }
 
