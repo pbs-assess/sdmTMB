@@ -81,7 +81,7 @@ sdmTMBcontrol <- function(
   iter.max = 1e3L,
   normalize = FALSE,
   nlminb_loops = 1L,
-  newton_loops = 0L,
+  newton_loops = 1L,
   mgcv = deprecated(),
   quadratic_roots = FALSE,
   start = NULL,
@@ -96,12 +96,18 @@ sdmTMBcontrol <- function(
   ...) {
 
   if (is_present(mgcv)) {
-    deprecate_warn("0.0.20", "sdmTMBcontrol(mgcv)",
+    deprecate_stop("0.0.20", "sdmTMBcontrol(mgcv)",
       details = "`mgcv` argument no longer does anything.")
   }
 
   if (is_present(map_rf)) {
     deprecate_stop("0.0.22", "sdmTMBcontrol(map_rf)", "sdmTMB(spatial = 'off', spatiotemporal = 'off')")
+  }
+  assert_that(is.numeric(nlminb_loops), is.numeric(newton_loops))
+  assert_that(nlminb_loops >= 1L)
+  assert_that(newton_loops >= 0L)
+  if (newton_loops > 2L) {
+    cli::cli_inform("There is rarely a benefit to making `newton_loops` > 1.")
   }
 
   if (!is.null(parallel)) {

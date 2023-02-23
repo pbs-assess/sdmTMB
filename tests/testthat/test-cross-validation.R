@@ -203,16 +203,16 @@ test_that("Cross validation with offsets works", {
     parallel = FALSE #<
   )
 
-  expect_equal(fit_cv_off1$models[[1]]$model, fit_cv_off2$models[[1]]$model)
-  expect_equal(fit_cv_off1$models[[1]]$model, fit_cv_off3$models[[1]]$model)
-  expect_equal(fit_cv_off1$models[[1]]$model, fit_cv_off4$models[[1]]$model)
+  expect_equal(round(fit_cv_off1$models[[1]]$model$par, 4), round(fit_cv_off2$models[[1]]$model$par, 4))
+  expect_equal(round(fit_cv_off1$models[[1]]$model$par, 4), round(fit_cv_off3$models[[1]]$model$par, 4))
+  expect_equal(round(fit_cv_off1$models[[1]]$model$par, 4), round(fit_cv_off4$models[[1]]$model$par, 4))
 
   # with/without offset:
-  expect_false(identical(fit_cv_off1$models[[1]]$model, fit_cv_off5$models[[1]]$model))
+  expect_false(identical(fit_cv_off1$models[[1]]$model$par, fit_cv_off5$models[[1]]$model$par))
 
-  expect_equal(fit_cv_off5$models[[1]]$model, fit_cv_off6$models[[1]]$model)
-  expect_equal(fit_cv_off5$models[[1]]$model, fit_cv_off7$models[[1]]$model)
-  expect_equal(fit_cv_off5$models[[1]]$model, fit_cv_off8$models[[1]]$model)
+  expect_equal(round(fit_cv_off5$models[[1]]$model$par, 4), round(fit_cv_off6$models[[1]]$model$par, 4))
+  expect_equal(round(fit_cv_off5$models[[1]]$model$par, 4), round(fit_cv_off7$models[[1]]$model$par, 4))
+  expect_equal(round(fit_cv_off5$models[[1]]$model$par, 4), round(fit_cv_off8$models[[1]]$model$par, 4))
 
   future::plan(future::sequential)
 })

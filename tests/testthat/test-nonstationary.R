@@ -283,7 +283,7 @@ test_that("Test that non-stationary model works without spatial field and random
   )
 
   par <- fit$sd_report$value[which(names(fit$sd_report$value)=="ln_epsilon_re_sigma")]
-  expect_equal(as.numeric(par), -13.5, tolerance = 0.002)
+  expect_equal(as.numeric(par), -14.0, tolerance = 0.002)
   par <- fit$sd_report$par.fixed[1:2]
   expect_equal(as.numeric(par), c(0.2579745,-0.40099), tolerance = 0.002)
 })
