@@ -1181,7 +1181,7 @@ sdmTMB <- function(
     tmb_params <- tmb_obj1$env$parList()
     # tmb_data$no_spatial <- FALSE
     # often causes optimization problems if set from phase 1!?
-    tmb_params$b_threshold <- if(thresh[[1]]$threshold_func == 2L) matrix(0, 3L, n_m) else matrix(0, 2L, n_m)
+    tmb_params$b_threshold <- matrix(0, thresh[[1]]$n_par, n_m)
   }
 
   tmb_random <- c()
