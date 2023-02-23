@@ -203,20 +203,22 @@ print_range <- function(x, m = 1) {
   range_text
 }
 
-print_anisotropy <- function(x, m = 1) {
+print_anisotropy <- function(x, m = 1L) {
   aniso_df <- plot_anisotropy(x, return_data = TRUE)
   aniso_df$degree <- aniso_df$angle * 180 / pi
 
   if (isTRUE(x$family$delta)) {
     aniso_df_sp <- aniso_df[aniso_df$random_field == "spatial" & aniso_df$model_num == m, ][1, c("a", "b", "degree")]
-    aniso_df_st <- aniso_df[aniso_df$random_field == "spatiotemporal" & aniso_df$model_num == m, ][1, c("a", "b", "degree")]
+    aniso_df_st <- aniso_df[aniso_df$random_field == "spatiotemporal" & aniso_df$model_num == m, ][1L, c("a", "b", "degree")]
   } else {
-    aniso_df_sp <- aniso_df[aniso_df$random_field == "spatial", ][1, c("a", "b", "degree")]
-    aniso_df_st <- aniso_df[aniso_df$random_field == "spatiotemporal", ][1, c("a", "b", "degree")]
+    aniso_df_sp <- aniso_df[aniso_df$random_field == "spatial", ][1L, c("a", "b", "degree")]
+    aniso_df_st <- aniso_df[aniso_df$random_field == "spatiotemporal", ][1L, c("a", "b", "degree")]
   }
 
-  aniso_df_sp <- mround(aniso_df_sp, 2L)
-  aniso_df_st <- mround(aniso_df_st, 2L)
+  aniso_df_sp[1:2] <- mround(aniso_df_sp[1:2], 2L)
+  aniso_df_st[1:2] <- mround(aniso_df_st[1:2], 2L)
+  aniso_df_sp[3] <- mround(aniso_df_sp[3], 0L)
+  aniso_df_st[3] <- mround(aniso_df_st[3], 0L)
 
   range_text <- if (x$tmb_data$share_range[m]) {
     paste0(
@@ -234,7 +236,7 @@ print_anisotropy <- function(x, m = 1) {
   range_text
 }
 
-print_other_parameters <- function(x, m = 1) {
+print_other_parameters <- function(x, m = 1L) {
   b <- tidy(x, "ran_pars", model = m, silent = TRUE)
 
   get_term_text <- function(term_name = "", pretext = "") {
