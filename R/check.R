@@ -90,9 +90,7 @@ sanity <- function(object, big_sd_log10 = 3, gradient_thresh = 0.001) {
         "`", np[i],
         paste0("` gradient > ", gradient_thresh)
       ))
-      msg <- "See `?run_extra_optimization()`"
-      cli::cli_alert_info(msg)
-      msg <- "Or refit with `control = sdmTMBcontrol(newton_loops = 1)`"
+      msg <- "See ?run_extra_optimization(), standardize covariates, and/or simplify the model"
       cli::cli_alert_info(msg)
       cat("\n")
     }
