@@ -1197,10 +1197,14 @@ Type objective_function<Type>::operator()()
   // FIXME save memory by not reporting all these or optionally so for MVN/Bayes?
 
   array<Type> log_range(range.rows(),range.cols()); // for SE
-  array<Type> log_sigma_E(sigma_E.rows(),sigma_E.cols()); // for SE
   for (int i = 0; i < range.rows(); i++) {
     for (int m = 0; m < range.cols(); m++) {
       log_range(i,m) = log(range(i,m));
+    }
+  }
+  array<Type> log_sigma_E(sigma_E.rows(),sigma_E.cols()); // for SE
+  for (int i = 0; i < sigma_E.rows(); i++) {
+    for (int m = 0; m < sigma_E.cols(); m++) {
       log_sigma_E(i,m) = log(sigma_E(i,m));
     }
   }
