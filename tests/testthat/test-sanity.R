@@ -10,7 +10,7 @@ test_that("sanity() runs", {
   expect_true(all(unlist(s)))
 
   fit$gradients[1] <- 0.9
-  expect_message(sanity(fit), regexp = "newton")
+  expect_message(sanity(fit), regexp = "gradient")
 
   fit$gradients[1] <- 0.00001
   fit$bad_eig <- TRUE
