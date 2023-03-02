@@ -16,9 +16,15 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
     fit_dg$sd_report
     nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
     p <- predict(fit_dg, newdata = nd)
-    # head(p)
-    # p <- predict(fit_dg, newdata = nd, type = "response")
-    # head(p)
+
+    expect_equal(
+      round(tidy(fit_dg, "ran_pars", model = 1)$estimate, 3),
+      c(39.334, 2.289, 0.808)
+    )
+    expect_equal(
+      round(tidy(fit_dg, "ran_pars", model = 2)$estimate, 3),
+      c(16.224, 0.992, 0.656, 1.426)
+    )
 
     p <- predict(fit_dg, newdata = nd, return_tmb_object = TRUE)
     ind_dg <- get_index(p, bias_correct = FALSE)

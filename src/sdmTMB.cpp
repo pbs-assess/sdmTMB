@@ -1197,9 +1197,11 @@ Type objective_function<Type>::operator()()
   // FIXME save memory by not reporting all these or optionally so for MVN/Bayes?
 
   array<Type> log_range(range.rows(),range.cols()); // for SE
+  array<Type> log_sigma_E(sigma_E.rows(),sigma_E.cols()); // for SE
   for (int i = 0; i < range.rows(); i++) {
     for (int m = 0; m < range.cols(); m++) {
       log_range(i,m) = log(range(i,m));
+      log_sigma_E(i,m) = log(sigma_E(i,m));
     }
   }
 
@@ -1208,7 +1210,6 @@ Type objective_function<Type>::operator()()
   REPORT(p_mix);
   REPORT(mix_ratio);
   ADREPORT(phi);
-  vector<Type> log_sigma_E = log(sigma_E);
   ADREPORT(log_sigma_E);      // log spatio-temporal SD
   REPORT(sigma_E);      // spatio-temporal SD
   ADREPORT(sigma_E);      // log spatio-temporal SD

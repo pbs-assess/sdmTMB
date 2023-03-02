@@ -97,7 +97,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     p$ar1_phi <- p$ar1_phi[model]
     p$ln_tau_G <- p$ln_tau_G[,model]
     p$log_sigma_O <- p$log_sigma_O[model]
-    p$log_sigma_E <- p$log_sigma_E[model]
+    p$log_sigma_E <- p$log_sigma_E[1,model]
     p$log_sigma_Z <- p$log_sigma_Z[,model]
     p$log_range <- p$log_range[,model]
     p
