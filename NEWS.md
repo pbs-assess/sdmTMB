@@ -1,5 +1,9 @@
 # sdmTMB (development version)
 
+* Fix bug in print()/tidy() for delta-model positive model component sigma_E.
+  A recently introduce bug was causing sigma_E for the 2nd model to be reported
+  as the 1st model component sigma_E.
+
 * Add anisotropic range printing. #149 by @jdunic
 
 # sdmTMB 0.3.0
