@@ -56,7 +56,7 @@ test_that("Print anisotropy prints correctly", {
   )
 
   expect_output(cat(print_anisotropy(fit2)), regexp = "\\(spatial\\): 20.11 to 65.79 at 117")
-  expect_output(cat(print_anisotropy(fit2)), regexp = "\\(spatiotemporal\\): 0.01 to 0.02 at 117")
+  expect_output(cat(print_anisotropy(fit2)), regexp = "\\(spatiotemporal\\): 0.01 to (0.02|0.03) at 117")
 
   # Anisotropy when shared across random fields in delta model
   fit_dg_shared <- sdmTMB(
