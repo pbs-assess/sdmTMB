@@ -159,6 +159,7 @@ Type objective_function<Type>::operator()()
   DATA_IVECTOR(rw_fields);
   DATA_INTEGER(include_spatial);
   DATA_INTEGER(random_walk);
+  DATA_INTEGER(random_walk0);
   DATA_INTEGER(ar1_time);
   DATA_IVECTOR(exclude_RE); // DELTA TODO currently shared...
   DATA_INTEGER(no_spatial); // omit all spatial calculations
@@ -523,35 +524,51 @@ Type objective_function<Type>::operator()()
     }
   }
 
-  // Random walk effects (dynamic regression):
-  if (random_walk || ar1_time) {
+  // Time-varying effects (dynamic regression):
+  if (random_walk || ar1_time || random_walk0) {
     array<Type> rho_time(X_rw_ik.cols(), n_m);
     rho_time.setZero();
     for (int m = 0; m < n_m; m++) {
       for (int k = 0; k < X_rw_ik.cols(); k++) {
-        // flat prior on the initial value... then:
-        if (random_walk) {
+        if (random_walk) { // type = 'rw'
+          // flat prior on the initial value... then:
           for (int t = 1; t < n_t; t++) {
             PARALLEL_REGION jnll -=
               dnorm(b_rw_t(t, k, m), b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)), true);
             if (sim_re(4) && simulate_t(t))
               SIMULATE{b_rw_t(t, k, m) = rnorm(b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)));}
           }
-        }
-        if (ar1_time) {
+        } else if (random_walk0) { // type = 'rw0'
+          // N(0, SD) prior on the initial value... then:
+          for (int t = 0; t < n_t; t++) {
+            if (t == 0) {
+              PARALLEL_REGION jnll -=
+                dnorm(b_rw_t(t, k, m), Type(0.), exp(ln_tau_V(k,m)), true);
+              if (sim_re(4) && simulate_t(t))
+                SIMULATE{b_rw_t(t, k, m) = rnorm(Type(0.), exp(ln_tau_V(k,m)));}
+            } else {
+              PARALLEL_REGION jnll -=
+                dnorm(b_rw_t(t, k, m), b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)), true);
+              if (sim_re(4) && simulate_t(t))
+                SIMULATE{b_rw_t(t, k, m) = rnorm(b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)));}
+            }
+          }
+        } else if (ar1_time) { // type = 'ar1'
           rho_time(k, m) = sdmTMB::minus_one_to_one(rho_time_unscaled(k, m));
           jnll += SCALE(AR1(rho_time(k, m)), exp(ln_tau_V(k, m)))(vector<Type>(b_rw_t.col(m).col(k)));
           if (sim_re(4)) {
-              // https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html
-              vector<Type> tmp(n_t);
-              Type ar1_sigma = sqrt(Type(1) - rho_time(k, m) * rho_time(k, m));
-              Type x0 = rnorm(Type(0), exp(ln_tau_V(k, m)));
-              tmp(0) = rho_time(k, m) * x0 + ar1_sigma * rnorm(Type(0), exp(ln_tau_V(k, m)));
-              for (int t = 1; t < n_t; t++)
-                tmp(t) = rho_time(k, m) * tmp(t-1) + ar1_sigma * rnorm(Type(0), exp(ln_tau_V(k, m)));
-              for(int t = 0; t < n_t; t++)
-                if (simulate_t(t)) SIMULATE{b_rw_t(t, k, m) = tmp(t);}
+            // https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html
+            vector<Type> tmp(n_t);
+            Type ar1_sigma = sqrt(Type(1) - rho_time(k, m) * rho_time(k, m));
+            Type x0 = rnorm(Type(0), exp(ln_tau_V(k, m)));
+            tmp(0) = rho_time(k, m) * x0 + ar1_sigma * rnorm(Type(0), exp(ln_tau_V(k, m)));
+            for (int t = 1; t < n_t; t++)
+              tmp(t) = rho_time(k, m) * tmp(t-1) + ar1_sigma * rnorm(Type(0), exp(ln_tau_V(k, m)));
+            for(int t = 0; t < n_t; t++)
+              if (simulate_t(t)) SIMULATE{b_rw_t(t, k, m) = tmp(t);}
           }
+        } else {
+          error("Time-varying type not found.");
         }
       }
     }
@@ -640,7 +657,7 @@ Type objective_function<Type>::operator()()
       if ((n_m == 2 && m == 1) || n_m == 1) {
         if (!poisson_link_delta) eta_i(i,m) += offset_i(i);
       }
-      if (random_walk || ar1_time) {
+      if (random_walk || ar1_time || random_walk0) {
         for (int k = 0; k < X_rw_ik.cols(); k++) {
           eta_rw_i(i,m) += X_rw_ik(i, k) * b_rw_t(year_i(i), k, m); // record it
           eta_i(i,m) += eta_rw_i(i,m);
@@ -967,7 +984,7 @@ Type objective_function<Type>::operator()()
     // Random walk covariates:
     array<Type> proj_rw_i(n_p,n_m);
     proj_rw_i.setZero();
-    if (random_walk || ar1_time) {
+    if (random_walk || ar1_time || random_walk0) {
       for (int m = 0; m < n_m; m++) {
         for (int i = 0; i < proj_X_rw_ik.rows(); i++) {
           for (int k = 0; k < proj_X_rw_ik.cols(); k++) {

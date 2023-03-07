@@ -50,21 +50,30 @@ NULL
 #'   deviation represents the marginal steady-state standard deviation of the
 #'   process in the case of the AR1. I.e., it is scaled according to the
 #'   correlation. See the [TMB
-#'   documentation](https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html). If the AR1
-#'   correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
-#'   may wish to switch to the random walk `'rw'`. Capitalization is ignored.
-#'   `TRUE` gets converted to `'iid'` and `FALSE` gets converted to `'off'`.
+#'   documentation](https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html).
+#'   If the AR1 correlation coefficient (rho) is estimated close to 1,
+#'   say > 0.99, then you may wish to switch to the random walk `'rw'`.
+#'   Capitalization is ignored. `TRUE` gets converted to `'iid'` and `FALSE`
+#'   gets converted to `'off'`.
 #' @param share_range Logical: estimate a shared spatial and spatiotemporal
-#'   range parameter (`TRUE`, default) or independent range parameters (`FALSE`). If a
-#'   delta model, can be a list. E.g., `list(TRUE, FALSE)`.
-#' @param time_varying An optional one-sided formula describing covariates that
-#'   should be modelled as a random walk through time. Be careful not to include
-#'   covariates (including the intercept) in both the main and time-varying
-#'   formula since the first time step is estimated independently. I.e., at
-#'   least one should have `~ 0` or `~ -1`. Structure must currently be shared
-#'   in delta models.
+#'   range parameter (`TRUE`, default) or independent range parameters
+#'   (`FALSE`). If a delta model, can be a list. E.g., `list(TRUE, FALSE)`.
+#' @param time_varying An optional one-sided formula describing covariates
+#'   that should be modelled as a time-varying process. Set the type of
+#'   process with `time_varying_type`. See the help for `time_varying_type`
+#'   for warnings about modelling the first time step. Structure shared in
+#'   delta models.
 #' @param time_varying_type Type of time-varying process to apply to
-#'   `time_varying` formula.
+#'   `time_varying` formula. `'rw'` indicates a random walk with the first
+#'   time step estimated independently (included for legacy reasons), `'rw0'`
+#'   indicates a random walk with the first time step estimated with
+#'   a mean-zero normal prior, `'ar1'` indicates a [stationary first-order
+#'   autoregressive process](https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html)
+#'   with the first time step estimated with a mean-zero prior. In the case of
+#'   `'rw'`, be careful not to include covariates (including the intercept) in
+#'   both the main and time-varying formula since the first time step is
+#'   estimated independently. I.e., in this case, at least one should have `~
+#'   0` or `~ -1`. Structure shared in delta models.
 #' @param spatial_varying An optional one-sided formula of coefficients that
 #'   should vary in space as random fields. Note that you likely want to include
 #'   a fixed effect for the same variable to improve interpretability since the
@@ -543,7 +552,7 @@ sdmTMB <- function(
   spatiotemporal = c("iid", "ar1", "rw", "off"),
   share_range = TRUE,
   time_varying = NULL,
-  time_varying_type = c("rw", "ar1"),
+  time_varying_type = c("rw", "rw0", "ar1"),
   spatial_varying = NULL,
   weights = NULL,
   offset = NULL,
@@ -1025,6 +1034,7 @@ sdmTMB <- function(
     calc_index_totals = 0L,
     calc_cog = 0L,
     random_walk = as.integer(!is.null(time_varying) && time_varying_type == "rw"),
+    random_walk0 = as.integer(!is.null(time_varying) && time_varying_type == "rw0"),
     ar1_time = as.integer(!is.null(time_varying) && time_varying_type == "ar1"),
     priors_b_n = length(not_na),
     priors_b_index = not_na - 1L,

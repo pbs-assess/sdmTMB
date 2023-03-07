@@ -14,7 +14,7 @@ sdmTMB(
   spatiotemporal = c("iid", "ar1", "rw", "off"),
   share_range = TRUE,
   time_varying = NULL,
-  time_varying_type = c("rw", "ar1"),
+  time_varying_type = c("rw", "rw0", "ar1"),
   spatial_varying = NULL,
   weights = NULL,
   offset = NULL,
@@ -80,24 +80,31 @@ or \code{TRUE} / \code{FALSE}. Optionally, a list for delta models, e.g. \code{l
 a list. E.g., \code{list('off', 'ar1')}. Note that the spatiotemporal standard
 deviation represents the marginal steady-state standard deviation of the
 process in the case of the AR1. I.e., it is scaled according to the
-correlation. See the \href{https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html}{TMB documentation}. If the AR1
-correlation coefficient (rho) is estimated close to 1, say > 0.99, then you
-may wish to switch to the random walk \code{'rw'}. Capitalization is ignored.
-\code{TRUE} gets converted to \code{'iid'} and \code{FALSE} gets converted to \code{'off'}.}
+correlation. See the \href{https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html}{TMB documentation}.
+If the AR1 correlation coefficient (rho) is estimated close to 1,
+say > 0.99, then you may wish to switch to the random walk \code{'rw'}.
+Capitalization is ignored. \code{TRUE} gets converted to \code{'iid'} and \code{FALSE}
+gets converted to \code{'off'}.}
 
 \item{share_range}{Logical: estimate a shared spatial and spatiotemporal
-range parameter (\code{TRUE}, default) or independent range parameters (\code{FALSE}). If a
-delta model, can be a list. E.g., \code{list(TRUE, FALSE)}.}
+range parameter (\code{TRUE}, default) or independent range parameters
+(\code{FALSE}). If a delta model, can be a list. E.g., \code{list(TRUE, FALSE)}.}
 
-\item{time_varying}{An optional one-sided formula describing covariates that
-should be modelled as a random walk through time. Be careful not to include
-covariates (including the intercept) in both the main and time-varying
-formula since the first time step is estimated independently. I.e., at
-least one should have \code{~ 0} or \code{~ -1}. Structure must currently be shared
-in delta models.}
+\item{time_varying}{An optional one-sided formula describing covariates
+that should be modelled as a time-varying process. Set the type of
+process with \code{time_varying_type}. See the help for \code{time_varying_type}
+for warnings about modelling the first time step. Structure shared in
+delta models.}
 
 \item{time_varying_type}{Type of time-varying process to apply to
-\code{time_varying} formula.}
+\code{time_varying} formula. \code{'rw'} indicates a random walk with the first
+time step estimated independently (included for legacy reasons), \code{'rw0'}
+indicates a random walk with the first time step estimated with
+a mean-zero normal prior, \code{'ar1'} indicates a \href{https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html}{stationary first-order autoregressive process}
+with the first time step estimated with a mean-zero prior. In the case of
+\code{'rw'}, be careful not to include covariates (including the intercept) in
+both the main and time-varying formula since the first time step is
+estimated independently. I.e., in this case, at least one should have \code{~ 0} or \code{~ -1}. Structure shared in delta models.}
 
 \item{spatial_varying}{An optional one-sided formula of coefficients that
 should vary in space as random fields. Note that you likely want to include

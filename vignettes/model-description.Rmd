@@ -109,6 +109,7 @@ symbols <- tibble::tribble(
   "$\\kappa_\\epsilon$", "`kappa(1)`", "Spatiotemporal decorrelation rate",
 
   "$\\rho$", "`ar1_rho`", "Correlation between random fields in subsequent time steps",
+  "$\\rho_{\\gamma}$", "`rho_time`", "Correlation between time-varying coefficients in subsequent time steps",
   "$\\boldsymbol{A}$", "`A`", "Sparse projection matrix to interpolate between knot and data locations",
   "$\\boldsymbol{H}$", "`H`", "2-parameter rotation matrix used to define anisotropy"
 )
@@ -270,7 +271,8 @@ $$
 \boldsymbol{\delta}_{t>1} &= \rho \boldsymbol{\delta}_{t-1} + \sqrt{1 - \rho^2} \boldsymbol{\epsilon_{t}},  \:
 \boldsymbol{\epsilon_{t}} \sim \operatorname{MVNormal} \left(\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right),
 \end{aligned}
-$$ where $\rho$ is the correlation between subsequent spatiotemporal random fields.
+$$ 
+where $\rho$ is the correlation between subsequent spatiotemporal random fields.
 The $\rho \boldsymbol{\delta}_{t-1} + \sqrt{1 - \rho^2}$ term scales the spatiotemporal variance by the correlation such that it represents the steady-state marginal variance.
 The correlation $\rho$ allows for mean-reverting spatiotemporal fields, and is constrained to be $-1 < \rho < 1$.
 Internally, the parameter is estimated as `ar1_phi`, which is unconstrained.
@@ -295,22 +297,51 @@ Note that, in contrast to the AR(1) parametrization, the variance is no longer t
 
 ## Time-varying regression parameters
 
-Parameters can be modelled as time varying (a random walk) according to the form
+Parameters can be modelled as time-varying according to a random walk or first-order autoregressive, AR(1), process. The time-series model is defined by `time_varying_type`. For all types:
 
 $$
 \begin{aligned}
-  \mu_{\boldsymbol{s},t} &= f^{-1} \left( \ldots +  \boldsymbol{X}^{\mathrm{tvc}}_{\boldsymbol{s},t} \boldsymbol{\gamma_{t}} + \ldots \right),\\
+  \mu_{\boldsymbol{s},t} &= f^{-1} \left( \ldots +  \boldsymbol{X}^{\mathrm{tvc}}_{\boldsymbol{s},t} \boldsymbol{\gamma_{t}} + \ldots \right),
+\end{aligned}
+$$
+where $\boldsymbol{\gamma_t}$ is an optional vector of time-varying regression parameters and $\boldsymbol{X}^{\mathrm{tvc}}_{\boldsymbol{s},t}$ is the corresponding model matrix with covariate values.
+This is defined via the `time_varying` argument, assuming that the `time` argument is also supplied a column name. 
+`time_varying` takes a *one-sided* formula.
+` ~ 1` implies a time-varying intercept.
+
+For `time_varying_type = 'rw'`, the first time step is estimated independently:
+
+$$
+\begin{aligned}
   \gamma_{t=1} &\sim \operatorname{Uniform} \left(-\infty, \infty \right),\\
-  \gamma_{t>1} &\sim \operatorname{Normal} \left(\gamma_{t-1}, \sigma^2_{\gamma} \right),
+  \gamma_{t>1} &\sim \operatorname{Normal} \left(\gamma_{t-1}, \sigma^2_{\gamma} \right).
 \end{aligned}
 $$
 
-where $\boldsymbol{\gamma_t}$ is an optional vector of time-varying regression parameters and $\boldsymbol{X}^{\mathrm{tvc}}_{\boldsymbol{s},t}$ is the corresponding model matrix with covariate values.
-This is defined via the `time_varying` argument, assuming that the `time` argument is also supplied a column name.
-For example, `time_varying ~ 0 + x`.
-The first value is given an implicit uniform prior.
+In this case, the first time-step value is given an implicit uniform prior.
 I.e., the same variable should not appear in the fixed effect formula since the initial value is estimated as part of the time-varying formula.
-The formula `time_varying = ~ 1` implicitly represents a time-varying intercept and, this case, the intercept should be omitted from the main effects (`formula ~ + 0 + ...` or `formula ~ -1 + ...`).
+The formula `time_varying = ~ 1` implicitly represents a time-varying intercept (assuming the `time` argument has been supplied) and, this case, the intercept should be omitted from the main effects (`formula ~ + 0 + ...` or `formula ~ -1 + ...`).
+
+For `time_varying_type = 'rw0'`, the first time step is estimated from a mean-zero prior:
+
+$$
+\begin{aligned}
+  \gamma_{t=1} &\sim \operatorname{Normal} \left(0, \sigma^2_{\gamma} \right),\\
+  \gamma_{t>1} &\sim \operatorname{Normal} \left(\gamma_{t-1}, \sigma^2_{\gamma} \right).
+\end{aligned}
+$$
+In this case, the time-varying variable (including the intercept) *should* be included in the main effects. We suggest using this formulation, but leave the `'rw'` option so that legacy code works.
+
+For `time_varying_type = 'ar1'`:
+
+$$
+\begin{aligned}
+  \gamma_{t=1} &\sim \operatorname{Normal} \left(0, \sigma^2_{\gamma} \right),\\
+  \gamma_{t>1} &\sim \operatorname{Normal} \left(\rho_\gamma\gamma_{t-1}, \sqrt{1 - \rho_\gamma^2} \sigma^2_{\gamma} \right),
+\end{aligned}
+$$
+where $\rho_{\gamma}$ is the correlation between subsequent time steps.
+The first time step is given a mean-zero prior.
 
 ## Spatially varying coefficients (SVC)
 
