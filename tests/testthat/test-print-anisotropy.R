@@ -14,6 +14,35 @@ test_that("Print anisotropy prints correctly", {
 
   expect_output(print(fit1), regexp = "range: 33.23")
 
+  # -------------------
+  # Anisotropy with spatial only
+  fit_sp_only <- sdmTMB(
+    data = pcod_2011,
+    formula = density ~ 1,
+    mesh = pcod_mesh_2011,
+    family = tweedie(),
+    spatial = "on",
+    spatiotemporal = "off",
+    anisotropy = TRUE
+  )
+
+  expect_output(print(fit_sp_only), regexp = "\\(spatial\\): 6.14 to 85.98 at 126")
+
+  # Anisotropy with only spatiotemporal random field
+  fit_st_only <- sdmTMB(
+    data = pcod_2011,
+    formula = density ~ 1,
+    mesh = pcod_mesh_2011,
+    family = tweedie(),
+    spatial = "off",
+    spatiotemporal = "iid",
+    time = "year",
+    anisotropy = TRUE
+  )
+
+  expect_output(print(fit_st_only), regexp = "\\(spatiotemporal\\): 0.04 to 245.08 at 153")
+# -------------------
+
   # Anisotropy when not shared across random fields
   set.seed(1)
   fit2 <- sdmTMB(
