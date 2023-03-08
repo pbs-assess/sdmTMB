@@ -211,20 +211,21 @@ print_anisotropy <- function(x, m = 1L) {
     aniso_df_sp <- aniso_df[aniso_df$random_field == "spatial" & aniso_df$model_num == m, ][1, c("a", "b", "degree")]
     aniso_df_st <- aniso_df[aniso_df$random_field == "spatiotemporal" & aniso_df$model_num == m, ][1L, c("a", "b", "degree")]
   } else {
-    if (x$spatial != "off") {
+    if (x$spatial[m] != "off") {
       aniso_df_sp <- aniso_df[aniso_df$random_field == "spatial", ][1L, c("a", "b", "degree")]
     }
-    if (x$spatiotemporal != "off") {
+    if (x$spatiotemporal[m] != "off") {
       aniso_df_st <- aniso_df[aniso_df$random_field == "spatiotemporal", ][1L, c("a", "b", "degree")]
     }
   }
 
-  if (exists('aniso_df_sp')) {
+  if (x$spatial[m] != "off") {
     aniso_df_sp[1:2] <- mround(aniso_df_sp[1:2], 2L)
     aniso_df_sp[3] <- mround(aniso_df_sp[3], 0L)
     aniso_df_sp[4] <- paste0("Mat\u00e9rn anisotropic range (spatial): ", aniso_df_sp[2], " to ", aniso_df_sp[1], " at ", aniso_df_sp[3], "\u02da", "\n")
+
   }
-  if (exists('aniso_df_st')) {
+  if (x$spatiotemporal[m] != "off") {
     aniso_df_st[1:2] <- mround(aniso_df_st[1:2], 2L)
     aniso_df_st[3] <- mround(aniso_df_st[3], 0L)
     aniso_df_st[4] <- paste0("Mat\u00e9rn anisotropic range (spatiotemporal): ", aniso_df_st[2], " to ", aniso_df_st[1], " at ", aniso_df_st[3], "\u02da", "\n")
@@ -239,11 +240,11 @@ print_anisotropy <- function(x, m = 1L) {
     range_text <- aniso_df_st[[4]]
   }
   # Spatial and spatiotemporal shared
-  if (x$tmb_data$share_range[m] == 1 && x$spatial[m] == "on" && x$spatiotemporal[m] != "off") {
+  if (x$tmb_data$share_range[m] == 1L && x$spatial[m] == "on" && x$spatiotemporal[m] != "off") {
     range_text <- aniso_df_sp[[4]]
   }
   # Spatial and spatiotemporal NOT shared
-  if (x$tmb_data$share_range[m] == 0 && x$spatial[m] == "on" && x$spatiotemporal[m] != "off") {
+  if (x$tmb_data$share_range[m] == 0L && x$spatial[m] == "on" && x$spatiotemporal[m] != "off") {
     range_text <- paste0(aniso_df_sp[[4]], aniso_df_st[[4]])
   }
   range_text
