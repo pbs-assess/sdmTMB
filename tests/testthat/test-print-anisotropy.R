@@ -29,6 +29,7 @@ test_that("Print anisotropy prints correctly", {
   expect_output(print(fit_sp_only), regexp = "\\(spatial\\): 6.14 to 85.98 at 126")
 
   # Anisotropy with only spatiotemporal random field
+  set.seed(1)
   fit_st_only <- sdmTMB(
     data = pcod_2011,
     formula = density ~ 1,
