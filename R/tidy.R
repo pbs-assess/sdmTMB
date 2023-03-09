@@ -279,10 +279,10 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
       }
       out_ranef[[jj]] <- data.frame(
         term = paste0(re_name,"_",level_names),
-        estimate = re_est[start_pos:end_pos],
-        std.error = re_ses[start_pos:end_pos],
-        conf.low = re_est[start_pos:end_pos] - crit * re_ses[start_pos:end_pos],
-        conf.high = re_est[start_pos:end_pos] + crit * re_ses[start_pos:end_pos],
+        estimate = re_est[start_pos:end_pos,model],
+        std.error = re_ses[start_pos:end_pos,model],
+        conf.low = re_est[start_pos:end_pos,model] - crit * re_ses[start_pos:end_pos,model],
+        conf.high = re_est[start_pos:end_pos,model] + crit * re_ses[start_pos:end_pos,model],
         stringsAsFactors = FALSE
       )
       if (!conf.int) {
