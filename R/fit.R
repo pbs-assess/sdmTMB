@@ -1000,6 +1000,7 @@ sdmTMB <- function(
   for (i in seq_len(n_m)) X_ij_list[[i]] <- X_ij[[i]]
 
   n_t <- length(unique(data[[time]]))
+  random_walk <- if (!is.null(time_varying)) switch(time_varying_type, rw = 1L, rw0 = 2L, ar1 = 0L) else 0L
   tmb_data <- list(
     y_i        = y_i,
     n_t        = n_t,
@@ -1033,8 +1034,7 @@ sdmTMB <- function(
     flag = 1L, # part of TMB::normalize()
     calc_index_totals = 0L,
     calc_cog = 0L,
-    random_walk = as.integer(!is.null(time_varying) && time_varying_type == "rw"),
-    random_walk0 = as.integer(!is.null(time_varying) && time_varying_type == "rw0"),
+    random_walk = random_walk,
     ar1_time = as.integer(!is.null(time_varying) && time_varying_type == "ar1"),
     priors_b_n = length(not_na),
     priors_b_index = not_na - 1L,

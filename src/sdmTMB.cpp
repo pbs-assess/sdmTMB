@@ -159,7 +159,6 @@ Type objective_function<Type>::operator()()
   DATA_IVECTOR(rw_fields);
   DATA_INTEGER(include_spatial);
   DATA_INTEGER(random_walk);
-  DATA_INTEGER(random_walk0);
   DATA_INTEGER(ar1_time);
   DATA_IVECTOR(exclude_RE); // DELTA TODO currently shared...
   DATA_INTEGER(no_spatial); // omit all spatial calculations
@@ -525,12 +524,12 @@ Type objective_function<Type>::operator()()
   }
 
   // Time-varying effects (dynamic regression):
-  if (random_walk || ar1_time || random_walk0) {
+  if (random_walk == 1 || ar1_time || random_walk == 2) {
     array<Type> rho_time(X_rw_ik.cols(), n_m);
     rho_time.setZero();
     for (int m = 0; m < n_m; m++) {
       for (int k = 0; k < X_rw_ik.cols(); k++) {
-        if (random_walk) { // type = 'rw'
+        if (random_walk == 1) { // type = 'rw'
           // flat prior on the initial value... then:
           for (int t = 1; t < n_t; t++) {
             PARALLEL_REGION jnll -=
@@ -538,7 +537,7 @@ Type objective_function<Type>::operator()()
             if (sim_re(4) && simulate_t(t))
               SIMULATE{b_rw_t(t, k, m) = rnorm(b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)));}
           }
-        } else if (random_walk0) { // type = 'rw0'
+        } else if (random_walk == 2) { // type = 'rw0'
           // N(0, SD) prior on the initial value... then:
           for (int t = 0; t < n_t; t++) {
             if (t == 0) {
@@ -657,7 +656,7 @@ Type objective_function<Type>::operator()()
       if ((n_m == 2 && m == 1) || n_m == 1) {
         if (!poisson_link_delta) eta_i(i,m) += offset_i(i);
       }
-      if (random_walk || ar1_time || random_walk0) {
+      if (random_walk == 1 || ar1_time || random_walk == 2) {
         for (int k = 0; k < X_rw_ik.cols(); k++) {
           eta_rw_i(i,m) += X_rw_ik(i, k) * b_rw_t(year_i(i), k, m); // record it
           eta_i(i,m) += eta_rw_i(i,m);
@@ -984,7 +983,7 @@ Type objective_function<Type>::operator()()
     // Random walk covariates:
     array<Type> proj_rw_i(n_p,n_m);
     proj_rw_i.setZero();
-    if (random_walk || ar1_time || random_walk0) {
+    if (random_walk == 1 || ar1_time || random_walk == 2) {
       for (int m = 0; m < n_m; m++) {
         for (int i = 0; i < proj_X_rw_ik.rows(); i++) {
           for (int k = 0; k < proj_X_rw_ik.cols(); k++) {
