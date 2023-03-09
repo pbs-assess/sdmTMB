@@ -572,7 +572,8 @@ sdmTMB <- function(
   experimental = NULL
   ) {
 
-
+  data <- droplevels(data) # if data was subset, strips absent factors
+  
   delta <- isTRUE(family$delta)
   n_m <- if (delta) 2L else 1L
 
