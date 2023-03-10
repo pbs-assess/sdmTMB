@@ -1069,6 +1069,21 @@ Type objective_function<Type>::operator()()
     for (int m = 0; m < n_m; m++)
       proj_eta.col(m) = proj_fe.col(m) + proj_rf.col(m);
 
+    if (n_m > 1 && pop_pred) { // grab SE on fixed effects combined if delta model:
+      Type t1, t2;
+      vector<Type> proj_rf_delta(n_p);
+      for (int i = 0; i < n_p; i++) {
+        if (poisson_link_delta) {
+          proj_rf_delta(i) = proj_fe(i,0) + proj_fe(i,1); // check
+        } else {
+          t1 = InverseLink(proj_fe(i,0), link(0));
+          t2 = InverseLink(proj_fe(i,1), link(1));
+          proj_rf_delta(i) = Link(t1 * t2, link(1));
+        }
+      }
+      if (calc_se) ADREPORT(proj_rf_delta);
+    }
+
     // FIXME save memory by not reporting all these or optionally so for MVN/Bayes?
     REPORT(proj_fe);            // fixed effect projections
     REPORT(proj_omega_s_A);     // spatial random effect projections

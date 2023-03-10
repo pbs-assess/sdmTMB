@@ -711,9 +711,9 @@ predict.sdmTMB <- function(object, newdata = object$data,
         proj_eta <- sr_est_rep[["proj_eta"]]
         se <- sr_se_rep[["proj_eta"]]
       }
-      if (is.na(model)) model <- 1L
-      proj_eta <- proj_eta[,model,drop=TRUE]
-      se <- se[,model,drop=TRUE]
+      if (is.na(model)) model_temp <- 1L else model_temp <- model
+      proj_eta <- proj_eta[,model_temp,drop=TRUE]
+      se <- se[,model_temp,drop=TRUE]
       nd$est <- proj_eta
       nd$est_se <- se
     }
@@ -727,25 +727,33 @@ predict.sdmTMB <- function(object, newdata = object$data,
     }
 
     if (pop_pred) {
-      if (!se_fit) {
-        if (isTRUE(object$family$delta)) {
-          if (type == "response") {
-            nd$est1 <- object$family[[1]]$linkinv(r$proj_fe[,1])
-            nd$est2 <- object$family[[2]]$linkinv(r$proj_fe[,2])
-            nd$est <- nd$est1 * nd$est2
-          } else {
-            nd$est1 <- r$proj_fe[,1]
-            nd$est2 <- r$proj_fe[,2]
-          }
+      if (isTRUE(object$family$delta)) {
+        if (type == "response") {
+          nd$est1 <- object$family[[1]]$linkinv(r$proj_fe[,1])
+          nd$est2 <- object$family[[2]]$linkinv(r$proj_fe[,2])
+          nd$est <- nd$est1 * nd$est2
         } else {
-          if (type == "response") {
-            nd$est <- object$family$linkinv(r$proj_fe[,1])
-          } else {
-            nd$est <- r$proj_fe[,1]
+          nd$est1 <- r$proj_fe[,1]
+          nd$est2 <- r$proj_fe[,2]
+          if (is.na(model)) {
+            p1 <- object$family[[1]]$linkinv(r$proj_fe[,1])
+            p2 <- object$family[[2]]$linkinv(r$proj_fe[,2])
+            nd$est <- object$family[[2]]$linkfun(p1 * p1)
+            if (se_fit) {
+              nd$est <- sr_est_rep$proj_rf_delta
+              nd$est_se <- sr_se_rep$proj_rf_delta
+            }
           }
+        }
+      } else {
+        if (type == "response") {
+          nd$est <- object$family$linkinv(r$proj_fe[,1])
+        } else {
+          nd$est <- r$proj_fe[,1]
         }
       }
     }
+
     if (pop_pred && visreg_df) {
       nd$est <- r$proj_fe[,model,drop=TRUE] # FIXME re_form_iid??
     }
