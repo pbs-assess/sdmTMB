@@ -133,6 +133,16 @@ make_mesh <- function(data, xy_cols,
   fake_data <- data
   fake_data[["sdm_spatial_id"]] <- seq(1, nrow(fake_data))
 
+  if (mesh$n > 1000L) {
+    msg <- paste0(
+      "This mesh has > 1000 vertices. Mesh complexity has the single largest ",
+      "influence on fitting speed. Consider whether you require a mesh this ",
+      "complex, especially for initial model exploration. ",
+      "Check `your_mesh$mesh$n` to view the number of vertices."
+    )
+    cli_warn(msg)
+  }
+
   structure(list(
     loc_xy = loc_xy, xy_cols = xy_cols, mesh = mesh, spde = spde,
     loc_centers = loc_centers, A_st = A,
