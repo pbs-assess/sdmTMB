@@ -45,7 +45,7 @@ test_that("Model with random intercepts fits appropriately.", {
 
   # with RE:
   m <- sdmTMB(data = s, time = NULL,
-    formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde)
+              formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde)
   tidy(m, "fixed", conf.int = TRUE)
   .t <- tidy(m, "ran_pars", conf.int = TRUE)
   print(m)
@@ -58,16 +58,17 @@ test_that("Model with random intercepts fits appropriately.", {
   .cor <- cor(c(RE_vals, RE_vals2), b$RE[,1])
   expect_equal(round(.cor, 5), 0.8313)
   expect_equal(round(b$RE[seq_len(5)], 5),
-    c(-0.28645, 0.68619, 0.10028, -0.31436, -0.61168), tolerance = 1e-5)
+               c(-0.28645, 0.68619, 0.10028, -0.31436, -0.61168), tolerance = 1e-5)
 
   # missing a factor level:
   s_drop <- s[s$g != 1, , drop = FALSE]
-  spde_drop <- make_mesh(s_drop, c("x", "y"), n_knots = 10, type = "kmeans")
-  expect_error(
-    sdmTMB(data = s_drop,
-      formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde_drop),
-    regexp = "levels"
-  )
+  #spde_drop <- make_mesh(s_drop, c("x", "y"), n_knots = 10, type = "kmeans")
+  #s_mesh <- make_mesh(s, c("x", "y"), n_knots = 10, type = "kmeans")
+  # expect_error(
+  #   sdmTMB(data = s_drop,
+  #     formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde_drop),
+  #   regexp = "levels"
+  # )
 
   p <- predict(m)
   p.nd <- predict(m, newdata = s)
@@ -96,22 +97,45 @@ test_that("Model with random intercepts fits appropriately.", {
 
   # random ints match glmmTMB exactly:
   m <- sdmTMB(data = s,
-    formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde, spatial = "off")
+              formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde, spatial = "off")
   .t <- tidy(m, "ran_pars")
   m.glmmTMB <- glmmTMB::glmmTMB(data = s,
-    formula = observed ~ 1 + (1 | g) + (1 | h))
+                                formula = observed ~ 1 + (1 | g) + (1 | h))
   .v <- glmmTMB::VarCorr(m.glmmTMB)
   expect_equal(.t$estimate[.t$term == "sigma_G"][1],
-    sqrt(as.numeric(.v$cond$g)), tolerance = 1e-5)
+               sqrt(as.numeric(.v$cond$g)), tolerance = 1e-5)
   expect_equal(.t$estimate[.t$term == "sigma_G"][2],
-    sqrt(as.numeric(.v$cond$h)), tolerance = 1e-5)
+               sqrt(as.numeric(.v$cond$h)), tolerance = 1e-5)
 
   sdmTMB_re <- as.list(m$sd_report, "Estimate")
   glmmTMB_re <- glmmTMB::ranef(m.glmmTMB)$cond
   expect_equal(c(glmmTMB_re$g$`(Intercept)`, glmmTMB_re$h$`(Intercept)`),
-    sdmTMB_re$RE[,1], tolerance = 1e-5)
+               sdmTMB_re$RE[,1], tolerance = 1e-5)
 })
 
+test_that("Test that droplevels matches glm.", {
+  skip_on_cran()
+  skip_if_not_installed("INLA")
+  skip_if_not_installed("glmmTMB")
+  set.seed(1)
+  df <- data.frame(y = rnorm(100),
+                   a_char = sample(c("a","b","c","d","e"), size=100, replace=T))
+  df$a_fac <- as.factor(df$a_char)
+  df$a_extra_fac <- factor(df$a_fac, levels = c("a","b","c","d","e","f"))
+
+  fit_lm <- lm(y ~ -1 + a_extra_fac, data = df)
+  fit_sdmTMB <- sdmTMB(y ~ -1 + a_extra_fac, data = df, spatial = FALSE)
+  expect_equal(as.numeric(coef(fit_lm)), tidy(fit_sdmTMB)$estimate)
+
+  # prediction to new levels fails on both
+  newdf <- data.frame(a_char = sample(c("a","b","c","d","e","f"), size=100, replace=T))
+  newdf$a_fac <- as.factor(newdf$a_char)
+  fit_lm <- lm(y ~ -1 + a_fac, data = df)
+  fit_sdmTMB <- sdmTMB(y ~ -1 + a_fac, data = df, spatial = FALSE)
+  expect_error(predict(fit_lm, newdf), regexp = "new levels")
+  expect_error(predict(fit_sdmTMB, newdf), regexp = "new levels")
+
+})
 
 test_that("Tidy returns random intercepts appropriately.", {
   skip_on_cran()
@@ -163,7 +187,7 @@ test_that("Tidy returns random intercepts appropriately.", {
 
   # Test against same model estimated from glmmTMB
   fit_glmmtmb <- glmmTMB::glmmTMB(data = s,
-                                formula = observed ~ 1 + (1 | g) + (1 | h))
+                                  formula = observed ~ 1 + (1 | g) + (1 | h))
   expect_equal(ranef(fit_glmmtmb)$cond$g[[1]],
                ranint$estimate[1:30], tolerance = 1e-5)
 
