@@ -326,11 +326,12 @@ print_footer <- function(x) {
   if (as.logical(x$tmb_data$anisotropy)) {
     cat("See ?plot_anisotropy to plot the anisotropic range.\n")
   }
-  # suppressWarnings(suppressMessages(ok <- sanity(x)$all_ok))
-  # if (!isTRUE(ok)) {
-  # cat("Possible issues detected; printing output of sanity():\n\n")
-  # sanity(x)
-  # }
+  sink(tempfile())
+  suppressWarnings(suppressMessages(s <- sanity(x)))
+  sink()
+  if (!all(unlist(s))) {
+    cat("\n**Possible issues detected! Check output of sanity().**\n")
+  }
 }
 
 #' @export
