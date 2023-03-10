@@ -67,10 +67,12 @@ test_that("Test that droplevels matches glmmTMB on (1 | factor)", {
     "2003", "2004", "2005", "2007", "2009", "2011", "2013", "2015",
     "2017", "9999", "9998"
   ))
-
   p1 <- predict(fit_glmmTMB, newdata = nd, re.form = NULL)
-  p2 <- predict(fit_sdmTMB, newdata = nd)$est
-  expect_equal(p1, p2, tolerance = 1e-3)
+
+  expect_error({
+    p2 <- predict(fit_sdmTMB, newdata = nd)$est
+  }, regexp = "levels")
+  # expect_equal(p1, p2, tolerance = 1e-3)
 
   # drop level on predict
   nd <- d
@@ -81,8 +83,10 @@ test_that("Test that droplevels matches glmmTMB on (1 | factor)", {
   ))
 
   p1 <- predict(fit_glmmTMB, newdata = nd, re.form = NULL)
-  p2 <- predict(fit_sdmTMB, newdata = nd)$est
-  expect_equal(p1, p2, tolerance = 1e-3)
+  expect_error({
+    p2 <- predict(fit_sdmTMB, newdata = nd)$est
+  }, regexp = "levels")
+  # expect_equal(p1, p2, tolerance = 1e-3)
 })
 
 test_that("re_form_iid is not specified but new levels in newdata doesn't blow up", {

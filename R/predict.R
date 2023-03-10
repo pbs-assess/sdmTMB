@@ -430,8 +430,8 @@ predict.sdmTMB <- function(object, newdata = object$data,
         levels_fit <- levels(object$data[[RE_names[i]]])
         levels_nd <- levels(newdata[[RE_names[i]]])
         if (sum(!levels_nd %in% levels_fit)) {
-          msg <- paste0("Extra levels round in random intercept factor levels for ", RE_names[i],
-            ". Please remove them.")
+          msg <- paste0("Extra levels found in random intercept factor levels for `", RE_names[i],
+            "`. Please remove them.")
           cli_abort(msg)
         }
       }
