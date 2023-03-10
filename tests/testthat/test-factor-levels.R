@@ -84,3 +84,35 @@ test_that("Test that droplevels matches glmmTMB on (1 | factor)", {
   p2 <- predict(fit_sdmTMB, newdata = nd)$est
   expect_equal(p1, p2, tolerance = 1e-3)
 })
+
+test_that("re_form_iid is not specified but new levels in newdata doesn't blow up", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+  skip_if_not_installed("glmmTMB")
+
+  sub <- pcod[pcod$year != 2017, ]
+  sub$fyear <- as.factor(sub$year)
+  fit <- sdmTMB(density ~ 1 + (1 | fyear),
+    data = sub,
+    family = tweedie(link = "log"),
+    spatial = "off"
+  )
+  d <- pcod
+  d$fyear <- as.factor(d$year)
+  p <- predict(fit, newdata = d, re_form_iid = NA) # works
+  expect_error({
+    predict(fit, newdata = d) # blows up
+  }, regexp = "levels")
+
+  # what about just with 1 level?
+  fit_glmmTMB <- glmmTMB::glmmTMB(density ~ 1 + (1 | fyear),
+    data = sub,
+    family = glmmTMB::tweedie(link = "log")
+  )
+  nd <- sub[sub$year == 2009, ]
+  p_glmmTMB <- predict(fit_glmmTMB, newdata = nd)
+  p <- predict(fit, newdata = nd)$est
+  expect_equal(p_glmmTMB, p, tolerance = 1e-4)
+})
+

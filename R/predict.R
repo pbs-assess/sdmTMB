@@ -425,6 +425,18 @@ predict.sdmTMB <- function(object, newdata = object$data,
     # fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
     proj_RE_indexes <- vapply(RE_names, function(x) as.integer(nd[[x]]) - 1L, rep(1L, nrow(nd)))
 
+    if (isFALSE(pop_pred_iid)) {
+      for (i in seq_along(RE_names)) {
+        levels_fit <- levels(object$data[[RE_names[i]]])
+        levels_nd <- levels(newdata[[RE_names[i]]])
+        if (sum(!levels_nd %in% levels_fit)) {
+          msg <- paste0("Extra levels round in random intercept factor levels for ", RE_names[i],
+            ". Please remove them.")
+          cli_abort(msg)
+        }
+      }
+    }
+
     proj_X_ij <- list()
     for (i in seq_along(object$formula)) {
       f2 <- remove_s_and_t2(object$split_formula[[i]]$fixedFormula)
