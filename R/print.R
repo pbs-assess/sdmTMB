@@ -222,13 +222,13 @@ print_anisotropy <- function(x, m = 1L) {
   if (x$spatial[m] != "off") {
     aniso_df_sp[1:2] <- mround(aniso_df_sp[1:2], 2L)
     aniso_df_sp[3] <- mround(aniso_df_sp[3], 0L)
-    aniso_df_sp[4] <- paste0("Mat\u00e9rn anisotropic range (spatial): ", aniso_df_sp[2], " to ", aniso_df_sp[1], " at ", aniso_df_sp[3], "\u02da", "\n")
+    aniso_df_sp[4] <- paste0("Mat\u00e9rn anisotropic range (spatial): ", aniso_df_sp[2], " to ", aniso_df_sp[1], " at ", aniso_df_sp[3], "deg", "\n")
 
   }
   if (x$spatiotemporal[m] != "off") {
     aniso_df_st[1:2] <- mround(aniso_df_st[1:2], 2L)
     aniso_df_st[3] <- mround(aniso_df_st[3], 0L)
-    aniso_df_st[4] <- paste0("Mat\u00e9rn anisotropic range (spatiotemporal): ", aniso_df_st[2], " to ", aniso_df_st[1], " at ", aniso_df_st[3], "\u02da", "\n")
+    aniso_df_st[4] <- paste0("Mat\u00e9rn anisotropic range (spatiotemporal): ", aniso_df_st[2], " to ", aniso_df_st[1], " at ", aniso_df_st[3], "deg", "\n")
   }
 
   # Spatial only
