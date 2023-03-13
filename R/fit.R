@@ -1420,7 +1420,7 @@ sdmTMB <- function(
   }
 
   if (nlminb_loops > 1) {
-    if (!silent) cli_inform("running extra nlminb loops\n")
+    if (!silent) cli_inform("running extra nlminb optimization\n")
     for (i in seq(2, nlminb_loops, length = max(0, nlminb_loops - 1))) {
       temp <- tmb_opt[c("iterations", "evaluations")]
       tmb_opt <- stats::nlminb(
@@ -1431,7 +1431,7 @@ sdmTMB <- function(
     }
   }
   if (newton_loops > 0) {
-    if (!silent) cli_inform("running newtonsteps\n")
+    if (!silent) cli_inform("attempting to improve convergence with optimHess\n")
     for (i in seq_len(newton_loops)) {
       g <- as.numeric(tmb_obj$gr(tmb_opt$par))
       h <- stats::optimHess(tmb_opt$par, fn = tmb_obj$fn, gr = tmb_obj$gr)

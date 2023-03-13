@@ -9,9 +9,12 @@
 #'   Sometimes restarting the optimizer at the previous best values aids
 #'   convergence. If the maximum gradient is still too large,
 #'   try increasing this to `2`.
-#' @param newton_loops How many Newton optimization steps to try with
-#'   [stats::optimHess()] after running [stats::nlminb()]. Sometimes aids
-#'   convergence.
+#' @param newton_loops How many Newton optimization steps to try after running
+#'   [stats::nlminb()]. This sometimes aids convergence by further reducing the
+#'   log-likelihood gradient with respect to the fixed effects. This calculates
+#'   the Hessian at the current MLE [with stats::optimHess()] using a
+#'   finite-difference approach and uses this to update the fixed effect
+#'   estimates.
 #' @param mgcv **Deprecated** Parse the formula with [mgcv::gam()]?
 #' @param map_rf **Deprecated** use `spatial = 'off', spatiotemporal = 'off'` in
 #'   [sdmTMB()].
