@@ -2,8 +2,8 @@
 #'
 #' @param object Fitted model from [sdmTMB()].
 #' @param big_sd_log10 Value to check size of standard errors against. A value
-#'   of 3 would indicate that standard errors greater than `10^3` should be
-#'   flagged.
+#'   of 2 would indicate that standard errors greater than `10^2` (i.e., 100)
+#'   should be flagged.
 #' @param gradient_thresh Gradient threshold to issue warning.
 #'
 #' @return An invisible named list of checks.
@@ -34,7 +34,7 @@
 #' all(unlist(s))
 #' all(unlist(s2))
 
-sanity <- function(object, big_sd_log10 = 3, gradient_thresh = 0.001) {
+sanity <- function(object, big_sd_log10 = 2, gradient_thresh = 0.001) {
 
   # make it easy to use output from try()
   if (length(object) <= 1L) {
