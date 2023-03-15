@@ -4,14 +4,14 @@
 \alias{sanity}
 \title{Sanity check of an sdmTMB model}
 \usage{
-sanity(object, big_sd_log10 = 3, gradient_thresh = 0.001)
+sanity(object, big_sd_log10 = 2, gradient_thresh = 0.001)
 }
 \arguments{
 \item{object}{Fitted model from \code{\link[=sdmTMB]{sdmTMB()}}.}
 
 \item{big_sd_log10}{Value to check size of standard errors against. A value
-of 3 would indicate that standard errors greater than \code{10^3} should be
-flagged.}
+of 2 would indicate that standard errors greater than \code{10^2} (i.e., 100)
+should be flagged.}
 
 \item{gradient_thresh}{Gradient threshold to issue warning.}
 }

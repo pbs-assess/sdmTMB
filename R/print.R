@@ -175,14 +175,14 @@ print_time_varying <- function(x, m = 1) {
   mm_tv
 }
 
-print_range <- function(x, m = 1) {
+print_range <- function(x, m = 1L, digits = 2L) {
   b <- tidy(x, effects = "ran_pars", model = m, silent = TRUE)
   range <- b$estimate[b$term == "range"]
   if (is.null(range)) {
     return(NULL)
   }
 
-  range <- mround(range, 2L)
+  range <- mround(range, digits)
   range_text <- if (x$tmb_data$share_range[m]) {
     paste0("Mat\u00e9rn range: ", range[1], "\n")
   } else {
@@ -203,35 +203,56 @@ print_range <- function(x, m = 1) {
   range_text
 }
 
-print_anisotropy <- function(x, m = 1L) {
+print_anisotropy <- function(x, m = 1L, digits = 1L) {
   aniso_df <- plot_anisotropy(x, return_data = TRUE)
   aniso_df$degree <- aniso_df$angle * 180 / pi
 
   if (isTRUE(x$family$delta)) {
-    aniso_df_sp <- aniso_df[aniso_df$random_field == "spatial" & aniso_df$model_num == m, ][1, c("a", "b", "degree")]
-    aniso_df_st <- aniso_df[aniso_df$random_field == "spatiotemporal" & aniso_df$model_num == m, ][1L, c("a", "b", "degree")]
+    aniso_df_sp <- aniso_df[aniso_df$random_field == "spatial" &
+        aniso_df$model_num == m, ][1, c("a", "b", "degree")]
+    aniso_df_st <- aniso_df[aniso_df$random_field == "spatiotemporal" &
+        aniso_df$model_num == m, ][1L, c("a", "b", "degree")]
   } else {
-    aniso_df_sp <- aniso_df[aniso_df$random_field == "spatial", ][1L, c("a", "b", "degree")]
-    aniso_df_st <- aniso_df[aniso_df$random_field == "spatiotemporal", ][1L, c("a", "b", "degree")]
+    if (x$spatial[m] != "off") {
+      aniso_df_sp <- aniso_df[aniso_df$random_field == "spatial", ][1L, c("a", "b", "degree")]
+    }
+    if (x$spatiotemporal[m] != "off") {
+      aniso_df_st <- aniso_df[aniso_df$random_field == "spatiotemporal", ][1L, c("a", "b", "degree")]
+    }
   }
 
-  aniso_df_sp[1:2] <- mround(aniso_df_sp[1:2], 2L)
-  aniso_df_st[1:2] <- mround(aniso_df_st[1:2], 2L)
-  aniso_df_sp[3] <- mround(aniso_df_sp[3], 0L)
-  aniso_df_st[3] <- mround(aniso_df_st[3], 0L)
+  if (x$spatial[m] != "off") {
+    aniso_df_sp[1:2] <- mround(aniso_df_sp[1:2], digits)
+    aniso_df_sp[3] <- mround(aniso_df_sp[3], 0L)
+    aniso_df_sp[4] <- paste0(
+      "Mat\u00e9rn anisotropic range (spatial): ",
+      aniso_df_sp[2], " to ", aniso_df_sp[1], " at ", aniso_df_sp[3], " deg.", "\n"
+    )
+  }
+  if (x$spatiotemporal[m] != "off") {
+    aniso_df_st[1:2] <- mround(aniso_df_st[1:2], digits)
+    aniso_df_st[3] <- mround(aniso_df_st[3], 0L)
+    aniso_df_st[4] <- paste0(
+      "Mat\u00e9rn anisotropic range (spatiotemporal): ",
+      aniso_df_st[2], " to ", aniso_df_st[1], " at ", aniso_df_st[3], " deg.", "\n"
+    )
+  }
 
-  range_text <- if (x$tmb_data$share_range[m]) {
-    paste0(
-      "Mat\u00e9rn anisotropic range (spatial): ", aniso_df_sp[2], " to ",
-      aniso_df_sp[1], " at ", aniso_df_sp[3], "\u02da", "\n"
-    )
-  } else {
-    paste0(
-      "Mat\u00e9rn anisotropic range (spatial): ", aniso_df_sp[2], " to ",
-      aniso_df_sp[1], " at ", aniso_df_sp[3], "\u02da", "\n",
-      "Mat\u00e9rn anisotropic range (spatiotemporal): ", aniso_df_st[2], " to ",
-      aniso_df_st[1], " at ", aniso_df_st[3], "\u02da", "\n"
-    )
+  # Spatial only
+  if (x$spatial[m] == "on" && x$spatiotemporal[m] == "off") {
+    range_text <- aniso_df_sp[[4]]
+  }
+  # Spatiotemporal only
+  if (x$spatial[m] == "off" && x$spatiotemporal[m] != "off") {
+    range_text <- aniso_df_st[[4]]
+  }
+  # Spatial and spatiotemporal shared
+  if (x$tmb_data$share_range[m] == 1L && x$spatial[m] == "on" && x$spatiotemporal[m] != "off") {
+    range_text <- aniso_df_sp[[4]]
+  }
+  # Spatial and spatiotemporal NOT shared
+  if (x$tmb_data$share_range[m] == 0L && x$spatial[m] == "on" && x$spatiotemporal[m] != "off") {
+    range_text <- paste0(aniso_df_sp[[4]], aniso_df_st[[4]])
   }
   range_text
 }

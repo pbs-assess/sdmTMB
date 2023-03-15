@@ -109,9 +109,9 @@ sdmTMBcontrol <- function(
   assert_that(is.numeric(nlminb_loops), is.numeric(newton_loops))
   assert_that(nlminb_loops >= 1L)
   assert_that(newton_loops >= 0L)
-  if (newton_loops > 2L) {
-    cli::cli_inform("There is rarely a benefit to making `newton_loops` > 1.")
-  }
+  # if (newton_loops > 1L) {
+  #   cli::cli_inform("There is rarely a benefit to making `newton_loops` > 1.")
+  # }
 
   if (!is.null(parallel)) {
     assert_that(!is.na(parallel), parallel > 0)
