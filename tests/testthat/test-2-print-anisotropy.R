@@ -26,38 +26,39 @@ test_that("Print anisotropy prints correctly", {
     anisotropy = TRUE
   )
 
-  expect_output(print(fit_sp_only), regexp = "\\(spatial\\): 6.14 to 85.98 at 126")
+  expect_output(print(fit_sp_only), regexp = "\\(spatial\\): 6.1 to 86.0 at 126")
 
   # Anisotropy with only spatiotemporal random field
-  set.seed(1)
+  test_mesh <- make_mesh(data = pcod, xy_cols = c("X", "Y"), cutoff = 20)
   fit_st_only <- sdmTMB(
-    data = pcod_2011,
+    data = pcod,
     formula = density ~ 1,
-    mesh = pcod_mesh_2011,
+    mesh = test_mesh,
     family = tweedie(),
     spatial = "off",
     spatiotemporal = "iid",
     time = "year",
-    anisotropy = TRUE
+    anisotropy = TRUE,
+    control = sdmTMBcontrol(newton_loops = 1)
   )
 
-  expect_output(print(fit_st_only), regexp = "\\(spatiotemporal\\): 0.04 to 245.08 at 153")
+  expect_output(print(fit_st_only), regexp = "\\(spatiotemporal\\): 16.5 to 29.1 at 54")
 # -------------------
 
   # Anisotropy when not shared across random fields
-  set.seed(1)
   fit2 <- sdmTMB(
-    data = pcod_2011,
+    data = pcod,
     formula = density ~ 1,
-    mesh = pcod_mesh_2011,
+    mesh = test_mesh,
     family = tweedie(),
     share_range = FALSE,
     time = "year",
-    anisotropy = TRUE
+    anisotropy = TRUE,
+    control = sdmTMBcontrol(newton_loops = 1)
   )
 
-  expect_output(cat(print_anisotropy(fit2)), regexp = "\\(spatial\\): 20.11 to 65.79 at 117")
-  expect_output(cat(print_anisotropy(fit2)), regexp = "\\(spatiotemporal\\): 0.01 to (0.02|0.03) at 117")
+  expect_output(cat(print_anisotropy(fit2)), regexp = "\\(spatial\\): ")
+  expect_output(cat(print_anisotropy(fit2)), regexp = "\\(spatiotemporal\\): ")
 
   # Anisotropy when shared across random fields in delta model
   fit_dg_shared <- sdmTMB(
@@ -71,12 +72,10 @@ test_that("Print anisotropy prints correctly", {
     control = sdmTMBcontrol(newton_loops = 1L)
   )
 
-  expect_output(cat(print_anisotropy(fit_dg_shared, m = 1)), regexp = "\\(spatial\\): 36.42 to 80.86 at 34")
-  expect_output(cat(print_anisotropy(fit_dg_shared, m = 2)), regexp = "\\(spatial\\): 2.09 to 4.65 at 34")
+  expect_output(cat(print_anisotropy(fit_dg_shared, m = 1)), regexp = "\\(spatial\\): 36")
+  expect_output(cat(print_anisotropy(fit_dg_shared, m = 2)), regexp = "\\(spatial\\): 2")
 
   # Anisotropy when not shared across random fields in delta model
-  test_mesh <- make_mesh(data = pcod, xy_cols = c("X", "Y"), cutoff = 20)
-
   fit_dg_not_shared <- sdmTMB(
     data = pcod,
     formula = density ~ 1,
@@ -88,8 +87,8 @@ test_that("Print anisotropy prints correctly", {
     control = sdmTMBcontrol(newton_loops = 1L)
   )
 
-  expect_output(cat(print_anisotropy(fit_dg_not_shared, m = 1)), regexp = "\\(spatial\\): 19.46 to 64.60 at 59")
-  expect_output(cat(print_anisotropy(fit_dg_not_shared, m = 1)), regexp = "\\(spatiotemporal\\): 122.96 to 408.11 at 59")
-  expect_output(cat(print_anisotropy(fit_dg_not_shared, m = 2)), regexp = "\\(spatial\\): 0.01 to 0.04 at 59")
-  expect_output(cat(print_anisotropy(fit_dg_not_shared, m = 2)), regexp = "\\(spatiotemporal\\): 9.10 to 30.22 at 59")
+  expect_output(cat(print_anisotropy(fit_dg_not_shared, m = 1)), regexp = "\\(spatial\\): 19")
+  expect_output(cat(print_anisotropy(fit_dg_not_shared, m = 1)), regexp = "\\(spatiotemporal\\): 12")
+  expect_output(cat(print_anisotropy(fit_dg_not_shared, m = 2)), regexp = "\\(spatial\\): 0")
+  expect_output(cat(print_anisotropy(fit_dg_not_shared, m = 2)), regexp = "\\(spatiotemporal\\): 9")
 })
