@@ -16,10 +16,10 @@ test_df <-
   data %>% dplyr::select(year, N_dat, prop_removed, obsHooksPerSet, scale_fac, upper_bound, low, high) %>%
   dplyr::slice(1:40)
 
-#write_csv(test_df, '../sdmTMB/data-raw/test_df.csv')
+#write_csv(test_df, '../sdmTMB/scratch/upr_censoring_test_df.csv')
 
 
-test_df <- read.csv(here::here('data-raw', 'test_df.csv'))
+test_df <- read.csv(here::here('scratch', 'upr_censoring_test_df.csv'))
 # p_tk = proportion of baits removed in fishing event k of year t
 # p_istar = true breakdown point for species i, which is cprop?
 
