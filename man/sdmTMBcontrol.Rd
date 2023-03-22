@@ -43,7 +43,7 @@ try increasing this to \code{2}.}
 \item{newton_loops}{How many Newton optimization steps to try after running
 \code{\link[stats:nlminb]{stats::nlminb()}}. This sometimes aids convergence by further reducing the
 log-likelihood gradient with respect to the fixed effects. This calculates
-the Hessian at the current MLE \code{\link[with stats:optimHess]{with stats::optimHess()}} using a
+the Hessian at the current MLE with \code{\link[stats:optim]{stats::optimHess()}} using a
 finite-difference approach and uses this to update the fixed effect
 estimates.}
 
