@@ -17,7 +17,7 @@
 #'   given by `newdata` be calculated? Warning: the current implementation can
 #'   be slow for large data sets or high-resolution projections unless
 #'   `re_form = NA` (omitting random fields). A faster option to approximate
-#'   point-wise uncertainty may be to use the `nsim` argument.
+#'   point-wise uncertainty is to use the `nsim` argument.
 #' @param return_tmb_object Logical. If `TRUE`, will include the TMB object in a
 #'   list format output. Necessary for the [get_index()] or [get_cog()]
 #'   functions.
@@ -291,6 +291,14 @@ predict.sdmTMB <- function(object, newdata = object$data,
   model <- model[[1]]
   type <- match.arg(type)
   # FIXME parallel setup here?
+
+  if (!is.null(re_form) && isTRUE(se_fit)) {
+    msg <- paste0("Prediction can be slow when `se_fit = TRUE` and random fields ",
+      "are included (i.e., `re_form = NA`). Consider using the `nsim` argument ",
+      "to take draws from the joint precision matrix and summarizing the standard ",
+      "devation of those draws.")
+    cli_inform(msg)
+  }
 
   sys_calls <- unlist(lapply(sys.calls(), deparse)) # retrieve function that called this
   vr <- check_visreg(sys_calls)

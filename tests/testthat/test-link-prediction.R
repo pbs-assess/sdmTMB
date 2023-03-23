@@ -53,7 +53,7 @@ test_that("Link/response type works", {
   expect_gt(mean(p$est2), 30)
 
   # with std. error
-  p <- predict(fit, type = "link", re_form = NA, se_fit = TRUE)
+  expect_message(p <- predict(fit, type = "link", re_form = NA, se_fit = TRUE), regexp = "slow")
   mean(p$est)
 
   p <- predict(fit_delt, type = "link", re_form = NA, se_fit = TRUE)

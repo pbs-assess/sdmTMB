@@ -39,7 +39,7 @@ fitted data.}
 given by \code{newdata} be calculated? Warning: the current implementation can
 be slow for large data sets or high-resolution projections unless
 \code{re_form = NA} (omitting random fields). A faster option to approximate
-point-wise uncertainty may be to use the \code{nsim} argument.}
+point-wise uncertainty is to use the \code{nsim} argument.}
 
 \item{re_form}{\code{NULL} to specify including all spatial/spatiotemporal random
 effects in predictions. \code{~0} or \code{NA} for population-level predictions.
