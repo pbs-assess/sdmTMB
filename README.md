@@ -17,43 +17,31 @@ sdmTMB is an R package that fits spatial and spatiotemporal predictive-process G
 
 ## Table of contents
 
-- <a href="#installation" id="toc-installation">Installation</a>
-- <a href="#overview" id="toc-overview">Overview</a>
-- <a href="#getting-help" id="toc-getting-help">Getting help</a>
-- <a href="#citation" id="toc-citation">Citation</a>
-- <a href="#related-software" id="toc-related-software">Related
-  software</a>
-- <a href="#basic-use" id="toc-basic-use">Basic use</a>
-- <a href="#advanced-functionality"
-  id="toc-advanced-functionality">Advanced functionality</a>
-  - <a href="#time-varying-coefficients"
-    id="toc-time-varying-coefficients">Time-varying coefficients</a>
-  - <a href="#spatially-varying-coefficients-svc"
-    id="toc-spatially-varying-coefficients-svc">Spatially varying
-    coefficients (SVC)</a>
-  - <a href="#random-intercepts" id="toc-random-intercepts">Random
-    intercepts</a>
-  - <a href="#breakpoint-and-threshold-effects"
-    id="toc-breakpoint-and-threshold-effects">Breakpoint and threshold
-    effects</a>
-  - <a href="#simulating-data" id="toc-simulating-data">Simulating data</a>
-  - <a href="#sampling-from-the-joint-precision-matrix"
-    id="toc-sampling-from-the-joint-precision-matrix">Sampling from the
-    joint precision matrix</a>
-  - <a href="#calculating-uncertainty-on-spatial-predictions"
-    id="toc-calculating-uncertainty-on-spatial-predictions">Calculating
-    uncertainty on spatial predictions</a>
-  - <a href="#cross-validation" id="toc-cross-validation">Cross
-    validation</a>
-  - <a href="#priors" id="toc-priors">Priors</a>
-  - <a href="#bayesian-mcmc-sampling-with-stan"
-    id="toc-bayesian-mcmc-sampling-with-stan">Bayesian MCMC sampling with
-    Stan</a>
-  - <a href="#turning-off-random-fields"
-    id="toc-turning-off-random-fields">Turning off random fields</a>
-  - <a href="#using-a-custom-inla-mesh"
-    id="toc-using-a-custom-inla-mesh">Using a custom INLA mesh</a>
-  - <a href="#barrier-meshes" id="toc-barrier-meshes">Barrier meshes</a>
+- [Installation](#installation)
+- [Overview](#overview)
+- [Getting help](#getting-help)
+- [Citation](#citation)
+- [Related software](#related-software)
+- [Basic use](#basic-use)
+- [Advanced functionality](#advanced-functionality)
+  - [Time-varying coefficients](#time-varying-coefficients)
+  - [Spatially varying coefficients
+    (SVC)](#spatially-varying-coefficients-svc)
+  - [Random intercepts](#random-intercepts)
+  - [Breakpoint and threshold
+    effects](#breakpoint-and-threshold-effects)
+  - [Simulating data](#simulating-data)
+  - [Sampling from the joint precision
+    matrix](#sampling-from-the-joint-precision-matrix)
+  - [Calculating uncertainty on spatial
+    predictions](#calculating-uncertainty-on-spatial-predictions)
+  - [Cross validation](#cross-validation)
+  - [Priors](#priors)
+  - [Bayesian MCMC sampling with
+    Stan](#bayesian-mcmc-sampling-with-stan)
+  - [Turning off random fields](#turning-off-random-fields)
+  - [Using a custom INLA mesh](#using-a-custom-inla-mesh)
+  - [Barrier meshes](#barrier-meshes)
 
 ## Installation
 
