@@ -132,7 +132,7 @@ get_upper_bound <- function(
   high <- N_dat
 
   # FIXME: is there a reason that this is prop_removed > cprop, not prop_removed >= cprop?
-  high[which(prop_removed >= cprop)] <- high[prop_removed >= cprop] +
+  high[prop_removed >= cprop] <- high[prop_removed >= cprop] +
     upper_bound[prop_removed >= cprop]
 
   upper_bound <- round(upper_bound, 3)
