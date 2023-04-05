@@ -139,8 +139,10 @@ get_upper_bound <- function(
 # Testing:
 test_upper <-
   get_upper_bound(
-    data = test_df, prop_removed = "prop_removed", N_dat = "N_dat",
-    n_hooks = "obsHooksPerSet", cprop = 0.95
+    test_df$prop_removed,
+    test_df$N_dat,
+    test_df$obsHooksPerSet,
+    cprop = 0.95
   )
 
 test_df$high
