@@ -112,8 +112,6 @@ get_upper_bound <- function(
   assertthat::assert_that(cprop < 1)
   assertthat::assert_that(sum(is.na(c(prop_removed, n_catch, n_hooks))) == 0)
 
-  N_dat <- n_catch
-
   removed_ind <- prop_removed > cprop
   # FIXME: add cli::cli_abort()?
   # probably need to throw error if length(removed_ind) == 0L
@@ -128,16 +126,12 @@ get_upper_bound <- function(
   upper_bound[removed_ind] <- (prop_removed[removed_ind] - cprop) *
     n_hooks[removed_ind] * scale_fac[removed_ind]
 
-  low <- N_dat
-  high <- N_dat
-
+  high <- n_catch
   # FIXME: is there a reason that this is prop_removed > cprop, not prop_removed >= cprop?
   high[prop_removed >= cprop] <- high[prop_removed >= cprop] +
     upper_bound[prop_removed >= cprop]
-
-  upper_bound <- round(upper_bound, 3)
   high <- round(high)
-  data.frame(low = low, upr = high)
+  data.frame(low = n_catch, upr = high)
 }
 
 # Testing:
