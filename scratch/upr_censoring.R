@@ -19,7 +19,6 @@
 
 # write_csv(test_df, '../sdmTMB/scratch/upr_censoring_test_df.csv')
 
-
 test_df <- read.csv(here::here("scratch", "upr_censoring_test_df.csv"))
 # p_tk = proportion of baits removed in fishing event k of year t
 # p_istar = true breakdown point for species i, which is cprop?
@@ -107,7 +106,12 @@ get_upper_bound <- function(
     cprop = 0.95) {
 
   assertthat::assert_that(is.numeric(prop_removed), is.numeric(n_catch), is.numeric(n_hooks))
-  assertthat::assert_that(is.numeric(prop_removed), is.numeric(n_catch), is.numeric(n_hooks))
+  assertthat::assert_that(length(prop_removed) == length(n_catch))
+  assertthat::assert_that(length(prop_removed) == length(n_hooks))
+  assertthat::assert_that(cprop > 0)
+  assertthat::assert_that(cprop < 1)
+  assertthat::assert_that(sum(is.na(c(prop_removed, n_catch, n_hooks))) == 0)
+
   N_dat <- n_catch
 
   removed_ind <- prop_removed > cprop
