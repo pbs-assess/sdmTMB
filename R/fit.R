@@ -81,9 +81,15 @@ NULL
 #'   used, it will represent a local-time-trend model. See
 #'   \doi{10.1111/ecog.05176} and the [spatial trends
 #'   vignette](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html).
-#'   Note this predictor should be centered to have mean zero and have a
+#'   Note this predictor should usually be centered to have mean zero and have a
 #'   standard deviation of approximately 1 and should likely also be included as
-#'   a main effect. Structure must currently be shared in delta models.
+#'   a main effect.
+#'   **The spatial intercept is controlled by the `spatial` argument**; therefore,
+#'   include or exclude the spatial intercept by setting `spatial = 'on'` or
+#'   `'off'`. The only time when it matters whether `spatial_varying` excludes
+#'   an intercept is in the case of factor predictors. In this case, if
+#'   `spatial_varying` excludes the intercept (`~ 0` or `~ -1`), you should set
+#'   `spatial = 'off'` to match.  Structure must be shared in delta models.
 #' @param weights A numeric vector representing optional likelihood weights for
 #'   the conditional model. Implemented as in \pkg{glmmTMB}: weights do not have
 #'   to sum to one and are not internally modified. Can also be used for trials
@@ -573,7 +579,7 @@ sdmTMB <- function(
   ) {
 
   data <- droplevels(data) # if data was subset, strips absent factors
-  
+
   delta <- isTRUE(family$delta)
   n_m <- if (delta) 2L else 1L
 
@@ -615,6 +621,15 @@ sdmTMB <- function(
     spatial <- rep(parse_spatial_arg(spatial), n_m)
   }
   include_spatial <- "on" %in% spatial
+
+  if (!include_spatial && !is.null(spatial_varying)) {
+    # move intercept into spatial_varying
+    omit_spatial_intercept <- TRUE
+    include_spatial <- TRUE
+    spatial <- "on" # checked later
+  } else {
+    omit_spatial_intercept <- FALSE
+  }
 
   if (!include_spatial && all(spatiotemporal == "off") || !include_spatial && all(spatial_only)) {
     # message("Both spatial and spatiotemporal fields are set to 'off'.")
@@ -771,6 +786,27 @@ sdmTMB <- function(
   spatial_varying_formula <- spatial_varying # save it
   if (!is.null(spatial_varying)) {
     z_i <- model.matrix(spatial_varying, data)
+    .int <- sum(grep("(Intercept)", colnames(z_i)) > 0)
+    if (length(attr(z_i, "contrasts")) && !.int && !omit_spatial_intercept) { # factors with ~ 0 or ~ -1
+      msg <- c("Detected predictors with factor levels in `spatial_varying` with the intercept omitted from the `spatial_varying` formula.",
+        "You likely want to set `spatial = 'off'` since the constant spatial field (`omega_s`) also represents a spatial intercept.`")
+        # "As of version 0.3.1, sdmTMB turns off the constant spatial field `omega_s` when `spatial_varying` is specified so that the intercept or factor-level means are fully described by the spatially varying random fields `zeta_s`.")
+      cli_inform(paste(msg, collapse = " "))
+    }
+    # if (!omit_spatial_intercept & !length(attr(z_i, "contrasts"))) {
+    #   msg <- c("The spatial intercept is now in the first element of the spatially varying random fields `zeta_s` instead of the constant spatial random field `omega_s`. This change in the output format occurred in version 0.3.1.")
+    #   cli_inform(msg)
+    # }
+#    .int <- sum(grep("(Intercept)", colnames(z_i)) > 0)
+#    if (.int && !omit_spatial_intercept) {
+#      # msg <- c("Detected an intercept in `spatial_varying`.",
+#      #   "Make sure you have `spatial = 'off'` set since this also represents a spatial intercept.")
+#      # cli_warn(msg)
+#      # actually, just do it!
+#      omit_spatial_intercept <- TRUE
+#      include_spatial <- TRUE
+#      spatial <- "on"
+#    }
     .int <- grep("(Intercept)", colnames(z_i))
     if (sum(.int) > 0) z_i <- z_i[,-.int,drop=FALSE]
     spatial_varying <- colnames(z_i)
@@ -1044,6 +1080,7 @@ sdmTMB <- function(
     priors = as.numeric(unlist(.priors)),
     share_range = as.integer(if (length(share_range) == 1L) rep(share_range, 2L) else share_range),
     include_spatial = as.integer(include_spatial),
+    omit_spatial_intercept = as.integer(omit_spatial_intercept),
     proj_mesh  = Matrix::Matrix(c(0,0,2:0), 3, 5), # dummy
     proj_X_ij  = list(matrix(0, ncol = 1, nrow = 1)), # dummy
     proj_X_rw_ik = matrix(0, ncol = 1, nrow = 1), # dummy
@@ -1105,7 +1142,7 @@ sdmTMB <- function(
     ln_tau_G   = matrix(0, ncol(RE_indexes), n_m),
     RE         = matrix(0, sum(nobs_RE), n_m),
     b_rw_t     = array(0, dim = c(tmb_data$n_t, ncol(X_rw_ik), n_m)),
-    omega_s    = matrix(0, n_s, n_m),
+    omega_s    = matrix(0, if (!omit_spatial_intercept) n_s else 0L, n_m),
     zeta_s    = array(0, dim = c(n_s, n_z, n_m)),
     epsilon_st = array(0, dim = c(n_s, tmb_data$n_t, n_m)),
     b_threshold = if(thresh[[1]]$threshold_func == 2L) matrix(0, 3L, n_m) else matrix(0, 2L, n_m),
@@ -1194,7 +1231,7 @@ sdmTMB <- function(
   }
 
   tmb_random <- c()
-  if (any(spatial == "on")) {
+  if (any(spatial == "on") && !omit_spatial_intercept) {
     tmb_random <- c(tmb_random, "omega_s")
     tmb_map <- unmap(tmb_map, c("omega_s", "ln_tau_O"))
   }

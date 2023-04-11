@@ -112,9 +112,15 @@ a fixed effect for the same variable to improve interpretability since the
 random field is assumed to have a mean of 0. If a (scaled) time column is
 used, it will represent a local-time-trend model. See
 \doi{10.1111/ecog.05176} and the \href{https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.
-Note this predictor should be centered to have mean zero and have a
+Note this predictor should usually be centered to have mean zero and have a
 standard deviation of approximately 1 and should likely also be included as
-a main effect. Structure must currently be shared in delta models.}
+a main effect.
+\strong{The spatial intercept is controlled by the \code{spatial} argument}; therefore,
+include or exclude the spatial intercept by setting \code{spatial = 'on'} or
+\code{'off'}. The only time when it matters whether \code{spatial_varying} excludes
+an intercept is in the case of factor predictors. In this case, if
+\code{spatial_varying} excludes the intercept (\code{~ 0} or \code{~ -1}), you should set
+\code{spatial = 'off'} to match.  Structure must be shared in delta models.}
 
 \item{weights}{A numeric vector representing optional likelihood weights for
 the conditional model. Implemented as in \pkg{glmmTMB}: weights do not have

@@ -279,6 +279,8 @@ print_other_parameters <- function(x, m = 1L) {
   if ("sigma_Z" %in% b$term) {
     a <- mround(b$estimate[b$term == "sigma_Z"], 2L)
     sigma_Z <- paste0("Spatially varying coefficient SD (", x$spatial_varying,  "): ", a, "\n")
+    sigma_Z <- gsub("\\(\\(", "\\(", sigma_Z) # ((Intercept))
+    sigma_Z <- gsub("\\)\\)", "\\)", sigma_Z) # ((Intercept))
     sigma_Z <- paste(sigma_Z, collapse = "")
   } else {
     sigma_Z <- ""
