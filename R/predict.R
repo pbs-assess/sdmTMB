@@ -292,7 +292,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
   type <- match.arg(type)
   # FIXME parallel setup here?
 
-  if (!is.null(re_form) && isTRUE(se_fit)) {
+  if (is.null(re_form) && isTRUE(se_fit)) {
     msg <- paste0("Prediction can be slow when `se_fit = TRUE` and random fields ",
       "are included (i.e., `re_form = NA`). Consider using the `nsim` argument ",
       "to take draws from the joint precision matrix and summarizing the standard ",
