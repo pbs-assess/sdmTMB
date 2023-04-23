@@ -22,11 +22,14 @@ plot_anisotropy2(object, model = 1)
 anisotropy. The ellipses are centered at coordinates of zero in the space of
 the X-Y coordinates being modeled. The ellipses show the spatial and/or
 spatiotemporal range (distance at which correlation is effectively
-independent) in any direction from zero. Uses \pkg{ggplot2}.
+independent) in any direction from zero. Uses \pkg{ggplot2}. If anisotropy
+was turned off when fitting the model, \code{NULL} is returned instead of a
+{ggplot2} object.
 
 \code{plot_anisotropy2()}: A plot of eigenvectors illustrating the estimated
 anisotropy. A list of the plotted data is invisibly returned. Uses base
-graphics.
+graphics. If anisotropy was turned off when fitting the model, \code{NULL} is
+returned instead of a plot object.
 }
 \description{
 Anisotropy is when spatial correlation is directionally dependent. In
