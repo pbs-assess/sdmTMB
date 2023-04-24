@@ -277,8 +277,14 @@ print_other_parameters <- function(x, m = 1L) {
   rho <- get_term_text("rho", "Spatiotemporal AR1 correlation (rho)")
 
   if ("sigma_Z" %in% b$term) {
-    a <- mround(b$estimate[b$term == "sigma_Z"], 2L)
+    # tidy() takes sigma_Z from the sdreport,
+    # which condenses them to unique values if mapped, so:
+    sigma_Z <- x$tmb_obj$report(x$tmb_obj$env$last.par.best)$sigma_Z
+    sigma_Z <- sigma_Z[,m,drop=TRUE]
+    a <- mround(sigma_Z, 2L)
     sigma_Z <- paste0("Spatially varying coefficient SD (", x$spatial_varying,  "): ", a, "\n")
+    sigma_Z <- gsub("\\(\\(", "\\(", sigma_Z) # ((Intercept))
+    sigma_Z <- gsub("\\)\\)", "\\)", sigma_Z) # ((Intercept))
     sigma_Z <- paste(sigma_Z, collapse = "")
   } else {
     sigma_Z <- ""

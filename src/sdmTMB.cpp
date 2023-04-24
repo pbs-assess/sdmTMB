@@ -158,6 +158,7 @@ Type objective_function<Type>::operator()()
   DATA_IVECTOR(ar1_fields);
   DATA_IVECTOR(rw_fields);
   DATA_INTEGER(include_spatial);
+  DATA_INTEGER(omit_spatial_intercept);
   DATA_INTEGER(random_walk);
   DATA_INTEGER(ar1_time);
   DATA_IVECTOR(exclude_RE); // DELTA TODO currently shared...
@@ -403,12 +404,14 @@ Type objective_function<Type>::operator()()
       } else {
         Q_temp = Q_s2;
       }
-      PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_O(m)))(omega_s.col(m));
-      if (sim_re(0)) {
-        vector<Type> omega_s_tmp(omega_s.rows());
-        SIMULATE {
-          GMRF(Q_temp, s).simulate(omega_s_tmp);
-          omega_s.col(m) = omega_s_tmp / exp(ln_tau_O(m));
+      if (!omit_spatial_intercept) {
+        PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_O(m)))(omega_s.col(m));
+        if (sim_re(0)) {
+          vector<Type> omega_s_tmp(omega_s.rows());
+          SIMULATE {
+            GMRF(Q_temp, s).simulate(omega_s_tmp);
+            omega_s.col(m) = omega_s_tmp / exp(ln_tau_O(m));
+          }
         }
       }
       if (spatial_covariate) {
@@ -590,7 +593,7 @@ Type objective_function<Type>::operator()()
       for (int t = 0; t < n_t; t++)
         if (!spatial_only(m)) epsilon_st_A.col(m).col(t) =
           A_st * vector<Type>(epsilon_st.col(m).col(t));
-      omega_s_A.col(m) = A_st * vector<Type>(omega_s.col(m));
+      if (!omit_spatial_intercept) omega_s_A.col(m) = A_st * vector<Type>(omega_s.col(m));
       for (int z = 0; z < n_z; z++)
         zeta_s_A.col(m).col(z) = A_st * vector<Type>(zeta_s.col(m).col(z));
     }
@@ -665,7 +668,8 @@ Type objective_function<Type>::operator()()
 
       // Spatially varying effects:
       if (include_spatial) {
-        eta_i(i,m) += omega_s_A(i,m);  // spatial omega
+        if (!omit_spatial_intercept)
+          eta_i(i,m) += omega_s_A(i,m);  // spatial omega
         if (spatial_covariate)
           for (int z = 0; z < n_z; z++)
             eta_i(i,m) += zeta_s_A(i,z,m) * z_i(i,z); // spatially varying covariate DELTA
@@ -1016,7 +1020,7 @@ Type objective_function<Type>::operator()()
         for (int t = 0; t < n_t; t++) {
           proj_epsilon_st_A_unique.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
         }
-        proj_omega_s_A_unique.col(m) = proj_mesh * vector<Type>(omega_s.col(m));
+        if (!omit_spatial_intercept) proj_omega_s_A_unique.col(m) = proj_mesh * vector<Type>(omega_s.col(m));
       }
 
       // Spatially varying coefficients:
