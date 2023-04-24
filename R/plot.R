@@ -43,18 +43,7 @@
 #' @rdname plot_anisotropy
 plot_anisotropy <- function(object, return_data = FALSE) {
   stopifnot(inherits(object, "sdmTMB"))
-  check_for_H <- any(grepl(
-    pattern = "ln_H_input",
-    x = names(object$sd_report$par.fixed),
-    ignore.case = TRUE
-  ))
-  if (!check_for_H) {
-    cli::cli_inform(c(
-      x = "H was turned off, i.e., sdmTMB::sdmTMB(anisotropy = FALSE), no figure is available.")
-    )
-    # TODO in the future "plot the isotropic covariance" instead of NULL
-    return(NULL)
-  }
+  if (!check_for_H(object)) return(NULL)
   report <- object$tmb_obj$report(object$tmb_obj$env$last.par.best)
   delta <- isTRUE(object$family$delta)
 
@@ -171,19 +160,7 @@ plot_anisotropy <- function(object, return_data = FALSE) {
 #' @rdname plot_anisotropy
 plot_anisotropy2 <- function(object, model = 1) {
   stopifnot(inherits(object, "sdmTMB"))
-  check_for_H <- any(grepl(
-    pattern = "ln_H_input",
-    x = names(object$sd_report$par.fixed),
-    ignore.case = TRUE
-  ))
-  if (!check_for_H) {
-    cli::cli_inform(c(
-      x = "The anisotropy figure is not available because H was turned off,",
-      " i.e., sdmTMB::sdmTMB(anisotropy = FALSE)."
-    ))
-    # TODO in the future "plot the isotropic covariance" instead of NULL
-    return(NULL)
-  }
+  if (!check_for_H(object)) return(NULL)
   report <- object$tmb_obj$report(object$tmb_obj$env$last.par.best)
   if (model == 1) eig <- eigen(report$H)
   if (model == 2) eig <- eigen(report$H2)
@@ -354,4 +331,17 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
     }
     return(g)
   }
+}
+
+check_for_H <- function(obj) {
+  H <- any(grepl(
+    pattern = "ln_H_input",
+    x = names(obj$sd_report$par.fixed),
+    ignore.case = TRUE
+  ))
+  if (!H) {
+    cli::cli_inform("`anisotropy = FALSE` in `sdmTMB()`; no anisotropy figure is available.")
+    # FIXME in the future plot the isotropic covariance instead of NULL?
+  }
+  H
 }
