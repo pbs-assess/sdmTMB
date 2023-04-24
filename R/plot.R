@@ -15,11 +15,14 @@
 #' anisotropy. The ellipses are centered at coordinates of zero in the space of
 #' the X-Y coordinates being modeled. The ellipses show the spatial and/or
 #' spatiotemporal range (distance at which correlation is effectively
-#' independent) in any direction from zero. Uses \pkg{ggplot2}.
+#' independent) in any direction from zero. Uses \pkg{ggplot2}. If anisotropy
+#' was turned off when fitting the model, `NULL` is returned instead of a
+#' {ggplot2} object.
 #'
 #' `plot_anisotropy2()`: A plot of eigenvectors illustrating the estimated
 #' anisotropy. A list of the plotted data is invisibly returned. Uses base
-#' graphics.
+#' graphics. If anisotropy was turned off when fitting the model, `NULL` is
+#' returned instead of a plot object.
 #' @references Code adapted from VAST R package
 #' @importFrom rlang .data
 #' @examplesIf inla_installed() && ggplot2_installed()
@@ -40,6 +43,7 @@
 #' @rdname plot_anisotropy
 plot_anisotropy <- function(object, return_data = FALSE) {
   stopifnot(inherits(object, "sdmTMB"))
+  if (!check_for_H(object)) return(NULL)
   report <- object$tmb_obj$report(object$tmb_obj$env$last.par.best)
   delta <- isTRUE(object$family$delta)
 
@@ -156,6 +160,7 @@ plot_anisotropy <- function(object, return_data = FALSE) {
 #' @rdname plot_anisotropy
 plot_anisotropy2 <- function(object, model = 1) {
   stopifnot(inherits(object, "sdmTMB"))
+  if (!check_for_H(object)) return(NULL)
   report <- object$tmb_obj$report(object$tmb_obj$env$last.par.best)
   if (model == 1) eig <- eigen(report$H)
   if (model == 2) eig <- eigen(report$H2)
@@ -326,4 +331,17 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
     }
     return(g)
   }
+}
+
+check_for_H <- function(obj) {
+  H <- any(grepl(
+    pattern = "ln_H_input",
+    x = names(obj$sd_report$par.fixed),
+    ignore.case = TRUE
+  ))
+  if (!H) {
+    cli::cli_inform("`anisotropy = FALSE` in `sdmTMB()`; no anisotropy figure is available.")
+    # FIXME in the future plot the isotropic covariance instead of NULL?
+  }
+  H
 }

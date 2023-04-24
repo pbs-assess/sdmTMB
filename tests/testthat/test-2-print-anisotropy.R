@@ -13,6 +13,8 @@ test_that("Print anisotropy prints correctly", {
   )
 
   expect_output(print(fit1), regexp = "range: 33.23")
+  expect_null(plot_anisotropy(fit1))
+  expect_null(plot_anisotropy2(fit1))
 
   # -------------------
   # Anisotropy with spatial only
@@ -26,6 +28,8 @@ test_that("Print anisotropy prints correctly", {
     anisotropy = TRUE
   )
 
+  plot_anisotropy(fit_sp_only)
+  plot_anisotropy2(fit_sp_only)
   expect_output(print(fit_sp_only), regexp = "\\(spatial\\): 6.1 to 86.0 at 126")
 
   # Anisotropy with only spatiotemporal random field
@@ -92,3 +96,4 @@ test_that("Print anisotropy prints correctly", {
   expect_output(cat(print_anisotropy(fit_dg_not_shared, m = 2)), regexp = "\\(spatial\\): 0")
   expect_output(cat(print_anisotropy(fit_dg_not_shared, m = 2)), regexp = "\\(spatiotemporal\\): 9")
 })
+
