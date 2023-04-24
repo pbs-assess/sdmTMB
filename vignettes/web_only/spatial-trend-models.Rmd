@@ -39,84 +39,114 @@ Using the built-in British Columbia Queen Charlotte Sound Pacific Cod dataset, w
 - The density units should be kg/km^2^.
 - Here, X and Y are coordinates in UTM zone 9.
 
-We will set up our SPDE mesh with a relatively coarse resolution so that this vignette builds quickly:
-
-```{r}
-pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 12)
+```{r, fig.asp=1}
+pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 5)
 plot(pcod_spde)
 ```
 
-We will fit a model that includes a slope for 'year', an intercept spatial random field, and another random field for spatially varying slopes the represent trends over time in space (`spatial_varying` argument). Our model just estimates an intercept and accounts for all other variation through the random effects.
+We will fit a model that includes an overall intercept, a slope for 'year', an intercept spatial random field, and another random field for spatially varying slopes that represent temporal trends that vary spatially (`spatial_varying` argument).
 
-First, we will set up a column for time that is Normal(0, 1) to help with estimation:
+First, we will set up a column for time that is centered to help break correlation with the intercept and help estimation (and interpretation of the intercept) and we will scale the year values so that a unit of change is a decade instead of a year. This is likely more interpretable and can help with estimation by keeping the coefficients on a reasonable scale.
 
 ```{r}
 d <- pcod
-d$scaled_year <- (pcod$year - mean(pcod$year)) / sd(pcod$year)
+d$scaled_year <- (pcod$year - mean(pcod$year)) / 10
+unique(d$scaled_year)
 ```
 
-Now fit a model using `spatial_varying ~ 0 + scaled_year`:
-
-(The `0 +` drops the intercept, although sdmTMB would take care of that anyways here.)
+Now we will fit a model using `spatial_varying ~ 0 + scaled_year`. The `0 +` drops the intercept, which is already present due to `spatial = "on"`, which is the default.
 
 ```{r}
-m1 <- sdmTMB(density ~ scaled_year, data = d,
-  mesh = pcod_spde, family = tweedie(link = "log"),
-  spatial_varying = ~ 0 + scaled_year, time = "year",
-  spatiotemporal = "off")
+fit <- sdmTMB(
+  density ~ scaled_year, 
+  data = d,
+  mesh = pcod_spde, 
+  family = tweedie(link = "log"),
+  spatial = "on",
+  spatial_varying = ~ 0 + scaled_year
+)
 ```
-
-We have turned off spatiotemporal random fields for this example for simplicity, but they also could be `IID` or `AR1`.
-
-Let's extract some parameter estimates. Look for `sigma_Z`:
 
 ```{r}
-tidy(m1, conf.int = TRUE)
-tidy(m1, "ran_pars", conf.int = TRUE)
+print(fit)
+sanity(fit)
 ```
 
-Let's look at the predictions and estimates of the spatially varying coefficients on a grid:
+We have not included spatiotemporal random fields for this example for simplicity, but they could also be included.
+
+Let's extract some parameter estimates. Look for `sigma_Z` coefficients:
+
+```{r}
+tidy(fit, conf.int = TRUE)
+tidy(fit, "ran_pars", conf.int = TRUE)
+```
+
+Let's look at the predictions and estimates of the spatially varying coefficients on a grid. First, we will create a small function to help with plotting:
 
 ```{r}
 plot_map_raster <- function(dat, column = est) {
   ggplot(dat, aes(X, Y, fill = {{ column }})) +
     geom_raster() +
-    facet_wrap(~year) +
     coord_fixed() +
-    scale_fill_viridis_c()
+    scale_fill_gradient2()
 }
 ```
 
-First, we need to predict on a grid. We also need to add a column for `scaled_year` to match the fitting:
+We need to predict on a grid to make our visualizations. We also need to add a column for `scaled_year` to match the fitting. Make sure you scale based on the same values! Here, that means using the mean from our fitted data and turning years into decades.
 
 ```{r}
 nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
-nd$scaled_year <- (nd$year - mean(pcod$year)) / sd(pcod$year)
-p1 <- predict(m1, newdata = nd)
+nd$scaled_year <- (nd$year - mean(pcod$year)) / 10
+pred <- predict(fit, newdata = nd)
 ```
 
-First let's look at the spatial trends.
-
-We will just pick out a single year to plot since they should all be the same for the slopes. Note that these are in log space. `zeta_s` are the spatially varying coefficients.
+Let's look at the spatial trends. The `zeta_s_scaled_year` in the predictions are values from a random field describing deviations from the overall effect of `year_scaled` on species density. These are in link (log) space. These are the spatially varying coefficients.
 
 ```{r}
-plot_map_raster(filter(p1, year == 2003), zeta_s_scaled_year)
+plot_map_raster(pred, zeta_s_scaled_year)
 ```
 
-This is the spatially varying intercept:
-
-```{r, warning=FALSE, message=FALSE}
-plot_map_raster(filter(p1, year == 2003), omega_s) + scale_fill_gradient2()
-```
-
-These are the predictions including all fixed and random effects plotted in log space.
+If we wanted to get at the actual slope of `scaled_year` in space, we would also have to add on the main overall (fixed effect) coefficient.
 
 ```{r}
-plot_map_raster(filter(p1, year == 2003), est)
+coefs <- tidy(fit, conf.int = TRUE)
+scaled_year_coef <- coefs$estimate[coefs$term == "scaled_year"]
+scaled_year_coef
+exp(scaled_year_coef)
 ```
 
-And we can look at just the spatiotemporal random effects for models 2 and 3 (intercept + slope combined):
+Our main effect tells us that the overall linear trend of density has been a multiplicative factor of `r round(exp(scaled_year_coef), 2)` per decade. Conversely, the overall trend has been a decline of `r 100 * round(1 - exp(scaled_year_coef), 2)`% per decade.
+
+We can add this overall effect to the spatial deviations from this effect to get the spatially varying trend:
 
 ```{r}
-plot_map_raster(filter(p1, year == 2003), est_rf)
+plot_map_raster(pred, scaled_year_coef + zeta_s_scaled_year)
 ```
+
+We could put those slopes back into natural space:
+
+```{r}
+plot_map_raster(pred, exp(scaled_year_coef + zeta_s_scaled_year)) +
+  scale_fill_gradient2(midpoint = 1)
+```
+
+Here, 2, for example, means a 2-fold change in density in that location per decade.
+
+We might prefer to log transform the color scale. This gets us back to the plot in log space but with values on the colour legend that represent (multiplicative) values in natural space.
+
+```{r}
+plot_map_raster(pred, exp(scaled_year_coef + zeta_s_scaled_year)) +
+  scale_fill_gradient2(midpoint = 0, trans = "log10")
+```
+
+The fastest way to get uncertainty on this spatially varying coefficient is with draws from the joint precision matrix of the parameters:
+
+```{r, message=FALSE, warning=FALSE}
+set.seed(82938)
+psim <- predict(fit, newdata = nd, nsim = 200, sims_var = "zeta_s")
+pred$se <- apply(psim, 1, sd)
+plot_map_raster(pred, se) +
+  scale_fill_viridis_c()
+```
+
+We can see a visual pattern of the SPDE mesh in this plot. The uncertainty standard error is most accurate at the nodes (vertices, knots) of the mesh.
