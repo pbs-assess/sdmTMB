@@ -84,6 +84,9 @@ user-friendly generalized linear mixed effects models with
 spatial and spatiotemporal random fields. bioRxiv
 2022.03.24.485545; doi: <https://doi.org/10.1101/2022.03.24.485545>
 
+A list of (known) publications that use sdmTMB can be found [here](https://github.com/pbs-assess/sdmTMB/wiki/Publications-using-sdmTMB). Please use the above citation so we can track publications.
+
+
 ## Related software
 
 sdmTMB is heavily inspired by the [VAST](https://github.com/James-Thorson-NOAA/VAST) R package:
