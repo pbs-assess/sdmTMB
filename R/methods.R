@@ -205,7 +205,8 @@ Effect.sdmTMB <- function(focal.predictors, mod, ...) {
     coefficients = coefs,
     vcov = vc,
     family = fam,
-    formula = formula(mod)
+    # formula = formula(mod) # includes random intercepts...
+    formula = remove_s_and_t2(mod$split_formula[[1]]$fixedFormula)
   )
   effects::Effect.default(focal.predictors, mod, ..., sources = args)
 }
