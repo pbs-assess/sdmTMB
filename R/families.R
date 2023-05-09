@@ -115,6 +115,23 @@ lognormal_mix <- function(link = "log") {
   add_to_family(x)
 }
 
+#' @export
+#' @rdname families
+#' @examples
+#' nbinom2_mix(link = "log")
+nbinom2_mix <- function(link = "log") {
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("identity", "log", "inverse")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+  x <- c(list(family = "nbinom2_mix", link = linktemp), stats)
+  add_to_family(x)
+}
+
 #' @details
 #' The `nbinom2` negative binomial parameterization is the NB2 where the
 #' variance grows quadratically with the mean (Hilbe 2011).

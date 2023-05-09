@@ -15,7 +15,8 @@
   truncated_nbinom1  = 11,
   censored_poisson  = 12,
   gamma_mix = 13,
-  lognormal_mix = 14
+  lognormal_mix = 14,
+  nbinom2_mix = 15
 )
 .valid_link <- c(
   identity = 0,

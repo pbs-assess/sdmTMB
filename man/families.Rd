@@ -6,6 +6,7 @@
 \alias{lognormal}
 \alias{gamma_mix}
 \alias{lognormal_mix}
+\alias{nbinom2_mix}
 \alias{nbinom2}
 \alias{nbinom1}
 \alias{truncated_nbinom2}
@@ -31,6 +32,8 @@ lognormal(link = "log")
 gamma_mix(link = "log")
 
 lognormal_mix(link = "log")
+
+nbinom2_mix(link = "log")
 
 nbinom2(link = "log")
 
@@ -108,6 +111,7 @@ Beta(link = "logit")
 lognormal(link = "log")
 gamma_mix(link = "log")
 lognormal_mix(link = "log")
+nbinom2_mix(link = "log")
 nbinom2(link = "log")
 nbinom1(link = "log")
 truncated_nbinom2(link = "log")

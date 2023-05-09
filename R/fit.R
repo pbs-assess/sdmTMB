@@ -1166,12 +1166,12 @@ sdmTMB <- function(
   tmb_map$b_j <- NULL
   if (delta) tmb_map$b_j2 <- NULL
   if (family$family[[1]] == "tweedie") tmb_map$thetaf <- NULL
-  if (family$family[[1]] %in% c("gamma_mix", "lognormal_mix")) {
+  if (family$family[[1]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
     tmb_map$log_ratio_mix <- NULL
     tmb_map$logit_p_mix <- NULL
   }
   if (delta) {
-    if(family$family[[2]] %in% c("gamma_mix","lognormal_mix")) {
+    if(family$family[[2]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
       tmb_map$log_ratio_mix <- NULL
       tmb_map$logit_p_mix <- NULL
     }

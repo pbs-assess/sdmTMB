@@ -18,7 +18,8 @@ enum valid_family {
   truncated_nbinom1_family  = 11,
   censored_poisson_family  = 12,
   gamma_mix_family = 13,
-  lognormal_mix_family = 14
+  lognormal_mix_family = 14,
+  nbinom2_mix_family = 15
 };
 
 enum valid_link {
@@ -720,11 +721,12 @@ Type objective_function<Type>::operator()()
     for (int i = 0; i < n_i; i++) {
       if (!sdmTMB::isNA(y_i(i,m))) {
         switch (family(m)) {
-          case gaussian_family:
+          case gaussian_family: {
             tmp_ll = dnorm(y_i(i,m), mu_i(i,m), phi(m), true);
             SIMULATE{y_i(i,m) = rnorm(mu_i(i,m), phi(m));}
             break;
-          case tweedie_family:
+          }
+          case tweedie_family: {
             s1 = invlogit(thetaf) + Type(1.0);
             if (!sdmTMB::isNA(priors(12))) {
               jnll -= dnorm(s1, priors(12), priors(13), true);
@@ -734,20 +736,24 @@ Type objective_function<Type>::operator()()
             tmp_ll = dtweedie(y_i(i,m), mu_i(i,m), phi(m), s1, true);
             SIMULATE{y_i(i,m) = rtweedie(mu_i(i,m), phi(m), s1);}
             break;
-          case binomial_family:
+          }
+          case binomial_family: {
             tmp_ll = dbinom_robust(y_i(i,m), size(i), mu_i(i,m), true);
             // SIMULATE{y_i(i,m) = rbinom(size(i), InverseLink(mu_i(i,m), link(m)));}
             SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));} // hardcoded invlogit b/c mu_i in logit space
             break;
-          case poisson_family:
+          }
+          case poisson_family: {
             tmp_ll = dpois(y_i(i,m), mu_i(i,m), true);
             SIMULATE{y_i(i,m) = rpois(mu_i(i,m));}
             break;
-          case censored_poisson_family:
+          }
+          case censored_poisson_family: {
             tmp_ll = sdmTMB::dcenspois(y_i(i,m), mu_i(i,m), lwr(i), upr(i), true);
             SIMULATE{y_i(i,m) = rpois(mu_i(i,m));}
             break;
-          case Gamma_family:
+          }
+          case Gamma_family: {
             s1 = exp(ln_phi(m));        // shape
             s2 = mu_i(i,m) / s1;        // scale
             tmp_ll = dgamma(y_i(i,m), s1, s2, true);
@@ -755,7 +761,8 @@ Type objective_function<Type>::operator()()
             // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
             // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
             break;
-          case nbinom2_family:
+          }
+          case nbinom2_family: {
             s1 = log(mu_i(i,m)); // log(mu_i)
             s2 = 2. * s1 - ln_phi(m); // log(var - mu)
             tmp_ll = dnbinom_robust(y_i(i,m), s1, s2, true);
@@ -765,7 +772,8 @@ Type objective_function<Type>::operator()()
               y_i(i,m) = rnbinom2(s1, s2);
             }
             break;
-          case truncated_nbinom2_family:
+          }
+          case truncated_nbinom2_family: {
             s1 = log(mu_i(i,m)); // log(mu_i)
             s2 = 2. * s1 - ln_phi(m); // log(var - mu)
             tmp_ll = dnbinom_robust(y_i(i,m), s1, s2, true);
@@ -775,13 +783,15 @@ Type objective_function<Type>::operator()()
             tmp_ll = zt_lik_nearzero(y_i(i,m), tmp_ll); // from glmmTMB
             SIMULATE{y_i(i,m) = sdmTMB::rtruncated_nbinom(asDouble(phi(m)), 0, asDouble(mu_i(i,m)));}
             break;
-          case nbinom1_family:
+          }
+          case nbinom1_family: {
             s1 = log(mu_i(i,m));
             s2 = s1 + ln_phi(m);
             tmp_ll = dnbinom_robust(y_i(i,m), s1, s2, true);
             SIMULATE {y_i(i,m) = rnbinom2(mu_i(i,m), mu_i(i,m) * (Type(1) + phi(m)));}
             break;
-          case truncated_nbinom1_family:
+          }
+          case truncated_nbinom1_family: {
             s1 = log(mu_i(i,m));
             s2 = s1 + ln_phi(m);
             tmp_ll = dnbinom_robust(y_i(i,m), s1, s2, true);
@@ -791,21 +801,25 @@ Type objective_function<Type>::operator()()
             tmp_ll = zt_lik_nearzero(y_i(i,m), tmp_ll);
             SIMULATE{y_i(i,m) = sdmTMB::rtruncated_nbinom(asDouble(mu_i(i,m)/phi(m)), 0, asDouble(mu_i(i,m)));}
             break;
-          case lognormal_family:
+          }
+          case lognormal_family: {
             tmp_ll = sdmTMB::dlnorm(y_i(i,m), log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
             SIMULATE{y_i(i,m) = exp(rnorm(log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m)));}
             break;
-          case student_family:
+          }
+          case student_family: {
             tmp_ll = sdmTMB::dstudent(y_i(i,m), mu_i(i,m), exp(ln_phi(m)), df, true);
             SIMULATE{y_i(i,m) = mu_i(i,m) + phi(m) * rt(df);}
             break;
-          case Beta_family: // Ferrari and Cribari-Neto 2004; betareg package
+          }
+          case Beta_family: { // Ferrari and Cribari-Neto 2004; betareg package
             s1 = mu_i(i,m) * phi(m);
             s2 = (Type(1) - mu_i(i,m)) * phi(m);
             tmp_ll = dbeta(y_i(i,m), s1, s2, true);
             SIMULATE{y_i(i,m) = rbeta(s1, s2);}
             break;
-          case gamma_mix_family:
+          }
+          case gamma_mix_family: {
             p_mix = invlogit(logit_p_mix); // probability of larger event
             s1 = exp(ln_phi(m));        // shape
             s2 = mu_i(i,m) / s1;        // scale
@@ -830,7 +844,8 @@ Type objective_function<Type>::operator()()
             // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
             // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
             break;
-        case lognormal_mix_family:
+          }
+        case lognormal_mix_family: {
           p_mix = invlogit(logit_p_mix); // probability of larger event
 
           ll_1 = log(Type(1.0 - p_mix)) + sdmTMB::dlnorm(y_i(i,m), log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
@@ -852,8 +867,29 @@ Type objective_function<Type>::operator()()
           // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
           // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
           break;
-          default:
-            error("Family not implemented.");
+        }
+        case nbinom2_mix_family: {
+          p_mix = invlogit(logit_p_mix); // probability of larger event
+          Type mu_i_large = mu_i(i,m) * mix_ratio;  // mean of large component = mean of smaller * ratio
+          s1 = log(mu_i(i,m)); // log(mu_i)
+          s2 = 2. * s1 - ln_phi(m); // log(var - mu)
+          Type s1_large = log(mu_i_large);
+          Type s2_large = 2. * s1_large - ln_phi(m);
+          mix_ratio = exp(log_ratio_mix) + 1.0; // ratio of large:small values, constrained > 1.0
+          ll_1 = log(Type(1.0 - p_mix)) + dnbinom_robust(y_i(i,m), s1, s2, true);
+          ll_2 = log(p_mix) + dnbinom_robust(y_i(i,m), s1_large, s2_large, true);
+          tmp_ll = ll_max + log(exp(ll_1 - ll_max) + exp(ll_2 - ll_max)); // log sum exp function
+          SIMULATE{
+            if (rbinom(Type(1), p_mix) == 0) {
+              y_i(i,m) = rnbinom2(s1, s2);
+            } else {
+              y_i(i,m) = rnbinom2(s1_large, s2_large);
+            }
+          }
+          break;
+        }
+        default:
+          error("Family not implemented.");
         }
         tmp_ll *= weights_i(i);
         jnll -= tmp_ll; // * keep

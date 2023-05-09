@@ -545,7 +545,10 @@ $$ where $\phi$ represents the Gamma shape, $\mu_{1} / \phi$ represents the scal
 
 The mean is $(1-p) \cdot \mu_{1} + p \cdot \mu_{2}$ and the variance is $(1-p) ^ 2 \cdot \mu_{1} \cdot \phi^2 + (p) ^ 2 \cdot \mu_{2} \cdot \phi^2$.
 
-Example: `family = gamma_mix(link = "log")`. See also `family = delta_gamma_mix()` for an extension incorporating this distribution with delta models. 
+Here, and for the other mixture distributions, the probability of the larger mean can be obtained from `plogis(fit$model$par[["logit_p_mix"]])` and the ratio of the larger mean to the smaller mean can be obtained from `1 + exp(fit$model$par[["log_ratio_mix"]])`.
+The standard errors are available in the TMB sdreport: `fit$sd_report`.
+
+Example: `family = gamma_mix(link = "log")`. See also `family = delta_gamma_mix()` for an extension incorporating this distribution with delta models.
 
 ## Lognormal mixture
 
@@ -560,6 +563,18 @@ Because of the bias correction, $\mathbb{E}[y] = (1-p) \cdot \mu_{1} + p \cdot \
 As with the Gamma mixture, $p$ controls the contribution of each component to the mixture (also interpreted as the probability of larger events).
 
 Example: `family = lognormal_mix(link = "log")`. See also `family = delta_lognormal_mix()` for an extension incorporating this distribution with delta models. 
+
+## Negative binomial 2 mixture
+
+This is a 2 component mixture that extends the NB2 distribution,
+
+$$
+(1 - p) \cdot \operatorname{NB2} \left( \mu_1, \phi \right) + p \cdot \operatorname{NB2} \left( \mu_2, \phi \right)
+$$
+
+where $\mu_1$ is the mean of the first (smaller component) of the distribution, $\mu_2$ is the mean of the larger component, and $p$ controls the contribution of each component to the mixture. 
+
+Example: `family = nbinom2_mix(link = "log")`
 
 # Gaussian random fields
 
