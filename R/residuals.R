@@ -44,7 +44,8 @@ qnbinom1 <- function(p, mu, phi) {
 }
 
 qres_nbinom1 <- function(object, y, mu, ...) {
-  phi <- exp(object$model$par[["ln_phi"]])
+  theta <- get_pars(object)
+  phi <- exp(theta[["ln_phi"]])
   a <- pnbinom1(y - 1, phi = phi, mu = mu)
   b <- pnbinom1(y, phi = phi, mu = mu)
   u <- stats::runif(n = length(y), min = a, max = b)
@@ -59,7 +60,8 @@ qres_pois <- function(object, y, mu, ...) {
 }
 
 qres_gamma <- function(object, y, mu, ...) {
-  phi <- exp(object$model$par[["ln_phi"]])
+  theta <- get_pars(object)
+  phi <- exp(theta[["ln_phi"]])
   s1 <- phi
   s2 <- mu / s1
   u <- stats::pgamma(q = y, shape = s1, scale = s2)
@@ -67,9 +69,10 @@ qres_gamma <- function(object, y, mu, ...) {
 }
 
 qres_gamma_mix <- function(object, y, mu, ...) {
-  p_mix <- plogis(object$model$par[["logit_p_mix"]])
-  phi <- exp(object$model$par[["ln_phi"]])
-  ratio <- exp(object$model$par[["log_ratio_mix"]])
+  theta <- get_pars(object)
+  p_mix <- plogis(theta[["logit_p_mix"]])
+  phi <- exp(theta[["ln_phi"]])
+  ratio <- exp(theta[["log_ratio_mix"]])
   s1 <- phi
   s2 <- mu / s1
   s3 <- ratio * s2
@@ -77,22 +80,36 @@ qres_gamma_mix <- function(object, y, mu, ...) {
   stats::qnorm(u)
 }
 
+qres_nbinom2_mix <- function(object, y, mu, ...) {
+  theta <- get_pars(object)
+  p_mix <- plogis(theta[["logit_p_mix"]])
+  phi <- exp(theta[["ln_phi"]])
+  ratio <- exp(theta[["log_ratio_mix"]])
+  a <- stats::pnbinom(y - 1, size = phi, mu = (1-p_mix)*mu + p_mix*ratio*mu)
+  b <- stats::pnbinom(y, size = phi, mu = (1-p_mix)*mu + p_mix*ratio*mu)
+  u <- stats::runif(n = length(y), min = a, max = b)
+  stats::qnorm(u)
+}
+
 qres_lognormal_mix <- function(object, y, mu, ...) {
-  p_mix <- plogis(object$model$par[["logit_p_mix"]])
-  dispersion <- exp(object$model$par[["ln_phi"]])
-  ratio <- exp(object$model$par[["log_ratio_mix"]])
+  theta <- get_pars(object)
+  p_mix <- plogis(theta[["logit_p_mix"]])
+  dispersion <- exp(theta[["ln_phi"]])
+  ratio <- exp(theta[["log_ratio_mix"]])
   u <- stats::plnorm(q = y, meanlog = log((1-p_mix)*mu + p_mix*ratio*mu) - (dispersion^2) / 2, sdlog = dispersion)
   stats::qnorm(u)
 }
 
 qres_gaussian <- function(object, y, mu, ...) {
-  dispersion <- exp(object$model$par[["ln_phi"]])
+  theta <- get_pars(object)
+  dispersion <- exp(theta[["ln_phi"]])
   u <- stats::pnorm(q = y, mean = mu, sd = dispersion)
   stats::qnorm(u)
 }
 
 qres_lognormal <- function(object, y, mu, ...) {
-  dispersion <- exp(object$model$par[["ln_phi"]])
+  theta <- get_pars(object)
+  dispersion <- exp(theta[["ln_phi"]])
   u <- stats::plnorm(q = y, meanlog = log(mu) - (dispersion^2) / 2, sdlog = dispersion)
   stats::qnorm(u)
 }
@@ -101,13 +118,15 @@ qres_lognormal <- function(object, y, mu, ...) {
 pt_ls <- function(q, df, mu, sigma) stats::pt((q - mu) / sigma, df)
 
 qres_student <- function(object, y, mu, ...) {
-  dispersion <- exp(object$model$par[["ln_phi"]])
+  theta <- get_pars(object)
+  dispersion <- exp(theta[["ln_phi"]])
   u <- pt_ls(q = y, df = object$tmb_data$df, mu = mu, sigma = dispersion)
   stats::qnorm(u)
 }
 
 qres_beta <- function(object, y, mu, ...) {
-  phi <- exp(object$model$par[["ln_phi"]])
+  theta <- get_pars(object)
+  phi <- exp(theta[["ln_phi"]])
   s1 <- mu * phi
   s2 <- (1 - mu) * phi
   u <- stats::pbeta(q = y, shape1 = s1, shape2 = s2)
@@ -257,6 +276,7 @@ residuals.sdmTMB <- function(object,
     lognormal  = qres_lognormal,
     gamma_mix = qres_gamma_mix,
     lognormal_mix = qres_lognormal_mix,
+    nbinom2_mix = qres_nbinom2_mix,
     cli_abort(paste(fam, "not yet supported."))
   )
 
