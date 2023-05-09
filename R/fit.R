@@ -1609,7 +1609,8 @@ check_irregalar_time <- function(data, time, spatiotemporal, time_varying) {
 find_missing_time <- function(x) {
   if (!is.factor(x)) {
     ti <- sort(unique(x))
-    mindiff <- min(diff(ti))
+    # mindiff <- min(diff(ti))
+    mindiff <- 1L
     allx <- seq(min(ti), max(ti), by = mindiff)
     setdiff(allx, ti)
   }
