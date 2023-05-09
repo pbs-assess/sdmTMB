@@ -878,6 +878,8 @@ Type objective_function<Type>::operator()()
           mix_ratio = exp(log_ratio_mix) + 1.0; // ratio of large:small values, constrained > 1.0
           ll_1 = log(Type(1.0 - p_mix)) + dnbinom_robust(y_i(i,m), s1, s2, true);
           ll_2 = log(p_mix) + dnbinom_robust(y_i(i,m), s1_large, s2_large, true);
+          ll_max = ll_1; // determine larger of ll_1 and ll_2
+          if (ll_2 > ll_1) ll_max = ll_2;
           tmp_ll = ll_max + log(exp(ll_1 - ll_max) + exp(ll_2 - ll_max)); // log sum exp function
           SIMULATE{
             if (rbinom(Type(1), p_mix) == 0) {
