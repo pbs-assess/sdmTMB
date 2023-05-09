@@ -22,6 +22,7 @@ qres_binomial <- function(object, y, mu, .n = NULL) {
 
 qres_nbinom2 <- function(object, y, mu, ...) {
   phi <- exp(object$model$par[["ln_phi"]])
+  if (is_delta(object)) phi <- phi[2]
   a <- stats::pnbinom(y - 1, size = phi, mu = mu)
   b <- stats::pnbinom(y, size = phi, mu = mu)
   u <- stats::runif(n = length(y), min = a, max = b)
@@ -46,6 +47,7 @@ qnbinom1 <- function(p, mu, phi) {
 qres_nbinom1 <- function(object, y, mu, ...) {
   theta <- get_pars(object)
   phi <- exp(theta[["ln_phi"]])
+  if (is_delta(object)) phi <- phi[2]
   a <- pnbinom1(y - 1, phi = phi, mu = mu)
   b <- pnbinom1(y, phi = phi, mu = mu)
   u <- stats::runif(n = length(y), min = a, max = b)
@@ -59,9 +61,14 @@ qres_pois <- function(object, y, mu, ...) {
   stats::qnorm(u)
 }
 
+is_delta <- function(object) {
+  isTRUE(object$family$delta)
+}
+
 qres_gamma <- function(object, y, mu, ...) {
   theta <- get_pars(object)
   phi <- exp(theta[["ln_phi"]])
+  if (is_delta(object)) phi <- phi[2]
   s1 <- phi
   s2 <- mu / s1
   u <- stats::pgamma(q = y, shape = s1, scale = s2)
@@ -72,6 +79,7 @@ qres_gamma_mix <- function(object, y, mu, ...) {
   theta <- get_pars(object)
   p_mix <- plogis(theta[["logit_p_mix"]])
   phi <- exp(theta[["ln_phi"]])
+  if (is_delta(object)) phi <- phi[2]
   ratio <- exp(theta[["log_ratio_mix"]])
   s1 <- phi
   s2 <- mu / s1
@@ -84,6 +92,7 @@ qres_nbinom2_mix <- function(object, y, mu, ...) {
   theta <- get_pars(object)
   p_mix <- plogis(theta[["logit_p_mix"]])
   phi <- exp(theta[["ln_phi"]])
+  if (is_delta(object)) phi <- phi[2]
   ratio <- exp(theta[["log_ratio_mix"]])
   a <- stats::pnbinom(y - 1, size = phi, mu = (1-p_mix)*mu + p_mix*ratio*mu)
   b <- stats::pnbinom(y, size = phi, mu = (1-p_mix)*mu + p_mix*ratio*mu)
@@ -95,6 +104,7 @@ qres_lognormal_mix <- function(object, y, mu, ...) {
   theta <- get_pars(object)
   p_mix <- plogis(theta[["logit_p_mix"]])
   dispersion <- exp(theta[["ln_phi"]])
+  if (is_delta(object)) dispersion <- dispersion[2]
   ratio <- exp(theta[["log_ratio_mix"]])
   u <- stats::plnorm(q = y, meanlog = log((1-p_mix)*mu + p_mix*ratio*mu) - (dispersion^2) / 2, sdlog = dispersion)
   stats::qnorm(u)
@@ -110,6 +120,7 @@ qres_gaussian <- function(object, y, mu, ...) {
 qres_lognormal <- function(object, y, mu, ...) {
   theta <- get_pars(object)
   dispersion <- exp(theta[["ln_phi"]])
+  if (is_delta(object)) dispersion <- dispersion[2]
   u <- stats::plnorm(q = y, meanlog = log(mu) - (dispersion^2) / 2, sdlog = dispersion)
   stats::qnorm(u)
 }
