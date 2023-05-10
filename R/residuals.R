@@ -292,10 +292,10 @@ residuals.sdmTMB <- function(object,
   )
 
   if (type %in% c("mle-laplace", "response", "pearson")) {
-    mu <- tryCatch({linkinv(predict(object, newdata = nd)[[est_column]])}, # newdata = NULL; fast
+    mu <- tryCatch({linkinv(predict(object, newdata = NULL)[[est_column]])}, # newdata = NULL; fast
       error = function(e) NA)
     if (is.na(mu[[1]])) {
-      mu <- linkinv(predict(object, newdata = object$data)[[est_column]]) # not newdata = NULL
+      mu <- linkinv(predict(object, newdata = object$data, offset = object$tmb_data$offset_i)[[est_column]]) # not newdata = NULL
     }
   } else if (type == "mvn-laplace") {
     mu <- linkinv(predict(object, nsim = 1L, model = model)[, 1L, drop = TRUE])
