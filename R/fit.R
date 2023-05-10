@@ -907,7 +907,17 @@ sdmTMB <- function(
   if (identical(family$family[1], "binomial") && !delta) {
     ## call this to catch the factor / matrix cases
     y_i <- model.response(mf[[1]], type = "any")
+    ## allow character
+    if (is.character(y_i)) {
+      y_i <- model.response(mf[[1]], type = "factor")
+      if(nlevels(y_i) > 2) {
+        cli_abort("More than 2 levels detected for response")
+      }
+    }
     if (is.factor(y_i)) {
+      if(nlevels(y_i) > 2) {
+        cli_abort("More than 2 levels detected for response")
+      }
       ## following glm, ‘success’ is interpreted as the factor not
       ## having the first level (and hence usually of having the
       ## second level).
