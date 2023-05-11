@@ -1129,6 +1129,9 @@ sdmTMB <- function(
     no_spatial = no_spatial
   )
 
+  if(is.na(sum(nobs_RE))) {
+    cli_abort("One of the groups used in the factor levels is NA - please remove")
+  }
   b_thresh <- matrix(0, 2L, n_m)
   if (thresh[[1]]$threshold_func == 2L) b_thresh <- matrix(0, 3L, n_m) # logistic #TODO: change hard coding on index of thresh[[1]]
 
