@@ -27,13 +27,14 @@ nobs.sdmTMB <- function(object, ...) {
 fitted.sdmTMB <- function(object, ...) {
   if (isTRUE(object$family$delta)) {
     inv1 <- object$family[[1]]$linkinv
-    p1 <- inv1(predict(object, type = "link")$est1)
+    p <- predict(object, type = "link", offset = object$tmb_data$offset_i)
+    p1 <- inv1(p$est1)
     inv2 <- object$family[[2]]$linkinv
-    p2 <- inv2(predict(object, type = "link")$est2)
+    p2 <- inv2(p$est2)
     p1 * p2
   } else {
     inv <- object$family$linkinv
-    inv(predict(object, type = "link")$est)
+    inv(predict(object, type = "link", offset = object$tmb_data$offset_i)$est)
   }
 }
 
