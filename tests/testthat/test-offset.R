@@ -101,3 +101,47 @@ test_that("Offset works with extra_time", {
   b <- tidy(fit, "ran_pars")
   expect_equal(round(b$estimate[b$term == "rho"], 2), 0.91)
 })
+
+test_that("Offset prediction matches glm()", {
+  skip_on_cran()
+  skip_if_not_installed("INLA")
+  skip_if_not_installed("glmmTMB")
+  set.seed(1)
+  pcod$offset <- rnorm(nrow(pcod))
+  fit <- sdmTMB(
+    present ~ 1,
+    offset = pcod$offset,
+    data = pcod, spatial = "off",
+    family = binomial()
+  )
+  fit_glm <- glm(
+    present ~ 1,
+    offset = pcod$offset,
+    data = pcod,
+    family = binomial()
+  )
+  fit_glmmTMB <- glmmTMB::glmmTMB(
+    present ~ 1,
+    offset = pcod$offset,
+    data = pcod,
+    family = binomial()
+  )
+
+  p <- predict(fit)
+  p_glm <- predict(fit_glm)
+  p_glmmTMB <- predict(fit_glmmTMB)
+
+  expect_equal(p$est, unname(p_glm))
+  expect_equal(p$est, p_glmmTMB)
+
+  set.seed(1)
+  p <- predict(fit, nsim = 1000)
+  mu <- apply(p, 1, mean)
+  plot(mu, p_glm)
+  expect_equal(unname(mu), unname(p_glm), tolerance = 0.01)
+
+  # sdmTMB ignores offset here (but not glm() or glmmTMB()!)
+  # p <- predict(fit, newdata = pcod)
+  # p_glmmTMB <- predict(fit_glmmTMB, newdata = pcod)
+  # expect_equal(p$est, unname(p_glmmTMB))
+})

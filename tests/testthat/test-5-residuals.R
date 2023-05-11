@@ -302,10 +302,14 @@ test_that("MCMC residuals work with sdmTMBextra", {
   skip_if_not_installed("INLA")
   skip_if_not_installed("sdmTMBextra")
   skip_if_not_installed("rstan")
+  d <- pcod_2011
+  set.seed(1)
+  d$offset <- rnorm(nrow(d))
   fit_dg <- sdmTMB(
     density ~ 1,
-    data = pcod_2011,
+    data = d,
     mesh = pcod_mesh_2011,
+    offset = d$offset,
     family = delta_gamma()
   )
   set.seed(1)

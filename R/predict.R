@@ -238,7 +238,7 @@
 #'   ggtitle("Prediction (fixed effects + all random effects)") +
 #'   scale_fill_viridis_c(trans = "sqrt")
 
-predict.sdmTMB <- function(object, newdata = object$data,
+predict.sdmTMB <- function(object, newdata = NULL,
   type = c("link", "response"),
   se_fit = FALSE,
   re_form = NULL,
@@ -247,11 +247,11 @@ predict.sdmTMB <- function(object, newdata = object$data,
   sims_var = "est",
   model = c(NA, 1, 2),
   offset = NULL,
-  tmbstan_model = deprecated(),
   mcmc_samples = NULL,
   return_tmb_object = FALSE,
   return_tmb_report = FALSE,
   return_tmb_data = FALSE,
+  tmbstan_model = deprecated(),
   sims = deprecated(),
   area = deprecated(),
   ...) {
@@ -298,6 +298,18 @@ predict.sdmTMB <- function(object, newdata = object$data,
       "to take draws from the joint precision matrix and summarizing the standard ",
       "devation of those draws.")
     cli_inform(msg)
+  }
+
+  # places where we force newdata:
+  nd_arg_was_null <- FALSE
+  if (is.null(newdata)) {
+    if (is_delta(object) || nsim > 0 || type == "response" || !is.null(mcmc_samples) || se_fit || !is.null(re_form) || !is.null(re_form_iid)) {
+      newdata <- object$data
+      nd_arg_was_null <- TRUE # will be used to carry over the offset
+    }
+  }
+  if (any(grepl("t2\\(", object$formula[[1]])) && !is.null(newdata)) {
+    cli_abort("There are unresolved issues with predicting on newdata when the formula includes t2() terms. Either predict with `newdata = NULL` or use s(). Post an issue if you'd like us to prioritize fixing this.")
   }
 
   sys_calls <- unlist(lapply(sys.calls(), deparse)) # retrieve function that called this
@@ -472,6 +484,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
         cli_abort("Prediction offset vector does not equal number of rows in prediction dataset.")
     }
     tmb_data$proj_offset_i <- if (!is.null(offset)) offset else rep(0, nrow(proj_X_ij[[1]]))
+    if (nd_arg_was_null) tmb_data$proj_offset_i <- tmb_data$offset_i
     tmb_data$proj_X_threshold <- thresh[[1]]$X_threshold # TODO DELTA HARDCODED TO 1
     tmb_data$area_i <- if (length(area) == 1L) rep(area, nrow(proj_X_ij[[1]])) else area
     tmb_data$proj_mesh <- proj_mesh
@@ -790,7 +803,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
     }
     if (isTRUE(object$family$delta)) {
       cli_abort(c("Delta model prediction not implemented for `newdata = NULL` yet.",
-          "Please provide your data to `newdata`."))
+          "Please provide your data to `newdata` and include the `offset` vector if needed."))
     }
     nd <- object$data
     lp <- object$tmb_obj$env$last.par.best
@@ -843,6 +856,7 @@ predict.sdmTMB <- function(object, newdata = object$data,
     nd <- nd[!nd[["_sdmTMB_fake_nd_"]],,drop=FALSE]
   }
   nd[["_sdmTMB_fake_nd_"]] <- NULL
+  row.names(nd) <- NULL
 
   if (return_tmb_object) {
     return(list(data = nd, report = r, obj = obj, fit_obj = object, pred_tmb_data = tmb_data))

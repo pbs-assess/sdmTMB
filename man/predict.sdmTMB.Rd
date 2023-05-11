@@ -6,7 +6,7 @@
 \usage{
 \method{predict}{sdmTMB}(
   object,
-  newdata = object$data,
+  newdata = NULL,
   type = c("link", "response"),
   se_fit = FALSE,
   re_form = NULL,

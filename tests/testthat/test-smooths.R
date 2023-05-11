@@ -80,14 +80,13 @@ test_that("A model with t2() works", {
               data = dat,
               spatial = 'off'
   )
-  p <- predict(m, newdata = NULL, re_form = NA)
+  p <- predict(m, newdata = NULL)
+  expect_error(pnd <- predict(m, newdata = dat), "t2")
   plot(p$est, p_mgcv)
   abline(a = 0, b = 1)
   expect_gt(cor(p$est, p_mgcv), 0.9999)
   expect_equal(as.numeric(p$est), as.numeric(p_mgcv), tolerance = 0.001)
-
 })
-
 
 test_that("A model with dimensions specified in t2() works", {
   skip_on_cran()
@@ -120,12 +119,11 @@ test_that("A model with dimensions specified in t2() works", {
               data = dat,
               spatial = 'off'
   )
-  p <- predict(m, newdata = NULL, re_form = NA)
+  p <- predict(m, newdata = NULL)
   plot(p$est, p_mgcv)
   abline(a = 0, b = 1)
   expect_gt(cor(p$est, p_mgcv), 0.9999)
   expect_equal(as.numeric(p$est), as.numeric(p_mgcv), tolerance = 0.001)
-
 })
 
 
@@ -150,6 +148,9 @@ test_that("A model with by in spline (and s(x, y)) works", {
   plot(p$est, p_mgcv)
   abline(a = 0, b = 1)
   expect_gt(cor(p$est, p_mgcv), 0.9999)
+  pnd <- predict(m, newdata = dat)
+  plot(p$est, pnd$est)
+  expect_gt(cor(p$est, pnd$est), 0.9999)
 
   # s(x, y)
   m_mgcv <- mgcv::gam(y ~ s(x2, x1), data = dat)
@@ -165,6 +166,11 @@ test_that("A model with by in spline (and s(x, y)) works", {
   p2 <- predict(m, newdata = dat)
   plot(p2$est, p$est)
   expect_gt(cor(p2$est, p$est), 0.999)
+
+  pnd <- predict(m, newdata = dat)
+  plot(p$est, pnd$est)
+  expect_gt(cor(p$est, pnd$est), 0.9999)
+
 
   # Factor `by' variable example (with a spurious covariate x0)
   set.seed(1)
@@ -182,6 +188,9 @@ test_that("A model with by in spline (and s(x, y)) works", {
   plot(p$est, p_mgcv)
   abline(a = 0, b = 1)
   expect_gt(cor(p$est, p_mgcv), 0.9999)
+  pnd <- predict(m, newdata = dat)
+  plot(p$est, pnd$est)
+  expect_gt(cor(p$est, pnd$est), 0.9999)
 
   set.seed(291823)
   .s <- sample(seq_len(nrow(dat)), 200L)
