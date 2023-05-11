@@ -292,13 +292,13 @@ residuals.sdmTMB <- function(object,
   )
 
   if (type %in% c("mle-laplace", "response", "pearson")) {
-    mu <- tryCatch({linkinv(predict(object, newdata = NULL)[[est_column]])}, # newdata = NULL; fast
-      error = function(e) NA)
-    if (is.na(mu[[1]])) {
-      mu <- linkinv(predict(object, newdata = object$data, offset = object$tmb_data$offset_i)[[est_column]]) # not newdata = NULL
-    }
+    # mu <- tryCatch({linkinv(predict(object, newdata = NULL)[[est_column]])}, # newdata = NULL; fast
+    #   error = function(e) NA)
+    # if (is.na(mu[[1]])) {
+    mu <- linkinv(predict(object, newdata = object$data, offset = object$tmb_data$offset_i)[[est_column]]) # not newdata = NULL
+    # }
   } else if (type == "mvn-laplace") {
-    mu <- linkinv(predict(object, nsim = 1L, model = model)[, 1L, drop = TRUE])
+    mu <- linkinv(predict(object, nsim = 1L, model = model, offset = object$tmb_data$offset_i)[, 1L, drop = TRUE])
   } else if (type == "mle-mcmc") {
     if (is.null(mcmc_samples)) {
       msg <- c("As of sdmTMB 0.3.0, `mcmc_samples` must be supplied to use `type = 'mle-mcmc'`.",
