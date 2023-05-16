@@ -710,6 +710,23 @@ Type objective_function<Type>::operator()()
   }
 
   // ------------------ Probability of data given random effects ---------------
+  // calcs for mix distr. first:
+  switch (family(m)) {
+    case gamma_mix_family:
+    case lognormal_mix_family:
+    case nbinom2_mix_family: {
+      p_mix = invlogit(logit_p_mix); // probability of larger event
+      mix_ratio = exp(log_ratio_mix) + 1.0; // ratio of large:small values, constrained > 1.0
+      vector<Type> mu_i_large(n_i),
+      for (int i = 0; i < n_i; i++) {
+        int mix_model_index = if (n_m > 1) 1 else 0;
+        mu_i_large(i) = mu_i(i, mix_model_index) * mix_ratio;  // mean of large component = mean of smaller * ratio
+      }
+    }
+    default:
+
+  }
+  
 
   // from glmmTMB:
   // close to zero: use for count data (cf binomial()$initialize)
