@@ -76,19 +76,21 @@ qres_gamma <- function(object, y, mu, ...) {
 }
 
 qres_gamma_mix <- function(object, y, mu, ...) {
-  theta <- get_pars(object)
-  p_mix <- plogis(theta[["logit_p_mix"]])
-  phi <- exp(theta[["ln_phi"]])
-  if (is_delta(object)) phi <- phi[2]
-  ratio <- exp(theta[["log_ratio_mix"]])
-  s1 <- phi
-  s2 <- mu / s1
-  s3 <- ratio * s2
-  u <- stats::pgamma(q = y, shape = s1, scale = (1-p_mix)*s2 + p_mix*s3)
+  cli_abort("Randomized quantile residuals for this family are not implemented yet")
+  # theta <- get_pars(object)
+  # p_mix <- plogis(theta[["logit_p_mix"]])
+  # phi <- exp(theta[["ln_phi"]])
+  # if (is_delta(object)) phi <- phi[2]
+  # ratio <- exp(theta[["log_ratio_mix"]])
+  # s1 <- phi
+  # s2 <- mu / s1
+  # s3 <- (ratio * mu) / s1
+  # u <- stats::pgamma(q = y, shape = s1, scale = (1-p_mix)*s2 + p_mix*s3) # this looks wrong
   stats::qnorm(u)
 }
 
 qres_nbinom2_mix <- function(object, y, mu, ...) {
+  cli_abort("Randomized quantile residuals for this family are not implemented yet")
   theta <- get_pars(object)
   p_mix <- plogis(theta[["logit_p_mix"]])
   phi <- exp(theta[["ln_phi"]])
@@ -101,6 +103,7 @@ qres_nbinom2_mix <- function(object, y, mu, ...) {
 }
 
 qres_lognormal_mix <- function(object, y, mu, ...) {
+  cli_abort("Randomized quantile residuals for this family are not implemented yet")
   theta <- get_pars(object)
   p_mix <- plogis(theta[["logit_p_mix"]])
   dispersion <- exp(theta[["ln_phi"]])

@@ -116,6 +116,13 @@ Type minus_one_to_one(Type x) {
 }
 
 template <class Type>
+Type log_sum_exp(Type x1, Type x2) {
+  Type xmax = x1;
+  if (x2 > x1) xmax = x2;
+  return xmax + log(exp(x1 - xmax) + exp(x2 - xmax));
+}
+
+template <class Type>
 matrix<Type> MakeH(vector<Type> x) {
   matrix<Type> H(2, 2);
   H(0, 0) = exp(x(0));

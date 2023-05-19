@@ -710,29 +710,36 @@ Type objective_function<Type>::operator()()
   }
 
   // ------------------ Probability of data given random effects ---------------
-  // calcs for mix distr. first:
-  switch (family(m)) {
-    case gamma_mix_family:
-    case lognormal_mix_family:
-    case nbinom2_mix_family: {
-      p_mix = invlogit(logit_p_mix); // probability of larger event
-      mix_ratio = exp(log_ratio_mix) + 1.0; // ratio of large:small values, constrained > 1.0
-      vector<Type> mu_i_large(n_i),
-      for (int i = 0; i < n_i; i++) {
-        int mix_model_index = if (n_m > 1) 1 else 0;
-        mu_i_large(i) = mu_i(i, mix_model_index) * mix_ratio;  // mean of large component = mean of smaller * ratio
-      }
-    }
-    default:
-
-  }
-  
 
   // from glmmTMB:
   // close to zero: use for count data (cf binomial()$initialize)
 #define zt_lik_nearzero(x,loglik_exp) ((x < Type(0.001)) ? -INFINITY : loglik_exp)
 
-  Type s1, s2, s3, lognzprob, tmp_ll, ll_1, ll_2, p_mix, mix_ratio, ll_max;
+  Type s1, s2, s3, lognzprob, tmp_ll, ll_1, ll_2, p_mix, mix_ratio, s1_large, s2_large;
+
+  // calcs for mix distr. first:
+  int mix_model;
+  if (n_m > 1) {
+    mix_model = 1;
+  } else {
+    mix_model = 0;
+  }
+  vector<Type> mu_i_large(n_i);
+  switch (family(mix_model)) {
+  case gamma_mix_family:
+  case lognormal_mix_family:
+  case nbinom2_mix_family: {
+    p_mix = invlogit(logit_p_mix); // probability of larger event
+    mix_ratio = exp(log_ratio_mix) + Type(1.); // ratio of large:small values, constrained > 1.0
+    for (int i = 0; i < n_i; i++) {
+      mu_i_large(i) = exp(log(mu_i(i, mix_model)) + log(mix_ratio));  // mean of large component = mean of smaller * ratio
+    }
+    break;
+  }
+  default:
+    break;
+  }
+
   REPORT(phi);
   for (int m = 0; m < n_m; m++) PARALLEL_REGION {
     for (int i = 0; i < n_i; i++) {
@@ -837,67 +844,42 @@ Type objective_function<Type>::operator()()
             break;
           }
           case gamma_mix_family: {
-            p_mix = invlogit(logit_p_mix); // probability of larger event
             s1 = exp(ln_phi(m));        // shape
             s2 = mu_i(i,m) / s1;        // scale
-            ll_1 = log(Type(1.0 - p_mix)) + dgamma(y_i(i,m), s1, s2, true);
-
-            mix_ratio = exp(log_ratio_mix) + 1.0; // ratio of large:small values, constrained > 1.0
-            s3 = s2 * mix_ratio; // mean of large component = mean of smaller * ratio
-            ll_2 = log(p_mix) + dgamma(y_i(i,m), s1, s3, true);
-
-            ll_max = ll_1; // determine larger of ll_1 and ll_2
-            if(ll_2 > ll_1) ll_max = ll_2;
-
-            tmp_ll = ll_max + log(exp(ll_1 - ll_max) + exp(ll_2 - ll_max)); // log sum exp function
-
+            ll_1 = log(Type(1. - p_mix)) + dgamma(y_i(i,m), s1, s2, true);
+            s2_large = mu_i_large(i) / s1;    // scale
+            ll_2 = log(p_mix) + dgamma(y_i(i,m), s1, s2_large, true);
+            tmp_ll = sdmTMB::log_sum_exp(ll_1, ll_2);
             SIMULATE{
               if(rbinom(Type(1),p_mix) == 0) {
                 y_i(i,m) = rgamma(s1, s2);
               } else {
-                y_i(i,m) = rgamma(s1, s3);
+                y_i(i,m) = rgamma(s1, s2_large);
               }
             }
-            // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
-            // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
             break;
           }
         case lognormal_mix_family: {
-          p_mix = invlogit(logit_p_mix); // probability of larger event
-
-          ll_1 = log(Type(1.0 - p_mix)) + sdmTMB::dlnorm(y_i(i,m), log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
-          mix_ratio = exp(log_ratio_mix) + 1.0; // ratio of large:small values, constrained > 1.0
-          ll_2 = log(p_mix) + sdmTMB::dlnorm(y_i(i,m), log(mix_ratio) + log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
-
-          ll_max = ll_1; // determine larger of ll_1 and ll_2
-          if(ll_2 > ll_1) ll_max = ll_2;
-
-          tmp_ll = ll_max + log(exp(ll_1 - ll_max) + exp(ll_2 - ll_max)); // log sum exp function
-
+          ll_1 = log(Type(1. - p_mix)) + sdmTMB::dlnorm(y_i(i,m), log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
+          ll_2 = log(p_mix) + sdmTMB::dlnorm(y_i(i,m), log(mu_i_large(i)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
+          tmp_ll = sdmTMB::log_sum_exp(ll_1, ll_2);
           SIMULATE{
-            if(rbinom(Type(1),p_mix) == 0) {
+            if (rbinom(Type(1), p_mix) == 0) {
               y_i(i,m) = exp(rnorm(log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m)));;
             } else {
-              y_i(i,m) = exp(rnorm(log(mix_ratio) + log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m)));;
+              y_i(i,m) = exp(rnorm(log(mu_i_large(i)) - pow(phi(m), Type(2)) / Type(2), phi(m)));;
             }
           }
-          // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
-          // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
           break;
         }
         case nbinom2_mix_family: {
-          p_mix = invlogit(logit_p_mix); // probability of larger event
-          Type mu_i_large = mu_i(i,m) * mix_ratio;  // mean of large component = mean of smaller * ratio
           s1 = log(mu_i(i,m)); // log(mu_i)
-          s2 = 2. * s1 - ln_phi(m); // log(var - mu)
-          Type s1_large = log(mu_i_large);
-          Type s2_large = 2. * s1_large - ln_phi(m);
-          mix_ratio = exp(log_ratio_mix) + 1.0; // ratio of large:small values, constrained > 1.0
-          ll_1 = log(Type(1.0 - p_mix)) + dnbinom_robust(y_i(i,m), s1, s2, true);
+          s2 = Type(2.) * s1 - ln_phi(m); // log(var - mu)
+          Type s1_large = log(mu_i_large(i));
+          Type s2_large = Type(2.) * s1_large - ln_phi(m);
+          ll_1 = log(Type(1. - p_mix)) + dnbinom_robust(y_i(i,m), s1, s2, true);
           ll_2 = log(p_mix) + dnbinom_robust(y_i(i,m), s1_large, s2_large, true);
-          ll_max = ll_1; // determine larger of ll_1 and ll_2
-          if (ll_2 > ll_1) ll_max = ll_2;
-          tmp_ll = ll_max + log(exp(ll_1 - ll_max) + exp(ll_2 - ll_max)); // log sum exp function
+          tmp_ll = sdmTMB::log_sum_exp(ll_1, ll_2);
           SIMULATE{
             if (rbinom(Type(1), p_mix) == 0) {
               y_i(i,m) = rnbinom2(s1, s2);
@@ -1109,6 +1091,8 @@ Type objective_function<Type>::operator()()
       }
     }
 
+
+
     // for (int m = 0; m < n_m; m++) {
     //   for (int i = 0; i < n_i; i++) {
     //     if ((n_m == 2 && m == 2) || n_m == 1) proj_fe(i,m) += proj_offset_i(i);
@@ -1127,6 +1111,31 @@ Type objective_function<Type>::operator()()
       // proj_fe includes s(), RW, and IID random effects:
     for (int m = 0; m < n_m; m++)
       proj_eta.col(m) = proj_fe.col(m) + proj_rf.col(m);
+
+    // for families that implement mixture models, adjust proj_eta by
+    // proportion and ratio of means
+    // (1 - p_mix) * mu_i(i,m) + p_mix * (mu(i,m) * mix_ratio);
+    switch (family(mix_model)) {
+      case gamma_mix_family:
+      case lognormal_mix_family:
+      case nbinom2_mix_family:
+        proj_eta.col(mix_model) = log((1. - p_mix) * exp(proj_eta.col(mix_model)) + // regular part
+               p_mix * exp(proj_eta.col(mix_model)) * mix_ratio); //large part
+        break;
+      default:
+        break;
+    }
+    // // add mixture large mean if specified
+    // switch (family(mix_model)) {
+    //   case gamma_mix_family:
+    //   case lognormal_mix_family:
+    //   case nbinom2_mix_family: {
+    //     mu_i_large(i) = exp(log(mu_i(i, mix_model)) + log(mix_ratio));  // mean of large component = mean of smaller * ratio
+    //     proj_fe(i,m) += p_mix * mu_i_large;
+    // }
+  // }
+  // }
+
 
     if (n_m > 1 && pop_pred) { // grab SE on fixed effects combined if delta model:
       Type t1, t2;
