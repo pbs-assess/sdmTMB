@@ -1125,17 +1125,6 @@ Type objective_function<Type>::operator()()
       default:
         break;
     }
-    // // add mixture large mean if specified
-    // switch (family(mix_model)) {
-    //   case gamma_mix_family:
-    //   case lognormal_mix_family:
-    //   case nbinom2_mix_family: {
-    //     mu_i_large(i) = exp(log(mu_i(i, mix_model)) + log(mix_ratio));  // mean of large component = mean of smaller * ratio
-    //     proj_fe(i,m) += p_mix * mu_i_large;
-    // }
-  // }
-  // }
-
 
     if (n_m > 1 && pop_pred) { // grab SE on fixed effects combined if delta model:
       Type t1, t2;
