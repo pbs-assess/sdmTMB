@@ -63,6 +63,9 @@ make_mesh <- function(data, xy_cols,
     cli_abort("INLA must be installed to use this function.")
   }
 
+  if (nrow(data) == 0L) {
+    cli_abort("The data frame supplied to `data` has no rows of data.")
+  }
   if (missing(xy_cols) || is.numeric(xy_cols) || is.numeric(data)) {
     msg <- paste0(
       "It looks like you are using an old format of make_mesh(). ",
