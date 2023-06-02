@@ -15,11 +15,11 @@
   sims_var = "est",
   model = c(NA, 1, 2),
   offset = NULL,
-  tmbstan_model = deprecated(),
   mcmc_samples = NULL,
   return_tmb_object = FALSE,
   return_tmb_report = FALSE,
   return_tmb_data = FALSE,
+  tmbstan_model = deprecated(),
   sims = deprecated(),
   area = deprecated(),
   ...
@@ -72,8 +72,6 @@ depending on the argument \code{type}.}
 \item{offset}{A numeric vector of optional offset values. If left at default
 \code{NULL}, the offset is implicitly left at 0.}
 
-\item{tmbstan_model}{Deprecated. See \code{mcmc_samples}.}
-
 \item{mcmc_samples}{See \code{extract_mcmc()} in the
 \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package for
 more details and the Bayesian vignette. If specified, the predict function
@@ -92,6 +90,8 @@ contents of each element is the output of the report for that sample.}
 
 \item{return_tmb_data}{Logical: return formatted data for TMB? Used
 internally.}
+
+\item{tmbstan_model}{Deprecated. See \code{mcmc_samples}.}
 
 \item{sims}{\strong{Deprecated}. Please use \code{nsim} instead.}
 

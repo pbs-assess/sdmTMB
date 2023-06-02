@@ -111,7 +111,7 @@
 add_barrier_mesh <- function(spde_obj, barrier_sf, range_fraction = 0.2,
   proj_scaling = 1, plot = FALSE) {
 
-  if (!requireNamespace("INLA", quietly = TRUE)) {
+  if (!inla_installed()) {
     cli_abort("INLA must be installed to use this function.")
   }
   if (!requireNamespace("sf", quietly = TRUE)) {

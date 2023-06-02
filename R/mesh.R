@@ -59,7 +59,7 @@ make_mesh <- function(data, xy_cols,
                       refine = list(min.angle = 21, max.edge = Inf, max.n.strict = -1, max.n = 1000),
                       mesh = NULL) {
 
-  if (!requireNamespace("INLA", quietly = TRUE)) {
+  if (!inla_installed()) {
     cli_abort("INLA must be installed to use this function.")
   }
 

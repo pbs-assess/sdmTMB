@@ -101,7 +101,7 @@ sdmTMB_sim <- function(mesh,
                        list = FALSE,
                        size = NULL) {
 
-  if (!requireNamespace("INLA", quietly = TRUE)) {
+  if (!inla_installed()) {
     cli_abort("INLA must be installed to use this function.")
   }
   assert_that(is.numeric(x), is.numeric(y))

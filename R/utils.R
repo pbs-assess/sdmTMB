@@ -266,8 +266,12 @@ check_valid_factor_levels <- function(x, .name = "") {
 #' @keywords internal
 #' @return Returns `TRUE` or `FALSE`.
 inla_installed <- function() {
-  r1 <- requireNamespace("INLA", quietly = TRUE)
-  r2 <- requireNamespace("rgdal", quietly = TRUE)
+  # Suppressing:
+  # > The legacy packages maptools, rgdal, and rgeos, underpinning...
+  suppressMessages({
+    r1 <- requireNamespace("INLA", quietly = TRUE)
+    r2 <- requireNamespace("rgdal", quietly = TRUE)
+  })
   r1 && r2
 }
 

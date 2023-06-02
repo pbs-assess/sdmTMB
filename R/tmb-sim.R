@@ -117,7 +117,7 @@ sdmTMB_simulate <- function(formula,
                             previous_fit = NULL,
                             seed = sample.int(1e6, 1),
                             ...) {
-  if (!requireNamespace("INLA", quietly = TRUE)) {
+  if (!inla_installed()) {
     cli_abort("INLA must be installed to use this function.")
   }
 
