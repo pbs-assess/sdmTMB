@@ -354,7 +354,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
       cli_abort(c("Some new time elements were found in `newdata`. ",
         "For now, make sure only time elements from the original dataset are present.",
         "If you would like to predict on new time elements,",
-        "see the `extra_time` argument in `?predict.sdmTMB`.")
+        "see the `extra_time` argument in `?sdmTMB`.")
       )
 
     if (!identical(new_data_time, original_time) & isFALSE(pop_pred)) {
