@@ -301,3 +301,16 @@ test_that("rmvnorm sim prediction works with various sims_vars", {
   p3c <- predict(m3, nsim = 3, sims_var = 'epsilon_st', model = 1)
   expect_identical(dim(p3c), c(nrow(d), 3L))
 })
+
+test_that("nsim with s() and no other random effects works", {
+  # https://github.com/pbs-assess/sdmTMB/issues/233
+  # non-spatial model with smooth
+  fit <- sdmTMB(
+    density ~ s(depth),
+    spatial = "off",
+    data = pcod_2011,
+    family = tweedie(link = "log")
+  )
+  p <- predict(fit, nsim = 3L)
+  expect_true(ncol(p) == 3L)
+})
