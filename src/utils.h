@@ -217,7 +217,7 @@ Type logistic_threshold(Type x, Type s50, Type s95, Type scale, int mi) {
   if (mi) {
     pred = scale * (1. / (1. + exp(-log(19.) * (x - s50) / s95)) - 1.);
   } else {
-    pred = scale * (1. / (1. + exp(-log(19.) * (x - s50) / (s95 - s50)) - 1.);
+    pred = scale * (1. / (1. + exp(-log(19.) * (x - s50) / s95)) - 1);
   }
   return pred;
 }
