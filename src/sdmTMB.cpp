@@ -280,7 +280,7 @@ Type objective_function<Type>::operator()()
       Eo(m) = b_threshold(2,m);
     }
     if (mi_est && threshold_func == 2) { // MI logistic model
-      s95(m) = exp(b_threshold(1,m)); // not actually s95; 'delta' here for MI model
+      s95(m) = (b_threshold(1,m)); // not actually s95; 'delta' here for MI model
       Eo(m) = b_threshold(3,m);
     }
   }
