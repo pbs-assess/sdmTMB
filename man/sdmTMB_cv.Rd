@@ -70,13 +70,17 @@ A list:
 and CV log likelihood.
 \item \code{models}: A list of models; one per fold.
 \item \code{fold_loglik}: Sum of left-out log likelihoods per fold.
-\item \code{fold_elpd}: Expected log predictive density per fold on left-out data.
+\item \code{fold_elpd}: Expected log predictive density per fold on left-out data (same as \code{fold_elpd}).
 \item \code{sum_loglik}: Sum of \code{fold_loglik} across all left-out data.
-\item \code{elpd}: Expected log predictive density across all left-out data.
+\item \code{elpd}: Expected log predictive density across all left-out data (same as \code{sum_loglik})
 \item \code{pdHess}: Logical vector: Hessian was invertible each fold?
 \item \code{converged}: Logical: all \code{pdHess} \code{TRUE}?
 \item \code{max_gradients}: Max gradient per fold.
 }
+
+Prior to \pkg{sdmTMB} version '0.3.0.9002', \code{elpd} was incorrectly returned as
+the log average likelihood, which is another metric you could compare models
+with, but not ELPD. For maximum likelihood, \href{https://github.com/pbs-assess/sdmTMB/issues/235}{ELPD is equivalent to the sum of the log likelihoods}.
 }
 \description{
 Facilitates cross validation with sdmTMB models. Returns log likelihood or

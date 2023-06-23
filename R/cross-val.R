@@ -106,12 +106,17 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'           and CV log likelihood.
 #' * `models`: A list of models; one per fold.
 #' * `fold_loglik`: Sum of left-out log likelihoods per fold.
-#' * `fold_elpd`: Expected log predictive density per fold on left-out data.
+#' * `fold_elpd`: Expected log predictive density per fold on left-out data (same as `fold_elpd`).
 #' * `sum_loglik`: Sum of `fold_loglik` across all left-out data.
-#' * `elpd`: Expected log predictive density across all left-out data.
+#' * `elpd`: Expected log predictive density across all left-out data (same as `sum_loglik`)
 #' * `pdHess`: Logical vector: Hessian was invertible each fold?
 #' * `converged`: Logical: all `pdHess` `TRUE`?
 #' * `max_gradients`: Max gradient per fold.
+#'
+#' Prior to \pkg{sdmTMB} version '0.3.0.9002', `elpd` was incorrectly returned as
+#' the log average likelihood, which is another metric you could compare models
+#' with, but not ELPD. For maximum likelihood, [ELPD is equivalent to the sum of
+#' the log likelihoods](https://github.com/pbs-assess/sdmTMB/issues/235).
 #'
 #' @details
 #' **Parallel processing**
@@ -431,10 +436,10 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
     data = data,
     models = models,
     fold_loglik = fold_cv_ll,
-    fold_elpd = fold_cv_elpd,
+    fold_elpd = fold_cv_ll,
     # fold_loglik_R = fold_cv_ll_R,
     sum_loglik = sum(data$cv_loglik),
-    elpd = log_sum_exp(data$cv_loglik) - log(length(data$cv_loglik)),
+    elpd = sum(data$cv_loglik),
     converged = converged,
     pdHess = pdHess,
     max_gradients = max_grad
