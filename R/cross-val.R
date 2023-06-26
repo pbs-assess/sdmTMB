@@ -26,9 +26,9 @@ ll_lognormal <- function(object, withheld_y, withheld_mu) {
 dstudent <- function(x, df, mean, sd, ncp, log = FALSE) {
   # from metRology::dt.scaled()
   if (!log) {
-    return(stats::dt((x - mean)/sd, df, ncp = ncp, log = FALSE)/sd)
+    return(stats::dt((x - mean) / sd, df, ncp = ncp, log = FALSE) / sd)
   } else {
-    return(stats::dt((x - mean)/sd, df, ncp = ncp, log = TRUE) - log(sd))
+    return(stats::dt((x - mean) / sd, df, ncp = ncp, log = TRUE) - log(sd))
   }
 }
 
@@ -39,7 +39,7 @@ ll_student <- function(object, withheld_y, withheld_mu) {
 
 ll_nbinom1 <- function(object, withheld_y, withheld_mu) {
   phi <- exp(object$model$par[["ln_phi"]])
-  stats::dnbinom(x = withheld_y, size = withheld_mu/phi, mu = withheld_mu, log = TRUE)
+  stats::dnbinom(x = withheld_y, size = withheld_mu / phi, mu = withheld_mu, log = TRUE)
 }
 
 ll_nbinom2 <- function(object, withheld_y, withheld_mu) {
@@ -57,7 +57,8 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
     Gamma = ll_gamma,
     nbinom1 = ll_nbinom1,
     nbinom2 = ll_nbinom2,
-    cli_abort(paste0(object$family$family, " not yet implemented. ",
+    cli_abort(paste0(
+      object$family$family, " not yet implemented. ",
       "Please file an issue on GitHub."
     ))
   )
@@ -66,10 +67,11 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 
 #' Cross validation with sdmTMB models
 #'
-#' Facilitates cross validation with sdmTMB models. Returns log likelihood or
-#' expected log predictive density (ELPD) across left-out data. Has an option
-#' for leave-future-out cross validation. By default creates folds randomly but
-#' folds can be manually assigned.
+#' Facilitates cross validation with sdmTMB models. Returns the log likelihood
+#' of left-out data, which is similar in spirit to the ELPD (expected log
+#' pointwise predictive density). The function has an option for
+#' leave-future-out cross validation. By default, the function creates folds
+#' randomly but folds can be manually assigned via the `fold_ids` argument.
 #'
 #' @param formula Model formula.
 #' @param data A data frame.
@@ -106,17 +108,15 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'           and CV log likelihood.
 #' * `models`: A list of models; one per fold.
 #' * `fold_loglik`: Sum of left-out log likelihoods per fold.
-#' * `fold_elpd`: Expected log predictive density per fold on left-out data (same as `fold_elpd`).
 #' * `sum_loglik`: Sum of `fold_loglik` across all left-out data.
-#' * `elpd`: Expected log predictive density across all left-out data (same as `sum_loglik`)
 #' * `pdHess`: Logical vector: Hessian was invertible each fold?
 #' * `converged`: Logical: all `pdHess` `TRUE`?
 #' * `max_gradients`: Max gradient per fold.
 #'
 #' Prior to \pkg{sdmTMB} version '0.3.0.9002', `elpd` was incorrectly returned as
 #' the log average likelihood, which is another metric you could compare models
-#' with, but not ELPD. For maximum likelihood, [ELPD is equivalent to the sum of
-#' the log likelihoods](https://github.com/pbs-assess/sdmTMB/issues/235).
+#' with, but not ELPD. For maximum likelihood, [ELPD is equivalent in spirit to
+#' the sum of the log likelihoods](https://github.com/pbs-assess/sdmTMB/issues/235).
 #'
 #' @details
 #' **Parallel processing**
@@ -160,9 +160,6 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'   family = tweedie(link = "log"), k_folds = 2
 #' )
 #'
-#' m_cv$fold_elpd
-#' m_cv$elpd
-#'
 #' m_cv$fold_loglik
 #' m_cv$sum_loglik
 #'
@@ -203,15 +200,16 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' example_data <- m_lfocv$models[[1]]$data
 #' table(example_data$cv_fold, example_data$year)
 #' }
-sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
-  k_folds = 8, fold_ids = NULL,
-  lfo = FALSE,
-  lfo_forecast = 1,
-  lfo_validations = 5,
-  parallel = TRUE,
-  use_initial_fit = FALSE,
-  spde = deprecated(),
-  ...) {
+sdmTMB_cv <- function(
+    formula, data, mesh_args, mesh = NULL, time = NULL,
+    k_folds = 8, fold_ids = NULL,
+    lfo = FALSE,
+    lfo_forecast = 1,
+    lfo_validations = 5,
+    parallel = TRUE,
+    use_initial_fit = FALSE,
+    spde = deprecated(),
+    ...) {
   if (k_folds < 1) cli_abort("`k_folds` must be >= 1.")
 
   if (is_present(spde)) {
@@ -280,8 +278,9 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
   }
   if ("offset" %in% names(dot_args)) {
     .offset <- eval(dot_args$offset)
-    if (parallel && !is.character(.offset) && !is.null(.offset))
+    if (parallel && !is.character(.offset) && !is.null(.offset)) {
       cli_abort("We recommend using a character value for 'offset' (indicating the column name) when applying parallel cross validation.")
+    }
   } else {
     .offset <- NULL
   }
@@ -312,8 +311,10 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
     }
     dot_args <- list(dot_args)[[1]]
     dot_args$offset <- NULL
-    .args <- c(list(data = dat_fit, formula = formula, time = time, mesh = mesh,
-      weights = weights, offset = .offset), dot_args)
+    .args <- c(list(
+      data = dat_fit, formula = formula, time = time, mesh = mesh,
+      weights = weights, offset = .offset
+    ), dot_args)
     fit1 <- do.call(sdmTMB, .args)
   }
 
@@ -345,10 +346,11 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
       dot_args$offset <- NULL
       args <- c(list(
         data = dat_fit, formula = formula, time = time, mesh = mesh, offset = .offset,
-        weights = weights, previous_fit = if (use_initial_fit) fit1 else NULL), dot_args)
+        weights = weights, previous_fit = if (use_initial_fit) fit1 else NULL
+      ), dot_args)
       object <- do.call(sdmTMB, args)
       # if (max(object$gradients) > 0.01) {
-        # object <- run_extra_optimization(object, nlminb_loops = 1L, newton_loops = 0L)
+      # object <- run_extra_optimization(object, nlminb_loops = 1L, newton_loops = 0L)
       # }
     }
 
@@ -396,8 +398,10 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
   }
 
   if (requireNamespace("future.apply", quietly = TRUE) && parallel) {
-    message("Running fits with `future.apply()`.\n",
-      "Set a parallel `future::plan()` to use parallel processing.")
+    message(
+      "Running fits with `future.apply()`.\n",
+      "Set a parallel `future::plan()` to use parallel processing."
+    )
     if (lfo) {
       out <- future.apply::future_lapply(seq_len(lfo_validations), fit_func, future.seed = TRUE)
     } else {
@@ -405,9 +409,11 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
     }
     # out <- lapply(seq_len(k_folds), fit_func)
   } else {
-    message("Running fits sequentially.\n",
+    message(
+      "Running fits sequentially.\n",
       "Install the future and future.apply packages,\n",
-      "set a parallel `future::plan()`, and set `parallel = TRUE` to use parallel processing.")
+      "set a parallel `future::plan()`, and set `parallel = TRUE` to use parallel processing."
+    )
     if (lfo) {
       out <- lapply(seq_len(lfo_validations), fit_func)
     } else {
@@ -418,9 +424,9 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
   models <- lapply(out, `[[`, "model")
   data <- lapply(out, `[[`, "data")
   fold_cv_ll <- vapply(data, function(.x) sum(.x$cv_loglik), FUN.VALUE = numeric(1L))
-  fold_cv_elpd <- vapply(data, function(.x)
-    log_sum_exp(.x$cv_loglik) - log(length(.x$cv_loglik)), FUN.VALUE = numeric(1L))
-  #fold_cv_ll <- vapply(data, function(.x) .x$cv_loglik[[1L]], FUN.VALUE = numeric(1L))
+  # fold_cv_elpd <- vapply(data, function(.x)
+  #   log_sum_exp(.x$cv_loglik) - log(length(.x$cv_loglik)), FUN.VALUE = numeric(1L))
+  # fold_cv_ll <- vapply(data, function(.x) .x$cv_loglik[[1L]], FUN.VALUE = numeric(1L))
   # fold_cv_ll_R <- vapply(data, function(.x) .x$cv_loglik_R[[1L]], FUN.VALUE = numeric(1L))
   data <- do.call(rbind, data)
   data <- data[order(data[["_sdm_order_"]]), , drop = FALSE]
@@ -436,10 +442,10 @@ sdmTMB_cv <- function(formula, data, mesh_args, mesh = NULL, time = NULL,
     data = data,
     models = models,
     fold_loglik = fold_cv_ll,
-    fold_elpd = fold_cv_ll,
+    # fold_elpd = fold_cv_ll,
     # fold_loglik_R = fold_cv_ll_R,
     sum_loglik = sum(data$cv_loglik),
-    elpd = sum(data$cv_loglik),
+    # elpd = sum(data$cv_loglik),
     converged = converged,
     pdHess = pdHess,
     max_gradients = max_grad
