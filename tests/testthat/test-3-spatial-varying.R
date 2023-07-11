@@ -86,7 +86,9 @@ test_that("Spatially-varying coefficients are estimated correctly for binomial a
 
 test_that("Delta model with spatially varying factor predictor and no spatiotemporal field works #237", {
   # https://github.com/pbs-assess/sdmTMB/issues/237
-  # Add in fake quarter to mimic the simple example in my data
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
   pcod_q2 <- pcod
   pcod_q1 <- pcod
   pcod_q1$quarter <- as.factor(1)
