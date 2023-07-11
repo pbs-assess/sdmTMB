@@ -626,7 +626,7 @@ sdmTMB <- function(
     # move intercept into spatial_varying
     omit_spatial_intercept <- TRUE
     include_spatial <- TRUE
-    spatial <- rep("on", length(spatial))
+    spatial <- rep("on", length(spatial)) # checked and turned off later if needed
   } else {
     omit_spatial_intercept <- FALSE
   }
