@@ -83,3 +83,28 @@ test_that("Spatially-varying coefficients are estimated correctly for binomial a
   b2 <- tidy(m2, effects = "ran_pars", conf.int = TRUE)
   expect_equal(b2$estimate[3], b1$estimate[3], tolerance = 1e-3)
 })
+
+test_that("Delta model with spatially varying factor predictor and no spatiotemporal field works #237", {
+  # https://github.com/pbs-assess/sdmTMB/issues/237
+  # Add in fake quarter to mimic the simple example in my data
+  pcod_q2 <- pcod
+  pcod_q1 <- pcod
+  pcod_q1$quarter <- as.factor(1)
+  pcod_q2$quarter <- as.factor(2)
+  set.seed(1)
+  pcod_q2$density <- pcod_q2$density + rnorm(10, 20, n = nrow(pcod)) # just adding some difference between quarters..
+  pcod2 <- rbind(pcod_q1, pcod_q2)
+  # Fit delta model with spatially varying quarter effect
+  mesh <- make_mesh(pcod2, c("X", "Y"), cutoff = 25)
+  m <- sdmTMB(density ~ 0 + as.factor(year) + quarter,
+    data = pcod2,
+    mesh = mesh,
+    family = delta_gamma(link1 = "logit", link2 = "log"),
+    spatiotemporal = "off",
+    spatial = "off", # since spatially varying predictor is a factor
+    spatial_varying = ~0 + quarter,
+    time = "year"
+  )
+  expect_s3_class(m, "sdmTMB")
+  expect_true(sum(is.na(m$sd_report$sd)) == 0L)
+})

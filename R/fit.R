@@ -626,7 +626,7 @@ sdmTMB <- function(
     # move intercept into spatial_varying
     omit_spatial_intercept <- TRUE
     include_spatial <- TRUE
-    spatial <- "on" # checked later
+    spatial <- rep("on", length(spatial))
   } else {
     omit_spatial_intercept <- FALSE
   }
@@ -1302,6 +1302,7 @@ sdmTMB <- function(
   # kappa mapping:
   tmb_map$ln_kappa <- matrix(seq_len(length(tmb_params$ln_kappa)),
     nrow(tmb_params$ln_kappa), ncol(tmb_params$ln_kappa))
+
   for (m in seq_len(n_m)) {
     if (share_range[m]) tmb_map$ln_kappa[,m] <- tmb_map$ln_kappa[1,m]
     if (spatiotemporal[m] == "off" && spatial[m] == "off") tmb_map$ln_kappa[,m] <- NA
