@@ -231,8 +231,8 @@ parse_threshold_formula <- function(formula, thresh_type_short = "lin_thresh",
   list(formula = formula, threshold_parameter = threshold_parameter)
 }
 
-expand_time <- function(df, time_slices, time_column) {
-  df[["weight_sdmTMB"]] <- 1
+expand_time <- function(df, time_slices, time_column, weights) {
+  df[["weight_sdmTMB"]] <- weights
   fake_df <- df[1L, , drop = FALSE]
   fake_df[["weight_sdmTMB"]] <- 0
   missing_years <- time_slices[!time_slices %in% df[[time_column]]]

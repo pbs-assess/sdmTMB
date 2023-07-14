@@ -773,7 +773,7 @@ sdmTMB <- function(
 
   if (!is.null(extra_time)) { # for forecasting or interpolating
     data[["__sdmTMB_offset__"]] <- offset
-    data <- expand_time(df = data, time_slices = extra_time, time_column = time)
+    data <- expand_time(df = data, time_slices = extra_time, time_column = time, weights = weights)
     offset <- data[["__sdmTMB_offset__"]]
     data[["__sdmTMB_offset__"]] <- NULL
     weights <- data$weight_sdmTMB
