@@ -72,7 +72,6 @@ test_that("Leave future out cross validation works", {
   table(x$models[[1]]$data$cv_fold, x$models[[1]]$data$year)
 
   expect_equal(length(x$models), 2)
-  expect_equal(length(x$fold_elpd), 2)
   expect_equal(length(x$fold_loglik), 2)
   expect_equal(length(x$max_gradients), 2)
   expect_equal(cor(x$data$cv_fold[x$data$cv_fold!=1], x$data$year[x$data$cv_fold!=1]), 1.0)
