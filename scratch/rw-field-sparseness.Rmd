@@ -1,0 +1,134 @@
+# RW/AR(1) random field speed/Matrix sparseness
+
+```{r main-setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  collapse = TRUE,
+  comment = "#>",
+  # prompt = FALSE,
+  cache = TRUE,
+  autodep = TRUE,
+  results = 'hide'
+  # fig.width = 7,
+  # fig.asp = 0.618,
+  # fig.pos = "ht",
+  # cache.comments = TRUE,
+  # dev = "pdf",
+  # dpi = 140,
+  # optipng = "-strip all"
+  # R.options = list(prompt = "R> ", continue = "+ ")
+)
+knitr::knit_hooks$set(optipng = knitr::hook_optipng)
+options(prompt = "R> ", continue = "+  ", width = 72, useFancyQuotes = FALSE)
+```
+
+```{r}
+# install_github("seananderson/sdmVAST")
+# load_all("../sdmVAST")
+library(sdmVAST)
+
+dat <- sdmTMB::pcod
+dat$X <- dat$X * 1000
+dat$Y <- dat$Y * 1000
+nd <- sdmTMB::qcs_grid
+nd$X <- nd$X * 1000
+nd$Y <- nd$Y * 1000
+```
+
+```{r}
+tictoc::tic()
+fit_vast_rw <- sdmVAST(
+  density ~ 1,
+  data = dat,
+  xy_cols = c("X", "Y"),
+  zone = 9,
+  n_knots = 200,
+  time = "year",
+  coord_type = "utm",
+  spatial = "on",
+  mean_per_time = "constant",
+  spatiotemporal = "rw",
+  newdata = nd,
+  area_km = 4,
+)
+x <- tictoc::toc()
+# fit_vast_rwfit
+# fit_vast_rw$settings
+```
+
+```{r, results='markup'}
+x$callback_msg
+```
+
+```{r}
+tictoc::tic()
+fit_vast_iid <- sdmVAST(
+  density ~ 1,
+  data = dat,
+  xy_cols = c("X", "Y"),
+  zone = 9,
+  n_knots = 200,
+  time = "year",
+  coord_type = "utm",
+  spatial = "on",
+  mean_per_time = "constant",
+  spatiotemporal = "iid",
+  newdata = nd,
+  area_km = 4,
+)
+x <- tictoc::toc()
+# fit_vast_iid
+# fit_vast_iid$settings
+```
+
+
+```{r, results='markup'}
+x$callback_msg
+```
+
+```{r, results='markup'}
+library(sdmTMB)
+mesh <- sdmTMB::make_mesh(pcod, xy_cols = c("X", "Y"),
+  mesh = fit_vast_iid$fit$spatial_list$MeshList$isotropic_mesh)
+grid <- replicate_df(qcs_grid, "year", unique(pcod$year))
+
+tictoc::tic()
+fit_rw <- sdmTMB(
+  density ~ 1,
+  time = "year",
+  data = pcod, mesh = mesh,
+  spatiotemporal = "rw",
+  silent = TRUE,
+  family = delta_gamma(),
+  do_index = TRUE,
+  predict_args = list(newdata = grid),
+  index_args = list(area = 4)
+
+)
+tictoc::toc()
+# fit_rw
+```
+
+```{r, results='markup'}
+# in my local version, run the AR(1) with the SEPARABLE() formulation to check:
+tictoc::tic()
+fit_ar1 <- update(fit_rw, spatiotemporal = "ar1")
+tictoc::toc()
+# fit_ar1
+```
+
+```{r, results='markup'}
+tictoc::tic()
+fit_iid <- update(fit_rw, spatiotemporal = "iid")
+tictoc::toc()
+# fit_iid
+```
+
+```{r}
+Matrix::image(fit_iid$tmb_obj$env$spHess(random = TRUE))
+Matrix::image(fit_ar1$tmb_obj$env$spHess(random = TRUE))
+Matrix::image(fit_rw$tmb_obj$env$spHess(random = TRUE))
+Matrix::image(fit_vast_rw$fit$tmb_list$Obj$env$spHess(random = TRUE))
+```
