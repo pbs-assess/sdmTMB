@@ -38,6 +38,71 @@ fitted.sdmTMB <- function(object, ...) {
   }
 }
 
+#' Get fixed-effect coefficients
+#'
+#' @param object The fitted sdmTMB model object
+#' @param complete Currently ignored
+#' @param ... Currently ignored
+#' @importFrom stats coef
+#' @export
+#' @noRd
+coef.sdmTMB <- function(object, complete = FALSE, ...) {
+  x <- tidy(object)
+  out <- x$estimate
+  names(out) <- x$term
+  out
+}
+
+#' Get variance-covariance matrix
+#'
+#' @param object The fitted sdmTMB model object
+#' @param complete Currently ignored
+#' @param ... Currently ignored
+#' @importFrom stats vcov
+#' @export
+#' @noRd
+vcov.sdmTMB <- function(object, complete = FALSE, ...) {
+  sdr <- object$sd_report
+  v <- sdr$cov.fixed
+  fe <- tidy(object)$term
+  nm <- colnames(v)
+  i <- grepl("^b_j$", nm)
+  if (sum(i)) {
+    if (sum(i) == length(fe)) { # should always be true
+      nm[i] <- fe
+    }
+  }
+  colnames(v) <- nm
+  rownames(v) <- nm
+  if (isTRUE(complete)) {
+    return(v)
+  } else {
+    return(v[i,i,drop=FALSE])
+  }
+}
+
+#' Get CIs
+#'
+#' @param object The fitted sdmTMB model object
+#' @param parm Parameters to return CIs
+#' @param level CI level
+#' @param ... Ignored
+#' @importFrom stats confint
+#' @export
+#' @noRd
+confint.sdmTMB <- function(object, parm, level = 0.95, ...) {
+  td <- tidy(object, conf.int = TRUE, conf.level = level)
+  x <- matrix(nrow = nrow(td), ncol = 3L)
+  x[,3L] <- td$estimate
+  x[,2L] <- td$conf.high
+  x[,1L] <- td$conf.low
+  p <- ((1 - level) / 2) * 100
+  pn <- paste(c(p, 100 - p), "%")
+  colnames(x) <- c(pn, "Estimate")
+  rownames(x) <- td$term
+  x
+}
+
 #' Extract the log likelihood of a sdmTMB model
 #'
 #' @param object The fitted sdmTMB model object
@@ -126,20 +191,6 @@ formula.sdmTMB <- function (x, ...) {
   } else {
     return(x$formula[[1]])
   }
-}
-
-#' @importFrom stats vcov
-#' @export
-vcov.sdmTMB <- function(object, ...) {
-  vc <- object$sd_report$cov.fixed
-  rn <- rownames(vc)
-  bj <- grepl("^b_j", rn)
-  vc <- vc[bj, bj]
-  b <- tidy(object, silent = TRUE)
-  stopifnot(nrow(b) == nrow(vc))
-  rownames(vc) <- b$term
-  colnames(vc) <- b$term
-  vc
 }
 
 #' @importFrom stats terms
