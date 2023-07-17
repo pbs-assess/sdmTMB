@@ -772,11 +772,9 @@ sdmTMB <- function(
   }
 
   if (!is.null(extra_time)) { # for forecasting or interpolating
-    data[["__sdmTMB_offset__"]] <- offset
-    data <- expand_time(df = data, time_slices = extra_time, time_column = time, weights = weights)
-    offset <- data[["__sdmTMB_offset__"]]
-    data[["__sdmTMB_offset__"]] <- NULL
-    weights <- data$weight_sdmTMB
+    data <- expand_time(df = data, time_slices = extra_time, time_column = time, weights = weights, offset = offset)
+    if (!is.null(offset)) offset <- data[["__sdmTMB_offset__"]] # expanded
+    if (!is.null(weights)) weights <- data[["__weight_sdmTMB__"]] # expanded
     spde$loc_xy <- as.matrix(data[,spde$xy_cols,drop=FALSE])
     spde$A_st <- INLA::inla.spde.make.A(spde$mesh, loc = spde$loc_xy)
     spde$sdm_spatial_id <- seq(1, nrow(data)) # FIXME
