@@ -78,13 +78,11 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
   est$zeta_s <- NULL
   est$omega_s <- NULL
   est$ln_H_input <- NULL
-  est$phi <- NULL
 
   se$epsilon_st <- NULL
   se$zeta_s <- NULL
   se$omega_s <- NULL
   se$ln_H_input <- NULL
-  se$phi <- NULL
 
   subset_pars <- function(p, model) {
     p$b_j <- if (model == 1) p$b_j else p$b_j2
@@ -108,6 +106,8 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
   if (x$family$family[[model]] %in% c("binomial", "poisson")) {
     se$ln_phi <- NULL
     est$ln_phi <- NULL
+    se$phi <- NULL
+    est$phi <- NULL
   }
 
   # not ADREPORTed for speed:
@@ -202,8 +202,27 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
       .se <- se[[log_name[j]]]
       .e <- if (is.null(.e)) NA else .e
       .se <- if (is.null(.se)) NA else .se
+
+      non_log_name <- gsub("ln_", "", gsub("log_", "", log_name))
+      this <- non_log_name[j]
+
+      if (delta) {
+        this_se <- se[[this]]
+        if (is.matrix(this_se)) {
+          this_se <- as.numeric(this_se[,model])
+        } else {
+          this_se <- as.numeric(this_se[model])
+        }
+      } else {
+        this_se <- as.numeric(se[[this]])
+      }
+      if (this == "sigma_E") this_se <- this_se[1]
+      if (length(this_se) != length(est[[i]])) { # safety
+        this_se <- NA_real_
+      }
+      # hack in the SEs:
       out_re[[i]] <- data.frame(
-        term = i, estimate = est[[i]], std.error = NA,
+        term = i, estimate = est[[i]], std.error = this_se,
         conf.low = exp(.e - crit * .se),
         conf.high = exp(.e + crit * .se),
         stringsAsFactors = FALSE
@@ -211,7 +230,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
 
       ii <- ii + 1
     }
-    out_re[[i]]$std.error <- NA
+    # out_re[[i]]$std.error <- NA
   }
   discard <- unlist(lapply(out_re, function(x) length(x) == 1L)) # e.g. old models and phi
   out_re[discard] <- NULL
@@ -219,7 +238,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
   if ("tweedie" %in% x$family$family) {
     out_re$tweedie_p <- data.frame(
       term = "tweedie_p", estimate = plogis(est$thetaf) + 1,
-      std.error = NA, stringsAsFactors = FALSE)
+      std.error = se$tweedie_p, stringsAsFactors = FALSE)
     out_re$tweedie_p$conf.low <- plogis(est$thetaf - crit * se$thetaf) + 1
     out_re$tweedie_p$conf.high <- plogis(est$thetaf + crit * se$thetaf) + 1
     ii <- ii + 1
@@ -308,12 +327,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
   } else if (effects == "ran_vals") {
     return(frm(out_ranef))
   } else if (effects == "ran_pars") {
-    if (!silent) {
-      if (!conf.int)
-        cli_inform("Standard errors intentionally omitted because they have been calculated in log space. Confidence intervals are available with `conf.int = TRUE`.")
-      else
-        cli_inform("Standard errors intentionally omitted because they have been calculated in log space.")
-    }
     return(frm(out_re))
   } else {
     cli_abort("The specified 'effects' type is not available.")

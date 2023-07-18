@@ -715,7 +715,7 @@ Type objective_function<Type>::operator()()
   // close to zero: use for count data (cf binomial()$initialize)
 #define zt_lik_nearzero(x,loglik_exp) ((x < Type(0.001)) ? -INFINITY : loglik_exp)
 
-  Type s1, s2, s3, lognzprob, tmp_ll, ll_1, ll_2, p_mix, mix_ratio, s1_large, s2_large;
+  Type s1, s2, s3, lognzprob, tmp_ll, ll_1, ll_2, p_mix, mix_ratio, tweedie_p, s1_large, s2_large;
 
   // calcs for mix distr. first:
   int mix_model;
@@ -751,14 +751,14 @@ Type objective_function<Type>::operator()()
             break;
           }
           case tweedie_family: {
-            s1 = invlogit(thetaf) + Type(1.0);
+            tweedie_p = invlogit(thetaf) + Type(1.0);
             if (!sdmTMB::isNA(priors(12))) {
               jnll -= dnorm(s1, priors(12), priors(13), true);
               // derivative: https://www.wolframalpha.com/input?i=e%5Ex%2F%281%2Be%5Ex%29+%2B+1
               if (stan_flag) jnll -= thetaf - 2 * log(1 + exp(thetaf)); // Jacobian adjustment
             }
-            tmp_ll = dtweedie(y_i(i,m), mu_i(i,m), phi(m), s1, true);
-            SIMULATE{y_i(i,m) = rtweedie(mu_i(i,m), phi(m), s1);}
+            tmp_ll = dtweedie(y_i(i,m), mu_i(i,m), phi(m), tweedie_p, true);
+            SIMULATE{y_i(i,m) = rtweedie(mu_i(i,m), phi(m), tweedie_p);}
             break;
           }
           case binomial_family: {
@@ -1299,6 +1299,7 @@ Type objective_function<Type>::operator()()
 
   ADREPORT(logit_p_mix);
   ADREPORT(log_ratio_mix);
+  ADREPORT(tweedie_p);
   REPORT(p_mix);
   REPORT(mix_ratio);
   ADREPORT(phi);
