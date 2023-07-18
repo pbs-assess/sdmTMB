@@ -1,5 +1,7 @@
 test_that("coef and vcov and confint work", {
   skip_if_not_installed("INLA")
+  skip_on_ci()
+  skip_on_cran()
   fit <- sdmTMB(
     density ~ depth,
     data = pcod_2011, spatial = "off",
@@ -27,3 +29,35 @@ test_that("coef and vcov and confint work", {
   expect_true(grepl("Estimate", colnames(x))[3])
 })
 
+test_that("various methods work", {
+  skip_if_not_installed("INLA")
+  skip_on_ci()
+  skip_on_cran()
+  fit <- sdmTMB(
+    density ~ depth,
+    data = pcod_2011, spatial = "off",
+    family = tweedie(link = "log")
+  )
+  f <- fitted(fit)
+  expect_equal(nrow(pcod_2011), length(f))
+
+  fit <- sdmTMB(
+    density ~ depth,
+    data = pcod_2011, spatial = "off",
+    family = delta_gamma()
+  )
+  f <- fitted(fit)
+  expect_equal(nrow(pcod_2011), length(f))
+
+  a <- AIC(fit)
+  expect_equal(round(a, 3), 6062.726)
+
+  f <- fixef(fit)
+  expect_length(f, 2L)
+
+  f <- family(fit)
+  expect_identical(f$family, c("binomial", "Gamma"))
+
+  x <- terms(fit)
+  expect_identical(as.character(x), c("~", "density", "depth"))
+})

@@ -314,3 +314,20 @@ test_that("nsim with s() and no other random effects works", {
   p <- predict(fit, nsim = 3L)
   expect_true(ncol(p) == 3L)
 })
+
+test_that("gather/spread sims work" {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("INLA")
+
+  m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2,
+    data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(),
+    spatiotemporal = "off")
+  x <- spread_sims(m, nsim = 10)
+  expect_true(nrow(x) == 10L)
+  expect_s3_class(x, "data.frame")
+
+  x <- gather_sims(m, nsim = 10)
+  expect_true(ncol(x) == 3L)
+  expect_s3_class(x, "data.frame")
+})

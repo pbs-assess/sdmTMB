@@ -148,7 +148,7 @@ family.sdmTMB <- function (object, ...) {
   }
 }
 
-##' @importFrom nlme fixef
+#' @importFrom nlme fixef
 #' @method fixef sdmTMB
 #' @export
 fixef.sdmTMB <- function(object, ...) {
