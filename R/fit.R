@@ -1285,6 +1285,7 @@ sdmTMB <- function(
 ##  }
 
   if (sm$has_smooths) {
+    if (reml) tmb_random <- c(tmb_random, "bs")
     tmb_random <- c(tmb_random, "b_smooth") # smooth random effects
     tmb_map <- unmap(tmb_map, c("b_smooth", "ln_smooth_sigma", "bs"))
   }
