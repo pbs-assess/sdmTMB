@@ -115,7 +115,7 @@ logLik.sdmTMB <- function(object, ...) {
   df <- length(object$model$par) # fixed effects only
   if (isTRUE(object$reml)) {
     s <- as.list(object$sd_report, "Estimate")
-    df <- df + length(s$b_j) + length(s$b_j2)
+    df <- df + length(s$b_j) + length(s$b_j2) + length(s$bs)
   }
   structure(val,
     nobs = nobs, nall = nobs, df = df,
