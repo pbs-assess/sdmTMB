@@ -524,7 +524,7 @@ test_that("An m = 1 or 2 smoother works with print warnings if needed; m > 2 err
   )
   expect_warning(print(m), regexp = "Smoother")
 
-  m_mgcv <- mgcv::gam(log(density) ~ s(depth_scaled, m = 1) + s(year, k = 3), data = d, method = "REML")
+  m_mgcv <- mgcv::gam(log(density) ~ s(depth_scaled, m = 1) + s(year, k = 3), data = d, method = "ML")
   p <- predict(m)
   p2 <- predict(m_mgcv)
   plot(p$est, p2)
