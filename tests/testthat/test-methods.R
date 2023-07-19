@@ -60,4 +60,13 @@ test_that("various methods work", {
 
   x <- terms(fit)
   expect_identical(as.character(x), c("~", "density", "depth"))
+
+  pcod_2011$fyear <- as.factor(pcod_2011$year)
+  fit <- sdmTMB(
+    density ~ (1 | fyear),
+    data = pcod_2011, spatial = "off",
+    family = tweedie(link = "log")
+  )
+  x <- ranef(fit)
+  expect_length(x$cond$fyear[,1], 4L)
 })
