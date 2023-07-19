@@ -645,6 +645,7 @@ sdmTMB <- function(
   share_range <- unlist(share_range)
   if (length(share_range) == 1L) share_range <- rep(share_range, n_m)
   share_range[spatiotemporal == "off"] <- TRUE
+  share_range[spatial == "off"] <- TRUE
 
   spde <- mesh
   epsilon_model <- NULL
@@ -1298,16 +1299,8 @@ sdmTMB <- function(
 
   if (!is.null(previous_fit)) tmb_map <- previous_fit$tmb_map
 
-  # kappa mapping:
-  tmb_map$ln_kappa <- matrix(seq_len(length(tmb_params$ln_kappa)),
-    nrow(tmb_params$ln_kappa), ncol(tmb_params$ln_kappa))
-
-  for (m in seq_len(n_m)) {
-    if (share_range[m]) tmb_map$ln_kappa[,m] <- tmb_map$ln_kappa[1,m]
-    if (spatiotemporal[m] == "off" && spatial[m] == "off") tmb_map$ln_kappa[,m] <- NA
-    if (spatiotemporal[m] == "off" && spatial[m] == "on") tmb_map$ln_kappa[,m] <- m
-  }
-  tmb_map$ln_kappa <- as.factor(as.integer(as.factor(tmb_map$ln_kappa)))
+  # this is complex; pulled it out into own function:
+  tmb_map$ln_kappa <- get_kappa_map(n_m = n_m, spatial = spatial, spatiotemporal = spatiotemporal, share_range = share_range)
 
   for (i in seq_along(start)) {
     cli_inform(c(i = paste0("Initiating `", names(start)[i],

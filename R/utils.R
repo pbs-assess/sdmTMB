@@ -350,3 +350,21 @@ replicate_df <- function(dat, time_name, time_values) {
   nd[[time_name]] <- rep(time_values, each = nrow(dat))
   nd
 }
+
+get_kappa_map <- function(
+    n_m = 2,
+  spatial = c("on", "off"),
+  spatiotemporal = c("on", "on"),
+  share_range = c(FALSE, FALSE)
+) {
+  ln_kappa <- matrix(0, 2L, n_m)
+  ln_kappa <- matrix(seq_len(length(ln_kappa)),
+    nrow(ln_kappa), ncol(ln_kappa))
+  for (m in seq_len(n_m)) {
+    if (share_range[m]) ln_kappa[, m] <- if (m == 1) ln_kappa[1, m] else ln_kappa[1, 1] + 1
+    if (spatiotemporal[m] == "off" && spatial[m] == "off") ln_kappa[, m] <- NA
+    if (spatiotemporal[m] == "off" && spatial[m] == "on") ln_kappa[, m] <- 99 + m
+    if (spatiotemporal[m] == "on" && spatial[m] == "off") ln_kappa[, m] <- 99 + m
+  }
+  as.factor(as.integer(as.factor(ln_kappa)))
+}
