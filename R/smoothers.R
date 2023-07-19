@@ -38,10 +38,7 @@ parse_smoothers <- function(formula, data, knots = NULL, newdata = NULL, basis_p
     for (i in seq_along(smterms)) {
       if (grepl('bs\\=\\"re', smterms[i])) cli_abort("bs = 're' is not currently supported for smooths")
       if (grepl('fx\\=T', smterms[i])) cli_abort("fx = TRUE is not currently supported for smooths")
-      if (grepl('m\\=3', smterms[i])) cli_abort("m > 2 is not currently supported for smooths")
-      if (grepl('m\\=4', smterms[i])) cli_abort("m > 2 is not currently supported for smooths")
-      if (grepl('m\\=5', smterms[i])) cli_abort("m > 2 is not currently supported for smooths")
-      if (grepl('m\\=6', smterms[i])) cli_abort("m > 2 is not currently supported for smooths")
+      # if (grepl('m\\=3', smterms[i])) cli_abort("m > 2 is not currently supported for smooths")
       obj <- eval(str2expression(smterms[i]))
       labels[[i]] <- obj$label
       classes[[i]] <- attr(obj, "class")
@@ -49,12 +46,12 @@ parse_smoothers <- function(formula, data, knots = NULL, newdata = NULL, basis_p
         basis[[i]] <- mgcv::smoothCon(
           object = obj, data = data,
           knots = knots, absorb.cons = TRUE,
-          diagonal.penalty = TRUE
+          diagonal.penalty = FALSE
         )
         basis_out[[i]] <- mgcv::smoothCon( # to be used on prediction
           object = obj, data = data,
           knots = knots, absorb.cons = TRUE,
-          diagonal.penalty = TRUE#  modCon = 3 # modCon set differently as per brms
+          diagonal.penalty = FALSE#  modCon = 3 # modCon set differently as per brms
         )
       } else {
         basis[[i]] <- basis_prev[[i]] # predicting on new data
