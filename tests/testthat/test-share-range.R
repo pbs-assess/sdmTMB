@@ -250,4 +250,43 @@ test_that("get_kappa_map() works", {
   )
   expect_identical(x, factor(c(NA, NA)))
 
+  x <- get_kappa_map(
+    n_m = 2,
+    spatial = c("on", "on"),
+    spatiotemporal = c("off", "on"),
+    share_range = c(FALSE, FALSE)
+  )
+  expect_identical(x, factor(c(1, 1, 2, 3)))
+
+  x <- get_kappa_map(
+    n_m = 2,
+    spatial = c("off", "off"),
+    spatiotemporal = c("on", "on"),
+    share_range = c(FALSE, TRUE)
+  )
+  expect_identical(x, factor(c(1, 1, 2, 2)))
+
+  x <- get_kappa_map(
+    n_m = 2,
+    spatial = c("off", "off"),
+    spatiotemporal = c("on", "on"),
+    share_range = c(FALSE, FALSE)
+  )
+  expect_identical(x, factor(c(1, 1, 2, 2)))
+
+  # get_kappa_map(
+  #   n_m = 2,
+  #   spatial = c("on", "on"),
+  #   spatiotemporal = c("on", "on"),
+  #   share_range = c(FALSE, TRUE)
+  # )
+  # expect_identical(x, factor(c(1, 2, 3, 3)))
 })
+
+
+# check if share_range = TRUE or if one of spatial or spatiotemporal is 'off', if so the values in that column should be identical
+
+# check if share_range = TRUE or if one of spatial or spatiotemporal is 'off', if so the values in that column should be identical
+
+
+
