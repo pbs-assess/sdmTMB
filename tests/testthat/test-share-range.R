@@ -185,4 +185,12 @@ test_that("get_kappa_map() works", {
     share_range = FALSE
   )
   expect_identical(x, factor(c(NA, NA)))
+
+  x <- get_kappa_map(
+         n_m = 2,
+         spatial = c("on", "on"),
+         spatiotemporal = c("off", "on"),
+         share_range = c(FALSE, FALSE)
+       )
+  expect_identical(x, factor(c(1, 1, 2, 3)))
 })

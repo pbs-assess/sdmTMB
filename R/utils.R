@@ -365,6 +365,17 @@ get_kappa_map <- function(
     if (spatiotemporal[m] == "off" && spatial[m] == "off") ln_kappa[, m] <- NA
     if (spatiotemporal[m] == "off" && spatial[m] == "on") ln_kappa[, m] <- 99 + m
     if (spatiotemporal[m] == "on" && spatial[m] == "off") ln_kappa[, m] <- 99 + m
+    if (spatiotemporal[m] == "on" && spatial[m] == "on" && !share_range[m]) {
+      if (m == 1) {
+        # ln_kappa[, m] <- c(max(ln_kappa[, 1] + 1))
+      } else {
+        max1 <- max(ln_kappa[, 1])
+        if (is.na(max1)) max1 <- 1
+        ln_kappa[, m] <- c(max1 + 1, max1 + 2)
+      }
+
+    }
   }
+  # ln_kappa
   as.factor(as.integer(as.factor(ln_kappa)))
 }
