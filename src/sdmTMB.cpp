@@ -653,6 +653,8 @@ Type objective_function<Type>::operator()()
   mu_i.setZero();
   eta_i.setZero();
 
+  vector<Type> poisson_link_m0_ll(n_i);
+
   // combine parts:
   for (int m = 0; m < n_m; m++) {
     for (int i = 0; i < n_i; i++) {
@@ -688,22 +690,25 @@ Type objective_function<Type>::operator()()
         }
       }
       eta_i(i,m) += eta_iid_re_i(i,m);
-
-      // bool poisson_link_delta = false;
-      // if (n_m > 1) if (family(0) == 1 && family(1) == 4 && link(0) == 1 && link(1) == 1)
-      //     poisson_link_delta = true;
-
       if (family(m) == 1 && !poisson_link_delta) { // regular binomial
-        // binomial(link = "logit"); don't touch (using robust density function in logit space)
         mu_i(i,m) = LogitInverseLink(eta_i(i,m), link(m));
-      } else if (poisson_link_delta) { // clogog, but put in logit space for robust density function:
-        Type n = exp(eta_i(i,0));
-        // Type p = Type(1) - exp(-exp(offset_i(i)) * n);
-        Type p = Type(1) - exp(-exp(offset_i(i) + eta_i(i,0)));
-        if (m == 0) mu_i(i,0) = logit(p);
-        // if (m == 1) mu_i(i,1) = (n/p) * exp(eta_i(i,1));
-        if (m == 1) mu_i(i,1) = exp(log(n/p) + eta_i(i,1));
-      } else {
+      } else if (poisson_link_delta) { // a tweak on clogog:
+        // eta_i(i,0) = log numbers density
+        // eta_i(i,1) = log average weight
+        // mu_i(i,0) = probability of occurence (kept in logit space within .cpp)
+        // mu_i(i,1) = positive density prediction
+        Type log_one_minus_p = -exp(offset_i(i) + eta_i(i,0));
+        Type log_p = logspace_sub(Type(0.0), log_one_minus_p);
+        if (m == 0) {
+          if (y_i(i,0) > Type(0.0)) {
+            poisson_link_m0_ll(i) = log_p; // calc ll here; more robust than dbinom_robust(logit(p))
+          } else {
+            poisson_link_m0_ll(i) = log_one_minus_p; // log(1 - p)
+          }
+          mu_i(i,1) = logit(exp(log_p)); // just for recording; not used in ll b/c robustness
+        }
+        if (m == 1) mu_i(i,1) = exp(offset_i(i) + eta_i(i,0) + eta_i(i,1) - log_p);
+      } else { // all the regular stuff:
         mu_i(i,m) = InverseLink(eta_i(i,m), link(m));
       }
     }
@@ -762,7 +767,12 @@ Type objective_function<Type>::operator()()
             break;
           }
           case binomial_family: {
-            tmp_ll = dbinom_robust(y_i(i,m), size(i), mu_i(i,m), true);
+            if (poisson_link_delta) {
+              // needed for robustness; must be first model component
+              tmp_ll = poisson_link_m0_ll(i);
+            } else {
+              tmp_ll = dbinom_robust(y_i(i,m), size(i), mu_i(i,m), true);
+            }
             // SIMULATE{y_i(i,m) = rbinom(size(i), InverseLink(mu_i(i,m), link(m)));}
             SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));} // hardcoded invlogit b/c mu_i in logit space
             break;
