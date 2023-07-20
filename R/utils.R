@@ -351,35 +351,41 @@ replicate_df <- function(dat, time_name, time_values) {
   nd
 }
 
-get_kappa_map <- function(
-    n_m = 2,
-  spatial = c("on", "off"),
-  spatiotemporal = c("on", "on"),
-  share_range = c(FALSE, FALSE)
-) {
-  ln_kappa <- matrix(0, 2L, n_m)
-  ln_kappa <- matrix(seq_len(length(ln_kappa)),
-    nrow(ln_kappa), ncol(ln_kappa))
-  for (m in seq_len(n_m)) {
-    if (share_range[m]) ln_kappa[, m] <- if (m == 1) ln_kappa[1, m] else ln_kappa[1, 1] + 1
-    if (spatiotemporal[m] == "off" && spatial[m] == "off") ln_kappa[, m] <- NA
-    if (spatiotemporal[m] == "off" && spatial[m] == "on") ln_kappa[, m] <- 99 + m
-    if (st_on(spatiotemporal[m]) && spatial[m] == "off") ln_kappa[, m] <- 99 + m
-    if (st_on(spatiotemporal[m]) == "on" && spatial[m] == "on" && !share_range[m]) {
-      if (m == 1) {
-        # ln_kappa[, m] <- c(max(ln_kappa[, 1] + 1))
-      } else {
-        max1 <- max(ln_kappa[, 1])
-        if (is.na(max1)) max1 <- 1
-        ln_kappa[, m] <- c(max1 + 1, max1 + 2)
-      }
-
+# work one delta model at a time
+# only diff with 2nd part is that the 'fake' values need to be larger than first
+# so make a function for just 1 component
+# then add an increment for 2nd that's always bigger (e.g. 100s vs. 1000s)
+# then as.factor() them down in sequence
+# check if share_range = TRUE or if one of spatial or spatiotemporal is 'off',
+# if so the values in that column should be identical
+# check if share_range = TRUE or if one of spatial or spatiotemporal is 'off',
+# if so the values in that column should be identical
+map_kappa <- function(spatial, spatiotemporal, share_range, a = 100L) {
+  if (share_range) {
+    if (!spatial && !spatiotemporal) {
+      x <- c(NA_integer_, NA_integer_)
+    } else {
+      x <- c(a, a)
     }
+  } else {
+    if (spatial && spatiotemporal) x <- c(a, a + 1L)
+    if (!spatial || !spatiotemporal) x <- c(a, a)
+    if (!spatial && !spatiotemporal) x <- c(NA_integer_, NA_integer_)
   }
-  # ln_kappa
-  as.factor(as.integer(as.factor(ln_kappa)))
+  x
 }
 
-st_on <- function(x) {
-  tolower(x) %in% c("iid", "rw", "on", "ar1")
+get_kappa_map <- function(
+    n_m = 2,
+    spatial = c("on", "off"),
+    spatiotemporal = c("on", "on"),
+    share_range = c(FALSE, FALSE)) {
+  spatial <- spatial == "on"
+  spatiotemporal <- spatiotemporal %in% c("on", "iid", "rw", "ar1")
+  k <- map_kappa(spatial[1], spatiotemporal[1], share_range[1], 100L)
+  if (n_m > 1) {
+    k2 <- map_kappa(spatial[2], spatiotemporal[2], share_range[2], 1000L)
+    k <- cbind(k, k2)
+  }
+  as.factor(as.integer(as.factor(k)))
 }
