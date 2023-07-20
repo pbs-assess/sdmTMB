@@ -27,7 +27,7 @@ test_that("share_range mapping works with delta models", {
     do_fit = FALSE, family = delta_gamma(),
     share_range = list(FALSE, TRUE),
   )
-  expect_identical(fit$tmb_map$ln_kappa, as.factor(c(1, 2, 3, 3)))
+  expect_identical(fit$tmb_map$ln_kappa, as.factor(c(1, 1, 2, 2)))
 
   fit <- sdmTMB(density ~ 1,
     data = pcod, mesh = pcod_spde, spatial = "off",
@@ -35,7 +35,7 @@ test_that("share_range mapping works with delta models", {
     do_fit = FALSE, family = delta_gamma(),
     share_range = list(FALSE, FALSE),
   )
-  expect_identical(fit$tmb_map$ln_kappa, as.factor(c(1, 2, 3, 4)))
+  expect_identical(fit$tmb_map$ln_kappa, as.factor(c(1, 1, 2, 2)))
 
   fit <- sdmTMB(density ~ 1,
     data = pcod, mesh = pcod_spde, spatial = "off",
@@ -43,7 +43,7 @@ test_that("share_range mapping works with delta models", {
     do_fit = FALSE, family = delta_gamma(),
     share_range = FALSE,
   )
-  expect_identical(fit$tmb_map$ln_kappa, as.factor(c(1, 2, 3, 4)))
+  expect_identical(fit$tmb_map$ln_kappa, as.factor(c(1, 1, 2, 2)))
 
   fit <- sdmTMB(density ~ 1,
     data = pcod, mesh = pcod_spde, spatial = "off",
