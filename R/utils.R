@@ -364,8 +364,8 @@ get_kappa_map <- function(
     if (share_range[m]) ln_kappa[, m] <- if (m == 1) ln_kappa[1, m] else ln_kappa[1, 1] + 1
     if (spatiotemporal[m] == "off" && spatial[m] == "off") ln_kappa[, m] <- NA
     if (spatiotemporal[m] == "off" && spatial[m] == "on") ln_kappa[, m] <- 99 + m
-    if (spatiotemporal[m] == "on" && spatial[m] == "off") ln_kappa[, m] <- 99 + m
-    if (spatiotemporal[m] == "on" && spatial[m] == "on" && !share_range[m]) {
+    if (st_on(spatiotemporal[m]) && spatial[m] == "off") ln_kappa[, m] <- 99 + m
+    if (st_on(spatiotemporal[m]) == "on" && spatial[m] == "on" && !share_range[m]) {
       if (m == 1) {
         # ln_kappa[, m] <- c(max(ln_kappa[, 1] + 1))
       } else {
@@ -378,4 +378,8 @@ get_kappa_map <- function(
   }
   # ln_kappa
   as.factor(as.integer(as.factor(ln_kappa)))
+}
+
+st_on <- function(x) {
+  tolower(x) %in% c("iid", "rw", "on", "ar1")
 }
