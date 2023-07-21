@@ -19,7 +19,7 @@
 
 # write_csv(test_df, '../sdmTMB/scratch/upr_censoring_test_df.csv')
 
-test_df <- read.csv(here::here("scratch", "upr_censoring_test_df.csv"))
+# test_df <- read.csv(here::here("scratch", "upr_censoring_test_df.csv"))
 # p_tk = proportion of baits removed in fishing event k of year t
 # p_istar = true breakdown point for species i, which is cprop?
 
@@ -82,6 +82,31 @@ get_scale_factor <- function(prop_removed, n_hooks, pstar) {
 #'   proportion of baits removed for each fishing event and checking when the
 #'   curve drops off.
 #'
+#' The `lwr` limit for [sdmTMB::censored_poisson()] should be the observed catch
+#' counts, i.e., `n_catch` here.
+#'
+#' If `upr` in [sdmTMB::censored_poisson()] is set to NA, the full
+#' right-censored Poisson likelihood is used without any upper bound.
+#'
+#' The right-censored Poisson without an upper limit can be written as:
+#'
+#' \begin{code}
+#'   dcens_pois <- function(x, lambda) {
+#'       1 - ppois(x - 1, lambda)
+#'    }
+#' \end{code}
+#'
+#' and the right-censored Poisson without an upper limit can be written as:
+#'
+#' \begin{code}
+#'   dcens_pois_upper <- function(x, lambda, upper) {
+#'     ppois(upper, lambda) - ppois(x - 1, lambda)
+#'   }
+#' \end{code}
+#'
+#' In practice, these computations are done in log space for numerical
+#' stability.
+#'
 #' @return A numeric vector of upper bound catch counts of the target species to
 #'   improve convergence of censored method.
 #'
@@ -89,24 +114,28 @@ get_scale_factor <- function(prop_removed, n_hooks, pstar) {
 #' @export
 #'
 #' @examples
-dat <- structure(
-  list(
-    n_catch = c(78L, 63L, 15L, 6L, 7L, 11L, 37L, 99L, 34L, 100L, 77L, 79L,
-      98L, 30L, 49L, 33L, 6L, 28L, 99L, 33L),
-    prop_removed = c(
-      0.61, 0.81, 0.96, 0.69, 0.99, 0.98, 0.25, 0.95, 0.89, 1, 0.95, 0.95,
-      0.94, 1, 0.95, 1, 0.84, 0.3, 1, 0.99
-    ), n_hooks = c(
-      140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L,
-      140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L
-    )),
-  class = "data.frame", row.names = c(NA, -20L)
-)
-upr <- get_upper_bound(dat$prop_removed, dat$n_catch, dat$n_hooks)
-plot(dat$n_catch, upr, type = "n")
-symbols(dat$n_catch, upr, circles = dat$prop_removed)
-abline(0, 1)
-plot(dat$prop_removed, upr)
+#' dat <- structure(
+#'   list(
+#'     n_catch = c(78L, 63L, 15L, 6L, 7L, 11L, 37L, 99L, 34L, 100L, 77L, 79L,
+#'       98L, 30L, 49L, 33L, 6L, 28L, 99L, 33L),
+#'     prop_removed = c(
+#'       0.61, 0.81, 0.96, 0.69, 0.99, 0.98, 0.25, 0.95, 0.89, 1, 0.95, 0.95,
+#'       0.94, 1, 0.95, 1, 0.84, 0.3, 1, 0.99
+#'     ), n_hooks = c(
+#'       140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L,
+#'       140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L
+#'     )),
+#'   class = "data.frame", row.names = c(NA, -20L)
+#' )
+#' upr <- get_upper_bound(dat$prop_removed, dat$n_catch, dat$n_hooks, pstar = 0.9)
+#' upr
+#'
+#' plot(dat$n_catch, upr, xlab = "N catch", ylab = "N catch upper limit")
+#' abline(0, 1, lty = 2)
+#' above_pstar <- dat[dat$prop_removed > 0.9,]
+#' upr_pstar <- upr[dat$prop_removed > 0.9]
+#' points(above_pstar$n_catch, upr_pstar, col = "red", pch = 20)
+#' text(10, 120, "Red = catch events with\nproportion removed above pstar", adj = 0)
 
 get_upper_bound <- function(
     prop_removed,

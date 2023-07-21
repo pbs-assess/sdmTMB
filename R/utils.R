@@ -389,3 +389,151 @@ get_kappa_map <- function(
   }
   as.factor(as.integer(as.factor(k)))
 }
+
+
+#' Calculate scaling factor for hook competition using censored method
+#'
+#' @param prop_removed A vector (numeric) containing the proportion of baits
+#'   removed in each fishing event.
+#' @param n_hooks A vector (integers) containing the number of hooks
+#'   deployed in each fishing event.
+#' @param pstar A single value (numeric) specifying the breakdown point of
+#'   observed catch counts as a result of hook competition.
+#' @return A vector containing the scale factor used to calculate the
+#'   upper bound on catch counts of target species to improve convergence of
+#'   censored method. See \doi{10.1139/cjfas-2022-0159}, including supplementary
+#'   materials section S.3 for more details.
+#' @noRd
+get_scale_factor <- function(prop_removed, n_hooks, pstar) {
+  # Apply pstar correction
+  prop_hook <- signif(((prop_removed - pstar) / (1 - pstar)), 5)
+  n_hooks <- round((1 - pstar) * n_hooks)
+  # Calculate competition adjustment factor
+  prop <- 1 - prop_hook
+  prop[prop == 0] <- 1 / n_hooks[prop == 0] # if all hooks saturated - map to 1 hook
+  -log(prop) / (1 - prop)
+}
+
+#' Calculate an upper bound on catch counts for the censored Poisson family
+#'
+#' @param prop_removed The proportion of baits removed in each fishing event
+#'   from *any* species. I.e., the proportion of hooks returning without bait
+#'   for any reason.
+#' @param n_catch The observed catch counts on each fishing event of the target
+#'   species.
+#' @param n_hooks The number of hooks deployed on each fishing event.
+#' @param pstar A single value between `0 <= pstar <= 1` specifying the
+#'   breakdown point of observed catch counts as a result of hook competition.
+#'
+#' @details `pstar` could be obtained via inspecting a GAM or other smoother fit
+#'   with catch counts as the response an offset for log(hook count) and
+#'   proportion of baits removed for each fishing event and checking when the
+#'   curve drops off.
+#'
+#' The `lwr` limit for [sdmTMB::censored_poisson()] should be the observed catch
+#' counts, i.e., `n_catch` here.
+#'
+#' If `upr` in [sdmTMB::censored_poisson()] is set to NA, the full
+#' right-censored Poisson likelihood is used without any upper bound.
+#'
+#' The right-censored Poisson density can be written as:
+#'
+#' ```
+#'   dcens_pois <- function(x, lambda) {
+#'       1 - ppois(x - 1, lambda)
+#'    }
+#' ```
+#'
+#' and the right-censored Poisson density with an upper limit can be written as:
+#'
+#' ```
+#'   dcens_pois_upper <- function(x, lambda, upper) {
+#'     ppois(upper, lambda) - ppois(x - 1, lambda)
+#'   }
+#' ```
+#'
+#' In practice, these computations are done in log space for numerical
+#' stability.
+#'
+#' @return A numeric vector of upper bound catch counts of the target species to
+#'   improve convergence of censored method.
+#'
+#' @references See \doi{10.1139/cjfas-2022-0159} for more details.
+#' @noRd
+#'
+#' @examples
+#' dat <- structure(
+#'   list(
+#'     n_catch = c(
+#'       78L, 63L, 15L, 6L, 7L, 11L, 37L, 99L, 34L, 100L, 77L, 79L,
+#'       98L, 30L, 49L, 33L, 6L, 28L, 99L, 33L
+#'     ),
+#'     prop_removed = c(
+#'       0.61, 0.81, 0.96, 0.69, 0.99, 0.98, 0.25, 0.95, 0.89, 1, 0.95, 0.95,
+#'       0.94, 1, 0.95, 1, 0.84, 0.3, 1, 0.99
+#'     ), n_hooks = c(
+#'       140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L,
+#'       140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L
+#'     )
+#'   ),
+#'   class = "data.frame", row.names = c(NA, -20L)
+#' )
+#' upr <- get_censored_upper(dat$prop_removed, dat$n_catch, dat$n_hooks, pstar = 0.9)
+#' upr
+#'
+#' plot(dat$n_catch, upr, xlab = "N catch", ylab = "N catch upper limit")
+#' abline(0, 1, lty = 2)
+#' above_pstar <- dat[dat$prop_removed > 0.9, ]
+#' upr_pstar <- upr[dat$prop_removed > 0.9]
+#' points(above_pstar$n_catch, upr_pstar, col = "red", pch = 20)
+#' txt <- paste0(
+#'   "Red indicates catch events\n",
+#'   "with >= pstar proportion of hooks\n",
+#'   "coming back without bait.\n\n",
+#'   "The rest are fishing events < pstar\n",
+#'   "('high-quality' events)."
+#' )
+#' text(10, 120, txt, adj = 0)
+get_censored_upper <- function(
+    prop_removed,
+  n_catch,
+  n_hooks,
+  pstar = 0.95) {
+  assertthat::assert_that(
+    is.numeric(prop_removed),
+    is.numeric(n_catch),
+    is.numeric(n_hooks)
+  )
+  assertthat::assert_that(length(prop_removed) == length(n_catch))
+  assertthat::assert_that(length(prop_removed) == length(n_hooks))
+  assertthat::assert_that(pstar >= 0)
+  assertthat::assert_that(pstar <= 1)
+  assertthat::assert_that(all(prop_removed <= 1))
+  assertthat::assert_that(all(prop_removed >= 0))
+  assertthat::assert_that(all(n_catch >= 0))
+  assertthat::assert_that(all(n_hooks >= 0))
+  assertthat::assert_that(sum(is.na(c(prop_removed, n_catch, n_hooks))) == 0)
+
+  removed_ind <- prop_removed > pstar
+  # FIXME: add cli::cli_abort()?
+  # probably need to throw error if length(removed_ind) == 0L
+  upper_bound <- rep(0, length(prop_removed))
+  scale_fac <- rep(0, length(prop_removed))
+
+  # Calculate part of scaling factor used to get upper bound (part of eq. S.20)
+  scale_fac[removed_ind] <-
+    get_scale_factor(
+      pstar = pstar,
+      prop_removed = prop_removed[removed_ind],
+      n_hooks = n_hooks[removed_ind]
+    )
+
+  # Upper bound for a species (part of eq. S.22)
+  upper_bound[removed_ind] <- (prop_removed[removed_ind] - pstar) *
+    n_hooks[removed_ind] * scale_fac[removed_ind]
+
+  high <- n_catch
+  high[prop_removed >= pstar] <- high[prop_removed >= pstar] +
+    upper_bound[prop_removed >= pstar]
+  round(high)
+}

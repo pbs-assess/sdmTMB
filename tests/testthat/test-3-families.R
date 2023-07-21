@@ -297,6 +297,101 @@ test_that("Censored Poisson fits", {
 
 })
 
+test_that("Censored Poisson upper limit function works", {
+  dat <- structure(
+    list(
+      n_catch = c(
+        78L, 63L, 15L, 6L, 7L, 11L, 37L, 99L, 34L, 100L, 77L, 79L,
+        98L, 30L, 49L, 33L, 6L, 28L, 99L, 33L
+      ),
+      prop_removed = c(
+        0.61, 0.81, 0.96, 0.69, 0.99, 0.98, 0.25, 0.95, 0.89, 1, 0.95, 0.95,
+        0.94, 1, 0.95, 1, 0.84, 0.3, 1, 0.99
+      ), n_hooks = c(
+        140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L,
+        140L, 140L, 140L, 140L, 140L, 140L, 140L, 140L
+      )
+    ),
+    class = "data.frame", row.names = c(NA, -20L)
+  )
+  upr <- get_censored_upper(dat$prop_removed, dat$n_catch, dat$n_hooks, pstar = 0.9)
+ expect_identical(upr,
+   c(78, 63, 28, 6, 39, 34, 37, 109, 34, 140, 87, 89, 105, 70, 59, 73, 6, 28, 139, 65))
+ x <- get_censored_upper(
+     prop_removed = c(0.5, 0.3, 0.2),
+     n_catch = c(3, 3, 3),
+     n_hooks = c(5, 5, 5),
+     pstar = 0.9
+   )
+ expect_equal(x, c(3, 3, 3))
+ expect_error(
+   get_censored_upper(
+     prop_removed = c(0.5, 0.3, 0.2),
+     n_catch = c(3, 3),
+     n_hooks = c(5, 5, 5),
+     pstar = 0.9
+   ),
+   regexp = "length"
+ )
+ expect_error(
+   get_censored_upper(
+     prop_removed = c(0.5, 0.3, 0.2),
+     n_catch = c(3, 3, 3),
+     n_hooks = c(5, 5),
+     pstar = 0.9
+   ),
+   regexp = "length"
+ )
+ expect_error(
+   get_censored_upper(
+     prop_removed = 1.1,
+     n_catch = 1,
+     n_hooks = 1
+   ),
+   regexp = "1"
+ )
+ expect_error(
+   get_censored_upper(
+     prop_removed = -0.1,
+     n_catch = 1,
+     n_hooks = 1
+   ),
+   regexp = "0"
+ )
+ expect_error(
+   get_censored_upper(
+     prop_removed = 0.5,
+     n_catch = -1,
+     n_hooks = 1
+   ),
+   regexp = "0"
+ )
+ expect_error(
+   get_censored_upper(
+     prop_removed = 0.5,
+     n_catch = 0,
+     n_hooks = -1
+   ),
+   regexp = "0"
+ )
+ expect_error(
+   get_censored_upper(
+     prop_removed = 0.5,
+     n_catch = NA_integer_,
+     n_hooks = -1
+   ),
+   regexp = "missing"
+ )
+ expect_error(
+   get_censored_upper(
+     prop_removed = 0.5,
+     n_catch = 1,
+     n_hooks = NA_integer_
+   ),
+   regexp = "missing"
+ )
+})
+
 test_that("Binomial simulation/residuals works with weights argument or cbind()", {
   set.seed(1)
   w <- sample(1:9, size = 300, replace = TRUE)
