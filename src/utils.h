@@ -21,7 +21,7 @@ Type dcenspois(Type x, Type lambda, Type lwr, Type upr, int give_log = 0)
       tmp_ll = log(ppois(Type(lwr-1.0), lambda)); // F(lower-1)
       tmp_ll = logspace_sub(Type(0), tmp_ll);  // 1 - F(lower-1)
     }
-  } else {
+  } else { // right censored with upper limit
     tmp_ll = log(ppois(Type(upr), lambda)); // F(upr)
     if (lwr > Type(0)) {
       tmp_ll = logspace_sub(tmp_ll, log(ppois(Type(lwr-1.0), lambda))); // F(upr) - F(lwr-1) iff lwr>0
