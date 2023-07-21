@@ -426,9 +426,9 @@ get_scale_factor <- function(prop_removed, n_hooks, pstar) {
 #'   breakdown point of observed catch counts as a result of hook competition.
 #'
 #' @details `pstar` could be obtained via inspecting a GAM or other smoother fit
-#'   with catch counts as the response an offset for log(hook count) and
-#'   proportion of baits removed for each fishing event and checking when the
-#'   curve drops off.
+#'   with catch counts as the response, an offset for log(hook count), and
+#'   proportion of baits removed for each fishing event as the predictor.
+#'   Check when the curve drops off as the proportion bait removed increases.
 #'
 #' The `lwr` limit for [sdmTMB::censored_poisson()] should be the observed catch
 #' counts, i.e., `n_catch` here.
@@ -456,7 +456,7 @@ get_scale_factor <- function(prop_removed, n_hooks, pstar) {
 #' stability.
 #'
 #' @return A numeric vector of upper bound catch counts of the target species to
-#'   improve convergence of censored method.
+#'   improve convergence of the censored method.
 #'
 #' @references See \doi{10.1139/cjfas-2022-0159} for more details.
 #' @noRd
