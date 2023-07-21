@@ -89,15 +89,22 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     p$ln_tau_O <- p$ln_tau_O[model]
     p$ln_tau_Z <- p$ln_tau_Z[model]
     p$ln_tau_E <- p$ln_tau_E[model]
-    p$ln_kappa <- p$ln_kappa[,model]
+    p$ln_kappa <- as.numeric(p$ln_kappa[,model])
     p$ln_phi <- p$ln_phi[model]
-    p$ln_tau_V <- p$ln_tau_V[,model]
-    p$ar1_phi <- p$ar1_phi[model]
-    p$ln_tau_G <- p$ln_tau_G[,model]
-    p$log_sigma_O <- p$log_sigma_O[model]
-    p$log_sigma_E <- p$log_sigma_E[1,model]
-    p$log_sigma_Z <- p$log_sigma_Z[,model]
-    p$log_range <- p$log_range[,model]
+    p$ln_tau_V <- as.numeric(p$ln_tau_V[,model])
+    p$ar1_phi <- as.numeric(p$ar1_phi[model])
+    p$ln_tau_G <- as.numeric(p$ln_tau_G[,model])
+    p$log_sigma_O <- as.numeric(p$log_sigma_O[1,model])
+    p$log_sigma_E <- as.numeric(p$log_sigma_E[1,model])
+    p$log_sigma_Z <- as.numeric(p$log_sigma_Z[,model])
+    p$log_range <- as.numeric(p$log_range[,model])
+
+    p$phi <- p$phi[model]
+    p$range <- as.numeric(p$range[,model])
+    p$sigma_E <- as.numeric(p$sigma_E[1,model])
+    p$sigma_O <- as.numeric(p$sigma_O[1,model])
+    p$sigma_Z <- as.numeric(p$sigma_Z[,model])
+    p$sigma_G <- as.numeric(p$sigma_G[,model])
     p
   }
   est <- subset_pars(est, model)
@@ -115,21 +122,21 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     if (from %in% names(est)) est[[to]] <- exp(est[[from]])
     est
   }
-  est <- optional_assign(est, "log_sigma_E", "sigma_E")
-  est <- optional_assign(est, "log_sigma_O", "sigma_O")
-  est <- optional_assign(est, "log_sigma_Z", "sigma_Z")
-  est <- optional_assign(est, "log_range", "range")
-  est <- optional_assign(est, "ln_phi", "phi")
-  est <- optional_assign(est, "ln_tau_G", "sigma_G")
-  est <- optional_assign(est, "ln_tau_V", "sigma_V")
+  # est <- optional_assign(est, "log_sigma_E", "sigma_E")
+  # est <- optional_assign(est, "log_sigma_O", "sigma_O")
+  # est <- optional_assign(est, "log_sigma_Z", "sigma_Z")
+  # est <- optional_assign(est, "log_range", "range")
+  # est <- optional_assign(est, "ln_phi", "phi")
+  # est <- optional_assign(est, "ln_tau_G", "sigma_G")
+  # est <- optional_assign(est, "ln_tau_V", "sigma_V")
 
   ii <- 1
-  if (length(unique(est$sigma_E)) == 1L) {
-    se$sigma_E <- se$sigma_E[1]
-    est$sigma_E <- est$sigma_E[1]
-    se$log_sigma_E <- se$log_sigma_E[1]
-    est$log_sigma_E <- est$log_sigma_E[1]
-  }
+  # # if (length(unique(est$sigma_E)) == 1L) {
+  #   se$sigma_E <- se$sigma_E[1,model]
+  #   est$sigma_E <- est$sigma_E[1,model]
+  #   se$log_sigma_E <- se$log_sigma_E[1]
+  #   est$log_sigma_E <- est$log_sigma_E[1]
+  # # }
 
   # grab fixed effects:
   .formula <- x$split_formula[[model]]$fixedFormula
@@ -170,7 +177,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     log_name <- c(log_name, "ln_phi")
     name <- c(name, "phi")
   }
-  if (x$tmb_data$include_spatial) {
+  if (x$tmb_data$include_spatial[model]) {
     log_name <- c(log_name, "log_sigma_O")
     name <- c(name, "sigma_O")
   }
@@ -195,6 +202,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
   if (!"log_range" %in% names(est)) {
     cli_warn("This model was fit with an old version of sdmTMB. Some parameters may not be available to the tidy() method. Re-fit the model with the current version of sdmTMB if you need access to any missing parameters.")
   }
+
   for (i in name) {
     j <- j + 1
     if (i %in% names(est)) {
@@ -205,24 +213,28 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
 
       non_log_name <- gsub("ln_", "", gsub("log_", "", log_name))
       this <- non_log_name[j]
+      # browser()
 
-      if (delta) {
-        this_se <- se[[this]]
-        if (is.matrix(this_se)) {
-          this_se <- as.numeric(this_se[,model])
-        } else {
-          this_se <- as.numeric(this_se[model])
-        }
-      } else {
+      # if (delta) {
+      #   this_est <- est[[this]]
+      #   this_se <- se[[this]]
+      #   if (is.matrix(this_se)) { # not needed now!?
+      #     this_se <- as.numeric(this_se[,model])
+      #     this_est <- as.numeric(this_est[,model])
+      #   } else {
+      #     this_est <- as.numeric(this_est[model])
+      #   }
+      # } else {
         this_se <- as.numeric(se[[this]])
-      }
-      if (this == "sigma_E") this_se <- this_se[1]
-      if (length(this_se) != length(est[[i]])) { # safety
-        this_se <- NA_real_
-      }
+        this_est <- as.numeric(est[[this]])
+      # }
+      # if (this == "sigma_E") this_se <- this_se[1]
+      # if (length(this_se) != length(est[[i]])) { # safety
+      #   this_se <- NA_real_
+      # }
       # hack in the SEs:
       out_re[[i]] <- data.frame(
-        term = i, estimate = est[[i]], std.error = this_se,
+        term = i, estimate = this_est, std.error = this_se,
         conf.low = exp(.e - crit * .se),
         conf.high = exp(.e + crit * .se),
         stringsAsFactors = FALSE
