@@ -36,4 +36,13 @@ test_that("tidy works", {
   x <- tidy(fit, "ran_pars", conf.int = TRUE, model = 2)
   x
   expect_true(sum(is.na(x$std.error)) == 0L)
+
+  fit <- sdmTMB(
+    density ~ depth_scaled,
+    data = pcod_2011, mesh = pcod_mesh_2011, share_range = FALSE,
+    family = tweedie(link = "log"), time = "year",
+  )
+  x <- tidy(fit, "ran_pars", conf.int = TRUE)
+  x
+  expect_true(sum(is.na(x$std.error)) == 0L)
 })

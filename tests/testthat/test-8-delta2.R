@@ -480,3 +480,90 @@ test_that("test that delta beta model works", {
   expect_gte(min(s), 0)
   expect_lte(min(s), 1)
 })
+
+test_that("one spatial off in a delta model works", {
+  skip_on_cran()
+  skip_if_not_installed("INLA")
+  skip_on_ci()
+
+  mesh0 <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
+  m0 <- sdmTMB(
+    density ~ 1,
+    mesh = mesh0,
+    data = pcod,
+    spatial = list("off", "on"), #<
+    spatiotemporal = list("off", "off"),
+    silent = FALSE,
+    time = "year",
+    family = delta_gamma()
+  )
+
+  # m0$tmb_map$omega_s
+  # m0$tmb_map$ln_tau_O
+  # m0$tmb_map$ln_kappa
+  # m0$tmb_data$include_spatial
+  # m0$tmb_data$spatial_only
+  # m0$tmb_map$ln_tau_E
+  # m0$tmb_map$epsilon_st
+  # m0$tmb_params$ln_tau_E
+  # m0$tmb_params$epsilon_re
+  # m0$tmb_params$ln_tau_O
+
+  pos <- subset(pcod, density > 0)
+  mesh2 <- sdmTMB::make_mesh(pos, xy_cols = c("X", "Y"), mesh = mesh0$mesh)
+  m2 <- sdmTMB(
+    density ~ 1,
+    mesh = mesh2,
+    data = pos,
+    spatial = "on", # <-
+    spatiotemporal = "off",
+    silent = FALSE,
+    time = "year",
+    family = Gamma(link = "log")
+  )
+
+  # m0$tmb_obj$report()$sigma_O
+  # s0 <- as.list(m0$sd_report, what = "Estimate", report = TRUE)
+  # s0$sigma_E
+  # s0$sigma_O
+  # s0$range
+  #
+  # s2 <- as.list(m2$sd_report, what = "Estimate", report = TRUE)
+  # s2$sigma_E
+  # s2$range
+
+  t0 <- tidy(m0, "ran_pars", model = 2)
+  t2 <- tidy(m2, "ran_pars")
+  expect_equal(t0, t2)
+
+
+  # ---------------------
+  # with sigma_E
+
+  m0 <- sdmTMB(
+    density ~ 1,
+    mesh = mesh0,
+    data = pcod,
+    spatial = list("off", "on"), #<
+    spatiotemporal = list("off", "iid"), #<
+    share_range = FALSE,
+    silent = FALSE,
+    time = "year",
+    family = delta_gamma()
+  )
+  m2 <- sdmTMB(
+    density ~ 1,
+    mesh = mesh2,
+    data = pos,
+    spatial = "on", # <-
+    spatiotemporal = "iid",
+    share_range = FALSE,
+    silent = FALSE,
+    time = "year",
+    family = Gamma(link = "log")
+  )
+  t0 <- tidy(m0, "ran_pars", model = 2)
+  t2 <- tidy(m2, "ran_pars")
+  expect_equal(t0$estimate, t2$estimate, tolerance = 0.1)
+
+})

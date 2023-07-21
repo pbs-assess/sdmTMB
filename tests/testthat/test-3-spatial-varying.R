@@ -1,4 +1,4 @@
-test_that("Spatially-varying coefficients are estimated correctly for binomial and delta models", {
+test_that("SVC are estimated correctly for binomial and delta models", {
   skip_on_cran()
   skip_on_ci()
   skip_if_not_installed("INLA")
@@ -89,15 +89,15 @@ test_that("Delta model with spatially varying factor predictor and no spatiotemp
   skip_on_cran()
   skip_on_ci()
   skip_if_not_installed("INLA")
-  pcod_q2 <- pcod
-  pcod_q1 <- pcod
+  pcod_q2 <- pcod_2011
+  pcod_q1 <- pcod_2011
   pcod_q1$quarter <- as.factor(1)
   pcod_q2$quarter <- as.factor(2)
   set.seed(1)
-  pcod_q2$density <- pcod_q2$density + rnorm(10, 20, n = nrow(pcod)) # just adding some difference between quarters..
+  pcod_q2$density <- pcod_q2$density + rnorm(10, 20, n = nrow(pcod_2011)) # just adding some difference between quarters..
   pcod2 <- rbind(pcod_q1, pcod_q2)
   # Fit delta model with spatially varying quarter effect
-  mesh <- make_mesh(pcod2, c("X", "Y"), cutoff = 25)
+  mesh <- make_mesh(pcod2, c("X", "Y"), cutoff = 50)
   m <- sdmTMB(density ~ 0 + as.factor(year) + quarter,
     data = pcod2,
     mesh = mesh,
@@ -105,7 +105,8 @@ test_that("Delta model with spatially varying factor predictor and no spatiotemp
     spatiotemporal = "off",
     spatial = "off", # since spatially varying predictor is a factor
     spatial_varying = ~0 + quarter,
-    time = "year"
+    time = "year",
+    control = sdmTMBcontrol(newton_loops = 0L)
   )
   expect_s3_class(m, "sdmTMB")
   expect_true(sum(is.na(m$sd_report$sd)) == 0L)
