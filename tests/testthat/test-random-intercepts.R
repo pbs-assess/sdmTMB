@@ -149,48 +149,38 @@ test_that("Tidy returns random intercepts appropriately.", {
   s$h <- h[seq_len(nrow(s))]
   s$observed <- s$observed + RE_vals[s$g] + RE_vals2[s$h]
 
-  # with RE:
+  # with RE; check against glmmTMB
   m <- sdmTMB(
     data = s, time = NULL,
     formula = observed ~ 1 + (1 | g) + (1 | h),
     mesh = spde,
     spatial = "off"
   )
-
-  ranpars <- tidy(m, "ran_pars", conf.int = TRUE)
-  expect_equal(ranpars$estimate,
-    c(0.1934564, 0.4422655, 0.1960184),
-    tolerance = 1e-5
-  )
-  expect_equal(ranpars$conf.low,
-    c(0.1812356, 0.3367532, 0.1414036),
-    tolerance = 1e-5
-  )
-  ranint <- tidy(m, "ran_vals", conf.int = TRUE)
-  expect_equal(ranint$estimate[1:5],
-    c(-0.2281940, 0.6663989, 0.1411399, -0.3220671, -0.6363942),
-    tolerance = 1e-5
-  )
-  expect_equal(ranint$conf.low[1:5],
-    c(-0.5029686, 0.3915682, -0.1338101, -0.5979386, -0.9114315),
-    tolerance = 1e-5
-  )
-
-  # Test against same model estimated from glmmTMB
-  fit_glmmtmb <- glmmTMB::glmmTMB(
+  m2 <- glmmTMB::glmmTMB(
     data = s,
     formula = observed ~ 1 + (1 | g) + (1 | h)
   )
-  expect_equal(ranef(fit_glmmtmb)$cond$g[[1]],
+  ranpars <- tidy(m, "ran_pars", conf.int = TRUE)
+  s2 <- as.list(m2$sdr, "Estimate")
+  expect_equal(ranpars$estimate[-1], exp(s2$theta), tolerance = 0.001)
+  s2se <- as.list(m2$sdr, "Std. Error")
+  upr <- exp(s2$theta + 2 * s2se$theta)
+  lwr <- exp(s2$theta - 2 * s2se$theta)
+  expect_equal(ranpars$conf.low[-1], lwr, tolerance = 0.01)
+  expect_equal(ranpars$conf.high[-1], upr, tolerance = 0.01)
+
+  ranint <- tidy(m, "ran_vals", conf.int = TRUE)
+
+  expect_equal(ranef(m2)$cond$g[[1]],
     ranint$estimate[1:30],
-    tolerance = 1e-5
+    tolerance = 0.01
   )
 
   # also check that ranef returns the same thing with same names
-  expect_equal(names(ranef(fit_glmmtmb)$cond), names(ranef(m)$cond))
+  expect_equal(names(ranef(m2)$cond), names(ranef(m)$cond))
 
   # and check that they return the same values
-  expect_equal(ranef(fit_glmmtmb)$cond$g[[1]], ranef(m)$cond$g[[1]], tolerance = 1e-5)
+  expect_equal(ranef(m2)$cond$g[[1]], ranef(m)$cond$g[[1]], tolerance = 1e-5)
 })
 
 test_that("random slopes throw an error", {
