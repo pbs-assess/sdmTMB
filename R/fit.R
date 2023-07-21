@@ -1221,7 +1221,8 @@ sdmTMB <- function(
     original_tmb_data <- tmb_data
     # # much faster on first phase!?
     tmb_data$no_spatial <- 1L
-    tmb_data$include_spatial <- 0L
+    # tmb_data$include_spatial <- 0L
+    tmb_data$include_spatial <- if (delta) c(0L, 0L) else 0L # TEMP!!!!!!!!!!!!!
     # tmb_data$spatial_only <- rep(1L, length(tmb_data$spatial_only))
 
     tmb_obj1 <- TMB::MakeADFun(
@@ -1437,6 +1438,8 @@ sdmTMB <- function(
     out_structure$do_index <- FALSE
   }
 
+
+  tmb_data$include_spatial = if (delta) c(0L, 1L) else 1L
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     profile = if (control$profile) prof else NULL,

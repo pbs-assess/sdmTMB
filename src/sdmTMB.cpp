@@ -158,7 +158,7 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(priors); // all other priors as a vector
   DATA_IVECTOR(ar1_fields);
   DATA_IVECTOR(rw_fields);
-  DATA_INTEGER(include_spatial);
+  DATA_IVECTOR(include_spatial);
   DATA_INTEGER(omit_spatial_intercept);
   DATA_INTEGER(random_walk);
   DATA_INTEGER(ar1_time);
@@ -294,24 +294,19 @@ Type objective_function<Type>::operator()()
   vector<Type> sigma_O(n_m);
   int n_z = ln_tau_Z.rows();
   array<Type> sigma_Z(n_z, n_m);
-  if (include_spatial) {
-    for (int m = 0; m < n_m; m++) {
+  vector<Type> log_sigma_O(n_m);
+  array<Type> log_sigma_Z(n_z,n_m); // for SE
+  for (int m = 0; m < n_m; m++) {
+    if (include_spatial(m)) { // FIXME need an include_svc!
       sigma_O(m) = sdmTMB::calc_rf_sigma(ln_tau_O(m), ln_kappa(0,m));
+      log_sigma_O(m) = log(sigma_O(m));
       for (int z = 0; z < n_z; z++) {
         sigma_Z(z,m) = sdmTMB::calc_rf_sigma(ln_tau_Z(z,m), ln_kappa(0,m));
       }
     }
-    vector<Type> log_sigma_O = log(sigma_O);
-    ADREPORT(log_sigma_O);
-    REPORT(sigma_O);
-    ADREPORT(sigma_O);
-    array<Type> log_sigma_Z(n_z,n_m); // for SE
     for (int z = 0; z < n_z; z++)
       for (int m = 0; m < n_m; m++)
         log_sigma_Z(z,m) = log(sigma_Z(z,m));
-    ADREPORT(log_sigma_Z);
-    REPORT(sigma_Z);
-    ADREPORT(sigma_Z);
   }
 
   // TODO can we not always run this for speed?
@@ -398,8 +393,9 @@ Type objective_function<Type>::operator()()
 
   // Spatial (intercept) random effects:
   for (int m = 0; m < n_m; m++) {
+  if (include_spatial(m)) {
     Eigen::SparseMatrix<Type> Q_temp; // Precision matrix
-    if (include_spatial) {
+    if (include_spatial(m)) {
       if (m == 0) {
         Q_temp = Q_s;
       } else {
@@ -428,6 +424,7 @@ Type objective_function<Type>::operator()()
         }
       }
     }
+  }
   }
 
   // Spatiotemporal random effects:
@@ -670,8 +667,8 @@ Type objective_function<Type>::operator()()
       }
 
       // Spatially varying effects:
-      if (include_spatial) {
-        if (!omit_spatial_intercept)
+      if (include_spatial(m)) {
+        if (!omit_spatial_intercept) // FIXME needs to be an n_m vector??
           eta_i(i,m) += omega_s_A(i,m);  // spatial omega
         if (spatial_covariate)
           for (int z = 0; z < n_z; z++)
@@ -1332,6 +1329,11 @@ Type objective_function<Type>::operator()()
   ADREPORT(log_range);  // log Matern approximate distance at 10% correlation
   REPORT(b_smooth);     // smooth coefficients for penalized splines
   REPORT(ln_smooth_sigma); // standard deviations of smooth random effects, in log-space
+                           
+  // ADREPORT(log_sigma_O);
+  REPORT(sigma_O);
+  ADREPORT(sigma_O);
+
   SIMULATE {
     REPORT(y_i);
     REPORT(omega_s);
