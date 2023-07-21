@@ -158,7 +158,7 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(priors); // all other priors as a vector
   DATA_IVECTOR(ar1_fields);
   DATA_IVECTOR(rw_fields);
-  DATA_IVECTOR(include_spatial);
+  DATA_IVECTOR(include_spatial); // include spatial intercept field(s)?
   DATA_INTEGER(omit_spatial_intercept);
   DATA_INTEGER(random_walk);
   DATA_INTEGER(ar1_time);
@@ -193,8 +193,8 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(proj_z_i);
   DATA_IVECTOR(proj_spatial_index);
 
-  DATA_IVECTOR(spatial_only);
-  DATA_INTEGER(spatial_covariate);
+  DATA_IVECTOR(spatial_only); // !spatial_only means include spatiotemporal(!)
+  DATA_INTEGER(spatial_covariate); // include SVC?
 
   DATA_VECTOR(X_threshold);
   DATA_VECTOR(proj_X_threshold);
@@ -291,22 +291,24 @@ Type objective_function<Type>::operator()()
   }
 
   // DELTA DONE
-  vector<Type> sigma_O(n_m);
+  array<Type> sigma_O(1,n_m); // array b/c ADREPORT crashes if vector elements mapped
+  array<Type> log_sigma_O(1,n_m); // array b/c ADREPORT crashes if vector elements mapped
   int n_z = ln_tau_Z.rows();
   array<Type> sigma_Z(n_z, n_m);
-  vector<Type> log_sigma_O(n_m);
   array<Type> log_sigma_Z(n_z,n_m); // for SE
   for (int m = 0; m < n_m; m++) {
-    if (include_spatial(m)) { // FIXME need an include_svc!
-      sigma_O(m) = sdmTMB::calc_rf_sigma(ln_tau_O(m), ln_kappa(0,m));
-      log_sigma_O(m) = log(sigma_O(m));
+    if (include_spatial(m)) {
+      sigma_O(0,m) = sdmTMB::calc_rf_sigma(ln_tau_O(m), ln_kappa(0,m));
+      log_sigma_O(0,m) = log(sigma_O(0,m));
+    }
+    if (spatial_covariate) {
       for (int z = 0; z < n_z; z++) {
         sigma_Z(z,m) = sdmTMB::calc_rf_sigma(ln_tau_Z(z,m), ln_kappa(0,m));
       }
-    }
     for (int z = 0; z < n_z; z++)
       for (int m = 0; m < n_m; m++)
         log_sigma_Z(z,m) = log(sigma_Z(z,m));
+    }
   }
 
   // TODO can we not always run this for speed?
@@ -516,54 +518,57 @@ Type objective_function<Type>::operator()()
   // ------------------ Probability of random effects --------------------------
 
   // IID random intercepts:
+  array<Type> sigma_G(RE.rows(),n_m);
   for (int m = 0; m < n_m; m++) {
     for (int g = 0; g < RE.rows(); g++) {
-      PARALLEL_REGION jnll -= dnorm(RE(g,m), Type(0), exp(ln_tau_G(ln_tau_G_index(g), m)), true);
-      if (sim_re(3)) SIMULATE{RE(g,m) = rnorm(Type(0), exp(ln_tau_G(ln_tau_G_index(g),m)));
-      }
+      sigma_G(g,m) = exp(ln_tau_G(ln_tau_G_index(g), m));
+      PARALLEL_REGION jnll -= dnorm(RE(g,m), Type(0), sigma_G(g,m), true);
+      if (sim_re(3)) SIMULATE{RE(g,m) = rnorm(Type(0), sigma_G(g,m));}
     }
   }
 
+  array<Type> sigma_V(X_rw_ik.cols(),n_m);
   // Time-varying effects (dynamic regression):
   if (random_walk == 1 || ar1_time || random_walk == 2) {
     array<Type> rho_time(X_rw_ik.cols(), n_m);
     rho_time.setZero();
     for (int m = 0; m < n_m; m++) {
       for (int k = 0; k < X_rw_ik.cols(); k++) {
+        sigma_V(k,m) = exp(ln_tau_V(k,m));
         if (random_walk == 1) { // type = 'rw'
           // flat prior on the initial value... then:
           for (int t = 1; t < n_t; t++) {
             PARALLEL_REGION jnll -=
-              dnorm(b_rw_t(t, k, m), b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)), true);
+              dnorm(b_rw_t(t, k, m), b_rw_t(t - 1, k, m), sigma_V(k,m), true);
             if (sim_re(4) && simulate_t(t))
-              SIMULATE{b_rw_t(t, k, m) = rnorm(b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)));}
+              SIMULATE{b_rw_t(t, k, m) = rnorm(b_rw_t(t - 1, k, m), sigma_V(k,m));}
           }
         } else if (random_walk == 2) { // type = 'rw0'
           // N(0, SD) prior on the initial value... then:
           for (int t = 0; t < n_t; t++) {
             if (t == 0) {
               PARALLEL_REGION jnll -=
-                dnorm(b_rw_t(t, k, m), Type(0.), exp(ln_tau_V(k,m)), true);
+                dnorm(b_rw_t(t, k, m), Type(0.), sigma_V(k,m), true);
               if (sim_re(4) && simulate_t(t))
-                SIMULATE{b_rw_t(t, k, m) = rnorm(Type(0.), exp(ln_tau_V(k,m)));}
+                SIMULATE{b_rw_t(t, k, m) = rnorm(Type(0.), sigma_V(k,m));}
             } else {
               PARALLEL_REGION jnll -=
-                dnorm(b_rw_t(t, k, m), b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)), true);
+                dnorm(b_rw_t(t, k, m), b_rw_t(t - 1, k, m), sigma_V(k,m), true);
               if (sim_re(4) && simulate_t(t))
-                SIMULATE{b_rw_t(t, k, m) = rnorm(b_rw_t(t - 1, k, m), exp(ln_tau_V(k,m)));}
+                SIMULATE{b_rw_t(t, k, m) = rnorm(b_rw_t(t - 1, k, m), sigma_V(k,m));}
             }
           }
         } else if (ar1_time) { // type = 'ar1'
           rho_time(k, m) = sdmTMB::minus_one_to_one(rho_time_unscaled(k, m));
-          jnll += SCALE(AR1(rho_time(k, m)), exp(ln_tau_V(k, m)))(vector<Type>(b_rw_t.col(m).col(k)));
+          jnll += SCALE(AR1(rho_time(k, m)), sigma_V(k,m))(vector<Type>(b_rw_t.col(m).col(k)));
           if (sim_re(4)) {
             // https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html
             vector<Type> tmp(n_t);
             Type ar1_sigma = sqrt(Type(1) - rho_time(k, m) * rho_time(k, m));
-            Type x0 = rnorm(Type(0), exp(ln_tau_V(k, m)));
-            tmp(0) = rho_time(k, m) * x0 + ar1_sigma * rnorm(Type(0), exp(ln_tau_V(k, m)));
+            Type x0 = rnorm(Type(0), sigma_V(k,m));
+            tmp(0) = rho_time(k, m) * x0 + ar1_sigma * rnorm(Type(0), sigma_V(k,m));
             for (int t = 1; t < n_t; t++)
-              tmp(t) = rho_time(k, m) * tmp(t-1) + ar1_sigma * rnorm(Type(0), exp(ln_tau_V(k, m)));
+              tmp(t) = rho_time(k, m) * tmp(t-1) + ar1_sigma * rnorm(Type(0), sigma_V(k,m));
             for(int t = 0; t < n_t; t++)
               if (simulate_t(t)) SIMULATE{b_rw_t(t, k, m) = tmp(t);}
           }
@@ -670,10 +675,10 @@ Type objective_function<Type>::operator()()
       if (include_spatial(m)) {
         if (!omit_spatial_intercept) // FIXME needs to be an n_m vector??
           eta_i(i,m) += omega_s_A(i,m);  // spatial omega
-        if (spatial_covariate)
-          for (int z = 0; z < n_z; z++)
-            eta_i(i,m) += zeta_s_A(i,z,m) * z_i(i,z); // spatially varying covariate DELTA
       }
+      if (spatial_covariate)
+        for (int z = 0; z < n_z; z++)
+          eta_i(i,m) += zeta_s_A(i,z,m) * z_i(i,z); // spatially varying covariate DELTA
       if (!no_spatial) epsilon_st_A_vec(i,m) = epsilon_st_A(A_spatial_index(i), year_i(i),m); // record it
       eta_i(i,m) += epsilon_st_A_vec(i,m); // spatiotemporal
 
@@ -1310,9 +1315,6 @@ Type objective_function<Type>::operator()()
   REPORT(p_mix);
   REPORT(mix_ratio);
   ADREPORT(phi);
-  ADREPORT(log_sigma_E);      // log spatio-temporal SD
-  REPORT(sigma_E);      // spatio-temporal SD
-  ADREPORT(sigma_E);      // log spatio-temporal SD
   REPORT(epsilon_st_A_vec);   // spatio-temporal effects; vector
   REPORT(b_rw_t);   // time-varying effects
   REPORT(omega_s_A);      // spatial effects; n_s length vector
@@ -1330,9 +1332,19 @@ Type objective_function<Type>::operator()()
   REPORT(b_smooth);     // smooth coefficients for penalized splines
   REPORT(ln_smooth_sigma); // standard deviations of smooth random effects, in log-space
                            
-  // ADREPORT(log_sigma_O);
   REPORT(sigma_O);
   ADREPORT(sigma_O);
+  ADREPORT(log_sigma_O);      
+  REPORT(sigma_Z);
+  ADREPORT(sigma_Z);
+  ADREPORT(log_sigma_Z);      
+  REPORT(sigma_E);      // spatio-temporal SD
+  ADREPORT(sigma_E);
+  ADREPORT(log_sigma_E);      // log spatio-temporal SD
+  REPORT(sigma_V);                            
+  REPORT(sigma_G);                            
+  ADREPORT(sigma_V); // time-varying SD
+  ADREPORT(sigma_G); // time-varying SD
 
   SIMULATE {
     REPORT(y_i);

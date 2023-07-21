@@ -828,10 +828,14 @@ predict.sdmTMB <- function(object, newdata = NULL,
   }
 
   # clean up:
-  if (!object$tmb_data$include_spatial) {
+  if (!object$tmb_data$include_spatial[1]) {
     nd$omega_s1 <- NULL
-    nd$omega_s2 <- NULL
     nd$omega_s <- NULL
+  }
+  if (isTRUE(object$family$delta)) {
+    if (!object$tmb_data$include_spatial[2]) {
+      nd$omega_s2 <- NULL
+    }
   }
   if (as.logical(object$tmb_data$spatial_only)[1]) {
     nd$epsilon_st1 <- NULL

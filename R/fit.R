@@ -1088,7 +1088,7 @@ sdmTMB <- function(
     priors_b_Sigma = priors_b_Sigma,
     priors = as.numeric(unlist(.priors)),
     share_range = as.integer(if (length(share_range) == 1L) rep(share_range, 2L) else share_range),
-    include_spatial = as.integer(include_spatial),
+    include_spatial = as.integer(include_spatial), # changed later
     omit_spatial_intercept = as.integer(omit_spatial_intercept),
     proj_mesh  = Matrix::Matrix(c(0,0,2:0), 3, 5), # dummy
     proj_X_ij  = list(matrix(0, ncol = 1, nrow = 1)), # dummy
@@ -1222,7 +1222,7 @@ sdmTMB <- function(
     # # much faster on first phase!?
     tmb_data$no_spatial <- 1L
     # tmb_data$include_spatial <- 0L
-    tmb_data$include_spatial <- if (delta) c(0L, 0L) else 0L # TEMP!!!!!!!!!!!!!
+    tmb_data$include_spatial <- rep(0L, length(spatial)) # for 1st phase
     # tmb_data$spatial_only <- rep(1L, length(tmb_data$spatial_only))
 
     tmb_obj1 <- TMB::MakeADFun(
@@ -1297,6 +1297,7 @@ sdmTMB <- function(
   }
 
   tmb_data$normalize_in_r <- as.integer(normalize)
+  tmb_data$include_spatial <- as.integer(spatial == "on")
 
   if (!is.null(previous_fit)) tmb_map <- previous_fit$tmb_map
 
@@ -1439,7 +1440,6 @@ sdmTMB <- function(
   }
 
 
-  tmb_data$include_spatial = if (delta) c(0L, 1L) else 1L
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
     profile = if (control$profile) prof else NULL,
