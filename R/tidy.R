@@ -117,26 +117,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     est$phi <- NULL
   }
 
-  # not ADREPORTed for speed:
-  optional_assign <- function(est, from, to) {
-    if (from %in% names(est)) est[[to]] <- exp(est[[from]])
-    est
-  }
-  # est <- optional_assign(est, "log_sigma_E", "sigma_E")
-  # est <- optional_assign(est, "log_sigma_O", "sigma_O")
-  # est <- optional_assign(est, "log_sigma_Z", "sigma_Z")
-  # est <- optional_assign(est, "log_range", "range")
-  # est <- optional_assign(est, "ln_phi", "phi")
-  # est <- optional_assign(est, "ln_tau_G", "sigma_G")
-  # est <- optional_assign(est, "ln_tau_V", "sigma_V")
-
   ii <- 1
-  # # if (length(unique(est$sigma_E)) == 1L) {
-  #   se$sigma_E <- se$sigma_E[1,model]
-  #   est$sigma_E <- est$sigma_E[1,model]
-  #   se$log_sigma_E <- se$log_sigma_E[1]
-  #   est$log_sigma_E <- est$log_sigma_E[1]
-  # # }
 
   # grab fixed effects:
   .formula <- x$split_formula[[model]]$fixedFormula
@@ -213,28 +194,10 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
 
       non_log_name <- gsub("ln_", "", gsub("log_", "", log_name))
       this <- non_log_name[j]
-      # browser()
-
-      # if (delta) {
-      #   this_est <- est[[this]]
-      #   this_se <- se[[this]]
-      #   if (is.matrix(this_se)) { # not needed now!?
-      #     this_se <- as.numeric(this_se[,model])
-      #     this_est <- as.numeric(this_est[,model])
-      #   } else {
-      #     this_est <- as.numeric(this_est[model])
-      #   }
-      # } else {
-        this_se <- as.numeric(se[[this]])
-        this_est <- as.numeric(est[[this]])
-      # }
-      # if (this == "sigma_E") this_se <- this_se[1]
-      # if (length(this_se) != length(est[[i]])) { # safety
-      #   this_se <- NA_real_
-      # }
-      # hack in the SEs:
       if (this == "tau_G") this <- "sigma_G"
       if (this == "tau_V") this <- "sigma_V"
+      this_se <- as.numeric(se[[this]])
+      this_est <- as.numeric(est[[this]])
       out_re[[i]] <- data.frame(
         term = i, estimate = this_est, std.error = this_se,
         conf.low = exp(.e - crit * .se),
@@ -244,7 +207,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
 
       ii <- ii + 1
     }
-    # out_re[[i]]$std.error <- NA
   }
   discard <- unlist(lapply(out_re, function(x) length(x) == 1L)) # e.g. old models and phi
   out_re[discard] <- NULL
