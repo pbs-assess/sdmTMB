@@ -1116,6 +1116,7 @@ sdmTMB <- function(
     proj_RE_indexes = matrix(0, ncol = 0, nrow = 1), # dummy
     nobs_RE = nobs_RE,
     ln_tau_G_index = ln_tau_G_index,
+    n_g = length(unique(ln_tau_G_index)),
     est_epsilon_model = as.integer(est_epsilon_model),
     epsilon_predictor = epsilon_covariate,
     est_epsilon_slope = as.integer(est_epsilon_slope),

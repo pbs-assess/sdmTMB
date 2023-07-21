@@ -128,6 +128,7 @@ Type objective_function<Type>::operator()()
   DATA_IMATRIX(proj_RE_indexes);
   DATA_IVECTOR(nobs_RE);
   DATA_IVECTOR(ln_tau_G_index);
+  DATA_INTEGER(n_g); // number of random intercepts
 
   DATA_SPARSE_MATRIX(A_st); // INLA 'A' projection matrix for unique stations
   DATA_IVECTOR(A_spatial_index); // Vector of stations to match up A_st output
@@ -518,12 +519,13 @@ Type objective_function<Type>::operator()()
   // ------------------ Probability of random effects --------------------------
 
   // IID random intercepts:
-  array<Type> sigma_G(RE.rows(),n_m);
+  array<Type> sigma_G(n_g,n_m);
   for (int m = 0; m < n_m; m++) {
-    for (int g = 0; g < RE.rows(); g++) {
-      sigma_G(g,m) = exp(ln_tau_G(ln_tau_G_index(g), m));
-      PARALLEL_REGION jnll -= dnorm(RE(g,m), Type(0), sigma_G(g,m), true);
-      if (sim_re(3)) SIMULATE{RE(g,m) = rnorm(Type(0), sigma_G(g,m));}
+    for (int h = 0; h < RE.rows(); h++) {
+      int g = ln_tau_G_index(h);
+      sigma_G(g,m) = exp(ln_tau_G(g,m));
+      PARALLEL_REGION jnll -= dnorm(RE(h,m), Type(0), sigma_G(g,m), true);
+      if (sim_re(3)) SIMULATE{RE(h,m) = rnorm(Type(0), sigma_G(g,m));}
     }
   }
 
