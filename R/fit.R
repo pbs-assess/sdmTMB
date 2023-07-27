@@ -1226,6 +1226,9 @@ sdmTMB <- function(
     tmb_data$include_spatial <- rep(0L, length(spatial)) # for 1st phase
     # tmb_data$spatial_only <- rep(1L, length(tmb_data$spatial_only))
 
+    # Poisson on first phase increases stability:
+    if (family$family[[1]] == "censored_poisson") tmb_data$family <- .valid_family["poisson"]
+
     tmb_obj1 <- TMB::MakeADFun(
       data = tmb_data, parameters = tmb_params,
       map = tmb_map, DLL = "sdmTMB", silent = silent)
