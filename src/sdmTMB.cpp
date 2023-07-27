@@ -787,7 +787,7 @@ Type objective_function<Type>::operator()()
             break;
           }
           case censored_poisson_family: {
-            tmp_ll = sdmTMB::dcenspois(y_i(i,m), mu_i(i,m), lwr(i), upr(i), true);
+            tmp_ll = sdmTMB::dcenspois2(y_i(i,m), mu_i(i,m), upr(i), true);
             SIMULATE{y_i(i,m) = rpois(mu_i(i,m));}
             break;
           }
@@ -1333,18 +1333,18 @@ Type objective_function<Type>::operator()()
   ADREPORT(log_range);  // log Matern approximate distance at 10% correlation
   REPORT(b_smooth);     // smooth coefficients for penalized splines
   REPORT(ln_smooth_sigma); // standard deviations of smooth random effects, in log-space
-                           
+
   REPORT(sigma_O);
   ADREPORT(sigma_O);
-  ADREPORT(log_sigma_O);      
+  ADREPORT(log_sigma_O);
   REPORT(sigma_Z);
   ADREPORT(sigma_Z);
-  ADREPORT(log_sigma_Z);      
+  ADREPORT(log_sigma_Z);
   REPORT(sigma_E);      // spatio-temporal SD
   ADREPORT(sigma_E);
   ADREPORT(log_sigma_E);      // log spatio-temporal SD
-  REPORT(sigma_V);                            
-  REPORT(sigma_G);                            
+  REPORT(sigma_V);
+  REPORT(sigma_G);
   ADREPORT(sigma_V); // time-varying SD
   ADREPORT(sigma_G); // time-varying SD
 

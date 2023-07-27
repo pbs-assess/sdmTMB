@@ -5,6 +5,51 @@ bool isNA(Type x) {
 }
 
 template <class Type>
+Type dcenspois_right(Type x, Type lambda, int give_log = 0) {
+  Type ll;
+  ll = log(ppois(x-1, lambda)); // F(lower-1)
+  ll = logspace_sub(Type(0.0), ll); // 1 - F(lower-1)
+  if (give_log)
+    return ll;
+  else
+    return exp(ll);
+}
+
+template <class Type>
+Type dcenspois_right_truncated(Type x, Type lambda, Type upr, int give_log = 0) {
+  Type ll;
+  ll = log(ppois(upr, lambda)); // F(upr)
+  if (x > Type(0.)) {
+    ll = logspace_sub(ll, log(ppois(x-Type(1.0), lambda))); // F(upr) - F(lwr-1) iff x>0
+  }
+  if (give_log)
+    return ll;
+  else
+    return exp(ll);
+}
+
+template <class Type>
+Type dcenspois2(Type x, Type lambda, Type upr, int give_log = 0) {
+  Type ll;
+  if (isNA(upr)) { // full right censored
+    if (x == Type(0.0)) {
+      ll = Type(0.0);
+    } else {
+      ll = dcenspois_right(x, lambda, 1);
+    }
+  } else if (upr > x) { // upper truncated right censored
+    ll = dcenspois_right_truncated(x, lambda, upr, 1);
+  } else if (x == upr) { // not censored
+    ll = dpois(Type(x), lambda, true);
+  }
+  if (give_log) {
+    return ll;
+  } else {
+    return exp(ll);
+  }
+}
+
+template <class Type>
 Type dcenspois(Type x, Type lambda, Type lwr, Type upr, int give_log = 0)
 {
   // Should not do the obvious route due to numerical issues
@@ -12,19 +57,20 @@ Type dcenspois(Type x, Type lambda, Type lwr, Type upr, int give_log = 0)
   Type tmp_ll;
   if (lwr == upr) {  // no censorship
     tmp_ll = dpois(Type(lwr), lambda, true);
-  }
-  if (isNA(upr)) {  // right censored
-    if (lwr == Type(0)) {
-      tmp_ll = 0.0;
-    }
-    if (lwr > Type(0)) {
-      tmp_ll = log(ppois(Type(lwr-1.0), lambda)); // F(lower-1)
-      tmp_ll = logspace_sub(Type(0), tmp_ll);  // 1 - F(lower-1)
-    }
-  } else { // right censored with upper limit
-    tmp_ll = log(ppois(Type(upr), lambda)); // F(upr)
-    if (lwr > Type(0)) {
-      tmp_ll = logspace_sub(tmp_ll, log(ppois(Type(lwr-1.0), lambda))); // F(upr) - F(lwr-1) iff lwr>0
+  } else {
+    if (isNA(upr)) {  // right censored
+      if (lwr == Type(0)) {
+        tmp_ll = 0.0;
+      }
+      if (lwr > Type(0)) {
+        tmp_ll = log(ppois(Type(lwr-1.0), lambda)); // F(lower-1)
+        tmp_ll = logspace_sub(Type(0), tmp_ll);  // 1 - F(lower-1)
+      }
+    } else { // right censored with upper limit
+      tmp_ll = log(ppois(Type(upr), lambda)); // F(upr)
+      if (lwr > Type(0)) {
+        tmp_ll = logspace_sub(tmp_ll, log(ppois(Type(lwr-1.0), lambda))); // F(upr) - F(lwr-1) iff lwr>0
+      }
     }
   }
   if (give_log)
