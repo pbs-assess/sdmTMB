@@ -231,12 +231,16 @@ parse_threshold_formula <- function(formula, thresh_type_short = "lin_thresh",
   list(formula = formula, threshold_parameter = threshold_parameter)
 }
 
-expand_time <- function(df, time_slices, time_column, weights, offset) {
+expand_time <- function(df, time_slices, time_column, weights, offset, upr, lwr) {
   if (!is.null(weights)) df[["__weight_sdmTMB__"]] <- weights
   if (!is.null(offset)) df[["__sdmTMB_offset__"]] <- offset
+  if (!is.null(upr)) df[["__dcens_upr__"]] <- upr
+  if (!is.null(lwr)) df[["__dcens_lwr__"]] <- lwr
   fake_df <- df[1L, , drop = FALSE]
   if (!is.null(weights)) fake_df[["__weight_sdmTMB__"]] <- 0
   if (!is.null(offset))fake_df[["__sdmTMB_offset__"]] <- 0
+  if (!is.null(upr)) fake_df[["__dcens_upr__"]] <- NA_real_
+  if (!is.null(lwr)) fake_df[["__dcens_lwr__"]] <- 0
   missing_years <- time_slices[!time_slices %in% df[[time_column]]]
   fake_df <- do.call("rbind", replicate(length(missing_years), fake_df, simplify = FALSE))
   fake_df[[time_column]] <- missing_years
