@@ -5,10 +5,14 @@ bool isNA(Type x) {
 }
 
 template <class Type>
+Type ppois_log(Type x, Type lambda) {
+  return atomic::Rmath::Rf_ppois(asDouble(x), asDouble(lambda), true, true);
+}
+
+template <class Type>
 Type dcenspois_right(Type x, Type lambda, int give_log = 0) {
   Type ll;
-  // ll = log(ppois(x-1, lambda)); // F(lower-1)
-  ll = atomic::Rmath::Rf_ppois(asDouble(x-Type(1.0)), asDouble(lambda), true, true); // F(lower-1)
+  ll = ppois_log(x-Type(1.0), lambda); // F(lower-1)
   ll = logspace_sub(Type(0.0), ll); // 1 - F(lower-1)
   if (give_log)
     return ll;
@@ -19,10 +23,9 @@ Type dcenspois_right(Type x, Type lambda, int give_log = 0) {
 template <class Type>
 Type dcenspois_right_truncated(Type x, Type lambda, Type upr, int give_log = 0) {
   Type ll;
-  ll = atomic::Rmath::Rf_ppois(asDouble(upr), asDouble(lambda), true, true); // F(upr)
+  ll = ppois_log(upr, lambda); // F(upr)
   if (x > Type(0.0)) {
-    // ll = logspace_sub(ll, log(ppois(x-Type(1.0), lambda))); // F(upr) - F(lwr-1) iff x>0
-    Type temp = atomic::Rmath::Rf_ppois(asDouble(x-Type(1.0)), asDouble(lambda), true, true);
+    Type temp = ppois_log(x-Type(1.0), lambda);
     ll = logspace_sub(ll, temp); // F(upr) - F(lwr-1) iff x>0
   }
   if (give_log)
@@ -38,10 +41,10 @@ Type dcenspois2(Type x, Type lambda, Type upr, int give_log = 0) {
     if (x == Type(0.0)) {
       ll = Type(0.0);
     } else {
-      ll = dcenspois_right(x, lambda, 1);
+      ll = dcenspois_right(x, lambda, true);
     }
   } else if (upr > x) { // upper truncated right censored
-    ll = dcenspois_right_truncated(x, lambda, upr, 1);
+    ll = dcenspois_right_truncated(x, lambda, upr, true);
   } else if (x == upr) { // not censored
     ll = dpois(Type(x), lambda, true);
   }
