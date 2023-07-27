@@ -17,6 +17,7 @@ sdmTMBcontrol(
   map = NULL,
   lower = NULL,
   upper = NULL,
+  censored_upper = NULL,
   multiphase = TRUE,
   profile = FALSE,
   get_joint_precision = TRUE,
@@ -77,6 +78,11 @@ cases) can be specified as a numeric vector. E.g.
 
 \item{upper}{An optional named list of upper bounds within the optimization.}
 
+\item{censored_upper}{An optional vector of upper bounds for
+\code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}. Values of \code{NA} indicate an unbounded right-censored to
+distribution, values greater that the observation indicate and upper bound,
+and values equal to the observation indicate no censoring.}
+
 \item{multiphase}{Logical: estimate the fixed and random effects in phases?
 Phases are usually faster and more stable.}
 
@@ -108,7 +114,7 @@ A list of control arguments
 \details{
 Usually used within \code{\link[=sdmTMB]{sdmTMB()}}. For example:
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{sdmTMB(..., control = sdmTMBcontrol(newton_loops = 1))
+\if{html}{\out{<div class="sourceCode">}}\preformatted{sdmTMB(..., control = sdmTMBcontrol(newton_loops = 2))
 }\if{html}{\out{</div>}}
 }
 \examples{

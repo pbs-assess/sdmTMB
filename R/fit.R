@@ -662,20 +662,8 @@ sdmTMB <- function(
     } else {
       epsilon_model <- NULL
     }
-
-    if ("lwr" %in% names(experimental) && "upr" %in% names(experimental)) {
-      lwr <- experimental$lwr
-      upr <- experimental$upr
-    } else {
-      #epsilon_predictor <- NULL
-      lwr <- 0
-      upr <- Inf
-    }
-  } else {
-    #epsilon_predictor <- NULL
-    lwr <- 0
-    upr <- Inf
   }
+
   normalize <- control$normalize
   nlminb_loops <- control$nlminb_loops
   newton_loops <- control$newton_loops
@@ -686,8 +674,9 @@ sdmTMB <- function(
   lower <- control$lower
   upper <- control$upper
   get_joint_precision <- control$get_joint_precision
+  upr <- control$censored_upper
 
-  dot_checks <- c("lower", "upper", "profile", "parallel",
+  dot_checks <- c("lower", "upper", "profile", "parallel", "censored_upper",
     "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",
     "newton_loops", "start", "map", "get_joint_precision", "normalize")
   .control <- control
@@ -714,13 +703,6 @@ sdmTMB <- function(
   if (!is.null(map) && length(map) != length(start)) {
     cli_warn(c("`length(map) != length(start)`.",
       "You likely want to specify `start` values if you are setting the `map` argument."))
-  }
-  if (family$family[1] == "censored_poisson") {
-    assert_that("lwr" %in% names(experimental) && "upr" %in% names(experimental),
-      msg = "`lwr` and `upr` must be specified in `experimental` as elements of a named list to use the censored Poisson likelihood.")
-    assert_that(length(lwr) == nrow(data) && length(upr) == nrow(data))
-    assert_that(length(lwr) == length(upr))
-    assert_that(mean(upr-lwr, na.rm = TRUE)>=0)
   }
 
   if (!is.null(time)) {
@@ -752,6 +734,15 @@ sdmTMB <- function(
   }
   # FIXME parallel setup here?
 
+  if (family$family[1] == "censored_poisson") {
+    if ("lwr" %in% names(experimental) || "upr" %in% names(experimental)) {
+      cli_abort("Detected `lwr` or `upr` in `experimental`. `lwr` is no longer needed and `upr` is now specified as `control = sdmTMBcontrol(censored_upper = ...)`.")
+    }
+    if (is.null(upr)) cli_abort("`censored_upper` must be defined in `control = sdmTMBcontrol()` to use the censored Poisson distribution.")
+    assert_that(length(upr) == nrow(data))
+  }
+  if (is.null(upr)) upr <- Inf
+
   # thresholds not yet enabled for delta model, where formula is a list
   if (inherits(formula, "formula")) {
     original_formula <- replicate(n_m, list(formula))
@@ -773,12 +764,11 @@ sdmTMB <- function(
   }
 
   if (!is.null(extra_time)) { # for forecasting or interpolating
-    data <- expand_time(df = data, time_slices = extra_time, time_column = time, weights = weights, offset = offset, upr = upr, lwr = lwr)
+    data <- expand_time(df = data, time_slices = extra_time, time_column = time, weights = weights, offset = offset, upr = upr)
     if (!is.null(offset)) offset <- data[["__sdmTMB_offset__"]] # expanded
     if (!is.null(weights)) weights <- data[["__weight_sdmTMB__"]] # expanded
     if (!is.null(upr)) upr <- data[["__dcens_upr__"]] # expanded
-    if (!is.null(lwr)) lwr <- data[["__dcens_lwr__"]] # expanded
-    data[["__dcens_upr__"]] <- data[["__dcens_lwr__"]] <- NULL
+    data[["__dcens_upr__"]] <- NULL
     spde$loc_xy <- as.matrix(data[,spde$xy_cols,drop=FALSE])
     spde$A_st <- INLA::inla.spde.make.A(spde$mesh, loc = spde$loc_xy)
     spde$sdm_spatial_id <- seq(1, nrow(data)) # FIXME
@@ -897,6 +887,9 @@ sdmTMB <- function(
 
   if (family$family[1] %in% c("Gamma", "lognormal") && min(y_i) <= 0 && !delta) {
     cli_abort("Gamma and lognormal must have response values > 0.")
+  }
+  if (family$family[1] == "censored_poisson") {
+    assert_that(mean(upr-y_i, na.rm = TRUE)>=0)
   }
 
   # This is taken from approach in glmmTMB to match how they handle binomial
@@ -1126,7 +1119,7 @@ sdmTMB <- function(
     est_epsilon_re = as.integer(est_epsilon_re),
     has_smooths = as.integer(sm$has_smooths),
     upr = upr,
-    lwr = lwr,
+    lwr = 0L, # in case we want to reintroduce this
     poisson_link_delta = as.integer(isTRUE(family$type == "poisson_link_delta")),
     stan_flag = as.integer(bayesian),
     no_spatial = no_spatial

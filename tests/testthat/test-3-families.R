@@ -226,34 +226,43 @@ test_that("Censored Poisson fits", {
   m_nocens_pois <- sdmTMB(
     data = sim_dat, formula = observed ~ 1,
     mesh = mesh, family = censored_poisson(link = "log"),
-    experimental = list(upr = sim_dat$observed, lwr = sim_dat$observed)
+    control = sdmTMBcontrol(censored_upper = sim_dat$observed)
   )
-  expect_equal(m_nocens_pois$tmb_data$lwr, m_nocens_pois$tmb_data$upr)
-  expect_equal(m_nocens_pois$tmb_data$lwr, as.numeric(m_nocens_pois$tmb_data$y_i))
+  expect_equal(m_nocens_pois$tmb_data$y_i[,1], m_nocens_pois$tmb_data$upr)
   expect_equal(names(m_nocens_pois$tmb_data$family), "censored_poisson")
   expect_equal(m_pois$model, m_nocens_pois$model)
 
-  # left-censored version
-  L_1 <- 5 # zeros and ones cannot be observed directly - observed as <= L1
-  y <- sim_dat$observed
-  lwr <- ifelse(y <= L_1, 0, y)
-  upr <- ifelse(y <= L_1, L_1, y)
-  m_left_cens_pois <- sdmTMB(
-    data = sim_dat, formula = observed ~ 1,
-    mesh = mesh, family = censored_poisson(link = "log"),
-    experimental = list(lwr = lwr, upr = upr),
-    spatial = "off"
-  )
+  # # left-censored version
+  # L_1 <- 5 # zeros and ones cannot be observed directly - observed as <= L1
+  # y <- sim_dat$observed
+  # lwr <- ifelse(y <= L_1, 0, y)
+  # upr <- ifelse(y <= L_1, L_1, y)
+  # m_left_cens_pois <- sdmTMB(
+  #   data = sim_dat, formula = observed ~ 1,
+  #   mesh = mesh, family = censored_poisson(link = "log"),
+  #   control = sdmTMBcontrol(censored_lower = lwr, censored_upper = upr),
+  #   spatial = "off"
+  # )
 
   # right-censored version
   U_1 <- 8 # U_1 and above cannot be directly observed - instead we see >= U1
   y <- sim_dat$observed
   lwr <- ifelse(y >= U_1, U_1, y)
   upr <- ifelse(y >= U_1, NA, y)
+
+  # old:
+  expect_error(m_right_cens_pois <- sdmTMB(
+    data = sim_dat, formula = observed ~ 1,
+    family = censored_poisson(link = "log"),
+    experimental = list(lwr = lwr, upr = upr),
+    spatial = "off"
+  ), regexp = "upr")
+
+  # new:
   m_right_cens_pois <- sdmTMB(
     data = sim_dat, formula = observed ~ 1,
-    mesh = mesh, family = censored_poisson(link = "log"),
-    experimental = list(lwr = lwr, upr = upr),
+    family = censored_poisson(link = "log"),
+    control = sdmTMBcontrol(censored_upper = upr),
     spatial = "off"
   )
 
@@ -262,38 +271,38 @@ test_that("Censored Poisson fits", {
   set.seed(123)
   U_2 <- sample(c(5:9), size = length(y), replace = TRUE)
   L_2 <- sample(c(1, 2, 3, 4), size = length(y), replace = TRUE)
-  lwr <- ifelse(y >= U_2, U_2, ifelse(y <= L_2, 0, y))
+  # lwr <- ifelse(y >= U_2, U_2, ifelse(y <= L_2, 0, y))
   upr <- ifelse(y >= U_2, 500, ifelse(y <= L_2, L_2, y))
   m_interval_cens_pois <- sdmTMB(
     data = sim_dat, formula = observed ~ 1,
-    mesh = mesh, family = censored_poisson(link = "log"),
-    experimental = list(lwr = lwr, upr = upr),
+    family = censored_poisson(link = "log"),
+    control = sdmTMBcontrol(censored_upper = upr),
     spatial = "off"
   )
   expect_true(all(!is.na(summary(m_interval_cens_pois$sd_report)[, "Std. Error"])))
 
-  # reversed upr and lwr:
-  expect_error(
-    m <- sdmTMB(
-      data = sim_dat, formula = observed ~ 1,
-      mesh = mesh, family = censored_poisson(link = "log"),
-      experimental = list(lwr = upr, upr = lwr)
-    ), regexp = "lwr")
+  # # reversed upr and lwr:
+  # expect_error(
+  #   m <- sdmTMB(
+  #     data = sim_dat, formula = observed ~ 1,
+  #     mesh = mesh, family = censored_poisson(link = "log"),
+  #     experimental = list(lwr = upr, upr = lwr)
+  #   ), regexp = "lwr")
 
   # wrong length lwr and upr
   expect_error(
     m <- sdmTMB(
       data = sim_dat, formula = observed ~ 1,
       mesh = mesh, family = censored_poisson(link = "log"),
-      experimental = list(lwr = c(1, 2), upr = c(4, 5, 6))
-    ), regexp = "lwr")
+      control = sdmTMBcontrol(censored_upper = c(4, 5, 6))
+    ), regexp = "upr")
 
   # missing lwr/upr
   expect_error(
     m <- sdmTMB(
       data = sim_dat, formula = observed ~ 1,
       mesh = mesh, family = censored_poisson(link = "log"),
-    ), regexp = "lwr")
+    ), regexp = "censored_upper")
 
 })
 
