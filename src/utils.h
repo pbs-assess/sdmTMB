@@ -7,7 +7,8 @@ bool isNA(Type x) {
 template <class Type>
 Type dcenspois_right(Type x, Type lambda, int give_log = 0) {
   Type ll;
-  ll = log(ppois(x-1, lambda)); // F(lower-1)
+  // ll = log(ppois(x-1, lambda)); // F(lower-1)
+  ll = atomic::Rmath::Rf_ppois(asDouble(x-Type(1.0)), asDouble(lambda), true, true); // F(lower-1)
   ll = logspace_sub(Type(0.0), ll); // 1 - F(lower-1)
   if (give_log)
     return ll;
@@ -18,9 +19,11 @@ Type dcenspois_right(Type x, Type lambda, int give_log = 0) {
 template <class Type>
 Type dcenspois_right_truncated(Type x, Type lambda, Type upr, int give_log = 0) {
   Type ll;
-  ll = log(ppois(upr, lambda)); // F(upr)
-  if (x > Type(0.)) {
-    ll = logspace_sub(ll, log(ppois(x-Type(1.0), lambda))); // F(upr) - F(lwr-1) iff x>0
+  ll = atomic::Rmath::Rf_ppois(asDouble(upr), asDouble(lambda), true, true); // F(upr)
+  if (x > Type(0.0)) {
+    // ll = logspace_sub(ll, log(ppois(x-Type(1.0), lambda))); // F(upr) - F(lwr-1) iff x>0
+    Type temp = atomic::Rmath::Rf_ppois(asDouble(x-Type(1.0)), asDouble(lambda), true, true);
+    ll = logspace_sub(ll, temp); // F(upr) - F(lwr-1) iff x>0
   }
   if (give_log)
     return ll;
