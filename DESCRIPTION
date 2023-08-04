@@ -90,6 +90,7 @@ Suggests:
     ggforce,
     ggplot2,
     INLA,
+    inlabru,
     knitr,
     lme4,
     rgdal,

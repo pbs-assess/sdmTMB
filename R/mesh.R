@@ -187,13 +187,31 @@ binary_search_knots <- function(loc_xy,
 #' @param ... Passed to [graphics::plot()].
 #'
 #' @importFrom graphics points
-#' @return `plot.sdmTMB()`: A plot of the mesh and data points.
+#' @return `plot.sdmTMBmesh()`: A plot of the mesh and data points. If
+#'   \pkg{inlabru} and \pkg{ggplot2} are installed, a \pkg{ggplot2} object is
+#'   returned, otherwise a base graphics R plot is returned. To make your own,
+#'   pass `your_mesh$mesh` to  [inlabru::gg()].
 #' @rdname make_mesh
 #' @export
 plot.sdmTMBmesh <- function(x, ...) {
-  plot(x$mesh, main = NA, edge.color = "grey60", asp = 1, ...)
-  points(x$loc_xy, pch = 21, col = "#00000070")
-  points(x$loc_centers, pch = 20, col = "red")
+  r1 <- requireNamespace("inlabru", quietly = TRUE)
+  r2 <- requireNamespace("ggplot2", quietly = TRUE)
+  if (r1 && r2) {
+    dat <-  data.frame(
+      x = x$loc_xy[,1,drop=TRUE],
+      y = x$loc_xy[,2,drop=TRUE]
+    )
+    ggplot2::ggplot() +
+      ggplot2::geom_point(
+        data = dat,
+        mapping = ggplot2::aes(x = .data$x, y = .data$y), alpha = 0.1, pch = 21) +
+      inlabru::gg(x$mesh) +
+      ggplot2::coord_fixed()
+  } else {
+    plot(x$mesh, main = NA, edge.color = "grey60", asp = 1, ...)
+    points(x$loc_xy, pch = ".", col = "#00000070")
+    points(x$loc_centers, pch = 20, col = "red")
+  }
 }
 
 # from TMB examples repository:

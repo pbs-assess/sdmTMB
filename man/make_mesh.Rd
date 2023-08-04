@@ -52,7 +52,10 @@ convenience options.}
 \code{\link[INLA:inla.mesh.create]{INLA::inla.mesh.create()}} and the element \code{spde} is the output from
 \code{\link[INLA:inla.spde2.matern]{INLA::inla.spde2.matern()}}.
 
-\code{plot.sdmTMB()}: A plot of the mesh and data points.
+\code{plot.sdmTMBmesh()}: A plot of the mesh and data points. If
+\pkg{inlabru} and \pkg{ggplot2} are installed, a \pkg{ggplot2} object is
+returned, otherwise a base graphics R plot is returned. To make your own,
+pass \code{your_mesh$mesh} to  \code{\link[inlabru:gg]{inlabru::gg()}}.
 }
 \description{
 Construct an SPDE mesh for use with sdmTMB.
