@@ -5,12 +5,8 @@ template:
 reference:
 - title: internal
   contents:
-  - bc_coast
+  - surveydata
   - get_pars
-  - pcod
-  - pcod_2011
-  - pcod_mesh_2011
-  - qcs_grid
 
 - title: 'Mesh construction'
   desc: |
@@ -43,17 +39,22 @@ reference:
   - lognormal
   - nbinom2
   - nbinom1
-  - truncated_nbinom1
-  - truncated_nbinom2
   - student
   - tweedie
   - censored_poisson
+  - truncated_nbinom1
+  - truncated_nbinom2
   - delta_gamma
   - delta_lognormal
   - delta_truncated_nbinom1
   - delta_truncated_nbinom2
   - delta_poisson_link_gamma
   - delta_poisson_link_lognormal
+  - gamma_mix
+  - lognormal_mix
+  - nbinom2_mix
+  - delta_gamma_mix
+  - delta_lognormal_mix
 
 - title: 'Priors'
   desc: |
