@@ -315,7 +315,7 @@ test_that("nsim with s() and no other random effects works", {
   expect_true(ncol(p) == 3L)
 })
 
-test_that("gather/spread sims work" {
+test_that("gather/spread sims work", {
   skip_on_cran()
   skip_on_ci()
   skip_if_not_installed("INLA")
