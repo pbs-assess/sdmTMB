@@ -367,7 +367,7 @@ print.sdmTMB <- function(x, ...) {
 
   # or x$tmb_obj$retape()!?
   sink(tempfile())
-  tmp <- x$tmb_obj$fn(x$tmb_obj$par) # FIXME needed?
+  # tmp <- x$tmb_obj$fn(x$tmb_obj$par) # FIXME needed?
   lp <- x$tmb_obj$env$last.par.best
   r <- x$tmb_obj$report(lp)
   sink()
