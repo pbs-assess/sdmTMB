@@ -5,7 +5,15 @@ template:
 reference:
 - title: internal
   contents:
-  - surveydata
+  - pcod
+  - pcod_2011
+  - pcod_mesh_2011
+  - qcs_grid
+  - bc_coast
+  - dogfish
+  - yelloweye
+  - hbll_s_grid
+  - wcvi_grid
   - get_pars
 
 - title: 'Mesh construction'
