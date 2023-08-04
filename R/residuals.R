@@ -86,7 +86,7 @@ qres_gamma_mix <- function(object, y, mu, ...) {
   # s2 <- mu / s1
   # s3 <- (ratio * mu) / s1
   # u <- stats::pgamma(q = y, shape = s1, scale = (1-p_mix)*s2 + p_mix*s3) # this looks wrong
-  stats::qnorm(u)
+  # stats::qnorm(u)
 }
 
 qres_nbinom2_mix <- function(object, y, mu, ...) {
