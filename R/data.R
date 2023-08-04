@@ -1,24 +1,47 @@
-#' Example data for Pacific Cod
+#' Example fish survey data
 #'
-#' @format A data frame.
+#' @description
+#' Various fish survey datasets.
+#'
+#' @format `pcod`: Trawl survey data for Pacific Cod in Queen Charlotte Sound. A
+#'   data frame.
+#' @rdname surveydata
 "pcod"
 
-#' Example data for Pacific Cod (years 2011 and after)
-#'
-#' @format A data frame.
+#' @format `pcod_2011`: A version of `pcod` for years 2011 and after (smaller
+#'   for speed). A data frame.
+#' @rdname surveydata
 "pcod_2011"
 
-#' Example SPDE mesh for the Pacific Cod data (years 2011 and after)
-#'
-#' @format A list object of class `sdmTMBmesh`.
+#' @format `pcod_mesh_2011`: A mesh pre-built for `pcod_2011` for examples. A
+#'   list of class `sdmTMBmesh`.
+#' @rdname surveydata
 "pcod_mesh_2011"
 
-#' Example 2x2km prediction grid for Queen Charlotte Sound
-#'
-#' @format A data frame.
+#' @format `qcs_grid` A 2x2km prediction grid for Queen Charlotte Sound. A data
+#'   frame.
+#' @rdname surveydata
 "qcs_grid"
 
-#' BC coastline data from ropensci/rnaturalearthhires
-#'
-#' @format An sf data frame.
+#' @format `bc_coast`: BC coastline data from ropensci/rnaturalearthhires. An
+#'   \pkg{sf} data frame.
+#' @rdname surveydata
 "bc_coast"
+
+#' @format `dogfish`: Trawl survey data for Pacific Spiny Dogfish on West Coast
+#'   Vancouver Island. A data frame.
+#' @rdname surveydata
+"dogfish"
+
+#' @format `yelloweye`: Survey data for Yelloweye Rockfish from the Hard Bottom
+#'   Longline Survey (South) off West Coast Vancouver Island.
+#' @rdname surveydata
+"yelloweye"
+
+#' @format `hbll_s_grid`: A survey domain grid to go with `yelloweye`. A data frame.
+#' @rdname surveydata
+"hbll_s_grid"
+
+#' @format `wcvi_grid`: A survey domain grid to go with `dogfish`. A data frame.
+#' @rdname surveydata
+"wcvi_grid"
