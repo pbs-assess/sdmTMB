@@ -61,6 +61,7 @@ recover_data.sdmTMB <- function(object, ...) {
 
 # with help from emm_basis.glmmTMB
 emm_basis.sdmTMB <- function(object, trms, xlev, grid, ...) {
+  if (is_delta(object)) cli_abort("Delta models not yet supported. In most cases you could fit the 2 components separately for now.")
   V <- vcov(object)
   misc <- list()
   fam <- family(object)
