@@ -749,6 +749,8 @@ Type objective_function<Type>::operator()()
     break;
   }
 
+  vector<Type> jnll_obs(n_i); // for cross validation
+  jnll_obs.setZero();
   REPORT(phi);
   for (int m = 0; m < n_m; m++) PARALLEL_REGION {
     for (int i = 0; i < n_i; i++) {
@@ -907,6 +909,7 @@ Type objective_function<Type>::operator()()
           error("Family not implemented.");
         }
         tmp_ll *= weights_i(i);
+        jnll_obs(i) -= tmp_ll; // for cross validation
         jnll -= tmp_ll; // * keep
       }
     }
@@ -1333,6 +1336,7 @@ Type objective_function<Type>::operator()()
   ADREPORT(log_range);  // log Matern approximate distance at 10% correlation
   REPORT(b_smooth);     // smooth coefficients for penalized splines
   REPORT(ln_smooth_sigma); // standard deviations of smooth random effects, in log-space
+  REPORT(jnll_obs); // for cross validation
 
   REPORT(sigma_O);
   ADREPORT(sigma_O);

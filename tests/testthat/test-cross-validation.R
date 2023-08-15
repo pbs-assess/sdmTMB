@@ -215,3 +215,32 @@ test_that("Cross validation with offsets works", {
 
   future::plan(future::sequential)
 })
+
+test_that("Delta model cross validation works", {
+  skip_on_ci()
+  skip_on_cran()
+  skip_if_not_installed("INLA")
+  set.seed(1)
+  out_tw <- sdmTMB_cv(
+    density ~ depth_scaled,
+    data = pcod_2011, mesh = pcod_mesh_2011, spatial = "off",
+    family = tweedie(), k_folds = 2
+  )
+  set.seed(1)
+  out_dg <- sdmTMB_cv(
+    density ~ depth_scaled,
+    data = pcod_2011, mesh = pcod_mesh_2011, spatial = "off",
+    family = delta_gamma(), k_folds = 2
+  )
+  diff_ll <- out_tw$sum_loglik - out_dg$sum_loglik
+  expect_equal(round(diff_ll, 4), round(-22.80799, 4))
+
+  set.seed(1)
+  out_dpg <- sdmTMB_cv(
+    density ~ depth_scaled,
+    data = pcod_2011, mesh = pcod_mesh_2011, spatial = "off",
+    family = delta_poisson_link_gamma(), k_folds = 2
+  )
+  diff_ll <- out_dpg$sum_loglik - out_dg$sum_loglik
+  expect_equal(round(diff_ll, 4), round(-4.250411, 4))
+})

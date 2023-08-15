@@ -47,6 +47,7 @@ ll_nbinom2 <- function(object, withheld_y, withheld_mu) {
   stats::dnbinom(x = withheld_y, size = phi, mu = withheld_mu, log = TRUE)
 }
 
+# no longer used within sdmTMB_cv(); uses TMB report() instead
 ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
   family_func <- switch(object$family$family,
     gaussian = ll_gaussian,
@@ -368,25 +369,27 @@ sdmTMB_cv <- function(
     withheld_mu <- cv_data$cv_predicted
 
     # calculate log likelihood for each withheld observation:
+    # trickery to get the log likelihood of the withheld data directly
+    # from the TMB report():
+    tmb_data <- object$tmb_data
+    tmb_data$weights_i <- ifelse(tmb_data$weights_i == 1, 0, 1) # reversed
+    new_tmb_obj <- TMB::MakeADFun(
+      data = tmb_data,
+      parameters = get_pars(object),
+      map = object$tmb_map,
+      random = object$tmb_random,
+      DLL = "sdmTMB",
+      silent = TRUE
+    )
+    lp <- object$tmb_obj$env$last.par.best
+    r <- new_tmb_obj$report(lp)
+    cv_loglik <- -1 * r$jnll_obs
+    cv_data$cv_loglik <- cv_loglik[tmb_data$weights_i == 1]
 
-    # trickery to get the log likelihood of the withheld data directly from the TMB report():
-    # tmb_data <- object$tmb_data
-    # tmb_data$weights_i <- ifelse(tmb_data$weights_i == 1, 0, 1) # reversed
-    # new_tmb_obj <- TMB::MakeADFun(
-    #   data = tmb_data,
-    #   parameters = get_pars(object),
-    #   map = predicted_obj$fit_obj$tmb_map,
-    #   random = predicted_obj$fit_obj$tmb_random,
-    #   DLL = "sdmTMB",
-    #   silent = TRUE
-    # )
-    # lp <- object$tmb_obj$env$last.par.best
-    # r <- new_tmb_obj$report(lp)
-    # r$nll_obs
-    # cv_data$cv_loglik <- -1 * r$nll_obs
-
+    ## test
+    # x2 <- ll_sdmTMB(object, withheld_y, withheld_mu)
+    # identical(round(cv_data$cv_loglik, 6), round(x2, 6))
     # cv_data$cv_loglik <- ll_sdmTMB(object, withheld_y, withheld_mu)
-    cv_data$cv_loglik <- ll_sdmTMB(object, withheld_y, withheld_mu)
 
     list(
       data = cv_data,
@@ -424,28 +427,19 @@ sdmTMB_cv <- function(
   models <- lapply(out, `[[`, "model")
   data <- lapply(out, `[[`, "data")
   fold_cv_ll <- vapply(data, function(.x) sum(.x$cv_loglik), FUN.VALUE = numeric(1L))
-  # fold_cv_elpd <- vapply(data, function(.x)
-  #   log_sum_exp(.x$cv_loglik) - log(length(.x$cv_loglik)), FUN.VALUE = numeric(1L))
-  # fold_cv_ll <- vapply(data, function(.x) .x$cv_loglik[[1L]], FUN.VALUE = numeric(1L))
-  # fold_cv_ll_R <- vapply(data, function(.x) .x$cv_loglik_R[[1L]], FUN.VALUE = numeric(1L))
   data <- do.call(rbind, data)
   data <- data[order(data[["_sdm_order_"]]), , drop = FALSE]
   data[["_sdm_order_"]] <- NULL
   data[["_sdmTMB_time"]] <- NULL
   row.names(data) <- NULL
-  # bad_eig <- vapply(out, `[[`, "bad_eig", FUN.VALUE = logical(1L))
   pdHess <- vapply(out, `[[`, "pdHess", FUN.VALUE = logical(1L))
   max_grad <- vapply(out, `[[`, "max_gradient", FUN.VALUE = numeric(1L))
-  # converged <- all(!bad_eig) && all(pdHess)
   converged <- all(pdHess)
   list(
     data = data,
     models = models,
     fold_loglik = fold_cv_ll,
-    # fold_elpd = fold_cv_ll,
-    # fold_loglik_R = fold_cv_ll_R,
     sum_loglik = sum(data$cv_loglik),
-    # elpd = sum(data$cv_loglik),
     converged = converged,
     pdHess = pdHess,
     max_gradients = max_grad
