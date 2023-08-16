@@ -64,7 +64,6 @@ test_that("Model with random intercepts fits appropriately.", {
     tolerance = 1e-5
   )
 
-
   p <- predict(m)
   p.nd <- predict(m, newdata = s)
   # newdata is not the same as fitted data:
@@ -116,6 +115,48 @@ test_that("Model with random intercepts fits appropriately.", {
     sdmTMB_re$RE[, 1],
     tolerance = 1e-5
   )
+
+  # predicting with new levels throws error for now:
+  m <- sdmTMB(data = s, formula = observed ~ 1 + (1 | g), spatial = "off")
+  nd <- data.frame(g = factor(c(1, 2, 3, 800)))
+  expect_error(predict(m, newdata = nd), regexp = "extra")
+  predict(m, newdata = nd)
+})
+
+test_that("Random intercepts and cross validation play nicely", {
+  skip_on_cran()
+  skip_if_not_installed("INLA")
+  set.seed(1)
+  x <- stats::runif(500, -1, 1)
+  y <- stats::runif(500, -1, 1)
+  loc <- data.frame(x = x, y = y)
+  spde <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
+  s <- sdmTMB_simulate(
+    ~1,
+    data = loc,
+    mesh = spde,
+    range = 1.4,
+    phi = 0.1,
+    sigma_O = 0,
+    seed = 1,
+    B = 0
+  )
+  g <- rep(gl(3, 10), 999)
+  RE_vals <- rnorm(3, 0, 0.4)
+  s$g <- g[seq_len(nrow(s))]
+  s$observed <- s$observed + RE_vals[s$g]
+  # one level in its own fold:
+  fold_ids <- as.integer(s$g %in% c(1, 2)) + 1
+  out <- sdmTMB_cv(
+    observed ~ 1 + (1 | g),
+    fold_ids = fold_ids, k_folds = 2L, spatial = "off", data = s, mesh = spde,
+    parallel = FALSE
+  )
+  expect_equal(round(out$sum_loglik, 3), -6390.816)
+  # Because the function fits with all the data but sets the missing fold to
+  # have likelihood weights of 0, the fitted model is aware of all levels and
+  # the missing levels just get left at a value of 0 because the data never
+  # inform the model, which is exactly what you want.
 })
 
 test_that("Tidy returns random intercepts appropriately.", {
