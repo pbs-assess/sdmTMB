@@ -699,7 +699,7 @@ Type objective_function<Type>::operator()()
       } else if (poisson_link_delta) { // a tweak on clogog:
         // eta_i(i,0) = log numbers density
         // eta_i(i,1) = log average weight
-        // mu_i(i,0) = probability of occurence (kept in logit space within .cpp)
+        // mu_i(i,0) = probability of occurrence (kept in logit space within .cpp)
         // mu_i(i,1) = positive density prediction
         Type log_one_minus_p = -exp(offset_i(i) + eta_i(i,0));
         Type log_p = logspace_sub(Type(0.0), log_one_minus_p);
