@@ -26,7 +26,8 @@ knitr::opts_chunk$set(
 # Introduction
 
 Jim Thorson introduced the Poisson-link delta model in a CJFAS paper [@thorson2018poisson]. 
-It's a useful model family when dealing with positive continuous data that have zeroes. I.e., it can be used in the same circumstances that you could use the Tweedie, or a traditional delta-gamma or delta-lognormal model with logit and log links.
+It's a useful model family when dealing with positive continuous data that have zeroes. 
+It can be used in the same circumstances that you could use the Tweedie or a traditional delta-gamma or delta-lognormal model with logit and log links.
 
 The Poisson-link delta formulation describes how to go from linear predictors in link space to expected values that are entered into the data likelihood. The likelihood on the first component is Bernoulli (i.e., binomial with single trials) and the likelihood of the second component can be gamma or lognormal.
 
