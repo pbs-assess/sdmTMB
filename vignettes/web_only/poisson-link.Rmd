@@ -253,37 +253,58 @@ Since the predicted response value is $n \cdot w$, you can get to the same value
 You could have more numbers and less weight per group or fewer numbers and more weight per group and get to the same place.
 However, there is a balance of the two, given covariates and random effects, that best fits the data when entered into the likelihood as $p$ and $r$.
 
-## What is the connection to the complementary log-log link ('cloglog')?
+## What is the connection to the complementary log-log link ('cloglog') and the Poisson?
 
-From [Wikipedia](https://en.wikipedia.org/wiki/Generalized_linear_model): "The cloglog model corresponds to applications where we observe either zero events (e.g., defects) or one or more, where the number of events is assumed to follow the Poisson distribution.[6]..."
+From [Wikipedia](https://en.wikipedia.org/wiki/Generalized_linear_model): "The cloglog model corresponds to applications where we observe either zero events (e.g., defects) or one or more, where the number of events is assumed to follow the Poisson distribution." The following is based around this entry.
 
-The cloglog link function is defined as
-
-$$
-\log(-\log(1 - x)),
-$$
-
-which has the following inverse link function
+The Poisson assumes that the probability of observing a zero given expected number $n$ is $\exp(-n)$. I.e.,
 
 $$
-1 - \exp(-\exp(x)).
+\mathrm{Pr}(0) = \exp(-n)
 $$
-
-You can see how that inverse link is the same as part of our Poisson-link delta model.
-The linear first linear predictor is on $\log n$, so
+If $p$ is the probability of observing a non-zero (i.e., an encounter), then 
 
 $$
-p = 1 - \exp(-\exp(\log(n))).
+\exp(-n) = 1 - p.
 $$
 
-This is the inverse cloglog link function.
-*However*, the 'trick' here is that group density $n$ affects both encounter probability $p$ and positive catch rates $r$:
+We can re-arrange that as
+
+$$
+n = -\log(1 - p).
+$$
+
+And since we want our linear predictor to take values from negative to positive infinity (and therefore keep our predicted number densities positive after exponentiating them), we work in log space:
+
+$$
+\log (n) = \log(-\log(1 - p)).
+$$
+
+The right side is known as the 'cloglog' link function.
+
+This link has the following inverse link function:
+
+$$
+p = 1 - \exp(-\exp(\log n)).
+$$
+
+We can check this in R:
+
+```{r, echo=TRUE, results='markup'}
+p <- 0.78
+log_n <- log(-log(1 - p))
+log_n
+1 - exp(-exp(log_n))
+```
+
+You can see how the cloglog inverse link is the same as the first part of our Poisson-link delta model.
+**However**, the 'trick' here is that group density $n$ affects both encounter probability $p$ (as shown above) *and* positive catch rates $r$:
 
 $$
 r = \frac{n w}{p}.
 $$
 
-So, when going from the linear predictors (which have log links) to the expected values going into the data likelihood (binomial + lognormal/Gamma), the first linear predictor plays double duty in that it appears in both delta model expected values.
+So, when going from the linear predictors (which have log links) to the expected values going into the data likelihood (binomial + lognormal/gamma), the first linear predictor plays double duty in that it appears in both delta model expected values.
 
 ## What are the advantages of using such a model?
 
@@ -295,17 +316,17 @@ So, when going from the linear predictors (which have log links) to the expected
 
 ## Where does the offset come in?
 
-The offset is added to the linear predictor for $\log n$, i.e., `exp(offset) * n`. For example if the offset is defined as log area swept, $a$, then
+The offset is added to the linear predictor for $\log n$, i.e., `exp(offset) * n`. For example if $a$ represents area swept (a measure of effort) and log area swept is entered into the model as the 'offset', then,
 
 $$
 p = 1 - \exp(-a \cdot n).
 $$
 
-Therefore, the encounter probability goes to 1 as area swept (effort) and underlying group numbers density increase towards infinity.
+Therefore, the encounter probability goes to 1 as area swept (effort) and underlying group numbers density increase towards infinity. This gets carried over to the positive rate $r$ via $p$ as $r = nw/p$.
 
 ## Why call it a Poisson-link?
 
-I can only guess. The cloglog is derived from the theory of a Poisson and although the cloglog formulation appears here, the interaction of the two model components makes it different from a pure cloglog and so I assume it needed another name.
+I can only guess. The cloglog function is derived from the theory of a Poisson and although the cloglog function appears in the 'Poisson-link' model, the interaction of the two model components makes it different from a pure cloglog and so I assume it needed another name.
 
 ## These equations don't look anything like the sdmTMB source code!
 

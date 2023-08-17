@@ -37,6 +37,7 @@ jobs:
       - name: Install extra packages for web-only vignettes
         run: |
           remotes::install_github("pbs-assess/sdmTMBextra", dependencies = TRUE)
+          remotes::install_cran("cowplot")
         shell: Rscript {0}
 
       - name: Build site
