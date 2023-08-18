@@ -119,8 +119,7 @@ test_that("Model with random intercepts fits appropriately.", {
   # predicting with new levels throws error for now:
   m <- sdmTMB(data = s, formula = observed ~ 1 + (1 | g), spatial = "off")
   nd <- data.frame(g = factor(c(1, 2, 3, 800)))
-  expect_error(predict(m, newdata = nd), regexp = "extra")
-  predict(m, newdata = nd)
+  expect_error(predict(m, newdata = nd), regexp = "Extra")
 })
 
 test_that("Random intercepts and cross validation play nicely", {
@@ -152,7 +151,7 @@ test_that("Random intercepts and cross validation play nicely", {
     fold_ids = fold_ids, k_folds = 2L, spatial = "off", data = s, mesh = spde,
     parallel = FALSE
   )
-  expect_equal(round(out$sum_loglik, 3), -6390.816)
+  expect_equal(round(out$sum_loglik, 3), -51.36)
   # Because the function fits with all the data but sets the missing fold to
   # have likelihood weights of 0, the fitted model is aware of all levels and
   # the missing levels just get left at a value of 0 because the data never

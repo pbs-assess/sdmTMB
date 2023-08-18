@@ -998,7 +998,6 @@ sdmTMB <- function(
     }
   }
 
-
   priors_b <- priors$b
   .priors <- priors
   .priors$b <- NULL # removes this in the list, so not passed in as data
@@ -1031,6 +1030,9 @@ sdmTMB <- function(
     Sigma <- as.matrix(priors_b[, -1])
     priors_b_Sigma <- as.matrix(Sigma[not_na, not_na])
   }
+  # random intercept SD priors:
+  priors_sigma_G <- tidy_sigma_G_priors(.priors$sigma_G, ln_tau_G_index)
+  .priors$sigma_G <- NULL
 
   if (!"A_st" %in% names(spde)) cli_abort("`mesh` was created with an old version of `make_mesh()`.")
   if (delta) y_i <- cbind(ifelse(y_i > 0, 1, 0), ifelse(y_i > 0, y_i, NA_real_))
@@ -1082,6 +1084,7 @@ sdmTMB <- function(
     priors_b_index = not_na - 1L,
     priors_b_mean = priors_b[not_na,1],
     priors_b_Sigma = priors_b_Sigma,
+    priors_sigma_G = priors_sigma_G,
     priors = as.numeric(unlist(.priors)),
     share_range = as.integer(if (length(share_range) == 1L) rep(share_range, 2L) else share_range),
     include_spatial = as.integer(include_spatial), # changed later
@@ -1628,4 +1631,17 @@ find_missing_time <- function(x) {
 unmap <- function(x, v) {
   for (i in v) x[[i]] <- NULL
   x
+}
+
+tidy_sigma_G_priors <- function(p, ln_tau_G_index) {
+  # expand (empty) sigma_G priors if needed to match sigma_G dimensions:
+  if (identical(as.numeric(p), c(NA_real_, NA_real_))) {
+    if (!identical(ln_tau_G_index, integer(0))) {
+      p <- do.call("rbind",
+        replicate(length(unique(ln_tau_G_index)), p, simplify = FALSE))
+    } else {
+      p <- matrix(nrow = 0, ncol = 2) # sigma_G by default nrow 0
+    }
+  }
+  p
 }

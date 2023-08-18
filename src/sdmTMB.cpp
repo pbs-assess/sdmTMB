@@ -156,6 +156,7 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(priors_b_Sigma); // beta priors matrix
   DATA_INTEGER(priors_b_n);
   DATA_IVECTOR(priors_b_index);
+  DATA_MATRIX(priors_sigma_G); // random intercept SD
   DATA_VECTOR(priors); // all other priors as a vector
   DATA_IVECTOR(ar1_fields);
   DATA_IVECTOR(rw_fields);
@@ -966,6 +967,16 @@ Type objective_function<Type>::operator()()
       // https://www.wolframalpha.com/input?i=2+*+%28e%5Ex%2F%281%2Be%5Ex%29%29+-+1
       // log abs derivative = log((2 * exp(x)) / (1 + exp(x))^2)
       if (stan_flag) jnll -= log(2.) + ar1_phi(m) - 2. * log(1. + exp(ar1_phi(m)));
+    }
+    if (priors_sigma_G.rows() != sigma_G.rows())
+      error("sigma_G prior dimensions are incorrect");
+    for (int m = 0; m < n_m; m++) {
+      for (int g = 0; g < sigma_G.rows(); g++) {
+        if (!sdmTMB::isNA(priors_sigma_G(g,0)) && !sdmTMB::isNA(priors_sigma_G(g,1))) {
+          jnll -= dnorm(sigma_G(g,m), priors_sigma_G(g,0), priors_sigma_G(g,1), true);
+          if (stan_flag) jnll -= log(sigma_G(g,m)); // Jacobian adjustment
+        }
+      }
     }
   }
 
