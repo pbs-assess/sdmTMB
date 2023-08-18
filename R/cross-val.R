@@ -361,6 +361,7 @@ sdmTMB_cv <- function(
       cv_data <- data[data$cv_fold == k, , drop = FALSE]
     }
 
+    # FIXME: only use TMB report() below to be faster!
     # predict for withheld data:
     predicted <- predict(object, newdata = cv_data, type = "response")
     cv_data$cv_predicted <- predicted$est
@@ -368,23 +369,28 @@ sdmTMB_cv <- function(
     withheld_y <- predicted[[response]]
     withheld_mu <- cv_data$cv_predicted
 
+    # FIXME: get LFO working with the TMB report() option below!
     # calculate log likelihood for each withheld observation:
     # trickery to get the log likelihood of the withheld data directly
     # from the TMB report():
-    tmb_data <- object$tmb_data
-    tmb_data$weights_i <- ifelse(tmb_data$weights_i == 1, 0, 1) # reversed
-    new_tmb_obj <- TMB::MakeADFun(
-      data = tmb_data,
-      parameters = get_pars(object),
-      map = object$tmb_map,
-      random = object$tmb_random,
-      DLL = "sdmTMB",
-      silent = TRUE
-    )
-    lp <- object$tmb_obj$env$last.par.best
-    r <- new_tmb_obj$report(lp)
-    cv_loglik <- -1 * r$jnll_obs
-    cv_data$cv_loglik <- cv_loglik[tmb_data$weights_i == 1]
+    if (!lfo) {
+      tmb_data <- object$tmb_data
+      tmb_data$weights_i <- ifelse(tmb_data$weights_i == 1, 0, 1) # reversed
+      new_tmb_obj <- TMB::MakeADFun(
+        data = tmb_data,
+        parameters = get_pars(object),
+        map = object$tmb_map,
+        random = object$tmb_random,
+        DLL = "sdmTMB",
+        silent = TRUE
+      )
+      lp <- object$tmb_obj$env$last.par.best
+      r <- new_tmb_obj$report(lp)
+      cv_loglik <- -1 * r$jnll_obs
+      cv_data$cv_loglik <- cv_loglik[tmb_data$weights_i == 1]
+    } else { # old method; doesn't work with delta models!
+      cv_data$cv_loglik <- ll_sdmTMB(object, withheld_y, withheld_mu)
+    }
 
     ## test
     # x2 <- ll_sdmTMB(object, withheld_y, withheld_mu)
