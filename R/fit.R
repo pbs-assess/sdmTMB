@@ -575,7 +575,8 @@ sdmTMB <- function(
   do_index = FALSE,
   predict_args = NULL,
   index_args = NULL,
-  experimental = NULL
+  experimental = NULL,
+  mvrw_category = NULL
   ) {
 
   data <- droplevels(data) # if data was subset, strips absent factors
@@ -1045,6 +1046,14 @@ sdmTMB <- function(
 
   n_t <- length(unique(data[[time]]))
   random_walk <- if (!is.null(time_varying)) switch(time_varying_type, rw = 1L, rw0 = 2L, ar1 = 0L) else 0L
+
+  if (!is.null(mvrw_category)) {
+    cats <- make_mvrw_cat_i(data[[mvrw_category]])
+    mvrw_u <- matrix(0, nrow = max(cats) + 1L, ncol = n_t)
+  } else {
+    mvrw_u <- matrix(0, nrow = 0L, ncol = 0L)
+  }
+
   tmb_data <- list(
     y_i        = y_i,
     n_t        = n_t,
@@ -1055,6 +1064,8 @@ sdmTMB <- function(
     sim_re     = if ("sim_re" %in% names(experimental)) as.integer(experimental$sim_re) else rep(0L, 6),
     A_spatial_index = spde$sdm_spatial_id - 1L,
     year_i     = make_year_i(data[[time]]),
+    mvrw_cat_i = if (!is.null(mvrw_category)) cats else numeric(0L),
+    proj_mvrw_cat_i = 0L, # fake until prediction
     ar1_fields = ar1_fields,
     simulate_t = rep(1L, n_t),
     rw_fields =  rw_fields,
@@ -1150,6 +1161,9 @@ sdmTMB <- function(
     ln_phi     = rep(0, n_m),
     ln_tau_V   = matrix(0, ncol(X_rw_ik), n_m),
     rho_time_unscaled = matrix(0, ncol(X_rw_ik), n_m),
+    mvrw_u = mvrw_u,
+    mvrw_logsds = rep(0, nrow(mvrw_u)),
+    mvrw_phi = if (nrow(mvrw_u) > 0L) 0.1 else numeric(0L),
     ar1_phi    = rep(0, n_m),
     ln_tau_G   = matrix(0, ncol(RE_indexes), n_m),
     RE         = matrix(0, sum(nobs_RE), n_m),
@@ -1270,6 +1284,10 @@ sdmTMB <- function(
     tmb_random <- c(tmb_random, "epsilon_re")
     tmb_map <- unmap(tmb_map, c("epsilon_re"))
   }
+  if (!is.null(mvrw_category)) {
+    tmb_random <- c(tmb_random, "mvrw_u")
+    tmb_map <- unmap(tmb_map, c("mvrw_u", "mvrw_phi", "mvrw_logsds"))
+  }
 
   tmb_map$ar1_phi <- as.numeric(tmb_map$ar1_phi) # strip factors
   for (i in seq_along(spatiotemporal)) {
@@ -1389,6 +1407,7 @@ sdmTMB <- function(
     threshold_function = thresh[[1]]$threshold_func,
     epsilon_predictor = epsilon_predictor,
     time       = time,
+    mvrw_category = mvrw_category,
     family     = family,
     smoothers = sm,
     response   = y_i,
@@ -1441,7 +1460,6 @@ sdmTMB <- function(
   } else {
     out_structure$do_index <- FALSE
   }
-
 
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
@@ -1644,4 +1662,12 @@ tidy_sigma_G_priors <- function(p, ln_tau_G_index) {
     }
   }
   p
+}
+
+make_mvrw_cat_i <- function(x) {
+  if (!is.null(x)) {
+    return(as.integer(as.factor(x)) - 1L)
+  } else {
+    return(0L)
+  }
 }

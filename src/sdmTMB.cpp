@@ -135,6 +135,8 @@ Type objective_function<Type>::operator()()
 
   // Indices for factors
   DATA_FACTOR(year_i);
+  DATA_FACTOR(mvrw_cat_i); // MVRW category ID
+  DATA_FACTOR(proj_mvrw_cat_i); // same for prediction
 
   DATA_INTEGER(normalize_in_r);
   DATA_INTEGER(flag);
@@ -252,6 +254,10 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(epsilon_re);
   PARAMETER_ARRAY(b_smooth);  // P-spline smooth parameters
   PARAMETER_ARRAY(ln_smooth_sigma);  // variances of spline REs if included
+
+  PARAMETER(mvrw_phi); // -Inf to Inf to be converted to mvrw_rho -1 to 1
+  PARAMETER_VECTOR(mvrw_logsds); // MVRW log process SDs
+  PARAMETER_ARRAY(mvrw_u); // MVRW states
 
   // Joint negative log-likelihood
   Type jnll = 0.;
@@ -581,6 +587,35 @@ Type objective_function<Type>::operator()()
       }
     }
   }
+
+  // Multivariate-random-walk time-varying intercepts:
+  if (mvrw_u.cols() > 0) {
+    if (n_m > 1) error("The MVRW is not yet coded for delta models.");
+    // FIXME: add MVRW to delta model!
+    // if (simulate_t(0)) error("Simulation not yet coded for delta models.");
+    // FIXME: add MVRW to simulation!
+    vector<Type> mvrw_sds = exp(mvrw_logsds);
+    Type mvrw_rho = sdmTMB::minus_one_to_one(mvrw_phi);
+    // Type mvrw_rho = Type(2)/(Type(1) + exp(-Type(2) * mvrw_phi)) - Type(1);
+
+    // sparse version:
+    VECSCALE_t<AR1_t<N01<Type>>> neg_log_density = VECSCALE(AR1(mvrw_rho), mvrw_sds);
+    jnll -= dnorm(mvrw_u.col(0).vec(), Type(0.), Type(1.), true).sum(); // first step N(0,1)
+    for (int t = 1; t < n_t; t++)
+      jnll += neg_log_density(mvrw_u.col(t) - mvrw_u.col(t-1));
+
+   // non-sparse version:
+    // int timeSteps=mvrw_u.dim[1];
+    // int stateDim=mvrw_u.dim[0];
+    // matrix<Type> cov(stateDim,stateDim);
+    // for(int i=0;i<stateDim;i++)
+    //   for(int j=0;j<stateDim;j++)
+    //     cov(i,j)=pow(mvrw_rho,Type(abs(i-j)))*mvrw_sds[i]*mvrw_sds[j];
+    // MVNORM_t<Type> neg_log_density(cov);
+    // for(int i=1;i<timeSteps;i++)    
+    //   jnll += neg_log_density(mvrw_u.col(i)-mvrw_u.col(i-1)); // Process likelihood
+  }
+
   // ------------------ INLA projections ---------------------------------------
 
   // Here we are projecting the spatiotemporal and spatial random effects to the
@@ -672,6 +707,9 @@ Type objective_function<Type>::operator()()
           eta_rw_i(i,m) += X_rw_ik(i, k) * b_rw_t(year_i(i), k, m); // record it
           eta_i(i,m) += eta_rw_i(i,m);
         }
+      }
+      if (mvrw_u.cols() > 0) {
+       eta_i(i,m) += mvrw_u(mvrw_cat_i(i), year_i(i)); // note reversed category/year row/column indexing to rest of sdmTMB!
       }
 
       // Spatially varying effects:
@@ -1059,6 +1097,16 @@ Type objective_function<Type>::operator()()
             proj_rw_i(i,m) += proj_X_rw_ik(i, k) * b_rw_t(proj_year(i), k, m);
             proj_fe(i) += proj_rw_i(i,m);
           }
+        }
+      }
+    }
+    array<Type> proj_mvrw_i(n_i,n_m);
+    proj_mvrw_i.setZero();
+    if (mvrw_u.cols() > 0) {
+      for (int m = 0; m < n_m; m++) {
+        for (int i = 0; i < n_i; i++) {
+          proj_mvrw_i(i,m) += mvrw_u(proj_mvrw_cat_i(i), proj_year(i)); // note reversed category/year row/column indexing to rest of sdmTMB! 
+          proj_fe(i) += proj_mvrw_i(i,m);
         }
       }
     }
