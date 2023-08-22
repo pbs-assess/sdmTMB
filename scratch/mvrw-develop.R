@@ -16,7 +16,7 @@ for (i in 1:stateDim) {
 Sigma <- corrMat * (sds %o% sds)
 d <- matrix(NA, timeSteps, stateDim)
 obs <- d
-d[1, ] <- rnorm(stateDim, 0, 1) # initial state
+d[1, ] <- rnorm(stateDim, 0, sds) # initial state
 i <- 1
 obs[i, ] <- d[i, ] + rnorm(stateDim, rep(0, stateDim), sdObs)
 for (i in 2:timeSteps) {

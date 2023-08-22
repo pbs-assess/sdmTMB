@@ -598,7 +598,7 @@ Type objective_function<Type>::operator()()
     Type mvrw_rho = sdmTMB::minus_one_to_one(mvrw_phi);
     // sparse version:
     VECSCALE_t<AR1_t<N01<Type>>> neg_log_density = VECSCALE(AR1(mvrw_rho), mvrw_sds);
-    jnll -= dnorm(mvrw_u.col(0).vec(), Type(0.), Type(1.), true).sum(); // first step N(0,1)
+    jnll -= dnorm(mvrw_u.col(0).vec(), Type(0.), mvrw_sds, true).sum(); // first step; assumes factors in fixed effects
     for (int t = 1; t < n_t; t++)
       jnll += neg_log_density(mvrw_u.col(t) - mvrw_u.col(t-1));
   }
