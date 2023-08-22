@@ -255,7 +255,7 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(b_smooth);  // P-spline smooth parameters
   PARAMETER_ARRAY(ln_smooth_sigma);  // variances of spline REs if included
 
-  PARAMETER(mvrw_phi); // -Inf to Inf to be converted to mvrw_rho -1 to 1
+  PARAMETER_VECTOR(mvrw_rho); // -Inf to Inf to be converted to mvrw_rho -1 to 1
   PARAMETER_VECTOR(mvrw_logsds); // MVRW log process SDs
   PARAMETER_ARRAY(mvrw_u); // MVRW states
 
@@ -595,15 +595,17 @@ Type objective_function<Type>::operator()()
     // if (simulate_t(0)) error("Simulation not yet coded for delta models.");
     // FIXME: add MVRW to simulation
     vector<Type> mvrw_sds = exp(mvrw_logsds);
+    // sparse AR1 (basically, ordinal categories) version:
     // Type mvrw_rho = sdmTMB::minus_one_to_one(mvrw_phi);
-    // sparse version:
     // VECSCALE_t<AR1_t<N01<Type>>> neg_log_density = VECSCALE(AR1(mvrw_rho), mvrw_sds);
-
-
-    jnll -= dnorm(mvrw_u.col(0).vec(), Type(0.), mvrw_sds, true).sum(); // first step; assumes factors in fixed effects
+    // jnll -= dnorm(mvrw_u.col(0).vec(), Type(0.), mvrw_sds, true).sum(); // first step; assumes factors in fixed effects
+    jnll += VECSCALE(UNSTRUCTURED_CORR(mvrw_rho), mvrw_sds)(mvrw_u.col(0)); // first step; assumes factors in fixed effects
     for (int t = 1; t < n_t; t++)
       // jnll += neg_log_density(mvrw_u.col(t) - mvrw_u.col(t-1));
-      jnll += VECSCALE(UNSTRUCTURED_CORR(mvrw_rho), mvrw_sds)();
+      jnll += VECSCALE(UNSTRUCTURED_CORR(mvrw_rho), mvrw_sds)(mvrw_u.col(t) - mvrw_u.col(t-1));
+    matrix<Type> mvrw_Sigma(mvrw_u.rows(), mvrw_u.rows());
+    mvrw_Sigma = UNSTRUCTURED_CORR(mvrw_rho).cov();
+    REPORT(mvrw_Sigma);
   }
 
   // ------------------ INLA projections ---------------------------------------

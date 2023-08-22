@@ -1167,7 +1167,7 @@ sdmTMB <- function(
     rho_time_unscaled = matrix(0, ncol(X_rw_ik), n_m),
     mvrw_u = mvrw_u,
     mvrw_logsds = rep(0, nrow(mvrw_u)),
-    mvrw_phi = if (nrow(mvrw_u) > 0L) 0 else numeric(0L),
+    mvrw_rho = if (nrow(mvrw_u) > 0L) rep(0, nrow(mvrw_u)*(nrow(mvrw_u)-1)/2) else numeric(0L),
     ar1_phi    = rep(0, n_m),
     ln_tau_G   = matrix(0, ncol(RE_indexes), n_m),
     RE         = matrix(0, sum(nobs_RE), n_m),
@@ -1290,7 +1290,7 @@ sdmTMB <- function(
   }
   if (!is.null(mvrw_category)) {
     tmb_random <- c(tmb_random, "mvrw_u")
-    tmb_map <- unmap(tmb_map, c("mvrw_u", "mvrw_phi", "mvrw_logsds"))
+    tmb_map <- unmap(tmb_map, c("mvrw_u", "mvrw_rho", "mvrw_logsds"))
   }
 
   tmb_map$ar1_phi <- as.numeric(tmb_map$ar1_phi) # strip factors
