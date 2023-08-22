@@ -595,12 +595,15 @@ Type objective_function<Type>::operator()()
     // if (simulate_t(0)) error("Simulation not yet coded for delta models.");
     // FIXME: add MVRW to simulation
     vector<Type> mvrw_sds = exp(mvrw_logsds);
-    Type mvrw_rho = sdmTMB::minus_one_to_one(mvrw_phi);
+    // Type mvrw_rho = sdmTMB::minus_one_to_one(mvrw_phi);
     // sparse version:
-    VECSCALE_t<AR1_t<N01<Type>>> neg_log_density = VECSCALE(AR1(mvrw_rho), mvrw_sds);
+    // VECSCALE_t<AR1_t<N01<Type>>> neg_log_density = VECSCALE(AR1(mvrw_rho), mvrw_sds);
+
+
     jnll -= dnorm(mvrw_u.col(0).vec(), Type(0.), mvrw_sds, true).sum(); // first step; assumes factors in fixed effects
     for (int t = 1; t < n_t; t++)
-      jnll += neg_log_density(mvrw_u.col(t) - mvrw_u.col(t-1));
+      // jnll += neg_log_density(mvrw_u.col(t) - mvrw_u.col(t-1));
+      jnll += VECSCALE(UNSTRUCTURED_CORR(mvrw_rho), mvrw_sds)();
   }
 
   // ------------------ INLA projections ---------------------------------------
