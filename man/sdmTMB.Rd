@@ -184,9 +184,9 @@ supplied and \code{area} can be supplied to \code{index_args}.}
 can be done when calling \code{\link[=get_index]{get_index()}} on the resulting fitted object.}
 
 \item{mvrw_category}{An optional column name (as character) of categories or
-groups for a multivariate random walk. Each category will have an intercept
-random walk with its own SD and correlation will be estimated across the
-categories.}
+groups for a multivariate (correlated) random walk. Each category will have
+an intercept random walk with its own SD and correlation will be estimated
+between the category random walks with an unstructured covariance matrix.}
 
 \item{experimental}{A named list for esoteric or in-development options. Here
 be dragons.}

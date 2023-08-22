@@ -31,7 +31,6 @@ d <- data.frame(
   year = rep(1:nrow(obs), stateDim),
   group = rep(letters[1:stateDim], each = timeSteps)
 )
-head(d)
 
 fit <- sdmTMB(
   y ~ 1,
@@ -40,7 +39,6 @@ fit <- sdmTMB(
   time = "year",
   spatiotemporal = "off",
   mvrw_category = "group",
-  # do_fit = FALSE,
   control = sdmTMBcontrol(
     map = list(b_j = factor(NA)),
     start = list(b_j = 0)
@@ -60,8 +58,12 @@ fit_null <- sdmTMB(
 # fit$tmb_params$mvrw_rho
 
 fit$sd_report
-r <- fit$tmb_obj$report()
+r <- fit$tmb_obj$report(fit$tmb_obj$env$last.par.best)
 r$mvrw_Sigma
+expect_equal(nrow(r$mvrw_Sigma), stateDim)
+expect_equal(ncol(r$mvrw_Sigma), stateDim)
+expect_equal(diag(r$mvrw_Sigma), rep(1, stateDim))
+
 pars <- fit$tmb_obj$env$parList()
 
 pars$mvrw_rho
@@ -73,12 +75,16 @@ pars$mvrw_u[1:3, 1:3]
 cor2cov <- function(R, S) {
   sweep(sweep(R, 1, S, "*"), 2, S, "*")
 }
-
 Sigma_hat <- cor2cov(r$mvrw_Sigma, exp(pars$mvrw_logsds))
-
 true_sds <- sqrt(diag(Sigma))
 par(mfrow = c(1, 2))
 plot(true_sds, exp(pars$mvrw_logsds), main = "SDs")
 abline(0, 1)
-plot(reshape2::melt(Sigma_hat)[, 3], reshape2::melt(Sigma)[, 3], main = "Covariances")
+plot(as.numeric(Sigma_hat), as.numeric(Sigma), main = "Covariances")
 abline(0, 1)
+
+expect_equal(exp(pars$ln_phi), sdObs, tolerance = 0.025)
+expect_gt(cor(as.numeric(Sigma_hat), as.numeric(Sigma)), 0.98)
+expect_gt(cor(true_sds, exp(pars$mvrw_logsds)), 0.98)
+
+

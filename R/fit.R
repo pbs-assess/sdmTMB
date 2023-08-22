@@ -136,9 +136,9 @@ NULL
 #'   \pkg{tmbstan}. If `TRUE`, Jacobian adjustments are applied to account for
 #'   parameter transformations when priors are applied.
 #' @param mvrw_category An optional column name (as character) of categories or
-#'   groups for a multivariate random walk. Each category will have an intercept
-#'   random walk with its own SD and correlation will be estimated across the
-#'   categories.
+#'   groups for a multivariate (correlated) random walk. Each category will have
+#'   an intercept random walk with its own SD and correlation will be estimated
+#'   between the category random walks with an unstructured covariance matrix.
 #' @param experimental A named list for esoteric or in-development options. Here
 #'   be dragons.
 #   (Experimental) A column name (as character) of a predictor of a
