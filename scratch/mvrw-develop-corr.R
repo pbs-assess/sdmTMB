@@ -9,7 +9,10 @@ timeSteps <- 400
 sdObs <- 0.3
 A <- matrix(runif(stateDim^2) * 2 - 1, ncol = stateDim)
 Sigma <- t(A) %*% A
+par(mfrow = c(1, 1))
 image(Sigma)
+print(Sigma)
+sqrt(diag(Sigma))
 d <- matrix(NA, timeSteps, stateDim)
 obs <- d
 d[1, ] <- MASS::mvrnorm(1, rep(0, stateDim), Sigma = Sigma) # initial state
@@ -42,6 +45,14 @@ fit <- sdmTMB(
     map = list(b_j = factor(NA)),
     start = list(b_j = 0)
   )
+)
+
+fit_null <- sdmTMB(
+  y ~ 1,
+  data = d,
+  spatial = "off",
+  time = "year",
+  spatiotemporal = "off"
 )
 
 # fit$tmb_params$mvrw_logsds
