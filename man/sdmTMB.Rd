@@ -31,6 +31,7 @@ sdmTMB(
   do_index = FALSE,
   predict_args = NULL,
   index_args = NULL,
+  mvrw_category = NULL,
   experimental = NULL
 )
 }
@@ -181,6 +182,11 @@ supplied and \code{area} can be supplied to \code{index_args}.}
 \item{index_args}{A list of arguments to pass to \code{\link[=get_index]{get_index()}} if
 \code{do_index = TRUE}. Currently, only \code{area} is supported. Bias correction
 can be done when calling \code{\link[=get_index]{get_index()}} on the resulting fitted object.}
+
+\item{mvrw_category}{An optional column name (as character) of categories or
+groups for a multivariate random walk. Each category will have an intercept
+random walk with its own SD and correlation will be estimated across the
+categories.}
 
 \item{experimental}{A named list for esoteric or in-development options. Here
 be dragons.}

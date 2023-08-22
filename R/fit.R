@@ -135,6 +135,10 @@ NULL
 #' @param bayesian Logical indicating if the model will be passed to
 #'   \pkg{tmbstan}. If `TRUE`, Jacobian adjustments are applied to account for
 #'   parameter transformations when priors are applied.
+#' @param mvrw_category An optional column name (as character) of categories or
+#'   groups for a multivariate random walk. Each category will have an intercept
+#'   random walk with its own SD and correlation will be estimated across the
+#'   categories.
 #' @param experimental A named list for esoteric or in-development options. Here
 #'   be dragons.
 #   (Experimental) A column name (as character) of a predictor of a
@@ -575,8 +579,8 @@ sdmTMB <- function(
   do_index = FALSE,
   predict_args = NULL,
   index_args = NULL,
-  experimental = NULL,
-  mvrw_category = NULL
+  mvrw_category = NULL,
+  experimental = NULL
   ) {
 
   data <- droplevels(data) # if data was subset, strips absent factors
@@ -1163,7 +1167,7 @@ sdmTMB <- function(
     rho_time_unscaled = matrix(0, ncol(X_rw_ik), n_m),
     mvrw_u = mvrw_u,
     mvrw_logsds = rep(0, nrow(mvrw_u)),
-    mvrw_phi = if (nrow(mvrw_u) > 0L) 0.1 else numeric(0L),
+    mvrw_phi = if (nrow(mvrw_u) > 0L) 0 else numeric(0L),
     ar1_phi    = rep(0, n_m),
     ln_tau_G   = matrix(0, ncol(RE_indexes), n_m),
     RE         = matrix(0, sum(nobs_RE), n_m),

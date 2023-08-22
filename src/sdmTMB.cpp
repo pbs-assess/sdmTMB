@@ -590,30 +590,17 @@ Type objective_function<Type>::operator()()
 
   // Multivariate-random-walk time-varying intercepts:
   if (mvrw_u.cols() > 0) {
-    if (n_m > 1) error("The MVRW is not yet coded for delta models.");
-    // FIXME: add MVRW to delta model!
+    if (n_m > 1) error("MVRW is not yet coded for delta models.");
+    // FIXME: add MVRW to delta model
     // if (simulate_t(0)) error("Simulation not yet coded for delta models.");
-    // FIXME: add MVRW to simulation!
+    // FIXME: add MVRW to simulation
     vector<Type> mvrw_sds = exp(mvrw_logsds);
     Type mvrw_rho = sdmTMB::minus_one_to_one(mvrw_phi);
-    // Type mvrw_rho = Type(2)/(Type(1) + exp(-Type(2) * mvrw_phi)) - Type(1);
-
     // sparse version:
     VECSCALE_t<AR1_t<N01<Type>>> neg_log_density = VECSCALE(AR1(mvrw_rho), mvrw_sds);
     jnll -= dnorm(mvrw_u.col(0).vec(), Type(0.), Type(1.), true).sum(); // first step N(0,1)
     for (int t = 1; t < n_t; t++)
       jnll += neg_log_density(mvrw_u.col(t) - mvrw_u.col(t-1));
-
-   // non-sparse version:
-    // int timeSteps=mvrw_u.dim[1];
-    // int stateDim=mvrw_u.dim[0];
-    // matrix<Type> cov(stateDim,stateDim);
-    // for(int i=0;i<stateDim;i++)
-    //   for(int j=0;j<stateDim;j++)
-    //     cov(i,j)=pow(mvrw_rho,Type(abs(i-j)))*mvrw_sds[i]*mvrw_sds[j];
-    // MVNORM_t<Type> neg_log_density(cov);
-    // for(int i=1;i<timeSteps;i++)    
-    //   jnll += neg_log_density(mvrw_u.col(i)-mvrw_u.col(i-1)); // Process likelihood
   }
 
   // ------------------ INLA projections ---------------------------------------
@@ -1105,7 +1092,7 @@ Type objective_function<Type>::operator()()
     if (mvrw_u.cols() > 0) {
       for (int m = 0; m < n_m; m++) {
         for (int i = 0; i < n_i; i++) {
-          proj_mvrw_i(i,m) += mvrw_u(proj_mvrw_cat_i(i), proj_year(i)); // note reversed category/year row/column indexing to rest of sdmTMB! 
+          proj_mvrw_i(i,m) += mvrw_u(proj_mvrw_cat_i(i), proj_year(i)); // note reversed category/year row/column indexing to rest of sdmTMB!
           proj_fe(i) += proj_mvrw_i(i,m);
         }
       }

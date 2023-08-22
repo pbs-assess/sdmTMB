@@ -1,44 +1,30 @@
-set.seed(1)
-library(MASS)
-simdata <- function() {
-  local(
-    {
-      rho <- 0.9
-      sds <- seq(0.5, 2, length = stateDim)
-      sdObs <- rep(1, stateDim)
-      corrMat <- matrix(0.0, stateDim, stateDim)
-      for (i in 1:stateDim) {
-        for (j in 1:stateDim) {
-          corrMat[i, j] <- rho^abs(i - j)
-        }
-      }
-      Sigma <- corrMat * (sds %o% sds)
-      d <- matrix(NA, timeSteps, stateDim)
-      obs <- d
-      ## init state
-      d[1, ] <- rnorm(stateDim)
-      i <- 1
-      obs[i, ] <- d[i, ] + rnorm(stateDim, rep(0, stateDim), sdObs)
-      for (i in 2:timeSteps) {
-        d[i, ] <- d[i - 1, ] + mvrnorm(1, rep(0, stateDim), Sigma = Sigma)
-        obs[i, ] <- d[i, ] + rnorm(stateDim, rep(0, stateDim), sdObs)
-      }
-      matplot(d, type = "l")
-      matpoints(obs)
-    },
-    .GlobalEnv
-  )
-}
+library(ggplot2)
+library(sdmTMB)
+
+set.seed(192838)
+rho <- 0.7
 stateDim <- 3
 timeSteps <- 100
-simdata()
-data <- list(obs = t(obs))
-parameters <- list(
-  u = data$obs * 0,
-  transf_rho = 0.1,
-  logsds = sds * 0,
-  logsdObs = sdObs * 0
-)
+sds <- c(0.5, 0.4, 0.9)
+sdObs <- rep(0.8, stateDim)
+corrMat <- matrix(0.0, stateDim, stateDim)
+for (i in 1:stateDim) {
+  for (j in 1:stateDim) {
+    corrMat[i, j] <- rho^abs(i - j)
+  }
+}
+Sigma <- corrMat * (sds %o% sds)
+d <- matrix(NA, timeSteps, stateDim)
+obs <- d
+d[1, ] <- rnorm(stateDim, 0, 1) # initial state
+i <- 1
+obs[i, ] <- d[i, ] + rnorm(stateDim, rep(0, stateDim), sdObs)
+for (i in 2:timeSteps) {
+  d[i, ] <- d[i - 1, ] + MASS::mvrnorm(1, rep(0, stateDim), Sigma = Sigma)
+  obs[i, ] <- d[i, ] + rnorm(stateDim, rep(0, stateDim), sdObs)
+}
+matplot(d, type = "l")
+matpoints(obs)
 
 d <- data.frame(
   y = c(obs[, 1], obs[, 2], obs[, 3]),
@@ -82,7 +68,9 @@ pred <- predict(fit, newdata = nd)
 
 head(pred)
 
-library(ggplot2)
 ggplot(pred, aes(year, est, colour = group)) +
   geom_line() +
   geom_point(data = d, mapping = aes(y = y))
+
+2 * plogis(p$mvrw_phi) - 1
+head(t(p$mvrw_u))
