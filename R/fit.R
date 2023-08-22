@@ -1668,10 +1668,17 @@ tidy_sigma_G_priors <- function(p, ln_tau_G_index) {
   p
 }
 
-make_mvrw_cat_i <- function(x) {
+make_mvrw_cat_i <- function(x, prev_cats = NULL) {
   if (!is.null(x)) {
-    return(as.integer(as.factor(x)) - 1L)
+    ret <- as.integer(as.factor(x)) - 1L
+    if (!is.null(prev_cats)) {
+      m1 <- setdiff(unique(prev_cats), unique(ret))
+      if (length(m1)) cli_abort("Some MVRW categories are missing in the prediction newdata.")
+      m2 <- setdiff(unique(ret), unique(prev_cats))
+      if (length(m2)) cli_abort("Some extra MVRW categories found in the prediction newdata.")
+    }
   } else {
-    return(0L)
+    ret <- 0L
   }
+  ret
 }
