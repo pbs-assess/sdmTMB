@@ -1,12 +1,12 @@
 library(ggplot2)
 library(sdmTMB)
 
-set.seed(192838)
-rho <- 0.7
-stateDim <- 3
-timeSteps <- 100
-sds <- c(0.5, 0.4, 0.9)
-sdObs <- rep(0.8, stateDim)
+set.seed(12928)
+rho <- 0.6
+stateDim <- 10
+timeSteps <- 200
+sds <- rlnorm(stateDim, meanlog = log(0.4), sdlog = 0.4)
+sdObs <- rep(0.2, stateDim)
 corrMat <- matrix(0.0, stateDim, stateDim)
 for (i in 1:stateDim) {
   for (j in 1:stateDim) {
@@ -24,16 +24,13 @@ for (i in 2:timeSteps) {
   obs[i, ] <- d[i, ] + rnorm(stateDim, rep(0, stateDim), sdObs)
 }
 matplot(d, type = "l")
+truth <- d
 matpoints(obs)
 
 d <- data.frame(
-  y = c(obs[, 1], obs[, 2], obs[, 3]),
-  year = rep(1:nrow(obs), 3),
-  group = c(
-    rep("a", nrow(obs)),
-    rep("b", nrow(obs)),
-    rep("c", nrow(obs))
-  )
+  y = reshape2::melt(obs)[,3],
+  year = rep(1:nrow(obs), stateDim),
+  group = rep(letters[1:stateDim], each = timeSteps)
 )
 head(d)
 
@@ -63,7 +60,13 @@ p <- fit$tmb_obj$env$parList()
 matplot(obs, type = "l", lwd = 1, lty = 2)
 matpoints(t(p$mvrw_u), pch = 21)
 
-nd <- expand.grid(year = 1:100, group = c("a", "b", "c"))
+nd <- expand.grid(year = unique(d$year), group = c("a", "b", "c"))
+expect_error(predict(fit, newdata = nd), regexp = "missing")
+
+nd <- expand.grid(year = unique(d$year), group = c(unique(d$group), "zz"))
+expect_error(predict(fit, newdata = nd), regexp = "extra")
+
+nd <- expand.grid(year = unique(d$year), group = unique(d$group))
 pred <- predict(fit, newdata = nd)
 
 head(pred)
@@ -74,3 +77,17 @@ ggplot(pred, aes(year, est, colour = group)) +
 
 2 * plogis(p$mvrw_phi) - 1
 head(t(p$mvrw_u))
+s <- as.list(fit$sd_report, "Std. Error")
+lwr <- 2 * plogis(p$mvrw_phi - 2 * s$mvrw_phi) - 1
+upr <- 2 * plogis(p$mvrw_phi + 2 * s$mvrw_phi) - 1
+expect_lt(lwr, rho)
+expect_gt(upr, rho)
+
+expect_gt(cor(pred$est, d$y), 0.99)
+for (i in 1:stateDim) {
+  expect_gt(cor(p$mvrw_u[i,], truth[,i]), 0.98)
+}
+
+plot(log(sds), p$mvrw_logsds)
+abline(0, 1)
+expect_gt(cor(log(sds), p$mvrw_logsds), 0.98)
