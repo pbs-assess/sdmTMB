@@ -60,6 +60,7 @@ fit_null <- sdmTMB(
 fit$sd_report
 r <- fit$tmb_obj$report(fit$tmb_obj$env$last.par.best)
 r$mvrw_Sigma
+# r$proj_mvrw_i
 expect_equal(nrow(r$mvrw_Sigma), stateDim)
 expect_equal(ncol(r$mvrw_Sigma), stateDim)
 expect_equal(diag(r$mvrw_Sigma), rep(1, stateDim))
@@ -87,4 +88,6 @@ expect_equal(exp(pars$ln_phi), sdObs, tolerance = 0.025)
 expect_gt(cor(as.numeric(Sigma_hat), as.numeric(Sigma)), 0.98)
 expect_gt(cor(true_sds, exp(pars$mvrw_logsds)), 0.98)
 
-
+nd <- expand.grid(year = unique(d$year), group = unique(d$group))
+p <- predict(fit, newdata = nd)
+p <- predict(fit, newdata = dplyr::filter(d, year == min(d$year)))
