@@ -6,7 +6,7 @@ library(sdmTMB)
 set.seed(12928)
 stateDim <- 7
 timeSteps <- 400
-sdObs <- 0.3
+sdObs <- 0.5
 A <- matrix(runif(stateDim^2) * 2 - 1, ncol = stateDim)
 Sigma <- t(A) %*% A
 par(mfrow = c(1, 1))
@@ -27,9 +27,10 @@ truth <- d
 matpoints(obs, pch = 21)
 
 d <- data.frame(
-  y = reshape2::melt(obs)[, 3],
+  y = as.numeric(obs),
   year = rep(1:nrow(obs), stateDim),
-  group = rep(letters[1:stateDim], each = timeSteps)
+  group = rep(letters[1:stateDim], each = timeSteps),
+  truth = as.numeric(truth)
 )
 
 fit <- sdmTMB(
@@ -89,5 +90,13 @@ expect_gt(cor(as.numeric(Sigma_hat), as.numeric(Sigma)), 0.98)
 expect_gt(cor(true_sds, exp(pars$mvrw_logsds)), 0.98)
 
 nd <- expand.grid(year = unique(d$year), group = unique(d$group))
-p <- predict(fit, newdata = nd)
 p <- predict(fit, newdata = dplyr::filter(d, year == min(d$year)))
+p <- predict(fit, newdata = nd)
+expect_true("est" %in% names(p))
+expect_true(sum(is.na(p$est)) == 0L)
+
+expect_gt(cor(p$est, d$truth), 0.99)
+
+ggplot(p, aes(year, est, colour = group)) + geom_line() +
+  geom_point(aes(y = truth), d, pch = 4, alpha = 0.7)
+
