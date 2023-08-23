@@ -770,7 +770,7 @@ sdmTMB <- function(
     if (!is.null(upr)) upr <- data[["__dcens_upr__"]] # expanded
     data[["__dcens_upr__"]] <- NULL
     spde$loc_xy <- as.matrix(data[,spde$xy_cols,drop=FALSE])
-    spde$A_st <- INLA::inla.spde.make.A(spde$mesh, loc = spde$loc_xy)
+    spde$A_st <- fmesher::fm_basis(spde$mesh, loc = spde$loc_xy)
     spde$sdm_spatial_id <- seq(1, nrow(data)) # FIXME
   }
   check_irregalar_time(data, time, spatiotemporal, time_varying)

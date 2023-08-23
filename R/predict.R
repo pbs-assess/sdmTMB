@@ -410,7 +410,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
           all.x = TRUE, all.y = FALSE)
         newdata <- newdata[order(newdata$sdm_orig_id),, drop = FALSE]
       }
-      proj_mesh <- INLA::inla.spde.make.A(object$spde$mesh,
+      proj_mesh <- fmesher::fm_basis(object$spde$mesh,
         loc = as.matrix(unique_newdata[, xy_cols, drop = FALSE]))
     } else {
       proj_mesh <- object$spde$A_st # fake
