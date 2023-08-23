@@ -221,6 +221,8 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(poisson_link_delta); // logical
 
   DATA_INTEGER(stan_flag); // logical whether to pass the model to Stan
+
+  DATA_INTEGER(n_c);  // N categories
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -231,6 +233,7 @@ Type objective_function<Type>::operator()()
   PARAMETER_VECTOR(ln_tau_O);    // spatial process
   PARAMETER_ARRAY(ln_tau_Z);    // optional spatially varying covariate process
   PARAMETER_VECTOR(ln_tau_E);    // spatio-temporal process
+  PARAMETER_VECTOR(ln_tau_U);    // spatio-temporal (category) process
   PARAMETER_ARRAY(ln_kappa);    // Matern parameter
 
   PARAMETER(thetaf);           // tweedie only
@@ -248,6 +251,7 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(omega_s);    // spatial effects; n_s length
   PARAMETER_ARRAY(zeta_s);    // spatial effects on covariate; n_s length, n_z cols, n_m
   PARAMETER_ARRAY(epsilon_st);  // spatio-temporal effects; n_s by n_t by n_m array
+  PARAMETER_ARRAY(upsilon_stc);  // spatio-temporal effects; n_s by n_t by n_c (category) by n_m array
   PARAMETER_ARRAY(b_threshold);  // coefficients for threshold relationship (3) // DELTA TODO
   PARAMETER_VECTOR(b_epsilon); // slope coefficient for log-linear model on epsilon
   PARAMETER_VECTOR(ln_epsilon_re_sigma);
@@ -494,10 +498,20 @@ Type objective_function<Type>::operator()()
           }
           ADREPORT(rho);
         } else if (rw_fields(m)) {
-          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1./exp(ln_tau_E_vec(0,m)))(epsilon_st.col(m).col(0));
-          for (int t = 1; t < n_t; t++) {
-            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s),
-                1./exp(ln_tau_E_vec(t,m)))(epsilon_st.col(m).col(t) - epsilon_st.col(m).col(t - 1));
+          if (n_c == 0) { // one category; normal
+            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1./exp(ln_tau_E_vec(0,m)))(epsilon_st.col(m).col(0));
+            for (int t = 1; t < n_t; t++) {
+              PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s),
+                  1./exp(ln_tau_E_vec(t,m)))(epsilon_st.col(m).col(t) - epsilon_st.col(m).col(t - 1));
+            }
+          } else { // has multiple categories
+            for (int c = 0; c < n_c; c++) {
+              jnll += SCALE(GMRF(Q_temp, s), 1./exp(ln_tau_U(m)))(upsilon_stc.col(m).col(c).col(0));
+              for (int t = 1; t < n_t; t++) {
+                jnll += SCALE(GMRF(Q_temp, s),
+                    1./exp(ln_tau_U(m)))(upsilon_stc.col(m).col(c).col(t) - upsilon_stc.col(m).col(c).col(t - 1));
+              }
+            }
           }
           if (sim_re(1)) {
             for (int t = 0; t < n_t; t++) {
@@ -615,17 +629,26 @@ Type objective_function<Type>::operator()()
   array<Type> omega_s_A(n_i, n_m);
   array<Type> zeta_s_A(n_i, n_z, n_m);
   array<Type> epsilon_st_A(n_i, n_t, n_m);
+  array<Type> upsilon_stc_A(n_i, n_t, n_c, n_m);
   array<Type> epsilon_st_A_vec(n_i, n_m);
+  array<Type> upsilon_st_A_vec(n_i, n_m);
   omega_s_A.setZero();
   zeta_s_A.setZero();
   epsilon_st_A.setZero();
   epsilon_st_A_vec.setZero();
+  upsilon_stc_A.setZero();
+  upsilon_st_A_vec.setZero();
 
   if (!no_spatial) {
     for (int m = 0; m < n_m; m++) {
-      for (int t = 0; t < n_t; t++)
+      for (int t = 0; t < n_t; t++) {
         if (!spatial_only(m)) epsilon_st_A.col(m).col(t) =
           A_st * vector<Type>(epsilon_st.col(m).col(t));
+        if (!spatial_only(m) && n_c > 0) {
+          for (int c = 0; c < n_c; c++)
+            upsilon_stc_A.col(m).col(c).col(t) = A_st * vector<Type>(upsilon_stc.col(m).col(c).col(t));
+        }
+      }
       if (!omit_spatial_intercept) omega_s_A.col(m) = A_st * vector<Type>(omega_s.col(m));
       for (int z = 0; z < n_z; z++)
         zeta_s_A.col(m).col(z) = A_st * vector<Type>(zeta_s.col(m).col(z));
@@ -712,8 +735,17 @@ Type objective_function<Type>::operator()()
       if (spatial_covariate)
         for (int z = 0; z < n_z; z++)
           eta_i(i,m) += zeta_s_A(i,z,m) * z_i(i,z); // spatially varying covariate DELTA
-      if (!no_spatial) epsilon_st_A_vec(i,m) = epsilon_st_A(A_spatial_index(i), year_i(i),m); // record it
+      if (!no_spatial) {
+        epsilon_st_A_vec(i,m) = epsilon_st_A(A_spatial_index(i), year_i(i),m); // record it
+        if (n_c > 0) {
+          for (int c = 0; c < n_c; c++) {
+            upsilon_st_A_vec(i,m) = upsilon_stc_A(A_spatial_index(i), year_i(i), mvrw_cat_i(i), m); // record it
+          }
+        }
+      }
+                                                                               
       eta_i(i,m) += epsilon_st_A_vec(i,m); // spatiotemporal
+      eta_i(i,m) += upsilon_st_A_vec(i,m); // spatiotemporal with categories
 
       // IID random intercepts:
       int temp = 0;
@@ -1108,15 +1140,19 @@ Type objective_function<Type>::operator()()
     array<Type> proj_omega_s_A_unique(n_p_mesh, n_m);
     array<Type> proj_zeta_s_A_unique(n_p_mesh, n_z, n_m);
     array<Type> proj_epsilon_st_A_unique(n_p_mesh, n_t, n_m);
+    array<Type> proj_upsilon_stc_A_unique(n_p_mesh, n_t, n_c, n_m);
     proj_epsilon_st_A_unique.setZero();
+    proj_upsilon_stc_A_unique.setZero();
 
     // Expanded to full length:
     array<Type> proj_omega_s_A(n_p, n_m);
     array<Type> proj_zeta_s_A(n_p, n_z, n_m);
     array<Type> proj_epsilon_st_A_vec(n_p, n_m);
+    array<Type> proj_upsilon_st_A_vec(n_p, n_m);
     proj_omega_s_A.setZero(); // may not get filled
     proj_zeta_s_A.setZero(); // may not get filled
     proj_epsilon_st_A_vec.setZero(); // may not get filled
+    proj_upsilon_st_A_vec.setZero(); // may not get filled
 
     array<Type> proj_zeta_s_A_cov(n_p, n_z, n_m);
     proj_zeta_s_A_cov.setZero();
@@ -1125,6 +1161,11 @@ Type objective_function<Type>::operator()()
       for (int m = 0; m < n_m; m++) {
         for (int t = 0; t < n_t; t++) {
           proj_epsilon_st_A_unique.col(m).col(t) = proj_mesh * vector<Type>(epsilon_st.col(m).col(t));
+          if (n_c > 0) {
+            for (int c = 0; c < n_c; c++) {
+              proj_upsilon_stc_A_unique.col(m).col(c).col(t) = proj_mesh * vector<Type>(upsilon_stc.col(m).col(c).col(t));
+            }
+          }
         }
         if (!omit_spatial_intercept) proj_omega_s_A_unique.col(m) = proj_mesh * vector<Type>(omega_s.col(m));
       }
@@ -1143,6 +1184,7 @@ Type objective_function<Type>::operator()()
         for (int i = 0; i < n_p; i++) {
           proj_omega_s_A(i,m) = proj_omega_s_A_unique(proj_spatial_index(i),m);
           proj_epsilon_st_A_vec(i,m) = proj_epsilon_st_A_unique(proj_spatial_index(i), proj_year(i),m);
+          proj_upsilon_st_A_vec(i,m) = proj_upsilon_stc_A_unique(proj_spatial_index(i), proj_year(i), proj_mvrw_cat_i(i), m);
           for (int z = 0; z < n_z; z++) {
             proj_zeta_s_A(i,z,m) = proj_zeta_s_A_unique(proj_spatial_index(i),z,m);
           }
@@ -1171,7 +1213,7 @@ Type objective_function<Type>::operator()()
     array<Type> proj_rf(n_p, n_m);
     array<Type> proj_eta(n_p, n_m);
     for (int m = 0; m < n_m; m++)
-      proj_rf.col(m) = proj_omega_s_A.col(m) + proj_epsilon_st_A_vec.col(m);
+      proj_rf.col(m) = proj_omega_s_A.col(m) + proj_epsilon_st_A_vec.col(m) + proj_upsilon_st_A_vec.col(m);
 
     for (int m = 0; m < n_m; m++)
       for (int z = 0; z < n_z; z++)
@@ -1214,6 +1256,7 @@ Type objective_function<Type>::operator()()
     REPORT(proj_fe);            // fixed effect projections
     REPORT(proj_omega_s_A);     // spatial random effect projections
     REPORT(proj_epsilon_st_A_vec);  // spatiotemporal random effect projections
+    REPORT(proj_upsilon_st_A_vec);  // spatiotemporal random effect projections
     REPORT(proj_zeta_s_A);      // spatial slope projections
     // REPORT(proj_zeta_s_A_cov);  // spatial slope * covariate projections
     REPORT(proj_eta);           // combined projections (in link space)

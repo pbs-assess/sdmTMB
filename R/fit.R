@@ -609,7 +609,9 @@ sdmTMB <- function(
     else
       spatiotemporal <- rep("iid", n_m)
   }
-
+  if (!is.null(mvrw_category) && delta)
+    cli_abort("Categories are only set up to work with non-delta models at this point.")
+  if (!is.null(mvrw_category) && spatiotemporal == "rw") spatiotemporal <- "rwc"
 
   if (is.null(time)) {
     spatial_only <- rep(TRUE, n_m)
@@ -689,7 +691,7 @@ sdmTMB <- function(
   for (i in dot_checks) .control[[i]] <- NULL # what's left should be for nlminb
 
   ar1_fields <- spatiotemporal == "ar1"
-  rw_fields <- spatiotemporal == "rw"
+  rw_fields <- spatiotemporal %in% c("rw", "rwc")
   assert_that(
     is.logical(reml), is.logical(anisotropy), is.logical(share_range),
     is.logical(silent), is.logical(multiphase), is.logical(normalize)
@@ -1051,16 +1053,18 @@ sdmTMB <- function(
   n_t <- length(unique(data[[time]]))
   random_walk <- if (!is.null(time_varying)) switch(time_varying_type, rw = 1L, rw0 = 2L, ar1 = 0L) else 0L
 
-  if (!is.null(mvrw_category)) {
-    cats <- make_mvrw_cat_i(data[[mvrw_category]])
+  if (!is.null(mvrw_category)) cats <- make_mvrw_cat_i(data[[mvrw_category]]) else numeric(0L)
+  if (!is.null(mvrw_category) && spatiotemporal != "rwc") {
     mvrw_u <- matrix(0, nrow = max(cats) + 1L, ncol = n_t)
   } else {
     mvrw_u <- matrix(0, nrow = 0L, ncol = 0L)
   }
+  n_c <- if (!is.null(mvrw_category)) length(unique(data[[mvrw_category]])) else 0L
 
   tmb_data <- list(
     y_i        = y_i,
     n_t        = n_t,
+    n_c        = n_c,
     z_i        = z_i,
     offset_i   = offset,
     proj_offset_i = 0,
@@ -1068,7 +1072,7 @@ sdmTMB <- function(
     sim_re     = if ("sim_re" %in% names(experimental)) as.integer(experimental$sim_re) else rep(0L, 6),
     A_spatial_index = spde$sdm_spatial_id - 1L,
     year_i     = make_year_i(data[[time]]),
-    mvrw_cat_i = if (!is.null(mvrw_category)) cats else numeric(0L),
+    mvrw_cat_i = cats,
     proj_mvrw_cat_i = 0L, # fake until prediction
     ar1_fields = ar1_fields,
     simulate_t = rep(1L, n_t),
@@ -1157,6 +1161,7 @@ sdmTMB <- function(
     ln_tau_O   = rep(0, n_m),
     ln_tau_Z = matrix(0, n_z, n_m),
     ln_tau_E   = rep(0, n_m),
+    ln_tau_U   = rep(0, n_m),
     ln_kappa   = matrix(0, 2L, n_m),
     # ln_kappa   = rep(log(sqrt(8) / median(stats::dist(spde$mesh$loc))), 2),
     thetaf     = 0,
@@ -1172,6 +1177,7 @@ sdmTMB <- function(
     omega_s    = matrix(0, if (!omit_spatial_intercept) n_s else 0L, n_m),
     zeta_s    = array(0, dim = c(n_s, n_z, n_m)),
     epsilon_st = array(0, dim = c(n_s, tmb_data$n_t, n_m)),
+    upsilon_stc = array(0, dim = c(n_s, tmb_data$n_t, n_c, n_m)),
     b_threshold = if(thresh[[1]]$threshold_func == 2L) matrix(0, 3L, n_m) else matrix(0, 2L, n_m),
     b_epsilon = rep(0, n_m),
     ln_epsilon_re_sigma = rep(0, n_m),
@@ -1270,8 +1276,14 @@ sdmTMB <- function(
     tmb_map <- unmap(tmb_map, c("omega_s", "ln_tau_O"))
   }
   if (!all(spatiotemporal == "off")) {
-    tmb_random <- c(tmb_random, "epsilon_st")
-    tmb_map <- unmap(tmb_map, c("ln_tau_E", "epsilon_st"))
+    if (!all(spatiotemporal == "rwc")) { # TODO TEMP upsilon!
+      tmb_random <- c(tmb_random, "epsilon_st")
+      tmb_map <- unmap(tmb_map, c("ln_tau_E", "epsilon_st"))
+    }
+  }
+  if (spatiotemporal == "rwc") {
+    tmb_random <- c(tmb_random, "upsilon_stc")
+    tmb_map <- unmap(tmb_map, c("ln_tau_U", "upsilon_stc"))
   }
   if (!is.null(spatial_varying)) {
     tmb_random <- c(tmb_random, "zeta_s")
@@ -1288,7 +1300,7 @@ sdmTMB <- function(
     tmb_random <- c(tmb_random, "epsilon_re")
     tmb_map <- unmap(tmb_map, c("epsilon_re"))
   }
-  if (!is.null(mvrw_category)) {
+  if (nrow(mvrw_u) > 0L) {
     tmb_random <- c(tmb_random, "mvrw_u")
     tmb_map <- unmap(tmb_map, c("mvrw_u", "mvrw_rho", "mvrw_logsds"))
   }

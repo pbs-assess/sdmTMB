@@ -380,7 +380,7 @@ get_kappa_map <- function(
     spatiotemporal = c("on", "on"),
     share_range = c(FALSE, FALSE)) {
   spatial <- spatial == "on"
-  spatiotemporal <- spatiotemporal %in% c("on", "iid", "rw", "ar1")
+  spatiotemporal <- spatiotemporal %in% c("on", "iid", "rw", "ar1", "rwc")
   k <- map_kappa(spatial[1], spatiotemporal[1], share_range[1], 100L)
   if (n_m > 1) {
     k2 <- map_kappa(spatial[2], spatiotemporal[2], share_range[2], 1000L)
