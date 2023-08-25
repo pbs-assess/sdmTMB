@@ -1685,9 +1685,9 @@ make_mvrw_cat_i <- function(x, prev_cats = NULL) {
     ret <- as.integer(as.factor(x)) - 1L
     if (!is.null(prev_cats)) {
       m1 <- setdiff(unique(prev_cats), unique(ret))
-      if (length(m1)) cli_inform("Some MVRW categories are missing in the prediction newdata. This is OK as long as your categories were entered as factors.")
+      if (length(m1)) cli_inform("Some groups are missing in 'newdata'. This is OK as long as your groups were entered as factors.")
       m2 <- setdiff(unique(ret), unique(prev_cats))
-      if (length(m2)) cli_abort("Some extra MVRW categories found in the prediction newdata.")
+      if (length(m2)) cli_abort("Some extra groups were found in 'newdata'.")
     }
   } else {
     ret <- 0L
