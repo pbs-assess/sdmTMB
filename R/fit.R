@@ -135,7 +135,7 @@ NULL
 #' @param bayesian Logical indicating if the model will be passed to
 #'   \pkg{tmbstan}. If `TRUE`, Jacobian adjustments are applied to account for
 #'   parameter transformations when priors are applied.
-#' @param mvrw_category An optional column name (as character) of categories or
+#' @param groups An optional column name (as character) of categories or
 #'   groups for a multivariate (correlated) random walk. Each category will have
 #'   an intercept random walk with its own SD and correlation will be estimated
 #'   between the category random walks with an unstructured covariance matrix.
@@ -579,11 +579,12 @@ sdmTMB <- function(
   do_index = FALSE,
   predict_args = NULL,
   index_args = NULL,
-  mvrw_category = NULL,
+  groups = NULL,
   experimental = NULL
   ) {
 
   data <- droplevels(data) # if data was subset, strips absent factors
+  mvrw_category <- groups  # FIXME
 
   delta <- isTRUE(family$delta)
   n_m <- if (delta) 2L else 1L

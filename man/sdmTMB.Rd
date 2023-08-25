@@ -31,7 +31,7 @@ sdmTMB(
   do_index = FALSE,
   predict_args = NULL,
   index_args = NULL,
-  mvrw_category = NULL,
+  groups = NULL,
   experimental = NULL
 )
 }
@@ -183,7 +183,7 @@ supplied and \code{area} can be supplied to \code{index_args}.}
 \code{do_index = TRUE}. Currently, only \code{area} is supported. Bias correction
 can be done when calling \code{\link[=get_index]{get_index()}} on the resulting fitted object.}
 
-\item{mvrw_category}{An optional column name (as character) of categories or
+\item{groups}{An optional column name (as character) of categories or
 groups for a multivariate (correlated) random walk. Each category will have
 an intercept random walk with its own SD and correlation will be estimated
 between the category random walks with an unstructured covariance matrix.}
