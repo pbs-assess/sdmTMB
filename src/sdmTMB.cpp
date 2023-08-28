@@ -305,6 +305,8 @@ Type objective_function<Type>::operator()()
   // DELTA DONE
   array<Type> sigma_O(1,n_m); // array b/c ADREPORT crashes if vector elements mapped
   array<Type> log_sigma_O(1,n_m); // array b/c ADREPORT crashes if vector elements mapped
+  array<Type> sigma_U(1,n_m); // array b/c ADREPORT crashes if vector elements mapped
+  array<Type> log_sigma_U(1,n_m); // array b/c ADREPORT crashes if vector elements mapped
   int n_z = ln_tau_Z.rows();
   array<Type> sigma_Z(n_z, n_m);
   array<Type> log_sigma_Z(n_z,n_m); // for SE
@@ -320,6 +322,10 @@ Type objective_function<Type>::operator()()
     for (int z = 0; z < n_z; z++)
       for (int m = 0; m < n_m; m++)
         log_sigma_Z(z,m) = log(sigma_Z(z,m));
+    }
+    if (n_c > 0) {
+      sigma_U(0,m) = sdmTMB::calc_rf_sigma(ln_tau_U(m), ln_kappa(1,m));
+      log_sigma_U(0,m) = log(sigma_U(0,m));
     }
   }
 
@@ -743,7 +749,7 @@ Type objective_function<Type>::operator()()
           }
         }
       }
-                                                                               
+
       eta_i(i,m) += epsilon_st_A_vec(i,m); // spatiotemporal
       eta_i(i,m) += upsilon_st_A_vec(i,m); // spatiotemporal with categories
 
@@ -1436,6 +1442,9 @@ Type objective_function<Type>::operator()()
   REPORT(sigma_O);
   ADREPORT(sigma_O);
   ADREPORT(log_sigma_O);
+  REPORT(sigma_U);
+  ADREPORT(sigma_U);
+  ADREPORT(log_sigma_U);
   REPORT(sigma_Z);
   ADREPORT(sigma_Z);
   ADREPORT(log_sigma_Z);
