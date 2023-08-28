@@ -38,7 +38,7 @@ fit <- sdmTMB(
   observed ~ 0 + as.factor(category),
   data = s,
   time = "year",
-  mvrw_category = "category",
+  group = "category",
   spatial = "off",
   spatiotemporal = "rw",
   silent = FALSE,
@@ -74,6 +74,12 @@ p_temp <- predict(fit, newdata = nd, return_tmb_report = TRUE)
 
 p <- predict(fit, newdata = nd)
 p$upsilon_stc <- p_temp$proj_upsilon_st_A_vec
+
+est <- as.list(fit$sd_report, "Estimate", report = TRUE)
+se <- as.list(fit$sd_report, "Std. Error", report = TRUE)
+est$log_sigma_U
+est$sigma_U
+se$log_sigma_U
 
 ggplot(p, aes(X, Y, colour = upsilon_stc)) +
   geom_point() +
