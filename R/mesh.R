@@ -197,16 +197,17 @@ plot.sdmTMBmesh <- function(x, ...) {
   r1 <- requireNamespace("inlabru", quietly = TRUE)
   r2 <- requireNamespace("ggplot2", quietly = TRUE)
   if (r1 && r2) {
-    dat <-  data.frame(
+    dat <- data.frame(
       x = x$loc_xy[,1,drop=TRUE],
       y = x$loc_xy[,2,drop=TRUE]
     )
     ggplot2::ggplot() +
+      inlabru::gg(x$mesh, ext.color = "grey20", ext.linewidth = 0.5, edge.color = "grey50") +
       ggplot2::geom_point(
         data = dat,
-        mapping = ggplot2::aes(x = .data$x, y = .data$y), alpha = 0.1, pch = 21) +
-      inlabru::gg(x$mesh) +
-      ggplot2::coord_fixed()
+        mapping = ggplot2::aes(x = .data$x, y = .data$y), alpha = 0.4, pch = 20, colour = "#3182BD") +
+      ggplot2::coord_fixed() +
+      ggplot2::labs(x = x$xy_cols[[1]], y = x$xy_cols[[2]])
   } else {
     plot(x$mesh, main = NA, edge.color = "grey60", asp = 1, ...)
     points(x$loc_xy, pch = ".", col = "#00000070")
