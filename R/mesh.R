@@ -21,12 +21,10 @@
 #'
 #' @return
 #' `make_mesh()`: A list of class `sdmTMBmesh`. The element `mesh` is the output from
-#' [INLA::inla.mesh.create()] and the element `spde` is the output from
-#' [INLA::inla.spde2.matern()].
+#' [fmesher::fm_rcdt_2d_inla()].
 #'
 #' @export
 #'
-#' @examplesIf inla_installed()
 #' mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 30, type = "cutoff")
 #' plot(mesh)
 #'
@@ -40,28 +38,23 @@
 #' mesh <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
 #' plot(mesh)
 #'
-#' # Defining a mesh directly with INLA:
-#' bnd <- INLA::inla.nonconvex.hull(cbind(pcod$X, pcod$Y), convex = -0.05)
-#' inla_mesh <- INLA::inla.mesh.2d(
-#'   boundary = bnd,
-#'   max.edge = c(20, 50),
-#'   offset = -0.05,
-#'   cutoff = c(2, 5),
-#'   min.angle = 10
-#' )
-#' mesh <- make_mesh(pcod, c("X", "Y"), mesh = inla_mesh)
-#' plot(mesh)
-#' }
+# # Defining a mesh directly with fmesher (formerly in INLA):
+# bnd <- fmesher::fm_nonconvex_hull(cbind(pcod$X, pcod$Y), convex = -0.05)
+# inla_mesh <- fmesher::fm_mesh_2d_inla(
+  # loc = cbind(pcod$X, pcod$Y),
+  # max.edge = c(20, 50),
+  # offset = -0.05,
+  # cutoff = c(2, 5),
+  # min.angle = 10
+# )
+# mesh <- make_mesh(pcod, c("X", "Y"), mesh = inla_mesh)
+# plot(mesh)
 make_mesh <- function(data, xy_cols,
                       type = c("kmeans", "cutoff", "cutoff_search"),
                       cutoff, n_knots,
                       seed = 42,
                       refine = list(min.angle = 21, max.edge = Inf, max.n.strict = -1, max.n = 1000),
                       mesh = NULL) {
-
-  if (!inla_installed()) {
-    cli_abort("INLA must be installed to use this function.")
-  }
 
   if (nrow(data) == 0L) {
     cli_abort("The data frame supplied to `data` has no rows of data.")
@@ -120,9 +113,12 @@ make_mesh <- function(data, xy_cols,
       set.seed(seed)
       knots <- stats::kmeans(x = loc_xy, centers = n_knots)
       loc_centers <- knots$centers
-      mesh <- INLA::inla.mesh.create(loc_centers, refine = TRUE)
+      # mesh <- INLA::inla.mesh.create(loc_centers, refine = TRUE)
+      mesh <- fmesher::fm_rcdt_2d_inla(loc_centers, refine = TRUE)
     } else if (type == "cutoff") {
-      mesh <- INLA::inla.mesh.create(loc_xy, refine = TRUE, cutoff = cutoff)
+      # refined constrained Delaunay triangulation
+      mesh <- fmesher::fm_rcdt_2d_inla(loc_xy, refine = TRUE, cutoff = cutoff)
+      # mesh_inla <- INLA::inla.mesh.create(loc_xy, refine = TRUE, cutoff = cutoff)
     } else {
       mesh <- binary_search_knots(loc_xy, n_knots = n_knots, refine = refine)
     }
@@ -130,8 +126,14 @@ make_mesh <- function(data, xy_cols,
     knots <- list()
     loc_centers <- NA
   }
+  # TODO:
   spde <- INLA::inla.spde2.matern(mesh)
-  A <- INLA::inla.spde.make.A(mesh, loc = loc_xy)
+  # mesh_inla <- INLA::inla.mesh.create(loc_xy, refine = TRUE, cutoff = cutoff)
+  # names(spde_inla$param.inla)
+
+  # spde <- fmesher::fm_matern_precision(mesh, alpha = 2)
+  # A_inla <- INLA::inla.spde.make.A(mesh, loc = loc_xy)
+  A <- fmesher::fm_basis(mesh, loc = loc_xy)
 
   fake_data <- data
   fake_data[["sdm_spatial_id"]] <- seq(1, nrow(fake_data))
@@ -164,7 +166,8 @@ binary_search_knots <- function(loc_xy,
   realized_knots <- Inf
   while (L <= R) {
     m <- floor((L + R) / 2)
-    mesh <- INLA::inla.mesh.create(loc_xy, refine = refine, cutoff = vec[m])
+    # mesh <- INLA::inla.mesh.create(loc_xy, refine = refine, cutoff = vec[m])
+    mesh <- fmesher::fm_rcdt_2d_inla(loc_xy, refine = refine, cutoff = vec[m])
     realized_knots <- mesh$n
     pretty_cutoff <- sprintf("%.2f", round(vec[m], 2))
     cat("cutoff =", pretty_cutoff, "| knots =", realized_knots)

@@ -49,8 +49,7 @@ convenience options.}
 }
 \value{
 \code{make_mesh()}: A list of class \code{sdmTMBmesh}. The element \code{mesh} is the output from
-\code{\link[INLA:inla.mesh.create]{INLA::inla.mesh.create()}} and the element \code{spde} is the output from
-\code{\link[INLA:inla.spde2.matern]{INLA::inla.spde2.matern()}}.
+\code{\link[fmesher:fm_rcdt_2d]{fmesher::fm_rcdt_2d_inla()}}.
 
 \code{plot.sdmTMBmesh()}: A plot of the mesh and data points. If
 \pkg{inlabru} and \pkg{ggplot2} are installed, a \pkg{ggplot2} object is
@@ -75,17 +74,6 @@ plot(mesh)
 mesh <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
 plot(mesh)
 
-# Defining a mesh directly with INLA:
-bnd <- INLA::inla.nonconvex.hull(cbind(pcod$X, pcod$Y), convex = -0.05)
-inla_mesh <- INLA::inla.mesh.2d(
-  boundary = bnd,
-  max.edge = c(20, 50),
-  offset = -0.05,
-  cutoff = c(2, 5),
-  min.angle = 10
-)
-mesh <- make_mesh(pcod, c("X", "Y"), mesh = inla_mesh)
-plot(mesh)
 }
 \dontshow{\}) # examplesIf}
 }
