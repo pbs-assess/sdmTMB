@@ -12,8 +12,11 @@ make_mesh(
   cutoff,
   n_knots,
   seed = 42,
-  refine = list(min.angle = 21, max.edge = Inf, max.n.strict = -1, max.n = 1000),
-  mesh = NULL
+  mesh = NULL,
+  fmesher_func = fmesher::fm_rcdt_2d_inla,
+  convex = NULL,
+  concave = convex,
+  ...
 )
 
 \method{plot}{sdmTMBmesh}(x, ...)
@@ -28,52 +31,85 @@ a helper function to convert to UTMs, see \code{\link[=add_utm_columns]{add_utm_
 \item{type}{Method to create the mesh. Also see \code{mesh} argument to supply
 your own mesh.}
 
-\item{cutoff}{An optional cutoff if type is \code{"cutoff"}. "The minimum allowed
-distance between points in the mesh". See \code{\link[INLA:inla.mesh.create]{INLA::inla.mesh.create()}}.
-Smaller values create meshes with more knots. Points further apart than this
-value will receive a separate vertex in the mesh before any mesh refinement.}
+\item{cutoff}{An optional cutoff if type is \code{"cutoff"}. The minimum allowed
+triangle edge length.}
 
 \item{n_knots}{The number of desired knots if \code{type} is not \code{"cutoff"}.}
 
 \item{seed}{Random seed. Affects \code{\link[stats:kmeans]{stats::kmeans()}} determination of knot
 locations if \code{type = "kmeans"}.}
 
-\item{refine}{Logical or list to pass to \code{\link[INLA:inla.mesh.create]{INLA::inla.mesh.create()}}.}
-
 \item{mesh}{An optional mesh created via INLA instead of using the above
 convenience options.}
 
-\item{x}{Output from \code{\link[=make_mesh]{make_mesh()}}.}
+\item{fmesher_func}{Which \pkg{fmesher} function to use. Options include
+\code{\link[fmesher:fm_rcdt_2d]{fmesher::fm_rcdt_2d_inla()}} and \code{\link[fmesher:fm_mesh_2d]{fmesher::fm_mesh_2d_inla()}} along with
+version without the \verb{_inla} on the end.}
+
+\item{convex}{If specified, passed to \code{\link[fmesher:fm_nonconvex_hull]{fmesher::fm_nonconvex_hull()}}.
+Distance to extend non-convex hull from data.}
+
+\item{concave}{If specified, passed to \code{\link[fmesher:fm_nonconvex_hull]{fmesher::fm_nonconvex_hull()}}.
+"Minimum allowed reentrant curvature". Defaults to \code{convex}.}
 
 \item{...}{Passed to \code{\link[graphics:plot.default]{graphics::plot()}}.}
+
+\item{x}{Output from \code{\link[=make_mesh]{make_mesh()}}.}
 }
 \value{
-\code{make_mesh()}: A list of class \code{sdmTMBmesh}. The element \code{mesh} is the output from
-\code{\link[fmesher:fm_rcdt_2d]{fmesher::fm_rcdt_2d_inla()}}.
+\code{make_mesh()}: A list of class \code{sdmTMBmesh}. The element \code{mesh} is the output
+from \code{fmesher_func} (default is \code{\link[fmesher:fm_mesh_2d]{fmesher::fm_mesh_2d_inla()}}). See
+\code{mesh$mesh$n} for the number of vertices.
 
 \code{plot.sdmTMBmesh()}: A plot of the mesh and data points. If
-\pkg{inlabru} and \pkg{ggplot2} are installed, a \pkg{ggplot2} object is
+\pkg{ggplot2} is installed, a \pkg{ggplot2} object is
 returned, otherwise a base graphics R plot is returned. To make your own,
-pass \code{your_mesh$mesh} to  \code{\link[inlabru:gg]{inlabru::gg()}}.
+pass \code{your_mesh$mesh} to \code{\link[inlabru:gg]{inlabru::gg()}}.
 }
 \description{
 Construct an SPDE mesh for use with sdmTMB.
 }
 \examples{
 \dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 30, type = "cutoff")
-plot(mesh)
-
-\donttest{
+# Extremely simple cutoff:
 mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 5, type = "cutoff")
 plot(mesh)
 
-mesh <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "cutoff_search")
-plot(mesh)
-
+# Using a k-means algorithm to assign vertices:
 mesh <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
 plot(mesh)
 
-}
+# But, it's better to develop more tailored meshes:
+
+# Pass arguments via '...' to fmesher::fm_mesh_2d_inla():
+mesh <- make_mesh(
+  pcod, c("X", "Y"),
+  fmesher_func = fmesher::fm_mesh_2d_inla,
+  cutoff = 8, # minimum triangle edge length
+  max.edge = c(20, 40), # inner and outer max triangle lengths
+  offset = c(5, 40) # inner and outer border widths
+)
+plot(mesh)
+
+# With a non-convex hull:
+mesh <- make_mesh(
+  pcod, c("X", "Y"),
+  fmesher_func = fmesher::fm_mesh_2d_inla,
+  cutoff = 8, # minimum triangle edge length
+  convex = 10, # add non-convex hull with this distance and concavity
+  max.edge = c(20, 40), # inner and outer max triangle lengths
+  offset = c(5, 40) # inner and outer border widths
+)
+plot(mesh)
+
+# Or define a mesh directly with fmesher (formerly in INLA):
+inla_mesh <- fmesher::fm_mesh_2d_inla(
+  loc = cbind(pcod$X, pcod$Y), # coordinates
+  max.edge = c(25, 50), # max triangle edge length; inner and outer meshes
+  offset = c(5, 25),  # inner and outer border widths
+  cutoff = 5 # minimum triangle edge length
+)
+mesh <- make_mesh(pcod, c("X", "Y"), mesh = inla_mesh)
+plot(mesh)
 \dontshow{\}) # examplesIf}
 }
