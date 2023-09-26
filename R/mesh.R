@@ -167,16 +167,16 @@ make_mesh <- function(data, xy_cols,
       loc_centers <- knots$centers
       if (!is.null(convex) || !is.null(concave)) {
         nch <- f <- fmesher::fm_nonconvex_hull(loc_xy, convex = convex, concave = concave)
-        mesh <- fmesher_func(loc_centers, refine = TRUE, boundary = nch, ...)
+        mesh <- fmesher_func(loc_centers, refine = list(), boundary = nch, ...)
       } else {
-        mesh <- fmesher_func(loc_centers, refine = TRUE, ...)
+        mesh <- fmesher_func(loc_centers, refine = list(), ...)
       }
     } else if (type == "cutoff") {
       if (!is.null(convex) || !is.null(concave)) {
         nch <- f <- fmesher::fm_nonconvex_hull(loc_xy, convex = convex, concave = concave)
-        mesh <- fmesher_func(loc_centers, refine = TRUE, cutoff = cutoff, boundary = nch, ...)
+        mesh <- fmesher_func(loc_centers, refine = list(), cutoff = cutoff, boundary = nch, extend = list(n = 16L), ...)
       } else {
-        mesh <- fmesher_func(loc_xy, refine = TRUE, cutoff = cutoff, ...)
+        mesh <- fmesher_func(loc_xy, refine = list(), cutoff = cutoff, extend = list(n = 16L), ...)
       }
     } else {
       mesh <- binary_search_knots(loc_xy, n_knots = n_knots,
@@ -186,8 +186,11 @@ make_mesh <- function(data, xy_cols,
     knots <- list()
     loc_centers <- NA
   }
-  # TODO: (not in fmesher... yet?)
-  spde <- INLA::inla.spde2.matern(mesh)
+  # spde_inla <- INLA::inla.spde2.matern(mesh)
+  spde <- fmesher::fm_fem(mesh)
+  # identical(spde2$c0, spde_inla$param.inla$M0)
+  # identical(as.matrix(spde2$g1), as.matrix(spde_inla$param.inla$M1))
+  # identical(as.matrix(spde2$g2), as.matrix(spde_inla$param.inla$M2))
   A <- fmesher::fm_basis(mesh, loc = loc_xy)
 
   fake_data <- data
@@ -215,7 +218,7 @@ binary_search_knots <- function(loc_xy,
                                 max = 1e4,
                                 length = 1e6,
                                 fmesher_func = fmesher::fm_mesh_2d_inla,
-                                refine = TRUE, ...) {
+                                refine = list(), ...) {
   vec <- exp(seq(log(min), log(max), length.out = length))
   L <- 0
   R <- length(vec)
@@ -223,7 +226,7 @@ binary_search_knots <- function(loc_xy,
   while (L <= R) {
     m <- floor((L + R) / 2)
     # mesh <- INLA::inla.mesh.create(loc_xy, refine = refine, cutoff = vec[m])
-    mesh <- fmesher_func(loc_xy, refine = refine, cutoff = vec[m], ...)
+    mesh <- fmesher_func(loc_xy, refine = refine, extend = list(n = 16L), cutoff = vec[m], ...)
     realized_knots <- mesh$n
     pretty_cutoff <- sprintf("%.2f", round(vec[m], 2))
     cat("cutoff =", pretty_cutoff, "| knots =", realized_knots)

@@ -1096,7 +1096,7 @@ sdmTMB <- function(
     proj_spatial_index = 0, # dummy
     proj_z_i = matrix(0, nrow = 1, ncol = n_m), # dummy
     spde_aniso = make_anisotropy_spde(spde, anisotropy),
-    spde       = spde$spde$param.inla[c("M0","M1","M2")],
+    spde       = spde$spde[c("g1", "g1", "g2")],
     barrier = as.integer(barrier),
     spde_barrier = make_barrier_spde(spde),
     barrier_scaling = if (barrier) spde$barrier_scaling else c(1, 1),
