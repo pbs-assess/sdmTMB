@@ -284,7 +284,7 @@ r2.sdmTMB <- function(x, which_fixef = NULL, method = NULL) {
     conditional = cond_all,
     marginal = marginal,
     partial_smoothers = cond_smooth,
-    partial_fixed = cond_fixed,
+    partial_fixed = if (!is.null(cond_smooth)) cond_fixed else NULL,
     partial_spatial = cond_rf_sp,
     partial_spatiotemporal = cond_rf_spt,
     partial_time_varying = cond_tv,
@@ -349,6 +349,12 @@ r2.sdmTMB(fit)
 
 fit <- sdmTMB(observed ~ 1 + b2 + s(b1, k = 3), data = sim_dat_tweedie, family = tweedie(), mesh = mesh, time = "year")
 r2.sdmTMB(fit)
+
+fit <- sdmTMB(observed ~ 1 + b1 + b2 + (1 | f_year), data = sim_dat_binom, spatial = "off", family = binomial())
+fit2 <- glmmTMB::glmmTMB(observed ~ 1 + b1 + b2 + (1 | f_year), data = sim_dat_binom, family = binomial())
+
+r2.sdmTMB(fit)
+performance::r2_nakagawa(fit2)
 
 # fit2 <- glmmTMB::glmmTMB(observed ~ 1 + b1 + (1 | f_year), data = sim_dat_tweedie, family = glmmTMB::tweedie())
 # performance::r2_nakagawa(fit2)
