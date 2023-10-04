@@ -73,20 +73,35 @@ sim_dat_tweedie <- sdmTMB_simulate(
 )
 sim_dat_tweedie$f_year <- as.factor(sim_dat_tweedie$year) # ml+fm: for testing random effects
 
-# sim_dat_pois <- sdmTMB_simulate(
-#   formula = ~ 1 + b1 + b2 + (1 | f_year),
-#   data = predictor_dat,
-#   time = "year",
-#   mesh = mesh,
-#   family = poisson(),
-#   range = 0.5,
-#   sigma_E = 0.2,
-#   sigma_O = 0.7,
-#   phi = 0.9,
-#   seed = 123,
-#   B = c(0.2, -0.4, 0.3)
-# )
-# sim_dat_pois$f_year <- as.factor(sim_dat_pois$year) # ml+fm: for testing random effects
+sim_dat_gamma <- sdmTMB_simulate(
+  formula = ~ 1 + b1 + b2 + (1 | f_year),
+  data = predictor_dat,
+  time = "year",
+  mesh = mesh,
+  family = Gamma(link = "log"),
+  range = 0.5,
+  sigma_E = 0.2,
+  sigma_O = 0.7,
+  phi = 0.9,
+  seed = 123,
+  B = c(0.2, -0.4, 0.3)
+)
+sim_dat_gamma$f_year <- as.factor(sim_dat_gamma$year) # ml+fm: for testing random effects
+
+sim_dat_pois <- sdmTMB_simulate(
+  formula = ~ 1 + b1 + b2 + (1 | f_year),
+  data = predictor_dat,
+  time = "year",
+  mesh = mesh,
+  family = poisson(),
+  range = 0.5,
+  sigma_E = 0.2,
+  sigma_O = 0.7,
+  phi = 0.9,
+  seed = 123,
+  B = c(0.2, -0.4, 0.3)
+)
+sim_dat_pois$f_year <- as.factor(sim_dat_pois$year) # ml+fm: for testing random effects
 ```
 
 Fit models to these simulated data
@@ -139,7 +154,12 @@ get_distribution_variance <- function(x) {
   if (x$family$family %in% "gaussian") {
     return(phi^2)
   }
-  if (x$family$family %in% "tweedie") {
+  if (x$family$family %in% "Gamma") {
+    return(stats::family(x)$variance(exp(-0.5 * log(phi))))
+  }
+
+  
+  if (x$family$family %in% c("tweedie", "Gamma", "poisson")) {
     re <- x$split_formula[[1]][[2]]
     if (!is.null(re)) {
       rterms <- paste0("(", re, ")") # FIXME: works for multiple!?
@@ -154,12 +174,8 @@ get_distribution_variance <- function(x) {
   cvsquared <- tryCatch(
     {
       vv <- switch(x$family$family,
-        # `zero-inflated poisson` = ,
-        # poisson = .variance_family_poisson(x, mu, faminfo),
-        # `hurdle poisson` = ,
-        # truncated_poisson = stats::family(x)$variance(sig),
-        # Gamma, exponential ----
-        # Gamma = stats::family(x)$variance(sig),
+        poisson = stats::family(x)$variance(mu),
+        # Gamma = stats::family(x)$variance(phi),
         # nbinom1 = ,
         # nbinom2 = .variance_family_nbinom(x, mu, sig, faminfo),
         # truncated_nbinom2 = stats::family(x)$variance(mu, sig),
@@ -198,8 +214,8 @@ r2.sdmTMB <- function(x, which_fixef = NULL, method = NULL) {
   # if (x$family$family == "tweedie" & is.null(method)) {
   #   cli::cli_inform("`method` not specified, using the lognormal approximation.")
   # }
-  if (!x$family$family %in% c("student", "gaussian", "binomial", "tweedie")) {
-    cli::cli_abort("r2.sdmTMB() currently only works for Gaussian, binomial, and Tweedie models.", call. = FALSE)
+  if (!x$family$family %in% c("student", "gaussian", "binomial", "tweedie", "Gamma", "poisson")) {
+    cli::cli_abort("r2.sdmTMB() currently only works for Gaussian, binomial, Gamma, Poisson, and Tweedie models.", call. = FALSE)
   }
   if (!is.null(x$spatial_varying)) {
     cli::cli_abort("r2.sdmTMB() currently does not work with spatially varying coefficient models.", call. = FALSE)
@@ -242,10 +258,10 @@ r2.sdmTMB <- function(x, which_fixef = NULL, method = NULL) {
   if (x$family$family %in% c("student", "gaussian")) {
     varR <- sigma(x)^2
     # denominator <- varF_all + varO + varE + varR + varV + varG
-  } else if (x$family$family == "binomial") {
+  } else if (x$family$family == "binomial" && x$family$link == "logit") {
     # "theoretical" method of Nakagawa supp. row 115
     varR <- pi^2 / 3 # FIXME: CHECK THIS
-  } else if (x$family$family == "tweedie") {
+  } else if (x$family$family %in% c("tweedie", "Gamma", "poisson")) {
     varR <- get_distribution_variance(x)
   } else {
     cli::cli_abort("Family not implemented", call. = FALSE)
@@ -338,6 +354,29 @@ fit2 <- glmmTMB::glmmTMB(observed ~ 1 + b1 + b2 + (1 | f_year), data = sim_dat_b
 
 r2.sdmTMB(fit)
 performance::r2_nakagawa(fit2)
+
+# gamma
+fit <- sdmTMB(observed ~ 1 + b1 + b2 + (1 | f_year), data = sim_dat_gamma, spatial = "off", family = Gamma(link = "log"))
+fit2 <- glmmTMB::glmmTMB(observed ~ 1 + b1 + b2 + (1 | f_year), data = sim_dat_gamma, family = Gamma(link = "log"))
+
+r2.sdmTMB(fit)
+performance::r2_nakagawa(fit2)
+
+get_distribution_variance(fit)
+insight::get_variance_distribution(fit2)
+
+# poisson
+
+fit <- sdmTMB(observed ~ 1 + b1 + b2 + (1 | f_year), data = sim_dat_pois, spatial = "off", family = poisson(link = "log"))
+fit2 <- glmmTMB::glmmTMB(observed ~ 1 + b1 + b2 + (1 | f_year), data = sim_dat_pois, family = poisson(link = "log"))
+
+r2.sdmTMB(fit)
+performance::r2_nakagawa(fit2)
+
+get_distribution_variance(fit)
+insight::get_variance_distribution(fit2)
+
+
 
 # fit2 <- glmmTMB::glmmTMB(observed ~ 1 + b1 + (1 | f_year), data = sim_dat_tweedie, family = glmmTMB::tweedie())
 # performance::r2_nakagawa(fit2)
