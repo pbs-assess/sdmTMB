@@ -112,10 +112,10 @@ fit_tweedie <- sdmTMB(observed ~ 1 + b1 + b2 + (1 | f_year),
   family = tweedie()
 )
 
-fit_delta <- sdmTMB(observed ~ 1 + b1 + b2 + (1 | f_year),
-  data = sim_dat_tweedie, mesh = mesh, time = "year",
-  family = delta_gamma()
-)
+# fit_delta <- sdmTMB(observed ~ 1 + b1 + b2 + (1 | f_year),
+#   data = sim_dat_tweedie, mesh = mesh, time = "year",
+#   family = delta_gamma()
+# )
 
 # fit_pois <- sdmTMB(observed ~ 1 + b1 + b2 + (1 | f_year),
 #   data = sim_dat_pois, mesh = mesh, time = "year",
@@ -133,7 +133,6 @@ get_variance_tweedie <- function(x, mu, phi) {
   p <- unname(stats::plogis(get_pars(x)$thetaf) + 1)
   phi * mu^p
 }
-# get_variance_tweedie(x, mu, phi)
 
 get_distribution_variance <- function(x) {
   phi <- exp(get_pars(x)$ln_phi)
@@ -141,8 +140,6 @@ get_distribution_variance <- function(x) {
     return(phi^2)
   }
   if (x$family$family %in% "tweedie") {
-    # x$split_formula
-    # rterms <- paste0("(", sapply(lme4::findbars(formula(x)), deparse),")")
     re <- x$split_formula[[1]][[2]]
     if (!is.null(re)) {
       rterms <- paste0("(", re, ")") # FIXME: works for multiple!?
@@ -301,20 +298,6 @@ r2.sdmTMB <- function(x, which_fixef = NULL, method = NULL) {
   out
 }
 ```
-
-```{r}
-# Test some R2s!
-# r2.sdmTMB(fit)
-# r2.sdmTMB(fit_re)
-#
-# r2.sdmTMB(fit_bi)
-# r2.sdmTMB(fit_pois)
-# r2.sdmTMB(fit_tweedie)
-#
-# r2.sdmTMB(fit_st)
-```
-
-Regarding split up the R2 for each fixed effect. But we thought it was unnecessary to force that in the function because it would probably add lots of code to just to for each variable (`varF` for one fixed effect at the time). Maybe there's a clever way, or it can be put into another function? Here's an example how to get it now though without the extra function.
 
 # glmmTMB comparison
 
