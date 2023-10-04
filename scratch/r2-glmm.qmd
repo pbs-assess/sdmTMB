@@ -1,0 +1,540 @@
+---
+title: "Working on the `r2.sdmTMB` function"
+format: html
+---
+
+Load libraries
+
+```{r, message=FALSE}
+library(sdmTMB)
+library(tidyr)
+library(lme4)
+library(assertthat)
+library(ggplot2)
+library(dplyr)
+
+set.seed(1)
+```
+
+Simulate data for testing the function for different families
+
+```{r, warning=FALSE, message=FALSE}
+predictor_dat <- data.frame(
+  X = runif(300), Y = runif(300),
+  b1 = rnorm(300), b2 = rnorm(300),
+  year = rep(1:6, each = 50),
+  f_year = as.factor(rep(1:6, each = 50)) # random intercept
+)
+
+mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.1)
+
+sim_dat <- sdmTMB_simulate(
+  formula = ~ 1 + b1 + b2 + (1|f_year),
+  data = predictor_dat,
+  time = "year",
+  mesh = mesh,
+  family = gaussian(),
+  range = 0.5,
+  sigma_E = 0.2,
+  sigma_O = 0.7,
+  phi = 0.9,
+  seed = 123,
+  B = c(0.2, -0.4, 0.3)
+)
+sim_dat$f_year <- as.factor(sim_dat$year) # ml+fm: for testing random effects
+
+sim_dat_binom <- sdmTMB_simulate(
+  formula = ~ 1 + b1 + b2 + (1|f_year),
+  data = predictor_dat,
+  time = "year",
+  mesh = mesh,
+  family = binomial(),
+  range = 0.5,
+  sigma_E = 0.2,
+  sigma_O = 0.7,
+  phi = 0.9,
+  seed = 123,
+  B = c(0.2, -0.4, 0.3)
+)
+sim_dat_binom$f_year <- as.factor(sim_dat_binom$year) # ml+fm: for testing random effects
+
+sim_dat_tweedie <- sdmTMB_simulate(
+  formula = ~ 1 + b1 + b2 + (1|f_year),
+  data = predictor_dat,
+  time = "year",
+  mesh = mesh,
+  family = tweedie(),
+  range = 0.5,
+  sigma_E = 0.2,
+  sigma_O = 0.7,
+  phi = 0.9,
+  seed = 123,
+  B = c(0.2, -0.4, 0.3)
+)
+sim_dat_tweedie$f_year <- as.factor(sim_dat_tweedie$year) # ml+fm: for testing random effects
+
+sim_dat_pois <- sdmTMB_simulate(
+  formula = ~ 1 + b1 + b2 + (1|f_year),
+  data = predictor_dat,
+  time = "year",
+  mesh = mesh,
+  family = poisson(),
+  range = 0.5,
+  sigma_E = 0.2,
+  sigma_O = 0.7,
+  phi = 0.9,
+  seed = 123,
+  B = c(0.2, -0.4, 0.3)
+)
+sim_dat_pois$f_year <- as.factor(sim_dat_pois$year) # ml+fm: for testing random effects
+```
+
+Fit models to these simulated data
+
+```{r}
+# Fit some example models so that we can test
+fit <- sdmTMB(observed ~ 1 + b1 + b2, data = sim_dat,
+              mesh = mesh, time = "year")
+
+fit_re <- sdmTMB(observed ~ 1 + b1 + b2 + (1|f_year),
+                 data = sim_dat, mesh = mesh, time = "year") # with random intercept
+
+fit_bi <- sdmTMB(observed ~ 1 + b1 + b2 + (1|f_year),
+                 data = sim_dat_binom, mesh = mesh, time = "year",
+                 family = binomial())
+
+fit_tweedie <- sdmTMB(observed ~ 1 + b1 + b2 + (1|f_year),
+                      data = sim_dat_tweedie, mesh = mesh, time = "year",
+                      family = tweedie())
+
+fit_delta <- sdmTMB(observed ~ 1 + b1 + b2 + (1|f_year),
+                    data = sim_dat_tweedie, mesh = mesh, time = "year",
+                    family = delta_gamma())
+
+fit_pois <- sdmTMB(observed ~ 1 + b1 + b2 + (1|f_year),
+                   data = sim_dat_pois, mesh = mesh, time = "year",
+                   family = poisson())
+
+fit_st <- sdmTMB(observed ~ 1 + b1 + b2 + (1|f_year),
+                 data = sim_dat, mesh = mesh, time = "year",
+                 family = student())
+```
+
+Make a fixef function
+
+```{r}
+# ml+ fm: or can we use the one in glmMTMB?
+# fixef <- function(x) {
+#   b <- tidy(x)
+#   stats::setNames(b$estimate, b$term)
+# }
+```
+
+Below is the updated version of the `r2.sdmTMB` function you sent me some time ago Sean. The main thing we have done is expanded the families it supports. Specifically:
+
+-   Made it work for `binomial`, `Poisson` and `Tweedie.` We have only implemented **one** of the approaches Nakagawa shows, but that's mainly because we are unsure about the best way to do it. Adding the equations is pretty straightforward!
+
+So, if this is interesting, some potential next steps are:
+
+-   Add a `method` argument and then just choose one of the methods as defaults. The defaults are now the *theoretical* for the binomial (but see also the *observation*-*level* approach that we currently commented out) and *lognormal approximation* for the Tweedie.
+
+-   Add compatibility with breakpoints (& delta?) models.
+
+-   Add negative binomial (for some reason we didn't do it but it's done in `glmmTMB`\`s R2 function.
+
+-   Make a function for partial R2? (see end of this document)
+
+We could probably play around with some of this but stopped here because we were unsure about how to best set it all up (mainly the part of the function that calculates the denominator, and how to best nest that!). We tried to annotate the function to clarify things that changed from the original function and sometimes we just ask if that specific line of code is the safest way to do things.
+
+```{r}
+# https://github.com/glmmTMB/glmmTMB/blob/master/glmmTMB/inst/misc/rsqglmm.R
+
+r2.sdmTMB <- function(x, which_fixef = NULL, method = NULL) {
+  
+  if (!is(x, "sdmTMB")) {
+    stop("x must be a model of class sdmTMB.", call. = FALSE)
+  }
+  if (length(x$family$family) > 1) { 
+    stop("r2.sdmTMB() does not work for delta (hurdle) models.", call. = FALSE)
+  }
+  if (x$family$family == "student") { 
+    warning("Warning: family is student, but the variance does not account for the degrees of freedom.")
+  }
+  if (x$family$family == "binomial" & is.null(method)) { 
+    message("`method` not specified, using the theoretical approach") # ml+ fm: not sure this is the place for this message
+  }
+  if (x$family$family == "tweedie" & is.null(method)) { 
+    message("`method` not specified, using the lognormal approximation.") # ml+ fm: not sure this is the place for this message
+  }
+  if (!x$family$family %in% c("student", "gaussian", "binomial", "poisson", "tweedie"))
+    stop("r2.sdmTMB() currently only works for Gaussian, binomial, Poisson and Tweedie models.", call. = FALSE)
+  if (!is.null(x$spatial_varying)) {
+    stop("r2.sdmTMB() currently does not work with spatially varying coefficient models.", call. = FALSE)
+  }
+  
+  fe <- fixef(x)
+  X <- as.data.frame(x$tmb_data$X_ij)  
+  # ml+fm: delta model update; make it available to both components? currently first model; fm: won't work for breakpoint models currently
+  varF_all <- var(as.vector(fe %*% t(X))) # variance from fixed-effects
+  
+  if (!is.null(which_fixef)) {
+    assert_that(max(which_fixef) <= length(fe))
+    assert_that(min(which_fixef) >= 1)
+    assert_that(is.numeric(which_fixef))
+    assert_that(all(which_fixef %in% seq_along(fe)))
+    message("Including fixed effects: ", paste(names(fe)[which_fixef], collapse = ", "))
+    fe <- fe[which_fixef]
+    X <- X[,which_fixef,drop=FALSE]
+  }
+  varF <- var(as.vector(fe %*% t(X)))
+  
+  varSmooths <- 0
+  if (isTRUE(x$smoothers$has_smooths)) {
+    b_smooth_start <- x$tmb_data$b_smooth_start
+    Zs <- x$tmb_data$Zs
+    Xs <- x$tmb_data$Xs
+    pars <- get_pars(x)
+    b_smooth <- pars$b_smooth
+    bs <- pars$bs
+    eta_smooth <- matrix(0, ncol = n_m, nrow = nrow(x$tmb_data$y_i))
+    n_m <- 1L # FIXME
+    for (m in seq(1, n_m)) {
+      for (s in seq(1, length(b_smooth_start))) { # iterate over # of smooth elements
+        beta_s <- matrix(0, nrow = ncol(Zs[[s]]), n_m)
+        for (j in seq(1, nrow(beta_s))) {
+          beta_s[j, m] <- b_smooth[b_smooth_start[s] + j, m]
+        }
+        eta_smooth[,m] <- eta_smooth + Zs[[s]] %*% as.numeric(beta_s[,m])
+      }
+      eta_smooth[,m] <- eta_smooth[,m] + Xs %*% as.numeric(bs[,m])
+    }
+    eta_smooth[,1L]
+    varSmooths <- var(eta_smooth[,1L])
+  }
+  varF_all <- varF_all + varSmooths
+  
+  b <- tidy(x, "ran_par")
+  sigma <- function(xx) {
+    .b <- tidy(x, "ran_par")
+    .b$estimate[.b$term == "phi"]
+  }
+  
+  if (x$tmb_data$include_spatial == 1L) {
+    varO <- b$estimate[b$term == "sigma_O"]^2 # spatial variance
+  } else {
+    varO <- 0
+  }
+  
+  if (x$tmb_data$spatial_only == 0L) { # ml + fm: spatial only is 1 if both spatial and spatiotemporal are off, so this won't work in a model with both those turned off because there is no sigma_E then but spatial_only is still 1?
+    varE <- b$estimate[b$term == "sigma_E"]^2 # spatiotemporal variance
+  } else {
+    varE <- 0
+  }
+  
+  if (x$tmb_data$random_walk == 1L) {
+    if (!identical(x$time_varying, ~ 1))
+      stop("r2.sdmTMB() currently only works with time-varying intercepts.", call. = FALSE)
+    varV <- b$estimate[b$term == "sigma_V"]^2 # time-varying variance
+  } else {
+    varV <- 0
+  }
+  
+  # ml+fm: random interecept
+  if (x$tmb_data$nobs_RE > 0) {
+    varG <- b$estimate[b$term == "sigma_G"]^2 # random effect variance
+  } else {
+    varG <- 0
+  }
+  
+  #varR <- suppressMessages(var(as.vector(residuals(x)))) # residual variance
+  # varR <- suppressMessages(as.vector(var(x$tmb_data$y_i - predict(x)$est))) # variance of raw residuals; cannot use residuals.sdmTMB! 
+  # FIXME est is in link space above!?
+  # varR <- suppressMessages(as.vector(var(residuals(x, type = "response")))) # variance of raw residuals; cannot use residuals.sdmTMB!
+  
+  #if (varO != 0) { # ml+fm: previously it was: "if (varO != 0) {", but we want to make it work non spatial models. We replaced with if for family
+  if (x$family$family %in% c("student", "gaussian")) {
+    varR <- sigma(x)^2
+    # denominator <- varF_all + varO + varE + varR + varV + varG
+  } else if (x$family$family == "binomial") {
+    # "theoretical" method of Nakagawa is default
+    varR <- pi ^ 2 / 3 # FIXME: CHECK THIS
+    # denominator <- varF_all + varO + varE + varV + varG + pi ^ 2 / 3 # From Nakagawa supp. row 115 (#A general and simple method for obtaining R2 from generalized linear mixed-effects models)
+  # } else if (x$family$family == "tweedie") {
+    
+    # re <- x$split_formula[[1]][[2]][[1]] # see above comment, is there a better way to update the model by removing fixed effects but keep random effects (if there are any?)
+    # m0 <- update(x, formula = as.formula(paste0(". ~ + 1 + ", deparse(re))))
+    # denominator <- varF_all + varO + varE + varR + varV + varG + log(1 + 1 / exp(as.numeric(fixef(m0))))
+  } else if (x$family$family == "tweedie") {
+    varR <- get_distribution_variance(x)
+  } else {
+    stop("Family not implemented", call. = FALSE)
+  }
+  
+  denominator <- varF_all + varO + varE + varR + varV + varG
+    
+    # phiN <- b$estimate[b$term == "phi"]
+    # pN <- b$estimate[b$term == "tweedie_p"]
+    # mu <- mean(x$tmb_data$y_i) 
+    # VarOlN <-
+    #   log(1 + (phiN * mu ^ (pN - 2))) # log-normal approximation
+    # denominator <- varF_all + varE + VarOlN + varV + varG
+  # remove varR
+
+    # ml+fm: here's a way to calculate R2 for the "observation-level" method
+      
+    # if (x$family$family == "binomial" & method == "observation-level") {
+    #   Vt <- varO + varE + varV + varG
+    # 
+    #   if (x$tmb_data$nobs_RE > 0) {
+    #     # Here we need to fit an intercept only model but keep the random effect!
+    #     re <- x$split_formula[[1]][[2]][[1]] # extract the term that is the random part so that we update the formula to remove all terms except the random effect. Perhaps there's a better way...
+    #     m0 <- update(x, formula = as.formula(paste0(". ~ + 1 + ", deparse(re)))) # ml+fm: add some test here to check there are no fixed effects? Ok to use deparse? Ben Bolker had some argument about that in the glmmTMB r2 code...
+    #   } else {
+    #     m0 <- update(x, formula = .~ +1) # need to fit an intercept only model
+    #   }
+    #   pmean <- plogis(as.numeric(fixef(m0)) -0.5 * Vt * tanh(as.numeric(fixef(m0)) * (1 + 2*exp(-0.5*Vt))/6)) # ml+fe: Nakagawa 2017 supp
+    #   VarOL <- 1/(pmean * (1 - pmean))
+    #   denominator <- varF_all + varO + varE + varV + varG + VarOL
+    # } else {
+
+  marg <- varF_all/denominator
+  
+  if (varO != 0) {
+    cond_rf_sp <- (varO)/denominator
+  } else {
+    cond_rf_sp <- NULL
+  }
+  if (varE != 0) {
+    cond_rf_spt <- (varE)/denominator
+  } else {
+    cond_rf_spt <- NULL
+  }
+  if (varV != 0) {
+    cond_tv <- (varV)/denominator
+  } else {
+    cond_tv <- NULL
+  }
+  if (varG != 0) {
+    cond_re <- (varG)/denominator
+  } else {
+    cond_re <- NULL
+  }
+  if (varE != 0 || varO != 0 || varV != 0 || varG != 0) {
+    cond_all <- (varF_all + varO + varE + varV + varG)/denominator
+  } else {
+    cond_all <- NULL
+  }
+  
+  out <- list(
+    marginal = marg,
+    partial_time_varying = cond_tv,
+    partial_spatial = cond_rf_sp,
+    partial_spatiotemporal = cond_rf_spt,
+    partial_random = cond_re,
+    conditional = cond_all
+  )
+  out[vapply(out, is.null, logical(1L))] <- NULL
+  out
+  
+  # ml+fm: ... nicer output format?
+  as.data.frame(out) |> pivot_longer(everything(), names_to = "component", values_to = "R2")
+  
+}
+```
+
+```{r}
+# Test some R2s!
+r2.sdmTMB(fit)
+r2.sdmTMB(fit_re)
+
+r2.sdmTMB(fit_bi)
+r2.sdmTMB(fit_pois)
+r2.sdmTMB(fit_tweedie)
+
+r2.sdmTMB(fit_st)
+```
+
+Regarding split up the R2 for each fixed effect. But we thought it was unnecessary to force that in the function because it would probably add lots of code to just to for each variable (`varF` for one fixed effect at the time). Maybe there's a clever way, or it can be put into another function? Here's an example how to get it now though without the extra function.
+
+```{r, message=FALSE, warning=FALSE}
+# Partition fixed effects R2? An attempt:
+dl <- list()
+
+x <- fit_tweedie
+which_fixef <- nrow(tidy(x))
+for(i in 1:which_fixef) {
+  temp <- r2.sdmTMB(x, which_fixef = i) |>
+    filter(component == "marginal") |>
+    mutate(variable = tidy(x)$term[i])
+    
+    dl[[i]] <- temp
+    
+    }
+  
+partial_R2 <- bind_rows(dl)
+  
+out <- r2.sdmTMB(fit_tweedie) |>
+  mutate(variable = ifelse(!component == "marginal", component, "marginal"))
+  
+out <- out |> full_join(partial_R2)
+
+ggplot(out |> filter(!variable %in% c("(Intercept)", "conditional", "marginal")), aes(1, R2, fill = variable)) + 
+  geom_bar(stat = "identity") + 
+  theme_minimal()
+```
+
+# glmmTMB comparison
+
+```{r}
+fit <- sdmTMB(observed ~ 1 + b1 + b2 + (1|f_year), data = sim_dat, spatial = "off")
+fit2 <- glmmTMB::glmmTMB(observed ~ 1 + b1 + b2 + (1|f_year), data = sim_dat)
+
+r2.sdmTMB(fit)
+my_rsq(fit2)
+performance::r2_nakagawa(fit2)
+```
+
+```{r}
+fit <- sdmTMB(observed ~ 1 + b1 + b2 + (1|f_year), data = sim_dat_tweedie, spatial = "off", family = tweedie())
+r2.sdmTMB(fit)
+
+fit2 <- glmmTMB::glmmTMB(observed ~ 1 + b1 + b2 + (1|f_year), data = sim_dat_tweedie, family = tweedie())
+performance::r2_nakagawa(fit2)
+
+
+fit <- sdmTMB(observed ~ 1 + s(b1), data = sim_dat_tweedie, spatial = "off", family = tweedie())
+r2.sdmTMB(fit)
+
+fit <- sdmTMB(observed ~ 1 + s(b1), data = sim_dat_tweedie, spatial = "on", family = tweedie(), mesh = mesh)
+r2.sdmTMB(fit)
+
+
+
+# library(mgcv)
+# fit2 <- mgcv::gam(observed ~ 1 + s(b1), data = sim_dat_tweedie, family = mgcv::tw())
+# performance::r2_nakagawa(fit2)
+
+fit2 <- glmmTMB::glmmTMB(observed ~ 1 + b1 + b2 + (1|f_year), data = sim_dat_tweedie, family = tweedie())
+performance::r2_nakagawa(fit2)
+
+insight::get_variance_fixed(fit2)
+insight::get_variance_residual(fit2)
+insight::get_variance_dispersion(fit2)
+insight::get_variance_random(fit2)
+insight::get_variance_distribution(fit2)
+insight::get_variance
+
+
+get_variance_tweedie <- function(x, mu, phi) {
+  p <- unname(stats::plogis(get_pars(x)$thetaf) + 1)
+  phi * mu^p
+}
+# get_variance_tweedie(x, mu, phi)
+
+get_distribution_variance <- function(x) {
+  
+  phi <- exp(get_pars(x)$ln_phi)
+  if (x$family$family %in% "gaussian") {
+    return(phi^2)
+  }
+  if (x$family$family %in% "tweedie") {
+    # x$split_formula
+    # rterms <- paste0("(", sapply(lme4::findbars(formula(x)), deparse),")")
+    re <- x$split_formula[[1]][[2]]
+    if (!is.null(re)) {
+      rterms <- paste0("(", re, ")") # FIXME: works for multiple!?
+      nullform <- reformulate(rterms,response=".")
+    } else {
+      nullform <- ". ~ 1"
+    }
+    null_model <- update(x, nullform)
+    mu <- null_model$family$linkinv(unname(fixef(null_model)))
+  }
+  
+  cvsquared <- tryCatch({
+    vv <- switch(x$family$family,
+      # `zero-inflated poisson` = ,
+      # poisson = .variance_family_poisson(x, mu, faminfo),
+      # `hurdle poisson` = ,
+      # truncated_poisson = stats::family(x)$variance(sig),
+      # Gamma, exponential ----
+      # Gamma = stats::family(x)$variance(sig),
+      # nbinom1 = ,
+      # nbinom2 = .variance_family_nbinom(x, mu, sig, faminfo),
+      # truncated_nbinom2 = stats::family(x)$variance(mu, sig),
+      tweedie = get_variance_tweedie(x, mu, phi)
+      # beta = .variance_family_beta(x, mu, sig),
+    )
+    if (vv < 0) {
+      cli::cli_warn("Model's distribution-specific variance is negative. Results are not reliable.")
+    }
+    vv / mu^2
+  },
+    error = function(x) {
+      cli::cli_warn("Can't calculate model's distribution-specific variance. Results are not reliable.")
+      0
+    }
+  )
+  log1p(cvsquared)
+}
+
+
+
+# FIXME: need to check for obs. level variances:
+## Separate observation variance from variance of random effects
+# nr <- vapply(vals$re, nrow, numeric(1))
+# not.obs.terms <- names(nr[nr != n_obs(x)])
+  # obs.terms <- names(nr[nr == n_obs(x)])
+  
+  
+  var_residual <- cvsquared
+
+
+```
+
+
+# Smoothers??
+
+```{r}
+fit_smooth <- sdmTMB(observed ~ 1 + s(b1, k = 3),
+  data = sim_dat,
+  mesh = mesh, time = "year")
+fit_smooth
+fixef(fit_smooth)
+# r2.sdmTMB(fit_smooth)
+
+x <- fit_smooth
+
+b_smooth_start <- x$tmb_data$b_smooth_start
+Zs <- x$tmb_data$Zs
+Xs <- x$tmb_data$Xs
+
+pars <- get_pars(x)
+b_smooth <- pars$b_smooth
+bs <- pars$bs
+
+eta_smooth <- matrix(0, ncol = n_m, nrow = nrow(x$tmb_data$y_i))
+
+n_m <- 1L # FIXME
+for (m in seq(1, n_m)) {
+  for (s in seq(1, length(b_smooth_start))) { # iterate over # of smooth elements
+    beta_s <- matrix(0, nrow = ncol(Zs[[s]]), n_m)
+    for (j in seq(1, nrow(beta_s))) {
+      beta_s[j, m] <- b_smooth[b_smooth_start[s] + j, m]
+    }
+    eta_smooth[,m] <- eta_smooth + Zs[[s]] %*% as.numeric(beta_s[,m])
+  }
+  eta_smooth[,m] <- eta_smooth[,m] + Xs %*% as.numeric(bs[,m])
+}
+eta_smooth[,1L]
+
+var_smooth <- var(eta_smooth[,1L])
+
+plot(eta_smooth)
+
+performance::r2(fit2)
+
+
+
+```
+
