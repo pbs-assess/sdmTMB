@@ -98,6 +98,11 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'   parallel.
 #' @param use_initial_fit Fit the first fold and use those parameter values
 #'   as starting values for subsequent folds? Can be faster with many folds.
+#' @param future_globals A character vector of global variables used within
+#'   arguments if an error is returned that \pkg{future.apply} can't find an
+#'   object. This vector is appended to `TRUE` and passed to the argument
+#'   `future.globals` in [future.apply::future_lapply()]. Useful if global
+#'   objects are used to specify arguments like priors, families, etc.
 #' @param spde **Depreciated.** Use `mesh` instead.
 #' @param ... All other arguments required to run [sdmTMB()] model with the
 #'   exception of `weights`, which are used to define the folds.
@@ -209,6 +214,7 @@ sdmTMB_cv <- function(
     lfo_validations = 5,
     parallel = TRUE,
     use_initial_fit = FALSE,
+    future_globals = NULL,
     spde = deprecated(),
     ...) {
   if (k_folds < 1) cli_abort("`k_folds` must be >= 1.")
@@ -412,12 +418,16 @@ sdmTMB_cv <- function(
       "Running fits with `future.apply()`.\n",
       "Set a parallel `future::plan()` to use parallel processing."
     )
-    if (lfo) {
-      out <- future.apply::future_lapply(seq_len(lfo_validations), fit_func, future.seed = TRUE)
+    if (!is.null(future_globals)) {
+      fg <- structure(TRUE, add = future_globals)
     } else {
-      out <- future.apply::future_lapply(seq_len(k_folds), fit_func, future.seed = TRUE)
+      fg <- TRUE
     }
-    # out <- lapply(seq_len(k_folds), fit_func)
+    if (lfo) {
+      out <- future.apply::future_lapply(seq_len(lfo_validations), fit_func, future.seed = TRUE, future.globals = fg)
+    } else {
+      out <- future.apply::future_lapply(seq_len(k_folds), fit_func, future.seed = TRUE, future.globals = fg)
+    }
   } else {
     message(
       "Running fits sequentially.\n",

@@ -17,6 +17,7 @@ sdmTMB_cv(
   lfo_validations = 5,
   parallel = TRUE,
   use_initial_fit = FALSE,
+  future_globals = NULL,
   spde = deprecated(),
   ...
 )
@@ -57,6 +58,12 @@ parallel.}
 
 \item{use_initial_fit}{Fit the first fold and use those parameter values
 as starting values for subsequent folds? Can be faster with many folds.}
+
+\item{future_globals}{A character vector of global variables used within
+arguments if an error is returned that \pkg{future.apply} can't find an
+object. This vector is appended to \code{TRUE} and passed to the argument
+\code{future.globals} in \code{\link[future.apply:future_lapply]{future.apply::future_lapply()}}. Useful if global
+objects are used to specify arguments like priors, families, etc.}
 
 \item{spde}{\strong{Depreciated.} Use \code{mesh} instead.}
 
