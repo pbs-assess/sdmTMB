@@ -60,9 +60,6 @@ pass \code{your_mesh$mesh} to  \code{\link[inlabru:gg]{inlabru::gg()}}.
 Construct an SPDE mesh for use with sdmTMB.
 }
 \examples{
-\dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 30, type = "cutoff")
-plot(mesh)
 
 \donttest{
 mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 5, type = "cutoff")
@@ -75,5 +72,4 @@ mesh <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
 plot(mesh)
 
 }
-\dontshow{\}) # examplesIf}
 }

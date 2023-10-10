@@ -824,8 +824,7 @@ sdmTMB <- function(
     contains_offset <- check_offset(formula[[ii]])
 
     # anything in a list here needs to be saved for tmb data
-    formula_no_sm <- remove_s_and_t2(formula[[ii]])
-    split_formula[[ii]] <- glmmTMB::splitForm(formula_no_sm)
+    split_formula[[ii]] <- splitForm(formula[ii][[1]])
     RE_names <- barnames(split_formula[[ii]]$reTrmFormulas)
 
     fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
@@ -835,8 +834,9 @@ sdmTMB <- function(
     formula[[ii]] <- split_formula[[ii]]$fixedFormula
     ln_tau_G_index[[ii]] <- unlist(lapply(seq_along(nobs_RE[[ii]]), function(i) rep(i, each = nobs_RE[[ii]][i]))) - 1L
 
-    X_ij[[ii]] <- model.matrix(split_formula[[ii]]$fixedFormula, data)
-    mf[[ii]] <- model.frame(split_formula[[ii]]$fixedFormula, data)
+    formula_no_sm <- remove_s_and_t2(formula[[ii]])
+    X_ij[[ii]] <- model.matrix(formula_no_sm, data)
+    mf[[ii]] <- model.frame(formula_no_sm, data)
     # Check for random slopes:
     if (length(split_formula[[ii]]$reTrmFormulas)) {
       termsfun <- function(x) {

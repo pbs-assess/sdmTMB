@@ -25,8 +25,7 @@
 #'
 #' @export
 #'
-#' mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 30, type = "cutoff")
-#' plot(mesh)
+#' @examples
 #'
 #' \donttest{
 #' mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 5, type = "cutoff")
@@ -38,6 +37,7 @@
 #' mesh <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
 #' plot(mesh)
 #'
+#'}
 # # Defining a mesh directly with fmesher (formerly in INLA):
 # bnd <- fmesher::fm_nonconvex_hull(cbind(pcod$X, pcod$Y), convex = -0.05)
 # inla_mesh <- fmesher::fm_mesh_2d_inla(
@@ -49,6 +49,7 @@
 # )
 # mesh <- make_mesh(pcod, c("X", "Y"), mesh = inla_mesh)
 # plot(mesh)
+
 make_mesh <- function(data, xy_cols,
                       type = c("kmeans", "cutoff", "cutoff_search"),
                       cutoff, n_knots,
