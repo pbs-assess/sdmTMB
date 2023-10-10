@@ -11,7 +11,23 @@ test_that("groups work", {
   expect_identical(make_groups(factor(c('a', 'b', 'c')), prev_levels = c('a', 'b', 'c')), c(0L, 1L, 2L))
   expect_identical(make_groups(factor(c('a', 'b'), levels = c('a', 'b', 'c')), prev_levels = c('a', 'b', 'c')), c(0L, 1L))
   expect_identical(make_groups(factor(c('a', 'c'), levels = c('a', 'b', 'c')), prev_levels = c('a', 'b', 'c')), c(0L, 2L))
-  expect_error(make_groups(factor(c('a', 'c'), levels = c('a', 'b', 'c', 'd')), prev_levels = c('a', 'b', 'c')), regexp = "Extra")
+  expect_error(make_groups(factor(c('a', 'c'), levels = c('a', 'b', 'c', 'd')), prev_levels = c('a', 'b', 'c')), regexp = "levels")
+
+  expect_error(
+    make_groups(
+      x = factor(c('c', 'a'), levels = c('a', 'c', 'b')),
+      prev_levels = c('a', 'b', 'c')
+    ),
+    regexp = "levels"
+  )
+
+  expect_identical(
+    make_groups(
+      x = factor(c('c', 'a'), levels = c('a', 'b', 'c')),
+      prev_levels = c('a', 'b', 'c')
+    ),
+    c(2L, 0L)
+  )
 
   s <- lapply(1:3, function(i) {
     predictor_dat <- data.frame(
@@ -114,7 +130,7 @@ test_that("groups work", {
 
   nd3 <- nd
   nd3$category <- factor(nd3$category, levels = c("1", "2", "3", "4"))
-  expect_error(p3 <- predict(fit, newdata = nd3), "Extra")
+  expect_error(p3 <- predict(fit, newdata = nd3), "levels")
 
   # ggplot(p, aes(X, Y, colour = upsilon_stc)) +
   #   geom_point() +

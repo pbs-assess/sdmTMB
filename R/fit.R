@@ -1688,8 +1688,8 @@ make_groups <- function(x, prev_levels = NULL) {
   if (is.null(prev_levels) && length(setdiff(lvs, vals))) {
     cli_abort("Extra factor levels found in group column, e.g., with `droplevels()`.")
   }
-  if (!is.null(prev_levels) && length(setdiff(lvs, prev_levels))) {
-    cli_abort("Extra factor levels found in prediction group column compared to fitted data.")
+  if (!is.null(prev_levels) && !identical(lvs, prev_levels)) {
+    cli_abort("Factor levels in the group column are not identical between the fitted and predicted data.")
   }
   if (!is.null(x)) {
     ret <- as.integer(x) - 1L
