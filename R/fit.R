@@ -835,8 +835,8 @@ sdmTMB <- function(
     formula[[ii]] <- split_formula[[ii]]$fixedFormula
     ln_tau_G_index[[ii]] <- unlist(lapply(seq_along(nobs_RE[[ii]]), function(i) rep(i, each = nobs_RE[[ii]][i]))) - 1L
 
-    X_ij[[ii]] <- model.matrix(formula_no_sm, data)
-    mf[[ii]] <- model.frame(formula_no_sm, data)
+    X_ij[[ii]] <- model.matrix(split_formula[[ii]]$fixedFormula, data)
+    mf[[ii]] <- model.frame(split_formula[[ii]]$fixedFormula, data)
     # Check for random slopes:
     if (length(split_formula[[ii]]$reTrmFormulas)) {
       termsfun <- function(x) {
