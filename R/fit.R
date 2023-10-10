@@ -1054,7 +1054,7 @@ sdmTMB <- function(
   n_t <- length(unique(data[[time]]))
   random_walk <- if (!is.null(time_varying)) switch(time_varying_type, rw = 1L, rw0 = 2L, ar1 = 0L) else 0L
 
-  cats <- if (!is.null(mvrw_category)) make_mvrw_cat_i(data[[mvrw_category]]) else numeric(0L)
+  cats <- if (!is.null(mvrw_category)) make_groups(data[[mvrw_category]]) else numeric(0L)
   if (!is.null(mvrw_category) && spatiotemporal != "rwc") {
     mvrw_u <- matrix(0, nrow = max(cats) + 1L, ncol = n_t)
   } else {
@@ -1681,15 +1681,18 @@ tidy_sigma_G_priors <- function(p, ln_tau_G_index) {
   p
 }
 
-make_mvrw_cat_i <- function(x, prev_cats = NULL) {
+make_groups <- function(x, prev_levels = NULL) {
+  assertthat::assert_that(inherits(x, "factor"), msg = "Group column is not a factor")
+  lvs <- levels(x)
+  vals <- unique(as.character(x))
+  if (is.null(prev_levels) && length(setdiff(lvs, vals))) {
+    cli_abort("Extra factor levels found in group column, e.g., with `droplevels()`.")
+  }
+  if (!is.null(prev_levels) && length(setdiff(lvs, prev_levels))) {
+    cli_abort("Extra factor levels found in prediction group column compared to fitted data.")
+  }
   if (!is.null(x)) {
-    ret <- as.integer(as.factor(x)) - 1L
-    if (!is.null(prev_cats)) {
-      m1 <- setdiff(unique(prev_cats), unique(ret))
-      if (length(m1)) cli_inform("Some groups are missing in 'newdata'. This is OK as long as your groups were entered as factors.")
-      m2 <- setdiff(unique(ret), unique(prev_cats))
-      if (length(m2)) cli_abort("Some extra groups were found in 'newdata'.")
-    }
+    ret <- as.integer(x) - 1L
   } else {
     ret <- 0L
   }
