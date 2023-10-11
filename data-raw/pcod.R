@@ -216,8 +216,8 @@ make_pkg_data_trawl <- function(spp, survey) {
 dogfish <- make_pkg_data_trawl("north-pacific-spiny-dogfish", "SYN WCVI")
 usethis::use_data(dogfish, internal = FALSE, overwrite = TRUE)
 
-# pcod_mesh_2011 <- sdmTMB::make_mesh(pcod_2011, xy_cols = c("X", "Y"), cutoff = 20)
-# usethis::use_data(pcod_mesh_2011, internal = FALSE, overwrite = TRUE)
+pcod_mesh_2011 <- sdmTMB::make_mesh(pcod_2011, xy_cols = c("X", "Y"), cutoff = 20)
+usethis::use_data(pcod_mesh_2011, internal = FALSE, overwrite = TRUE)
 
 # digits <- 5L
 # qcs_grid <- gfplot::synoptic_grid |>
