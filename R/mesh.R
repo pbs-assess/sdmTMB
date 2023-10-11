@@ -74,27 +74,6 @@
 #' mesh <- make_mesh(pcod, c("X", "Y"), mesh = inla_mesh)
 #' plot(mesh)
 
-# inla_mesh <- fmesher::fm_mesh_2d_inla(
-#   loc = cbind(pcod$X, pcod$Y), # coordinates
-#   max.edge = c(25, 50), # max triangle edge length; inner and outer meshes
-#   offset = c(5, 25), # border around data; inner and outer meshes
-#   cutoff = 5 # minimum triangle edge length for inner mesh
-# )
-# plot(inla_mesh)
-#
-# inla_mesh <- fmesher::fm_rcdt_2d(
-#   loc = cbind(pcod$X, pcod$Y), # coordinates
-#   refine = list(min.angle = 21, max.edge = Inf, max.n.strict = -1, max.n = 1000),
-#   cutoff = 10 # minimum triangle edge length for inner mesh
-# )
-# plot(inla_mesh);points(cbind(pcod$X, pcod$Y), col = "red", pch = ".")
-#
-# inla_mesh <- fmesher::fm_mesh_2d_inla(
-#   loc = cbind(pcod$X, pcod$Y), # coordinates
-#   cutoff = 10 # minimum triangle edge length for inner mesh
-# )
-# plot(inla_mesh);points(cbind(pcod$X, pcod$Y), col = "red", pch = ".")
-
 make_mesh <- function(data, xy_cols,
                       type = c("kmeans", "cutoff", "cutoff_search"),
                       cutoff,

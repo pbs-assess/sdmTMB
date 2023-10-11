@@ -824,7 +824,7 @@ sdmTMB <- function(
     contains_offset <- check_offset(formula[[ii]])
 
     # anything in a list here needs to be saved for tmb data
-    split_formula[[ii]] <- glmmTMB::splitForm(formula[ii][[1]])
+    split_formula[[ii]] <- splitForm(formula[ii][[1]])
     RE_names <- barnames(split_formula[[ii]]$reTrmFormulas)
 
     fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)

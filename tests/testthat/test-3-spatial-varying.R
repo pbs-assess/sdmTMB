@@ -106,7 +106,7 @@ test_that("Delta model with spatially varying factor predictor and no spatiotemp
     spatial = "off", # since spatially varying predictor is a factor
     spatial_varying = ~0 + quarter,
     time = "year",
-    control = sdmTMBcontrol(newton_loops = 0L)
+    control = sdmTMBcontrol(newton_loops = 1L)
   )
   expect_s3_class(m, "sdmTMB")
   expect_true(sum(is.na(m$sd_report$sd)) == 0L)

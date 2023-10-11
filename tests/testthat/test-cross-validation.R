@@ -88,8 +88,8 @@ test_that("Cross validation with offsets works", {
   d <- pcod_2011
   d$log_effort <- rnorm(nrow(d))
 
-  library(future)
-  future::plan(future::multisession)
+  # library(future)
+  # future::plan(future::multisession)
 
   expect_error(
     fit_cv_off1 <- sdmTMB_cv(
@@ -213,7 +213,7 @@ test_that("Cross validation with offsets works", {
   expect_equal(round(fit_cv_off5$models[[1]]$model$par, 4), round(fit_cv_off7$models[[1]]$model$par, 4))
   expect_equal(round(fit_cv_off5$models[[1]]$model$par, 4), round(fit_cv_off8$models[[1]]$model$par, 4))
 
-  future::plan(future::sequential)
+  # future::plan(future::sequential)
 })
 
 test_that("Delta model cross validation works", {
