@@ -938,7 +938,7 @@ Type objective_function<Type>::operator()()
       array<Type> proj_X_thresh(n_i,n_m);
       proj_X_thresh.setZero();
       for (int m = 0; m < n_m; m++) {
-        for (int i = 0; i < n_i; i++) {
+        for (int i = 0; i < n_p; i++) {
           if (!mi_est) { // regular linear or logistic
             proj_X_thresh(i,m) = proj_X_threshold(i,0);
           } else { // MI
