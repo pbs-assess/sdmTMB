@@ -96,7 +96,7 @@
 #'
 #' @export
 #'
-#' @examplesIf ggplot2_installed() && inla_installed()
+#' @examplesIf ggplot2_installed()
 #'
 #' d <- pcod_2011
 #' mesh <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed

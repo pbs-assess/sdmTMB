@@ -23,7 +23,7 @@
 #' * `.iteration`: the sample ID
 #' * columns for each parameter with a sample per row
 #'
-#' @examplesIf inla_installed()
+#' @examples
 #' m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2,
 #'   data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(),
 #'   spatiotemporal = "AR1", time = "year")

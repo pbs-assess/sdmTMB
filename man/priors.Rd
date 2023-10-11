@@ -97,7 +97,7 @@ the argument names in \code{pc_matern()}):
 credible intervals when the prior satisfies \code{P(sigma > sigma_lt) = 0.05} and
 \code{P(range < range_gt) = 0.05}, where \code{sigma_lt} is between 2.5 to 40 times
 the true marginal standard deviation and \code{range_gt} is between 1/10 and 1/2.5
-of the true range." Also see \code{\link[INLA:inla.spde2.pcmatern]{INLA::inla.spde2.pcmatern()}}.
+of the true range."
 
 Keep in mind that the range is dependent on the units and scale of the
 coordinate system. In practice, you may choose to try fitting the model
@@ -112,8 +112,6 @@ halfnormal(0, 1)
 mvnormal(c(0, 0))
 pc_matern(range_gt = 5, sigma_lt = 1)
 plot_pc_matern(range_gt = 5, sigma_lt = 1)
-
-if (inla_installed()) {
 
 d <- subset(pcod, year > 2011)
 pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
@@ -158,8 +156,6 @@ m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
     matern_s = pc_matern(range_gt = 5, sigma_lt = 1),
     matern_st = pc_matern(range_gt = 5, sigma_lt = 1))
 )
-
-}
 }
 \references{
 Fuglstad, G.-A., Simpson, D., Lindgren, F., and Rue, H. (2016) Constructing

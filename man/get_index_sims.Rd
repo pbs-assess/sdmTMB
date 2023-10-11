@@ -74,8 +74,6 @@ This function does nothing more than summarize and reshape the
 matrix of simulation draws into a data frame.
 }
 \examples{
-if (inla_installed()) {
-
 m <- sdmTMB(density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
   data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(link = "log"),
   time = "year"
@@ -99,7 +97,6 @@ ind <- get_index_sims(
   agg_function = function(x) sum(x),
   area_function = function(x, area) x * area
 )
-}
 }
 \seealso{
 \code{\link[=get_index]{get_index()}}

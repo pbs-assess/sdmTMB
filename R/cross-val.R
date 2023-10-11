@@ -149,7 +149,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'
 #' See example below.
 #'
-#' @examplesIf inla_installed()
+#' @examples
 #' mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 #'
 #' # Set parallel processing first if desired with the future package.

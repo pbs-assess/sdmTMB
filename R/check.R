@@ -14,7 +14,7 @@
 #' return `FALSE`. This is to facilitate using `sanity()` on models with [try()]
 #' or [tryCatch()]. See the examples section.
 #'
-#' @examplesIf inla_installed()
+#' @examples
 #' fit <- sdmTMB(
 #'   present ~ s(depth),
 #'   data = pcod_2011, mesh = pcod_mesh_2011,

@@ -31,7 +31,6 @@ where log scores are used to generate the stacking of predictive
 distributions
 }
 \examples{
-\dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # Set parallel processing if desired. See 'Details' in ?sdmTMB_cv
 
 # Depth as quadratic:
@@ -60,7 +59,6 @@ m_cv_3 <- sdmTMB_cv(
 models <- list(m_cv_1, m_cv_2, m_cv_3)
 weights <- sdmTMB_stacking(models)
 weights
-\dontshow{\}) # examplesIf}
 }
 \references{
 Yao, Y., Vehtari, A., Simpson, D., and Gelman, A. 2018. Using Stacking to

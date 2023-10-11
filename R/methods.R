@@ -223,7 +223,7 @@ terms.sdmTMB <- function(x, ...) {
 #' } else {
 #'   export(Effect.sdmTMB)
 #' }
-#' @examplesIf inla_installed() && require("effects", quietly = TRUE)
+#' @examplesIf require("effects", quietly = TRUE)
 #' fit <- sdmTMB(present ~ depth_scaled, data = pcod_2011, family = binomial(),
 #'   spatial = "off")
 #' effects::effect("depth_scaled", fit)

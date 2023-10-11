@@ -54,7 +54,6 @@
 #' @seealso [simulate.sdmTMB()]
 #'
 #' @examples
-#' if (inla_installed()) {
 #'   set.seed(123)
 #'
 #'   # make fake predictor(s) (a1) and sampling locations:
@@ -97,7 +96,6 @@
 #     simulate_re = TRUE, phi = 0.04, sigma_O = 0.4
 #   )
 #   head(sim_dat2)
-#' }
 sdmTMB_simulate <- function(formula,
                             data,
                             mesh,
@@ -117,9 +115,6 @@ sdmTMB_simulate <- function(formula,
                             previous_fit = NULL,
                             seed = sample.int(1e6, 1),
                             ...) {
-  if (!inla_installed()) {
-    cli_abort("INLA must be installed to use this function.")
-  }
 
   if (!is.null(previous_fit)) stop("`previous_fit` is deprecated. See `simulate.sdmTMB()`", call. = FALSE)
   if (!is.null(previous_fit)) mesh <- previous_fit$spde
@@ -322,7 +317,6 @@ sdmTMB_simulate <- function(formula,
 #'
 #' @export
 #' @examples
-#' if (inla_installed()) {
 #'
 #' # start with some data simulated from scratch:
 #' set.seed(1)
@@ -356,7 +350,6 @@ sdmTMB_simulate <- function(formula,
 #'
 #' # simulate with new random fields and new parameter draws:
 #' s3 <- simulate(fit, nsim = 1, params = "MVN", re_form = ~ 0)
-#' }
 
 simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
                             params = c("mle", "mvn"),

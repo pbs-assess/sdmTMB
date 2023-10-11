@@ -13,7 +13,7 @@
 #' @param n_knots The number of desired knots if `type` is not `"cutoff"`.
 #' @param seed Random seed. Affects [stats::kmeans()] determination of knot
 #'   locations if `type = "kmeans"`.
-#' @param mesh An optional mesh created via INLA instead of using the above
+#' @param mesh An optional mesh created via \pkg{fmesher} instead of using the above
 #'   convenience options.
 #' @param fmesher_func Which \pkg{fmesher} function to use. Options include
 #'   [fmesher::fm_rcdt_2d_inla()] and [fmesher::fm_mesh_2d_inla()] along with
@@ -32,7 +32,7 @@
 #'
 #' @export
 #'
-#' @examplesIf inla_installed()
+#' @examples
 #' # Extremely simple cutoff:
 #' mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 5, type = "cutoff")
 #' plot(mesh)
@@ -84,9 +84,6 @@ make_mesh <- function(data, xy_cols,
                       convex = NULL, concave = convex,
                       ...) {
 
-  if (!inla_installed()) {
-    cli_abort("INLA must be installed to use this function.")
-  }
   if (nrow(data) == 0L) {
     cli_abort("The data frame supplied to `data` has no rows of data.")
   }

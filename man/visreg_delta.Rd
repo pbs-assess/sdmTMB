@@ -32,8 +32,7 @@ Note the residuals are currently randomized quantile residuals,
 \emph{not} deviance residuals as is usual for GLMs with \pkg{visreg}.
 }
 \examples{
-if (inla_installed() &&
-  require("ggplot2", quietly = TRUE) &&
+if (require("ggplot2", quietly = TRUE) &&
   require("visreg", quietly = TRUE)) {
 
   fit <- sdmTMB(

@@ -68,7 +68,6 @@ based on simulations drawn from the assumed multivariate normal distribution
 \strong{\code{"response"}} refers to response residuals: observed minus predicted.
 }
 \examples{
-if (inla_installed()) {
 
   mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 10)
   fit <- sdmTMB(
@@ -89,7 +88,6 @@ if (inla_installed()) {
   qqline(r1)
 
   # see also "mle-mcmc" residuals with the help of the sdmTMBextra package
-}
 }
 \references{
 Dunn, P.K. & Smyth, G.K. (1996). Randomized Quantile Residuals. Journal of

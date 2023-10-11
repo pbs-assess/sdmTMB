@@ -39,7 +39,7 @@ triangle edge length.}
 \item{seed}{Random seed. Affects \code{\link[stats:kmeans]{stats::kmeans()}} determination of knot
 locations if \code{type = "kmeans"}.}
 
-\item{mesh}{An optional mesh created via INLA instead of using the above
+\item{mesh}{An optional mesh created via \pkg{fmesher} instead of using the above
 convenience options.}
 
 \item{fmesher_func}{Which \pkg{fmesher} function to use. Options include
@@ -70,7 +70,6 @@ pass \code{your_mesh$mesh} to \code{\link[inlabru:gg]{inlabru::gg()}}.
 Construct an SPDE mesh for use with sdmTMB.
 }
 \examples{
-\dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # Extremely simple cutoff:
 mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 5, type = "cutoff")
 plot(mesh)
@@ -111,5 +110,4 @@ inla_mesh <- fmesher::fm_mesh_2d_inla(
 )
 mesh <- make_mesh(pcod, c("X", "Y"), mesh = inla_mesh)
 plot(mesh)
-\dontshow{\}) # examplesIf}
 }

@@ -91,7 +91,6 @@ Suggests:
     ggeffects,
     ggforce,
     ggplot2,
-    INLA,
     inlabru,
     knitr,
     rgdal,

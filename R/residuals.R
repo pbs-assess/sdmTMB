@@ -218,7 +218,6 @@ qres_beta <- function(object, y, mu, ...) {
 #' \doi{10.1007/s10651-017-0372-4}
 #'
 #' @examples
-#' if (inla_installed()) {
 #'
 #'   mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 10)
 #'   fit <- sdmTMB(
@@ -239,7 +238,6 @@ qres_beta <- function(object, y, mu, ...) {
 #'   qqline(r1)
 #'
 #'   # see also "mle-mcmc" residuals with the help of the sdmTMBextra package
-#' }
 
 residuals.sdmTMB <- function(object,
                              type = c("mle-laplace", "mle-mcmc", "mvn-laplace", "response", "pearson"),

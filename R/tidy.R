@@ -28,7 +28,7 @@
 #'
 #' @importFrom assertthat assert_that
 #' @importFrom stats plogis
-#' @examplesIf inla_installed()
+#' @examples
 #' fit <- sdmTMB(density ~ poly(depth_scaled, 2, raw = TRUE),
 #'   data = pcod_2011, mesh = pcod_mesh_2011,
 #'   family = tweedie()

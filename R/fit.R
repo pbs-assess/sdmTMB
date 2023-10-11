@@ -358,17 +358,17 @@ NULL
 #'
 #' @export
 #'
-#' @examplesIf inla_installed() && require("visreg", quietly = TRUE)
+#' @examplesIf require("visreg", quietly = TRUE)
 #' library(sdmTMB)
 #'
-#' # Build an SPDE mesh with INLA:
+#' # Build a mesh to implement the SPDE approach:
 #' mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
 #' # * this example uses a fairly coarse mesh so these examples run quickly
 #' # * `cutoff` is the minimum distance between mesh vertices in units of the
 #' #   x and y coordinates
 #' # * `cutoff = 10` or `cutoff = 15` might make more sense in applied situations
 #' #   for this dataset
-#' # * or build any mesh in INLA and pass it to the `mesh` argument in `make_mesh()`
+#' # * or build any mesh in 'fmesher' and pass it to the `mesh` argument in `make_mesh()`
 #' # * not needed if you will be turning off all spatial/spatiotemporal random fields
 #'
 #' # Quick mesh plot:

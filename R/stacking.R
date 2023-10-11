@@ -30,7 +30,7 @@
 #' \doi{10.1214/17-BA1091}
 #'
 #'
-#' @examplesIf inla_installed()
+#' @examples
 #' # Set parallel processing if desired. See 'Details' in ?sdmTMB_cv
 #'
 #' # Depth as quadratic:
