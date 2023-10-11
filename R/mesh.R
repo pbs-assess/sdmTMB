@@ -278,15 +278,15 @@ make_anisotropy_spde <- function(spde, anistropy = TRUE) {
     for (i in seq_len(length(Tri_Area))) Tri_Area[i] <- TmpFn(E0[i, ], E1[i, ]) / 2
 
     ret <- list(
-      n_s = spde$spde$n.spde,
+      n_s = spde$mesh$n,
       n_tri = nrow(TV),
       Tri_Area = Tri_Area,
       E0 = E0,
       E1 = E1,
       E2 = E2,
       TV = TV - 1,
-      G0 = spde$spde$param.inla$M0,
-      G0_inv = as(Matrix::diag(1 / Matrix::diag(spde$spde$param.inla$M0)), "TsparseMatrix")
+      G0 = spde$spde$c0,
+      G0_inv = as(Matrix::diag(1 / Matrix::diag(spde$spde$c0)), "TsparseMatrix")
     )
   } else {
     ret <- list(
