@@ -824,28 +824,28 @@ sdmTMB <- function(
     contains_offset <- check_offset(formula[[ii]])
 
     # anything in a list here needs to be saved for tmb data
-    split_formula[[ii]] <- splitForm(formula[ii][[1]])
-    RE_names <- barnames(split_formula[[ii]]$reTrmFormulas)
+    split_formula[[ii]] <- split_form(formula[ii][[1]])
+    RE_names <- split_formula[[ii]]$barnames
 
     fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
     RE_indexes[[ii]] <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
     nobs_RE[[ii]] <- unname(apply(RE_indexes[[ii]], 2L, max)) + 1L
     if (length(nobs_RE[[ii]]) == 0L) nobs_RE[[ii]] <- 0L
-    formula[[ii]] <- split_formula[[ii]]$fixedFormula
+    formula[[ii]] <- split_formula[[ii]]$form_no_bars
     ln_tau_G_index[[ii]] <- unlist(lapply(seq_along(nobs_RE[[ii]]), function(i) rep(i, each = nobs_RE[[ii]][i]))) - 1L
 
     formula_no_sm <- remove_s_and_t2(formula[[ii]])
     X_ij[[ii]] <- model.matrix(formula_no_sm, data)
     mf[[ii]] <- model.frame(formula_no_sm, data)
     # Check for random slopes:
-    if (length(split_formula[[ii]]$reTrmFormulas)) {
+    if (length(split_formula[[ii]]$bars)) {
       termsfun <- function(x) {
         # using glmTMB and lme4:::mkBlist approach
         ff <- eval(substitute(~foo, list(foo = x[[2]])))
         tt <- try(terms(ff, data =  mf[[ii]]), silent = TRUE)
         tt
       }
-      reXterms <- lapply(split_formula[[ii]]$reTrmFormulas, termsfun)
+      reXterms <- lapply(split_formula[[ii]]$bars, termsfun)
       if (length(attr(reXterms[[1]], "term.labels")))
         cli_abort("This model appears to have a random slope specified (e.g., y ~ (1 + b | group)). sdmTMB currently can only do random intercepts (e.g., y ~ (1 | group)).")
     }
@@ -1651,4 +1651,19 @@ get_spde_matrices <- function(x) {
   x <- x$spde[c("c0", "g1", "g2")]
   names(x) <- c("M0", "M1", "M2") # legacy INLA names needed!
   x
+}
+
+safe_deparse <- function (x, collapse = " ") {
+  paste(deparse(x, 500L), collapse = collapse)
+}
+
+barnames <- function (bars) {
+  vapply(bars, function(x) safe_deparse(x[[3]]), "")
+}
+
+split_form <- function(f) {
+  b <- lme4::findbars(f)
+  bn <- barnames(b)
+  fe_form <- lme4::nobars(f)
+  list(bars = b, barnames = bn, form_no_bars = fe_form, n_bars = length(bn))
 }

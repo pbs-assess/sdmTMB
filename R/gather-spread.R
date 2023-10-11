@@ -63,7 +63,7 @@ spread_sims <- function(object, nsim = 200, n_sims = deprecated()) {
   if (isTRUE(object$family$delta)) {
     cli_warn("If your delta model has 2 formulas, this function is only using the first")
   }
-  .formula <- object$split_formula[[1]]$fixedFormula # TODO DELTA HARDCODED TO 1!
+  .formula <- object$split_formula[[1]]$form_no_bars # TODO DELTA HARDCODED TO 1!
   if (isFALSE(object$mgcv)) {
     fe_names <- colnames(model.matrix(.formula, object$data))
   } else {

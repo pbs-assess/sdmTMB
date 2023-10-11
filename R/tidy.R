@@ -120,7 +120,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
   ii <- 1
 
   # grab fixed effects:
-  .formula <- x$split_formula[[model]]$fixedFormula
+  .formula <- x$split_formula[[model]]$form_no_bars
   .formula <- remove_s_and_t2(.formula)
   if (!"mgcv" %in% names(x)) x[["mgcv"]] <- FALSE
   fe_names <- colnames(model.matrix(.formula, x$data))
@@ -251,7 +251,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
   }
 
   # random intercepts
-  n_re_int <- length(x$split_formula[[model]]$reTrmFormulas)
+  n_re_int <- x$split_formula[[model]]$n_bars
   if (n_re_int == 0 && effects == "ran_vals") {
     cli::cli_abort("effects = 'ran_vals' currently only works with random intercepts (e.g., `+ (1 | g)`).")
   }
@@ -260,10 +260,9 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     re_est <- as.list(x$sd_report, "Estimate")$RE
     re_ses <- as.list(x$sd_report, "Std. Error")$RE
     for(jj in 1:n_re_int) {
-      # 3rd element below is piece after the bar, e.g. grouping variable
-      level_names <- levels(x$data[[x$split_formula[[model]]$reTrmFormulas[[jj]][[3]]]])
+      level_names <- levels(x$data[[x$split_formula[[model]]$barnames[jj]]])
       n_levels <- length(level_names)
-      re_name <- x$split_formula[[model]]$reTrmFormulas[[jj]][[3]]
+      re_name <- x$split_formula[[model]]$barnames[jj]
 
       if(jj==1) {
         start_pos <- 1

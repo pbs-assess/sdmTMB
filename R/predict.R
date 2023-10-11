@@ -440,7 +440,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
     if (!"mgcv" %in% names(object)) object[["mgcv"]] <- FALSE
 
     # deal with prediction IID random intercepts:
-    RE_names <- barnames(object$split_formula[[1]]$reTrmFormulas) # TODO DELTA HARDCODED TO 1 here; fine for now
+    RE_names <- object$split_formula[[1]]$barnames # TODO DELTA HARDCODED TO 1 here; fine for now
     ## not checking so that not all factors need to be in prediction:
     # fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
     proj_RE_indexes <- vapply(RE_names, function(x) as.integer(nd[[x]]) - 1L, rep(1L, nrow(nd)))
@@ -459,7 +459,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
 
     proj_X_ij <- list()
     for (i in seq_along(object$formula)) {
-      f2 <- remove_s_and_t2(object$split_formula[[i]]$fixedFormula)
+      f2 <- remove_s_and_t2(object$split_formula[[i]]$form_no_bars)
       tt <- stats::terms(f2)
       attr(tt, "predvars") <- attr(object$terms[[i]], "predvars")
       Terms <- stats::delete.response(tt)
