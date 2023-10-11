@@ -128,11 +128,11 @@ make_mesh <- function(data, xy_cols,
     loc_centers <- NA
   }
   # TODO:
-  spde <- INLA::inla.spde2.matern(mesh)
+  # spde <- INLA::inla.spde2.matern(mesh)
   # mesh_inla <- INLA::inla.mesh.create(loc_xy, refine = TRUE, cutoff = cutoff)
   # names(spde_inla$param.inla)
 
-  # spde <- fmesher::fm_matern_precision(mesh, alpha = 2)
+  spde <- fmesher::fm_matern_precision(mesh, alpha = 2)
   # A_inla <- INLA::inla.spde.make.A(mesh, loc = loc_xy)
   A <- fmesher::fm_basis(mesh, loc = loc_xy)
 
