@@ -502,6 +502,8 @@ dropHead <- function(term,value) {
 ## drop.special(x~a + b+ offset(z))
 ## @export
 ## @keywords internal
+#' @importFrom stats update setNames findbars
+#' @importFrom utils head
 drop.special <- function(x, value=quote(offset), preserve = NULL) {
   k <- 0
   proc <- function(x) {

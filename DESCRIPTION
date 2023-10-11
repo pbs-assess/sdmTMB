@@ -66,6 +66,7 @@ Imports:
     assertthat,
     clisymbols,
     cli,
+    fmesher,
     fishMod,
     generics,
     glmmTMB,
