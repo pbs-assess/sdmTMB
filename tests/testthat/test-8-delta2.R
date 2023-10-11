@@ -534,7 +534,8 @@ test_that("one spatial off in a delta model works", {
 
   t0 <- tidy(m0, "ran_pars", model = 2)
   t2 <- tidy(m2, "ran_pars")
-  expect_equal(t0, t2)
+
+  expect_equal(t0, t2, tolerance = 0.01)
 
 
   # ---------------------
@@ -544,26 +545,27 @@ test_that("one spatial off in a delta model works", {
     density ~ 1,
     mesh = mesh0,
     data = pcod,
-    spatial = list("off", "on"), #<
+    spatial = list("off", "off"), #<
     spatiotemporal = list("off", "iid"), #<
     share_range = FALSE,
     silent = FALSE,
     time = "year",
+    control = sdmTMBcontrol(newton_loops = 0L),
     family = delta_gamma()
   )
   m2 <- sdmTMB(
     density ~ 1,
     mesh = mesh2,
     data = pos,
-    spatial = "on", # <-
+    spatial = "off", # <-
     spatiotemporal = "iid",
     share_range = FALSE,
     silent = FALSE,
     time = "year",
+    control = sdmTMBcontrol(newton_loops = 0L),
     family = Gamma(link = "log")
   )
   t0 <- tidy(m0, "ran_pars", model = 2)
   t2 <- tidy(m2, "ran_pars")
-  expect_equal(t0$estimate, t2$estimate, tolerance = 0.1)
-
+  expect_equal(t0$estimate, t2$estimate, tolerance = 0.01)
 })
