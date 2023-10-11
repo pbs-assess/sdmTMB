@@ -25,8 +25,7 @@
 #'
 #' @export
 #'
-#' @examples
-#'
+#' @examplesIf inla_installed()
 #' \donttest{
 #' mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 5, type = "cutoff")
 #' plot(mesh)
@@ -38,6 +37,7 @@
 #' plot(mesh)
 #'
 #'}
+#'
 # # Defining a mesh directly with fmesher (formerly in INLA):
 # bnd <- fmesher::fm_nonconvex_hull(cbind(pcod$X, pcod$Y), convex = -0.05)
 # inla_mesh <- fmesher::fm_mesh_2d_inla(
@@ -128,11 +128,11 @@ make_mesh <- function(data, xy_cols,
     loc_centers <- NA
   }
   # TODO:
-  # spde <- INLA::inla.spde2.matern(mesh)
-  # mesh_inla <- INLA::inla.mesh.create(loc_xy, refine = TRUE, cutoff = cutoff)
+  spde <- INLA::inla.spde2.matern(mesh)
+  mesh_inla <- INLA::inla.mesh.create(loc_xy, refine = TRUE, cutoff = cutoff)
   # names(spde_inla$param.inla)
 
-  spde <- fmesher::fm_matern_precision(mesh, alpha = 2)
+  # spde <- fmesher::fm_matern_precision(mesh, alpha = 2, rho = )
   # A_inla <- INLA::inla.spde.make.A(mesh, loc = loc_xy)
   A <- fmesher::fm_basis(mesh, loc = loc_xy)
 
