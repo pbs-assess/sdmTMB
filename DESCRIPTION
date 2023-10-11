@@ -69,7 +69,6 @@ Imports:
     fmesher,
     fishMod,
     generics,
-    glmmTMB,
     graphics,
     lifecycle,
     lme4,

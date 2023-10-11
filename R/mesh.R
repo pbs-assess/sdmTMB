@@ -156,7 +156,7 @@ make_mesh <- function(data, xy_cols,
       }
     } else {
       mesh <- binary_search_knots(loc_xy, n_knots = n_knots,
-        refine = refine, fmesher_func = fmesher_func, ...)
+        refine = list(), fmesher_func = fmesher_func, ...)
     }
   } else {
     knots <- list()
