@@ -1044,6 +1044,7 @@ sdmTMB <- function(
   for (i in seq_len(n_m)) X_ij_list[[i]] <- X_ij[[i]]
 
   n_t <- length(unique(data[[time]]))
+
   random_walk <- if (!is.null(time_varying)) switch(time_varying_type, rw = 1L, rw0 = 2L, ar1 = 0L) else 0L
   tmb_data <- list(
     y_i        = y_i,
@@ -1096,7 +1097,7 @@ sdmTMB <- function(
     proj_spatial_index = 0, # dummy
     proj_z_i = matrix(0, nrow = 1, ncol = n_m), # dummy
     spde_aniso = make_anisotropy_spde(spde, anisotropy),
-    spde       = spde$spde[c("g1", "g1", "g2")],
+    spde       = get_spde_matrices(spde),
     barrier = as.integer(barrier),
     spde_barrier = make_barrier_spde(spde),
     barrier_scaling = if (barrier) spde$barrier_scaling else c(1, 1),
@@ -1644,4 +1645,10 @@ tidy_sigma_G_priors <- function(p, ln_tau_G_index) {
     }
   }
   p
+}
+
+get_spde_matrices <- function(x) {
+  x <- x$spde[c("c0", "g1", "g2")]
+  names(x) <- c("M0", "M1", "M2") # legacy INLA names needed!
+  x
 }
