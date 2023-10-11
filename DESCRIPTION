@@ -89,6 +89,7 @@ Suggests:
     future.apply,
     ggeffects,
     ggforce,
+    glmmTMB,
     ggplot2,
     inlabru,
     knitr,
