@@ -93,11 +93,11 @@ test_that("Delta model with spatially varying factor predictor and no spatiotemp
   pcod_q1 <- pcod_2011
   pcod_q1$quarter <- as.factor(1)
   pcod_q2$quarter <- as.factor(2)
-  set.seed(1)
+  set.seed(123)
   pcod_q2$density <- pcod_q2$density + rnorm(10, 20, n = nrow(pcod_2011)) # just adding some difference between quarters..
   pcod2 <- rbind(pcod_q1, pcod_q2)
   # Fit delta model with spatially varying quarter effect
-  mesh <- make_mesh(pcod2, c("X", "Y"), cutoff = 50)
+  mesh <- make_mesh(pcod2, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ 0 + as.factor(year) + quarter,
     data = pcod2,
     mesh = mesh,
