@@ -54,7 +54,7 @@ map_data <- rnaturalearth::ne_countries(
   returnclass = "sf", country = "canada")
 
 # Crop the polygon for plotting and efficiency:
-st_bbox(map_data)
+sf::st_bbox(map_data)
 bc_coast <- suppressWarnings(suppressMessages(
   sf::st_crop(map_data,
     c(xmin = -134, ymin = 46, xmax = -120, ymax = 57))))
@@ -99,7 +99,7 @@ bspde <- add_barrier_mesh(
 # In the above, the grey dots are the centre of triangles that are in the
 # ocean. The red crosses are centres of triangles that are over land. The
 # spatial range will be assumed to be 0.1 (`range_fraction`) over land
-compared to over water.
+# compared to over water.
 
 # We can make a more advanced plot if we want:
 mesh_df_water <- bspde$mesh_sf[bspde$normal_triangles, ]
