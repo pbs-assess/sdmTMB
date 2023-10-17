@@ -95,6 +95,7 @@ Suggests:
     knitr,
     rgdal,
     rmarkdown,
+    rnaturalearth,
     sf,
     splancs,
     testthat,

@@ -23,11 +23,6 @@
 #' @rdname surveydata
 "qcs_grid"
 
-#' @format `bc_coast`: BC coastline data from ropensci/rnaturalearthhires. An
-#'   \pkg{sf} data frame.
-#' @rdname surveydata
-"bc_coast"
-
 #' @format `dogfish`: Trawl survey data for Pacific Spiny Dogfish on West Coast
 #'   Vancouver Island. A data frame.
 #' @rdname surveydata
