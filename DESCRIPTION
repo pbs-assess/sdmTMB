@@ -97,6 +97,7 @@ Suggests:
     rgdal,
     rmarkdown,
     rnaturalearth,
+    rnaturalearthdata,
     sf,
     splancs,
     testthat,
