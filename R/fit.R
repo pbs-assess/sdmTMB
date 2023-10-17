@@ -410,6 +410,7 @@ NULL
 #' )
 #' fit
 #'
+#' \donttest{
 #' # Make the fields AR1:
 #' fit <- sdmTMB(
 #'   density ~ s(depth),
@@ -547,6 +548,7 @@ NULL
 #'   family = tweedie()
 #' )
 #' fit
+#' }
 
 sdmTMB <- function(
   formula,

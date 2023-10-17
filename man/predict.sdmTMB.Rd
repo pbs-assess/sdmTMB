@@ -166,6 +166,7 @@ qqnorm(predictions$resids);abline(a = 0, b = 1)
 qcs_grid_2011 <- replicate_df(qcs_grid, "year", unique(pcod_2011$year))
 predictions <- predict(m, newdata = qcs_grid_2011)
 
+\donttest{
 # A short function for plotting our predictions:
 plot_map <- function(dat, column = est) {
   ggplot(dat, aes(X, Y, fill = {{ column }})) +
@@ -280,5 +281,6 @@ plot_map(p, exp(est_non_rf)) +
 plot_map(p, exp(est)) +
   ggtitle("Prediction (fixed effects + all random effects)") +
   scale_fill_viridis_c(trans = "sqrt")
+}
 \dontshow{\}) # examplesIf}
 }

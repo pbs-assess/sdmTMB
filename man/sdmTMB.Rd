@@ -370,6 +370,7 @@ fit <- sdmTMB(
 )
 fit
 
+\donttest{
 # Make the fields AR1:
 fit <- sdmTMB(
   density ~ s(depth),
@@ -507,6 +508,7 @@ fit <- sdmTMB(
   family = tweedie()
 )
 fit
+}
 \dontshow{\}) # examplesIf}
 }
 \references{

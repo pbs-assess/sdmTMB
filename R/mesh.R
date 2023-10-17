@@ -41,6 +41,7 @@
 #' mesh <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
 #' plot(mesh)
 #'
+#' \donttest{
 #' # But, it's better to develop more tailored meshes:
 #'
 #' # Pass arguments via '...' to fmesher::fm_mesh_2d_inla():
@@ -73,6 +74,7 @@
 #' )
 #' mesh <- make_mesh(pcod, c("X", "Y"), mesh = inla_mesh)
 #' plot(mesh)
+#' }
 
 make_mesh <- function(data, xy_cols,
                       type = c("kmeans", "cutoff", "cutoff_search"),
