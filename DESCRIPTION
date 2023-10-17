@@ -92,6 +92,7 @@ Suggests:
     glmmTMB,
     ggplot2,
     inlabru,
+    INLAspacetime,
     knitr,
     rgdal,
     rmarkdown,

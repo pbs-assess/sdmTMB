@@ -111,6 +111,9 @@ add_barrier_mesh <- function(spde_obj, barrier_sf, range_fraction = 0.2,
   if (!requireNamespace("sf", quietly = TRUE)) {
     cli_abort("The sf package must be installed to use this function.")
   }
+  if (!requireNamespace("INLAspacetime", quietly = TRUE)) {
+    cli_abort("The INLAspacetime package must be installed to use this function.")
+  }
 
   assert_that(
     is.numeric(range_fraction), range_fraction <= 1,
