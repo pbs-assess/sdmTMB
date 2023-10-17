@@ -142,17 +142,17 @@ make_mesh <- function(data, xy_cols,
       knots <- stats::kmeans(x = loc_xy, centers = n_knots)
       loc_centers <- knots$centers
       if (!is.null(convex) || !is.null(concave)) {
-        nch <- f <- fmesher::fm_nonconvex_hull(loc_xy, convex = convex, concave = concave)
-        mesh <- fmesher_func(loc_centers, refine = list(), boundary = nch, ...)
+        nch <- fmesher::fm_nonconvex_hull(loc_xy, convex = convex, concave = concave)
+        mesh <- fmesher_func(loc_centers, refine = list(), boundary = nch, extend = list(), ...)
       } else {
-        mesh <- fmesher_func(loc_centers, refine = list(), ...)
+        mesh <- fmesher_func(loc_centers, refine = list(), extend = list(), ...)
       }
     } else if (type == "cutoff") {
       if (!is.null(convex) || !is.null(concave)) {
-        nch <- f <- fmesher::fm_nonconvex_hull(loc_xy, convex = convex, concave = concave)
-        mesh <- fmesher_func(loc_centers, refine = list(), cutoff = cutoff, boundary = nch, extend = list(n = 16L), ...)
+        nch <- fmesher::fm_nonconvex_hull(loc_xy, convex = convex, concave = concave)
+        mesh <- fmesher_func(loc_centers, refine = list(), cutoff = cutoff, boundary = nch, extend = list(), ...)
       } else {
-        mesh <- fmesher_func(loc_xy, refine = list(), cutoff = cutoff, extend = list(n = 16L), ...)
+        mesh <- fmesher_func(loc_xy, refine = list(), cutoff = cutoff, extend = list(), ...)
       }
     } else {
       mesh <- binary_search_knots(loc_xy, n_knots = n_knots,
@@ -202,7 +202,7 @@ binary_search_knots <- function(loc_xy,
   while (L <= R) {
     m <- floor((L + R) / 2)
     # mesh <- INLA::inla.mesh.create(loc_xy, refine = refine, cutoff = vec[m])
-    mesh <- fmesher_func(loc_xy, refine = refine, extend = list(n = 16L), cutoff = vec[m], ...)
+    mesh <- fmesher_func(loc_xy, refine = refine, extend = list(), cutoff = vec[m], ...)
     realized_knots <- mesh$n
     pretty_cutoff <- sprintf("%.2f", round(vec[m], 2))
     cat("cutoff =", pretty_cutoff, "| knots =", realized_knots)
