@@ -93,6 +93,7 @@ Suggests:
     ggplot2,
     inlabru,
     INLAspacetime,
+    INLA,
     knitr,
     rgdal,
     rmarkdown,
