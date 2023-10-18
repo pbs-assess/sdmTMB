@@ -54,17 +54,6 @@
 #' )
 #' plot(mesh)
 #'
-#' # With a non-convex hull:
-#' mesh <- make_mesh(
-#'   pcod, c("X", "Y"),
-#'   fmesher_func = fmesher::fm_mesh_2d_inla,
-#'   cutoff = 8, # minimum triangle edge length
-#'   convex = 10, # add non-convex hull with this distance and concavity
-#'   max.edge = c(20, 40), # inner and outer max triangle lengths
-#'   offset = c(5, 40) # inner and outer border widths
-#' )
-#' plot(mesh)
-#'
 #' # Or define a mesh directly with fmesher (formerly in INLA):
 #' inla_mesh <- fmesher::fm_mesh_2d_inla(
 #'   loc = cbind(pcod$X, pcod$Y), # coordinates
