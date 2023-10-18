@@ -91,7 +91,6 @@ Suggests:
     ggforce,
     glmmTMB,
     ggplot2,
-    inlabru,
     knitr,
     rmarkdown,
     sf,

@@ -151,6 +151,7 @@ mvnormal <- function(location = 0, scale = diag(length(location))) {
 #' pc_matern(range_gt = 5, sigma_lt = 1)
 #' plot_pc_matern(range_gt = 5, sigma_lt = 1)
 #'
+#' \donttest{
 #' d <- subset(pcod, year > 2011)
 #' pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
 #'
@@ -194,6 +195,7 @@ mvnormal <- function(location = 0, scale = diag(length(location))) {
 #'     matern_s = pc_matern(range_gt = 5, sigma_lt = 1),
 #'     matern_st = pc_matern(range_gt = 5, sigma_lt = 1))
 #' )
+#' }
 pc_matern <- function(range_gt, sigma_lt, range_prob = 0.05, sigma_prob = 0.05) {
   assert_that(range_prob > 0 && range_prob < 1)
   assert_that(sigma_prob > 0 && sigma_prob < 1)

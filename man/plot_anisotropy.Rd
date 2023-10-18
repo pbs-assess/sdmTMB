@@ -24,7 +24,7 @@ the X-Y coordinates being modeled. The ellipses show the spatial and/or
 spatiotemporal range (distance at which correlation is effectively
 independent) in any direction from zero. Uses \pkg{ggplot2}. If anisotropy
 was turned off when fitting the model, \code{NULL} is returned instead of a
-{ggplot2} object.
+\pkg{ggplot2} object.
 
 \code{plot_anisotropy2()}: A plot of eigenvectors illustrating the estimated
 anisotropy. A list of the plotted data is invisibly returned. Uses base

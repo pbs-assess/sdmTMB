@@ -234,27 +234,27 @@ binary_search_knots <- function(loc_xy,
 #' @rdname make_mesh
 #' @export
 plot.sdmTMBmesh <- function(x, ...) {
-  r1 <- requireNamespace("inlabru", quietly = TRUE)
-  r2 <- requireNamespace("ggplot2", quietly = TRUE)
-  if (r1 && r2) {
-    dat <- data.frame(
-      x = x$loc_xy[,1,drop=TRUE],
-      y = x$loc_xy[,2,drop=TRUE]
-    )
-    ggplot2::ggplot() +
-      inlabru::gg(x$mesh, ext.color = "grey20", ext.linewidth = 0.5, edge.color = "grey50") +
-      # ggplot2::coord_sf() +
-      # fmesher::geom_fm(data = x$mesh) +
-      ggplot2::geom_point(
-        data = dat,
-        mapping = ggplot2::aes(x = .data$x, y = .data$y), alpha = 0.4, pch = 20, colour = "#3182BD") +
-      ggplot2::coord_fixed() +
-      ggplot2::labs(x = x$xy_cols[[1]], y = x$xy_cols[[2]])
-  } else {
+  # r1 <- requireNamespace("inlabru", quietly = TRUE)
+  # r2 <- requireNamespace("ggplot2", quietly = TRUE)
+  # if (r1 && r2) {
+  #   dat <- data.frame(
+  #     x = x$loc_xy[,1,drop=TRUE],
+  #     y = x$loc_xy[,2,drop=TRUE]
+  #   )
+  #   ggplot2::ggplot() +
+  #     # inlabru::gg(x$mesh, ext.color = "grey20", ext.linewidth = 0.5, edge.color = "grey50") +
+  #     ggplot2::coord_sf() +
+  #     fmesher::geom_fm(data = x$mesh) +
+  #     ggplot2::geom_point(
+  #       data = dat,
+  #       mapping = ggplot2::aes(x = .data$x, y = .data$y), alpha = 0.4, pch = 20, colour = "#3182BD") +
+  #     # ggplot2::coord_fixed() +
+  #     ggplot2::labs(x = x$xy_cols[[1]], y = x$xy_cols[[2]])
+  # } else {
     plot(x$mesh, main = NA, edge.color = "grey60", asp = 1, ...)
-    points(x$loc_xy, pch = ".", col = "#00000070")
+    points(x$loc_xy, pch = 21, cex = 0.3, col = "#00000080")
     points(x$loc_centers, pch = 20, col = "red")
-  }
+  # }
 }
 
 # from TMB examples repository:
