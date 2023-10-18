@@ -217,8 +217,8 @@ mesh <- make_mesh(pcod, xy_cols = c("X", "Y"), cutoff = 10)
 
 Here, `cutoff` defines the minimum allowed distance between points in
 the units of `X` and `Y` (km). Alternatively, we could have created any
-mesh via the INLA package and supplied it to `make_mesh()`. We can
-inspect our mesh object with the associated plotting method
+mesh via the fmesher or INLA packages and supplied it to `make_mesh()`.
+We can inspect our mesh object with the associated plotting method
 `plot(mesh)`.
 
 Fit a spatial model with a smoother for depth:
@@ -239,13 +239,13 @@ Print the model fit:
 fit
 #> Spatial model fit by ML ['sdmTMB']
 #> Formula: density ~ s(depth)
-#> Mesh: mesh
+#> Mesh: mesh (isotropic covariance)
 #> Data: pcod
 #> Family: tweedie(link = 'log')
 #>  
 #>             coef.est coef.se
 #> (Intercept)     2.37    0.21
-#> sdepth          6.17   25.17
+#> sdepth          0.62    2.53
 #> 
 #> Smooth terms:
 #>            Std. Dev.
@@ -253,7 +253,7 @@ fit
 #> 
 #> Dispersion parameter: 12.69
 #> Tweedie p: 1.58
-#> Matern range: 16.39
+#> Matérn range: 16.39
 #> Spatial SD: 1.86
 #> ML criterion at convergence: 6402.136
 #> 
@@ -280,11 +280,11 @@ tidy(fit, conf.int = TRUE)
 tidy(fit, effects = "ran_pars", conf.int = TRUE)
 #> # A tibble: 4 × 5
 #>   term      estimate std.error conf.low conf.high
-#>   <chr>        <dbl> <lgl>        <dbl>     <dbl>
-#> 1 range        16.4  NA            9.60     28.0 
-#> 2 phi          12.7  NA           11.9      13.5 
-#> 3 sigma_O       1.86 NA            1.48      2.34
-#> 4 tweedie_p     1.58 NA            1.56      1.60
+#>   <chr>        <dbl>     <dbl>    <dbl>     <dbl>
+#> 1 range        16.4    4.47        9.60     28.0 
+#> 2 phi          12.7    0.406      11.9      13.5 
+#> 3 sigma_O       1.86   0.218       1.48      2.34
+#> 4 tweedie_p     1.58   0.00998     1.56      1.60
 ```
 
 Run some basic sanity checks on our model:
@@ -333,7 +333,7 @@ head(p)
     #>       X     Y depth   est est_non_rf est_rf omega_s
     #>   <dbl> <dbl> <dbl> <dbl>      <dbl>  <dbl>   <dbl>
     #> 1   456  5636  347. -3.06      -3.08 0.0172  0.0172
-    #> 2   458  5636  223.  2.03       1.99 0.0459  0.0459
+    #> 2   458  5636  223.  2.03       1.99 0.0460  0.0460
     #> 3   460  5636  204.  2.89       2.82 0.0747  0.0747
 
 ``` r
@@ -477,10 +477,6 @@ grid_yrs <- replicate_df(qcs_grid, "year", unique(pcod$year))
 grid_yrs$year_scaled <- (grid_yrs$year - mean(pcod$year)) / sd(pcod$year)
 p <- predict(fit, newdata = grid_yrs) %>% 
   subset(year == 2011) # any year
-#> Warning: The installed version of sdmTMB is newer than the version that was used to fit
-#> this model. It is possible new parameters have been added to the TMB model
-#> since you fit this model and that prediction will fail. We recommend you fit
-#> and predict from an sdmTMB model with the same version.
 ggplot(p, aes(X, Y, fill = zeta_s_year_scaled)) + geom_raster() +
   scale_fill_gradient2()
 ```
@@ -665,11 +661,7 @@ m_cv <- sdmTMB_cv(
 #> Set a parallel `future::plan()` to use parallel processing.
 # Sum of log likelihoods of left-out data:
 m_cv$sum_loglik
-#> [1] -7122.779
-# Expected log pointwise predictive density from left-out data:
-# (average likelihood density)
-m_cv$elpd
-#> [1] -1.005114
+#> [1] -6756.28
 ```
 
 See

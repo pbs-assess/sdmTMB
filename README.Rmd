@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.path = "man/figures/README-",
   out.width = "50%",
-  cache = TRUE,
+  cache = FALSE,
   autodep = TRUE,
   dpi = 72
 )
@@ -131,7 +131,7 @@ We start by creating a mesh object that contains matrices to apply the SPDE appr
 mesh <- make_mesh(pcod, xy_cols = c("X", "Y"), cutoff = 10)
 ```
 
-Here, `cutoff` defines the minimum allowed distance between points in the units of `X` and `Y` (km). Alternatively, we could have created any mesh via the INLA package and supplied it to `make_mesh()`. 
+Here, `cutoff` defines the minimum allowed distance between points in the units of `X` and `Y` (km). Alternatively, we could have created any mesh via the fmesher or INLA packages and supplied it to `make_mesh()`. 
 We can inspect our mesh object with the associated plotting method `plot(mesh)`.
 
 Fit a spatial model with a smoother for depth:
@@ -468,9 +468,6 @@ m_cv <- sdmTMB_cv(
 )
 # Sum of log likelihoods of left-out data:
 m_cv$sum_loglik
-# Expected log pointwise predictive density from left-out data:
-# (average likelihood density)
-m_cv$elpd
 ```
 
 See [`?sdmTMB_cv`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB_cv.html) for more details.
