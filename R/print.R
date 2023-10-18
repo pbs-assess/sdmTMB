@@ -273,7 +273,9 @@ print_other_parameters <- function(x, m = 1L) {
   phi <- get_term_text("phi", "Dispersion parameter")
   tweedie_p <- get_term_text("tweedie_p", "Tweedie p")
   sigma_O <- get_term_text("sigma_O", "Spatial SD")
-  sigma_E <- get_term_text("sigma_E", "Spatiotemporal SD")
+  xtra <- if (x$spatiotemporal[m] == "ar1") "marginal " else ""
+  sigma_E <- get_term_text("sigma_E",
+    paste0("Spatiotemporal ", xtra, toupper(x$spatiotemporal[m]), " SD"))
   rho <- get_term_text("rho", "Spatiotemporal AR1 correlation (rho)")
 
   if ("sigma_Z" %in% b$term) {
