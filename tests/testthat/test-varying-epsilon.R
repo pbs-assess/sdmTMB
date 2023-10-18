@@ -75,3 +75,4 @@
 ##   expect_equal(tidy(m1, "ran_par")$estimate, tidy(m2, "ran_par")$estimate, tolerance = 0.001)
 ##   expect_equal(logLik(m1)[1], logLik(m2)[1])
 ## })
+
