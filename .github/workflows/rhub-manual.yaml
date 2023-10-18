@@ -1,0 +1,28 @@
+name: R CMD check with an R-hub container
+
+on:
+  workflow_dispatch:
+    inputs:
+      inpcont:
+        description: 'Check container'
+        required: true
+        type: choice
+        options:
+        - 'macos'
+        - 'linux'
+        - 'windows'
+        - 'valgrind'
+        - 'clang-asan'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/r-hub/containers/${{ github.event.inputs.inpcont }}:latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install dependencies
+      run: |
+        R -q -e 'pak::pkg_install(c("deps::.", "any::rcmdcheck"), dependencies = TRUE)'
+    - uses: r-lib/actions/check-r-package@v2
