@@ -1,6 +1,5 @@
 test_that("Print anisotropy prints correctly", {
   skip_on_cran()
-  skip_if_not_installed("INLA")
   skip_on_ci()
 
   # No anisotropy
@@ -58,7 +57,7 @@ test_that("Print anisotropy prints correctly", {
     share_range = FALSE,
     time = "year",
     anisotropy = TRUE,
-    control = sdmTMBcontrol(newton_loops = 1)
+    control = sdmTMBcontrol(newton_loops = 2)
   )
 
   expect_output(cat(print_anisotropy(fit2)), regexp = "\\(spatial\\): ")

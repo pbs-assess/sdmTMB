@@ -9,7 +9,6 @@ loc$time <- rep(1:4, each = 100)
 
 test_that("sdmTMB model fit with a covariate beta", {
   local_edition(2)
-  skip_if_not_installed("INLA")
   spde <- make_mesh(loc, c("x", "y"), cutoff = 0.04)
   initial_betas <- 0.5
   range <- 0.1
@@ -128,7 +127,6 @@ test_that("sdmTMB model fit with a covariate beta", {
 test_that("Anisotropy fits and plots", {
   skip_on_ci()
   skip_on_cran()
-  skip_if_not_installed("INLA")
   local_edition(2)
   m <- sdmTMB(
     data = pcod,
@@ -148,7 +146,6 @@ test_that("Anisotropy fits and plots", {
 })
 
 test_that("A spatiotemporal version works with predictions on new data points", {
-  skip_if_not_installed("INLA")
   d <- pcod_2011
   pcod_spde <- pcod_mesh_2011
   m <- sdmTMB(
@@ -180,7 +177,6 @@ test_that("A spatiotemporal version works with predictions on new data points", 
 test_that("Predictions on the original data set as `newdata`` return the same predictions", {
   skip_on_cran()
   skip_on_ci()
-  skip_if_not_installed("INLA")
   local_edition(2)
   set.seed(1)
   x <- stats::runif(500, -1, 1)
@@ -224,7 +220,6 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
 test_that("poly() works on newdata", {
   skip_on_cran()
   skip_on_ci()
-  skip_if_not_installed("INLA")
 
   # https://github.com/pbs-assess/sdmTMB/issues/77
   d <- pcod_2011

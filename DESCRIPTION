@@ -1,7 +1,7 @@
 Type: Package
 Package: sdmTMB
 Title: Spatial and Spatiotemporal SPDE-Based GLMMs with 'TMB'
-Version: 0.3.1.9000
+Version: 0.3.1.9002
 Authors@R: c(
     person(c("Sean", "C."), "Anderson", , "sean@seananderson.ca",
            role = c("aut", "cre"),
@@ -66,11 +66,12 @@ Imports:
     assertthat,
     clisymbols,
     cli,
+    fmesher,
     fishMod,
     generics,
-    glmmTMB,
     graphics,
     lifecycle,
+    lme4,
     Matrix,
     methods,
     mgcv,
@@ -88,12 +89,9 @@ Suggests:
     future.apply,
     ggeffects,
     ggforce,
+    glmmTMB,
     ggplot2,
-    INLA,
-    inlabru,
     knitr,
-    lme4,
-    rgdal,
     rmarkdown,
     sf,
     splancs,
@@ -105,7 +103,6 @@ LinkingTo:
     TMB
 VignetteBuilder:
     knitr
-Additional_repositories: https://inla.r-inla-download.org/R/stable
 ByteCompile: true
 Config/testthat/edition: 3
 Config/testthat/parallel: true

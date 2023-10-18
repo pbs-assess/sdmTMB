@@ -51,7 +51,6 @@ a fitted model. This is similar to \code{\link[lme4:simulate.merMod]{lme4::simul
 among other uses.
 }
 \examples{
-if (inla_installed()) {
 
 # start with some data simulated from scratch:
 set.seed(1)
@@ -85,7 +84,6 @@ s3 <- simulate(fit, nsim = 1, re_form = ~ 0)
 
 # simulate with new random fields and new parameter draws:
 s3 <- simulate(fit, nsim = 1, params = "MVN", re_form = ~ 0)
-}
 }
 \seealso{
 \code{\link[=sdmTMB_simulate]{sdmTMB_simulate()}}

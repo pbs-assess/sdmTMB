@@ -13,7 +13,7 @@
 #' @return An updated model fit of class `sdmTMB`.
 #' @export
 #'
-#' @examplesIf inla_installed()
+#' @examples
 #' # Run extra optimization steps to help convergence:
 #' # (Not typically needed)
 #' fit <- sdmTMB(density ~ 0 + poly(depth, 2) + as.factor(year),

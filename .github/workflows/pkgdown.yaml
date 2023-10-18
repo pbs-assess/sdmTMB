@@ -31,7 +31,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, local::., any::rgdal, any::textshaping, any::remotes
+          extra-packages: any::pkgdown, local::., any::textshaping, any::remotes
           needs: website
 
       - name: Install extra packages for web-only vignettes

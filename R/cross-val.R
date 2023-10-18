@@ -149,7 +149,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'
 #' See example below.
 #'
-#' @examplesIf inla_installed()
+#' @examples
 #' mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 #'
 #' # Set parallel processing first if desired with the future package.
@@ -236,10 +236,11 @@ sdmTMB_cv <- function(
       # Create lfo_validations + 1 folds, ordered sequentially
       data$cv_fold <- 1
       t_validate <- sort(unique(data[[time]]), decreasing = TRUE)
-      for (t in seq(1, (lfo_validations + lfo_forecast - 1))) {
+      for (t in seq(1, lfo_validations)) {
         # fold id increasing order + forecast
         data$cv_fold[data[[time]] == t_validate[t]] <- lfo_validations - t + 1 + lfo_forecast
       }
+      data$cv_fold <- as.numeric(as.factor(data$cv_fold))
     } else {
       dd <- lapply(split(data, data[[time]]), function(x) {
         x$cv_fold <- sample(rep(seq(1L, k_folds), nrow(x)), size = nrow(x))

@@ -30,7 +30,8 @@
 #' \doi{10.1214/17-BA1091}
 #'
 #'
-#' @examplesIf inla_installed()
+#' @examples
+#' \donttest{
 #' # Set parallel processing if desired. See 'Details' in ?sdmTMB_cv
 #'
 #' # Depth as quadratic:
@@ -59,6 +60,7 @@
 #' models <- list(m_cv_1, m_cv_2, m_cv_3)
 #' weights <- sdmTMB_stacking(models)
 #' weights
+#' }
 sdmTMB_stacking <- function(model_list, include_folds = NULL) {
   n_models <- length(model_list)
   if (is.null(include_folds)) {

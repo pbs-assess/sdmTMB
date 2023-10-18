@@ -96,7 +96,7 @@
 #'
 #' @export
 #'
-#' @examplesIf ggplot2_installed() && inla_installed()
+#' @examplesIf ggplot2_installed()
 #'
 #' d <- pcod_2011
 #' mesh <- make_mesh(d, c("X", "Y"), cutoff = 30) # a coarse mesh for example speed
@@ -123,6 +123,7 @@
 #' qcs_grid_2011 <- replicate_df(qcs_grid, "year", unique(pcod_2011$year))
 #' predictions <- predict(m, newdata = qcs_grid_2011)
 #'
+#' \donttest{
 #' # A short function for plotting our predictions:
 #' plot_map <- function(dat, column = est) {
 #'   ggplot(dat, aes(X, Y, fill = {{ column }})) +
@@ -237,6 +238,7 @@
 #' plot_map(p, exp(est)) +
 #'   ggtitle("Prediction (fixed effects + all random effects)") +
 #'   scale_fill_viridis_c(trans = "sqrt")
+#' }
 
 predict.sdmTMB <- function(object, newdata = NULL,
   type = c("link", "response"),
@@ -410,7 +412,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
           all.x = TRUE, all.y = FALSE)
         newdata <- newdata[order(newdata$sdm_orig_id),, drop = FALSE]
       }
-      proj_mesh <- INLA::inla.spde.make.A(object$spde$mesh,
+      proj_mesh <- fmesher::fm_basis(object$spde$mesh,
         loc = as.matrix(unique_newdata[, xy_cols, drop = FALSE]))
     } else {
       proj_mesh <- object$spde$A_st # fake
@@ -440,7 +442,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
     if (!"mgcv" %in% names(object)) object[["mgcv"]] <- FALSE
 
     # deal with prediction IID random intercepts:
-    RE_names <- barnames(object$split_formula[[1]]$reTrmFormulas) # TODO DELTA HARDCODED TO 1 here; fine for now
+    RE_names <- object$split_formula[[1]]$barnames # TODO DELTA HARDCODED TO 1 here; fine for now
     ## not checking so that not all factors need to be in prediction:
     # fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
     proj_RE_indexes <- vapply(RE_names, function(x) as.integer(nd[[x]]) - 1L, rep(1L, nrow(nd)))
@@ -459,7 +461,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
 
     proj_X_ij <- list()
     for (i in seq_along(object$formula)) {
-      f2 <- remove_s_and_t2(object$split_formula[[i]]$fixedFormula)
+      f2 <- remove_s_and_t2(object$split_formula[[i]]$form_no_bars)
       tt <- stats::terms(f2)
       attr(tt, "predvars") <- attr(object$terms[[i]], "predvars")
       Terms <- stats::delete.response(tt)

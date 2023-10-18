@@ -1,7 +1,6 @@
 test_that("TMB IID simulation works", {
   skip_on_ci()
   skip_on_cran()
-  skip_if_not_installed("INLA")
 
   set.seed(1)
   predictor_dat <- data.frame(
@@ -35,7 +34,6 @@ test_that("TMB IID simulation works", {
 test_that("TMB AR1 simulation works", {
   skip_on_ci()
   skip_on_cran()
-  skip_if_not_installed("INLA")
 
   set.seed(1)
   predictor_dat <- data.frame(
@@ -72,7 +70,6 @@ test_that("TMB AR1 simulation works", {
 test_that("TMB RW simulation works", {
   skip_on_ci()
   skip_on_cran()
-  skip_if_not_installed("INLA")
 
   set.seed(1)
   predictor_dat <- data.frame(
@@ -126,7 +123,6 @@ test_that("TMB (custom) AR1 simulation is unbiased", {
   # run many times; check for bias
   skip_on_ci()
   skip_on_cran()
-  skip_if_not_installed("INLA")
 
   do_sim_fit <- function(i) {
     cat("Iteration", i, "\n")

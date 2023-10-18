@@ -1,7 +1,6 @@
 test_that("Extra optimization runs and reduces gradients", {
   skip_on_cran()
   skip_on_ci()
-  skip_if_not_installed("INLA")
   d <- subset(pcod, year >= 2013)
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),

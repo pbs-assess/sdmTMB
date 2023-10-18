@@ -22,8 +22,7 @@
 #' @rdname visreg_delta
 #'
 #' @examples
-#' if (inla_installed() &&
-#'   require("ggplot2", quietly = TRUE) &&
+#' if (require("ggplot2", quietly = TRUE) &&
 #'   require("visreg", quietly = TRUE)) {
 #'
 #'   fit <- sdmTMB(

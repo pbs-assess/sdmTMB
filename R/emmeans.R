@@ -10,7 +10,7 @@
 #' @references
 #' \url{https://aosmith.rbind.io/2019/03/25/getting-started-with-emmeans/}
 #'
-#' @examplesIf inla_installed() && require("emmeans", quietly = TRUE)
+#' @examplesIf require("emmeans", quietly = TRUE)
 #' mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
 #' fit <- sdmTMB(
 #'   present ~ as.factor(year),

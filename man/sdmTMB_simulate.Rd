@@ -101,7 +101,6 @@ values. \code{\link[=simulate.sdmTMB]{simulate.sdmTMB()}}, on the other hand, ta
 and simulates new observations and optionally new random effects.
 }
 \examples{
-if (inla_installed()) {
   set.seed(123)
 
   # make fake predictor(s) (a1) and sampling locations:
@@ -136,7 +135,6 @@ if (inla_installed()) {
   # fit to the simulated data:
   fit <- sdmTMB(observed ~ a1, data = sim_dat, mesh = mesh, time = "year")
   fit
-}
 }
 \seealso{
 \code{\link[=simulate.sdmTMB]{simulate.sdmTMB()}}

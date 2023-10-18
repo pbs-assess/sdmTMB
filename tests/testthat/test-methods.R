@@ -1,5 +1,4 @@
 test_that("coef and vcov and confint work", {
-  skip_if_not_installed("INLA")
   skip_on_ci()
   skip_on_cran()
   fit <- sdmTMB(
@@ -30,7 +29,6 @@ test_that("coef and vcov and confint work", {
 })
 
 test_that("various methods work", {
-  skip_if_not_installed("INLA")
   skip_on_ci()
   skip_on_cran()
   fit <- sdmTMB(

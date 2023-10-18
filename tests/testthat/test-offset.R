@@ -1,7 +1,6 @@
 test_that("Offset works", {
   skip_on_cran()
   skip_on_ci()
-  skip_if_not_installed("INLA")
 
   pcod$offset <- rnorm(nrow(pcod))
   fit2 <- sdmTMB(density ~ 1,
@@ -20,7 +19,6 @@ test_that("Offset works", {
 test_that("Offset matches glmmTMB", {
   skip_on_cran()
   skip_on_ci()
-  skip_if_not_installed("INLA")
 
   set.seed(1)
   pcod$offset <- rnorm(nrow(pcod))
@@ -84,7 +82,6 @@ test_that("Offset matches glmmTMB", {
 test_that("Offset works with extra_time", {
   skip_on_cran()
   skip_on_ci()
-  skip_if_not_installed("INLA")
   set.seed(1)
   pcod$offset <- rnorm(nrow(pcod))
   mesh <- make_mesh(pcod, xy_cols = c("X", "Y"), n_knots = 80)
@@ -104,7 +101,6 @@ test_that("Offset works with extra_time", {
 
 test_that("Offset prediction matches glm()", {
   skip_on_cran()
-  skip_if_not_installed("INLA")
   skip_if_not_installed("glmmTMB")
   set.seed(1)
   pcod$offset <- rnorm(nrow(pcod))

@@ -6,7 +6,6 @@
 \alias{pcod_2011}
 \alias{pcod_mesh_2011}
 \alias{qcs_grid}
-\alias{bc_coast}
 \alias{dogfish}
 \alias{yelloweye}
 \alias{hbll_s_grid}
@@ -24,9 +23,6 @@ list of class \code{sdmTMBmesh}.
 
 \code{qcs_grid} A 2x2km prediction grid for Queen Charlotte Sound. A data
 frame.
-
-\code{bc_coast}: BC coastline data from ropensci/rnaturalearthhires. An
-\pkg{sf} data frame.
 
 \code{dogfish}: Trawl survey data for Pacific Spiny Dogfish on West Coast
 Vancouver Island. A data frame.
@@ -46,8 +42,6 @@ pcod_2011
 pcod_mesh_2011
 
 qcs_grid
-
-bc_coast
 
 dogfish
 

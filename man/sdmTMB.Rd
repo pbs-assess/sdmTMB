@@ -324,17 +324,17 @@ can be shared across the models.
 See the \href{https://pbs-assess.github.io/sdmTMB/articles/delta-models.html}{delta-model vignette}.
 }
 \examples{
-\dontshow{if (inla_installed() && require("visreg", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (require("visreg", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 library(sdmTMB)
 
-# Build an SPDE mesh with INLA:
+# Build a mesh to implement the SPDE approach:
 mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
 # * this example uses a fairly coarse mesh so these examples run quickly
 # * `cutoff` is the minimum distance between mesh vertices in units of the
 #   x and y coordinates
 # * `cutoff = 10` or `cutoff = 15` might make more sense in applied situations
 #   for this dataset
-# * or build any mesh in INLA and pass it to the `mesh` argument in `make_mesh()`
+# * or build any mesh in 'fmesher' and pass it to the `mesh` argument in `make_mesh()`
 # * not needed if you will be turning off all spatial/spatiotemporal random fields
 
 # Quick mesh plot:
@@ -355,17 +355,18 @@ tidy(fit, effects = "ran_par", conf.int = TRUE)
 # Perform several 'sanity' checks:
 sanity(fit)
 
-# Visualize depth effect: (see ?visreg_delta)
-visreg::visreg(fit, xvar = "depth") # link space; randomized quantile residuals
-visreg::visreg(fit, xvar = "depth", scale = "response")
-visreg::visreg(fit, xvar = "depth", scale = "response", gg = TRUE, rug = FALSE)
-
 # Predict on the fitted data; see ?predict.sdmTMB
 p <- predict(fit)
 
 # Predict on new data:
 p <- predict(fit, newdata = qcs_grid)
 head(p)
+
+\donttest{
+# Visualize depth effect: (see ?visreg_delta)
+visreg::visreg(fit, xvar = "depth") # link space; randomized quantile residuals
+visreg::visreg(fit, xvar = "depth", scale = "response")
+visreg::visreg(fit, xvar = "depth", scale = "response", gg = TRUE, rug = FALSE)
 
 # Add spatiotemporal random fields:
 fit <- sdmTMB(
@@ -513,6 +514,7 @@ fit <- sdmTMB(
   family = tweedie()
 )
 fit
+}
 \dontshow{\}) # examplesIf}
 }
 \references{

@@ -266,7 +266,7 @@ $$
 If $p$ is the probability of observing a non-zero (i.e., an encounter), then 
 
 $$
-\exp(-n) = 1 - p.
+\exp(-n) = 1 - p = \mathrm{Pr}(0).
 $$
 
 We can re-arrange that as
@@ -331,6 +331,6 @@ I can only guess. The cloglog function is derived from the theory of a Poisson a
 
 ## These equations don't look anything like the sdmTMB source code!
 
-That's because the calculations have to be done in log space for computation stability and some calculations are fastest and most stable if done slightly differently from how they are most easily described in equations above.
+That's because the calculations have to be done in log space for computational stability and some calculations are fastest and most stable if done slightly differently from how they are most easily described in equations above.
 
 # References

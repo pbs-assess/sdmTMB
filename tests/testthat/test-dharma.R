@@ -1,7 +1,6 @@
 test_that("simulate() and dharma_residuals() work", {
   skip_on_ci()
   skip_on_cran()
-  skip_if_not_installed("INLA")
 
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
   fit <- sdmTMB(density ~ 1,

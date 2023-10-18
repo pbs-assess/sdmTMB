@@ -40,7 +40,7 @@ sdmTMB is an R package that fits spatial and spatiotemporal predictive-process G
   - [Bayesian MCMC sampling with
     Stan](#bayesian-mcmc-sampling-with-stan)
   - [Turning off random fields](#turning-off-random-fields)
-  - [Using a custom INLA mesh](#using-a-custom-inla-mesh)
+  - [Using a custom fmesher mesh](#using-a-custom-fmesher-mesh)
   - [Barrier meshes](#barrier-meshes)
 
 ## Installation
@@ -59,9 +59,6 @@ installed, the development version can be installed:
 # install.packages("remotes")
 remotes::install_github("pbs-assess/sdmTMB", dependencies = TRUE)
 ```
-
-If you have problems installing INLA, try [installing it
-directly](https://www.r-inla.org/download-install) first.
 
 There are some extra utilities in the
 [sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra) package.
@@ -752,7 +749,7 @@ broom::tidy(fit_glm)
 #> 3 poly(depth_scaled, 2)2  -66.9      4.09      -16.4  3.50e-60
 ```
 
-### Using a custom INLA mesh
+### Using a custom fmesher mesh
 
 Defining a mesh directly with INLA:
 
@@ -779,5 +776,5 @@ fit <- sdmTMB(
 ### Barrier meshes
 
 A barrier mesh limits correlation across barriers (e.g., land or water).
-See the example in
-[`?add_barrier_mesh`](https://pbs-assess.github.io/sdmTMB/reference/add_barrier_mesh.html).
+See `add_barrier_mesh()` in
+[sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra).

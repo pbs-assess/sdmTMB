@@ -1,6 +1,5 @@
 test_that("Fitting without a mesh works", {
   skip_on_cran()
-  skip_if_not_installed("INLA")
   set.seed(1)
   y <- stats::rnorm(100, 1, 1)
   x <- stats::runif(100)

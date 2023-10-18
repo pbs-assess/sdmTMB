@@ -8,60 +8,72 @@
 #'   a helper function to convert to UTMs, see [add_utm_columns()].
 #' @param type Method to create the mesh. Also see `mesh` argument to supply
 #'   your own mesh.
-#' @param cutoff An optional cutoff if type is `"cutoff"`. "The minimum allowed
-#'   distance between points in the mesh". See [INLA::inla.mesh.create()].
-#'   Smaller values create meshes with more knots. Points further apart than this
-#'   value will receive a separate vertex in the mesh before any mesh refinement.
+#' @param cutoff An optional cutoff if type is `"cutoff"`. The minimum allowed
+#'   triangle edge length.
 #' @param n_knots The number of desired knots if `type` is not `"cutoff"`.
 #' @param seed Random seed. Affects [stats::kmeans()] determination of knot
 #'   locations if `type = "kmeans"`.
-#' @param refine Logical or list to pass to [INLA::inla.mesh.create()].
-#' @param mesh An optional mesh created via INLA instead of using the above
+#' @param mesh An optional mesh created via \pkg{fmesher} instead of using the above
 #'   convenience options.
+#' @param fmesher_func Which \pkg{fmesher} function to use. Options include
+#'   [fmesher::fm_rcdt_2d_inla()] and [fmesher::fm_mesh_2d_inla()] along with
+#'   version without the `_inla` on the end.
+#' @param convex If specified, passed to [fmesher::fm_nonconvex_hull()].
+#'   Distance to extend non-convex hull from data.
+#' @param concave If specified, passed to [fmesher::fm_nonconvex_hull()].
+#'   "Minimum allowed reentrant curvature". Defaults to `convex`.
+#' @param ... Other arguments to pass to `fmesher_func`. Common arguments
+#'   include `offset` and `max.edge`. See examples below.
 #'
 #' @return
-#' `make_mesh()`: A list of class `sdmTMBmesh`. The element `mesh` is the output from
-#' [INLA::inla.mesh.create()] and the element `spde` is the output from
-#' [INLA::inla.spde2.matern()].
+#' `make_mesh()`: A list of class `sdmTMBmesh`. The element `mesh` is the output
+#' from `fmesher_func` (default is [fmesher::fm_mesh_2d_inla()]). See
+#' `mesh$mesh$n` for the number of vertices.
 #'
 #' @export
 #'
-#' @examplesIf inla_installed()
-#' mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 30, type = "cutoff")
-#' plot(mesh)
-#'
-#' \donttest{
+#' @examples
+#' # Extremely simple cutoff:
 #' mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 5, type = "cutoff")
 #' plot(mesh)
 #'
-#' mesh <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "cutoff_search")
-#' plot(mesh)
-#'
+#' # Using a k-means algorithm to assign vertices:
 #' mesh <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
 #' plot(mesh)
 #'
-#' # Defining a mesh directly with INLA:
-#' bnd <- INLA::inla.nonconvex.hull(cbind(pcod$X, pcod$Y), convex = -0.05)
-#' inla_mesh <- INLA::inla.mesh.2d(
-#'   boundary = bnd,
-#'   max.edge = c(20, 50),
-#'   offset = -0.05,
-#'   cutoff = c(2, 5),
-#'   min.angle = 10
+#' \donttest{
+#' # But, it's better to develop more tailored meshes:
+#'
+#' # Pass arguments via '...' to fmesher::fm_mesh_2d_inla():
+#' mesh <- make_mesh(
+#'   pcod, c("X", "Y"),
+#'   fmesher_func = fmesher::fm_mesh_2d_inla,
+#'   cutoff = 8, # minimum triangle edge length
+#'   max.edge = c(20, 40), # inner and outer max triangle lengths
+#'   offset = c(5, 40) # inner and outer border widths
+#' )
+#' plot(mesh)
+#'
+#' # Or define a mesh directly with fmesher (formerly in INLA):
+#' inla_mesh <- fmesher::fm_mesh_2d_inla(
+#'   loc = cbind(pcod$X, pcod$Y), # coordinates
+#'   max.edge = c(25, 50), # max triangle edge length; inner and outer meshes
+#'   offset = c(5, 25),  # inner and outer border widths
+#'   cutoff = 5 # minimum triangle edge length
 #' )
 #' mesh <- make_mesh(pcod, c("X", "Y"), mesh = inla_mesh)
 #' plot(mesh)
 #' }
+
 make_mesh <- function(data, xy_cols,
                       type = c("kmeans", "cutoff", "cutoff_search"),
-                      cutoff, n_knots,
+                      cutoff,
+                      n_knots,
                       seed = 42,
-                      refine = list(min.angle = 21, max.edge = Inf, max.n.strict = -1, max.n = 1000),
-                      mesh = NULL) {
-
-  if (!inla_installed()) {
-    cli_abort("INLA must be installed to use this function.")
-  }
+                      mesh = NULL,
+                      fmesher_func = fmesher::fm_rcdt_2d_inla,
+                      convex = NULL, concave = convex,
+                      ...) {
 
   if (nrow(data) == 0L) {
     cli_abort("The data frame supplied to `data` has no rows of data.")
@@ -120,18 +132,33 @@ make_mesh <- function(data, xy_cols,
       set.seed(seed)
       knots <- stats::kmeans(x = loc_xy, centers = n_knots)
       loc_centers <- knots$centers
-      mesh <- INLA::inla.mesh.create(loc_centers, refine = TRUE)
+      if (!is.null(convex) || !is.null(concave)) {
+        nch <- fmesher::fm_nonconvex_hull(loc_xy, convex = convex, concave = concave)
+        mesh <- fmesher_func(loc_centers, refine = list(), boundary = nch, extend = list(), ...)
+      } else {
+        mesh <- fmesher_func(loc_centers, refine = list(), extend = list(), ...)
+      }
     } else if (type == "cutoff") {
-      mesh <- INLA::inla.mesh.create(loc_xy, refine = TRUE, cutoff = cutoff)
+      if (!is.null(convex) || !is.null(concave)) {
+        nch <- fmesher::fm_nonconvex_hull(loc_xy, convex = convex, concave = concave)
+        mesh <- fmesher_func(loc_centers, refine = list(), cutoff = cutoff, boundary = nch, extend = list(), ...)
+      } else {
+        mesh <- fmesher_func(loc_xy, refine = list(), cutoff = cutoff, extend = list(), ...)
+      }
     } else {
-      mesh <- binary_search_knots(loc_xy, n_knots = n_knots, refine = refine)
+      mesh <- binary_search_knots(loc_xy, n_knots = n_knots,
+        refine = list(), fmesher_func = fmesher_func, ...)
     }
   } else {
     knots <- list()
     loc_centers <- NA
   }
-  spde <- INLA::inla.spde2.matern(mesh)
-  A <- INLA::inla.spde.make.A(mesh, loc = loc_xy)
+  # spde_inla <- INLA::inla.spde2.matern(mesh)
+  spde <- fmesher::fm_fem(mesh)
+  # identical(spde2$c0, spde_inla$param.inla$M0)
+  # identical(as.matrix(spde2$g1), as.matrix(spde_inla$param.inla$M1))
+  # identical(as.matrix(spde2$g2), as.matrix(spde_inla$param.inla$M2))
+  A <- fmesher::fm_basis(mesh, loc = loc_xy)
 
   fake_data <- data
   fake_data[["sdm_spatial_id"]] <- seq(1, nrow(fake_data))
@@ -143,7 +170,7 @@ make_mesh <- function(data, xy_cols,
       "complex, especially for initial model exploration. ",
       "Check `your_mesh$mesh$n` to view the number of vertices."
     )
-    cli_warn(msg)
+    cli_inform(msg)
   }
 
   structure(list(
@@ -157,14 +184,16 @@ binary_search_knots <- function(loc_xy,
                                 min = 1e-4,
                                 max = 1e4,
                                 length = 1e6,
-                                refine = TRUE) {
+                                fmesher_func = fmesher::fm_mesh_2d_inla,
+                                refine = list(), ...) {
   vec <- exp(seq(log(min), log(max), length.out = length))
   L <- 0
   R <- length(vec)
   realized_knots <- Inf
   while (L <= R) {
     m <- floor((L + R) / 2)
-    mesh <- INLA::inla.mesh.create(loc_xy, refine = refine, cutoff = vec[m])
+    # mesh <- INLA::inla.mesh.create(loc_xy, refine = refine, cutoff = vec[m])
+    mesh <- fmesher_func(loc_xy, refine = refine, extend = list(), cutoff = vec[m], ...)
     realized_knots <- mesh$n
     pretty_cutoff <- sprintf("%.2f", round(vec[m], 2))
     cat("cutoff =", pretty_cutoff, "| knots =", realized_knots)
@@ -188,30 +217,33 @@ binary_search_knots <- function(loc_xy,
 #'
 #' @importFrom graphics points
 #' @return `plot.sdmTMBmesh()`: A plot of the mesh and data points. If
-#'   \pkg{inlabru} and \pkg{ggplot2} are installed, a \pkg{ggplot2} object is
+#'   \pkg{ggplot2} is installed, a \pkg{ggplot2} object is
 #'   returned, otherwise a base graphics R plot is returned. To make your own,
-#'   pass `your_mesh$mesh` to  [inlabru::gg()].
+#'   pass `your_mesh$mesh` to [inlabru::gg()].
 #' @rdname make_mesh
 #' @export
 plot.sdmTMBmesh <- function(x, ...) {
-  r1 <- requireNamespace("inlabru", quietly = TRUE)
-  r2 <- requireNamespace("ggplot2", quietly = TRUE)
-  if (r1 && r2) {
-    dat <-  data.frame(
-      x = x$loc_xy[,1,drop=TRUE],
-      y = x$loc_xy[,2,drop=TRUE]
-    )
-    ggplot2::ggplot() +
-      ggplot2::geom_point(
-        data = dat,
-        mapping = ggplot2::aes(x = .data$x, y = .data$y), alpha = 0.1, pch = 21) +
-      inlabru::gg(x$mesh) +
-      ggplot2::coord_fixed()
-  } else {
+  # r1 <- requireNamespace("inlabru", quietly = TRUE)
+  # r2 <- requireNamespace("ggplot2", quietly = TRUE)
+  # if (r1 && r2) {
+  #   dat <- data.frame(
+  #     x = x$loc_xy[,1,drop=TRUE],
+  #     y = x$loc_xy[,2,drop=TRUE]
+  #   )
+  #   ggplot2::ggplot() +
+  #     # inlabru::gg(x$mesh, ext.color = "grey20", ext.linewidth = 0.5, edge.color = "grey50") +
+  #     ggplot2::coord_sf() +
+  #     fmesher::geom_fm(data = x$mesh) +
+  #     ggplot2::geom_point(
+  #       data = dat,
+  #       mapping = ggplot2::aes(x = .data$x, y = .data$y), alpha = 0.4, pch = 20, colour = "#3182BD") +
+  #     # ggplot2::coord_fixed() +
+  #     ggplot2::labs(x = x$xy_cols[[1]], y = x$xy_cols[[2]])
+  # } else {
     plot(x$mesh, main = NA, edge.color = "grey60", asp = 1, ...)
-    points(x$loc_xy, pch = ".", col = "#00000070")
+    points(x$loc_xy, pch = 21, cex = 0.3, col = "#00000080")
     points(x$loc_centers, pch = 20, col = "red")
-  }
+  # }
 }
 
 # from TMB examples repository:
@@ -234,15 +266,15 @@ make_anisotropy_spde <- function(spde, anistropy = TRUE) {
     for (i in seq_len(length(Tri_Area))) Tri_Area[i] <- TmpFn(E0[i, ], E1[i, ]) / 2
 
     ret <- list(
-      n_s = spde$spde$n.spde,
+      n_s = spde$mesh$n,
       n_tri = nrow(TV),
       Tri_Area = Tri_Area,
       E0 = E0,
       E1 = E1,
       E2 = E2,
       TV = TV - 1,
-      G0 = spde$spde$param.inla$M0,
-      G0_inv = as(Matrix::diag(1 / Matrix::diag(spde$spde$param.inla$M0)), "TsparseMatrix")
+      G0 = spde$spde$c0,
+      G0_inv = as(Matrix::diag(1 / Matrix::diag(spde$spde$c0)), "TsparseMatrix")
     )
   } else {
     ret <- list(

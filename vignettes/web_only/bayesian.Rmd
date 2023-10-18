@@ -15,11 +15,10 @@ vignette: >
 ```{r setup, include = FALSE, cache=FALSE}
 dplyr_installed <- require("dplyr", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
-inla_installed <- sdmTMB::inla_installed()
 tmbstan <- requireNamespace("tmbstan", quietly = TRUE)
 rstan <- requireNamespace("rstan", quietly = TRUE)
 bayesplot <- requireNamespace("bayesplot", quietly = TRUE)
-pkgs <- dplyr_installed && ggplot_installed && inla_installed && tmbstan && rstan && bayesplot
+pkgs <- dplyr_installed && ggplot_installed && tmbstan && rstan && bayesplot
 EVAL <- identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
 knitr::opts_chunk$set(
   collapse = TRUE,

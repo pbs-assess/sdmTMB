@@ -6,7 +6,6 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
 
   test_that("Delta-Gamma family fits", {
     skip_on_cran()
-    skip_if_not_installed("INLA")
 
     fit_dg <- sdmTMB(density ~ 1,
       data = pcod, mesh = pcod_spde,
@@ -54,7 +53,6 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
 
   test_that("Delta-lognormal family fits", {
     skip_on_cran()
-    skip_if_not_installed("INLA")
 
     fit_dln <- sdmTMB(density ~ 1,
       data = pcod, mesh = pcod_spde,
@@ -67,7 +65,6 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
 
   test_that("delta_poisson_link_gamma() family fits", {
     skip_on_cran()
-    skip_if_not_installed("INLA")
 
     fit_plg <- sdmTMB(density ~ 1,
       data = pcod, mesh = pcod_spde,
@@ -85,7 +82,6 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
 
   test_that("delta_poisson_link_lognormal() family fits", {
     skip_on_cran()
-    skip_if_not_installed("INLA")
 
     fit_plg <- sdmTMB(density ~ 1,
       data = pcod, mesh = pcod_spde,
@@ -100,7 +96,6 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
   test_that("delta_truncated_nbinom2 family fits", {
     skip_on_cran()
     skip_on_ci()
-    skip_if_not_installed("INLA")
 
     pcod$count <- round(pcod$density)
     fit_dtnb2 <- sdmTMB(count ~ 1,
@@ -116,7 +111,6 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
   test_that("delta_truncated_nbinom1 family fits", {
     skip_on_cran()
     skip_on_ci()
-    skip_if_not_installed("INLA")
 
     pcod$count <- round(pcod$density)
     fit_dtnb1 <- sdmTMB(count ~ 1,
@@ -130,7 +124,6 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
 
   test_that("Anisotropy with delta model", {
     skip_on_cran()
-    skip_if_not_installed("INLA")
 
     suppressWarnings({
       fit_dg <- sdmTMB(density ~ 1,

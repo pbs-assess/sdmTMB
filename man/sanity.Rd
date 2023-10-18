@@ -27,7 +27,6 @@ return \code{FALSE}. This is to facilitate using \code{sanity()} on models with 
 or \code{\link[=tryCatch]{tryCatch()}}. See the examples section.
 }
 \examples{
-\dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 fit <- sdmTMB(
   present ~ s(depth),
   data = pcod_2011, mesh = pcod_mesh_2011,
@@ -46,5 +45,4 @@ failed_fit <- try(stop())
 s2 <- sanity(failed_fit)
 all(unlist(s))
 all(unlist(s2))
-\dontshow{\}) # examplesIf}
 }

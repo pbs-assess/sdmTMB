@@ -260,22 +260,6 @@ check_valid_factor_levels <- function(x, .name = "") {
       "Random effect group column `%s` has extra factor levels. Please remove them.", .name))
 }
 
-#' Check if INLA installed (i.e., not on CRAN)
-#'
-#' @export
-#' @rdname inla_installed
-#' @keywords internal
-#' @return Returns `TRUE` or `FALSE`.
-inla_installed <- function() {
-  # Suppressing:
-  # > The legacy packages maptools, rgdal, and rgeos, underpinning...
-  suppressMessages({
-    r1 <- requireNamespace("INLA", quietly = TRUE)
-    r2 <- requireNamespace("rgdal", quietly = TRUE)
-  })
-  r1 && r2
-}
-
 #' Check if ggplot2 installed
 #'
 #' @export
@@ -307,7 +291,7 @@ has_no_random_effects <- function(obj) {
 #'
 #' @return A named list of parameter values
 #'
-#' @examplesIf inla_installed()
+#' @examples
 #' fit <- sdmTMB(present ~ 1, data = pcod_2011, family = binomial(), spatial = "off")
 #' pars <- get_pars(fit)
 #' names(pars)

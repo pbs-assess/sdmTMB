@@ -1,7 +1,6 @@
 test_that("cloglog works", {
   skip_on_cran()
   skip_on_ci()
-  skip_if_not_installed("INLA")
 
   m1 <- sdmTMB(present ~ 1, family = binomial(link = "cloglog"),
     spatial = "off", mesh = pcod_mesh_2011, data = pcod_2011)

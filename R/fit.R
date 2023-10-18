@@ -362,17 +362,17 @@ NULL
 #'
 #' @export
 #'
-#' @examplesIf inla_installed() && require("visreg", quietly = TRUE)
+#' @examplesIf require("visreg", quietly = TRUE)
 #' library(sdmTMB)
 #'
-#' # Build an SPDE mesh with INLA:
+#' # Build a mesh to implement the SPDE approach:
 #' mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
 #' # * this example uses a fairly coarse mesh so these examples run quickly
 #' # * `cutoff` is the minimum distance between mesh vertices in units of the
 #' #   x and y coordinates
 #' # * `cutoff = 10` or `cutoff = 15` might make more sense in applied situations
 #' #   for this dataset
-#' # * or build any mesh in INLA and pass it to the `mesh` argument in `make_mesh()`
+#' # * or build any mesh in 'fmesher' and pass it to the `mesh` argument in `make_mesh()`
 #' # * not needed if you will be turning off all spatial/spatiotemporal random fields
 #'
 #' # Quick mesh plot:
@@ -393,17 +393,18 @@ NULL
 #' # Perform several 'sanity' checks:
 #' sanity(fit)
 #'
-#' # Visualize depth effect: (see ?visreg_delta)
-#' visreg::visreg(fit, xvar = "depth") # link space; randomized quantile residuals
-#' visreg::visreg(fit, xvar = "depth", scale = "response")
-#' visreg::visreg(fit, xvar = "depth", scale = "response", gg = TRUE, rug = FALSE)
-#'
 #' # Predict on the fitted data; see ?predict.sdmTMB
 #' p <- predict(fit)
 #'
 #' # Predict on new data:
 #' p <- predict(fit, newdata = qcs_grid)
 #' head(p)
+#'
+#' \donttest{
+#' # Visualize depth effect: (see ?visreg_delta)
+#' visreg::visreg(fit, xvar = "depth") # link space; randomized quantile residuals
+#' visreg::visreg(fit, xvar = "depth", scale = "response")
+#' visreg::visreg(fit, xvar = "depth", scale = "response", gg = TRUE, rug = FALSE)
 #'
 #' # Add spatiotemporal random fields:
 #' fit <- sdmTMB(
@@ -551,6 +552,7 @@ NULL
 #'   family = tweedie()
 #' )
 #' fit
+#' }
 
 sdmTMB <- function(
   formula,
@@ -778,7 +780,7 @@ sdmTMB <- function(
     if (!is.null(upr)) upr <- data[["__dcens_upr__"]] # expanded
     data[["__dcens_upr__"]] <- NULL
     spde$loc_xy <- as.matrix(data[,spde$xy_cols,drop=FALSE])
-    spde$A_st <- INLA::inla.spde.make.A(spde$mesh, loc = spde$loc_xy)
+    spde$A_st <- fmesher::fm_basis(spde$mesh, loc = spde$loc_xy)
     spde$sdm_spatial_id <- seq(1, nrow(data)) # FIXME
   }
   check_irregalar_time(data, time, spatiotemporal, time_varying)
@@ -832,28 +834,28 @@ sdmTMB <- function(
     contains_offset <- check_offset(formula[[ii]])
 
     # anything in a list here needs to be saved for tmb data
-    split_formula[[ii]] <- glmmTMB::splitForm(formula[ii][[1]])
-    RE_names <- barnames(split_formula[[ii]]$reTrmFormulas)
+    split_formula[[ii]] <- split_form(formula[ii][[1]])
+    RE_names <- split_formula[[ii]]$barnames
 
     fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
     RE_indexes[[ii]] <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
     nobs_RE[[ii]] <- unname(apply(RE_indexes[[ii]], 2L, max)) + 1L
     if (length(nobs_RE[[ii]]) == 0L) nobs_RE[[ii]] <- 0L
-    formula[[ii]] <- split_formula[[ii]]$fixedFormula
+    formula[[ii]] <- split_formula[[ii]]$form_no_bars
     ln_tau_G_index[[ii]] <- unlist(lapply(seq_along(nobs_RE[[ii]]), function(i) rep(i, each = nobs_RE[[ii]][i]))) - 1L
 
     formula_no_sm <- remove_s_and_t2(formula[[ii]])
     X_ij[[ii]] <- model.matrix(formula_no_sm, data)
     mf[[ii]] <- model.frame(formula_no_sm, data)
     # Check for random slopes:
-    if (length(split_formula[[ii]]$reTrmFormulas)) {
+    if (length(split_formula[[ii]]$bars)) {
       termsfun <- function(x) {
         # using glmTMB and lme4:::mkBlist approach
         ff <- eval(substitute(~foo, list(foo = x[[2]])))
         tt <- try(terms(ff, data =  mf[[ii]]), silent = TRUE)
         tt
       }
-      reXterms <- lapply(split_formula[[ii]]$reTrmFormulas, termsfun)
+      reXterms <- lapply(split_formula[[ii]]$bars, termsfun)
       if (length(attr(reXterms[[1]], "term.labels")))
         cli_abort("This model appears to have a random slope specified (e.g., y ~ (1 + b | group)). sdmTMB currently can only do random intercepts (e.g., y ~ (1 | group)).")
     }
@@ -1052,6 +1054,7 @@ sdmTMB <- function(
   for (i in seq_len(n_m)) X_ij_list[[i]] <- X_ij[[i]]
 
   n_t <- length(unique(data[[time]]))
+
   random_walk <- if (!is.null(time_varying)) switch(time_varying_type, rw = 1L, rw0 = 2L, ar1 = 0L) else 0L
 
   cats <- if (!is.null(mvrw_category)) make_groups(data[[mvrw_category]]) else numeric(0L)
@@ -1116,7 +1119,7 @@ sdmTMB <- function(
     proj_spatial_index = 0, # dummy
     proj_z_i = matrix(0, nrow = 1, ncol = n_m), # dummy
     spde_aniso = make_anisotropy_spde(spde, anisotropy),
-    spde       = spde$spde$param.inla[c("M0","M1","M2")],
+    spde       = get_spde_matrices(spde),
     barrier = as.integer(barrier),
     spde_barrier = make_barrier_spde(spde),
     barrier_scaling = if (barrier) spde$barrier_scaling else c(1, 1),
@@ -1697,4 +1700,24 @@ make_groups <- function(x, prev_levels = NULL) {
     ret <- 0L
   }
   ret
+
+get_spde_matrices <- function(x) {
+  x <- x$spde[c("c0", "g1", "g2")]
+  names(x) <- c("M0", "M1", "M2") # legacy INLA names needed!
+  x
+}
+
+safe_deparse <- function (x, collapse = " ") {
+  paste(deparse(x, 500L), collapse = collapse)
+}
+
+barnames <- function (bars) {
+  vapply(bars, function(x) safe_deparse(x[[3]]), "")
+}
+
+split_form <- function(f) {
+  b <- lme4::findbars(f)
+  bn <- barnames(b)
+  fe_form <- lme4::nobars(f)
+  list(bars = b, barnames = bn, form_no_bars = fe_form, n_bars = length(bn))
 }

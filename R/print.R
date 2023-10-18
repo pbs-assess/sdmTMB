@@ -146,7 +146,7 @@ print_smooth_effects <- function(x, m = 1) {
 print_iid_re <- function(x, m = 1) {
   .tidy <- tidy(x, "ran_pars", model = m, silent = TRUE)
   if ("sigma_G" %in% .tidy$term) {
-    re_int_names <- barnames(x$split_formula[[1]]$reTrmFormulas) # TODO DELTA HARDCODED TO 1
+    re_int_names <- x$split_formula[[1]]$barnames # TODO DELTA HARDCODED TO 1
     re_int_mat <- matrix(NA_real_, nrow = length(re_int_names), ncol = 1L)
     re_int_mat[, 1L] <- round(.tidy$estimate[.tidy$term == "sigma_G"], 2L)
     rownames(re_int_mat) <- re_int_names
@@ -273,7 +273,9 @@ print_other_parameters <- function(x, m = 1L) {
   phi <- get_term_text("phi", "Dispersion parameter")
   tweedie_p <- get_term_text("tweedie_p", "Tweedie p")
   sigma_O <- get_term_text("sigma_O", "Spatial SD")
-  sigma_E <- get_term_text("sigma_E", "Spatiotemporal SD")
+  xtra <- if (x$spatiotemporal[m] == "ar1") "marginal " else ""
+  sigma_E <- get_term_text("sigma_E",
+    paste0("Spatiotemporal ", xtra, toupper(x$spatiotemporal[m]), " SD"))
   rho <- get_term_text("rho", "Spatiotemporal AR1 correlation (rho)")
 
   if ("sigma_Z" %in% b$term) {

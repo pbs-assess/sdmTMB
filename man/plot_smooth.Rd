@@ -45,7 +45,6 @@ Note:
 }
 }
 \examples{
-if (inla_installed()) {
   d <- subset(pcod, year >= 2000 & density > 0)
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(
@@ -54,5 +53,4 @@ if (inla_installed()) {
     mesh = pcod_spde
   )
   plot_smooth(m)
-}
 }

@@ -119,7 +119,6 @@ An example of LFOCV with 9 time steps, \code{lfo_forecast = 2}, and
 See example below.
 }
 \examples{
-\dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 
 # Set parallel processing first if desired with the future package.
@@ -171,5 +170,4 @@ m_lfocv <- sdmTMB_cv(
 example_data <- m_lfocv$models[[1]]$data
 table(example_data$cv_fold, example_data$year)
 }
-\dontshow{\}) # examplesIf}
 }

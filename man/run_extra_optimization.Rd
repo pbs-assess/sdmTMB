@@ -23,7 +23,6 @@ An updated model fit of class \code{sdmTMB}.
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
 \examples{
-\dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # Run extra optimization steps to help convergence:
 # (Not typically needed)
 fit <- sdmTMB(density ~ 0 + poly(depth, 2) + as.factor(year),
@@ -31,5 +30,4 @@ fit <- sdmTMB(density ~ 0 + poly(depth, 2) + as.factor(year),
 fit_1 <- run_extra_optimization(fit, newton_loops = 1)
 max(fit$gradients)
 max(fit_1$gradients)
-\dontshow{\}) # examplesIf}
 }

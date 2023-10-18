@@ -1,7 +1,6 @@
 test_that("sdmTMB_simulate works for different spatiotemporal field types", {
   skip_on_cran()
   skip_on_ci()
-  skip_if_not_installed("INLA")
 
   # make fake predictor(s) (a1) and sampling locations:
   set.seed(123)

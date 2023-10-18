@@ -1,7 +1,6 @@
 test_that("coef works", {
   skip_on_ci()
   skip_on_cran()
-  skip_if_not_installed("INLA")
 
   pcod_spde <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
   m <- sdmTMB(

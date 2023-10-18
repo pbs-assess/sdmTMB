@@ -35,8 +35,6 @@ Assuming you have a [C++ compiler](https://support.posit.co/hc/en-us/articles/20
 remotes::install_github("pbs-assess/sdmTMB", dependencies = TRUE)
 ```
 
-If you have problems installing INLA, try [installing it directly](https://www.r-inla.org/download-install) first.
-
 There are some extra utilities in the [sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra) package.
 
 ## Overview
@@ -528,7 +526,7 @@ tidy(fit_sdmTMB)
 broom::tidy(fit_glm)
 ```
 
-### Using a custom INLA mesh
+### Using a custom fmesher mesh
 
 Defining a mesh directly with INLA:
 
@@ -552,4 +550,4 @@ fit <- sdmTMB(
 
 ### Barrier meshes
 
-A barrier mesh limits correlation across barriers (e.g., land or water). See the example in [`?add_barrier_mesh`](https://pbs-assess.github.io/sdmTMB/reference/add_barrier_mesh.html).
+A barrier mesh limits correlation across barriers (e.g., land or water). See `add_barrier_mesh()` in [sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra).

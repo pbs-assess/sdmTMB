@@ -223,7 +223,7 @@ terms.sdmTMB <- function(x, ...) {
 #' } else {
 #'   export(Effect.sdmTMB)
 #' }
-#' @examplesIf inla_installed() && require("effects", quietly = TRUE)
+#' @examplesIf require("effects", quietly = TRUE)
 #' fit <- sdmTMB(present ~ depth_scaled, data = pcod_2011, family = binomial(),
 #'   spatial = "off")
 #' effects::effect("depth_scaled", fit)
@@ -262,7 +262,7 @@ Effect.sdmTMB <- function(focal.predictors, mod, ...) {
     vcov = vc,
     family = fam,
     # formula = formula(mod) # includes random intercepts...
-    formula = remove_s_and_t2(mod$split_formula[[1]]$fixedFormula)
+    formula = remove_s_and_t2(mod$split_formula[[1]]$form_no_bars)
   )
   effects::Effect.default(focal.predictors, mod, ..., sources = args)
 }

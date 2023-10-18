@@ -2,7 +2,7 @@
 # https://community.rstudio.com/new-topic?category=Package%20development&tags=github-actions
 on:
   push:
-    branches: [main, dev]
+    branches: [main, dev, fmesher2]
   pull_request:
     branches: [main, dev]
 
@@ -22,7 +22,7 @@ jobs:
           - {os: windows-latest, r: 'release'}
           # - {os: macOS-latest, r: 'release'}
           # - {os: macOS-latest, r: 'devel'}
-          # - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
+          - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
           # - {os: ubuntu-latest,   r: 'release'}
           # - {os: ubuntu-latest,   r: 'oldrel-1'}
 
@@ -73,7 +73,6 @@ jobs:
           remotes::install_cran("sf")
           remotes::install_cran("rcmdcheck")
           remotes::install_cran("textshaping")
-          remotes::install_cran("rgdal")
         shell: Rscript {0}
 
       - name: Install dependencies Ubuntu
@@ -88,7 +87,7 @@ jobs:
       - name: Install dependencies Windows
         if: runner.os == 'Windows'
         run: |
-          remotes::install_deps(dependencies = NA)
+          remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("knitr")
           remotes::install_cran("rmarkdown")
           remotes::install_cran("rcmdcheck")

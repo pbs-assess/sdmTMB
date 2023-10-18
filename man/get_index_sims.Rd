@@ -74,9 +74,8 @@ This function does nothing more than summarize and reshape the
 matrix of simulation draws into a data frame.
 }
 \examples{
-if (inla_installed()) {
-
-m <- sdmTMB(density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+\donttest{
+m <- sdmTMB(density ~ 0 + as.factor(year),
   data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(link = "log"),
   time = "year"
 )

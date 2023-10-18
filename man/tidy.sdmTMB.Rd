@@ -53,7 +53,6 @@ terms, range, or parameters associated with the observation error) are
 omitted to avoid confusion. Confidence intervals are still available.
 }
 \examples{
-\dontshow{if (inla_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 fit <- sdmTMB(density ~ poly(depth_scaled, 2, raw = TRUE),
   data = pcod_2011, mesh = pcod_mesh_2011,
   family = tweedie()
@@ -68,5 +67,4 @@ fit <- sdmTMB(density ~ poly(depth_scaled, 2, raw = TRUE) + (1 | fyear),
   family = tweedie()
 )
 tidy(fit, "ran_vals")
-\dontshow{\}) # examplesIf}
 }

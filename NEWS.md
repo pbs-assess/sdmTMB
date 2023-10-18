@@ -1,5 +1,10 @@
 # sdmTMB (development version)
 
+* Add new anisotropy plotting function.
+
+* Switch to using the new fmesher package for all mesh/SPDE calculations. INLA
+  is no longer a dependency.
+
 * Fix bug in print()/tidy() for delta-model positive model component sigma_E.
   A recently introduce bug was causing sigma_E for the 2nd model to be reported
   as the 1st model component sigma_E.

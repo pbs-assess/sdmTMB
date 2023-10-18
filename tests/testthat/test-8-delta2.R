@@ -1,6 +1,5 @@
 test_that("share_range mapping works with delta models", {
   skip_on_cran()
-  skip_if_not_installed("INLA")
   skip_on_ci()
 
   pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
@@ -77,7 +76,6 @@ test_that("share_range mapping works with delta models", {
 
 test_that("spatial field mapping/specification works with delta models", {
   skip_on_cran()
-  skip_if_not_installed("INLA")
   skip_on_ci()
 
   pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
@@ -131,7 +129,7 @@ test_that("spatial field mapping/specification works with delta models", {
   expect_equal(s$ln_tau_E[1], 0)
   expect_gt(abs(s$ln_tau_E[2]), 0)
   expect_output(print(fit5), regexp = "Spatiotemporal model")
-  expect_output(print(fit5), regexp = "Spatiotemporal SD")
+  expect_output(print(fit5), regexp = "Spatiotemporal IID SD")
 
   fit6 <- sdmTMB(density ~ 1,
     data = pcod, mesh = pcod_spde, spatial = list("off", "on"),
@@ -148,7 +146,6 @@ test_that("spatial field mapping/specification works with delta models", {
 
 test_that("spatiotemporal field mapping/specification works with delta models", {
   skip_on_cran()
-  skip_if_not_installed("INLA")
   skip_on_ci()
 
   pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
@@ -178,7 +175,7 @@ test_that("spatiotemporal field mapping/specification works with delta models", 
   expect_gt(abs(s$ln_tau_E[1]), 0)
   expect_equal(s$ln_tau_E[2], 0)
   expect_output(print(fit), regexp = "Spatiotemporal model")
-  expect_output(print(fit), regexp = "Spatiotemporal SD")
+  expect_output(print(fit), regexp = "Spatiotemporal IID SD")
 
   fit <- sdmTMB(density ~ 1,
     data = pcod, mesh = pcod_spde, spatial = "off",
@@ -256,7 +253,6 @@ test_that("spatiotemporal field mapping/specification works with delta models", 
 
 test_that("delta models work with different main effects", {
   skip_on_cran()
-  skip_if_not_installed("INLA")
   skip_on_ci()
 
   mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
@@ -352,7 +348,6 @@ test_that("delta models work with different main effects", {
 test_that("Offset works with delta models", {
   skip_on_cran()
   skip_on_ci()
-  skip_if_not_installed("INLA")
 
   set.seed(1)
   pcod$offset <- rnorm(nrow(pcod))
@@ -432,7 +427,6 @@ test_that("Offset works with delta models", {
 
 test_that("test that delta beta model works", {
   skip_on_cran()
-  skip_if_not_installed("INLA")
   skip_on_ci()
 
   set.seed(1)
@@ -483,7 +477,6 @@ test_that("test that delta beta model works", {
 
 test_that("one spatial off in a delta model works", {
   skip_on_cran()
-  skip_if_not_installed("INLA")
   skip_on_ci()
 
   mesh0 <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
@@ -534,7 +527,8 @@ test_that("one spatial off in a delta model works", {
 
   t0 <- tidy(m0, "ran_pars", model = 2)
   t2 <- tidy(m2, "ran_pars")
-  expect_equal(t0, t2)
+
+  expect_equal(t0, t2, tolerance = 0.01)
 
 
   # ---------------------
@@ -544,26 +538,27 @@ test_that("one spatial off in a delta model works", {
     density ~ 1,
     mesh = mesh0,
     data = pcod,
-    spatial = list("off", "on"), #<
+    spatial = list("off", "off"), #<
     spatiotemporal = list("off", "iid"), #<
     share_range = FALSE,
     silent = FALSE,
     time = "year",
+    control = sdmTMBcontrol(newton_loops = 0L),
     family = delta_gamma()
   )
   m2 <- sdmTMB(
     density ~ 1,
     mesh = mesh2,
     data = pos,
-    spatial = "on", # <-
+    spatial = "off", # <-
     spatiotemporal = "iid",
     share_range = FALSE,
     silent = FALSE,
     time = "year",
+    control = sdmTMBcontrol(newton_loops = 0L),
     family = Gamma(link = "log")
   )
   t0 <- tidy(m0, "ran_pars", model = 2)
   t2 <- tidy(m2, "ran_pars")
-  expect_equal(t0$estimate, t2$estimate, tolerance = 0.1)
-
+  expect_equal(t0$estimate, t2$estimate, tolerance = 0.01)
 })

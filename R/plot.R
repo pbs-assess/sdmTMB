@@ -17,7 +17,7 @@
 #' spatiotemporal range (distance at which correlation is effectively
 #' independent) in any direction from zero. Uses \pkg{ggplot2}. If anisotropy
 #' was turned off when fitting the model, `NULL` is returned instead of a
-#' {ggplot2} object.
+#' \pkg{ggplot2} object.
 #'
 #' `plot_anisotropy2()`: A plot of eigenvectors illustrating the estimated
 #' anisotropy. A list of the plotted data is invisibly returned. Uses base
@@ -25,7 +25,7 @@
 #' returned instead of a plot object.
 #' @references Code adapted from VAST R package
 #' @importFrom rlang .data
-#' @examplesIf inla_installed() && ggplot2_installed()
+#' @examplesIf ggplot2_installed()
 #' mesh <- make_mesh(pcod_2011, c("X", "Y"), n_knots = 80, type = "kmeans")
 #' fit <- sdmTMB(
 #'   data = pcod_2011,
@@ -202,7 +202,6 @@ plot_anisotropy2 <- function(object, model = 1) {
 #' @return
 #' A plot of a smoother term.
 #' @examples
-#' if (inla_installed()) {
 #'   d <- subset(pcod, year >= 2000 & density > 0)
 #'   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
 #'   m <- sdmTMB(
@@ -211,7 +210,6 @@ plot_anisotropy2 <- function(object, model = 1) {
 #'     mesh = pcod_spde
 #'   )
 #'   plot_smooth(m)
-#' }
 plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
                         ggplot = FALSE, rug = TRUE, return_data = FALSE) {
   msg <- c(
