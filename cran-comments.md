@@ -1,9 +1,16 @@
 ## Resubmission
+
+This version fixes several issues that have arisen on CRAN:
+ 
+* Removes dependencies on 'rgdal'
+* Fixes issues caused by updates to 'sf', 'INLA', and 'glmmTMB'
+
+This version no longer depends on 'INLA'. It also contains several bug fixes
+and additions to functionality.
   
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes
-
+0 errors | 0 warnings | 1 notes
 
 checking installed package size ... NOTE
     installed size is  6.0Mb
@@ -17,10 +24,10 @@ checking installed package size ... NOTE
 * local macOS install, R 4.3.1
 * Windows (on github-actions), R 4.3.1
 * Ubuntu 22.04.3 (on github-actions), R-devel
-* Windows (winbuilder), R devel
-* Windows (winbuilder), R release
+* Windows (winbuilder), R-devel
+* Windows (winbuilder), R-release
 
 With sanitizer checks:
  
-* Ubuntu 20.04.4 (on github-actions), R-devel with valgrind
-
+* Ubuntu 22.04.3 (on github-actions), R-devel with valgrind
+* Ubuntu 22.04.3 (on github-actions), R-devel with clang-asan
