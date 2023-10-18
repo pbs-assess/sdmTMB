@@ -1,13 +1,34 @@
-# sdmTMB (development version)
+# sdmTMB 0.4.0
 
-* Add new anisotropy plotting function.
+* Move add_barrier_mesh() to sdmTMBextra to avoid final INLA dependency.
+  https://github.com/pbs-assess/sdmTMBextra
 
 * Switch to using the new fmesher package for all mesh/SPDE calculations. INLA
   is no longer a dependency.
+  
+* Switch to `diagonal.penalty = FALSE` in mgcv::smoothCon(). 
+  This changes the scale of the linear component of the smoother, but
+  should result in the same model.
+  https://github.com/glmmTMB/glmmTMB/issues/928#issuecomment-1642862066
+  
+* Implement cross validation for delta models #239
+
+* Remove ELPD from cross validation output. Use sum_loglik instead. #235
+
+* Turn on Newton optimization by default. #182
+
+* print() now checks sanity() and issues a warning if there may be issues. #176
+
+* Poisson-link delta models and censored likelihood distributions have been made
+  considerably more robust. #186
+  
+* Standard errors are now available on SD parameters etc. in tidy() #240
 
 * Fix bug in print()/tidy() for delta-model positive model component sigma_E.
   A recently introduce bug was causing sigma_E for the 2nd model to be reported
   as the 1st model component sigma_E.
+  
+* Add new anisotropy plotting function.
 
 * Add anisotropic range printing. #149 by @jdunic
 
