@@ -6,23 +6,16 @@ on:
   pull_request:
     branches: [main, master]
 
-name: R-CMD-check-HTML5
+name: HTML5 check
 
 jobs:
-  R-CMD-check:
+  HTML5-check:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
-      _R_CHECK_RD_VALIDATE_RD2HTML_: TRUE
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Install pdflatex
-        run: sudo apt-get install texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra
-
-      - name: Install tidy
-        run: sudo apt install tidy
+      - uses: actions/checkout@v3
 
       - uses: r-lib/actions/setup-r@v2
         with:
@@ -33,10 +26,19 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck
-          needs: check
+          dependencies: 'character()'
+
+      - name: Install pdflatex
+        run: sudo apt-get install texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra
+
+      - name: Install tidy
+        run: sudo apt install tidy
 
       - uses: r-lib/actions/check-r-package@v2
         with:
-          args: '"--as-cran"'
-          build_args: 'character()'
+          args: 'c("--as-cran", "--no-codoc", "--no-examples", "--no-tests", "--no-vignettes", "--no-build-vignettes", "--ignore-vignettes", "--no-install")'
+          build_args: 'c("--no-build-vignettes")'
           error-on: '"note"'
+        env:
+          _R_CHECK_CRAN_INCOMING_REMOTE_: false
+          _R_CHECK_CRAN_INCOMING_: false
