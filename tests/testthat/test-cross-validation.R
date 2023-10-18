@@ -1,7 +1,6 @@
 test_that("Basic cross validation works", {
   skip_on_ci()
   skip_on_cran()
-  skip_if_not_installed("INLA")
   d <- pcod
   spde <- make_mesh(d, c("X", "Y"), cutoff = 15)
 
@@ -51,7 +50,6 @@ test_that("Basic cross validation works", {
 test_that("Leave future out cross validation works", {
   skip_on_ci()
   skip_on_cran()
-  skip_if_not_installed("INLA")
   x <- sdmTMB_cv(
     present ~ 1,
     data = pcod_2011,
@@ -80,7 +78,6 @@ test_that("Leave future out cross validation works", {
 test_that("Cross validation with offsets works", {
   skip_on_ci()
   skip_on_cran()
-  skip_if_not_installed("INLA")
   skip_if_not_installed("future")
   skip_if_not_installed("future.apply")
 
@@ -219,7 +216,6 @@ test_that("Cross validation with offsets works", {
 test_that("Delta model cross validation works", {
   skip_on_ci()
   skip_on_cran()
-  skip_if_not_installed("INLA")
   set.seed(1)
   out_tw <- sdmTMB_cv(
     density ~ depth_scaled,

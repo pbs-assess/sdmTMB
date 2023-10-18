@@ -9,7 +9,6 @@ test_that("RE group factor levels are properly checked.", {
 
 test_that("Model with random intercepts fits appropriately.", {
   skip_on_cran()
-  skip_if_not_installed("INLA")
   skip_if_not_installed("glmmTMB")
   set.seed(1)
   x <- stats::runif(500, -1, 1)
@@ -124,7 +123,6 @@ test_that("Model with random intercepts fits appropriately.", {
 
 test_that("Random intercepts and cross validation play nicely", {
   skip_on_cran()
-  skip_if_not_installed("INLA")
   set.seed(1)
   x <- stats::runif(500, -1, 1)
   y <- stats::runif(500, -1, 1)
@@ -160,7 +158,6 @@ test_that("Random intercepts and cross validation play nicely", {
 
 test_that("Tidy returns random intercepts appropriately.", {
   skip_on_cran()
-  skip_if_not_installed("INLA")
   skip_if_not_installed("glmmTMB")
   set.seed(1)
   x <- stats::runif(500, -1, 1)

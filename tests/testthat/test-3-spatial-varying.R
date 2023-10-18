@@ -1,7 +1,6 @@
 test_that("SVC are estimated correctly for binomial and delta models", {
   skip_on_cran()
   skip_on_ci()
-  skip_if_not_installed("INLA")
   local_edition(2)
   d <- pcod
   d$year_scaled <- as.numeric(scale(d$year))
@@ -88,7 +87,6 @@ test_that("Delta model with spatially varying factor predictor and no spatiotemp
   # https://github.com/pbs-assess/sdmTMB/issues/237
   skip_on_cran()
   skip_on_ci()
-  skip_if_not_installed("INLA")
   pcod_q2 <- pcod_2011
   pcod_q1 <- pcod_2011
   pcod_q1$quarter <- as.factor(1)

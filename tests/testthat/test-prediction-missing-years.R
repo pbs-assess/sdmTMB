@@ -1,6 +1,5 @@
 test_that("Prediction works with missing time", {
   skip_on_cran()
-  skip_if_not_installed("INLA")
   fit <- sdmTMB(
     density ~ 1,
     data = pcod_2011, mesh = pcod_mesh_2011, time = "year",

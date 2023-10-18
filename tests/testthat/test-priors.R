@@ -21,7 +21,6 @@ test_that("Basic prior parsing works", {
 test_that("Prior fitting works", {
   skip_on_ci()
   skip_on_cran()
-  skip_if_not_installed("INLA")
   d <- pcod_2011
   pcod_spde <- pcod_mesh_2011
 
@@ -68,7 +67,6 @@ test_that("Prior fitting works", {
 test_that("Priors on random intercept SDs work", {
   skip_on_ci()
   skip_on_cran()
-  skip_if_not_installed("INLA")
 
   pcod$fyear <- as.factor(pcod$year)
   fit0 <- sdmTMB(
@@ -124,7 +122,6 @@ test_that("Priors on random intercept SDs work", {
 test_that("Additional priors work", {
   skip_on_ci()
   skip_on_cran()
-  skip_if_not_installed("INLA")
   d <- pcod_2011
   pcod_spde <- pcod_mesh_2011
 

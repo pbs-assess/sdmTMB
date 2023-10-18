@@ -1,6 +1,5 @@
 test_that("sanity() runs", {
   skip_on_cran()
-  skip_if_not_installed("INLA")
 
   fit <- sdmTMB(density ~ 1, time = "year",
     data = pcod_2011, mesh = pcod_mesh_2011,

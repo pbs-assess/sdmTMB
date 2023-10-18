@@ -1,7 +1,6 @@
 test_that("Forecasting works with a time-varying parameter", {
   skip_on_cran()
   skip_on_ci()
-  skip_if_not_installed("INLA")
   spde <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
   nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
   grid2019 <- nd[nd$year == max(nd$year), ]

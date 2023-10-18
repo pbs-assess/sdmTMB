@@ -1,7 +1,6 @@
 ## test_that("Epsilon models work with RW spatiotemporal fields", {
 ##   skip_on_cran()
 ##   skip_on_ci()
-##   skip_if_not_installed("INLA")
 ##
 ##   pcod_spde <- pcod_mesh_2011
 ##   pcod_2011$year_centered <- pcod_2011$year - mean(pcod_2011$year)
@@ -41,7 +40,6 @@
 ## test_that("Epsilon models work with AR1 spatiotemporal fields", {
 ##   skip_on_cran()
 ##   skip_on_ci()
-##   skip_if_not_installed("INLA")
 ##
 ##   pcod_spde <- pcod_mesh_2011
 ##   pcod_2011$year_centered <- pcod_2011$year - mean(pcod_2011$year)

@@ -204,7 +204,6 @@ if (suppressWarnings(require("INLA", quietly = TRUE))) {
 test_that("Censored Poisson fits", {
   skip_on_ci()
   skip_on_cran()
-  skip_if_not_installed("INLA")
   set.seed(1)
 
   predictor_dat <- data.frame(X = runif(300), Y = runif(300))

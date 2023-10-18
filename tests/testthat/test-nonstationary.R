@@ -117,7 +117,6 @@ test_that("Test that non-stationary model works without spatial field and epsilo
   local_edition(2)
   skip_on_cran()
   skip_on_ci()
-  skip_if_not_installed("INLA")
 
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 
@@ -164,7 +163,6 @@ test_that("Test that non-stationary model works with spatial field and epsilon t
   local_edition(2)
   skip_on_cran()
   skip_on_ci()
-  skip_if_not_installed("INLA")
 
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 
@@ -212,7 +210,6 @@ test_that("Test that non-stationary model works with epsilon trend and delta mod
   local_edition(2)
   skip_on_cran()
   skip_on_ci()
-  skip_if_not_installed("INLA")
 
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 
@@ -241,7 +238,6 @@ test_that("Test that non-stationary model works without spatial field and random
   local_edition(2)
   skip_on_cran()
   skip_on_ci()
-  skip_if_not_installed("INLA")
 
   set.seed(42)
   time_steps <- 20
@@ -293,7 +289,6 @@ test_that("Test that non-stationary model works without spatial field and trend 
   local_edition(2)
   skip_on_cran()
   skip_on_ci()
-  skip_if_not_installed("INLA")
 
   set.seed(42)
   time_steps <- 20

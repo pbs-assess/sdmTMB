@@ -1,7 +1,6 @@
 test_that("aniso plots work", {
   skip_on_ci()
   skip_on_cran()
-  skip_if_not_installed("INLA")
   skip_if_not_installed("ggplot2")
   skip_if_not_installed("ggforce")
 

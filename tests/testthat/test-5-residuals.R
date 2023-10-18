@@ -20,7 +20,6 @@
 test_that("randomized quantile residuals work,", {
   skip_on_cran()
   skip_on_ci()
-  skip_if_not_installed("INLA")
 
   set.seed(1)
   predictor_dat <- data.frame(X = runif(2000), Y = runif(2000))
@@ -183,7 +182,6 @@ test_that("randomized quantile residuals work,", {
 
 test_that("residuals() works", {
   skip_on_cran()
-  skip_if_not_installed("INLA")
   pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
   # fit <- sdmTMB(density ~ 1, spatial = "off",
   #   data = pcod, mesh = pcod_spde,
@@ -285,7 +283,6 @@ test_that("Pearson residuals work", {
 
 test_that("MCMC residuals throw error as needed", {
   skip_on_cran()
-  skip_if_not_installed("INLA")
   fit_dg <- sdmTMB(
     density ~ 1,
     data = pcod_2011,
