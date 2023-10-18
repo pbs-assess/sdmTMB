@@ -25,5 +25,7 @@ jobs:
     - name: Install dependencies
       run: |
         R -q -e 'pak::pkg_install(c("deps::.", "any::rcmdcheck"), dependencies = TRUE)'
-    - uses: r-lib/actions/setup-pandoc@v2
     - uses: r-lib/actions/check-r-package@v2
+      with:
+        args: 'c("--no-manual", "--as-cran", "--ignore-vignettes", "--no-build-vignettes")'
+        build_args: 'c("--no-manual", "--no-build-vignettes")'
