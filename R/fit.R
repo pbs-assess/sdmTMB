@@ -1700,6 +1700,7 @@ make_groups <- function(x, prev_levels = NULL) {
     ret <- 0L
   }
   ret
+}
 
 get_spde_matrices <- function(x) {
   x <- x$spde[c("c0", "g1", "g2")]
