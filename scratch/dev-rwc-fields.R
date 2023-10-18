@@ -33,6 +33,7 @@ ggplot(s, aes(X, Y, colour = epsilon_st)) +
   facet_grid(category ~ year) +
   scale_colour_viridis_c()
 
+s$category <- as.factor(s$category)
 mesh <- make_mesh(s, c("X", "Y"), cutoff = 0.1)
 fit <- sdmTMB(
   observed ~ 0 + as.factor(category),

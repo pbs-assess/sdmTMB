@@ -1132,7 +1132,7 @@ Type objective_function<Type>::operator()()
     }
     array<Type> proj_mvrw_i(n_p,n_m);
     proj_mvrw_i.setZero();
-    if (mvrw_u.cols() > 0) {
+    if (n_c > 0) {
       for (int m = 0; m < n_m; m++) {
         for (int i = 0; i < n_p; i++) {
           proj_mvrw_i(i,m) += mvrw_u(proj_mvrw_cat_i(i), proj_year(i)); // note reversed category/year row/column indexing to rest of sdmTMB!
@@ -1190,7 +1190,8 @@ Type objective_function<Type>::operator()()
         for (int i = 0; i < n_p; i++) {
           proj_omega_s_A(i,m) = proj_omega_s_A_unique(proj_spatial_index(i),m);
           proj_epsilon_st_A_vec(i,m) = proj_epsilon_st_A_unique(proj_spatial_index(i), proj_year(i),m);
-          proj_upsilon_st_A_vec(i,m) = proj_upsilon_stc_A_unique(proj_spatial_index(i), proj_year(i), proj_mvrw_cat_i(i), m);
+          if (n_c > 0)
+            proj_upsilon_st_A_vec(i,m) = proj_upsilon_stc_A_unique(proj_spatial_index(i), proj_year(i), proj_mvrw_cat_i(i), m);
           for (int z = 0; z < n_z; z++) {
             proj_zeta_s_A(i,z,m) = proj_zeta_s_A_unique(proj_spatial_index(i),z,m);
           }
