@@ -19,6 +19,12 @@ print_model_info <- function(x) {
     title <- paste0("Spatial model fit by ", fit_by, " ['sdmTMB']\n")
   } else {
     title <- paste0("Spatiotemporal model fit by ", fit_by, " ['sdmTMB']\n")
+    if(delta) {
+      title <- paste0(title, paste0("Spatiotemporal field (presence): ", x$spatiotemporal[1], "\n"))
+      title <- paste0(title, paste0("Spatiotemporal field (positive): ", x$spatiotemporal[2], "\n"))
+    } else {
+      title <- paste0(title, paste0("Spatiotemporal field: ", x$spatiotemporal, "\n"))
+    }
   }
   if (all(x$spatial == "off") && all(x$spatiotemporal == "off")) {
     title <- paste0("Model fit by ", fit_by, " ['sdmTMB']\n")
