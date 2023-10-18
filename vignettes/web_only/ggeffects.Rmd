@@ -16,9 +16,8 @@ dplyr_installed <- require("dplyr", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
 ggeffects_installed <- require("ggeffects", quietly = TRUE)
 effects_installed <- require("effects", quietly = TRUE)
-inla_installed <- sdmTMB::inla_installed()
 pkgs <- dplyr_installed && ggplot_installed &&
-  ggeffects_installed && effects_installed && inla_installed
+  ggeffects_installed && effects_installed
 EVAL <- identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
 knitr::opts_chunk$set(
   collapse = TRUE,
