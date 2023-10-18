@@ -74,13 +74,14 @@ This function does nothing more than summarize and reshape the
 matrix of simulation draws into a data frame.
 }
 \examples{
-m <- sdmTMB(density ~ 0 + as.factor(year) + depth_scaled + depth_scaled2,
+m <- sdmTMB(density ~ 0 + as.factor(year),
   data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(link = "log"),
   time = "year"
 )
 qcs_grid_2011 <- replicate_df(qcs_grid, "year", unique(pcod_2011$year))
 p <- predict(m, newdata = qcs_grid_2011, nsim = 100)
 x <- get_index_sims(p)
+\donttest{
 x_sims <- get_index_sims(p, return_sims = TRUE)
 
 if (require("ggplot2", quietly = TRUE)) {
@@ -97,6 +98,7 @@ ind <- get_index_sims(
   agg_function = function(x) sum(x),
   area_function = function(x, area) x * area
 )
+}
 }
 \seealso{
 \code{\link[=get_index]{get_index()}}

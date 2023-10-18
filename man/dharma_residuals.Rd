@@ -21,7 +21,7 @@ Deprecated. See the
 }
 \description{
 Moved to the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
-package
+package. Make sure to load \pkg{sdmTMBextra} \emph{after} \pkg{sdmTMB}.
 }
 \examples{
 \dontrun{

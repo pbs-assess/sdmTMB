@@ -73,7 +73,6 @@ jobs:
           remotes::install_cran("sf")
           remotes::install_cran("rcmdcheck")
           remotes::install_cran("textshaping")
-          remotes::install_cran("rgdal")
         shell: Rscript {0}
 
       - name: Install dependencies Ubuntu

@@ -389,17 +389,18 @@ NULL
 #' # Perform several 'sanity' checks:
 #' sanity(fit)
 #'
-#' # Visualize depth effect: (see ?visreg_delta)
-#' visreg::visreg(fit, xvar = "depth") # link space; randomized quantile residuals
-#' visreg::visreg(fit, xvar = "depth", scale = "response")
-#' visreg::visreg(fit, xvar = "depth", scale = "response", gg = TRUE, rug = FALSE)
-#'
 #' # Predict on the fitted data; see ?predict.sdmTMB
 #' p <- predict(fit)
 #'
 #' # Predict on new data:
 #' p <- predict(fit, newdata = qcs_grid)
 #' head(p)
+#'
+#' \donttest{
+#' # Visualize depth effect: (see ?visreg_delta)
+#' visreg::visreg(fit, xvar = "depth") # link space; randomized quantile residuals
+#' visreg::visreg(fit, xvar = "depth", scale = "response")
+#' visreg::visreg(fit, xvar = "depth", scale = "response", gg = TRUE, rug = FALSE)
 #'
 #' # Add spatiotemporal random fields:
 #' fit <- sdmTMB(
@@ -410,7 +411,6 @@ NULL
 #' )
 #' fit
 #'
-#' \donttest{
 #' # Make the fields AR1:
 #' fit <- sdmTMB(
 #'   density ~ s(depth),

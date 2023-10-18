@@ -7,7 +7,7 @@
 extract_mcmc(object = deprecated())
 }
 \arguments{
-\item{object}{\strong{Deprecated} See the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package.}
+\item{object}{\strong{Deprecated} See the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package. Make sure to load \pkg{sdmTMBextra} \emph{after} \pkg{sdmTMB}.}
 }
 \value{
 Deprecated. See the
