@@ -1,6 +1,5 @@
-## Resubmission
-
-This version fixes several issues that have arisen on CRAN:
+This version fixes several issues that have arisen on CRAN as per an email
+from Brian Ripley on 2023-10-07 and a note about rgdal on 2023-10-18.
  
 * Removes dependencies on 'rgdal'
 * Fixes issues caused by updates to 'sf', 'INLA', and 'glmmTMB'
