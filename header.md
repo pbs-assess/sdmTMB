@@ -1,6 +1,6 @@
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# sdmTMB <a href='https://github.com/pbs-assess/sdmTMB'><img src='man/figures/logo-sdmTMB.png' style="float:right; height:139px;" /></a>
+# sdmTMB <a href='https://github.com/pbs-assess/sdmTMB'><img src='man/figures/logo-sdmTMB.png' align="right" /></a>
 
 > Spatial and spatiotemporal GLMMs with TMB
 
@@ -8,7 +8,6 @@
 [![](https://www.r-pkg.org/badges/version/sdmTMB)](https://cran.r-project.org/package=sdmTMB)
 [![Documentation](https://img.shields.io/badge/documentation-sdmTMB-orange.svg?colorB=E91E63)](https://pbs-assess.github.io/sdmTMB/)
 [![R-CMD-check](https://github.com/pbs-assess/sdmTMB/workflows/R-CMD-check/badge.svg)](https://github.com/pbs-assess/sdmTMB/actions)
-status](https://codecov.io/gh/pbs-assess/sdmTMB/branch/master/graph/badge.svg)](https://app.codecov.io/github/pbs-assess/sdmTMB?branch=master)
 [![downloads](http://cranlogs.r-pkg.org/badges/sdmTMB)](https://cranlogs.r-pkg.org/)
 [![total](http://cranlogs.r-pkg.org/badges/grand-total/sdmTMB)](https://cranlogs.r-pkg.org/)
 <!-- badges: end -->
