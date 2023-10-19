@@ -1132,7 +1132,7 @@ Type objective_function<Type>::operator()()
     }
     array<Type> proj_mvrw_i(n_p,n_m);
     proj_mvrw_i.setZero();
-    if (n_c > 0) {
+    if (mvrw_u.cols() > 0) {
       for (int m = 0; m < n_m; m++) {
         for (int i = 0; i < n_p; i++) {
           proj_mvrw_i(i,m) += mvrw_u(proj_mvrw_cat_i(i), proj_year(i)); // note reversed category/year row/column indexing to rest of sdmTMB!
