@@ -49,12 +49,11 @@ Authors@R: c(
            "the Minister of the Department of Fisheries and Oceans"),
            role = "cph")
   )
-Description: Implements spatial and spatiotemporal predictive-process GLMMs
-    (Generalized Linear Mixed Effect Models) using 'TMB', 'INLA', and the SPDE
-    (Stochastic Partial Differential Equation) approximation to Gaussian random
-    fields. One common application is for spatially explicit (and optionally
-    dynamic) species distribution models (SDMs). See Anderson et al. (2022)
-    <doi:10.1101/2022.03.24.485545>.
+Description: Implements spatial and spatiotemporal GLMMs (Generalized Linear
+    Mixed Effect Models) using 'TMB', 'INLA', and the SPDE (Stochastic Partial
+    Differential Equation) approximation to Gaussian random fields. One common
+    application is for spatially explicit species distribution models (SDMs).
+    See Anderson et al. (2022) <doi:10.1101/2022.03.24.485545>.
 License: GPL-3
 Copyright: inst/COPYRIGHTS
 URL: https://pbs-assess.github.io/sdmTMB/index.html,
