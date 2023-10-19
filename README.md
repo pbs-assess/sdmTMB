@@ -10,7 +10,6 @@
 [![Documentation](https://img.shields.io/badge/documentation-sdmTMB-orange.svg?colorB=E91E63)](https://pbs-assess.github.io/sdmTMB/)
 [![R-CMD-check](https://github.com/pbs-assess/sdmTMB/workflows/R-CMD-check/badge.svg)](https://github.com/pbs-assess/sdmTMB/actions)
 [![downloads](http://cranlogs.r-pkg.org/badges/sdmTMB)](https://cranlogs.r-pkg.org/)
-[![total](http://cranlogs.r-pkg.org/badges/grand-total/sdmTMB)](https://cranlogs.r-pkg.org/)
 <!-- badges: end -->
 
 sdmTMB is an R package that fits spatial and spatiotemporal GLMMs (Generalized Linear Mixed Effects Models) using Template Model Builder ([TMB](https://github.com/kaskr/adcomp)), [R-INLA](https://www.r-inla.org/), and Gaussian Markov random fields. One common application is for species distribution models (SDMs). See the [documentation site](https://pbs-assess.github.io/sdmTMB/) and a preprint:
