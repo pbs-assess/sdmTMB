@@ -3,11 +3,9 @@ NULL
 
 #' Fit a spatial or spatiotemporal GLMM with TMB
 #'
-#' Fit a spatial or spatiotemporal Gaussian random field generalized linear
-#' mixed effects model (GLMM) with the TMB (Template Model Builder) R package and
-#' the SPDE (stochastic partial differential equation) approach. This can be
-#' useful for (dynamic) species distribution models and relative abundance index
-#' standardization among many other uses.
+#' Fit a spatial or spatiotemporal generalized linear mixed effects model (GLMM)
+#' with the TMB (Template Model Builder) R package and the SPDE (stochastic
+#' partial differential equation) approximation to Gaussian random fields.
 #'
 #' @param formula Model formula. IID random intercepts are possible using
 #'   \pkg{lme4} syntax, e.g., `+ (1 | g)` where `g` is a column of class
@@ -82,8 +80,7 @@ NULL
 #'   \doi{10.1111/ecog.05176} and the [spatial trends
 #'   vignette](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html).
 #'   Note this predictor should usually be centered to have mean zero and have a
-#'   standard deviation of approximately 1 and should likely also be included as
-#'   a main effect.
+#'   standard deviation of approximately 1.
 #'   **The spatial intercept is controlled by the `spatial` argument**; therefore,
 #'   include or exclude the spatial intercept by setting `spatial = 'on'` or
 #'   `'off'`. The only time when it matters whether `spatial_varying` excludes
@@ -97,8 +94,8 @@ NULL
 #'   a name of the variable in the data frame. See the Details section below.
 #' @param offset A numeric vector representing the model offset *or* a character
 #'   value representing the column name of the offset. In delta/hurdle models,
-#'   this applies only to the positive component. Usually a log
-#'   transformed variable.
+#'   this applies only to the positive component. Usually a log transformed
+#'   variable.
 #' @param extra_time Optional extra time slices (e.g., years) to include for
 #'   interpolation or forecasting with the predict function. See the Details
 #'   section below.
@@ -163,7 +160,7 @@ NULL
 #' An object (list) of class `sdmTMB`. Useful elements include:
 #'
 #' * `sd_report`: output from [TMB::sdreport()]
-#' * `gradients`: log likelihood gradients with respect to each fixed effect
+#' * `gradients`: marginal log likelihood gradients with respect to each fixed effect
 #' * `model`: output from [stats::nlminb()]
 #' * `data`: the fitted data
 #' * `mesh`: the object that was supplied to the `mesh` argument
@@ -202,8 +199,8 @@ NULL
 #' with `+ s(x, y)` or `+ t2(x, y)`; smooths can be specific to various factor
 #' levels, `+ s(x, by = group)`; the basis function dimensions may be specified,
 #' e.g. `+ s(x, k = 4)`; and various types of splines may be constructed such as
-#' cyclic splines to model seasonality, `+ s(month, bs = "cc", k = 12)` (perhaps
-#' with the `knots` argument also be supplied).
+#' cyclic splines to model seasonality (perhaps with the `knots` argument also
+#' be supplied).
 #'
 #' **Threshold models**
 #'
@@ -216,7 +213,8 @@ NULL
 #' `+ logistic(variable)`. This option models the relationship as a logistic
 #' function of the 50% and 95% values. This is similar to length- or size-based
 #' selectivity in fisheries, and is parameterized by the points at which f(x) =
-#' 0.5 or 0.95. See the [threshold vignette](https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html).
+#' 0.5 or 0.95. See the
+#' [threshold vignette](https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html).
 #'
 #' Note that only a single threshold covariate can be included and the same covariate
 #' is included in both components for the delta families.
@@ -236,16 +234,7 @@ NULL
 #' time slices with process error.
 #'
 #' `extra_time` can also be used to fill in missing time steps for the purposes
-#' of a random walk or AR(1) process if their inclusion makes the gaps between
-#' time steps even.
-#'
-#' **Index standardization**
-#'
-#' For index standardization, you may wish to include `0 + as.factor(year)`
-#' (or whatever the time column is called) in the formula. See a basic
-#' example of index standardization in the relevant
-#' [package vignette](https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html).
-#' You will need to specify the `time` argument. See [get_index()].
+#' of a random walk or AR(1) process if the gaps between time steps are uneven.
 #'
 #' **Regularization and priors**
 #'
@@ -279,10 +268,18 @@ NULL
 #' The main advantage of specifying such models using a delta family (compared
 #' to fitting two separate models) is (1) coding simplicity and (2) calculation
 #' of uncertainty on derived quantities such as an index of abundance with
-#' [get_index()] using the generalized delta method within TMB. Also, parameters
-#' can be shared across the models.
+#' [get_index()] using the generalized delta method within TMB. Also, selected
+#' parameters can be shared across the models.
 #'
 #' See the [delta-model vignette](https://pbs-assess.github.io/sdmTMB/articles/delta-models.html).
+#'
+#' **Index standardization**
+#'
+#' For index standardization, you may wish to include `0 + as.factor(year)`
+#' (or whatever the time column is called) in the formula. See a basic
+#' example of index standardization in the relevant
+#' [package vignette](https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html).
+#' You will need to specify the `time` argument. See [get_index()].
 #'
 #' @references
 #'
@@ -305,7 +302,7 @@ NULL
 #' English, P., E.J. Ward, C.N. Rooper, R.E. Forrest, L.A. Rogers, K.L. Hunter,
 #' A.M. Edwards, B.M. Connors, S.C. Anderson. 2021. Contrasting climate velocity
 #' impacts in warm and cool locations show that effects of marine warming are
-#' worse in already warmer temperate waters. In press at Fish and Fisheries.
+#' worse in already warmer temperate waters. Fish and Fisheries. 23(1) 239-255.
 #' \doi{10.1111/faf.12613}.
 #'
 #' *Discussion of and illustration of some decision points when fitting these
@@ -319,9 +316,10 @@ NULL
 #' *Application and description of threshold/break-point models:*
 #'
 #' Essington, T.E. S.C. Anderson, L.A.K. Barnett, H.M. Berger, S.A. Siedlecki,
-#' E.J. Ward. Advancing statistical models to reveal the effect of dissolved
-#' oxygen on the spatial distribution of marine taxa using thresholds and a
-#' physiologically based index. In press at Ecography. \doi{10.1111/ecog.06249}.
+#' E.J. Ward. 2022. Advancing statistical models to reveal the effect of
+#' dissolved oxygen on the spatial distribution of marine taxa using thresholds
+#' and a physiologically based index. Ecography. 2022: e06249
+#' \doi{10.1111/ecog.06249}.
 #'
 #' *Application to fish body condition:*
 #'
@@ -329,7 +327,7 @@ NULL
 #' spatiotemporal individual condition of a bottom-associated marine fish.
 #' bioRxiv 2022.04.19.488709. \doi{10.1101/2022.04.19.488709}.
 #'
-#' *A number of sections of the original TMB model code were adapted from the
+#' *Several sections of the original TMB model code were adapted from the
 #' VAST R package:*
 #'
 #' Thorson, J.T., 2019. Guidance for decisions using the Vector Autoregressive
@@ -363,13 +361,14 @@ NULL
 #'
 #' # Build a mesh to implement the SPDE approach:
 #' mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
-#' # * this example uses a fairly coarse mesh so these examples run quickly
-#' # * `cutoff` is the minimum distance between mesh vertices in units of the
+#'
+#' # - this example uses a fairly coarse mesh so these examples run quickly
+#' # - 'cutoff' is the minimum distance between mesh vertices in units of the
 #' #   x and y coordinates
-#' # * `cutoff = 10` or `cutoff = 15` might make more sense in applied situations
-#' #   for this dataset
-#' # * or build any mesh in 'fmesher' and pass it to the `mesh` argument in `make_mesh()`
-#' # * not needed if you will be turning off all spatial/spatiotemporal random fields
+#' # - 'cutoff = 10' might make more sense in applied situations for this dataset
+#' # - or build any mesh in 'fmesher' and pass it to the 'mesh' argument in make_mesh()`
+#' # - the mesh is not needed if you will be turning off all
+#' #   spatial/spatiotemporal random fields
 #'
 #' # Quick mesh plot:
 #' plot(mesh)
@@ -607,14 +606,10 @@ sdmTMB <- function(
       spatiotemporal <- rep("iid", n_m)
   }
 
-
   if (is.null(time)) {
     spatial_only <- rep(TRUE, n_m)
   } else {
     spatial_only <- ifelse(spatiotemporal == "off", TRUE, FALSE)
-    # if(all(spatiotemporal == "off")) {
-    #   cli_abort("Time needs to be null if spatiotemporal fields are not included")
-    # }
   }
 
   if (is.list(spatial)) {
@@ -634,8 +629,6 @@ sdmTMB <- function(
   }
 
   if (!include_spatial && all(spatiotemporal == "off") || !include_spatial && all(spatial_only)) {
-    # message("Both spatial and spatiotemporal fields are set to 'off'.")
-    # control$map_rf <- TRUE
     no_spatial <- TRUE
     if (missing(mesh)) {
       mesh <- sdmTMB::pcod_mesh_2011 # internal data; fake!
@@ -787,20 +780,6 @@ sdmTMB <- function(
         # "As of version 0.3.1, sdmTMB turns off the constant spatial field `omega_s` when `spatial_varying` is specified so that the intercept or factor-level means are fully described by the spatially varying random fields `zeta_s`.")
       cli_inform(paste(msg, collapse = " "))
     }
-    # if (!omit_spatial_intercept & !length(attr(z_i, "contrasts"))) {
-    #   msg <- c("The spatial intercept is now in the first element of the spatially varying random fields `zeta_s` instead of the constant spatial random field `omega_s`. This change in the output format occurred in version 0.3.1.")
-    #   cli_inform(msg)
-    # }
-#    .int <- sum(grep("(Intercept)", colnames(z_i)) > 0)
-#    if (.int && !omit_spatial_intercept) {
-#      # msg <- c("Detected an intercept in `spatial_varying`.",
-#      #   "Make sure you have `spatial = 'off'` set since this also represents a spatial intercept.")
-#      # cli_warn(msg)
-#      # actually, just do it!
-#      omit_spatial_intercept <- TRUE
-#      include_spatial <- TRUE
-#      spatial <- "on"
-#    }
     .int <- grep("(Intercept)", colnames(z_i))
     if (sum(.int) > 0) z_i <- z_i[,-.int,drop=FALSE]
     spatial_varying <- colnames(z_i)
@@ -1042,7 +1021,6 @@ sdmTMB <- function(
 
   # TODO: make this cleaner
   X_ij_list <- list()
-  #X_ij_array <- array(data = NA, dim = c(nrow(X_ij[[1]]), ncol(X_ij[[1]]), n_m))
   for (i in seq_len(n_m)) X_ij_list[[i]] <- X_ij[[i]]
 
   n_t <- length(unique(data[[time]]))
@@ -1174,8 +1152,6 @@ sdmTMB <- function(
     tmb_params$b_j <- stats::coef(temp)
   }
 
-  #if (delta && !is.null(thresh$threshold_parameter)) cli_abort("Thresholds not implemented with delta models yet.") # TODO DELTA
-
   # Map off parameters not needed
   tmb_map <- map_all_params(tmb_params)
   tmb_map$b_j <- NULL
@@ -1203,14 +1179,6 @@ sdmTMB <- function(
   tmb_map$ln_phi <- as.factor(tmb_map$ln_phi)
   if (!is.null(thresh[[1]]$threshold_parameter)) tmb_map$b_threshold <- NULL
 
-  # optional models on spatiotemporal sd parameter
-  # if (est_epsilon_re == 0L) {
-  #   tmb_map <- c(tmb_map,
-  #                list(
-  #                  ln_epsilon_re_sigma = factor(rep(NA, n_m)),
-  #                  epsilon_re = factor(rep(NA, tmb_data$n_t))
-  #                ))
-  # }
   if (est_epsilon_re == 1L) {
     tmb_map <- unmap(tmb_map, c("ln_epsilon_re_sigma","epsilon_re"))
   }
@@ -1222,7 +1190,7 @@ sdmTMB <- function(
 
 
     original_tmb_data <- tmb_data
-    # # much faster on first phase!?
+    # much faster on first phase!?
     tmb_data$no_spatial <- 1L
     # tmb_data$include_spatial <- 0L
     tmb_data$include_spatial <- rep(0L, length(spatial)) # for 1st phase
@@ -1286,11 +1254,6 @@ sdmTMB <- function(
   }
   if (reml) tmb_random <- c(tmb_random, "b_j")
   if (reml && delta) tmb_random <- c(tmb_random, "b_j2")
-
-##  if (est_epsilon_model >= 2) {
-##    # model 2 = re model, model 3 = loglinear-re
-##    tmb_random <- c(tmb_random, "epsilon_rw")
-##  }
 
   if (sm$has_smooths) {
     if (reml) tmb_random <- c(tmb_random, "bs")
@@ -1380,8 +1343,6 @@ sdmTMB <- function(
   prof <- c("b_j")
   if (delta) prof <- c(prof, "b_j2")
 
-
-
   out_structure <- structure(list(
     data       = data,
     spde       = spde,
@@ -1444,7 +1405,6 @@ sdmTMB <- function(
   } else {
     out_structure$do_index <- FALSE
   }
-
 
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
@@ -1546,23 +1506,6 @@ set_limits <- function(tmb_obj, lower, upper, loc = NULL, silent = TRUE) {
     .upper["ar1_phi"] <- stats::qlogis((0.999 + 1) / 2)
   }
 
-  # if (!is.null(loc) && !"ln_kappa" %in% union(names(lower), names(upper))) {
-  #   .dist <- stats::dist(loc)
-  #   range_limits <- c(min(.dist) * 0.25, max(.dist) * 4)
-  #   .upper[names(.upper) == "ln_kappa"] <- log(sqrt(8) / range_limits[1])
-  #   .lower[names(.upper) == "ln_kappa"] <- log(sqrt(8) / range_limits[2])
-  #   message("Setting limits on range to ",
-  #     round(range_limits[1], 1), " and ",
-  #     round(range_limits[2], 1), ":\n",
-  #     "half the minimum and twice the maximum knot distance."
-  #   )
-  #   if (.upper[names(.upper) == "ln_kappa"][1] <= tmb_obj$par[["ln_kappa"]][1]) {
-  #     .upper[names(.upper) == "ln_kappa"] <- tmb_obj$par[["ln_kappa"]][1] + 0.1
-  #   }
-  #   if (.lower[names(.lower) == "ln_kappa"][1] >= tmb_obj$par[["ln_kappa"]][1]) {
-  #     .lower[names(.lower) == "ln_kappa"] <- tmb_obj$par[["ln_kappa"]][1] - 0.1
-  #   }
-  # }
   list(lower = .lower, upper = .upper)
 }
 
@@ -1624,7 +1567,6 @@ check_irregalar_time <- function(data, time, spatiotemporal, time_varying) {
 find_missing_time <- function(x) {
   if (!is.factor(x)) {
     ti <- sort(unique(x))
-    # mindiff <- min(diff(ti))
     mindiff <- 1L
     allx <- seq(min(ti), max(ti), by = mindiff)
     setdiff(allx, ti)

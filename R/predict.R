@@ -4,8 +4,8 @@
 
 #' Predict from an sdmTMB model
 #'
-#' Make predictions from an sdmTMB model; can predict on the original or new
-#' data.
+#' Make predictions from an \pkg{sdmTMB} model; can predict on the original or
+#' new data.
 #'
 #' @param object A model fitted with [sdmTMB()].
 #' @param newdata A data frame to make predictions on. This should be a data
@@ -29,32 +29,36 @@
 #'   predictions. `~0` or `NA` for population-level predictions. No other
 #'   options (e.g., some but not all random intercepts) are implemented yet.
 #'   Only affects predictions with `newdata`. This *does* affects [get_index()].
-#' @param nsim Experimental: If `> 0`, simulate from the joint precision
+#' @param nsim If `> 0`, simulate from the joint precision
 #'   matrix with `nsim` draws. Returns a matrix of `nrow(data)` by `nsim`
 #'   representing the estimates of the linear predictor (i.e., in link space).
-#'   Can be useful for deriving uncertainty on predictions (e.g., `apply(x, 1,
-#'   sd)`) or propagating uncertainty. This is currently the fastest way to
-#'   characterize uncertainty on predictions in space with sdmTMB.
+#'   Can be useful for deriving uncertainty on predictions
+#'   (e.g., `apply(x, 1, sd)`) or propagating uncertainty. This is currently
+#'   the fastest way to characterize uncertainty on predictions in space with
+#'   sdmTMB.
 #' @param sims_var Experimental: Which TMB reported variable from the model
 #'   should be extracted from the joint precision matrix simulation draws?
-#'   Defaults to the link-space predictions. Options include: `"omega_s"`,
+#'   Defaults to link-space predictions. Options include: `"omega_s"`,
 #'   `"zeta_s"`, `"epsilon_st"`, and `"est_rf"` (as described below).
 #'   Other options will be passed verbatim.
 #' @param tmbstan_model Deprecated. See `mcmc_samples`.
 #' @param mcmc_samples See `extract_mcmc()` in the
 #'   \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package for
-#'   more details and the Bayesian vignette. If specified, the predict function
-#'   will return a matrix of a similar form as if `nsim > 0` but representing
-#'   Bayesian posterior samples from the Stan model.
+#'   more details and the
+#'   \href{https://pbs-assess.github.io/sdmTMB/articles/web_only/bayesian.html}{Bayesian vignette}.
+#'   If specified, the predict function will return a matrix of a similar form
+#'   as if `nsim > 0` but representing Bayesian posterior samples from the Stan
+#'   model.
 #' @param model Type of prediction if a delta/hurdle model *and* `nsim > 0` or
 #'   `mcmc_samples` is supplied: `NA` returns the combined prediction from both
 #'   components on the link scale for the positive component; `1` or `2` return
 #'   the first or second model component only on the link or response scale
-#'   depending on the argument `type`.
+#'   depending on the argument `type`. For regular prediction from delta models,
+#'   both sets of predictions are returned.
 #' @param offset A numeric vector of optional offset values. If left at default
 #'   `NULL`, the offset is implicitly left at 0.
 #' @param return_tmb_report Logical: return the output from the TMB
-#'   report? For regular prediction this is all the reported variables
+#'   report? For regular prediction, this is all the reported variables
 #'   at the MLE parameter values. For `nsim > 0` or when `mcmc_samples`
 #'   is supplied, this is a list where each element is a sample and the
 #'   contents of each element is the output of the report for that sample.
@@ -499,8 +503,6 @@ predict.sdmTMB <- function(object, newdata = NULL,
     tmb_data$calc_se <- as.integer(se_fit)
     tmb_data$pop_pred <- as.integer(pop_pred)
     tmb_data$exclude_RE <- exclude_RE
-    # tmb_data$calc_index_totals <- as.integer(!se_fit)
-    # tmb_data$calc_cog <- as.integer(!se_fit)
     tmb_data$proj_spatial_index <- newdata$sdm_spatial_id
     tmb_data$proj_Zs <- sm$Zs
     tmb_data$proj_Xs <- sm$Xs

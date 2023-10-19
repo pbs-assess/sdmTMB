@@ -113,8 +113,7 @@ random field is assumed to have a mean of 0. If a (scaled) time column is
 used, it will represent a local-time-trend model. See
 \doi{10.1111/ecog.05176} and the \href{https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.
 Note this predictor should usually be centered to have mean zero and have a
-standard deviation of approximately 1 and should likely also be included as
-a main effect.
+standard deviation of approximately 1.
 \strong{The spatial intercept is controlled by the \code{spatial} argument}; therefore,
 include or exclude the spatial intercept by setting \code{spatial = 'on'} or
 \code{'off'}. The only time when it matters whether \code{spatial_varying} excludes
@@ -130,8 +129,8 @@ a name of the variable in the data frame. See the Details section below.}
 
 \item{offset}{A numeric vector representing the model offset \emph{or} a character
 value representing the column name of the offset. In delta/hurdle models,
-this applies only to the positive component. Usually a log
-transformed variable.}
+this applies only to the positive component. Usually a log transformed
+variable.}
 
 \item{extra_time}{Optional extra time slices (e.g., years) to include for
 interpolation or forecasting with the predict function. See the Details
@@ -189,7 +188,7 @@ be dragons.}
 An object (list) of class \code{sdmTMB}. Useful elements include:
 \itemize{
 \item \code{sd_report}: output from \code{\link[TMB:sdreport]{TMB::sdreport()}}
-\item \code{gradients}: log likelihood gradients with respect to each fixed effect
+\item \code{gradients}: marginal log likelihood gradients with respect to each fixed effect
 \item \code{model}: output from \code{\link[stats:nlminb]{stats::nlminb()}}
 \item \code{data}: the fitted data
 \item \code{mesh}: the object that was supplied to the \code{mesh} argument
@@ -201,11 +200,9 @@ An object (list) of class \code{sdmTMB}. Useful elements include:
 }
 }
 \description{
-Fit a spatial or spatiotemporal Gaussian random field generalized linear
-mixed effects model (GLMM) with the TMB (Template Model Builder) R package and
-the SPDE (stochastic partial differential equation) approach. This can be
-useful for (dynamic) species distribution models and relative abundance index
-standardization among many other uses.
+Fit a spatial or spatiotemporal generalized linear mixed effects model (GLMM)
+with the TMB (Template Model Builder) R package and the SPDE (stochastic
+partial differential equation) approximation to Gaussian random fields.
 }
 \details{
 \strong{Model description}
@@ -235,8 +232,8 @@ Within these smooths, the same syntax commonly used in \code{\link[mgcv:s]{mgcv:
 with \code{+ s(x, y)} or \code{+ t2(x, y)}; smooths can be specific to various factor
 levels, \code{+ s(x, by = group)}; the basis function dimensions may be specified,
 e.g. \code{+ s(x, k = 4)}; and various types of splines may be constructed such as
-cyclic splines to model seasonality, \code{+ s(month, bs = "cc", k = 12)} (perhaps
-with the \code{knots} argument also be supplied).
+cyclic splines to model seasonality (perhaps with the \code{knots} argument also
+be supplied).
 
 \strong{Threshold models}
 
@@ -249,7 +246,8 @@ Similarly, a logistic-function threshold model can be included via
 \code{+ logistic(variable)}. This option models the relationship as a logistic
 function of the 50\% and 95\% values. This is similar to length- or size-based
 selectivity in fisheries, and is parameterized by the points at which f(x) =
-0.5 or 0.95. See the \href{https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html}{threshold vignette}.
+0.5 or 0.95. See the
+\href{https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html}{threshold vignette}.
 
 Note that only a single threshold covariate can be included and the same covariate
 is included in both components for the delta families.
@@ -269,16 +267,7 @@ or a smoother on the time column provide mechanisms to predict over missing
 time slices with process error.
 
 \code{extra_time} can also be used to fill in missing time steps for the purposes
-of a random walk or AR(1) process if their inclusion makes the gaps between
-time steps even.
-
-\strong{Index standardization}
-
-For index standardization, you may wish to include \code{0 + as.factor(year)}
-(or whatever the time column is called) in the formula. See a basic
-example of index standardization in the relevant
-\href{https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html}{package vignette}.
-You will need to specify the \code{time} argument. See \code{\link[=get_index]{get_index()}}.
+of a random walk or AR(1) process if the gaps between time steps are uneven.
 
 \strong{Regularization and priors}
 
@@ -312,10 +301,18 @@ through a single formula that is shared across the two models.
 The main advantage of specifying such models using a delta family (compared
 to fitting two separate models) is (1) coding simplicity and (2) calculation
 of uncertainty on derived quantities such as an index of abundance with
-\code{\link[=get_index]{get_index()}} using the generalized delta method within TMB. Also, parameters
-can be shared across the models.
+\code{\link[=get_index]{get_index()}} using the generalized delta method within TMB. Also, selected
+parameters can be shared across the models.
 
 See the \href{https://pbs-assess.github.io/sdmTMB/articles/delta-models.html}{delta-model vignette}.
+
+\strong{Index standardization}
+
+For index standardization, you may wish to include \code{0 + as.factor(year)}
+(or whatever the time column is called) in the formula. See a basic
+example of index standardization in the relevant
+\href{https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html}{package vignette}.
+You will need to specify the \code{time} argument. See \code{\link[=get_index]{get_index()}}.
 }
 \examples{
 \dontshow{if (require("visreg", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
@@ -323,13 +320,14 @@ library(sdmTMB)
 
 # Build a mesh to implement the SPDE approach:
 mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
-# * this example uses a fairly coarse mesh so these examples run quickly
-# * `cutoff` is the minimum distance between mesh vertices in units of the
+
+# - this example uses a fairly coarse mesh so these examples run quickly
+# - 'cutoff' is the minimum distance between mesh vertices in units of the
 #   x and y coordinates
-# * `cutoff = 10` or `cutoff = 15` might make more sense in applied situations
-#   for this dataset
-# * or build any mesh in 'fmesher' and pass it to the `mesh` argument in `make_mesh()`
-# * not needed if you will be turning off all spatial/spatiotemporal random fields
+# - 'cutoff = 10' might make more sense in applied situations for this dataset
+# - or build any mesh in 'fmesher' and pass it to the 'mesh' argument in make_mesh()`
+# - the mesh is not needed if you will be turning off all
+#   spatial/spatiotemporal random fields
 
 # Quick mesh plot:
 plot(mesh)
@@ -531,7 +529,7 @@ velocities:}
 English, P., E.J. Ward, C.N. Rooper, R.E. Forrest, L.A. Rogers, K.L. Hunter,
 A.M. Edwards, B.M. Connors, S.C. Anderson. 2021. Contrasting climate velocity
 impacts in warm and cool locations show that effects of marine warming are
-worse in already warmer temperate waters. In press at Fish and Fisheries.
+worse in already warmer temperate waters. Fish and Fisheries. 23(1) 239-255.
 \doi{10.1111/faf.12613}.
 
 \emph{Discussion of and illustration of some decision points when fitting these
@@ -545,9 +543,10 @@ e12783. \doi{10.7717/peerj.12783}.
 \emph{Application and description of threshold/break-point models:}
 
 Essington, T.E. S.C. Anderson, L.A.K. Barnett, H.M. Berger, S.A. Siedlecki,
-E.J. Ward. Advancing statistical models to reveal the effect of dissolved
-oxygen on the spatial distribution of marine taxa using thresholds and a
-physiologically based index. In press at Ecography. \doi{10.1111/ecog.06249}.
+E.J. Ward. 2022. Advancing statistical models to reveal the effect of
+dissolved oxygen on the spatial distribution of marine taxa using thresholds
+and a physiologically based index. Ecography. 2022: e06249
+\doi{10.1111/ecog.06249}.
 
 \emph{Application to fish body condition:}
 
@@ -555,7 +554,7 @@ Lindmark, M., S.C. Anderson, M. Gogina, M. Casini. Evaluating drivers of
 spatiotemporal individual condition of a bottom-associated marine fish.
 bioRxiv 2022.04.19.488709. \doi{10.1101/2022.04.19.488709}.
 
-\emph{A number of sections of the original TMB model code were adapted from the
+\emph{Several sections of the original TMB model code were adapted from the
 VAST R package:}
 
 Thorson, J.T., 2019. Guidance for decisions using the Vector Autoregressive
