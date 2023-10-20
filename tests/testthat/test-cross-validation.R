@@ -47,6 +47,24 @@ test_that("Basic cross validation works", {
   expect_equal(class(x$models[[1]]), "sdmTMB")
 })
 
+test_that("Cross validation in parallel with globals", {
+  # https://github.com/pbs-assess/sdmTMB/issues/127
+  skip_on_ci()
+  skip_on_cran()
+  d <- pcod
+  spde <- make_mesh(d, c("X", "Y"), cutoff = 15)
+  set.seed(2)
+  future::plan(future::multisession, workers = 2L)
+  fam <- tweedie(link = "log")
+  x <- sdmTMB_cv(
+    density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+    data = d, mesh = spde,
+    family = fam, time = "year", k_folds = 2L, future_globals = 'fam'
+  )
+  expect_s3_class(x$models[[1]], "sdmTMB")
+  future::plan(future::sequential)
+})
+
 test_that("Leave future out cross validation works", {
   skip_on_ci()
   skip_on_cran()
