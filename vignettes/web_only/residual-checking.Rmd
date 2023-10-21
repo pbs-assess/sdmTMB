@@ -225,6 +225,62 @@ These also look OK.
 
 For help interpreting the DHARMa residual plots, see `vignette("DHARMa", package="DHARMa")`.
 
+For delta models, or models of presence-absence data, additional diagnostics can be generated. A first commonly used diagnostic is the AUC (Area Under the Curve), quantifying the ability of a model to discriminate between the two classes; this is done from the Receiver Operating Characteristic (ROC) curve, which plots the true positive rate versus false positive rate. There are a number of packages to calculate AUC in R, but this can be done with the `pROC` package, where inputs are a vector of 0s and 1s (or factor equivalents) in the raw data, and a vector of estimated probabilities (generated from a call to `predict()`, as shown below). The `plogis()` function is needed to convert estimated values in logit space to probabilities in normal space. 
+
+```{r roc, eval=FALSE}
+pred <- predict(sdmtmb_model) # presence-absence model
+roc <- pROC::roc( actual_values, plogis(pred$est) )
+auc <- pROC::auc(roc)
+```
+
+With a delta model, two estimated values are returned, so only the first would be used, 
+```{r}
+roc <- pROC::roc( actual_values, plogis(pred$est1) )
+```
+
+AUC may be sensitive to imbalances in the data, however, and alternative metrics may better approximate skill. To highlight an example of using true skill score (implemented in packages like `SDMtune`), we can create a new binary response and fit a model to that.
+
+```{r}
+dat <- sdmTMB_simulate(
+  formula = ~ 1,
+  data = predictor_dat,
+  mesh = mesh,
+  family = binomial(link = "logit"),
+  range = 0.4,
+  sigma_O = 0.3,
+  seed = 1,
+  B = c(-0.2) # B0 = intercept
+)
+
+fit_bin <- sdmTMB(observed ~ 1, data = dat, family = binomial(), mesh = mesh)
+```
+
+Next, we can generate predicted probabilities and classes using a threshold of 0.5
+
+```{r}
+pred <- predict(fit_bin)
+pred$p <- plogis(pred$est)
+pred$pred_01 <- ifelse(pred$p < 0.5, 0, 1)
+```
+
+Next we create a confusion matrix and calculate the true skill skore,
+
+```{r}
+conmat <- table(pred$pred_01, pred$observed)
+
+true_neg <- conmat[1,1]
+false_neg <- conmat[1,2]
+false_pos <- conmat[2,1]
+true_pos <- conmat[2,2] 
+
+# Calculate TSS
+true_pos_rate <- true_pos / (true_pos + false_neg)
+true_neg_rate <- true_neg / (true_neg + false_pos)
+TSS <- true_pos_rate + true_neg_rate - 1
+```
+
+In some cases, reporting the true negative or true positive rate might be of interest in addition to TSS.
+
 # References
 
 Dunn, P.K., and Smyth, G.K. 1996. Randomized Quantile Residuals. Journal of Computational and Graphical Statistics 5(3): 236–244.
