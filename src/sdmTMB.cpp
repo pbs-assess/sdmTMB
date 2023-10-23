@@ -302,14 +302,21 @@ Type objective_function<Type>::operator()()
     if (include_spatial(m)) {
       sigma_O(0,m) = sdmTMB::calc_rf_sigma(ln_tau_O(m), ln_kappa(0,m));
       log_sigma_O(0,m) = log(sigma_O(0,m));
+      REPORT(sigma_O);
+      ADREPORT(sigma_O);
+      ADREPORT(log_sigma_O);
     }
     if (spatial_covariate) {
       for (int z = 0; z < n_z; z++) {
         sigma_Z(z,m) = sdmTMB::calc_rf_sigma(ln_tau_Z(z,m), ln_kappa(0,m));
+        REPORT(sigma_Z);
+        ADREPORT(sigma_Z);
+        ADREPORT(log_sigma_Z);
       }
     for (int z = 0; z < n_z; z++)
       for (int m = 0; m < n_m; m++)
         log_sigma_Z(z,m) = log(sigma_Z(z,m));
+        ADREPORT(log_sigma_Z);
     }
   }
 
@@ -358,6 +365,16 @@ Type objective_function<Type>::operator()()
       }
     }
   }
+  array<Type> log_sigma_E(sigma_E.rows(),sigma_E.cols()); // for SE
+  log_sigma_E.setZero();
+  for (int i = 0; i < sigma_E.rows(); i++) {
+    for (int m = 0; m < sigma_E.cols(); m++) {
+      log_sigma_E(i,m) = log(sigma_E(i,m));
+    }
+  }
+  REPORT(sigma_E);      // spatio-temporal SD
+  ADREPORT(sigma_E);
+  ADREPORT(log_sigma_E);      // log spatio-temporal SD
 
   Eigen::SparseMatrix<Type> Q_s; // Precision matrix
   Eigen::SparseMatrix<Type> Q_st; // Precision matrix
@@ -529,6 +546,8 @@ Type objective_function<Type>::operator()()
       if (sim_re(3)) SIMULATE{RE(h,m) = rnorm(Type(0), sigma_G(g,m));}
     }
   }
+  REPORT(sigma_G);
+  ADREPORT(sigma_G); // time-varying SD
 
   array<Type> sigma_V(X_rw_ik.cols(),n_m);
   // Time-varying effects (dynamic regression):
@@ -580,6 +599,8 @@ Type objective_function<Type>::operator()()
         }
       }
     }
+    REPORT(sigma_V);
+    ADREPORT(sigma_V); // time-varying SD
   }
   // ------------------ INLA projections ---------------------------------------
 
@@ -631,6 +652,8 @@ Type objective_function<Type>::operator()()
       }
       eta_smooth_i.col(m) += Xs * vector<Type>(bs.col(m));
     }
+    REPORT(b_smooth);     // smooth coefficients for penalized splines
+    REPORT(ln_smooth_sigma); // standard deviations of smooth random effects, in log-space
   }
 
   // add threshold effect if specified
@@ -744,6 +767,10 @@ Type objective_function<Type>::operator()()
     for (int i = 0; i < n_i; i++) {
       mu_i_large(i) = exp(log(mu_i(i, mix_model)) + log(mix_ratio));  // mean of large component = mean of smaller * ratio
     }
+    ADREPORT(logit_p_mix);
+    ADREPORT(log_ratio_mix);
+    REPORT(p_mix);
+    REPORT(mix_ratio);
     break;
   }
   default:
@@ -752,7 +779,6 @@ Type objective_function<Type>::operator()()
 
   vector<Type> jnll_obs(n_i); // for cross validation
   jnll_obs.setZero();
-  REPORT(phi);
   for (int m = 0; m < n_m; m++) PARALLEL_REGION {
     for (int i = 0; i < n_i; i++) {
       if (!sdmTMB::isNA(y_i(i,m))) {
@@ -764,6 +790,7 @@ Type objective_function<Type>::operator()()
           }
           case tweedie_family: {
             tweedie_p = invlogit(thetaf) + Type(1.0);
+            ADREPORT(tweedie_p);
             if (!sdmTMB::isNA(priors(12))) {
               jnll -= dnorm(s1, priors(12), priors(13), true);
               // derivative: https://www.wolframalpha.com/input?i=e%5Ex%2F%281%2Be%5Ex%29+%2B+1
@@ -1312,25 +1339,37 @@ Type objective_function<Type>::operator()()
   //  // ------------------ Reporting ----------------------------------------------
   // FIXME save memory by not reporting all these or optionally so for MVN/Bayes?
 
-  array<Type> log_range(range.rows(),range.cols()); // for SE
-  for (int i = 0; i < range.rows(); i++) {
-    for (int m = 0; m < range.cols(); m++) {
-      log_range(i,m) = log(range(i,m));
+  if (!no_spatial) {
+    array<Type> log_range(range.rows(),range.cols()); // for SE
+    log_range.setZero();
+    for (int i = 0; i < range.rows(); i++) {
+      for (int m = 0; m < range.cols(); m++) {
+        log_range(i,m) = log(range(i,m));
+      }
     }
-  }
-  array<Type> log_sigma_E(sigma_E.rows(),sigma_E.cols()); // for SE
-  for (int i = 0; i < sigma_E.rows(); i++) {
-    for (int m = 0; m < sigma_E.cols(); m++) {
-      log_sigma_E(i,m) = log(sigma_E(i,m));
-    }
+    REPORT(rho);          // AR1 correlation in -1 to 1 space
+    REPORT(range);        // Matern approximate distance at 10% correlation
+    ADREPORT(range);        // Matern approximate distance at 10% correlation
+    REPORT(log_range);  // log Matern approximate distance at 10% correlation
+    ADREPORT(log_range);  // log Matern approximate distance at 10% correlation
   }
 
-  ADREPORT(logit_p_mix);
-  ADREPORT(log_ratio_mix);
-  ADREPORT(tweedie_p);
-  REPORT(p_mix);
-  REPORT(mix_ratio);
-  ADREPORT(phi);
+  // only ADREPORT phi if a family uses it:
+  int phi_model;
+  if (n_m > 1) {
+    phi_model = 1;
+  } else {
+    phi_model = 0;
+  }
+  switch (family(phi_model)) {
+    case binomial_family:
+    case poisson_family:
+      break;
+    default:
+      ADREPORT(phi);
+      REPORT(phi);
+  }
+
   REPORT(epsilon_st_A_vec);   // spatio-temporal effects; vector
   REPORT(b_rw_t);   // time-varying effects
   REPORT(omega_s_A);      // spatial effects; n_s length vector
@@ -1340,28 +1379,7 @@ Type objective_function<Type>::operator()()
   REPORT(eta_i);        // fixed and random effect predictions in link space
   REPORT(eta_rw_i);     // time-varying predictions in link space
   REPORT(eta_iid_re_i); // IID intercept random effect estimates
-  REPORT(rho);          // AR1 correlation in -1 to 1 space
-  REPORT(range);        // Matern approximate distance at 10% correlation
-  ADREPORT(range);        // Matern approximate distance at 10% correlation
-  REPORT(log_range);  // log Matern approximate distance at 10% correlation
-  ADREPORT(log_range);  // log Matern approximate distance at 10% correlation
-  REPORT(b_smooth);     // smooth coefficients for penalized splines
-  REPORT(ln_smooth_sigma); // standard deviations of smooth random effects, in log-space
   REPORT(jnll_obs); // for cross validation
-
-  REPORT(sigma_O);
-  ADREPORT(sigma_O);
-  ADREPORT(log_sigma_O);
-  REPORT(sigma_Z);
-  ADREPORT(sigma_Z);
-  ADREPORT(log_sigma_Z);
-  REPORT(sigma_E);      // spatio-temporal SD
-  ADREPORT(sigma_E);
-  ADREPORT(log_sigma_E);      // log spatio-temporal SD
-  REPORT(sigma_V);
-  REPORT(sigma_G);
-  ADREPORT(sigma_V); // time-varying SD
-  ADREPORT(sigma_G); // time-varying SD
 
   SIMULATE {
     REPORT(y_i);
