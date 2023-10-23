@@ -302,23 +302,23 @@ Type objective_function<Type>::operator()()
     if (include_spatial(m)) {
       sigma_O(0,m) = sdmTMB::calc_rf_sigma(ln_tau_O(m), ln_kappa(0,m));
       log_sigma_O(0,m) = log(sigma_O(0,m));
-      REPORT(sigma_O);
-      ADREPORT(sigma_O);
-      ADREPORT(log_sigma_O);
     }
     if (spatial_covariate) {
       for (int z = 0; z < n_z; z++) {
         sigma_Z(z,m) = sdmTMB::calc_rf_sigma(ln_tau_Z(z,m), ln_kappa(0,m));
-        REPORT(sigma_Z);
-        ADREPORT(sigma_Z);
-        ADREPORT(log_sigma_Z);
       }
     for (int z = 0; z < n_z; z++)
       for (int m = 0; m < n_m; m++)
         log_sigma_Z(z,m) = log(sigma_Z(z,m));
-        ADREPORT(log_sigma_Z);
     }
   }
+  REPORT(sigma_Z);
+  ADREPORT(sigma_Z);
+  ADREPORT(log_sigma_Z);
+  REPORT(sigma_O);
+  ADREPORT(sigma_O);
+  ADREPORT(log_sigma_O);
+  ADREPORT(log_sigma_Z);
 
   // TODO can we not always run this for speed?
   //vector<Type> sigma_E(n_m);

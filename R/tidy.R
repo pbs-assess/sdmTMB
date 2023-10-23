@@ -198,7 +198,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
       if (this == "tau_V") this <- "sigma_V"
       this_se <- as.numeric(se[[this]])
       this_est <- as.numeric(est[[this]])
-      if (length(this_est)) {
+      if (length(this_est) && !(all(this_se == 0) && all(this_est == 0))) {
         out_re[[i]] <- data.frame(
           term = i, estimate = this_est, std.error = this_se,
           conf.low = exp(.e - crit * .se),
