@@ -422,7 +422,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
       proj_mesh <- object$spde$A_st # fake
       newdata[[xy_cols[1]]] <- NA_real_ # fake
       newdata[[xy_cols[2]]] <- NA_real_ # fake
-      newdata[["sdm_spatial_id"]] <- NA_integer_ # fake
+      newdata[["sdm_spatial_id"]] <- rep(0L, nrow(newdata)) # fake
     }
 
     if (length(object$formula) == 1L) {
