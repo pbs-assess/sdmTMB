@@ -196,7 +196,12 @@ df.residual.sdmTMB <- function(object, ...) {
 #' @export
 formula.sdmTMB <- function (x, ...) {
   if (.has_delta_attr(x)) {
-    return(x$formula[[attr(fit, "delta_model_predict")]])
+    which_model <- attr(x, "delta_model_predict")
+    if (!identical(x$formula[[1]], x$formula[[2]]) && is.na(which_model)) {
+      cli_abort("Delta component formulas are not the same but ggeffects::ggpredict() is trying to predict on the combined model. For now, predict on one or the other component, or keep the formulas the same, or write your own prediction and plot code.")
+    }
+    if (is.na(which_model)) which_model <- 1L # combined take 1!?
+    return(x$formula[[which_model]])
   }
   if (length(x$formula) > 1L) {
     if ("visreg_model" %in% names(x)) {
@@ -243,6 +248,12 @@ terms.sdmTMB <- function(x, ...) {
 Effect.sdmTMB <- function(focal.predictors, mod, ...) {
   if (!requireNamespace("effects", quietly = TRUE)) {
     cli_abort("Please install the effects package")
+  }
+
+  if (is_delta(mod)) {
+    msg <- paste0("Effect() and ggeffects::ggeffect() do not yet work with ",
+      "sdmTMB delta/hurdle models. Please use ggeffects::ggpredict() instead.")
+    cli_abort(msg)
   }
 
   vc <- vcov(mod)
