@@ -33,173 +33,171 @@ x <- stats::runif(100, -1, 1)
 y <- stats::runif(100, -1, 1)
 loc <- data.frame(x = x, y = y)
 
-if (suppressWarnings(require("INLA", quietly = TRUE))) {
-  spde <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
+spde <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
 
-  test_that("Student family fits", {
-    skip_on_ci()
-    skip_on_cran()
-    set.seed(3)
-    initial_betas <- 0.5
-    range <- 0.5
-    sigma_O <- 0.3
-    phi <- 0.01
-    s <- sdmTMB_simulate(~ 1, data = loc,
-      B = initial_betas,
-      phi = phi, range = range, sigma_O = sigma_O, sigma_E = 0,
-      seed = 1, mesh = spde
-    )
-    m <- sdmTMB(data = s, formula = observed ~ 1, mesh = spde,
-      family = student(link = "identity", df = 7),
-      spatial = "off", spatiotemporal = "off"
-    )
-    expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
-    expect_length(residuals(m), nrow(s))
-  })
+test_that("Student family fits", {
+  skip_on_ci()
+  skip_on_cran()
+  set.seed(3)
+  initial_betas <- 0.5
+  range <- 0.5
+  sigma_O <- 0.3
+  phi <- 0.01
+  s <- sdmTMB_simulate(~ 1, data = loc,
+    B = initial_betas,
+    phi = phi, range = range, sigma_O = sigma_O, sigma_E = 0,
+    seed = 1, mesh = spde
+  )
+  m <- sdmTMB(data = s, formula = observed ~ 1, mesh = spde,
+    family = student(link = "identity", df = 7),
+    spatial = "off", spatiotemporal = "off"
+  )
+  expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
+  expect_length(residuals(m), nrow(s))
+})
 
-  test_that("Lognormal fits", {
-    skip_on_ci()
-    skip_on_cran()
-    range <- 1
-    x <- stats::runif(500, -1, 1)
-    y <- stats::runif(500, -1, 1)
-    loc <- data.frame(x = x, y = y)
-    spde <- make_mesh(loc, c("x", "y"), n_knots = 70, type = "kmeans")
-    sigma_O <- 0.3
-    sigma_E <- 0
-    phi <- 0.2
-    s <- sdmTMB_simulate(~ 1, loc, mesh = spde, family = lognormal(),
-      B = 1,
-      phi = phi, range = range, sigma_O = sigma_O, seed = 1
-    )
-    mlog <- sdmTMB(data = s, formula = observed ~ 1, mesh = spde,
-      family = lognormal(link = "log"))
-    expect_equal(exp(mlog$model$par[["ln_phi"]]), phi, tolerance = 0.1)
-  })
+test_that("Lognormal fits", {
+  skip_on_ci()
+  skip_on_cran()
+  range <- 1
+  x <- stats::runif(500, -1, 1)
+  y <- stats::runif(500, -1, 1)
+  loc <- data.frame(x = x, y = y)
+  spde <- make_mesh(loc, c("x", "y"), n_knots = 70, type = "kmeans")
+  sigma_O <- 0.3
+  sigma_E <- 0
+  phi <- 0.2
+  s <- sdmTMB_simulate(~ 1, loc, mesh = spde, family = lognormal(),
+    B = 1,
+    phi = phi, range = range, sigma_O = sigma_O, seed = 1
+  )
+  mlog <- sdmTMB(data = s, formula = observed ~ 1, mesh = spde,
+    family = lognormal(link = "log"))
+  expect_equal(exp(mlog$model$par[["ln_phi"]]), phi, tolerance = 0.1)
+})
 
-  test_that("NB2 fits", {
-    skip_on_ci()
-    skip_on_cran()
-    set.seed(1)
-    x <- stats::runif(300, -1, 1)
-    y <- stats::runif(300, -1, 1)
-    loc <- data.frame(x = x, y = y)
-    spde <- make_mesh(loc, c("x", "y"), n_knots = 80, type = "kmeans")
-    s <- sdmTMB_simulate(~ 1, loc, B = 0.4, phi = 1.5, range = 0.8,
-      sigma_O = 0.4, seed = 1, mesh = spde, family = nbinom2())
-    m <- sdmTMB(data = s, formula = observed ~ 1,
-      mesh = spde, family = nbinom2(),
-      control = sdmTMBcontrol(newton_loops = 1))
-    expect_equal(round(tidy(m)[,"estimate", drop=TRUE], 6), 0.601897)
-  })
+test_that("NB2 fits", {
+  skip_on_ci()
+  skip_on_cran()
+  set.seed(1)
+  x <- stats::runif(300, -1, 1)
+  y <- stats::runif(300, -1, 1)
+  loc <- data.frame(x = x, y = y)
+  spde <- make_mesh(loc, c("x", "y"), n_knots = 80, type = "kmeans")
+  s <- sdmTMB_simulate(~ 1, loc, B = 0.4, phi = 1.5, range = 0.8,
+    sigma_O = 0.4, seed = 1, mesh = spde, family = nbinom2())
+  m <- sdmTMB(data = s, formula = observed ~ 1,
+    mesh = spde, family = nbinom2(),
+    control = sdmTMBcontrol(newton_loops = 1))
+  expect_equal(round(tidy(m)[,"estimate", drop=TRUE], 6), 0.601897)
+})
 
-  test_that("Truncated NB2, truncated NB1, and regular NB1 fit", {
-    skip_on_ci()
-    skip_on_cran()
-    set.seed(1)
-    x <- stats::runif(300, -1, 1)
-    y <- stats::runif(300, -1, 1)
-    loc <- data.frame(x = x, y = y)
-    spde <- make_mesh(loc, c("x", "y"), n_knots = 80, type = "kmeans")
-    s <- sdmTMB_simulate(~ 1, loc, B = 0.4, phi = 1.5, range = 0.8,
-      sigma_O = 0.4, seed = 1, mesh = spde, family = nbinom2())
+test_that("Truncated NB2, truncated NB1, and regular NB1 fit", {
+  skip_on_ci()
+  skip_on_cran()
+  set.seed(1)
+  x <- stats::runif(300, -1, 1)
+  y <- stats::runif(300, -1, 1)
+  loc <- data.frame(x = x, y = y)
+  spde <- make_mesh(loc, c("x", "y"), n_knots = 80, type = "kmeans")
+  s <- sdmTMB_simulate(~ 1, loc, B = 0.4, phi = 1.5, range = 0.8,
+    sigma_O = 0.4, seed = 1, mesh = spde, family = nbinom2())
 
-    m_sdmTMB <- sdmTMB(data = s, formula = observed ~ 1,
-      mesh = spde, family = nbinom1(),
-      spatial = "off")
-    m_glmmTMB <- glmmTMB::glmmTMB(data = s, formula = observed ~ 1,
-      family = glmmTMB::nbinom1())
-    expect_equal(m_glmmTMB$fit$par[[1]], m_sdmTMB$model$par[[1]], tolerance = 0.00001)
-    expect_equal(m_glmmTMB$fit$par[[2]], m_sdmTMB$model$par[[2]], tolerance = 0.00001)
+  m_sdmTMB <- sdmTMB(data = s, formula = observed ~ 1,
+    mesh = spde, family = nbinom1(),
+    spatial = "off")
+  m_glmmTMB <- glmmTMB::glmmTMB(data = s, formula = observed ~ 1,
+    family = glmmTMB::nbinom1())
+  expect_equal(m_glmmTMB$fit$par[[1]], m_sdmTMB$model$par[[1]], tolerance = 0.00001)
+  expect_equal(m_glmmTMB$fit$par[[2]], m_sdmTMB$model$par[[2]], tolerance = 0.00001)
 
-    s_trunc <- subset(s, observed > 0)
-    spde <- make_mesh(s_trunc, c("x", "y"), n_knots = 80, type = "kmeans")
-    m_sdmTMB <- sdmTMB(data = s_trunc, formula = observed ~ 1,
-      mesh = spde, family = truncated_nbinom2(), spatial = "off")
-    m_glmmTMB <- glmmTMB::glmmTMB(data = s_trunc, formula = observed ~ 1,
-      family = glmmTMB::truncated_nbinom2())
-    expect_equal(m_glmmTMB$fit$par[[1]], m_sdmTMB$model$par[[1]], tolerance = 0.00001)
-    expect_equal(m_glmmTMB$fit$par[[2]], m_sdmTMB$model$par[[2]], tolerance = 0.00001)
+  s_trunc <- subset(s, observed > 0)
+  spde <- make_mesh(s_trunc, c("x", "y"), n_knots = 80, type = "kmeans")
+  m_sdmTMB <- sdmTMB(data = s_trunc, formula = observed ~ 1,
+    mesh = spde, family = truncated_nbinom2(), spatial = "off")
+  m_glmmTMB <- glmmTMB::glmmTMB(data = s_trunc, formula = observed ~ 1,
+    family = glmmTMB::truncated_nbinom2())
+  expect_equal(m_glmmTMB$fit$par[[1]], m_sdmTMB$model$par[[1]], tolerance = 0.00001)
+  expect_equal(m_glmmTMB$fit$par[[2]], m_sdmTMB$model$par[[2]], tolerance = 0.00001)
 
-    m_sdmTMB <- sdmTMB(data = s_trunc, formula = observed ~ 1,
-      mesh = spde, family = truncated_nbinom1(), spatial = "off")
-    m_glmmTMB <- glmmTMB::glmmTMB(data = s_trunc, formula = observed ~ 1,
-      family = glmmTMB::truncated_nbinom1())
-    expect_equal(m_glmmTMB$fit$par[[1]], m_sdmTMB$model$par[[1]], tolerance = 0.00001)
-    expect_equal(m_glmmTMB$fit$par[[2]], m_sdmTMB$model$par[[2]], tolerance = 0.00001)
-  })
+  m_sdmTMB <- sdmTMB(data = s_trunc, formula = observed ~ 1,
+    mesh = spde, family = truncated_nbinom1(), spatial = "off")
+  m_glmmTMB <- glmmTMB::glmmTMB(data = s_trunc, formula = observed ~ 1,
+    family = glmmTMB::truncated_nbinom1())
+  expect_equal(m_glmmTMB$fit$par[[1]], m_sdmTMB$model$par[[1]], tolerance = 0.00001)
+  expect_equal(m_glmmTMB$fit$par[[2]], m_sdmTMB$model$par[[2]], tolerance = 0.00001)
+})
 
-  test_that("Poisson fits", {
-    skip_on_ci()
-    skip_on_cran()
-    d <- pcod
-    spde <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
-    set.seed(3)
-    d$density <- rpois(nrow(pcod), 3)
-    m <- sdmTMB(data = d, formula = density ~ 1,
-      mesh = spde, family = poisson(link = "log"),
-      control = sdmTMBcontrol(newton_loops = 1)
-    )
-    expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
-    expect_length(residuals(m), nrow(pcod))
-  })
+test_that("Poisson fits", {
+  skip_on_ci()
+  skip_on_cran()
+  d <- pcod
+  spde <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
+  set.seed(3)
+  d$density <- rpois(nrow(pcod), 3)
+  m <- sdmTMB(data = d, formula = density ~ 1,
+    mesh = spde, family = poisson(link = "log"),
+    control = sdmTMBcontrol(newton_loops = 1)
+  )
+  expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
+  expect_length(residuals(m), nrow(pcod))
+})
 
-  test_that("Binomial fits", {
-    skip_on_ci()
-    skip_on_cran()
-    d <- pcod[pcod$year == 2017, ]
-    d$density <- round(d$density)
-    spde <- make_mesh(d, c("X", "Y"), cutoff = 10)
-    d$present <- ifelse(d$density > 0, 1, 0)
-    m <- sdmTMB(data = d, formula = present ~ 1,
-      mesh = spde, family = binomial(link = "logit"),
-      control = sdmTMBcontrol(newton_loops = 1))
-    expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
-    expect_length(residuals(m), nrow(d))
-  })
+test_that("Binomial fits", {
+  skip_on_ci()
+  skip_on_cran()
+  d <- pcod[pcod$year == 2017, ]
+  d$density <- round(d$density)
+  spde <- make_mesh(d, c("X", "Y"), cutoff = 10)
+  d$present <- ifelse(d$density > 0, 1, 0)
+  m <- sdmTMB(data = d, formula = present ~ 1,
+    mesh = spde, family = binomial(link = "logit"),
+    control = sdmTMBcontrol(newton_loops = 1))
+  expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
+  expect_length(residuals(m), nrow(d))
+})
 
-  test_that("Gamma fits", {
-    skip_on_ci()
-    skip_on_cran()
-    d <- pcod[pcod$year == 2017 & pcod$density > 0, ]
-    spde <- make_mesh(d, c("X", "Y"), cutoff = 10)
-    m <- sdmTMB(data = d, formula = density ~ 1,
-      mesh = spde, family = Gamma(link = "log"),
-      spatial = "off",
-      control = sdmTMBcontrol(newton_loops = 1))
-    expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
-    expect_length(residuals(m), nrow(d))
-    set.seed(123)
-    d$test_gamma <- stats::rgamma(nrow(d), shape = 0.5, scale = 1 / 0.5)
-    m <- sdmTMB(data = d, formula = test_gamma ~ 1,
-      mesh = spde, family = Gamma(link = "inverse"), spatiotemporal = "off",
-      control = sdmTMBcontrol(newton_loops = 1))
-  })
+test_that("Gamma fits", {
+  skip_on_ci()
+  skip_on_cran()
+  d <- pcod[pcod$year == 2017 & pcod$density > 0, ]
+  spde <- make_mesh(d, c("X", "Y"), cutoff = 10)
+  m <- sdmTMB(data = d, formula = density ~ 1,
+    mesh = spde, family = Gamma(link = "log"),
+    spatial = "off",
+    control = sdmTMBcontrol(newton_loops = 1))
+  expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
+  expect_length(residuals(m), nrow(d))
+  set.seed(123)
+  d$test_gamma <- stats::rgamma(nrow(d), shape = 0.5, scale = 1 / 0.5)
+  m <- sdmTMB(data = d, formula = test_gamma ~ 1,
+    mesh = spde, family = Gamma(link = "inverse"), spatiotemporal = "off",
+    control = sdmTMBcontrol(newton_loops = 1))
+})
 
-  test_that("Beta fits", {
-    skip_on_ci()
-    skip_on_cran()
-    set.seed(1)
-    x <- stats::runif(400, -1, 1)
-    y <- stats::runif(400, -1, 1)
-    loc <- data.frame(x = x, y = y)
-    spde <- make_mesh(loc, c("x", "y"), n_knots = 90, type = "kmeans")
-    s <- sdmTMB_simulate(~ 1, loc, mesh = spde, sigma_O = 0.2,
-      range = 0.8, family = Beta(), phi = 4, B = 1)
-    m <- sdmTMB(data = s, formula = observed ~ 1,
-      mesh = spde, family = Beta(link = "logit"),
-      control = sdmTMBcontrol(newton_loops = 1),
-      spatial = "off")
-    expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
-    expect_length(residuals(m), nrow(s))
+test_that("Beta fits", {
+  skip_on_ci()
+  skip_on_cran()
+  set.seed(1)
+  x <- stats::runif(400, -1, 1)
+  y <- stats::runif(400, -1, 1)
+  loc <- data.frame(x = x, y = y)
+  spde <- make_mesh(loc, c("x", "y"), n_knots = 90, type = "kmeans")
+  s <- sdmTMB_simulate(~ 1, loc, mesh = spde, sigma_O = 0.2,
+    range = 0.8, family = Beta(), phi = 4, B = 1)
+  m <- sdmTMB(data = s, formula = observed ~ 1,
+    mesh = spde, family = Beta(link = "logit"),
+    control = sdmTMBcontrol(newton_loops = 1),
+    spatial = "off")
+  expect_true(all(!is.na(summary(m$sd_report)[,"Std. Error"])))
+  expect_length(residuals(m), nrow(s))
 
-    m_glmmTMB<- glmmTMB::glmmTMB(data = s, formula = observed ~ 1,
-      family = glmmTMB::beta_family(link = "logit"))
+  m_glmmTMB<- glmmTMB::glmmTMB(data = s, formula = observed ~ 1,
+    family = glmmTMB::beta_family(link = "logit"))
 
-    expect_equal(m$model$par[[2]], m_glmmTMB$fit$par[[2]], tolerance = 1e-4)
-    expect_equal(m$model$par[[1]], m_glmmTMB$fit$par[[1]], tolerance = 1e-4)
-  })
-}
+  expect_equal(m$model$par[[2]], m_glmmTMB$fit$par[[2]], tolerance = 1e-4)
+  expect_equal(m$model$par[[1]], m_glmmTMB$fit$par[[1]], tolerance = 1e-4)
+})
 
 test_that("Censored Poisson fits", {
   skip_on_ci()
@@ -323,81 +321,81 @@ test_that("Censored Poisson upper limit function works", {
     class = "data.frame", row.names = c(NA, -20L)
   )
   upr <- get_censored_upper(dat$prop_removed, dat$n_catch, dat$n_hooks, pstar = 0.9)
- expect_identical(upr,
-   c(78, 63, 28, 6, 39, 34, 37, 109, 34, 140, 87, 89, 105, 70, 59, 73, 6, 28, 139, 65))
- x <- get_censored_upper(
-     prop_removed = c(0.5, 0.3, 0.2),
-     n_catch = c(3, 3, 3),
-     n_hooks = c(5, 5, 5),
-     pstar = 0.9
-   )
- expect_equal(x, c(3, 3, 3))
- expect_error(
-   get_censored_upper(
-     prop_removed = c(0.5, 0.3, 0.2),
-     n_catch = c(3, 3),
-     n_hooks = c(5, 5, 5),
-     pstar = 0.9
-   ),
-   regexp = "length"
- )
- expect_error(
-   get_censored_upper(
-     prop_removed = c(0.5, 0.3, 0.2),
-     n_catch = c(3, 3, 3),
-     n_hooks = c(5, 5),
-     pstar = 0.9
-   ),
-   regexp = "length"
- )
- expect_error(
-   get_censored_upper(
-     prop_removed = 1.1,
-     n_catch = 1,
-     n_hooks = 1
-   ),
-   regexp = "1"
- )
- expect_error(
-   get_censored_upper(
-     prop_removed = -0.1,
-     n_catch = 1,
-     n_hooks = 1
-   ),
-   regexp = "0"
- )
- expect_error(
-   get_censored_upper(
-     prop_removed = 0.5,
-     n_catch = -1,
-     n_hooks = 1
-   ),
-   regexp = "0"
- )
- expect_error(
-   get_censored_upper(
-     prop_removed = 0.5,
-     n_catch = 0,
-     n_hooks = -1
-   ),
-   regexp = "0"
- )
- expect_error(
-   get_censored_upper(
-     prop_removed = 0.5,
-     n_catch = NA_integer_,
-     n_hooks = -1
-   ),
-   regexp = "missing"
- )
- expect_error(
-   get_censored_upper(
-     prop_removed = 0.5,
-     n_catch = 1,
-     n_hooks = NA_integer_
-   ),
-   regexp = "missing"
- )
+  expect_identical(upr,
+    c(78, 63, 28, 6, 39, 34, 37, 109, 34, 140, 87, 89, 105, 70, 59, 73, 6, 28, 139, 65))
+  x <- get_censored_upper(
+    prop_removed = c(0.5, 0.3, 0.2),
+    n_catch = c(3, 3, 3),
+    n_hooks = c(5, 5, 5),
+    pstar = 0.9
+  )
+  expect_equal(x, c(3, 3, 3))
+  expect_error(
+    get_censored_upper(
+      prop_removed = c(0.5, 0.3, 0.2),
+      n_catch = c(3, 3),
+      n_hooks = c(5, 5, 5),
+      pstar = 0.9
+    ),
+    regexp = "length"
+  )
+  expect_error(
+    get_censored_upper(
+      prop_removed = c(0.5, 0.3, 0.2),
+      n_catch = c(3, 3, 3),
+      n_hooks = c(5, 5),
+      pstar = 0.9
+    ),
+    regexp = "length"
+  )
+  expect_error(
+    get_censored_upper(
+      prop_removed = 1.1,
+      n_catch = 1,
+      n_hooks = 1
+    ),
+    regexp = "1"
+  )
+  expect_error(
+    get_censored_upper(
+      prop_removed = -0.1,
+      n_catch = 1,
+      n_hooks = 1
+    ),
+    regexp = "0"
+  )
+  expect_error(
+    get_censored_upper(
+      prop_removed = 0.5,
+      n_catch = -1,
+      n_hooks = 1
+    ),
+    regexp = "0"
+  )
+  expect_error(
+    get_censored_upper(
+      prop_removed = 0.5,
+      n_catch = 0,
+      n_hooks = -1
+    ),
+    regexp = "0"
+  )
+  expect_error(
+    get_censored_upper(
+      prop_removed = 0.5,
+      n_catch = NA_integer_,
+      n_hooks = -1
+    ),
+    regexp = "missing"
+  )
+  expect_error(
+    get_censored_upper(
+      prop_removed = 0.5,
+      n_catch = 1,
+      n_hooks = NA_integer_
+    ),
+    regexp = "missing"
+  )
 })
 
 test_that("Binomial simulation/residuals works with weights argument or cbind()", {
