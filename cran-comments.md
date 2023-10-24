@@ -1,12 +1,6 @@
-This version fixes several issues that have arisen on CRAN as per an email
-from Brian Ripley on 2023-10-07 and a note about rgdal on 2023-10-18.
+This version fixes clang-UBSAN and valgrind 'Additional issues' as per
+an email from Brian Ripley on 2023-10-23.
  
-* Removes dependencies on 'rgdal'
-* Fixes issues caused by updates to 'sf', 'INLA', and 'glmmTMB'
-
-This version no longer depends on 'INLA'. It also contains several bug fixes
-and additions to functionality.
-  
 ## R CMD check results
 
 0 errors | 0 warnings | 1 notes
@@ -28,5 +22,5 @@ checking installed package size ... NOTE
 
 With sanitizer checks:
  
-* Ubuntu 22.04.3 (on github-actions), R-devel with valgrind
-* Ubuntu 22.04.3 (on github-actions), R-devel with clang-asan
+* Ubuntu 22.04.3 (on local Docker), R-devel with valgrind
+* Ubuntu 22.04.3 (on local Docker), R-devel with clang-ASAN/UBSAN
