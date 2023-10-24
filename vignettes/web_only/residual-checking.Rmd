@@ -234,7 +234,7 @@ auc <- pROC::auc(roc)
 ```
 
 With a delta model, two estimated values are returned, so only the first would be used, 
-```{r}
+```{r, eval=FALSE}
 roc <- pROC::roc(actual_values, plogis(pred$est1))
 ```
 
