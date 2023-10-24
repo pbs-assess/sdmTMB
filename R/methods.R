@@ -145,6 +145,11 @@ extractAIC.sdmTMB <- function(fit, scale, k = 2, ...) {
 #' @importFrom stats family
 #' @export
 family.sdmTMB <- function (object, ...) {
+  if (.has_delta_attr(object)) {
+    which_model <- attr(object, "delta_model_predict")
+    if (is.na(which_model)) which_model <- 2L # combined; for link
+    return(object$family[[which_model]])
+  }
   if ("visreg_model" %in% names(object)) {
     return(object$family[[object$visreg_model]])
   } else {
@@ -184,8 +189,15 @@ df.residual.sdmTMB <- function(object, ...) {
   nobs(object) - length(object$model$par)
 }
 
+.has_delta_attr <- function(x) {
+  "delta_model_predict" %in% names(attributes(x))
+}
+
 #' @export
 formula.sdmTMB <- function (x, ...) {
+  if (.has_delta_attr(x)) {
+    return(x$formula[[attr(fit, "delta_model_predict")]])
+  }
   if (length(x$formula) > 1L) {
     if ("visreg_model" %in% names(x)) {
       return(x$formula[[x$visreg_model]])

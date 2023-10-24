@@ -292,9 +292,11 @@ predict.sdmTMB <- function(object, newdata = NULL,
     sims <- nsim
   }
 
+  # TODO check if missing and only use attribute then!!
   assert_that(model[[1]] %in% c(NA, 1, 2),
     msg = "`model` argument not valid; should be one of NA, 1, 2")
   model <- model[[1]]
+  if (.has_delta_attr(object)) model <- attr(object, "delta_model_predict") # for ggpredict
   type <- match.arg(type)
   # FIXME parallel setup here?
 
