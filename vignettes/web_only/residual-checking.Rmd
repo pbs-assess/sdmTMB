@@ -235,7 +235,7 @@ auc <- pROC::auc(roc)
 
 With a delta model, two estimated values are returned, so only the first would be used, 
 ```{r}
-roc <- pROC::roc( actual_values, plogis(pred$est1) )
+roc <- pROC::roc(actual_values, plogis(pred$est1))
 ```
 
 AUC may be sensitive to imbalances in the data, however, and alternative metrics may better approximate skill. To highlight an example of using true skill score (implemented in packages like `SDMtune`), we can create a new binary response and fit a model to that.
