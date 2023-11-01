@@ -2,6 +2,14 @@
 
 * Fix memory issues detected by CRAN 'Additional issues' clang-UBSAN, valgrind.
 
+* Fix a bug predicting on new data with a specified offset and `extra_time`. 
+  #270
+
+* Add warning around non-factor handling of the `spatial_varying` formula. #269
+
+* Add experimental `set_delta_model()` for plotting delta models with
+  `ggeffects::ggpredict()` (GitHub version only until next CRAN version).
+
 # sdmTMB 0.4.0
 
 * Move add_barrier_mesh() to sdmTMBextra to avoid final INLA dependency.

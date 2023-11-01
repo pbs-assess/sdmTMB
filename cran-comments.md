@@ -1,5 +1,5 @@
 This version fixes clang-UBSAN and valgrind 'Additional issues' as per
-an email from Brian Ripley on 2023-10-23.
+an email from Brian Ripley on 2023-10-23. It also includes 2 minor bug fixes.
  
 ## R CMD check results
 
