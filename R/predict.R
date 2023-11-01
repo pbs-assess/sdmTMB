@@ -379,6 +379,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
       newdata[["_sdmTMB_fake_nd_"]] <- FALSE
       fake_nd[["_sdmTMB_fake_nd_"]] <- TRUE
       newdata <- rbind(newdata, fake_nd)
+      if (!is.null(offset)) offset <- c(offset, rep(0, nrow(fake_nd))) # issue 270
     }
 
     # If making population predictions (with standard errors), we don't need
@@ -828,6 +829,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
     #   nd[[paste0("zeta_s_", object$spatial_varying[z])]] <- r$zeta_s_A[,z,1]
     # }
     nd$epsilon_st <- r$epsilon_st_A_vec[,1]# DELTA FIXME
+    nd <- nd[!nd[[object$time]] %in% object$extra_time, , drop = FALSE] # issue 270
     obj <- object
   }
 
