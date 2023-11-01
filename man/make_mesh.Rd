@@ -64,7 +64,7 @@ from \code{fmesher_func} (default is \code{\link[fmesher:fm_mesh_2d]{fmesher::fm
 \code{plot.sdmTMBmesh()}: A plot of the mesh and data points. If
 \pkg{ggplot2} is installed, a \pkg{ggplot2} object is
 returned, otherwise a base graphics R plot is returned. To make your own,
-pass \code{your_mesh$mesh} to \code{\link[inlabru:gg]{inlabru::gg()}}.
+pass \code{your_mesh$mesh} to \code{inlabru::gg()}.
 }
 \description{
 Construct an SPDE mesh for use with sdmTMB.

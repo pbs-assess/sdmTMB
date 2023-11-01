@@ -219,7 +219,7 @@ binary_search_knots <- function(loc_xy,
 #' @return `plot.sdmTMBmesh()`: A plot of the mesh and data points. If
 #'   \pkg{ggplot2} is installed, a \pkg{ggplot2} object is
 #'   returned, otherwise a base graphics R plot is returned. To make your own,
-#'   pass `your_mesh$mesh` to [inlabru::gg()].
+#'   pass `your_mesh$mesh` to `inlabru::gg()`.
 #' @rdname make_mesh
 #' @export
 plot.sdmTMBmesh <- function(x, ...) {
