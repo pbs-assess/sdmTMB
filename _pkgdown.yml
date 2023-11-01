@@ -37,6 +37,7 @@ reference:
   - run_extra_optimization
   - residuals.sdmTMB
   - replicate_df
+  - set_delta_model
 
 - title: 'Families'
   desc: |

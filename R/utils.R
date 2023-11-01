@@ -521,13 +521,19 @@ get_censored_upper <- function(
   round(high)
 }
 
-#' Set delta model for prediction/\pkg{ggeffects}
+#' Set delta model for [ggeffects::ggpredict()].
 #'
 #' @param x An [sdmTMB::sdmTMB()] model fit with a delta family such as
 #'   [sdmTMB::delta_gamma()].
 #' @param model Which delta/hurdle model component to predict/plot with.
 #'   `NA` does the combined prediction, `1` does the binomial part, and `2`
 #'   does the positive part.
+#'
+#' This function modifies an attribute named `delta_model_predict`.
+#' We suggest you use `set_delta_model()` in a pipe (as in the examples)
+#' so that this attribute does not persist. Otherwise, [predict.sdmTMB()]
+#' will choose this model component by default. You can also remove the
+#' attribute yourself after: `attr(fit, "delta_model_predict") <- NULL`.
 #'
 #' @export
 #' @examplesIf require("ggeffects", quietly = TRUE)
@@ -545,7 +551,6 @@ get_censored_upper <- function(
 #' # combined:
 #' set_delta_model(fit, model = NA) |>
 #'   ggeffects::ggpredict("depth_scaled [all]")
-
 set_delta_model <- function(x, model = c(NA, 1, 2)) {
   assertthat::assert_that(model[[1]] %in% c(NA, 1, 2),
     msg = "`model` argument not valid; should be one of NA, 1, 2")

@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{set_delta_model}
 \alias{set_delta_model}
-\title{Set delta model for prediction/\pkg{ggeffects}}
+\title{Set delta model for \code{\link[ggeffects:ggpredict]{ggeffects::ggpredict()}}.}
 \usage{
 set_delta_model(x, model = c(NA, 1, 2))
 }
@@ -10,10 +10,18 @@ set_delta_model(x, model = c(NA, 1, 2))
 \item{x}{An \code{\link[=sdmTMB]{sdmTMB()}} model fit with a delta family such as
 \code{\link[=delta_gamma]{delta_gamma()}}.}
 
-\item{model}{Which delta/hurdle model component to predict/plot with.}
+\item{model}{Which delta/hurdle model component to predict/plot with.
+\code{NA} does the combined prediction, \code{1} does the binomial part, and \code{2}
+does the positive part.
+
+This function modifies an attribute named \code{delta_model_predict}.
+We suggest you use \code{set_delta_model()} in a pipe (as in the examples)
+so that this attribute does not persist. Otherwise, \code{\link[=predict.sdmTMB]{predict.sdmTMB()}}
+will choose this model component by default. You can also remove the
+attribute yourself after: \code{attr(fit, "delta_model_predict") <- NULL}.}
 }
 \description{
-Set delta model for prediction/\pkg{ggeffects}
+Set delta model for \code{\link[ggeffects:ggpredict]{ggeffects::ggpredict()}}.
 }
 \examples{
 \dontshow{if (require("ggeffects", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
