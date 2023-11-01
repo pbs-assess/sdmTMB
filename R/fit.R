@@ -772,6 +772,14 @@ sdmTMB <- function(
 
   spatial_varying_formula <- spatial_varying # save it
   if (!is.null(spatial_varying)) {
+    mf1 <- model.frame(spatial_varying, data)
+    for (i in seq_len(ncol(mf1))) {
+      if (is.character(mf1[[i]])) {
+        cli_warn(paste0("Detected '{colnames(mf1)[i]}' as a character term in the ",
+          "'spatial_varying' formula. We suggest you make this a factor if you plan ",
+          "to predict with only some factor levels. `as.factor({colnames(mf1)[i]})`."))
+      }
+    }
     z_i <- model.matrix(spatial_varying, data)
     .int <- sum(grep("(Intercept)", colnames(z_i)) > 0)
     if (length(attr(z_i, "contrasts")) && !.int && !omit_spatial_intercept) { # factors with ~ 0 or ~ -1
