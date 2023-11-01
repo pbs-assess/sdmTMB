@@ -521,7 +521,9 @@ get_censored_upper <- function(
   round(high)
 }
 
-#' Set delta model for [ggeffects::ggpredict()].
+#' Set delta model for [ggeffects::ggpredict()]
+#'
+#' Set a delta model component to predict from with [ggeffects::ggpredict()].
 #'
 #' @param x An [sdmTMB::sdmTMB()] model fit with a delta family such as
 #'   [sdmTMB::delta_gamma()].
@@ -529,14 +531,10 @@ get_censored_upper <- function(
 #'   `NA` does the combined prediction, `1` does the binomial part, and `2`
 #'   does the positive part.
 #'
-#' This function modifies an attribute named `delta_model_predict`.
-#' We suggest you use `set_delta_model()` in a pipe (as in the examples)
-#' so that this attribute does not persist. Otherwise, [predict.sdmTMB()]
-#' will choose this model component by default. You can also remove the
-#' attribute yourself after: `attr(fit, "delta_model_predict") <- NULL`.
+#' @details
+#' A complete version of the examples below would be:
 #'
-#' @export
-#' @examplesIf require("ggeffects", quietly = TRUE)
+#' ```
 #' fit <- sdmTMB(density ~ poly(depth_scaled, 2), data = pcod_2011,
 #'   spatial = "off", family = delta_gamma())
 #'
@@ -551,6 +549,36 @@ get_censored_upper <- function(
 #' # combined:
 #' set_delta_model(fit, model = NA) |>
 #'   ggeffects::ggpredict("depth_scaled [all]")
+#' ```
+#'
+#' But cannot be run on CRAN until a version of \pkg{ggeffects} > 1.3.2
+#' is on CRAN. For now, you can install the GitHub version of \pkg{ggeffects}.
+#' <https://github.com/strengejacke/ggeffects>.
+#'
+#' @returns
+#' The fitted model with a new attribute named `delta_model_predict`.
+#' We suggest you use `set_delta_model()` in a pipe (as in the examples)
+#' so that this attribute does not persist. Otherwise, [predict.sdmTMB()]
+#' will choose this model component by default. You can also remove the
+#' attribute yourself after:
+#'
+#' ```
+#' attr(fit, "delta_model_predict") <- NULL
+#' ```
+#'
+#' @examplesIf require("ggeffects", quietly = TRUE)
+#' fit <- sdmTMB(density ~ poly(depth_scaled, 2), data = pcod_2011,
+#'   spatial = "off", family = delta_gamma())
+#'
+#' # binomial part:
+#' set_delta_model(fit, model = 1)
+#'
+#' # gamma part:
+#' set_delta_model(fit, model = 2)
+#'
+#' # combined:
+#' set_delta_model(fit, model = NA)
+#' @export
 set_delta_model <- function(x, model = c(NA, 1, 2)) {
   assertthat::assert_that(model[[1]] %in% c(NA, 1, 2),
     msg = "`model` argument not valid; should be one of NA, 1, 2")
