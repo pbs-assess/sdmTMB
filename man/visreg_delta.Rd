@@ -35,15 +35,15 @@ Note the residuals are currently randomized quantile residuals,
 if (require("ggplot2", quietly = TRUE) &&
   require("visreg", quietly = TRUE)) {
 
+\donttest{
   fit <- sdmTMB(
     density ~ s(depth_scaled),
-    data = pcod_2011, mesh = pcod_mesh_2011,
+    data = pcod_2011,
     spatial = "off",
     family = tweedie()
   )
   visreg::visreg(fit, xvar = "depth_scaled")
 
-  \donttest{
   visreg::visreg(fit, xvar = "depth_scaled", scale = "response")
   v <- visreg::visreg(fit, xvar = "depth_scaled")
   head(v$fit)
