@@ -15,7 +15,8 @@ checking installed package size ... NOTE
 
 ## Test environments
 
-* local macOS install, R 4.3.1
+* Local M2 macOS install, R 4.3.1
+* Intel macOS (on github-actions), R-release
 * Ubuntu 22.04.3 (on github-actions), R-release
 * Ubuntu 22.04.3 (on github-actions), R-devel
 * Ubuntu 22.04.3 (on github-actions), R-oldrel
