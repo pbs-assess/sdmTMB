@@ -303,22 +303,15 @@ sanity(fit)
 #> ✔ Range parameter doesn't look unreasonably large
 ```
 
-Use the visreg package to plot the smoother effect in link space with
-randomized quantile partial residuals:
+Use the [ggeffects](https://github.com/strengejacke/ggeffects) package
+(**the GitHub version until the next ggeffects CRAN update**) to plot
+the smoother effect:
 
 ``` r
-visreg::visreg(fit, xvar = "depth", xlim = c(50, 500))
+ggeffects::ggpredict(fit, "depth [50:400, by=2]") |> plot()
 ```
 
-<img src="man/figures/README-plot-visreg-link-1.png" width="50%" />
-
-Or on the response scale:
-
-``` r
-visreg::visreg(fit, xvar = "depth", scale = "response", xlim = c(50, 300), nn = 200)
-```
-
-<img src="man/figures/README-plot-visreg-response-1.png" width="50%" />
+<img src="man/figures/README-plot-ggpredict-link-1.png" width="50%" />
 
 Predict on new data:
 
