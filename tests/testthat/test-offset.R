@@ -29,15 +29,13 @@ test_that("Offset matches glmmTMB", {
     family = Gamma(link = "log")
   )
 
-  fit1_off <- glmmTMB::glmmTMB(density ~ 1,
-    offset = pcod_pos$offset,
+  fit1_off <- glmmTMB::glmmTMB(density ~ 1 + offset(offset),
     data = pcod_pos,
     family = Gamma(link = "log")
   )
 
   pcod_pos$offset2 <- log(1)
-  fit1_off0 <- glmmTMB::glmmTMB(density ~ 1,
-    offset = pcod_pos$offset2,
+  fit1_off0 <- glmmTMB::glmmTMB(density ~ 1 + offset(offset2),
     data = pcod_pos,
     family = Gamma(link = "log")
   )
@@ -103,41 +101,113 @@ test_that("Offset prediction matches glm()", {
   skip_on_cran()
   skip_if_not_installed("glmmTMB")
   set.seed(1)
-  pcod$offset <- rnorm(nrow(pcod))
+  dat <- pcod[pcod$density > 0,]
+  dat$.offset <- rnorm(nrow(dat))
   fit <- sdmTMB(
     present ~ 1,
-    offset = pcod$offset,
-    data = pcod, spatial = "off",
-    family = binomial()
+    offset = dat$.offset,
+    data = dat, spatial = "off",
+    family = Gamma(link = "log")
   )
   fit_glm <- glm(
-    present ~ 1,
-    offset = pcod$offset,
-    data = pcod,
-    family = binomial()
+    present ~ 1 + offset(.offset),
+    data = dat,
+    family = Gamma(link = "log")
   )
   fit_glmmTMB <- glmmTMB::glmmTMB(
-    present ~ 1,
-    offset = pcod$offset,
-    data = pcod,
-    family = binomial()
+    present ~ 1 + offset(.offset),
+    data = dat,
+    family = Gamma(link = "log")
   )
 
   p <- predict(fit)
   p_glm <- predict(fit_glm)
   p_glmmTMB <- predict(fit_glmmTMB)
+  expect_equal(p$est, unname(p_glm))
+  expect_equal(p$est, p_glmmTMB)
 
+  p_glmmTMB <- predict(fit_glmmTMB, newdata = dat)
   expect_equal(p$est, unname(p_glm))
   expect_equal(p$est, p_glmmTMB)
 
   set.seed(1)
-  p <- predict(fit, nsim = 1000)
+  p <- predict(fit, nsim = 1000, offset = dat$.offset)
   mu <- apply(p, 1, mean)
   plot(mu, p_glm)
   expect_equal(unname(mu), unname(p_glm), tolerance = 0.01)
 
   # sdmTMB ignores offset here (but not glm() or glmmTMB()!)
-  # p <- predict(fit, newdata = pcod)
-  # p_glmmTMB <- predict(fit_glmmTMB, newdata = pcod)
+  # p <- predict(fit, newdata = dat)
+  # p_glmmTMB <- predict(fit_glmmTMB, newdata = dat)
   # expect_equal(p$est, unname(p_glmmTMB))
 })
+# #
+# # offset/prediction setting checks:
+#
+# pos <- dogfish[dogfish$catch_weight > 0,]
+#
+# m1 <- sdmTMB(catch_weight ~ 1, family = Gamma("log"), data = pos, offset = log(pos$area_swept), spatial = "off")
+# # m2 <- glmmTMB::glmmTMB(catch_weight ~ 1, family = Gamma("log"), data = pos, offset = log(pos$area_swept))
+# # m3 <- glm(catch_weight ~ 1, family = Gamma("log"), data = pos, offset = log(pos$area_swept))
+#
+# head(predict(m1, newdata = pos, offset = rep(0, nrow(pos)))$est) # right
+# head(predict(m1, offset = rep(0, nrow(pos)))$est) # right (was wrong)
+#
+# head(predict(m1, offset = log(pos$area_swept))$est) # right
+# head(predict(m1, newdata = pos, offset = log(pos$area_swept))$est) # right
+#
+# head(predict(m1)$est) # right
+# head(predict(m1, newdata = pos)$est) # right
+#
+# head(predict(m1, newdata = pos, offset = rep(0, nrow(pos)), nsim = 2)) # right
+# head(predict(m1, offset = rep(0, nrow(pos)), nsim = 2)) # right (was wrong)
+#
+# head(predict(m1, offset = log(pos$area_swept), nsim = 2)) # right
+# head(predict(m1, newdata = pos, offset = log(pos$area_swept), nsim = 2)) # right
+#
+# head(predict(m1, nsim = 2)) # right
+# head(predict(m1, newdata = pos, nsim = 2)) # right
+#
+#
+# # m2 <- glmmTMB::glmmTMB(catch_weight ~ 1, family = Gamma("log"), data = pos)
+# # head(predict(m2))
+# # head(predict(m2, newdata = pos))
+# # predict(m2, newdata = pos[1:3,,drop=FALSE])
+# #
+# # e1 <- predict(m1, newdata = pos, offset = rep(0, nrow(pos)))$est
+# # plot(exp(e1), pos$catch_weight)
+# # mean(exp(e1))
+# # mean(pos$catch_weight)
+# #
+# #
+# # e1 <- predict(m1, newdata = pos, offset = log(pos$area_swept))$est
+# # plot(exp(e1), pos$catch_weight)
+# # mean(exp(e1))
+# # mean(pos$catch_weight)
+# #
+# # head(predict(m1, newdata = pos, offset = rep(0, nrow(pos)))$est)
+# #
+# # head(predict(m2))
+# # head(predict(m2, newdata = pos))
+# #
+# # head(predict(m2))
+# # head(predict(m2, newdata = pos))
+# # head(predict(m3))
+# #
+# # expect_equal(p7[,1,drop=TRUE], p6[,1,drop=TRUE])
+# #
+# # set.seed(1)
+# # suppressWarnings(p8 <- predict(m, newdata = pcod, nsim = 2L))
+# # suppressWarnings(p9 <- predict(m, newdata = pcod, offset = rep(0, nrow(pcod)), nsim = 2L))
+# #
+# # pos <- subset(dogfish, catch_weight > 0)
+# #
+# # mm <- glm(catch_weight ~ 1, family = Gamma("log"), data = pos, offset = log(pos$area_swept))
+# # mm_s <- sdmTMB(catch_weight ~ 1, family = Gamma("log"), data = pos, offset = log(pos$area_swept), spatial = "off")
+# # pp1 <- predict(mm)
+# # pp1_s <- predict(mm_s)
+# #
+# #
+# #
+# # head(p8)
+# # head(p9)

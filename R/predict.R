@@ -312,8 +312,11 @@ predict.sdmTMB <- function(object, newdata = NULL,
   # places where we force newdata:
   nd_arg_was_null <- FALSE
   if (is.null(newdata)) {
-    if (is_delta(object) || nsim > 0 || type == "response" || !is.null(mcmc_samples) || se_fit || !is.null(re_form) || !is.null(re_form_iid)) {
+    if (is_delta(object) || nsim > 0 || type == "response" || !is.null(mcmc_samples) || se_fit || !is.null(re_form) || !is.null(re_form_iid) || !is.null(offset)) {
       newdata <- object$data
+      if (!is.null(object$extra_time)) { # issue #273
+        newdata <- newdata[!newdata[[object$time]] %in% object$extra_time,]
+      }
       nd_arg_was_null <- TRUE # will be used to carry over the offset
     }
   }
@@ -341,6 +344,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
   tmb_data <- object$tmb_data
   tmb_data$do_predict <- 1L
   no_spatial <- as.logical(object$tmb_data$no_spatial)
+  fake_nd <- NULL
 
   if (!is.null(newdata)) {
     if (any(!xy_cols %in% names(newdata)) && isFALSE(pop_pred) && !no_spatial)
@@ -494,7 +498,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
         cli_abort("Prediction offset vector does not equal number of rows in prediction dataset.")
     }
     tmb_data$proj_offset_i <- if (!is.null(offset)) offset else rep(0, nrow(proj_X_ij[[1]]))
-    if (nd_arg_was_null) tmb_data$proj_offset_i <- tmb_data$offset_i
+    # if (nd_arg_was_null) tmb_data$proj_offset_i <- tmb_data$offset_i
     tmb_data$proj_X_threshold <- thresh[[1]]$X_threshold # TODO DELTA HARDCODED TO 1
     tmb_data$area_i <- if (length(area) == 1L) rep(area, nrow(proj_X_ij[[1]])) else area
     tmb_data$proj_mesh <- proj_mesh
@@ -664,6 +668,9 @@ predict.sdmTMB <- function(object, newdata = NULL,
         }
       }
 
+      if (!is.null(fake_nd)) {
+        out <- out[-seq(nrow(out) - nrow(fake_nd) + 1, nrow(out)), ,drop=FALSE] # issue #273
+      }
       return(out)
     }
 

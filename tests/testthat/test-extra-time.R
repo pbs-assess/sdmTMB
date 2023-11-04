@@ -24,4 +24,16 @@ test_that("extra time, newdata, and offsets work", {
   expect_equal(nrow(p4), nrow(pcod))
   expect_equal(p1$est, p2$est)
   expect_equal(p3$est, p4$est)
+
+  #273 (with nsim)
+  set.seed(1)
+  suppressWarnings(p5 <- predict(m, offset = pcod$os, nsim = 2L))
+  expect_equal(ncol(p5), 2L)
+  expect_equal(nrow(p5), nrow(pcod))
+
+  set.seed(1)
+  suppressWarnings(p6 <- predict(m, newdata = pcod, offset = pcod$os, nsim = 2L))
+  expect_equal(ncol(p6), 2L)
+  expect_equal(nrow(p6), nrow(pcod))
+  expect_equal(p6[,1,drop=TRUE], p5[,1,drop=TRUE])
 })
