@@ -1,5 +1,11 @@
 # sdmTMB (development version)
 
+* Fix prediction with `offset` when `newdata` is `NULL` but `offset` is
+  specified. #274
+
+* Fix prediction failure when both `offset` and `nsim` are provided and
+  model includes `extra_time`. #273
+
 # sdmTMB 0.4.1
 
 * Fix memory issues detected by CRAN 'Additional issues' clang-UBSAN, valgrind.
