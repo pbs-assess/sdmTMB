@@ -124,11 +124,13 @@ NULL
 #'   the TMB object doesn't have to be rebuilt with [predict.sdmTMB()] and
 #'   [get_index()]. If `TRUE`, then `predict_args` must have a `newdata` element
 #'   supplied and `area` can be supplied to `index_args`.
-#' @param predict_args A list of arguments to pass to [predict.sdmTMB()] if
-#'   `do_index = TRUE`.
-#' @param index_args A list of arguments to pass to [get_index()] if
+#'   Most users can ignore this option.
+#' @param predict_args A list of arguments to pass to [predict.sdmTMB()] **if**
+#'   `do_index = TRUE`. Most users can ignore this option.
+#' @param index_args A list of arguments to pass to [get_index()] **if**
 #'   `do_index = TRUE`. Currently, only `area` is supported. Bias correction
 #'   can be done when calling [get_index()] on the resulting fitted object.
+#'   Most users can ignore this option.
 #' @param bayesian Logical indicating if the model will be passed to
 #'   \pkg{tmbstan}. If `TRUE`, Jacobian adjustments are applied to account for
 #'   parameter transformations when priors are applied.
@@ -1384,6 +1386,10 @@ sdmTMB <- function(
     version    = utils::packageVersion("sdmTMB")),
     class      = "sdmTMB")
 
+  if ((!is.null(predict_args) || !is.null(index_args)) && isFALSE(do_index)) {
+    cli_abort(c("`predict_args` and/or `index_args` were set but `do_index` was FALSE.",
+      "`do_index` must be TRUE for these arguments to take effect.")) #276
+  }
   if (do_index) {
     args <- list(object = out_structure, return_tmb_data = TRUE)
     args <- c(args, predict_args)

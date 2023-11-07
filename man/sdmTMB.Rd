@@ -172,14 +172,16 @@ fitting (\code{FALSE})?}
 memory and time when working with large datasets or projection grids since
 the TMB object doesn't have to be rebuilt with \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} and
 \code{\link[=get_index]{get_index()}}. If \code{TRUE}, then \code{predict_args} must have a \code{newdata} element
-supplied and \code{area} can be supplied to \code{index_args}.}
+supplied and \code{area} can be supplied to \code{index_args}.
+Most users can ignore this option.}
 
-\item{predict_args}{A list of arguments to pass to \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} if
-\code{do_index = TRUE}.}
+\item{predict_args}{A list of arguments to pass to \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} \strong{if}
+\code{do_index = TRUE}. Most users can ignore this option.}
 
-\item{index_args}{A list of arguments to pass to \code{\link[=get_index]{get_index()}} if
+\item{index_args}{A list of arguments to pass to \code{\link[=get_index]{get_index()}} \strong{if}
 \code{do_index = TRUE}. Currently, only \code{area} is supported. Bias correction
-can be done when calling \code{\link[=get_index]{get_index()}} on the resulting fitted object.}
+can be done when calling \code{\link[=get_index]{get_index()}} on the resulting fitted object.
+Most users can ignore this option.}
 
 \item{experimental}{A named list for esoteric or in-development options. Here
 be dragons.}

@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Improve warnings/errors around use of `do_index = TRUE` and `get_index()`
+  if `newdata = NULL`. #276
+
 * Fix prediction with `offset` when `newdata` is `NULL` but `offset` is
   specified. #274
 

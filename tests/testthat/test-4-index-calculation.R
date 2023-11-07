@@ -55,3 +55,36 @@ test_that("get_index(), get_index_sims(), and get_cog() work", {
   expect_equal(cog$est[which(cog$coord=="X")], cog_wide$est_x)
 })
 
+test_that("index errors are returned as needed", {
+  skip_on_ci()
+  skip_on_cran()
+
+  g <- replicate_df(qcs_grid, "year", unique(pcod_2011$year))
+
+  expect_error(
+  fit <- sdmTMB(
+    density ~ 1,
+    data = pcod_2011,
+    spatial = "off", spatiotemporal = "off",
+    family = tweedie(link = "log"),
+    time = "year",
+    predict_args = list(newdata = g),
+    index_args = list(area = 1)
+  ), regexp = "do_index" # missing!
+  )
+
+  fit <- sdmTMB(
+    density ~ 1,
+    data = pcod_2011, spatial = "off", spatiotemporal = "off",
+    family = tweedie(link = "log"),
+    time = "year"
+  )
+  p1 <- predict(fit, newdata = NULL, return_tmb_object = TRUE)
+  expect_error(get_index(p1), "newdata") # missing!
+
+  p2 <- predict(fit, newdata = g, return_tmb_object = TRUE)
+  suppressMessages(
+    i <- get_index(p2)
+  )
+  expect_s3_class(i, "data.frame")
+})

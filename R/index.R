@@ -110,6 +110,11 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
       cli_abort(paste0("`obj` needs to be created with ",
         "`predict(..., return_tmb_object = TRUE).`"))
     }
+
+    if (!"report" %in% names(obj$obj)) {
+      cli_abort(c("It looks like the predict function was run without `newdata` specified.",
+        "Re-run the predict function with `newdata` specified.")) #276
+    }
     test <- suppressWarnings(tryCatch(obj$obj$report(obj$obj$env$last.par),
       error = function(e) NA))
     if (all(is.na(test)))
