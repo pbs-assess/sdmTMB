@@ -2,16 +2,50 @@
 % Please edit documentation in R/r2.R
 \name{r2.sdmTMB}
 \alias{r2.sdmTMB}
-\title{Nakagawa R2}
+\title{Nakagawa's R2 for mixed models}
 \usage{
-\method{r2}{sdmTMB}(x)
+\method{r2}{sdmTMB}(model, ...)
 }
 \arguments{
-\item{x}{An \code{\link[=sdmTMB]{sdmTMB()}} model object.}
+\item{model}{An \code{\link[=sdmTMB]{sdmTMB()}} model object.}
+
+\item{...}{Not used.}
 }
 \value{
-A data frame of proportion variance explained.
+A data frame of proportion variance explained:
+\itemize{
+\item \code{conditional}: takes the fixed and random effects into account
+\item \code{marginal}: considers only the variance of the fixed effects + smoothers
+\item \code{partial_fixed}: partial contribution of the fixed effects
+\item \code{partial_smoothers}: partial contribution of the smoothers (e.g., \code{+ s()})
+\item \code{partial_spatial}: partial contribution of the spatial random field
+\item \code{partial_spatiotemporal}: partial contribution of the spatiotemporal random fields
+\item \code{partial_time_varying}: partial contribution of the time-varying effects
+\item \code{partial_random_intercepts}: partial contribution of the IID random intercepts
+}
 }
 \description{
-Nakagawa R2
+Marginal and conditional R2 values for \pkg{sdmTMB} mixed effects models
+using Nakagawa et al's methods.
+}
+\examples{
+mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 10)
+fit <- sdmTMB(
+  present ~ s(depth, k = 5),
+  data = pcod_2011,
+  mesh = mesh,
+  spatial = "on",
+  family = binomial()
+)
+r2(fit)
+}
+\references{
+Nakagawa, S., and Schielzeth, H. (2013). A general and simple method for
+obtaining R2 from generalized linear mixed-effects models. Methods in Ecology
+and Evolution, 4(2), 133–142. \doi{10.1111/j.2041-210x.2012.00261.x}
+
+Nakagawa, S., Johnson, P. C. D., and Schielzeth, H. (2017). The coefficient
+of determination R2 and intra-class correlation coefficient from generalized
+linear mixed-effects models revisited and expanded. Journal of The Royal
+Society Interface, 14(134), 20170213. \doi{0.1098/rsif.2017.0213}
 }

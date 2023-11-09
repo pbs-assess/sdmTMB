@@ -24,6 +24,16 @@ test_that("r2 function works", {
   p2 <- performance::r2_nakagawa(fit2)
   .compare(p1, p2)
 
+  # no (1 | g)
+  fit <- sdmTMB(
+    density ~ s(depth),
+    data = pcod_2011, mesh = pcod_mesh_2011,
+    family = tweedie(link = "log")
+  )
+  p1 <- r2(fit)
+  p1
+  expect_equal(p1$R2[p1$component == "conditional"], expected = 0.9142605, tolerance = 1e-3)
+
   # binomial
   fit <- sdmTMB(present ~ scaled_log_depth + (1 | fyear), data = d, spatial = "off", family = binomial())
   fit2 <- glmmTMB::glmmTMB(present ~ scaled_log_depth + (1 | fyear), data = d, family = binomial())

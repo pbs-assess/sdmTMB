@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Add support for Nakagawa et al. R2 values. See `?r2.sdmTMB` #256
+
 * Improve warnings/errors around use of `do_index = TRUE` and `get_index()`
   if `newdata = NULL`. #276
 

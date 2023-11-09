@@ -76,6 +76,7 @@ Imports:
     mgcv,
     mvtnorm,
     nlme,
+    performance,
     rlang,
     stats,
     TMB (>= 1.8.0)
