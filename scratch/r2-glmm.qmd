@@ -239,7 +239,7 @@ r2.sdmTMB <- function(x, which_fixef = NULL, method = NULL) {
   }
 
   varO <- varE <- varV <- varG <- 0
-  if (x$tmb_data$include_spatial == 1L && x$tmb_data$no_spatial) {
+  if (x$tmb_data$include_spatial == 1L && !x$tmb_data$no_spatial) {
     varO <- b$estimate[b$term == "sigma_O"]^2 # spatial variance
   }
   if (x$tmb_data$spatial_only == 0L && !x$tmb_data$no_spatial) {
