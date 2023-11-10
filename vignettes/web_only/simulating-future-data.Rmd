@@ -1,0 +1,253 @@
+---
+title: "Simulating future data with sdmTMB"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Simulating future data with sdmTMB}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+**If the code in this vignette has not been evaluated, a rendered version is available on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html) under 'Articles'.**
+
+```{r setup, include = FALSE, cache=FALSE}
+dplyr_installed <- require("dplyr", quietly = TRUE)
+ggplot_installed <- require("ggplot2", quietly = TRUE)
+pkgs <- dplyr_installed && ggplot_installed
+EVAL <- identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.asp = 0.618,
+  eval = EVAL,
+  purl = EVAL
+)
+```
+
+```{r packages, message=FALSE, warning=TRUE}
+library(ggplot2)
+library(dplyr)
+library(sdmTMB)
+```
+
+```{r, results="hide", message=FALSE}
+mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 10)
+fit <- sdmTMB(
+  density ~ 1,
+  data = pcod_2011,
+  mesh = mesh,
+  time = "year",
+  spatial = "on",
+  spatiotemporal = "rw",
+  family = tweedie(link = "log"),
+  silent = FALSE
+)
+```
+
+```{r}
+fit
+```
+
+Now, we want to simulate future years using the estimated spatial and spatiotemporal random fields for the historical years.
+For future years, we will use the estimated spatial random field (since we would expect this to remain constant) but new spatiotemporal random fields with the same properties (SD and range).
+In this example where we used a spatiotemporal random field random walk, the random field random walk will continue from the last time step.
+The future spatiotemporal random fields represent spatially correlated latent effects such as temperature, movement, and species interactions.
+
+The general approach is that we will pass the fitted array of spatiotemporal random field estimates to `sdmTMB_simulate()` and we will pad this array with `NA`s for any future years where we want to simulate new fields.
+
+```{r}
+p <- get_pars(fit)
+eps <- p$epsilon_st
+dim(eps)
+```
+
+`eps` is an array of dimension 188 rows (one for each mesh "knot"), 4 columns (1 for each time step), and 1 element deep (our family is not a delta family, which would have 2).
+Here, we will simulate 3 new years:
+
+```{r}
+n_future_yrs <- 3
+eps2 <- array(dim = dim(eps) + c(0, n_future_yrs, 0))
+eps2[,,1] <- cbind(
+  eps[,,1], 
+  matrix(NA, nrow = dim(eps)[1], ncol = n_future_yrs)
+)
+head(eps2)
+dim(eps2)
+```
+
+We now have 3 extra years with `NA`s.
+
+We need to decide where we want to sample in future years.
+For this example, we will randomly select 200 new locations per year from previous sampling locations.
+We will include the depth covariate as an example in case you wanted to carry covariates through, although our example model only has an intercept.
+
+```{r}
+set.seed(123)
+samps <- sample(seq_len(nrow(pcod_2011)), size = 600)
+nd <- data.frame(
+  X = pcod_2011$X[samps], 
+  Y = pcod_2011$Y[samps], 
+  depth = pcod_2011$depth[samps],
+  year = rep(c(2019L, 2021L, 2023L), each = 200)
+)
+nd <- rbind(select(pcod_2011, X, Y, year, depth), nd)
+```
+
+We will also append on the survey grid, so we can calculate the "true" index for future years:
+
+```{r}
+grid <- data.frame(
+  X = rep(qcs_grid$X, 3), 
+  Y = rep(qcs_grid$Y, 3), 
+  depth = rep(qcs_grid$depth, 3), 
+  year = rep(c(2019L, 2021L, 2023L), each = nrow(qcs_grid)), 
+  grid_data = TRUE
+)
+nd <- rbind(data.frame(nd, grid_data = FALSE), grid)
+```
+
+```{r}
+head(nd)
+```
+
+Now we can simulate new data with `sdmTMB_simulate()`:
+
+```{r}
+b <- tidy(fit, "ran_pars")
+# assign the previous mesh to new data locations:
+mesh2 <- make_mesh(nd, c("X", "Y"), mesh = mesh$mesh)
+s <- sdmTMB_simulate(
+  ~ 1,
+  data = nd,
+  mesh = mesh2,
+  range = b$estimate[b$term == "range"],
+  sigma_E = b$estimate[b$term == "sigma_E"],
+  sigma_O = b$estimate[b$term == "sigma_O"],
+  phi = b$estimate[b$term == "phi"],
+  B = unname(coef(fit)),
+  time = "year",
+  spatiotemporal = "rw",
+  family = tweedie(link = "log"),
+  seed = 2927819,
+  fixed_re = list(epsilon_st = eps2) # <- our `eps2` from above
+)
+s$depth <- nd$depth # append this covariate
+```
+
+Now we can split up our simulation into grid and sample observations:
+
+```{r}
+sim_grid <- s[nd$grid_data,]
+sim <- s[!nd$grid_data,]
+```
+
+Next we plot the simulated expected values.
+The last 3 years are simulated; the previous values should match our predictions from the fitted model.
+
+```{r}
+ggplot(sim, aes(X, Y, colour = mu)) + geom_point() +
+  scale_color_viridis_c(trans = "log10") +
+  facet_wrap(~year)+
+  coord_fixed()
+```
+
+These are the random walk random field values.
+The last three years are simulated.
+
+```{r}
+ggplot(sim, aes(X, Y, colour = epsilon_st)) + geom_point() +
+  scale_color_viridis_c(limits = c(-4, 4)) +
+  facet_wrap(~year)+
+  coord_fixed()
+```
+
+We can compare that to the predictions to ensure they match:
+
+```{r}
+pred <- predict(fit)
+ggplot(pred, aes(X, Y, colour = epsilon_st)) + geom_point() +
+  scale_color_viridis_c(limits = c(-4, 4)) +
+  facet_wrap(~year)+
+  coord_fixed()
+```
+
+And these are the expected values on the grid for our future years:
+
+```{r}
+ggplot(sim_grid, aes(X, Y, fill = mu)) + geom_raster() +
+  scale_fill_viridis_c(trans = "sqrt") +
+  facet_wrap(~year) +
+  coord_fixed()
+```
+
+Now, we will combine our future simulated observations with our historically observed observations:
+
+```{r}
+sim_future <- filter(sim, year > max(pcod_2011$year)) |> 
+  select(year, X, Y, depth, density = observed) |> 
+  mutate(simulated_data = TRUE)
+combined_dat <- bind_rows(
+  mutate(pcod_2011, simulated_data = FALSE), 
+  sim_future
+)
+table(combined_dat$year)
+```
+
+And fit a model to these combined data:
+
+```{r, results='hide'}
+mesh3 <- make_mesh(combined_dat, c("X", "Y"), mesh = mesh$mesh)
+fit2 <- sdmTMB(
+  density ~ 1,
+  data = combined_dat,
+  mesh = mesh3,
+  time = "year",
+  spatial = "on",
+  spatiotemporal = "rw",
+  family = tweedie(link = "log"),
+  silent = FALSE
+)
+```
+
+```{r}
+fit2
+```
+
+Now, we can compare our estimated and known true index values:
+
+First, predict on the survey grid:
+
+```{r}
+g <- replicate_df(qcs_grid, "year", time_values = unique(combined_dat$year))
+pred2 <- predict(fit2, newdata = g, return_tmb_object = TRUE)
+```
+
+Sum the predictions across the grid cells and calculate standard errors:
+
+```{r}
+ind <- get_index(pred2, bias_correct = TRUE, area = 4) # 2 x 2 cells
+```
+
+Calculate "true" index from the simulated expectations:
+
+```{r}
+true <- group_by(sim_grid, year) |> 
+  summarise(biomass = sum(mu) * 4) # 2 x 2 cells
+```
+
+Compare them:
+
+```{r}
+ggplot(ind, aes(year, est, ymin = lwr, ymax = upr)) + geom_pointrange() +
+  geom_line(aes(x = year, y = biomass), data = true, inherit.aes = FALSE, colour = "red") +
+  ylim(0, NA) +
+  ylab("biomass")
+```
