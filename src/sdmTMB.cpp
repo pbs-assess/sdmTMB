@@ -211,7 +211,7 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(has_smooths);  // whether or not smooths are included
   DATA_IVECTOR(b_smooth_start);
 
-  DATA_IVECTOR(sim_re); // sim random effects? 0,1; order: omega, epsilon (ignored), zeta, IID, RW, smoothers
+  DATA_IVECTOR(sim_re); // sim random effects? 0,1; order: omega, epsilon, zeta, IID, RW, smoothers
   DATA_IVECTOR(sim_eps_t); // sim spatiotemporal random effects? (epsilon only)
   DATA_IVECTOR(simulate_t); // sim this specific time step? (used for forecasting)
 
