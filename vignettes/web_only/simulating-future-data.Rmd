@@ -137,7 +137,7 @@ s <- sdmTMB_simulate(
   spatiotemporal = "rw",
   family = tweedie(link = "log"),
   seed = 2927819,
-  fixed_re = list(epsilon_st = eps2) # <- our `eps2` from above
+  fixed_re = list(omega_s = p$omega_s, epsilon_st = eps2) # <- our `eps2` from above
 )
 s$depth <- nd$depth # append this covariate
 ```
