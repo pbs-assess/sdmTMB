@@ -176,7 +176,11 @@ sdmTMB_simulate <- function(formula,
   }
   tmb_data <- fit$tmb_data
   tmb_data$sim_re <- as.integer(.sim_re)
-  # tmb_data$sim_re <- c(1L, 0L, 0L, 0L, 0L, 0L)
+
+  if (!is.null(fixed_re$epsilon_st)) {
+    tmb_data$sim_eps_t <- as.integer(apply(fixed_re$epsilon_st, 2L, function(.x) all(is.na(.x))))
+    if (sum(tmb_data$sim_eps_t)) tmb_data$sim_re[2] <- 1L
+  }
 
   if (!is.null(B)) {
     n_covariates <- length(B)

@@ -211,7 +211,8 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(has_smooths);  // whether or not smooths are included
   DATA_IVECTOR(b_smooth_start);
 
-  DATA_IVECTOR(sim_re); // sim random effects? 0,1; order: omega, epsilon, zeta, IID, RW, smoothers
+  DATA_IVECTOR(sim_re); // sim random effects? 0,1; order: omega, epsilon (ignored), zeta, IID, RW, smoothers
+  DATA_IVECTOR(sim_eps_t); // sim spatiotemporal random effects? (epsilon only)
   DATA_IVECTOR(simulate_t); // sim this specific time step? (used for forecasting)
 
   DATA_VECTOR(lwr); // lower bound for censpois on counts
@@ -462,7 +463,7 @@ Type objective_function<Type>::operator()()
           PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E_vec(t,m)))(epsilon_st.col(m).col(t));
         if (sim_re(1)) {
           for (int t = 0; t < n_t; t++) {
-            if (simulate_t(t)) {
+            if (simulate_t(t) && sim_eps_t(t)) {
               vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
               SIMULATE {GMRF(Q_temp, s).simulate(epsilon_st_tmp);
                 epsilon_st.col(m).col(t) = epsilon_st_tmp / exp(ln_tau_E_vec(t,m));}
@@ -487,7 +488,7 @@ Type objective_function<Type>::operator()()
             // SIMULATE {SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)).simulate(epsilon_st_tmp);
             //   epsilon_st.col(m) = epsilon_st_tmp / exp(ln_tau_E(m));}
             for (int t = 0; t < n_t; t++) {
-              if (simulate_t(t)) {
+              if (simulate_t(t) && sim_eps_t(t)) {
                 vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
                 SIMULATE {
                   GMRF(Q_temp, s).simulate(epsilon_st_tmp);
@@ -512,7 +513,7 @@ Type objective_function<Type>::operator()()
           }
           if (sim_re(1)) {
             for (int t = 0; t < n_t; t++) {
-              if (simulate_t(t)) {
+              if (simulate_t(t) && sim_eps_t(t)) {
                 vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
                 SIMULATE {
                   GMRF(Q_temp, s).simulate(epsilon_st_tmp);
