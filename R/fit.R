@@ -124,7 +124,8 @@ NULL
 #'   the TMB object doesn't have to be rebuilt with [predict.sdmTMB()] and
 #'   [get_index()]. If `TRUE`, then `predict_args` must have a `newdata` element
 #'   supplied and `area` can be supplied to `index_args`.
-#'   Most users can ignore this option.
+#'   Most users can ignore this option. The fitted object can be passed directly
+#'   to [get_index()].
 #' @param predict_args A list of arguments to pass to [predict.sdmTMB()] **if**
 #'   `do_index = TRUE`. Most users can ignore this option.
 #' @param index_args A list of arguments to pass to [get_index()] **if**
