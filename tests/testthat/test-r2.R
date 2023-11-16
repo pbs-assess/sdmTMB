@@ -24,6 +24,15 @@ test_that("r2 function works", {
   p2 <- performance::r2_nakagawa(fit2)
   .compare(p1, p2)
 
+  # multiple random intercepts:
+  set.seed(1)
+  d$g <- as.factor(sample(letters[1:5], size = nrow(d), replace = TRUE))
+  fit <- sdmTMB(density ~ scaled_log_depth + (1 | g) + (1 | fyear), data = d, spatial = "off", family = tweedie())
+  fit2 <- glmmTMB::glmmTMB(density ~ scaled_log_depth + (1 | g) + (1 | fyear), data = d, family = glmmTMB::tweedie())
+  p1 <- r2(fit)
+  p2 <- r2(fit2)
+  .compare(p1, p2)
+
   # no (1 | g)
   fit <- sdmTMB(
     density ~ s(depth),
