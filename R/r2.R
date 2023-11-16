@@ -169,9 +169,9 @@ r2.sdmTMB <- function(model, ...) {
 }
 
 .get_var_re_iid <- function(x) {
-  if (x$tmb_data$nobs_RE > 0) {
+  if (any(x$tmb_data$nobs_RE > 0)) {
     b <- tidy(x, "ran_par")
-    varG <- b$estimate[b$term == "sigma_G"]^2 # random effect variance
+    varG <- sum(b$estimate[b$term == "sigma_G"]^2) # random effect variance
   } else {
     varG <- 0
   }
