@@ -260,7 +260,6 @@ test_that("random slopes throw an error", {
   expect_s3_class(fit, "sdmTMB")
 })
 
-
 test_that("Random intercept classes in predict() are checked appropriately", {
   skip_on_cran()
   set.seed(1)
@@ -270,15 +269,11 @@ test_that("Random intercept classes in predict() are checked appropriately", {
   pcod_yrf_as_num$year_f <- as.numeric(pcod$year)
   pcod_yrf_as_chr$year_f <- as.character(pcod$year)
 
-  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
-
   m_yrf_re <- sdmTMB(
     data = pcod,
     formula = density ~ poly(log(depth), 2) + (1 | year_f),
-    mesh = mesh,
     family = tweedie(link = "log"),
-    spatial = "on",
-    time = "year"
+    spatial = "off"
   )
 
   expect_error(
