@@ -461,6 +461,9 @@ predict.sdmTMB <- function(object, newdata = NULL,
 
     if (isFALSE(pop_pred_iid)) {
       for (i in seq_along(RE_names)) {
+        # checking newdata random intercept columns are factors
+        assert_that(is.factor(newdata[[RE_names[i]]]),
+                    msg = sprintf("Random effect group column `%s` in newdata is not a factor.", RE_names[i]))
         levels_fit <- levels(object$data[[RE_names[i]]])
         levels_nd <- levels(newdata[[RE_names[i]]])
         if (sum(!levels_nd %in% levels_fit)) {
