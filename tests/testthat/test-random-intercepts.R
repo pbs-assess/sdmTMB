@@ -259,3 +259,41 @@ test_that("random slopes throw an error", {
   )
   expect_s3_class(fit, "sdmTMB")
 })
+
+test_that("Random intercept classes in predict() are checked appropriately", {
+  skip_on_cran()
+  set.seed(1)
+
+  pcod$year_f <- as.factor(pcod$year)
+  pcod_yrf_as_num <- pcod_yrf_as_chr <- pcod
+  pcod_yrf_as_num$year_f <- as.numeric(pcod$year)
+  pcod_yrf_as_chr$year_f <- as.character(pcod$year)
+
+  m_yrf_re <- sdmTMB(
+    data = pcod,
+    formula = density ~ poly(log(depth), 2) + (1 | year_f),
+    family = tweedie(link = "log"),
+    spatial = "off"
+  )
+
+  expect_error(
+    p8 <- predict(m_yrf_re, newdata = pcod_yrf_as_num),
+    regexp = "newdata"
+  )
+
+  expect_error(
+    p9 <- predict(m_yrf_re, newdata = pcod_yrf_as_chr),
+    regexp = "newdata"
+  )
+
+  expect_error(
+    p10 <- predict(m_yrf_re, newdata = pcod_yrf_as_num, re_form = NA),
+    regexp = "newdata"
+  )
+
+  p11 <- predict(m_yrf_re, newdata = pcod_yrf_as_num,  # This should work
+                 re_form = NA, re_form_iid = NA)
+
+  expect_s3_class(p11, "tbl_df")
+})
+
