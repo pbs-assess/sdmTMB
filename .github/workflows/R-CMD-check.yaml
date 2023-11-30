@@ -72,6 +72,8 @@ jobs:
           remotes::install_cran("sf")
           remotes::install_cran("rcmdcheck")
           remotes::install_cran("textshaping")
+          install.packages("Matrix", type = "source")
+          install.packages("TMB", type = "source")
         shell: Rscript {0}
 
       - name: Install dependencies Ubuntu
