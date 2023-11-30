@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Add check for factor random intercept columns in `newdata` to avoid a crash.
+  #278 #280
+
 * Improve warnings/errors around use of `do_index = TRUE` and `get_index()`
   if `newdata = NULL`. #276
 
