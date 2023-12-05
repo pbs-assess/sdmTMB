@@ -312,7 +312,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
   # places where we force newdata:
   nd_arg_was_null <- FALSE
   if (is.null(newdata)) {
-    if (is_delta(object) || nsim > 0 || type == "response" || !is.null(mcmc_samples) || se_fit || !is.null(re_form) || !is.null(re_form_iid) || !is.null(offset)) {
+    if (is_delta(object) || nsim > 0 || type == "response" || !is.null(mcmc_samples) || se_fit || !is.null(re_form) || !is.null(re_form_iid) || !is.null(offset) || isTRUE(object$family$delta)) {
       newdata <- object$data
       if (!is.null(object$extra_time)) { # issue #273
         newdata <- newdata[!newdata[[object$time]] %in% object$extra_time,]
@@ -819,10 +819,6 @@ predict.sdmTMB <- function(object, newdata = NULL,
         "supply `newdata`. In the meantime you could supply your original data frame ",
         "to the `newdata` argument."))
     }
-    if (isTRUE(object$family$delta)) {
-      cli_abort(c("Delta model prediction not implemented for `newdata = NULL` yet.",
-          "Please provide your data to `newdata` and include the `offset` vector if needed."))
-    }
     nd <- object$data
     lp <- object$tmb_obj$env$last.par.best
     # object$tmb_obj$fn(lp) # call once to update internal structures?
@@ -833,14 +829,10 @@ predict.sdmTMB <- function(object, newdata = NULL,
     # IID and RW effects are baked into fixed effects for `newdata` in above code:
     nd$est_non_rf <- r$eta_fixed_i[,1] + r$eta_rw_i[,1] + r$eta_iid_re_i[,1] # DELTA FIXME
     nd$est_rf <- r$omega_s_A[,1] + r$epsilon_st_A_vec[,1] # DELTA FIXME
-    if (!is.null(object$spatial_varying_formula))
-      cli_abort(c("Prediction with `newdata = NULL` is not supported with spatially varying coefficients yet.",
-          "Please provide your data to `newdata`."))
-    # + r$zeta_s_A
     nd$omega_s <- r$omega_s_A[,1]# DELTA FIXME
-    # for (z in seq_len(dim(r$zeta_s_A)[2])) { # SVC:
-    #   nd[[paste0("zeta_s_", object$spatial_varying[z])]] <- r$zeta_s_A[,z,1]
-    # }
+    for (z in seq_len(dim(r$zeta_s_A)[2])) { # SVC: # DELTA FIXME
+      nd[[paste0("zeta_s_", object$spatial_varying[z])]] <- r$zeta_s_A[,z,1]
+    }
     nd$epsilon_st <- r$epsilon_st_A_vec[,1]# DELTA FIXME
     nd <- nd[!nd[[object$time]] %in% object$extra_time, , drop = FALSE] # issue 270
     obj <- object

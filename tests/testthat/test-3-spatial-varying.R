@@ -12,6 +12,13 @@ test_that("SVC are estimated correctly for binomial and delta models", {
     mesh = mesh10,
     family = binomial()
   )
+
+  p <- predict(m1)
+  pnd <- predict(m1, newdata = d)
+  expect_identical(names(p), names(pnd))
+  expect_equal(p$est, pnd$est)
+  expect_equal(p$zeta_s_year_scaled, pnd$zeta_s_year_scaled)
+
   # m1.1 <- sdmTMB(
   #   data = d,
   #   formula = present ~ 1 + year_scaled,
@@ -144,3 +151,4 @@ test_that("SVC throws a warning if character class #269", {
     )
   }, regexp = "character")
 })
+
