@@ -815,37 +815,73 @@ sdmTMB <- function(
   for (ii in seq_along(formula)) {
     contains_offset <- check_offset(formula[[ii]])
 
+    # RE_names is either the names of the groups OR a character w/length 0 if none exist
     # anything in a list here needs to be saved for tmb data
-    split_formula[[ii]] <- split_form(formula[ii][[1]])
-    RE_names <- split_formula[[ii]]$barnames
+    split_formula[[ii]] <- split_form(formula[ii][[1]], data)
 
-    fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
+    # Null values for when REs aren't included
+    RE_names <- as.character()
+    ln_tau_G_index[[ii]] <- integer()
+    nobs_RE[[ii]] <- 0L
+
+    if(split_formula[[ii]]$n_bars > 0) { # random effects included
+      ln_tau_G_index[[ii]] <- split_formula[[ii]]$re_cov_terms$Lind - 1L # index corresponding to which variance each re is assoc with
+      nobs_RE[[ii]] <- as.numeric(split_formula[[ii]]$re_cov_terms$nl) # concatenated vector of ids,
+      RE_names <- names(split_formula[[ii]]$re_cov_terms$flist) # names of each group
+    }
+    fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)# commented out because this isn't being used anywhere
+
+    # RE_indexes[[ii]] is a matrix here with 0 cols if there's no REs
     RE_indexes[[ii]] <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
-    nobs_RE[[ii]] <- unname(apply(RE_indexes[[ii]], 2L, max)) + 1L
-    if (length(nobs_RE[[ii]]) == 0L) nobs_RE[[ii]] <- 0L
-    formula[[ii]] <- split_formula[[ii]]$form_no_bars
-    ln_tau_G_index[[ii]] <- unlist(lapply(seq_along(nobs_RE[[ii]]), function(i) rep(i, each = nobs_RE[[ii]][i]))) - 1L
+    #nobs_RE[[ii]] <- unname(apply(RE_indexes[[ii]], 2L, max)) + 1L
+    #if (length(nobs_RE[[ii]]) == 0L) nobs_RE[[ii]] <- 0L # catch case with no RE
+    #ln_tau_G_index[[ii]] <- unlist(lapply(seq_along(nobs_RE[[ii]]), function(i) rep(i, each = nobs_RE[[ii]][i]))) - 1L
 
+    # Save formula with no bars -- this is used for parsing smoothing, etc below
+    formula[[ii]] <- lme4::nobars(formula[[ii]])
     formula_no_sm <- remove_s_and_t2(formula[[ii]])
     X_ij[[ii]] <- model.matrix(formula_no_sm, data)
     mf[[ii]] <- model.frame(formula_no_sm, data)
+
     # Check for random slopes:
-    if (length(split_formula[[ii]]$bars)) {
-      termsfun <- function(x) {
-        # using glmTMB and lme4:::mkBlist approach
-        ff <- eval(substitute(~foo, list(foo = x[[2]])))
-        tt <- try(terms(ff, data =  mf[[ii]]), silent = TRUE)
-        tt
-      }
-      reXterms <- lapply(split_formula[[ii]]$bars, termsfun)
-      if (length(attr(reXterms[[1]], "term.labels")))
-        cli_abort("This model appears to have a random slope specified (e.g., y ~ (1 + b | group)). sdmTMB currently can only do random intercepts (e.g., y ~ (1 | group)).")
-    }
+    # if (length(split_formula[[ii]]$bars)) {
+    #   termsfun <- function(x) {
+    #     # using glmTMB and lme4:::mkBlist approach
+    #     ff <- eval(substitute(~foo, list(foo = x[[2]])))
+    #     tt <- try(terms(ff, data =  mf[[ii]]), silent = TRUE)
+    #     tt
+    #   }
+    #   reXterms <- lapply(split_formula[[ii]]$bars, termsfun)
+    #   if (length(attr(reXterms[[1]], "term.labels")))
+    #     cli_abort("This model appears to have a random slope specified (e.g., y ~ (1 + b | group)). sdmTMB currently can only do random intercepts (e.g., y ~ (1 | group)).")
+    # }
 
     mt[[ii]] <- attr(mf[[ii]], "terms")
     # parse everything mgcv + smoothers:
     sm[[ii]] <- parse_smoothers(formula = formula[[ii]], data = data, knots = knots)
   }
+
+  # bind the elements of split_formula[[ii]] together to pass into TMB
+  # add a new column to each dataframe storing the model number (1, 2, ...)
+  split_formula_dfs <- add_model_index(split_formula, "re_df")
+  re_cov_df <- do.call(rbind, split_formula_dfs)# bind all dataframes together
+
+  re_cov_term_dfs <- add_model_index(split_formula, "re_cov_term_map")
+  re_cov_df_map <- do.call(rbind, re_cov_term_dfs)
+
+  re_b_dfs <- add_model_index(split_formula, "re_b_df")
+  re_b_df <- do.call(rbind, re_b_dfs)
+
+  re_b_map_dfs <- add_model_index(split_formula, "re_b_map")
+  re_b_map <- do.call(rbind, re_b_map_dfs)
+
+  n_re_groups <- rep(0, length(formula)) # integer array of number of groups per model
+  Zt_list <- list() # list of sparse matrices for random effects
+  for(ii in 1:length(formula)) {
+    n_re_groups[ii] <- length(which(re_cov_df_map$model == ii))
+    Zt_list[[ii]] <- split_formula[[ii]]$re_cov_terms$Zt # transpose of matrix, so cols = observation, row = REs
+  }
+
 
   if (delta) {
     if (any(unlist(lapply(nobs_RE, function(.x) .x > 0)))) {
@@ -1117,7 +1153,13 @@ sdmTMB <- function(
     lwr = 0L, # in case we want to reintroduce this
     poisson_link_delta = as.integer(isTRUE(family$type == "poisson_link_delta")),
     stan_flag = as.integer(bayesian),
-    no_spatial = no_spatial
+    no_spatial = no_spatial,
+    re_cov_df_map = as.matrix(re_cov_df_map), # dataframe used to map parameters to cov matrices,
+    re_cov_df = as.matrix(re_cov_df),
+    n_re_groups = c(n_re_groups),
+    re_b_df = as.matrix(re_b_df[,-1]),# data frame containing indidivual level ids. Don't pass in first col (can be char)
+    re_b_map = as.matrix(re_b_map),
+    Zt_list = Zt_list # list of RE matrices
   )
 
   if(is.na(sum(nobs_RE))) {
@@ -1620,9 +1662,135 @@ barnames <- function (bars) {
   vapply(bars, function(x) safe_deparse(x[[3]]), "")
 }
 
-split_form <- function(f) {
-  b <- lme4::findbars(f)
-  bn <- barnames(b)
-  fe_form <- lme4::nobars(f)
-  list(bars = b, barnames = bn, form_no_bars = fe_form, n_bars = length(bn))
+#' make_indices is an internal function to build lower triangular matrices for correlated random effects
+#' @param vec
+#'
+make_indices <- function(vec) {
+  group_indices <- unlist(lapply(seq_along(vec), function(i) rep(i, sum(1:vec[i]))))
+
+  # Function to generate lower triangular indices
+  get_lower_tri_indices <- function(n) {
+    cols <- unlist(lapply(1:n, function(i) rep(i, n - i + 1)))
+    rows <- unlist(lapply(1:n, function(i) i:n))
+    return(list(rows = rows, cols = cols))
+  }
+
+  # Getting row and column indices for each group
+  col_indices <- unlist(lapply(vec, function(x) get_lower_tri_indices(x)$cols))
+  row_indices <- unlist(lapply(vec, function(x) get_lower_tri_indices(x)$rows))
+  # return list of indices, all starting at 0 for TMB
+  return(list(group_indices = group_indices - 1L, rows = row_indices - 1L, cols = col_indices - 1L))
 }
+
+#' split_form is an internal function to parse random effects in a formula and return objects for estimation
+#' @param f formula object
+#' @param data dataframe used to build the random effects
+#'
+split_form <- function(f, data) {
+  b <- lme4::findbars(f) # find expressions separated by |, NULL if no RE
+  bn <- barnames(b) # names of groups
+  fe_form <- lme4::nobars(f) # fixed effect formula, no bars
+  re_cov_terms <- NULL
+
+  re_cov_terms <- list(Zt = NULL, theta = NULL, Lind = NULL, Gp = NULL,
+                   lower = NULL, Lambdat = NULL, flist = NULL,
+                   cnms = NULL, Ztlist = NULL, nl = NULL)
+  re_cov_terms$re_df = data.frame(group_indices = integer(0),
+                                  rows = integer(0), cols = integer(0),
+                                  is_sd = integer(0), par_index = integer(0))
+  re_cov_terms$re_cov_term_map <- data.frame(group = integer(0),
+                                dim = integer(0),
+                                start = integer(0),
+                                end = integer(0))
+  re_cov_terms$re_b_df <- data.frame(level_ids = integer(0),
+                        start = integer(0),
+                        end = integer(0),
+                        group_indices = integer(0))
+  re_cov_terms$re_b_map <- data.frame(group = integer(0),
+                                dim = integer(0),
+                                start = integer(0),
+                                end = integer(0))
+  if(length(bn) > 0) {
+    mf <- model.frame(lme4::subbars(f), data)
+    re_cov_terms <- lme4::mkReTrms(b, mf,
+                               drop.unused.levels=TRUE,
+                               reorder.terms=FALSE, # default is true, reorder based on dec levels
+                               reorder.vars=FALSE) # keep not alphabetical
+    # re_cov_terms$theta gives the total number of params across v-cov matrices
+    # see lme4 vignettes for construction details. These are indexes with
+    # Lind which maps elements of theta to the VCov matrices.
+
+    # this function creates replicated indices per element
+    group_dims <- unlist(lapply(re_cov_terms$cnms, length)) # dimensions of RE for each group
+    re_cov_terms$re_df <- as.data.frame(make_indices(group_dims))
+    re_cov_terms$re_df$is_sd <- ifelse(re_cov_terms$re_df$rows == re_cov_terms$re_df$cols, 1L, 0L) # used for TMB transform
+    re_cov_terms$re_df$par_index <- seq_len(nrow(re_cov_terms$re_df)) - 1L # index, e.g. 0 - 15 to be used for TMB indexing
+
+    # also need to map these indices to the vector of estimated covariance parameters
+    re_cov_terms$re_cov_term_map <- data.frame(group = unique(re_cov_terms$re_df$group_indices),
+                                  dim = group_dims,
+                                  start = NA, end = NA)
+    for(i in 1:nrow(re_cov_terms$re_cov_term_map)) {
+      indx <- which(re_cov_terms$re_df$group_indices == re_cov_terms$re_cov_term_map$group[i])
+      re_cov_terms$re_cov_term_map$start[i] <- min(indx) - 1L# start at 0
+      re_cov_terms$re_cov_term_map$end[i] <- max(indx) - 1L# start at 0
+    }
+
+    # index the level / group of the elements of Zt
+    for(i in 1:length(re_cov_terms$Ztlist)) {
+      levels <- levels(data[,bn[[i]]])
+      level_ids <- rownames(re_cov_terms$Ztlist[[i]])
+      if(i == 1) {
+        df <- data.frame(index = 1:length(level_ids),
+                       level_ids = level_ids,
+                       group_indices = i)
+      } else {
+        df <- rbind(df, data.frame(index = 1:length(level_ids),
+                                   level_ids = level_ids,
+                                   group_indices = i))
+      }
+    }
+    df$index <- seq(1, nrow(df))
+    re_cov_terms$re_b_df <- data.frame(level_ids = unique(df$level_ids),
+                          start = NA, end = NA, group_indices = NA)
+    for(i in 1:nrow(re_cov_terms$re_b_df)) {
+      indx <- which(df$level_ids == re_cov_terms$re_b_df$level_ids[i])
+      re_cov_terms$re_b_df$start[i] <- min(indx) - 1L# start at 0
+      re_cov_terms$re_b_df$end[i] <- max(indx) - 1L# start at 0
+      re_cov_terms$re_b_df$group_indices[i] <- df$group_indices[indx[1]]
+    }
+
+    # index the groups
+    # also need to map these indices to the vector of estimated covariance parameters
+    re_cov_terms$re_b_map <- data.frame(group = unique(re_cov_terms$re_b_df$group_indices),
+                                  start = NA, end = NA)
+    for(i in 1:nrow(re_cov_terms$re_b_map)) {
+      indx <- which(re_cov_terms$re_b_df$group_indices == re_cov_terms$re_b_map$group[i])
+      re_cov_terms$re_b_map$start[i] <- min(indx) - 1L# start at 0
+      re_cov_terms$re_b_map$end[i] <- max(indx) - 1L# start at 0
+    }
+  }
+  return(list(bars = b, barnames = bn, form_no_bars = fe_form, n_bars = length(bn),
+       re_cov_terms = re_cov_terms))
+}
+
+add_model_index <- function(split_formula, dataframe_name) {
+  lapply(seq_along(split_formula), function(i) {
+    # Access the specific dataframe using the provided dataframe name
+    df <- split_formula[[i]]$re_cov_terms[[dataframe_name]]
+
+    nrows <- nrow(df)
+    if (nrows > 0) {
+      df$model <- i  # Add new column with the position in the list
+    } else {
+      df$model <- integer(0)
+    }
+
+    # Assign the modified dataframe back to the original list structure
+    split_formula[[i]]$re_cov_terms[[dataframe_name]] <- df
+
+    return(df)
+  })
+}
+
+

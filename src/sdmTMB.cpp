@@ -96,6 +96,21 @@ Type Link(Type eta, int link)
   return out;
 }
 
+/* List of sparse matrices */
+// taken from kaskr, https://github.com/kaskr/adcomp/issues/96
+using namespace Eigen;
+using namespace tmbutils;
+template<class Type>
+struct LOSM_t : vector<SparseMatrix<Type> > {
+  LOSM_t(SEXP x){  /* x = List passed from R */
+(*this).resize(LENGTH(x));
+    for(int i=0; i<LENGTH(x); i++){
+      SEXP sm = VECTOR_ELT(x, i);
+      (*this)(i) = asSparseMatrix<Type>(sm);
+    }
+  }
+};
+
 // ------------------ Main TMB template ----------------------------------------
 
 template <class Type>
@@ -122,6 +137,14 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(proj_offset_i); // optional offset
 
   DATA_INTEGER(n_t);  // number of years
+
+  // Random effects
+  DATA_IMATRIX(re_cov_df); // dataframe describing the random effects covariance parameters
+  DATA_IMATRIX(re_cov_df_map); // dataframe describing the groups of random effects covariance parameters
+  DATA_IMATRIX(re_b_df);// dataframe describing the random effects parameters
+  DATA_IMATRIX(re_b_map);// dataframe describing the groups of random effects parameters
+  DATA_IVECTOR(n_re_groups);
+  DATA_STRUCT(Zt_list, LOSM_t); // list of model matrices for random effects
 
   // Random intercepts:
   DATA_IMATRIX(RE_indexes);
@@ -535,6 +558,54 @@ Type objective_function<Type>::operator()()
   if (flag == 0) return jnll;
 
   // ------------------ Probability of random effects --------------------------
+  // re_cov_pars will be a PARAMETER_ARRAY
+  // re_cov_map will be n_m x max_groups
+  int g_index = -1;
+  for (int m = 0; m < n_m; m++) {
+    for(int g = 0; g < n_re_groups(m); g++) { // loop over each group in the model
+      // construct the variance covariance matrix based on the dimension
+      // for example, (1|x) would have 1 dimension; (day+school|x) would have 3
+
+      // fill the covariance matrix and evaluate the likelihood. The elements of Z that
+      // get passed in are ordered by group -- so that they are
+      // level1_group1 / level2_group1 / level3_group1 / ... / level1_group2 / level2_group2
+
+      // cycle through rows of re_cov_df_map
+      g_index = g_index + 1;
+      int n = re_cov_df_map(g_index, 1); // dimension of random effects for this group
+
+      // unconstrained params here are the lower triangular of the cholesky corr matrix, and sds are the diagonal
+      vector<Type> unconstrained_params(n*(n-1)/2);  // Dummy parameterization of correlation matrix
+      vector<Type> sds(n);                           // Standard deviations
+      int par_indx = 0;
+      int jj = 0;
+      for(jj = re_cov_df_map(g_index, 2); jj <= re_cov_df_map(g_index, 2); jj++) {
+        if(re_cov_df(jj,3) == 1) { // standard deviation, is_sd indexed as col 3
+          //TODO sds(re_cov_df(jj,2)) = exp(re_cov_pars(jj)); // sd estimated in log_space
+        } else {
+          //TODO unconstrained_params(par_indx) = re_cov_pars(jj);
+          par_indx = par_indx + 1;
+        }
+      }
+
+      // covariance matrix has now been constructed. we have to cycle through all of the levels
+      // for this group to evaluate the probability of joint random effects
+
+      vector<Type> b_re_vec(n); // this is the vectorized version of the corr matrix for this group
+
+      for(int levels = re_b_map(g_index,1); levels <= re_b_map(g_index,2); levels++) {
+          // this is indexing of indexing
+          jj = 0;
+          for(int this_level = re_b_df(levels,1); this_level <= re_b_df(levels,2); this_level++) {
+            //TODO b_re_vec(jj) = re_b_pars(this_level);
+            jj = jj + 1;
+          }
+          // evaluate likelihood
+          //TODO res = VECSCALE(UNSTRUCTURED_CORR(unconstrained_params),sds)(b_re_vec);
+      }
+
+    }
+  }
 
   // IID random intercepts:
   array<Type> sigma_G(n_g,n_m);
