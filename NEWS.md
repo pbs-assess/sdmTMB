@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Add the ability to pass a custom randomized quantile function `qres_func`
+  to `residuals.sdmTMB()`.
+
 * Add check for factor random intercept columns in `newdata` to avoid a crash.
   #278 #280
 

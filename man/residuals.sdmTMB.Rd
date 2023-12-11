@@ -9,6 +9,7 @@
   type = c("mle-laplace", "mle-mcmc", "mvn-laplace", "response", "pearson"),
   model = c(1, 2),
   mcmc_samples = NULL,
+  qres_func = NULL,
   ...
 )
 }
@@ -22,6 +23,10 @@
 \item{mcmc_samples}{A vector of MCMC samples of the linear predictor in link
 space. See the
 \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package.}
+
+\item{qres_func}{A custom quantile residuals function. Function should take
+the arguments \verb{object, y, mu, ...} and return a vector of length
+\code{length(y)}.}
 
 \item{...}{Passed to residual function. Only \code{n} works for binomial.}
 }

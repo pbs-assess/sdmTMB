@@ -160,6 +160,9 @@ qres_beta <- function(object, y, mu, ...) {
 #' @param mcmc_samples A vector of MCMC samples of the linear predictor in link
 #'   space. See the
 #'   \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package.
+#' @param qres_func A custom quantile residuals function. Function should take
+#'   the arguments `object, y, mu, ...` and return a vector of length
+#'   `length(y)`.
 #' @param ... Passed to residual function. Only `n` works for binomial.
 #' @export
 #' @importFrom stats predict
@@ -243,6 +246,7 @@ residuals.sdmTMB <- function(object,
                              type = c("mle-laplace", "mle-mcmc", "mvn-laplace", "response", "pearson"),
                              model = c(1, 2),
                              mcmc_samples = NULL,
+                             qres_func = NULL,
                              ...) {
 
   model_missing <- FALSE
@@ -275,22 +279,26 @@ residuals.sdmTMB <- function(object,
     nd <- object$data
     est_column <- if (model == 1L) "est1" else "est2"
   }
-  res_func <- switch(fam,
-    gaussian = qres_gaussian,
-    binomial = qres_binomial,
-    tweedie  = qres_tweedie,
-    Beta     = qres_beta,
-    Gamma    = qres_gamma,
-    nbinom2  = qres_nbinom2,
-    nbinom1  = qres_nbinom1,
-    poisson  = qres_pois,
-    student  = qres_student,
-    lognormal  = qres_lognormal,
-    gamma_mix = qres_gamma_mix,
-    lognormal_mix = qres_lognormal_mix,
-    nbinom2_mix = qres_nbinom2_mix,
-    cli_abort(paste(fam, "not yet supported."))
-  )
+  if (is.null(qres_func)) {
+    res_func <- switch(fam,
+      gaussian = qres_gaussian,
+      binomial = qres_binomial,
+      tweedie  = qres_tweedie,
+      Beta     = qres_beta,
+      Gamma    = qres_gamma,
+      nbinom2  = qres_nbinom2,
+      nbinom1  = qres_nbinom1,
+      poisson  = qres_pois,
+      student  = qres_student,
+      lognormal  = qres_lognormal,
+      gamma_mix = qres_gamma_mix,
+      lognormal_mix = qres_lognormal_mix,
+      nbinom2_mix = qres_nbinom2_mix,
+      cli_abort(paste(fam, "not yet supported."))
+    )
+  } else {
+    res_func <- qres_func
+  }
 
   if (type %in% c("mle-laplace", "response", "pearson")) {
     # mu <- tryCatch({linkinv(predict(object, newdata = NULL)[[est_column]])}, # newdata = NULL; fast
