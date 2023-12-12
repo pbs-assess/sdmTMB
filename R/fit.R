@@ -1394,10 +1394,10 @@ sdmTMB <- function(
   if (do_index) {
     args <- list(object = out_structure, return_tmb_data = TRUE)
     args <- c(args, predict_args)
-    tmb_data <- do.call(predict.sdmTMB, args)
     if (!"newdata" %in% names(predict_args)) {
       cli_warn("`newdata` must be supplied if `do_index = TRUE`.")
     }
+    tmb_data <- do.call(predict.sdmTMB, args)
     if ("bias_correct" %in% names(index_args)) {
       cli_warn("`bias_correct` must be done later with `get_index(..., bias_correct = TRUE)`.")
       index_args$bias_correct <- NULL
@@ -1408,7 +1408,7 @@ sdmTMB <- function(
       index_args[["area"]] <- 1
     }
     if (length(index_args$area) == 1L) {
-      tmb_data$area_i <- rep(index_args[["area"]], nrow(predict_args[["newdata"]]))
+      tmb_data$area_i <- rep(index_args[["area"]], length(tmb_data$proj_year)) # proj_year includes padded extra_time! otherwise, crash
     } else {
       if (length(index_args$area) != nrow(predict_args[["newdata"]]))
         cli_abort("`area` length does not match `nrow(newdata)`.")
@@ -1417,6 +1417,9 @@ sdmTMB <- function(
     tmb_data$calc_index_totals <- 1L
     tmb_params[["eps_index"]] <- numeric(0) # for bias correction
     out_structure$do_index <- TRUE
+    do_index_time_missing_from_nd <-
+    out_structure$do_index_time_missing_from_nd <-
+      setdiff(data[[time]], predict_args$newdata[[time]])
   } else {
     out_structure$do_index <- FALSE
   }

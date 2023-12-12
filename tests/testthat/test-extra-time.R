@@ -41,7 +41,7 @@ test_that("extra time, newdata, and offsets work", {
 test_that("extra_time, newdata, get_index() work", {
   m <- sdmTMB(
     density ~ 1,
-    time_varying = ~1,
+    time_varying = ~ 1,
     time_varying_type = "ar1",
     data = pcod,
     family = tweedie(link = "log"),
@@ -88,4 +88,24 @@ test_that("extra_time, newdata, get_index() work", {
   p <- predict(m, newdata = nd, return_tmb_object = TRUE)
   ind5 <- get_index(p)
   expect_equal(ind2[ind2$year %in% nd$year, "est"], ind5[ind5$year %in% nd$year, "est"])
+
+  # with do_index = TRUE
+  nd <- replicate_df(pcod, "year", unique(pcod$year))
+  m2 <- sdmTMB(
+    density ~ 1,
+    time_varying = ~ 1,
+    time_varying_type = "ar1",
+    data = pcod,
+    family = tweedie(link = "log"),
+    time = "year",
+    spatial = "off",
+    spatiotemporal = "off",
+    do_index = TRUE,
+    predict_args = list(newdata = nd),
+    index_args = list(area = 1), # used to cause crash b/c extra_time
+    extra_time = c(2006, 2008, 2010, 2012, 2014, 2016, 2018) # last real year is 2017
+  )
+  ind6 <- get_index(m2)
+  expect_identical(ind6$year, c(2003, 2004, 2005, 2007, 2009, 2011, 2013, 2015, 2017))
+  expect_equal(ind3$est, ind6$est)
 })

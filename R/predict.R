@@ -539,7 +539,6 @@ predict.sdmTMB <- function(object, newdata = NULL,
       return(tmb_data)
     }
 
-    # TODO: when fields are a RW, visreg call crashes R here...
     new_tmb_obj <- TMB::MakeADFun(
       data = tmb_data,
       parameters = get_pars(object),

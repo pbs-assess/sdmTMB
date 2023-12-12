@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Fix crash in if `sdmTMB(..., do_index = TRUE)` and `extra_time` supplied along
+  with `predict_args = list(newdata = ...)` that lacked `extra_time` elements.
+
 * Allow `get_index()` to work with missing time elements.
 
 * Add the ability to pass a custom randomized quantile function `qres_func`

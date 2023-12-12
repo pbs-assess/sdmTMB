@@ -235,5 +235,8 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   if (!is.null(obj$fake_nd)) {
     d <- d[!d[[obj$fit_obj$time]] %in% obj$fake_nd[[obj$fit_obj$time]], ,drop = FALSE]
   }
+  if ("do_index_time_missing_from_nd" %in% names(obj$fit_obj)) {
+    d <- d[!d[[obj$fit_obj$time]] %in% obj$fit_obj$do_index_time_missing_from_nd, ,drop = FALSE]
+  }
   d[,c(time_name, 'est', 'lwr', 'upr', 'trans_est', 'se'), drop = FALSE]
 }
