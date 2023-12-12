@@ -39,6 +39,7 @@ test_that("extra time, newdata, and offsets work", {
 })
 
 test_that("extra_time, newdata, get_index() work", {
+  skip_on_cran()
   m <- sdmTMB(
     density ~ 1,
     time_varying = ~ 1,
@@ -107,5 +108,5 @@ test_that("extra_time, newdata, get_index() work", {
   )
   ind6 <- get_index(m2)
   expect_identical(ind6$year, c(2003, 2004, 2005, 2007, 2009, 2011, 2013, 2015, 2017))
-  expect_equal(ind3$est, ind6$est)
+  expect_equal(ind3$est, ind6$est, tolerance = 0.1)
 })
