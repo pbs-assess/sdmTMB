@@ -371,10 +371,6 @@ predict.sdmTMB <- function(object, newdata = NULL,
       )
 
     if (!identical(new_data_time, original_time) & isFALSE(pop_pred)) {
-      if (isTRUE(return_tmb_object) || nsim > 0) {
-        cli_warn(c("The time elements in `newdata` are not identical to those in the original dataset.",
-          "This is normally fine, but may create problems for index standardization."))
-      }
       missing_time <- original_time[!original_time %in% new_data_time]
       fake_nd_list <- list()
       fake_nd <- newdata[1L,,drop=FALSE]
@@ -874,7 +870,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
   row.names(nd) <- NULL
 
   if (return_tmb_object) {
-    return(list(data = nd, report = r, obj = obj, fit_obj = object, pred_tmb_data = tmb_data))
+    return(list(data = nd, report = r, obj = obj, fit_obj = object, pred_tmb_data = tmb_data, fake_nd = fake_nd))
   } else {
     if (visreg_df) {
       # for visreg & related, return consistent objects with lm(), gam() etc.

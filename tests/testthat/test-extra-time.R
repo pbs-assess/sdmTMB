@@ -35,5 +35,51 @@ test_that("extra time, newdata, and offsets work", {
   suppressWarnings(p6 <- predict(m, newdata = pcod, offset = pcod$os, nsim = 2L))
   expect_equal(ncol(p6), 2L)
   expect_equal(nrow(p6), nrow(pcod))
-  expect_equal(p6[,1,drop=TRUE], p5[,1,drop=TRUE])
+  expect_equal(p6[, 1, drop = TRUE], p5[, 1, drop = TRUE])
+})
+
+test_that("extra_time, newdata, get_index() work", {
+  m <- sdmTMB(
+    density ~ 1,
+    time_varying = ~1,
+    time_varying_type = "ar1",
+    data = pcod,
+    family = tweedie(link = "log"),
+    time = "year",
+    spatial = "off",
+    # mesh = make_mesh(pcod, c("X", "Y"), n_knots = 25),
+    spatiotemporal = "off",
+    extra_time = c(2006, 2008, 2010, 2012, 2014, 2016, 2018) # last real year is 2017
+  )
+
+  # missing one extra_time
+  nd <- replicate_df(pcod, "year", sort(union(unique(pcod$year), m$extra_time)))
+  nd <- subset(nd, year != 2018)
+  p <- predict(m, newdata = nd, return_tmb_object = TRUE)
+  ind <- get_index(p)
+  ind
+
+  # all:
+  nd <- replicate_df(pcod, "year", sort(union(unique(pcod$year), m$extra_time)))
+  p <- predict(m, newdata = nd, return_tmb_object = TRUE)
+  ind2 <- get_index(p)
+  ind2
+  expect_identical(ind2$year, c(
+    2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
+    2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018
+  ))
+
+  expect_equal(ind[ind$year %in% pcod$year, "est"], ind2[ind2$year %in% pcod$year, "est"])
+
+  # just original:
+  nd <- replicate_df(pcod, "year", unique(pcod$year))
+  p <- predict(m, newdata = nd, return_tmb_object = TRUE)
+  ind3 <- get_index(p)
+  ind3
+
+  expect_equal(ind2[ind2$year %in% pcod$year, "est"], ind3[ind3$year %in% pcod$year, "est"])
+  expect_identical(as.numeric(sort(unique(ind3$year))), as.numeric(sort(unique(pcod$year))))
+
+  p$fake_nd <- NULL # mimic old sdmTMB
+  expect_error(ind4 <- get_index(p))
 })

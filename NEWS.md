@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Allow `get_index()` to work with missing time elements.
+
 * Add the ability to pass a custom randomized quantile function `qres_func`
   to `residuals.sdmTMB()`.
 

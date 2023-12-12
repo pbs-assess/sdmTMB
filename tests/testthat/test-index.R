@@ -28,11 +28,4 @@ test_that("coef works", {
   expect_s3_class(cog, "data.frame")
 
   expect_error(get_index(predictions, area = c(1, 2, 3)), regexp = "area")
-
-  nd <- replicate_df(qcs_grid, "year", c(2003, 2004))
-
-  expect_warning(
-    predictions <- predict(m, newdata = nd, return_tmb_object = TRUE)
-  )
-  expect_error(ind <- get_index(predictions), regexp = "time")
 })
