@@ -772,16 +772,12 @@ Type objective_function<Type>::operator()()
 
     // this is the matrix multiplication for all random effects for this model.
     if(n_re_groups(m) > 0) {
-      //vector<Type>ress = Zt_list(m) * col_vec;
       // Extract the m-th column an Eigen vector
       Eigen::Matrix<Type, Eigen::Dynamic, 1> col_vec = re_b_pars.col(m);
       Eigen::SparseMatrix<Type> temp_Z = Zt_list(m);
-      std::cout << col_vec.size() << "\n";
-      std::cout << temp_Z.rows() << "\n";
-      std::cout << temp_Z.cols() << "\n";
-      //Eigen::Matrix<Type, Eigen::Dynamic, 1> row_vec = temp_Z * col_vec;
-      //eta_iid_re_i.col(m).array() += temp_Z * vector<Type>(re_b_pars.col(m));// * re_b_pars(j,m);//Zt_list(m)(j,i);// * ;
-      //eta_iid_re_i(i,m) = Zt_list(m).col(i) * col_vec;
+      for(int j = 0; j < temp_Z.rows(); j++) {
+        eta_iid_re_i = eta_iid_re_i + Zt_list(m).row(j) * col_vec(j);
+      }
     }
 
     for (int i = 0; i < n_i; i++) {
@@ -817,7 +813,7 @@ Type objective_function<Type>::operator()()
       //     eta_iid_re_i(i,m) += RE(RE_indexes(i, k) + temp,m); // record it
       //   }
       // }
-      //eta_i(i,m) += eta_iid_re_i(i,m);
+      eta_i(i,m) += eta_iid_re_i(i,m);
       if (family(m) == 1 && !poisson_link_delta) { // regular binomial
         mu_i(i,m) = LogitInverseLink(eta_i(i,m), link(m));
       } else if (poisson_link_delta) { // a tweak on clogog:
