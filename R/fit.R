@@ -804,9 +804,9 @@ sdmTMB <- function(
   contains_offset <- check_offset(formula[[1]]) # deprecated check
 
   split_formula <- list() # passed to out structure, not TMB
-  RE_indexes <- list() # ncols passed into TMB
-  nobs_RE <- list() # ncols passed into TMB
-  ln_tau_G_index<- list() # passed into TMB
+  # commenting out old RE RE_indexes <- list() # ncols passed into TMB
+  # commenting out old RE nobs_RE <- list() # ncols passed into TMB
+  # commenting out old RE ln_tau_G_index<- list() # passed into TMB
   X_ij = list() # main effects, passed into TMB
   mf <- list()
   mt <- list()
@@ -820,19 +820,19 @@ sdmTMB <- function(
     split_formula[[ii]] <- split_form(formula[ii][[1]], data)
 
     # Null values for when REs aren't included
-    RE_names <- as.character()
-    ln_tau_G_index[[ii]] <- integer()
-    nobs_RE[[ii]] <- 0L
+    # commenting out old RE RE_names <- as.character()
+    # commenting out old RE ln_tau_G_index[[ii]] <- integer()
+    # commenting out old RE nobs_RE[[ii]] <- 0L
 
-    if(split_formula[[ii]]$n_bars > 0) { # random effects included
-      ln_tau_G_index[[ii]] <- split_formula[[ii]]$re_cov_terms$Lind - 1L # index corresponding to which variance each re is assoc with
-      nobs_RE[[ii]] <- as.numeric(split_formula[[ii]]$re_cov_terms$nl) # concatenated vector of ids,
-      RE_names <- names(split_formula[[ii]]$re_cov_terms$flist) # names of each group
-    }
-    fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)# commented out because this isn't being used anywhere
+    # commenting out old REif(split_formula[[ii]]$n_bars > 0) { # random effects included
+    # commenting out old RE  ln_tau_G_index[[ii]] <- split_formula[[ii]]$re_cov_terms$Lind - 1L # index corresponding to which variance each re is assoc with
+    # commenting out old RE  nobs_RE[[ii]] <- as.numeric(split_formula[[ii]]$re_cov_terms$nl) # concatenated vector of ids,
+    # commenting out old RE  RE_names <- names(split_formula[[ii]]$re_cov_terms$flist) # names of each group
+    # commenting out old RE}
+    # commenting out old REfct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)# commented out because this isn't being used anywhere
 
     # RE_indexes[[ii]] is a matrix here with 0 cols if there's no REs
-    RE_indexes[[ii]] <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
+    # commenting out old RE RE_indexes[[ii]] <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
     #nobs_RE[[ii]] <- unname(apply(RE_indexes[[ii]], 2L, max)) + 1L
     #if (length(nobs_RE[[ii]]) == 0L) nobs_RE[[ii]] <- 0L # catch case with no RE
     #ln_tau_G_index[[ii]] <- unlist(lapply(seq_along(nobs_RE[[ii]]), function(i) rep(i, each = nobs_RE[[ii]][i]))) - 1L
@@ -877,20 +877,33 @@ sdmTMB <- function(
 
   n_re_groups <- rep(0, length(formula)) # integer array of number of groups per model
   Zt_list <- list() # list of sparse matrices for random effects
+  n_re_betas <- rep(0, length(formula))
+  n_re_cov <- rep(0, length(formula))
   for(ii in 1:length(formula)) {
     n_re_groups[ii] <- length(which(re_cov_df_map$model == ii))
-    Zt_list[[ii]] <- split_formula[[ii]]$re_cov_terms$Zt # transpose of matrix, so cols = observation, row = REs
+    if(n_re_groups[ii] > 0) {
+      Zt_list[[ii]] <- split_formula[[ii]]$re_cov_terms$Zt # transpose of matrix, so cols = observation, row = REs
+      n_re_betas[ii] <- max(re_b_df$end[which(re_b_df$model == ii)]) # number of unique random effect deviations being estimated
+      n_re_cov[ii] <- max(re_cov_df_map$end[which(re_cov_df_map$model == ii)]) # number of unique random effect variances being estimated
+    }
+  }
+  max_re_betas <- max(n_re_betas) # most number of estimated betas across all models
+  max_re_cov <- max(n_re_cov)
+  if(max_re_betas > 0 & max_re_cov == 0) max_re_cov = 1 # this is to catch case where 1 random slope or intercept is included and max_re_cov can't be 0
+  var_indx_matrix <- matrix(0, nrow = max_re_betas+1, ncol = length(formula))
+  for(i in 1:length(formula)) {
+    if(n_re_groups[ii] > 0) var_indx_matrix[,i] <- split_formula[[ii]]$var_indx_vector
   }
 
-
   if (delta) {
-    if (any(unlist(lapply(nobs_RE, function(.x) .x > 0)))) {
-      if (original_formula[[1]] != original_formula[[2]]) {
-        msg <- paste0("For now, if delta models contain random intercepts, both ",
-          "components must have the same main-effects formula.")
-        cli_abort(msg)
-      }
-    }
+    # commenting out old RE
+    # if (any(unlist(lapply(nobs_RE, function(.x) .x > 0)))) {
+    #   if (original_formula[[1]] != original_formula[[2]]) {
+    #     msg <- paste0("For now, if delta models contain random intercepts, both ",
+    #       "components must have the same main-effects formula.")
+    #     cli_abort(msg)
+    #   }
+    # }
     if (any(unlist(lapply(sm, `[[`, "has_smooths")))) {
       if (original_formula[[1]] != original_formula[[2]]) {
         msg <- paste0("For now, if delta models contain smoothers, both components ",
@@ -901,9 +914,9 @@ sdmTMB <- function(
   }
 
   # split_formula <- split_formula[[1]] # Delete this and next 7 lines as smooths / random effects added
-  RE_indexes <- RE_indexes[[1]]
-  nobs_RE <- nobs_RE[[1]]
-  ln_tau_G_index <- ln_tau_G_index[[1]]
+  # commenting out old RE RE_indexes <- RE_indexes[[1]]
+  # commenting out old RE nobs_RE <- nobs_RE[[1]]
+  # commenting out old RE ln_tau_G_index <- ln_tau_G_index[[1]]
   sm <- sm[[1]]
 
   y_i <- model.response(mf[[1]], "numeric")
@@ -1059,8 +1072,8 @@ sdmTMB <- function(
     priors_b_Sigma <- as.matrix(Sigma[not_na, not_na])
   }
   # random intercept SD priors:
-  priors_sigma_G <- tidy_sigma_G_priors(.priors$sigma_G, ln_tau_G_index)
-  .priors$sigma_G <- NULL
+  #commenting out old RE priors_sigma_G <- tidy_sigma_G_priors(.priors$sigma_G, ln_tau_G_index)
+  #commenting out old RE .priors$sigma_G <- NULL
 
   if (!"A_st" %in% names(spde)) cli_abort("`mesh` was created with an old version of `make_mesh()`.")
   if (delta) y_i <- cbind(ifelse(y_i > 0, 1, 0), ifelse(y_i > 0, y_i, NA_real_))
@@ -1099,7 +1112,7 @@ sdmTMB <- function(
     calc_se    = 0L,
     pop_pred   = 0L,
     short_newdata = 0L,
-    exclude_RE = rep(0L, ncol(RE_indexes)),
+    # commenting out old RE exclude_RE = rep(0L, ncol(RE_indexes)),
     weights_i  = if (!is.null(weights)) weights else rep(1, length(y_i)),
     area_i     = rep(1, length(y_i)),
     normalize_in_r = 0L, # not used first time
@@ -1112,7 +1125,7 @@ sdmTMB <- function(
     priors_b_index = not_na - 1L,
     priors_b_mean = priors_b[not_na,1],
     priors_b_Sigma = priors_b_Sigma,
-    priors_sigma_G = priors_sigma_G,
+    #  commenting out old RE priors_sigma_G = priors_sigma_G,
     priors = as.numeric(unlist(.priors)),
     share_range = as.integer(if (length(share_range) == 1L) rep(share_range, 2L) else share_range),
     include_spatial = as.integer(include_spatial), # changed later
@@ -1139,11 +1152,11 @@ sdmTMB <- function(
     X_threshold = thresh[[1]]$X_threshold, # TODO: don't hardcode index thresh[[1]]
     proj_X_threshold = 0, # dummy
     threshold_func = thresh[[1]]$threshold_func,# TODO: don't hardcode index thresh[[1]]
-    RE_indexes = RE_indexes,
-    proj_RE_indexes = matrix(0, ncol = 0, nrow = 1), # dummy
-    nobs_RE = nobs_RE,
-    ln_tau_G_index = ln_tau_G_index,
-    n_g = length(unique(ln_tau_G_index)),
+    # commenting out old RE RE_indexes = RE_indexes,
+    # commenting out old RE proj_RE_indexes = matrix(0, ncol = 0, nrow = 1), # dummy
+    # commenting out old RE nobs_RE = nobs_RE,
+    # commenting out old RE ln_tau_G_index = ln_tau_G_index,
+    # commenting out old RE n_g = length(unique(ln_tau_G_index)),
     est_epsilon_model = as.integer(est_epsilon_model),
     epsilon_predictor = epsilon_covariate,
     est_epsilon_slope = as.integer(est_epsilon_slope),
@@ -1159,12 +1172,13 @@ sdmTMB <- function(
     n_re_groups = c(n_re_groups),
     re_b_df = as.matrix(re_b_df[,-1]),# data frame containing indidivual level ids. Don't pass in first col (can be char)
     re_b_map = as.matrix(re_b_map),
+    var_indx_matrix = var_indx_matrix,
     Zt_list = Zt_list # list of RE matrices
   )
-
-  if(is.na(sum(nobs_RE))) {
-    cli_abort("One of the groups used in the factor levels is NA - please remove")
-  }
+  # commenting out old RE
+  #if(is.na(sum(nobs_RE))) {
+  #  cli_abort("One of the groups used in the factor levels is NA - please remove")
+  #}
   b_thresh <- matrix(0, 2L, n_m)
   if (thresh[[1]]$threshold_func == 2L) b_thresh <- matrix(0, 3L, n_m) # logistic #TODO: change hard coding on index of thresh[[1]]
 
@@ -1185,8 +1199,10 @@ sdmTMB <- function(
     ln_tau_V   = matrix(0, ncol(X_rw_ik), n_m),
     rho_time_unscaled = matrix(0, ncol(X_rw_ik), n_m),
     ar1_phi    = rep(0, n_m),
-    ln_tau_G   = matrix(0, ncol(RE_indexes), n_m),
-    RE         = matrix(0, sum(nobs_RE), n_m),
+    re_cov_pars = matrix(0, max_re_cov+1, n_m),
+    re_b_pars = matrix(0, max_re_betas+1, n_m),
+    # commenting out old RE ln_tau_G   = matrix(0, ncol(RE_indexes), n_m),
+    # commenting out old RE RE         = matrix(0, sum(nobs_RE), n_m),
     b_rw_t     = array(0, dim = c(tmb_data$n_t, ncol(X_rw_ik), n_m)),
     omega_s    = matrix(0, if (!omit_spatial_intercept) n_s else 0L, n_m),
     zeta_s    = array(0, dim = c(n_s, n_z, n_m)),
@@ -1300,10 +1316,10 @@ sdmTMB <- function(
     if (spatiotemporal[i] == "ar1") tmb_map$ar1_phi[i] <- i
   }
   tmb_map$ar1_phi <- as.factor(as.integer(as.factor(tmb_map$ar1_phi)))
-
-  if (nobs_RE[[1]] > 0) {
-    tmb_random <- c(tmb_random, "RE")
-    tmb_map <- unmap(tmb_map, c("ln_tau_G", "RE"))
+  # commengint out old RE
+  if (sum(n_re_groups) > 0) {
+    tmb_random <- c(tmb_random, "re_b_pars")
+    tmb_map <- unmap(tmb_map, c("re_cov_pars", "re_b_pars"))
   }
   if (reml) tmb_random <- c(tmb_random, "b_j")
   if (reml && delta) tmb_random <- c(tmb_random, "b_j2")
@@ -1635,18 +1651,19 @@ unmap <- function(x, v) {
   x
 }
 
-tidy_sigma_G_priors <- function(p, ln_tau_G_index) {
-  # expand (empty) sigma_G priors if needed to match sigma_G dimensions:
-  if (identical(as.numeric(p), c(NA_real_, NA_real_))) {
-    if (!identical(ln_tau_G_index, integer(0))) {
-      p <- do.call("rbind",
-        replicate(length(unique(ln_tau_G_index)), p, simplify = FALSE))
-    } else {
-      p <- matrix(nrow = 0, ncol = 2) # sigma_G by default nrow 0
-    }
-  }
-  p
-}
+# commenting out old RE
+# tidy_sigma_G_priors <- function(p, ln_tau_G_index) {
+#   # expand (empty) sigma_G priors if needed to match sigma_G dimensions:
+#   if (identical(as.numeric(p), c(NA_real_, NA_real_))) {
+#     if (!identical(ln_tau_G_index, integer(0))) {
+#       p <- do.call("rbind",
+#         replicate(length(unique(ln_tau_G_index)), p, simplify = FALSE))
+#     } else {
+#       p <- matrix(nrow = 0, ncol = 2) # sigma_G by default nrow 0
+#     }
+#   }
+#   p
+# }
 
 get_spde_matrices <- function(x) {
   x <- x$spde[c("c0", "g1", "g2")]
@@ -1703,13 +1720,17 @@ split_form <- function(f, data) {
                                 start = integer(0),
                                 end = integer(0))
   re_cov_terms$re_b_df <- data.frame(level_ids = integer(0),
-                        start = integer(0),
-                        end = integer(0),
-                        group_indices = integer(0))
+                        start = integer(0),# index of beta vec in TMB
+                        end = integer(0),# index of beta vec in TMB
+                        group_indices = integer(0),# which group are these levels associated with
+                        var_start = integer(0), # index of variances to use for these betas and groups
+                        var_end = integer(0))# index of variances to use for these betas and groups
   re_cov_terms$re_b_map <- data.frame(group = integer(0),
                                 dim = integer(0),
                                 start = integer(0),
                                 end = integer(0))
+  var_indx_vector <- 0
+
   if(length(bn) > 0) {
     mf <- model.frame(lme4::subbars(f), data)
     re_cov_terms <- lme4::mkReTrms(b, mf,
@@ -1759,7 +1780,27 @@ split_form <- function(f, data) {
       re_cov_terms$re_b_df$end[i] <- max(indx) - 1L# start at 0
       re_cov_terms$re_b_df$group_indices[i] <- df$group_indices[indx[1]]
     }
+    # add the variance index -- largely for groups with 1 type of RE
+    re_cov_terms$re_b_df$var_start <- 0
+    re_cov_terms$re_b_df$var_end <- 0
+    group_index <- 0
 
+    for(i in 1:nrow(re_cov_terms$re_b_df)) {
+      if(re_cov_terms$re_b_df$group_indices[i] > group_index) {
+        if(i == 1) {
+          start_index <- re_cov_terms$re_b_df$start[i]
+          end_index <- re_cov_terms$re_b_df$end[i]
+        } else {
+          start_index <- end_index + 1
+          end_index <- start_index + (re_cov_terms$re_b_df$end[i] - re_cov_terms$re_b_df$start[i])
+        }
+        group_index <- group_index + 1
+      }
+      re_cov_terms$re_b_df$var_start[i] <- start_index
+      re_cov_terms$re_b_df$var_end[i] <- end_index
+    }
+    var_indx_vector <- unlist(mapply(seq, from = re_cov_terms$re_b_df$var_start, to = re_cov_terms$re_b_df$var_end, SIMPLIFY = FALSE))
+    re_cov_terms$re_b_df <- re_cov_terms$re_b_df[,c("level_ids","start","end","group_indices")]
     # index the groups
     # also need to map these indices to the vector of estimated covariance parameters
     re_cov_terms$re_b_map <- data.frame(group = unique(re_cov_terms$re_b_df$group_indices),
@@ -1771,7 +1812,7 @@ split_form <- function(f, data) {
     }
   }
   return(list(bars = b, barnames = bn, form_no_bars = fe_form, n_bars = length(bn),
-       re_cov_terms = re_cov_terms))
+       re_cov_terms = re_cov_terms, var_indx_vector = var_indx_vector))
 }
 
 add_model_index <- function(split_formula, dataframe_name) {

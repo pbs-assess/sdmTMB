@@ -93,7 +93,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     p$ln_phi <- p$ln_phi[model]
     p$ln_tau_V <- as.numeric(p$ln_tau_V[,model])
     p$ar1_phi <- as.numeric(p$ar1_phi[model])
-    p$ln_tau_G <- as.numeric(p$ln_tau_G[,model])
+    # commenting out old RE p$ln_tau_G <- as.numeric(p$ln_tau_G[,model])
     p$log_sigma_O <- as.numeric(p$log_sigma_O[1,model])
     p$log_sigma_E <- as.numeric(p$log_sigma_E[1,model])
     p$log_sigma_Z <- as.numeric(p$log_sigma_Z[,model])
@@ -174,10 +174,10 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     log_name <- c(log_name, "ln_tau_V")
     name <- c(name, "tau_V")
   }
-  if (length(est$ln_tau_G) > 0L) {
-    log_name <- c(log_name, "ln_tau_G")
-    name <- c(name, "sigma_G")
-  }
+  # commenting out old RE if (length(est$ln_tau_G) > 0L) {
+  # commenting out old RE   log_name <- c(log_name, "ln_tau_G")
+  # commenting out old RE   name <- c(name, "sigma_G")
+  # commenting out old RE }
 
   j <- 0
   if (!"log_range" %in% names(est)) {
@@ -241,7 +241,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
 
   if (identical(est$ln_tau_E, 0)) out_re <- out_re[out_re$term != "sigma_E", ]
   if (identical(est$ln_tau_V, 0)) out_re <- out_re[out_re$term != "sigma_V", ]
-  if (identical(est$ln_tau_G, 0)) out_re <- out_re[out_re$term != "sigma_G", ]
+  # commenting out old RE if (identical(est$ln_tau_G, 0)) out_re <- out_re[out_re$term != "sigma_G", ]
   if (identical(est$ln_tau_O, 0)) out_re <- out_re[out_re$term != "sigma_O", ]
   if (identical(est$ln_tau_Z, 0)) out_re <- out_re[out_re$term != "sigma_Z", ]
   if (is.na(x$tmb_map$ar1_phi[model])) out_re <- out_re[out_re$term != "rho", ]
