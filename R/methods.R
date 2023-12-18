@@ -172,6 +172,17 @@ fixef.sdmTMB <- function(object, ...) {
 #' @export
 ranef.sdmTMB <- function(object, ...) {
   .t <- tidy(object, "ran_vals", conf.int = FALSE, silent = TRUE)
+  model_list = list()
+  for(i in 1:max(.t$model)) {
+    group_list = list()
+    groups <- .t$group_ids[which(.t$model == i)]
+    for(j in 1:max(groups)) {
+      groups[[j]] = data.frame("(Intercept)" = 0)
+      #m <- matrix()
+      #colnames(m) <- as.character(unlist(sdmTMB_fit$split_formula[[i]]$re_cov_terms$cnms))
+      #names(groups[[j]]) <-
+    }
+  }
   terms <- unlist(lapply(strsplit(.t$term,"_"), getElement, 1))
   est <- .t$estimate
   cond <- list()

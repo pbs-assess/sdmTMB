@@ -817,7 +817,7 @@ sdmTMB <- function(
 
     # RE_names is either the names of the groups OR a character w/length 0 if none exist
     # anything in a list here needs to be saved for tmb data
-    split_formula[[ii]] <- split_form(formula[ii][[1]], data)
+    split_formula[[ii]] <- parse_formula(formula[ii][[1]], data)
 
     # Null values for when REs aren't included
     # commenting out old RE RE_names <- as.character()
@@ -887,10 +887,10 @@ sdmTMB <- function(
       n_re_cov[ii] <- max(re_cov_df_map$end[which(re_cov_df_map$model == ii)]) # number of unique random effect variances being estimated
     }
   }
-  max_re_betas <- max(n_re_betas) # most number of estimated betas across all models
-  max_re_cov <- max(n_re_cov)
-  if(max_re_betas > 0 & max_re_cov == 0) max_re_cov = 1 # this is to catch case where 1 random slope or intercept is included and max_re_cov can't be 0
-  var_indx_matrix <- matrix(0, nrow = max_re_betas+1, ncol = length(formula))
+  max_re_betas <- max(n_re_betas) + 1 # most number of estimated betas across all models
+  max_re_cov <- max(n_re_cov) + 1
+  #if(max_re_betas > 0 & max_re_cov == 0) max_re_cov = 1 # this is to catch case where 1 random slope or intercept is included and max_re_cov can't be 0
+  var_indx_matrix <- matrix(0, nrow = max_re_betas, ncol = length(formula))
   for(i in 1:length(formula)) {
     if(n_re_groups[ii] > 0) var_indx_matrix[,i] <- split_formula[[ii]]$var_indx_vector
   }
@@ -1199,8 +1199,8 @@ sdmTMB <- function(
     ln_tau_V   = matrix(0, ncol(X_rw_ik), n_m),
     rho_time_unscaled = matrix(0, ncol(X_rw_ik), n_m),
     ar1_phi    = rep(0, n_m),
-    re_cov_pars = matrix(0, max_re_cov+1, n_m),
-    re_b_pars = matrix(0, max_re_betas+1, n_m),
+    re_cov_pars = matrix(0, max_re_cov, n_m),
+    re_b_pars = matrix(0, max_re_betas, n_m),
     # commenting out old RE ln_tau_G   = matrix(0, ncol(RE_indexes), n_m),
     # commenting out old RE RE         = matrix(0, sum(nobs_RE), n_m),
     b_rw_t     = array(0, dim = c(tmb_data$n_t, ncol(X_rw_ik), n_m)),
@@ -1670,168 +1670,3 @@ get_spde_matrices <- function(x) {
   names(x) <- c("M0", "M1", "M2") # legacy INLA names needed!
   x
 }
-
-safe_deparse <- function (x, collapse = " ") {
-  paste(deparse(x, 500L), collapse = collapse)
-}
-
-barnames <- function (bars) {
-  vapply(bars, function(x) safe_deparse(x[[3]]), "")
-}
-
-#' make_indices is an internal function to build lower triangular matrices for correlated random effects
-#' @param vec
-#'
-make_indices <- function(vec) {
-  group_indices <- unlist(lapply(seq_along(vec), function(i) rep(i, sum(1:vec[i]))))
-
-  # Function to generate lower triangular indices
-  get_lower_tri_indices <- function(n) {
-    cols <- unlist(lapply(1:n, function(i) rep(i, n - i + 1)))
-    rows <- unlist(lapply(1:n, function(i) i:n))
-    return(list(rows = rows, cols = cols))
-  }
-
-  # Getting row and column indices for each group
-  col_indices <- unlist(lapply(vec, function(x) get_lower_tri_indices(x)$cols))
-  row_indices <- unlist(lapply(vec, function(x) get_lower_tri_indices(x)$rows))
-  # return list of indices, all starting at 0 for TMB
-  return(list(group_indices = group_indices - 1L, rows = row_indices - 1L, cols = col_indices - 1L))
-}
-
-#' split_form is an internal function to parse random effects in a formula and return objects for estimation
-#' @param f formula object
-#' @param data dataframe used to build the random effects
-#'
-split_form <- function(f, data) {
-  b <- lme4::findbars(f) # find expressions separated by |, NULL if no RE
-  bn <- barnames(b) # names of groups
-  fe_form <- lme4::nobars(f) # fixed effect formula, no bars
-  re_cov_terms <- NULL
-
-  re_cov_terms <- list(Zt = NULL, theta = NULL, Lind = NULL, Gp = NULL,
-                   lower = NULL, Lambdat = NULL, flist = NULL,
-                   cnms = NULL, Ztlist = NULL, nl = NULL)
-  re_cov_terms$re_df = data.frame(group_indices = integer(0),
-                                  rows = integer(0), cols = integer(0),
-                                  is_sd = integer(0), par_index = integer(0))
-  re_cov_terms$re_cov_term_map <- data.frame(group = integer(0),
-                                dim = integer(0),
-                                start = integer(0),
-                                end = integer(0))
-  re_cov_terms$re_b_df <- data.frame(level_ids = integer(0),
-                        start = integer(0),# index of beta vec in TMB
-                        end = integer(0),# index of beta vec in TMB
-                        group_indices = integer(0),# which group are these levels associated with
-                        var_start = integer(0), # index of variances to use for these betas and groups
-                        var_end = integer(0))# index of variances to use for these betas and groups
-  re_cov_terms$re_b_map <- data.frame(group = integer(0),
-                                dim = integer(0),
-                                start = integer(0),
-                                end = integer(0))
-  var_indx_vector <- 0
-
-  if(length(bn) > 0) {
-    mf <- model.frame(lme4::subbars(f), data)
-    re_cov_terms <- lme4::mkReTrms(b, mf,
-                               drop.unused.levels=TRUE,
-                               reorder.terms=FALSE, # default is true, reorder based on dec levels
-                               reorder.vars=FALSE) # keep not alphabetical
-    # re_cov_terms$theta gives the total number of params across v-cov matrices
-    # see lme4 vignettes for construction details. These are indexes with
-    # Lind which maps elements of theta to the VCov matrices.
-
-    # this function creates replicated indices per element
-    group_dims <- unlist(lapply(re_cov_terms$cnms, length)) # dimensions of RE for each group
-    re_cov_terms$re_df <- as.data.frame(make_indices(group_dims))
-    re_cov_terms$re_df$is_sd <- ifelse(re_cov_terms$re_df$rows == re_cov_terms$re_df$cols, 1L, 0L) # used for TMB transform
-    re_cov_terms$re_df$par_index <- seq_len(nrow(re_cov_terms$re_df)) - 1L # index, e.g. 0 - 15 to be used for TMB indexing
-
-    # also need to map these indices to the vector of estimated covariance parameters
-    re_cov_terms$re_cov_term_map <- data.frame(group = unique(re_cov_terms$re_df$group_indices),
-                                  dim = group_dims,
-                                  start = NA, end = NA)
-    for(i in 1:nrow(re_cov_terms$re_cov_term_map)) {
-      indx <- which(re_cov_terms$re_df$group_indices == re_cov_terms$re_cov_term_map$group[i])
-      re_cov_terms$re_cov_term_map$start[i] <- min(indx) - 1L# start at 0
-      re_cov_terms$re_cov_term_map$end[i] <- max(indx) - 1L# start at 0
-    }
-
-    # index the level / group of the elements of Zt
-    for(i in 1:length(re_cov_terms$Ztlist)) {
-      levels <- levels(data[,bn[[i]]])
-      level_ids <- rownames(re_cov_terms$Ztlist[[i]])
-      if(i == 1) {
-        df <- data.frame(index = 1:length(level_ids),
-                       level_ids = level_ids,
-                       group_indices = i)
-      } else {
-        df <- rbind(df, data.frame(index = 1:length(level_ids),
-                                   level_ids = level_ids,
-                                   group_indices = i))
-      }
-    }
-    df$index <- seq(1, nrow(df))
-    re_cov_terms$re_b_df <- data.frame(level_ids = unique(df$level_ids),
-                          start = NA, end = NA, group_indices = NA)
-    for(i in 1:nrow(re_cov_terms$re_b_df)) {
-      indx <- which(df$level_ids == re_cov_terms$re_b_df$level_ids[i])
-      re_cov_terms$re_b_df$start[i] <- min(indx) - 1L# start at 0
-      re_cov_terms$re_b_df$end[i] <- max(indx) - 1L# start at 0
-      re_cov_terms$re_b_df$group_indices[i] <- df$group_indices[indx[1]]
-    }
-    # add the variance index -- largely for groups with 1 type of RE
-    re_cov_terms$re_b_df$var_start <- 0
-    re_cov_terms$re_b_df$var_end <- 0
-    group_index <- 0
-
-    for(i in 1:nrow(re_cov_terms$re_b_df)) {
-      if(re_cov_terms$re_b_df$group_indices[i] > group_index) {
-        if(i == 1) {
-          start_index <- re_cov_terms$re_b_df$start[i]
-          end_index <- re_cov_terms$re_b_df$end[i]
-        } else {
-          start_index <- end_index + 1
-          end_index <- start_index + (re_cov_terms$re_b_df$end[i] - re_cov_terms$re_b_df$start[i])
-        }
-        group_index <- group_index + 1
-      }
-      re_cov_terms$re_b_df$var_start[i] <- start_index
-      re_cov_terms$re_b_df$var_end[i] <- end_index
-    }
-    var_indx_vector <- unlist(mapply(seq, from = re_cov_terms$re_b_df$var_start, to = re_cov_terms$re_b_df$var_end, SIMPLIFY = FALSE))
-    re_cov_terms$re_b_df <- re_cov_terms$re_b_df[,c("level_ids","start","end","group_indices")]
-    # index the groups
-    # also need to map these indices to the vector of estimated covariance parameters
-    re_cov_terms$re_b_map <- data.frame(group = unique(re_cov_terms$re_b_df$group_indices),
-                                  start = NA, end = NA)
-    for(i in 1:nrow(re_cov_terms$re_b_map)) {
-      indx <- which(re_cov_terms$re_b_df$group_indices == re_cov_terms$re_b_map$group[i])
-      re_cov_terms$re_b_map$start[i] <- min(indx) - 1L# start at 0
-      re_cov_terms$re_b_map$end[i] <- max(indx) - 1L# start at 0
-    }
-  }
-  return(list(bars = b, barnames = bn, form_no_bars = fe_form, n_bars = length(bn),
-       re_cov_terms = re_cov_terms, var_indx_vector = var_indx_vector))
-}
-
-add_model_index <- function(split_formula, dataframe_name) {
-  lapply(seq_along(split_formula), function(i) {
-    # Access the specific dataframe using the provided dataframe name
-    df <- split_formula[[i]]$re_cov_terms[[dataframe_name]]
-
-    nrows <- nrow(df)
-    if (nrows > 0) {
-      df$model <- i  # Add new column with the position in the list
-    } else {
-      df$model <- integer(0)
-    }
-
-    # Assign the modified dataframe back to the original list structure
-    split_formula[[i]]$re_cov_terms[[dataframe_name]] <- df
-
-    return(df)
-  })
-}
-
-

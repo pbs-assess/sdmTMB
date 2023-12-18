@@ -7,46 +7,46 @@
 #   expect_error(check_valid_factor_levels(x, "test"))
 # })
 #
-# test_that("Model with random intercepts fits appropriately.", {
-#   skip_on_cran()
-#   skip_if_not_installed("glmmTMB")
-#   set.seed(1)
-#   x <- stats::runif(500, -1, 1)
-#   y <- stats::runif(500, -1, 1)
-#   loc <- data.frame(x = x, y = y)
-#   spde <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
-#
-#   s <- sdmTMB_simulate(
-#     ~1,
-#     data = loc,
-#     mesh = spde,
-#     range = 1.4,
-#     phi = 0.1,
-#     sigma_O = 0.2,
-#     seed = 1,
-#     B = 0
-#   )
-#
-#   g <- rep(gl(30, 10), 999)
-#   set.seed(134)
-#   RE_vals <- rnorm(30, 0, 0.4)
-#   h <- rep(gl(40, 10), 999)
-#   set.seed(1283)
-#   RE_vals2 <- rnorm(40, 0, 0.2)
-#   s$g <- g[seq_len(nrow(s))]
-#   s$h <- h[seq_len(nrow(s))]
-#   s$observed <- s$observed + RE_vals[s$g] + RE_vals2[s$h]
-#
-#   # ignore RE:
-#   m1 <- sdmTMB(data = s, formula = observed ~ 1, mesh = spde)
-#   tidy(m1, "fixed", conf.int = TRUE)
-#   .t1 <- tidy(m1, "ran_pars", conf.int = TRUE)
-#
-#   # with RE:
-#   m <- sdmTMB(
-#     data = s, time = NULL,
-#     formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde
-#   )
+test_that("Model with random intercepts fits appropriately.", {
+  skip_on_cran()
+  skip_if_not_installed("glmmTMB")
+  set.seed(1)
+  x <- stats::runif(500, -1, 1)
+  y <- stats::runif(500, -1, 1)
+  loc <- data.frame(x = x, y = y)
+  spde <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
+
+  s <- sdmTMB_simulate(
+    ~1,
+    data = loc,
+    mesh = spde,
+    range = 1.4,
+    phi = 0.1,
+    sigma_O = 0.2,
+    seed = 1,
+    B = 0
+  )
+
+  g <- rep(gl(30, 10), 999)
+  set.seed(134)
+  RE_vals <- rnorm(30, 0, 0.4)
+  h <- rep(gl(40, 10), 999)
+  set.seed(1283)
+  RE_vals2 <- rnorm(40, 0, 0.2)
+  s$g <- g[seq_len(nrow(s))]
+  s$h <- h[seq_len(nrow(s))]
+  s$observed <- s$observed + RE_vals[s$g] + RE_vals2[s$h]
+
+  # ignore RE:
+  m1 <- sdmTMB(data = s, formula = observed ~ 1, mesh = spde)
+  tidy(m1, "fixed", conf.int = TRUE)
+  .t1 <- tidy(m1, "ran_pars", conf.int = TRUE)
+
+  # with RE:
+  # m <- sdmTMB(
+  #   data = s, time = NULL,
+  #   formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde
+  # )
 #   tidy(m, "fixed", conf.int = TRUE)
 #   .t <- tidy(m, "ran_pars", conf.int = TRUE)
 #   print(m)
@@ -295,5 +295,5 @@
 #                  re_form = NA, re_form_iid = NA)
 #
 #   expect_s3_class(p11, "tbl_df")
-# })
-#
+})
+

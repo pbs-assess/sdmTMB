@@ -104,7 +104,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     p$sigma_E <- as.numeric(p$sigma_E[1,model])
     p$sigma_O <- as.numeric(p$sigma_O[1,model])
     p$sigma_Z <- as.numeric(p$sigma_Z[,model])
-    p$sigma_G <- as.numeric(p$sigma_G[,model])
+    # commenting out old RE p$sigma_G <- as.numeric(p$sigma_G[,model])
     p
   }
   est <- subset_pars(est, model)
@@ -194,7 +194,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
 
       non_log_name <- gsub("ln_", "", gsub("log_", "", log_name))
       this <- non_log_name[j]
-      if (this == "tau_G") this <- "sigma_G"
+      # commenting out old RE if (this == "tau_G") this <- "sigma_G"
       if (this == "tau_V") this <- "sigma_V"
       this_se <- as.numeric(se[[this]])
       this_est <- as.numeric(est[[this]])
@@ -251,43 +251,93 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     out_re[["conf.high"]] <- NULL
   }
 
-  # random intercepts
-  n_re_int <- x$split_formula[[model]]$n_bars
-  if (n_re_int == 0 && effects == "ran_vals") {
-    cli::cli_abort("effects = 'ran_vals' currently only works with random intercepts (e.g., `+ (1 | g)`).")
-  }
-  if (n_re_int > 0) {
-    out_ranef <- list()
-    re_est <- as.list(x$sd_report, "Estimate")$RE
-    re_ses <- as.list(x$sd_report, "Std. Error")$RE
-    for(jj in 1:n_re_int) {
-      level_names <- levels(x$data[[x$split_formula[[model]]$barnames[jj]]])
-      n_levels <- length(level_names)
-      re_name <- x$split_formula[[model]]$barnames[jj]
+  if(sum(x$tmb_data$n_re_groups) > 0) {
+    re_b_dfs <- add_model_index(x$split_formula, "re_b_df")
+    re_b_df <- do.call(rbind, re_b_dfs)
+    names(re_b_df)[which(names(re_b_df)=="group_indices")] = "group_id"
 
-      if(jj==1) {
-        start_pos <- 1
-        end_pos <- n_levels
-      } else {
-        start_pos <- end_pos + 1
-        end_pos <- start_pos + n_levels - 1
-      }
-      out_ranef[[jj]] <- data.frame(
-        term = paste0(re_name,"_",level_names),
-        estimate = re_est[start_pos:end_pos,model],
-        std.error = re_ses[start_pos:end_pos,model],
-        conf.low = re_est[start_pos:end_pos,model] - crit * re_ses[start_pos:end_pos,model],
-        conf.high = re_est[start_pos:end_pos,model] + crit * re_ses[start_pos:end_pos,model],
-        stringsAsFactors = FALSE
+    # this function just expands each row from start: end
+    expand_row <- function(level_id, start, end, group_id, model) {
+      seq_len <- end - start + 1
+      data.frame(
+        level_ids = rep(level_id, seq_len),
+        index = seq(from = start, to = end),
+        group_id = rep(group_id, seq_len),
+        model = rep(model, seq_len)
       )
-      if (!conf.int) {
-        out_ranef[[jj]][["conf.low"]] <- NULL
-        out_ranef[[jj]][["conf.high"]] <- NULL
+    }
+
+    # apply to each row and combine the results
+    expanded_rows <- Map(expand_row, re_b_df$level_ids,
+                         re_b_df$start, re_b_df$end,
+                         re_b_df$group_id, re_b_df$model)
+
+    re_b_df <- do.call("rbind", expanded_rows) # list to df
+    rownames(re_b_df) <- NULL # reset row names
+
+    # this is all as before
+    re_indx <- grep("re_b_pars", names(x$sd_report$value), fixed=TRUE)
+    re_b_df$estimate <- x$sd_report$value[re_indx]
+    re_b_df$std.error <- x$sd_report$sd[re_indx]
+    re_b_df$conf.low <- re_b_df$estimate - crit*re_b_df$std.error
+    re_b_df$conf.hi <- re_b_df$estimate + crit*re_b_df$std.error
+    re_b_df$index <- NULL
+
+    re_b_df$group_name <- NA
+    re_b_df$par_name <- NA
+    for(i in 1:length(x$split_formula)) {
+      groupnames <- names(x$split_formula[[i]]$re_cov_terms$cnms)
+      for(j in 1:length(x$split_formula[[i]]$barnames)) {
+        model_grp <- which(re_b_df$model==i & re_b_df$group_id==j)
+        re_b_df$group_name[model_grp] <- groupnames[j]
+        re_b_df$par_name[model_grp] <- rep(x$split_formula[[i]]$re_cov_terms$cnms[[j]], length.out=length(model_grp))
       }
     }
-    out_ranef <- do.call("rbind", out_ranef)
+    # more sensible re-ordering
+    re_b_df$group_id <- NULL
+    re_b_df <- re_b_df[,c("model","group_name","par_name","level_ids","estimate","std.error", "conf.low","conf.hi")]
+
+    out_ranef <- re_b_df
     row.names(out_ranef) <- NULL
   }
+  # random intercepts
+  # Comment out old RE
+  # n_re_int <- x$split_formula[[model]]$n_bars
+  # if (n_re_int == 0 && effects == "ran_vals") {
+  #   cli::cli_abort("effects = 'ran_vals' currently only works with random intercepts (e.g., `+ (1 | g)`).")
+  # }
+  # if (n_re_int > 0) {
+  #   out_ranef <- list()
+  #   re_est <- as.list(x$sd_report, "Estimate")$RE
+  #   re_ses <- as.list(x$sd_report, "Std. Error")$RE
+  #   for(jj in 1:n_re_int) {
+  #     level_names <- levels(x$data[[x$split_formula[[model]]$barnames[jj]]])
+  #     n_levels <- length(level_names)
+  #     re_name <- x$split_formula[[model]]$barnames[jj]
+  #
+  #     if(jj==1) {
+  #       start_pos <- 1
+  #       end_pos <- n_levels
+  #     } else {
+  #       start_pos <- end_pos + 1
+  #       end_pos <- start_pos + n_levels - 1
+  #     }
+  #     out_ranef[[jj]] <- data.frame(
+  #       term = paste0(re_name,"_",level_names),
+  #       estimate = re_est[start_pos:end_pos,model],
+  #       std.error = re_ses[start_pos:end_pos,model],
+  #       conf.low = re_est[start_pos:end_pos,model] - crit * re_ses[start_pos:end_pos,model],
+  #       conf.high = re_est[start_pos:end_pos,model] + crit * re_ses[start_pos:end_pos,model],
+  #       stringsAsFactors = FALSE
+  #     )
+  #     if (!conf.int) {
+  #       out_ranef[[jj]][["conf.low"]] <- NULL
+  #       out_ranef[[jj]][["conf.high"]] <- NULL
+  #     }
+  #   }
+  #   out_ranef <- do.call("rbind", out_ranef)
+  #   row.names(out_ranef) <- NULL
+  #}
 
   out <- unique(out) # range can be duplicated
   out_re <- unique(out_re)

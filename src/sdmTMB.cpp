@@ -584,8 +584,8 @@ Type objective_function<Type>::operator()()
       vector<Type> sds(n);                           // Standard deviations
       int par_indx = 0;
       int jj = 0;
+
       for(jj = re_cov_df_map(g_index, 2); jj <= re_cov_df_map(g_index, 3); jj++) {
-          //std::cout<<re_cov_pars(jj,m)<<std::endl;
          if(re_cov_df(jj,3) == 1) { // standard deviation, is_sd indexed as col 3
            sds(re_cov_df(jj,2)) = exp(re_cov_pars(jj,m)); // sd estimated in log_space
          } else {
@@ -600,11 +600,13 @@ Type objective_function<Type>::operator()()
       for(int levels = re_b_map(g_index,1); levels <= re_b_map(g_index,2); levels++) {
           // this is indexing of indexing
           jj = 0;
+          // this_level is indexing the elements of b_re_vec re_b_pars(,m) associated with this group and level
           for(int this_level = re_b_df(levels,0); this_level <= re_b_df(levels,1); this_level++) {
             b_re_vec(jj) = re_b_pars(this_level,m);
             if(n == 1) {
               // evaluate univariate / uncorrelated REs. can be slopes or intercepts
-              jnll -= dnorm(b_re_vec(jj), Type(0), Type(sds(var_indx_matrix(jj,m))), true);
+              PARALLEL_REGION jnll -= dnorm(re_b_pars(this_level,m), Type(0), Type(sds(var_indx_matrix(jj,m))), true);
+              if (sim_re(3)) SIMULATE{re_b_pars(this_level,m) = rnorm(Type(0), Type(sds(var_indx_matrix(jj,m))));}
             }
             jj = jj + 1;
           }
@@ -618,6 +620,10 @@ Type objective_function<Type>::operator()()
 
     } // end for g
   } // end for m
+  REPORT(re_cov_pars);
+  ADREPORT(re_cov_pars);
+  REPORT(re_b_pars);
+  ADREPORT(re_b_pars);
 
   // commenting out, old RE
   // IID random intercepts:
@@ -776,7 +782,7 @@ Type objective_function<Type>::operator()()
       Eigen::Matrix<Type, Eigen::Dynamic, 1> col_vec = re_b_pars.col(m);
       Eigen::SparseMatrix<Type> temp_Z = Zt_list(m);
       for(int j = 0; j < temp_Z.rows(); j++) {
-        eta_iid_re_i = eta_iid_re_i + Zt_list(m).row(j) * col_vec(j);
+        eta_iid_re_i.col(m) += Zt_list(m).row(j) * col_vec(j);
       }
     }
 
