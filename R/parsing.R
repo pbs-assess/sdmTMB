@@ -143,11 +143,6 @@ parse_formula <- function(f, data) {
     }
   }
 
-  # add in group names -- for tidy()
-  #model_group_levels <- re_b_df
-  #model_group_levels$group_name <- NA
-  #if(length(bn) > 0) model_group_levels$group_name <- bn[model_group_levels$group_ids]
-
   return(list(bars = b, barnames = bn, form_no_bars = fe_form, n_bars = length(bn),
               re_cov_terms = re_cov_terms, var_indx_vector = var_indx_vector))
 }

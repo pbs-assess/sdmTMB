@@ -172,25 +172,29 @@ fixef.sdmTMB <- function(object, ...) {
 #' @export
 ranef.sdmTMB <- function(object, ...) {
   .t <- tidy(object, "ran_vals", conf.int = FALSE, silent = TRUE)
-  model_list = list()
-  for(i in 1:max(.t$model)) {
-    group_list = list()
-    groups <- .t$group_ids[which(.t$model == i)]
-    for(j in 1:max(groups)) {
-      groups[[j]] = data.frame("(Intercept)" = 0)
-      #m <- matrix()
-      #colnames(m) <- as.character(unlist(sdmTMB_fit$split_formula[[i]]$re_cov_terms$cnms))
-      #names(groups[[j]]) <-
-    }
+  model_list <- list()
+  for(i in 1:max(.t$model)) { # loop through models
+    .t <- .t[which(.t$model == i),]
+    groups <- unique(.t$group_name)
+    group_list <- list()
+    for(j in 1:length(groups)) {
+      sub <- .t[which(.t$group_name == groups[j]),]
+      level_ids <- unique(sub$level_ids)
+      sub <- sub[,c("group_name","par_name","estimate")]
+      if(nrow(sub) > 0) {
+        # convert long to wide, storing just estimates
+        split_data <- split(sub$estimate, sub$par_name)
+        wide_df <- as.data.frame(split_data)# Convert to wide format
+        names(wide_df) <- unique(sub$par_name) # rename, fix .X issue
+        rownames(wide_df) <- level_ids # add rownames, like lmer does
+        # Create a list with the dataframe as an element named 'Dog'
+        group_list[[j]] <- list(wide_df)
+        names(group_list[[j]]) <- sub$group_name[1]
+      } # end if
+    } # end for j
+    model_list[[i]] <- group_list
   }
-  terms <- unlist(lapply(strsplit(.t$term,"_"), getElement, 1))
-  est <- .t$estimate
-  cond <- list()
-  for(i in seq_along(unique(terms))) {
-    cond[[unique(terms)[i]]] =
-      data.frame("Intercept" = est[which(terms == unique(terms)[i])], stringsAsFactors = FALSE)
-  }
-  return(list(cond = cond))
+  return(cond = model_list)
 }
 
 #' @importFrom stats df.residual
