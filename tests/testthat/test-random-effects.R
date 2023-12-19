@@ -320,5 +320,11 @@ test_that("Delta model works with random effects", {
   )
   expect_equal(nrow(tidy(m_yrf_re, "ran_vals")), length(unique(pcod$year))*2)
 
-
+  # now we can try separate RE formulas by sub-model
+  # m_yrf_re2 <- sdmTMB(
+  #   data = pcod,
+  #   formula = list(density ~ (1 | year_f), density ~ (1|vessel)),
+  #   family = delta_gamma(),
+  #   spatial = "off"
+  # )
 })

@@ -175,8 +175,9 @@ ranef.sdmTMB <- function(object, ...) {
   model_list <- list()
   for(i in 1:max(.t$model)) { # loop through models
     .t <- .t[which(.t$model == i),]
-    groups <- unique(.t$group_name)
-    group_list <- list()
+    groups <- unique(.t$group_name) # names of groups for this model
+    group_list <- vector("list", length = length(groups)) # create empty named list
+    names(group_list) <- groups
     for(j in 1:length(groups)) {
       sub <- .t[which(.t$group_name == groups[j]),]
       level_ids <- unique(sub$level_ids)
@@ -188,8 +189,8 @@ ranef.sdmTMB <- function(object, ...) {
         names(wide_df) <- unique(sub$par_name) # rename, fix .X issue
         rownames(wide_df) <- level_ids # add rownames, like lmer does
         # Create a list with the dataframe as an element named 'Dog'
-        group_list[[j]] <- list(wide_df)
-        names(group_list[[j]]) <- sub$group_name[1]
+        group_list[[j]] <- wide_df
+       # names(group_list[[j]]) <- sub$group_name[1]
       } # end if
     } # end for j
     model_list[[i]] <- group_list
