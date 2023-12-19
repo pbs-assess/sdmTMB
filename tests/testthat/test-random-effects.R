@@ -6,7 +6,7 @@
 #   x <- x[-1]
 #   expect_error(check_valid_factor_levels(x, "test"))
 # })
-#
+
 test_that("Model with random intercepts fits appropriately.", {
   skip_on_cran()
   skip_if_not_installed("glmmTMB")
@@ -30,7 +30,7 @@ test_that("Model with random intercepts fits appropriately.", {
                as.numeric(REs[2]), tolerance = 1.0e-2)
 
   # Check that ranef() returns the same thing
-  expect_equal(mean(diag(cor(ranef(sdmTMB_fit)[[1]][[1]][[1]]$Subject, ranef(lmer_fit)$Subject))), 1)
+  expect_equal(mean(diag(cor(ranef(sdmTMB_fit)[[1]]$Subject, ranef(lmer_fit)$Subject))), 1)
 
   # verify model with no random int works
   sdmTMB_fit <- sdmTMB(Reaction ~ Days + (-1 + Days | Subject), sleepstudy, spatial="off")
@@ -261,7 +261,7 @@ test_that("Tidy returns random intercepts appropriately.", {
 #
 #   # and check that they return the same values
 #   expect_equal(ranef(m2)$cond$g[[1]], ranef(m)$cond$g[[1]], tolerance = 1e-5)
-# })
+})
 #
 #
 test_that("Random intercept classes in predict() are checked appropriately", {
@@ -301,3 +301,24 @@ test_that("Random intercept classes in predict() are checked appropriately", {
   expect_s3_class(p11, "tbl_df")
 })
 
+test_that("Delta model works with random effects", {
+  skip_on_cran()
+  set.seed(1)
+
+  data(pcod)
+  pcod$year_f <- as.factor(pcod$year)
+  intcpts <- rnorm(10)
+  pcod$vessel <- sample(1:10, size = nrow(pcod), replace=T)
+  pcod$density[which(pcod$present==1)] <- exp(log(pcod$density[which(pcod$present==1)]) + intcpts[pcod$vessel[which(pcod$present==1)]])
+
+  # with single formula, the random effects should get carried through to all pieces
+  m_yrf_re <- sdmTMB(
+    data = pcod,
+    formula = density ~ (1 | year_f),
+    family = delta_gamma(),
+    spatial = "off"
+  )
+  expect_equal(nrow(tidy(m_yrf_re, "ran_vals")), length(unique(pcod$year))*2)
+
+
+})
