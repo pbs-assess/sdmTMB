@@ -296,7 +296,8 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     # more sensible re-ordering
     re_b_df$group_id <- NULL
     re_b_df <- re_b_df[,c("model","group_name","par_name","level_ids","estimate","std.error", "conf.low","conf.hi")]
-
+    # remove ":" in the level_ids
+    re_b_df$level_ids <- sapply(strsplit(re_b_df$level_ids, ":"), function(x) x[2])
     out_ranef <- re_b_df
     row.names(out_ranef) <- NULL
   }

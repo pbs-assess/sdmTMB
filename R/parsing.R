@@ -91,7 +91,9 @@ parse_formula <- function(f, data) {
     # index the level / group of the elements of Zt
     for(i in 1:length(re_cov_terms$Ztlist)) {
       levels <- levels(data[,bn[[i]]])
-      level_ids <- rownames(re_cov_terms$Ztlist[[i]])
+      # Add the group and ":" to the name for each -- otherwise the level names might be the
+      # same, especially if the levels ids are integers for 2+ groups
+      level_ids <- paste0(bn[[i]],":",rownames(re_cov_terms$Ztlist[[i]]))
       if(i == 1) {
         df <- data.frame(index = 1:length(level_ids),
                          level_ids = level_ids,
