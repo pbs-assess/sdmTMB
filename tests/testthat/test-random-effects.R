@@ -10,7 +10,7 @@
 test_that("Model with random intercepts fits appropriately.", {
   skip_on_cran()
   skip_if_not_installed("glmmTMB")
-
+  skip_if_not_installed("lme4")
   # Classic lme4 random effects model
   data("sleepstudy", package="lme4")
   lmer_fit <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
@@ -323,7 +323,7 @@ test_that("Delta model works with random effects", {
   # now we can try separate RE formulas by sub-model
   # m_yrf_re2 <- sdmTMB(
   #   data = pcod,
-  #   formula = list(density ~ (1 | year_f), density ~ (1|vessel)),
+  #   formula = list(density ~ (depth | year_f), density ~ (1|vessel)),
   #   family = delta_gamma(),
   #   spatial = "off"
   # )

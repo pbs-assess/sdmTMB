@@ -889,11 +889,24 @@ sdmTMB <- function(
   }
   max_re_betas <- max(n_re_betas) + 1 # most number of estimated betas across all models
   max_re_cov <- max(n_re_cov) + 1
-  #if(max_re_betas > 0 & max_re_cov == 0) max_re_cov = 1 # this is to catch case where 1 random slope or intercept is included and max_re_cov can't be 0
+
   var_indx_matrix <- matrix(0, nrow = max_re_betas, ncol = length(formula))
   for(i in 1:length(formula)) {
-    if(n_re_groups[ii] > 0) var_indx_matrix[,i] <- split_formula[[ii]]$var_indx_vector
+    sd_vec <- split_formula[[ii]]$var_indx_vector
+    if(n_re_groups[ii] > 0) var_indx_matrix[1:length(sd_vec),i] <- sd_vec
   }
+  # create matrices for tmb_params
+  re_cov_par_mat = matrix(0, max_re_cov, n_m)
+  re_b_par_mat = matrix(0, max_re_betas, n_m)
+  #re_cov_par_mat = matrix(rep(list(as.factor(NA)), max_re_cov*n_m), max_re_cov, n_m)
+  #re_b_par_mat = matrix(rep(list(as.factor(NA)), max_re_betas*n_m), max_re_betas, n_m)
+  #re_cov_par_mat = matrix(rep(NA, max_re_cov*n_m), max_re_cov, n_m)
+  #re_b_par_mat = matrix(rep(NA, max_re_betas*n_m), max_re_betas, n_m)
+  #for(m in 1:n_m) {
+  #  re_b_par_mat[seq(1, n_re_betas[m]+1),m] <- 0 # these are estimated
+  #  re_cov_par_mat[seq(1, n_re_cov[m]+1),m] <- 0 # these are estimated
+  #}
+
 
   if (delta) {
     # commenting out old RE
@@ -1199,8 +1212,8 @@ sdmTMB <- function(
     ln_tau_V   = matrix(0, ncol(X_rw_ik), n_m),
     rho_time_unscaled = matrix(0, ncol(X_rw_ik), n_m),
     ar1_phi    = rep(0, n_m),
-    re_cov_pars = matrix(0, max_re_cov, n_m),
-    re_b_pars = matrix(0, max_re_betas, n_m),
+    re_cov_pars = re_cov_par_mat, # defined above, mapping off pars as needed
+    re_b_pars = re_b_par_mat, # defined above, mapping off pars as needed
     # commenting out old RE ln_tau_G   = matrix(0, ncol(RE_indexes), n_m),
     # commenting out old RE RE         = matrix(0, sum(nobs_RE), n_m),
     b_rw_t     = array(0, dim = c(tmb_data$n_t, ncol(X_rw_ik), n_m)),
