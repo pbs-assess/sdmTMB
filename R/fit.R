@@ -895,18 +895,6 @@ sdmTMB <- function(
     sd_vec <- split_formula[[ii]]$var_indx_vector
     if(n_re_groups[ii] > 0) var_indx_matrix[1:length(sd_vec),i] <- sd_vec
   }
-  # create matrices for tmb_params
-  re_cov_par_mat = matrix(0, max_re_cov, n_m)
-  re_b_par_mat = matrix(0, max_re_betas, n_m)
-  #re_cov_par_mat = matrix(rep(list(as.factor(NA)), max_re_cov*n_m), max_re_cov, n_m)
-  #re_b_par_mat = matrix(rep(list(as.factor(NA)), max_re_betas*n_m), max_re_betas, n_m)
-  #re_cov_par_mat = matrix(rep(NA, max_re_cov*n_m), max_re_cov, n_m)
-  #re_b_par_mat = matrix(rep(NA, max_re_betas*n_m), max_re_betas, n_m)
-  #for(m in 1:n_m) {
-  #  re_b_par_mat[seq(1, n_re_betas[m]+1),m] <- 0 # these are estimated
-  #  re_cov_par_mat[seq(1, n_re_cov[m]+1),m] <- 0 # these are estimated
-  #}
-
 
   if (delta) {
     # commenting out old RE
@@ -1212,8 +1200,8 @@ sdmTMB <- function(
     ln_tau_V   = matrix(0, ncol(X_rw_ik), n_m),
     rho_time_unscaled = matrix(0, ncol(X_rw_ik), n_m),
     ar1_phi    = rep(0, n_m),
-    re_cov_pars = re_cov_par_mat, # defined above, mapping off pars as needed
-    re_b_pars = re_b_par_mat, # defined above, mapping off pars as needed
+    re_cov_pars = matrix(0, max_re_cov, n_m), # defined above, mapping off pars as needed
+    re_b_pars = matrix(0, max_re_betas, n_m), # defined above, mapping off pars as needed
     # commenting out old RE ln_tau_G   = matrix(0, ncol(RE_indexes), n_m),
     # commenting out old RE RE         = matrix(0, sum(nobs_RE), n_m),
     b_rw_t     = array(0, dim = c(tmb_data$n_t, ncol(X_rw_ik), n_m)),
@@ -1333,6 +1321,21 @@ sdmTMB <- function(
   if (sum(n_re_groups) > 0) {
     tmb_random <- c(tmb_random, "re_b_pars")
     tmb_map <- unmap(tmb_map, c("re_cov_pars", "re_b_pars"))
+
+    # map off pars not being estimated
+    tmb_map$re_b_pars <- matrix(NA, max_re_betas, n_m)
+    tmb_map$re_cov_pars <- matrix(NA, max_re_cov, n_m)
+    for(m in 1:n_m) {
+      tmb_map$re_b_pars[seq(1, n_re_betas[m]+1),m] <- 0 # these are estimated
+      tmb_map$re_cov_pars[seq(1, n_re_cov[m]+1),m] <- 0 # these are estimated
+    }
+    # turn non-NA values into sequence of integers
+    non_nas <- which(!is.na(c(tmb_map$re_b_pars)))
+    tmb_map$re_b_pars[non_nas] <- seq(1,length(non_nas))
+    non_nas <- which(!is.na(c(tmb_map$re_cov_pars)))
+    tmb_map$re_cov_pars[non_nas] <- seq(1,length(non_nas))
+    tmb_map$re_b_pars <- as.factor(tmb_map$re_b_pars)
+    tmb_map$re_cov_pars <- as.factor(tmb_map$re_cov_pars)
   }
   if (reml) tmb_random <- c(tmb_random, "b_j")
   if (reml && delta) tmb_random <- c(tmb_random, "b_j2")

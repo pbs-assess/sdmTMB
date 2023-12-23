@@ -1,3 +1,6 @@
+library(glmmTMB)
+library(sdmTMB)
+library(lme4)
 # test_that("RE group factor levels are properly checked.", {
 #   expect_error(check_valid_factor_levels(c(1, 2, 3), "test"))
 #   expect_error(check_valid_factor_levels(c("A", "B")))
@@ -38,18 +41,22 @@ test_that("Model with random intercepts fits appropriately.", {
   expect_equal(fixef(lmer_fit)[1], coef(sdmTMB_fit)[1])
   expect_equal(fixef(lmer_fit)[2], coef(sdmTMB_fit)[2])
   REs <- sdmTMB_fit$sd_report$value[grep("cov_pars", names(sdmTMB_fit$sd_report$value))]
-  expect_equal(as.numeric(attr(summary(lmer_fit)$varcor[[1]], "stddev")),
+  expect_equal(as.numeric(attr(summary(lmer_fit)$varcor[[1]], "stddev"))[1],
                as.numeric(exp(REs[c(1)])), tolerance = 1.0e-4)
 
   # add a new level and verify multiple groups works
-  sleepstudy$age <- rep(letters[1:6],30)
-  sleepstudy$Reaction <- sleepstudy$Reaction + c(-0.1, 3, 1.2, 0.3, 0.5, 0.6)[rep(1:6,30)]
-  sdmTMB_fit <- sdmTMB(Reaction ~ Days + (Days | Subject) + (1 | age), sleepstudy, spatial="off")
-  lmer_fit <- lmer(Reaction ~ Days + (Days | Subject) + (1 | age), sleepstudy, REML = FALSE)
-  expect_equal(fixef(lmer_fit)[1], coef(sdmTMB_fit)[1])
-  expect_equal(fixef(lmer_fit)[2], coef(sdmTMB_fit)[2])
+  data("sleepstudy", package="lme4")
+  sleepstudy$age <- as.factor(rep(letters[1:5],36))
+  devs <- rnorm(5,0,1)
+  sleepstudy$Reaction <- sleepstudy$Reaction + devs[rep(1:5,36)] + rnorm(nrow(sleepstudy),0,0.03)
+
+  glmmtmb_fit <- glmmTMB(Reaction ~ Days + (Days | Subject) + (1|age), sleepstudy, REML = FALSE)
+  sdmTMB_fit <- sdmTMB(Reaction ~ Days + (1 + Days | Subject) + (1 | age), sleepstudy, spatial="off")
+
+  expect_equal(fixef(glmmtmb_fit)$cond[1], coef(sdmTMB_fit)[1], tolerance = 1e-5)
+  expect_equal(fixef(glmmtmb_fit)$cond[2], coef(sdmTMB_fit)[2], tolerance = 1e-5)
   REs <- sdmTMB_fit$sd_report$value[grep("cov_pars", names(sdmTMB_fit$sd_report$value))]
-  expect_equal(as.numeric(attr(summary(lmer_fit)$varcor[[1]], "stddev")),
+  expect_equal(as.numeric(attr(summary(glmmtmb_fit)$varcor$cond$Subject, 'stddev')),
                as.numeric(exp(REs[c(1,3)])), tolerance = 1.0e-4)
 
   # Add in spatial field
@@ -99,8 +106,8 @@ test_that("Model with random intercepts fits appropriately.", {
   expect_equal(nrow(.t1), nrow(.t))
 
   b <- as.list(m$sd_report, "Estimate")
-  .cor <- cor(c(RE_vals, RE_vals2), b$re_b_pars[, 1])
-  expect_equal(round(.cor, 5), 0.8313)
+  .cor <- cor(c(RE_vals, RE_vals2), b$re_b_pars)
+  expect_equal(round(c(.cor), 5), 0.8313)
   expect_equal(round(b$re_b_pars[seq_len(5)], 5),
     c(-0.28645, 0.68619, 0.10028, -0.31436, -0.61168),
     tolerance = 1e-5
@@ -154,7 +161,7 @@ test_that("Model with random intercepts fits appropriately.", {
   sdmTMB_re <- as.list(m$sd_report, "Estimate")
   glmmTMB_re <- glmmTMB::ranef(m.glmmTMB)$cond
   expect_equal(c(glmmTMB_re$g$`(Intercept)`, glmmTMB_re$h$`(Intercept)`),
-    sdmTMB_re$re_b_pars[, 1],
+    sdmTMB_re$re_b_pars[,1],
     tolerance = 1e-5
   )
 #
@@ -307,9 +314,6 @@ test_that("Delta model works with random effects", {
 
   data(pcod)
   pcod$year_f <- as.factor(pcod$year)
-  intcpts <- rnorm(10)
-  pcod$vessel <- sample(1:10, size = nrow(pcod), replace=T)
-  pcod$density[which(pcod$present==1)] <- exp(log(pcod$density[which(pcod$present==1)]) + intcpts[pcod$vessel[which(pcod$present==1)]])
 
   # with single formula, the random effects should get carried through to all pieces
   m_yrf_re <- sdmTMB(
@@ -320,11 +324,83 @@ test_that("Delta model works with random effects", {
   )
   expect_equal(nrow(tidy(m_yrf_re, "ran_vals")), length(unique(pcod$year))*2)
 
-  # now we can try separate RE formulas by sub-model
-  # m_yrf_re2 <- sdmTMB(
-  #   data = pcod,
-  #   formula = list(density ~ (depth | year_f), density ~ (1|vessel)),
-  #   family = delta_gamma(),
-  #   spatial = "off"
-  # )
+
+  # test 2 different RE intercepts
+ m_yrf_re_1 <- sdmTMB(
+    data = pcod,
+    formula = list(density ~ (1 | year_f), density ~ (1|year_f)),
+    family = delta_gamma(),
+    spatial = "off"
+  )
+
+  # 2 diff intercepts, same number of levels
+  intcpts <- rnorm(9)
+  pcod$vessel <- sample(1:9, size = nrow(pcod), replace=T)
+  pcod$density[which(pcod$present==1)] <- exp(log(pcod$density[which(pcod$present==1)]) + intcpts[pcod$vessel[which(pcod$present==1)]])
+  pcod$vessel <- as.factor(pcod$vessel)
+  pcod$density[which(pcod$present==1)] <- exp(log(pcod$density[which(pcod$present==1)]) + intcpts[pcod$vessel[which(pcod$present==1)]])
+
+  m_yrf_re2 <- sdmTMB(
+    data = pcod,
+    formula = list(density ~ (1 | year_f), density ~ (1|vessel)),
+    family = delta_gamma(),
+    spatial = "off"
+  )
+  glmm_pres <- glmmTMB(
+    data = pcod,
+    formula = present ~ (1 | year),
+    family = binomial()
+  )
+  log_vars <- m_yrf_re2$sd_report$value[grep("re_cov_pars", names(m_yrf_re2$sd_report$value))]
+  expect_equal(as.numeric(attr(summary(glmm_pres)$varcor[[1]]$year, "stddev")), as.numeric(exp(log_vars[1])),
+               tolerance = 1e-5)
+
+  # 2 diff intercepts, different number of levels
+  intcpts <- rnorm(10)
+  pcod$vessel <- sample(1:10, size = nrow(pcod), replace=T)
+  pcod$density[which(pcod$present==1)] <- exp(log(pcod$density[which(pcod$present==1)]) + intcpts[pcod$vessel[which(pcod$present==1)]])
+  pcod$vessel <- as.factor(pcod$vessel)
+  pcod$density[which(pcod$present==1)] <- exp(log(pcod$density[which(pcod$present==1)]) + intcpts[pcod$vessel[which(pcod$present==1)]])
+
+  m_yrf_re3 <- sdmTMB(
+    data = pcod,
+    formula = list(density ~ (-1+depth | year_f), density ~ (1|vessel)),
+    family = delta_gamma(),
+    spatial = "off"
+  )
+
+  # test 2 different numbers of random ints
+  m_yrf_re4 <- sdmTMB(
+    data = pcod,
+    formula = list(density ~ (1 | year_f) + (1|vessel), density ~ (1|vessel)),
+    family = delta_gamma(),
+    spatial = "off"
+  )
+
+
+  # test 2 different numbers of random ints, different number of levels
+  m_yrf_re5 <- sdmTMB(
+    data = pcod,
+    formula = list(density ~ (depth | year_f) + (1|vessel), density ~ (1|vessel)),
+    family = delta_gamma(),
+    spatial = "off"
+  )
+
+  # Test same model with characters
+  pcod$year_chr <- paste(pcod$year)
+  m_yrf_re6 <- sdmTMB(
+    data = pcod,
+    formula = list(density ~ (depth | year_chr) + (1|vessel), density ~ (1|vessel)),
+    family = delta_gamma(),
+    spatial = "off"
+  )
+
+
+  # Test same model with integers
+  m_yrf_re7 <- sdmTMB(
+    data = pcod,
+    formula = list(density ~ (depth | year) + (1|vessel), density ~ (1|vessel)),
+    family = delta_gamma(),
+    spatial = "off"
+  )
 })

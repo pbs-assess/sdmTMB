@@ -277,8 +277,9 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
 
     # this is all as before
     re_indx <- grep("re_b_pars", names(x$sd_report$value), fixed=TRUE)
-    re_b_df$estimate <- x$sd_report$value[re_indx]
-    re_b_df$std.error <- x$sd_report$sd[re_indx]
+    non_nas <- which(x$sd_report$value[re_indx] != 0) # remove parameter that get mapped off
+    re_b_df$estimate <- x$sd_report$value[re_indx][non_nas]
+    re_b_df$std.error <- x$sd_report$sd[re_indx][non_nas]
     re_b_df$conf.low <- re_b_df$estimate - crit*re_b_df$std.error
     re_b_df$conf.hi <- re_b_df$estimate + crit*re_b_df$std.error
     re_b_df$index <- NULL
@@ -301,44 +302,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     out_ranef <- re_b_df
     row.names(out_ranef) <- NULL
   }
-  # random intercepts
-  # Comment out old RE
-  # n_re_int <- x$split_formula[[model]]$n_bars
-  # if (n_re_int == 0 && effects == "ran_vals") {
-  #   cli::cli_abort("effects = 'ran_vals' currently only works with random intercepts (e.g., `+ (1 | g)`).")
-  # }
-  # if (n_re_int > 0) {
-  #   out_ranef <- list()
-  #   re_est <- as.list(x$sd_report, "Estimate")$RE
-  #   re_ses <- as.list(x$sd_report, "Std. Error")$RE
-  #   for(jj in 1:n_re_int) {
-  #     level_names <- levels(x$data[[x$split_formula[[model]]$barnames[jj]]])
-  #     n_levels <- length(level_names)
-  #     re_name <- x$split_formula[[model]]$barnames[jj]
-  #
-  #     if(jj==1) {
-  #       start_pos <- 1
-  #       end_pos <- n_levels
-  #     } else {
-  #       start_pos <- end_pos + 1
-  #       end_pos <- start_pos + n_levels - 1
-  #     }
-  #     out_ranef[[jj]] <- data.frame(
-  #       term = paste0(re_name,"_",level_names),
-  #       estimate = re_est[start_pos:end_pos,model],
-  #       std.error = re_ses[start_pos:end_pos,model],
-  #       conf.low = re_est[start_pos:end_pos,model] - crit * re_ses[start_pos:end_pos,model],
-  #       conf.high = re_est[start_pos:end_pos,model] + crit * re_ses[start_pos:end_pos,model],
-  #       stringsAsFactors = FALSE
-  #     )
-  #     if (!conf.int) {
-  #       out_ranef[[jj]][["conf.low"]] <- NULL
-  #       out_ranef[[jj]][["conf.high"]] <- NULL
-  #     }
-  #   }
-  #   out_ranef <- do.call("rbind", out_ranef)
-  #   row.names(out_ranef) <- NULL
-  #}
 
   out <- unique(out) # range can be duplicated
   out_re <- unique(out_re)
