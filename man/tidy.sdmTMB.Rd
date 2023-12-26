@@ -6,7 +6,7 @@
 \usage{
 \method{tidy}{sdmTMB}(
   x,
-  effects = c("fixed", "ran_pars", "ran_vals"),
+  effects = c("fixed", "ran_pars", "ran_vals", "ran_vcov"),
   model = 1,
   conf.int = FALSE,
   conf.level = 0.95,
@@ -20,8 +20,9 @@
 
 \item{effects}{A character value. One of \code{"fixed"} ('fixed' or main-effect
 parameters), \code{"ran_pars"} (standard deviations, spatial range, and other
-random effect and dispersion-related terms), or \code{"ran_vals"} (individual
-random intercepts, if included; behaves like \code{ranef()}).}
+random effect and dispersion-related terms), \code{"ran_vals"} (individual
+random intercepts, if included; behaves like \code{ranef()}), or \code{"ran_vcov"} (list
+of variance covariance matrices for the random effects, by model and group).}
 
 \item{model}{Which model to tidy if a delta model (1 or 2).}
 

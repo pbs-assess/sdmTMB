@@ -7,7 +7,7 @@
 make_indices(vec)
 }
 \arguments{
-\item{vec}{}
+\item{vec}{Vector of indices to generate row and col positions for}
 }
 \description{
 make_indices is an internal function to build lower triangular matrices for correlated random effects

@@ -7,7 +7,7 @@
 barnames(bars)
 }
 \arguments{
-\item{vec}{}
+\item{bars}{The chataracter string representing the random effects, e.g. \code{1 | group}}
 }
 \description{
 barnames is an internal function to return the group (bar) names in a formula, e.g. (1|group)

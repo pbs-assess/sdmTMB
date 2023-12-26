@@ -1,6 +1,6 @@
 
 #' barnames is an internal function to return the group (bar) names in a formula, e.g. (1|group)
-#' @param vec
+#' @param bars The chataracter string representing the random effects, e.g. `1 | group`
 #'
 barnames <- function (bars) {
   vapply(bars, function(x) safe_deparse(x[[3]]), "")
@@ -11,7 +11,7 @@ safe_deparse <- function (x, collapse = " ") {
 }
 
 #' make_indices is an internal function to build lower triangular matrices for correlated random effects
-#' @param vec
+#' @param vec Vector of indices to generate row and col positions for
 #'
 make_indices <- function(vec) {
   group_indices <- unlist(lapply(seq_along(vec), function(i) rep(i, sum(1:vec[i]))))

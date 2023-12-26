@@ -3,8 +3,9 @@
 #' @param x Output from [sdmTMB()].
 #' @param effects A character value. One of `"fixed"` ('fixed' or main-effect
 #'   parameters), `"ran_pars"` (standard deviations, spatial range, and other
-#'   random effect and dispersion-related terms), or `"ran_vals"` (individual
-#'   random intercepts, if included; behaves like `ranef()`).
+#'   random effect and dispersion-related terms), `"ran_vals"` (individual
+#'   random intercepts, if included; behaves like `ranef()`), or `"ran_vcov"` (list
+#'   of variance covariance matrices for the random effects, by model and group).
 #' @param conf.int Include a confidence interval?
 #' @param conf.level Confidence level for CI.
 #' @param exponentiate Whether to exponentiate the fixed-effect coefficient
@@ -44,7 +45,7 @@
 #' )
 #' tidy(fit, "ran_vals")
 
-tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model = 1,
+tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vcov"), model = 1,
                  conf.int = FALSE, conf.level = 0.95, exponentiate = FALSE,
                  silent = FALSE, ...) {
   effects <- match.arg(effects)
@@ -251,6 +252,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     out_re[["conf.high"]] <- NULL
   }
 
+  cov_mat_list <- NULL
   if(sum(x$tmb_data$n_re_groups) > 0) {
     re_b_dfs <- add_model_index(x$split_formula, "re_b_df")
     re_b_df <- do.call(rbind, re_b_dfs)
@@ -294,6 +296,8 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
         re_b_df$par_name[model_grp] <- rep(x$split_formula[[i]]$re_cov_terms$cnms[[j]], length.out=length(model_grp))
       }
     }
+    group_key <- aggregate(group_name ~ model + group_id, data = re_b_df, FUN = function(x) x[1])
+
     # more sensible re-ordering
     re_b_df$group_id <- NULL
     re_b_df <- re_b_df[,c("model","group_name","par_name","level_ids","estimate","std.error", "conf.low","conf.hi")]
@@ -301,6 +305,41 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     re_b_df$level_ids <- sapply(strsplit(re_b_df$level_ids, ":"), function(x) x[2])
     out_ranef <- re_b_df
     row.names(out_ranef) <- NULL
+
+    re_cov_dfs <- add_model_index(x$split_formula, "re_df")
+    # add group names
+    re_cov_dfs <- lapply(re_cov_dfs, function(df) {
+      df$group <- row.names(df)
+      return(df)
+    })
+    re_cov_df <- do.call(rbind, re_cov_dfs)
+    re_cov_df$rows <- re_cov_df$rows + 1 # increement rows/cols from 1, not 0
+    re_cov_df$cols <- re_cov_df$cols + 1
+    row.names(re_cov_df) <- NULL
+
+    # make sure group index is included correctly
+    for(i in 1:nrow(re_cov_df)) {
+      indx <- which(group_key$model == re_cov_df$model[i] & group_key$group_id == (re_cov_df$group_indices[i] + 1))
+      re_cov_df$group[i] <- group_key$group_name[indx]
+    }
+
+    #re_cov_df <- re_cov_df[,c("rows","cols","is_sd","model","group")]
+    re_indx <- grep("re_cov_pars", names(x$sd_report$value), fixed=TRUE)
+    non_nas <- which(x$sd_report$value[re_indx] != 0) # remove parameter that get mapped off
+    re_cov_df$estimate <- x$sd_report$value[re_indx][non_nas]
+    re_cov_df$std.error <- x$sd_report$sd[re_indx][non_nas]
+    re_cov_df$conf.low <- re_cov_df$estimate - crit*re_cov_df$std.error
+    re_cov_df$conf.hi <- re_cov_df$estimate + crit*re_cov_df$std.error
+    # the SD parameters are returned in log space -- use delta method to generate CIs
+    est <- exp(re_cov_df$estimate)
+    sd_est <- exp( sqrt((est)^2 * (re_cov_df$std.error)^2) )
+    sds <- which(re_cov_df$is_sd == 1)
+    re_cov_df$estimate[sds] <- est[sds]
+    re_cov_df$conf.low[sds] <- est[sds] - crit*est[sds]
+    re_cov_df$conf.hi[sds] <- est[sds] + crit*est[sds]
+
+    re_cov_df <- re_cov_df[,c("rows","cols","model","group","estimate","std.error","conf.low","conf.hi")]
+    cov_mat_list <- create_cov_matrices(re_cov_df)
   }
 
   out <- unique(out) # range can be duplicated
@@ -318,10 +357,37 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     return(frm(out_ranef))
   } else if (effects == "ran_pars") {
     return(frm(out_re))
+  } else if (effects == "ran_vcov") {
+      return(frm(cov_mat_list))
   } else {
     cli_abort("The specified 'effects' type is not available.")
   }
 }
+
+
+create_cov_matrices <- function(df) {
+  # Initialize an empty list to store the covariance matrices
+  cov_matrices <- list()
+
+  # Group by model and group, and then create a covariance matrix for each group
+  for(model in unique(df$model)) {
+    model_df <- subset(df, model == model)
+    for(group in unique(model_df$group)) {
+      group_df <- subset(model_df, group == group)
+      # Create an empty matrix
+      cov_matrix <- matrix(NA, nrow = max(group_df$rows), ncol = max(group_df$cols))
+      # Fill the matrix with the estimates
+      for(i in 1:nrow(group_df)) {
+        cov_matrix[group_df$rows[i], group_df$cols[i]] <- group_df$estimate[i]
+      }
+      # Add the matrix to the list
+      cov_matrices[[paste("Model", model, "Group", group)]] <- cov_matrix
+    }
+  }
+
+  return(cov_matrices)
+}
+
 
 #' @importFrom generics tidy
 #' @export
