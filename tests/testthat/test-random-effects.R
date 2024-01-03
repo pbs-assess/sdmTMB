@@ -16,7 +16,7 @@ test_that("Model with random intercepts fits appropriately.", {
   skip_if_not_installed("lme4")
   # Classic lme4 random effects model
   data("sleepstudy", package="lme4")
-  lmer_fit <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
+  lmer_fit <- lme4::lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
   # Same model in sdmTMB
   sdmTMB_fit <- sdmTMB(Reaction ~ Days + (Days | Subject), sleepstudy, spatial="off")
 
@@ -37,7 +37,7 @@ test_that("Model with random intercepts fits appropriately.", {
 
   # verify model with no random int works
   sdmTMB_fit <- sdmTMB(Reaction ~ Days + (-1 + Days | Subject), sleepstudy, spatial="off")
-  lmer_fit <- lmer(Reaction ~ Days + (-1 + Days | Subject), sleepstudy, REML = FALSE)
+  lmer_fit <- lme4::lmer(Reaction ~ Days + (-1 + Days | Subject), sleepstudy, REML = FALSE)
   expect_equal(fixef(lmer_fit)[1], coef(sdmTMB_fit)[1])
   expect_equal(fixef(lmer_fit)[2], coef(sdmTMB_fit)[2])
   REs <- sdmTMB_fit$sd_report$value[grep("cov_pars", names(sdmTMB_fit$sd_report$value))]
@@ -47,10 +47,11 @@ test_that("Model with random intercepts fits appropriately.", {
   # add a new level and verify multiple groups works
   data("sleepstudy", package="lme4")
   sleepstudy$age <- as.factor(rep(letters[1:5],36))
+  set.seed(1)
   devs <- rnorm(5,0,1)
   sleepstudy$Reaction <- sleepstudy$Reaction + devs[rep(1:5,36)] + rnorm(nrow(sleepstudy),0,0.03)
 
-  glmmtmb_fit <- glmmTMB(Reaction ~ Days + (Days | Subject) + (1|age), sleepstudy, REML = FALSE)
+  glmmtmb_fit <- glmmTMB::glmmTMB(Reaction ~ Days + (Days | Subject) + (1|age), sleepstudy, REML = FALSE)
   sdmTMB_fit <- sdmTMB(Reaction ~ Days + (1 + Days | Subject) + (1 | age), sleepstudy, spatial="off")
 
   expect_equal(fixef(glmmtmb_fit)$cond[1], coef(sdmTMB_fit)[1], tolerance = 1e-5)

@@ -94,7 +94,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     p$ln_phi <- p$ln_phi[model]
     p$ln_tau_V <- as.numeric(p$ln_tau_V[,model])
     p$ar1_phi <- as.numeric(p$ar1_phi[model])
-    # commenting out old RE p$ln_tau_G <- as.numeric(p$ln_tau_G[,model])
     p$log_sigma_O <- as.numeric(p$log_sigma_O[1,model])
     p$log_sigma_E <- as.numeric(p$log_sigma_E[1,model])
     p$log_sigma_Z <- as.numeric(p$log_sigma_Z[,model])
@@ -105,7 +104,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     p$sigma_E <- as.numeric(p$sigma_E[1,model])
     p$sigma_O <- as.numeric(p$sigma_O[1,model])
     p$sigma_Z <- as.numeric(p$sigma_Z[,model])
-    # commenting out old RE p$sigma_G <- as.numeric(p$sigma_G[,model])
     p
   }
   est <- subset_pars(est, model)
@@ -175,11 +173,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     log_name <- c(log_name, "ln_tau_V")
     name <- c(name, "tau_V")
   }
-  # commenting out old RE if (length(est$ln_tau_G) > 0L) {
-  # commenting out old RE   log_name <- c(log_name, "ln_tau_G")
-  # commenting out old RE   name <- c(name, "sigma_G")
-  # commenting out old RE }
-
   j <- 0
   if (!"log_range" %in% names(est)) {
     cli_warn("This model was fit with an old version of sdmTMB. Some parameters may not be available to the tidy() method. Re-fit the model with the current version of sdmTMB if you need access to any missing parameters.")
@@ -195,7 +188,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
 
       non_log_name <- gsub("ln_", "", gsub("log_", "", log_name))
       this <- non_log_name[j]
-      # commenting out old RE if (this == "tau_G") this <- "sigma_G"
       if (this == "tau_V") this <- "sigma_V"
       this_se <- as.numeric(se[[this]])
       this_est <- as.numeric(est[[this]])
@@ -242,7 +234,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
 
   if (identical(est$ln_tau_E, 0)) out_re <- out_re[out_re$term != "sigma_E", ]
   if (identical(est$ln_tau_V, 0)) out_re <- out_re[out_re$term != "sigma_V", ]
-  # commenting out old RE if (identical(est$ln_tau_G, 0)) out_re <- out_re[out_re$term != "sigma_G", ]
   if (identical(est$ln_tau_O, 0)) out_re <- out_re[out_re$term != "sigma_O", ]
   if (identical(est$ln_tau_Z, 0)) out_re <- out_re[out_re$term != "sigma_Z", ]
   if (is.na(x$tmb_map$ar1_phi[model])) out_re <- out_re[out_re$term != "rho", ]
@@ -252,94 +243,13 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     out_re[["conf.high"]] <- NULL
   }
 
-  cov_mat_list <- NULL
-  if(sum(x$tmb_data$n_re_groups) > 0) {
-    re_b_dfs <- add_model_index(x$split_formula, "re_b_df")
-    re_b_df <- do.call(rbind, re_b_dfs)
-    names(re_b_df)[which(names(re_b_df)=="group_indices")] = "group_id"
-
-    # this function just expands each row from start: end
-    expand_row <- function(level_id, start, end, group_id, model) {
-      seq_len <- end - start + 1
-      data.frame(
-        level_ids = rep(level_id, seq_len),
-        index = seq(from = start, to = end),
-        group_id = rep(group_id, seq_len),
-        model = rep(model, seq_len)
-      )
-    }
-
-    # apply to each row and combine the results
-    expanded_rows <- Map(expand_row, re_b_df$level_ids,
-                         re_b_df$start, re_b_df$end,
-                         re_b_df$group_id, re_b_df$model)
-
-    re_b_df <- do.call("rbind", expanded_rows) # list to df
-    rownames(re_b_df) <- NULL # reset row names
-
-    # this is all as before
-    re_indx <- grep("re_b_pars", names(x$sd_report$value), fixed=TRUE)
-    non_nas <- which(x$sd_report$value[re_indx] != 0) # remove parameter that get mapped off
-    re_b_df$estimate <- x$sd_report$value[re_indx][non_nas]
-    re_b_df$std.error <- x$sd_report$sd[re_indx][non_nas]
-    re_b_df$conf.low <- re_b_df$estimate - crit*re_b_df$std.error
-    re_b_df$conf.hi <- re_b_df$estimate + crit*re_b_df$std.error
-    re_b_df$index <- NULL
-
-    re_b_df$group_name <- NA
-    re_b_df$par_name <- NA
-    for(i in 1:length(x$split_formula)) {
-      groupnames <- names(x$split_formula[[i]]$re_cov_terms$cnms)
-      for(j in 1:length(x$split_formula[[i]]$barnames)) {
-        model_grp <- which(re_b_df$model==i & re_b_df$group_id==j)
-        re_b_df$group_name[model_grp] <- groupnames[j]
-        re_b_df$par_name[model_grp] <- rep(x$split_formula[[i]]$re_cov_terms$cnms[[j]], length.out=length(model_grp))
-      }
-    }
-    group_key <- aggregate(group_name ~ model + group_id, data = re_b_df, FUN = function(x) x[1])
-
-    # more sensible re-ordering
-    re_b_df$group_id <- NULL
-    re_b_df <- re_b_df[,c("model","group_name","par_name","level_ids","estimate","std.error", "conf.low","conf.hi")]
-    # remove ":" in the level_ids
-    re_b_df$level_ids <- sapply(strsplit(re_b_df$level_ids, ":"), function(x) x[2])
-    out_ranef <- re_b_df
-    row.names(out_ranef) <- NULL
-
-    re_cov_dfs <- add_model_index(x$split_formula, "re_df")
-    # add group names
-    re_cov_dfs <- lapply(re_cov_dfs, function(df) {
-      df$group <- row.names(df)
-      return(df)
-    })
-    re_cov_df <- do.call(rbind, re_cov_dfs)
-    re_cov_df$rows <- re_cov_df$rows + 1 # increement rows/cols from 1, not 0
-    re_cov_df$cols <- re_cov_df$cols + 1
-    row.names(re_cov_df) <- NULL
-
-    # make sure group index is included correctly
-    for(i in 1:nrow(re_cov_df)) {
-      indx <- which(group_key$model == re_cov_df$model[i] & group_key$group_id == (re_cov_df$group_indices[i] + 1))
-      re_cov_df$group[i] <- group_key$group_name[indx]
-    }
-
-    #re_cov_df <- re_cov_df[,c("rows","cols","is_sd","model","group")]
-    re_indx <- grep("re_cov_pars", names(x$sd_report$value), fixed=TRUE)
-    non_nas <- which(x$sd_report$value[re_indx] != 0) # remove parameter that get mapped off
-    re_cov_df$estimate <- x$sd_report$value[re_indx][non_nas]
-    re_cov_df$std.error <- x$sd_report$sd[re_indx][non_nas]
-    re_cov_df$conf.low <- re_cov_df$estimate - crit*re_cov_df$std.error
-    re_cov_df$conf.hi <- re_cov_df$estimate + crit*re_cov_df$std.error
-    # the SD parameters are returned in log space -- use delta method to generate CIs
-    est <- exp(re_cov_df$estimate)
-    sd_est <- exp( sqrt((est)^2 * (re_cov_df$std.error)^2) )
-    sds <- which(re_cov_df$is_sd == 1)
-    re_cov_df$estimate[sds] <- est[sds]
-    re_cov_df$conf.low[sds] <- est[sds] - crit*est[sds]
-    re_cov_df$conf.hi[sds] <- est[sds] + crit*est[sds]
-
-    re_cov_df <- re_cov_df[,c("rows","cols","model","group","estimate","std.error","conf.low","conf.hi")]
-    cov_mat_list <- create_cov_matrices(re_cov_df)
+  if (sum(x$tmb_data$n_re_groups) > 0L) { # we have random intercepts/slopes
+    temp <- get_re_tidy_list(x, crit = crit)
+    cov_mat_list <- temp$cov_matrices
+    out_ranef <- temp$out_ranef
+  } else {
+    cov_mat_list <- NULL
+    out_ranef <- NULL
   }
 
   out <- unique(out) # range can be duplicated
@@ -358,36 +268,122 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   } else if (effects == "ran_pars") {
     return(frm(out_re))
   } else if (effects == "ran_vcov") {
-      return(frm(cov_mat_list))
+    return(frm(cov_mat_list))
   } else {
     cli_abort("The specified 'effects' type is not available.")
   }
 }
 
+get_re_tidy_list <- function(x, crit) {
+  re_b_dfs <- add_model_index(x$split_formula, "re_b_df")
+  re_b_df <- do.call(rbind, re_b_dfs)
+  names(re_b_df)[which(names(re_b_df) == "group_indices")] <- "group_id"
+
+  # this function just expands each row from start: end
+  expand_row <- function(level_id, start, end, group_id, model) {
+    seq_len <- end - start + 1
+    data.frame(
+      level_ids = rep(level_id, seq_len),
+      index = seq(from = start, to = end),
+      group_id = rep(group_id, seq_len),
+      model = rep(model, seq_len)
+    )
+  }
+
+  # apply to each row and combine the results
+  expanded_rows <- Map(
+    expand_row, re_b_df$level_ids,
+    re_b_df$start, re_b_df$end,
+    re_b_df$group_id, re_b_df$model
+  )
+
+  re_b_df <- do.call(rbind, expanded_rows) # list to df
+  rownames(re_b_df) <- NULL # reset row names
+
+  # this is all as before
+  re_indx <- grep("re_b_pars", names(x$sd_report$value), fixed = TRUE)
+  non_nas <- which(x$sd_report$value[re_indx] != 0) # remove parameter that get mapped off
+  re_b_df$estimate <- x$sd_report$value[re_indx][non_nas]
+  re_b_df$std.error <- x$sd_report$sd[re_indx][non_nas]
+  re_b_df$conf.low <- re_b_df$estimate - crit * re_b_df$std.error
+  re_b_df$conf.hi <- re_b_df$estimate + crit * re_b_df$std.error
+  re_b_df$index <- NULL
+  re_b_df$group_name <- NA
+  re_b_df$par_name <- NA
+  for (i in seq_len(length(x$split_formula))) {
+    groupnames <- names(x$split_formula[[i]]$re_cov_terms$cnms)
+    for (j in seq_len(length(x$split_formula[[i]]$barnames))) {
+      model_grp <- which(re_b_df$model == i & re_b_df$group_id == j)
+      re_b_df$group_name[model_grp] <- groupnames[j]
+      re_b_df$par_name[model_grp] <- rep(x$split_formula[[i]]$re_cov_terms$cnms[[j]], length.out = length(model_grp))
+    }
+  }
+  group_key <- aggregate(group_name ~ model + group_id, data = re_b_df, FUN = function(x) x[1])
+
+  # more sensible re-ordering
+  re_b_df$group_id <- NULL
+  re_b_df <- re_b_df[, c("model", "group_name", "par_name", "level_ids", "estimate", "std.error", "conf.low", "conf.hi")]
+  # remove ":" in the level_ids
+  re_b_df$level_ids <- sapply(strsplit(re_b_df$level_ids, ":"), function(x) x[2])
+  out_ranef <- re_b_df
+  row.names(out_ranef) <- NULL
+
+  re_cov_dfs <- add_model_index(x$split_formula, "re_df")
+  # add group names
+  re_cov_dfs <- lapply(re_cov_dfs, function(df) {
+    df$group <- row.names(df)
+    df
+  })
+  re_cov_df <- do.call(rbind, re_cov_dfs)
+  re_cov_df$rows <- re_cov_df$rows + 1 # increement rows/cols from 1, not 0
+  re_cov_df$cols <- re_cov_df$cols + 1
+  row.names(re_cov_df) <- NULL
+
+  # make sure group index is included correctly
+  for (i in seq_len(nrow(re_cov_df))) {
+    indx <- which(group_key$model == re_cov_df$model[i] & group_key$group_id == (re_cov_df$group_indices[i] + 1))
+    re_cov_df$group[i] <- group_key$group_name[indx]
+  }
+
+  re_indx <- grep("re_cov_pars", names(x$sd_report$value), fixed = TRUE)
+  non_nas <- which(x$sd_report$value[re_indx] != 0) # remove parameter that gets mapped off
+  re_cov_df$estimate <- x$sd_report$value[re_indx][non_nas]
+  re_cov_df$std.error <- x$sd_report$sd[re_indx][non_nas]
+  re_cov_df$conf.low <- re_cov_df$estimate - crit * re_cov_df$std.error
+  re_cov_df$conf.hi <- re_cov_df$estimate + crit * re_cov_df$std.error
+  # the SD parameters are returned in log space -- use delta method to generate CIs
+  est <- exp(re_cov_df$estimate)
+  sd_est <- exp(sqrt((est)^2 * (re_cov_df$std.error)^2))
+  sds <- which(re_cov_df$is_sd == 1)
+  re_cov_df$estimate[sds] <- est[sds]
+  re_cov_df$conf.low[sds] <- est[sds] - crit * est[sds]
+  re_cov_df$conf.hi[sds] <- est[sds] + crit * est[sds]
+
+  re_cov_df <- re_cov_df[, c("rows", "cols", "model", "group", "estimate", "std.error", "conf.low", "conf.hi")]
+  list(out_ranef = out_ranef, cov_matrices = create_cov_matrices(re_cov_df))
+}
 
 create_cov_matrices <- function(df) {
   # Initialize an empty list to store the covariance matrices
   cov_matrices <- list()
 
   # Group by model and group, and then create a covariance matrix for each group
-  for(model in unique(df$model)) {
+  for (model in unique(df$model)) {
     model_df <- subset(df, model == model)
-    for(group in unique(model_df$group)) {
+    for (group in unique(model_df$group)) {
       group_df <- subset(model_df, group == group)
       # Create an empty matrix
-      cov_matrix <- matrix(NA, nrow = max(group_df$rows), ncol = max(group_df$cols))
+      cov_matrix <- matrix(NA_real_, nrow = max(group_df$rows), ncol = max(group_df$cols))
       # Fill the matrix with the estimates
-      for(i in 1:nrow(group_df)) {
+      for (i in seq_len(nrow(group_df))) {
         cov_matrix[group_df$rows[i], group_df$cols[i]] <- group_df$estimate[i]
       }
       # Add the matrix to the list
       cov_matrices[[paste("Model", model, "Group", group)]] <- cov_matrix
     }
   }
-
-  return(cov_matrices)
+  cov_matrices
 }
-
 
 #' @importFrom generics tidy
 #' @export

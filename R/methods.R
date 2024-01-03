@@ -195,7 +195,7 @@ ranef.sdmTMB <- function(object, ...) {
     } # end for j
     model_list[[i]] <- group_list
   }
-  return(cond = model_list)
+  model_list
 }
 
 #' @importFrom stats df.residual
