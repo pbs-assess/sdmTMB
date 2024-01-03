@@ -173,24 +173,24 @@ fixef.sdmTMB <- function(object, ...) {
 ranef.sdmTMB <- function(object, ...) {
   .t <- tidy(object, "ran_vals", conf.int = FALSE, silent = TRUE)
   model_list <- list()
-  for(i in 1:max(.t$model)) { # loop through models
-    .t <- .t[which(.t$model == i),]
+  for (i in seq_len(max(.t$model))) { # loop through models
+    .t <- .t[which(.t$model == i), ]
     groups <- unique(.t$group_name) # names of groups for this model
     group_list <- vector("list", length = length(groups)) # create empty named list
     names(group_list) <- groups
-    for(j in 1:length(groups)) {
-      sub <- .t[which(.t$group_name == groups[j]),]
+    for (j in 1:length(groups)) {
+      sub <- .t[which(.t$group_name == groups[j]), ]
       level_ids <- unique(sub$level_ids)
-      sub <- sub[,c("group_name","par_name","estimate")]
-      if(nrow(sub) > 0) {
+      sub <- sub[, c("group_name", "par_name", "estimate")]
+      if (nrow(sub) > 0) {
         # convert long to wide, storing just estimates
         split_data <- split(sub$estimate, sub$par_name)
-        wide_df <- as.data.frame(split_data)# Convert to wide format
+        wide_df <- as.data.frame(split_data) # Convert to wide format
         names(wide_df) <- unique(sub$par_name) # rename, fix .X issue
         rownames(wide_df) <- level_ids # add rownames, like lmer does
         # Create a list with the dataframe as an element named 'Dog'
         group_list[[j]] <- wide_df
-       # names(group_list[[j]]) <- sub$group_name[1]
+        # names(group_list[[j]]) <- sub$group_name[1]
       } # end if
     } # end for j
     model_list[[i]] <- group_list

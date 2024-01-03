@@ -804,9 +804,6 @@ sdmTMB <- function(
   contains_offset <- check_offset(formula[[1]]) # deprecated check
 
   split_formula <- list() # passed to out structure, not TMB
-  # commenting out old RE RE_indexes <- list() # ncols passed into TMB
-  # commenting out old RE nobs_RE <- list() # ncols passed into TMB
-  # commenting out old RE ln_tau_G_index<- list() # passed into TMB
   X_ij = list() # main effects, passed into TMB
   mf <- list()
   mt <- list()
@@ -819,42 +816,11 @@ sdmTMB <- function(
     # anything in a list here needs to be saved for tmb data
     split_formula[[ii]] <- parse_formula(formula[ii][[1]], data)
 
-    # Null values for when REs aren't included
-    # commenting out old RE RE_names <- as.character()
-    # commenting out old RE ln_tau_G_index[[ii]] <- integer()
-    # commenting out old RE nobs_RE[[ii]] <- 0L
-
-    # commenting out old REif(split_formula[[ii]]$n_bars > 0) { # random effects included
-    # commenting out old RE  ln_tau_G_index[[ii]] <- split_formula[[ii]]$re_cov_terms$Lind - 1L # index corresponding to which variance each re is assoc with
-    # commenting out old RE  nobs_RE[[ii]] <- as.numeric(split_formula[[ii]]$re_cov_terms$nl) # concatenated vector of ids,
-    # commenting out old RE  RE_names <- names(split_formula[[ii]]$re_cov_terms$flist) # names of each group
-    # commenting out old RE}
-    # commenting out old REfct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)# commented out because this isn't being used anywhere
-
-    # RE_indexes[[ii]] is a matrix here with 0 cols if there's no REs
-    # commenting out old RE RE_indexes[[ii]] <- vapply(RE_names, function(x) as.integer(data[[x]]) - 1L, rep(1L, nrow(data)))
-    #nobs_RE[[ii]] <- unname(apply(RE_indexes[[ii]], 2L, max)) + 1L
-    #if (length(nobs_RE[[ii]]) == 0L) nobs_RE[[ii]] <- 0L # catch case with no RE
-    #ln_tau_G_index[[ii]] <- unlist(lapply(seq_along(nobs_RE[[ii]]), function(i) rep(i, each = nobs_RE[[ii]][i]))) - 1L
-
     # Save formula with no bars -- this is used for parsing smoothing, etc below
     formula[[ii]] <- lme4::nobars(formula[[ii]])
     formula_no_sm <- remove_s_and_t2(formula[[ii]])
     X_ij[[ii]] <- model.matrix(formula_no_sm, data)
     mf[[ii]] <- model.frame(formula_no_sm, data)
-
-    # Check for random slopes:
-    # if (length(split_formula[[ii]]$bars)) {
-    #   termsfun <- function(x) {
-    #     # using glmTMB and lme4:::mkBlist approach
-    #     ff <- eval(substitute(~foo, list(foo = x[[2]])))
-    #     tt <- try(terms(ff, data =  mf[[ii]]), silent = TRUE)
-    #     tt
-    #   }
-    #   reXterms <- lapply(split_formula[[ii]]$bars, termsfun)
-    #   if (length(attr(reXterms[[1]], "term.labels")))
-    #     cli_abort("This model appears to have a random slope specified (e.g., y ~ (1 + b | group)). sdmTMB currently can only do random intercepts (e.g., y ~ (1 | group)).")
-    # }
 
     mt[[ii]] <- attr(mf[[ii]], "terms")
     # parse everything mgcv + smoothers:
@@ -864,7 +830,7 @@ sdmTMB <- function(
   # bind the elements of split_formula[[ii]] together to pass into TMB
   # add a new column to each dataframe storing the model number (1, 2, ...)
   split_formula_dfs <- add_model_index(split_formula, "re_df")
-  re_cov_df <- do.call(rbind, split_formula_dfs)# bind all dataframes together
+  re_cov_df <- do.call(rbind, split_formula_dfs) # bind all dataframes together
 
   re_cov_term_dfs <- add_model_index(split_formula, "re_cov_term_map")
   re_cov_df_map <- do.call(rbind, re_cov_term_dfs)
@@ -879,32 +845,27 @@ sdmTMB <- function(
   Zt_list <- list() # list of sparse matrices for random effects
   n_re_betas <- rep(0, length(formula))
   n_re_cov <- rep(0, length(formula))
-  for(ii in 1:length(formula)) {
+  for (ii in seq_len(length(formula))) {
     n_re_groups[ii] <- length(which(re_cov_df_map$model == ii))
-    if(n_re_groups[ii] > 0) {
-      Zt_list[[ii]] <- split_formula[[ii]]$re_cov_terms$Zt # transpose of matrix, so cols = observation, row = REs
-      n_re_betas[ii] <- max(re_b_df$end[which(re_b_df$model == ii)]) # number of unique random effect deviations being estimated
-      n_re_cov[ii] <- max(re_cov_df_map$end[which(re_cov_df_map$model == ii)]) # number of unique random effect variances being estimated
+    if (n_re_groups[ii] > 0) {
+      # transpose of matrix, so cols = observation, row = REs:
+      Zt_list[[ii]] <- split_formula[[ii]]$re_cov_terms$Zt 
+      # number of unique random effect deviations being estimated:
+      n_re_betas[ii] <- max(re_b_df$end[which(re_b_df$model == ii)])
+      # number of unique random effect variances being estimated:
+      n_re_cov[ii] <- max(re_cov_df_map$end[which(re_cov_df_map$model == ii)])
     }
   }
   max_re_betas <- max(n_re_betas) + 1 # most number of estimated betas across all models
   max_re_cov <- max(n_re_cov) + 1
 
   var_indx_matrix <- matrix(0, nrow = max_re_betas, ncol = length(formula))
-  for(i in 1:length(formula)) {
+  for (i in seq_len(length(formula))) {
     sd_vec <- split_formula[[ii]]$var_indx_vector
-    if(n_re_groups[ii] > 0) var_indx_matrix[1:length(sd_vec),i] <- sd_vec
+    if (n_re_groups[ii] > 0) var_indx_matrix[seq_along(sd_vec), i] <- sd_vec
   }
 
   if (delta) {
-    # commenting out old RE
-    # if (any(unlist(lapply(nobs_RE, function(.x) .x > 0)))) {
-    #   if (original_formula[[1]] != original_formula[[2]]) {
-    #     msg <- paste0("For now, if delta models contain random intercepts, both ",
-    #       "components must have the same main-effects formula.")
-    #     cli_abort(msg)
-    #   }
-    # }
     if (any(unlist(lapply(sm, `[[`, "has_smooths")))) {
       if (original_formula[[1]] != original_formula[[2]]) {
         msg <- paste0("For now, if delta models contain smoothers, both components ",
@@ -914,10 +875,6 @@ sdmTMB <- function(
     }
   }
 
-  # split_formula <- split_formula[[1]] # Delete this and next 7 lines as smooths / random effects added
-  # commenting out old RE RE_indexes <- RE_indexes[[1]]
-  # commenting out old RE nobs_RE <- nobs_RE[[1]]
-  # commenting out old RE ln_tau_G_index <- ln_tau_G_index[[1]]
   sm <- sm[[1]]
 
   y_i <- model.response(mf[[1]], "numeric")
@@ -1072,9 +1029,6 @@ sdmTMB <- function(
     Sigma <- as.matrix(priors_b[, -1])
     priors_b_Sigma <- as.matrix(Sigma[not_na, not_na])
   }
-  # random intercept SD priors:
-  #commenting out old RE priors_sigma_G <- tidy_sigma_G_priors(.priors$sigma_G, ln_tau_G_index)
-  #commenting out old RE .priors$sigma_G <- NULL
 
   if (!"A_st" %in% names(spde)) cli_abort("`mesh` was created with an old version of `make_mesh()`.")
   if (delta) y_i <- cbind(ifelse(y_i > 0, 1, 0), ifelse(y_i > 0, y_i, NA_real_))
@@ -1113,7 +1067,6 @@ sdmTMB <- function(
     calc_se    = 0L,
     pop_pred   = 0L,
     short_newdata = 0L,
-    # commenting out old RE exclude_RE = rep(0L, ncol(RE_indexes)),
     weights_i  = if (!is.null(weights)) weights else rep(1, length(y_i)),
     area_i     = rep(1, length(y_i)),
     normalize_in_r = 0L, # not used first time
@@ -1126,7 +1079,6 @@ sdmTMB <- function(
     priors_b_index = not_na - 1L,
     priors_b_mean = priors_b[not_na,1],
     priors_b_Sigma = priors_b_Sigma,
-    #  commenting out old RE priors_sigma_G = priors_sigma_G,
     priors = as.numeric(unlist(.priors)),
     share_range = as.integer(if (length(share_range) == 1L) rep(share_range, 2L) else share_range),
     include_spatial = as.integer(include_spatial), # changed later
@@ -1153,11 +1105,6 @@ sdmTMB <- function(
     X_threshold = thresh[[1]]$X_threshold, # TODO: don't hardcode index thresh[[1]]
     proj_X_threshold = 0, # dummy
     threshold_func = thresh[[1]]$threshold_func,# TODO: don't hardcode index thresh[[1]]
-    # commenting out old RE RE_indexes = RE_indexes,
-    # commenting out old RE proj_RE_indexes = matrix(0, ncol = 0, nrow = 1), # dummy
-    # commenting out old RE nobs_RE = nobs_RE,
-    # commenting out old RE ln_tau_G_index = ln_tau_G_index,
-    # commenting out old RE n_g = length(unique(ln_tau_G_index)),
     est_epsilon_model = as.integer(est_epsilon_model),
     epsilon_predictor = epsilon_covariate,
     est_epsilon_slope = as.integer(est_epsilon_slope),
@@ -1176,10 +1123,6 @@ sdmTMB <- function(
     var_indx_matrix = var_indx_matrix,
     Zt_list = Zt_list # list of RE matrices
   )
-  # commenting out old RE
-  #if(is.na(sum(nobs_RE))) {
-  #  cli_abort("One of the groups used in the factor levels is NA - please remove")
-  #}
   b_thresh <- matrix(0, 2L, n_m)
   if (thresh[[1]]$threshold_func == 2L) b_thresh <- matrix(0, 3L, n_m) # logistic #TODO: change hard coding on index of thresh[[1]]
 
@@ -1202,8 +1145,6 @@ sdmTMB <- function(
     ar1_phi    = rep(0, n_m),
     re_cov_pars = matrix(0, max_re_cov, n_m), # defined above, mapping off pars as needed
     re_b_pars = matrix(0, max_re_betas, n_m), # defined above, mapping off pars as needed
-    # commenting out old RE ln_tau_G   = matrix(0, ncol(RE_indexes), n_m),
-    # commenting out old RE RE         = matrix(0, sum(nobs_RE), n_m),
     b_rw_t     = array(0, dim = c(tmb_data$n_t, ncol(X_rw_ik), n_m)),
     omega_s    = matrix(0, if (!omit_spatial_intercept) n_s else 0L, n_m),
     zeta_s    = array(0, dim = c(n_s, n_z, n_m)),
@@ -1317,7 +1258,6 @@ sdmTMB <- function(
     if (spatiotemporal[i] == "ar1") tmb_map$ar1_phi[i] <- i
   }
   tmb_map$ar1_phi <- as.factor(as.integer(as.factor(tmb_map$ar1_phi)))
-  # commengint out old RE
   if (sum(n_re_groups) > 0) {
     tmb_random <- c(tmb_random, "re_b_pars")
     tmb_map <- unmap(tmb_map, c("re_cov_pars", "re_b_pars"))
@@ -1325,9 +1265,9 @@ sdmTMB <- function(
     # map off pars not being estimated
     tmb_map$re_b_pars <- matrix(NA, max_re_betas, n_m)
     tmb_map$re_cov_pars <- matrix(NA, max_re_cov, n_m)
-    for(m in 1:n_m) {
-      tmb_map$re_b_pars[seq(1, n_re_betas[m]+1),m] <- 0 # these are estimated
-      tmb_map$re_cov_pars[seq(1, n_re_cov[m]+1),m] <- 0 # these are estimated
+    for (m in seq_len(n_m)) {
+      tmb_map$re_b_pars[seq(1, n_re_betas[m]+1), m] <- 0 # these are estimated
+      tmb_map$re_cov_pars[seq(1, n_re_cov[m]+1), m] <- 0 # these are estimated
     }
     # turn non-NA values into sequence of integers
     non_nas <- which(!is.na(c(tmb_map$re_b_pars)))
@@ -1666,20 +1606,6 @@ unmap <- function(x, v) {
   for (i in v) x[[i]] <- NULL
   x
 }
-
-# commenting out old RE
-# tidy_sigma_G_priors <- function(p, ln_tau_G_index) {
-#   # expand (empty) sigma_G priors if needed to match sigma_G dimensions:
-#   if (identical(as.numeric(p), c(NA_real_, NA_real_))) {
-#     if (!identical(ln_tau_G_index, integer(0))) {
-#       p <- do.call("rbind",
-#         replicate(length(unique(ln_tau_G_index)), p, simplify = FALSE))
-#     } else {
-#       p <- matrix(nrow = 0, ncol = 2) # sigma_G by default nrow 0
-#     }
-#   }
-#   p
-# }
 
 get_spde_matrices <- function(x) {
   x <- x$spde[c("c0", "g1", "g2")]
