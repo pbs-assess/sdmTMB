@@ -19,7 +19,8 @@ enum valid_family {
   censored_poisson_family  = 12,
   gamma_mix_family = 13,
   lognormal_mix_family = 14,
-  nbinom2_mix_family = 15
+  nbinom2_mix_family = 15,
+  gengamma_family = 16
 };
 
 enum valid_link {
@@ -232,6 +233,7 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(ln_kappa);    // Matern parameter
 
   PARAMETER(thetaf);           // tweedie only
+  PARAMETER(gengamma_Q);           // gengamma only
   PARAMETER(logit_p_mix);           // ECE / positive mixture only
   PARAMETER(log_ratio_mix);           // ECE / positive mixture only
 
@@ -933,6 +935,11 @@ Type objective_function<Type>::operator()()
           }
           break;
         }
+          case gengamma_family: {
+            tmp_ll = sdmTMB::dgengamma(y_i(i,m), mu_i(i,m), phi(m), gengamma_Q, true);
+            SIMULATE{y_i(i,m) = sdmTMB::rgengamma(mu_i(i,m), phi(m), gengamma_Q);}
+            break;
+          }
         default:
           error("Family not implemented.");
         }
