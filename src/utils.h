@@ -34,9 +34,9 @@ Type dgengamma( Type x,
   // from https://github.com/chjackson/flexsurv-dev/blob/master/src/gengamma.h#L54-L56
   Type y = log(x);
   Type w = (y - mu) / sigma;
-  Type qi = 1/square(Q);
-  Type qw = Q * w;
-  Type logres = -log(sigma*x) + 0.5*log(square(lambda)) * (1 - 2 * qi) + qi * (qw - exp(qw)) - lgamma(qi);
+  Type qi = pow(Q, -2);
+  Type qw = Q * w;                 // 0.5*log(pow(x,2)) as trick for abs(log(x))
+  Type logres = -log(sigma*x) + 0.5*log(pow(lambda,2)) * (1 - 2 * qi) + qi * (qw - exp(qw)) - lgamma(qi);
 
   // return stuff
   if(give_log) return logres; else return exp(logres);

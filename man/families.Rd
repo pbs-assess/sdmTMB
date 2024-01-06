@@ -4,6 +4,7 @@
 \alias{Families}
 \alias{Beta}
 \alias{lognormal}
+\alias{gengamma}
 \alias{gamma_mix}
 \alias{lognormal_mix}
 \alias{nbinom2_mix}
@@ -28,6 +29,8 @@
 Beta(link = "logit")
 
 lognormal(link = "log")
+
+gengamma(link = "log")
 
 gamma_mix(link = "log")
 
@@ -109,6 +112,7 @@ log-log) delta model (Thorson 2018).
 \examples{
 Beta(link = "logit")
 lognormal(link = "log")
+gengamma(link = "log")
 gamma_mix(link = "log")
 lognormal_mix(link = "log")
 nbinom2_mix(link = "log")
