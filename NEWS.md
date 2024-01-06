@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Add the generalized gamma distribution (thanks to J. Thorson).
+  See `gengamma()`. #286
+
 * Fix crash in if `sdmTMB(..., do_index = TRUE)` and `extra_time` supplied along
   with `predict_args = list(newdata = ...)` that lacked `extra_time` elements.
 
