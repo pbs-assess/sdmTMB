@@ -61,6 +61,12 @@
 #'   cores, as an example, use `TMB::openmp(n = 3, DLL = "sdmTMB")`. But be
 #'   careful, because it's not always faster with more cores and there is
 #'   definitely an upper limit.
+#' @param stdcurve Whether to use standard curve for eDNA. If so, this requires
+#' @param stdcurve_df The dataframe containing the data for standard curve estimation.
+#' The critical names in the data are `plate` indicating the PCR plate, `Ct` indicating
+#' the PCR cycle count at which exponential DNA amplification was detected. If Ct is NA,
+#' no amplification was observed, `known_conc_ul` the known concentration of DNA that was
+#' spiked into the standards to build the standard curve
 #' @param ... Anything else. See the 'Control parameters' section of
 #'   [stats::nlminb()].
 #'
@@ -92,6 +98,8 @@ sdmTMBcontrol <- function(
   profile = FALSE,
   get_joint_precision = TRUE,
   parallel = getOption("sdmTMB.cores", 1L),
+  stdcurve = FALSE,
+  stdcurve_df = NULL,
   ...) {
 
   if (is_present(mgcv)) {
@@ -114,6 +122,14 @@ sdmTMBcontrol <- function(
     parallel <- as.integer(parallel)
   }
 
+  if(stdcurve) {
+    assert_that(!is.null(stdcurve_df))
+    # check names are ok
+    assert_that("plate" %in% names(stdcurve_df))
+    assert_that("Ct" %in% names(stdcurve_df))
+    assert_that("known_conc_ul" %in% names(stdcurve_df))
+  }
+
   out <- named_list(
     eval.max,
     iter.max,
@@ -129,7 +145,9 @@ sdmTMBcontrol <- function(
     censored_upper,
     multiphase,
     parallel,
-    get_joint_precision
+    get_joint_precision,
+    stdcurve,
+    stdcurve_df
   )
   c(out, list(...))
 }

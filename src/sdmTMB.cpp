@@ -219,6 +219,19 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(poisson_link_delta); // logical
 
   DATA_INTEGER(stan_flag); // logical whether to pass the model to Stan
+
+  // optional pieces of data for standards curve
+  DATA_INTEGER(stdcurve_flag); // whether or not to use standard curves for eDNA
+  DATA_INTEGER(N_stand_bin);
+  DATA_INTEGER(N_stand_pos);
+  DATA_VECTOR(bin_stand); // N_stand_bin
+  DATA_VECTOR(pos_stand); // N_stand_pos
+  DATA_VECTOR(D_bin_stand); // Covariates (standards) (log counts) N_stand_bin
+  DATA_VECTOR(D_pos_stand); // Covariates (standards) (log counts) N_stand_pos
+  DATA_IVECTOR(pcr_stand_bin_idx); // N_stand_bin
+  DATA_IVECTOR(pcr_stand_pos_idx); // N_stand_pos
+  DATA_IVECTOR(pcr_idx);
+  //DATA_SCALAR(stand_offset);
   // ------------------ Parameters ---------------------------------------------
 
   // Parameters
@@ -252,6 +265,15 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(epsilon_re);
   PARAMETER_ARRAY(b_smooth);  // P-spline smooth parameters
   PARAMETER_ARRAY(ln_smooth_sigma);  // variances of spline REs if included
+
+  // optional parameters for standards curve
+  PARAMETER_VECTOR(phi_0); //[N_pcr]
+  PARAMETER_VECTOR(phi_1); //[N_pcr]
+  PARAMETER_VECTOR(beta_0); //[N_pcr]
+  PARAMETER_VECTOR(beta_1); //[N_pcr]
+  PARAMETER_VECTOR(std_means); //[4]
+  PARAMETER_VECTOR(std_sds); //[4]
+  PARAMETER(log_sigma_all_stand);
 
   // Joint negative log-likelihood
   Type jnll = 0.;
@@ -683,10 +705,56 @@ Type objective_function<Type>::operator()()
 
   vector<Type> poisson_link_m0_ll(n_i);
 
+  if(stdcurve_flag == 1) {
+    // Presence-Absence component of model.
+    vector<Type> theta_stand(N_stand_bin);
+    for(int i = 0; i < phi_0.size(); i++){
+      jnll -= dnorm(phi_0(i), std_means(0), std_sds(0), true);//phi_0 ~ normal(2, 2)
+      jnll -= dnorm(phi_1(i), std_means(1), std_sds(1), true);//phi_1 ~ normal(4, 2)
+    }
+    for(int i = 0; i < N_stand_bin; i++){ // likelihood
+      theta_stand(i) = phi_0(pcr_stand_bin_idx(i)) + phi_1(pcr_stand_bin_idx(i)) * (D_bin_stand(i));// - stand_offset);
+      jnll -= dbinom_robust(bin_stand(i), Type(1), theta_stand(i), true); // likelihood
+    }
+    // Positive component of model.
+    for(int i = 0; i < beta_0.size(); i++){
+      jnll -= dnorm(beta_0(i), std_means(2), std_sds(2), true);//beta_0 ~ normal(40,5)
+      jnll -= dnorm(beta_1(i), std_means(3), std_sds(3), true);//beta_1 ~ normal(-3.32,0.1)
+    }
+    vector<Type> kappa_stand(N_stand_pos);
+    Type sigma_all_stand = exp(log_sigma_all_stand);
+    for(int i = 0; i < N_stand_pos; i++){
+      kappa_stand(i) = beta_0(pcr_stand_pos_idx(i)) + beta_1(pcr_stand_pos_idx(i)) * (D_pos_stand(i));// - stand_offset);
+      jnll -= dnorm(pos_stand(i), kappa_stand(i), sigma_all_stand, true); // likelihood
+    }
+
+    // adjust eta(i,m) accordingly
+    for (int i = 0; i < n_i; i++) {
+      eta_fixed_i(i,0) += phi_0(pcr_idx(i)) + phi_1(pcr_idx(i));// * (D_pos_stand(i));
+      eta_fixed_i(i,1) += beta_0(pcr_idx(i)) + beta_1(pcr_idx(i));
+    }
+
+    REPORT(beta_0);
+    REPORT(beta_1);
+    REPORT(phi_0);
+    REPORT(phi_1);
+    REPORT(std_means);
+    REPORT(std_sds);
+    REPORT(sigma_all_stand);
+    ADREPORT(beta_0);
+    ADREPORT(beta_1);
+    ADREPORT(phi_0);
+    ADREPORT(phi_1);
+    ADREPORT(std_means);
+    ADREPORT(std_sds);
+    ADREPORT(sigma_all_stand);
+  }
+
   // combine parts:
   for (int m = 0; m < n_m; m++) {
     for (int i = 0; i < n_i; i++) {
       eta_i(i,m) = eta_fixed_i(i,m) + eta_smooth_i(i,m);
+
       if ((n_m == 2 && m == 1) || n_m == 1) {
         if (!poisson_link_delta) eta_i(i,m) += offset_i(i);
       }
