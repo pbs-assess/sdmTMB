@@ -87,6 +87,11 @@ A list with elements common to standard R family objects including \code{family}
 Additional families compatible with \code{\link[=sdmTMB]{sdmTMB()}}.
 }
 \details{
+The \code{gengamma()} family was implemented by J.T. Thorson and uses the Prentice
+(1974) parameterization such that the lognormal occurs as the internal
+parameter \code{gengamma_Q} (reported in \code{print()} as "Generalized gamma lambda")
+approaches 0.
+
 The families ending in \verb{_mix()} are 2-component mixtures where each
 distribution has its own mean but a shared scale parameter.
 (Thorson et al. 2011). See the model-description vignette for details.
@@ -134,6 +139,15 @@ delta_poisson_link_lognormal()
 delta_beta()
 }
 \references{
+\emph{Generalized gamma family}:
+
+Prentice, R.L. 1974. A log gamma model and its maximum likelihood estimation.
+Biometrika 61(3): 539–544. \doi{10.1093/biomet/61.3.539}
+
+Stacy, E.W. 1962. A Generalization of the Gamma Distribution. The Annals of
+Mathematical Statistics 33(3): 1187–1192. Institute of Mathematical
+Statistics.
+
 \emph{Families ending in \verb{_mix()}}:
 
 Thorson, J.T., Stewart, I.J., and Punt, A.E. 2011. Accounting for fish shoals

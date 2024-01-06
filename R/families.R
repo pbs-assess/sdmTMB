@@ -70,6 +70,23 @@ lognormal <- function(link = "log") {
 #' @rdname families
 #' @examples
 #' gengamma(link = "log")
+#' @details
+#' The `gengamma()` family was implemented by J.T. Thorson and uses the Prentice
+#' (1974) parameterization such that the lognormal occurs as the internal
+#' parameter `gengamma_Q` (reported in `print()` as "Generalized gamma lambda")
+#' approaches 0.
+#'
+#' @references
+#'
+#' *Generalized gamma family*:
+#'
+#' Prentice, R.L. 1974. A log gamma model and its maximum likelihood estimation.
+#' Biometrika 61(3): 539–544. \doi{10.1093/biomet/61.3.539}
+#'
+#' Stacy, E.W. 1962. A Generalization of the Gamma Distribution. The Annals of
+#' Mathematical Statistics 33(3): 1187–1192. Institute of Mathematical
+#' Statistics.
+
 gengamma <- function(link = "log") {
   linktemp <- substitute(link)
   if (!is.character(linktemp))
