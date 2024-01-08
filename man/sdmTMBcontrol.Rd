@@ -22,7 +22,6 @@ sdmTMBcontrol(
   profile = FALSE,
   get_joint_precision = TRUE,
   parallel = getOption("sdmTMB.cores", 1L),
-  stdcurve = FALSE,
   stdcurve_df = NULL,
   ...
 )
@@ -103,8 +102,6 @@ experimental at this stage.}}
 cores, as an example, use \code{TMB::openmp(n = 3, DLL = "sdmTMB")}. But be
 careful, because it's not always faster with more cores and there is
 definitely an upper limit.}
-
-\item{stdcurve}{Whether to use standard curve for eDNA. If so, this requires}
 
 \item{stdcurve_df}{The dataframe containing the data for standard curve estimation.
 The critical names in the data are \code{plate} indicating the PCR plate, \code{Ct} indicating

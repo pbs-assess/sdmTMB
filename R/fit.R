@@ -585,8 +585,9 @@ sdmTMB <- function(
   data <- droplevels(data) # if data was subset, strips absent factors
 
   delta <- isTRUE(family$delta)
-  if(!delta & control$stdcurve) {
-    cli_abort("Delta families must be used for eDNA applications")
+  stdcurve <- ifelse(is.null(control$stdcurve_df), FALSE, TRUE)
+  if(!delta & stdcurve) {
+    cli_abort("Delta families must be used for applications that use stdcurve_df")
   }
   n_m <- if (delta) 2L else 1L
 
@@ -676,12 +677,11 @@ sdmTMB <- function(
   upper <- control$upper
   get_joint_precision <- control$get_joint_precision
   upr <- control$censored_upper
-  stdcurve <- control$stdcurve
   stdcurve_df <- control$stdcurve_df
 
   dot_checks <- c("lower", "upper", "profile", "parallel", "censored_upper",
     "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",
-    "newton_loops", "start", "map", "get_joint_precision", "normalize","stdcurve","stdcurve_df")
+    "newton_loops", "start", "map", "get_joint_precision", "normalize","stdcurve_df")
   .control <- control
   # FIXME; automate this from sdmTMcontrol args?
   for (i in dot_checks) .control[[i]] <- NULL # what's left should be for nlminb
@@ -1125,7 +1125,7 @@ sdmTMB <- function(
     no_spatial = no_spatial
   )
 
-  tmb_data$stdcurve_flag <- as.numeric(control$stdcurve)
+  tmb_data$stdcurve_flag <- as.numeric(stdcurve)
   if(stdcurve) {
     # process standards data
     stdcurve_df$present <- ifelse(stdcurve_df$Ct > 0, 1, 0)
@@ -1244,7 +1244,7 @@ sdmTMB <- function(
   if (est_epsilon_slope == 1L) {
      tmb_map <- unmap(tmb_map, "b_epsilon")
   }
-  if(control$stdcurve) {
+  if(stdcurve) {
     tmb_map$phi_0 <- NULL
     tmb_map$phi_1 <- NULL
     tmb_map$beta_0 <- NULL
@@ -1309,7 +1309,7 @@ sdmTMB <- function(
     tmb_random <- c(tmb_random, "epsilon_re")
     tmb_map <- unmap(tmb_map, c("epsilon_re"))
   }
-  if(control$stdcurve) {
+  if(stdcurve) {
     tmb_random <- c(tmb_random, "phi_0", "phi_1", "beta_0", "beta_1")
   }
 
