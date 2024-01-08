@@ -1146,6 +1146,11 @@ sdmTMB <- function(
     tmb_data$D_pos_stand <- log(stdcurve_df$known_conc_ul[pos_indx])# could change to log10
     tmb_data$pcr_stand_bin_idx <- stdcurve_df$plate_n - 1L # -1 for index -> 0
     tmb_data$pcr_stand_pos_idx <- stdcurve_df$plate_n[pos_indx] - 1L
+    tmb_data$pcr_bin <- ifelse(data$Ct > 0, 1, 0)
+    pcr_pos_indx <- which(data$Ct > 0)
+    tmb_data$N_pcr_pos <- length(pcr_pos_indx)
+    tmb_data$pcr_pos <- data$Ct[pcr_pos_indx]
+    tmb_data$pcr_pos_idx <- tmb_data$pcr_idx[pcr_pos_indx]
     #tmb_data$stand_offset <- 0
   } else {
     tmb_data$N_stand_bin <- 0L
@@ -1157,7 +1162,10 @@ sdmTMB <- function(
     tmb_data$pcr_stand_bin_idx <- 0L
     tmb_data$pcr_stand_pos_idx <- 0L
     tmb_data$pcr_idx <- 0L
-    #tmb_data$stand_offset <- 0
+    tmb_data$pcr_bin <- 0L
+    tmb_data$N_pcr_pos <- 0L
+    tmb_data$pcr_pos <- 0L
+    tmb_data$pcr_pos_idx <- 0L
     n_pcr <- 1
   }
 

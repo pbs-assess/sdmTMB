@@ -232,9 +232,12 @@ Type objective_function<Type>::operator()()
   DATA_IVECTOR(pcr_stand_pos_idx); // N_stand_pos
   DATA_IVECTOR(pcr_idx);
   //DATA_SCALAR(stand_offset);
-  // ------------------ Parameters ---------------------------------------------
+  DATA_VECTOR(pcr_bin); // for obs data
+  DATA_VECTOR(pcr_pos); // for obs data
+  DATA_IVECTOR(pcr_pos_idx); // for obs data
+  DATA_INTEGER(N_pcr_pos);// for obs data
 
-  // Parameters
+  // ------------------ Parameters ---------------------------------------------
   // Fixed effects
   PARAMETER_VECTOR(b_j);  // fixed effect parameters
   PARAMETER_VECTOR(b_j2);  // fixed effect parameters delta2 part
@@ -705,6 +708,7 @@ Type objective_function<Type>::operator()()
 
   vector<Type> poisson_link_m0_ll(n_i);
 
+  Type sigma_all_stand;
   if(stdcurve_flag == 1) {
     // Presence-Absence component of model.
     vector<Type> theta_stand(N_stand_bin);
@@ -722,16 +726,10 @@ Type objective_function<Type>::operator()()
       jnll -= dnorm(beta_1(i), std_means(3), std_sds(3), true);//beta_1 ~ normal(-3.32,0.1)
     }
     vector<Type> kappa_stand(N_stand_pos);
-    Type sigma_all_stand = exp(log_sigma_all_stand);
+    sigma_all_stand = exp(log_sigma_all_stand);
     for(int i = 0; i < N_stand_pos; i++){
       kappa_stand(i) = beta_0(pcr_stand_pos_idx(i)) + beta_1(pcr_stand_pos_idx(i)) * (D_pos_stand(i));// - stand_offset);
       jnll -= dnorm(pos_stand(i), kappa_stand(i), sigma_all_stand, true); // likelihood
-    }
-
-    // adjust eta(i,m) accordingly
-    for (int i = 0; i < n_i; i++) {
-      eta_fixed_i(i,0) += phi_0(pcr_idx(i)) + phi_1(pcr_idx(i));// * (D_pos_stand(i));
-      eta_fixed_i(i,1) += beta_0(pcr_idx(i)) + beta_1(pcr_idx(i));
     }
 
     REPORT(beta_0);
@@ -843,6 +841,18 @@ Type objective_function<Type>::operator()()
   }
   default:
     break;
+  }
+
+  // include likelihood component for standard curve model
+  // use latent state as covariate
+  if(stdcurve_flag == 1) {
+    for (int i = 0; i < n_i; i++) {
+      jnll -= dbinom_robust(pcr_bin(i), Type(1), phi_0(pcr_idx(i)) + phi_1(pcr_idx(i)) * mu_i(i,0), true); // likelihood
+    }
+    for(int i = 0; i < N_pcr_pos; i++) {
+      jnll -= dnorm(pcr_pos(i), beta_0(pcr_pos_idx(i)) + beta_1(pcr_pos_idx(i)) * mu_i(i,1), sigma_all_stand, true);
+    }
+
   }
 
   vector<Type> jnll_obs(n_i); // for cross validation
