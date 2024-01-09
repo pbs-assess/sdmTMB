@@ -37,13 +37,32 @@ mesh <- make_mesh(d_obs, c("utm.lon.m", "utm.lat.m"), cutoff = 20)
 fit4 <- sdmTMB(
   Ct ~ 1,
   data = d_obs, mesh = mesh,
-  family = delta_gamma()
+  family = delta_gaussian()
 )
 
-# Fit everything together
+# Fit everything together -- intercept only. AIC 15213.08
 fit5 <- sdmTMB(
   Ct ~ 1,
   data = d_obs, mesh = mesh,
-  family = delta_gamma(),
+  family = delta_gaussian(),
   control = sdmTMBcontrol(stdcurve_df = d)
 )
+#sanity(fit5) # pass
+
+#adding year: doesn't converge
+fit6 <- sdmTMB(
+  Ct ~ year,
+  data = d_obs, mesh = mesh,
+  family = delta_gaussian(),
+  control = sdmTMBcontrol(stdcurve_df = d)
+)
+
+fit7 <- sdmTMB(
+  Ct ~ year,
+  data = d_obs, mesh = mesh,
+  family = delta_gaussian(),
+  time = "year",
+  spatiotemporal = "iid",
+  control = sdmTMBcontrol(stdcurve_df = d)
+)
+

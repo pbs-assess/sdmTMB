@@ -31,6 +31,7 @@ NULL
 #'   \code{\link[sdmTMB:families]{tweedie()}}. Supports the delta/hurdle models:
 #'   \code{\link[sdmTMB:families]{delta_beta()}},
 #'   \code{\link[sdmTMB:families]{delta_gamma()}},
+#'   \code{\link[sdmTMB:families]{delta_gaussian()}},
 #'   \code{\link[sdmTMB:families]{delta_gamma_mix()}},
 #'   \code{\link[sdmTMB:families]{delta_lognormal_mix()}},
 #'   \code{\link[sdmTMB:families]{delta_lognormal()}}, and
@@ -1146,11 +1147,10 @@ sdmTMB <- function(
     tmb_data$D_pos_stand <- log(stdcurve_df$known_conc_ul[pos_indx])# could change to log10
     tmb_data$pcr_stand_bin_idx <- stdcurve_df$plate_n - 1L # -1 for index -> 0
     tmb_data$pcr_stand_pos_idx <- stdcurve_df$plate_n[pos_indx] - 1L
-    tmb_data$pcr_bin <- ifelse(data$Ct > 0, 1, 0)
-    pcr_pos_indx <- which(data$Ct > 0)
-    tmb_data$N_pcr_pos <- length(pcr_pos_indx)
-    tmb_data$pcr_pos <- data$Ct[pcr_pos_indx]
-    tmb_data$pcr_pos_idx <- tmb_data$pcr_idx[pcr_pos_indx]
+    #pcr_pos_indx <- which(data$Ct > 0)
+    #tmb_data$N_pcr_pos <- length(pcr_pos_indx)
+    #tmb_data$pcr_pos <- data$Ct[pcr_pos_indx]
+    #tmb_data$pcr_pos_idx <- tmb_data$pcr_idx[pcr_pos_indx]
     #tmb_data$stand_offset <- 0
   } else {
     tmb_data$N_stand_bin <- 0L
@@ -1162,10 +1162,10 @@ sdmTMB <- function(
     tmb_data$pcr_stand_bin_idx <- 0L
     tmb_data$pcr_stand_pos_idx <- 0L
     tmb_data$pcr_idx <- 0L
-    tmb_data$pcr_bin <- 0L
-    tmb_data$N_pcr_pos <- 0L
-    tmb_data$pcr_pos <- 0L
-    tmb_data$pcr_pos_idx <- 0L
+    #tmb_data$pcr_bin <- 0L
+    #tmb_data$N_pcr_pos <- 0L
+    #tmb_data$pcr_pos <- 0L
+    #tmb_data$pcr_pos_idx <- 0L
     n_pcr <- 1
   }
 
@@ -1209,8 +1209,8 @@ sdmTMB <- function(
     beta_0 = rep(0, n_pcr),
     beta_1 = rep(0, n_pcr),
     std_means = c(2, 4, 40, -3.32), # order: phi0, phi1, beta0, beta1
-    std_sds = c(2, 2, 5, 0.1), # order: phi0, phi1, beta0, beta1
-    log_sigma_all_stand = 0
+    std_sds = c(2, 2, 5, 0.1) # order: phi0, phi1, beta0, beta1
+    #log_sigma_all_stand = 0
   )
   if (identical(family$link, "inverse") && family$family[1] %in% c("Gamma", "gaussian", "student") && !delta) {
     fam <- family
@@ -1259,7 +1259,7 @@ sdmTMB <- function(
     tmb_map$beta_1 <- NULL
     tmb_map$std_means <- NULL
     tmb_map$std_sds <- NULL
-    tmb_map$log_sigma_all_stand <- NULL
+    #tmb_map$log_sigma_all_stand <- NULL
   }
 
   if (multiphase && is.null(previous_fit) && do_fit) {

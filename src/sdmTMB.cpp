@@ -230,12 +230,8 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(D_pos_stand); // Covariates (standards) (log counts) N_stand_pos
   DATA_IVECTOR(pcr_stand_bin_idx); // N_stand_bin
   DATA_IVECTOR(pcr_stand_pos_idx); // N_stand_pos
-  DATA_IVECTOR(pcr_idx);
+  DATA_IVECTOR(pcr_idx); // plate indices
   //DATA_SCALAR(stand_offset);
-  DATA_VECTOR(pcr_bin); // for obs data
-  DATA_VECTOR(pcr_pos); // for obs data
-  DATA_IVECTOR(pcr_pos_idx); // for obs data
-  DATA_INTEGER(N_pcr_pos);// for obs data
 
   // ------------------ Parameters ---------------------------------------------
   // Fixed effects
@@ -276,7 +272,7 @@ Type objective_function<Type>::operator()()
   PARAMETER_VECTOR(beta_1); //[N_pcr]
   PARAMETER_VECTOR(std_means); //[4]
   PARAMETER_VECTOR(std_sds); //[4]
-  PARAMETER(log_sigma_all_stand);
+  //PARAMETER(log_sigma_all_stand);
 
   // Joint negative log-likelihood
   Type jnll = 0.;
@@ -708,7 +704,7 @@ Type objective_function<Type>::operator()()
 
   vector<Type> poisson_link_m0_ll(n_i);
 
-  Type sigma_all_stand;
+  //Type sigma_all_stand;
   if(stdcurve_flag == 1) {
     // Presence-Absence component of model.
     vector<Type> theta_stand(N_stand_bin);
@@ -726,10 +722,10 @@ Type objective_function<Type>::operator()()
       jnll -= dnorm(beta_1(i), std_means(3), std_sds(3), true);//beta_1 ~ normal(-3.32,0.1)
     }
     vector<Type> kappa_stand(N_stand_pos);
-    sigma_all_stand = exp(log_sigma_all_stand);
+    //sigma_all_stand = exp(log_sigma_all_stand);
     for(int i = 0; i < N_stand_pos; i++){
       kappa_stand(i) = beta_0(pcr_stand_pos_idx(i)) + beta_1(pcr_stand_pos_idx(i)) * (D_pos_stand(i));// - stand_offset);
-      jnll -= dnorm(pos_stand(i), kappa_stand(i), sigma_all_stand, true); // likelihood
+      jnll -= dnorm(pos_stand(i), kappa_stand(i), phi(1), true); // likelihood
     }
 
     REPORT(beta_0);
@@ -738,14 +734,14 @@ Type objective_function<Type>::operator()()
     REPORT(phi_1);
     REPORT(std_means);
     REPORT(std_sds);
-    REPORT(sigma_all_stand);
+    //REPORT(sigma_all_stand);
     ADREPORT(beta_0);
     ADREPORT(beta_1);
     ADREPORT(phi_0);
     ADREPORT(phi_1);
     ADREPORT(std_means);
     ADREPORT(std_sds);
-    ADREPORT(sigma_all_stand);
+    //ADREPORT(sigma_all_stand);
   }
 
   // combine parts:
@@ -843,18 +839,6 @@ Type objective_function<Type>::operator()()
     break;
   }
 
-  // include likelihood component for standard curve model
-  // use latent state as covariate
-  if(stdcurve_flag == 1) {
-    for (int i = 0; i < n_i; i++) {
-      jnll -= dbinom_robust(pcr_bin(i), Type(1), phi_0(pcr_idx(i)) + phi_1(pcr_idx(i)) * mu_i(i,0), true); // likelihood
-    }
-    for(int i = 0; i < N_pcr_pos; i++) {
-      jnll -= dnorm(pcr_pos(i), beta_0(pcr_pos_idx(i)) + beta_1(pcr_pos_idx(i)) * mu_i(i,1), sigma_all_stand, true);
-    }
-
-  }
-
   vector<Type> jnll_obs(n_i); // for cross validation
   jnll_obs.setZero();
   for (int m = 0; m < n_m; m++) PARALLEL_REGION {
@@ -862,8 +846,13 @@ Type objective_function<Type>::operator()()
       if (!sdmTMB::isNA(y_i(i,m))) {
         switch (family(m)) {
           case gaussian_family: {
-            tmp_ll = dnorm(y_i(i,m), mu_i(i,m), phi(m), true);
-            SIMULATE{y_i(i,m) = rnorm(mu_i(i,m), phi(m));}
+            if(stdcurve_flag == 1) {
+              tmp_ll = dnorm(y_i(i,m), beta_0(pcr_idx(i)) + beta_1(pcr_idx(i)) * mu_i(i,m), phi(m), true);
+              SIMULATE{y_i(i,m) = rnorm(beta_0(pcr_idx(i)) + beta_1(pcr_idx(i)) * mu_i(i,m), phi(m));}
+            } else {
+              tmp_ll = dnorm(y_i(i,m), mu_i(i,m), phi(m), true);
+              SIMULATE{y_i(i,m) = rnorm(mu_i(i,m), phi(m));}
+            }
             break;
           }
           case tweedie_family: {
@@ -883,10 +872,18 @@ Type objective_function<Type>::operator()()
               // needed for robustness; must be first model component
               tmp_ll = poisson_link_m0_ll(i);
             } else {
-              tmp_ll = dbinom_robust(y_i(i,m), size(i), mu_i(i,m), true);
+              if(stdcurve_flag == 1) {
+                tmp_ll = dbinom_robust(y_i(i,m), size(i), phi_0(pcr_idx(i)) + phi_1(pcr_idx(i)) * mu_i(i,m), true); // likelihood
+              } else {
+                tmp_ll = dbinom_robust(y_i(i,m), size(i), mu_i(i,m), true);
+              }
             }
             // SIMULATE{y_i(i,m) = rbinom(size(i), InverseLink(mu_i(i,m), link(m)));}
-            SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));} // hardcoded invlogit b/c mu_i in logit space
+            if(stdcurve_flag == 1) {
+              SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(phi_0(pcr_idx(i)) + phi_1(pcr_idx(i)) * mu_i(i,m)));} // hardcoded invlogit b/c mu_i in logit space
+            } else {
+              SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));}
+            }
             break;
           }
           case poisson_family: {

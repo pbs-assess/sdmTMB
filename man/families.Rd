@@ -23,6 +23,7 @@
 \alias{delta_poisson_link_gamma}
 \alias{delta_poisson_link_lognormal}
 \alias{delta_beta}
+\alias{delta_gaussian}
 \title{Additional families}
 \usage{
 Beta(link = "logit")
@@ -66,6 +67,8 @@ delta_poisson_link_gamma(link1 = "log", link2 = "log")
 delta_poisson_link_lognormal(link1 = "log", link2 = "log")
 
 delta_beta(link1 = "logit", link2 = "logit")
+
+delta_gaussian(link1 = "logit", link2 = "identity")
 }
 \arguments{
 \item{link}{Link.}
@@ -128,6 +131,7 @@ delta_truncated_nbinom1()
 delta_poisson_link_gamma()
 delta_poisson_link_lognormal()
 delta_beta()
+delta_gaussian()
 }
 \references{
 \emph{Families ending in \verb{_mix()}}:

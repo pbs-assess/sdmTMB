@@ -63,6 +63,7 @@ downstream, supply the time argument.}
 \code{\link[sdmTMB:families]{tweedie()}}. Supports the delta/hurdle models:
 \code{\link[sdmTMB:families]{delta_beta()}},
 \code{\link[sdmTMB:families]{delta_gamma()}},
+\code{\link[sdmTMB:families]{delta_gaussian()}},
 \code{\link[sdmTMB:families]{delta_gamma_mix()}},
 \code{\link[sdmTMB:families]{delta_lognormal_mix()}},
 \code{\link[sdmTMB:families]{delta_lognormal()}}, and
