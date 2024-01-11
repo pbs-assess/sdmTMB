@@ -239,6 +239,24 @@ student <- function(link = "identity", df = 3) {
 }
 
 #' @export
+#' @rdname families
+#' @examples
+#' stdcurve(link = "identity")
+stdcurve <- function(link = "identity") {
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("identity")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+
+  x <- c(list(family = "stdcurve", link = linktemp), stats)
+  add_to_family(x)
+}
+
+#' @export
 #' @examples
 #' tweedie(link = "log")
 #' @rdname families

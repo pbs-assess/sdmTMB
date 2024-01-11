@@ -19,7 +19,8 @@ enum valid_family {
   censored_poisson_family  = 12,
   gamma_mix_family = 13,
   lognormal_mix_family = 14,
-  nbinom2_mix_family = 15
+  nbinom2_mix_family = 15,
+  stdcurve_family = 16
 };
 
 enum valid_link {
@@ -266,10 +267,10 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(ln_smooth_sigma);  // variances of spline REs if included
 
   // optional parameters for standards curve
-  PARAMETER_VECTOR(phi_0); //[N_pcr]
-  PARAMETER_VECTOR(phi_1); //[N_pcr]
-  PARAMETER_VECTOR(beta_0); //[N_pcr]
-  PARAMETER_VECTOR(beta_1); //[N_pcr]
+  PARAMETER_VECTOR(std_phi_0); //[N_pcr]
+  PARAMETER_VECTOR(std_phi_1); //[N_pcr]
+  PARAMETER_VECTOR(std_beta_0); //[N_pcr]
+  PARAMETER_VECTOR(std_beta_1); //[N_pcr]
   PARAMETER_VECTOR(std_means); //[4]
   PARAMETER_VECTOR(std_sds); //[4]
   //PARAMETER(log_sigma_all_stand);
@@ -708,37 +709,37 @@ Type objective_function<Type>::operator()()
   if(stdcurve_flag == 1) {
     // Presence-Absence component of model.
     vector<Type> theta_stand(N_stand_bin);
-    for(int i = 0; i < phi_0.size(); i++){
-      jnll -= dnorm(phi_0(i), std_means(0), std_sds(0), true);//phi_0 ~ normal(2, 2)
-      jnll -= dnorm(phi_1(i), std_means(1), std_sds(1), true);//phi_1 ~ normal(4, 2)
+    for(int i = 0; i < std_phi_0.size(); i++){
+      jnll -= dnorm(std_phi_0(i), std_means(0), std_sds(0), true);//phi_0 ~ normal(2, 2)
+      jnll -= dnorm(std_phi_1(i), std_means(1), std_sds(1), true);//phi_1 ~ normal(4, 2)
     }
     for(int i = 0; i < N_stand_bin; i++){ // likelihood
-      theta_stand(i) = phi_0(pcr_stand_bin_idx(i)) + phi_1(pcr_stand_bin_idx(i)) * (D_bin_stand(i));// - stand_offset);
+      theta_stand(i) = std_phi_0(pcr_stand_bin_idx(i)) + std_phi_1(pcr_stand_bin_idx(i)) * (D_bin_stand(i));// - stand_offset);
       jnll -= dbinom_robust(bin_stand(i), Type(1), theta_stand(i), true); // likelihood
     }
     // Positive component of model.
-    for(int i = 0; i < beta_0.size(); i++){
-      jnll -= dnorm(beta_0(i), std_means(2), std_sds(2), true);//beta_0 ~ normal(40,5)
-      jnll -= dnorm(beta_1(i), std_means(3), std_sds(3), true);//beta_1 ~ normal(-3.32,0.1)
+    for(int i = 0; i < std_beta_0.size(); i++){
+      jnll -= dnorm(std_beta_0(i), std_means(2), std_sds(2), true);//beta_0 ~ normal(40,5)
+      jnll -= dnorm(std_beta_1(i), std_means(3), std_sds(3), true);//beta_1 ~ normal(-3.32,0.1)
     }
     vector<Type> kappa_stand(N_stand_pos);
     //sigma_all_stand = exp(log_sigma_all_stand);
     for(int i = 0; i < N_stand_pos; i++){
-      kappa_stand(i) = beta_0(pcr_stand_pos_idx(i)) + beta_1(pcr_stand_pos_idx(i)) * (D_pos_stand(i));// - stand_offset);
-      jnll -= dnorm(pos_stand(i), kappa_stand(i), phi(1), true); // likelihood
+      kappa_stand(i) = std_beta_0(pcr_stand_pos_idx(i)) + std_beta_1(pcr_stand_pos_idx(i)) * (D_pos_stand(i));// - stand_offset);
+      jnll -= dnorm(pos_stand(i), kappa_stand(i), phi(0), true); // likelihood
     }
 
-    REPORT(beta_0);
-    REPORT(beta_1);
-    REPORT(phi_0);
-    REPORT(phi_1);
+    REPORT(std_beta_0);
+    REPORT(std_beta_1);
+    REPORT(std_phi_0);
+    REPORT(std_phi_1);
     REPORT(std_means);
     REPORT(std_sds);
     //REPORT(sigma_all_stand);
-    ADREPORT(beta_0);
-    ADREPORT(beta_1);
-    ADREPORT(phi_0);
-    ADREPORT(phi_1);
+    ADREPORT(std_beta_0);
+    ADREPORT(std_beta_1);
+    ADREPORT(std_phi_0);
+    ADREPORT(std_phi_1);
     ADREPORT(std_means);
     ADREPORT(std_sds);
     //ADREPORT(sigma_all_stand);
@@ -841,18 +842,14 @@ Type objective_function<Type>::operator()()
 
   vector<Type> jnll_obs(n_i); // for cross validation
   jnll_obs.setZero();
+  tmp_ll = 0;
   for (int m = 0; m < n_m; m++) PARALLEL_REGION {
     for (int i = 0; i < n_i; i++) {
       if (!sdmTMB::isNA(y_i(i,m))) {
         switch (family(m)) {
           case gaussian_family: {
-            if(stdcurve_flag == 1) {
-              tmp_ll = dnorm(y_i(i,m), beta_0(pcr_idx(i)) + beta_1(pcr_idx(i)) * mu_i(i,m), phi(m), true);
-              SIMULATE{y_i(i,m) = rnorm(beta_0(pcr_idx(i)) + beta_1(pcr_idx(i)) * mu_i(i,m), phi(m));}
-            } else {
-              tmp_ll = dnorm(y_i(i,m), mu_i(i,m), phi(m), true);
-              SIMULATE{y_i(i,m) = rnorm(mu_i(i,m), phi(m));}
-            }
+            tmp_ll = dnorm(y_i(i,m), mu_i(i,m), phi(m), true);
+            SIMULATE{y_i(i,m) = rnorm(mu_i(i,m), phi(m));}
             break;
           }
           case tweedie_family: {
@@ -872,18 +869,9 @@ Type objective_function<Type>::operator()()
               // needed for robustness; must be first model component
               tmp_ll = poisson_link_m0_ll(i);
             } else {
-              if(stdcurve_flag == 1) {
-                tmp_ll = dbinom_robust(y_i(i,m), size(i), phi_0(pcr_idx(i)) + phi_1(pcr_idx(i)) * mu_i(i,m), true); // likelihood
-              } else {
-                tmp_ll = dbinom_robust(y_i(i,m), size(i), mu_i(i,m), true);
-              }
+              tmp_ll = dbinom_robust(y_i(i,m), size(i), mu_i(i,m), true);
             }
-            // SIMULATE{y_i(i,m) = rbinom(size(i), InverseLink(mu_i(i,m), link(m)));}
-            if(stdcurve_flag == 1) {
-              SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(phi_0(pcr_idx(i)) + phi_1(pcr_idx(i)) * mu_i(i,m)));} // hardcoded invlogit b/c mu_i in logit space
-            } else {
-              SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));}
-            }
+            SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));}
             break;
           }
           case poisson_family: {
@@ -1006,6 +994,16 @@ Type objective_function<Type>::operator()()
               y_i(i,m) = rnbinom2(s1_large, s2_large);
             }
           }
+          break;
+        }
+        case stdcurve_family: {
+          if(y_i(i,m) > 0) {
+            tmp_ll = dnorm(y_i(i,m), std_beta_0(pcr_idx(i)) + std_beta_1(pcr_idx(i)) * mu_i(i,m), phi(m), true);
+            tmp_ll += dbinom_robust(Type(1), size(i), std_phi_0(pcr_idx(i)) + std_phi_1(pcr_idx(i)) * mu_i(i,m), true);
+          } else {
+            tmp_ll = dbinom_robust(Type(0), size(i), std_phi_0(pcr_idx(i)) + std_phi_1(pcr_idx(i)) * mu_i(i,m), true);
+          }
+          SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(std_phi_0(pcr_idx(i)) + std_phi_1(pcr_idx(i)) * mu_i(i,m))) * rnorm(std_beta_0(pcr_idx(i)) + std_beta_1(pcr_idx(i)) * mu_i(i,m), phi(m));}
           break;
         }
         default:

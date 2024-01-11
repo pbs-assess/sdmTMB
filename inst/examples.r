@@ -44,7 +44,6 @@ fit4 <- sdmTMB(
 fit5 <- sdmTMB(
   Ct ~ 1,
   data = d_obs, mesh = mesh,
-  family = delta_gaussian(),
   control = sdmTMBcontrol(stdcurve_df = d)
 )
 #sanity(fit5) # pass

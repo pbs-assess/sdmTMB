@@ -26,6 +26,8 @@ NULL
 #'   \code{\link[sdmTMB:families]{truncated_nbinom1()}},
 #'   \code{\link[sdmTMB:families]{censored_poisson()}},
 #'   \code{\link[sdmTMB:families]{gamma_mix()}},
+#'   \code{\link[sdmTMB:families]{nbinom2_mix()}},
+#'   \code{\link[sdmTMB:families]{stdcurve()}},
 #'   \code{\link[sdmTMB:families]{lognormal_mix()}},
 #'   \code{\link[sdmTMB:families]{student()}}, and
 #'   \code{\link[sdmTMB:families]{tweedie()}}. Supports the delta/hurdle models:
@@ -587,8 +589,8 @@ sdmTMB <- function(
 
   delta <- isTRUE(family$delta)
   stdcurve <- ifelse(is.null(control$stdcurve_df), FALSE, TRUE)
-  if(!delta & stdcurve) {
-    cli_abort("Delta families must be used for applications that use stdcurve_df")
+  if(stdcurve & family$family != "stdcurve") {
+    cli_abort("family should be `stdcurve`")
   }
   n_m <- if (delta) 2L else 1L
 
@@ -1204,10 +1206,10 @@ sdmTMB <- function(
     epsilon_re = matrix(0, tmb_data$n_t, n_m),
     b_smooth = if (sm$has_smooths) matrix(0, sum(sm$sm_dims), n_m) else array(0),
     ln_smooth_sigma = if (sm$has_smooths) matrix(0, length(sm$sm_dims), n_m) else array(0),
-    phi_0 = rep(0, n_pcr),
-    phi_1 = rep(0, n_pcr),
-    beta_0 = rep(0, n_pcr),
-    beta_1 = rep(0, n_pcr),
+    std_phi_0 = rep(0, n_pcr),
+    std_phi_1 = rep(0, n_pcr),
+    std_beta_0 = rep(0, n_pcr),
+    std_beta_1 = rep(0, n_pcr),
     std_means = c(2, 4, 40, -3.32), # order: phi0, phi1, beta0, beta1
     std_sds = c(2, 2, 5, 0.1) # order: phi0, phi1, beta0, beta1
     #log_sigma_all_stand = 0
@@ -1253,10 +1255,10 @@ sdmTMB <- function(
      tmb_map <- unmap(tmb_map, "b_epsilon")
   }
   if(stdcurve) {
-    tmb_map$phi_0 <- NULL
-    tmb_map$phi_1 <- NULL
-    tmb_map$beta_0 <- NULL
-    tmb_map$beta_1 <- NULL
+    tmb_map$std_phi_0 <- NULL
+    tmb_map$std_phi_1 <- NULL
+    tmb_map$std_beta_0 <- NULL
+    tmb_map$std_beta_1 <- NULL
     tmb_map$std_means <- NULL
     tmb_map$std_sds <- NULL
     #tmb_map$log_sigma_all_stand <- NULL
@@ -1318,7 +1320,7 @@ sdmTMB <- function(
     tmb_map <- unmap(tmb_map, c("epsilon_re"))
   }
   if(stdcurve) {
-    tmb_random <- c(tmb_random, "phi_0", "phi_1", "beta_0", "beta_1")
+    tmb_random <- c(tmb_random, "std_phi_0", "std_phi_1", "std_beta_0", "std_beta_1")
   }
 
   tmb_map$ar1_phi <- as.numeric(tmb_map$ar1_phi) # strip factors

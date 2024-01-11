@@ -12,6 +12,7 @@
 \alias{truncated_nbinom2}
 \alias{truncated_nbinom1}
 \alias{student}
+\alias{stdcurve}
 \alias{tweedie}
 \alias{censored_poisson}
 \alias{delta_gamma}
@@ -45,6 +46,8 @@ truncated_nbinom2(link = "log")
 truncated_nbinom1(link = "log")
 
 student(link = "identity", df = 3)
+
+stdcurve(link = "identity")
 
 tweedie(link = "log")
 
@@ -120,6 +123,7 @@ nbinom1(link = "log")
 truncated_nbinom2(link = "log")
 truncated_nbinom1(link = "log")
 student(link = "identity")
+stdcurve(link = "identity")
 tweedie(link = "log")
 censored_poisson(link = "log")
 delta_gamma()
