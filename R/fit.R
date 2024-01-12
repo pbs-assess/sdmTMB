@@ -1545,6 +1545,10 @@ sdmTMB <- function(
   conv <- get_convergence_diagnostics(sd_report)
 
   out_structure$tmb_obj <- tmb_obj
+
+  if(stdcurve) {
+    out_structure$plates <- plates
+  }
   out <- c(out_structure, list(
     model      = tmb_opt,
     sd_report  = sd_report,
