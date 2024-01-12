@@ -1210,8 +1210,8 @@ sdmTMB <- function(
     std_phi_1 = rep(0, n_pcr),
     std_beta_0 = rep(0, n_pcr),
     std_beta_1 = rep(0, n_pcr),
-    std_means = c(2, 4, 40, -3.32), # order: phi0, phi1, beta0, beta1
-    std_sds = c(2, 2, 5, 0.1) # order: phi0, phi1, beta0, beta1
+    std_mu = c(2, 4, 40, -3.32), # order: phi0, phi1, beta0, beta1
+    ln_std_sigma = c(0,0,0,-2)#log(c(2, 2, 5, 0.1)) # order: phi0, phi1, beta0, beta1
     #log_sigma_all_stand = 0
   )
   if (identical(family$link, "inverse") && family$family[1] %in% c("Gamma", "gaussian", "student") && !delta) {
@@ -1259,8 +1259,8 @@ sdmTMB <- function(
     tmb_map$std_phi_1 <- NULL
     tmb_map$std_beta_0 <- NULL
     tmb_map$std_beta_1 <- NULL
-    tmb_map$std_means <- NULL
-    tmb_map$std_sds <- NULL
+    tmb_map$std_mu <- NULL
+    tmb_map$ln_std_sds <- NULL
     #tmb_map$log_sigma_all_stand <- NULL
   }
 

@@ -271,8 +271,8 @@ Type objective_function<Type>::operator()()
   PARAMETER_VECTOR(std_phi_1); //[N_pcr]
   PARAMETER_VECTOR(std_beta_0); //[N_pcr]
   PARAMETER_VECTOR(std_beta_1); //[N_pcr]
-  PARAMETER_VECTOR(std_means); //[4]
-  PARAMETER_VECTOR(std_sds); //[4]
+  PARAMETER_VECTOR(std_mu); //[4]
+  PARAMETER_VECTOR(ln_std_sigma); //[4]
   //PARAMETER(log_sigma_all_stand);
 
   // Joint negative log-likelihood
@@ -706,12 +706,15 @@ Type objective_function<Type>::operator()()
   vector<Type> poisson_link_m0_ll(n_i);
 
   //Type sigma_all_stand;
+
   if(stdcurve_flag == 1) {
     // Presence-Absence component of model.
     vector<Type> theta_stand(N_stand_bin);
+    vector<Type> std_sigma = exp(ln_std_sigma);
+
     for(int i = 0; i < std_phi_0.size(); i++){
-      jnll -= dnorm(std_phi_0(i), std_means(0), std_sds(0), true);//phi_0 ~ normal(2, 2)
-      jnll -= dnorm(std_phi_1(i), std_means(1), std_sds(1), true);//phi_1 ~ normal(4, 2)
+      jnll -= dnorm(std_phi_0(i), std_mu(0), std_sigma(0), true);//phi_0 ~ normal(2, 2)
+      jnll -= dnorm(std_phi_1(i), std_mu(1), std_sigma(1), true);//phi_1 ~ normal(4, 2)
     }
     for(int i = 0; i < N_stand_bin; i++){ // likelihood
       theta_stand(i) = std_phi_0(pcr_stand_bin_idx(i)) + std_phi_1(pcr_stand_bin_idx(i)) * (D_bin_stand(i));// - stand_offset);
@@ -719,8 +722,8 @@ Type objective_function<Type>::operator()()
     }
     // Positive component of model.
     for(int i = 0; i < std_beta_0.size(); i++){
-      jnll -= dnorm(std_beta_0(i), std_means(2), std_sds(2), true);//beta_0 ~ normal(40,5)
-      jnll -= dnorm(std_beta_1(i), std_means(3), std_sds(3), true);//beta_1 ~ normal(-3.32,0.1)
+      jnll -= dnorm(std_beta_0(i), std_mu(2), std_sigma(2), true);//beta_0 ~ normal(40,5)
+      jnll -= dnorm(std_beta_1(i), std_mu(3), std_sigma(3), true);//beta_1 ~ normal(-3.32,0.1)
     }
     vector<Type> kappa_stand(N_stand_pos);
     //sigma_all_stand = exp(log_sigma_all_stand);
@@ -733,15 +736,17 @@ Type objective_function<Type>::operator()()
     REPORT(std_beta_1);
     REPORT(std_phi_0);
     REPORT(std_phi_1);
-    REPORT(std_means);
-    REPORT(std_sds);
+    REPORT(std_mu);
+    REPORT(std_sigma);
+    REPORT(ln_std_sigma);
     //REPORT(sigma_all_stand);
     ADREPORT(std_beta_0);
     ADREPORT(std_beta_1);
     ADREPORT(std_phi_0);
     ADREPORT(std_phi_1);
-    ADREPORT(std_means);
-    ADREPORT(std_sds);
+    ADREPORT(std_mu);
+    ADREPORT(std_sigma);
+    ADREPORT(ln_std_sigma);
     //ADREPORT(sigma_all_stand);
   }
 
