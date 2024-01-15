@@ -16,6 +16,23 @@ sdmTMB is an R package that fits spatial and spatiotemporal GLMMs (Generalized L
 
 Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett. 2022. sdmTMB: an R package for fast, flexible, and user-friendly generalized linear mixed effects models with spatial and spatiotemporal random fields. bioRxiv 2022.03.24.485545; doi: https://doi.org/10.1101/2022.03.24.485545
 
+## Temporary `NA/NaN gradient` issue as of January 2023
+
+If you are receiving the error:
+
+```
+Error in stats::nlminb(start = tmb_obj$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,  : 
+  NA/NaN gradient evaluation
+```
+
+on all model fits with random effects, it is likely due to [this](https://github.com/pbs-assess/sdmTMB/issues/287) issue affecting all TMB-based packages on CRAN. We will submit an update to trigger a rebuilding of the package. In the meantime, assuming you have a C++ compilter installed (e.g., command-line tools on a Mac, Rtools on Windows), the solution is to install from source to ensure TMB and sdmTMB are built with the latest Matrix package.
+
+```r
+install.packages("Matrix")
+install.packages("TMB", type = "source")
+install.packages("sdmTMB", type = "source")
+```
+
 ## Table of contents
 
 - [Installation](#installation)
