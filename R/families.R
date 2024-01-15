@@ -274,6 +274,25 @@ censored_poisson <- function(link = "log") {
     linkinv = stats$linkinv), class = "family")
 }
 
+#' @details
+#' @export
+#' @examples
+#' censored_nbinom2(link = "log")
+#' @rdname families
+censored_nbinom2 <- function(link = "log") {
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("log")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+
+  structure(list(family = "censored_nbinom2", link = linktemp, linkfun = stats$linkfun,
+    linkinv = stats$linkinv), class = "family")
+}
+
 #' @param link1 Link for first part of delta/hurdle model.
 #' @param link2 Link for second part of delta/hurdle model.
 #' @export

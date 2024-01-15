@@ -19,7 +19,8 @@ enum valid_family {
   censored_poisson_family  = 12,
   gamma_mix_family = 13,
   lognormal_mix_family = 14,
-  nbinom2_mix_family = 15
+  nbinom2_mix_family = 15, 
+  censored_nbinom2_family = 16
 };
 
 enum valid_link {
@@ -840,7 +841,7 @@ Type objective_function<Type>::operator()()
               y_i(i,m) = rnbinom2(s1, s2);
             }
             break;
-          }
+          } 
           case truncated_nbinom2_family: {
             s1 = log(mu_i(i,m)); // log(mu_i)
             s2 = 2. * s1 - ln_phi(m); // log(var - mu)
@@ -850,6 +851,17 @@ Type objective_function<Type>::operator()()
             tmp_ll -= lognzprob;
             tmp_ll = zt_lik_nearzero(y_i(i,m), tmp_ll); // from glmmTMB
             SIMULATE{y_i(i,m) = sdmTMB::rtruncated_nbinom(asDouble(phi(m)), 0, asDouble(mu_i(i,m)));}
+            break;
+          }
+          case censored_nbinom2_family: {
+            s1 = mu_i(i,m); // mu_i
+            s2 = 2. * s1 - ln_phi(m); // log(var - mu)
+            tmp_ll = sdmTMB::dcensnb2_right(y_i(i,m), s1, s2, true);
+            SIMULATE {
+              s1 = mu_i(i,m);
+              s2 = mu_i(i,m) * (Type(1) + mu_i(i,m) / phi(m));
+              y_i(i,m) = rnbinom2(s1, s2);
+            }
             break;
           }
           case nbinom1_family: {
