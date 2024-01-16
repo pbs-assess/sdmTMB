@@ -1179,10 +1179,10 @@ sdmTMB <- function(
     }
   }
   tmb_map$ln_phi <- rep(1, n_m)
-  if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson"))
+  if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson", "censored_nbinom2"))
     tmb_map$ln_phi[1] <- factor(NA)
   if (delta) {
-    if (family$family[[2]] %in% c("binomial", "poisson", "censored_poisson"))
+    if (family$family[[2]] %in% c("binomial", "poisson", "censored_poisson", "censored_nbinom2"))
       tmb_map$ln_phi[2] <- factor(NA)
     else
       tmb_map$ln_phi[2] <- 2

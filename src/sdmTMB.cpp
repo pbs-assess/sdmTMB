@@ -856,7 +856,7 @@ Type objective_function<Type>::operator()()
           }
           case censored_nbinom2_family: {
             s1 = mu_i(i,m); // mu_i
-            s2 = 2. * s1 - ln_phi(m); // log(var - mu)
+            s2 = exp(2. * s1 - ln_phi(m)); // log(var - mu)
             tmp_ll = sdmTMB::dcensnb2_right(y_i(i,m), s1, s2, upr(i), true);
             SIMULATE {
               s1 = mu_i(i,m);

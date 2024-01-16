@@ -16,7 +16,8 @@
   censored_poisson  = 12,
   gamma_mix = 13,
   lognormal_mix = 14,
-  nbinom2_mix = 15
+  nbinom2_mix = 15, 
+  censored_nbinom2 = 16
 )
 .valid_link <- c(
   identity = 0,
