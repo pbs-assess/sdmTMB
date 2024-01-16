@@ -217,7 +217,7 @@ Type objective_function<Type>::operator()()
 
   DATA_VECTOR(lwr); // lower bound for censpois on counts
   DATA_VECTOR(upr); // upper bound for censpois on counts
-  DATA_IVECTOR(cens); // boolean to select if nbniom2 is censored
+  //DATA_IVECTOR(cens); // boolean to select if nbniom2 is censored
   DATA_INTEGER(poisson_link_delta); // logical
 
   DATA_INTEGER(stan_flag); // logical whether to pass the model to Stan
@@ -857,7 +857,7 @@ Type objective_function<Type>::operator()()
           case censored_nbinom2_family: {
             s1 = mu_i(i,m); // mu_i
             s2 = 2. * s1 - ln_phi(m); // log(var - mu)
-            tmp_ll = sdmTMB::dcensnb2_right(y_i(i,m), s1, s2, cens(i), true);
+            tmp_ll = sdmTMB::dcensnb2_right(y_i(i,m), s1, s2, upr(i), true);
             SIMULATE {
               s1 = mu_i(i,m);
               s2 = mu_i(i,m) * (Type(1) + mu_i(i,m) / phi(m));

@@ -116,9 +116,10 @@ Type pnbinom2_log(Type x, Type size, Type mu) {
 }
 
 template <class Type>
-Type dcensnb2_right(Type x, Type size, Type mu, bool cens = 0, int give_log = 0) {
-  Type ll = Type(0.0);  // Initialize ll with a default value
-  if (cens) {
+Type dcensnb2_right(Type x, Type size, Type mu, Type upr, int give_log = 0) {
+  //Type ll = Type(0.0);  // Initialize ll with a default value
+  Type ll;
+  if (upr > Type (0.0)) {
     ll = pnbinom2_log(x - Type(1.), size, mu); // F(lower-1)
     ll = logspace_sub(Type(0.), ll); // 1 - F(lower-1)
   } else {
