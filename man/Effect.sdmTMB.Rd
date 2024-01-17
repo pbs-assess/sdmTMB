@@ -4,7 +4,7 @@
 \alias{Effect.sdmTMB}
 \title{Calculate effects}
 \usage{
-Effect.sdmTMB(focal.predictors, mod, ...)
+\method{Effect}{sdmTMB}(focal.predictors, mod, ...)
 }
 \arguments{
 \item{focal.predictors}{a character vector of one or more predictors in the model in any order.}
