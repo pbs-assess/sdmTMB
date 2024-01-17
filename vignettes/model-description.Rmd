@@ -43,7 +43,7 @@ div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
 
 # Notation conventions
 
-This appendix uses the following notation conventions, which generally follows the guidance in @edwards2019:
+This appendix uses the following notation conventions, which generally follow the guidance in @edwards2019:
 
 -   Greek symbols for parameters,
 
