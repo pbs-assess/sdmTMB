@@ -321,14 +321,17 @@ sanity(fit)
 ```
 
 Use the [ggeffects](https://github.com/strengejacke/ggeffects) package
-(**the GitHub version until the next ggeffects CRAN update**) to plot
-the smoother effect:
+to plot the smoother effect:
 
 ``` r
 ggeffects::ggpredict(fit, "depth [50:400, by=2]") |> plot()
 ```
 
 <img src="man/figures/README-plot-ggpredict-link-1.png" width="50%" />
+
+If the depth effect was parametric and not a penalized smoother, we
+could have alternatively used `ggeffects::ggeffect()` for a fast
+marginal effect plot.
 
 Predict on new data:
 
