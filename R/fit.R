@@ -399,7 +399,7 @@ NULL
 #' head(p)
 #'
 #' \donttest{
-#' Visualize the depth effect with ggeffects:
+#' # Visualize the depth effect with ggeffects:
 #' ggeffects::ggpredict(fit,  "depth [all]") |> plot()
 #'
 #' # Visualize depth effect with visreg: (see ?visreg_delta)
