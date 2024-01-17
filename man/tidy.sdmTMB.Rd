@@ -4,7 +4,7 @@
 \alias{tidy.sdmTMB}
 \title{Turn sdmTMB model output into a tidy data frame}
 \usage{
-\method{tidy}{sdmTMB}(
+tidy.sdmTMB(
   x,
   effects = c("fixed", "ran_pars", "ran_vals"),
   model = 1,
