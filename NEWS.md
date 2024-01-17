@@ -1,4 +1,7 @@
-# sdmTMB (development version)
+# sdmTMB 0.4.2
+
+* Force rebuild of CRAN binaries to fix issue with breaking Matrix ABI change
+  causing `NaN gradient` errors. #288 #287
 
 * Fix crash in if `sdmTMB(..., do_index = TRUE)` and `extra_time` supplied along
   with `predict_args = list(newdata = ...)` that lacked `extra_time` elements.
