@@ -359,7 +359,7 @@ NULL
 #'
 #' @export
 #'
-#' @examplesIf require("visreg", quietly = TRUE)
+#' @examplesIf require("visreg", quietly = TRUE) && require("ggeffects", quietly = TRUE)
 #' library(sdmTMB)
 #'
 #' # Build a mesh to implement the SPDE approach:
@@ -399,7 +399,10 @@ NULL
 #' head(p)
 #'
 #' \donttest{
-#' # Visualize depth effect: (see ?visreg_delta)
+#' Visualize the depth effect with ggeffects:
+#' ggeffects::ggpredict(fit,  "depth [all]") |> plot()
+#'
+#' # Visualize depth effect with visreg: (see ?visreg_delta)
 #' visreg::visreg(fit, xvar = "depth") # link space; randomized quantile residuals
 #' visreg::visreg(fit, xvar = "depth", scale = "response")
 #' visreg::visreg(fit, xvar = "depth", scale = "response", gg = TRUE, rug = FALSE)

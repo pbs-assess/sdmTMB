@@ -318,7 +318,7 @@ example of index standardization in the relevant
 You will need to specify the \code{time} argument. See \code{\link[=get_index]{get_index()}}.
 }
 \examples{
-\dontshow{if (require("visreg", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (require("visreg", quietly = TRUE) && require("ggeffects", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 library(sdmTMB)
 
 # Build a mesh to implement the SPDE approach:
@@ -358,7 +358,10 @@ p <- predict(fit, newdata = qcs_grid)
 head(p)
 
 \donttest{
-# Visualize depth effect: (see ?visreg_delta)
+Visualize the depth effect with ggeffects:
+ggeffects::ggpredict(fit,  "depth [all]") |> plot()
+
+# Visualize depth effect with visreg: (see ?visreg_delta)
 visreg::visreg(fit, xvar = "depth") # link space; randomized quantile residuals
 visreg::visreg(fit, xvar = "depth", scale = "response")
 visreg::visreg(fit, xvar = "depth", scale = "response", gg = TRUE, rug = FALSE)
