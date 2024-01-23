@@ -298,14 +298,18 @@ censored_poisson <- function(link = "log") {
 #' \doi{10.1139/cjfas-2017-0266}
 delta_gamma <- function(link1 = "logit", link2 = "log", type = c("standard", "poisson-link")) {
   type <- match.arg(type)
-  f1 <- binomial(link = link1)
-  f2 <- Gamma(link = link2)
+  l1 <- substitute(link1)
+  if (!is.character(l1)) l1 <- deparse(l1)
+  l2 <- substitute(link2)
+  if (!is.character(l2)) l2 <- deparse(l2)
+  f1 <- binomial(link = l1)
+  f2 <- Gamma(link = l2)
   if (type == "poisson-link") {
     .type <- "poisson_link_delta"
-    clean_name <- "delta_gamma(link1 = 'logit', link2 = 'log', type = 'poisson-link')"
+    clean_name <- paste0("delta_gamma(link1 = '", l1, "', link2 = '", l2, "', type = 'poisson-link')")
   } else {
     .type <- "standard"
-    clean_name <- "delta_gamma(link1 = 'logit', link2 = 'log')"
+    clean_name <- paste0("delta_gamma(link1 = '", l1, "', link2 = '", l2, "')")
   }
   structure(list(f1, f2, delta = TRUE, link = c("logit", "log"),
     type = .type, family = c("binomial", "Gamma"),
@@ -330,14 +334,18 @@ delta_gamma_mix <- function(link1 = "logit", link2 = "log") {
 #' @rdname families
 delta_lognormal <- function(link1 = "logit", link2 = "log", type = c("standard", "poisson-link")) {
   type <- match.arg(type)
-  f1 <- binomial(link = link1)
-  f2 <- lognormal(link = link2)
+  l1 <- substitute(link1)
+  if (!is.character(l1)) l1 <- deparse(l1)
+  l2 <- substitute(link2)
+  if (!is.character(l2)) l2 <- deparse(l2)
+  f1 <- binomial(link = l1)
+  f2 <- lognormal(link = l2)
   if (type == "poisson-link") {
     .type <- "poisson_link_delta"
-    clean_name <- "delta_lognormal(link1 = 'logit', link2 = 'log', type = 'poisson-link')"
+    clean_name <- paste0("delta_lognormal(link1 = '", l1, "', link2 = '", l2, "', type = 'poisson-link')")
   } else {
     .type <- "standard"
-    clean_name <- "delta_lognormal(link1 = 'logit', link2 = 'log')"
+    clean_name <- paste0("delta_lognormal(link1 = '", l1, "', link2 = '", l2, "')")
   }
   structure(list(f1, f2, delta = TRUE, link = c("logit", "log"),
     family = c("binomial", "lognormal"), type = .type,
