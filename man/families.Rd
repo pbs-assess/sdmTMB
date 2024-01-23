@@ -49,11 +49,19 @@ tweedie(link = "log")
 
 censored_poisson(link = "log")
 
-delta_gamma(link1 = "logit", link2 = "log")
+delta_gamma(
+  link1 = "logit",
+  link2 = "log",
+  type = c("standard", "poisson-link")
+)
 
 delta_gamma_mix(link1 = "logit", link2 = "log")
 
-delta_lognormal(link1 = "logit", link2 = "log")
+delta_lognormal(
+  link1 = "logit",
+  link2 = "log",
+  type = c("standard", "poisson-link")
+)
 
 delta_lognormal_mix(link1 = "logit", link2 = "log")
 
@@ -75,15 +83,23 @@ delta_beta(link1 = "logit", link2 = "logit")
 \item{link1}{Link for first part of delta/hurdle model.}
 
 \item{link2}{Link for second part of delta/hurdle model.}
+
+\item{type}{Delta/hurdle family type. \code{"standard"} for a classic hurdle
+model. \code{"poisson-link"} for a Poisson-link delta model (Thorson 2018).}
 }
 \value{
 A list with elements common to standard R family objects including \code{family},
-\code{link}, \code{linkfun}, and \code{linkinv}.
+\code{link}, \code{linkfun}, and \code{linkinv}. Delta/hurdle model families also have
+elements \code{delta} (logical) and \code{type} (standard vs. Poisson-link).
 }
 \description{
 Additional families compatible with \code{\link[=sdmTMB]{sdmTMB()}}.
 }
 \details{
+\code{delta_poisson_link_gamma()} and \code{delta_poisson_link_lognormal()} have been
+deprecated in favour of \code{delta_gamma(type = "poisson-link")} and
+\code{delta_lognormal(type = "poisson-link")}.
+
 The families ending in \verb{_mix()} are 2-component mixtures where each
 distribution has its own mean but a shared scale parameter.
 (Thorson et al. 2011). See the model-description vignette for details.
@@ -99,12 +115,6 @@ The \code{nbinom1} negative binomial parameterization lets the variance grow
 linearly with the mean (Hilbe 2011).
 
 For \code{student()}, the degrees of freedom parameter is currently not estimated and is fixed at \code{df}.
-
-\code{delta_poisson_link_gamma()} is the Poisson-link (complementary
-log-log) delta model (Thorson 2018).
-
-\code{delta_poisson_link_lognormal()} is the Poisson-link (complementary
-log-log) delta model (Thorson 2018).
 }
 \examples{
 Beta(link = "logit")
@@ -125,8 +135,6 @@ delta_lognormal()
 delta_lognormal_mix()
 delta_truncated_nbinom2()
 delta_truncated_nbinom1()
-delta_poisson_link_gamma()
-delta_poisson_link_lognormal()
 delta_beta()
 }
 \references{
@@ -140,10 +148,11 @@ Can. J. Fish. Aquat. Sci. 68(9): 1681–1693. \doi{10.1139/f2011-086}.
 
 Hilbe, J. M. 2011. Negative binomial regression. Cambridge University Press.
 
-\emph{Poisson-link families}:
+\emph{Poisson-link delta families}:
 
 Thorson, J.T. 2018. Three problems with the conventional delta-model for
 biomass sampling data, and a computationally efficient alternative. Canadian
 Journal of Fisheries and Aquatic Sciences, 75(9), 1369-1382.
 \doi{10.1139/cjfas-2017-0266}
 }
+\keyword{internal}
