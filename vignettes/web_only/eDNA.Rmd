@@ -1,0 +1,171 @@
+---
+title: "eDNA applications with sdmTMB"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{eDNA applications with sdmTMB}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+**If the code in this vignette has not been evaluated, a rendered version is available on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html) under 'Articles'.**
+
+```{r setup, include = FALSE, cache=FALSE}
+dplyr_installed <- require("dplyr", quietly = TRUE)
+ggplot_installed <- require("ggplot2", quietly = TRUE)
+sdmTMBextra_installed <- require("sdmTMBextra", quietly = TRUE)
+pkgs <- dplyr_installed && ggplot_installed && sdmTMBextra_installed
+EVAL <- identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.asp = 0.618,
+  eval = EVAL,
+  purl = EVAL
+)
+```
+
+```{r packages, message=FALSE, warning=TRUE}
+library(ggplot2)
+library(dplyr)
+library(sdmTMB)
+library(mvtnorm)
+```
+
+In this vignette, we will simulate data from a eDNA experiment, and illustrate parameter estimation with sdmTMB. The data will consist of two components, a lab dataset (with known DNA concentration) and observational data (such as in other sdmTMB examples -- observations from trawl surveys, or similar studies). 
+
+First, we will generate the standards data (as this is collected in the lab, it's non-spatial). We'll assume a range of known concentrations, and assume we have data for, and generate 3 replicates per PCR plate. When using real data, the column names `plate` and `known_conc_ul` must be in the dataframe, just like with this simulated dataset.  
+
+```{r}
+set.seed(123)
+known_conc_ul <- c(1e05, 1e04, 1e03, 1e02, 1e01, 1, 5, 2.322919, 2.050185, 1.289870e-01, 4.922461e-02, 1.633000e+02, 4.598000, 4.799000, 2.897600, 4.387000, 4.185000, 6.369000)
+
+plates = paste0(sample(letters, 50, replace=T), sample(1:100, size=50))
+standards <- expand.grid(known_conc_ul = known_conc_ul, replicate = 1:3, plate = plates)
+standards$plate <- as.factor(standards$plate)
+```
+
+We sill assume that the relationship between known concentration and cycle threshold (the 'standard curve') can be modeled with a hierarchical normal regression model. These covariance matrices are assumed known -- but in practice, these will be estimated parameters. 
+
+```{r}
+Sigma <- matrix(c(0.26, 0.081, 0.081, 0.026), 2, 2)
+logistic_coefs <- mvtnorm::rmvnorm(n = length(plates), c(2,0.1), Sigma)
+Sigma <- matrix(c(0.65, -0.01, -0.01, 0.00145), 2, 2)
+gauss_coefs <- mvtnorm::rmvnorm(n = length(plates), c(30,-1.5), Sigma)
+true_coefs <- as.data.frame(cbind(logistic_coefs, gauss_coefs))
+names(true_coefs) = c("std_xi_2_true", "std_xi_3_true", "std_xi_0_true", "std_xi_1_true")
+```
+
+Next, for each row of our standards data (plate and concentration) we can generate predictions of Ct. We'll assume these to be corrupted by measurement / observation error. 
+
+```{r}
+phi <- 0.01
+standards$Ct <- gauss_coefs[match(standards$plate, levels(standards$plate)),1] + gauss_coefs[match(standards$plate, levels(standards$plate)),2] * log(standards$known_conc_ul) + rnorm(nrow(standards), 0, phi)
+
+# presence - absence model
+standards$p <- plogis(logistic_coefs[match(standards$plate, levels(standards$plate)),1] + logistic_coefs[match(standards$plate, levels(standards$plate)),2] * log(standards$known_conc_ul))
+standards$Ct <- standards$Ct * ifelse(runif(nrow(standards)) < standards$p, 1, 0)
+```
+
+Next, we'll generate a spatial dataset. This will be simulated for a single year, without covariates, and we use the same measurement / observation error parameter $\phi$ as above.
+
+```{r}
+# make fake predictor(s) (a1) and sampling locations:
+  predictor_dat <- data.frame(
+    X = runif(500, 0, 500), Y = runif(500, 0, 500), year = 1
+  )
+  mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 20)
+
+  sim_dat <- sdmTMB_simulate(
+    formula = ~ 1,
+    data = predictor_dat,
+    time = "year",
+    mesh = mesh,
+    family = gaussian(),
+    range = 0.5,
+    sigma_E = 0,
+    phi = 0.01,
+    sigma_O = 0.2,
+    seed = 123,
+    B = 3 # B0 = intercept, B1 = a1 slope
+  )
+```
+
+The dataframe `sim_dat` now contains simulated observations at 500 spatial locations. We'll interpret the value of the latent spatial field `sim_dat$eta` to represent log biomass. The final step in simulating data is to generate simulated Ct values. We do this by assigning PCR plates to each observation, and using our hierarchical regression intercept and slope parameters to generate Ct observations. This is largely the same as above with the standards data, but we swap in `sim_dat$eta` for `log(standards$known_conc_ul)`
+
+```{r}
+sim_dat$plate <- sample(unique(standards$plate), nrow(sim_dat), replace=T)
+
+sim_dat$Ct <- gauss_coefs[match(sim_dat$plate, levels(standards$plate)),1] + gauss_coefs[match(sim_dat$plate, levels(standards$plate)),2] * sim_dat$eta + rnorm(nrow(sim_dat), 0, phi)
+
+# presence - absence model
+sim_dat$p <- plogis(logistic_coefs[match(sim_dat$plate, levels(standards$plate)),1] + logistic_coefs[match(sim_dat$plate, levels(standards$plate)),2] * sim_dat$eta)
+sim_dat$Ct <- sim_dat$Ct * ifelse(runif(nrow(sim_dat)) < sim_dat$p, 1, 0)
+```
+
+We have two dataframes now -- `standards` containing the standards dataset, and `sim_dat` containing our simulated observations. The next step is to fit a model with sdmTMB, using `Ct` as the response variable. We pass in the `sim_dat` dataframe as we do with every other sdmTMB model, but pass in the `standards` dataframe as an argument to sdmTMBcontrol()
+
+```{r}
+
+mesh <- make_mesh(sim_dat, xy_cols = c("X", "Y"), cutoff = 25)
+fit <- sdmTMB(Ct ~ 1,
+       mesh = mesh,
+       spatial = "on",
+       spatiotemporal = "off",
+       control = sdmTMBcontrol(stdcurve_df = standards),
+       data=sim_dat)
+```
+
+A major goal of eDNA analyses is to convert DNA concentration into biomass, and it looks like our estimate of the intercept (3.00) is the same as our simulated data:
+
+```{r}
+tidy(fit)
+```
+
+The hierarchical means being estimated are also in line with our simulated values. We can get these out of the sdreport, looking at `std_mu` values,
+
+```{r}
+fit$sd_report
+```
+
+the first and second of these correspond to the intercept and slope of the Gaussian model (~ 30 and -1.5) and the third and fourth correspond to the logistic model (~ 2.28 and 0.18)
+
+The slopes for individual standard curves can also be extracted from the sdreport. These are in `fit$sd_report$par.random` -- and are represented as the variables whose names are `std_xi_0`, `std_xi_1`, `std_xi_2` and `std_xi_3`. For demonstration, let's extract all these values into a dataframe and add the plate IDs back in (these are stored in `fit$plate`)
+
+```{r}
+r <- fit$sd_report$par.random
+
+df <- data.frame(id = fit$plates$id,
+                 plate = fit$plates$plate,
+                 std_xi_0 = r[grep("std_xi_0", names(r))],
+                 std_xi_1 = r[grep("std_xi_1", names(r))],
+                 std_xi_2 = r[grep("std_xi_2", names(r))],
+                 std_xi_3 = r[grep("std_xi_3", names(r))]
+                 )
+
+# bring in true coefficients
+df <- cbind(df, true_coefs)
+```
+
+We can look at the true and estimated values of random effects, and see we do really well for the positive model -- and a little less so for the presence-absence component, but the overall estimates are relatively close to the 1:1 line: 
+
+```{r eval=FALSE}
+p1 <- ggplot(df, aes(std_xi_0_true, std_xi_0)) + 
+  geom_abline(aes(intercept=0,slope=1),col="red",alpha=0.5) + 
+  geom_point() + theme_bw() + ggtitle("Intcpt:positive")
+p2 <- ggplot(df, aes(std_xi_1_true, std_xi_1)) + 
+  geom_abline(aes(intercept=0,slope=1),col="red",alpha=0.5) +
+  geom_point() + theme_bw() + ggtitle("Slope:positive")
+p3 <- ggplot(df, aes(std_xi_2_true, std_xi_2)) + 
+  geom_abline(aes(intercept=0,slope=1),col="red",alpha=0.5) +
+  geom_point() + theme_bw() + ggtitle("Intcpt:logistic")
+p4 <- ggplot(df, aes(std_xi_3_true, std_xi_3)) + 
+  geom_abline(aes(intercept=0,slope=1),col="red",alpha=0.5) +
+  geom_point() + theme_bw() + ggtitle("Slope:logistic")
+gridExtra::grid.arrange(p1,p2,p3,p4,nrow=2)
+```
+
+
+
+

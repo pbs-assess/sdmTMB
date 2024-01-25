@@ -589,8 +589,12 @@ sdmTMB <- function(
 
   delta <- isTRUE(family$delta)
   stdcurve <- ifelse(is.null(control$stdcurve_df), FALSE, TRUE)
-  if(stdcurve & family$family != "stdcurve") {
-    cli_abort("family should be `stdcurve`")
+  if(stdcurve) {
+    family <- stdcurve()
+    if("plate" %in% names(control$stdcurve_df) == FALSE) cli_abort("`plate` must be a column in the standards dataframe")
+    if("Ct" %in% names(control$stdcurve_df) == FALSE) cli_abort("`Ct` must be a column in the standards dataframe")
+    if("known_conc_ul" %in% names(control$stdcurve_df) == FALSE) cli_abort("`known_conc_ul` must be a column in the standards dataframe")
+    if("plate" %in% names(data) == FALSE) cli_abort("`plate` must be a column in the input dataframe")
   }
   n_m <- if (delta) 2L else 1L
 
@@ -1206,12 +1210,12 @@ sdmTMB <- function(
     epsilon_re = matrix(0, tmb_data$n_t, n_m),
     b_smooth = if (sm$has_smooths) matrix(0, sum(sm$sm_dims), n_m) else array(0),
     ln_smooth_sigma = if (sm$has_smooths) matrix(0, length(sm$sm_dims), n_m) else array(0),
-    std_phi_0 = rep(0, n_pcr),
-    std_phi_1 = rep(0, n_pcr),
-    std_beta_0 = rep(0, n_pcr),
-    std_beta_1 = rep(0, n_pcr),
-    std_mu = c(2, 4, 40, -3.32), # order: phi0, phi1, beta0, beta1
-    ln_std_sigma = c(0,0,0,-2)#log(c(2, 2, 5, 0.1)) # order: phi0, phi1, beta0, beta1
+    std_xi_2 = rep(0, n_pcr),
+    std_xi_3 = rep(0, n_pcr),
+    std_xi_0 = rep(0, n_pcr),
+    std_xi_1 = rep(0, n_pcr),
+    std_mu = c(40, -3.32, 2, 4), # order: phi0, phi1, beta0, beta1
+    ln_std_sigma = c(0,-2,0,0)#log(c(2, 2, 5, 0.1)) # order: phi0, phi1, beta0, beta1
     #log_sigma_all_stand = 0
   )
   if (identical(family$link, "inverse") && family$family[1] %in% c("Gamma", "gaussian", "student") && !delta) {
@@ -1255,10 +1259,10 @@ sdmTMB <- function(
      tmb_map <- unmap(tmb_map, "b_epsilon")
   }
   if(stdcurve) {
-    tmb_map$std_phi_0 <- NULL
-    tmb_map$std_phi_1 <- NULL
-    tmb_map$std_beta_0 <- NULL
-    tmb_map$std_beta_1 <- NULL
+    tmb_map$std_xi_2 <- NULL
+    tmb_map$std_xi_3 <- NULL
+    tmb_map$std_xi_0 <- NULL
+    tmb_map$std_xi_1 <- NULL
     tmb_map$std_mu <- NULL
     tmb_map$ln_std_sds <- NULL
     #tmb_map$log_sigma_all_stand <- NULL
@@ -1320,7 +1324,7 @@ sdmTMB <- function(
     tmb_map <- unmap(tmb_map, c("epsilon_re"))
   }
   if(stdcurve) {
-    tmb_random <- c(tmb_random, "std_phi_0", "std_phi_1", "std_beta_0", "std_beta_1")
+    tmb_random <- c(tmb_random, "std_xi_2", "std_xi_3", "std_xi_0", "std_xi_1")
   }
 
   tmb_map$ar1_phi <- as.numeric(tmb_map$ar1_phi) # strip factors
