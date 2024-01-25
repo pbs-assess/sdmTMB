@@ -441,7 +441,7 @@ test_that("A model with s(x, bs = 're') errors", {
   ))
 })
 
-test_that("A model with s(x, bs = 'ps') works", {
+test_that("A model with s(x, bs = 'gp') works", {
   skip_on_cran()
   skip_on_ci()
   d <- subset(pcod, density > 0)

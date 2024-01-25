@@ -84,7 +84,6 @@ spatial and spatiotemporal random fields. bioRxiv
 
 A list of (known) publications that use sdmTMB can be found [here](https://github.com/pbs-assess/sdmTMB/wiki/Publications-using-sdmTMB). Please use the above citation so we can track publications.
 
-
 ## Related software
 
 sdmTMB is heavily inspired by the [VAST](https://github.com/James-Thorson-NOAA/VAST) R package:
@@ -167,11 +166,13 @@ Run some basic sanity checks on our model:
 sanity(fit)
 ```
 
-Use the [ggeffects](https://github.com/strengejacke/ggeffects) package (**the GitHub version until the next ggeffects CRAN update**) to plot the smoother effect:
+Use the [ggeffects](https://github.com/strengejacke/ggeffects) package to plot the smoother effect:
 
 ```{r plot-ggpredict-link, warning=FALSE, message=FALSE}
 ggeffects::ggpredict(fit, "depth [50:400, by=2]") |> plot()
 ```
+
+If the depth effect was parametric and not a penalized smoother, we could have alternatively used `ggeffects::ggeffect()` for a fast marginal effect plot.
 
 Predict on new data:
 

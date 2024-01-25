@@ -253,7 +253,7 @@ test_that("Delta model cross validation works", {
   out_dpg <- sdmTMB_cv(
     density ~ depth_scaled,
     data = pcod_2011, mesh = pcod_mesh_2011, spatial = "off",
-    family = delta_poisson_link_gamma(), k_folds = 2
+    family = delta_gamma(type = "poisson-link"), k_folds = 2
   )
   diff_ll <- out_dpg$sum_loglik - out_dg$sum_loglik
   expect_equal(round(diff_ll, 4), round(-4.629497, 4))

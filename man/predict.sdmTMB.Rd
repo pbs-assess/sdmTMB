@@ -202,7 +202,8 @@ plot_map(predictions, epsilon_st) +
 
 # Visualizing a marginal effect ----------------------------------------
 
-# See the visreg package or the ggeffects::ggeffect() function
+# See the visreg package or the ggeffects::ggeffect() or
+# ggeffects::ggpredict() functions
 # To do this manually:
 
 nd <- data.frame(depth_scaled =
@@ -223,7 +224,7 @@ m_gam <- sdmTMB(
  data = d, formula = density ~ 0 + as.factor(year) + s(depth_scaled, k = 5),
  time = "year", mesh = mesh, family = tweedie(link = "log")
 )
-if (require("visreg", quietly = TRUE)) { # just for help docs
+if (require("visreg", quietly = TRUE)) {
   visreg::visreg(m_gam, "depth_scaled")
 }
 

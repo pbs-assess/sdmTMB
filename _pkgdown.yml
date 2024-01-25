@@ -14,6 +14,8 @@ reference:
   - hbll_s_grid
   - wcvi_grid
   - get_pars
+  - delta_poisson_link_gamma
+  - delta_poisson_link_lognormal
 
 - title: 'Mesh construction'
   desc: |
@@ -56,8 +58,6 @@ reference:
   - delta_lognormal
   - delta_truncated_nbinom1
   - delta_truncated_nbinom2
-  - delta_poisson_link_gamma
-  - delta_poisson_link_lognormal
   - gamma_mix
   - lognormal_mix
   - nbinom2_mix
