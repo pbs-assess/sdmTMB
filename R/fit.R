@@ -701,10 +701,10 @@ sdmTMB <- function(
   assert_that(class(formula) %in% c("formula", "list"))
   assert_that(inherits(data, "data.frame"))
   time_varying_type <- match.arg(time_varying_type)
-  if (!is.null(map) && length(map) != length(start)) {
-    cli_warn(c("`length(map) != length(start)`.",
-      "You likely want to specify `start` values if you are setting the `map` argument."))
-  }
+  # if (!is.null(map) && length(map) != length(start)) {
+  #   cli_warn(c("`length(map) != length(start)`.",
+  #     "You likely want to specify `start` values if you are setting the `map` argument."))
+  # }
 
   if (!is.null(time)) {
     assert_that(time %in% names(data),
@@ -797,8 +797,10 @@ sdmTMB <- function(
     .int <- grep("(Intercept)", colnames(z_i))
     if (sum(.int) > 0) z_i <- z_i[,-.int,drop=FALSE]
     spatial_varying <- colnames(z_i)
+    svc_contrasts <- attr(z_i, which = "contrasts")
   } else {
     z_i <- matrix(0, nrow(data), 0L)
+    svc_contrasts <- NULL
   }
   n_z <- ncol(z_i)
 
@@ -1347,10 +1349,11 @@ sdmTMB <- function(
     cli_abort("Profile not yet working with delta models.")
 
   for (i in seq_along(map)) { # user supplied
-    cli_inform(c(i = paste0("Fixing (mapping) `", names(map)[i],
-      "` at specified starting value(s) of:"),
-      paste0("  ",
-        paste(round(tmb_params[[names(map)[i]]], 3), collapse = ", "))))
+    cli_inform(c(i = paste0("Fixing or mirroring `", names(map)[i], "`")))
+    # ,
+    #   "` at specified starting value(s) of:"),
+    #   paste0("  ",
+    #     paste(round(tmb_params[[names(map)[i]]], 3), collapse = ", "))))
   }
   tmb_map <- c(map, tmb_map) # add user-supplied mapping
 

@@ -517,7 +517,16 @@ predict.sdmTMB <- function(object, newdata = NULL,
 
     # SVC:
     if (!is.null(object$spatial_varying)) {
-      z_i <- model.matrix(object$spatial_varying_formula, newdata)
+      # recreate original data SVC formula stuff:
+      z_i_orig <- model.matrix(object$spatial_varying_formula, object$data)
+      svc_contrasts <- attr(z_i_orig, which = "contrasts")
+      ttsv <- stats::terms(object$spatial_varying_formula)
+      mfsv <- model.frame(ttsv, object$data)
+      mtsv <- attr(mfsv, "terms")
+      xlevelssv <- stats::.getXlevels(mtsv, mfsv)
+      # apply it to prediction data:
+      mfsv_new <- model.frame(ttsv, newdata, xlev = xlevelssv)
+      z_i <- model.matrix(ttsv, mfsv_new, contrasts.arg = svc_contrasts)
       .int <- grep("(Intercept)", colnames(z_i))
       if (sum(.int) > 0) z_i <- z_i[,-.int,drop=FALSE]
     } else {
