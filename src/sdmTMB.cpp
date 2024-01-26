@@ -19,7 +19,7 @@ enum valid_family {
   censored_poisson_family  = 12,
   gamma_mix_family = 13,
   lognormal_mix_family = 14,
-  nbinom2_mix_family = 15, 
+  nbinom2_mix_family = 15,
   censored_nbinom2_family = 16
 };
 
@@ -217,7 +217,7 @@ Type objective_function<Type>::operator()()
 
   DATA_VECTOR(lwr); // lower bound for censpois on counts
   DATA_VECTOR(upr); // upper bound for censpois on counts
-  //DATA_IVECTOR(cens); // boolean to select if nbniom2 is censored
+  DATA_IVECTOR(cens); // boolean to select if nbniom2 is censored
   DATA_INTEGER(poisson_link_delta); // logical
 
   DATA_INTEGER(stan_flag); // logical whether to pass the model to Stan
@@ -842,7 +842,7 @@ Type objective_function<Type>::operator()()
               y_i(i,m) = rnbinom2(s1, s2);
             }
             break;
-          } 
+          }
           case truncated_nbinom2_family: {
             s1 = log(mu_i(i,m)); // log(mu_i)
             s2 = 2. * s1 - ln_phi(m); // log(var - mu)
@@ -855,11 +855,18 @@ Type objective_function<Type>::operator()()
             break;
           }
           case censored_nbinom2_family: {
-            s1 = mu_i(i,m); // mu_i
-            s2 = exp(2. * s1 - ln_phi(m)); // log(var - mu)
-            tmp_ll = sdmTMB::dcensnb2_right(y_i(i,m), s1, s2, upr(i), true);
+            s1 = mu_i(i,m);
+            if (cens(i)) {
+              // density uses size not variance:
+              tmp_ll = sdmTMB::dcensnb2_right(y_i(i,m), s1, phi(m), true);
+              // tmp_ll = dnbinom2(y_i(i,m), s1, s2, true);
+            } else {
+              s1 = log(mu_i(i,m)); // log(mu_i)
+              s2 = 2. * s1 - ln_phi(m); // log(var - mu)
+              tmp_ll = dnbinom_robust(y_i(i,m), s1, s2, true);
+              // tmp_ll = dnbinom(y_i(i,m), s1, phi(m), true);
+            }
             SIMULATE {
-              s1 = mu_i(i,m);
               s2 = mu_i(i,m) * (Type(1) + mu_i(i,m) / phi(m));
               y_i(i,m) = rnbinom2(s1, s2);
             }

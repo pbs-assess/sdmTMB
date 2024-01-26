@@ -14,6 +14,7 @@
 \alias{student}
 \alias{tweedie}
 \alias{censored_poisson}
+\alias{censored_nbinom2}
 \alias{delta_gamma}
 \alias{delta_gamma_mix}
 \alias{delta_lognormal}
@@ -48,6 +49,8 @@ student(link = "identity", df = 3)
 tweedie(link = "log")
 
 censored_poisson(link = "log")
+
+censored_nbinom2(link = "log")
 
 delta_gamma(link1 = "logit", link2 = "log")
 
@@ -119,6 +122,7 @@ truncated_nbinom1(link = "log")
 student(link = "identity")
 tweedie(link = "log")
 censored_poisson(link = "log")
+censored_nbinom2(link = "log")
 delta_gamma()
 delta_gamma_mix()
 delta_lognormal()

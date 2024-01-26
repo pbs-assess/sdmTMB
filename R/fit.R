@@ -1062,6 +1062,7 @@ sdmTMB <- function(
     do_predict = 0L,
     calc_se    = 0L,
     pop_pred   = 0L,
+    cens = if ("cens" %in% names(experimental)) experimental$cens else rep(0L, length(y_i)),
     short_newdata = 0L,
     exclude_RE = rep(0L, ncol(RE_indexes)),
     weights_i  = if (!is.null(weights)) weights else rep(1, length(y_i)),
