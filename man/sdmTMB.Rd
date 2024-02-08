@@ -525,7 +525,7 @@ bioRxiv 2022.03.24.485545; \doi{10.1101/2022.03.24.485545}.
 
 \emph{Reference for local trends:}
 
-Barnett, L.A.K., E.J. Ward, S.C. Anderson. Improving estimates of species
+Barnett, L.A.K., E.J. Ward, S.C. Anderson. 2021. Improving estimates of species
 distribution change by incorporating local trends. Ecography. 44(3):427-439.
 \doi{10.1111/ecog.05176}.
 
@@ -541,14 +541,14 @@ worse in already warmer temperate waters. Fish and Fisheries. 23(1) 239-255.
 \emph{Discussion of and illustration of some decision points when fitting these
 models:}
 
-Commander, C.J.C., Barnett, L.A.K., Ward, E.J., Anderson, S.C., and
-Essington, T.E. 2022. The shadow model: how and why small choices in
+Commander, C.J.C., L.A.K. Barnett, E.J. Ward, S.C. Anderson, T.E.
+Essington. 2022. The shadow model: how and why small choices in
 spatially explicit species distribution models affect predictions. PeerJ 10:
 e12783. \doi{10.7717/peerj.12783}.
 
 \emph{Application and description of threshold/break-point models:}
 
-Essington, T.E. S.C. Anderson, L.A.K. Barnett, H.M. Berger, S.A. Siedlecki,
+Essington, T.E., S.C. Anderson, L.A.K. Barnett, H.M. Berger, S.A. Siedlecki,
 E.J. Ward. 2022. Advancing statistical models to reveal the effect of
 dissolved oxygen on the spatial distribution of marine taxa using thresholds
 and a physiologically based index. Ecography. 2022: e06249
@@ -563,7 +563,7 @@ bioRxiv 2022.04.19.488709. \doi{10.1101/2022.04.19.488709}.
 \emph{Several sections of the original TMB model code were adapted from the
 VAST R package:}
 
-Thorson, J.T., 2019. Guidance for decisions using the Vector Autoregressive
+Thorson, J.T. 2019. Guidance for decisions using the Vector Autoregressive
 Spatio-Temporal (VAST) package in stock, ecosystem, habitat and climate
 assessments. Fish. Res. 210:143–161.
 \doi{10.1016/j.fishres.2018.10.013}.
@@ -573,16 +573,16 @@ the observation likelihoods, general package structure inspiration, and the
 idea behind the TMB prediction approach were adapted from the glmmTMB R
 package:}
 
-Mollie E. Brooks, Kasper Kristensen, Koen J. van Benthem, Arni Magnusson,
-Casper W. Berg, Anders Nielsen, Hans J. Skaug, Martin Maechler and Benjamin
-M. Bolker (2017). glmmTMB Balances Speed and Flexibility Among Packages for
+Brooks, M.E., K. Kristensen, K.J. van Benthem, A. Magnusson,
+C.W. Berg, A. Nielsen, H.J. Skaug, M. Maechler, B.M. Bolker.
+2017. glmmTMB Balances Speed and Flexibility Among Packages for
 Zero-inflated Generalized Linear Mixed Modeling. The R Journal, 9(2):378-400.
 \doi{10.32614/rj-2017-066}.
 
 \emph{Implementation of geometric anisotropy with the SPDE and use of random
 field GLMMs for index standardization}:
 
-Thorson, J.T., Shelton, A.O., Ward, E.J., and Skaug, H.J. 2015.
+Thorson, J.T., A.O. Shelton, E.J. Ward, H.J. Skaug. 2015.
 Geostatistical delta-generalized linear mixed models improve precision for
 estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 72(5): 1297–1310. \doi{10.1093/icesjms/fsu243}.
