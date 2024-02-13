@@ -366,14 +366,24 @@ delta_gamma_mix <- function(link1 = "logit", link2 = "log") {
 #' @examples
 #' delta_gengamma()
 #' @rdname families
-delta_gengamma <- function(link1 = "logit", link2 = "log") {
-  link1 <- match.arg(link1)
-  link2 <- match.arg(link2)
-  f1 <- binomial(link = "logit")
-  f2 <- gengamma(link = "log")
+delta_gengamma <- function(link1 = "logit", link2 = "log", type = c("standard", "poisson-link")) {
+  type <- match.arg(type)
+  l1 <- substitute(link1)
+  if (!is.character(l1)) l1 <- deparse(l1)
+  l2 <- substitute(link2)
+  if (!is.character(l2)) l2 <- deparse(l2)
+  f1 <- binomial(link = l1)
+  f2 <- gengamma(link = l2)
+  if (type == "poisson-link") {
+    .type <- "poisson_link_delta"
+    clean_name <- paste0("delta_gengamma(link1 = '", l1, "', link2 = '", l2, "', type = 'poisson-link')")
+  } else {
+    .type <- "standard"
+    clean_name <- paste0("delta_gengamma(link1 = '", l1, "', link2 = '", l2, "')")
+  }
   structure(list(f1, f2, delta = TRUE, link = c("logit", "log"),
-       family = c("binomial", "gengamma"),
-       clean_name = "delta_gengamma(link1 = 'logit', link2 = 'log')"), class = "family")
+    type = .type, family = c("binomial", "gengamma"),
+    clean_name = clean_name), class = "family")
 }
 
 #' @export
