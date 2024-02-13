@@ -12,7 +12,6 @@ test_that("Delta-Gamma family fits", {
   )
   fit_dg$sd_report
   nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
-  p <- predict(fit_dg, newdata = nd)
 
   expect_equal(
     round(tidy(fit_dg, "ran_pars", model = 1)$estimate, 3),
