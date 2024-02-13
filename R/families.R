@@ -341,6 +341,20 @@ delta_gamma_mix <- function(link1 = "logit", link2 = "log") {
 
 #' @export
 #' @examples
+#' delta_gengamma()
+#' @rdname families
+delta_gengamma <- function(link1 = "logit", link2 = "log") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "logit")
+  f2 <- gengamma(link = "log")
+  structure(list(f1, f2, delta = TRUE, link = c("logit", "log"),
+       family = c("binomial", "gengamma"),
+       clean_name = "delta_gengamma(link1 = 'logit', link2 = 'log')"), class = "family")
+}
+
+#' @export
+#' @examples
 #' delta_lognormal()
 #' @rdname families
 delta_lognormal <- function(link1 = "logit", link2 = "log") {
