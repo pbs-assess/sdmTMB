@@ -76,14 +76,13 @@ To cite sdmTMB in publications use:
 citation("sdmTMB")
 ```
 
-Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett.
+Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett., J.T. Thorson.
 2022. sdmTMB: an R package for fast, flexible, and
 user-friendly generalized linear mixed effects models with
 spatial and spatiotemporal random fields. bioRxiv
 2022.03.24.485545; doi: <https://doi.org/10.1101/2022.03.24.485545>
 
 A list of (known) publications that use sdmTMB can be found [here](https://github.com/pbs-assess/sdmTMB/wiki/Publications-using-sdmTMB). Please use the above citation so we can track publications.
-
 
 ## Related software
 
@@ -167,11 +166,13 @@ Run some basic sanity checks on our model:
 sanity(fit)
 ```
 
-Use the [ggeffects](https://github.com/strengejacke/ggeffects) package (**the GitHub version until the next ggeffects CRAN update**) to plot the smoother effect:
+Use the [ggeffects](https://github.com/strengejacke/ggeffects) package to plot the smoother effect:
 
 ```{r plot-ggpredict-link, warning=FALSE, message=FALSE}
 ggeffects::ggpredict(fit, "depth [50:400, by=2]") |> plot()
 ```
+
+If the depth effect was parametric and not a penalized smoother, we could have alternatively used `ggeffects::ggeffect()` for a fast marginal effect plot.
 
 Predict on new data:
 
