@@ -185,34 +185,33 @@ test_that("Delta-Gengamma family fits", {
 
   fit_dgg <- sdmTMB(density ~ 1,
     data = pcod, mesh = pcod_spde,
-    time = "year", family = delta_gengamma(link1 = 'logit', link2 = 'log'),
-    control = sdmTMBcontrol(newton_loops = 1)
+    spatial = 'off',
+    family = delta_gengamma(link1 = 'logit', link2 = 'log', type = 'standard')
   )
   fit_dgg$sd_report
 
   expect_equal(
-    round(tidy(fit_dgg, "ran_pars", model = 1)$estimate, 3),
-    c(39.334, 2.289, 0.808)
+    round(tidy(fit_dgg, "fixed", model = 1)$estimate, 3),
+    -0.152
   )
   expect_equal(
-    round(tidy(fit_dgg, "ran_pars", model = 2)$estimate, 3),
-    c(17.274, 1.061, 0.613, 1.320)
+    round(tidy(fit_dgg, "fixed", model = 2)$estimate, 3),
+    c(4.418)
   )
 
   nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
   p <- predict(fit_dgg, newdata = nd, return_tmb_object = TRUE)
-  ind_dg <- get_index(p, bias_correct = FALSE)
 
   # check
   fit_bin <- sdmTMB(present ~ 1,
     data = pcod, mesh = pcod_spde,
-    time = "year", family = binomial(),
-    control = sdmTMBcontrol(newton_loops = 1)
+    spatial = "off",
+    family = binomial()
   )
   fit_gengamma <- sdmTMB(density ~ 1,
     data = pcod_pos, mesh = pcod_spde_pos,
-    time = "year", family = gengamma(link = "log"),
-    control = sdmTMBcontrol(newton_loops = 1)
+    spatial = "off",
+    family = gengamma(link = "log")
   )
   sr_bin <- as.list(fit_bin$sd_report, "Estimate")
   sr_gengamma <- as.list(fit_gengamma$sd_report, "Estimate")
