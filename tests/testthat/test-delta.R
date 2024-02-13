@@ -179,3 +179,49 @@ test_that("Anisotropy with delta model", {
   expect_equal(sr_gamma$ln_tau_E, sr_dg$ln_tau_E[2], tolerance = 1e-4)
   expect_equal(sr_gamma$ln_kappa[1,1], sr_dg$ln_kappa[1,2], tolerance = 1e-4)
 })
+
+test_that("Delta-Gengamma family fits", {
+  skip_on_cran()
+
+  fit_dgg <- sdmTMB(density ~ 1,
+    data = pcod, mesh = pcod_spde,
+    time = "year", family = delta_gengamma(link1 = 'logit', link2 = 'log'),
+    control = sdmTMBcontrol(newton_loops = 1)
+  )
+  fit_dgg$sd_report
+
+  expect_equal(
+    round(tidy(fit_dgg, "ran_pars", model = 1)$estimate, 3),
+    c(39.334, 2.289, 0.808)
+  )
+  expect_equal(
+    round(tidy(fit_dgg, "ran_pars", model = 2)$estimate, 3),
+    c(17.274, 1.061, 0.613, 1.320)
+  )
+
+  nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
+  p <- predict(fit_dgg, newdata = nd, return_tmb_object = TRUE)
+  ind_dg <- get_index(p, bias_correct = FALSE)
+
+  # check
+  fit_bin <- sdmTMB(present ~ 1,
+    data = pcod, mesh = pcod_spde,
+    time = "year", family = binomial(),
+    control = sdmTMBcontrol(newton_loops = 1)
+  )
+  fit_gengamma <- sdmTMB(density ~ 1,
+    data = pcod_pos, mesh = pcod_spde_pos,
+    time = "year", family = gengamma(link = "log"),
+    control = sdmTMBcontrol(newton_loops = 1)
+  )
+  sr_bin <- as.list(fit_bin$sd_report, "Estimate")
+  sr_gengamma <- as.list(fit_gengamma$sd_report, "Estimate")
+  sr_dgg <- as.list(fit_dgg$sd_report, "Estimate")
+  expect_equal(sr_bin$b_j[1], sr_dgg$b_j[1], tolerance = 1e-4)
+  expect_equal(sr_gengamma$b_j[1], sr_dgg$b_j2[1], tolerance = 1e-4)
+  expect_equal(sr_gengamma$ln_phi, sr_dgg$ln_phi[2], tolerance = 1e-4)
+  expect_equal(sr_gengamma$ln_tau_O, sr_dgg$ln_tau_O[2], tolerance = 1e-4)
+  expect_equal(sr_gengamma$ln_tau_E, sr_dgg$ln_tau_E[2], tolerance = 1e-4)
+  expect_equal(sr_gengamma$ln_kappa[1,1], sr_dgg$ln_kappa[1,2], tolerance = 1e-4)
+  expect_equal(sr_bin$ln_kappa[1,1], sr_dgg$ln_kappa[1,1], tolerance = 1e-4)
+})
