@@ -224,3 +224,17 @@ test_that("Delta-Gengamma family fits", {
   expect_equal(sr_gengamma$ln_kappa[1,1], sr_dgg$ln_kappa[1,2], tolerance = 1e-4)
   expect_equal(sr_bin$ln_kappa[1,1], sr_dgg$ln_kappa[1,1], tolerance = 1e-4)
 })
+
+test_that("delta_gengamma() Poisson-link family fits", {
+  skip_on_cran()
+  skip_on_ci()
+
+  fit_pgg <- sdmTMB(density ~ 1,
+    data = pcod, mesh = pcod_spde,
+    spatial = "off",
+    family = delta_gengamma(link1 = 'log', link2 = 'log', type = "poisson-link")
+  )
+  fit_pgg$sd_report
+  s <- as.list(fit_pgg$sd_report, "Std. Error")
+  expect_true(sum(is.na(s$b_j)) == 0L)
+})
