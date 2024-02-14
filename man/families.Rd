@@ -17,6 +17,7 @@
 \alias{censored_poisson}
 \alias{delta_gamma}
 \alias{delta_gamma_mix}
+\alias{delta_gengamma}
 \alias{delta_lognormal}
 \alias{delta_lognormal_mix}
 \alias{delta_truncated_nbinom2}
@@ -59,6 +60,12 @@ delta_gamma(
 )
 
 delta_gamma_mix(link1 = "logit", link2 = "log")
+
+delta_gengamma(
+  link1 = "logit",
+  link2 = "log",
+  type = c("standard", "poisson-link")
+)
 
 delta_lognormal(
   link1 = "logit",
@@ -103,6 +110,11 @@ Additional families compatible with \code{\link[=sdmTMB]{sdmTMB()}}.
 deprecated in favour of \code{delta_gamma(type = "poisson-link")} and
 \code{delta_lognormal(type = "poisson-link")}.
 
+The \code{gengamma()} family was implemented by J.T. Thorson and uses the Prentice
+(1974) parameterization such that the lognormal occurs as the internal
+parameter \code{gengamma_Q} (reported in \code{print()} as "Generalized gamma lambda")
+approaches 0.
+
 The families ending in \verb{_mix()} are 2-component mixtures where each
 distribution has its own mean but a shared scale parameter.
 (Thorson et al. 2011). See the model-description vignette for details.
@@ -135,6 +147,7 @@ tweedie(link = "log")
 censored_poisson(link = "log")
 delta_gamma()
 delta_gamma_mix()
+delta_gengamma()
 delta_lognormal()
 delta_lognormal_mix()
 delta_truncated_nbinom2()
