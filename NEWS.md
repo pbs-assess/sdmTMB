@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Issue error if `time` column has NAs. #298 #299
+
 * Fix bug in `get_cog(..., format = "wide")` where the time column was
   hardcoded to `"year"` by accident.
 
