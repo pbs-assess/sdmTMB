@@ -709,6 +709,8 @@ sdmTMB <- function(
   if (!is.null(time)) {
     assert_that(time %in% names(data),
       msg = "Specified `time` column is missing from `data`.")
+    assert_that(sum(is.na(as.numeric(data[[time]]))) == 0L,
+      msg = "Specified `time` column can't be coerced to a numeric value or contains NAs. Please remove any NAs in the time column.")
   }
   if (is.null(time)) {
     time <- "_sdmTMB_time"

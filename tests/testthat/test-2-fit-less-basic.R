@@ -507,3 +507,15 @@ test_that("sdmTMB throws error on AR1/RW with non-numeric time", {
       mesh = pcod_mesh_2011
     ))
 })
+
+test_that("Time with an NA gets flagged", {
+  skip_on_cran()
+  d <- pcod_2011
+  d$yr <- as.character(d$year)
+  d$yr[2] <- NA
+  expect_error({
+    m <- sdmTMB(density ~ 1, time = "yr", spatial = "off", spatiotemporal = "off", data = d)
+  }, regexp = "time")
+})
+
+
