@@ -7,7 +7,6 @@ name: R-CMD-check-with-valgrind2
 
 jobs:
   R-CMD-check:
-    if: contains(github.event.head_commit.message, '[valgrind]')
     runs-on: ${{ matrix.config.os }}
 
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})

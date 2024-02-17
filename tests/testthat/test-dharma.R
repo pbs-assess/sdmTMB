@@ -24,7 +24,7 @@ test_that("simulate() and dharma_residuals() work", {
   # fit <- sdmTMB(density ~ 1,
   #   data = pcod, mesh = mesh,
   #   spatial = "off",
-  #   family = delta_poisson_link_gamma()
+  #   family = delta_gamma(type = "poisson-link")
   # )
   # s <- simulate(fit, nsim = 100)
   # expect_equal(ncol(s), 100)

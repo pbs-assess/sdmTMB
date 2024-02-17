@@ -62,13 +62,13 @@ test_that("Delta-lognormal family fits", {
   expect_true(sum(is.na(s$b_j)) == 0L)
 })
 
-test_that("delta_poisson_link_gamma() family fits", {
+test_that("delta_gamma() Poisson-link family fits", {
   skip_on_cran()
 
   fit_plg <- sdmTMB(density ~ 1,
     data = pcod, mesh = pcod_spde,
     spatial = "off",
-    family = delta_poisson_link_gamma()
+    family = delta_gamma(type = "poisson-link")
   )
   fit_plg$sd_report
   s <- as.list(fit_plg$sd_report, "Std. Error")
@@ -79,14 +79,14 @@ test_that("delta_poisson_link_gamma() family fits", {
   # expect_error(p <- predict(fit_plg, newdata = NULL, type = "response"))
 })
 
-test_that("delta_poisson_link_lognormal() family fits", {
+test_that("delta_lognormal() Poisson-link family fits", {
   skip_on_cran()
   skip_on_ci()
 
   fit_plg <- sdmTMB(density ~ 1,
     data = pcod, mesh = pcod_spde,
     spatial = "off",
-    family = delta_poisson_link_lognormal()
+    family = delta_lognormal(type = "poisson-link")
   )
   fit_plg$sd_report
   s <- as.list(fit_plg$sd_report, "Std. Error")

@@ -1,5 +1,17 @@
 # sdmTMB (development version)
 
+* Poisson-link delta models now use a `type` argument in `delta_gamma()` and
+  `delta_lognormal()`. `delta_poisson_link_gamma()` and
+  `delta_poisson_link_lognormal()` are deprecated. #290
+  
+* Delta families can now pass links that are different from the default 
+  `"logit"` and `"log"`. #290
+
+# sdmTMB 0.4.2
+
+* Force rebuild of CRAN binaries to fix issue with breaking Matrix ABI change
+  causing `NaN gradient` errors. #288 #287
+
 * Fix crash in if `sdmTMB(..., do_index = TRUE)` and `extra_time` supplied along
   with `predict_args = list(newdata = ...)` that lacked `extra_time` elements.
 
