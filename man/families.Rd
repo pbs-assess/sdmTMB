@@ -12,6 +12,7 @@
 \alias{truncated_nbinom2}
 \alias{truncated_nbinom1}
 \alias{student}
+\alias{stdcurve}
 \alias{tweedie}
 \alias{censored_poisson}
 \alias{delta_gamma}
@@ -23,6 +24,7 @@
 \alias{delta_poisson_link_gamma}
 \alias{delta_poisson_link_lognormal}
 \alias{delta_beta}
+\alias{delta_gaussian}
 \title{Additional families}
 \usage{
 Beta(link = "logit")
@@ -44,6 +46,8 @@ truncated_nbinom2(link = "log")
 truncated_nbinom1(link = "log")
 
 student(link = "identity", df = 3)
+
+stdcurve(link = "identity")
 
 tweedie(link = "log")
 
@@ -74,6 +78,8 @@ delta_poisson_link_gamma(link1 = "log", link2 = "log")
 delta_poisson_link_lognormal(link1 = "log", link2 = "log")
 
 delta_beta(link1 = "logit", link2 = "logit")
+
+delta_gaussian(link1 = "logit", link2 = "identity")
 }
 \arguments{
 \item{link}{Link.}
@@ -127,6 +133,7 @@ nbinom1(link = "log")
 truncated_nbinom2(link = "log")
 truncated_nbinom1(link = "log")
 student(link = "identity")
+stdcurve(link = "identity")
 tweedie(link = "log")
 censored_poisson(link = "log")
 delta_gamma()
@@ -136,6 +143,7 @@ delta_lognormal_mix()
 delta_truncated_nbinom2()
 delta_truncated_nbinom1()
 delta_beta()
+delta_gaussian()
 }
 \references{
 \emph{Families ending in \verb{_mix()}}:

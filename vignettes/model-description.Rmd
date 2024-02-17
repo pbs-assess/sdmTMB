@@ -390,10 +390,34 @@ $$
   \mu_{\boldsymbol{s},t} &= f^{-1} \left( \ldots + O_{\boldsymbol{s},t} + \ldots \right),
 \end{aligned}
 $$
-
 where $O_{\boldsymbol{s},t}$ is an offset term---a **log transformed** variable without a coefficient (assuming a log link).
 The offset is *not* included in the prediction.
 Therefore, if `offset` represents a measure of effort, for example, the prediction is for one unit of effort (`log(1) = 0`).
+
+## Standard curve models
+
+Applications focused on environmental DNA (eDNA) require slight modifications to the main formula, as well as a secondary dataset. PCR allows for the detection and quantification of DNA by producing a signal proportional to the amount of DNA amplified during each PCR cycle; by regressing cycle threshold (Ct) values against known DNA concentrations produces a standard curve that can be used to predict DNA signals in unknown samples. Keeping all other components of the latent model the same, models with the standard curve have a delta observation model, with the positive model describing the positive distribution of Ct values as
+
+$$
+y_{\boldsymbol{s},t} \sim Normal(\xi_{0,i} + \xi_{1,i} \cdot \mu_{\boldsymbol{s},t}, \phi)
+$$
+
+such that the presence absence model describing whether or not Ct values are exceeded is   
+
+$$
+y_{\boldsymbol{s},t} \sim Ber(\mathrm{logit}^{-1} (\xi_{2,i} + \xi_{3,i} \cdot \mu_{\boldsymbol{s},t}))
+$$
+Each of the $\xi$ intercept and slope coefficients is indexed by the PCR plate number $i$. These parameters are modeled as hierarchical random effects such that 
+
+$$
+\begin{align*}
+\xi_{0,i} &\sim \text{Normal}(\mu_{\xi_{0}}, \sigma_{\xi_{0}}) \\
+\xi_{1,i} &\sim \text{Normal}(\mu_{\xi_{1}}, \sigma_{\xi_{1}}) \\
+\xi_{2,i} &\sim \text{Normal}(\mu_{\xi_{2}}, \sigma_{\xi_{2}}) \\
+\xi_{3,i} &\sim \text{Normal}(\mu_{\xi_{3}}, \sigma_{\xi_{3}})
+\end{align*}
+$$
+Estimation of the $\xi$ terms and their respective hyperparameters is not possible with observational data alone -- but is possible if lab data exists, using the same PCR plates. For this reason, eDNA applications in sdmTMB require an additional dataset passed in with these observations. See the eDNA vignette for more information.  
 
 # Observation model families
 

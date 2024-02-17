@@ -245,6 +245,24 @@ student <- function(link = "identity", df = 3) {
 }
 
 #' @export
+#' @rdname families
+#' @examples
+#' stdcurve(link = "identity")
+stdcurve <- function(link = "identity") {
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("identity")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link))
+    stats <- stats::make.link(link)
+
+  x <- c(list(family = "stdcurve", link = linktemp), stats)
+  add_to_family(x)
+}
+
+#' @export
 #' @examples
 #' tweedie(link = "log")
 #' @rdname families
@@ -418,4 +436,18 @@ delta_beta <- function(link1 = "logit", link2 = "logit") {
   structure(list(f1, f2, delta = TRUE, link = c("logit", "logit"),
        family = c("binomial", "Beta"),
        clean_name = "delta_beta(link1 = 'logit', link2 = 'logit')"), class = "family")
+}
+
+#' @export
+#' @examples
+#' delta_gaussian()
+#' @rdname families
+delta_gaussian <- function(link1 = "logit", link2 = "identity") {
+  link1 <- match.arg(link1)
+  link2 <- match.arg(link2)
+  f1 <- binomial(link = "logit")
+  f2 <- gaussian(link = "identity")
+  structure(list(f1, f2, delta = TRUE, link = c("logit", "identity"),
+                 family = c("binomial", "gaussian"),
+                 clean_name = "delta_gaussian(link1 = 'logit', link2 = 'identity')"), class = "family")
 }

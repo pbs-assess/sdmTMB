@@ -19,7 +19,8 @@ enum valid_family {
   censored_poisson_family  = 12,
   gamma_mix_family = 13,
   lognormal_mix_family = 14,
-  nbinom2_mix_family = 15
+  nbinom2_mix_family = 15,
+  stdcurve_family = 16
 };
 
 enum valid_link {
@@ -219,9 +220,21 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(poisson_link_delta); // logical
 
   DATA_INTEGER(stan_flag); // logical whether to pass the model to Stan
-  // ------------------ Parameters ---------------------------------------------
 
-  // Parameters
+  // optional pieces of data for standards curve
+  DATA_INTEGER(stdcurve_flag); // whether or not to use standard curves for eDNA
+  DATA_INTEGER(N_stand_bin);
+  DATA_INTEGER(N_stand_pos);
+  DATA_VECTOR(bin_stand); // N_stand_bin
+  DATA_VECTOR(pos_stand); // N_stand_pos
+  DATA_VECTOR(D_bin_stand); // Covariates (standards) (log counts) N_stand_bin
+  DATA_VECTOR(D_pos_stand); // Covariates (standards) (log counts) N_stand_pos
+  DATA_IVECTOR(pcr_stand_bin_idx); // N_stand_bin
+  DATA_IVECTOR(pcr_stand_pos_idx); // N_stand_pos
+  DATA_IVECTOR(pcr_idx); // plate indices
+  //DATA_SCALAR(stand_offset);
+
+  // ------------------ Parameters ---------------------------------------------
   // Fixed effects
   PARAMETER_VECTOR(b_j);  // fixed effect parameters
   PARAMETER_VECTOR(b_j2);  // fixed effect parameters delta2 part
@@ -252,6 +265,15 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(epsilon_re);
   PARAMETER_ARRAY(b_smooth);  // P-spline smooth parameters
   PARAMETER_ARRAY(ln_smooth_sigma);  // variances of spline REs if included
+
+  // optional parameters for standards curve
+  PARAMETER_VECTOR(std_xi_2); //[N_pcr]
+  PARAMETER_VECTOR(std_xi_3); //[N_pcr]
+  PARAMETER_VECTOR(std_xi_0); //[N_pcr]
+  PARAMETER_VECTOR(std_xi_1); //[N_pcr]
+  PARAMETER_VECTOR(std_mu); //[4]
+  PARAMETER_VECTOR(ln_std_sigma); //[4]
+  //PARAMETER(log_sigma_all_stand);
 
   // Joint negative log-likelihood
   Type jnll = 0.;
@@ -683,10 +705,60 @@ Type objective_function<Type>::operator()()
 
   vector<Type> poisson_link_m0_ll(n_i);
 
+  //Type sigma_all_stand;
+
+  if(stdcurve_flag == 1) {
+    // Presence-Absence component of model.
+    vector<Type> theta_stand(N_stand_bin);
+    vector<Type> std_sigma = exp(ln_std_sigma);
+
+    for(int i = 0; i < std_xi_2.size(); i++){
+      jnll -= dnorm(std_xi_2(i), std_mu(2), std_sigma(2), true);//phi_0 ~ normal(2, 2)
+      jnll -= dnorm(std_xi_3(i), std_mu(3), std_sigma(3), true);//phi_1 ~ normal(4, 2)
+    }
+    for(int i = 0; i < N_stand_bin; i++){ // likelihood
+      theta_stand(i) = std_xi_2(pcr_stand_bin_idx(i)) + std_xi_3(pcr_stand_bin_idx(i)) * (D_bin_stand(i));// - stand_offset);
+      jnll -= dbinom_robust(bin_stand(i), Type(1), theta_stand(i), true); // likelihood
+    }
+    // Positive component of model.
+    for(int i = 0; i < std_xi_0.size(); i++){
+      jnll -= dnorm(std_xi_0(i), std_mu(0), std_sigma(0), true);//beta_0 ~ normal(40,5)
+      jnll -= dnorm(std_xi_1(i), std_mu(1), std_sigma(1), true);//beta_1 ~ normal(-3.32,0.1)
+    }
+    vector<Type> kappa_stand(N_stand_pos);
+    //sigma_all_stand = exp(log_sigma_all_stand);
+    for(int i = 0; i < N_stand_pos; i++){
+      kappa_stand(i) = std_xi_0(pcr_stand_pos_idx(i)) + std_xi_1(pcr_stand_pos_idx(i)) * (D_pos_stand(i));// - stand_offset);
+      jnll -= dnorm(pos_stand(i), kappa_stand(i), phi(0), true); // likelihood
+    }
+
+    REPORT(std_xi_0);
+    REPORT(std_xi_1);
+    REPORT(std_xi_2);
+    REPORT(std_xi_3);
+    REPORT(std_mu);
+    REPORT(std_sigma);
+    REPORT(ln_std_sigma);
+    //REPORT(sigma_all_stand);
+    ADREPORT(std_xi_0);
+    ADREPORT(std_xi_1);
+    ADREPORT(std_xi_2);
+    ADREPORT(std_xi_3);
+    ADREPORT(std_mu);
+    ADREPORT(std_sigma);
+    ADREPORT(ln_std_sigma);
+    //ADREPORT(sigma_all_stand);
+    REPORT(theta_stand);
+    REPORT(kappa_stand);
+    ADREPORT(theta_stand);
+    ADREPORT(kappa_stand);
+  }
+
   // combine parts:
   for (int m = 0; m < n_m; m++) {
     for (int i = 0; i < n_i; i++) {
       eta_i(i,m) = eta_fixed_i(i,m) + eta_smooth_i(i,m);
+
       if ((n_m == 2 && m == 1) || n_m == 1) {
         if (!poisson_link_delta) eta_i(i,m) += offset_i(i);
       }
@@ -779,6 +851,7 @@ Type objective_function<Type>::operator()()
 
   vector<Type> jnll_obs(n_i); // for cross validation
   jnll_obs.setZero();
+  tmp_ll = 0;
   for (int m = 0; m < n_m; m++) PARALLEL_REGION {
     for (int i = 0; i < n_i; i++) {
       if (!sdmTMB::isNA(y_i(i,m))) {
@@ -807,8 +880,7 @@ Type objective_function<Type>::operator()()
             } else {
               tmp_ll = dbinom_robust(y_i(i,m), size(i), mu_i(i,m), true);
             }
-            // SIMULATE{y_i(i,m) = rbinom(size(i), InverseLink(mu_i(i,m), link(m)));}
-            SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));} // hardcoded invlogit b/c mu_i in logit space
+            SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));}
             break;
           }
           case poisson_family: {
@@ -931,6 +1003,16 @@ Type objective_function<Type>::operator()()
               y_i(i,m) = rnbinom2(s1_large, s2_large);
             }
           }
+          break;
+        }
+        case stdcurve_family: {
+          if(y_i(i,m) > 0) {
+            tmp_ll = dnorm(y_i(i,m), std_xi_0(pcr_idx(i)) + std_xi_1(pcr_idx(i)) * mu_i(i,m), phi(m), true);
+            tmp_ll += dbinom_robust(Type(1), size(i), std_xi_2(pcr_idx(i)) + std_xi_3(pcr_idx(i)) * mu_i(i,m), true);
+          } else {
+            tmp_ll = dbinom_robust(Type(0), size(i), std_xi_2(pcr_idx(i)) + std_xi_3(pcr_idx(i)) * mu_i(i,m), true);
+          }
+          SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(std_xi_2(pcr_idx(i)) + std_xi_3(pcr_idx(i)) * mu_i(i,m))) * rnorm(std_xi_0(pcr_idx(i)) + std_xi_1(pcr_idx(i)) * mu_i(i,m), phi(m));}
           break;
         }
         default:

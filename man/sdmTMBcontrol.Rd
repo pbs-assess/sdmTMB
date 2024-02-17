@@ -22,6 +22,7 @@ sdmTMBcontrol(
   profile = FALSE,
   get_joint_precision = TRUE,
   parallel = getOption("sdmTMB.cores", 1L),
+  stdcurve_df = NULL,
   ...
 )
 }
@@ -101,6 +102,12 @@ experimental at this stage.}}
 cores, as an example, use \code{TMB::openmp(n = 3, DLL = "sdmTMB")}. But be
 careful, because it's not always faster with more cores and there is
 definitely an upper limit.}
+
+\item{stdcurve_df}{The dataframe containing the data for standard curve estimation.
+The critical names in the data are \code{plate} indicating the PCR plate, \code{Ct} indicating
+the PCR cycle count at which exponential DNA amplification was detected. If Ct is NA,
+no amplification was observed, \code{known_conc_ul} the known concentration of DNA that was
+spiked into the standards to build the standard curve}
 
 \item{...}{Anything else. See the 'Control parameters' section of
 \code{\link[stats:nlminb]{stats::nlminb()}}.}

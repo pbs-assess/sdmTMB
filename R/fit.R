@@ -26,11 +26,14 @@ NULL
 #'   \code{\link[sdmTMB:families]{truncated_nbinom1()}},
 #'   \code{\link[sdmTMB:families]{censored_poisson()}},
 #'   \code{\link[sdmTMB:families]{gamma_mix()}},
+#'   \code{\link[sdmTMB:families]{nbinom2_mix()}},
+#'   \code{\link[sdmTMB:families]{stdcurve()}},
 #'   \code{\link[sdmTMB:families]{lognormal_mix()}},
 #'   \code{\link[sdmTMB:families]{student()}}, and
 #'   \code{\link[sdmTMB:families]{tweedie()}}. Supports the delta/hurdle models:
 #'   \code{\link[sdmTMB:families]{delta_beta()}},
 #'   \code{\link[sdmTMB:families]{delta_gamma()}},
+#'   \code{\link[sdmTMB:families]{delta_gaussian()}},
 #'   \code{\link[sdmTMB:families]{delta_gamma_mix()}},
 #'   \code{\link[sdmTMB:families]{delta_lognormal_mix()}},
 #'   \code{\link[sdmTMB:families]{delta_lognormal()}}, and
@@ -588,6 +591,14 @@ sdmTMB <- function(
   data <- droplevels(data) # if data was subset, strips absent factors
 
   delta <- isTRUE(family$delta)
+  stdcurve <- ifelse(is.null(control$stdcurve_df), FALSE, TRUE)
+  if(stdcurve) {
+    family <- stdcurve()
+    if("plate" %in% names(control$stdcurve_df) == FALSE) cli_abort("`plate` must be a column in the standards dataframe")
+    if("Ct" %in% names(control$stdcurve_df) == FALSE) cli_abort("`Ct` must be a column in the standards dataframe")
+    if("known_conc_ul" %in% names(control$stdcurve_df) == FALSE) cli_abort("`known_conc_ul` must be a column in the standards dataframe")
+    if("plate" %in% names(data) == FALSE) cli_abort("`plate` must be a column in the input dataframe")
+  }
   n_m <- if (delta) 2L else 1L
 
   if (!missing(spatial)) {
@@ -676,10 +687,11 @@ sdmTMB <- function(
   upper <- control$upper
   get_joint_precision <- control$get_joint_precision
   upr <- control$censored_upper
+  stdcurve_df <- control$stdcurve_df
 
   dot_checks <- c("lower", "upper", "profile", "parallel", "censored_upper",
     "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",
-    "newton_loops", "start", "map", "get_joint_precision", "normalize")
+    "newton_loops", "start", "map", "get_joint_precision", "normalize","stdcurve_df")
   .control <- control
   # FIXME; automate this from sdmTMcontrol args?
   for (i in dot_checks) .control[[i]] <- NULL # what's left should be for nlminb
@@ -1127,6 +1139,49 @@ sdmTMB <- function(
     no_spatial = no_spatial
   )
 
+  tmb_data$stdcurve_flag <- as.numeric(stdcurve)
+  if(stdcurve) {
+    # process standards data
+    stdcurve_df$present <- ifelse(stdcurve_df$Ct > 0, 1, 0)
+    #stdcurve_df$plate_n <- as.numeric(as.factor(stdcurve_df$plate))
+    plates <- data.frame(plate = levels(as.factor(stdcurve_df$plate)))
+    plates$id <- seq_len(nrow(plates))
+    stdcurve_df$plate_n <- plates$id[match(stdcurve_df$plate, plates$plate)]
+    n_pcr <- nrow(plates)
+    # also add plate number (index) to main dataframe
+    tmb_data$pcr_idx <- plates$id[match(data$plate, plates$plate)] - 1L # -1 for index -> 0
+
+    pos_indx <- which(stdcurve_df$Ct > 0)
+    tmb_data$N_stand_bin <- nrow(stdcurve_df)
+    tmb_data$N_stand_pos <- length(pos_indx)
+    tmb_data$bin_stand <- stdcurve_df$present
+    tmb_data$pos_stand <- stdcurve_df$Ct[pos_indx]
+    tmb_data$D_bin_stand <- log(stdcurve_df$known_conc_ul) # could change to log10
+    tmb_data$D_pos_stand <- log(stdcurve_df$known_conc_ul[pos_indx])# could change to log10
+    tmb_data$pcr_stand_bin_idx <- stdcurve_df$plate_n - 1L # -1 for index -> 0
+    tmb_data$pcr_stand_pos_idx <- stdcurve_df$plate_n[pos_indx] - 1L
+    #pcr_pos_indx <- which(data$Ct > 0)
+    #tmb_data$N_pcr_pos <- length(pcr_pos_indx)
+    #tmb_data$pcr_pos <- data$Ct[pcr_pos_indx]
+    #tmb_data$pcr_pos_idx <- tmb_data$pcr_idx[pcr_pos_indx]
+    #tmb_data$stand_offset <- 0
+  } else {
+    tmb_data$N_stand_bin <- 0L
+    tmb_data$N_stand_pos <- 0L
+    tmb_data$bin_stand <- 0L
+    tmb_data$pos_stand <- 0
+    tmb_data$D_bin_stand <- 0
+    tmb_data$D_pos_stand <- 0
+    tmb_data$pcr_stand_bin_idx <- 0L
+    tmb_data$pcr_stand_pos_idx <- 0L
+    tmb_data$pcr_idx <- 0L
+    #tmb_data$pcr_bin <- 0L
+    #tmb_data$N_pcr_pos <- 0L
+    #tmb_data$pcr_pos <- 0L
+    #tmb_data$pcr_pos_idx <- 0L
+    n_pcr <- 1
+  }
+
   if(is.na(sum(nobs_RE))) {
     cli_abort("One of the groups used in the factor levels is NA - please remove")
   }
@@ -1161,7 +1216,14 @@ sdmTMB <- function(
     ln_epsilon_re_sigma = rep(0, n_m),
     epsilon_re = matrix(0, tmb_data$n_t, n_m),
     b_smooth = if (sm$has_smooths) matrix(0, sum(sm$sm_dims), n_m) else array(0),
-    ln_smooth_sigma = if (sm$has_smooths) matrix(0, length(sm$sm_dims), n_m) else array(0)
+    ln_smooth_sigma = if (sm$has_smooths) matrix(0, length(sm$sm_dims), n_m) else array(0),
+    std_xi_2 = rep(0, n_pcr),
+    std_xi_3 = rep(0, n_pcr),
+    std_xi_0 = rep(0, n_pcr),
+    std_xi_1 = rep(0, n_pcr),
+    std_mu = c(40, -3.32, 2, 4), # order: phi0, phi1, beta0, beta1
+    ln_std_sigma = c(0,-2,0,0)#log(c(2, 2, 5, 0.1)) # order: phi0, phi1, beta0, beta1
+    #log_sigma_all_stand = 0
   )
   if (identical(family$link, "inverse") && family$family[1] %in% c("Gamma", "gaussian", "student") && !delta) {
     fam <- family
@@ -1202,6 +1264,15 @@ sdmTMB <- function(
   }
   if (est_epsilon_slope == 1L) {
      tmb_map <- unmap(tmb_map, "b_epsilon")
+  }
+  if(stdcurve) {
+    tmb_map$std_xi_2 <- NULL
+    tmb_map$std_xi_3 <- NULL
+    tmb_map$std_xi_0 <- NULL
+    tmb_map$std_xi_1 <- NULL
+    tmb_map$std_mu <- NULL
+    tmb_map$ln_std_sds <- NULL
+    #tmb_map$log_sigma_all_stand <- NULL
   }
 
   if (multiphase && is.null(previous_fit) && do_fit) {
@@ -1258,6 +1329,9 @@ sdmTMB <- function(
   if (est_epsilon_re) {
     tmb_random <- c(tmb_random, "epsilon_re")
     tmb_map <- unmap(tmb_map, c("epsilon_re"))
+  }
+  if(stdcurve) {
+    tmb_random <- c(tmb_random, "std_xi_2", "std_xi_3", "std_xi_0", "std_xi_1")
   }
 
   tmb_map$ar1_phi <- as.numeric(tmb_map$ar1_phi) # strip factors
@@ -1483,6 +1557,10 @@ sdmTMB <- function(
   conv <- get_convergence_diagnostics(sd_report)
 
   out_structure$tmb_obj <- tmb_obj
+
+  if(stdcurve) {
+    out_structure$plates <- plates
+  }
   out <- c(out_structure, list(
     model      = tmb_opt,
     sd_report  = sd_report,
