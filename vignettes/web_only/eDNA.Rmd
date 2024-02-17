@@ -167,5 +167,54 @@ gridExtra::grid.arrange(p1,p2,p3,p4,nrow=2)
 ```
 
 
+### Predictions
+
+Prediction for eDNA observations is slightly more complicated than regular applications, because the latent log density (`mu` in the source code, `est` in the predicted dataframe) may be of interest, in addition to individual observations (corrected with standard curve parameters). As a first step, we can predict the latent log density using `predict()`
+
+```{r}
+pred <- predict(fit) # or pass in a new dataframe with the newdat argument
+```
+
+Next, we can join in the estimated standard curve hierarchical parameters above
+```{r}
+pred <- dplyr::left_join(pred, df)
+```
+
+Now we can use these parameters to predict the observed concentrations
+
+```{r}
+pred$kappa <- pred$std_xi_0 + pred$std_xi_1 * pred$est # predicted positive component
+pred$theta <- pred$std_xi_2 + pred$std_xi_3 * pred$est# predicted logit component
+
+```
+
+```{r}
+dplyr::filter(pred, Ct > 0) |>
+  ggplot(aes(kappa, Ct)) + geom_point(alpha=0.5) + 
+  geom_abline(aes(intercept=0,slope=1),col="red") +
+  theme_bw()
+```
+
+### Predictions for standard curve samples
+
+We can also make predictions for the samples used to estimate the standard curves. 
+
+```{r}
+standards$theta_stand <- fit$sd_report$value[grep("theta_stand", names(fit$sd_report$value))]
+standards$kappa_stand <- NA
+standards$kappa_stand[which(standards$Ct > 0)] <- fit$sd_report$value[grep("kappa_stand", names(fit$sd_report$value))]
+
+dplyr::filter(standards, Ct > 0) |>
+  ggplot(aes(kappa_stand, Ct)) + geom_point(alpha=0.5) + 
+  geom_abline(aes(intercept=0,slope=1),col="red") +
+  theme_bw()
+```
+
+
+
+### Offsets
+
+Additional offsets can be added to the observed eDNA data, by using the `offset` argument. These should generally be log transformed in R prior to passing in, and the input offset can represent a sum of several log transformed offsets.
+
 
 

@@ -748,6 +748,10 @@ Type objective_function<Type>::operator()()
     ADREPORT(std_sigma);
     ADREPORT(ln_std_sigma);
     //ADREPORT(sigma_all_stand);
+    REPORT(theta_stand);
+    REPORT(kappa_stand);
+    ADREPORT(theta_stand);
+    ADREPORT(kappa_stand);
   }
 
   // combine parts:
