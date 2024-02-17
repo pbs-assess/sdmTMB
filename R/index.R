@@ -97,7 +97,7 @@ get_cog <- function(obj, bias_correct = FALSE, level = 0.95, format = c("long", 
     y <- d[d$coord == "Y", c("est", "lwr", "upr", "se"),drop=FALSE]
     names(x) <- paste0(names(x), "_", "x")
     names(y) <- paste0(names(y), "_", "y")
-    d <- cbind(d[d$coord == "X", "year", drop=FALSE], cbind(x, y))
+    d <- cbind(d[d$coord == "X", obj$fit_obj$time, drop=FALSE], cbind(x, y))
   }
   d
 }

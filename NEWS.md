@@ -1,5 +1,10 @@
 # sdmTMB (development version)
 
+* Issue error if `time` column has NAs. #298 #299
+
+* Fix bug in `get_cog(..., format = "wide")` where the time column was
+  hardcoded to `"year"` by accident.
+
 * Poisson-link delta models now use a `type` argument in `delta_gamma()` and
   `delta_lognormal()`. `delta_poisson_link_gamma()` and
   `delta_poisson_link_lognormal()` are deprecated. #290

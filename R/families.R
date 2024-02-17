@@ -410,16 +410,20 @@ delta_truncated_nbinom1 <- function(link1 = "logit", link2 = "log") {
 #' @export
 #' @keywords internal
 delta_poisson_link_gamma <- function(link1 = "log", link2 = "log") {
+  assert_that(link1 == "log")
+  assert_that(link2 == "log")
   lifecycle::deprecate_warn("0.4.2.9000", "delta_poisson_link_gamma()", "delta_gamma(type)")
-  delta_gamma(link1 = link1, link2 = link2, type = "poisson-link")
+  delta_gamma(link1 = "logit", link2 = "log", type = "poisson-link")
 }
 
 #' @rdname families
 #' @export
 #' @keywords internal
 delta_poisson_link_lognormal <- function(link1 = "log", link2 = "log") {
+  assert_that(link1 == "log")
+  assert_that(link2 == "log")
   lifecycle::deprecate_warn("0.4.2.9000", "delta_poisson_link_lognormal()", "delta_lognormal(type)")
-  delta_lognormal(link1 = link1, link2 = link2, type = "poisson-link")
+  delta_lognormal(link1 = "logit", link2 = "log", type = "poisson-link")
 }
 
 #' @export
