@@ -1,10 +1,11 @@
 # sdmTMB (development version)
 
 * Fix a bug likely introduced in July 2023 that caused issues when
-  `extra_time` was specified with some configurations of `offset`. This is an
-  important bug and models fit with `extra_time` and offsets between that date
-  and v0.4.2.9003 (February 21 2024) should be checked against a current version
-  of sdmTMB. This likely affected v0.4.0 to v0.4.2 on CRAN.
+  `extra_time` was specified. This is an important bug and models fit with
+  `extra_time` between that date (if using the GitHub version) and v0.4.2.9004
+  (2024-02-24) should be checked against a current version of sdmTMB
+  (v0.4.2.9005 or greater). On CRAN, this affected v0.4.0 (2023-10-20) to 
+  v0.4.2.
 
 * Issue error if `time` column has NAs. #298 #299
 
