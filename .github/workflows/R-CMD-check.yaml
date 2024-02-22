@@ -85,6 +85,7 @@ jobs:
           remotes::install_cran("rcmdcheck")
           install.packages("Matrix", type = "source")
           install.packages("TMB", type = "source")
+          install.packages("units", type = "source")
         shell: Rscript {0}
 
       - name: Install dependencies Windows
