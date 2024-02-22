@@ -113,8 +113,10 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' * `data`: Original data plus columns for fold ID, CV predicted value,
 #'           and CV log likelihood.
 #' * `models`: A list of models; one per fold.
-#' * `fold_loglik`: Sum of left-out log likelihoods per fold.
-#' * `sum_loglik`: Sum of `fold_loglik` across all left-out data.
+#' * `fold_loglik`: Sum of left-out log likelihoods per fold. More positive
+#'   values are better.
+#' * `sum_loglik`: Sum of `fold_loglik` across all left-out data. More positive
+#'   values are better.
 #' * `pdHess`: Logical vector: Hessian was invertible each fold?
 #' * `converged`: Logical: all `pdHess` `TRUE`?
 #' * `max_gradients`: Max gradient per fold.

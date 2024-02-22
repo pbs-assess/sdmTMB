@@ -76,8 +76,10 @@ A list:
 \item \code{data}: Original data plus columns for fold ID, CV predicted value,
 and CV log likelihood.
 \item \code{models}: A list of models; one per fold.
-\item \code{fold_loglik}: Sum of left-out log likelihoods per fold.
-\item \code{sum_loglik}: Sum of \code{fold_loglik} across all left-out data.
+\item \code{fold_loglik}: Sum of left-out log likelihoods per fold. More positive
+values are better.
+\item \code{sum_loglik}: Sum of \code{fold_loglik} across all left-out data. More positive
+values are better.
 \item \code{pdHess}: Logical vector: Hessian was invertible each fold?
 \item \code{converged}: Logical: all \code{pdHess} \code{TRUE}?
 \item \code{max_gradients}: Max gradient per fold.
