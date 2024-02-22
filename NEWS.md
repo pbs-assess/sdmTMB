@@ -1,6 +1,64 @@
 # sdmTMB (development version)
 
-* Add new anisotropy plotting function.
+* Fix a bug likely introduced in July 2023 that caused issues when
+  `extra_time` was specified with some configurations of `offset`. This is an
+  important bug and models fit with `extra_time` and offsets between that date
+  and v0.4.2.9003 (February 21 2024) should be checked against a current version
+  of sdmTMB. This likely affected v0.4.0 to v0.4.2 on CRAN.
+
+* Issue error if `time` column has NAs. #298 #299
+
+* Fix bug in `get_cog(..., format = "wide")` where the time column was
+  hardcoded to `"year"` by accident.
+
+* Poisson-link delta models now use a `type` argument in `delta_gamma()` and
+  `delta_lognormal()`. `delta_poisson_link_gamma()` and
+  `delta_poisson_link_lognormal()` are deprecated. #290
+  
+* Delta families can now pass links that are different from the default 
+  `"logit"` and `"log"`. #290
+
+# sdmTMB 0.4.2
+
+* Force rebuild of CRAN binaries to fix issue with breaking Matrix ABI change
+  causing `NaN gradient` errors. #288 #287
+
+* Fix crash in if `sdmTMB(..., do_index = TRUE)` and `extra_time` supplied along
+  with `predict_args = list(newdata = ...)` that lacked `extra_time` elements.
+
+* Allow `get_index()` to work with missing time elements.
+
+* Add the ability to pass a custom randomized quantile function `qres_func`
+  to `residuals.sdmTMB()`.
+
+* Add check for factor random intercept columns in `newdata` to avoid a crash.
+  #278 #280
+
+* Improve warnings/errors around use of `do_index = TRUE` and `get_index()`
+  if `newdata = NULL`. #276
+
+* Fix prediction with `offset` when `newdata` is `NULL` but `offset` is
+  specified. #274
+
+* Fix prediction failure when both `offset` and `nsim` are provided and
+  model includes `extra_time`. #273
+
+# sdmTMB 0.4.1
+
+* Fix memory issues detected by CRAN 'Additional issues' clang-UBSAN, valgrind.
+
+* Fix a bug predicting on new data with a specified offset and `extra_time`. 
+  #270
+
+* Add warning around non-factor handling of the `spatial_varying` formula. #269
+
+* Add experimental `set_delta_model()` for plotting delta models with
+  `ggeffects::ggpredict()` (GitHub version only until next CRAN version).
+
+# sdmTMB 0.4.0
+
+* Move add_barrier_mesh() to sdmTMBextra to avoid final INLA dependency.
+  https://github.com/pbs-assess/sdmTMBextra
 
 * Switch to using the new fmesher package for all mesh/SPDE calculations. INLA
   is no longer a dependency.
