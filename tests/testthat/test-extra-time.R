@@ -110,3 +110,69 @@ test_that("extra_time, newdata, get_index() work", {
   expect_identical(ind6$year, c(2003, 2004, 2005, 2007, 2009, 2011, 2013, 2015, 2017))
   expect_equal(ind3$est, ind6$est, tolerance = 0.1)
 })
+test_that("extra time does not affect estimation (without time series estimation)", {
+  # there was a bad bug at one point where the likelihood (via the weights)
+  # wasn't getting turned off for the extra time data!
+  skip_on_cran()
+  skip_on_ci()
+  # adding extra time at beginning or end
+  m <- sdmTMB(present ~ depth_scaled,
+    family = binomial(),
+    data = pcod_2011, spatial = "on", mesh = pcod_mesh_2011
+  )
+  m1 <- sdmTMB(
+    present ~ depth_scaled,
+    family = binomial(), data = pcod_2011, spatial = "on",
+    mesh = pcod_mesh_2011,
+    extra_time = 1990
+  )
+  m2 <- sdmTMB(
+    present ~ depth_scaled,
+    family = binomial(), data = pcod_2011, spatial = "on",
+    mesh = pcod_mesh_2011,
+    extra_time = 3000
+  )
+  expect_equal(m$model$par, m1$model$par)
+  expect_equal(m$model$par, m2$model$par)
+
+  # with weights
+  set.seed(1)
+  w <- rlnorm(nrow(pcod_2011), meanlog = log(1), sdlog = 0.1)
+  m <- sdmTMB(present ~ depth_scaled,
+    family = binomial(), weights = w,
+    data = pcod_2011, spatial = "on", mesh = pcod_mesh_2011
+  )
+  m1 <- sdmTMB(
+    present ~ depth_scaled, weights = w,
+    family = binomial(), data = pcod_2011, spatial = "on",
+    mesh = pcod_mesh_2011,
+    extra_time = 1990
+  )
+  expect_equal(m$model$par, m1$model$par)
+
+  # with offset as numeric
+  o <- log(w)
+  m <- sdmTMB(density ~ depth_scaled,
+    family = tweedie(), offset = o,
+    data = pcod_2011, mesh = pcod_mesh_2011
+  )
+  m1 <- sdmTMB(density ~ depth_scaled,
+    family = tweedie(), offset = o,
+    data = pcod_2011, mesh = pcod_mesh_2011,
+    extra_time = 1990
+  )
+  expect_equal(m$model$par, m1$model$par)
+
+  # with offset as character
+  pcod_2011$off <- o
+  m <- sdmTMB(density ~ depth_scaled,
+    family = tweedie(), offset = "off",
+    data = pcod_2011, mesh = pcod_mesh_2011
+  )
+  m1 <- sdmTMB(density ~ depth_scaled,
+    family = tweedie(), offset = "off",
+    data = pcod_2011, mesh = pcod_mesh_2011,
+    extra_time = 1990
+  )
+  expect_equal(m$model$par, m1$model$par)
+})

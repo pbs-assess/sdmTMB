@@ -767,14 +767,14 @@ sdmTMB <- function(
   }
 
   if (!is.null(extra_time)) { # for forecasting or interpolating
-    data <- expand_time(df = data, time_slices = extra_time, time_column = time, weights = weights, offset = offset, upr = upr)
+    data <- expand_time(df = data, time_slices = extra_time, time_column = time,
+      weights = weights, offset = offset, upr = upr)
     offset <- data[["__sdmTMB_offset__"]] # expanded
     weights <- data[["__weight_sdmTMB__"]] # expanded
     upr <- data[["__dcens_upr__"]] # expanded
-    # data[["__dcens_upr__"]] <- NULL
     spde$loc_xy <- as.matrix(data[,spde$xy_cols,drop=FALSE])
     spde$A_st <- fmesher::fm_basis(spde$mesh, loc = spde$loc_xy)
-    spde$sdm_spatial_id <- seq(1, nrow(data)) # FIXME
+    spde$sdm_spatial_id <- seq(1, nrow(data)) # FIXME?
   }
   check_irregalar_time(data, time, spatiotemporal, time_varying)
 
