@@ -341,9 +341,9 @@ test_that("predict_mle_mcmc() works with extra_time #297", {
   skip_if_not_installed("rstan")
   skip_on_ci()
   fit <- sdmTMB(
-    density ~ 0 + as.factor(year),
+    density ~ 1,
     time = "year",
-    spatiotemporal = "off",
+    spatiotemporal = "rw",
     spatial = "on",
     mesh = pcod_mesh_2011,
     data = pcod_2011,
