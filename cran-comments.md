@@ -1,7 +1,6 @@
-This version fixes some minor bugs and is meant to trigger a rebuild of the
-sdmTMB binaries on CRAN with the latest version of Matrix, which had breaking
-ABI changes that affected TMB.
- 
+This version fixes bugs, adds minor functionality, and maintains
+compatibility with a revised version of a preprint introducing the package.
+
 ## R CMD check results
 
 0 errors | 0 warnings | 1 notes
