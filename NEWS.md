@@ -1,4 +1,4 @@
-# sdmTMB (development version)
+# sdmTMB 0.4.3
 
 * Fix a bug likely introduced in July 2023 that caused issues when
   `extra_time` was specified. This is an important bug and models fit with
