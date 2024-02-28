@@ -7,9 +7,10 @@ bibentry(
     person(c("Sean", "C."), "Anderson"),
     person(c("Eric", "J."), "Ward"),
     person(c("Philina", "A."), "English"),
-    person(c("Lewis", "A.", "K."), "Barnett")
+    person(c("Lewis", "A.", "K."), "Barnett"),
+    person(c("James", "T."), "Thorson")
   ),
-  year = "2022",
+  year = "2024",
   journal = "bioRxiv",
   volume = "2022.03.24.485545",
   doi = "10.1101/2022.03.24.485545"
