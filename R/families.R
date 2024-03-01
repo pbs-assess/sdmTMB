@@ -306,7 +306,7 @@ delta_gamma <- function(link1 = "logit", link2 = "log", type = c("standard", "po
   f2 <- Gamma(link = l2)
   if (type == "poisson-link") {
     .type <- "poisson_link_delta"
-    clean_name <- paste0("delta_gamma(link1 = '", l1, "', link2 = '", l2, "', type = 'poisson-link')")
+    clean_name <- paste0("delta_gamma(link1 = "log", link2 = "log", type = 'poisson-link')")
   } else {
     .type <- "standard"
     clean_name <- paste0("delta_gamma(link1 = '", l1, "', link2 = '", l2, "')")
@@ -342,7 +342,7 @@ delta_lognormal <- function(link1 = "logit", link2 = "log", type = c("standard",
   f2 <- lognormal(link = l2)
   if (type == "poisson-link") {
     .type <- "poisson_link_delta"
-    clean_name <- paste0("delta_lognormal(link1 = '", l1, "', link2 = '", l2, "', type = 'poisson-link')")
+    clean_name <- paste0("delta_lognormal(link1 = "log", link2 = "log", type = 'poisson-link')")
   } else {
     .type <- "standard"
     clean_name <- paste0("delta_lognormal(link1 = '", l1, "', link2 = '", l2, "')")
