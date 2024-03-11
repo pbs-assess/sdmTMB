@@ -1266,7 +1266,8 @@ Type objective_function<Type>::operator()()
       if (eps_index.size() > 0) {
         Type S;
         for (int t=0; t < n_t; t++) {
-          S = total(t); // Set lowrank tag on S = sum(exp(x))
+          S = total(t);
+          S = newton::Tag(S); // Set lowrank tag on S = sum(exp(x))
           jnll += eps_index(t) * S;
         }
       }

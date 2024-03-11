@@ -56,6 +56,7 @@ test_that("get_index works with subsets of years", {
   p_3 <- predict(m, newdata = nd_3, return_tmb_object = TRUE)
 
   index_full <- get_index(p_full, bias_correct = TRUE)
+  expect_equal(index_full$est, c(322529.7268, 293854.3696, 390942.2649, 184368.2756), tolerance = 0.01)
   index_2011 <- get_index(p_2011, bias_correct = TRUE)
   index_2 <- get_index(p_2, bias_correct = TRUE)
   index_3 <- get_index(p_3, bias_correct = TRUE)
@@ -72,3 +73,41 @@ test_that("get_index works with subsets of years", {
   index_apply <- do.call(rbind, index_apply)
   expect_equal(index_apply, index_full)
 })
+
+# test_that("get_index faster epsilon bias correction", {
+#   skip_on_ci()
+#   skip_on_cran()
+#
+#   library(sdmTMB)
+#   mesh <- make_mesh(pcod, c('X', 'Y'), cutoff = 5)
+#
+#   m <- sdmTMB(
+#     density ~ factor(year),
+#     data = pcod,
+#     mesh = mesh,
+#     time = "year",
+#     family = delta_gamma()
+#   )
+#   nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
+#   p <- predict(m, newdata = nd, return_tmb_object = TRUE)
+#
+#   TRACE=TRUE
+#
+#   INTERN=TRUE
+#   LOWRANK=TRUE
+#   index <- get_index(p, bias_correct = TRUE)
+#
+#   INTERN=FALSE
+#   LOWRANK=FALSE
+#   index <- get_index(p, bias_correct = TRUE)
+#
+#   INTERN=FALSE
+#   LOWRANK=TRUE
+#   index <- get_index(p, bias_correct = TRUE)
+#
+#   INTERN=TRUE
+#   LOWRANK=FALSE
+#   index <- get_index(p, bias_correct = TRUE)
+#
+# })
+
