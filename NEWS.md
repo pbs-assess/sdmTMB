@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Set `intern = FALSE` within index bias correction, which seems to be
+  considerably faster when testing with most models.
+
 # sdmTMB 0.4.3
 
 * Fix a bug likely introduced in July 2023 that caused issues when
