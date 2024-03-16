@@ -112,14 +112,19 @@ sanity <- function(object, big_sd_log10 = 2, gradient_thresh = 0.001, silent = F
 
   obj <- object$tmb_obj
   random <- unique(names(obj$env$par[obj$env$random]))
-  s <- summary(object$sd_report)
-  se <- s[, "Std. Error"]
-  fixed_se <- !names(se) %in% random
-  se <- se[fixed_se]
-  np <- names(se)
+
+  pl <- as.list(object$sd_report, "Estimate")
+  ple <- as.list(object$sd_report, "Std. Error")
+  pars <- names(object$model$par)
+  pl <- pl[pars]
+  ple <- ple[pars]
+  np <- names(ple)
+  if (is_delta(object)) {
+    ple$ln_phi[1] <- 0 # don't flag NA, not estimated
+  }
   se_na_ok <- TRUE
-  for (i in seq_along(se)) {
-    if (is.na(se[i])) {
+  for (i in seq_along(ple)) {
+    if (any(is.na(ple[i]))) {
       if (!silent) cli::cli_alert_danger(c("`", np[i], paste0("` standard error is NA")))
       par_message(np[i])
       if (!silent) {

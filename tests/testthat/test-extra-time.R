@@ -176,3 +176,29 @@ test_that("extra time does not affect estimation (without time series estimation
   )
   expect_equal(m$model$par, m1$model$par)
 })
+
+test_that("factor year extra time clash is detected and warned about", {
+  skip_on_cran()
+  skip_on_ci()
+  mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
+  expect_warning({fit <- sdmTMB(
+    density ~ 0 + as.factor(year),
+    time = "year", extra_time = 2030, do_fit = FALSE,
+    data = pcod_2011, mesh = mesh,
+    family = tweedie(link = "log")
+  )}, regexp = "rename")
+  pcod_2011$year_f <- factor(pcod_2011$year)
+  expect_warning({fit <- sdmTMB(
+    density ~ 0 + year_f,
+    time = "year_f", do_fit = FALSE, extra_time = factor(2030),
+    data = pcod_2011, mesh = mesh,
+    family = tweedie(link = "log")
+  )})
+  pcod_2011$year_f2 <- pcod_2011$year_f
+  fit <- sdmTMB(
+    density ~ 0 + year_f,
+    time = "year_f2", do_fit = FALSE, extra_time = factor(2030),
+    data = pcod_2011, mesh = mesh,
+    family = tweedie(link = "log")
+  )
+})

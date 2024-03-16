@@ -1,4 +1,5 @@
 #define TMB_LIB_INIT R_init_sdmTMB
+#define EIGEN_DONT_PARALLELIZE
 #include <TMB.hpp>
 #include "utils.h"
 // #include <omp.h>

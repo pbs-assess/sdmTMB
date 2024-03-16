@@ -1,5 +1,11 @@
 # sdmTMB (development version)
 
+* Detect possible issue with factor(time) in formula if same column name is used
+  for `time` and `extra_time` is specified. #320
+
+* Improve `sanity()` check output when there are NA fixed effect standard
+  errors.
+
 * Set `intern = FALSE` within index bias correction, which seems to be
   considerably faster when testing with most models.
 
