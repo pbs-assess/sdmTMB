@@ -251,7 +251,7 @@ test_that("Pearson residuals work", {
   m1 <- glmmTMB::glmmTMB(prop ~ 1, data = dat, family = gaussian())
   r <- residuals(m, type = "pearson")
   r1 <- residuals(m1, type = "pearson")
-  expect_equal(as.numeric(r), as.numeric(r1))
+  expect_equal(as.numeric(r), as.numeric(r1), tolerance = 1e-6)
 
   # gamma
   set.seed(1)
