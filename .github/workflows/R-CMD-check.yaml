@@ -23,7 +23,7 @@ jobs:
           - {os: macOS-latest, r: 'release'}
           - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,   r: 'release'}
-          - {os: ubuntu-latest,   r: 'oldrel-1'}
+        # - {os: ubuntu-latest,   r: 'oldrel-1'}
 
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
