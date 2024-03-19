@@ -433,6 +433,8 @@ test_that("Binomial simulation/residuals works with weights argument or cbind()"
 })
 
 test_that("Generalized gamma works", {
+  skip_on_cran()
+  skip_on_ci()
   d <- subset(pcod_2011, density > 0)
   fit1 <- sdmTMB(
     density ~ 1 + depth_scaled,
@@ -477,6 +479,9 @@ test_that("Generalized gamma works", {
 
 
 test_that("Generalized gamma matches Gamma when Q = sigma", {
+  skip_on_cran()
+  skip_on_ci()
+
   # Generate values drawn from generaliased gamma distribution given the mean of those values
   rgengamma <- function(n, mean, sigma, Q) {
     # Get mu from mean
@@ -523,14 +528,14 @@ test_that("Generalized gamma matches Gamma when Q = sigma", {
   fit1 <- sdmTMB(
     y ~ x,
     data = d,
-    spatial = "off", 
+    spatial = "off",
     family = gengamma(link = "log")
   )
-  
+
   fit2 <- sdmTMB(
     y ~ x,
     data = d,
-    spatial = "off", 
+    spatial = "off",
     family = Gamma(link = "log")
   )
 

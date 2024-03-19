@@ -1,7 +1,8 @@
 # sdmTMB (development version)
 
-* Add the generalized gamma distribution (thanks to J. Thorson).
-  See `gengamma()`. #286
+* Add the generalized gamma distribution (thanks to J.T. Thorson with additional
+  work by J.C. Dunic.) See `gengamma()`. This distribution is still in a testing
+  phase and is not recommended for applied use yet. #286
 
 * Fix bug in `get_cog(..., format = "wide")` where the time column was
   hardcoded to `"year"` by accident.

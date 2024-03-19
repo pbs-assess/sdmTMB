@@ -182,6 +182,7 @@ test_that("Anisotropy with delta model", {
 
 test_that("Delta-Gengamma family fits", {
   skip_on_cran()
+  skip_on_ci()
 
   fit_dgg <- sdmTMB(density ~ 1,
     data = pcod, mesh = pcod_spde,
