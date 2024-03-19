@@ -431,3 +431,117 @@ test_that("Binomial simulation/residuals works with weights argument or cbind()"
   expect_equal(mean(dat$y), mean(s2), tolerance = 0.1)
   expect_equal(mean(apply(s2, 1, mean) - dat$y), 0, tolerance = 0.01)
 })
+
+test_that("Generalized gamma works", {
+  skip_on_cran()
+  skip_on_ci()
+  d <- subset(pcod_2011, density > 0)
+  fit1 <- sdmTMB(
+    density ~ 1 + depth_scaled,
+    data = d,
+    spatial = "off",
+    family = lognormal(link = "log")
+  )
+  fit2 <- sdmTMB(
+    density ~ 1 + depth_scaled,
+    data = d,
+    spatial = "off",
+    family = Gamma(link = "log")
+  )
+  fit3 <- sdmTMB(
+    density ~ 1 + depth_scaled,
+    data = d,
+    spatial = "off",
+    family = gengamma(link = "log")
+  )
+  expect_s3_class(fit2, "sdmTMB")
+  logLik(fit1)
+  logLik(fit2)
+  logLik(fit3)
+  get_df <- function(x) {
+    L <- logLik(x)
+    attr(L, "df")
+  }
+  df1 <- get_df(fit1)
+  df2 <- get_df(fit2)
+  df3 <- get_df(fit3)
+  expect_identical(df1, 3L)
+  expect_identical(df3, 4L)
+
+  b <- as.list(fit3$sd_report, "Estimate")
+  expect_equal(b$gengamma_Q, 0.04212623, tolerance = 0.001)
+  AIC(fit1)
+  AIC(fit2)
+  AIC(fit3)
+
+  expect_error(residuals(fit3), regexp = "supported")
+})
+
+
+test_that("Generalized gamma matches Gamma when Q = sigma", {
+  skip_on_cran()
+  skip_on_ci()
+
+  # Generate values drawn from generaliased gamma distribution given the mean of those values
+  rgengamma <- function(n, mean, sigma, Q) {
+    # Get mu from mean
+    k <- Q^-2
+    beta <- Q / sigma
+    log_theta <- log(mean) - lgamma( (k*beta+1)/beta ) + lgamma( k )
+    mu <- log_theta + log(k) / beta
+
+    if (Q != 0) {
+      w <- log(Q^2 * rgamma(n, 1 / Q^(2), 1)) / Q
+      y <- exp(mu + (sigma * w))
+
+    } else {
+      y <- rlnorm(n, mu, sigma)
+    }
+    return(y)
+  }
+
+  sigma <- 0.5
+  Q <- sigma
+  mean <- 5
+  n <- 10000
+
+  # Regression coefficients (effects)
+  intercept <- 1
+  b1 <- 1.8
+  # Generate covariate values
+  set.seed(1)
+  x <- runif(n, min = 0, max = 2)
+
+  # Compute mu's
+  coefs_true <- matrix(c(intercept, b1))
+  X <- matrix(cbind(1, x), ncol = 2)
+  y_mean <- exp(X %*% coefs_true)
+
+  set.seed(10)
+  y <- rgengamma(n = n, mean = y_mean, sigma = sigma, Q = Q)
+  # Should get the same answers with flexsurv::rgengamma
+  # set.seed(10)
+  # y_flex <- flexsurv::rgengamma(n = n, mu = y_mu, sigma = sigma, Q = Q)
+
+  d <- data.frame(x = x, y = y)
+
+  fit1 <- sdmTMB(
+    y ~ x,
+    data = d,
+    spatial = "off",
+    family = gengamma(link = "log")
+  )
+
+  fit2 <- sdmTMB(
+    y ~ x,
+    data = d,
+    spatial = "off",
+    family = Gamma(link = "log")
+  )
+
+  b <- as.list(fit1$sd_report, "Estimate")
+  expect_equal(b$gengamma_Q, 0.5, tolerance = 0.1)
+  expect_equal(b$b_j[1], 1, tolerance = 0.01)
+  expect_equal(b$b_j[2], 1.8, tolerance = 0.01)
+
+})

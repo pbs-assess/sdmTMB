@@ -261,8 +261,12 @@ print_other_parameters <- function(x, m = 1L) {
   b <- tidy(x, "ran_pars", model = m, silent = TRUE)
 
   get_term_text <- function(term_name = "", pretext = "") {
+    b2 <- as.list(x$sd_report, what = "Estimate")
     if (term_name %in% b$term) {
       a <- mround(b$estimate[b$term == term_name], 2L)
+      a <- paste0(pretext, ": ", a, "\n")
+    } else if (term_name %in% names(b2)) {
+      a <- mround(b2[[term_name]], 2L)
       a <- paste0(pretext, ": ", a, "\n")
     } else {
       a <- ""
@@ -272,6 +276,9 @@ print_other_parameters <- function(x, m = 1L) {
 
   phi <- get_term_text("phi", "Dispersion parameter")
   tweedie_p <- get_term_text("tweedie_p", "Tweedie p")
+  gengamma_par <- if ('gengamma' %in% family(x)[[m]]) {
+    get_term_text("gengamma_Q", "Generalized gamma lambda") 
+    } else ""
   sigma_O <- get_term_text("sigma_O", "Spatial SD")
   xtra <- if (x$spatiotemporal[m] == "ar1") "marginal " else ""
   sigma_E <- get_term_text("sigma_E",
@@ -292,7 +299,7 @@ print_other_parameters <- function(x, m = 1L) {
     sigma_Z <- ""
   }
 
-  named_list(phi, tweedie_p, sigma_O, sigma_E, sigma_Z, rho)
+  named_list(phi, tweedie_p, sigma_O, sigma_E, sigma_Z, rho, gengamma_par)
 }
 
 print_header <- function(x) {
@@ -340,6 +347,7 @@ print_one_model <- function(x, m = 1) {
 
   cat(other$phi)
   cat(other$tweedie_p)
+  cat(other$gengamma_par)
   cat(other$rho)
   cat(range)
   cat(other$sigma_O)

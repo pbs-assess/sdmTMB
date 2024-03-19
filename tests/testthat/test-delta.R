@@ -12,7 +12,6 @@ test_that("Delta-Gamma family fits", {
   )
   fit_dg$sd_report
   nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
-  p <- predict(fit_dg, newdata = nd)
 
   expect_equal(
     round(tidy(fit_dg, "ran_pars", model = 1)$estimate, 3),
@@ -179,4 +178,64 @@ test_that("Anisotropy with delta model", {
   expect_equal(sr_gamma$ln_tau_O, sr_dg$ln_tau_O[2], tolerance = 1e-4)
   expect_equal(sr_gamma$ln_tau_E, sr_dg$ln_tau_E[2], tolerance = 1e-4)
   expect_equal(sr_gamma$ln_kappa[1,1], sr_dg$ln_kappa[1,2], tolerance = 1e-4)
+})
+
+test_that("Delta-Gengamma family fits", {
+  skip_on_cran()
+  skip_on_ci()
+
+  fit_dgg <- sdmTMB(density ~ 1,
+    data = pcod, mesh = pcod_spde,
+    spatial = 'off',
+    family = delta_gengamma(link1 = 'logit', link2 = 'log', type = 'standard')
+  )
+  fit_dgg$sd_report
+
+  expect_equal(
+    round(tidy(fit_dgg, "fixed", model = 1)$estimate, 3),
+    -0.152
+  )
+  expect_equal(
+    round(tidy(fit_dgg, "fixed", model = 2)$estimate, 3),
+    c(4.418)
+  )
+
+  nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
+  p <- predict(fit_dgg, newdata = nd, return_tmb_object = TRUE)
+
+  # check
+  fit_bin <- sdmTMB(present ~ 1,
+    data = pcod, mesh = pcod_spde,
+    spatial = "off",
+    family = binomial()
+  )
+  fit_gengamma <- sdmTMB(density ~ 1,
+    data = pcod_pos, mesh = pcod_spde_pos,
+    spatial = "off",
+    family = gengamma(link = "log")
+  )
+  sr_bin <- as.list(fit_bin$sd_report, "Estimate")
+  sr_gengamma <- as.list(fit_gengamma$sd_report, "Estimate")
+  sr_dgg <- as.list(fit_dgg$sd_report, "Estimate")
+  expect_equal(sr_bin$b_j[1], sr_dgg$b_j[1], tolerance = 1e-4)
+  expect_equal(sr_gengamma$b_j[1], sr_dgg$b_j2[1], tolerance = 1e-4)
+  expect_equal(sr_gengamma$ln_phi, sr_dgg$ln_phi[2], tolerance = 1e-4)
+  expect_equal(sr_gengamma$ln_tau_O, sr_dgg$ln_tau_O[2], tolerance = 1e-4)
+  expect_equal(sr_gengamma$ln_tau_E, sr_dgg$ln_tau_E[2], tolerance = 1e-4)
+  expect_equal(sr_gengamma$ln_kappa[1,1], sr_dgg$ln_kappa[1,2], tolerance = 1e-4)
+  expect_equal(sr_bin$ln_kappa[1,1], sr_dgg$ln_kappa[1,1], tolerance = 1e-4)
+})
+
+test_that("delta_gengamma() Poisson-link family fits", {
+  skip_on_cran()
+  skip_on_ci()
+
+  fit_pgg <- sdmTMB(density ~ 1,
+    data = pcod, mesh = pcod_spde,
+    spatial = "off",
+    family = delta_gengamma(link1 = 'log', link2 = 'log', type = "poisson-link")
+  )
+  fit_pgg$sd_report
+  s <- as.list(fit_pgg$sd_report, "Std. Error")
+  expect_true(sum(is.na(s$b_j)) == 0L)
 })

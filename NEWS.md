@@ -1,5 +1,9 @@
 # sdmTMB (development version)
 
+* Add the generalized gamma distribution (thanks to J.T. Thorson with additional
+  work by J.C. Dunic.) See `gengamma()`. This distribution is still in a testing
+  phase and is not recommended for applied use yet. #286
+  
 * Detect possible issue with factor(time) in formula if same column name is used
   for `time` and `extra_time` is specified. #320
 
