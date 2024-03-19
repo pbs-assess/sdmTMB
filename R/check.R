@@ -89,7 +89,7 @@ sanity <- function(object, big_sd_log10 = 2, gradient_thresh = 0.001, silent = F
   g <- object$gradients
   np <- names(object$model$par)
   for (i in seq_along(g)) {
-    if (g[i] > gradient_thresh) {
+    if (abs(g[i]) > gradient_thresh) {
       if (!silent) {
         cli::cli_alert_danger(c(
           "`", np[i],
@@ -104,7 +104,7 @@ sanity <- function(object, big_sd_log10 = 2, gradient_thresh = 0.001, silent = F
     }
   }
 
-  if (all(g <= gradient_thresh)) {
+  if (all(abs(g) <= gradient_thresh)) {
     msg <- "No gradients with respect to fixed effects are >= "
     if (!silent) cli::cli_alert_success(paste0(msg, gradient_thresh))
     gradients_ok <- TRUE
