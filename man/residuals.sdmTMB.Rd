@@ -6,7 +6,7 @@
 \usage{
 \method{residuals}{sdmTMB}(
   object,
-  type = c("mle-laplace", "mle-mcmc", "mvn-laplace", "response", "pearson"),
+  type = c("mle-laplace", "mle-mcmc", "mle-mvn", "mvn-laplace", "response", "pearson"),
   model = c(1, 2),
   mcmc_samples = NULL,
   qres_func = NULL,
@@ -91,6 +91,12 @@ based on simulations drawn from the assumed multivariate normal distribution
   r1 <- residuals(fit, type = "mle-laplace")
   qqnorm(r1)
   qqline(r1)
+
+  # "mle-mvn" residuals with the fixed effects at their MLE and the random
+  # effects sampled from their approximate posterior
+  r2 <- residuals(fit, type = "mle-mvn")
+  qqnorm(r2)
+  qqline(r2)
 
   # see also "mle-mcmc" residuals with the help of the sdmTMBextra package
 }

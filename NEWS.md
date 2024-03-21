@@ -1,5 +1,10 @@
 # sdmTMB (development version)
 
+* Add experimental residuals option "mle-mvn" where a single approximate 
+  posterior sample of the random effects is drawn and these are combined
+  with the MLE fixed effects to produce residuals. This may become the
+  default option.
+
 * Add the generalized gamma distribution (thanks to J.T. Thorson with additional
   work by J.C. Dunic.) See `gengamma()`. This distribution is still in a testing
   phase and is not recommended for applied use yet. #286

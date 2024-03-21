@@ -240,10 +240,16 @@ qres_beta <- function(object, y, mu, ...) {
 #'   qqnorm(r1)
 #'   qqline(r1)
 #'
+#'   # "mle-mvn" residuals with the fixed effects at their MLE and the random
+#'   # effects sampled from their approximate posterior
+#'   r2 <- residuals(fit, type = "mle-mvn")
+#'   qqnorm(r2)
+#'   qqline(r2)
+#'
 #'   # see also "mle-mcmc" residuals with the help of the sdmTMBextra package
 
 residuals.sdmTMB <- function(object,
-                             type = c("mle-laplace", "mle-mcmc", "mvn-laplace", "response", "pearson"),
+                             type = c("mle-laplace", "mle-mcmc", "mle-mvn", "mvn-laplace", "response", "pearson"),
                              model = c(1, 2),
                              mcmc_samples = NULL,
                              qres_func = NULL,
@@ -301,9 +307,6 @@ residuals.sdmTMB <- function(object,
   }
 
   if (type %in% c("mle-laplace", "response", "pearson")) {
-    # mu <- tryCatch({linkinv(predict(object, newdata = NULL)[[est_column]])}, # newdata = NULL; fast
-    #   error = function(e) NA)
-    # if (is.na(mu[[1]])) {
     mu <- linkinv(predict(object, newdata = object$data, offset = object$tmb_data$offset_i)[[est_column]]) # not newdata = NULL
     # }
   } else if (type == "mvn-laplace") {
@@ -318,6 +321,25 @@ residuals.sdmTMB <- function(object,
     mcmc_samples <- as.numeric(mcmc_samples)
     assert_that(length(mcmc_samples) == nrow(object$data))
     mu <- linkinv(mcmc_samples)
+  } else if (type == "mle-mvn") {
+    ## see TMB:::oneSamplePosterior()
+    tmp <- object$tmb_obj$env$MC(n = 1L, keep = TRUE, antithetic = FALSE)
+    re_samp <- as.vector(attr(tmp, "samples"))
+    lp <- object$tmb_obj$env$last.par.best
+    p <- numeric(length(lp))
+    fe <- object$tmb_obj$env$lfixed()
+    re <- object$tmb_obj$env$lrandom()
+    p[re] <- re_samp
+    p[fe] <- lp[fe]
+    pred <- predict(
+      object,
+      newdata = object$data,
+      mcmc_samples = matrix(p, ncol = 1L),
+      model = model[[1L]],
+      nsim = 1L,
+      offset = object$tmb_data$offset_i
+    )
+    mu <- linkinv(pred[, 1L, drop = TRUE])
   } else {
     cli_abort("residual type not implemented")
   }
@@ -335,7 +357,7 @@ residuals.sdmTMB <- function(object,
 
   if (type == "response") {
     if (!prop_binomial) r <- y - mu else r <- y / size - mu
-  } else if (type == "mle-laplace" || type == "mvn-laplace") {
+  } else if (type == "mle-laplace" || type == "mvn-laplace" || type == "mle-mvn") {
     r <- res_func(object, y, mu, .n = size, ...)
   } else if (type == "mle-mcmc") {
     r <- res_func(object, y, mu, .n = size, ...)
