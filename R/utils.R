@@ -614,26 +614,26 @@ update_version <- function(object) {
       d[["__sdmTMB_offset__"]] <- d[["__dcens_upr__"]] <- NULL
     d <- d[seq(1, real_data_n), , drop = FALSE]
     object$data <- d
+  }
 
-    # add gengamma_Q
-    p <- object$tmb_obj$env$parList()
-    if (!"gengamma_Q" %in% names(p)) {
-      p$gengamma_Q <- 1 # not defined at 0
-      ee <- object$tmb_obj$env
-      map <- object$tmb_map
-      map$gengamma_Q <- factor(NA)
-      object$tmb_obj <- TMB::MakeADFun(
-        data = ee$data,
-        parameters = p,
-        map = map,
-        random = ee$random,
-        silent = ee$silent,
-        DLL = "sdmTMB"
-      )
-      object$tmb_obj$fn(object$model$par)
-      object$tmb_obj$env$last.par.best <- ee$last.par.best
-      object$tmb_map <- map
-    }
+  # add gengamma_Q
+  p <- object$tmb_obj$env$parList()
+  if (!"gengamma_Q" %in% names(p)) {
+    p$gengamma_Q <- 1 # not defined at 0
+    ee <- object$tmb_obj$env
+    map <- object$tmb_map
+    map$gengamma_Q <- factor(NA)
+    object$tmb_obj <- TMB::MakeADFun(
+      data = ee$data,
+      parameters = p,
+      map = map,
+      random = ee$random,
+      silent = ee$silent,
+      DLL = "sdmTMB"
+    )
+    object$tmb_obj$fn(object$model$par)
+    object$tmb_obj$env$last.par.best <- ee$last.par.best
+    object$tmb_map <- map
   }
   object
 }
