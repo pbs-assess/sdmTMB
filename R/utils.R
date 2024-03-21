@@ -591,3 +591,47 @@ get_fitted_time <- function(x) {
     cli_abort("Missing 'fitted_time' element in fitted object. Please refit the model with a current version of sdmTMB.")
   x$fitted_time
 }
+
+update_version <- function(object) {
+  if (object$version < '0.4.3') {
+    cli::cli_abort("`update_version()` only works with models fit with version 0.4.3 or later.")
+  }
+  if (!"fitted_time" %in% names(object)) { # < 0.4.3.9004
+    object$fitted_time <- sort(unique(object$data[[object$time]]))
+
+    et <- object$extra_time
+    o <- object$tmb_obj$env$data$offset_i
+    real_data_n <- length(o) - length(et)
+    o <- o[seq(1, real_data_n)]
+    object$offset <- o
+
+    y <- object$response
+    y <- y[seq(1, real_data_n),,drop=FALSE]
+    object$response <- y
+
+    d <- object$data
+    d[['__fake_data__']] <- d[['__weight_sdmTMB__']] <-
+      d[['__sdmTMB_offset__']] <- d[['__dcens_upr__']] <- NULL
+    d <- d[seq(1, real_data_n),,drop=FALSE]
+    object$data <- d
+
+    # add gengamma_Q
+    p <- object$tmb_obj$env$parList()
+    if (!"gengamma_Q" %in% names(p)) {
+      p$gengamma_Q <- 1 # not defined at 0
+      ee <- object$tmb_obj$env
+      map <- object$tmb_map
+      map$gengamma_Q <- factor(NA)
+      object$tmb_obj <- TMB::MakeADFun(
+        data = ee$data,
+        parameters = p,
+        map = map,
+        random = ee$random,
+        silent = ee$silent,
+        DLL = "sdmTMB"
+      )
+    }
+    object$tmb_obj$env$last.par.best <- ee$last.par.best
+    object
+  }
+}
