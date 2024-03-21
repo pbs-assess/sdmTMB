@@ -306,11 +306,12 @@ residuals.sdmTMB <- function(object,
     res_func <- qres_func
   }
 
+  if (!"offset" %in% names(object)) cli_abort("This model appears to have been fit with an older sdmTMB.")
   if (type %in% c("mle-laplace", "response", "pearson")) {
-    mu <- linkinv(predict(object, newdata = object$data, offset = object$tmb_data$offset_i)[[est_column]]) # not newdata = NULL
+    mu <- linkinv(predict(object, newdata = object$data, offset = object$offset)[[est_column]]) # not newdata = NULL
     # }
   } else if (type == "mvn-laplace") {
-    mu <- linkinv(predict(object, nsim = 1L, model = model, offset = object$tmb_data$offset_i)[, 1L, drop = TRUE])
+    mu <- linkinv(predict(object, nsim = 1L, model = model, offset = object$offset)[, 1L, drop = TRUE])
   } else if (type == "mle-mcmc") {
     if (is.null(mcmc_samples)) {
       msg <- c("As of sdmTMB 0.3.0, `mcmc_samples` must be supplied to use `type = 'mle-mcmc'`.",
@@ -337,7 +338,7 @@ residuals.sdmTMB <- function(object,
       mcmc_samples = matrix(p, ncol = 1L),
       model = model[[1L]],
       nsim = 1L,
-      offset = object$tmb_data$offset_i
+      offset = object$offset
     )
     mu <- linkinv(pred[, 1L, drop = TRUE])
   } else {
@@ -385,7 +386,7 @@ residuals.sdmTMB <- function(object,
     cli_inform(paste0("These are residuals for delta model component ", model,
       ". Use the `model` argument to select the other component."))
   }
-  r
+  as.vector(r)
 }
 
 # from:

@@ -784,6 +784,8 @@ sdmTMB <- function(
     spde$loc_xy <- as.matrix(data[,spde$xy_cols,drop=FALSE])
     spde$A_st <- fmesher::fm_basis(spde$mesh, loc = spde$loc_xy)
     spde$sdm_spatial_id <- seq(1, nrow(data)) # FIXME?
+  } else {
+    data[["__fake_data__"]] <- FALSE
   }
   check_irregalar_time(data, time, spatiotemporal, time_varying)
 
@@ -1373,8 +1375,13 @@ sdmTMB <- function(
   prof <- c("b_j")
   if (delta) prof <- c(prof, "b_j2")
 
-  out_structure <- structure(list(
-    data       = data,
+  fd <- data[['__fake_data__']]
+  tmp <- data[!fd,,drop=FALSE]
+  tmp[['__fake_data__']] <- tmp[['__weight_sdmTMB__']] <-
+    tmp[['__sdmTMB_offset__']] <- tmp[['__dcens_upr__']] <- NULL
+    out_structure <- structure(list(
+    data       = tmp,
+    offset     = offset[!fd],
     spde       = spde,
     formula    = original_formula,
     split_formula = split_formula,
@@ -1385,7 +1392,7 @@ sdmTMB <- function(
     time       = time,
     family     = family,
     smoothers = sm,
-    response   = y_i,
+    response   = y_i[!fd,,drop=FALSE],
     tmb_data   = tmb_data,
     tmb_params = tmb_params,
     tmb_map    = tmb_map,
@@ -1401,6 +1408,7 @@ sdmTMB <- function(
     contrasts  = lapply(X_ij, attr, which = "contrasts"),
     terms  = lapply(mf, attr, which = "terms"),
     extra_time = extra_time,
+    fitted_time = sort(unique(data[[time]])),
     xlevels    = lapply(seq_along(mf), function(i) stats::.getXlevels(mt[[i]], mf[[i]])),
     call       = match.call(expand.dots = TRUE),
     version    = utils::packageVersion("sdmTMB")),

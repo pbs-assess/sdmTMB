@@ -232,7 +232,9 @@ expand_time <- function(df, time_slices, time_column, weights, offset, upr) {
   df[["__weight_sdmTMB__"]] <- if (!is.null(weights)) weights else  1
   df[["__sdmTMB_offset__"]] <- if (!is.null(offset)) offset else 0
   df[["__dcens_upr__"]] <- if (!is.null(upr)) upr else NA_real_
+  df[["__fake_data__"]] <- FALSE
   fake_df <- df[1L, , drop = FALSE]
+  fake_df[["__fake_data__"]] <- TRUE
   fake_df[["__weight_sdmTMB__"]] <- 0 # IMPORTANT: this turns off these data in the likelihood
   missing_years <- time_slices[!time_slices %in% df[[time_column]]]
   fake_df <- do.call("rbind", replicate(length(missing_years), fake_df, simplify = FALSE))
@@ -582,4 +584,10 @@ set_delta_model <- function(x, model = c(NA, 1, 2)) {
     msg = "`model` argument not valid; should be one of NA, 1, 2")
   attr(x, "delta_model_predict") <- model[[1]]
   x
+}
+
+get_fitted_time <- function(x) {
+  if (!"fitted_time" %in% names(x))
+    cli_abort("Missing 'fitted_time' element in fitted object. Please refit the model with a current version of sdmTMB.")
+  x$fitted_time
 }

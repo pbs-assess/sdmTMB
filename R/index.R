@@ -129,7 +129,7 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
     # FIXME parallel setup here?
     if (!"fake_nd" %in% names(obj)) { # old sdmTMB versions...
       predicted_time <- sort(unique(obj$data[[obj$fit_obj$time]]))
-      fitted_time <- sort(unique(obj$fit_obj$data[[obj$fit_obj$time]]))
+      fitted_time <- get_fitted_time(obj$fit_obj)
       if (!all(fitted_time %in% predicted_time)) {
         cli_abort(paste0("Some of the fitted time elements were not predicted ",
           "on with `predict.sdmTMB()`. Either supply all time elements to ",
@@ -236,7 +236,8 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   }
   d$lwr <- as.numeric(trans(d$trans_est + stats::qnorm((1-level)/2) * d$se))
   d$upr <- as.numeric(trans(d$trans_est + stats::qnorm(1-(1-level)/2) * d$se))
-  d[[time_name]] <- sort(unique(obj$fit_obj$data[[time_name]]))
+
+  d[[time_name]] <- get_fitted_time(obj$fit_obj)
   # d$max_gradient <- max(conv$final_grads)
   # d$bad_eig <- conv$bad_eig
 

@@ -1,5 +1,12 @@
 # sdmTMB (development version)
 
+* Fix bug in `sanity()` where gradient checks were missing `abs()` such that
+  large negative gradients weren't getting caught. #324
+
+* Return `offset` vector in fitted object as an element. Ensure any extra time
+  rows of data in the `data` element of the fitted object do not include the
+  extra time slices.
+
 * Add experimental residuals option "mle-mvn" where a single approximate 
   posterior sample of the random effects is drawn and these are combined
   with the MLE fixed effects to produce residuals. This may become the

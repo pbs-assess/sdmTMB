@@ -167,7 +167,7 @@ print_time_varying <- function(x, m = 1) {
     tv_names <- colnames(model.matrix(x$time_varying, x$data))
     mm_tv <- cbind(round(as.numeric(b_rw_t_est), 2L), round(as.numeric(b_rw_t_se), 2L))
     colnames(mm_tv) <- c("coef.est", "coef.se")
-    time_slices <- sort(unique(x$data[[x$time]]))
+    time_slices <- get_fitted_time(x)
     row.names(mm_tv) <- paste(rep(tv_names, each = length(time_slices)), time_slices, sep = "-")
   } else {
     mm_tv <- NULL
@@ -277,7 +277,7 @@ print_other_parameters <- function(x, m = 1L) {
   phi <- get_term_text("phi", "Dispersion parameter")
   tweedie_p <- get_term_text("tweedie_p", "Tweedie p")
   gengamma_par <- if ('gengamma' %in% family(x)[[m]]) {
-    get_term_text("gengamma_Q", "Generalized gamma lambda") 
+    get_term_text("gengamma_Q", "Generalized gamma lambda")
     } else ""
   sigma_O <- get_term_text("sigma_O", "Spatial SD")
   xtra <- if (x$spatiotemporal[m] == "ar1") "marginal " else ""

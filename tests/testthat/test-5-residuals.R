@@ -352,5 +352,43 @@ test_that("predict_mle_mcmc() works with extra_time #297", {
   )
   set.seed(123)
   samps <- sdmTMBextra::predict_mle_mcmc(fit, mcmc_iter = 11, mcmc_warmup = 10)
-  expect_true(nrow(samps) == 972L)
+  expect_true(nrow(samps) == 969L)
+})
+
+test_that("all residuals work with extra time and offsets #326", {
+  skip_on_cran()
+  skip_on_ci()
+  skip_if_not_installed("sdmTMBextra")
+  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
+  pcod$os <- rep(log(0.01), nrow(pcod)) # offset
+  m <- sdmTMB(
+    data = pcod,
+    formula = density ~ 1,
+    mesh = mesh,
+    offset = pcod$os,
+    family = tweedie(link = "log"),
+    spatial = "on",
+    time = "year",
+    extra_time = c(2006, 2008, 2010, 2012, 2014, 2016),
+    spatiotemporal = "off"
+  )
+  set.seed(1)
+  r <- residuals(m, type = "mle-laplace")
+  expect_true(is.vector(r))
+  expect_equal(round(r, 3)[1:10], c(1.182, 0.671, -1.095, 0.511, -0.874, -0.521, 0.018, -1.19,  0.069, 0.973))
+  set.seed(1)
+  expect_equal(length(r), 2143L)
+  r <- residuals(m, type = "mle-mvn")
+  expect_equal(round(r, 3)[1:10], c(1.24, 0.746, -1.054, 0.506, 0, -0.453, -1.196, -1.449, -0.585, 0.976))
+  expect_equal(length(r), 2143L)
+  r <- residuals(m, type = "mvn-laplace")
+  expect_equal(length(r), 2143L)
+  r <- residuals(m, type = "response")
+  expect_equal(length(r), 2143L)
+  set.seed(1)
+  p1 <- sdmTMBextra::predict_mle_mcmc(m,
+    mcmc_iter = 11, mcmc_warmup = 10
+  )
+  r <- residuals(m, type = "mle-mcmc", mcmc_samples = p1)
+  expect_equal(length(r), 2143L)
 })

@@ -361,8 +361,8 @@ predict.sdmTMB <- function(object, newdata = NULL,
     }
 
     check_time_class(object, newdata)
-    original_time <- as.numeric(sort(unique(object$data[[object$time]])))
-    new_data_time <- as.numeric(sort(unique(newdata[[object$time]])))
+    original_time <- as.integer(get_fitted_time(object))
+    new_data_time <- as.integer(sort(unique(newdata[[object$time]])))
 
     if (!all(new_data_time %in% original_time))
       cli_abort(c("Some new time elements were found in `newdata`. ",
