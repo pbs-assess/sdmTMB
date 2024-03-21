@@ -593,7 +593,7 @@ get_fitted_time <- function(x) {
 }
 
 update_version <- function(object) {
-  if (object$version < '0.4.3') {
+  if (object$version < "0.4.3") {
     cli::cli_abort("`update_version()` only works with models fit with version 0.4.3 or later.")
   }
   if (!"fitted_time" %in% names(object)) { # < 0.4.3.9004
@@ -606,13 +606,13 @@ update_version <- function(object) {
     object$offset <- o
 
     y <- object$response
-    y <- y[seq(1, real_data_n),,drop=FALSE]
+    y <- y[seq(1, real_data_n), , drop = FALSE]
     object$response <- y
 
     d <- object$data
-    d[['__fake_data__']] <- d[['__weight_sdmTMB__']] <-
-      d[['__sdmTMB_offset__']] <- d[['__dcens_upr__']] <- NULL
-    d <- d[seq(1, real_data_n),,drop=FALSE]
+    d[["__fake_data__"]] <- d[["__weight_sdmTMB__"]] <-
+      d[["__sdmTMB_offset__"]] <- d[["__dcens_upr__"]] <- NULL
+    d <- d[seq(1, real_data_n), , drop = FALSE]
     object$data <- d
 
     # add gengamma_Q
@@ -634,6 +634,6 @@ update_version <- function(object) {
       object$tmb_obj$env$last.par.best <- ee$last.par.best
       object$tmb_map <- map
     }
-    object
   }
+  object
 }

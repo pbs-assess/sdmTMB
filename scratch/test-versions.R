@@ -81,3 +81,22 @@ check_version(f)
 
 f <- "scratch/version-checks/fit-0.4.3.9003.rds"
 check_version(f)
+
+## current
+mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
+pcod$os <- rep(log(0.01), nrow(pcod)) # offset
+f <- "scratch/version-checks/fit-main.rds"
+fit <- sdmTMB(
+  data = pcod,
+  formula = density ~ s(depth_scaled, k = 3),
+  mesh = mesh,
+  offset = pcod$os,
+  family = tweedie(link = "log"),
+  time = "year",
+  time_varying = ~ 1,
+  time_varying_type = 'ar1',
+  extra_time = c(2006, 2008, 2010, 2012, 2014, 2016),
+  spatiotemporal = "off"
+)
+saveRDS(fit, f)
+check_version(f)
