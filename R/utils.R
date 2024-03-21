@@ -630,8 +630,10 @@ update_version <- function(object) {
         silent = ee$silent,
         DLL = "sdmTMB"
       )
+      object$tmb_obj$fn(object$model$par)
+      object$tmb_obj$env$last.par.best <- ee$last.par.best
+      object$tmb_map <- map
     }
-    object$tmb_obj$env$last.par.best <- ee$last.par.best
     object
   }
 }
