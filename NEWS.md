@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Make `simulate.sdmTMB()` not include `extra_time` elements.
+
 * Improved re-initialization of saved fitted model objects in new sessions.
 
 * Fix important bug in `simulate.sdmTMB()` method for delta families where
