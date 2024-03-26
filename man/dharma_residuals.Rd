@@ -13,7 +13,9 @@ dharma_residuals(
 )
 }
 \arguments{
-\item{simulated_response}{Output from \code{\link[=simulate.sdmTMB]{simulate.sdmTMB()}}.}
+\item{simulated_response}{Output from \code{\link[=simulate.sdmTMB]{simulate.sdmTMB()}}. It is recommended
+to set \code{type = "mle-mvn"} in the call to \code{\link[=simulate.sdmTMB]{simulate.sdmTMB()}} for the
+residuals to have the expected distribution.}
 
 \item{object}{Output from \code{\link[=sdmTMB]{sdmTMB()}}.}
 
@@ -34,11 +36,27 @@ is returned and any subsequent \pkg{DHARMa} functions can be applied.
 \description{
 Plot (and possibly return) DHARMa residuals. This is a wrapper function
 around \code{\link[DHARMa:createDHARMa]{DHARMa::createDHARMa()}} to facilitate its use with \code{\link[=sdmTMB]{sdmTMB()}} models.
+\strong{Note:} It is recommended to set \code{type = "mle-mvn"} in
+\code{\link[=simulate.sdmTMB]{simulate.sdmTMB()}} for the resulting residuals to have the
+expected distribution. This is \emph{not} the default.
 }
 \details{
-\strong{Note:} It is recommended to set \code{type = "mle-mvn"} in
-\code{\link[=residuals.sdmTMB]{residuals.sdmTMB()}} for the resulting residuals to have the
-expected distribution. This is \emph{not} the default.
+Advantages to these residuals over the ones from the \code{\link[=residuals.sdmTMB]{residuals.sdmTMB()}}
+method are (1) they work with delta/hurdle models for the combined
+predictions, not the just the two parts separately, (2) they should work for
+all families, not the just the families where we have worked out the
+analytical quantile function, and (3) they can be used with the various
+diagnostic tools and plots from the \pkg{DHARMa} package.
+
+Disadvantages are (1) they are slower to calculate since one must first
+simulate from the model, (2) the stability of the distribution of the
+residuals depends on having a sufficient number of simulation draws, and
+(3) you no longer have a single residual per data point, should that be of
+diagnostic interest.
+
+Note that \pkg{DHARMa} returns residuals that are uniform(0, 1) if the data
+are consistent with the model whereas any randomized quantile residuals from
+\code{\link[=residuals.sdmTMB]{residuals.sdmTMB()}} are expected to be normal(0, 1).
 }
 \examples{
 \dontshow{if (requireNamespace("DHARMa", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}

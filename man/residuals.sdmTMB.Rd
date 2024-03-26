@@ -107,6 +107,7 @@ standard deviation. If weights are present, the residuals are then
 multiplied by sqrt(weights).
 }
 \examples{
+
 mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 10)
 fit <- sdmTMB(
   present ~ as.factor(year) + poly(depth, 2),
@@ -162,4 +163,7 @@ Rufener, M.-C., Kristensen, K., Nielsen, J.R., and Bastardie, F. 2021.
 Bridging the gap between commercial fisheries and survey data to model the
 spatiotemporal dynamics of marine species. Ecological Applications. e02453.
 \doi{10.1002/eap.2453}
+}
+\seealso{
+\code{\link[=simulate.sdmTMB]{simulate.sdmTMB()}}, \code{\link[=dharma_residuals]{dharma_residuals()}}
 }

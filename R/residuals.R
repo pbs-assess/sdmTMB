@@ -258,7 +258,9 @@ qres_beta <- function(object, y, mu, ...) {
 #' a randomization seed** and to not go "fishing" for the perfect residuals or
 #' to present all inspected residuals.
 #'
+#' @seealso [simulate.sdmTMB()], [dharma_residuals()]
 #' @examples
+#'
 #' mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 10)
 #' fit <- sdmTMB(
 #'   present ~ as.factor(year) + poly(depth, 2),

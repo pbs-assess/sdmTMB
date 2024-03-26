@@ -2,16 +2,35 @@
 #'
 #' Plot (and possibly return) DHARMa residuals. This is a wrapper function
 #' around [DHARMa::createDHARMa()] to facilitate its use with [sdmTMB()] models.
-#'
 #' **Note:** It is recommended to set `type = "mle-mvn"` in
-#' [sdmTMB::residuals.sdmTMB()] for the resulting residuals to have the
+#' [sdmTMB::simulate.sdmTMB()] for the resulting residuals to have the
 #' expected distribution. This is *not* the default.
 #'
-#' @param simulated_response Output from [simulate.sdmTMB()].
+#' @param simulated_response Output from [simulate.sdmTMB()]. It is recommended
+#'   to set `type = "mle-mvn"` in the call to [simulate.sdmTMB()] for the
+#'   residuals to have the expected distribution.
 #' @param object Output from [sdmTMB()].
 #' @param return_DHARMa Logical.
 #' @param plot Logical.
 #' @param ... Other arguments to pass to [DHARMa::createDHARMa()].
+#'
+#' @details
+#' Advantages to these residuals over the ones from the [residuals.sdmTMB()]
+#' method are (1) they work with delta/hurdle models for the combined
+#' predictions, not the just the two parts separately, (2) they should work for
+#' all families, not the just the families where we have worked out the
+#' analytical quantile function, and (3) they can be used with the various
+#' diagnostic tools and plots from the \pkg{DHARMa} package.
+#'
+#' Disadvantages are (1) they are slower to calculate since one must first
+#' simulate from the model, (2) the stability of the distribution of the
+#' residuals depends on having a sufficient number of simulation draws, and
+#' (3) you no longer have a single residual per data point, should that be of
+#' diagnostic interest.
+#'
+#' Note that \pkg{DHARMa} returns residuals that are uniform(0, 1) if the data
+#' are consistent with the model whereas any randomized quantile residuals from
+#' [residuals.sdmTMB()] are expected to be normal(0, 1).
 #'
 #' @return
 #' A data frame of observed and expected values is invisibly returned,
@@ -26,7 +45,7 @@
 #' @importFrom assertthat assert_that
 #' @importFrom cli cli_abort
 #'
-#' @seealso [sdmTMB::simulate.sdmTMB()], [sdmTMB::residuals.sdmTMB()]
+#' @seealso [simulate.sdmTMB()], [residuals.sdmTMB()]
 #'
 #' @examplesIf requireNamespace("DHARMa", quietly = TRUE)
 #' # Try Tweedie family:
