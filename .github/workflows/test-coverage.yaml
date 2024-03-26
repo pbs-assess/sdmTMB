@@ -26,6 +26,11 @@ jobs:
           extra-packages: any::covr
           needs: coverage
 
+      - name: Install extras
+        run: |
+          remotes::install_github("pbs-assess/sdmTMBextra")
+        shell: Rscript {0}
+
       - name: Test coverage
         run: |
           covr::codecov(
