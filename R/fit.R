@@ -1375,6 +1375,7 @@ sdmTMB <- function(
   prof <- c("b_j")
   if (delta) prof <- c(prof, "b_j2")
 
+  lu <- make_year_lu(data[[time]])
   fd <- data[['__fake_data__']]
   tmp <- data[!fd,,drop=FALSE]
   tmp[['__fake_data__']] <- tmp[['__weight_sdmTMB__']] <-
@@ -1390,6 +1391,7 @@ sdmTMB <- function(
     threshold_function = thresh[[1]]$threshold_func,
     epsilon_predictor = epsilon_predictor,
     time       = time,
+    time_lu    = lu,
     family     = family,
     smoothers = sm,
     response   = y_i[!fd,,drop=FALSE],

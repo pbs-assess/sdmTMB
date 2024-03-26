@@ -166,6 +166,13 @@ make_year_i <- function(x) {
   x - min(x)
 }
 
+make_year_lu <- function(x) {
+  ret <- unique(data.frame(year_i = make_year_i(x), time_from_data = x, stringsAsFactors = FALSE))
+  ret <- ret[order(ret$year_i),,drop=FALSE]
+  row.names(ret) <- NULL
+  ret
+}
+
 check_offset <- function(formula) {
   .check <- any(grepl("^offset$",
     gsub(" ", "", unlist(strsplit(as.character(formula), "\\+")))))
