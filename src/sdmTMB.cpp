@@ -197,6 +197,9 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(proj_z_i);
   DATA_IVECTOR(proj_spatial_index);
 
+  DATA_IVECTOR(proj_year_index); // may be a subset of proj_year for speed!
+  DATA_INTEGER(n_proj_year_index);
+
   DATA_IVECTOR(spatial_only); // !spatial_only means include spatiotemporal(!)
   DATA_INTEGER(spatial_covariate); // include SVC?
 
@@ -1225,7 +1228,7 @@ Type objective_function<Type>::operator()()
     }
 
     // Total biomass etc.:
-    vector<Type> total(n_t);
+    vector<Type> total(n_proj_year_index);
     total.setZero();
     vector<Type> mu_combined(n_p);
     mu_combined.setZero();
@@ -1247,21 +1250,23 @@ Type objective_function<Type>::operator()()
             t2 = InverseLink(proj_eta(i,1), link(1));
             mu_combined(i) = t1 * t2;
           }
-          total(proj_year(i)) += mu_combined(i) * area_i(i);
+          if (!sdmTMB::isNA(proj_year_index(i))) // NAs are for years we're skipping for speed
+            total(proj_year_index(i)) += mu_combined(i) * area_i(i);
         }
       } else { // non-delta model
         for (int i = 0; i < n_p; i++) {
           mu_combined(i) = InverseLink(proj_eta(i,0), link(0));
-          total(proj_year(i)) += mu_combined(i) * area_i(i);
+          if (!sdmTMB::isNA(proj_year_index(i))) // NAs are for years we're skipping for speed
+            total(proj_year_index(i)) += mu_combined(i) * area_i(i);
         }
       }
-      vector<Type> link_total(n_t);
+      vector<Type> link_total(total.size());
       if (n_m > 1) {
         link_tmp = link(1); // 2nd link should always be log/exp in this case
       } else {
         link_tmp = link(0);
       }
-      for (int i = 0; i < n_t; i++) {
+      for (int i = 0; i < total.size(); i++) {
         link_total(i) = Link(total(i), link_tmp);
       }
       if (calc_index_totals) {
@@ -1274,7 +1279,7 @@ Type objective_function<Type>::operator()()
       PARAMETER_VECTOR(eps_index);
       if (eps_index.size() > 0) {
         Type S;
-        for (int t=0; t < n_t; t++) {
+        for (int t=0; t < total.size(); t++) {
           S = total(t);
           S = newton::Tag(S); // Set lowrank tag on S = sum(exp(x))
           jnll += eps_index(t) * S;

@@ -506,6 +506,8 @@ predict.sdmTMB <- function(object, newdata = NULL,
     tmb_data$proj_X_rw_ik <- proj_X_rw_ik
     tmb_data$proj_RE_indexes <- proj_RE_indexes
     tmb_data$proj_year <- make_year_i(nd[[object$time]])
+    tmb_data$proj_year_index <- tmb_data$proj_year # fake for now... FIXME if doing with fitting...
+    tmb_data$n_proj_year_index <- max(tmb_data$proj_year_index) + 1L # fake for now... FIXME if doing with fitting...
     tmb_data$proj_lon <- newdata[[xy_cols[[1]]]]
     tmb_data$proj_lat <- newdata[[xy_cols[[2]]]]
     tmb_data$calc_se <- as.integer(se_fit)

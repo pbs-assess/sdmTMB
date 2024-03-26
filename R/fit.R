@@ -1103,6 +1103,8 @@ sdmTMB <- function(
     proj_X_ij  = list(matrix(0, ncol = 1, nrow = 1)), # dummy
     proj_X_rw_ik = matrix(0, ncol = 1, nrow = 1), # dummy
     proj_year  = 0, # dummy
+    proj_year_index = 0, # dummy
+    n_proj_year_index = 0, # dummy
     proj_spatial_index = 0, # dummy
     proj_z_i = matrix(0, nrow = 1, ncol = n_m), # dummy
     spde_aniso = make_anisotropy_spde(spde, anisotropy),

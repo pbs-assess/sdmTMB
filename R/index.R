@@ -140,6 +140,7 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
     assert_that(!is.null(area))
     if (length(area) > 1L) {
       n_fakend <- if (!is.null(obj$fake_nd)) nrow(obj$fake_nd) else 0L
+      # area <- c(area, rep(0, n_fakend)) # pad area with any extra time
       area <- c(area, rep(1, n_fakend)) # pad area with any extra time
     }
     if (length(area) != nrow(obj$pred_tmb_data$proj_X_ij[[1]]) && length(area) != 1L) {
@@ -159,6 +160,26 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
 
     eps_name <- "eps_index" # FIXME break out into function; add for COG?
     pars[[eps_name]] <- numeric(0)
+
+    if ("time_lu" %in% names(obj$fit_obj)) { # old version missing it
+      # turn area_i to 0 for all proj_years we aren't going to actually use
+      # because benchmarking shows it's faster and almost the same speed and memory as
+      # the more complex option of only doing this for just the necessary years
+      lu <- obj$fit_obj$time_lu
+      pred_time_slices <- unique(obj$data[[obj$fit_obj$time]])
+      proj_year_keep <- lu$year_i[lu$time_from_data %in% pred_time_slices]
+      set_zero <- !tmb_data$proj_year %in% proj_year_keep
+      # tmb_data$area_i[set_zero] <- 0 # time slices we aren't interested in; will get discarded
+
+      tmb_data$proj_year_index[set_zero] <- NA # to ignore
+      u <- unique(tmb_data$proj_year_index)
+      tmb_data$n_proj_year_index <- length(unique(u[!is.na(u)]))
+      tmb_data$proj_year_index <- as.numeric(factor(tmb_data$proj_year_index)) - 1L
+      time_for_df <- pred_time_slices
+    } else {
+      time_for_df <- get_fitted_time(obj$fit_obj)
+    }
+    # print(table(tmb_data$area_i))
 
     new_obj <- TMB::MakeADFun(
       data = tmb_data,
@@ -202,9 +223,9 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
       inner.control = list(sparse = TRUE, lowrank = TRUE, trace = TRUE)
     )
     # tictoc::toc()
-    # tictoc::tic("gr()")
+    tictoc::tic("gr()")
     gradient <- new_obj2$gr(fixed)
-    # tictoc::toc()
+    tictoc::toc()
     # tictoc::toc()
     corrected_vals <- gradient[names(fixed) == eps_name]
   } else {
@@ -242,7 +263,7 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   d$lwr <- as.numeric(trans(d$trans_est + stats::qnorm((1-level)/2) * d$se))
   d$upr <- as.numeric(trans(d$trans_est + stats::qnorm(1-(1-level)/2) * d$se))
 
-  d[[time_name]] <- get_fitted_time(obj$fit_obj)
+  d[[time_name]] <- time_for_df
   # d$max_gradient <- max(conv$final_grads)
   # d$bad_eig <- conv$bad_eig
 
