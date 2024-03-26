@@ -154,54 +154,82 @@ qres_beta <- function(object, y, mu, ...) {
 #' site](https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html).
 #' See notes about types of residuals in 'Details' section below.
 #'
-#' @param object An [sdmTMB()] model
-#' @param type Type of residual. See details.
+#' @param object An [sdmTMB()] model.
+#' @param type Residual type. See details.
 #' @param model Which delta/hurdle model component?
 #' @param mcmc_samples A vector of MCMC samples of the linear predictor in link
-#'   space. See the
+#'   space. See the `predict_mle_mcmc()` function in the
 #'   \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package.
 #' @param qres_func A custom quantile residuals function. Function should take
 #'   the arguments `object, y, mu, ...` and return a vector of length
 #'   `length(y)`.
-#' @param ... Passed to residual function. Only `n` works for binomial.
+#' @param ... Passed to custom `qres_func` function. Unused.
 #' @export
 #' @importFrom stats predict
-#' @return A vector of residuals.
 #' @details
 #'
-#' Types of residuals currently supported:
+#' **Randomized quantile residuals:**
 #'
-#' **`"mle-laplace"`** refers to randomized quantile residuals (Dunn &
-#' Smyth 1996), which are also known as probability integral transform (PIT)
-#' residuals (Smith 1985). Under model assumptions, these should be distributed
-#' as standard normal with the following caveat: the Laplace approximation used
-#' for the latent/random effects can cause these residuals to deviate from the
-#' standard normal assumption even if the model is consistent with the data
-#' (Thygesen et al. 2017). Therefore, **these residuals are fast to calculate
-#' but can be unreliable.**
+#' `mle-mvn`, `mle-eb`, and `mle-mcmc` are all implementations of
+#' randomized quantile residuals (Dunn & Smyth 1996), which are also known as
+#' probability integral transform (PIT) residuals (Smith 1985). If the data are
+#' consistent with model assumptions, these residuals should be distributed as
+#' normal(0, 1). Randomization is added to account for integer or binary
+#' response observations. For example, for a Poisson observation likelihood with
+#' observations `y` and mean predictions `mu`, we would create randomized
+#' quantile residuals as:
 #'
-#' **`"mle-mcmc"`** refers to randomized quantile residuals where the fixed
-#' effects are fixed at their MLE (maximum likelihood estimate) values and the
-#' random effects are sampled with MCMC via tmbstan/Stan. As proposed in
-#' Thygesen et al. (2017) and used in Rufener et al. (2021). Under model
-#' assumptions, these should be distributed as standard normal. **These
-#' residuals are theoretically preferred over the regular Laplace approximated
-#' randomized-quantile residuals, but will be considerably slower to
-#' calculate.**
+#' ```
+#' a <- ppois(y - 1, mu)
+#' b <- ppois(y, mu)
+#' u <- runif(n = length(y), min = a, max = b)
+#' qnorm(u)
+#' ```
+#'
+#' **Types of residuals:**
+#'
+#' Acronyms:
+#' - EB: Empirical Bayes
+#' - MCMC: Markov chain Monte Carlo
+#' - MLE: Maximum Likelihood Estimate
+#' - MVN: Multivariate normal
+#'
+#' **`mle-mvn`**: Fixed effects are held at their MLEs and random effects are
+#' taken from a single approximate posterior sample. The "approximate" part
+#' refers to the sample being taken from the random effects' assumed MVN
+#' distribution. In practice, the sample is obtained based on the mode and
+#' Hessian of the random effects taking advantage of sparsity in the Hessian for
+#' computational efficiency. This sample is taken with `obj$MC()`, where `obj`
+#' is the \pkg{TMB} object created with `TMB::MakeADFun()`. See Waagepetersen
+#' (2006) and the description in the source code for the internal \pkg{TMB}
+#' function `TMB:::oneSamplePosterior()`. Residuals are converted to randomized
+#' quantile residuals as described above.
+#'
+#' **`mle-eb`**: Fixed effects are held at their MLEs and random effects are
+#' taken as their EB estimates. These used to be the default residuals in
+#' \pkg{sdmTMB} (and were called `mle-laplace`). They are available for
+#' backwards compatibility and for research purposes but they are *not*
+#' recommended for checking goodness of fit. Residuals are converted to
+#' randomized quantile residuals as described above.
+#'
+#' **`mle-mcmc`**: Fixed effects are held at their MLEs and random effects are
+#' taken from a single posterior sample obtained with MCMC. These are an
+#' excellent option since they make no assumption about the distribution of the
+#' random effects (compared to the `mle-mvn` option) but can be slow to obtain.
+#' See Waagepetersen (2006) and Thygesen et al. (2017). Residuals are converted
+#' to randomized quantile residuals as described above.
 #'
 #' See the \href{https://github.com/pbs-assess/sdmTMBextra}{\pkg{sdmTMBextra}}
-#' package for the function `predict_mle_mcmc()`,
-#' which can generate the MCMC samples to pass to the `mcmc_samples` argument.
-#' Ideally MCMC is run until convergence and then the last iteration can be
-#' used for residuals. MCMC samples are defined by `mcmc_iter - mcmc_warmup`.
-#' The Stan model can be printed with `print_stan_model = TRUE` to check.
+#' package for the function `predict_mle_mcmc()`, which can generate the MCMC
+#' samples to pass to the `mcmc_samples` argument. Ideally MCMC is run until
+#' convergence and then the last iteration can be used for residuals.
 #' The defaults may not be sufficient for many models.
 #'
-#' **`"mvn-laplace"`** is the same as `"mle-laplace"` except the parameters are
-#' based on simulations drawn from the assumed multivariate normal distribution
-#' (using the joint precision matrix).
+#' **`response`**: These are simple observed minus predicted residuals.
 #'
-#' **`"response"`** refers to response residuals: observed minus predicted.
+#' **`pearson`**: These are Pearson residuals: response residuals scaled by the
+#' standard deviation. If weights are present, the residuals are then
+#' multiplied by sqrt(weights).
 #'
 #' @references
 #' Dunn, P.K. & Smyth, G.K. (1996). Randomized Quantile Residuals. Journal of
@@ -210,51 +238,69 @@ qres_beta <- function(object, y, mu, ...) {
 #' Smith, J.Q. (1985). Diagnostic checks of non-standard time series models.
 #' Journal of Forecasting, 4, 283–291.
 #'
-#' Rufener, M.-C., Kristensen, K., Nielsen, J.R., and Bastardie, F. 2021.
-#' Bridging the gap between commercial fisheries and survey data to model the
-#' spatiotemporal dynamics of marine species. Ecological Applications. e02453.
-#' \doi{10.1002/eap.2453}
+#' Waagepetersen, R. (2006). A simulation-based goodness-of-fit test for random
+#' effects in generalized linear mixed models. Scandinavian Journal of
+#' Statistics, 33(4), 721-731.
 #'
 #' Thygesen, U.H., Albertsen, C.M., Berg, C.W., Kristensen, K., and Nielsen, A.
 #' 2017. Validation of ecological state space models using the Laplace
 #' approximation. Environ Ecol Stat 24(2): 317–339.
 #' \doi{10.1007/s10651-017-0372-4}
 #'
+#' Rufener, M.-C., Kristensen, K., Nielsen, J.R., and Bastardie, F. 2021.
+#' Bridging the gap between commercial fisheries and survey data to model the
+#' spatiotemporal dynamics of marine species. Ecological Applications. e02453.
+#' \doi{10.1002/eap.2453}
+#'
+#' @return A vector of residuals. Note that randomization from any single
+#' random effect posterior sample and from any randomized quantile routines
+#' will result in different residuals with each call. It is suggested to **set
+#' a randomization seed** and to not go "fishing" for the perfect residuals or
+#' to present all inspected residuals.
+#'
 #' @examples
+#' mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 10)
+#' fit <- sdmTMB(
+#'   present ~ as.factor(year) + poly(depth, 2),
+#'   data = pcod_2011, mesh = mesh,
+#'   family = binomial()
+#' )
 #'
-#'   mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 10)
-#'   fit <- sdmTMB(
-#'     present ~ as.factor(year) + poly(depth, 3),
-#'     data = pcod_2011, mesh = mesh,
-#'     family = binomial()
-#'   )
+#' # the default "mle-mvn" residuals use fixed effects at their MLE and a
+#' # single sample from the approximate random effect posterior:
+#' set.seed(9283)
+#' r <- residuals(fit, type = "mle-mvn")
+#' qqnorm(r)
+#' abline(0, 1)
 #'
-#'   # response residuals will be not be normally distributed unless
-#'   # the family is Gaussian:
-#'   r0 <- residuals(fit, type = "response")
-#'   qqnorm(r0)
-#'   qqline(r0)
+#' # response residuals will be not be normally distributed unless
+#' # the family is Gaussian:
+#' r <- residuals(fit, type = "response")
+#' qqnorm(r)
+#' abline(0, 1)
 #'
-#'   # quick but can have issues because of Laplace approximation:
-#'   r1 <- residuals(fit, type = "mle-laplace")
-#'   qqnorm(r1)
-#'   qqline(r1)
+#' # "mle-eb" are quick but are not expected to be N(0, 1); not recommended:
+#' set.seed(2321)
+#' r <- residuals(fit, type = "mle-eb")
+#' qqnorm(r)
+#' abline(0, 1)
 #'
-#'   # "mle-mvn" residuals with the fixed effects at their MLE and the random
-#'   # effects sampled from their approximate posterior
-#'   r2 <- residuals(fit, type = "mle-mvn")
-#'   qqnorm(r2)
-#'   qqline(r2)
-#'
-#'   # see also "mle-mcmc" residuals with the help of the sdmTMBextra package
-
+#' # see also "mle-mcmc" residuals with the help of the sdmTMBextra package
+#' # we can fake them here by taking a single sample from the joint precision
+#' # matrix and pretending they are MCMC samples:
+#' set.seed(82728)
+#' p <- predict(fit, nsim = 1) # pretend these are from sdmTMBextra::predict_mle_mcmc()
+#' r <- residuals(fit, mcmc_samples = p)
+#' qqnorm(r)
+#' abline(0, 1)
 residuals.sdmTMB <- function(object,
-                             type = c("mle-laplace", "mle-mcmc", "mle-mvn", "mvn-laplace", "response", "pearson"),
+                             type = c("mle-mvn", "mle-eb", "mle-mcmc", "response", "pearson"),
                              model = c(1, 2),
                              mcmc_samples = NULL,
                              qres_func = NULL,
                              ...) {
 
+  cli_inform("Note what used to be the default sdmTMB residuals (before version 0.4.3.9005) are now `type = 'mle-eb'`. We recommend using the current default `'mle-mvn'`, which takes one sample from the approximate posterior of the random effects or `dharma_residuals()` using a similar approach.")
   model_missing <- FALSE
   if (identical(model, c(1, 2))) model_missing <- TRUE
   model <- as.integer(model[[1]])
@@ -307,7 +353,7 @@ residuals.sdmTMB <- function(object,
   }
 
   if (!"offset" %in% names(object)) cli_abort("This model appears to have been fit with an older sdmTMB.")
-  if (type %in% c("mle-laplace", "response", "pearson")) {
+  if (type %in% c("mle-eb", "response", "pearson")) {
     mu <- linkinv(predict(object, newdata = object$data, offset = object$offset)[[est_column]]) # not newdata = NULL
     # }
   } else if (type == "mvn-laplace") {
@@ -324,18 +370,16 @@ residuals.sdmTMB <- function(object,
     mu <- linkinv(mcmc_samples)
   } else if (type == "mle-mvn") {
     ## see TMB:::oneSamplePosterior()
-    tmp <- object$tmb_obj$env$MC(n = 1L, keep = TRUE, antithetic = FALSE)
-    re_samp <- as.vector(attr(tmp, "samples"))
-    lp <- object$tmb_obj$env$last.par.best
-    p <- numeric(length(lp))
-    fe <- object$tmb_obj$env$lfixed()
-    re <- object$tmb_obj$env$lrandom()
-    p[re] <- re_samp
-    p[fe] <- lp[fe]
+
+    if (is.null(object$tmb_random)) {
+      params <- object$tmb_obj$env$last.par.best
+    } else {
+      params <- .one_sample_posterior(object)
+    }
     pred <- predict(
       object,
       newdata = object$data,
-      mcmc_samples = matrix(p, ncol = 1L),
+      mcmc_samples = matrix(params, ncol = 1L),
       model = model[[1L]],
       nsim = 1L,
       offset = object$offset
@@ -358,7 +402,7 @@ residuals.sdmTMB <- function(object,
 
   if (type == "response") {
     if (!prop_binomial) r <- y - mu else r <- y / size - mu
-  } else if (type == "mle-laplace" || type == "mvn-laplace" || type == "mle-mvn") {
+  } else if (type == "mle-eb" || type == "mle-mvn") {
     r <- res_func(object, y, mu, .n = size, ...)
   } else if (type == "mle-mcmc") {
     r <- res_func(object, y, mu, .n = size, ...)
@@ -398,4 +442,19 @@ check_overdisp <- function(object) {
   prat <- pearson_chisq / rdf
   pval <- stats::pchisq(pearson_chisq, df = rdf, lower.tail = FALSE)
   data.frame(chisq = pearson_chisq, ratio = prat, rdf = rdf, p = pval)
+}
+
+# return full set of parameter vector with the
+# random effects sampled from the implied MVN posterior and the
+# fixed effects at their MLEs
+.one_sample_posterior <- function(object) {
+  tmp <- object$tmb_obj$env$MC(n = 1L, keep = TRUE, antithetic = FALSE)
+  re_samp <- as.vector(attr(tmp, "samples"))
+  lp <- object$tmb_obj$env$last.par.best
+  p <- numeric(length(lp))
+  fe <- object$tmb_obj$env$lfixed()
+  re <- object$tmb_obj$env$lrandom()
+  p[re] <- re_samp
+  p[fe] <- lp[fe]
+  p
 }

@@ -1,5 +1,11 @@
 # sdmTMB (development version)
 
+* Add new `"mle-mvn"` type to `residuals.sdmTMB()` and make it the default.
+  This is a fast option for evaluating goodness of fit that should be better
+  than the previous default. See the details section in `?residuals.sdmTMB`
+  for details. The previous default is now called `"mvn-eb"` but is not
+  recommended.
+  
 * Fix bug in `sanity()` where gradient checks were missing `abs()` such that
   large negative gradients weren't getting caught. #324
 
