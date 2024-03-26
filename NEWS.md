@@ -6,6 +6,12 @@
   for details. The previous default is now called `"mvn-eb"` but is not
   recommended.
   
+* Bring `dharma_residuals()` back over from sdmTMBextra to sdmTMB. Add a new
+  option in the `params` argument (`"mle-mvn"`) that should make the
+  simulation residuals more consistent with the expected distribution.
+  See the same new documentation in `?residuals.sdmTMB`. The examples
+  in `?dharma_residuals` illustrate suggested use.
+
 * Fix bug in `sanity()` where gradient checks were missing `abs()` such that
   large negative gradients weren't getting caught. #324
 

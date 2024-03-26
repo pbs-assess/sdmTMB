@@ -80,6 +80,7 @@ Imports:
     stats,
     TMB (>= 1.8.0)
 Suggests:
+    DHARMa,
     dplyr,
     effects (>= 4.0-1),
     estimability,
