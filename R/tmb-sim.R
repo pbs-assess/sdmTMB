@@ -395,11 +395,11 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
 
   if (isTRUE(object$family$delta)) {
     if (is.na(model[[1]])) {
-      ret <- lapply(ret, function(.x) ifelse(!is.na(.x[,2]), .x[,2], .x[,1]))
+      ret <- lapply(ret, function(.x) .x[,1] * .x[,2])
     } else if (model[[1]] == 1) {
       ret <- lapply(ret, function(.x) .x[,1])
     } else if (model[[1]] == 2) {
-      ret <- lapply(ret, function(.x) ifelse(!is.na(.x[,2]), .x[,2], NA))
+      ret <- lapply(ret, function(.x) .x[,2])
     } else {
       cli_abort("`model` argument isn't valid; should be NA, 1, or 2.")
     }
