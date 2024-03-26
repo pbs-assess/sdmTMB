@@ -7,8 +7,7 @@ test_that("Delta-Gamma family fits", {
 
   fit_dg <- sdmTMB(density ~ 1,
     data = pcod, mesh = pcod_spde,
-    time = "year", family = delta_gamma(),
-    control = sdmTMBcontrol(newton_loops = 1)
+    time = "year", family = delta_gamma()
   )
   fit_dg$sd_report
   nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
@@ -71,6 +70,7 @@ test_that("delta_gamma() Poisson-link family fits", {
   fit_plg$sd_report
   s <- as.list(fit_plg$sd_report, "Std. Error")
   expect_true(sum(is.na(s$b_j)) == 0L)
+  expect_equal(fit_plg$family[[1]]$link, "log")
 
   # p <- predict(fit_plg, newdata = qcs_grid, type = "response")
   # p <- predict(fit_plg, newdata = pcod, type = "response")
@@ -88,6 +88,7 @@ test_that("delta_lognormal() Poisson-link family fits", {
   fit_plg$sd_report
   s <- as.list(fit_plg$sd_report, "Std. Error")
   expect_true(sum(is.na(s$b_j)) == 0L)
+  expect_equal(fit_plg$family[[1]]$link, "log")
 })
 
 test_that("delta_truncated_nbinom2 family fits", {
