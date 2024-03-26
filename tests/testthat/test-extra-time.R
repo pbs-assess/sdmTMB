@@ -35,6 +35,10 @@ test_that("extra time, newdata, and offsets work", {
   expect_equal(ncol(p6), 2L)
   expect_equal(nrow(p6), nrow(pcod))
   expect_equal(p6[, 1, drop = TRUE], p5[, 1, drop = TRUE])
+
+  f <- fitted(m)
+  expect_equal(length(f), 2143L)
+  expect_equal(round(unique(f), 2), c(31.13, 61.93, 64.98, 18.73, 22.76, 42.97, 40.66, 51.65, 26.05))
 })
 
 test_that("extra_time, newdata, get_index() work", {

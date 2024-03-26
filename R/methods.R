@@ -25,16 +25,19 @@ nobs.sdmTMB <- function(object, ...) {
 #' @export
 #' @noRd
 fitted.sdmTMB <- function(object, ...) {
+
+  if (!"offset" %in% names(object))
+    cli_abort("It looks like this was fit with an older version of sdmTMB. Try sdmTMB:::update_version(fit).")
   if (isTRUE(object$family$delta)) {
     inv1 <- object$family[[1]]$linkinv
-    p <- predict(object, type = "link", offset = object$tmb_data$offset_i)
+    p <- predict(object, type = "link", offset = object$offset)
     p1 <- inv1(p$est1)
     inv2 <- object$family[[2]]$linkinv
     p2 <- inv2(p$est2)
     p1 * p2
   } else {
     inv <- object$family$linkinv
-    inv(predict(object, type = "link", offset = object$tmb_data$offset_i)$est)
+    inv(predict(object, type = "link", offset = object$offset)$est)
   }
 }
 
