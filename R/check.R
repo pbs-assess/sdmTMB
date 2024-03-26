@@ -37,6 +37,11 @@
 #' all(unlist(s))
 #' all(unlist(s2))
 sanity <- function(object, big_sd_log10 = 2, gradient_thresh = 0.001, silent = FALSE) {
+
+  if ( isFALSE(object$call$do_fit)) {
+    cli_abort("`do_fit = FALSE` so this model hasn't been fit yet")
+  }
+
   # make it easy to use output from try()
   if (length(object) <= 1L) {
     if (is.na(object) || is.null(object)) {
