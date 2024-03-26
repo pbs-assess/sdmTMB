@@ -1,5 +1,9 @@
 # sdmTMB (development version)
 
+* Fix important bug in `simulate.sdmTMB()` method for delta families where
+  the positive linear predictor was only getting simulated for observations
+  present in the fitted data.
+
 * Add new `"mle-mvn"` type to `residuals.sdmTMB()` and make it the default.
   This is a fast option for evaluating goodness of fit that should be better
   than the previous default. See the details section in `?residuals.sdmTMB`
