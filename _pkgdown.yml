@@ -38,6 +38,7 @@ reference:
   - sdmTMBcontrol
   - run_extra_optimization
   - residuals.sdmTMB
+  - dharma_residuals
   - replicate_df
   - set_delta_model
 
