@@ -296,10 +296,12 @@ sdmTMB_simulate <- function(formula,
 #' @param object sdmTMB model
 #' @param nsim Number of response lists to simulate. Defaults to 1.
 #' @param seed Random number seed
-#' @param params Whether the parameters used in the simulation should come from
-#'   the Maximum Likelihood Estimate (`"mle"`) or from new draws from the joint
-#'   precision matrix assuming they are multivariate normal distributed
-#'   (`"mvn"`).
+#' @param params How parameters should be treated. `"mle-eb"`: fixed effects
+#'   are at their maximum likelihood (MLE) estimates  and random effects are at
+#'   their empirical Bayes (EB) estimates. `"mle-mvn"`: fixed effects are at
+#'   their MLEs but random effects are taken from a single approximate sample.
+#'   This latter option is a suggested approach if these simulations will be
+#'   used for goodness of fit testing (e.g., with the DHARMa package).
 #' @param re_form `NULL` to specify a simulation conditional on fitted random
 #'   effects (this only simulates observation error). `~0` or `NA` to simulate
 #'   new random affects (smoothers, which internally are random effects, will
@@ -342,22 +344,21 @@ sdmTMB_simulate <- function(formula,
 #' sum(s1 == 0)/length(s1)
 #' sum(dat$observed == 0) / length(dat$observed)
 #'
-#' # simulate with the parameters drawn from the joint precision matrix:
-#' s2 <- simulate(fit, nsim = 1, params = "MVN")
+#' # simulate with random effects sampled from their approximate posterior
+#' s2 <- simulate(fit, nsim = 1, params = "mle-mvn")
+#' # these may be useful in conjunction with DHARMa simulation-based residuals
 #'
 #' # simulate with new random fields:
 #' s3 <- simulate(fit, nsim = 1, re_form = ~ 0)
-#'
-#' # simulate with new random fields and new parameter draws:
-#' s3 <- simulate(fit, nsim = 1, params = "MVN", re_form = ~ 0)
 
 simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
-                            params = c("mle", "mvn"),
+                            params = c("mle-eb", "mle-mvn"),
                             model = c(NA, 1, 2),
                             re_form = NULL, mcmc_samples = NULL, ...) {
   set.seed(seed)
   params <- tolower(params)
-  params <- match.arg(params, choices = c("mle", "mvn"))
+  params <- match.arg(params)
+  assert_that(as.integer(model[[1]]) %in% c(NA_integer_, 1L, 2L))
 
   # re_form stuff
   conditional_re <- !(!is.null(re_form) && ((re_form == ~0) || identical(re_form, NA)))
@@ -375,17 +376,19 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
 
   # params MLE/MVN stuff
   if (is.null(mcmc_samples)) {
-    if (params == "MVN") {
-      new_par <- rmvnorm_prec(object$tmb_obj$env$last.par.best, object$sd_report, nsim)
-    } else {
+    if (params == "mle-mvn") {
+      new_par <- .one_sample_posterior(object)
+    } else if (params == "mle-eb") {
       new_par <- object$tmb_obj$env$last.par.best
+    } else {
+      cli_abort("`params` type not defined")
     }
   } else {
     new_par <- mcmc_samples
   }
 
   # do the sim
-  if (params == "MVN" || !is.null(mcmc_samples)) { # we have a matrix
+  if (!is.null(mcmc_samples)) { # we have a matrix
     ret <- lapply(seq_len(nsim), function(i) {
       newobj$simulate(par = new_par[, i, drop = TRUE], complete = FALSE)$y_i
     })
@@ -405,5 +408,7 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
     }
   }
 
-  do.call(cbind, ret)
+  ret <- do.call(cbind, ret)
+  attr(ret, "params") <- params
+  ret
 }
