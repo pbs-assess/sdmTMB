@@ -301,7 +301,11 @@ residuals.sdmTMB <- function(object,
                              ...) {
   type_was_missing <- missing(type)
   type <- match.arg(type[[1]], choices = c("mle-mvn", "mle-laplace", "mle-eb", "mle-mcmc", "response", "pearson"))
-  if (!"visreg_model" %in% names(object)) {
+
+  # retrieve function that called this:
+  sys_calls <- unlist(lapply(sys.calls(), deparse))
+  visreg_call <- any(grepl("setupV", substr(sys_calls, 1, 7)))
+  if (!visreg_call) {
     if (type_was_missing || type == "mle-laplace") {
       msg <- paste0("Note what used to be the default sdmTMB residuals ",
         "(before version 0.4.3.9005) are now `type = 'mle-eb'`. We recommend using ",
@@ -320,18 +324,6 @@ residuals.sdmTMB <- function(object,
   }
   # need to re-attach environment if in fresh session
   reinitialize(object)
-
-  # retrieve function that called this:
-  sys_calls <- unlist(lapply(sys.calls(), deparse))
-  visreg_call <- any(grepl("setupV", substr(sys_calls, 1, 7)))
-
-  if (!visreg_call) {
-    msg <- c(
-      "We recommend using the slower `type = 'mle-mcmc'` for final inference.",
-      "See the ?residuals.sdmTMB 'Details' section."
-    )
-    if (type == "randomized-quantile") cli_inform(msg)
-  }
 
   fam <- object$family$family
   nd <- NULL
