@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Improved re-initialization of saved fitted model objects in new sessions.
+
 * Fix important bug in `simulate.sdmTMB()` method for delta families where
   the positive linear predictor was only getting simulated for observations
   present in the fitted data.
