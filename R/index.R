@@ -137,6 +137,11 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
       }
     }
 
+    assert_that(!is.null(area))
+    if (length(area) > 1L) {
+      n_fakend <- if (!is.null(obj$fake_nd)) nrow(obj$fake_nd) else 0L
+      area <- c(area, rep(1, n_fakend)) # pad area with any extra time
+    }
     if (length(area) != nrow(obj$pred_tmb_data$proj_X_ij[[1]]) && length(area) != 1L) {
       cli_abort("`area` should be of the same length as `nrow(newdata)` or of length 1.")
     }

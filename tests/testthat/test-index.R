@@ -72,6 +72,39 @@ test_that("get_index works with subsets of years", {
   expect_equal(index_apply, index_full)
 })
 
+test_that("Index integration with area vector works with extra time and possibly not all time elements in prediction data #323", {
+  skip_on_cran()
+  fit <- sdmTMB(
+    density ~ s(depth),
+    time_varying_type = 'ar1',
+    time_varying = ~ 1,
+    time = 'year',
+    spatial = 'off',
+    spatiotemporal = 'off',
+    extra_time = c(2012, 2014, 2016),
+    data = pcod_2011,
+    family = tweedie(link = "log")
+  )
+  # with all years:
+  nd <- replicate_df(qcs_grid, "year", seq(2011, 2017))
+  nd$area <- 4
+  p <- predict(fit, newdata = nd, return_tmb_object = TRUE)
+  ind0 <- get_index(p, area = nd$area)
+
+  # newdata doesn't have all fitted years:
+  nd <- replicate_df(qcs_grid, "year", unique(pcod_2011$year))
+  nd$area <- 4
+  p <- predict(fit, newdata = nd, return_tmb_object = TRUE)
+  ind <- get_index(p, area = nd$area)
+  if (FALSE) {
+    library(ggplot2)
+    ggplot(ind, aes(year, est, ymin = lwr, ymax = upr)) + geom_pointrange() +
+      geom_pointrange(data = ind0, colour = "red", mapping = aes(x = year + 0.05))
+  }
+  expect_equal(ind$est - ind0$est[ind0$year %in% seq(2011, 2017, 2)], c(0, 0, 0, 0))
+  expect_equal(ind$se - ind0$se[ind0$year %in% seq(2011, 2017, 2)], c(0, 0, 0, 0))
+})
+
 # test_that("get_index faster epsilon bias correction", {
 #   skip_on_cran()
 #
