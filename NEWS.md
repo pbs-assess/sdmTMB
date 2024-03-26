@@ -11,8 +11,8 @@
   recommended.
   
 * Bring `dharma_residuals()` back over from sdmTMBextra to sdmTMB. Add a new
-  option in the `params` argument (`"mle-mvn"`) that should make the
-  simulation residuals more consistent with the expected distribution.
+  option in the `type` argument (`"mle-mvn"`) that should make the
+  simulation residuals consistent with the expected distribution.
   See the same new documentation in `?residuals.sdmTMB`. The examples
   in `?dharma_residuals` illustrate suggested use.
 
