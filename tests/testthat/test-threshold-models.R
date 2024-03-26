@@ -1,6 +1,5 @@
 test_that("A logistic threshold model fits", {
   skip_on_cran()
-  skip_on_ci()
   d <- subset(pcod, year >= 2011) # subset for speed
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ 0 + as.factor(year) + logistic(depth_scaled), data = d,
@@ -16,7 +15,6 @@ test_that("A logistic threshold model fits", {
 
 test_that("A linear threshold model fits", {
   skip_on_cran()
-  skip_on_ci()
   d <- subset(pcod, year >= 2011) # subset for speed
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(density ~ 0 + as.factor(year) + breakpt(depth_scaled), data = d,
@@ -30,7 +28,6 @@ test_that("A linear threshold model fits", {
 
 test_that("A linear threshold *delta* model fits", {
   skip_on_cran()
-  skip_on_ci()
 
   set.seed(1)
   predictor_dat <- data.frame(

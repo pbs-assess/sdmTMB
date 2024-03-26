@@ -50,7 +50,6 @@ test_that("Delta-Gamma family fits", {
 
 test_that("Delta-lognormal family fits", {
   skip_on_cran()
-  skip_on_ci()
 
   fit_dln <- sdmTMB(density ~ 1,
     data = pcod, mesh = pcod_spde,
@@ -80,7 +79,6 @@ test_that("delta_gamma() Poisson-link family fits", {
 
 test_that("delta_lognormal() Poisson-link family fits", {
   skip_on_cran()
-  skip_on_ci()
 
   fit_plg <- sdmTMB(density ~ 1,
     data = pcod, mesh = pcod_spde,
@@ -94,7 +92,6 @@ test_that("delta_lognormal() Poisson-link family fits", {
 
 test_that("delta_truncated_nbinom2 family fits", {
   skip_on_cran()
-  skip_on_ci()
 
   pcod$count <- round(pcod$density)
   fit_dtnb2 <- sdmTMB(count ~ 1,
@@ -109,7 +106,6 @@ test_that("delta_truncated_nbinom2 family fits", {
 
 test_that("delta_truncated_nbinom1 family fits", {
   skip_on_cran()
-  skip_on_ci()
 
   pcod$count <- round(pcod$density)
   fit_dtnb1 <- sdmTMB(count ~ 1,
@@ -182,7 +178,6 @@ test_that("Anisotropy with delta model", {
 
 test_that("Delta-Gengamma family fits", {
   skip_on_cran()
-  skip_on_ci()
 
   fit_dgg <- sdmTMB(density ~ 1,
     data = pcod, mesh = pcod_spde,
@@ -228,7 +223,6 @@ test_that("Delta-Gengamma family fits", {
 
 test_that("delta_gengamma() Poisson-link family fits", {
   skip_on_cran()
-  skip_on_ci()
 
   fit_pgg <- sdmTMB(density ~ 1,
     data = pcod, mesh = pcod_spde,

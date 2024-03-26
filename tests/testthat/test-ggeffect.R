@@ -1,6 +1,5 @@
 ## test_that("ggeffects + sdmTMB", {
 ##   skip_on_cran()
-##   skip_on_ci()
 ##   skip_if_not_installed("INLA")
 ##   skip_if_not_installed("ggeffects")
 ##   skip_if_not_installed("ggplot2")
@@ -51,7 +50,6 @@
 
 ### test_that("ggpredict + sdmTMB", {
 ###   skip_on_cran()
-###   skip_on_ci()
 ###   skip_if_not_installed("INLA")
 ###   skip_if_not_installed("ggeffects")
 ###   skip_if_not_installed("ggplot2")

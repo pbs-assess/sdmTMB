@@ -1,5 +1,4 @@
 test_that("TMB IID simulation works", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -32,7 +31,6 @@ test_that("TMB IID simulation works", {
 })
 
 test_that("TMB AR1 simulation works", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -70,7 +68,6 @@ test_that("TMB AR1 simulation works", {
 })
 
 test_that("TMB RW simulation works", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -121,7 +118,6 @@ test_that("TMB RW simulation works", {
 })
 
 test_that("TMB breakpt sims work", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)

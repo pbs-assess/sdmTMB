@@ -1,6 +1,5 @@
 test_that("visreg works", {
   skip_on_cran()
-  skip_on_ci()
   skip_if_not_installed("visreg")
 
   # first test against glmmTMB outputs

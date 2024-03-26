@@ -1,5 +1,4 @@
 test_that("TMB IID simulation works", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -32,7 +31,6 @@ test_that("TMB IID simulation works", {
 })
 
 test_that("TMB AR1 simulation works", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -68,7 +66,6 @@ test_that("TMB AR1 simulation works", {
 })
 
 test_that("TMB RW simulation works", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -121,7 +118,6 @@ test_that("TMB RW simulation works", {
 
 test_that("TMB (custom) AR1 simulation is unbiased", {
   # run many times; check for bias
-  skip_on_ci()
   skip_on_cran()
 
   do_sim_fit <- function(i) {
@@ -165,7 +161,6 @@ test_that("TMB (custom) AR1 simulation is unbiased", {
 
 
 # test_that("TMB Delta simulation works", {
-#   skip_on_ci()
 #   skip_on_cran()
 #   skip_if_not_installed("INLA")
 #

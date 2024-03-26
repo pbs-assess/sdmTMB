@@ -2,7 +2,6 @@
 # https://github.com/pbs-assess/sdmTMB/issues/60
 test_that("smoothers with 'bs = re' error", {
   skip_on_cran()
-  skip_on_ci()
   expect_error({
     m <- sdmTMB(
       density ~ s(depth_scaled, bs = "re"),
@@ -14,7 +13,6 @@ test_that("smoothers with 'bs = re' error", {
 
 test_that("A model with 2 s() splines works", {
   skip_on_cran()
-  skip_on_ci()
   d <- subset(pcod, year >= 2000 & density > 0)
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(
@@ -50,7 +48,6 @@ test_that("A model with 2 s() splines works", {
 
 test_that("A model with t2() works", {
   skip_on_cran()
-  skip_on_ci()
   set.seed(2938)
   dat <- mgcv::gamSim(1, n = 400, dist = "normal", scale = 2)
 
@@ -87,7 +84,6 @@ test_that("A model with t2() works", {
 
 test_that("A model with dimensions specified in t2() works", {
   skip_on_cran()
-  skip_on_ci()
   set.seed(2938)
   dat <- mgcv::gamSim(1, n = 400, dist = "normal", scale = 1)
 
@@ -125,7 +121,6 @@ test_that("A model with dimensions specified in t2() works", {
 
 test_that("A model with by in spline (and s(x, y)) works", {
   skip_on_cran()
-  skip_on_ci()
   set.seed(19203)
   # examples from ?mgcv::gam.models
   # continuous by example:
@@ -203,7 +198,6 @@ test_that("Formula removal of s and t2 works", {
 
 test_that("Smooth plotting works", {
   skip_on_cran()
-  skip_on_ci()
   d <- subset(pcod, year >= 2000 & density > 0)
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   m <- sdmTMB(
@@ -254,7 +248,6 @@ test_that("Smooth plotting works", {
 
 test_that("print works with s(X, Y)", {
   skip_on_cran()
-  skip_on_ci()
 
   d <- subset(pcod_2011, density > 0)
   m <- sdmTMB(log(density) ~ s(X, Y, k = 5), data = d, spatial = "off")
@@ -277,7 +270,6 @@ test_that("print works with s(X, Y)", {
 
 test_that("smoothers with 'bs = cc' work", {
   skip_on_cran()
-  skip_on_ci()
   m <- sdmTMB(
     density ~ s(depth_scaled, bs = "cc"),
     data = pcod_2011,
@@ -300,7 +292,6 @@ test_that("smoothers with 'bs = cc' work", {
 
 test_that("smoothers with 'bs = cc' work with knots specified", {
   skip_on_cran()
-  skip_on_ci()
   m <- sdmTMB(
     density ~ s(depth_scaled, bs = "cc", k = 5), knots = list(depth_scaled = c(-3, -1, 0, 1, 3)),
     data = pcod_2011, spatial = "off"
@@ -321,7 +312,6 @@ test_that("smoothers with 'bs = cc' work with knots specified", {
 
 test_that("smoothers with 'bs = cr' work", {
   skip_on_cran()
-  skip_on_ci()
   m <- sdmTMB(
     density ~ s(depth_scaled, bs = "cr"),
     data = pcod_2011,
@@ -343,7 +333,6 @@ test_that("smoothers with 'bs = cr' work", {
 
 test_that("prediction with smoothers error helpfully if missing variable", {
   skip_on_cran()
-  skip_on_ci()
   suppressWarnings({
     m <- sdmTMB(
       density ~ s(year, k = 3) + s(depth_scaled),
@@ -364,7 +353,6 @@ test_that("prediction with smoothers error helpfully if missing variable", {
 
 test_that("A model with s(x, bs = 'cs') works", {
   skip_on_cran()
-  skip_on_ci()
   d <- subset(pcod, density > 0)
   m <- sdmTMB(
     data = d,
@@ -381,7 +369,6 @@ test_that("A model with s(x, bs = 'cs') works", {
 
 test_that("A model with s(x, bs = 'cr') works", {
   skip_on_cran()
-  skip_on_ci()
   d <- subset(pcod, density > 0)
   m <- sdmTMB(
     data = d,
@@ -398,7 +385,6 @@ test_that("A model with s(x, bs = 'cr') works", {
 
 test_that("A model with s(x, bs = 'ds') works", {
   skip_on_cran()
-  skip_on_ci()
   d <- subset(pcod, density > 0)
   m <- sdmTMB(
     data = d,
@@ -415,7 +401,6 @@ test_that("A model with s(x, bs = 'ds') works", {
 
 test_that("A model with s(x, bs = 'ps') works", {
   skip_on_cran()
-  skip_on_ci()
   d <- subset(pcod, density > 0)
   m <- sdmTMB(
     data = d,
@@ -432,7 +417,6 @@ test_that("A model with s(x, bs = 'ps') works", {
 
 test_that("A model with s(x, bs = 're') errors", {
   skip_on_cran()
-  skip_on_ci()
   d <- subset(pcod, density > 0)
   expect_error(m <- sdmTMB(
     data = d,
@@ -443,7 +427,6 @@ test_that("A model with s(x, bs = 're') errors", {
 
 test_that("A model with s(x, bs = 'gp') works", {
   skip_on_cran()
-  skip_on_ci()
   d <- subset(pcod, density > 0)
   m <- sdmTMB(
     data = d,
@@ -460,7 +443,6 @@ test_that("A model with s(x, bs = 'gp') works", {
 
 test_that("A model with s(x, bs = 'fs') works", {
   skip_on_cran()
-  skip_on_ci()
   d <- subset(pcod, density > 0)
   d$yearf <- as.factor(d$year)
   m <- sdmTMB(
@@ -479,7 +461,6 @@ test_that("A model with s(x, bs = 'fs') works", {
 
 test_that("An fx=TRUE smoother errors out", {
   skip_on_cran()
-  skip_on_ci()
   d <- subset(pcod, density > 0)
   expect_error(m <- sdmTMB(
     data = d,

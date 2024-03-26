@@ -1,5 +1,4 @@
 test_that("simulate() and dharma_residuals() work", {
-  skip_on_ci()
   skip_on_cran()
 
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 15)

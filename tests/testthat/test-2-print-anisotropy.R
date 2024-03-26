@@ -1,6 +1,6 @@
 test_that("Print anisotropy prints correctly", {
   skip_on_cran()
-  skip_on_ci()
+  skip_on_ci() # slow
 
   # No anisotropy
   fit1 <- sdmTMB(

@@ -4,7 +4,6 @@
 # test_that("Test that non-stationary model works with random effects in epsilon works", {
 #   local_edition(2)
 #   skip_on_cran()
-#   skip_on_ci()
 #   skip_if_not_installed("INLA")
 #
 #   mesh <- make_mesh(predictor_dat, xy_cols = c("x", "y"), cutoff = 0.1)
@@ -59,7 +58,6 @@
 ## # test_that("Test that non-stationary model works with random effects in epsilon with trend works", {
 ## #   local_edition(2)
 ## #   skip_on_cran()
-## #   skip_on_ci()
 ## #   skip_if_not_installed("INLA")
 # ## #
 #   set.seed(42)
@@ -116,7 +114,6 @@
 test_that("Test that non-stationary model works without spatial field and epsilon trend works", {
   local_edition(2)
   skip_on_cran()
-  skip_on_ci()
 
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 
@@ -162,7 +159,6 @@ test_that("Test that non-stationary model works without spatial field and epsilo
 test_that("Test that non-stationary model works with spatial field and epsilon trend works", {
   local_edition(2)
   skip_on_cran()
-  skip_on_ci()
 
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 
@@ -209,7 +205,6 @@ test_that("Test that non-stationary model works with spatial field and epsilon t
 test_that("Test that non-stationary model works with epsilon trend and delta model", {
   local_edition(2)
   skip_on_cran()
-  skip_on_ci()
 
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 
@@ -237,7 +232,6 @@ test_that("Test that non-stationary model works with epsilon trend and delta mod
 test_that("Test that non-stationary model works without spatial field and random effects in epsilon", {
   local_edition(2)
   skip_on_cran()
-  skip_on_ci()
 
   set.seed(42)
   time_steps <- 20
@@ -288,7 +282,6 @@ test_that("Test that non-stationary model works without spatial field and random
 test_that("Test that non-stationary model works without spatial field and trend and random effects in epsilon", {
   local_edition(2)
   skip_on_cran()
-  skip_on_ci()
 
   set.seed(42)
   time_steps <- 20

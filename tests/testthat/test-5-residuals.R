@@ -1,6 +1,5 @@
 # test_that("Simulated residuals work", {
 #   skip_on_cran()
-#   skip_on_ci()
 #   skip_if_not_installed("INLA")
 #   fit <- sdmTMB(density ~ as.factor(year) + poly(depth, 2),
 #     data = pcod_2011, time = "year", mesh = pcod_mesh_2011,
@@ -19,7 +18,6 @@
 
 test_that("randomized quantile residuals work,", {
   skip_on_cran()
-  skip_on_ci()
 
   set.seed(1)
   predictor_dat <- data.frame(X = runif(2000), Y = runif(2000))
@@ -298,7 +296,6 @@ test_that("MCMC residuals work with sdmTMBextra", {
   skip_on_cran()
   skip_if_not_installed("sdmTMBextra")
   skip_if_not_installed("rstan")
-  skip_on_ci()
   d <- pcod_2011
   set.seed(1)
   d$offset <- rnorm(nrow(d))
@@ -339,7 +336,6 @@ test_that("predict_mle_mcmc() works with extra_time #297", {
   skip_on_cran()
   skip_if_not_installed("sdmTMBextra")
   skip_if_not_installed("rstan")
-  skip_on_ci()
   fit <- sdmTMB(
     density ~ 1,
     time = "year",
@@ -357,7 +353,6 @@ test_that("predict_mle_mcmc() works with extra_time #297", {
 
 test_that("all residuals work with extra time and offsets #326", {
   skip_on_cran()
-  skip_on_ci()
   skip_if_not_installed("sdmTMBextra")
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
   pcod$os <- rep(log(0.01), nrow(pcod)) # offset

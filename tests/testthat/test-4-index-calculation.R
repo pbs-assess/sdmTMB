@@ -1,6 +1,5 @@
 test_that("get_index(), get_index_sims(), and get_cog() work", {
   local_edition(3)
-  skip_on_ci()
   skip_on_cran()
   pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
   m <- sdmTMB(
@@ -56,7 +55,6 @@ test_that("get_index(), get_index_sims(), and get_cog() work", {
 })
 
 test_that("index errors are returned as needed", {
-  skip_on_ci()
   skip_on_cran()
 
   g <- replicate_df(qcs_grid, "year", unique(pcod_2011$year))

@@ -1,6 +1,5 @@
 test_that("UTM conversion works", {
   skip_on_cran()
-  skip_on_ci()
   skip_if_not_installed("sf")
 
   d <- data.frame(lat = c(52.1, 53.4), lon = c(-130.0, -131.4))

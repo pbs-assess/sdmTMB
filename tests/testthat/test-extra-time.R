@@ -1,7 +1,6 @@
 test_that("extra time, newdata, and offsets work", {
   # https://github.com/pbs-assess/sdmTMB/issues/270
   skip_on_cran()
-  skip_on_ci()
   pcod$os <- rep(log(0.01), nrow(pcod)) # offset
   m <- sdmTMB(
     data = pcod,
@@ -114,7 +113,6 @@ test_that("extra time does not affect estimation (without time series estimation
   # there was a bad bug at one point where the likelihood (via the weights)
   # wasn't getting turned off for the extra time data!
   skip_on_cran()
-  skip_on_ci()
   # adding extra time at beginning or end
   m <- sdmTMB(present ~ depth_scaled,
     family = binomial(),
@@ -179,7 +177,6 @@ test_that("extra time does not affect estimation (without time series estimation
 
 test_that("factor year extra time clash is detected and warned about", {
   skip_on_cran()
-  skip_on_ci()
   mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
   expect_warning({fit <- sdmTMB(
     density ~ 0 + as.factor(year),

@@ -125,7 +125,6 @@ test_that("sdmTMB model fit with a covariate beta", {
 })
 
 test_that("Anisotropy fits and plots", {
-  skip_on_ci()
   skip_on_cran()
   local_edition(2)
   m <- sdmTMB(
@@ -176,7 +175,6 @@ test_that("A spatiotemporal version works with predictions on new data points", 
 
 test_that("Predictions on the original data set as `newdata`` return the same predictions", {
   skip_on_cran()
-  skip_on_ci()
   local_edition(2)
   set.seed(1)
   x <- stats::runif(500, -1, 1)
@@ -219,7 +217,6 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
 
 test_that("poly() works on newdata", {
   skip_on_cran()
-  skip_on_ci()
 
   # https://github.com/pbs-assess/sdmTMB/issues/77
   d <- pcod_2011

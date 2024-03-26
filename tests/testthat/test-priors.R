@@ -19,7 +19,6 @@ test_that("Basic prior parsing works", {
 })
 
 test_that("Prior fitting works", {
-  skip_on_ci()
   skip_on_cran()
   d <- pcod_2011
   pcod_spde <- pcod_mesh_2011
@@ -65,7 +64,6 @@ test_that("Prior fitting works", {
 })
 
 test_that("Priors on random intercept SDs work", {
-  skip_on_ci()
   skip_on_cran()
 
   pcod$fyear <- as.factor(pcod$year)
@@ -120,7 +118,6 @@ test_that("Priors on random intercept SDs work", {
 })
 
 test_that("Additional priors work", {
-  skip_on_ci()
   skip_on_cran()
   d <- pcod_2011
   pcod_spde <- pcod_mesh_2011

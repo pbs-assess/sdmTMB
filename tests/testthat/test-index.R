@@ -1,5 +1,4 @@
 test_that("get_index works", {
-  skip_on_ci()
   skip_on_cran()
 
   pcod_spde <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
@@ -32,7 +31,6 @@ test_that("get_index works", {
 
 
 test_that("get_index works with subsets of years", {
-  skip_on_ci()
   skip_on_cran()
 
   m <- sdmTMB(
@@ -75,7 +73,6 @@ test_that("get_index works with subsets of years", {
 })
 
 # test_that("get_index faster epsilon bias correction", {
-#   skip_on_ci()
 #   skip_on_cran()
 #
 #   library(sdmTMB)

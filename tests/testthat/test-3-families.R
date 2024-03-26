@@ -36,7 +36,6 @@ loc <- data.frame(x = x, y = y)
 spde <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
 
 test_that("Student family fits", {
-  skip_on_ci()
   skip_on_cran()
   set.seed(3)
   initial_betas <- 0.5
@@ -57,7 +56,6 @@ test_that("Student family fits", {
 })
 
 test_that("Lognormal fits", {
-  skip_on_ci()
   skip_on_cran()
   range <- 1
   x <- stats::runif(500, -1, 1)
@@ -77,7 +75,6 @@ test_that("Lognormal fits", {
 })
 
 test_that("NB2 fits", {
-  skip_on_ci()
   skip_on_cran()
   set.seed(1)
   x <- stats::runif(300, -1, 1)
@@ -93,7 +90,6 @@ test_that("NB2 fits", {
 })
 
 test_that("Truncated NB2, truncated NB1, and regular NB1 fit", {
-  skip_on_ci()
   skip_on_cran()
   set.seed(1)
   x <- stats::runif(300, -1, 1)
@@ -129,7 +125,6 @@ test_that("Truncated NB2, truncated NB1, and regular NB1 fit", {
 })
 
 test_that("Poisson fits", {
-  skip_on_ci()
   skip_on_cran()
   d <- pcod
   spde <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
@@ -144,7 +139,6 @@ test_that("Poisson fits", {
 })
 
 test_that("Binomial fits", {
-  skip_on_ci()
   skip_on_cran()
   d <- pcod[pcod$year == 2017, ]
   d$density <- round(d$density)
@@ -158,7 +152,6 @@ test_that("Binomial fits", {
 })
 
 test_that("Gamma fits", {
-  skip_on_ci()
   skip_on_cran()
   d <- pcod[pcod$year == 2017 & pcod$density > 0, ]
   spde <- make_mesh(d, c("X", "Y"), cutoff = 10)
@@ -176,7 +169,6 @@ test_that("Gamma fits", {
 })
 
 test_that("Beta fits", {
-  skip_on_ci()
   skip_on_cran()
   set.seed(1)
   x <- stats::runif(400, -1, 1)
@@ -200,7 +192,6 @@ test_that("Beta fits", {
 })
 
 test_that("Censored Poisson fits", {
-  skip_on_ci()
   skip_on_cran()
   set.seed(1)
 
@@ -434,7 +425,6 @@ test_that("Binomial simulation/residuals works with weights argument or cbind()"
 
 test_that("Generalized gamma works", {
   skip_on_cran()
-  skip_on_ci()
   d <- subset(pcod_2011, density > 0)
   fit1 <- sdmTMB(
     density ~ 1 + depth_scaled,
@@ -480,7 +470,6 @@ test_that("Generalized gamma works", {
 
 test_that("Generalized gamma matches Gamma when Q = sigma", {
   skip_on_cran()
-  skip_on_ci()
 
   # Generate values drawn from generaliased gamma distribution given the mean of those values
   rgengamma <- function(n, mean, sigma, Q) {

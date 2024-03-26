@@ -1,6 +1,5 @@
 test_that("Depreciated args work/throw warnings/stops", {
   skip_on_cran()
-  skip_on_ci()
 
   # fields
   expect_error(m1 <- sdmTMB(
@@ -45,7 +44,6 @@ test_that("Depreciated args work/throw warnings/stops", {
 
 # test_that("spatial = off and spatiotemporal = off triggers map_rf", {
 #   skip_on_cran()
-#   skip_on_ci()
 #   skip_if_not_installed("INLA")
 #   m1 <- sdmTMB(
 #     formula = density ~ 1,
@@ -65,7 +63,6 @@ test_that("Depreciated args work/throw warnings/stops", {
 
 test_that("spde/mesh args work", {
   skip_on_cran()
-  skip_on_ci()
   expect_error(
     m1 <- sdmTMB(density ~ 1, data = pcod_2011, spde = pcod_mesh_2011, do_fit = FALSE),
     "mesh"
