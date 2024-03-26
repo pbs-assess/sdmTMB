@@ -3,7 +3,7 @@
 #' Plot (and possibly return) DHARMa residuals. This is a wrapper function
 #' around [DHARMa::createDHARMa()] to facilitate its use with [sdmTMB()] models.
 #'
-#' **Note:** It is recommended to set `params = "mle-mvn"` in
+#' **Note:** It is recommended to set `type = "mle-mvn"` in
 #' [sdmTMB::residuals.sdmTMB()] for the resulting residuals to have the
 #' expected distribution. This is *not* the default.
 #'
@@ -38,16 +38,16 @@
 #' # simulate() can be piped to dharma_residuals():
 #'
 #' # not great:
-#' simulate(fit, nsim = 200, params = "mle-mvn") |>
+#' simulate(fit, nsim = 200, type = "mle-mvn") |>
 #'   dharma_residuals(fit)
 #'
 #' # delta-lognormal looks better:
 #' fit_dl <- update(fit, family = delta_lognormal())
-#' simulate(fit_dl, nsim = 200, params = "mle-mvn") |>
+#' simulate(fit_dl, nsim = 200, type = "mle-mvn") |>
 #'   dharma_residuals(fit)
 #'
 #' # or skip the pipe:
-#' s <- simulate(fit_dl, nsim = 200, params = "mle-mvn")
+#' s <- simulate(fit_dl, nsim = 200, type = "mle-mvn")
 #' # and manually plot it:
 #' r <- dharma_residuals(s, fit_dl, plot = FALSE)
 #' head(r)
@@ -55,7 +55,7 @@
 #' abline(0, 1)
 #'
 #' # return the DHARMa object and work with the DHARMa methods
-#' ret <- simulate(fit_dl, nsim = 200, params = "mle-mvn") |>
+#' ret <- simulate(fit_dl, nsim = 200, type = "mle-mvn") |>
 #'   dharma_residuals(fit, return_DHARMa = TRUE)
 #' plot(ret)
 
@@ -67,8 +67,8 @@ dharma_residuals <- function(simulated_response, object, plot = TRUE, return_DHA
   assert_that(is.logical(plot))
   assert_that(is.matrix(simulated_response))
   assert_that(nrow(simulated_response) == nrow(object$response))
-  if (attr(simulated_response, "params") != "mle-mvn") {
-    cli_warn("It is recommended to use `simulate.sdmTMB(fit, params = 'mle-mvn')` if simulating for DHARMa residuals. See the description in ?residuals.sdmTMB under the types of residuals section.")
+  if (attr(simulated_response, "type") != "mle-mvn") {
+    cli_warn("It is recommended to use `simulate.sdmTMB(fit, type = 'mle-mvn')` if simulating for DHARMa residuals. See the description in ?residuals.sdmTMB under the types of residuals section.")
   }
   if (isTRUE(object$family$delta)) {
     y <- ifelse(!is.na(object$response[,2]),

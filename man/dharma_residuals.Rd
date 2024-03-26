@@ -36,7 +36,7 @@ Plot (and possibly return) DHARMa residuals. This is a wrapper function
 around \code{\link[DHARMa:createDHARMa]{DHARMa::createDHARMa()}} to facilitate its use with \code{\link[=sdmTMB]{sdmTMB()}} models.
 }
 \details{
-\strong{Note:} It is recommended to set \code{params = "mle-mvn"} in
+\strong{Note:} It is recommended to set \code{type = "mle-mvn"} in
 \code{\link[=residuals.sdmTMB]{residuals.sdmTMB()}} for the resulting residuals to have the
 expected distribution. This is \emph{not} the default.
 }
@@ -51,16 +51,16 @@ fit <- sdmTMB(density ~ as.factor(year) + s(depth, k = 3),
 # simulate() can be piped to dharma_residuals():
 
 # not great:
-simulate(fit, nsim = 200, params = "mle-mvn") |>
+simulate(fit, nsim = 200, type = "mle-mvn") |>
   dharma_residuals(fit)
 
 # delta-lognormal looks better:
 fit_dl <- update(fit, family = delta_lognormal())
-simulate(fit_dl, nsim = 200, params = "mle-mvn") |>
+simulate(fit_dl, nsim = 200, type = "mle-mvn") |>
   dharma_residuals(fit)
 
 # or skip the pipe:
-s <- simulate(fit_dl, nsim = 200, params = "mle-mvn")
+s <- simulate(fit_dl, nsim = 200, type = "mle-mvn")
 # and manually plot it:
 r <- dharma_residuals(s, fit_dl, plot = FALSE)
 head(r)
@@ -68,7 +68,7 @@ plot(r$expected, r$observed)
 abline(0, 1)
 
 # return the DHARMa object and work with the DHARMa methods
-ret <- simulate(fit_dl, nsim = 200, params = "mle-mvn") |>
+ret <- simulate(fit_dl, nsim = 200, type = "mle-mvn") |>
   dharma_residuals(fit, return_DHARMa = TRUE)
 plot(ret)
 \dontshow{\}) # examplesIf}

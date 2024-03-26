@@ -16,8 +16,7 @@ glmmTMB_installed <- require("glmmTMB", quietly = TRUE)
 DHARMa_installed <- require("DHARMa", quietly = TRUE)
 tmbstan_installed <- require("tmbstan", quietly = TRUE)
 sdmTMBextra_installed <- require("sdmTMBextra", quietly = TRUE)
-pkgs <- dplyr_installed && ggplot_installed && glmmTMB_installed && DHARMa_installed && sdmTMBextra_installed
-  tmbstan_installed
+pkgs <- dplyr_installed && ggplot_installed && glmmTMB_installed && DHARMa_installed && sdmTMBextra_installed && tmbstan_installed
 EVAL <- identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -105,9 +104,9 @@ We can see these look a bit better. Remember, this is the 'correct' model.
 We can take simulations from the fitted model to use with simulation-based residuals:
 
 ```{r}
-s_pois <- simulate(fit_pois, nsim = 500)
-s_nb2_miss <- simulate(fit_nb2_miss, nsim = 500)
-s_nb2 <- simulate(fit_nb2, nsim = 500)
+s_pois <- simulate(fit_pois, nsim = 500, type = "mle-mvn")
+s_nb2_miss <- simulate(fit_nb2_miss, nsim = 500, type = "mle-mvn")
+s_nb2 <- simulate(fit_nb2, nsim = 500, type = "mle-mvn")
 ```
 
 These return a matrix where each row represents a row of data and each column is a simulation draw:
@@ -129,8 +128,8 @@ There are obviously too few zeros in the data simulated from the Poisson model.
 Plot DHARMa residuals:
 
 ```{r}
-simulate(fit_pois, nsim = 300) |> 
-  sdmTMBextra::dharma_residuals(fit_pois)
+simulate(fit_pois, nsim = 300, type = "mle-mvn") |> 
+  dharma_residuals(fit_pois)
 ```
 
 We did that with the sdmTMBextra package <https://github.com/pbs-assess/sdmTMBextra>.
@@ -157,8 +156,8 @@ In the QQ residual plots we clearly see evidence of over dispersion compared to 
 Lets try with the correct model:
 
 ```{r}
-simulate(fit_nb2, nsim = 300) |> 
-  sdmTMBextra::dharma_residuals(fit_nb2)
+simulate(fit_nb2, nsim = 300, type = "mle-mvn") |> 
+  dharma_residuals(fit_nb2)
 ```
 
 Everything looks fine. But, again, the MCMC-based residuals above are likely the best approach.
@@ -191,13 +190,6 @@ We can also see the difference in the log likelihood or by using the `AIC()` met
 fit_nb2$model$objective
 fit_nb2_miss$model$objective
 AIC(fit_nb2_miss, fit_nb2) # AIC supports including the 'a1' predictor
-```
-
-Or we could simulate with new random fields based on the estimated parameters governing the random fields (range and SD):
-
-```{r}
-# simulate with new random fields:
-s3 <- simulate(fit_nb2, nsim = 1, re_form = ~ 0)
 ```
 
 For help interpreting the DHARMa residual plots, see `vignette("DHARMa", package="DHARMa")`.

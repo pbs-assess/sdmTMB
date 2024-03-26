@@ -352,12 +352,12 @@ sdmTMB_simulate <- function(formula,
 #' s3 <- simulate(fit, nsim = 1, re_form = ~ 0)
 
 simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
-                            params = c("mle-eb", "mle-mvn"),
+                            type = c("mle-eb", "mle-mvn"),
                             model = c(NA, 1, 2),
                             re_form = NULL, mcmc_samples = NULL, ...) {
   set.seed(seed)
-  params <- tolower(params)
-  params <- match.arg(params)
+  type <- tolower(type)
+  type <- match.arg(type)
   assert_that(as.integer(model[[1]]) %in% c(NA_integer_, 1L, 2L))
 
   # re_form stuff
@@ -376,12 +376,12 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
 
   # params MLE/MVN stuff
   if (is.null(mcmc_samples)) {
-    if (params == "mle-mvn") {
+    if (type == "mle-mvn") {
       new_par <- .one_sample_posterior(object)
-    } else if (params == "mle-eb") {
+    } else if (type == "mle-eb") {
       new_par <- object$tmb_obj$env$last.par.best
     } else {
-      cli_abort("`params` type not defined")
+      cli_abort("`type` type not defined")
     }
   } else {
     new_par <- mcmc_samples
@@ -409,6 +409,6 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
   }
 
   ret <- do.call(cbind, ret)
-  attr(ret, "params") <- params
+  attr(ret, "type") <- type
   ret
 }
