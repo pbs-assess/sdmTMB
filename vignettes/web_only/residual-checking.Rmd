@@ -193,35 +193,12 @@ fit_nb2_miss$model$objective
 AIC(fit_nb2_miss, fit_nb2) # AIC supports including the 'a1' predictor
 ```
 
-The above used simulations with the parameters fixed at their Maximum Likelihood Estimate (MLE) and predictions conditional on the fitted random effects. Alternatively, we could simulate with the parameters drawn from their joint precision matrix to encapsulate uncertainty about the parameters. This may be a better test for residual analysis, but this is an open area of research as far as I can tell.
-
-```{r}
-# simulate with the parameters drawn from the joint precision matrix:
-s2 <- simulate(fit_nb2, nsim = 1, params = "MVN")
-```
-
 Or we could simulate with new random fields based on the estimated parameters governing the random fields (range and SD):
 
 ```{r}
 # simulate with new random fields:
 s3 <- simulate(fit_nb2, nsim = 1, re_form = ~ 0)
 ```
-
-We could, of course, combine those two options:
-
-```{r}
-# simulate with new random fields and new parameter draws:
-s4 <- simulate(fit_nb2, nsim = 500, params = "MVN", re_form = ~ 0)
-pred_fixed <- fit_nb2$family$linkinv(predict(fit_nb2)$est_non_rf)
-r_nb2 <- DHARMa::createDHARMa(
-  simulatedResponse = s4,
-  observedResponse = dat$observed,
-  fittedPredictedResponse = pred_fixed
-)
-plot(r_nb2)
-```
-
-These also look OK.
 
 For help interpreting the DHARMa residual plots, see `vignette("DHARMa", package="DHARMa")`.
 
