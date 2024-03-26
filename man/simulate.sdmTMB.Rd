@@ -8,7 +8,7 @@
   object,
   nsim = 1L,
   seed = sample.int(1e+06, 1L),
-  params = c("mle", "mvn"),
+  params = c("mle-eb", "mle-mvn"),
   model = c(NA, 1, 2),
   re_form = NULL,
   mcmc_samples = NULL,
@@ -22,10 +22,12 @@
 
 \item{seed}{Random number seed}
 
-\item{params}{Whether the parameters used in the simulation should come from
-the Maximum Likelihood Estimate (\code{"mle"}) or from new draws from the joint
-precision matrix assuming they are multivariate normal distributed
-(\code{"mvn"}).}
+\item{params}{How parameters should be treated. \code{"mle-eb"}: fixed effects
+are at their maximum likelihood (MLE) estimates  and random effects are at
+their empirical Bayes (EB) estimates. \code{"mle-mvn"}: fixed effects are at
+their MLEs but random effects are taken from a single approximate sample.
+This latter option is a suggested approach if these simulations will be
+used for goodness of fit testing (e.g., with the DHARMa package).}
 
 \item{model}{If a delta/hurdle model, which model to simulate from?
 \code{NA} = combined, \code{1} = first model, \code{2} = second mdoel.}
@@ -76,14 +78,12 @@ dim(s1)
 sum(s1 == 0)/length(s1)
 sum(dat$observed == 0) / length(dat$observed)
 
-# simulate with the parameters drawn from the joint precision matrix:
-s2 <- simulate(fit, nsim = 1, params = "MVN")
+# simulate with random effects sampled from their approximate posterior
+s2 <- simulate(fit, nsim = 1, params = "mle-mvn")
+# these may be useful in conjunction with DHARMa simulation-based residuals
 
 # simulate with new random fields:
 s3 <- simulate(fit, nsim = 1, re_form = ~ 0)
-
-# simulate with new random fields and new parameter draws:
-s3 <- simulate(fit, nsim = 1, params = "MVN", re_form = ~ 0)
 }
 \seealso{
 \code{\link[=sdmTMB_simulate]{sdmTMB_simulate()}}

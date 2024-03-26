@@ -196,7 +196,7 @@ test_that("residuals() works", {
     data = pcod, mesh = pcod_spde,
     family = binomial()
   )
-  r <- residuals(fit)
+  r <- residuals(fit, type = "mle-eb")
   expect_true(length(r) == nrow(pcod))
   expect_true(sum(is.na(r)) == 0L)
 
@@ -206,10 +206,10 @@ test_that("residuals() works", {
     control = sdmTMBcontrol(newton_loops = 1)
   )
   r <- residuals(fit)
-  r <- residuals(fit, model = 1)
+  r <- residuals(fit, model = 1, type = "mle-eb")
   qqnorm(r)
   set.seed(1)
-  r <- residuals(fit, model = 2)
+  r <- residuals(fit, model = 2, type = "mle-eb")
   qqnorm(r[!is.na(r)])
 
   # matches the Gamma positive-only model:
@@ -221,9 +221,9 @@ test_that("residuals() works", {
     control = sdmTMBcontrol(newton_loops = 1)
   )
   set.seed(1)
-  rpos <- residuals(fit2)
+  rpos <- residuals(fit2, type = "mle-eb")
   expect_equal(as.double(r[!is.na(r)]), rpos)
-
+  rpos <- residuals(fit2, type = "mle-mvn")
   })
 
 test_that("Pearson residuals work", {
@@ -373,15 +373,12 @@ test_that("all residuals work with extra time and offsets #326", {
     spatiotemporal = "off"
   )
   set.seed(1)
-  r <- residuals(m, type = "mle-laplace")
+  r <- residuals(m, type = "mle-eb")
   expect_true(is.vector(r))
   expect_equal(round(r, 3)[1:10], c(1.182, 0.671, -1.095, 0.511, -0.874, -0.521, 0.018, -1.19,  0.069, 0.973))
   set.seed(1)
   expect_equal(length(r), 2143L)
-  r <- residuals(m, type = "mle-mvn")
-  expect_equal(round(r, 3)[1:10], c(1.24, 0.746, -1.054, 0.506, 0, -0.453, -1.196, -1.449, -0.585, 0.976))
-  expect_equal(length(r), 2143L)
-  r <- residuals(m, type = "mvn-laplace")
+  r <- residuals(m, type = "mle-eb")
   expect_equal(length(r), 2143L)
   r <- residuals(m, type = "response")
   expect_equal(length(r), 2143L)

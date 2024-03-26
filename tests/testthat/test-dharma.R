@@ -31,8 +31,8 @@ test_that("simulate() and dharma_residuals() work", {
   # expect_equal(nrow(s), nrow(pcod))
   # dharma_residuals(s, fit)
 
-  s <- simulate(fit, nsim = 100, params = "mvn")
+  s <- simulate(fit, nsim = 100, params = "mle-mvn")
   expect_equal(ncol(s), 100)
-  s <- simulate(fit, nsim = 100, params = "mvn", re_form = NA)
+  s <- simulate(fit, nsim = 100, params = "mle-mvn", re_form = NA)
   expect_equal(ncol(s), 100)
 })
