@@ -22,6 +22,13 @@
 
 \item{seed}{Random number seed}
 
+\item{type}{How parameters should be treated. \code{"mle-eb"}: fixed effects
+are at their maximum likelihood (MLE) estimates  and random effects are at
+their empirical Bayes (EB) estimates. \code{"mle-mvn"}: fixed effects are at
+their MLEs but random effects are taken from a single approximate sample.
+This latter option is a suggested approach if these simulations will be
+used for goodness of fit testing (e.g., with the DHARMa package).}
+
 \item{model}{If a delta/hurdle model, which model to simulate from?
 \code{NA} = combined, \code{1} = first model, \code{2} = second mdoel.}
 
@@ -35,13 +42,6 @@ in the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
 package.}
 
 \item{...}{Extra arguments (not used)}
-
-\item{params}{How parameters should be treated. \code{"mle-eb"}: fixed effects
-are at their maximum likelihood (MLE) estimates  and random effects are at
-their empirical Bayes (EB) estimates. \code{"mle-mvn"}: fixed effects are at
-their MLEs but random effects are taken from a single approximate sample.
-This latter option is a suggested approach if these simulations will be
-used for goodness of fit testing (e.g., with the DHARMa package).}
 }
 \value{
 Returns a matrix; number of columns is \code{nsim}.

@@ -296,7 +296,7 @@ sdmTMB_simulate <- function(formula,
 #' @param object sdmTMB model
 #' @param nsim Number of response lists to simulate. Defaults to 1.
 #' @param seed Random number seed
-#' @param params How parameters should be treated. `"mle-eb"`: fixed effects
+#' @param type How parameters should be treated. `"mle-eb"`: fixed effects
 #'   are at their maximum likelihood (MLE) estimates  and random effects are at
 #'   their empirical Bayes (EB) estimates. `"mle-mvn"`: fixed effects are at
 #'   their MLEs but random effects are taken from a single approximate sample.
