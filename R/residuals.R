@@ -299,8 +299,17 @@ residuals.sdmTMB <- function(object,
                              mcmc_samples = NULL,
                              qres_func = NULL,
                              ...) {
-
-  cli_inform("Note what used to be the default sdmTMB residuals (before version 0.4.3.9005) are now `type = 'mle-eb'`. We recommend using the current default `'mle-mvn'`, which takes one sample from the approximate posterior of the random effects or `dharma_residuals()` using a similar approach.")
+  type_was_missing <- missing(type)
+  type <- match.arg(type[[1]], choices = c("mle-mvn", "mle-laplace", "mle-eb", "mle-mcmc", "response", "pearson"))
+  if (type_was_missing || type == "mle-laplace") {
+    msg <- paste0("Note what used to be the default sdmTMB residuals ",
+      "(before version 0.4.3.9005) are now `type = 'mle-eb'`. We recommend using ",
+      "the current default `'mle-mvn'`, which takes one sample from the approximate ",
+      "posterior of the random effects or `dharma_residuals()` using a similar ",
+      "approach.")
+    cli_inform(msg)
+    if (type == "mle-laplace") type <- "mle-eb"
+  }
   model_missing <- FALSE
   if (identical(model, c(1, 2))) model_missing <- TRUE
   model <- as.integer(model[[1]])
@@ -312,7 +321,6 @@ residuals.sdmTMB <- function(object,
   sys_calls <- unlist(lapply(sys.calls(), deparse))
   visreg_call <- any(grepl("setupV", substr(sys_calls, 1, 7)))
 
-  type <- match.arg(type)
   if (!visreg_call) {
     msg <- c(
       "We recommend using the slower `type = 'mle-mcmc'` for final inference.",
