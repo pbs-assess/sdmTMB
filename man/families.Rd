@@ -53,25 +53,13 @@ tweedie(link = "log")
 
 censored_poisson(link = "log")
 
-delta_gamma(
-  link1 = "logit",
-  link2 = "log",
-  type = c("standard", "poisson-link")
-)
+delta_gamma(link1, link2 = "log", type = c("standard", "poisson-link"))
 
 delta_gamma_mix(link1 = "logit", link2 = "log")
 
-delta_gengamma(
-  link1 = "logit",
-  link2 = "log",
-  type = c("standard", "poisson-link")
-)
+delta_gengamma(link1, link2 = "log", type = c("standard", "poisson-link"))
 
-delta_lognormal(
-  link1 = "logit",
-  link2 = "log",
-  type = c("standard", "poisson-link")
-)
+delta_lognormal(link1, link2 = "log", type = c("standard", "poisson-link"))
 
 delta_lognormal_mix(link1 = "logit", link2 = "log")
 
@@ -90,7 +78,8 @@ delta_beta(link1 = "logit", link2 = "logit")
 
 \item{df}{Student-t degrees of freedom fixed value parameter.}
 
-\item{link1}{Link for first part of delta/hurdle model.}
+\item{link1}{Link for first part of delta/hurdle model. Defaults to \code{"logit"}
+for \code{type = "standard"} and \code{"log"} for \code{type = "poisson-link"}.}
 
 \item{link2}{Link for second part of delta/hurdle model.}
 

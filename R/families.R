@@ -314,7 +314,8 @@ censored_poisson <- function(link = "log") {
     linkinv = stats$linkinv), class = "family")
 }
 
-#' @param link1 Link for first part of delta/hurdle model.
+#' @param link1 Link for first part of delta/hurdle model. Defaults to `"logit"`
+#'  for `type = "standard"` and `"log"` for `type = "poisson-link"`.
 #' @param link2 Link for second part of delta/hurdle model.
 #' @param type Delta/hurdle family type. `"standard"` for a classic hurdle
 #'   model. `"poisson-link"` for a Poisson-link delta model (Thorson 2018).
@@ -330,8 +331,10 @@ censored_poisson <- function(link = "log") {
 #' biomass sampling data, and a computationally efficient alternative. Canadian
 #' Journal of Fisheries and Aquatic Sciences, 75(9), 1369-1382.
 #' \doi{10.1139/cjfas-2017-0266}
-delta_gamma <- function(link1 = "logit", link2 = "log", type = c("standard", "poisson-link")) {
+delta_gamma <- function(link1,
+  link2 = "log", type = c("standard", "poisson-link")) {
   type <- match.arg(type)
+  if (missing(link1)) link1 <- if (type == "standard") "logit" else "log"
   l1 <- substitute(link1)
   if (!is.character(l1)) l1 <- deparse(l1)
   l2 <- substitute(link2)
@@ -366,8 +369,10 @@ delta_gamma_mix <- function(link1 = "logit", link2 = "log") {
 #' @examples
 #' delta_gengamma()
 #' @rdname families
-delta_gengamma <- function(link1 = "logit", link2 = "log", type = c("standard", "poisson-link")) {
+delta_gengamma <- function(link1,
+  link2 = "log", type = c("standard", "poisson-link")) {
   type <- match.arg(type)
+  if (missing(link1)) link1 <- if (type == "standard") "logit" else "log"
   l1 <- substitute(link1)
   if (!is.character(l1)) l1 <- deparse(l1)
   l2 <- substitute(link2)
@@ -390,8 +395,10 @@ delta_gengamma <- function(link1 = "logit", link2 = "log", type = c("standard", 
 #' @examples
 #' delta_lognormal()
 #' @rdname families
-delta_lognormal <- function(link1 = "logit", link2 = "log", type = c("standard", "poisson-link")) {
+delta_lognormal <- function(link1,
+  link2 = "log", type = c("standard", "poisson-link")) {
   type <- match.arg(type)
+  if (missing(link1)) link1 <- if (type == "standard") "logit" else "log"
   l1 <- substitute(link1)
   if (!is.character(l1)) l1 <- deparse(l1)
   l2 <- substitute(link2)
