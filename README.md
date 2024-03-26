@@ -9,6 +9,7 @@
 [![](https://www.r-pkg.org/badges/version/sdmTMB)](https://cran.r-project.org/package=sdmTMB)
 [![Documentation](https://img.shields.io/badge/documentation-sdmTMB-orange.svg?colorB=E91E63)](https://pbs-assess.github.io/sdmTMB/)
 [![R-CMD-check](https://github.com/pbs-assess/sdmTMB/workflows/R-CMD-check/badge.svg)](https://github.com/pbs-assess/sdmTMB/actions)
+[![Codecov test coverage](https://codecov.io/gh/pbs-assess/sdmTMB/branch/main/graph/badge.svg)](https://app.codecov.io/gh/pbs-assess/sdmTMB?branch=main)
 [![downloads](http://cranlogs.r-pkg.org/badges/sdmTMB)](https://cranlogs.r-pkg.org/)
 <!-- badges: end -->
 
