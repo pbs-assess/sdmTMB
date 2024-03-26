@@ -412,6 +412,9 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
   }
 
   ret <- do.call(cbind, ret)
+  if (!is.null(object$extra_time)) {
+    ret <- ret[seq(1, nrow(object$data)),,drop=FALSE] # drop extra time rows
+  }
   attr(ret, "type") <- type
   ret
 }

@@ -165,3 +165,21 @@ test_that("TMB breakpt sims work", {
   expect_lt(max(sim_dat$observed), 0.53)
   expect_gt(min(sim_dat$observed), -0.05)
 })
+
+test_that("simulate.sdmTMB returns the right length", {
+  skip_on_cran()
+  pcod$os <- rep(log(0.01), nrow(pcod)) # offset
+  m <- sdmTMB(
+    data = pcod,
+    formula = density ~ 0,
+    time_varying = ~ 1,
+    offset = pcod$os,
+    family = tweedie(link = "log"),
+    spatial = "off",
+    time = "year",
+    extra_time = c(2006, 2008, 2010, 2012, 2014, 2016),
+    spatiotemporal = "off"
+  )
+  s <- simulate(m, nsim = 2)
+  expect_equal(nrow(s), nrow(pcod))
+})
