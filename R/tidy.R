@@ -60,6 +60,8 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
   crit <- stats::qnorm(1 - (1 - conf.level) / 2)
   if (exponentiate) trans <- exp else trans <- I
 
+  reinitialize(x)
+
   delta <- isTRUE(x$family$delta)
   assert_that(is.numeric(model))
   assert_that(length(model) == 1L)

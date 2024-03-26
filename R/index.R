@@ -105,6 +105,8 @@ get_cog <- function(obj, bias_correct = FALSE, level = 0.95, format = c("long", 
 get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   trans = I, area = 1, silent = TRUE, ...) {
 
+  reinitialize(obj$fit_obj)
+
   if ((!isTRUE(obj$do_index) && value_name[1] == "link_total") || value_name[1] == "cog_x") {
     if (is.null(obj[["obj"]])) {
       cli_abort(paste0("`obj` needs to be created with ",

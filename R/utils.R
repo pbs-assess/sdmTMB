@@ -644,3 +644,17 @@ update_version <- function(object) {
   }
   object
 }
+
+reinitialize <- function(x) {
+  # replacement for TMB:::isNullPointer; modified from glmmTMB source
+  # https://github.com/glmmTMB/glmmTMB/issues/651#issuecomment-912920255
+  # https://github.com/glmmTMB/glmmTMB/issues/651#issuecomment-914542795
+  is_null_pointer <- function(x) {
+    x <- x$tmb_obj$env$ADFun$ptr
+    attributes(x) <- NULL
+    identical(x, new("externalptr"))
+  }
+  if (is_null_pointer(x)) {
+    x$tmb_obj$retape()
+  }
+}

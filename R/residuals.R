@@ -316,6 +316,8 @@ residuals.sdmTMB <- function(object,
   if ("visreg_model" %in% names(object)) {
     model <- object$visreg_model
   }
+  # need to re-attach environment if in fresh session
+  reinitialize(object)
 
   # retrieve function that called this:
   sys_calls <- unlist(lapply(sys.calls(), deparse))
