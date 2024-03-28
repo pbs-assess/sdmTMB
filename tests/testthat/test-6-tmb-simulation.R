@@ -159,6 +159,26 @@ test_that("TMB (custom) AR1 simulation is unbiased", {
   expect_true(median(out$sigma_E) > 0.09 && median(out$sigma_E) < 0.11)
 })
 
+test_that("simulate() behaves OK with or without random effects across types", {
+  skip_on_cran()
+  m <- sdmTMB(
+    data = pcod_2011,
+    formula = density ~ 1,
+    mesh = pcod_mesh_2011,
+    family = tweedie(link = "log")
+  )
+  set.seed(1)
+  s <- simulate(m)
+  expect_length(s, 969)
+
+  m2 <- update(m, spatial = "off")
+  s <- simulate(m2)
+  expect_length(s, 969)
+
+  # has no random effects, switches to standard as needed:
+  s <- simulate(m2, type = "mle-mvn")
+  expect_length(s, 969)
+})
 
 # test_that("TMB Delta simulation works", {
 #   skip_on_cran()

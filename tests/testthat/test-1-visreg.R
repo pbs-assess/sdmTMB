@@ -196,7 +196,7 @@ test_that("visreg works with extra time #330", {
     time_varying = ~ 1,
     data = pcod_2011,
     family = tweedie(),
-    extra_time = 2012
+    extra_time = c(2012, 2014, 2016)
   )
   v <- visreg::visreg(fit, "depth_scaled")
   expect_s3_class(v, 'visreg')
