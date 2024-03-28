@@ -147,6 +147,29 @@ qres_beta <- function(object, y, mu, ...) {
   stats::qnorm(u)
 }
 
+# Modified from flexsurv::pgengamma
+pgengamma <- function(q, mean, sigma, .Q, lower.tail = TRUE, log.p = FALSE) {
+  beta <- .Q / sigma
+  k <- .Q^-2
+  mu <- log(mean) - lgamma((k * beta + 1) / beta) + lgamma(k) + log(k) / beta # Need to convert from mean to 'location' mu
+  log_scale = mu - (sigma * sqrt(k) * log(k))
+  shape = 1 / (sigma * sqrt(k))
+  y <- log(q)
+  w <- (y - log_scale) * shape
+  prob <- pgamma(exp(w), shape = k)
+  if (!lower.tail) prob <- 1 - prob
+  if (log.p) prob <- log(prob)
+  prob
+}
+
+qres_gengamma <- function(object, y, mu, ...) {
+  theta <- get_pars(object)
+  .Q <- theta$gengamma_Q
+  sigma <- exp(theta$ln_phi)
+  u <- pgengamma(q = y, mean = mu, sigma = sigma, .Q = .Q)
+  stats::qnorm(u)
+}
+
 #' Residuals method for sdmTMB models
 #'
 #' See the residual-checking vignette: `browseVignettes("sdmTMB")` or [on the
@@ -352,6 +375,7 @@ residuals.sdmTMB <- function(object,
       gamma_mix = qres_gamma_mix,
       lognormal_mix = qres_lognormal_mix,
       nbinom2_mix = qres_nbinom2_mix,
+      gengamma = qres_gengamma,
       cli_abort(paste(fam, "not yet supported."))
     )
   } else {

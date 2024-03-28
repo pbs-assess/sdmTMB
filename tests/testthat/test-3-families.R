@@ -464,7 +464,6 @@ test_that("Generalized gamma works", {
   AIC(fit2)
   AIC(fit3)
 
-  expect_error(residuals(fit3), regexp = "supported")
 })
 
 

@@ -176,6 +176,15 @@ test_that("randomized quantile residuals work,", {
   )
   expect_error(residuals(fit), regexp = "truncated_nbinom1")
   # check_resids_dharma(fit)
+
+  d <- sim_dat(gengamma())
+  fit <- sdmTMB(
+    observed ~ 1,
+    family = gengamma(),
+    data = d, mesh = mesh,
+    spatial = "off", spatiotemporal = "off"
+  )
+  check_resids(fit)
 })
 
 test_that("residuals() works", {
