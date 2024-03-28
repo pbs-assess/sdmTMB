@@ -9,6 +9,7 @@ dharma_residuals(
   object,
   plot = TRUE,
   return_DHARMa = FALSE,
+  expected_distribution = c("uniform", "normal"),
   ...
 )
 }
@@ -22,6 +23,15 @@ residuals to have the expected distribution.}
 \item{plot}{Logical.}
 
 \item{return_DHARMa}{Logical.}
+
+\item{expected_distribution}{Experimental: expected distribution for
+comparison: uniform(0, 1) or normal(0, 1). Traditional \pkg{DHARMa}
+residuals are uniform. If \code{"normal"}, a \code{pnorm()} transformation is applied.
+First, any simulated quantiles of 0 (no simulations were smaller than the
+observation) are set to an arbitrary value of \code{1/(n*10)} where \code{n} is the
+number of simulated replicated. Any simulated quantiles of 1 (no
+simulations were larger than the observation) are set to an arbitrary value
+of \code{1 - 1/(n*10)}. These points are shown with crosses overlaid.}
 
 \item{...}{Other arguments to pass to \code{\link[DHARMa:createDHARMa]{DHARMa::createDHARMa()}}.}
 }
@@ -50,13 +60,15 @@ diagnostic tools and plots from the \pkg{DHARMa} package.
 
 Disadvantages are (1) they are slower to calculate since one must first
 simulate from the model, (2) the stability of the distribution of the
-residuals depends on having a sufficient number of simulation draws, and
-(3) you no longer have a single residual per data point, should that be of
-diagnostic interest.
+residuals depends on having a sufficient number of simulation draws, (3)
+uniformly distributed residuals put less emphasis on the tails visually
+(which or may not be desired).
 
 Note that \pkg{DHARMa} returns residuals that are uniform(0, 1) if the data
 are consistent with the model whereas any randomized quantile residuals from
-\code{\link[=residuals.sdmTMB]{residuals.sdmTMB()}} are expected to be normal(0, 1).
+\code{\link[=residuals.sdmTMB]{residuals.sdmTMB()}} are expected to be normal(0, 1). An experimental option
+\code{expected_distribution} is included to transform the distributions to
+a normal(0, 1) expectation.
 }
 \examples{
 \dontshow{if (requireNamespace("DHARMa", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
@@ -92,6 +104,16 @@ abline(0, 1)
 ret <- simulate(fit_dl, nsim = 200, type = "mle-mvn") |>
   dharma_residuals(fit, return_DHARMa = TRUE)
 plot(ret)
+
+# try normal(0, 1) residuals:
+s <- simulate(fit_dl, nsim = 200, type = "mle-mvn")
+dharma_residuals(s, fit, expected_distribution = "normal")
+# note the points in the top right corner that had Inf quantiles
+# because of pnorm(1)
+
+# work with the residuals themselves:
+r <- dharma_residuals(s, fit, return_DHARMa = TRUE)
+plot(fitted(fit), r$scaledResiduals)
 \dontshow{\}) # examplesIf}
 }
 \seealso{

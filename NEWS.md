@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Add experimental option to return standard normal residuals from 
+  `dharma_residuals()`.
+
 * Make `simulate.sdmTMB()` not include `extra_time` elements.
 
 * Improved re-initialization of saved fitted model objects in new sessions.

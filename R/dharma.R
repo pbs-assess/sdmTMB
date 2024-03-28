@@ -12,6 +12,14 @@
 #' @param object Output from [sdmTMB()].
 #' @param return_DHARMa Logical.
 #' @param plot Logical.
+#' @param expected_distribution Experimental: expected distribution for
+#'   comparison: uniform(0, 1) or normal(0, 1). Traditional \pkg{DHARMa}
+#'   residuals are uniform. If `"normal"`, a `pnorm()` transformation is applied.
+#'   First, any simulated quantiles of 0 (no simulations were smaller than the
+#'   observation) are set to an arbitrary value of `1/(n*10)` where `n` is the
+#'   number of simulated replicated. Any simulated quantiles of 1 (no
+#'   simulations were larger than the observation) are set to an arbitrary value
+#'   of `1 - 1/(n*10)`. These points are shown with crosses overlaid.
 #' @param ... Other arguments to pass to [DHARMa::createDHARMa()].
 #'
 #' @details
@@ -24,13 +32,15 @@
 #'
 #' Disadvantages are (1) they are slower to calculate since one must first
 #' simulate from the model, (2) the stability of the distribution of the
-#' residuals depends on having a sufficient number of simulation draws, and
-#' (3) you no longer have a single residual per data point, should that be of
-#' diagnostic interest.
+#' residuals depends on having a sufficient number of simulation draws, (3)
+#' uniformly distributed residuals put less emphasis on the tails visually
+#' (which or may not be desired).
 #'
 #' Note that \pkg{DHARMa} returns residuals that are uniform(0, 1) if the data
 #' are consistent with the model whereas any randomized quantile residuals from
-#' [residuals.sdmTMB()] are expected to be normal(0, 1).
+#' [residuals.sdmTMB()] are expected to be normal(0, 1). An experimental option
+#' `expected_distribution` is included to transform the distributions to
+#' a normal(0, 1) expectation.
 #'
 #' @return
 #' A data frame of observed and expected values is invisibly returned,
@@ -80,8 +90,20 @@
 #' ret <- simulate(fit_dl, nsim = 200, type = "mle-mvn") |>
 #'   dharma_residuals(fit, return_DHARMa = TRUE)
 #' plot(ret)
+#'
+#' # try normal(0, 1) residuals:
+#' s <- simulate(fit_dl, nsim = 200, type = "mle-mvn")
+#' dharma_residuals(s, fit, expected_distribution = "normal")
+#' # note the points in the top right corner that had Inf quantiles
+#' # because of pnorm(1)
+#'
+#' # work with the residuals themselves:
+#' r <- dharma_residuals(s, fit, return_DHARMa = TRUE)
+#' plot(fitted(fit), r$scaledResiduals)
 
-dharma_residuals <- function(simulated_response, object, plot = TRUE, return_DHARMa = FALSE, ...) {
+dharma_residuals <- function(simulated_response, object, plot = TRUE,
+  return_DHARMa = FALSE,
+  expected_distribution = c("uniform", "normal"), ...) {
   if (!requireNamespace("DHARMa", quietly = TRUE)) {
     cli_abort("DHARMa must be installed to use this function.")
   }
@@ -89,7 +111,8 @@ dharma_residuals <- function(simulated_response, object, plot = TRUE, return_DHA
   assert_that(is.logical(plot))
   assert_that(is.matrix(simulated_response))
   assert_that(nrow(simulated_response) == nrow(object$response))
-  if (attr(simulated_response, "type") != "mle-mvn") {
+  expected_distribution <- match.arg(expected_distribution)
+  if (attr(simulated_response, "type") != "mle-mvn" && !is.null(object$tmb_random)) {
     cli_warn("It is recommended to use `simulate.sdmTMB(fit, type = 'mle-mvn')` if simulating for DHARMa residuals. See the description in ?residuals.sdmTMB under the types of residuals section.")
   }
   if (isTRUE(object$family$delta)) {
@@ -108,16 +131,28 @@ dharma_residuals <- function(simulated_response, object, plot = TRUE, return_DHA
   )
   if (return_DHARMa) return(res)
   u <- res$scaledResiduals
-  n <- length(u)
-  m <- seq_len(n) / (n + 1)
-  z <- stats::qqplot(m, u, plot.it = FALSE)
-  if (plot) {
-    DHARMa::plotQQunif(
-      res,
-      testUniformity = FALSE,
-      testOutliers = FALSE, testDispersion = FALSE
-    )
+  if (expected_distribution == "uniform") {
+    n <- length(u)
+    m <- seq_len(n) / (n + 1)
+    z <- stats::qqplot(m, u, plot.it = FALSE)
+    if (plot) {
+      DHARMa::plotQQunif(
+        res,
+        testUniformity = FALSE,
+        testOutliers = FALSE, testDispersion = FALSE
+      )
+    }
+    return(invisible(data.frame(observed = z$y, expected = z$x)))
+  } else { # normal
+    .u <- u
+    nsim <- ncol(simulated_response) * 10
+    .u[.u == 1] <- 1 - (1 / nsim)
+    .u[.u == 0] <- 1 / nsim
+    resid_n01 <- stats::qnorm(.u)
+    z <- stats::qqnorm(resid_n01, plot.it = plot);graphics::abline(0, 1)
+    zo <- u %in% c(0, 1)
+    if (plot) graphics::points(z$x[zo], z$y[zo], pch = 4)
+    return(invisible(data.frame(observed = z$y, expected = z$x)))
   }
-  invisible(data.frame(observed = z$y, expected = z$x))
 }
 
