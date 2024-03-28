@@ -1378,6 +1378,8 @@ sdmTMB <- function(
   lu <- make_year_lu(data[[time]])
   fd <- data[['__fake_data__']]
   tmp <- data[!fd,,drop=FALSE]
+  # strip fake data from A matrix:
+  if (sum(fd) > 0L) spde <- make_mesh(tmp, spde$xy_cols, mesh = spde$mesh)
   tmp[['__fake_data__']] <- tmp[['__weight_sdmTMB__']] <-
     tmp[['__sdmTMB_offset__']] <- tmp[['__dcens_upr__']] <- NULL
     out_structure <- structure(list(
