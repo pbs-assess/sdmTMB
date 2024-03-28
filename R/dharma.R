@@ -57,15 +57,18 @@
 #' # simulate() can be piped to dharma_residuals():
 #'
 #' # not great:
+#' set.seed(123)
 #' simulate(fit, nsim = 200, type = "mle-mvn") |>
 #'   dharma_residuals(fit)
 #'
 #' # delta-lognormal looks better:
+#' set.seed(123)
 #' fit_dl <- update(fit, family = delta_lognormal())
 #' simulate(fit_dl, nsim = 200, type = "mle-mvn") |>
 #'   dharma_residuals(fit)
 #'
 #' # or skip the pipe:
+#' set.seed(123)
 #' s <- simulate(fit_dl, nsim = 200, type = "mle-mvn")
 #' # and manually plot it:
 #' r <- dharma_residuals(s, fit_dl, plot = FALSE)
