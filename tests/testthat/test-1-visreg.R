@@ -185,20 +185,19 @@ test_that("visreg works", {
   expect_identical(class(v), "visreg2d")
 })
 
-
 test_that("visreg works with extra time #330", {
   skip_on_cran()
-  library(sdmTMB)
-  pcod$fyear <- as.factor(pcod$year)
-  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
+  pcod_2011$fyear <- as.factor(pcod_2011$year)
   fit <- sdmTMB(
-    density ~ fyear,
+    density ~ 0 + depth_scaled,
     time = "year",
-    spatiotemporal = "iid",
-    data = pcod,
-    mesh = mesh,
+    spatial = "off",
+    spatiotemporal = "off",
+    time_varying = ~ 1,
+    data = pcod_2011,
     family = tweedie(),
     extra_time = 2012
   )
-  visreg::visreg(fit, "fyear")
+  v <- visreg::visreg(fit, "depth_scaled")
+  expect_s3_class(v, 'visreg')
 })
