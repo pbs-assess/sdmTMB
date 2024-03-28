@@ -203,3 +203,32 @@ test_that("factor year extra time clash is detected and warned about", {
     family = tweedie(link = "log")
   )
 })
+
+test_that("update() works on an extra_time model", {
+  skip_on_cran()
+  pcod$os <- rep(log(0.01), nrow(pcod)) # offset check
+  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
+  m <- sdmTMB(
+    data = pcod,
+    formula = density ~ 0,
+    time_varying = ~ 1,
+    mesh = mesh,
+    offset = pcod$os,
+    family = tweedie(link = "log"),
+    spatial = "on",
+    time = "year",
+    extra_time = c(2012),
+    spatiotemporal = "off"
+  )
+  m2 <- update(m, time_varying_type = "ar1")
+  expect_s3_class(m2, "sdmTMB")
+
+  m2 <- update(m, time_varying_type = "ar1", mesh = m$spde)
+  expect_s3_class(m2, "sdmTMB")
+
+  m2 <- update(m, time_varying_type = "ar1", extra_time = m$extra_time)
+  expect_s3_class(m2, "sdmTMB")
+
+  m2 <- update(m, time_varying_type = "ar1", extra_time = m$extra_time, mesh = m$spde)
+  expect_s3_class(m2, "sdmTMB")
+})
