@@ -793,7 +793,6 @@ Type objective_function<Type>::operator()()
           }
           case tweedie_family: {
             tweedie_p = invlogit(thetaf) + Type(1.0);
-            ADREPORT(tweedie_p);
             // FIXME! move this out of loop!!!!!!!!
             if (!sdmTMB::isNA(priors(12))) {
               error("Priors not enabled for Tweedie p currently");
@@ -1379,6 +1378,8 @@ Type objective_function<Type>::operator()()
       ADREPORT(phi);
       REPORT(phi);
   }
+
+  if (family(0) == tweedie_family) ADREPORT(tweedie_p); // #302
 
   REPORT(epsilon_st_A_vec);   // spatio-temporal effects; vector
   REPORT(b_rw_t);   // time-varying effects
