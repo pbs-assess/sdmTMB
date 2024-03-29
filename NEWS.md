@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Add check if prediction coordinates appear outside of fitted coordinates. #285
+
 * Fix memory issue with Tweedie family on large datasets. #302
 
 * Add experimental option to return standard normal residuals from 
