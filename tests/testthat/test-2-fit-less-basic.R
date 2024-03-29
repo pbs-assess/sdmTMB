@@ -507,4 +507,29 @@ test_that("Time with an NA gets flagged", {
   }, regexp = "time")
 })
 
+test_that("Prediction outside fitted coordinates gets warned about #285", {
+  fit <- sdmTMB(
+    present ~ 1,
+    family = binomial(),
+    data = pcod_2011,
+    mesh = pcod_mesh_2011
+  )
+  nd <- qcs_grid
+  range(nd$X)
+  nd$X <- nd$X * 10
+  range(nd$X)
+  expect_warning(p <- predict(fit, newdata = nd), regexp = "coordinates")
+
+  nd <- qcs_grid
+  nd$X <- nd$X / 10
+  expect_warning(p <- predict(fit, newdata = nd), regexp = "coordinates")
+
+  nd <- qcs_grid
+  nd$Y <- nd$Y / 10
+  expect_warning(p <- predict(fit, newdata = nd), regexp = "coordinates")
+
+  nd <- qcs_grid
+  nd$Y <- nd$Y * 10
+  expect_warning(p <- predict(fit, newdata = nd), regexp = "coordinates")
+})
 
