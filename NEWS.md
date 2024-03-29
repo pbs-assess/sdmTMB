@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Fix memory issue with Tweedie family on large datasets. #302
+
 * Add experimental option to return standard normal residuals from 
   `dharma_residuals()`.
 
