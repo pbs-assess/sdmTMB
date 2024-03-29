@@ -721,7 +721,7 @@ Type objective_function<Type>::operator()()
         }
       }
       eta_i(i,m) += eta_iid_re_i(i,m);
-      if (family(m) == 1 && !poisson_link_delta) { // regular binomial
+      if (family(m) == binomial_family && !poisson_link_delta) { // regular binomial
         mu_i(i,m) = LogitInverseLink(eta_i(i,m), link(m));
       } else if (poisson_link_delta) { // a tweak on clogog:
         // eta_i(i,0) = log numbers density
