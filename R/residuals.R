@@ -147,25 +147,33 @@ qres_beta <- function(object, y, mu, ...) {
   stats::qnorm(u)
 }
 
-# Modified from flexsurv::pgengamma
+# Modified from https://github.com/chjackson/flexsurv/blob/c765344fa798868036b841481fce2ea4d009d85e/src/gengamma.h#L63
 pgengamma <- function(q, mean, sigma, .Q, lower.tail = TRUE, log.p = FALSE) {
-  beta <- .Q / sigma
-  k <- .Q^-2
-  mu <- log(mean) - lgamma((k * beta + 1) / beta) + lgamma(k) + log(k) / beta # Need to convert from mean to 'location' mu
-  log_scale = mu - (sigma * sqrt(k) * log(k))
-  shape = 1 / (sigma * sqrt(k))
-  y <- log(q)
-  w <- (y - log_scale) * shape
-  prob <- pgamma(exp(w), shape = k)
-  if (!lower.tail) prob <- 1 - prob
-  if (log.p) prob <- log(prob)
-  prob
+  if (.Q != 0) {
+    y <- log(q)
+    beta <- .Q / sigma
+    k <- .Q^-2
+    if (.Q > 0) { a <- 1 } else { a <- -1 }
+    mu <- log(mean) - lgamma((k * beta + 1) / beta) + lgamma(k) + log(k) / beta # Need to convert from mean to 'location' mu
+    w <- (y - mu) / sigma
+    expnu <- exp(.Q * w) * k # What is expnu? where does nu fit?
+
+    if (.Q > 0) {
+      stats::pgamma(q = expnu, shape = k, rate = 1, lower.tail = lower.tail, log.p = log.p)
+    } else {
+      stats::pgamma(q = expnu, shape = k, rate = 1, lower.tail = !lower.tail, log.p = log.p)
+    }
+  } else {
+    # use lnorm with correction for Q = 0
+    stats::plnorm(q = y, meanlog = log(mean) - ((sigma^2) / 2), sdlog = sigma)
+  }
 }
 
 qres_gengamma <- function(object, y, mu, ...) {
   theta <- get_pars(object)
   .Q <- theta$gengamma_Q
   sigma <- exp(theta$ln_phi)
+  if (is_delta(object)) sigma <- sigma[2]
   u <- pgengamma(q = y, mean = mu, sigma = sigma, .Q = .Q)
   stats::qnorm(u)
 }
