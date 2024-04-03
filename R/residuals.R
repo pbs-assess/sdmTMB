@@ -153,7 +153,6 @@ pgengamma <- function(q, mean, sigma, .Q, lower.tail = TRUE, log.p = FALSE) {
     y <- log(q)
     beta <- .Q / sigma
     k <- .Q^-2
-    if (.Q > 0) { a <- 1 } else { a <- -1 }
     mu <- log(mean) - lgamma((k * beta + 1) / beta) + lgamma(k) + log(k) / beta # Need to convert from mean to 'location' mu
     w <- (y - mu) / sigma
     expnu <- exp(.Q * w) * k
@@ -165,7 +164,7 @@ pgengamma <- function(q, mean, sigma, .Q, lower.tail = TRUE, log.p = FALSE) {
     }
   } else {
     # use lnorm with correction for Q = 0
-    stats::plnorm(q = y, meanlog = log(mean) - ((sigma^2) / 2), sdlog = sigma)
+    stats::plnorm(q = q, meanlog = log(mean) - ((sigma^2) / 2), sdlog = sigma)
   }
 }
 
