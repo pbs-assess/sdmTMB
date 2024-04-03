@@ -156,7 +156,7 @@ pgengamma <- function(q, mean, sigma, .Q, lower.tail = TRUE, log.p = FALSE) {
     if (.Q > 0) { a <- 1 } else { a <- -1 }
     mu <- log(mean) - lgamma((k * beta + 1) / beta) + lgamma(k) + log(k) / beta # Need to convert from mean to 'location' mu
     w <- (y - mu) / sigma
-    expnu <- exp(.Q * w) * k # What is expnu? where does nu fit?
+    expnu <- exp(.Q * w) * k
 
     if (.Q > 0) {
       stats::pgamma(q = expnu, shape = k, rate = 1, lower.tail = lower.tail, log.p = log.p)
