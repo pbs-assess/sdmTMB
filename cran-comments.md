@@ -1,28 +1,18 @@
-This version fixes bugs, adds minor functionality, and maintains
-compatibility with a revised version of a preprint introducing the package.
+This version fixes a unit test that was broken by an update to glmmTMB (as per
+an email from CRAN on March 20 2024). This version also adds minor functionality
+and fixes several bugs.
 
 ## R CMD check results
 
-0 errors | 0 warnings | 1 notes
-
-checking installed package size ... NOTE
-    installed size is  6.1Mb
-    sub-directories of 1Mb or more:
-      libs   4.2Mb
-      
-* This is due to compiled code; we cannot reduce the size further.
+0 errors | 0 warnings | 0 notes
 
 ## Test environments
 
-* Local M2 macOS install, R 4.3.2
+* Local M2 macOS install, R 4.3.3
 * Intel macOS (on github-actions), R-release
-* Ubuntu 22.04.3 (on github-actions), R-release
 * Ubuntu 22.04.3 (on github-actions), R-devel
-* Ubuntu 22.04.3 (on github-actions), R-oldrel
-* Windows (on github-actions), R 4.3.2
+* Ubuntu 22.04.3 (on github-actions), R-release
+* Windows (on github-actions), R-release
 * Windows (winbuilder), R-devel
-
-With sanitizer checks:
- 
-* Ubuntu 22.04.3 (on github-actions), R-devel with valgrind
-
+* Windows (winbuilder), R-release
+* Windows (winbuilder), R-oldrelease
