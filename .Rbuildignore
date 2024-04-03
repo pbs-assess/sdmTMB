@@ -20,4 +20,4 @@
 ^Dockerfile$
 ^CRAN-SUBMISSION$
 ^vignettes/web_only$
-^revdep$
+revdep/

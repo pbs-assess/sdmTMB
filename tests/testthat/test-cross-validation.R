@@ -48,6 +48,7 @@ test_that("Basic cross validation works", {
 })
 
 test_that("Cross validation in parallel with globals", {
+  skip_on_cran()
   # https://github.com/pbs-assess/sdmTMB/issues/127
   d <- pcod
   spde <- make_mesh(d, c("X", "Y"), cutoff = 15)

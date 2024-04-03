@@ -363,6 +363,10 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
   # need to re-attach environment if in fresh session
   reinitialize(object)
 
+  if (is.null(object$tmb_random) && type == "mle-mvn") {
+    type <- "mle-eb" # no random effects to sample from
+  }
+
   # re_form stuff
   conditional_re <- !(!is.null(re_form) && ((re_form == ~0) || identical(re_form, NA)))
   tmb_dat <- object$tmb_data

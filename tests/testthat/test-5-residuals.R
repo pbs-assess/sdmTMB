@@ -40,17 +40,17 @@ test_that("randomized quantile residuals work,", {
 
   check_resids <- function(fit) {
     set.seed(123)
-    r <- residuals(fit)
+    r <- residuals(fit, type = "mle-mvn")
     qqnorm(r)
-    qqline(r)
+    abline(0, 1)
     p <- stats::shapiro.test(r)
     expect_gt(p$p.value, 0.01)
     invisible(r)
   }
-  # check_resids_dharma <- function(fit) {
-  #   set.seed(1)
-  #   dharma_residuals(simulate(fit, nsim = 500), fit)
-  # }
+  check_resids_dharma <- function(fit) {
+    set.seed(1)
+    dharma_residuals(simulate(fit, nsim = 100, type = "mle-mvn"), fit)
+  }
 
   d <- sim_dat(gaussian())
   fit <- sdmTMB(
@@ -60,7 +60,7 @@ test_that("randomized quantile residuals work,", {
   )
   check_resids(fit)
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
   d <- sim_dat(lognormal())
   fit <- sdmTMB(
@@ -69,7 +69,7 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh
   )
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
   d <- sim_dat(Gamma(link = "log"), phi = 0.3, sigma_O = 0.001)
   fit <- sdmTMB(
@@ -78,25 +78,25 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh, spatial = "off", spatiotemporal = "off"
   )
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
-  d <- sim_dat(binomial(), sigma_O = 0.001)
+  d <- sim_dat(binomial(), sigma_O = 0.0001)
   fit <- sdmTMB(
     observed ~ 1,
     family = binomial(),
     data = d, mesh = mesh, spatial = "off", spatiotemporal = "off"
   )
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
-  d <- sim_dat(nbinom2(), sigma_O = 0.001)
+  d <- sim_dat(nbinom2(), sigma_O = 0.0001)
   fit <- sdmTMB(
     observed ~ 0,
     family = nbinom2(),
     data = d, mesh = mesh, spatial = "off", spatiotemporal = "off"
   )
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
   d <- sim_dat(nbinom1(), sigma_O = 0.001)
   fit <- sdmTMB(
@@ -105,7 +105,7 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh, spatial = "off", spatiotemporal = "off"
   )
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
   d <- sim_dat(Beta(), phi = 5, sigma_O = 0.001)
   fit <- sdmTMB(
@@ -114,7 +114,7 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh, spatial = 'off', spatiotemporal = 'off'
   )
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
   set.seed(1)
   d <- sim_dat(poisson())
@@ -124,7 +124,7 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh
   )
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
   d <- sim_dat(student(df = 2))
   fit <- sdmTMB(
@@ -133,7 +133,7 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh
   )
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
   # wrong df:
   fit <- sdmTMB(
@@ -141,12 +141,14 @@ test_that("randomized quantile residuals work,", {
     family = student(df = 10),
     data = d, mesh = mesh
   )
-  r <- residuals(fit)
+  expect_message(r <- residuals(fit), "mle")
+  set.seed(1)
+  r <- residuals(fit, type = "mle-mvn")
   qqnorm(r)
   qqline(r)
   p <- stats::shapiro.test(r)
   expect_lt(p$p.value, 0.05) # less than 0.05!
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
   d <- sim_dat(tweedie())
   fit <- sdmTMB(
@@ -155,7 +157,7 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh
   )
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
   d <- sim_dat(truncated_nbinom2())
   fit <- sdmTMB(
@@ -164,8 +166,8 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh,
     spatial = "off", spatiotemporal = "off"
   )
-  expect_error(residuals(fit), regexp = "truncated_nbinom2")
-  # check_resids_dharma(fit)
+  expect_error(residuals(fit, type = "mle-mvn"), regexp = "truncated_nbinom2")
+  check_resids_dharma(fit)
 
   d <- sim_dat(truncated_nbinom1())
   fit <- sdmTMB(
@@ -174,8 +176,9 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh,
     spatial = "off", spatiotemporal = "off"
   )
-  expect_error(residuals(fit), regexp = "truncated_nbinom1")
-  # check_resids_dharma(fit)
+
+  expect_error(residuals(fit, type = "mle-mvn"), regexp = "truncated_nbinom1")
+  check_resids_dharma(fit)
 
   d <- sim_dat(gengamma())
   fit <- sdmTMB(

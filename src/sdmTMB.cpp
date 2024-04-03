@@ -721,7 +721,7 @@ Type objective_function<Type>::operator()()
         }
       }
       eta_i(i,m) += eta_iid_re_i(i,m);
-      if (family(m) == 1 && !poisson_link_delta) { // regular binomial
+      if (family(m) == binomial_family && !poisson_link_delta) { // regular binomial
         mu_i(i,m) = LogitInverseLink(eta_i(i,m), link(m));
       } else if (poisson_link_delta) { // a tweak on clogog:
         // eta_i(i,0) = log numbers density
@@ -793,7 +793,6 @@ Type objective_function<Type>::operator()()
           }
           case tweedie_family: {
             tweedie_p = invlogit(thetaf) + Type(1.0);
-            ADREPORT(tweedie_p);
             // FIXME! move this out of loop!!!!!!!!
             if (!sdmTMB::isNA(priors(12))) {
               error("Priors not enabled for Tweedie p currently");
@@ -1379,6 +1378,8 @@ Type objective_function<Type>::operator()()
       ADREPORT(phi);
       REPORT(phi);
   }
+
+  if (family(0) == tweedie_family) ADREPORT(tweedie_p); // #302
 
   REPORT(epsilon_st_A_vec);   // spatio-temporal effects; vector
   REPORT(b_rw_t);   // time-varying effects
