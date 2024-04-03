@@ -190,23 +190,23 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'   family = tweedie(link = "log"),
 #'   fold_ids = rep(seq(1, 3), nrow(pcod))[seq(1, nrow(pcod))]
 #' )
-#'
-#' # LFOCV:
-#' m_lfocv <- sdmTMB_cv(
-#'   present ~ s(year, k = 4),
-#'   data = pcod,
-#'   mesh = mesh,
-#'   lfo = TRUE,
-#'   lfo_forecast = 2,
-#'   lfo_validations = 3,
-#'   family = binomial(),
-#'   spatiotemporal = "off",
-#'   time = "year" # must be specified
-#' )
-#'
-#' # See how the LFOCV folds were assigned:
-#' example_data <- m_lfocv$models[[1]]$data
-#' table(example_data$cv_fold, example_data$year)
+#
+# # LFOCV:
+# m_lfocv <- sdmTMB_cv(
+#   present ~ s(year, k = 4),
+#   data = pcod,
+#   mesh = mesh,
+#   lfo = TRUE,
+#   lfo_forecast = 2,
+#   lfo_validations = 3,
+#   family = binomial(),
+#   spatiotemporal = "off",
+#   time = "year" # must be specified
+# )
+#
+# # See how the LFOCV folds were assigned:
+# example_data <- m_lfocv$models[[1]]$data
+# table(example_data$cv_fold, example_data$year)
 #' }
 sdmTMB_cv <- function(
     formula, data, mesh_args, mesh = NULL, time = NULL,
