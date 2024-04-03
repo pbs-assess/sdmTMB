@@ -1,5 +1,9 @@
 # sdmTMB (development version)
 
+* Overhaul residuals vignette including brief intros to randomized quantile
+  residuals, simulation-based residuals, 'one-sample' residuals, and uniform
+  vs. Gaussian residuals.
+
 * Add check if prediction coordinates appear outside of fitted coordinates. #285
 
 * Fix memory issue with Tweedie family on large datasets. #302
