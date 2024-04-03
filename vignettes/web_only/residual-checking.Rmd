@@ -432,6 +432,8 @@ The gamma example above illustrated how we can use the distribution function (th
 
 Now we need to do the same with the Poisson equivalent: `ppois()`.
 The `ppois(y)` function gives us the cumulative probability density up to value `y`.
+Say we have a Poisson variable with a mean (lambda) of 5 and we have an observation with a value of 3.
+We can calculate the density up to the value of 3 as:
 
 ```{r}
 lambda <- 5
