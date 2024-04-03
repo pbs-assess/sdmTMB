@@ -64,22 +64,27 @@
 #'   family = tweedie(link = "log"), spatial = "on")
 #'
 #' # The `simulated_response` argument is first so the output from
-#' # simulate() can be piped to dharma_residuals():
+#' # simulate() can be piped to dharma_residuals().
+#'
+#' # We will work with 100 simulations for fast examples, but you'll
+#' # likely want to work with more than this (enough that the results
+#' # are stable from run to run).
 #'
 #' # not great:
 #' set.seed(123)
-#' simulate(fit, nsim = 200, type = "mle-mvn") |>
+#' simulate(fit, nsim = 100, type = "mle-mvn") |>
 #'   dharma_residuals(fit)
 #'
+#' \donttest{
 #' # delta-lognormal looks better:
 #' set.seed(123)
 #' fit_dl <- update(fit, family = delta_lognormal())
-#' simulate(fit_dl, nsim = 200, type = "mle-mvn") |>
+#' simulate(fit_dl, nsim = 100, type = "mle-mvn") |>
 #'   dharma_residuals(fit)
 #'
 #' # or skip the pipe:
 #' set.seed(123)
-#' s <- simulate(fit_dl, nsim = 200, type = "mle-mvn")
+#' s <- simulate(fit_dl, nsim = 100, type = "mle-mvn")
 #' # and manually plot it:
 #' r <- dharma_residuals(s, fit_dl, plot = FALSE)
 #' head(r)
@@ -87,12 +92,12 @@
 #' abline(0, 1)
 #'
 #' # return the DHARMa object and work with the DHARMa methods
-#' ret <- simulate(fit_dl, nsim = 200, type = "mle-mvn") |>
+#' ret <- simulate(fit_dl, nsim = 100, type = "mle-mvn") |>
 #'   dharma_residuals(fit, return_DHARMa = TRUE)
 #' plot(ret)
 #'
 #' # try normal(0, 1) residuals:
-#' s <- simulate(fit_dl, nsim = 200, type = "mle-mvn")
+#' s <- simulate(fit_dl, nsim = 100, type = "mle-mvn")
 #' dharma_residuals(s, fit, expected_distribution = "normal")
 #' # note the points in the top right corner that had Inf quantiles
 #' # because of pnorm(1)
@@ -100,6 +105,7 @@
 #' # work with the residuals themselves:
 #' r <- dharma_residuals(s, fit, return_DHARMa = TRUE)
 #' plot(fitted(fit), r$scaledResiduals)
+#' }
 
 dharma_residuals <- function(simulated_response, object, plot = TRUE,
   return_DHARMa = FALSE,
