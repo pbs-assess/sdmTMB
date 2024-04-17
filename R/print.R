@@ -167,7 +167,7 @@ print_time_varying <- function(x, m = 1) {
     tv_names <- colnames(model.matrix(x$time_varying, x$data))
     mm_tv <- cbind(round(as.numeric(b_rw_t_est), 2L), round(as.numeric(b_rw_t_se), 2L))
     colnames(mm_tv) <- c("coef.est", "coef.se")
-    time_slices <- get_fitted_time(x)
+    time_slices <- x$time_lu$time_from_data
     row.names(mm_tv) <- paste(rep(tv_names, each = length(time_slices)), time_slices, sep = "-")
   } else {
     mm_tv <- NULL

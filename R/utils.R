@@ -166,11 +166,21 @@ make_year_i <- function(x) {
   x - min(x)
 }
 
-make_year_lu <- function(x) {
-  ret <- unique(data.frame(year_i = make_year_i(x), time_from_data = x, stringsAsFactors = FALSE))
-  ret <- ret[order(ret$year_i),,drop=FALSE]
-  row.names(ret) <- NULL
-  ret
+make_time_lu <- function(time_vec_from_data, full_time_vec = sort(unique(time_vec_from_data))) {
+  if (!all(time_vec_from_data %in% full_time_vec)) {
+    stop("All time elements not in full time vector.")
+  }
+  lu <- unique(
+    data.frame(
+      year_i = make_year_i(full_time_vec),
+      time_from_data = full_time_vec,
+      stringsAsFactors = FALSE
+    )
+  )
+  lu$extra_time <- !lu$time_from_data %in% time_vec_from_data
+  lu <- lu[order(lu$time_from_data),]
+  row.names(lu) <- NULL
+  lu
 }
 
 check_offset <- function(formula) {

@@ -274,6 +274,9 @@ time slices with process error.
 \code{extra_time} can also be used to fill in missing time steps for the purposes
 of a random walk or AR(1) process if the gaps between time steps are uneven.
 
+\code{extra_time} can include only extra time steps or all time steps including
+those found in the fitted data. This latter option may be simpler.
+
 \strong{Regularization and priors}
 
 You can achieve regularization via penalties (priors) on the fixed effect
