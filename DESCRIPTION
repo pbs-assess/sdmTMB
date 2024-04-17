@@ -109,10 +109,5 @@ Config/testthat/parallel: true
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-<<<<<<< HEAD
-RoxygenNote: 7.2.3
-SystemRequirements: GNU make, C++17
-=======
 RoxygenNote: 7.3.1
 SystemRequirements: GNU make
->>>>>>> 3701635b (Add extra_time tests and clean up fix)
