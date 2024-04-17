@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Simplify the internal treatment of extra time slices (`extra_time`). #329
+  This is less bug prone and also fixes a recently created bug. #335
+
 # sdmTMB 0.5.0
 
 * Overhaul residuals vignette ('article') 

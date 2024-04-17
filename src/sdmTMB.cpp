@@ -1225,7 +1225,7 @@ Type objective_function<Type>::operator()()
 
     // Total biomass etc.:
     vector<Type> total(n_t);
-    total.setZero();
+    total.setZero(); // important; 0s are filtered out after as not predicted on
     vector<Type> mu_combined(n_p);
     mu_combined.setZero();
 
@@ -1235,8 +1235,8 @@ Type objective_function<Type>::operator()()
       Type t2;
       int link_tmp;
 
-      if (n_m > 1) { // delta model
-        for (int i = 0; i < n_p; i++) {
+      for (int i = 0; i < n_p; i++) {
+        if (n_m > 1) { // delta model
           if (poisson_link_delta) {
             // Type R1 = Type(1.) - exp(-exp(proj_eta(i,0)));
             // Type R2 = exp(proj_eta(i,0)) / R1 * exp(proj_eta(i,1))
@@ -1247,9 +1247,7 @@ Type objective_function<Type>::operator()()
             mu_combined(i) = t1 * t2;
           }
           total(proj_year(i)) += mu_combined(i) * area_i(i);
-        }
-      } else { // non-delta model
-        for (int i = 0; i < n_p; i++) {
+        } else { // non-delta model
           mu_combined(i) = InverseLink(proj_eta(i,0), link(0));
           total(proj_year(i)) += mu_combined(i) * area_i(i);
         }

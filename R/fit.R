@@ -775,19 +775,7 @@ sdmTMB <- function(
     offset <- data[[offset]]
   }
 
-  if (!is.null(extra_time)) { # for forecasting or interpolating
-    data <- expand_time(df = data, time_slices = extra_time, time_column = time,
-      weights = weights, offset = offset, upr = upr)
-    offset <- data[["__sdmTMB_offset__"]] # expanded
-    weights <- data[["__weight_sdmTMB__"]] # expanded
-    upr <- data[["__dcens_upr__"]] # expanded
-    spde$loc_xy <- as.matrix(data[,spde$xy_cols,drop=FALSE])
-    spde$A_st <- fmesher::fm_basis(spde$mesh, loc = spde$loc_xy)
-    spde$sdm_spatial_id <- seq(1, nrow(data)) # FIXME?
-  } else {
-    data[["__fake_data__"]] <- FALSE
-  }
-  check_irregalar_time(data, time, spatiotemporal, time_varying)
+  check_irregalar_time(data, time, spatiotemporal, time_varying, extra_time = extra_time)
 
   spatial_varying_formula <- spatial_varying # save it
   if (!is.null(spatial_varying)) {
@@ -804,7 +792,6 @@ sdmTMB <- function(
     if (length(attr(z_i, "contrasts")) && !.int && !omit_spatial_intercept) { # factors with ~ 0 or ~ -1
       msg <- c("Detected predictors with factor levels in `spatial_varying` with the intercept omitted from the `spatial_varying` formula.",
         "You likely want to set `spatial = 'off'` since the constant spatial field (`omega_s`) also represents a spatial intercept.`")
-        # "As of version 0.3.1, sdmTMB turns off the constant spatial field `omega_s` when `spatial_varying` is specified so that the intercept or factor-level means are fully described by the spatially varying random fields `zeta_s`.")
       cli_inform(paste(msg, collapse = " "))
     }
     .int <- grep("(Intercept)", colnames(z_i))
@@ -1052,7 +1039,8 @@ sdmTMB <- function(
   X_ij_list <- list()
   for (i in seq_len(n_m)) X_ij_list[[i]] <- X_ij[[i]]
 
-  n_t <- length(unique(data[[time]]))
+  time_df <- make_time_lu(data[[time]], full_time_vec = union(data[[time]], extra_time))
+  n_t <- nrow(time_df)
 
   random_walk <- if (!is.null(time_varying)) switch(time_varying_type, rw = 1L, rw0 = 2L, ar1 = 0L) else 0L
   tmb_data <- list(
@@ -1064,7 +1052,7 @@ sdmTMB <- function(
     A_st       = spde$A_st,
     sim_re     = if ("sim_re" %in% names(experimental)) as.integer(experimental$sim_re) else rep(0L, 6),
     A_spatial_index = spde$sdm_spatial_id - 1L,
-    year_i     = make_year_i(data[[time]]),
+    year_i     = time_df$year_i[match(data[[time]], time_df$time_from_data)],
     ar1_fields = ar1_fields,
     simulate_t = rep(1L, n_t),
     rw_fields =  rw_fields,
@@ -1375,16 +1363,9 @@ sdmTMB <- function(
   prof <- c("b_j")
   if (delta) prof <- c(prof, "b_j2")
 
-  lu <- make_year_lu(data[[time]])
-  fd <- data[['__fake_data__']]
-  tmp <- data[!fd,,drop=FALSE]
-  # strip fake data from A matrix:
-  if (sum(fd) > 0L) spde <- make_mesh(tmp, spde$xy_cols, mesh = spde$mesh)
-  tmp[['__fake_data__']] <- tmp[['__weight_sdmTMB__']] <-
-    tmp[['__sdmTMB_offset__']] <- tmp[['__dcens_upr__']] <- NULL
     out_structure <- structure(list(
-    data       = tmp,
-    offset     = offset[!fd],
+    data       = data,
+    offset     = offset,
     spde       = spde,
     formula    = original_formula,
     split_formula = split_formula,
@@ -1393,10 +1374,10 @@ sdmTMB <- function(
     threshold_function = thresh[[1]]$threshold_func,
     epsilon_predictor = epsilon_predictor,
     time       = time,
-    time_lu    = lu,
+    time_lu    = time_df,
     family     = family,
     smoothers = sm,
-    response   = y_i[!fd,,drop=FALSE],
+    response   = y_i,
     tmb_data   = tmb_data,
     tmb_params = tmb_params,
     tmb_map    = tmb_map,
@@ -1593,12 +1574,12 @@ parse_spatial_arg <- function(spatial) {
   spatial
 }
 
-check_irregalar_time <- function(data, time, spatiotemporal, time_varying) {
+check_irregalar_time <- function(data, time, spatiotemporal, time_varying, extra_time) {
   if (any(spatiotemporal %in% c("ar1", "rw")) || !is.null(time_varying)) {
     if (!is.numeric(data[[time]])) {
       cli_abort("Time column should be integer or numeric if using AR(1) or random walk processes.")
     }
-    ti <- sort(unique(data[[time]]))
+    ti <- sort(union(unique(data[[time]]), extra_time))
     if (length(unique(diff(ti))) > 1L) {
       missed <- find_missing_time(data[[time]])
       msg <- c(

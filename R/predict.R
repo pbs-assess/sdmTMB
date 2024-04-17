@@ -315,9 +315,6 @@ predict.sdmTMB <- function(object, newdata = NULL,
   if (is.null(newdata)) {
     if (is_delta(object) || nsim > 0 || type == "response" || !is.null(mcmc_samples) || se_fit || !is.null(re_form) || !is.null(re_form_iid) || !is.null(offset) || isTRUE(object$family$delta)) {
       newdata <- object$data
-      if (!is.null(object$extra_time)) { # issue #273
-        newdata <- newdata[!newdata[[object$time]] %in% object$extra_time,]
-      }
       nd_arg_was_null <- TRUE # will be used to carry over the offset
     }
   }
@@ -345,7 +342,6 @@ predict.sdmTMB <- function(object, newdata = NULL,
   tmb_data <- object$tmb_data
   tmb_data$do_predict <- 1L
   no_spatial <- as.logical(object$tmb_data$no_spatial)
-  fake_nd <- NULL
 
   if (!is.null(newdata)) {
     if (any(!xy_cols %in% names(newdata)) && isFALSE(pop_pred) && !no_spatial)
@@ -375,30 +371,14 @@ predict.sdmTMB <- function(object, newdata = NULL,
     }
 
     check_time_class(object, newdata)
-    original_time <- as.integer(get_fitted_time(object))
-    new_data_time <- as.integer(sort(unique(newdata[[object$time]])))
+    original_time <- object$time_lu$time_from_data
+    new_data_time <- unique(newdata[[object$time]])
 
     if (!all(new_data_time %in% original_time))
       cli_abort(c("Some new time elements were found in `newdata`. ",
-        "For now, make sure only time elements from the original dataset are present.",
         "If you would like to predict on new time elements,",
         "see the `extra_time` argument in `?sdmTMB`.")
       )
-
-    if (!identical(new_data_time, original_time) & isFALSE(pop_pred)) {
-      missing_time <- original_time[!original_time %in% new_data_time]
-      fake_nd_list <- list()
-      fake_nd <- newdata[1L,,drop=FALSE]
-      for (.t in seq_along(missing_time)) {
-        fake_nd[[object$time]] <- missing_time[.t]
-        fake_nd_list[[.t]] <- fake_nd
-      }
-      fake_nd <- do.call("rbind", fake_nd_list)
-      newdata[["_sdmTMB_fake_nd_"]] <- FALSE
-      fake_nd[["_sdmTMB_fake_nd_"]] <- TRUE
-      newdata <- rbind(newdata, fake_nd)
-      if (!is.null(offset)) offset <- c(offset, rep(0, nrow(fake_nd))) # issue 270
-    }
 
     # If making population predictions (with standard errors), we don't need
     # to worry about space, so fill in dummy values if the user hasn't made any:
@@ -519,7 +499,8 @@ predict.sdmTMB <- function(object, newdata = NULL,
     tmb_data$proj_X_ij <- proj_X_ij
     tmb_data$proj_X_rw_ik <- proj_X_rw_ik
     tmb_data$proj_RE_indexes <- proj_RE_indexes
-    tmb_data$proj_year <- make_year_i(nd[[object$time]])
+    time_lu <- object$time_lu
+    tmb_data$proj_year <- time_lu$year_i[match(nd[[object$time]], time_lu$time_from_data)] # was make_year_i(nd[[object$time]])
     tmb_data$proj_lon <- newdata[[xy_cols[[1]]]]
     tmb_data$proj_lat <- newdata[[xy_cols[[2]]]]
     tmb_data$calc_se <- as.integer(se_fit)
@@ -690,9 +671,6 @@ predict.sdmTMB <- function(object, newdata = NULL,
         }
       }
 
-      if (!is.null(fake_nd)) {
-        out <- out[-seq(nrow(out) - nrow(fake_nd) + 1, nrow(out)), ,drop=FALSE] # issue #273
-      }
       return(out)
     }
 
@@ -853,7 +831,6 @@ predict.sdmTMB <- function(object, newdata = NULL,
       nd[[paste0("zeta_s_", object$spatial_varying[z])]] <- r$zeta_s_A[,z,1]
     }
     nd$epsilon_st <- r$epsilon_st_A_vec[,1]# DELTA FIXME
-    nd <- nd[!nd[[object$time]] %in% object$extra_time, , drop = FALSE] # issue 270
     obj <- object
   }
 
@@ -886,14 +863,10 @@ predict.sdmTMB <- function(object, newdata = NULL,
   nd[["_sdmTMB_time"]] <- NULL
   if (no_spatial) nd[["est_rf"]] <- NULL
   if (no_spatial) nd[["est_non_rf"]] <- NULL
-  if ("_sdmTMB_fake_nd_" %in% names(nd)) {
-    nd <- nd[!nd[["_sdmTMB_fake_nd_"]],,drop=FALSE]
-  }
-  nd[["_sdmTMB_fake_nd_"]] <- NULL
   row.names(nd) <- NULL
 
   if (return_tmb_object) {
-    return(list(data = nd, report = r, obj = obj, fit_obj = object, pred_tmb_data = tmb_data, fake_nd = fake_nd))
+    return(list(data = nd, report = r, obj = obj, fit_obj = object, pred_tmb_data = tmb_data))
   } else {
     if (visreg_df) {
       # for visreg & related, return consistent objects with lm(), gam() etc.

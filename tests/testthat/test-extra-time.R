@@ -83,8 +83,8 @@ test_that("extra_time, newdata, get_index() work", {
   expect_equal(ind2[ind2$year %in% pcod$year, "est"], ind3[ind3$year %in% pcod$year, "est"])
   expect_identical(as.numeric(sort(unique(ind3$year))), as.numeric(sort(unique(pcod$year))))
 
-  p$fake_nd <- NULL # mimic old sdmTMB
-  expect_error(ind4 <- get_index(p))
+  # p$fake_nd <- NULL # mimic old sdmTMB
+  # expect_error(ind4 <- get_index(p))
 
   # missing some original time:
   nd <- replicate_df(pcod, "year", unique(pcod$year))
@@ -231,4 +231,145 @@ test_that("update() works on an extra_time model", {
 
   m2 <- update(m, time_varying_type = "ar1", extra_time = m$extra_time, mesh = m$spde)
   expect_s3_class(m2, "sdmTMB")
+})
+
+test_that("prediction with newdata = NULL for non-delta models with extra_time works #335", {
+  m <- sdmTMB(
+      density ~ 1,
+      data = pcod,
+      spatial = "off",
+      spatiotemporal = "off",
+      time = "year",
+      family = tweedie(),
+      extra_time = 2018:2020
+  )
+  p1 <- predict(m) # was broken
+  p2 <- predict(m, newdata = pcod)
+  expect_equal(p1, p2, tolerance = 0.0001)
+
+  # what if extra_time includes some fitted years?
+  m <- sdmTMB(
+    density ~ 1,
+    data = pcod,
+    spatial = "off",
+    spatiotemporal = "off",
+    time = "year",
+    family = tweedie(),
+    extra_time = 2017:2020
+  )
+  p1 <- predict(m)
+  p2 <- predict(m, newdata = pcod)
+  expect_equal(p1, p2, tolerance = 0.0001)
+
+  m <- update(m, family = delta_gamma())
+  p1 <- predict(m)
+  p2 <- predict(m, newdata = pcod)
+  expect_equal(p1, p2, tolerance = 0.0001)
+})
+
+test_that("make_time_lu works", {
+  # extra time on end
+  x <- make_time_lu(c(1, 2, 3), c(1, 2, 3, 4))
+  expect_equal(x$year_i, 0:3)
+  expect_equal(x$time_from_data, 1:4)
+  expect_equal(x$extra_time, c(FALSE, FALSE, FALSE, TRUE))
+
+  # no extra time
+  x <- make_time_lu(c(1, 2, 3), c(1, 2, 3))
+  expect_equal(x$year_i, 0:2)
+  expect_equal(x$time_from_data, 1:3)
+  expect_equal(x$extra_time, c(FALSE, FALSE, FALSE))
+
+  # missing element in full vector
+  expect_error(x <- make_time_lu(c(1, 2, 3, 4), c(1, 2, 3)), regexp = "time")
+
+  # extra time on end with gap
+  x <- make_time_lu(c(1, 2, 3), c(1, 2, 3, 5))
+  expect_equal(x$year_i, 0:3)
+  expect_equal(x$time_from_data, c(1, 2, 3, 5))
+  expect_equal(x$extra_time, c(FALSE, FALSE, FALSE, TRUE))
+
+  # gap in middle
+  x <- make_time_lu(c(1, 2, 4), c(1, 2, 3, 4))
+  expect_equal(x$year_i, 0:3)
+  expect_equal(x$time_from_data, c(1, 2, 3, 4))
+  expect_equal(x$extra_time, c(FALSE, FALSE, TRUE, FALSE))
+
+  # extra time at beginning
+  x <- make_time_lu(c(1, 2, 3), c(0, 1, 2, 3))
+  expect_equal(x$year_i, 0:3)
+  expect_equal(x$time_from_data, 0:3)
+  expect_equal(x$extra_time, c(TRUE, FALSE, FALSE, FALSE))
+
+  # order scrambled
+  x <- make_time_lu(c(1, 3, 2), c(0, 1, 2, 3))
+  expect_equal(x$year_i, 0:3)
+  expect_equal(x$time_from_data, 0:3)
+  expect_equal(x$extra_time, c(TRUE, FALSE, FALSE, FALSE))
+
+  # order scrambled in full vector
+  x <- make_time_lu(c(1, 3, 2), c(0, 2, 3, 1))
+  expect_equal(x$year_i, 0:3)
+  expect_equal(x$time_from_data, 0:3)
+  expect_equal(x$extra_time, c(TRUE, FALSE, FALSE, FALSE))
+
+  # do it in sdmTMB()
+  m <- sdmTMB(
+    density ~ 1,
+    data = pcod,
+    spatial = "off",
+    spatiotemporal = "off",
+    time = "year",
+    family = tweedie(),
+    extra_time = 2018:2020,
+    do_fit = FALSE
+  )
+  x <- m$time_lu
+  expect_equal(x$year_i, 0:11)
+  expect_equal(x$time_from_data,
+    c(sort(unique(pcod$year)), 2018:2020))
+  expect_equal(sum(x$extra_time), 3)
+
+  # do it with estimation
+  m <- sdmTMB(
+    density ~ 1,
+    data = pcod,
+    spatial = "off",
+    spatiotemporal = "off",
+    time = "year",
+    family = tweedie(),
+    extra_time = 2018:2020
+  )
+
+  # do it with estimation and a random walk
+  m <- sdmTMB(
+    density ~ 1,
+    data = pcod,
+    spatial = "off",
+    spatiotemporal = "rw",
+    mesh = make_mesh(pcod, c("X", "Y"), cutoff = 40),
+    time = "year",
+    family = tweedie(),
+    extra_time = 2018:2020
+  )
+  s <- as.list(m$sd_report, "Estimate")
+  expect_equal(max(m$time_lu$year_i) + 1, dim(s$epsilon_st)[2]) # extra slices there?
+
+  # prediction?
+  p1 <- predict(m, newdata = pcod)
+  p2 <- predict(m)
+  expect_equal(p1, p2)
+
+  nd <- replicate_df(qcs_grid, "year", c(unique(pcod$year), 2018:2020))
+  p3 <- predict(m, newdata = nd)
+  expect_equal(unique(p3$year), c(2003L, 2004L, 2005L, 2007L, 2009L, 2011L, 2013L, 2015L, 2017L,
+    2018L, 2019L, 2020L))
+
+  if (FALSE) {
+    library(ggplot2)
+    ggplot(p3, aes(X, Y, fill = est)) +
+      geom_raster() +
+      facet_wrap(~year) +
+      scale_fill_viridis_c()
+  }
 })
