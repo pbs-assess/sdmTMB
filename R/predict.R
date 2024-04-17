@@ -277,6 +277,10 @@ predict.sdmTMB <- function(object, newdata = NULL,
     xy_cols <- object$spde$xy_cols
   }
 
+  if (object$version < numeric_version("0.5.0.9001")) {
+    cli_abort("This model was fit with an older version of sdmTMB before internal handling of `extra_time` was simplified. Please refit your model before predicting on it (or install version 0.5.0 or 0.5.0.9000).")
+  }
+
   if (is_present(tmbstan_model)) {
     deprecate_stop("0.2.2", "predict.sdmTMB(tmbstan_model)", "predict.sdmTMB(mcmc_samples)")
   }
