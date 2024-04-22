@@ -129,6 +129,9 @@ sdmTMB_simulate <- function(formula,
   assert_that(sigma_O >= 0 || is.null(sigma_O))
   assert_that(all(sigma_E >= 0) || is.null(sigma_E))
   assert_that(all(sigma_Z >= 0) || is.null(sigma_Z))
+  if (sigma_E > 0 && is.null(time)) {
+    cli_abort("`sigma_E > 0` but `time` argument is `NULL`. Please specify the `time` argument or set `sigma_E` to `NULL`.")
+  }
 
   if (is.null(previous_fit)) {
     assert_that(is(mesh, "sdmTMBmesh"))
