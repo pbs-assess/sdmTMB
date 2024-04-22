@@ -1096,6 +1096,8 @@ sdmTMB <- function(
     proj_year  = 0, # dummy
     proj_spatial_index = 0, # dummy
     proj_z_i = matrix(0, nrow = 1, ncol = n_m), # dummy
+    indexes_total = numeric(0), # dummy
+    n_integration = 0L, # dummy
     spde_aniso = make_anisotropy_spde(spde, anisotropy),
     spde       = get_spde_matrices(spde),
     barrier = as.integer(barrier),
@@ -1350,9 +1352,6 @@ sdmTMB <- function(
   }
 
   if (tmb_data$threshold_func > 0) tmb_map$b_threshold <- NULL
-
-  if (control$profile && delta)
-    cli_abort("Profile not yet working with delta models.")
 
   for (i in seq_along(map)) { # user supplied
     cli_inform(c(i = paste0("Fixing or mirroring `", names(map)[i], "`")))
