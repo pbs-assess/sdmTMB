@@ -154,6 +154,9 @@ Type objective_function<Type>::operator()()
   // DATA_INTEGER(calc_quadratic_range); // DELTA TODO
   DATA_VECTOR(area_i); // area per prediction grid cell for index standardization
 
+  DATA_IVECTOR(indexes_total); // totals time index
+  DATA_INTEGER(n_integration); // n integration (e.g., total) time steps
+
   DATA_VECTOR(priors_b_mean);
   DATA_MATRIX(priors_b_Sigma); // beta priors matrix
   DATA_INTEGER(priors_b_n);
@@ -1223,9 +1226,22 @@ Type objective_function<Type>::operator()()
       }
     }
 
+    // approach:
+    // start with the set of years we want to integrate for
+    // enter these as the TMB year indexes (year_i etc.)
+    // total is the length of this
+    // need to iterate through the sets of rows for each
+    // and sum those into the appropriate element of total
+
+    // indexes:
+    // - element of total
+    // - row start
+    // - row end
+    // (could bring these in as a matrix/array of 3 columns)
+
     // Total biomass etc.:
-    vector<Type> total(n_t);
-    total.setZero(); // important; 0s are filtered out after as not predicted on
+    vector<Type> total(n_integration);
+    total.setZero();
     vector<Type> mu_combined(n_p);
     mu_combined.setZero();
 
@@ -1236,29 +1252,29 @@ Type objective_function<Type>::operator()()
       int link_tmp;
 
       for (int i = 0; i < n_p; i++) {
-        if (n_m > 1) { // delta model
-          if (poisson_link_delta) {
-            // Type R1 = Type(1.) - exp(-exp(proj_eta(i,0)));
-            // Type R2 = exp(proj_eta(i,0)) / R1 * exp(proj_eta(i,1))
-            mu_combined(i) = exp(proj_eta(i,0) + proj_eta(i,1)); // prevent numerical issues
-          } else {
-            t1 = InverseLink(proj_eta(i,0), link(0));
-            t2 = InverseLink(proj_eta(i,1), link(1));
-            mu_combined(i) = t1 * t2;
+          if (n_m > 1) { // delta model
+            if (poisson_link_delta) {
+              // Type R1 = Type(1.) - exp(-exp(proj_eta(i,0)));
+              // Type R2 = exp(proj_eta(i,0)) / R1 * exp(proj_eta(i,1))
+              mu_combined(i) = exp(proj_eta(i,0) + proj_eta(i,1)); // prevent numerical issues
+            } else {
+              t1 = InverseLink(proj_eta(i,0), link(0));
+              t2 = InverseLink(proj_eta(i,1), link(1));
+              mu_combined(i) = t1 * t2;
+            }
+            total(indexes_total(i)) += mu_combined(i) * area_i(i);
+          } else { // non-delta model
+            mu_combined(i) = InverseLink(proj_eta(i,0), link(0));
+            total(indexes_total(i)) += mu_combined(i) * area_i(i);
           }
-          total(proj_year(i)) += mu_combined(i) * area_i(i);
-        } else { // non-delta model
-          mu_combined(i) = InverseLink(proj_eta(i,0), link(0));
-          total(proj_year(i)) += mu_combined(i) * area_i(i);
         }
-      }
-      vector<Type> link_total(n_t);
+      vector<Type> link_total(total.size());
       if (n_m > 1) {
         link_tmp = link(1); // 2nd link should always be log/exp in this case
       } else {
         link_tmp = link(0);
       }
-      for (int i = 0; i < n_t; i++) {
+      for (int i = 0; i < total.size(); i++) {
         link_total(i) = Link(total(i), link_tmp);
       }
       if (calc_index_totals) {
@@ -1271,7 +1287,7 @@ Type objective_function<Type>::operator()()
       PARAMETER_VECTOR(eps_index);
       if (eps_index.size() > 0) {
         Type S;
-        for (int t=0; t < n_t; t++) {
+        for (int t=0; t < total.size(); t++) {
           S = total(t);
           S = newton::Tag(S); // Set lowrank tag on S = sum(exp(x))
           jnll += eps_index(t) * S;

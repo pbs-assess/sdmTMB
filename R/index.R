@@ -151,6 +151,16 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
     eps_name <- "eps_index" # FIXME break out into function; add for COG?
     pars[[eps_name]] <- numeric(0)
 
+    lu <- obj$fit_obj$time_lu
+    yy <- unique(obj$pred_tmb_data$proj_year)
+    lu_used <- subset(lu,year_i %in% yy)
+    lu_used$index_year_i <- seq_len(nrow(lu_used)) - 1
+
+    py <- obj$pred_tmb_data$proj_year
+    iy <- dplyr::left_join(data.frame(year_i = py), lu_used)$index_year_i
+    tmb_data$indexes_total <- iy
+    tmb_data$n_integration <- max(iy) + 1
+
     new_obj <- TMB::MakeADFun(
       data = tmb_data,
       parameters = pars,
@@ -238,10 +248,12 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   } else { # fit with do_index = TRUE
     ii <- sort(unique(obj$fit_obj$tmb_data$proj_year))
   }
-  d <- d[d$est != 0, ,drop=FALSE] # these were not predicted on
-  lu <- obj$fit_obj$time_lu
-  tt <- lu$time_from_data[match(ii, lu$year_i)]
-  d[[time_name]] <- tt
+  # d <- d[d$est != 0, ,drop=FALSE] # these were not predicted on
+  # lu <- obj$fit_obj$time_lu
+  # tt <- lu$time_from_data[match(ii, lu$year_i)]
+  # d[[time_name]] <- tt
+  d[[time_name]] <- lu_used$time_from_data
+
   # d$max_gradient <- max(conv$final_grads)
   # d$bad_eig <- conv$bad_eig
 
