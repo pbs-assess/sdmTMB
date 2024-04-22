@@ -115,15 +115,9 @@ confint.sdmTMB <- function(object, parm, level = 0.95, ...) {
 logLik.sdmTMB <- function(object, ...) {
   val <- -object$model$objective
   nobs <- nobs.sdmTMB(object)
-  df <- length(object$model$par) # fixed effects only
-  if (isTRUE(object$reml)) {
-    s <- as.list(object$sd_report, "Estimate")
-    n_bs <- 0 # smoother FE
-    if (s$bs[1] != 0) { # starting value if mapped off
-      n_bs <- length(s$bs)
-    }
-    df <- df + length(s$b_j) + length(s$b_j2) + n_bs
-  }
+  lpb <- names(object$tmb_obj$env$last.par.best)
+  ran <- c("omega_s", "epsilon_st", "zeta_s", "b_rw_t", "epsilon_re", "RE", "b_smooth")
+  df <- sum(!lpb %in% ran)
   structure(val,
     nobs = nobs, nall = nobs, df = df,
     class = "logLik"

@@ -114,6 +114,8 @@ sdmTMBcontrol <- function(
     parallel <- as.integer(parallel)
   }
 
+  assert_that(is.logical(profile) || is.character(profile))
+
   out <- named_list(
     eval.max,
     iter.max,

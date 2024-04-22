@@ -1364,6 +1364,10 @@ sdmTMB <- function(
 
   prof <- c("b_j")
   if (delta) prof <- c(prof, "b_j2")
+  if (is.character(control$profile)) {
+    prof <- control$profile
+    control$profile <- TRUE
+  }
 
     out_structure <- structure(list(
     data       = data,
