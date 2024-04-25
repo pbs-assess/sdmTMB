@@ -550,6 +550,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
 
     new_tmb_obj <- TMB::MakeADFun(
       data = tmb_data,
+      profile = object$control$profile,
       parameters = get_pars(object),
       map = object$tmb_map,
       random = object$tmb_random,

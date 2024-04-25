@@ -1362,11 +1362,15 @@ sdmTMB <- function(
   }
   tmb_map <- c(map, tmb_map) # add user-supplied mapping
 
-  prof <- c("b_j")
-  if (delta) prof <- c(prof, "b_j2")
-  if (is.character(control$profile)) {
+  if (isTRUE(control$profile)) {
+    prof <- c("b_j")
+    if (delta) prof <- c(prof, "b_j2")
+    control$profile <- prof
+  } else if (is.character(control$profile)) {
     prof <- control$profile
-    control$profile <- TRUE
+    control$profile <- prof
+  } else {
+    control$profile <- NULL
   }
 
     out_structure <- structure(list(
@@ -1444,7 +1448,7 @@ sdmTMB <- function(
 
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
-    profile = if (control$profile) prof else NULL,
+    profile = control$profile,
     random = tmb_random, DLL = "sdmTMB", silent = silent)
   lim <- set_limits(tmb_obj, lower = lower, upper = upper,
     loc = spde$mesh$loc, silent = FALSE)
@@ -1454,6 +1458,7 @@ sdmTMB <- function(
   out_structure$tmb_params <- tmb_params
   out_structure$lower <- lim$lower
   out_structure$upper <- lim$upper
+
 
   if (!do_fit) return(out_structure)
 
