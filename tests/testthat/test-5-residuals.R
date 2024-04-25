@@ -176,8 +176,41 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh,
     spatial = "off", spatiotemporal = "off"
   )
+
   expect_error(residuals(fit, type = "mle-mvn"), regexp = "truncated_nbinom1")
   check_resids_dharma(fit)
+
+  d <- sim_dat(gengamma())
+  fit <- sdmTMB(
+    observed ~ 1,
+    family = gengamma(),
+    data = d, mesh = mesh,
+    spatial = "off", spatiotemporal = "off"
+  )
+  check_resids(fit)
+
+  set.seed(1)
+  d <- sdmTMB_simulate(
+      formula = ~1,
+      data = predictor_dat,
+      mesh = mesh,
+      family = gengamma(),
+      range = 0.5,
+      phi = 0.2,
+      sigma_O = 0.2,
+      seed = 1,
+      B = 0,
+      control = sdmTMBcontrol(start = list(gengamma_Q = -1),
+                              map = list(gengamma_Q = factor(1))
+                              )
+  )
+  fit <- sdmTMB(
+      observed ~ 1,
+      family = gengamma(),
+      data = d, mesh = mesh,
+      spatial = "off", spatiotemporal = "off"
+  )
+  check_resids(fit)
 })
 
 test_that("residuals() works", {
@@ -397,4 +430,10 @@ test_that("old residual types get flagged with a message", {
   expect_message(r <- residuals(fit, type = "mle-laplace"), regexp = "'mle-eb'")
   r <- residuals(fit, type = "mle-mvn")
   expect_length(r, 969L)
+})
+
+test_that("pgengamma works for Q = 0", {
+  set.seed(1)
+  p <- pgengamma(q = 1, mean = 0.5, sigma = 0.8, .Q = 0, lower.tail = TRUE, log.p = FALSE)
+  expect_equal(round(p, 4), 0.8973)
 })
