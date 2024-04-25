@@ -119,6 +119,12 @@ sdmTMB_simulate <- function(formula,
   if (!is.null(previous_fit)) stop("`previous_fit` is deprecated. See `simulate.sdmTMB()`", call. = FALSE)
   if (!is.null(previous_fit)) mesh <- previous_fit$spde
   if (!is.null(previous_fit)) data <- previous_fit$data
+  if (!missing(seed)) {
+    msg <- c("The `seed` argument may be deprecated in the future.",
+      "We recommend instead setting the seed manually with `set.seed()` prior to calling `sdmTMB_simulate()`.",
+      "We have encountered some situations where setting the seed via this argument does not have the intended effect.")
+    cli_inform(msg)
+  }
 
   assert_that(tweedie_p > 1 && tweedie_p < 2 || is.null(tweedie_p))
   assert_that(df >= 1 || is.null(df))
