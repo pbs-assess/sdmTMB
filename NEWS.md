@@ -6,7 +6,7 @@
 * Add theoretical quantile residuals for the generalized gamma distribution.
   Thanks to J.C. Dunic. #333 
   
-* Allow Poisson-link delta-generalized-gamma models.
+* Add poisson-link to delta-mixture lognormal.
 
 * Fix bug in simulation from Poisson-link delta models.
 
