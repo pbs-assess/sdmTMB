@@ -723,10 +723,10 @@ Type objective_function<Type>::operator()()
       eta_i(i,m) += eta_iid_re_i(i,m);
       if (family(m) == binomial_family && !poisson_link_delta) { // regular binomial
         mu_i(i,m) = LogitInverseLink(eta_i(i,m), link(m));
-      } else if (poisson_link_delta) { // a tweak on clogog:
+      } else if (poisson_link_delta) { // a tweak on cloglog:
         // eta_i(i,0) = log numbers density
         // eta_i(i,1) = log average weight
-        // mu_i(i,0) = probability of occurrence (kept in logit space within .cpp)
+        // mu_i(i,0) = probability of occurrence
         // mu_i(i,1) = positive density prediction
         Type log_one_minus_p = -exp(offset_i(i) + eta_i(i,0));
         Type log_p = logspace_sub(Type(0.0), log_one_minus_p);
@@ -736,7 +736,7 @@ Type objective_function<Type>::operator()()
           } else {
             poisson_link_m0_ll(i) = log_one_minus_p; // log(1 - p)
           }
-          mu_i(i,1) = logit(exp(log_p)); // just for recording; not used in ll b/c robustness
+          mu_i(i,0) = exp(log_p); // just for recording; not used in ll b/c robustness
         }
         if (m == 1) mu_i(i,1) = exp(offset_i(i) + eta_i(i,0) + eta_i(i,1) - log_p);
       } else { // all the regular stuff:
@@ -806,13 +806,12 @@ Type objective_function<Type>::operator()()
           }
           case binomial_family: {
             if (poisson_link_delta) {
-              // needed for robustness; must be first model component
-              if (notNA) tmp_ll = poisson_link_m0_ll(i);
+              if (notNA) tmp_ll = poisson_link_m0_ll(i); // needed for robustness; must be first model component
+              SIMULATE{y_i(i,m) = rbinom(size(i), mu_i(i,m));}
             } else {
               if (notNA) tmp_ll = dbinom_robust(y_i(i,m), size(i), mu_i(i,m), true);
+              SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));} // hardcoded invlogit b/c mu_i in logit space
             }
-            // SIMULATE{y_i(i,m) = rbinom(size(i), InverseLink(mu_i(i,m), link(m)));}
-            SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));} // hardcoded invlogit b/c mu_i in logit space
             break;
           }
           case poisson_family: {
