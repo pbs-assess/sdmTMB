@@ -1148,7 +1148,7 @@ sdmTMB <- function(
     ln_kappa   = matrix(0, 2L, n_m),
     # ln_kappa   = rep(log(sqrt(8) / median(stats::dist(spde$mesh$loc))), 2),
     thetaf     = 0,
-    gengamma_Q = 1, # Not defined at exactly 0
+    gengamma_Q = 0.5, # Not defined at exactly 0
     logit_p_mix = 0,
     log_ratio_mix = 0,
     ln_phi     = rep(0, n_m),
@@ -1180,7 +1180,7 @@ sdmTMB <- function(
   tmb_map$b_j <- NULL
   if (delta) tmb_map$b_j2 <- NULL
   if (family$family[[1]] == "tweedie") tmb_map$thetaf <- NULL
-  if ("gengamma" %in% family$family) tmb_map$gengamma_Q <- NULL
+  if ("gengamma" %in% family$family) tmb_map$gengamma_Q <- factor(NA)
   if (family$family[[1]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
     tmb_map$log_ratio_mix <- NULL
     tmb_map$logit_p_mix <- NULL
@@ -1211,7 +1211,6 @@ sdmTMB <- function(
   }
 
   if (multiphase && is.null(previous_fit) && do_fit) {
-
 
     original_tmb_data <- tmb_data
     # much faster on first phase!?
@@ -1352,6 +1351,7 @@ sdmTMB <- function(
   }
 
   if (tmb_data$threshold_func > 0) tmb_map$b_threshold <- NULL
+  if ("gengamma" %in% family$family) tmb_map$gengamma_Q <- NULL
 
   for (i in seq_along(map)) { # user supplied
     cli_inform(c(i = paste0("Fixing or mirroring `", names(map)[i], "`")))
