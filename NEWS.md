@@ -1,5 +1,15 @@
 # sdmTMB (development version)
 
+* Allow `profile` argument in the control list to take a character vector
+  of parameters.
+  
+* Add theoretical quantile residuals for the generalized gamma distribution.
+  Thanks to J.C. Dunic. #333 
+  
+* Allow Poisson-link delta-generalized-gamma models.
+
+* Fix bug in simulation from Poisson-link delta models.
+
 * Simplify the internal treatment of extra time slices (`extra_time`). #329
   This is less bug prone and also fixes a recently created bug. #335
 

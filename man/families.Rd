@@ -61,7 +61,7 @@ delta_gengamma(link1, link2 = "log", type = c("standard", "poisson-link"))
 
 delta_lognormal(link1, link2 = "log", type = c("standard", "poisson-link"))
 
-delta_lognormal_mix(link1 = "logit", link2 = "log")
+delta_lognormal_mix(link1, link2 = "log", type = c("standard", "poisson-link"))
 
 delta_truncated_nbinom2(link1 = "logit", link2 = "log")
 
