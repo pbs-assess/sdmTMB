@@ -1495,7 +1495,7 @@ sdmTMB <- function(
   }
   check_bounds(tmb_opt$par, lim$lower, lim$upper)
 
-  cli_inform("running TMB sdreport\n")
+  if (!silent) cli_inform("running TMB sdreport\n")
   sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision)
   conv <- get_convergence_diagnostics(sd_report)
 
