@@ -1,5 +1,10 @@
 # sdmTMB (development version)
 
+* Move `log_ratio_mix` parameter to 2nd phase with starting value of -1 instead
+  of 0 to improve convergence.
+
+* Fix bugs for `nbinom1()` and `nbinom2_mix()` simulation.
+
 * Allow `profile` argument in the control list to take a character vector
   of parameters.
   
