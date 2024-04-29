@@ -1150,7 +1150,7 @@ sdmTMB <- function(
     thetaf     = 0,
     gengamma_Q = 0.5, # Not defined at exactly 0
     logit_p_mix = 0,
-    log_ratio_mix = 0,
+    log_ratio_mix = -1, # ratio is 1 + exp(log_ratio_mix) so 0 would start fairly high
     ln_phi     = rep(0, n_m),
     ln_tau_V   = matrix(0, ncol(X_rw_ik), n_m),
     rho_time_unscaled = matrix(0, ncol(X_rw_ik), n_m),
@@ -1181,16 +1181,6 @@ sdmTMB <- function(
   if (delta) tmb_map$b_j2 <- NULL
   if (family$family[[1]] == "tweedie") tmb_map$thetaf <- NULL
   if ("gengamma" %in% family$family) tmb_map$gengamma_Q <- factor(NA)
-  if (family$family[[1]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
-    tmb_map$log_ratio_mix <- NULL
-    tmb_map$logit_p_mix <- NULL
-  }
-  if (delta) {
-    if(family$family[[2]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
-      tmb_map$log_ratio_mix <- NULL
-      tmb_map$logit_p_mix <- NULL
-    }
-  }
   tmb_map$ln_phi <- rep(1, n_m)
   if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson"))
     tmb_map$ln_phi[1] <- factor(NA)
@@ -1347,7 +1337,18 @@ sdmTMB <- function(
   }
 
   if (anisotropy && delta && !"ln_H_input" %in% names(map)) {
-    tmb_map$ln_H_input <- factor(c(1, 2, 1, 2)) # share anistropy as in VAST
+    tmb_map$ln_H_input <- factor(c(1, 2, 1, 2)) # share anisotropy as in VAST
+  }
+
+  if (family$family[[1]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
+    tmb_map$log_ratio_mix <- NULL # performs better starting this in 2nd phase
+    tmb_map$logit_p_mix <- NULL # performs better starting this in 2nd phase
+  }
+  if (delta) {
+    if (family$family[[2]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
+      tmb_map$log_ratio_mix <- NULL
+      tmb_map$logit_p_mix <- NULL
+    }
   }
 
   if (tmb_data$threshold_func > 0) tmb_map$b_threshold <- NULL
@@ -1494,6 +1495,7 @@ sdmTMB <- function(
   }
   check_bounds(tmb_opt$par, lim$lower, lim$upper)
 
+  cli_inform("running TMB sdreport\n")
   sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision)
   conv <- get_convergence_diagnostics(sd_report)
 
