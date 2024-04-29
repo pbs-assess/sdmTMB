@@ -859,7 +859,11 @@ Type objective_function<Type>::operator()()
             s1 = log(mu_i(i,m));
             s2 = s1 + ln_phi(m);
             if (notNA) tmp_ll = dnbinom_robust(y_i(i,m), s1, s2, true);
-            SIMULATE {y_i(i,m) = rnbinom2(mu_i(i,m), mu_i(i,m) * (Type(1) + phi(m)));}
+            SIMULATE { // from glmmTMB
+              s1 = mu_i(i,m);
+              s2 = mu_i(i,m) * (Type(1)+phi(m));
+              y_i(i,m) = rnbinom2(s1, s2);
+              }
             break;
           }
           case truncated_nbinom1_family: {
@@ -928,6 +932,10 @@ Type objective_function<Type>::operator()()
           ll_2 = log(p_mix) + dnbinom_robust(y_i(i,m), s1_large, s2_large, true);
           if (notNA) tmp_ll = sdmTMB::log_sum_exp(ll_1, ll_2);
           SIMULATE{
+            s1 = mu_i(i,m);
+            s2 = mu_i(i,m) * (Type(1) + mu_i(i,m) / phi(m));
+            s1_large = mu_i_large(i);
+            s2_large = mu_i_large(i) * (Type(1) + mu_i_large(i) / phi(m));
             if (rbinom(Type(1), p_mix) == 0) {
               y_i(i,m) = rnbinom2(s1, s2);
             } else {
