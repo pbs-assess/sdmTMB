@@ -670,3 +670,8 @@ reinitialize <- function(x) {
     x$tmb_obj$retape()
   }
 }
+
+chunk_time <- function(x, chunks) {
+  ny <- length(x)
+  split(x, rep(seq_len(chunks), each = ceiling(ny/chunks))[seq_along(x)])
+}
