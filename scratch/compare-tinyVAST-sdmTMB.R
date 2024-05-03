@@ -10,7 +10,7 @@ get_sdmTMB_pars <- function(x) {
   )
 }
 
-test_that("Tweedie spatiotemporal IID models match", {
+test_that("Tweedie spatiotemporal IID models and index integration match", {
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 18)
   tictoc::tic()
   fit_sd <- sdmTMB(
@@ -45,7 +45,6 @@ test_that("Tweedie spatiotemporal IID models match", {
   expect_equal(pt$beta_z, ps$sigma_E[1, 1], tolerance = TOL)
   expect_equal(pt$theta_z, ps$sigma_O[1, 1], tolerance = TOL)
   expect_equal(pt$log_kappa, ps$ln_kappa[1, 1], tolerance = TOL)
-  expect_equal(pt$log_kappa, ps$ln_kappa[1, 1], tolerance = TOL)
 
   g <- replicate_df(qcs_grid, "year", unique(pcod$year))
   p <- predict(fit_sd, newdata = g, return_tmb_object = TRUE)
@@ -53,6 +52,14 @@ test_that("Tweedie spatiotemporal IID models match", {
   tictoc::tic()
   is <- get_index(p, bias_correct = TRUE)
   tictoc::toc()
+
+  # tictoc::tic()
+  # is2 <- lapply(unique(g$year), \(x) {
+  #   pp <- predict(fit_sd, newdata = subset(g, year == x), return_tmb_object = TRUE)
+  #   get_index(pp, bias_correct = TRUE)
+  # })
+  # is2 <- do.call(rbind, is2)
+  # tictoc::toc()
 
   tictoc::tic()
   g$var <- "response"
