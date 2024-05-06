@@ -348,7 +348,7 @@ delta_gamma <- function(link1,
     .type <- "standard"
     clean_name <- paste0("delta_gamma(link1 = '", l1, "', link2 = '", l2, "')")
   }
-  structure(list(f1, f2, delta = TRUE, link = c("logit", "log"),
+  structure(list(f1, f2, delta = TRUE, link = c(l1, l2),
     type = .type, family = c("binomial", "Gamma"),
     clean_name = clean_name), class = "family")
 }
