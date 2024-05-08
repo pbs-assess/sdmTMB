@@ -657,6 +657,30 @@ update_version <- function(object) {
   object
 }
 
+reload_model <- function(object) {
+  if ("parlist" %in% names(object)) {
+    # tinyVAST does this to be extra sure... I've found one case where it was needed
+    obj <- TMB::MakeADFun(
+      data = object$tmb_data,
+      parameters = object$parlist, #!! important part
+      map = object$tmb_map,
+      random = object$tmb_random,
+      DLL = "sdmTMB",
+      profile = object$control$profile
+    )
+    obj$env$beSilent()
+    nll_new <- obj$fn(object$model$par) #!! important: need to eval once (restores last.par.best etc.)
+    if (abs(nll_new - object$model$objective) > 0.01) {
+      cli_abort(c("Model fit is not identical to recorded value:", "
+        something is not working as expected"))
+    }
+    object$tmb_obj <- obj
+    object
+  } else {
+    cli_abort("`reload_model()` only works with models fit with sdmTMB 0.5.0.9006 and higher.")
+  }
+}
+
 reinitialize <- function(x) {
   # replacement for TMB:::isNullPointer; modified from glmmTMB source
   # https://github.com/glmmTMB/glmmTMB/issues/651#issuecomment-912920255
@@ -667,7 +691,16 @@ reinitialize <- function(x) {
     identical(x, new("externalptr"))
   }
   if (is_null_pointer(x)) {
-    x$tmb_obj$retape()
+    x$tmb_obj$env$beSilent()
+    x$tmb_obj$fn(x$model$par)
+    # x$tmb_obj$retape()
+    if ("parlist" %in% names(x) && "last.par.best" %in% names(x)) {
+      if (!identical(x$tmb_obj$env$last.par.best, x$last.par.best)) {
+        cli_warn(c("Detected a potential issue reloading a saved sdmTMB model.",
+          "Please run `fit <- sdmTMB:::reload_model(fit)`,",
+          "where `fit` is your fitted model."))
+      }
+    }
   }
 }
 

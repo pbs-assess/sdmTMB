@@ -1,5 +1,11 @@
 # sdmTMB (development version)
 
+* Add warning if it's detected that there were problems reloading (e.g., with
+  `readRDS()`) a fitted model. Simultaneously revert the approach to 
+  how reloaded models are reattached. Check that random effects haven't been
+  reverted to zero if you `readRDS()` a fitted model. E.g. 
+  `get_pars(fit)$omega_s` if you have spatial random fields enabled.
+
 * Move `log_ratio_mix` parameter to 2nd phase with starting value of -1 instead
   of 0 to improve convergence.
 

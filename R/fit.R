@@ -1503,6 +1503,8 @@ sdmTMB <- function(
   out <- c(out_structure, list(
     model      = tmb_opt,
     sd_report  = sd_report,
+    parlist = tmb_obj$env$parList(par = tmb_obj$env$last.par.best),
+    last.par.best = tmb_obj$env$last.par.best,
     gradients  = conv$final_grads,
     bad_eig    = conv$bad_eig,
     pos_def_hessian = sd_report$pdHess))

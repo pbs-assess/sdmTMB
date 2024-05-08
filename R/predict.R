@@ -297,6 +297,8 @@ predict.sdmTMB <- function(object, newdata = NULL,
     sims <- nsim
   }
 
+  reinitialize(object)
+
   assert_that(model[[1]] %in% c(NA, 1, 2),
     msg = "`model` argument not valid; should be one of NA, 1, 2")
   if (missing(model)) {
