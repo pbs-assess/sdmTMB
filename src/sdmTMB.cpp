@@ -717,7 +717,7 @@ Type objective_function<Type>::operator()()
       jnll -= dnorm(std_xi_3(i), std_mu(3), std_sigma(3), true);//phi_1 ~ normal(4, 2)
     }
     for(int i = 0; i < N_stand_bin; i++){ // likelihood
-      theta_stand(i) = std_xi_2(pcr_stand_bin_idx(i)) + std_xi_3(pcr_stand_bin_idx(i)) * (D_bin_stand(i));// - stand_offset);
+      theta_stand(i) = std_xi_2(pcr_stand_bin_idx(i)) + std_xi_3(pcr_stand_bin_idx(i)) * (exp(D_bin_stand(i)));// - stand_offset);
       jnll -= dbinom_robust(bin_stand(i), Type(1), theta_stand(i), true); // likelihood
     }
     // Positive component of model.
@@ -1008,9 +1008,9 @@ Type objective_function<Type>::operator()()
         case stdcurve_family: {
           if(y_i(i,m) > 0) {
             tmp_ll = dnorm(y_i(i,m), std_xi_0(pcr_idx(i)) + std_xi_1(pcr_idx(i)) * mu_i(i,m), phi(m), true);
-            tmp_ll += dbinom_robust(Type(1), size(i), std_xi_2(pcr_idx(i)) + std_xi_3(pcr_idx(i)) * mu_i(i,m), true);
+            tmp_ll += dbinom_robust(Type(1), size(i), std_xi_2(pcr_idx(i)) + std_xi_3(pcr_idx(i)) * exp(mu_i(i,m)), true);
           } else {
-            tmp_ll = dbinom_robust(Type(0), size(i), std_xi_2(pcr_idx(i)) + std_xi_3(pcr_idx(i)) * mu_i(i,m), true);
+            tmp_ll = dbinom_robust(Type(0), size(i), std_xi_2(pcr_idx(i)) + std_xi_3(pcr_idx(i)) * exp(mu_i(i,m)), true);
           }
           SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(std_xi_2(pcr_idx(i)) + std_xi_3(pcr_idx(i)) * mu_i(i,m))) * rnorm(std_xi_0(pcr_idx(i)) + std_xi_1(pcr_idx(i)) * mu_i(i,m), phi(m));}
           break;
