@@ -225,7 +225,7 @@ Type logistic_threshold(Type x, Type s50, Type s95, Type scale, int mi) {
   if (mi) {
     delta = s95;
   } else {
-    delta = s95 - s50;
+    delta = s95;
   }
 
   beta0 = -a + s50 * (b - a) / delta;
