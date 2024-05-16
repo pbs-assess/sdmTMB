@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Add suggestion to use an optimized BLAS library to README.
+
 * Add warning if it's detected that there were problems reloading (e.g., with
   `readRDS()`) a fitted model. Simultaneously revert the approach to 
   how reloaded models are reattached. Check that random effects haven't been
