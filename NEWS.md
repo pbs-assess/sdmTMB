@@ -7,6 +7,8 @@
   - including IID random intercepts or time-varying coefficients
   See #342. Thanks to @tom-peatman for the issue report.
 
+* Fix delta-gamma binomial link printing for `type = 'poisson-link'` #340
+
 * Add suggestion to use an optimized BLAS library to README.
 
 * Add warning if it's detected that there were problems reloading (e.g., with
