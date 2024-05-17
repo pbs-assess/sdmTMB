@@ -1,5 +1,12 @@
 # sdmTMB (development version)
 
+* Fix bug in `est_non_rf1` and `est_non_rf2` columns when all the following
+  conditions were true:
+  - predicting on new data
+  - using a delta model
+  - including IID random intercepts or time-varying coefficients
+  See #342. Thanks to @tom-peatman for the issue report.
+
 * Add suggestion to use an optimized BLAS library to README.
 
 * Add warning if it's detected that there were problems reloading (e.g., with

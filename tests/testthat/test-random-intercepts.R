@@ -297,3 +297,30 @@ test_that("Random intercept classes in predict() are checked appropriately", {
   expect_s3_class(p11, "tbl_df")
 })
 
+test_that("Random intercepts are incorporated into est_non_rf1 and est_non_rf2 correctly #342", {
+  ## test based on example by @tom-peatman #342
+  skip_on_cran()
+  skip_on_ci()
+  pcod_2011$year <- factor(pcod_2011$year)
+  ## fit model with random intercepts for year in both model components
+  fit <- sdmTMB(
+    density ~ (1 | year),
+    spatial = "off",
+    data = pcod_2011, mesh = pcod_mesh_2011,
+    family = delta_gamma(link1 = "logit", link2 = "log")
+  )
+  ## fitted random intercepts
+  t1 <- tidy(fit, effects = "ran_vals", model = 1)
+  t2 <- tidy(fit, effects = "ran_vals", model = 2)
+  expect_equal(t1$estimate, c(-0.24066, 0.33083, 0.20459, -0.29288), tolerance = 0.001)
+  expect_equal(t2$estimate, c(0.17724, -0.14142, 0.11862, -0.16844), tolerance = 0.001)
+
+  ## data frame to get predictions for each year (at a specific location and depth)
+  new_dat <- expand.grid(
+    X = mean(pcod_2011$X), Y = mean(pcod_2011$Y),
+    depth = mean(pcod_2011$depth), year = unique(pcod_2011$year)
+  )
+  p <- predict(fit, newdata = new_dat)
+  expect_equal(p$est_non_rf1, c(-0.40011, 0.17137, 0.04514, -0.45234), tolerance = 0.001)
+  expect_equal(p$est_non_rf2, c(4.6455, 4.32684, 4.58688, 4.29982), tolerance = 0.001)
+})

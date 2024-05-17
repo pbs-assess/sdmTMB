@@ -1087,7 +1087,7 @@ Type objective_function<Type>::operator()()
             if (!exclude_RE(k)) proj_iid_re_i(i,m) += RE(proj_RE_indexes(i, k) + temp,m);
           }
         }
-        proj_fe(i) += proj_iid_re_i(i,m);
+        proj_fe(i,m) += proj_iid_re_i(i,m);
       }
     }
 
@@ -1099,7 +1099,7 @@ Type objective_function<Type>::operator()()
         for (int i = 0; i < proj_X_rw_ik.rows(); i++) {
           for (int k = 0; k < proj_X_rw_ik.cols(); k++) {
             proj_rw_i(i,m) += proj_X_rw_ik(i, k) * b_rw_t(proj_year(i), k, m);
-            proj_fe(i) += proj_rw_i(i,m);
+            proj_fe(i,m) += proj_rw_i(i,m);
           }
         }
       }
