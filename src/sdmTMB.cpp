@@ -426,7 +426,7 @@ Type objective_function<Type>::operator()()
         Q_temp = Q_s2;
       }
       if (!omit_spatial_intercept) {
-        PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_O(m)))(omega_s.col(m));
+        jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_O(m)))(omega_s.col(m));
         if (sim_re(0)) {
           vector<Type> omega_s_tmp(omega_s.rows());
           SIMULATE {
@@ -437,7 +437,7 @@ Type objective_function<Type>::operator()()
       }
       if (spatial_covariate) {
         for (int z = 0; z < n_z; z++) {
-          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_Z(z,m)))(zeta_s.col(m).col(z));
+          jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_Z(z,m)))(zeta_s.col(m).col(z));
           if (sim_re(3)) {
             vector<Type> zeta_s_tmp(zeta_s.col(m).rows());
             SIMULATE {
@@ -462,7 +462,7 @@ Type objective_function<Type>::operator()()
     if (!spatial_only(m)) {
       if (!ar1_fields(m) && !rw_fields(m)) {
         for (int t = 0; t < n_t; t++)
-          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E_vec(t,m)))(epsilon_st.col(m).col(t));
+          jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E_vec(t,m)))(epsilon_st.col(m).col(t));
         if (sim_re(1)) {
           for (int t = 0; t < n_t; t++) {
             if (simulate_t(t)) {
@@ -474,17 +474,17 @@ Type objective_function<Type>::operator()()
         }
       } else {
         if (ar1_fields(m)) { // not using separable(ar1()) so we can simulate by time step
-          // PARALLEL_REGION jnll += SCALE(SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)), 1./exp(ln_tau_E(m)))(epsilon_st.col(m));
+          // jnll += SCALE(SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)), 1./exp(ln_tau_E(m)))(epsilon_st.col(m));
           // Split out by year so we can turn on/off simulation by year and model covariates of ln_tau_E:
-          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E_vec(0,m)))(epsilon_st.col(m).col(0));
+          jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E_vec(0,m)))(epsilon_st.col(m).col(0));
           for (int t = 1; t < n_t; t++) {
-            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. /exp(ln_tau_E_vec(t,m)))((epsilon_st.col(m).col(t) -
+            jnll += SCALE(GMRF(Q_temp, s), 1. /exp(ln_tau_E_vec(t,m)))((epsilon_st.col(m).col(t) -
               rho(m) * epsilon_st.col(m).col(t - 1))/sqrt(1. - rho(m) * rho(m)));
           }
           Type n_cols = epsilon_st.col(m).cols();
           Type n_rows = epsilon_st.col(m).rows();
           // Penalty to match TMB AR1_t() implementation:
-          PARALLEL_REGION jnll += Type((n_cols - 1.) * n_rows) * log(sqrt(1. - rho(m) * rho(m)));
+          jnll += Type((n_cols - 1.) * n_rows) * log(sqrt(1. - rho(m) * rho(m)));
           if (sim_re(1)) {
             // array<Type> epsilon_st_tmp(epsilon_st.col(m).rows(),n_t);
             // SIMULATE {SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)).simulate(epsilon_st_tmp);
@@ -508,9 +508,9 @@ Type objective_function<Type>::operator()()
           }
           ADREPORT(rho);
         } else if (rw_fields(m)) {
-          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1./exp(ln_tau_E_vec(0,m)))(epsilon_st.col(m).col(0));
+          jnll += SCALE(GMRF(Q_temp, s), 1./exp(ln_tau_E_vec(0,m)))(epsilon_st.col(m).col(0));
           for (int t = 1; t < n_t; t++) {
-            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s),
+            jnll += SCALE(GMRF(Q_temp, s),
                 1./exp(ln_tau_E_vec(t,m)))(epsilon_st.col(m).col(t) - epsilon_st.col(m).col(t - 1));
           }
           if (sim_re(1)) {
@@ -545,7 +545,7 @@ Type objective_function<Type>::operator()()
     for (int h = 0; h < RE.rows(); h++) {
       int g = ln_tau_G_index(h);
       sigma_G(g,m) = exp(ln_tau_G(g,m));
-      PARALLEL_REGION jnll -= dnorm(RE(h,m), Type(0), sigma_G(g,m), true);
+      jnll -= dnorm(RE(h,m), Type(0), sigma_G(g,m), true);
       if (sim_re(3)) SIMULATE{RE(h,m) = rnorm(Type(0), sigma_G(g,m));}
     }
   }
@@ -563,7 +563,7 @@ Type objective_function<Type>::operator()()
         if (random_walk == 1) { // type = 'rw'
           // flat prior on the initial value... then:
           for (int t = 1; t < n_t; t++) {
-            PARALLEL_REGION jnll -=
+            jnll -=
               dnorm(b_rw_t(t, k, m), b_rw_t(t - 1, k, m), sigma_V(k,m), true);
             if (sim_re(4) && simulate_t(t))
               SIMULATE{b_rw_t(t, k, m) = rnorm(b_rw_t(t - 1, k, m), sigma_V(k,m));}
@@ -572,12 +572,12 @@ Type objective_function<Type>::operator()()
           // N(0, SD) prior on the initial value... then:
           for (int t = 0; t < n_t; t++) {
             if (t == 0) {
-              PARALLEL_REGION jnll -=
+              jnll -=
                 dnorm(b_rw_t(t, k, m), Type(0.), sigma_V(k,m), true);
               if (sim_re(4) && simulate_t(t))
                 SIMULATE{b_rw_t(t, k, m) = rnorm(Type(0.), sigma_V(k,m));}
             } else {
-              PARALLEL_REGION jnll -=
+              jnll -=
                 dnorm(b_rw_t(t, k, m), b_rw_t(t - 1, k, m), sigma_V(k,m), true);
               if (sim_re(4) && simulate_t(t))
                 SIMULATE{b_rw_t(t, k, m) = rnorm(b_rw_t(t - 1, k, m), sigma_V(k,m));}
@@ -648,7 +648,7 @@ Type objective_function<Type>::operator()()
         beta_s.setZero();
         for (int j = 0; j < beta_s.rows(); j++) {
           beta_s(j,m) = b_smooth(b_smooth_start(s) + j,m);
-          PARALLEL_REGION jnll -= dnorm(beta_s(j,m), Type(0), exp(ln_smooth_sigma(s,m)), true);
+          jnll -= dnorm(beta_s(j,m), Type(0), exp(ln_smooth_sigma(s,m)), true);
           if (sim_re(5)) SIMULATE{beta_s(j,m) = rnorm(Type(0), exp(ln_smooth_sigma(s,m)));}
         }
         eta_smooth_i.col(m) += Zs(s) * vector<Type>(beta_s.col(m));
@@ -782,7 +782,7 @@ Type objective_function<Type>::operator()()
 
   vector<Type> jnll_obs(n_i); // for cross validation
   jnll_obs.setZero();
-  for (int m = 0; m < n_m; m++) PARALLEL_REGION {
+  for (int m = 0; m < n_m; m++)  {
     for (int i = 0; i < n_i; i++) {
       bool notNA = !sdmTMB::isNA(y_i(i,m));
         switch (family(m)) {
