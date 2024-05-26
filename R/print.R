@@ -277,7 +277,7 @@ print_other_parameters <- function(x, m = 1L) {
   phi <- get_term_text("phi", "Dispersion parameter")
   tweedie_p <- get_term_text("tweedie_p", "Tweedie p")
   gengamma_par <- if ('gengamma' %in% family(x)[[m]]) {
-    get_term_text("gengamma_Q", "Generalized gamma lambda")
+    get_term_text("gengamma_Q", "Generalized gamma Q")
     } else ""
   sigma_O <- get_term_text("sigma_O", "Spatial SD")
   xtra <- if (x$spatiotemporal[m] == "ar1") "marginal " else ""

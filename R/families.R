@@ -79,8 +79,9 @@ lognormal <- function(link = "log") {
 #' @details
 #' The `gengamma()` family was implemented by J.T. Thorson and uses the Prentice
 #' (1974) parameterization such that the lognormal occurs as the internal
-#' parameter `gengamma_Q` (reported in `print()` as "Generalized gamma lambda")
-#' approaches 0.
+#' parameter `gengamma_Q` (reported in `print()` or `summary()` as
+#' "Generalized gamma Q") approaches 0. If Q matches `phi` the distribution
+#' should be the gamma.
 #'
 #' @references
 #'

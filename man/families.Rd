@@ -101,8 +101,9 @@ deprecated in favour of \code{delta_gamma(type = "poisson-link")} and
 
 The \code{gengamma()} family was implemented by J.T. Thorson and uses the Prentice
 (1974) parameterization such that the lognormal occurs as the internal
-parameter \code{gengamma_Q} (reported in \code{print()} as "Generalized gamma lambda")
-approaches 0.
+parameter \code{gengamma_Q} (reported in \code{print()} or \code{summary()} as
+"Generalized gamma Q") approaches 0. If Q matches \code{phi} the distribution
+should be the gamma.
 
 The families ending in \verb{_mix()} are 2-component mixtures where each
 distribution has its own mean but a shared scale parameter.
