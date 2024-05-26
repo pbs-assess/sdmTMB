@@ -12,6 +12,7 @@
   model = c(NA, 1, 2),
   re_form = NULL,
   mcmc_samples = NULL,
+  silent = TRUE,
   ...
 )
 }
@@ -40,6 +41,8 @@ not be simulated as new).}
 \item{mcmc_samples}{An optional matrix of MCMC samples. See \code{extract_mcmc()}
 in the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
 package.}
+
+\item{silent}{Logical. Silent?}
 
 \item{...}{Extra arguments (not used)}
 }

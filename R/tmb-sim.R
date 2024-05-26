@@ -119,12 +119,12 @@ sdmTMB_simulate <- function(formula,
   if (!is.null(previous_fit)) stop("`previous_fit` is deprecated. See `simulate.sdmTMB()`", call. = FALSE)
   if (!is.null(previous_fit)) mesh <- previous_fit$spde
   if (!is.null(previous_fit)) data <- previous_fit$data
-  if (!missing(seed)) {
-    msg <- c("The `seed` argument may be deprecated in the future.",
-      "We recommend instead setting the seed manually with `set.seed()` prior to calling `sdmTMB_simulate()`.",
-      "We have encountered some situations where setting the seed via this argument does not have the intended effect.")
-    cli_inform(msg)
-  }
+  # if (!missing(seed)) {
+  #   msg <- c("The `seed` argument may be deprecated in the future.",
+  #     "We recommend instead setting the seed manually with `set.seed()` prior to calling `sdmTMB_simulate()`.",
+  #     "We have encountered some situations where setting the seed via this argument does not have the intended effect.")
+  #   cli_inform(msg)
+  # }
 
   assert_that(tweedie_p > 1 && tweedie_p < 2 || is.null(tweedie_p))
   assert_that(df >= 1 || is.null(df))
@@ -317,6 +317,7 @@ sdmTMB_simulate <- function(formula,
 #' @param mcmc_samples An optional matrix of MCMC samples. See `extract_mcmc()`
 #'   in the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
 #'   package.
+#' @param silent Logical. Silent?
 #' @param ... Extra arguments (not used)
 #' @return Returns a matrix; number of columns is `nsim`.
 #' @importFrom stats simulate
@@ -360,7 +361,7 @@ sdmTMB_simulate <- function(formula,
 simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
                             type = c("mle-eb", "mle-mvn"),
                             model = c(NA, 1, 2),
-                            re_form = NULL, mcmc_samples = NULL, ...) {
+                            re_form = NULL, mcmc_samples = NULL, silent = TRUE, ...) {
   set.seed(seed)
   type <- tolower(type)
   type <- match.arg(type)
@@ -403,10 +404,14 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
   # do the sim
   if (!is.null(mcmc_samples)) { # we have a matrix
     ret <- lapply(seq_len(nsim), function(i) {
+      if (!silent) cat("-")
       newobj$simulate(par = new_par[, i, drop = TRUE], complete = FALSE)$y_i
     })
   } else {
-    ret <- lapply(seq_len(nsim), function(i) newobj$simulate(par = new_par, complete = FALSE)$y_i)
+    ret <- lapply(seq_len(nsim), function(i) {
+      if (!silent) cat("-")
+      newobj$simulate(par = new_par, complete = FALSE)$y_i
+      })
   }
 
   if (isTRUE(object$family$delta)) {

@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Add `silent` option in `simulate.sdmTMB()`. Setting it to `FALSE` allows
+  monitoring simulations from larger models.
+
 * Fix bug in `est_non_rf1` and `est_non_rf2` columns when all the following
   conditions were true:
   - predicting on new data
