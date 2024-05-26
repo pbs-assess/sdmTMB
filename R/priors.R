@@ -103,7 +103,6 @@ sdmTMBpriors <- function(
 #' @examples
 #' normal(0, 1)
 normal <- function(location = 0, scale = 1) {
-  # assert_that(all(location[!is.na(location)] == 0))
   assert_that(all(scale[!is.na(scale)] > 0))
   assert_that(length(location) == length(scale))
   assert_that(sum(is.na(location)) == sum(is.na(scale)))

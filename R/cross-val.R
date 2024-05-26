@@ -359,9 +359,6 @@ sdmTMB_cv <- function(
         weights = weights, previous_fit = if (use_initial_fit) fit1 else NULL
       ), dot_args)
       object <- do.call(sdmTMB, args)
-      # if (max(object$gradients) > 0.01) {
-      # object <- run_extra_optimization(object, nlminb_loops = 1L, newton_loops = 0L)
-      # }
     }
 
     if (lfo) {

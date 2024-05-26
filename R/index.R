@@ -238,8 +238,6 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   lu <- obj$fit_obj$time_lu
   tt <- lu$time_from_data[match(ii, lu$year_i)]
   d[[time_name]] <- tt
-  # d$max_gradient <- max(conv$final_grads)
-  # d$bad_eig <- conv$bad_eig
 
   # remove padded extra time fake data:
   if (!is.null(obj$fake_nd)) {
