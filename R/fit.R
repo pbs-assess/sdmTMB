@@ -1214,6 +1214,7 @@ sdmTMB <- function(
 
     tmb_obj1 <- TMB::MakeADFun(
       data = tmb_data, parameters = tmb_params,
+      profile = control$profile,
       map = tmb_map, DLL = "sdmTMB", silent = silent)
     lim <- set_limits(tmb_obj1, lower = lower, upper = upper, silent = TRUE)
 
