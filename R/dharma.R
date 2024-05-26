@@ -153,7 +153,7 @@ dharma_residuals <- function(simulated_response, object, plot = TRUE,
     n <- length(u)
     m <- seq_len(n) / (n + 1)
     z <- stats::qqplot(m, u, plot.it = FALSE)
-    suppressWarnings(ks <- ks.test(u, punif))
+    # suppressWarnings(ks <- ks.test(u, punif))
   # } else { # normal
   #   .u <- u
   #   nsim <- ncol(simulated_response) * 10

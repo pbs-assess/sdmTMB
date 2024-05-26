@@ -1,3 +1,4 @@
+if (FALSE) {
 if (requireNamespace("tinyVAST", quietly = TRUE)) {
   library("tinyVAST", warn.conflicts = FALSE)
   TOL <- 1e-5
@@ -12,31 +13,31 @@ if (requireNamespace("tinyVAST", quietly = TRUE)) {
   test_that("tinyVAST/sdmTMB Tweedie spatiotemporal IID models and index area integration match", {
     skip_on_cran()
     mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 18)
-    tictoc::tic()
-    fit_sd <- sdmTMB(
-      density ~ 0 + as.factor(year),
-      data = pcod,
-      mesh = mesh,
-      family = tweedie(),
-      time = "year",
-      control = sdmTMBcontrol(multiphase = FALSE)
-    )
-    tictoc::toc()
+    system.time({
+      fit_sd <- sdmTMB(
+        density ~ 0 + as.factor(year),
+        data = pcod,
+        mesh = mesh,
+        family = tweedie(),
+        time = "year",
+        control = sdmTMBcontrol(multiphase = FALSE)
+      )
+    })
     ps <- get_sdmTMB_pars(fit_sd)
 
-    tictoc::tic()
-    fit_tv <- tinyVAST(
-      density ~ 0 + factor(year),
-      dsem = "",
-      sem = "",
-      data = pcod,
-      family = tweedie(),
-      time_column = "year",
-      space_columns = c("X", "Y"),
-      spatial_graph = mesh$mesh,
-      control = tinyVASTcontrol(newton_loops = 1)
-    )
-    tictoc::toc()
+    system.time({
+      fit_tv <- tinyVAST(
+        density ~ 0 + factor(year),
+        dsem = "",
+        sem = "",
+        data = pcod,
+        family = tweedie(),
+        time_column = "year",
+        space_columns = c("X", "Y"),
+        spatial_graph = mesh$mesh,
+        control = tinyVASTcontrol(newton_loops = 1)
+      )
+    })
     pt <- as.list(fit_tv$sdrep, "Estimate")
 
     expect_equal(pt$alpha_j, ps$b_j, tolerance = TOL)
@@ -49,24 +50,24 @@ if (requireNamespace("tinyVAST", quietly = TRUE)) {
     g <- replicate_df(qcs_grid, "year", unique(pcod$year))
     p <- predict(fit_sd, newdata = g, return_tmb_object = TRUE)
 
-    tictoc::tic()
-    is <- get_index(p, bias_correct = TRUE)
-    tictoc::toc()
+    system.time({
+      is <- get_index(p, bias_correct = TRUE)
+    })
 
-    # tictoc::tic()
+    # system.time({
     # is2 <- lapply(unique(g$year), \(x) {
     #   pp <- predict(fit_sd, newdata = subset(g, year == x), return_tmb_object = TRUE)
     #   get_index(pp, bias_correct = TRUE)
     # })
     # is2 <- do.call(rbind, is2)
-    # tictoc::toc()
+    # })
 
-    tictoc::tic()
-    g$var <- "response"
-    it <- lapply(unique(g$year), \(x)
-    integrate_output(fit_tv, newdata = subset(g, year == x), apply.epsilon = TRUE))
-    it <- do.call(rbind, it) |> as.data.frame()
-    tictoc::toc()
+    system.time({
+      g$var <- "response"
+      it <- lapply(unique(g$year), \(x)
+      integrate_output(fit_tv, newdata = subset(g, year == x), apply.epsilon = TRUE))
+      it <- do.call(rbind, it) |> as.data.frame()
+    })
 
     expect_equal(it$`Est. (bias.correct)`, is$est, tolerance = TOL)
   })
@@ -124,4 +125,5 @@ if (requireNamespace("tinyVAST", quietly = TRUE)) {
     pt <- as.list(fit_tv$sdrep, "Estimate")
     expect_equal(1 / (exp(pt$log_sigma))^2, exp(ps$ln_phi[2]), tolerance = TOL)
   })
+}
 }

@@ -181,8 +181,6 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
     names(new_values) <- rep(eps_name, length(new_values))
     fixed <- c(obj$fit_obj$model$par, new_values)
 
-    # tictoc::tic("Combined")
-    # tictoc::tic("MakeADFun()")
     new_obj2 <- TMB::MakeADFun(
       data = tmb_data,
       parameters = pars,
@@ -194,11 +192,7 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
       intern = FALSE, # tested as faster for most models
       inner.control = list(sparse = TRUE, lowrank = TRUE, trace = TRUE)
     )
-    # tictoc::toc()
-    # tictoc::tic("gr()")
     gradient <- new_obj2$gr(fixed)
-    # tictoc::toc()
-    # tictoc::toc()
     corrected_vals <- gradient[names(fixed) == eps_name]
   } else {
     if (value_name[1] == "link_total")
