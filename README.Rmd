@@ -31,8 +31,8 @@ install.packages("sdmTMB", dependencies = TRUE)
 Assuming you have a [C++ compiler](https://support.posit.co/hc/en-us/articles/200486498-Package-Development-Prerequisites) installed, the development version is recommended and can be installed:
 
 ```{r, eval=FALSE}
-# install.packages("remotes")
-remotes::install_github("pbs-assess/sdmTMB", dependencies = TRUE)
+# install.packages("pak")
+pak::pkg_install("pbs-assess/sdmTMB", dependencies = TRUE)
 ```
 
 There are some extra utilities in the [sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra) package.

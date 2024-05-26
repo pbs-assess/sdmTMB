@@ -55,26 +55,34 @@ install.packages("sdmTMB", dependencies = TRUE)
 
 Assuming you have a [C++
 compiler](https://support.posit.co/hc/en-us/articles/200486498-Package-Development-Prerequisites)
-installed, the development version can be installed:
+installed, the development version is recommended and can be installed:
 
 ``` r
-# install.packages("remotes")
-remotes::install_github("pbs-assess/sdmTMB", dependencies = TRUE)
+# install.packages("pak")
+pak::pkg_install("pbs-assess/sdmTMB", dependencies = TRUE)
 ```
 
 There are some extra utilities in the
 [sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra) package.
 
-**Importantly**, it is recommended to use an optimized BLAS library, which will result in major speed improvements for TMB (and other) models in R (e.g., often 8-fold speed increases for sdmTMB models).
-Suggested installation instructions for [Mac users](https://www.mail-archive.com/r-sig-mac@r-project.org/msg06199.html), [Linux users](https://prdm0.github.io/ropenblas/), and [Windows users](https://github.com/david-cortes/R-openblas-in-windows). To check that you've successfully linked the optimized BLAS, start a new session and run:
+**Importantly**, it is recommended to use an optimized BLAS library,
+which will result in major speed improvements for TMB (and other) models
+in R (e.g., often 8-fold speed increases for sdmTMB models). Suggested
+installation instructions for [Mac
+users](https://www.mail-archive.com/r-sig-mac@r-project.org/msg06199.html),
+[Linux users](https://prdm0.github.io/ropenblas/), and [Windows
+users](https://github.com/david-cortes/R-openblas-in-windows). To check
+that you’ve successfully linked the optimized BLAS, start a new session
+and run:
 
-```r
+``` r
 m <- 1e4; n <- 1e3; k <- 3e2
 X <- matrix(rnorm(m*k), nrow=m); Y <- matrix(rnorm(n*k), ncol=n)
 system.time(X %*% Y)
 ```
 
-The result should take a fraction of a second (e.g., 0.03 s), not multiple seconds.
+The result should take a fraction of a second (e.g., 0.03 s), not
+multiple seconds.
 
 ## Overview
 
@@ -290,6 +298,9 @@ tidy(fit, conf.int = TRUE)
 #>   term        estimate std.error conf.low conf.high
 #>   <chr>          <dbl>     <dbl>    <dbl>     <dbl>
 #> 1 (Intercept)     2.37     0.215     1.95      2.79
+```
+
+``` r
 tidy(fit, effects = "ran_pars", conf.int = TRUE)
 #> # A tibble: 4 × 5
 #>   term      estimate std.error conf.low conf.high
@@ -562,6 +573,9 @@ head(sim_dat)
 #> 4 0.0303     0  -0.282  2.05 0.718        2             1
 #> 5 0.0404     0  -0.325  1.96 0.675        3             1
 #> 6 0.0505     0  -0.367  1.88 0.633        2             1
+```
+
+``` r
 
 # sample 200 points for fitting:
 set.seed(1)
@@ -668,6 +682,9 @@ m_cv <- sdmTMB_cv(
 )
 #> Running fits with `future.apply()`.
 #> Set a parallel `future::plan()` to use parallel processing.
+```
+
+``` r
 # Sum of log likelihoods of left-out data:
 m_cv$sum_loglik
 #> [1] -6756.28
@@ -741,6 +758,9 @@ tidy(fit_sdmTMB)
 #> 1 (Intercept)              -0.426    0.0573
 #> 2 poly(depth_scaled, 2)1  -31.7      3.03  
 #> 3 poly(depth_scaled, 2)2  -66.9      4.09
+```
+
+``` r
 broom::tidy(fit_glm)
 #> # A tibble: 3 × 5
 #>   term                   estimate std.error statistic  p.value
