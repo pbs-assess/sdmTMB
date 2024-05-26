@@ -1,6 +1,4 @@
-This version fixes a unit test that was broken by an update to glmmTMB (as per
-an email from CRAN on March 20 2024). This version also adds minor functionality
-and fixes several bugs.
+This version fixes several bugs and adds minor functionality.
 
 ## R CMD check results
 
@@ -8,7 +6,7 @@ and fixes several bugs.
 
 ## Test environments
 
-* Local M2 macOS install, R 4.3.3
+* Local M2 macOS install, R 4.4.0
 * Intel macOS (on github-actions), R-release
 * Ubuntu 22.04.3 (on github-actions), R-devel
 * Ubuntu 22.04.3 (on github-actions), R-release
