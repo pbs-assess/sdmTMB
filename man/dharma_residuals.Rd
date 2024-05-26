@@ -9,7 +9,9 @@ dharma_residuals(
   object,
   plot = TRUE,
   return_DHARMa = FALSE,
-  expected_distribution = c("uniform", "normal"),
+  test_uniformity = TRUE,
+  test_outliers = FALSE,
+  test_dispersion = FALSE,
   ...
 )
 }
@@ -20,25 +22,22 @@ residuals to have the expected distribution.}
 
 \item{object}{Output from \code{\link[=sdmTMB]{sdmTMB()}}.}
 
-\item{plot}{Logical.}
+\item{plot}{Logical. Calls \code{\link[DHARMa:plotQQunif]{DHARMa::plotQQunif()}}.}
 
-\item{return_DHARMa}{Logical.}
+\item{return_DHARMa}{Logical. Return object from \code{\link[DHARMa:createDHARMa]{DHARMa::createDHARMa()}}?}
 
-\item{expected_distribution}{Experimental: expected distribution for
-comparison: uniform(0, 1) or normal(0, 1). Traditional \pkg{DHARMa}
-residuals are uniform. If \code{"normal"}, a \code{pnorm()} transformation is applied.
-First, any simulated quantiles of 0 (no simulations were smaller than the
-observation) are set to an arbitrary value of \code{1/(n*10)} where \code{n} is the
-number of simulated replicated. Any simulated quantiles of 1 (no
-simulations were larger than the observation) are set to an arbitrary value
-of \code{1 - 1/(n*10)}. These points are shown with crosses overlaid.}
+\item{test_uniformity}{Passed to \code{testUniformity} in \code{\link[DHARMa:plotQQunif]{DHARMa::plotQQunif()}}.}
+
+\item{test_outliers}{Passed to \code{testOutliers} in \code{\link[DHARMa:plotQQunif]{DHARMa::plotQQunif()}}.}
+
+\item{test_dispersion}{Passed to \code{testDispersion} in \code{\link[DHARMa:plotQQunif]{DHARMa::plotQQunif()}}.}
 
 \item{...}{Other arguments to pass to \code{\link[DHARMa:createDHARMa]{DHARMa::createDHARMa()}}.}
 }
 \value{
-A data frame of observed and expected values is invisibly returned,
-so you can set \code{plot = FALSE} and assign the output to an object if you wish
-to plot the residuals yourself. See the examples.
+A data frame of observed and expected values is invisibly returned
+so you can assign the output to an object and
+plot the residuals yourself. See the examples.
 
 If \code{return_DHARMa = TRUE}, the object from \code{DHARMa::createDHARMa()}
 is returned and any subsequent \pkg{DHARMa} functions can be applied.
@@ -51,6 +50,8 @@ around \code{\link[DHARMa:createDHARMa]{DHARMa::createDHARMa()}} to facilitate i
 expected distribution. This is \emph{not} the default.
 }
 \details{
+See the \href{https://pbs-assess.github.io/sdmTMB/articles/web_only/residual-checking.html}{residuals vignette}.
+
 Advantages to these residuals over the ones from the \code{\link[=residuals.sdmTMB]{residuals.sdmTMB()}}
 method are (1) they work with delta/hurdle models for the combined
 predictions, not the just the two parts separately, (2) they should work for
@@ -78,7 +79,7 @@ fit <- sdmTMB(density ~ as.factor(year) + s(depth, k = 3),
   family = tweedie(link = "log"), spatial = "on")
 
 # The `simulated_response` argument is first so the output from
-# simulate() can be piped to dharma_residuals().
+# simulate() can be piped to `dharma_residuals()`.
 
 # We will work with 100 simulations for fast examples, but you'll
 # likely want to work with more than this (enough that the results
@@ -109,16 +110,6 @@ abline(0, 1)
 ret <- simulate(fit_dl, nsim = 100, type = "mle-mvn") |>
   dharma_residuals(fit, return_DHARMa = TRUE)
 plot(ret)
-
-# try normal(0, 1) residuals:
-s <- simulate(fit_dl, nsim = 100, type = "mle-mvn")
-dharma_residuals(s, fit, expected_distribution = "normal")
-# note the points in the top right corner that had Inf quantiles
-# because of pnorm(1)
-
-# work with the residuals themselves:
-r <- dharma_residuals(s, fit, return_DHARMa = TRUE)
-plot(fitted(fit), r$scaledResiduals)
 }
 \dontshow{\}) # examplesIf}
 }

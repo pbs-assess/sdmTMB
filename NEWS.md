@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Pass several arguments to `DHARMa::plotQQunif()` and set the uniformity
+  p-value argumemt to `TRUE` by default.
+
 * Add `silent` option in `simulate.sdmTMB()`. Setting it to `FALSE` allows
   monitoring simulations from larger models.
 
