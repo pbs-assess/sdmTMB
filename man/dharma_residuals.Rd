@@ -43,7 +43,7 @@ If \code{return_DHARMa = TRUE}, the object from \code{DHARMa::createDHARMa()}
 is returned and any subsequent \pkg{DHARMa} functions can be applied.
 }
 \description{
-Plot (and possibly return) DHARMa residuals. This is a wrapper function
+Plot (and possibly return) \pkg{DHARMa} residuals. This is a wrapper function
 around \code{\link[DHARMa:createDHARMa]{DHARMa::createDHARMa()}} to facilitate its use with \code{\link[=sdmTMB]{sdmTMB()}} models.
 \strong{Note:} It is recommended to set \code{type = "mle-mvn"} in
 \code{\link[=simulate.sdmTMB]{simulate.sdmTMB()}} for the resulting residuals to have the
@@ -63,13 +63,12 @@ Disadvantages are (1) they are slower to calculate since one must first
 simulate from the model, (2) the stability of the distribution of the
 residuals depends on having a sufficient number of simulation draws, (3)
 uniformly distributed residuals put less emphasis on the tails visually
-(which or may not be desired).
+than normally distributed residuals
+(which may or may not be desired).
 
 Note that \pkg{DHARMa} returns residuals that are uniform(0, 1) if the data
-are consistent with the model whereas any randomized quantile residuals from
-\code{\link[=residuals.sdmTMB]{residuals.sdmTMB()}} are expected to be normal(0, 1). An experimental option
-\code{expected_distribution} is included to transform the distributions to
-a normal(0, 1) expectation.
+are consistent with the model whereas randomized quantile residuals from
+\code{\link[=residuals.sdmTMB]{residuals.sdmTMB()}} are expected to be normal(0, 1).
 }
 \examples{
 \dontshow{if (requireNamespace("DHARMa", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}

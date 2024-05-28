@@ -1,6 +1,6 @@
 #' DHARMa residuals
 #'
-#' Plot (and possibly return) DHARMa residuals. This is a wrapper function
+#' Plot (and possibly return) \pkg{DHARMa} residuals. This is a wrapper function
 #' around [DHARMa::createDHARMa()] to facilitate its use with [sdmTMB()] models.
 #' **Note:** It is recommended to set `type = "mle-mvn"` in
 #' [sdmTMB::simulate.sdmTMB()] for the resulting residuals to have the
@@ -40,13 +40,15 @@
 #' simulate from the model, (2) the stability of the distribution of the
 #' residuals depends on having a sufficient number of simulation draws, (3)
 #' uniformly distributed residuals put less emphasis on the tails visually
-#' (which or may not be desired).
+#' than normally distributed residuals
+#' (which may or may not be desired).
 #'
 #' Note that \pkg{DHARMa} returns residuals that are uniform(0, 1) if the data
-#' are consistent with the model whereas any randomized quantile residuals from
-#' [residuals.sdmTMB()] are expected to be normal(0, 1). An experimental option
-#' `expected_distribution` is included to transform the distributions to
-#' a normal(0, 1) expectation.
+#' are consistent with the model whereas randomized quantile residuals from
+#' [residuals.sdmTMB()] are expected to be normal(0, 1).
+# An experimental option
+# `expected_distribution` is included to transform the distributions to
+# a normal(0, 1) expectation.
 #'
 #' @return
 #' A data frame of observed and expected values is invisibly returned
@@ -170,6 +172,7 @@ dharma_residuals <- function(simulated_response, object, plot = TRUE,
       testOutliers = test_outliers,
       testDispersion = test_dispersion
     )
+    invisible(data.frame(observed = z$y, expected = z$x))
     # if (requireNamespace("ggplot2", quietly = TRUE) && isTRUE(ggplot2)) {
     #   df <- data.frame(observed = z$y, expected = z$x)
     #   ggplot2::ggplot(df, ggplot2::aes(.data$expected, .data$observed)) +
