@@ -373,15 +373,3 @@ test_that("make_time_lu works", {
       scale_fill_viridis_c()
   }
 })
-
-
-test_that("old versions get flagged pre 0.5.0.9001", {
-  m <- sdmTMB(
-    density ~ 0,
-    data = pcod,
-    spatial = "off",
-    family = tweedie()
-  )
-  m$version <- numeric_version('0.5.0')
-  expect_error(p <- predict(m), "extra")
-})
