@@ -1,7 +1,7 @@
-# sdmTMB (development version)
+# sdmTMB 0.6.0
 
 * Pass several arguments to `DHARMa::plotQQunif()` and set the uniformity
-  p-value argumemt to `TRUE` by default.
+  p-value argument to `TRUE` by default.
 
 * Add `silent` option in `simulate.sdmTMB()`. Setting it to `FALSE` allows
   monitoring simulations from larger models.
@@ -19,27 +19,32 @@
 
 * Add warning if it's detected that there were problems reloading (e.g., with
   `readRDS()`) a fitted model. Simultaneously revert the approach to 
-  how reloaded models are reattached. Check that random effects haven't been
-  reverted to zero if you `readRDS()` a fitted model. E.g. 
-  `get_pars(fit)$omega_s` if you have spatial random fields enabled.
+  how reloaded models are reattached.
 
 * Move `log_ratio_mix` parameter to 2nd phase with starting value of -1 instead
   of 0 to improve convergence.
 
 * Fix bugs for `nbinom1()` and `nbinom2_mix()` simulation.
 
-* Allow `profile` argument in the control list to take a character vector
-  of parameters.
+* Allow `profile` argument in the control list to take a character vector of
+  parameters. This move these parameters from the outer optimization problem to
+  the inner problem (but omits from the from the Laplace approximation). See
+  documentation in TMB. This can considerably speed up fitting models with many
+  fixed effects.
   
 * Add theoretical quantile residuals for the generalized gamma distribution.
   Thanks to J.C. Dunic. #333 
   
-* Add poisson-link to delta-mixture lognormal.
+* Add `"poisson-link"` option to delta-mixture lognormal.
 
 * Fix bug in simulation from Poisson-link delta models.
 
 * Simplify the internal treatment of extra time slices (`extra_time`). #329
-  This is less bug prone and also fixes a recently created bug. #335
+  This is much less bug prone and also fixes a recently introduced bug. #335
+  This can slightly affect model results compared to the previous approach if
+  extra time was used along with smoothers since the 'fake' extra data
+  previously used was included when mgcv determined knot locations for
+  smoothers.
 
 # sdmTMB 0.5.0
 
