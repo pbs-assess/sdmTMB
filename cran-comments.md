@@ -8,7 +8,6 @@ This version fixes several bugs and adds minor functionality.
 
 * Local M2 macOS install, R 4.4.0
 * Intel macOS (on github-actions), R-release
-* Ubuntu 22.04.3 (on github-actions), R-devel
 * Ubuntu 22.04.3 (on github-actions), R-release
 * Windows (on github-actions), R-release
 * Windows (winbuilder), R-devel
