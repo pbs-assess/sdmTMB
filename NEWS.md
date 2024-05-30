@@ -1,3 +1,5 @@
+# sdmTMB (development version)
+
 # sdmTMB 0.6.0
 
 * Pass several arguments to `DHARMa::plotQQunif()`.
