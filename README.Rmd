@@ -185,7 +185,9 @@ ggeffects::ggpredict(fit, "depth [50:400, by=2]") |> plot()
 
 If the depth effect was parametric and not a penalized smoother, we could have alternatively used `ggeffects::ggeffect()` for a fast marginal effect plot.
 
-Predict on new data:
+Next, we can predict on new data.
+We will use a data frame `qcs_grid` from the package, which contains all the locations (and covariates) at which we wish to predict.
+Here, these `newdata` are a grid, or raster, covering our survey.
 
 ```{r}
 p <- predict(fit, newdata = qcs_grid)

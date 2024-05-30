@@ -81,8 +81,8 @@ X <- matrix(rnorm(m*k), nrow=m); Y <- matrix(rnorm(n*k), ncol=n)
 system.time(X %*% Y)
 ```
 
-The result ('elapsed') should take a fraction of a second (e.g., 0.03 s), not
-multiple seconds.
+The result (‘elapsed’) should take a fraction of a second (e.g., 0.03
+s), not multiple seconds.
 
 ## Overview
 
@@ -339,7 +339,10 @@ If the depth effect was parametric and not a penalized smoother, we
 could have alternatively used `ggeffects::ggeffect()` for a fast
 marginal effect plot.
 
-Predict on new data:
+Next, we can predict on new data. We will use a data frame `qcs_grid`
+from the package, which contains all the locations (and covariates) at
+which we wish to predict. Here, these `newdata` are a grid, or raster,
+covering our survey.
 
 ``` r
 p <- predict(fit, newdata = qcs_grid)
