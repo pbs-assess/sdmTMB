@@ -65,15 +65,9 @@ pak::pkg_install("pbs-assess/sdmTMB", dependencies = TRUE)
 There are some extra utilities in the
 [sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra) package.
 
-**Importantly**, it is recommended to use an optimized BLAS library,
-which will result in major speed improvements for TMB (and other) models
-in R (e.g., often 8-fold speed increases for sdmTMB models). Suggested
-installation instructions for [Mac
-users](https://www.mail-archive.com/r-sig-mac@r-project.org/msg06199.html),
-[Linux users](https://prdm0.github.io/ropenblas/), and [Windows
-users](https://github.com/david-cortes/R-openblas-in-windows). To check
-that you’ve successfully linked the optimized BLAS, start a new session
-and run:
+**Importantly**, it is recommended to use an optimized BLAS library, which will result in major speed improvements for TMB (and other) models in R (e.g., often 8-fold speed increases for sdmTMB models).
+Suggested installation instructions for [Mac users](https://www.mail-archive.com/r-sig-mac@r-project.org/msg06199.html), [Linux users](https://prdm0.github.io/ropenblas/), [Windows users](https://github.com/david-cortes/R-openblas-in-windows), and [Windows users without admin privileges](https://gist.github.com/seananderson/08a51e296a854f227a908ddd365fb9c1).
+To check that you've successfully linked the optimized BLAS, start a new session and run:
 
 ``` r
 m <- 1e4; n <- 1e3; k <- 3e2
