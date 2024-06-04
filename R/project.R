@@ -166,7 +166,7 @@ project <- function(
   assert_that(as.integer(model) %in% c(1L, 2L))
   assert_that(is.logical(silent))
   assert_that(length(sim_re) == 6L)
-  assert_that(as.integer(sim_re) %in% c(0L, 1L))
+  assert_that(all(as.integer(sim_re) %in% c(0L, 1L)))
 
   ## extend time keeping elements of sdmTMB object
   max_year_i <- max(object$time_lu$year_i)
