@@ -2,6 +2,17 @@
 
 #' Project from an \pkg{sdmTMB} model using simulation
 #'
+#' @description `r lifecycle::badge("experimental")`
+#'
+#' @description The function enables projecting forward in time from an
+#' \pkg{sdmTMB} model using a simulation approach for computational efficiency.
+#' This can be helpful for calculating predictive intervals for long
+#' projections where including those time elements in `extra_time` during model
+#' estimation can be slow.
+#'
+#' @description Inspiration for this approach comes from the \pkg{VAST} function
+#' `project_model()` by J.T. Thorson.
+#'
 #' @param object A fitted model from [sdmTMB()].
 #' @param newdata A new data frame to predict on. Should contain all new time
 #'   elements.
@@ -17,8 +28,9 @@
 #'   grabbing multiple elements from one set of simulations. See examples.
 #' @param ... Passed to [predict.sdmTMB()].
 #'
-#' @return
+#' @references `project_model()` in the \pkg{VAST} package.
 #'
+#' @return
 #' If `return_tmb_report = FALSE` (default): a matrix with N rows equal to the
 #' number of rows in `newdata` and N columns equal to `nsim`.
 #'
@@ -81,7 +93,7 @@
 #'   facet_wrap(~year) +
 #'   coord_fixed() +
 #'   scale_fill_viridis_c() +
-#'   ggtitle("Projection simulation")
+#'   ggtitle("Projection simulation (mean)")
 #'
 #' # if instead we wanted to grab, say, the spatiotemporal random field values,
 #' # we can return the report and work with the raw output ourselves:
@@ -110,6 +122,15 @@
 #'   scale_fill_gradient2() +
 #'   coord_fixed() +
 #'   ggtitle("Projection simulation\n(spatiotemporal fields)")
+#'
+#' proj_grid$eps_se <- eps_se
+#' ggplot(subset(proj_grid, year > 2021), aes(X, Y, fill = eps_se)) +
+#'   geom_raster() +
+#'   facet_wrap(~year) +
+#'   scale_fill_viridis_c() +
+#'   coord_fixed() +
+#'   ggtitle("Projection simulation\n(spatiotemporal fields standard error)")
+
 project <- function(
     object,
     newdata,
@@ -120,6 +141,22 @@ project <- function(
     model = 1,
     return_tmb_report = FALSE,
     ...) {
+
+  assert_that(inherits(object, "sdmTMB"))
+  assert_that(length(nsim) == 1L)
+  assert_that(is.numeric(nsim))
+  assert_that(nsim >= 1)
+  assert_that(length(nproj) == 1L)
+  assert_that(is.numeric(nproj))
+  assert_that(nproj >= 1)
+  assert_that(is.data.frame(newdata))
+  assert_that(length(sims_var) == 1L)
+  assert_that(is.logical(return_tmb_report))
+  assert_that(is.numeric(model))
+  assert_that(length(model) == 1L)
+  assert_that(as.integer(model) %in% c(1L, 2L))
+  assert_that(is.logical(silent))
+
   ## extend time keeping elements of sdmTMB object
   max_year_i <- max(object$time_lu$year_i)
   new_year_i <- seq(max_year_i + 1, max_year_i + nproj)
@@ -210,7 +247,7 @@ move_proj_to_tmbdat <- function(x, object, newdata) {
   x$offset_i <- x$proj_offset_i
   x$y_i <- matrix(NA, ncol = 1, nrow = nrow(x$proj_X_ij[[1]])) # fake
   x$weights_i <- rep(1, nrow(x$y_i)) # fake
-  x$area_i <- rep(1, nrow(x$y_i)) # fake
+  x$area_i <- rep(1, nrow(x$y_i)) # fak
   unique_size <- unique(x$size)
   if (length(unique_size) != 1L) {
     cli::cli_abort("This function hasn't been set up to work with binomial size specified yet.")

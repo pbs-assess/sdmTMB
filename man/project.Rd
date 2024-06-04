@@ -50,7 +50,16 @@ If \code{return_tmb_report = TRUE}: a list of TMB reports from \code{simulate()}
 TODO: fill in more details.
 }
 \description{
-Project from an \pkg{sdmTMB} model using simulation
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
+The function enables projecting forward in time from an
+\pkg{sdmTMB} model using a simulation approach for computational efficiency.
+This can be helpful for calculating predictive intervals for long
+projections where including those time elements in \code{extra_time} during model
+estimation can be slow.
+
+Inspiration for this approach comes from the \pkg{VAST} function
+\code{project_model()} by J.T. Thorson.
 }
 \examples{
 \dontshow{if (ggplot2_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
@@ -106,7 +115,7 @@ ggplot(subset(proj_grid, year > 2021), aes(X, Y, fill = est_mean)) +
   facet_wrap(~year) +
   coord_fixed() +
   scale_fill_viridis_c() +
-  ggtitle("Projection simulation")
+  ggtitle("Projection simulation (mean)")
 
 # if instead we wanted to grab, say, the spatiotemporal random field values,
 # we can return the report and work with the raw output ourselves:
@@ -135,5 +144,16 @@ ggplot(subset(proj_grid, year > 2021), aes(X, Y, fill = eps_mean)) +
   scale_fill_gradient2() +
   coord_fixed() +
   ggtitle("Projection simulation\n(spatiotemporal fields)")
+
+proj_grid$eps_se <- eps_se
+ggplot(subset(proj_grid, year > 2021), aes(X, Y, fill = eps_se)) +
+  geom_raster() +
+  facet_wrap(~year) +
+  scale_fill_viridis_c() +
+  coord_fixed() +
+  ggtitle("Projection simulation\n(spatiotemporal fields standard error)")
 \dontshow{\}) # examplesIf}
+}
+\references{
+\code{project_model()} in the \pkg{VAST} package.
 }
