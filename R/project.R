@@ -230,7 +230,7 @@ project <- function(
     if (!silent) cli::cli_progress_update()
     ret[[i]] <- obj$simulate()
   }
-  cli::cli_process_done()
+  cli::cli_progress_done()
   if (return_tmb_report) {
     return(ret)
   }
