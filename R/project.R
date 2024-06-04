@@ -23,6 +23,12 @@
 #'   `return_tmb_report`.
 #' @param model Linear predictor number to extract. Also see
 #'   `return_tmb_report`.
+#' @param sim_re A vector of `0`s and `1`s representing which random effects to
+#'   simulate in the projection. Generally, leave this untouched. Order is:
+#'   spatial fields, spatiotemporal fields, spatially varying coefficient
+#'   fields, random intercepts, time-varying coefficients, smoothers.
+#'   The default is to simulate spatiotemporal fields and time-varying
+#'   coefficients, if present.
 #' @param return_tmb_report Return the \pkg{TMB} report from `simulate()`? This
 #'   lets you parse out whatever elements you want from the simulation including
 #'   grabbing multiple elements from one set of simulations. See examples.
@@ -141,6 +147,7 @@ project <- function(
     silent = FALSE,
     sims_var = "eta_i",
     model = 1,
+    sim_re = c(0, 1, 0, 0, 1, 0),
     return_tmb_report = FALSE,
     ...) {
 
@@ -158,6 +165,8 @@ project <- function(
   assert_that(length(model) == 1L)
   assert_that(as.integer(model) %in% c(1L, 2L))
   assert_that(is.logical(silent))
+  assert_that(length(sim_re) == 6L)
+  assert_that(as.integer(sim_re) %in% c(0L, 1L))
 
   ## extend time keeping elements of sdmTMB object
   max_year_i <- max(object$time_lu$year_i)
@@ -184,7 +193,7 @@ project <- function(
   p$n_t <- nrow(object$time_lu)
   p$simulate_t <- as.integer(object$time_lu$sim_projected)
   ## sim random effects? order: omega, epsilon, zeta, IID, RW, smoothers
-  p$sim_re <- c(1L, 1L, 1L, 1L, 1L, 0L)
+  p$sim_re <- sim_re
 
   ## parameters: add zeros as needed to all time-based parameters
   pars <- get_pars(object)

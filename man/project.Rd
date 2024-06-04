@@ -12,6 +12,7 @@ project(
   silent = FALSE,
   sims_var = "eta_i",
   model = 1,
+  sim_re = c(0, 1, 0, 0, 1, 0),
   return_tmb_report = FALSE,
   ...
 )
@@ -33,6 +34,13 @@ elements.}
 
 \item{model}{Linear predictor number to extract. Also see
 \code{return_tmb_report}.}
+
+\item{sim_re}{A vector of \code{0}s and \code{1}s representing which random effects to
+simulate in the projection. Generally, leave this untouched. Order is:
+spatial fields, spatiotemporal fields, spatially varying coefficient
+fields, random intercepts, time-varying coefficients, smoothers.
+The default is to simulate spatiotemporal fields and time-varying
+coefficients, if present.}
 
 \item{return_tmb_report}{Return the \pkg{TMB} report from \code{simulate()}? This
 lets you parse out whatever elements you want from the simulation including
