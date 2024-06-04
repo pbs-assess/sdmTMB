@@ -41,6 +41,7 @@
 #' @export
 #'
 #' @examplesIf ggplot2_installed()
+#' \donttest{
 #' library(ggplot2)
 #'
 #' mesh <- make_mesh(dogfish, c("X", "Y"), cutoff = 25)
@@ -130,6 +131,7 @@
 #'   scale_fill_viridis_c() +
 #'   coord_fixed() +
 #'   ggtitle("Projection simulation\n(spatiotemporal fields standard error)")
+#' }
 
 project <- function(
     object,

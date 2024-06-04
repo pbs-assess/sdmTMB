@@ -63,6 +63,7 @@ Inspiration for this approach comes from the \pkg{VAST} function
 }
 \examples{
 \dontshow{if (ggplot2_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\donttest{
 library(ggplot2)
 
 mesh <- make_mesh(dogfish, c("X", "Y"), cutoff = 25)
@@ -152,6 +153,7 @@ ggplot(subset(proj_grid, year > 2021), aes(X, Y, fill = eps_se)) +
   scale_fill_viridis_c() +
   coord_fixed() +
   ggtitle("Projection simulation\n(spatiotemporal fields standard error)")
+}
 \dontshow{\}) # examplesIf}
 }
 \references{
