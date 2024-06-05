@@ -12,18 +12,19 @@ fit2 <- sdmTMB(
   catch_weight ~ 1,
   time = "year",
   offset = log(dogfish$area_swept),
-  time_varying = ~ 1,
-  time_varying_type = "ar1",
+  # time_varying = ~ 1,
+  # time_varying_type = "ar1",
   extra_time = historical_years, #< does *not* include projection years
   spatial = "on",
-  spatiotemporal = "ar1",
+  spatiotemporal = list("off", "ar1"),
   data = dogfish,
   mesh = mesh,
-  family = tweedie(link = "log")
+  family = delta_gamma()
 )
 
 set.seed(1)
-out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 150, uncertainty = "joint")
+out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 2, uncertainty = "joint")
+
 est_se <- apply(out, 1, sd)
 proj_grid$est_se_both <- est_se
 ggplot(subset(proj_grid, year > 2021), aes(X, Y, fill = est_se)) +

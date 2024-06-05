@@ -228,10 +228,12 @@ project <- function(
   pars <- get_pars(object)
   n_m <- if (is_delta(object)) 2L else 1L
   n_s <- dim(pars$epsilon_st)[1]
-  pars$epsilon_st <- abind::abind(pars$epsilon_st, array(0, c(n_s, nproj, n_m)), along = 2)
-  pars$b_rw_t <- abind::abind(pars$b_rw_t, array(0, c(nproj, 1, n_m)), along = 1)
 
-  ## extend mapping as need
+  new_eps <- array(0, c(n_s, nproj, n_m))
+  new_b_rw_t <- array(0, c(nproj, 1, n_m))
+  pars$epsilon_st <- abind::abind(pars$epsilon_st, new_eps, along = 2)
+  pars$b_rw_t <- abind::abind(pars$b_rw_t, new_b_rw_t, along = 1)
+
   ## FIXME: drop dims to 0 to avoid mapping complexity
   map <- object$tmb_map
   if ("b_rw_t" %in% names(map)) {
@@ -240,8 +242,19 @@ project <- function(
     }
     map$b_rw_t <- factor(rep(NA, length(as.numeric(pars$b_rw_t))))
   }
-  if ("epsilon_st" %in% names(map)) {
-    cli_abort("This function hasn't been set up to work with maps in epsilon_st yet.")
+
+  delta <- is_delta(object)
+  if (delta && "off" %in% object$spatiotemporal) {
+    map$epsilon_st <- array(
+      seq_len(length(pars$epsilon_st)),
+      dim = dim(pars$epsilon_st)
+    )
+    for (i in which(object$spatiotemporal == "off")) {
+      map$epsilon_st[,,i] <- NA
+      new_eps[,,i] <- NA
+    }
+    map$epsilon_st <- as.factor(map$epsilon_st)
+    new_eps <- rep(0, length(new_eps[!is.na(new_eps)]))
   }
 
   ## rebuild TMB object
@@ -255,41 +268,19 @@ project <- function(
     silent = TRUE
   )
 
-  if (is_delta(object)) {
-    cli_abort("Last part of function not finished for delta models.")
-  }
   ## do simulations
   if (!silent) cli::cli_progress_bar("Simulating projections", total = nsim)
   ret <- list()
   for (i in seq_len(nsim)) {
     if (!silent) cli::cli_progress_update()
-    .lp <- lp[,i,drop=TRUE]
-    rn <- row.names(lp)
-    names(.lp) <- rn
-    ## pull this out into mini-function:
+    lpx <- lp[,i,drop=TRUE]
     if (!is.null(object$time_varying)) { ## pad time-varying random effects
-      last_tv <- max(which(rn == "b_rw_t"))
-      to_fill <- rep(0, ncol(object$tmb_data$X_rw_ik) * nproj)
-      names(to_fill) <- rep("b_rw_t", length(to_fill))
-      if (rn[length(rn)] != "b_rw_t") {
-        .names <-
-        .lp <- c(.lp[seq(1, last_tv)], to_fill, .lp[seq(last_tv + 1, length(.lp))], use.names = TRUE)
-      } else { ## at end
-        .lp <- c(.lp[seq(1, last_tv)], to_fill, use.names = TRUE)
-      }
+      lpx <- insert_pars(lpx, "b_rw_t", .n = length(as.vector(new_b_rw_t)))
     }
-    rn <- names(.lp)
-    if (object$spatiotemporal != "off") { ## pad spatiotemporal random effects
-      last_eps <- max(which(rn == "epsilon_st"))
-      to_fill <- rep(0, dim(pars$epsilon_st)[1] * nproj)
-      names(to_fill) <- rep("epsilon_st", length(to_fill))
-      if (rn[length(rn)] != "epsilon_st") {
-        .lp <- c(.lp[seq(1, last_eps)], to_fill, seq(last_eps + 1, length(.lp)), use.names = TRUE)
-      } else { ## at end
-        .lp <- c(.lp[seq(1, last_eps)], to_fill, use.names = TRUE)
-      }
+    if (length(as.vector(new_eps))) { ## pad spatiotemporal random effects
+      lpx <- insert_pars(lpx, "epsilon_st", .n = length(as.vector(new_eps)))
     }
-    ret[[i]] <- obj$simulate(par = .lp)
+    ret[[i]] <- obj$simulate(par = lpx)
   }
   cli::cli_progress_done()
   if (return_tmb_report) {
@@ -297,6 +288,18 @@ project <- function(
   }
   ret <- lapply(ret, \(x) x[[sims_var]][, model])
   do.call(cbind, ret)
+}
+
+insert_pars <- function(par, nm, .n) {
+  rn <- names(par)
+  last <- max(which(rn == nm))
+  fill <- rep(0, .n)
+  names(fill) <- rep(nm, length(fill))
+  ret <- c(par[seq(last)], fill, use.names = TRUE)
+  if (rn[length(rn)] != nm) { ## not at end
+    ret <- c(ret, par[seq(last + 1, length(par))], use.names = TRUE)
+  }
+  ret
 }
 
 move_proj_to_tmbdat <- function(x, object, newdata) {
