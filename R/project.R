@@ -18,8 +18,10 @@
 #'   elements.
 #' @param nproj Number of years to project.
 #' @param nsim Number of simulations.
-#' @param param_uncertainty How to sample uncertainty from the fitted
-#'   parameters: both fixed and random effects, random effects only, or neither.
+#' @param uncertainty How to sample uncertainty for the fitted parameters:
+#'   `"joint"` for the joint fixed and random effect precision matrix,
+#'   `"random"` for the random effect precision matrix (holding the fixed
+#'   effects at their MLE), or `"none"` for neither.
 #' @param silent Silent?
 #' @param sims_var Element to extract from the \pkg{TMB} report. Also see
 #'   `return_tmb_report`.
@@ -151,7 +153,7 @@ project <- function(
     newdata,
     nproj = 1,
     nsim = 1,
-    param_uncertainty = c("both", "random", "none"),
+    uncertainty = c("joint", "random", "none"),
     silent = FALSE,
     sims_var = "eta_i",
     model = 1,
@@ -182,12 +184,12 @@ project <- function(
     cli_abort("Please enable either spatiotemporal random fields or time-varying parameters to use this function.")
   }
 
-  param_uncertainty <- match.arg(param_uncertainty)
+  uncertainty <- match.arg(uncertainty)
   ee <- object$tmb_obj$env
   lpb <- ee$last.par.best
-  if (param_uncertainty == "both") {
+  if (uncertainty == "joint") {
     lp <- rmvnorm_prec(lpb, object$sd_report, nsim)
-  } else if (param_uncertainty == "random") {
+  } else if (uncertainty == "random") {
     lp <- lpb %o% rep(1, nsim)
     mc <- ee$MC(keep = TRUE, n = nsim, antithetic = FALSE)
     lp[ee$random,] <- attr(mc, "samples")
