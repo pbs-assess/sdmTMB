@@ -23,7 +23,7 @@ fit2 <- sdmTMB(
 )
 
 set.seed(1)
-out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 150, historical_uncertainty = "both")
+out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 150, uncertainty = "joint")
 est_se <- apply(out, 1, sd)
 proj_grid$est_se_both <- est_se
 ggplot(subset(proj_grid, year > 2021), aes(X, Y, fill = est_se)) +
@@ -33,7 +33,7 @@ ggplot(subset(proj_grid, year > 2021), aes(X, Y, fill = est_se)) +
   coord_fixed() +
   ggtitle("Estimate SE (both)")
 
-out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 150, historical_uncertainty = "none")
+out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 150, uncertainty = "none")
 est_se <- apply(out, 1, sd)
 proj_grid$est_se_none <- est_se
 ggplot(subset(proj_grid, year > 2021), aes(X, Y, fill = est_se_none)) +
@@ -43,7 +43,7 @@ ggplot(subset(proj_grid, year > 2021), aes(X, Y, fill = est_se_none)) +
   coord_fixed() +
   ggtitle("Estimate SE (both)")
 
-out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 150, historical_uncertainty = "random")
+out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 150, uncertainty = "random")
 est_se <- apply(out, 1, sd)
 proj_grid$est_se_random <- est_se
 ggplot(subset(proj_grid, year > 2021), aes(X, Y, fill = est_se_random)) +
