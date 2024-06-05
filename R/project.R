@@ -19,7 +19,7 @@
 #' @param nproj Number of years to project.
 #' @param nsim Number of simulations.
 #' @param uncertainty How to sample uncertainty for the fitted parameters:
-#'   `"joint"` for the joint fixed and random effect precision matrix,
+#'   `"both"` for the joint fixed and random effect precision matrix,
 #'   `"random"` for the random effect precision matrix (holding the fixed
 #'   effects at their MLE), or `"none"` for neither.
 #' @param silent Silent?
@@ -153,10 +153,10 @@ project <- function(
     newdata,
     nproj = 1,
     nsim = 1,
-    uncertainty = c("joint", "random", "none"),
+    uncertainty = c("both", "random", "none"),
     silent = FALSE,
     sims_var = "eta_i",
-    model = 1,
+    model = 1, # FIXME: NA as default?
     sim_re = c(0, 1, 0, 0, 1, 0),
     return_tmb_report = FALSE,
     ...) {
@@ -187,7 +187,7 @@ project <- function(
   uncertainty <- match.arg(uncertainty)
   ee <- object$tmb_obj$env
   lpb <- ee$last.par.best
-  if (uncertainty == "joint") {
+  if (uncertainty == "both") {
     lp <- rmvnorm_prec(lpb, object$sd_report, nsim)
   } else if (uncertainty == "random") {
     lp <- lpb %o% rep(1, nsim)
@@ -305,7 +305,6 @@ insert_pars <- function(par, nm, .n) {
 move_proj_to_tmbdat <- function(x, object, newdata) {
   x$do_predict <- 0L
   x$year_i <- x$proj_year
-  ## FIXME:
   ## x$A_st <- x$proj_mesh
   ## .cpp uses unique locations in projection but not in fitting:
   xy_cols <- object$spde$xy_cols
@@ -314,19 +313,19 @@ move_proj_to_tmbdat <- function(x, object, newdata) {
   x$A_spatial_index <- seq_len(dim(proj_mesh)[1]) - 1L
   x$X_threshold <- x$proj_X_threshold
   x$X_ij <- x$proj_X_ij
-  x$X_rw_ik <- x$proj_X_rw_ik # FIXME: matches proj?
+  x$X_rw_ik <- x$proj_X_rw_ik
   x$z_i <- x$proj_z_i
   x$Zs <- x$proj_Zs
   x$Xs <- x$proj_Xs
   x$RE_indexes <- x$proj_RE_indexes
   x$offset_i <- x$proj_offset_i
   x$y_i <- matrix(NA, ncol = 1, nrow = nrow(x$proj_X_ij[[1]])) # fake
-  x$weights_i <- rep(1, nrow(x$y_i)) # fake
-  x$area_i <- rep(1, nrow(x$y_i)) # fak
+  x$weights_i <- rep(1, nrow(x$y_i)) # fake: FIXME: bring in?
+  x$area_i <- rep(1, nrow(x$y_i)) # fake FIXME: bring in for index??
   unique_size <- unique(x$size)
   if (length(unique_size) != 1L) {
     cli_abort("This function hasn't been set up to work with binomial size specified yet.")
   }
-  x$size <- rep(1, nrow(x$y_i)) # FIXME:
+  x$size <- rep(1, nrow(x$y_i)) # FIXME: bring in?
   x
 }

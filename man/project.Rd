@@ -9,7 +9,7 @@ project(
   newdata,
   nproj = 1,
   nsim = 1,
-  uncertainty = c("joint", "random", "none"),
+  uncertainty = c("both", "random", "none"),
   silent = FALSE,
   sims_var = "eta_i",
   model = 1,
@@ -29,7 +29,7 @@ elements.}
 \item{nsim}{Number of simulations.}
 
 \item{uncertainty}{How to sample uncertainty for the fitted parameters:
-\code{"joint"} for the joint fixed and random effect precision matrix,
+\code{"both"} for the joint fixed and random effect precision matrix,
 \code{"random"} for the random effect precision matrix (holding the fixed
 effects at their MLE), or \code{"none"} for neither.}
 
