@@ -11,14 +11,14 @@
 #' estimation can be slow.
 #'
 #' @description Inspiration for this approach comes from the \pkg{VAST} function
-#' `project_model()` by J.T. Thorson.
+#' `project_model()`.
 #'
 #' @param object A fitted model from [sdmTMB()].
 #' @param newdata A new data frame to predict on. Should contain all new time
 #'   elements.
 #' @param nproj Number of years to project.
 #' @param nsim Number of simulations.
-#' @param historical_uncertainty How to sample uncertainty from the fitted
+#' @param param_uncertainty How to sample uncertainty from the fitted
 #'   parameters: both fixed and random effects, random effects only, or neither.
 #' @param silent Silent?
 #' @param sims_var Element to extract from the \pkg{TMB} report. Also see
@@ -37,6 +37,10 @@
 #' @param ... Passed to [predict.sdmTMB()].
 #'
 #' @references `project_model()` in the \pkg{VAST} package.
+#' @author
+#' J.T. Thorson wrote the original version in the \pkg{VAST} package.
+#' S.C. Anderson wrote this version inspired by the \pkg{VAST} version with
+#' help from A.J. Allyn.
 #' @importFrom cli cli_abort cli_inform cli_warn
 #'
 #' @return
@@ -147,7 +151,7 @@ project <- function(
     newdata,
     nproj = 1,
     nsim = 1,
-    historical_uncertainty = c("both", "random", "none"),
+    param_uncertainty = c("both", "random", "none"),
     silent = FALSE,
     sims_var = "eta_i",
     model = 1,
@@ -174,16 +178,16 @@ project <- function(
 
   reinitialize(object)
 
-  if (object$spatiotemporal == "off" && is.null(object$time_varying)) {
+  if (all(object$spatiotemporal == "off") && is.null(object$time_varying)) {
     cli_abort("Please enable either spatiotemporal random fields or time-varying parameters to use this function.")
   }
 
-  historical_uncertainty <- match.arg(historical_uncertainty)
+  param_uncertainty <- match.arg(param_uncertainty)
   ee <- object$tmb_obj$env
   lpb <- ee$last.par.best
-  if (historical_uncertainty == "both") {
+  if (param_uncertainty == "both") {
     lp <- rmvnorm_prec(lpb, object$sd_report, nsim)
-  } else if (historical_uncertainty == "random") {
+  } else if (param_uncertainty == "random") {
     lp <- lpb %o% rep(1, nsim)
     mc <- ee$MC(keep = TRUE, n = nsim, antithetic = FALSE)
     lp[ee$random,] <- attr(mc, "samples")
@@ -194,7 +198,7 @@ project <- function(
   ## extend time keeping elements of sdmTMB object
   max_year_i <- max(object$time_lu$year_i)
   new_year_i <- seq(max_year_i + 1, max_year_i + nproj)
-  max_time <- max(object$extra_time)
+  max_time <- max(object$time_lu$time_from_data)
   new_time_from_data <- seq(max_time + 1, max_time + nproj)
   object$extra_time <- c(object$extra_time, new_time_from_data)
   object$time_lu$sim_projected <- FALSE
@@ -220,16 +224,19 @@ project <- function(
 
   ## parameters: add zeros as needed to all time-based parameters
   pars <- get_pars(object)
+  n_m <- if (is_delta(object)) 2L else 1L
   n_s <- dim(pars$epsilon_st)[1]
-  nt_new <- 1L
-  pars$epsilon_st <- abind::abind(pars$epsilon_st, array(0, c(n_s, nproj, 1)), along = 2)
-  pars$b_rw_t <- abind::abind(pars$b_rw_t, array(0, c(nproj, 1, 1)), along = 1)
+  pars$epsilon_st <- abind::abind(pars$epsilon_st, array(0, c(n_s, nproj, n_m)), along = 2)
+  pars$b_rw_t <- abind::abind(pars$b_rw_t, array(0, c(nproj, 1, n_m)), along = 1)
 
   ## extend mapping as need
   ## FIXME: drop dims to 0 to avoid mapping complexity
   map <- object$tmb_map
   if ("b_rw_t" %in% names(map)) {
-    map$b_rw_t <- c(map$b_rw_t, factor(rep(NA, nproj)))
+    if (any(!is.na(map$b_rw_t))) {
+      cli_abort("Function not set up yet for non-NA mapping of `b_rw_t`.")
+    }
+    map$b_rw_t <- factor(rep(NA, length(as.numeric(pars$b_rw_t))))
   }
   if ("epsilon_st" %in% names(map)) {
     cli_abort("This function hasn't been set up to work with maps in epsilon_st yet.")
@@ -246,6 +253,9 @@ project <- function(
     silent = TRUE
   )
 
+  if (is_delta(object)) {
+    cli_abort("Last part of function not finished for delta models.")
+  }
   ## do simulations
   if (!silent) cli::cli_progress_bar("Simulating projections", total = nsim)
   ret <- list()

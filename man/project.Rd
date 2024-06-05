@@ -9,7 +9,7 @@ project(
   newdata,
   nproj = 1,
   nsim = 1,
-  historical_uncertainty = c("both", "random", "none"),
+  param_uncertainty = c("both", "random", "none"),
   silent = FALSE,
   sims_var = "eta_i",
   model = 1,
@@ -28,7 +28,7 @@ elements.}
 
 \item{nsim}{Number of simulations.}
 
-\item{historical_uncertainty}{How to sample uncertainty from the fitted
+\item{param_uncertainty}{How to sample uncertainty from the fitted
 parameters: both fixed and random effects, random effects only, or neither.}
 
 \item{silent}{Silent?}
@@ -71,7 +71,7 @@ projections where including those time elements in \code{extra_time} during mode
 estimation can be slow.
 
 Inspiration for this approach comes from the \pkg{VAST} function
-\code{project_model()} by J.T. Thorson.
+\code{project_model()}.
 }
 \examples{
 \dontshow{if (ggplot2_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
@@ -170,4 +170,9 @@ ggplot(subset(proj_grid, year > 2021), aes(X, Y, fill = eps_se)) +
 }
 \references{
 \code{project_model()} in the \pkg{VAST} package.
+}
+\author{
+J.T. Thorson wrote the original version in the \pkg{VAST} package.
+S.C. Anderson wrote this version inspired by the \pkg{VAST} version with
+help from A.J. Allyn.
 }
