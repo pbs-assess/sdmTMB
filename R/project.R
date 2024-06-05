@@ -18,6 +18,8 @@
 #'   elements.
 #' @param nproj Number of years to project.
 #' @param nsim Number of simulations.
+#' @param historical_uncertainty How to sample uncertainty from the fitted
+#'   parameters: both fixed and random effects, random effects only, or neither.
 #' @param silent Silent?
 #' @param sims_var Element to extract from the \pkg{TMB} report. Also see
 #'   `return_tmb_report`.
@@ -35,6 +37,7 @@
 #' @param ... Passed to [predict.sdmTMB()].
 #'
 #' @references `project_model()` in the \pkg{VAST} package.
+#' @importFrom cli cli_abort cli_inform cli_warn
 #'
 #' @return
 #' If `return_tmb_report = FALSE` (default): a matrix with N rows equal to the
@@ -144,6 +147,7 @@ project <- function(
     newdata,
     nproj = 1,
     nsim = 1,
+    historical_uncertainty = c("both", "random", "none"),
     silent = FALSE,
     sims_var = "eta_i",
     model = 1,
@@ -167,6 +171,25 @@ project <- function(
   assert_that(is.logical(silent))
   assert_that(length(sim_re) == 6L)
   assert_that(all(as.integer(sim_re) %in% c(0L, 1L)))
+
+  reinitialize(object)
+
+  if (object$spatiotemporal == "off" && is.null(object$time_varying)) {
+    cli_abort("Please enable either spatiotemporal random fields or time-varying parameters to use this function.")
+  }
+
+  historical_uncertainty <- match.arg(historical_uncertainty)
+  ee <- object$tmb_obj$env
+  lpb <- ee$last.par.best
+  if (historical_uncertainty == "both") {
+    lp <- rmvnorm_prec(lpb, object$sd_report, nsim)
+  } else if (historical_uncertainty == "random") {
+    lp <- lpb %o% rep(1, nsim)
+    mc <- ee$MC(keep = TRUE, n = nsim, antithetic = FALSE)
+    lp[ee$random,] <- attr(mc, "samples")
+  } else { ## 'none'
+    lp <- lpb %o% rep(1, nsim)
+  }
 
   ## extend time keeping elements of sdmTMB object
   max_year_i <- max(object$time_lu$year_i)
@@ -209,7 +232,7 @@ project <- function(
     map$b_rw_t <- c(map$b_rw_t, factor(rep(NA, nproj)))
   }
   if ("epsilon_st" %in% names(map)) {
-    cli::cli_abort("This function hasn't been set up to work with maps in epsilon_st yet.")
+    cli_abort("This function hasn't been set up to work with maps in epsilon_st yet.")
   }
 
   ## rebuild TMB object
@@ -228,7 +251,33 @@ project <- function(
   ret <- list()
   for (i in seq_len(nsim)) {
     if (!silent) cli::cli_progress_update()
-    ret[[i]] <- obj$simulate()
+    .lp <- lp[,i,drop=TRUE]
+    rn <- row.names(lp)
+    names(.lp) <- rn
+    ## pull this out into mini-function:
+    if (!is.null(object$time_varying)) { ## pad time-varying random effects
+      last_tv <- max(which(rn == "b_rw_t"))
+      to_fill <- rep(0, ncol(object$tmb_data$X_rw_ik) * nproj)
+      names(to_fill) <- rep("b_rw_t", length(to_fill))
+      if (rn[length(rn)] != "b_rw_t") {
+        .names <-
+        .lp <- c(.lp[seq(1, last_tv)], to_fill, .lp[seq(last_tv + 1, length(.lp))], use.names = TRUE)
+      } else { ## at end
+        .lp <- c(.lp[seq(1, last_tv)], to_fill, use.names = TRUE)
+      }
+    }
+    rn <- names(.lp)
+    if (object$spatiotemporal != "off") { ## pad spatiotemporal random effects
+      last_eps <- max(which(rn == "epsilon_st"))
+      to_fill <- rep(0, dim(pars$epsilon_st)[1] * nproj)
+      names(to_fill) <- rep("epsilon_st", length(to_fill))
+      if (rn[length(rn)] != "epsilon_st") {
+        .lp <- c(.lp[seq(1, last_eps)], to_fill, seq(last_eps + 1, length(.lp)), use.names = TRUE)
+      } else { ## at end
+        .lp <- c(.lp[seq(1, last_eps)], to_fill, use.names = TRUE)
+      }
+    }
+    ret[[i]] <- obj$simulate(par = .lp)
   }
   cli::cli_progress_done()
   if (return_tmb_report) {
@@ -261,7 +310,7 @@ move_proj_to_tmbdat <- function(x, object, newdata) {
   x$area_i <- rep(1, nrow(x$y_i)) # fak
   unique_size <- unique(x$size)
   if (length(unique_size) != 1L) {
-    cli::cli_abort("This function hasn't been set up to work with binomial size specified yet.")
+    cli_abort("This function hasn't been set up to work with binomial size specified yet.")
   }
   x$size <- rep(1, nrow(x$y_i)) # FIXME:
   x

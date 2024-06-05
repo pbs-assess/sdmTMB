@@ -9,6 +9,7 @@ project(
   newdata,
   nproj = 1,
   nsim = 1,
+  historical_uncertainty = c("both", "random", "none"),
   silent = FALSE,
   sims_var = "eta_i",
   model = 1,
@@ -26,6 +27,9 @@ elements.}
 \item{nproj}{Number of years to project.}
 
 \item{nsim}{Number of simulations.}
+
+\item{historical_uncertainty}{How to sample uncertainty from the fitted
+parameters: both fixed and random effects, random effects only, or neither.}
 
 \item{silent}{Silent?}
 
