@@ -25,8 +25,6 @@
 #' @param silent Silent?
 #' @param sims_var Element to extract from the \pkg{TMB} report. Also see
 #'   `return_tmb_report`.
-#' @param model Linear predictor number to extract. Also see
-#'   `return_tmb_report`.
 #' @param sim_re A vector of `0`s and `1`s representing which random effects to
 #'   simulate in the projection. Generally, leave this untouched. Order is:
 #'   spatial fields, spatiotemporal fields, spatially varying coefficient
@@ -147,7 +145,6 @@
 #'   coord_fixed() +
 #'   ggtitle("Projection simulation\n(spatiotemporal fields standard error)")
 #' }
-
 project <- function(
     object,
     newdata,
@@ -156,11 +153,9 @@ project <- function(
     uncertainty = c("both", "random", "none"),
     silent = FALSE,
     sims_var = "eta_i",
-    model = 1, # FIXME: NA as default?
     sim_re = c(0, 1, 0, 0, 1, 0),
     return_tmb_report = FALSE,
     ...) {
-
   assert_that(inherits(object, "sdmTMB"))
   assert_that(length(nsim) == 1L)
   assert_that(is.numeric(nsim))
@@ -171,9 +166,6 @@ project <- function(
   assert_that(is.data.frame(newdata))
   assert_that(length(sims_var) == 1L)
   assert_that(is.logical(return_tmb_report))
-  assert_that(is.numeric(model))
-  assert_that(length(model) == 1L)
-  assert_that(as.integer(model) %in% c(1L, 2L))
   assert_that(is.logical(silent))
   assert_that(length(sim_re) == 6L)
   assert_that(all(as.integer(sim_re) %in% c(0L, 1L)))
@@ -192,7 +184,7 @@ project <- function(
   } else if (uncertainty == "random") {
     lp <- lpb %o% rep(1, nsim)
     mc <- ee$MC(keep = TRUE, n = nsim, antithetic = FALSE)
-    lp[ee$random,] <- attr(mc, "samples")
+    lp[ee$random, ] <- attr(mc, "samples")
   } else { ## 'none'
     lp <- lpb %o% rep(1, nsim)
   }
@@ -250,8 +242,8 @@ project <- function(
       dim = dim(pars$epsilon_st)
     )
     for (i in which(object$spatiotemporal == "off")) {
-      map$epsilon_st[,,i] <- NA
-      new_eps[,,i] <- NA
+      map$epsilon_st[, , i] <- NA
+      new_eps[, , i] <- NA
     }
     map$epsilon_st <- as.factor(map$epsilon_st)
     new_eps <- rep(0, length(new_eps[!is.na(new_eps)]))
@@ -273,7 +265,7 @@ project <- function(
   ret <- list()
   for (i in seq_len(nsim)) {
     if (!silent) cli::cli_progress_update()
-    lpx <- lp[,i,drop=TRUE]
+    lpx <- lp[, i, drop = TRUE]
     if (!is.null(object$time_varying)) { ## pad time-varying random effects
       lpx <- insert_pars(lpx, "b_rw_t", .n = length(as.vector(new_b_rw_t)))
     }
@@ -286,7 +278,7 @@ project <- function(
   if (return_tmb_report) {
     return(ret)
   }
-  ret <- lapply(ret, \(x) x[[sims_var]][, model])
+  ret <- lapply(ret, \(x) x[[sims_var]][, 1])
   do.call(cbind, ret)
 }
 

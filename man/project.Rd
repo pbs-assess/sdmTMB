@@ -12,7 +12,6 @@ project(
   uncertainty = c("both", "random", "none"),
   silent = FALSE,
   sims_var = "eta_i",
-  model = 1,
   sim_re = c(0, 1, 0, 0, 1, 0),
   return_tmb_report = FALSE,
   ...
@@ -36,9 +35,6 @@ effects at their MLE), or \code{"none"} for neither.}
 \item{silent}{Silent?}
 
 \item{sims_var}{Element to extract from the \pkg{TMB} report. Also see
-\code{return_tmb_report}.}
-
-\item{model}{Linear predictor number to extract. Also see
 \code{return_tmb_report}.}
 
 \item{sim_re}{A vector of \code{0}s and \code{1}s representing which random effects to
