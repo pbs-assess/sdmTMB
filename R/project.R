@@ -22,6 +22,7 @@
 #'   `"both"` for the joint fixed and random effect precision matrix,
 #'   `"random"` for the random effect precision matrix (holding the fixed
 #'   effects at their MLE), or `"none"` for neither.
+#' @param model Linear predictor model number. Defaults to first linear predictor.
 #' @param silent Silent?
 #' @param sims_var Element to extract from the \pkg{TMB} report. Also see
 #'   `return_tmb_report`.
@@ -65,17 +66,19 @@
 #' proj_grid <- replicate_df(wcvi_grid, "year", all_years)
 #'
 #' # we could fit our model like this, but for long projections, this becomes slow:
-#' fit <- sdmTMB(
-#'   catch_weight ~ 1,
-#'   time = "year",
-#'   offset = log(dogfish$area_swept),
-#'   extra_time = all_years, #< note that all years here
-#'   spatial = "on",
-#'   spatiotemporal = "ar1",
-#'   data = dogfish,
-#'   mesh = mesh,
-#'   family = tweedie(link = "log")
-#' )
+#' if (FALSE) {
+#'   fit <- sdmTMB(
+#'     catch_weight ~ 1,
+#'     time = "year",
+#'     offset = log(dogfish$area_swept),
+#'     extra_time = all_years, #< note that all years here
+#'     spatial = "on",
+#'     spatiotemporal = "ar1",
+#'     data = dogfish,
+#'     mesh = mesh,
+#'     family = tweedie(link = "log")
+#'   )
+#' }
 #'
 #' # instead, we could fit our model like this and then take simulation draws
 #' # from the projection time period:
@@ -151,6 +154,7 @@ project <- function(
     nproj = 1,
     nsim = 1,
     uncertainty = c("both", "random", "none"),
+    model = 1,
     silent = FALSE,
     sims_var = "eta_i",
     sim_re = c(0, 1, 0, 0, 1, 0),
@@ -169,6 +173,9 @@ project <- function(
   assert_that(is.logical(silent))
   assert_that(length(sim_re) == 6L)
   assert_that(all(as.integer(sim_re) %in% c(0L, 1L)))
+  assert_that(is.numeric(model))
+  model <- as.integer(model)
+  assert_that(model %in% c(1L, 2L))
 
   reinitialize(object)
 
@@ -278,7 +285,7 @@ project <- function(
   if (return_tmb_report) {
     return(ret)
   }
-  ret <- lapply(ret, \(x) x[[sims_var]][, 1])
+  ret <- lapply(ret, \(x) x[[sims_var]][, model])
   do.call(cbind, ret)
 }
 
@@ -311,7 +318,8 @@ move_proj_to_tmbdat <- function(x, object, newdata) {
   x$Xs <- x$proj_Xs
   x$RE_indexes <- x$proj_RE_indexes
   x$offset_i <- x$proj_offset_i
-  x$y_i <- matrix(NA, ncol = 1, nrow = nrow(x$proj_X_ij[[1]])) # fake
+  n_m <- length(x$X_ij) ## n linear predictor [m]odels
+  x$y_i <- matrix(NA, ncol = n_m, nrow = nrow(x$proj_X_ij[[1]])) # fake
   x$weights_i <- rep(1, nrow(x$y_i)) # fake: FIXME: bring in?
   x$area_i <- rep(1, nrow(x$y_i)) # fake FIXME: bring in for index??
   unique_size <- unique(x$size)

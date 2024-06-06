@@ -3,7 +3,7 @@ library(ggplot2)
 
 mesh <- make_mesh(dogfish, c("X", "Y"), cutoff = 25)
 historical_years <- 2004:2022
-to_project <- 50
+to_project <- 5
 future_years <- seq(max(historical_years) + 1, max(historical_years) + to_project)
 all_years <- c(historical_years, future_years)
 proj_grid <- replicate_df(wcvi_grid, "year", all_years)
@@ -23,7 +23,8 @@ fit2 <- sdmTMB(
 )
 
 set.seed(1)
-out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 100, uncertainty = "joint")
+out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 100, uncertainty = "both", model = 1)
+out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 100, uncertainty = "both", model = 2)
 
 est_se <- apply(out, 1, sd)
 proj_grid$est_se_both <- est_se

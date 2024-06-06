@@ -10,6 +10,7 @@ project(
   nproj = 1,
   nsim = 1,
   uncertainty = c("both", "random", "none"),
+  model = 1,
   silent = FALSE,
   sims_var = "eta_i",
   sim_re = c(0, 1, 0, 0, 1, 0),
@@ -31,6 +32,8 @@ elements.}
 \code{"both"} for the joint fixed and random effect precision matrix,
 \code{"random"} for the random effect precision matrix (holding the fixed
 effects at their MLE), or \code{"none"} for neither.}
+
+\item{model}{Linear predictor model number. Defaults to first linear predictor.}
 
 \item{silent}{Silent?}
 
@@ -84,17 +87,19 @@ all_years <- c(historical_years, future_years)
 proj_grid <- replicate_df(wcvi_grid, "year", all_years)
 
 # we could fit our model like this, but for long projections, this becomes slow:
-fit <- sdmTMB(
-  catch_weight ~ 1,
-  time = "year",
-  offset = log(dogfish$area_swept),
-  extra_time = all_years, #< note that all years here
-  spatial = "on",
-  spatiotemporal = "ar1",
-  data = dogfish,
-  mesh = mesh,
-  family = tweedie(link = "log")
-)
+if (FALSE) {
+  fit <- sdmTMB(
+    catch_weight ~ 1,
+    time = "year",
+    offset = log(dogfish$area_swept),
+    extra_time = all_years, #< note that all years here
+    spatial = "on",
+    spatiotemporal = "ar1",
+    data = dogfish,
+    mesh = mesh,
+    family = tweedie(link = "log")
+  )
+}
 
 # instead, we could fit our model like this and then take simulation draws
 # from the projection time period:
