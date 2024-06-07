@@ -295,6 +295,7 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
     ii <- sort(unique(obj$fit_obj$tmb_data$proj_year))
   }
   d <- d[d$est != 0, ,drop=FALSE] # these were not predicted on
+  d <- d[!is.na(d$est), ,drop=FALSE] # these were not predicted on
   lu <- obj$fit_obj$time_lu
   tt <- lu$time_from_data[match(ii, lu$year_i)]
   d[[time_name]] <- tt
