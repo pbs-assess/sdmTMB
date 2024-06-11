@@ -425,8 +425,10 @@ predict.sdmTMB <- function(object, newdata = NULL,
         loc = as.matrix(unique_newdata[, xy_cols, drop = FALSE]))
     } else {
       proj_mesh <- object$spde$A_st # fake
-      newdata[[xy_cols[1]]] <- NA_real_ # fake
-      newdata[[xy_cols[2]]] <- NA_real_ # fake
+      if (!all(object$spde$xy_cols %in% names(newdata))) {
+        newdata[[xy_cols[1]]] <- NA_real_ # fake
+        newdata[[xy_cols[2]]] <- NA_real_ # fake
+      }
       newdata[["sdm_spatial_id"]] <- rep(0L, nrow(newdata)) # fake
     }
 

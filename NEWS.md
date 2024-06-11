@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Add `get_eao()` to calculate effective area occupied.
+
 # sdmTMB 0.6.0
 
 * Pass several arguments to `DHARMa::plotQQunif()`.
