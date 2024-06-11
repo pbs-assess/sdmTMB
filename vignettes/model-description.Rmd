@@ -287,8 +287,8 @@ $$
 \begin{aligned}
 \mu_{\boldsymbol{s},t} &= f^{-1} \left( \ldots + \delta_{\boldsymbol{s},t} + \ldots \right),\\
 \boldsymbol{\delta}_{t=1} &\sim \operatorname{MVNormal} (\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon}),\\
-\boldsymbol{\delta}_{t>1} &= \boldsymbol{\delta}_{t-1} +  \boldsymbol{\epsilon_{t-1}},  \:
-\boldsymbol{\epsilon_{t-1}} \sim \operatorname{MVNormal} \left(\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right),
+\boldsymbol{\delta}_{t>1} &= \boldsymbol{\delta}_{t-1} +  \boldsymbol{\epsilon_{t}},  \:
+\boldsymbol{\epsilon_{t}} \sim \operatorname{MVNormal} \left(\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right),
 \end{aligned}
 $$
 
