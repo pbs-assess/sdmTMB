@@ -38,7 +38,7 @@ test_that("project() works with delta models", {
     family = delta_gamma()
   )
   set.seed(1)
-  out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 100, uncertainty = "none")
+  out <- project(fit2, newdata = proj_grid, nsim = 100, uncertainty = "none")
   none <- out
   expect_identical(names(out), c("est1", "est2", "epsilon_st1", "epsilon_st2"))
 
@@ -86,7 +86,6 @@ test_that("project() works with delta models", {
   out <- project(
     fit2,
     newdata = proj_grid,
-    nproj = to_project,
     nsim = 100,
     uncertainty = "none",
     return_tmb_report = TRUE #< difference from above example
@@ -106,10 +105,10 @@ test_that("project() works with delta models", {
 
   # test the types of uncertainty
   set.seed(1)
-  both <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 50, uncertainty = "both")
+  both <- project(fit2, newdata = proj_grid, nsim = 50, uncertainty = "both")
   set.seed(1)
   suppressWarnings({
-    random <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 50, uncertainty = "random")
+    random <- project(fit2, newdata = proj_grid, nsim = 50, uncertainty = "random")
   })
 
   sd_both <- mean(apply(both$est1, 1, sd)[i])
@@ -157,7 +156,7 @@ test_that("project() works with non-delta models", {
     family = tweedie()
   )
   set.seed(1)
-  out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 100, uncertainty = "none")
+  out <- project(fit2, newdata = proj_grid, nsim = 100, uncertainty = "none")
   expect_identical(names(out), c("est", "epsilon_st"))
 
   i <- p$year == 2023
@@ -206,10 +205,85 @@ test_that("project() works with time-varying effects", {
     family = tweedie()
   )
   set.seed(1)
-  out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 100, uncertainty = "none")
+  out <- project(fit2, newdata = proj_grid, nsim = 100, uncertainty = "none")
   expect_identical(names(out), c("est"))
   i <- p$year == 2023
   hist(out$est[i, ])
   abline(v = mean(p$est[i]))
   expect_equal(mean(p$est[i]), 5.983172, tolerance = 1e-3)
+})
+
+
+test_that("project() works/fails as expected in some less obvious situations", {
+  skip_on_cran()
+
+  mesh <- make_mesh(dogfish, c("X", "Y"), cutoff = 35)
+  historical_years <- 2004:2022
+  to_project <- 1
+  future_years <- seq(max(historical_years) + 1, max(historical_years) + to_project)
+  all_years <- c(historical_years, future_years)
+  proj_grid <- replicate_df(wcvi_grid, "year", all_years)
+
+  # no time model:
+  fit <- sdmTMB(
+    catch_weight ~ 1,
+    time = "year",
+    offset = log(dogfish$area_swept),
+    extra_time = historical_years,
+    spatial = "off",
+    spatiotemporal = "off",
+    data = dogfish,
+    mesh = mesh,
+    family = delta_gamma()
+  )
+
+  set.seed(1)
+  expect_message(out <- project(fit, newdata = proj_grid, nsim = 2, uncertainty = "none"), "structures")
+  expect_equal(unique(as.numeric(out$est1)), 0.8032636, tolerance = 1e-3)
+  expect_message(out <- project(fit, newdata = proj_grid, nsim = 1, uncertainty = "both"), regexp = "random")
+  expect_error(out <- project(fit, newdata = proj_grid, nsim = 1, uncertainty = "random"), regexp = "random")
+
+  # no time argument specified errors:
+  fit <- sdmTMB(
+    catch_weight ~ 1,
+    # time = "year",
+    offset = log(dogfish$area_swept),
+    extra_time = historical_years,
+    spatial = "off",
+    spatiotemporal = "off",
+    data = dogfish,
+    # mesh = mesh,
+    family = delta_gamma()
+  )
+
+  expect_error(out2 <- project(fit, newdata = proj_grid, nsim = 1), regexp = "time")
+
+  # no future time errors:
+  fit <- sdmTMB(
+    catch_weight ~ 0,
+    time = "year",
+    offset = log(dogfish$area_swept),
+    extra_time = historical_years,
+    spatial = "off",
+    spatiotemporal = "off",
+    time_varying = ~ 1,
+    data = dogfish,
+    family = tweedie()
+  )
+  expect_error(out <- project(fit, newdata = subset(proj_grid, year %in% historical_years), nsim = 1), "new")
+
+  # newdata is missing a time step; make sure that's fine and matches not missing the time step:
+  all_years <- c(historical_years, 2023:2025)
+  proj_grid <- replicate_df(wcvi_grid, "year", all_years)
+  set.seed(1)
+  out <- project(fit, newdata = proj_grid, nsim = 1)
+
+  all_years <- c(historical_years, c(2023, 2025))
+  proj_grid2 <- replicate_df(wcvi_grid, "year", all_years)
+  set.seed(1)
+  out2 <- project(fit, newdata = proj_grid2, nsim = 1)
+
+  i <- proj_grid$year %in% c(2023, 2025)
+  i2 <- proj_grid2$year %in% c(2023, 2025)
+  expect_equal(out$est[i,], out2$est[i2,])
 })

@@ -1,5 +1,3 @@
-## TODO: probably don't need both nproj and newdata; can drop nproj?
-
 #' Project from an \pkg{sdmTMB} model using simulation
 #'
 #' @description `r lifecycle::badge("experimental")`
@@ -14,9 +12,8 @@
 #' `project_model()`.
 #'
 #' @param object A fitted model from [sdmTMB()].
-#' @param newdata A new data frame to predict on. Should contain all new time
-#'   elements.
-#' @param nproj Number of years to project.
+#' @param newdata A new data frame to predict on. Should contain both historical
+#'   and any new time elements to predict on.
 #' @param nsim Number of simulations.
 #' @param uncertainty How to sample uncertainty for the fitted parameters:
 #'   `"both"` for the joint fixed and random effect precision matrix,
@@ -100,7 +97,7 @@
 #' # is relatively stable
 #'
 #' set.seed(1)
-#' out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 20)
+#' out <- project(fit2, newdata = proj_grid, nsim = 20)
 #' names(out)
 #' est_mean <- apply(out$est, 1, mean) # summarize however you'd like
 #' est_se <- apply(out$est, 1, sd)
@@ -134,7 +131,6 @@
 project <- function(
     object,
     newdata,
-    nproj = 1,
     nsim = 1,
     uncertainty = c("both", "random", "none"),
     silent = FALSE,
@@ -146,9 +142,9 @@ project <- function(
   assert_that(length(nsim) == 1L)
   assert_that(is.numeric(nsim))
   assert_that(nsim >= 1)
-  assert_that(length(nproj) == 1L)
-  assert_that(is.numeric(nproj))
-  assert_that(nproj >= 1)
+  # assert_that(length(nproj) == 1L)
+  # assert_that(is.numeric(nproj))
+  # assert_that(nproj >= 1)
   assert_that(is.data.frame(newdata))
   assert_that(length(sims_var) == 1L)
   assert_that(is.logical(return_tmb_report))
@@ -158,23 +154,50 @@ project <- function(
 
   reinitialize(object)
 
+  if (object$time == "_sdmTMB_time")
+    cli_abort("Please refit the sdmTMB model with the 'time' argument specified.")
+
+  ti <- sort(unique(newdata[[object$time]]))
+  fitted_time <- object$time_lu$time_from_data
+  nproj <- max(ti) - max(fitted_time)
+  if (nproj == 0L) {
+    msg <- c(
+      "No new time elements for projection found in 'newdata'.",
+      "Please supply new time elements in 'newdata'.",
+      "If you wish to simulate from predictions on new data without supplying new time elements, please use sdmTMB::predict(..., nsim = ...)."
+    )
+    cli_abort(msg)
+  }
+
   if (all(object$spatiotemporal == "off") && is.null(object$time_varying)) {
-    cli_abort("Please enable either spatiotemporal random fields or time-varying parameters to use this function.")
+    cli_inform("No spatiotemporal or time-varying structures found. Proceeding with projection anyways.")
   }
 
   uncertainty <- match.arg(uncertainty)
   ee <- object$tmb_obj$env
   lpb <- ee$last.par.best
+
   if (uncertainty == "both") {
-    lp <- rmvnorm_prec(lpb, object$sd_report, nsim)
+    if (has_no_random_effects(object)) {
+      msg <- c("This model has no random effects.",
+        "Sampling only from the fixed effects.")
+      cli_inform(msg)
+      lp <- t(mvtnorm::rmvnorm(n = nsim, mean = lpb, sigma = object$sd_report$cov.fixed))
+    } else {
+      lp <- rmvnorm_prec(lpb, object$sd_report, nsim)
+    }
   } else if (uncertainty == "random") {
+    if (has_no_random_effects(object)) {
+      msg <- c("This model has no random effects.",
+        "Choose a different type of uncertainty.")
+      cli_abort(msg)
+    }
     lp <- lpb %o% rep(1, nsim)
     mc <- ee$MC(keep = TRUE, n = nsim, antithetic = FALSE)
     lp[ee$random, ] <- attr(mc, "samples")
   } else { ## 'none'
     lp <- lpb %o% rep(1, nsim)
   }
-
 
   ## extend time keeping elements of sdmTMB object
   max_year_i <- max(object$time_lu$year_i)

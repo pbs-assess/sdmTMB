@@ -7,7 +7,6 @@
 project(
   object,
   newdata,
-  nproj = 1,
   nsim = 1,
   uncertainty = c("both", "random", "none"),
   silent = FALSE,
@@ -20,10 +19,8 @@ project(
 \arguments{
 \item{object}{A fitted model from \code{\link[=sdmTMB]{sdmTMB()}}.}
 
-\item{newdata}{A new data frame to predict on. Should contain all new time
-elements.}
-
-\item{nproj}{Number of years to project.}
+\item{newdata}{A new data frame to predict on. Should contain both historical
+and any new time elements to predict on.}
 
 \item{nsim}{Number of simulations.}
 
@@ -119,7 +116,7 @@ fit2 <- sdmTMB(
 # is relatively stable
 
 set.seed(1)
-out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 20)
+out <- project(fit2, newdata = proj_grid, nsim = 20)
 names(out)
 est_mean <- apply(out$est, 1, mean) # summarize however you'd like
 est_se <- apply(out$est, 1, sd)
