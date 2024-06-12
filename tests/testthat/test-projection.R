@@ -187,7 +187,7 @@ test_that("project() works with time-varying effects", {
   )
   set.seed(1)
   out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 100, uncertainty = "none")
-  expect_identical(names(out), c("est", "epsilon_st"))
+  expect_identical(names(out), c("est"))
   i <- p$year == 2023
   hist(out$est[i,]);abline(v = mean(p$est[i]))
   expect_equal(mean(p$est[i]), 5.983172, tolerance = 1e-3)
