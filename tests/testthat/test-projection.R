@@ -1,0 +1,121 @@
+test_that("project() works", {
+  library(ggplot2)
+  mesh <- make_mesh(dogfish, c("X", "Y"), cutoff = 35)
+  historical_years <- 2004:2022
+  to_project <- 1
+  future_years <- seq(max(historical_years) + 1, max(historical_years) + to_project)
+  all_years <- c(historical_years, future_years)
+  proj_grid <- replicate_df(wcvi_grid, "year", all_years)
+
+  # we could fit our model like this, but for long projections, this becomes slow:
+  fit <- sdmTMB(
+    catch_weight ~ 1,
+    time = "year",
+    offset = log(dogfish$area_swept),
+    extra_time = all_years, #< note that all years here
+    spatial = "off", # speed
+    spatiotemporal = "ar1",
+    data = dogfish,
+    mesh = mesh,
+    family = delta_gamma()
+  )
+  p <- predict(fit, newdata = proj_grid)
+
+  # instead, we could fit our model like this and then take simulation draws
+  # from the projection time period:
+  fit2 <- sdmTMB(
+    catch_weight ~ 1,
+    time = "year",
+    offset = log(dogfish$area_swept),
+    extra_time = historical_years, #< does *not* include projection years
+    spatial = "off", # speed
+    spatiotemporal = "ar1",
+    data = dogfish,
+    mesh = mesh,
+    family = delta_gamma()
+  )
+  set.seed(1)
+  out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 100, uncertainty = "none")
+  none <- out
+  expect_identical(names(out), c("est1", "est2", "epsilon_st1", "epsilon_st2"))
+
+  proj_grid$est_mean1 <- apply(out$est1, 1, mean)
+  proj_grid$est_mean2 <- apply(out$est2, 1, mean)
+  proj_grid$eps_mean1 <- apply(out$epsilon_st1, 1, mean)
+  proj_grid$eps_mean2 <- apply(out$epsilon_st2, 1, mean)
+
+  # visualize:
+  ggplot(subset(proj_grid, year > 2021), aes(X, Y, fill = est_mean1)) +
+    geom_raster() +
+    facet_wrap(~year) +
+    coord_fixed() +
+    scale_fill_viridis_c(limits = c(-4, 4)) +
+    ggtitle("Projection simulation (mean)")
+
+  # or with predict() method:
+  ggplot(subset(p, year > 2021), aes(X, Y, fill = est1)) +
+    geom_raster() +
+    facet_wrap(~year) +
+    coord_fixed() +
+    scale_fill_viridis_c() +
+    labs(fill = "est_mean") +
+    scale_fill_viridis_c(limits = c(-4, 4)) +
+    ggtitle("Projection simulation (mean)")
+
+  i <- p$year == 2023
+  plot(p$est1[i], proj_grid$est_mean1[i])
+  plot(p$est2[i], proj_grid$est_mean2[i])
+
+  plot(p$epsilon_st1[i], proj_grid$eps_mean1[i])
+  plot(p$epsilon_st2[i], proj_grid$eps_mean2[i])
+
+  OK_COR <- 0.98
+  expect_gt(cor(p$est1[i], proj_grid$est_mean1[i]), OK_COR)
+  expect_gt(cor(p$est2[i], proj_grid$est_mean2[i]), OK_COR)
+  expect_gt(cor(p$epsilon_st1[i], proj_grid$eps_mean1[i]), OK_COR)
+  expect_gt(cor(p$epsilon_st2[i], proj_grid$eps_mean2[i]), OK_COR)
+
+  # test return_tmb_report:
+
+  # if instead we wanted to grab, say, the spatiotemporal random field values,
+  # we can return the report and work with the raw output ourselves:
+  set.seed(1)
+  out <- project(
+    fit2,
+    newdata = proj_grid,
+    nproj = to_project,
+    nsim = 100,
+    uncertainty = "none",
+    return_tmb_report = TRUE #< difference from above example
+  )
+
+  eps <- lapply(out, \(x) x[["epsilon_st_A_vec"]][, 1])
+  eps <- do.call(cbind, eps)
+  eps_mean <- apply(eps, 1, mean)
+  plot(eps_mean, proj_grid$eps_mean1)
+  expect_gt(cor(eps_mean, proj_grid$eps_mean1), OK_COR)
+
+  eps <- lapply(out, \(x) x[["epsilon_st_A_vec"]][, 2])
+  eps <- do.call(cbind, eps)
+  eps_mean <- apply(eps, 1, mean)
+  plot(eps_mean, proj_grid$eps_mean2)
+  expect_gt(cor(eps_mean, proj_grid$eps_mean2), OK_COR)
+
+  # test the types of uncertainty
+  set.seed(1)
+  both <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 50, uncertainty = "both")
+  set.seed(1)
+  suppressWarnings({
+    random <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 50, uncertainty = "random")
+  })
+
+  sd_both <- mean(apply(both$est1, 1, sd)[i])
+  sd_none <- mean(apply(none$est1, 1, sd)[i])
+  sd_random <- mean(apply(random$est1, 1, sd)[i], na.rm = TRUE)
+  sd_both
+  sd_none
+  sd_random
+  # expect_gt(sd_both, sd_random) # !!?
+  expect_gt(sd_both, sd_none)
+  expect_gt(sd_random, sd_none)
+})
