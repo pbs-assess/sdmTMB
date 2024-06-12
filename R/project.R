@@ -99,8 +99,9 @@
 #'
 #' set.seed(1)
 #' out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 20)
-#' est_mean <- apply(out, 1, mean) # summarize however you'd like
-#' est_se <- apply(out, 1, sd)
+#' names(out)
+#' est_mean <- apply(out$est, 1, mean) # summarize however you'd like
+#' est_se <- apply(out$est, 1, sd)
 #'
 #' # visualize:
 #' proj_grid$est_mean <- est_mean
@@ -111,27 +112,9 @@
 #'   scale_fill_viridis_c() +
 #'   ggtitle("Projection simulation (mean)")
 #'
-#' # if instead we wanted to grab, say, the spatiotemporal random field values,
-#' # we can return the report and work with the raw output ourselves:
-#'
-#' set.seed(1)
-#' out <- project(
-#'   fit2,
-#'   newdata = proj_grid, nproj = to_project,
-#'   nsim = 20, # increase this
-#'   return_tmb_report = TRUE #< difference from above example
-#' )
-#'
-#' # here are the elements we could extract:
-#' names(out[[1]])
-#'
-#' # 'epsilon_st_A_vec' are the 'epsilon_st' at every location in 'newdata':
-#' eps <- lapply(out, \(x) x[["epsilon_st_A_vec"]][, 1])
-#' eps <- do.call(cbind, eps)
-#' eps_mean <- apply(eps, 1, mean) # summarize however you'd like
-#' eps_se <- apply(eps, 1, sd)
-#'
-#' proj_grid$eps_mean <- eps_mean
+#' # visualize the spatiotemporal random fields:
+#' proj_grid$eps_mean <- apply(out$epsilon_st, 1, mean)
+#' proj_grid$eps_se <- apply(out$epsilon_st, 1, sd)
 #' ggplot(subset(proj_grid, year > 2021), aes(X, Y, fill = eps_mean)) +
 #'   geom_raster() +
 #'   facet_wrap(~year) +
@@ -139,7 +122,6 @@
 #'   coord_fixed() +
 #'   ggtitle("Projection simulation\n(spatiotemporal fields)")
 #'
-#' proj_grid$eps_se <- eps_se
 #' ggplot(subset(proj_grid, year > 2021), aes(X, Y, fill = eps_se)) +
 #'   geom_raster() +
 #'   facet_wrap(~year) +
