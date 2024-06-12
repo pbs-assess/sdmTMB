@@ -304,7 +304,7 @@ insert_pars <- function(par, nm, .n, delta_model = FALSE) {
   } else {
     fill <- rep(0, .n)
     names(fill) <- rep(nm, length(fill))
-    ret0 <- c(par[seq(last)], fill, use.names = TRUE)
+    ret <- c(par[seq(last)], fill, use.names = TRUE)
   }
   if (rn[length(rn)] != nm) { ## not at end; append on the rest of par
     ret <- c(ret, par[seq(last + 1, length(par))], use.names = TRUE)
