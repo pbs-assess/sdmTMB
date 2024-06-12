@@ -39,6 +39,7 @@ test_that("get_index works with subsets of years", {
     time = "year",
     spatiotemporal = "off",
     spatial = 'off',
+    mesh = pcod_mesh_2011,
     family = delta_gamma()
   )
   nd <- replicate_df(qcs_grid, "year", unique(pcod_2011$year))
@@ -58,6 +59,7 @@ test_that("get_index works with subsets of years", {
   index_2011 <- get_index(p_2011, bias_correct = TRUE)
   index_2 <- get_index(p_2, bias_correct = TRUE)
   index_3 <- get_index(p_3, bias_correct = TRUE)
+  cog <- get_cog(p_full)
 
   expect_equal(index_2011$est, subset(index_full, year == 2011)$est)
   expect_equal(index_2$est, subset(index_full, year %in% c(2011, 2013))$est)
@@ -70,6 +72,13 @@ test_that("get_index works with subsets of years", {
   })
   index_apply <- do.call(rbind, index_apply)
   expect_equal(index_apply, index_full)
+
+  cog <- get_cog(p_full)
+  eao <- get_eao(p_full)
+  cog2011 <- get_cog(p_2011)
+  eao2011 <- get_eao(p_2011)
+  expect_equal(eao2011$est, eao$est[eao$year == 2011])
+  expect_equal(cog2011$est, cog2011$est[cog2011$year == 2011])
 })
 
 test_that("Index integration with area vector works with extra time and possibly not all time elements in prediction data #323", {

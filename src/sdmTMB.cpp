@@ -151,6 +151,7 @@ Type objective_function<Type>::operator()()
   // Calculate total summed by year (e.g. biomass)?
   DATA_INTEGER(calc_index_totals);
   DATA_INTEGER(calc_cog);
+  DATA_INTEGER(calc_eao);
   // DATA_INTEGER(calc_quadratic_range); // DELTA TODO
   DATA_VECTOR(area_i); // area per prediction grid cell for index standardization
 
@@ -1236,7 +1237,7 @@ Type objective_function<Type>::operator()()
     vector<Type> mu_combined(n_p);
     mu_combined.setZero();
 
-    if (calc_index_totals || calc_cog) {
+    if (calc_index_totals || calc_cog || calc_eao) {
       // ------------------ Derived quantities ---------------------------------
       Type t1;
       Type t2;
@@ -1272,18 +1273,18 @@ Type objective_function<Type>::operator()()
         REPORT(link_total);
         ADREPORT(link_total);
         ADREPORT(total);
-      }
-
-      // Low-rank sparse hessian bias-correction
-      PARAMETER_VECTOR(eps_index);
-      if (eps_index.size() > 0) {
-        Type S;
-        for (int t=0; t < n_t; t++) {
-          S = total(t);
-          S = newton::Tag(S); // Set lowrank tag on S = sum(exp(x))
-          jnll += eps_index(t) * S;
+        // Low-rank sparse hessian bias-correction
+        PARAMETER_VECTOR(eps_index);
+        if (eps_index.size() > 0) {
+          Type S;
+          for (int t=0; t < n_t; t++) {
+            S = total(t);
+            S = newton::Tag(S); // Set lowrank tag on S = sum(exp(x))
+            jnll += eps_index(t) * S;
+          }
         }
       }
+
       if (calc_cog) {
         // Centre of gravity:
         vector<Type> cog_x(n_t);
@@ -1302,6 +1303,29 @@ Type objective_function<Type>::operator()()
         ADREPORT(cog_x);
         REPORT(cog_y);
         ADREPORT(cog_y);
+      }
+      if (calc_eao) { // effective area occupied: Thorson et al. 2016 doi:10.1098/rspb.2016.1853
+        vector<Type> sum_dens(n_t);
+        vector<Type> mean_dens(n_t);
+        vector<Type> eao(n_t);
+        vector<Type> log_eao(n_t);
+        sum_dens.setZero();
+        mean_dens.setZero();
+        eao.setZero();
+        for (int i = 0; i < n_p; i++) {
+          sum_dens(proj_year(i)) += mu_combined(i);
+        }
+        for (int i = 0; i < n_p; i++) {
+          // weighted.mean(density, w = density)
+          mean_dens(proj_year(i)) += mu_combined(i) * mu_combined(i) / sum_dens(proj_year(i));
+        }
+        for (int t = 0; t < n_t; t++) {
+          eao(t) = total(t) / mean_dens(t);
+          log_eao(t) = log(eao(t));
+        }
+        REPORT(eao);
+        REPORT(mean_dens);
+        ADREPORT(log_eao);
       }
     }
   }
