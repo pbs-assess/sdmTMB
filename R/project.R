@@ -221,7 +221,9 @@ project <- function(
   }
 
   delta <- is_delta(object)
-  if (delta && "off" %in% object$spatiotemporal) {
+  ## epsilon_st is always in map??
+  # if (delta && "off") {
+  # if (delta && "off" %in% object$spatiotemporal) {
     map$epsilon_st <- array(
       seq_len(length(pars$epsilon_st)),
       dim = dim(pars$epsilon_st)
@@ -232,7 +234,7 @@ project <- function(
     }
     map$epsilon_st <- as.factor(map$epsilon_st)
     new_eps <- rep(0, length(new_eps[!is.na(new_eps)]))
-  }
+  # }
 
   ## rebuild TMB object
   obj <- TMB::MakeADFun(
@@ -272,12 +274,15 @@ project <- function(
   } else {
     element_names <- c("est", "epsilon_st")
     element_internal <- c("eta_i", "epsilon_st_A_vec")
-    linear_predictor <- c(1L, 2L)
+    linear_predictor <- c(1L, 1L)
   }
   for (i in seq_along(element_names)) {
     eni <- element_names[i]
     out[[eni]] <- lapply(ret, \(x) x[[element_internal[i]]][, linear_predictor[i]])
     out[[eni]] <- do.call(cbind, out[[eni]])
+  }
+  if (all("off" == object$spatiotemporal)) {
+    out$epsilon_st1 <- out$epsilon_st2 <- out$epsilon_st <- NULL
   }
   out
 }

@@ -1,12 +1,12 @@
-test_that("project() works", {
-  library(ggplot2)
-  mesh <- make_mesh(dogfish, c("X", "Y"), cutoff = 35)
-  historical_years <- 2004:2022
-  to_project <- 1
-  future_years <- seq(max(historical_years) + 1, max(historical_years) + to_project)
-  all_years <- c(historical_years, future_years)
-  proj_grid <- replicate_df(wcvi_grid, "year", all_years)
+library(ggplot2)
+mesh <- make_mesh(dogfish, c("X", "Y"), cutoff = 35)
+historical_years <- 2004:2022
+to_project <- 1
+future_years <- seq(max(historical_years) + 1, max(historical_years) + to_project)
+all_years <- c(historical_years, future_years)
+proj_grid <- replicate_df(wcvi_grid, "year", all_years)
 
+test_that("project() works with delta models", {
   # we could fit our model like this, but for long projections, this becomes slow:
   fit <- sdmTMB(
     catch_weight ~ 1,
@@ -118,4 +118,77 @@ test_that("project() works", {
   # expect_gt(sd_both, sd_random) # !!?
   expect_gt(sd_both, sd_none)
   expect_gt(sd_random, sd_none)
+})
+
+test_that("project() works with non-delta models", {
+  fit <- sdmTMB(
+    catch_weight ~ 1,
+    time = "year",
+    offset = log(dogfish$area_swept),
+    extra_time = all_years, #< note that all years here
+    spatial = "off", # speed
+    spatiotemporal = "ar1",
+    data = dogfish,
+    mesh = mesh,
+    family = tweedie()
+  )
+  p <- predict(fit, newdata = proj_grid)
+  fit2 <- sdmTMB(
+    catch_weight ~ 1,
+    time = "year",
+    offset = log(dogfish$area_swept),
+    extra_time = historical_years, #< does *not* include projection years
+    spatial = "off", # speed
+    spatiotemporal = "ar1",
+    data = dogfish,
+    mesh = mesh,
+    family = tweedie()
+  )
+  set.seed(1)
+  out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 100, uncertainty = "none")
+  expect_identical(names(out), c("est", "epsilon_st"))
+
+  i <- p$year == 2023
+  proj_grid$est_mean <- apply(out$est, 1, mean)
+  proj_grid$eps_mean <- apply(out$epsilon_st, 1, mean)
+  plot(p$est[i], proj_grid$est_mean[i])
+  plot(p$epsilon_st[i], proj_grid$eps_mean[i])
+  expect_gt(cor(p$est[i], proj_grid$est_mean[i]), 0.98)
+  expect_gt(cor(p$epsilon_st[i], proj_grid$est_mean[i]), 0.98)
+})
+
+test_that("project() works with time-varying effects", {
+  fit <- sdmTMB(
+    catch_weight ~ 1,
+    time = "year",
+    offset = log(dogfish$area_swept),
+    time_varying = ~ 1,
+    time_varying_type = "ar1",
+    extra_time = all_years, #< note that all years here
+    spatial = "off",
+    spatiotemporal = "off",
+    data = dogfish,
+    # mesh = mesh,
+    family = tweedie()
+  )
+  p <- predict(fit, newdata = proj_grid)
+  fit2 <- sdmTMB(
+    catch_weight ~ 1,
+    time = "year",
+    offset = log(dogfish$area_swept),
+    time_varying = ~ 1,
+    time_varying_type = "ar1",
+    extra_time = historical_years, #< does *not* include projection years
+    spatial = "off",
+    spatiotemporal = "off",
+    data = dogfish,
+    # mesh = mesh,
+    family = tweedie()
+  )
+  set.seed(1)
+  out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 100, uncertainty = "none")
+  expect_identical(names(out), c("est", "epsilon_st"))
+  i <- p$year == 2023
+  hist(out$est[i,]);abline(v = mean(p$est[i]))
+  expect_equal(mean(p$est[i]), 5.983172, tolerance = 1e-3)
 })
