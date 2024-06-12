@@ -10,7 +10,6 @@ project(
   nproj = 1,
   nsim = 1,
   uncertainty = c("both", "random", "none"),
-  model = 1,
   silent = FALSE,
   sims_var = "eta_i",
   sim_re = c(0, 1, 0, 0, 1, 0),
@@ -32,8 +31,6 @@ elements.}
 \code{"both"} for the joint fixed and random effect precision matrix,
 \code{"random"} for the random effect precision matrix (holding the fixed
 effects at their MLE), or \code{"none"} for neither.}
-
-\item{model}{Linear predictor model number. Defaults to first linear predictor.}
 
 \item{silent}{Silent?}
 

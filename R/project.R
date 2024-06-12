@@ -22,7 +22,6 @@
 #'   `"both"` for the joint fixed and random effect precision matrix,
 #'   `"random"` for the random effect precision matrix (holding the fixed
 #'   effects at their MLE), or `"none"` for neither.
-#' @param model Linear predictor model number. Defaults to first linear predictor.
 #' @param silent Silent?
 #' @param sims_var Element to extract from the \pkg{TMB} report. Also see
 #'   `return_tmb_report`.
@@ -154,7 +153,6 @@ project <- function(
     nproj = 1,
     nsim = 1,
     uncertainty = c("both", "random", "none"),
-    model = 1,
     silent = FALSE,
     sims_var = "eta_i",
     sim_re = c(0, 1, 0, 0, 1, 0),
@@ -173,9 +171,6 @@ project <- function(
   assert_that(is.logical(silent))
   assert_that(length(sim_re) == 6L)
   assert_that(all(as.integer(sim_re) %in% c(0L, 1L)))
-  assert_that(is.numeric(model))
-  model <- as.integer(model)
-  assert_that(model %in% c(1L, 2L))
 
   reinitialize(object)
 
@@ -195,6 +190,7 @@ project <- function(
   } else { ## 'none'
     lp <- lpb %o% rep(1, nsim)
   }
+
 
   ## extend time keeping elements of sdmTMB object
   max_year_i <- max(object$time_lu$year_i)
@@ -274,10 +270,10 @@ project <- function(
     if (!silent) cli::cli_progress_update()
     lpx <- lp[, i, drop = TRUE]
     if (!is.null(object$time_varying)) { ## pad time-varying random effects
-      lpx <- insert_pars(lpx, "b_rw_t", .n = length(as.vector(new_b_rw_t)))
+      lpx <- insert_pars(lpx, "b_rw_t", .n = length(as.vector(new_b_rw_t)), delta = delta)
     }
     if (length(as.vector(new_eps))) { ## pad spatiotemporal random effects
-      lpx <- insert_pars(lpx, "epsilon_st", .n = length(as.vector(new_eps)))
+      lpx <- insert_pars(lpx, "epsilon_st", .n = length(as.vector(new_eps)), delta = delta)
     }
     ret[[i]] <- obj$simulate(par = lpx)
   }
@@ -285,18 +281,52 @@ project <- function(
   if (return_tmb_report) {
     return(ret)
   }
-  ret <- lapply(ret, \(x) x[[sims_var]][, model])
-  do.call(cbind, ret)
+
+  out <- list()
+  if (delta) {
+    element_names <- c("est1", "est2", "epsilon_st1", "epsilon_st2")
+    element_internal <- c("eta_i", "eta_i", "epsilon_st_A_vec", "epsilon_st_A_vec")
+    linear_predictor <- c(1L, 2L, 1L, 2L)
+  } else {
+    element_names <- c("est", "epsilon_st")
+    element_internal <- c("eta_i", "epsilon_st_A_vec")
+    linear_predictor <- c(1L, 2L)
+  }
+  for (i in seq_along(element_names)) {
+    eni <- element_names[i]
+    out[[eni]] <- lapply(ret, \(x) x[[element_internal[i]]][, linear_predictor[i]])
+    out[[eni]] <- do.call(cbind, out[[eni]])
+  }
+  out
 }
 
-insert_pars <- function(par, nm, .n) {
+insert_pars <- function(par, nm, .n, delta_model = FALSE) {
   rn <- names(par)
+  first <- min(which(rn == nm))
   last <- max(which(rn == nm))
-  fill <- rep(0, .n)
-  names(fill) <- rep(nm, length(fill))
-  ret <- c(par[seq(last)], fill, use.names = TRUE)
-  if (rn[length(rn)] != nm) { ## not at end
+  npar <- sum(rn == nm)
+  if (delta_model) { ## must inject 1st linear predictor mid-way through
+    mid <- npar / 2 ## guaranteed to be even
+    fill <- rep(0, .n)
+    names(fill) <- rep(nm, length(fill))
+    fill1 <- fill[seq(1, length(fill) / 2)] ## split fill in 2
+    fill2 <- fill[seq(length(fill) / 2 + 1, length(fill))]
+    ret <- c(
+      par[seq(1, first - 1)], ## up to our param of interest
+      par[seq(first, first + mid)], ## 1st half of param of interest
+      fill1,
+      par[seq(first + mid + 1, last)], ## 2nd half of param of interest
+      fill2,
+      use.names = TRUE
+    )
+  } else {
+    fill <- rep(0, .n)
+    names(fill) <- rep(nm, length(fill))
+    ret0 <- c(par[seq(last)], fill, use.names = TRUE)
+  }
+  if (rn[length(rn)] != nm) { ## not at end; append on the rest of par
     ret <- c(ret, par[seq(last + 1, length(par))], use.names = TRUE)
+    ret
   }
   ret
 }
