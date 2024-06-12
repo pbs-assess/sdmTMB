@@ -45,11 +45,11 @@
 #'
 #' @return
 #' Default: a list with elements `est` and `epsilon_st` (if spatiotemporal
-#' effects are present). Each list element includes a matrix with N rows equal
-#' to the number of rows in `newdata` and N columns equal to `nsim`.
-#' For delta models, the components are `est1`, `est2`, `epsilon_st`, and
-#' `epsilon_st2` for the 1st and 3nd linear predictors.
-#' In all cases, these returned values are in *link* space.
+#' effects are present). Each list element includes a matrix with rows
+#' corresponding to rows in `newdata` and `nsim` columns. For delta models, the
+#' components are `est1`, `est2`, `epsilon_st`, and `epsilon_st2` for the 1st
+#' and 2nd linear predictors. In all cases, these returned values are in *link*
+#' space.
 #'
 #' If `return_tmb_report = TRUE`, a list of \pkg{TMB} reports from `simulate()`.
 #' Run `names()` on the output to see the options.

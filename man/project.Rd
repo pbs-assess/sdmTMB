@@ -52,11 +52,11 @@ grabbing multiple elements from one set of simulations. See examples.}
 }
 \value{
 Default: a list with elements \code{est} and \code{epsilon_st} (if spatiotemporal
-effects are present). Each list element includes a matrix with N rows equal
-to the number of rows in \code{newdata} and N columns equal to \code{nsim}.
-For delta models, the components are \code{est1}, \code{est2}, \code{epsilon_st}, and
-\code{epsilon_st2} for the 1st and 3nd linear predictors.
-In all cases, these returned values are in \emph{link} space.
+effects are present). Each list element includes a matrix with rows
+corresponding to rows in \code{newdata} and \code{nsim} columns. For delta models, the
+components are \code{est1}, \code{est2}, \code{epsilon_st}, and \code{epsilon_st2} for the 1st
+and 2nd linear predictors. In all cases, these returned values are in \emph{link}
+space.
 
 If \code{return_tmb_report = TRUE}, a list of \pkg{TMB} reports from \code{simulate()}.
 Run \code{names()} on the output to see the options.
