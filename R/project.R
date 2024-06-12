@@ -256,10 +256,10 @@ project <- function(
     if (!silent) cli::cli_progress_update()
     lpx <- lp[, i, drop = TRUE]
     if (!is.null(object$time_varying)) { ## pad time-varying random effects
-      lpx <- insert_pars(lpx, "b_rw_t", .n = length(as.vector(new_b_rw_t)), delta = delta)
+      lpx <- insert_pars(lpx, "b_rw_t", .n = length(as.vector(new_b_rw_t)), delta_model = delta)
     }
     if (length(as.vector(new_eps))) { ## pad spatiotemporal random effects
-      lpx <- insert_pars(lpx, "epsilon_st", .n = length(as.vector(new_eps)), delta = delta)
+      lpx <- insert_pars(lpx, "epsilon_st", .n = length(as.vector(new_eps)), delta_model = delta)
     }
     ret[[i]] <- obj$simulate(par = lpx)
   }
