@@ -1,12 +1,15 @@
-library(ggplot2)
-mesh <- make_mesh(dogfish, c("X", "Y"), cutoff = 35)
-historical_years <- 2004:2022
-to_project <- 1
-future_years <- seq(max(historical_years) + 1, max(historical_years) + to_project)
-all_years <- c(historical_years, future_years)
-proj_grid <- replicate_df(wcvi_grid, "year", all_years)
-
 test_that("project() works with delta models", {
+  skip_on_cran()
+  skip_if_not_installed("ggplot2")
+
+  library(ggplot2)
+  mesh <- make_mesh(dogfish, c("X", "Y"), cutoff = 35)
+  historical_years <- 2004:2022
+  to_project <- 1
+  future_years <- seq(max(historical_years) + 1, max(historical_years) + to_project)
+  all_years <- c(historical_years, future_years)
+  proj_grid <- replicate_df(wcvi_grid, "year", all_years)
+
   # we could fit our model like this, but for long projections, this becomes slow:
   fit <- sdmTMB(
     catch_weight ~ 1,
@@ -121,6 +124,15 @@ test_that("project() works with delta models", {
 })
 
 test_that("project() works with non-delta models", {
+  skip_on_cran()
+
+  mesh <- make_mesh(dogfish, c("X", "Y"), cutoff = 35)
+  historical_years <- 2004:2022
+  to_project <- 1
+  future_years <- seq(max(historical_years) + 1, max(historical_years) + to_project)
+  all_years <- c(historical_years, future_years)
+  proj_grid <- replicate_df(wcvi_grid, "year", all_years)
+
   fit <- sdmTMB(
     catch_weight ~ 1,
     time = "year",
@@ -158,11 +170,19 @@ test_that("project() works with non-delta models", {
 })
 
 test_that("project() works with time-varying effects", {
+  skip_on_cran()
+  mesh <- make_mesh(dogfish, c("X", "Y"), cutoff = 35)
+  historical_years <- 2004:2022
+  to_project <- 1
+  future_years <- seq(max(historical_years) + 1, max(historical_years) + to_project)
+  all_years <- c(historical_years, future_years)
+  proj_grid <- replicate_df(wcvi_grid, "year", all_years)
+
   fit <- sdmTMB(
     catch_weight ~ 1,
     time = "year",
     offset = log(dogfish$area_swept),
-    time_varying = ~ 1,
+    time_varying = ~1,
     time_varying_type = "ar1",
     extra_time = all_years, #< note that all years here
     spatial = "off",
@@ -176,7 +196,7 @@ test_that("project() works with time-varying effects", {
     catch_weight ~ 1,
     time = "year",
     offset = log(dogfish$area_swept),
-    time_varying = ~ 1,
+    time_varying = ~1,
     time_varying_type = "ar1",
     extra_time = historical_years, #< does *not* include projection years
     spatial = "off",
@@ -189,6 +209,7 @@ test_that("project() works with time-varying effects", {
   out <- project(fit2, newdata = proj_grid, nproj = to_project, nsim = 100, uncertainty = "none")
   expect_identical(names(out), c("est"))
   i <- p$year == 2023
-  hist(out$est[i,]);abline(v = mean(p$est[i]))
+  hist(out$est[i, ])
+  abline(v = mean(p$est[i]))
   expect_equal(mean(p$est[i]), 5.983172, tolerance = 1e-3)
 })
