@@ -1033,6 +1033,8 @@ sdmTMB <- function(
   # random intercept SD priors:
   priors_sigma_G <- tidy_sigma_G_priors(.priors$sigma_G, ln_tau_G_index)
   .priors$sigma_G <- NULL
+  priors_sigma_V <- priors$sigma_V
+  .priors$sigma_V <- NULL
 
   if (!"A_st" %in% names(spde)) cli_abort("`mesh` was created with an old version of `make_mesh()`.")
   if (delta) y_i <- cbind(ifelse(y_i > 0, 1, 0), ifelse(y_i > 0, y_i, NA_real_))
@@ -1087,6 +1089,7 @@ sdmTMB <- function(
     priors_b_mean = priors_b[not_na,1],
     priors_b_Sigma = priors_b_Sigma,
     priors_sigma_G = priors_sigma_G,
+    priors_sigma_V = priors_sigma_V,
     priors = as.numeric(unlist(.priors)),
     share_range = as.integer(if (length(share_range) == 1L) rep(share_range, 2L) else share_range),
     include_spatial = as.integer(include_spatial), # changed later

@@ -184,6 +184,7 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(priors_b_n);
   DATA_IVECTOR(priors_b_index);
   DATA_MATRIX(priors_sigma_G); // random intercept SD
+  DATA_MATRIX(priors_sigma_V); // time-varying params SD
   DATA_VECTOR(priors); // all other priors as a vector
   DATA_IVECTOR(ar1_fields);
   DATA_IVECTOR(rw_fields);
@@ -1042,6 +1043,16 @@ Type objective_function<Type>::operator()()
         if (!sdmTMB::isNA(priors_sigma_G(g,0)) && !sdmTMB::isNA(priors_sigma_G(g,1))) {
           jnll -= dnorm(sigma_G(g,m), priors_sigma_G(g,0), priors_sigma_G(g,1), true);
           if (stan_flag) jnll -= log(sigma_G(g,m)); // Jacobian adjustment
+        }
+      }
+    }
+    if (priors_sigma_V.rows() != sigma_V.rows())
+      error("sigma_V prior dimensions are incorrect");
+    for (int m = 0; m < n_m; m++) {
+      for (int v = 0; v < sigma_V.rows(); v++) {
+        if (!sdmTMB::isNA(priors_sigma_V(v,0)) && !sdmTMB::isNA(priors_sigma_V(v,1))) {
+          jnll -= dgamma(sigma_V(v,m), priors_sigma_V(v,0), priors_sigma_V(v,1), true);
+          if (stan_flag) jnll -= log(sigma_V(v,m)); // Jacobian adjustment
         }
       }
     }

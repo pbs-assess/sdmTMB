@@ -4,6 +4,7 @@
 \alias{sdmTMBpriors}
 \alias{normal}
 \alias{halfnormal}
+\alias{gamma_cv}
 \alias{mvnormal}
 \alias{pc_matern}
 \title{Prior distributions}
@@ -15,12 +16,15 @@ sdmTMBpriors(
   ar1_rho = normal(NA, NA),
   tweedie_p = normal(NA, NA),
   b = normal(NA, NA),
-  sigma_G = halfnormal(NA, NA)
+  sigma_G = halfnormal(NA, NA),
+  sigma_V = gamma_cv(NA, NA)
 )
 
 normal(location = 0, scale = 1)
 
 halfnormal(location = 0, scale = 1)
+
+gamma_cv(location, cv)
 
 mvnormal(location = 0, scale = diag(length(location)))
 
@@ -48,10 +52,14 @@ parameter has support \verb{1 < tweedie_p < 2} so choose a mean appropriately.}
 
 \item{sigma_G}{\code{halfnormal()} priors for the random intercept SDs.}
 
-\item{location}{Location parameter(s).}
+\item{sigma_V}{\code{gamma_cv()} priors for any time-varying parameter SDs.}
+
+\item{location}{Location parameter(s). Typically the mean.}
 
 \item{scale}{Scale parameter. For \code{normal()}/\code{halfnormal()}: standard
 deviation(s). For \code{mvnormal()}: variance-covariance matrix.}
+
+\item{cv}{Coefficient of variation (SD/mean).}
 
 \item{range_gt}{A value one expects the spatial or spatiotemporal range is
 \strong{g}reater \strong{t}han with \code{1 - range_prob} probability.}
