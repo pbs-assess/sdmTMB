@@ -98,6 +98,30 @@ Type Link(Type eta, int link)
   return out;
 }
 
+// Modified from glmmTMB:
+/* log-prob of non-zero value in conditional distribution  */
+template<class Type>
+Type calc_log_nzprob(Type mu, Type phi, int family) {
+  Type ans, s1, s2;
+  switch (family) {
+  case truncated_nbinom1_family:
+    s2 = logspace_add(Type(0), log(phi));      // log(1. + phi(i)
+    ans = logspace_sub(Type(0), -mu / phi * s2); // 1-prob(0)
+    break;
+  case truncated_nbinom2_family:
+    s1 = log(mu);
+    // s2 := log( 1. + mu(i) / phi(i) )
+    s2 = logspace_add(Type(0), s1 - log(phi));
+    ans = logspace_sub(Type(0), -phi * s2);
+    break;
+  // case truncated_poisson_family:
+  //   ans = logspace_sub(Type(0), -mu);  // log(1-exp(-mu(i))) = P(x>0)
+  //   break;
+  default: ans = Type(0);
+  }
+  return ans;
+}
+
 // ------------------ Main TMB template ----------------------------------------
 
 template <class Type>
@@ -755,21 +779,21 @@ Type objective_function<Type>::operator()()
   Type s1, s2, s3, lognzprob, tmp_ll, ll_1, ll_2, p_mix, mix_ratio, tweedie_p, s1_large, s2_large;
 
   // calcs for mix distr. first:
-  int mix_model;
+  int pos_model;
   if (n_m > 1) {
-    mix_model = 1;
+    pos_model = 1;
   } else {
-    mix_model = 0;
+    pos_model = 0;
   }
   vector<Type> mu_i_large(n_i);
-  switch (family(mix_model)) {
+  switch (family(pos_model)) {
   case gamma_mix_family:
   case lognormal_mix_family:
   case nbinom2_mix_family: {
     p_mix = invlogit(logit_p_mix); // probability of larger event
     mix_ratio = exp(log_ratio_mix) + Type(1.); // ratio of large:small values, constrained > 1.0
     for (int i = 0; i < n_i; i++) {
-      mu_i_large(i) = exp(log(mu_i(i, mix_model)) + log(mix_ratio));  // mean of large component = mean of smaller * ratio
+      mu_i_large(i) = exp(log(mu_i(i, pos_model)) + log(mix_ratio));  // mean of large component = mean of smaller * ratio
     }
     ADREPORT(logit_p_mix);
     ADREPORT(log_ratio_mix);
@@ -1186,12 +1210,12 @@ Type objective_function<Type>::operator()()
     // for families that implement mixture models, adjust proj_eta by
     // proportion and ratio of means
     // (1 - p_mix) * mu_i(i,m) + p_mix * (mu(i,m) * mix_ratio);
-    switch (family(mix_model)) {
+    switch (family(pos_model)) {
       case gamma_mix_family:
       case lognormal_mix_family:
       case nbinom2_mix_family:
-        proj_eta.col(mix_model) = log((1. - p_mix) * exp(proj_eta.col(mix_model)) + // regular part
-               p_mix * exp(proj_eta.col(mix_model)) * mix_ratio); //large part
+        proj_eta.col(pos_model) = log((1. - p_mix) * exp(proj_eta.col(pos_model)) + // regular part
+               p_mix * exp(proj_eta.col(pos_model)) * mix_ratio); //large part
         break;
       default:
         break;
@@ -1237,6 +1261,17 @@ Type objective_function<Type>::operator()()
     vector<Type> mu_combined(n_p);
     mu_combined.setZero();
 
+    int truncated_dist;
+    switch (family(pos_model)) {
+      case truncated_nbinom1_family:
+      case truncated_nbinom2_family:
+        truncated_dist = 1;
+        break;
+      default:
+        truncated_dist = 0;
+        break;
+    }
+
     if (calc_index_totals || calc_cog || calc_eao) {
       // ------------------ Derived quantities ---------------------------------
       Type t1;
@@ -1249,7 +1284,13 @@ Type objective_function<Type>::operator()()
             // Type R1 = Type(1.) - exp(-exp(proj_eta(i,0)));
             // Type R2 = exp(proj_eta(i,0)) / R1 * exp(proj_eta(i,1))
             mu_combined(i) = exp(proj_eta(i,0) + proj_eta(i,1)); // prevent numerical issues
-          } else {
+          } else if (truncated_dist) {
+            t1 = InverseLink(proj_eta(i,0), link(0));
+            // convert from mean of *un-truncated* to mean of *truncated* distribution
+            Type log_nzprob = calc_log_nzprob(exp(proj_eta(i,1)), phi(1), family(1));
+            t2 = exp(proj_eta(i,1)) / exp(log_nzprob);
+            mu_combined(i) = t1 * t2;
+          } else  {
             t1 = InverseLink(proj_eta(i,0), link(0));
             t2 = InverseLink(proj_eta(i,1), link(1));
             mu_combined(i) = t1 * t2;

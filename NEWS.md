@@ -1,5 +1,11 @@
 # sdmTMB (development version)
 
+* Fix bug in prediction from `delta_truncated_nbinom1()` and 
+  `delta_truncated_nbinom2()` families. The positive component
+  needs to be transformed to represent the mean of the *un*truncated
+  distribution first before multiplying by the probability of a non-zero.
+  Thanks to @tom-peatman #350
+
 * Add `get_eao()` to calculate effective area occupied.
 
 # sdmTMB 0.6.0

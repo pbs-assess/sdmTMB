@@ -271,7 +271,11 @@ sdmTMB_simulate <- function(formula,
   d[["omega_s"]] <- if (all(s$omega_s_A != 0)) s$omega_s_A
   d[["epsilon_st"]] <- if (all(s$epsilon_st_A_vec != 0)) s$epsilon_st_A_vec
   d[["zeta_s"]] <- if (all(s$zeta_s_A != 0)) s$zeta_s_A
-  d[["mu"]] <- family$linkinv(s$eta_i)
+  if (any(family$family %in% c("truncated_nbinom1", "truncated_nbinom2"))) {
+    d[["mu"]] <- family$linkinv(s$eta_i, phi = phi)
+  } else {
+    d[["mu"]] <- family$linkinv(s$eta_i)
+  }
   d[["eta"]] <- s$eta_i
   d[["observed"]] <- s$y_i
   d <- do.call("data.frame", d)
