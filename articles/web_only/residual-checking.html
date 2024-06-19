@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9003</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -231,8 +231,8 @@ the fixed effects held at their MLEs. We do this with the
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.000981 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 9.81 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.000948 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 9.48 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -249,9 +249,9 @@ the fixed effects held at their MLEs. We do this with the
 <span><span class="co">#&gt; Chain 1: Iteration: 720 / 800 [ 90%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 800 / 800 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 6.699 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                4.763 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                11.462 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 6.685 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                4.757 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                11.442 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span></code></pre></div>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mcmc_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">fit_nb2</span>, type <span class="op">=</span> <span class="st">"mle-mcmc"</span>, mcmc_samples <span class="op">=</span> <span class="va">samps</span><span class="op">)</span></span>
@@ -507,8 +507,8 @@ assumptions, but is much more time intensive for large models.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.002297 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 22.97 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.002265 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 22.65 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -525,9 +525,9 @@ assumptions, but is much more time intensive for large models.</p>
 <span><span class="co">#&gt; Chain 1: Iteration: 360 / 400 [ 90%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 400 / 400 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 30.634 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                30.075 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                60.709 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 28.805 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                31.342 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                60.147 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
 <span><span class="co">#&gt; Warning: The largest R-hat is 1.08, indicating chains have not mixed.</span></span>
 <span><span class="co">#&gt; Running the chains for more iterations may help. See</span></span>
@@ -548,7 +548,7 @@ assumptions, but is much more time intensive for large models.</p>
 <span><span class="co">#&gt;  Asymptotic one-sample Kolmogorov-Smirnov test</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; data:  r3</span></span>
-<span><span class="co">#&gt; D = 0.024522, p-value = 0.5845</span></span>
+<span><span class="co">#&gt; D = 0.04293, p-value = 0.05014</span></span>
 <span><span class="co">#&gt; alternative hypothesis: two-sided</span></span></code></pre></div>
 <p>Here that gets us something similar and we would (correctly) fail to
 reject the hypothesis that <span class="math inline">\(r_3 \sim

@@ -15,7 +15,7 @@ articles:
   spatial-trend-models: web_only/spatial-trend-models.html
   threshold-models: web_only/threshold-models.html
   visreg: web_only/visreg.html
-last_built: 2024-06-19T17:18Z
+last_built: 2024-06-19T18:29Z
 urls:
   reference: https://pbs-assess.github.io/sdmTMB/reference
   article: https://pbs-assess.github.io/sdmTMB/articles
