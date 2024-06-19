@@ -151,7 +151,8 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     out$conf.low <- as.numeric(trans(out$estimate - crit * out$std.error))
     out$conf.high <- as.numeric(trans(out$estimate + crit * out$std.error))
   }
-  out$estimate <- trans(out$estimate)
+  # must wrap in as.numeric() otherwise I() leaves 'AsIs' class that affects emmeans package
+  out$estimate <- as.numeric(trans(out$estimate))
   if (exponentiate) out$std.error <- NULL
 
   out_re <- list()
