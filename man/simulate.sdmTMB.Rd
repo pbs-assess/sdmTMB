@@ -12,7 +12,7 @@
   model = c(NA, 1, 2),
   re_form = NULL,
   mcmc_samples = NULL,
-  silent = TRUE,
+  silent = FALSE,
   ...
 )
 }
