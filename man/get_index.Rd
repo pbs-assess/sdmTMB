@@ -2,6 +2,7 @@
 % Please edit documentation in R/index.R
 \name{get_index}
 \alias{get_index}
+\alias{get_index_split}
 \alias{get_cog}
 \alias{get_eao}
 \title{Extract a relative biomass/abundance index, center of gravity, or effective
@@ -13,6 +14,18 @@ get_index(
   level = 0.95,
   area = 1,
   silent = TRUE,
+  ...
+)
+
+get_index_split(
+  obj,
+  newdata,
+  bias_correct = FALSE,
+  nsplit = 1,
+  level = 0.95,
+  area = 1,
+  silent = FALSE,
+  predict_args = list(),
   ...
 )
 
@@ -29,7 +42,9 @@ get_cog(
 get_eao(obj, bias_correct = FALSE, level = 0.95, area = 1, silent = TRUE, ...)
 }
 \arguments{
-\item{obj}{Output from \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} with \code{return_tmb_object = TRUE}.}
+\item{obj}{Output from \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} with \code{return_tmb_object = TRUE}.
+Alternatively, if \code{\link[=sdmTMB]{sdmTMB()}} was called with \code{do_index = TRUE} or if using
+the helper function \code{\link[=get_index_chunks]{get_index_chunks()}}, the an object from \code{\link[=sdmTMB]{sdmTMB()}}.}
 
 \item{bias_correct}{Should bias correction be implemented \code{\link[TMB:sdreport]{TMB::sdreport()}}?}
 
@@ -42,6 +57,17 @@ internally to match.}
 \item{silent}{Silent?}
 
 \item{...}{Passed to \code{\link[TMB:sdreport]{TMB::sdreport()}}.}
+
+\item{newdata}{New data (e.g., a prediction grid by year) to pass to \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} in the case of \code{get_index_split()}.}
+
+\item{nsplit}{The number of splits to do the calculation in. For memory
+intensive operations (large grids and/or models), it can be helpful to
+do the prediction, area integration, and bias correction on subsets of
+time slices (e.g., years) instead of all at once. If \code{nsplit > 1}, this
+will usually be slower but with reduced memory use.}
+
+\item{predict_args}{A list of arguments to pass to \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} in the
+case of \code{get_index_split()}.}
 
 \item{format}{Long or wide.}
 }
@@ -70,13 +96,13 @@ area occupied
 library(ggplot2)
 
 # use a small number of knots for this example to make it fast:
-pcod_spde <- make_mesh(pcod, c("X", "Y"), n_knots = 60, type = "kmeans")
+mesh <- make_mesh(pcod, c("X", "Y"), n_knots = 60)
 
 # fit a spatiotemporal model:
 m <- sdmTMB(
  data = pcod,
  formula = density ~ 0 + as.factor(year),
- time = "year", mesh = pcod_spde, family = tweedie(link = "log")
+ time = "year", mesh = mesh, family = tweedie(link = "log")
 )
 
 # prepare a prediction grid:
@@ -86,11 +112,17 @@ nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
 predictions <- predict(m, newdata = nd, return_tmb_object = TRUE)
 
 # biomass index:
-ind <- get_index(predictions)
+ind <- get_index(predictions, bias_correct = TRUE)
 ind
 ggplot(ind, aes(year, est)) + geom_line() +
   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4) +
   ylim(0, NA)
+
+# do that in 2 chunks
+# only necessary for very large grids to save memory
+# will be slower but save memory
+# note the first argument is the model fit object:
+ind <- get_index_split(m, newdata = nd, nsplit = 2, bias_correct = TRUE)
 
 # center of gravity:
 cog <- get_cog(predictions, format = "wide")

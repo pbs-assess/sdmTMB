@@ -15,6 +15,15 @@ test_that("get_index works", {
   ind
   expect_s3_class(ind, "data.frame")
 
+  indsp <- get_index_split(m, nd, nsplit = 2)
+  expect_equal(ind, indsp)
+  expect_identical(chunk_time(c(1, 2, 3), 2), list(`1` = c(1, 2), `2` = 3))
+  expect_error(chunk_time(c(1, 2), 0))
+  expect_error(chunk_time(c(1, 2), -1))
+  expect_error(chunk_time(c(1, 2), "a"))
+  expect_error(chunk_time(c(1, 2), 0.2))
+  expect_error(indsp <- get_index_split(m, nd, nsplit = 2, predict_args = "a"), regexp = "list")
+
   ind <- get_index(predictions, bias_correct = TRUE)
   expect_s3_class(ind, "data.frame")
 

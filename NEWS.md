@@ -1,5 +1,9 @@
 # sdmTMB (development version)
 
+* At experimental function `get_index_split()`, which takes care of 
+  splitting a prediction grid by time, undoing the prediction and 
+  area-integration index calculations for each chunk to save memory.
+
 * Fig bug in `exponentiate` argument for `tidy()`. Set `conf.int = TRUE` as
   default. #353
 
