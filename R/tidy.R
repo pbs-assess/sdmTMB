@@ -45,7 +45,7 @@
 #' tidy(fit, "ran_vals")
 
 tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model = 1,
-                 conf.int = FALSE, conf.level = 0.95, exponentiate = FALSE,
+                 conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE,
                  silent = FALSE, ...) {
   effects <- match.arg(effects)
   assert_that(is.logical(exponentiate))
@@ -131,7 +131,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
   b_j_se <- se$b_j[!fe_names == "offset", drop = TRUE]
   fe_names <- fe_names[!fe_names == "offset"]
   out <- data.frame(term = fe_names, estimate = b_j, std.error = b_j_se, stringsAsFactors = FALSE)
-  if (exponentiate) out$estimate <- trans(out$estimate)
 
   if (x$tmb_data$threshold_func > 0) {
     if (x$threshold_function == 1L) {
@@ -152,6 +151,9 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     out$conf.low <- as.numeric(trans(out$estimate - crit * out$std.error))
     out$conf.high <- as.numeric(trans(out$estimate + crit * out$std.error))
   }
+  # must wrap in as.numeric() otherwise I() leaves 'AsIs' class that affects emmeans package
+  out$estimate <- as.numeric(trans(out$estimate))
+  if (exponentiate) out$std.error <- NULL
 
   out_re <- list()
   log_name <- c("log_range")

@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Fig bug in `exponentiate` argument for `tidy()`. Set `conf.int = TRUE` as
+  default. #353
+
 * Fix bug in prediction from `delta_truncated_nbinom1()` and 
   `delta_truncated_nbinom2()` families. The positive component
   needs to be transformed to represent the mean of the *un*truncated

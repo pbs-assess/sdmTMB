@@ -222,6 +222,8 @@ nbinom1 <- function(link = "log") {
   add_to_family(x)
 }
 
+utils::globalVariables(".phi") ## avoid R CMD check NOTE
+
 #' @export
 #' @examples
 #' truncated_nbinom2(link = "log")

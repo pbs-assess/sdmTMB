@@ -1308,7 +1308,13 @@ Type objective_function<Type>::operator()()
           }
           total(proj_year(i)) += mu_combined(i) * area_i(i);
         } else { // non-delta model
-          mu_combined(i) = InverseLink(proj_eta(i,0), link(0));
+          if (truncated_dist) {
+            // convert from mean of *un-truncated* to mean of *truncated* distribution
+            Type log_nzprob = calc_log_nzprob(exp(proj_eta(i,0)), phi(0), family(0));
+            mu_combined(i) = exp(proj_eta(i,0)) / exp(log_nzprob);
+          } else  {
+            mu_combined(i) = InverseLink(proj_eta(i,0), link(0));
+          }
           total(proj_year(i)) += mu_combined(i) * area_i(i);
         }
       }
