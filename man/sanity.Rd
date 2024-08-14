@@ -4,7 +4,7 @@
 \alias{sanity}
 \title{Sanity check of an sdmTMB model}
 \usage{
-sanity(object, big_sd_log10 = 2, gradient_thresh = 0.001)
+sanity(object, big_sd_log10 = 2, gradient_thresh = 0.001, silent = FALSE)
 }
 \arguments{
 \item{object}{Fitted model from \code{\link[=sdmTMB]{sdmTMB()}}.}
@@ -14,6 +14,10 @@ of 2 would indicate that standard errors greater than \code{10^2} (i.e., 100)
 should be flagged.}
 
 \item{gradient_thresh}{Gradient threshold to issue warning.}
+
+\item{silent}{Logical: suppress messages? Useful to set to \code{TRUE} if running
+large numbers of models and just interested in returning sanity list
+objects.}
 }
 \value{
 An invisible named list of checks.

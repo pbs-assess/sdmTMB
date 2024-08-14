@@ -31,7 +31,7 @@ It can be used in the same circumstances that you could use the Tweedie or a tra
 
 The Poisson-link delta formulation describes how to go from linear predictors in link space to expected values that are entered into the data likelihood. The likelihood on the first component is Bernoulli (i.e., binomial with single trials) and the likelihood of the second component can be gamma or lognormal.
 
-In sdmTMB, these families are specified as `delta_poisson_link_gamma()` and `delta_poisson_link_lognormal()`.
+In sdmTMB, these families are specified as `delta_gamma(type = "poisson-link")` and `delta_lognormal(type = "poisson-link")`.
 
 # The model
 
@@ -154,7 +154,7 @@ Instead, let's fit a Poisson-link delta-gamma model:
 
 ```{r, results='hide', echo=TRUE}
 fit_dpg <- sdmTMB(catch_weight ~ 0 + as.factor(year) + s(log_depth),
-  family = delta_poisson_link_gamma(),
+  family = delta_gamma(type = "poisson-link"),
   spatial = "on",
   mesh = mesh,
   data = dogfish,

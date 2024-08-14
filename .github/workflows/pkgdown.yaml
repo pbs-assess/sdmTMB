@@ -38,6 +38,10 @@ jobs:
         run: |
           remotes::install_github("pbs-assess/sdmTMBextra", dependencies = TRUE)
           remotes::install_cran("cowplot")
+          remotes::install_cran("rnaturalearth")
+          remotes::install_cran("rnaturalearthdata")
+          install.packages("Matrix", type = "source")
+          install.packages("TMB", type = "source")
         shell: Rscript {0}
 
       - name: Build site

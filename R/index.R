@@ -1,4 +1,5 @@
-#' Extract a relative biomass/abundance index or a center of gravity
+#' Extract a relative biomass/abundance index, center of gravity, or effective
+#' area occupied
 #'
 #' @param obj Output from [predict.sdmTMB()] with `return_tmb_object = TRUE`.
 #' @param bias_correct Should bias correction be implemented [TMB::sdreport()]?
@@ -20,9 +21,14 @@
 #' coordinates), lower and upper confidence intervals, and standard error of
 #' center of gravity coordinates.
 #'
+#' For `get_eao()`:
+#' A data frame with a columns for time, estimate (effective area occupied; EAO),
+#' lower and upper confidence intervals,
+#' log EAO, and standard error of the log EAO estimates.
+#'
 #' @references
 #'
-#' Geostatistical random-field model-based indices of abundance
+#' Geostatistical model-based indices of abundance
 #' (along with many newer papers):
 #'
 #' Shelton, A.O., Thorson, J.T., Ward, E.J., and Feist, B.E. 2014. Spatial
@@ -41,6 +47,14 @@
 #' estimating shifts in species distribution, area occupied and centre of
 #' gravity. Methods Ecol Evol 7(8): 990–1002. \doi{10.1111/2041-210X.12567}
 #'
+#' Geostatistical model-based effective area occupied:
+#'
+#' Thorson, J.T., Rindorf, A., Gao, J., Hanselman, D.H., and Winker, H. 2016.
+#' Density-dependent changes in effective area occupied for
+#' sea-bottom-associated marine fishes. Proceedings of the Royal Society B:
+#' Biological Sciences 283(1840): 20161853.
+#' \doi{10.1098/rspb.2016.1853}
+#'
 #' Bias correction:
 #'
 #' Thorson, J.T., and Kristensen, K. 2016. Implementing a generic method for
@@ -48,37 +62,55 @@
 #' population dynamics examples. Fisheries Research 175: 66–74.
 #' \doi{10.1016/j.fishres.2015.11.016}
 #'
-#' @examples
+#' @examplesIf ggplot2_installed()
 #' \donttest{
-#' # Use a small number of knots for this example to make it fast:
+#' library(ggplot2)
+#'
+#' # use a small number of knots for this example to make it fast:
 #' pcod_spde <- make_mesh(pcod, c("X", "Y"), n_knots = 60, type = "kmeans")
+#'
+#' # fit a spatiotemporal model:
 #' m <- sdmTMB(
 #'  data = pcod,
 #'  formula = density ~ 0 + as.factor(year),
 #'  time = "year", mesh = pcod_spde, family = tweedie(link = "log")
 #' )
 #'
-#' # make prediction grid:
+#' # prepare a prediction grid:
 #' nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
 #'
 #' # Note `return_tmb_object = TRUE` and the prediction grid:
 #' predictions <- predict(m, newdata = nd, return_tmb_object = TRUE)
+#'
+#' # biomass index:
 #' ind <- get_index(predictions)
-#'
-#' if (require("ggplot2", quietly = TRUE)) {
+#' ind
 #' ggplot(ind, aes(year, est)) + geom_line() +
-#'   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4)
-#' }
+#'   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4) +
+#'   ylim(0, NA)
 #'
-#' cog <- get_cog(predictions)
+#' # center of gravity:
+#' cog <- get_cog(predictions, format = "wide")
 #' cog
-#' }
+#' ggplot(cog, aes(est_x, est_y, colour = year)) +
+#'   geom_point() +
+#'   geom_linerange(aes(xmin = lwr_x, xmax = upr_x)) +
+#'   geom_linerange(aes(ymin = lwr_y, ymax = upr_y)) +
+#'   scale_colour_viridis_c()
 #'
+#' # effective area occupied:
+#' eao <- get_eao(predictions)
+#' eao
+#' ggplot(eao, aes(year, est)) + geom_line() +
+#'   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4) +
+#'   ylim(0, NA)
+#' }
 #' @export
 get_index <- function(obj, bias_correct = FALSE, level = 0.95, area = 1, silent = TRUE, ...)  {
   d <- get_generic(obj, value_name = "link_total",
     bias_correct = bias_correct, level = level, trans = exp, area = area, ...)
   names(d)[names(d) == "trans_est"] <- "log_est"
+  d$type <- "index"
   d
 }
 
@@ -86,7 +118,7 @@ get_index <- function(obj, bias_correct = FALSE, level = 0.95, area = 1, silent 
 #' @param format Long or wide.
 #' @export
 get_cog <- function(obj, bias_correct = FALSE, level = 0.95, format = c("long", "wide"), area = 1, silent = TRUE, ...)  {
-  if (bias_correct) cli_abort("Bias correction with get_cog() is temporarily disabled.")
+  if (bias_correct) cli_abort("Bias correction with get_cog() is currently disabled.")
   d <- get_generic(obj, value_name = c("cog_x", "cog_y"),
     bias_correct = bias_correct, level = level, trans = I, area = area, ...)
   d <- d[, names(d) != "trans_est", drop = FALSE]
@@ -97,18 +129,43 @@ get_cog <- function(obj, bias_correct = FALSE, level = 0.95, format = c("long", 
     y <- d[d$coord == "Y", c("est", "lwr", "upr", "se"),drop=FALSE]
     names(x) <- paste0(names(x), "_", "x")
     names(y) <- paste0(names(y), "_", "y")
-    d <- cbind(d[d$coord == "X", "year", drop=FALSE], cbind(x, y))
+    d <- cbind(d[d$coord == "X", obj$fit_obj$time, drop=FALSE], cbind(x, y))
   }
+  d$type <- "cog"
+  d
+}
+
+#' @rdname get_index
+#' @export
+get_eao <- function(obj,
+  bias_correct = FALSE,
+  level = 0.95,
+  area = 1,
+  silent = TRUE,
+  ...
+)  {
+  if (bias_correct) cli_abort("Bias correction with get_eao() is currently disabled.")
+  d <- get_generic(obj, value_name = c("log_eao"),
+    bias_correct = bias_correct, level = level, trans = exp, area = area, ...)
+  names(d)[names(d) == "trans_est"] <- "log_est"
+  d$type <- "eoa"
   d
 }
 
 get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   trans = I, area = 1, silent = TRUE, ...) {
 
-  if ((!isTRUE(obj$do_index) && value_name[1] == "link_total") || value_name[1] == "cog_x") {
+  reinitialize(obj$fit_obj)
+
+  if ((!isTRUE(obj$do_index) && value_name[1] == "link_total") || value_name[1] == "cog_x" || value_name[[1]] == "log_eao") {
     if (is.null(obj[["obj"]])) {
       cli_abort(paste0("`obj` needs to be created with ",
         "`predict(..., return_tmb_object = TRUE).`"))
+    }
+
+    if (!"report" %in% names(obj$obj)) {
+      cli_abort(c("It looks like the predict function was run without `newdata` specified.",
+        "Re-run the predict function with `newdata` specified.")) #276
     }
     test <- suppressWarnings(tryCatch(obj$obj$report(obj$obj$env$last.par),
       error = function(e) NA))
@@ -121,15 +178,11 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
       obj$fit_obj$control$parallel <- 1L
     }
 
-    # FIXME parallel setup here?
-
-    predicted_time <- sort(unique(obj$data[[obj$fit_obj$time]]))
-    fitted_time <- sort(unique(obj$fit_obj$data[[obj$fit_obj$time]]))
-    if (!all(fitted_time %in% predicted_time)) {
-      cli_abort(paste0("Some of the fitted time elements were not predicted ",
-        "on with `predict.sdmTMB()`. Please include all time elements."))
+    assert_that(!is.null(area))
+    if (length(area) > 1L) {
+      n_fakend <- if (!is.null(obj$fake_nd)) nrow(obj$fake_nd) else 0L
+      area <- c(area, rep(1, n_fakend)) # pad area with any extra time
     }
-
     if (length(area) != nrow(obj$pred_tmb_data$proj_X_ij[[1]]) && length(area) != 1L) {
       cli_abort("`area` should be of the same length as `nrow(newdata)` or of length 1.")
     }
@@ -142,6 +195,8 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
       tmb_data$calc_index_totals <- 1L
     if (value_name[1] == "cog_x")
       tmb_data$calc_cog <- 1L
+    if (value_name[1] == "log_eao")
+      tmb_data$calc_eao <- 1L
 
     pars <- get_pars(obj$fit_obj)
 
@@ -151,6 +206,7 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
     new_obj <- TMB::MakeADFun(
       data = tmb_data,
       parameters = pars,
+      profile = obj$fit_obj$control$profile,
       map = obj$fit_obj$tmb_map,
       random = obj$fit_obj$tmb_random,
       DLL = "sdmTMB",
@@ -160,7 +216,14 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
     old_par <- obj$fit_obj$model$par
     new_obj$fn(old_par) # (sometimes) need to initialize the new TMB object once!
 
-    sr <- TMB::sdreport(new_obj, bias.correct = FALSE, ...)
+    # if (value_name[[1]] == "link_total") {
+      bc <- FALSE ## done below
+    # } else if (bias_correct) {
+    #   bc <- TRUE
+    # } else {
+    #   bc <- FALSE
+    # }
+    sr <- TMB::sdreport(new_obj, bias.correct = bc, ...)
   } else {
     sr <- obj$sd_report # already done in sdmTMB(do_index = TRUE)
     pars <- get_pars(obj)
@@ -170,19 +233,24 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   }
   sr_est <- as.list(sr, "Estimate", report = TRUE)
 
-  if (bias_correct && value_name[1] == "link_total") {
+  if (bias_correct && value_name[[1]] %in% c("link_total")) {
     # extract and modify parameters
-    pars[[eps_name]] <- rep(0, length(sr_est$total))
-    new_values <- rep(0, length(sr_est$total))
+    if (value_name[[1]] == "link_total") .n <- length(sr_est$total)
+    # if (value_name[[1]] == "log_eao") .n <- length(sr_est$log_eao)
+    pars[[eps_name]] <- rep(0, .n)
+    new_values <- rep(0, .n)
     names(new_values) <- rep(eps_name, length(new_values))
     fixed <- c(obj$fit_obj$model$par, new_values)
     new_obj2 <- TMB::MakeADFun(
       data = tmb_data,
       parameters = pars,
       map = obj$fit_obj$tmb_map,
+      profile = obj$fit_obj$control$profile,
       random = obj$fit_obj$tmb_random,
       DLL = "sdmTMB",
-      silent = silent
+      silent = silent,
+      intern = FALSE, # tested as faster for most models
+      inner.control = list(sparse = TRUE, lowrank = TRUE, trace = TRUE)
     )
     gradient <- new_obj2$gr(fixed)
     corrected_vals <- gradient[names(fixed) == eps_name]
@@ -220,9 +288,24 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   }
   d$lwr <- as.numeric(trans(d$trans_est + stats::qnorm((1-level)/2) * d$se))
   d$upr <- as.numeric(trans(d$trans_est + stats::qnorm(1-(1-level)/2) * d$se))
-  d[[time_name]] <- sort(unique(obj$fit_obj$data[[time_name]]))
-  # d$max_gradient <- max(conv$final_grads)
-  # d$bad_eig <- conv$bad_eig
-  d[,c(time_name, 'est', 'lwr', 'upr', 'trans_est', 'se'),
-    drop = FALSE]
+
+  if ("pred_tmb_data" %in% names(obj)) { # standard case
+    ii <- sort(unique(obj$pred_tmb_data$proj_year))
+  } else { # fit with do_index = TRUE
+    ii <- sort(unique(obj$fit_obj$tmb_data$proj_year))
+  }
+  d <- d[d$est != 0, ,drop=FALSE] # these were not predicted on
+  d <- d[!is.na(d$est), ,drop=FALSE] # these were not predicted on
+  lu <- obj$fit_obj$time_lu
+  tt <- lu$time_from_data[match(ii, lu$year_i)]
+  d[[time_name]] <- tt
+
+  # remove padded extra time fake data:
+  if (!is.null(obj$fake_nd)) {
+    d <- d[!d[[obj$fit_obj$time]] %in% obj$fake_nd[[obj$fit_obj$time]], ,drop = FALSE]
+  }
+  if ("do_index_time_missing_from_nd" %in% names(obj$fit_obj)) {
+    d <- d[!d[[obj$fit_obj$time]] %in% obj$fit_obj$do_index_time_missing_from_nd, ,drop = FALSE]
+  }
+  d[,c(time_name, 'est', 'lwr', 'upr', 'trans_est', 'se'), drop = FALSE]
 }

@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.path = "man/figures/README-",
   out.width = "50%",
-  cache = TRUE,
+  cache = FALSE,
   autodep = TRUE,
   dpi = 72
 )
@@ -28,14 +28,26 @@ sdmTMB can be installed from CRAN:
 install.packages("sdmTMB", dependencies = TRUE)
 ```
 
-Assuming you have a [C++ compiler](https://support.posit.co/hc/en-us/articles/200486498-Package-Development-Prerequisites) installed, the development version can be installed:
+Assuming you have a [C++ compiler](https://support.posit.co/hc/en-us/articles/200486498-Package-Development-Prerequisites) installed, the development version is recommended and can be installed:
 
 ```{r, eval=FALSE}
-# install.packages("remotes")
-remotes::install_github("pbs-assess/sdmTMB", dependencies = TRUE)
+# install.packages("pak")
+pak::pkg_install("pbs-assess/sdmTMB", dependencies = TRUE)
 ```
 
 There are some extra utilities in the [sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra) package.
+
+**Importantly**, it is recommended to use an optimized BLAS library, which will result in major speed improvements for TMB (and other) models in R (e.g., often 8-fold speed increases for sdmTMB models).
+Suggested installation instructions for [Mac users](https://www.mail-archive.com/r-sig-mac@r-project.org/msg06199.html), [Linux users](https://prdm0.github.io/ropenblas/), [Windows users](https://github.com/david-cortes/R-openblas-in-windows), and [Windows users without admin privileges](https://gist.github.com/seananderson/08a51e296a854f227a908ddd365fb9c1).
+To check that you've successfully linked the optimized BLAS, start a new session and run:
+
+```r
+m <- 1e4; n <- 1e3; k <- 3e2
+X <- matrix(rnorm(m*k), nrow=m); Y <- matrix(rnorm(n*k), ncol=n)
+system.time(X %*% Y)
+```
+
+The result ('elapsed') should take a fraction of a second (e.g., 0.03 s), not multiple seconds.
 
 ## Overview
 
@@ -76,14 +88,13 @@ To cite sdmTMB in publications use:
 citation("sdmTMB")
 ```
 
-Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett.
-2022. sdmTMB: an R package for fast, flexible, and
+Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett., J.T. Thorson.
+2024. sdmTMB: an R package for fast, flexible, and
 user-friendly generalized linear mixed effects models with
 spatial and spatiotemporal random fields. bioRxiv
 2022.03.24.485545; doi: <https://doi.org/10.1101/2022.03.24.485545>
 
 A list of (known) publications that use sdmTMB can be found [here](https://github.com/pbs-assess/sdmTMB/wiki/Publications-using-sdmTMB). Please use the above citation so we can track publications.
-
 
 ## Related software
 
@@ -131,7 +142,7 @@ We start by creating a mesh object that contains matrices to apply the SPDE appr
 mesh <- make_mesh(pcod, xy_cols = c("X", "Y"), cutoff = 10)
 ```
 
-Here, `cutoff` defines the minimum allowed distance between points in the units of `X` and `Y` (km). Alternatively, we could have created any mesh via the INLA package and supplied it to `make_mesh()`. 
+Here, `cutoff` defines the minimum allowed distance between points in the units of `X` and `Y` (km). Alternatively, we could have created any mesh via the fmesher or INLA packages and supplied it to `make_mesh()`. 
 We can inspect our mesh object with the associated plotting method `plot(mesh)`.
 
 Fit a spatial model with a smoother for depth:
@@ -167,19 +178,17 @@ Run some basic sanity checks on our model:
 sanity(fit)
 ```
 
-Use the visreg package to plot the smoother effect in link space with randomized quantile partial residuals:
+Use the [ggeffects](https://github.com/strengejacke/ggeffects) package to plot the smoother effect:
 
-```{r plot-visreg-link}
-visreg::visreg(fit, xvar = "depth", xlim = c(50, 500))
+```{r plot-ggpredict-link, warning=FALSE, message=FALSE}
+ggeffects::ggpredict(fit, "depth [50:400, by=2]") |> plot()
 ```
 
-Or on the response scale:
+If the depth effect was parametric and not a penalized smoother, we could have alternatively used `ggeffects::ggeffect()` for a fast marginal effect plot.
 
-```{r plot-visreg-response, warning=FALSE}
-visreg::visreg(fit, xvar = "depth", scale = "response", xlim = c(50, 300), nn = 200)
-```
-
-Predict on new data:
+Next, we can predict on new data.
+We will use a data frame `qcs_grid` from the package, which contains all the locations (and covariates) at which we wish to predict.
+Here, these `newdata` are a grid, or raster, covering our survey.
 
 ```{r}
 p <- predict(fit, newdata = qcs_grid)
@@ -468,9 +477,6 @@ m_cv <- sdmTMB_cv(
 )
 # Sum of log likelihoods of left-out data:
 m_cv$sum_loglik
-# Expected log pointwise predictive density from left-out data:
-# (average likelihood density)
-m_cv$elpd
 ```
 
 See [`?sdmTMB_cv`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB_cv.html) for more details.

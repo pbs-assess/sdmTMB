@@ -8,7 +8,7 @@
   x,
   effects = c("fixed", "ran_pars", "ran_vals"),
   model = 1,
-  conf.int = FALSE,
+  conf.int = TRUE,
   conf.level = 0.95,
   exponentiate = FALSE,
   silent = FALSE,

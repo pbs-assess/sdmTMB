@@ -1,5 +1,4 @@
 test_that("TMB IID simulation works", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -32,7 +31,6 @@ test_that("TMB IID simulation works", {
 })
 
 test_that("TMB AR1 simulation works", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -70,7 +68,6 @@ test_that("TMB AR1 simulation works", {
 })
 
 test_that("TMB RW simulation works", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -121,7 +118,6 @@ test_that("TMB RW simulation works", {
 })
 
 test_that("TMB breakpt sims work", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -168,4 +164,22 @@ test_that("TMB breakpt sims work", {
   plot(predictor_dat$a1, sim_dat$observed)
   expect_lt(max(sim_dat$observed), 0.53)
   expect_gt(min(sim_dat$observed), -0.05)
+})
+
+test_that("simulate.sdmTMB returns the right length", {
+  skip_on_cran()
+  pcod$os <- rep(log(0.01), nrow(pcod)) # offset
+  m <- sdmTMB(
+    data = pcod,
+    formula = density ~ 0,
+    time_varying = ~ 1,
+    offset = pcod$os,
+    family = tweedie(link = "log"),
+    spatial = "off",
+    time = "year",
+    extra_time = c(2006, 2008, 2010, 2012, 2014, 2016),
+    spatiotemporal = "off"
+  )
+  s <- simulate(m, nsim = 2)
+  expect_equal(nrow(s), nrow(pcod))
 })

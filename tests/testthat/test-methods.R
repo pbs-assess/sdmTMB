@@ -1,5 +1,4 @@
 test_that("coef and vcov and confint work", {
-  skip_on_ci()
   skip_on_cran()
   fit <- sdmTMB(
     density ~ depth,
@@ -29,7 +28,6 @@ test_that("coef and vcov and confint work", {
 })
 
 test_that("various methods work", {
-  skip_on_ci()
   skip_on_cran()
   fit <- sdmTMB(
     density ~ depth,

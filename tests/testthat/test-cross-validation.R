@@ -47,8 +47,24 @@ test_that("Basic cross validation works", {
   expect_equal(class(x$models[[1]]), "sdmTMB")
 })
 
+test_that("Cross validation in parallel with globals", {
+  skip_on_cran()
+  # https://github.com/pbs-assess/sdmTMB/issues/127
+  d <- pcod
+  spde <- make_mesh(d, c("X", "Y"), cutoff = 15)
+  set.seed(2)
+  future::plan(future::multisession, workers = 2L)
+  fam <- tweedie(link = "log")
+  x <- sdmTMB_cv(
+    density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+    data = d, mesh = spde,
+    family = fam, time = "year", k_folds = 2L, future_globals = 'fam'
+  )
+  expect_s3_class(x$models[[1]], "sdmTMB")
+  future::plan(future::sequential)
+})
+
 test_that("Leave future out cross validation works", {
-  skip_on_ci()
   skip_on_cran()
   x <- sdmTMB_cv(
     present ~ 1,
@@ -76,7 +92,6 @@ test_that("Leave future out cross validation works", {
 })
 
 test_that("Cross validation with offsets works", {
-  skip_on_ci()
   skip_on_cran()
   skip_if_not_installed("future")
   skip_if_not_installed("future.apply")
@@ -214,7 +229,6 @@ test_that("Cross validation with offsets works", {
 })
 
 test_that("Delta model cross validation works", {
-  skip_on_ci()
   skip_on_cran()
   set.seed(1)
   out_tw <- sdmTMB_cv(
@@ -235,7 +249,7 @@ test_that("Delta model cross validation works", {
   out_dpg <- sdmTMB_cv(
     density ~ depth_scaled,
     data = pcod_2011, mesh = pcod_mesh_2011, spatial = "off",
-    family = delta_poisson_link_gamma(), k_folds = 2
+    family = delta_gamma(type = "poisson-link"), k_folds = 2
   )
   diff_ll <- out_dpg$sum_loglik - out_dg$sum_loglik
   expect_equal(round(diff_ll, 4), round(-4.629497, 4))

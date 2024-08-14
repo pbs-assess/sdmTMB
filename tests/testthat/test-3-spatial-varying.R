@@ -1,6 +1,5 @@
 test_that("SVC are estimated correctly for binomial and delta models", {
   skip_on_cran()
-  skip_on_ci()
   local_edition(2)
   d <- pcod
   d$year_scaled <- as.numeric(scale(d$year))
@@ -12,6 +11,13 @@ test_that("SVC are estimated correctly for binomial and delta models", {
     mesh = mesh10,
     family = binomial()
   )
+
+  p <- predict(m1)
+  pnd <- predict(m1, newdata = d)
+  expect_identical(names(p), names(pnd))
+  expect_equal(p$est, pnd$est)
+  expect_equal(p$zeta_s_year_scaled, pnd$zeta_s_year_scaled)
+
   # m1.1 <- sdmTMB(
   #   data = d,
   #   formula = present ~ 1 + year_scaled,
@@ -86,7 +92,6 @@ test_that("SVC are estimated correctly for binomial and delta models", {
 test_that("Delta model with spatially varying factor predictor and no spatiotemporal field works #237", {
   # https://github.com/pbs-assess/sdmTMB/issues/237
   skip_on_cran()
-  skip_on_ci()
   pcod_q2 <- pcod_2011
   pcod_q1 <- pcod_2011
   pcod_q1$quarter <- as.factor(1)
@@ -109,3 +114,37 @@ test_that("Delta model with spatially varying factor predictor and no spatiotemp
   expect_s3_class(m, "sdmTMB")
   expect_true(sum(is.na(m$sd_report$sd)) == 0L)
 })
+
+test_that("Factor handling for SVC models works #269", {
+  skip_on_cran()
+  set.seed(1)
+  pcod_2011$vessel <- sample(c("A", "B"), size = nrow(pcod_2011), replace = TRUE)
+  pcod_2011$vessel <- as.factor(pcod_2011$vessel)
+  fit <- sdmTMB(present ~ vessel,
+    spatial_varying = ~ vessel,
+    spatial = "on",
+    mesh = pcod_mesh_2011,
+    data = pcod_2011
+  )
+  p1 <- predict(fit, pcod_2011)
+  p2 <- predict(fit, newdata = pcod_2011)
+  expect_equal(p1$est, p2$est)
+
+  p3 <- predict(fit, newdata = pcod_2011[pcod_2011$vessel == "A", ])
+  p4 <- p2[p2$vessel == "A", ]
+  expect_equal(p3$est, p4$est)
+})
+
+test_that("SVC throws a warning if character class #269", {
+  skip_on_cran()
+  pcod_2011$vessel <- sample(c("A", "B"), size = nrow(pcod_2011), replace = TRUE)
+  expect_warning({
+    fit <- sdmTMB(present ~ vessel,
+      spatial_varying = ~ vessel,
+      spatial = "on",
+      mesh = pcod_mesh_2011,
+      data = pcod_2011
+    )
+  }, regexp = "character")
+})
+

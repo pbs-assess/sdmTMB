@@ -9,7 +9,6 @@ test_that("check_bounds works", {
 
 test_that("lower and upper work", {
   skip_on_cran()
-  skip_on_ci()
   d <- subset(pcod, year == 2011)
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 30)
   expect_warning({

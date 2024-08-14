@@ -98,6 +98,11 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'   parallel.
 #' @param use_initial_fit Fit the first fold and use those parameter values
 #'   as starting values for subsequent folds? Can be faster with many folds.
+#' @param future_globals A character vector of global variables used within
+#'   arguments if an error is returned that \pkg{future.apply} can't find an
+#'   object. This vector is appended to `TRUE` and passed to the argument
+#'   `future.globals` in [future.apply::future_lapply()]. Useful if global
+#'   objects are used to specify arguments like priors, families, etc.
 #' @param spde **Depreciated.** Use `mesh` instead.
 #' @param ... All other arguments required to run [sdmTMB()] model with the
 #'   exception of `weights`, which are used to define the folds.
@@ -108,8 +113,10 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' * `data`: Original data plus columns for fold ID, CV predicted value,
 #'           and CV log likelihood.
 #' * `models`: A list of models; one per fold.
-#' * `fold_loglik`: Sum of left-out log likelihoods per fold.
-#' * `sum_loglik`: Sum of `fold_loglik` across all left-out data.
+#' * `fold_loglik`: Sum of left-out log likelihoods per fold. More positive
+#'   values are better.
+#' * `sum_loglik`: Sum of `fold_loglik` across all left-out data. More positive
+#'   values are better.
 #' * `pdHess`: Logical vector: Hessian was invertible each fold?
 #' * `converged`: Logical: all `pdHess` `TRUE`?
 #' * `max_gradients`: Max gradient per fold.
@@ -183,23 +190,23 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'   family = tweedie(link = "log"),
 #'   fold_ids = rep(seq(1, 3), nrow(pcod))[seq(1, nrow(pcod))]
 #' )
-#'
-#' # LFOCV:
-#' m_lfocv <- sdmTMB_cv(
-#'   present ~ s(year, k = 4),
-#'   data = pcod,
-#'   mesh = mesh,
-#'   lfo = TRUE,
-#'   lfo_forecast = 2,
-#'   lfo_validations = 3,
-#'   family = binomial(),
-#'   spatiotemporal = "off",
-#'   time = "year" # must be specified
-#' )
-#'
-#' # See how the LFOCV folds were assigned:
-#' example_data <- m_lfocv$models[[1]]$data
-#' table(example_data$cv_fold, example_data$year)
+#
+# # LFOCV:
+# m_lfocv <- sdmTMB_cv(
+#   present ~ s(year, k = 4),
+#   data = pcod,
+#   mesh = mesh,
+#   lfo = TRUE,
+#   lfo_forecast = 2,
+#   lfo_validations = 3,
+#   family = binomial(),
+#   spatiotemporal = "off",
+#   time = "year" # must be specified
+# )
+#
+# # See how the LFOCV folds were assigned:
+# example_data <- m_lfocv$models[[1]]$data
+# table(example_data$cv_fold, example_data$year)
 #' }
 sdmTMB_cv <- function(
     formula, data, mesh_args, mesh = NULL, time = NULL,
@@ -209,6 +216,7 @@ sdmTMB_cv <- function(
     lfo_validations = 5,
     parallel = TRUE,
     use_initial_fit = FALSE,
+    future_globals = NULL,
     spde = deprecated(),
     ...) {
   if (k_folds < 1) cli_abort("`k_folds` must be >= 1.")
@@ -351,9 +359,6 @@ sdmTMB_cv <- function(
         weights = weights, previous_fit = if (use_initial_fit) fit1 else NULL
       ), dot_args)
       object <- do.call(sdmTMB, args)
-      # if (max(object$gradients) > 0.01) {
-      # object <- run_extra_optimization(object, nlminb_loops = 1L, newton_loops = 0L)
-      # }
     }
 
     if (lfo) {
@@ -412,12 +417,16 @@ sdmTMB_cv <- function(
       "Running fits with `future.apply()`.\n",
       "Set a parallel `future::plan()` to use parallel processing."
     )
-    if (lfo) {
-      out <- future.apply::future_lapply(seq_len(lfo_validations), fit_func, future.seed = TRUE)
+    if (!is.null(future_globals)) {
+      fg <- structure(TRUE, add = future_globals)
     } else {
-      out <- future.apply::future_lapply(seq_len(k_folds), fit_func, future.seed = TRUE)
+      fg <- TRUE
     }
-    # out <- lapply(seq_len(k_folds), fit_func)
+    if (lfo) {
+      out <- future.apply::future_lapply(seq_len(lfo_validations), fit_func, future.seed = TRUE, future.globals = fg)
+    } else {
+      out <- future.apply::future_lapply(seq_len(k_folds), fit_func, future.seed = TRUE, future.globals = fg)
+    }
   } else {
     message(
       "Running fits sequentially.\n",

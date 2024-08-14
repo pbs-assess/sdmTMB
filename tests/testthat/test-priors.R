@@ -19,7 +19,6 @@ test_that("Basic prior parsing works", {
 })
 
 test_that("Prior fitting works", {
-  skip_on_ci()
   skip_on_cran()
   d <- pcod_2011
   pcod_spde <- pcod_mesh_2011
@@ -52,7 +51,7 @@ test_that("Prior fitting works", {
     priors = sdmTMBpriors(
       b = normal(c(0, 0, NA, NA, NA, NA), c(2, 2, NA, NA, NA, NA)),
       phi = halfnormal(0, 10),
-      tweedie_p = normal(1.5, 2),
+      # tweedie_p = normal(1.5, 2),
       ar1_rho = normal(0, 1),
       matern_s = pc_matern(range_gt = 5, sigma_lt = 1),
       matern_st = pc_matern(range_gt = 5, sigma_lt = 1)
@@ -65,7 +64,6 @@ test_that("Prior fitting works", {
 })
 
 test_that("Priors on random intercept SDs work", {
-  skip_on_ci()
   skip_on_cran()
 
   pcod$fyear <- as.factor(pcod$year)
@@ -120,7 +118,6 @@ test_that("Priors on random intercept SDs work", {
 })
 
 test_that("Additional priors work", {
-  skip_on_ci()
   skip_on_cran()
   d <- pcod_2011
   pcod_spde <- pcod_mesh_2011

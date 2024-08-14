@@ -25,16 +25,19 @@ nobs.sdmTMB <- function(object, ...) {
 #' @export
 #' @noRd
 fitted.sdmTMB <- function(object, ...) {
+
+  if (!"offset" %in% names(object))
+    cli_abort("It looks like this was fit with an older version of sdmTMB. Try sdmTMB:::update_version(fit).")
   if (isTRUE(object$family$delta)) {
     inv1 <- object$family[[1]]$linkinv
-    p <- predict(object, type = "link", offset = object$tmb_data$offset_i)
+    p <- predict(object, type = "link", offset = object$offset)
     p1 <- inv1(p$est1)
     inv2 <- object$family[[2]]$linkinv
     p2 <- inv2(p$est2)
     p1 * p2
   } else {
     inv <- object$family$linkinv
-    inv(predict(object, type = "link", offset = object$tmb_data$offset_i)$est)
+    inv(predict(object, type = "link", offset = object$offset)$est)
   }
 }
 
@@ -112,15 +115,9 @@ confint.sdmTMB <- function(object, parm, level = 0.95, ...) {
 logLik.sdmTMB <- function(object, ...) {
   val <- -object$model$objective
   nobs <- nobs.sdmTMB(object)
-  df <- length(object$model$par) # fixed effects only
-  if (isTRUE(object$reml)) {
-    s <- as.list(object$sd_report, "Estimate")
-    n_bs <- 0 # smoother FE
-    if (s$bs[1] != 0) { # starting value if mapped off
-      n_bs <- length(s$bs)
-    }
-    df <- df + length(s$b_j) + length(s$b_j2) + n_bs
-  }
+  lpb <- names(object$tmb_obj$env$last.par.best)
+  ran <- c("omega_s", "epsilon_st", "zeta_s", "b_rw_t", "epsilon_re", "RE", "b_smooth")
+  df <- sum(!lpb %in% ran)
   structure(val,
     nobs = nobs, nall = nobs, df = df,
     class = "logLik"
@@ -145,6 +142,11 @@ extractAIC.sdmTMB <- function(fit, scale, k = 2, ...) {
 #' @importFrom stats family
 #' @export
 family.sdmTMB <- function (object, ...) {
+  if (.has_delta_attr(object)) {
+    which_model <- attr(object, "delta_model_predict")
+    if (is.na(which_model)) which_model <- 2L # combined; for link
+    return(object$family[[which_model]])
+  }
   if ("visreg_model" %in% names(object)) {
     return(object$family[[object$visreg_model]])
   } else {
@@ -184,8 +186,20 @@ df.residual.sdmTMB <- function(object, ...) {
   nobs(object) - length(object$model$par)
 }
 
+.has_delta_attr <- function(x) {
+  "delta_model_predict" %in% names(attributes(x))
+}
+
 #' @export
 formula.sdmTMB <- function (x, ...) {
+  if (.has_delta_attr(x)) {
+    which_model <- attr(x, "delta_model_predict")
+    if (!identical(x$formula[[1]], x$formula[[2]]) && is.na(which_model)) {
+      cli_abort("Delta component formulas are not the same but ggeffects::ggpredict() is trying to predict on the combined model. For now, predict on one or the other component, or keep the formulas the same, or write your own prediction and plot code.")
+    }
+    if (is.na(which_model)) which_model <- 1L # combined take 1!?
+    return(x$formula[[which_model]])
+  }
   if (length(x$formula) > 1L) {
     if ("visreg_model" %in% names(x)) {
       return(x$formula[[x$visreg_model]])
@@ -231,6 +245,12 @@ terms.sdmTMB <- function(x, ...) {
 Effect.sdmTMB <- function(focal.predictors, mod, ...) {
   if (!requireNamespace("effects", quietly = TRUE)) {
     cli_abort("Please install the effects package")
+  }
+
+  if (is_delta(mod)) {
+    msg <- paste0("Effect() and ggeffects::ggeffect() do not yet work with ",
+      "sdmTMB delta/hurdle models. Please use ggeffects::ggpredict() instead.")
+    cli_abort(msg)
   }
 
   vc <- vcov(mod)

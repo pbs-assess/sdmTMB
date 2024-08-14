@@ -119,6 +119,12 @@ sdmTMB_simulate <- function(formula,
   if (!is.null(previous_fit)) stop("`previous_fit` is deprecated. See `simulate.sdmTMB()`", call. = FALSE)
   if (!is.null(previous_fit)) mesh <- previous_fit$spde
   if (!is.null(previous_fit)) data <- previous_fit$data
+  # if (!missing(seed)) {
+  #   msg <- c("The `seed` argument may be deprecated in the future.",
+  #     "We recommend instead setting the seed manually with `set.seed()` prior to calling `sdmTMB_simulate()`.",
+  #     "We have encountered some situations where setting the seed via this argument does not have the intended effect.")
+  #   cli_inform(msg)
+  # }
 
   assert_that(tweedie_p > 1 && tweedie_p < 2 || is.null(tweedie_p))
   assert_that(df >= 1 || is.null(df))
@@ -265,7 +271,11 @@ sdmTMB_simulate <- function(formula,
   d[["omega_s"]] <- if (all(s$omega_s_A != 0)) s$omega_s_A
   d[["epsilon_st"]] <- if (all(s$epsilon_st_A_vec != 0)) s$epsilon_st_A_vec
   d[["zeta_s"]] <- if (all(s$zeta_s_A != 0)) s$zeta_s_A
-  d[["mu"]] <- family$linkinv(s$eta_i)
+  if (any(family$family %in% c("truncated_nbinom1", "truncated_nbinom2"))) {
+    d[["mu"]] <- family$linkinv(s$eta_i, phi = phi)
+  } else {
+    d[["mu"]] <- family$linkinv(s$eta_i)
+  }
   d[["eta"]] <- s$eta_i
   d[["observed"]] <- s$y_i
   d <- do.call("data.frame", d)
@@ -296,10 +306,12 @@ sdmTMB_simulate <- function(formula,
 #' @param object sdmTMB model
 #' @param nsim Number of response lists to simulate. Defaults to 1.
 #' @param seed Random number seed
-#' @param params Whether the parameters used in the simulation should come from
-#'   the Maximum Likelihood Estimate (`"mle"`) or from new draws from the joint
-#'   precision matrix assuming they are multivariate normal distributed
-#'   (`"mvn"`).
+#' @param type How parameters should be treated. `"mle-eb"`: fixed effects
+#'   are at their maximum likelihood (MLE) estimates  and random effects are at
+#'   their empirical Bayes (EB) estimates. `"mle-mvn"`: fixed effects are at
+#'   their MLEs but random effects are taken from a single approximate sample.
+#'   This latter option is a suggested approach if these simulations will be
+#'   used for goodness of fit testing (e.g., with the DHARMa package).
 #' @param re_form `NULL` to specify a simulation conditional on fitted random
 #'   effects (this only simulates observation error). `~0` or `NA` to simulate
 #'   new random affects (smoothers, which internally are random effects, will
@@ -309,6 +321,7 @@ sdmTMB_simulate <- function(formula,
 #' @param mcmc_samples An optional matrix of MCMC samples. See `extract_mcmc()`
 #'   in the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
 #'   package.
+#' @param silent Logical. Silent?
 #' @param ... Extra arguments (not used)
 #' @return Returns a matrix; number of columns is `nsim`.
 #' @importFrom stats simulate
@@ -342,22 +355,28 @@ sdmTMB_simulate <- function(formula,
 #' sum(s1 == 0)/length(s1)
 #' sum(dat$observed == 0) / length(dat$observed)
 #'
-#' # simulate with the parameters drawn from the joint precision matrix:
-#' s2 <- simulate(fit, nsim = 1, params = "MVN")
+#' # simulate with random effects sampled from their approximate posterior
+#' s2 <- simulate(fit, nsim = 1, params = "mle-mvn")
+#' # these may be useful in conjunction with DHARMa simulation-based residuals
 #'
 #' # simulate with new random fields:
 #' s3 <- simulate(fit, nsim = 1, re_form = ~ 0)
-#'
-#' # simulate with new random fields and new parameter draws:
-#' s3 <- simulate(fit, nsim = 1, params = "MVN", re_form = ~ 0)
 
 simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
-                            params = c("mle", "mvn"),
+                            type = c("mle-eb", "mle-mvn"),
                             model = c(NA, 1, 2),
-                            re_form = NULL, mcmc_samples = NULL, ...) {
+                            re_form = NULL, mcmc_samples = NULL, silent = TRUE, ...) {
   set.seed(seed)
-  params <- tolower(params)
-  params <- match.arg(params, choices = c("mle", "mvn"))
+  type <- tolower(type)
+  type <- match.arg(type)
+  assert_that(as.integer(model[[1]]) %in% c(NA_integer_, 1L, 2L))
+
+  # need to re-attach environment if in fresh session
+  reinitialize(object)
+
+  if (is.null(object$tmb_random) && type == "mle-mvn") {
+    type <- "mle-eb" # no random effects to sample from
+  }
 
   # re_form stuff
   conditional_re <- !(!is.null(re_form) && ((re_form == ~0) || identical(re_form, NA)))
@@ -375,35 +394,43 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
 
   # params MLE/MVN stuff
   if (is.null(mcmc_samples)) {
-    if (params == "MVN") {
-      new_par <- rmvnorm_prec(object$tmb_obj$env$last.par.best, object$sd_report, nsim)
-    } else {
+    if (type == "mle-mvn") {
+      new_par <- .one_sample_posterior(object)
+    } else if (type == "mle-eb") {
       new_par <- object$tmb_obj$env$last.par.best
+    } else {
+      cli_abort("`type` type not defined")
     }
   } else {
     new_par <- mcmc_samples
   }
 
   # do the sim
-  if (params == "MVN" || !is.null(mcmc_samples)) { # we have a matrix
+  if (!is.null(mcmc_samples)) { # we have a matrix
     ret <- lapply(seq_len(nsim), function(i) {
+      if (!silent) cat("-")
       newobj$simulate(par = new_par[, i, drop = TRUE], complete = FALSE)$y_i
     })
   } else {
-    ret <- lapply(seq_len(nsim), function(i) newobj$simulate(par = new_par, complete = FALSE)$y_i)
+    ret <- lapply(seq_len(nsim), function(i) {
+      if (!silent) cat("-")
+      newobj$simulate(par = new_par, complete = FALSE)$y_i
+      })
   }
 
   if (isTRUE(object$family$delta)) {
     if (is.na(model[[1]])) {
-      ret <- lapply(ret, function(.x) ifelse(!is.na(.x[,2]), .x[,2], .x[,1]))
+      ret <- lapply(ret, function(.x) .x[,1] * .x[,2])
     } else if (model[[1]] == 1) {
       ret <- lapply(ret, function(.x) .x[,1])
     } else if (model[[1]] == 2) {
-      ret <- lapply(ret, function(.x) ifelse(!is.na(.x[,2]), .x[,2], NA))
+      ret <- lapply(ret, function(.x) .x[,2])
     } else {
       cli_abort("`model` argument isn't valid; should be NA, 1, or 2.")
     }
   }
 
-  do.call(cbind, ret)
+  ret <- do.call(cbind, ret)
+  attr(ret, "type") <- type
+  ret
 }

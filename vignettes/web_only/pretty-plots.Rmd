@@ -12,7 +12,9 @@ vignette: >
 ```{r, include = FALSE}
 sf_installed <- require("sf", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
-pkgs <- sf_installed && ggplot_installed
+rnaturalearth_installed <- require("rnaturalearth", quietly = TRUE)
+rnaturalearthdata_installed <- require("rnaturalearthdata", quietly = TRUE)
+pkgs <- sf_installed && ggplot_installed && rnaturalearth_installed && rnaturalearthdata_installed
 EVAL <- identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -32,14 +34,14 @@ library(sdmTMB)
 First, we will download coastline data for our region. 
 We will use a medium resolution version. For applied situations on finer scales, you may want to use `scale = "large"`.
 
-```{r, eval=FALSE}
+```{r}
 map_data <- rnaturalearth::ne_countries(
   scale = "medium",
   returnclass = "sf", country = "canada")
 # Crop the polygon for plotting and efficiency:
 # st_bbox(map_data) # find the rough coordinates
 bc_coast <- suppressWarnings(suppressMessages(
-  st_crop(map_data,
+  sf::st_crop(map_data,
     c(xmin = -134, ymin = 46, xmax = -120, ymax = 57))))
 ```
 

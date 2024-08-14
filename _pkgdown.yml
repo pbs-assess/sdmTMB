@@ -14,6 +14,8 @@ reference:
   - hbll_s_grid
   - wcvi_grid
   - get_pars
+  - delta_poisson_link_gamma
+  - delta_poisson_link_lognormal
 
 - title: 'Mesh construction'
   desc: |
@@ -36,7 +38,9 @@ reference:
   - sdmTMBcontrol
   - run_extra_optimization
   - residuals.sdmTMB
+  - dharma_residuals
   - replicate_df
+  - set_delta_model
 
 - title: 'Families'
   desc: |
@@ -55,8 +59,6 @@ reference:
   - delta_lognormal
   - delta_truncated_nbinom1
   - delta_truncated_nbinom2
-  - delta_poisson_link_gamma
-  - delta_poisson_link_lognormal
   - gamma_mix
   - lognormal_mix
   - nbinom2_mix

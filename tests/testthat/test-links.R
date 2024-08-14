@@ -1,6 +1,5 @@
 test_that("cloglog works", {
   skip_on_cran()
-  skip_on_ci()
 
   m1 <- sdmTMB(present ~ 1, family = binomial(link = "cloglog"),
     spatial = "off", mesh = pcod_mesh_2011, data = pcod_2011)

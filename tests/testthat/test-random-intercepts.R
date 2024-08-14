@@ -259,3 +259,68 @@ test_that("random slopes throw an error", {
   )
   expect_s3_class(fit, "sdmTMB")
 })
+
+test_that("Random intercept classes in predict() are checked appropriately", {
+  skip_on_cran()
+  set.seed(1)
+
+  pcod$year_f <- as.factor(pcod$year)
+  pcod_yrf_as_num <- pcod_yrf_as_chr <- pcod
+  pcod_yrf_as_num$year_f <- as.numeric(pcod$year)
+  pcod_yrf_as_chr$year_f <- as.character(pcod$year)
+
+  m_yrf_re <- sdmTMB(
+    data = pcod,
+    formula = density ~ poly(log(depth), 2) + (1 | year_f),
+    family = tweedie(link = "log"),
+    spatial = "off"
+  )
+
+  expect_error(
+    p8 <- predict(m_yrf_re, newdata = pcod_yrf_as_num),
+    regexp = "newdata"
+  )
+
+  expect_error(
+    p9 <- predict(m_yrf_re, newdata = pcod_yrf_as_chr),
+    regexp = "newdata"
+  )
+
+  expect_error(
+    p10 <- predict(m_yrf_re, newdata = pcod_yrf_as_num, re_form = NA),
+    regexp = "newdata"
+  )
+
+  p11 <- predict(m_yrf_re, newdata = pcod_yrf_as_num,  # This should work
+                 re_form = NA, re_form_iid = NA)
+
+  expect_s3_class(p11, "tbl_df")
+})
+
+test_that("Random intercepts are incorporated into est_non_rf1 and est_non_rf2 correctly #342", {
+  ## test based on example by @tom-peatman #342
+  skip_on_cran()
+  skip_on_ci()
+  pcod_2011$year <- factor(pcod_2011$year)
+  ## fit model with random intercepts for year in both model components
+  fit <- sdmTMB(
+    density ~ (1 | year),
+    spatial = "off",
+    data = pcod_2011, mesh = pcod_mesh_2011,
+    family = delta_gamma(link1 = "logit", link2 = "log")
+  )
+  ## fitted random intercepts
+  t1 <- tidy(fit, effects = "ran_vals", model = 1)
+  t2 <- tidy(fit, effects = "ran_vals", model = 2)
+  expect_equal(t1$estimate, c(-0.24066, 0.33083, 0.20459, -0.29288), tolerance = 0.001)
+  expect_equal(t2$estimate, c(0.17724, -0.14142, 0.11862, -0.16844), tolerance = 0.001)
+
+  ## data frame to get predictions for each year (at a specific location and depth)
+  new_dat <- expand.grid(
+    X = mean(pcod_2011$X), Y = mean(pcod_2011$Y),
+    depth = mean(pcod_2011$depth), year = unique(pcod_2011$year)
+  )
+  p <- predict(fit, newdata = new_dat)
+  expect_equal(p$est_non_rf1, c(-0.40011, 0.17137, 0.04514, -0.45234), tolerance = 0.001)
+  expect_equal(p$est_non_rf2, c(4.6455, 4.32684, 4.58688, 4.29982), tolerance = 0.001)
+})

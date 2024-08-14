@@ -36,9 +36,8 @@ long-format data frame. The format matches the format in the \pkg{tidybayes}
 \code{spread_draws()} and \code{gather_draws()} functions.
 }
 \examples{
-m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2,
-  data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie(),
-  spatiotemporal = "AR1", time = "year")
+m <- sdmTMB(density ~ depth_scaled,
+  data = pcod_2011, mesh = pcod_mesh_2011, family = tweedie())
 head(spread_sims(m, nsim = 10))
 head(gather_sims(m, nsim = 10))
 samps <- gather_sims(m, nsim = 1000)

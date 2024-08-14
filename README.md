@@ -1,19 +1,21 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# sdmTMB <a href='https://github.com/pbs-assess/sdmTMB'><img src='man/figures/logo-sdmTMB.png' style="float:right; height:139px;" /></a>
+# sdmTMB <a href='https://github.com/pbs-assess/sdmTMB'><img src='man/figures/logo-sdmTMB.png' align="right" style="height:139px;"/></a>
 
 > Spatial and spatiotemporal GLMMs with TMB
 
 <!-- badges: start -->
 [![](https://www.r-pkg.org/badges/version/sdmTMB)](https://cran.r-project.org/package=sdmTMB)
+[![Documentation](https://img.shields.io/badge/documentation-sdmTMB-orange.svg?colorB=E91E63)](https://pbs-assess.github.io/sdmTMB/)
 [![R-CMD-check](https://github.com/pbs-assess/sdmTMB/workflows/R-CMD-check/badge.svg)](https://github.com/pbs-assess/sdmTMB/actions)
-[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
-[![Coverage
-status](https://codecov.io/gh/pbs-assess/sdmTMB/branch/master/graph/badge.svg)](https://codecov.io/github/pbs-assess/sdmTMB?branch=master)
+[![Codecov test coverage](https://codecov.io/gh/pbs-assess/sdmTMB/branch/main/graph/badge.svg)](https://app.codecov.io/gh/pbs-assess/sdmTMB?branch=main)
+[![downloads](http://cranlogs.r-pkg.org/badges/sdmTMB)](https://cranlogs.r-pkg.org/)
 <!-- badges: end -->
 
-sdmTMB is an R package that fits spatial and spatiotemporal predictive-process GLMMs (Generalized Linear Mixed Effects Models) using Template Model Builder ([TMB](https://github.com/kaskr/adcomp)), [R-INLA](https://www.r-inla.org/), and Gaussian Markov random fields. One common application is for species distribution models (SDMs). See also the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html).
+sdmTMB is an R package that fits spatial and spatiotemporal GLMMs (Generalized Linear Mixed Effects Models) using Template Model Builder ([TMB](https://github.com/kaskr/adcomp)), [R-INLA](https://www.r-inla.org/), and Gaussian Markov random fields. One common application is for species distribution models (SDMs). See the [documentation site](https://pbs-assess.github.io/sdmTMB/) and a preprint:
+
+Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett, J.T. Thorson. 2024. sdmTMB: an R package for fast, flexible, and user-friendly generalized linear mixed effects models with spatial and spatiotemporal random fields. bioRxiv 2022.03.24.485545; doi: https://doi.org/10.1101/2022.03.24.485545
 
 ## Table of contents
 
@@ -53,15 +55,28 @@ install.packages("sdmTMB", dependencies = TRUE)
 
 Assuming you have a [C++
 compiler](https://support.posit.co/hc/en-us/articles/200486498-Package-Development-Prerequisites)
-installed, the development version can be installed:
+installed, the development version is recommended and can be installed:
 
 ``` r
-# install.packages("remotes")
-remotes::install_github("pbs-assess/sdmTMB", dependencies = TRUE)
+# install.packages("pak")
+pak::pkg_install("pbs-assess/sdmTMB", dependencies = TRUE)
 ```
 
 There are some extra utilities in the
 [sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra) package.
+
+**Importantly**, it is recommended to use an optimized BLAS library, which will result in major speed improvements for TMB (and other) models in R (e.g., often 8-fold speed increases for sdmTMB models).
+Suggested installation instructions for [Mac users](https://www.mail-archive.com/r-sig-mac@r-project.org/msg06199.html), [Linux users](https://prdm0.github.io/ropenblas/), [Windows users](https://github.com/david-cortes/R-openblas-in-windows), and [Windows users without admin privileges](https://gist.github.com/seananderson/08a51e296a854f227a908ddd365fb9c1).
+To check that you've successfully linked the optimized BLAS, start a new session and run:
+
+``` r
+m <- 1e4; n <- 1e3; k <- 3e2
+X <- matrix(rnorm(m*k), nrow=m); Y <- matrix(rnorm(n*k), ncol=n)
+system.time(X %*% Y)
+```
+
+The result (‘elapsed’) should take a fraction of a second (e.g., 0.03
+s), not multiple seconds.
 
 ## Overview
 
@@ -134,10 +149,10 @@ To cite sdmTMB in publications use:
 citation("sdmTMB")
 ```
 
-Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett. 2022. sdmTMB:
-an R package for fast, flexible, and user-friendly generalized linear
-mixed effects models with spatial and spatiotemporal random fields.
-bioRxiv 2022.03.24.485545; doi:
+Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett., J.T. Thorson.
+2024. sdmTMB: an R package for fast, flexible, and user-friendly
+generalized linear mixed effects models with spatial and spatiotemporal
+random fields. bioRxiv 2022.03.24.485545; doi:
 <https://doi.org/10.1101/2022.03.24.485545>
 
 A list of (known) publications that use sdmTMB can be found
@@ -217,8 +232,8 @@ mesh <- make_mesh(pcod, xy_cols = c("X", "Y"), cutoff = 10)
 
 Here, `cutoff` defines the minimum allowed distance between points in
 the units of `X` and `Y` (km). Alternatively, we could have created any
-mesh via the INLA package and supplied it to `make_mesh()`. We can
-inspect our mesh object with the associated plotting method
+mesh via the fmesher or INLA packages and supplied it to `make_mesh()`.
+We can inspect our mesh object with the associated plotting method
 `plot(mesh)`.
 
 Fit a spatial model with a smoother for depth:
@@ -239,13 +254,13 @@ Print the model fit:
 fit
 #> Spatial model fit by ML ['sdmTMB']
 #> Formula: density ~ s(depth)
-#> Mesh: mesh
+#> Mesh: mesh (isotropic covariance)
 #> Data: pcod
 #> Family: tweedie(link = 'log')
 #>  
 #>             coef.est coef.se
 #> (Intercept)     2.37    0.21
-#> sdepth          6.17   25.17
+#> sdepth          0.62    2.53
 #> 
 #> Smooth terms:
 #>            Std. Dev.
@@ -253,7 +268,7 @@ fit
 #> 
 #> Dispersion parameter: 12.69
 #> Tweedie p: 1.58
-#> Matern range: 16.39
+#> Matérn range: 16.39
 #> Spatial SD: 1.86
 #> ML criterion at convergence: 6402.136
 #> 
@@ -277,14 +292,17 @@ tidy(fit, conf.int = TRUE)
 #>   term        estimate std.error conf.low conf.high
 #>   <chr>          <dbl>     <dbl>    <dbl>     <dbl>
 #> 1 (Intercept)     2.37     0.215     1.95      2.79
+```
+
+``` r
 tidy(fit, effects = "ran_pars", conf.int = TRUE)
 #> # A tibble: 4 × 5
 #>   term      estimate std.error conf.low conf.high
-#>   <chr>        <dbl> <lgl>        <dbl>     <dbl>
-#> 1 range        16.4  NA            9.60     28.0 
-#> 2 phi          12.7  NA           11.9      13.5 
-#> 3 sigma_O       1.86 NA            1.48      2.34
-#> 4 tweedie_p     1.58 NA            1.56      1.60
+#>   <chr>        <dbl>     <dbl>    <dbl>     <dbl>
+#> 1 range        16.4    4.47        9.60     28.0 
+#> 2 phi          12.7    0.406      11.9      13.5 
+#> 3 sigma_O       1.86   0.218       1.48      2.34
+#> 4 tweedie_p     1.58   0.00998     1.56      1.60
 ```
 
 Run some basic sanity checks on our model:
@@ -302,24 +320,23 @@ sanity(fit)
 #> ✔ Range parameter doesn't look unreasonably large
 ```
 
-Use the visreg package to plot the smoother effect in link space with
-randomized quantile partial residuals:
+Use the [ggeffects](https://github.com/strengejacke/ggeffects) package
+to plot the smoother effect:
 
 ``` r
-visreg::visreg(fit, xvar = "depth", xlim = c(50, 500))
+ggeffects::ggpredict(fit, "depth [50:400, by=2]") |> plot()
 ```
 
-<img src="man/figures/README-plot-visreg-link-1.png" width="50%" />
+<img src="man/figures/README-plot-ggpredict-link-1.png" width="50%" />
 
-Or on the response scale:
+If the depth effect was parametric and not a penalized smoother, we
+could have alternatively used `ggeffects::ggeffect()` for a fast
+marginal effect plot.
 
-``` r
-visreg::visreg(fit, xvar = "depth", scale = "response", xlim = c(50, 300), nn = 200)
-```
-
-<img src="man/figures/README-plot-visreg-response-1.png" width="50%" />
-
-Predict on new data:
+Next, we can predict on new data. We will use a data frame `qcs_grid`
+from the package, which contains all the locations (and covariates) at
+which we wish to predict. Here, these `newdata` are a grid, or raster,
+covering our survey.
 
 ``` r
 p <- predict(fit, newdata = qcs_grid)
@@ -333,7 +350,7 @@ head(p)
     #>       X     Y depth   est est_non_rf est_rf omega_s
     #>   <dbl> <dbl> <dbl> <dbl>      <dbl>  <dbl>   <dbl>
     #> 1   456  5636  347. -3.06      -3.08 0.0172  0.0172
-    #> 2   458  5636  223.  2.03       1.99 0.0459  0.0459
+    #> 2   458  5636  223.  2.03       1.99 0.0460  0.0460
     #> 3   460  5636  204.  2.89       2.82 0.0747  0.0747
 
 ``` r
@@ -477,10 +494,6 @@ grid_yrs <- replicate_df(qcs_grid, "year", unique(pcod$year))
 grid_yrs$year_scaled <- (grid_yrs$year - mean(pcod$year)) / sd(pcod$year)
 p <- predict(fit, newdata = grid_yrs) %>% 
   subset(year == 2011) # any year
-#> Warning: The installed version of sdmTMB is newer than the version that was used to fit
-#> this model. It is possible new parameters have been added to the TMB model
-#> since you fit this model and that prediction will fail. We recommend you fit
-#> and predict from an sdmTMB model with the same version.
 ggplot(p, aes(X, Y, fill = zeta_s_year_scaled)) + geom_raster() +
   scale_fill_gradient2()
 ```
@@ -557,6 +570,9 @@ head(sim_dat)
 #> 4 0.0303     0  -0.282  2.05 0.718        2             1
 #> 5 0.0404     0  -0.325  1.96 0.675        3             1
 #> 6 0.0505     0  -0.367  1.88 0.633        2             1
+```
+
+``` r
 
 # sample 200 points for fitting:
 set.seed(1)
@@ -663,13 +679,12 @@ m_cv <- sdmTMB_cv(
 )
 #> Running fits with `future.apply()`.
 #> Set a parallel `future::plan()` to use parallel processing.
+```
+
+``` r
 # Sum of log likelihoods of left-out data:
 m_cv$sum_loglik
-#> [1] -7122.779
-# Expected log pointwise predictive density from left-out data:
-# (average likelihood density)
-m_cv$elpd
-#> [1] -1.005114
+#> [1] -6756.28
 ```
 
 See
@@ -740,6 +755,9 @@ tidy(fit_sdmTMB)
 #> 1 (Intercept)              -0.426    0.0573
 #> 2 poly(depth_scaled, 2)1  -31.7      3.03  
 #> 3 poly(depth_scaled, 2)2  -66.9      4.09
+```
+
+``` r
 broom::tidy(fit_glm)
 #> # A tibble: 3 × 5
 #>   term                   estimate std.error statistic  p.value

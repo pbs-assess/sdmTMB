@@ -4,8 +4,8 @@
 
 #' Predict from an sdmTMB model
 #'
-#' Make predictions from an sdmTMB model; can predict on the original or new
-#' data.
+#' Make predictions from an \pkg{sdmTMB} model; can predict on the original or
+#' new data.
 #'
 #' @param object A model fitted with [sdmTMB()].
 #' @param newdata A data frame to make predictions on. This should be a data
@@ -29,32 +29,36 @@
 #'   predictions. `~0` or `NA` for population-level predictions. No other
 #'   options (e.g., some but not all random intercepts) are implemented yet.
 #'   Only affects predictions with `newdata`. This *does* affects [get_index()].
-#' @param nsim Experimental: If `> 0`, simulate from the joint precision
+#' @param nsim If `> 0`, simulate from the joint precision
 #'   matrix with `nsim` draws. Returns a matrix of `nrow(data)` by `nsim`
 #'   representing the estimates of the linear predictor (i.e., in link space).
-#'   Can be useful for deriving uncertainty on predictions (e.g., `apply(x, 1,
-#'   sd)`) or propagating uncertainty. This is currently the fastest way to
-#'   characterize uncertainty on predictions in space with sdmTMB.
+#'   Can be useful for deriving uncertainty on predictions
+#'   (e.g., `apply(x, 1, sd)`) or propagating uncertainty. This is currently
+#'   the fastest way to characterize uncertainty on predictions in space with
+#'   sdmTMB.
 #' @param sims_var Experimental: Which TMB reported variable from the model
 #'   should be extracted from the joint precision matrix simulation draws?
-#'   Defaults to the link-space predictions. Options include: `"omega_s"`,
+#'   Defaults to link-space predictions. Options include: `"omega_s"`,
 #'   `"zeta_s"`, `"epsilon_st"`, and `"est_rf"` (as described below).
 #'   Other options will be passed verbatim.
 #' @param tmbstan_model Deprecated. See `mcmc_samples`.
 #' @param mcmc_samples See `extract_mcmc()` in the
 #'   \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package for
-#'   more details and the Bayesian vignette. If specified, the predict function
-#'   will return a matrix of a similar form as if `nsim > 0` but representing
-#'   Bayesian posterior samples from the Stan model.
+#'   more details and the
+#'   \href{https://pbs-assess.github.io/sdmTMB/articles/web_only/bayesian.html}{Bayesian vignette}.
+#'   If specified, the predict function will return a matrix of a similar form
+#'   as if `nsim > 0` but representing Bayesian posterior samples from the Stan
+#'   model.
 #' @param model Type of prediction if a delta/hurdle model *and* `nsim > 0` or
 #'   `mcmc_samples` is supplied: `NA` returns the combined prediction from both
 #'   components on the link scale for the positive component; `1` or `2` return
 #'   the first or second model component only on the link or response scale
-#'   depending on the argument `type`.
+#'   depending on the argument `type`. For regular prediction from delta models,
+#'   both sets of predictions are returned.
 #' @param offset A numeric vector of optional offset values. If left at default
 #'   `NULL`, the offset is implicitly left at 0.
 #' @param return_tmb_report Logical: return the output from the TMB
-#'   report? For regular prediction this is all the reported variables
+#'   report? For regular prediction, this is all the reported variables
 #'   at the MLE parameter values. For `nsim > 0` or when `mcmc_samples`
 #'   is supplied, this is a list where each element is a sample and the
 #'   contents of each element is the output of the report for that sample.
@@ -154,7 +158,8 @@
 #'
 #' # Visualizing a marginal effect ----------------------------------------
 #'
-#' # See the visreg package or the ggeffects::ggeffect() function
+#' # See the visreg package or the ggeffects::ggeffect() or
+#' # ggeffects::ggpredict() functions
 #' # To do this manually:
 #'
 #' nd <- data.frame(depth_scaled =
@@ -175,7 +180,7 @@
 #'  data = d, formula = density ~ 0 + as.factor(year) + s(depth_scaled, k = 5),
 #'  time = "year", mesh = mesh, family = tweedie(link = "log")
 #' )
-#' if (require("visreg", quietly = TRUE)) { # just for help docs
+#' if (require("visreg", quietly = TRUE)) {
 #'   visreg::visreg(m_gam, "depth_scaled")
 #' }
 #'
@@ -272,6 +277,10 @@ predict.sdmTMB <- function(object, newdata = NULL,
     xy_cols <- object$spde$xy_cols
   }
 
+  if (object$version < numeric_version("0.5.0.9001")) {
+    cli_abort("This model was fit with an older version of sdmTMB before internal handling of `extra_time` was simplified. Please refit your model before predicting on it (or install version 0.5.0 or 0.5.0.9000).")
+  }
+
   if (is_present(tmbstan_model)) {
     deprecate_stop("0.2.2", "predict.sdmTMB(tmbstan_model)", "predict.sdmTMB(mcmc_samples)")
   }
@@ -288,8 +297,13 @@ predict.sdmTMB <- function(object, newdata = NULL,
     sims <- nsim
   }
 
+  reinitialize(object)
+
   assert_that(model[[1]] %in% c(NA, 1, 2),
     msg = "`model` argument not valid; should be one of NA, 1, 2")
+  if (missing(model)) {
+    if (.has_delta_attr(object)) model <- attr(object, "delta_model_predict") # for ggpredict
+  }
   model <- model[[1]]
   type <- match.arg(type)
   # FIXME parallel setup here?
@@ -305,7 +319,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
   # places where we force newdata:
   nd_arg_was_null <- FALSE
   if (is.null(newdata)) {
-    if (is_delta(object) || nsim > 0 || type == "response" || !is.null(mcmc_samples) || se_fit || !is.null(re_form) || !is.null(re_form_iid)) {
+    if (is_delta(object) || nsim > 0 || type == "response" || !is.null(mcmc_samples) || se_fit || !is.null(re_form) || !is.null(re_form_iid) || !is.null(offset) || isTRUE(object$family$delta)) {
       newdata <- object$data
       nd_arg_was_null <- TRUE # will be used to carry over the offset
     }
@@ -341,6 +355,20 @@ predict.sdmTMB <- function(object, newdata = NULL,
           "Did you miss specifying the argument `xy_cols` to match your data?",
           "The newer `make_mesh()` (vs. `make_spde()`) takes care of this for you."))
 
+    if (isFALSE(pop_pred) && !no_spatial) {
+      xy_orig <- object$data[,xy_cols]
+      xy_nd <- newdata[,xy_cols]
+      all_outside <- function(x1, x2) {
+        min(x1) > max(x2) || max(x1) < min(x2)
+      }
+      if (all_outside(xy_orig[,1], xy_nd[,1]) || all_outside(xy_orig[,2], xy_nd[,2])) {
+        cli_warn(c("`newdata` prediction coordinates appear to be ouside the fitted coordinates.",
+          "This will likely cause all your random field values to be returned as 0.",
+          "Check your coordinates including any conversions between projections.",
+          "If working with UTMs, are both in km or m?"))
+      }
+    }
+
     if (object$time == "_sdmTMB_time") newdata[[object$time]] <- 0L
     if (visreg_df) {
       if (!object$time %in% names(newdata)) {
@@ -349,33 +377,14 @@ predict.sdmTMB <- function(object, newdata = NULL,
     }
 
     check_time_class(object, newdata)
-    original_time <- as.numeric(sort(unique(object$data[[object$time]])))
-    new_data_time <- as.numeric(sort(unique(newdata[[object$time]])))
+    original_time <- object$time_lu$time_from_data
+    new_data_time <- unique(newdata[[object$time]])
 
     if (!all(new_data_time %in% original_time))
       cli_abort(c("Some new time elements were found in `newdata`. ",
-        "For now, make sure only time elements from the original dataset are present.",
         "If you would like to predict on new time elements,",
         "see the `extra_time` argument in `?sdmTMB`.")
       )
-
-    if (!identical(new_data_time, original_time) & isFALSE(pop_pred)) {
-      if (isTRUE(return_tmb_object) || nsim > 0) {
-        cli_warn(c("The time elements in `newdata` are not identical to those in the original dataset.",
-          "This is normally fine, but may create problems for index standardization."))
-      }
-      missing_time <- original_time[!original_time %in% new_data_time]
-      fake_nd_list <- list()
-      fake_nd <- newdata[1L,,drop=FALSE]
-      for (.t in seq_along(missing_time)) {
-        fake_nd[[object$time]] <- missing_time[.t]
-        fake_nd_list[[.t]] <- fake_nd
-      }
-      fake_nd <- do.call("rbind", fake_nd_list)
-      newdata[["_sdmTMB_fake_nd_"]] <- FALSE
-      fake_nd[["_sdmTMB_fake_nd_"]] <- TRUE
-      newdata <- rbind(newdata, fake_nd)
-    }
 
     # If making population predictions (with standard errors), we don't need
     # to worry about space, so fill in dummy values if the user hasn't made any:
@@ -416,9 +425,11 @@ predict.sdmTMB <- function(object, newdata = NULL,
         loc = as.matrix(unique_newdata[, xy_cols, drop = FALSE]))
     } else {
       proj_mesh <- object$spde$A_st # fake
-      newdata[[xy_cols[1]]] <- NA_real_ # fake
-      newdata[[xy_cols[2]]] <- NA_real_ # fake
-      newdata[["sdm_spatial_id"]] <- NA_integer_ # fake
+      if (!all(object$spde$xy_cols %in% names(newdata))) {
+        newdata[[xy_cols[1]]] <- NA_real_ # fake
+        newdata[[xy_cols[2]]] <- NA_real_ # fake
+      }
+      newdata[["sdm_spatial_id"]] <- rep(0L, nrow(newdata)) # fake
     }
 
     if (length(object$formula) == 1L) {
@@ -449,6 +460,9 @@ predict.sdmTMB <- function(object, newdata = NULL,
 
     if (isFALSE(pop_pred_iid)) {
       for (i in seq_along(RE_names)) {
+        # checking newdata random intercept columns are factors
+        assert_that(is.factor(newdata[[RE_names[i]]]),
+                    msg = sprintf("Random effect group column `%s` in newdata is not a factor.", RE_names[i]))
         levels_fit <- levels(object$data[[RE_names[i]]])
         levels_nd <- levels(newdata[[RE_names[i]]])
         if (sum(!levels_nd %in% levels_fit)) {
@@ -486,29 +500,37 @@ predict.sdmTMB <- function(object, newdata = NULL,
         cli_abort("Prediction offset vector does not equal number of rows in prediction dataset.")
     }
     tmb_data$proj_offset_i <- if (!is.null(offset)) offset else rep(0, nrow(proj_X_ij[[1]]))
-    if (nd_arg_was_null) tmb_data$proj_offset_i <- tmb_data$offset_i
+    # if (nd_arg_was_null) tmb_data$proj_offset_i <- tmb_data$offset_i
     tmb_data$proj_X_threshold <- thresh[[1]]$X_threshold # TODO DELTA HARDCODED TO 1
     tmb_data$area_i <- if (length(area) == 1L) rep(area, nrow(proj_X_ij[[1]])) else area
     tmb_data$proj_mesh <- proj_mesh
     tmb_data$proj_X_ij <- proj_X_ij
     tmb_data$proj_X_rw_ik <- proj_X_rw_ik
     tmb_data$proj_RE_indexes <- proj_RE_indexes
-    tmb_data$proj_year <- make_year_i(nd[[object$time]])
     tmb_data$proj_mvrw_cat_i <- if (is.null(object$mvrw_category)) numeric(0L) else make_groups(nd[[object$mvrw_category]], prev_levels = levels(object$data[[object$mvrw_category]]))
+    time_lu <- object$time_lu
+    tmb_data$proj_year <- time_lu$year_i[match(nd[[object$time]], time_lu$time_from_data)] # was make_year_i(nd[[object$time]])
     tmb_data$proj_lon <- newdata[[xy_cols[[1]]]]
     tmb_data$proj_lat <- newdata[[xy_cols[[2]]]]
     tmb_data$calc_se <- as.integer(se_fit)
     tmb_data$pop_pred <- as.integer(pop_pred)
     tmb_data$exclude_RE <- exclude_RE
-    # tmb_data$calc_index_totals <- as.integer(!se_fit)
-    # tmb_data$calc_cog <- as.integer(!se_fit)
     tmb_data$proj_spatial_index <- newdata$sdm_spatial_id
     tmb_data$proj_Zs <- sm$Zs
     tmb_data$proj_Xs <- sm$Xs
 
     # SVC:
     if (!is.null(object$spatial_varying)) {
-      z_i <- model.matrix(object$spatial_varying_formula, newdata)
+      # recreate original data SVC formula stuff:
+      z_i_orig <- model.matrix(object$spatial_varying_formula, object$data)
+      svc_contrasts <- attr(z_i_orig, which = "contrasts")
+      ttsv <- stats::terms(object$spatial_varying_formula)
+      mfsv <- model.frame(ttsv, object$data)
+      mtsv <- attr(mfsv, "terms")
+      xlevelssv <- stats::.getXlevels(mtsv, mfsv)
+      # apply it to prediction data:
+      mfsv_new <- model.frame(ttsv, newdata, xlev = xlevelssv)
+      z_i <- model.matrix(ttsv, mfsv_new, contrasts.arg = svc_contrasts)
       .int <- grep("(Intercept)", colnames(z_i))
       if (sum(.int) > 0) z_i <- z_i[,-.int,drop=FALSE]
     } else {
@@ -531,9 +553,9 @@ predict.sdmTMB <- function(object, newdata = NULL,
       return(tmb_data)
     }
 
-    # TODO: when fields are a RW, visreg call crashes R here...
     new_tmb_obj <- TMB::MakeADFun(
       data = tmb_data,
+      profile = object$control$profile,
       parameters = get_pars(object),
       map = object$tmb_map,
       random = object$tmb_random,
@@ -804,10 +826,6 @@ predict.sdmTMB <- function(object, newdata = NULL,
         "supply `newdata`. In the meantime you could supply your original data frame ",
         "to the `newdata` argument."))
     }
-    if (isTRUE(object$family$delta)) {
-      cli_abort(c("Delta model prediction not implemented for `newdata = NULL` yet.",
-          "Please provide your data to `newdata` and include the `offset` vector if needed."))
-    }
     nd <- object$data
     lp <- object$tmb_obj$env$last.par.best
     # object$tmb_obj$fn(lp) # call once to update internal structures?
@@ -818,14 +836,10 @@ predict.sdmTMB <- function(object, newdata = NULL,
     # IID and RW effects are baked into fixed effects for `newdata` in above code:
     nd$est_non_rf <- r$eta_fixed_i[,1] + r$eta_rw_i[,1] + r$eta_iid_re_i[,1] # DELTA FIXME
     nd$est_rf <- r$omega_s_A[,1] + r$epsilon_st_A_vec[,1] # DELTA FIXME
-    if (!is.null(object$spatial_varying_formula))
-      cli_abort(c("Prediction with `newdata = NULL` is not supported with spatially varying coefficients yet.",
-          "Please provide your data to `newdata`."))
-    # + r$zeta_s_A
     nd$omega_s <- r$omega_s_A[,1]# DELTA FIXME
-    # for (z in seq_len(dim(r$zeta_s_A)[2])) { # SVC:
-    #   nd[[paste0("zeta_s_", object$spatial_varying[z])]] <- r$zeta_s_A[,z,1]
-    # }
+    for (z in seq_len(dim(r$zeta_s_A)[2])) { # SVC: # DELTA FIXME
+      nd[[paste0("zeta_s_", object$spatial_varying[z])]] <- r$zeta_s_A[,z,1]
+    }
     nd$epsilon_st <- r$epsilon_st_A_vec[,1]# DELTA FIXME
     obj <- object
   }
@@ -859,10 +873,6 @@ predict.sdmTMB <- function(object, newdata = NULL,
   nd[["_sdmTMB_time"]] <- NULL
   if (no_spatial) nd[["est_rf"]] <- NULL
   if (no_spatial) nd[["est_non_rf"]] <- NULL
-  if ("_sdmTMB_fake_nd_" %in% names(nd)) {
-    nd <- nd[!nd[["_sdmTMB_fake_nd_"]],,drop=FALSE]
-  }
-  nd[["_sdmTMB_fake_nd_"]] <- NULL
   row.names(nd) <- NULL
 
   if (return_tmb_object) {

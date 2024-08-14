@@ -3,7 +3,6 @@ test_that("Link/response type works", {
   # see also test-delta-population-predictions.R
   # https://github.com/pbs-assess/sdmTMB/issues/110
   skip_on_cran()
-  skip_on_ci()
 
   fit <- sdmTMB(
     density ~ 1,
@@ -65,7 +64,6 @@ test_that("Link/response type works", {
 
 test_that("Response prediction works as reported in https://github.com/pbs-assess/sdmTMB/issues/160#issuecomment-1380920333", {
   skip_on_cran()
-  skip_on_ci()
 
   fit_dg <- sdmTMB(density ~ 1 + s(depth),
     data = pcod_2011,

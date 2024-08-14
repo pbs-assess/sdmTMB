@@ -1,6 +1,5 @@
 test_that("Test that droplevels matches lm()", {
   skip_on_cran()
-  skip_on_ci()
   skip_if_not_installed("glmmTMB")
 
   set.seed(1)
@@ -35,7 +34,6 @@ test_that("Test that droplevels matches lm()", {
 
 test_that("Test that droplevels matches glmmTMB on (1 | factor)", {
   skip_on_cran()
-  skip_on_ci()
   skip_if_not_installed("glmmTMB")
 
   d <- pcod
@@ -89,7 +87,6 @@ test_that("Test that droplevels matches glmmTMB on (1 | factor)", {
 
 test_that("re_form_iid is not specified but new levels in newdata doesn't blow up", {
   skip_on_cran()
-  skip_on_ci()
   skip_if_not_installed("glmmTMB")
 
   sub <- pcod[pcod$year != 2017, ]

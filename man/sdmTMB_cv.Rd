@@ -17,6 +17,7 @@ sdmTMB_cv(
   lfo_validations = 5,
   parallel = TRUE,
   use_initial_fit = FALSE,
+  future_globals = NULL,
   spde = deprecated(),
   ...
 )
@@ -58,6 +59,12 @@ parallel.}
 \item{use_initial_fit}{Fit the first fold and use those parameter values
 as starting values for subsequent folds? Can be faster with many folds.}
 
+\item{future_globals}{A character vector of global variables used within
+arguments if an error is returned that \pkg{future.apply} can't find an
+object. This vector is appended to \code{TRUE} and passed to the argument
+\code{future.globals} in \code{\link[future.apply:future_lapply]{future.apply::future_lapply()}}. Useful if global
+objects are used to specify arguments like priors, families, etc.}
+
 \item{spde}{\strong{Depreciated.} Use \code{mesh} instead.}
 
 \item{...}{All other arguments required to run \code{\link[=sdmTMB]{sdmTMB()}} model with the
@@ -69,8 +76,10 @@ A list:
 \item \code{data}: Original data plus columns for fold ID, CV predicted value,
 and CV log likelihood.
 \item \code{models}: A list of models; one per fold.
-\item \code{fold_loglik}: Sum of left-out log likelihoods per fold.
-\item \code{sum_loglik}: Sum of \code{fold_loglik} across all left-out data.
+\item \code{fold_loglik}: Sum of left-out log likelihoods per fold. More positive
+values are better.
+\item \code{sum_loglik}: Sum of \code{fold_loglik} across all left-out data. More positive
+values are better.
 \item \code{pdHess}: Logical vector: Hessian was invertible each fold?
 \item \code{converged}: Logical: all \code{pdHess} \code{TRUE}?
 \item \code{max_gradients}: Max gradient per fold.
@@ -152,22 +161,5 @@ m_cv3 <- sdmTMB_cv(
   family = tweedie(link = "log"),
   fold_ids = rep(seq(1, 3), nrow(pcod))[seq(1, nrow(pcod))]
 )
-
-# LFOCV:
-m_lfocv <- sdmTMB_cv(
-  present ~ s(year, k = 4),
-  data = pcod,
-  mesh = mesh,
-  lfo = TRUE,
-  lfo_forecast = 2,
-  lfo_validations = 3,
-  family = binomial(),
-  spatiotemporal = "off",
-  time = "year" # must be specified
-)
-
-# See how the LFOCV folds were assigned:
-example_data <- m_lfocv$models[[1]]$data
-table(example_data$cv_fold, example_data$year)
 }
 }

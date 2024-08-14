@@ -114,6 +114,8 @@ sdmTMBcontrol <- function(
     parallel <- as.integer(parallel)
   }
 
+  assert_that(is.logical(profile) || is.character(profile))
+
   out <- named_list(
     eval.max,
     iter.max,
@@ -164,6 +166,23 @@ get_convergence_diagnostics <- function(sd_report) {
 make_year_i <- function(x) {
   x <- as.integer(as.factor(x))
   x - min(x)
+}
+
+make_time_lu <- function(time_vec_from_data, full_time_vec = sort(unique(time_vec_from_data))) {
+  if (!all(time_vec_from_data %in% full_time_vec)) {
+    stop("All time elements not in full time vector.")
+  }
+  lu <- unique(
+    data.frame(
+      year_i = make_year_i(full_time_vec),
+      time_from_data = full_time_vec,
+      stringsAsFactors = FALSE
+    )
+  )
+  lu$extra_time <- !lu$time_from_data %in% time_vec_from_data
+  lu <- lu[order(lu$time_from_data),]
+  row.names(lu) <- NULL
+  lu
 }
 
 check_offset <- function(formula) {
@@ -232,7 +251,9 @@ expand_time <- function(df, time_slices, time_column, weights, offset, upr) {
   df[["__weight_sdmTMB__"]] <- if (!is.null(weights)) weights else  1
   df[["__sdmTMB_offset__"]] <- if (!is.null(offset)) offset else 0
   df[["__dcens_upr__"]] <- if (!is.null(upr)) upr else NA_real_
+  df[["__fake_data__"]] <- FALSE
   fake_df <- df[1L, , drop = FALSE]
+  fake_df[["__fake_data__"]] <- TRUE
   fake_df[["__weight_sdmTMB__"]] <- 0 # IMPORTANT: this turns off these data in the likelihood
   missing_years <- time_slices[!time_slices %in% df[[time_column]]]
   fake_df <- do.call("rbind", replicate(length(missing_years), fake_df, simplify = FALSE))
@@ -517,4 +538,127 @@ get_censored_upper <- function(
   high[prop_removed >= pstar] <- high[prop_removed >= pstar] +
     upper_bound[prop_removed >= pstar]
   round(high)
+}
+
+#' Set delta model for [ggeffects::ggpredict()]
+#'
+#' Set a delta model component to predict from with [ggeffects::ggpredict()].
+#'
+#' @param x An [sdmTMB::sdmTMB()] model fit with a delta family such as
+#'   [sdmTMB::delta_gamma()].
+#' @param model Which delta/hurdle model component to predict/plot with.
+#'   `NA` does the combined prediction, `1` does the binomial part, and `2`
+#'   does the positive part.
+#'
+#' @details
+#' A complete version of the examples below would be:
+#'
+#' ```
+#' fit <- sdmTMB(density ~ poly(depth_scaled, 2), data = pcod_2011,
+#'   spatial = "off", family = delta_gamma())
+#'
+#' # binomial part:
+#' set_delta_model(fit, model = 1) |>
+#'   ggeffects::ggpredict("depth_scaled [all]")
+#'
+#' # gamma part:
+#' set_delta_model(fit, model = 2) |>
+#'   ggeffects::ggpredict("depth_scaled [all]")
+#'
+#' # combined:
+#' set_delta_model(fit, model = NA) |>
+#'   ggeffects::ggpredict("depth_scaled [all]")
+#' ```
+#'
+#' But cannot be run on CRAN until a version of \pkg{ggeffects} > 1.3.2
+#' is on CRAN. For now, you can install the GitHub version of \pkg{ggeffects}.
+#' <https://github.com/strengejacke/ggeffects>.
+#'
+#' @returns
+#' The fitted model with a new attribute named `delta_model_predict`.
+#' We suggest you use `set_delta_model()` in a pipe (as in the examples)
+#' so that this attribute does not persist. Otherwise, [predict.sdmTMB()]
+#' will choose this model component by default. You can also remove the
+#' attribute yourself after:
+#'
+#' ```
+#' attr(fit, "delta_model_predict") <- NULL
+#' ```
+#'
+#' @examplesIf require("ggeffects", quietly = TRUE)
+#' fit <- sdmTMB(density ~ poly(depth_scaled, 2), data = pcod_2011,
+#'   spatial = "off", family = delta_gamma())
+#'
+#' # binomial part:
+#' set_delta_model(fit, model = 1)
+#'
+#' # gamma part:
+#' set_delta_model(fit, model = 2)
+#'
+#' # combined:
+#' set_delta_model(fit, model = NA)
+#' @export
+set_delta_model <- function(x, model = c(NA, 1, 2)) {
+  assertthat::assert_that(model[[1]] %in% c(NA, 1, 2),
+    msg = "`model` argument not valid; should be one of NA, 1, 2")
+  attr(x, "delta_model_predict") <- model[[1]]
+  x
+}
+
+get_fitted_time <- function(x) {
+  if (!"fitted_time" %in% names(x))
+    cli_abort("Missing 'fitted_time' element in fitted object. Please refit the model with a current version of sdmTMB.")
+  x$fitted_time
+}
+
+reload_model <- function(object) {
+  if ("parlist" %in% names(object)) {
+    # tinyVAST does this to be extra sure... I've found one case where it was needed
+    obj <- TMB::MakeADFun(
+      data = object$tmb_data,
+      parameters = object$parlist, #!! important part
+      map = object$tmb_map,
+      random = object$tmb_random,
+      DLL = "sdmTMB",
+      profile = object$control$profile
+    )
+    obj$env$beSilent()
+    nll_new <- obj$fn(object$model$par) #!! important: need to eval once (restores last.par.best etc.)
+    if (abs(nll_new - object$model$objective) > 0.01) {
+      cli_abort(c("Model fit is not identical to recorded value:", "
+        something is not working as expected"))
+    }
+    object$tmb_obj <- obj
+    object
+  } else {
+    cli_abort("`reload_model()` only works with models fit with sdmTMB 0.5.0.9006 and higher.")
+  }
+}
+
+reinitialize <- function(x) {
+  # replacement for TMB:::isNullPointer; modified from glmmTMB source
+  # https://github.com/glmmTMB/glmmTMB/issues/651#issuecomment-912920255
+  # https://github.com/glmmTMB/glmmTMB/issues/651#issuecomment-914542795
+  is_null_pointer <- function(x) {
+    x <- x$tmb_obj$env$ADFun$ptr
+    attributes(x) <- NULL
+    identical(x, new("externalptr"))
+  }
+  if (is_null_pointer(x)) {
+    x$tmb_obj$env$beSilent()
+    x$tmb_obj$fn(x$model$par)
+    # x$tmb_obj$retape()
+    if ("parlist" %in% names(x) && "last.par.best" %in% names(x)) {
+      if (!identical(x$tmb_obj$env$last.par.best, x$last.par.best)) {
+        cli_warn(c("Detected a potential issue reloading a saved sdmTMB model.",
+          "Please run `fit <- sdmTMB:::reload_model(fit)`,",
+          "where `fit` is your fitted model."))
+      }
+    }
+  }
+}
+
+chunk_time <- function(x, chunks) {
+  ny <- length(x)
+  split(x, rep(seq_len(chunks), each = ceiling(ny/chunks))[seq_along(x)])
 }

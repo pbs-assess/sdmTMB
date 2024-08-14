@@ -103,7 +103,6 @@ sdmTMBpriors <- function(
 #' @examples
 #' normal(0, 1)
 normal <- function(location = 0, scale = 1) {
-  # assert_that(all(location[!is.na(location)] == 0))
   assert_that(all(scale[!is.na(scale)] > 0))
   assert_that(length(location) == length(scale))
   assert_that(sum(is.na(location)) == sum(is.na(scale)))
@@ -190,7 +189,7 @@ mvnormal <- function(location = 0, scale = diag(length(location))) {
 #'   priors = sdmTMBpriors(
 #'     b = normal(c(0, 0, NA, NA, NA), c(2, 2, NA, NA, NA)),
 #'     phi = halfnormal(0, 10),
-#'     tweedie_p = normal(1.5, 2),
+#'     # tweedie_p = normal(1.5, 2),
 #'     ar1_rho = normal(0, 1),
 #'     matern_s = pc_matern(range_gt = 5, sigma_lt = 1),
 #'     matern_st = pc_matern(range_gt = 5, sigma_lt = 1))

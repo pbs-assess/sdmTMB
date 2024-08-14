@@ -16,3 +16,5 @@ README_cache/*
 /doc/
 /Meta/
 Dockerfile
+revdep/
+scratch/VAST-EAO*

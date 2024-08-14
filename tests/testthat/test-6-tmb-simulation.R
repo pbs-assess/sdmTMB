@@ -1,5 +1,4 @@
 test_that("TMB IID simulation works", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -32,7 +31,6 @@ test_that("TMB IID simulation works", {
 })
 
 test_that("TMB AR1 simulation works", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -68,7 +66,6 @@ test_that("TMB AR1 simulation works", {
 })
 
 test_that("TMB RW simulation works", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -121,7 +118,6 @@ test_that("TMB RW simulation works", {
 
 test_that("TMB (custom) AR1 simulation is unbiased", {
   # run many times; check for bias
-  skip_on_ci()
   skip_on_cran()
 
   do_sim_fit <- function(i) {
@@ -163,9 +159,28 @@ test_that("TMB (custom) AR1 simulation is unbiased", {
   expect_true(median(out$sigma_E) > 0.09 && median(out$sigma_E) < 0.11)
 })
 
+test_that("simulate() behaves OK with or without random effects across types", {
+  skip_on_cran()
+  m <- sdmTMB(
+    data = pcod_2011,
+    formula = density ~ 1,
+    mesh = pcod_mesh_2011,
+    family = tweedie(link = "log")
+  )
+  set.seed(1)
+  s <- simulate(m)
+  expect_length(s, 969)
+
+  m2 <- update(m, spatial = "off")
+  s <- simulate(m2)
+  expect_length(s, 969)
+
+  # has no random effects, switches to standard as needed:
+  s <- simulate(m2, type = "mle-mvn")
+  expect_length(s, 969)
+})
 
 # test_that("TMB Delta simulation works", {
-#   skip_on_ci()
 #   skip_on_cran()
 #   skip_if_not_installed("INLA")
 #

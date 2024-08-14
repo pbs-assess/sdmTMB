@@ -1,6 +1,5 @@
 test_that("share_range mapping works with delta models", {
   skip_on_cran()
-  skip_on_ci()
 
   pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
 
@@ -76,7 +75,6 @@ test_that("share_range mapping works with delta models", {
 
 test_that("spatial field mapping/specification works with delta models", {
   skip_on_cran()
-  skip_on_ci()
 
   pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 
@@ -146,7 +144,6 @@ test_that("spatial field mapping/specification works with delta models", {
 
 test_that("spatiotemporal field mapping/specification works with delta models", {
   skip_on_cran()
-  skip_on_ci()
 
   pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 
@@ -253,7 +250,6 @@ test_that("spatiotemporal field mapping/specification works with delta models", 
 
 test_that("delta models work with different main effects", {
   skip_on_cran()
-  skip_on_ci()
 
   mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
 
@@ -347,7 +343,6 @@ test_that("delta models work with different main effects", {
 
 test_that("Offset works with delta models", {
   skip_on_cran()
-  skip_on_ci()
 
   set.seed(1)
   pcod$offset <- rnorm(nrow(pcod))
@@ -427,7 +422,6 @@ test_that("Offset works with delta models", {
 
 test_that("test that delta beta model works", {
   skip_on_cran()
-  skip_on_ci()
 
   set.seed(1)
   y01 <- stats::rbinom(1000, 1, 0.5)
@@ -477,7 +471,6 @@ test_that("test that delta beta model works", {
 
 test_that("one spatial off in a delta model works", {
   skip_on_cran()
-  skip_on_ci()
 
   mesh0 <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
   m0 <- sdmTMB(

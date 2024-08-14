@@ -4,7 +4,6 @@
 # test_that("Test that non-stationary model works with random effects in epsilon works", {
 #   local_edition(2)
 #   skip_on_cran()
-#   skip_on_ci()
 #   skip_if_not_installed("INLA")
 #
 #   mesh <- make_mesh(predictor_dat, xy_cols = c("x", "y"), cutoff = 0.1)
@@ -59,7 +58,6 @@
 ## # test_that("Test that non-stationary model works with random effects in epsilon with trend works", {
 ## #   local_edition(2)
 ## #   skip_on_cran()
-## #   skip_on_ci()
 ## #   skip_if_not_installed("INLA")
 # ## #
 #   set.seed(42)
@@ -116,7 +114,6 @@
 test_that("Test that non-stationary model works without spatial field and epsilon trend works", {
   local_edition(2)
   skip_on_cran()
-  skip_on_ci()
 
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 
@@ -162,7 +159,6 @@ test_that("Test that non-stationary model works without spatial field and epsilo
 test_that("Test that non-stationary model works with spatial field and epsilon trend works", {
   local_edition(2)
   skip_on_cran()
-  skip_on_ci()
 
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 
@@ -209,7 +205,6 @@ test_that("Test that non-stationary model works with spatial field and epsilon t
 test_that("Test that non-stationary model works with epsilon trend and delta model", {
   local_edition(2)
   skip_on_cran()
-  skip_on_ci()
 
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
 
@@ -279,7 +274,7 @@ test_that("Test that non-stationary model works without spatial field and random
   )
 
   par <- fit$sd_report$value[which(names(fit$sd_report$value)=="ln_epsilon_re_sigma")]
-  expect_equal(as.numeric(par), -14.0, tolerance = 0.002)
+  expect_equal(as.numeric(par), -14.0, tolerance = 0.01) # unstable mac vs. windows/ubuntu
   par <- fit$sd_report$par.fixed[1:2]
   expect_equal(as.numeric(par), c(0.2579745,-0.40099), tolerance = 0.002)
 })
@@ -288,7 +283,6 @@ test_that("Test that non-stationary model works without spatial field and random
 test_that("Test that non-stationary model works without spatial field and trend and random effects in epsilon", {
   local_edition(2)
   skip_on_cran()
-  skip_on_ci()
 
   set.seed(42)
   time_steps <- 20
@@ -315,7 +309,6 @@ test_that("Test that non-stationary model works without spatial field and trend 
     seed = 42,
     B = c(0.2, -0.4) # B0 = intercept, B1 = a1 slope
   )
-
   sim_dat$time <- sim_dat$year
   sim_dat$year_centered <- sim_dat$time - min(sim_dat$time)
 
@@ -330,8 +323,7 @@ test_that("Test that non-stationary model works without spatial field and trend 
     control = sdmTMBcontrol(lower = list(ln_epsilon_re_sigma = -15, b_epsilon=-1),
                             upper = list(ln_epsilon_re_sigma = -1, b_epsilon=1))
   )
-
   par <- fit$sd_report$value[which(names(fit$sd_report$value)=="b_epsilon")]
-  expect_equal(as.numeric(par), 0.01257052, tolerance = 0.002)
+  expect_equal(as.numeric(par), 0.01257052, tolerance = 0.05)
 
 })

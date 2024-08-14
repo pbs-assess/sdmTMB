@@ -4,6 +4,61 @@ bool isNA(Type x) {
   return R_IsNA(asDouble(x));
 }
 
+// dgengamma
+// Written by J. Thorson based on scripts listed below
+// using Prentice-1974 parameterization for lambda instead of k, so that lognormal occurs as lambda -> 0
+// using mean parameterization to back out theta
+// CV is a function of sigma and lambda and NOT mean (i.e., CV is fixed for all values of mean)
+// See: C:\Users\James.Thorson\Desktop\Work files\AFSC\2021-10 -- Generalized gamma-lognormal\Explore gengamma.R
+template<class Type>
+Type dgengamma( Type x,
+                Type mean,
+                Type sigma,
+                Type Q,
+                int give_log=0){
+
+
+  // First convert from mean to mu
+  // Rename based on flexdist
+  Type lambda = Q;
+  // Using https://stats.stackexchange.com/questions/345564/generalized-gamma-log-normal-as-limiting-special-case
+  Type k = pow( lambda, -2);
+  Type beta = pow( sigma, -1) * lambda;
+  // Use wikipedia expression for the mean:   mean = a * gamma((d+1)/p) / gamma(d/p) where d/p = k, theta = a, and beta = p
+  // https://en.wikipedia.org/wiki/Generalized_gamma_distribution#Software_implementation
+  Type log_theta = log(mean) - lgamma( (k*beta+1)/beta ) + lgamma( k );
+  // Using https://stats.stackexchange.com/questions/345564/generalized-gamma-log-normal-as-limiting-special-case
+  Type mu = log_theta + log(k) / beta;
+
+  // Next evaluate PDF
+  // from https://github.com/chjackson/flexsurv-dev/blob/master/src/gengamma.h#L54-L56
+  Type y = log(x);
+  Type w = (y - mu) / sigma;
+  Type qi = pow(Q, -2);
+  Type qw = Q * w;                 // 0.5*log(pow(x,2)) as trick for abs(log(x))
+  Type logres = -log(sigma*x) + 0.5*log(pow(lambda,2)) * (1 - 2 * qi) + qi * (qw - exp(qw)) - lgamma(qi);
+
+  // return stuff
+  if(give_log) return logres; else return exp(logres);
+}
+
+// rgengamma
+// Written by J. Thorson based on scripts listed below
+template<class Type>
+Type rgengamma( Type mean,
+                Type sigma,
+                Type Q){
+
+  // See: C:\Users\James.Thorson\Desktop\Work files\AFSC\2021-10 -- Generalized gamma-lognormal\Explore gengamma.R
+  Type lambda = Q;
+  Type k = pow( lambda, -2 );
+  Type beta = pow( sigma, -1 ) * lambda;
+  Type log_theta = log(mean) - lgamma( (k*beta+1)/beta ) + lgamma( k );
+  Type w = log(rgamma(k, Type(1.0)));
+  Type y = w/beta + log_theta;
+  return exp(y);
+}
+
 template <class Type>
 Type ppois_log(Type x, Type lambda) {
   return atomic::Rmath::Rf_ppois(asDouble(x), asDouble(lambda), true, true);
