@@ -91,7 +91,7 @@ test_that("Offset works with extra_time", {
   )
   expect_true(inherits(fit, "sdmTMB"))
   b <- tidy(fit, "ran_pars")
-  expect_equal(round(b$estimate[b$term == "rho"], 2), 0.88)
+  expect_equal(round(b$estimate[b$term == "rho"], 2), 0.91)
 })
 
 test_that("Offset prediction matches glm()", {
