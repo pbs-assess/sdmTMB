@@ -801,11 +801,11 @@ sdmTMB <- function(
     }
     z_i <- model.matrix(spatial_varying, data)
     .int <- sum(grep("(Intercept)", colnames(z_i)) > 0)
-    if (length(attr(z_i, "contrasts")) && !.int && !omit_spatial_intercept) { # factors with ~ 0 or ~ -1
-      msg <- c("Detected predictors with factor levels in `spatial_varying` with the intercept omitted from the `spatial_varying` formula.",
-        "You likely want to set `spatial = 'off'` since the constant spatial field (`omega_s`) also represents a spatial intercept.`")
-      cli_inform(paste(msg, collapse = " "))
-    }
+    # if (length(attr(z_i, "contrasts")) && !.int && !omit_spatial_intercept) { # factors with ~ 0 or ~ -1
+    #   msg <- c("Detected predictors with factor levels in `spatial_varying` with the intercept omitted from the `spatial_varying` formula.",
+    #     "You likely want to set `spatial = 'off'` since the constant spatial field (`omega_s`) also represents a spatial intercept.`")
+    #   cli_inform(paste(msg, collapse = " "))
+    # }
     .int <- grep("(Intercept)", colnames(z_i))
     if (sum(.int) > 0) z_i <- z_i[,-.int,drop=FALSE]
     spatial_varying <- colnames(z_i)
@@ -1191,7 +1191,8 @@ sdmTMB <- function(
     epsilon_re = matrix(0, tmb_data$n_t, n_m),
     b_smooth = if (sm$has_smooths) matrix(0, sum(sm$sm_dims), n_m) else array(0),
     ln_smooth_sigma = if (sm$has_smooths) matrix(0, length(sm$sm_dims), n_m) else array(0),
-    mvrw_rho = if (nrow(mvrw_u) > 0L) rep(0, nrow(mvrw_u)*(nrow(mvrw_u)-1)/2) else 0,
+    # mvrw_rho = if (nrow(mvrw_u) > 0L) rep(0, nrow(mvrw_u)*(nrow(mvrw_u)-1)/2) else 0,
+    mvrw_rho = if (nrow(mvrw_u) > 0L) 0 else numeric(0),
     mvrw_logsds = rep(0, nrow(mvrw_u)),
     mvrw_u = mvrw_u
   )
