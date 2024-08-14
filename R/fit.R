@@ -1269,7 +1269,7 @@ sdmTMB <- function(
       tmb_map <- unmap(tmb_map, c("ln_tau_E", "epsilon_st"))
     }
   }
-  if (spatiotemporal == "rwc") {
+  if (all(spatiotemporal == "rwc")) {
     tmb_random <- c(tmb_random, "upsilon_stc")
     tmb_map <- unmap(tmb_map, c("ln_tau_U", "upsilon_stc"))
   }
