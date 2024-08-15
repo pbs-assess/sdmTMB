@@ -661,7 +661,7 @@ Type objective_function<Type>::operator()()
   }
 
   // Multivariate-random-walk time-varying intercepts:
-  if (mvrw_u.cols() > 0) {
+  if (mvrw_u.cols() > 0 && !rw_fields(n_m)) {
     if (n_m > 1) error("MVRW is not yet coded for delta models.");
     // FIXME: add MVRW to delta model
     // if (simulate_t(0)) error("Simulation not yet coded for delta models.");
