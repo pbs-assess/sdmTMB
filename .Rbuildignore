@@ -21,3 +21,4 @@
 ^CRAN-SUBMISSION$
 ^vignettes/web_only$
 revdep/
+^vignettes/articles$
