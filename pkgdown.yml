@@ -1,22 +1,21 @@
 pandoc: 3.1.11
-pkgdown: 2.0.9
+pkgdown: 2.1.0
 pkgdown_sha: ~
 articles:
-  basic-intro: web_only/basic-intro.html
-  bayesian: web_only/bayesian.html
-  cross-validation: web_only/cross-validation.html
-  delta-models: web_only/delta-models.html
-  ggeffects: web_only/ggeffects.html
-  index-standardization: web_only/index-standardization.html
+  articles/basic-intro: basic-intro.html
+  articles/bayesian: bayesian.html
+  articles/cross-validation: cross-validation.html
+  articles/delta-models: delta-models.html
+  articles/ggeffects: ggeffects.html
+  articles/index-standardization: index-standardization.html
   model-description: model-description.html
-  poisson-link: web_only/poisson-link.html
-  pretty-plots: web_only/pretty-plots.html
-  residual-checking: web_only/residual-checking.html
-  spatial-trend-models: web_only/spatial-trend-models.html
-  threshold-models: web_only/threshold-models.html
-  visreg: web_only/visreg.html
-last_built: 2024-07-03T18:46Z
+  articles/poisson-link: poisson-link.html
+  articles/pretty-plots: pretty-plots.html
+  articles/residual-checking: residual-checking.html
+  articles/spatial-trend-models: spatial-trend-models.html
+  articles/threshold-models: threshold-models.html
+  articles/visreg: visreg.html
+last_built: 2024-08-26T18:24Z
 urls:
   reference: https://pbs-assess.github.io/sdmTMB/reference
   article: https://pbs-assess.github.io/sdmTMB/articles
-

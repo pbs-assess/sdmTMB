@@ -5,75 +5,60 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="description" content="sdmTMB">
 <title>Bayesian estimation with sdmTMB • sdmTMB</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Bayesian estimation with sdmTMB">
-<meta property="og:description" content="sdmTMB">
-<!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
-<script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-<![endif]-->
+<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Bayesian estimation with sdmTMB">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
-    
 
-    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light"><div class="container">
-    
+
+    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9004</small>
 
-    
+
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item">
-  <a class="nav-link" href="../reference/index.html">Reference</a>
-</li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item dropdown">
-  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
-  <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/basic-intro.html">Introduction to modelling with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/bayesian.html">Bayesian estimation with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/cross-validation.html">Cross-validation for model evaluation and comparison</a>
-    <a class="dropdown-item" href="../articles/delta-models.html">Fitting delta (hurdle) models with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/ggeffects.html">Visualizing marginal effects in sdmTMB models with ggeffects</a>
-    <a class="dropdown-item" href="../articles/index-standardization.html">Index standardization with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/model-description.html">sdmTMB model description</a>
-    <a class="dropdown-item" href="../articles/pretty-plots.html">Making pretty maps with sdmTMB output</a>
-    <a class="dropdown-item" href="../articles/residual-checking.html">Residual checking with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/spatial-trend-models.html">Fitting spatial trend models with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/threshold-models.html">Threshold modeling with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/visreg.html">Visualizing sdmTMB conditional effects using visreg</a>
-  </div>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="../articles/basic-intro.html">Introduction to modelling with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/bayesian.html">Bayesian estimation with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/cross-validation.html">Cross-validation for model evaluation and comparison</a></li>
+    <li><a class="dropdown-item" href="../articles/delta-models.html">Fitting delta (hurdle) models with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/ggeffects.html">Visualizing marginal effects in sdmTMB models with ggeffects</a></li>
+    <li><a class="dropdown-item" href="../articles/index-standardization.html">Index standardization with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/model-description.html">sdmTMB model description</a></li>
+    <li><a class="dropdown-item" href="../articles/poisson-link.html">Poisson-link delta models</a></li>
+    <li><a class="dropdown-item" href="../articles/pretty-plots.html">Making pretty maps with sdmTMB output</a></li>
+    <li><a class="dropdown-item" href="../articles/residual-checking.html">Residual checking with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/spatial-trend-models.html">Fitting spatial trend models with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/threshold-models.html">Threshold modeling with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/visreg.html">Visualizing sdmTMB conditional effects using visreg</a></li>
+  </ul>
 </li>
-<li class="nav-item">
-  <a class="nav-link" href="../news/index.html">Changelog</a>
-</li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
-<form class="form-inline my-2 my-lg-0" role="search">
-        <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off">
-</form>
-
-      <ul class="navbar-nav">
-<li class="nav-item">
-  <a class="external-link nav-link" href="https://github.com/pbs-assess/sdmTMB/" aria-label="github">
-    <span class="fab fa fab fa-github fa-lg"></span>
-     
-  </a>
-</li>
+<ul class="navbar-nav">
+<li class="nav-item"><form class="form-inline" role="search">
+ <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
+</form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/pbs-assess/sdmTMB/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
-    
+
   </div>
 </nav><div class="container template-article">
 
@@ -82,11 +67,12 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="" class="logo" alt=""><h1>Bayesian estimation with sdmTMB</h1>
+
+      <h1>Bayesian estimation with sdmTMB</h1>
             
-            <h4 data-toc-skip class="date">2023-01-03</h4>
+            <h4 data-toc-skip class="date">2024-08-26</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/HEAD/vignettes/bayesian.Rmd" class="external-link"><code>vignettes/bayesian.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/vignettes/articles/bayesian.Rmd" class="external-link"><code>vignettes/articles/bayesian.Rmd</code></a></small>
       <div class="d-none name"><code>bayesian.Rmd</code></div>
     </div>
 
@@ -95,12 +81,10 @@
 <p><strong>If the code in this vignette has not been evaluated, a
 rendered version is available on the <a href="https://pbs-assess.github.io/sdmTMB/index.html">documentation
 site</a> under ‘Articles’.</strong></p>
-<p>If this vignette is viewed on CRAN, a rendered version is available
-at <a href="https://pbs-assess.github.io/sdmTMB/articles/bayesian.html" class="uri">https://pbs-assess.github.io/sdmTMB/articles/bayesian.html</a>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pbs-assess.github.io/sdmTMB/index.html">sdmTMB</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pbs-assess.github.io/sdmTMB/">sdmTMB</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/rstan/" class="external-link">rstan</a></span><span class="op">)</span> <span class="co"># for plot() method</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>mc.cores <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="co"># use rstan parallel processing</span></span></code></pre></div>
 <p>Bayesian estimation is possible with sdmTMB by passing fitted models
@@ -131,7 +115,6 @@ priors <span class="citation">(e.g., Monnahan <em>et al.</em>
 <span>  a1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">500</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">mesh</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_mesh.html">make_mesh</a></span><span class="op">(</span><span class="va">predictor_dat</span>, xy_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="st">"Y"</span><span class="op">)</span>, cutoff <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; as(&lt;dgCMatrix&gt;, "dgTMatrix") is deprecated since Matrix 1.5-0; do as(., "TsparseMatrix") instead</span></span>
 <span><span class="co"># plot(mesh)</span></span>
 <span><span class="co"># mesh$mesh$n</span></span>
 <span><span class="va">sim_dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdmTMB_simulate.html">sdmTMB_simulate</a></span><span class="op">(</span></span>
@@ -167,7 +150,7 @@ priors <span class="citation">(e.g., Monnahan <em>et al.</em>
 <span><span class="va">fit</span></span>
 <span><span class="co">#&gt; Spatial model fit by ML ['sdmTMB']</span></span>
 <span><span class="co">#&gt; Formula: observed ~ a1</span></span>
-<span><span class="co">#&gt; Mesh: mesh</span></span>
+<span><span class="co">#&gt; Mesh: mesh (isotropic covariance)</span></span>
 <span><span class="co">#&gt; Data: sim_dat</span></span>
 <span><span class="co">#&gt; Family: gaussian(link = 'identity')</span></span>
 <span><span class="co">#&gt;  </span></span>
@@ -176,7 +159,7 @@ priors <span class="citation">(e.g., Monnahan <em>et al.</em>
 <span><span class="co">#&gt; a1              -0.4    0.01</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Dispersion parameter: 0.20</span></span>
-<span><span class="co">#&gt; Matern range: 0.32</span></span>
+<span><span class="co">#&gt; Matérn range: 0.32</span></span>
 <span><span class="co">#&gt; Spatial SD: 0.17</span></span>
 <span><span class="co">#&gt; ML criterion at convergence: -65.939</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -220,7 +203,7 @@ priors:</p>
 <span><span class="va">fit</span></span>
 <span><span class="co">#&gt; Spatial model fit by ML ['sdmTMB']</span></span>
 <span><span class="co">#&gt; Formula: observed ~ a1</span></span>
-<span><span class="co">#&gt; Mesh: mesh</span></span>
+<span><span class="co">#&gt; Mesh: mesh (isotropic covariance)</span></span>
 <span><span class="co">#&gt; Data: sim_dat</span></span>
 <span><span class="co">#&gt; Family: gaussian(link = 'identity')</span></span>
 <span><span class="co">#&gt;  </span></span>
@@ -229,7 +212,7 @@ priors:</p>
 <span><span class="co">#&gt; a1              -0.4    0.01</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Dispersion parameter: 0.20</span></span>
-<span><span class="co">#&gt; Matern range: 0.32</span></span>
+<span><span class="co">#&gt; Matérn range: 0.32</span></span>
 <span><span class="co">#&gt; Spatial SD: 0.17</span></span>
 <span><span class="co">#&gt; ML criterion at convergence: -62.846</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -274,8 +257,7 @@ fitting the updated model since it’s not necessary.</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Initiating `ln_kappa` at specified starting value(s) of:</span></span>
 <span><span class="co">#&gt; 2.173, 2.173</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Fixing (mapping) `ln_kappa` at specified starting value(s) of:</span></span>
-<span><span class="co">#&gt; 2.173, 2.173</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Fixing or mirroring `ln_kappa`</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="passing-the-model-to-tmbstan">Passing the model to tmbstan<a class="anchor" aria-label="anchor" href="#passing-the-model-to-tmbstan"></a>
@@ -308,98 +290,98 @@ of required samples.</p>
 <span><span class="co">#&gt; post-warmup draws per chain=500, total post-warmup draws=1000.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;               mean se_mean   sd   2.5%    25%    50%    75%  97.5% n_eff Rhat</span></span>
-<span><span class="co">#&gt; b_j[1]        0.79    0.01 0.06   0.67   0.76   0.80   0.84   0.90    85 1.05</span></span>
-<span><span class="co">#&gt; b_j[2]       -0.40    0.00 0.01  -0.41  -0.40  -0.40  -0.39  -0.38  1604 1.00</span></span>
-<span><span class="co">#&gt; ln_tau_O     -1.66    0.01 0.14  -1.92  -1.75  -1.67  -1.57  -1.38   272 1.00</span></span>
-<span><span class="co">#&gt; ln_phi       -1.63    0.00 0.03  -1.69  -1.65  -1.63  -1.61  -1.57  1144 1.00</span></span>
-<span><span class="co">#&gt; omega_s[1]   -0.08    0.01 0.09  -0.24  -0.14  -0.08  -0.02   0.10   203 1.02</span></span>
-<span><span class="co">#&gt; omega_s[2]   -0.05    0.01 0.09  -0.22  -0.11  -0.05   0.00   0.12   177 1.02</span></span>
-<span><span class="co">#&gt; omega_s[3]    0.03    0.01 0.09  -0.15  -0.03   0.03   0.09   0.20   173 1.02</span></span>
-<span><span class="co">#&gt; omega_s[4]   -0.20    0.01 0.09  -0.38  -0.26  -0.20  -0.14  -0.02   212 1.01</span></span>
-<span><span class="co">#&gt; omega_s[5]   -0.32    0.01 0.10  -0.53  -0.39  -0.33  -0.26  -0.12   238 1.01</span></span>
-<span><span class="co">#&gt; omega_s[6]   -0.07    0.01 0.11  -0.26  -0.14  -0.06   0.01   0.14   302 1.00</span></span>
-<span><span class="co">#&gt; omega_s[7]   -0.01    0.01 0.08  -0.17  -0.07  -0.02   0.04   0.15   180 1.02</span></span>
-<span><span class="co">#&gt; omega_s[8]   -0.22    0.01 0.09  -0.39  -0.28  -0.22  -0.16  -0.05   176 1.02</span></span>
-<span><span class="co">#&gt; omega_s[9]   -0.31    0.01 0.09  -0.47  -0.37  -0.31  -0.25  -0.14   169 1.02</span></span>
-<span><span class="co">#&gt; omega_s[10]   0.29    0.01 0.09   0.13   0.23   0.29   0.34   0.47   156 1.03</span></span>
-<span><span class="co">#&gt; omega_s[11]  -0.14    0.01 0.09  -0.31  -0.21  -0.14  -0.08   0.04   214 1.01</span></span>
-<span><span class="co">#&gt; omega_s[12]   0.01    0.01 0.10  -0.19  -0.06   0.01   0.08   0.21   236 1.02</span></span>
-<span><span class="co">#&gt; omega_s[13]   0.20    0.01 0.09   0.04   0.14   0.20   0.26   0.37   184 1.02</span></span>
-<span><span class="co">#&gt; omega_s[14]  -0.08    0.01 0.10  -0.28  -0.14  -0.08  -0.02   0.11   199 1.02</span></span>
-<span><span class="co">#&gt; omega_s[15]   0.23    0.01 0.08   0.06   0.18   0.23   0.28   0.38   188 1.02</span></span>
-<span><span class="co">#&gt; omega_s[16]  -0.01    0.01 0.09  -0.19  -0.06  -0.01   0.06   0.17   189 1.01</span></span>
-<span><span class="co">#&gt; omega_s[17]  -0.14    0.01 0.09  -0.33  -0.20  -0.14  -0.07   0.05   189 1.02</span></span>
-<span><span class="co">#&gt; omega_s[18]  -0.27    0.01 0.10  -0.46  -0.34  -0.27  -0.21  -0.08   290 1.01</span></span>
-<span><span class="co">#&gt; omega_s[19]   0.01    0.01 0.09  -0.17  -0.05   0.01   0.07   0.20   203 1.02</span></span>
-<span><span class="co">#&gt; omega_s[20]   0.03    0.01 0.09  -0.13  -0.03   0.04   0.09   0.21   143 1.02</span></span>
-<span><span class="co">#&gt; omega_s[21]   0.09    0.01 0.09  -0.08   0.02   0.09   0.15   0.27   161 1.02</span></span>
-<span><span class="co">#&gt; omega_s[22]  -0.01    0.01 0.10  -0.21  -0.07  -0.01   0.06   0.20   190 1.02</span></span>
-<span><span class="co">#&gt; omega_s[23]   0.13    0.01 0.09  -0.04   0.07   0.12   0.18   0.31   190 1.02</span></span>
-<span><span class="co">#&gt; omega_s[24]   0.20    0.01 0.10   0.02   0.13   0.20   0.27   0.41   237 1.02</span></span>
-<span><span class="co">#&gt; omega_s[25]   0.08    0.01 0.09  -0.07   0.03   0.08   0.14   0.25   182 1.02</span></span>
-<span><span class="co">#&gt; omega_s[26]   0.00    0.01 0.10  -0.20  -0.07   0.00   0.07   0.20   242 1.01</span></span>
-<span><span class="co">#&gt; omega_s[27]  -0.10    0.01 0.09  -0.28  -0.16  -0.10  -0.04   0.07   168 1.02</span></span>
-<span><span class="co">#&gt; omega_s[28]   0.13    0.01 0.10  -0.06   0.06   0.12   0.19   0.32   233 1.01</span></span>
-<span><span class="co">#&gt; omega_s[29]   0.31    0.01 0.09   0.15   0.25   0.30   0.36   0.49    69 1.03</span></span>
-<span><span class="co">#&gt; omega_s[30]  -0.04    0.01 0.09  -0.20  -0.10  -0.04   0.02   0.14   217 1.02</span></span>
-<span><span class="co">#&gt; omega_s[31]   0.10    0.01 0.08  -0.06   0.05   0.10   0.16   0.27   172 1.02</span></span>
-<span><span class="co">#&gt; omega_s[32]   0.06    0.01 0.11  -0.16  -0.01   0.07   0.15   0.28   316 1.01</span></span>
-<span><span class="co">#&gt; omega_s[33]   0.09    0.01 0.10  -0.11   0.02   0.09   0.15   0.29   222 1.02</span></span>
-<span><span class="co">#&gt; omega_s[34]   0.05    0.01 0.09  -0.11  -0.01   0.05   0.11   0.23   267 1.01</span></span>
-<span><span class="co">#&gt; omega_s[35]   0.08    0.01 0.09  -0.10   0.02   0.08   0.14   0.27   214 1.01</span></span>
-<span><span class="co">#&gt; omega_s[36]   0.15    0.01 0.09  -0.03   0.09   0.15   0.21   0.34   175 1.02</span></span>
-<span><span class="co">#&gt; omega_s[37]   0.17    0.01 0.11  -0.05   0.10   0.17   0.25   0.38   298 1.01</span></span>
-<span><span class="co">#&gt; omega_s[38]   0.13    0.01 0.09  -0.07   0.07   0.13   0.19   0.31   210 1.01</span></span>
-<span><span class="co">#&gt; omega_s[39]  -0.21    0.01 0.09  -0.39  -0.27  -0.21  -0.14  -0.02   224 1.01</span></span>
-<span><span class="co">#&gt; omega_s[40]  -0.02    0.01 0.09  -0.19  -0.08  -0.01   0.04   0.16   203 1.01</span></span>
-<span><span class="co">#&gt; omega_s[41]   0.20    0.01 0.09   0.04   0.14   0.19   0.25   0.38   184 1.02</span></span>
-<span><span class="co">#&gt; omega_s[42]   0.21    0.01 0.09   0.05   0.15   0.21   0.27   0.40   184 1.01</span></span>
-<span><span class="co">#&gt; omega_s[43]   0.16    0.01 0.10  -0.04   0.09   0.15   0.22   0.36   319 1.01</span></span>
-<span><span class="co">#&gt; omega_s[44]   0.15    0.01 0.09  -0.03   0.09   0.14   0.21   0.32   235 1.01</span></span>
-<span><span class="co">#&gt; omega_s[45]   0.10    0.01 0.10  -0.08   0.03   0.10   0.17   0.32   310 1.01</span></span>
-<span><span class="co">#&gt; omega_s[46]   0.06    0.01 0.10  -0.13   0.00   0.06   0.13   0.27   261 1.01</span></span>
-<span><span class="co">#&gt; omega_s[47]   0.32    0.01 0.09   0.16   0.26   0.32   0.37   0.51   223 1.01</span></span>
-<span><span class="co">#&gt; omega_s[48]  -0.24    0.01 0.09  -0.42  -0.30  -0.23  -0.17  -0.06   142 1.02</span></span>
-<span><span class="co">#&gt; omega_s[49]   0.11    0.01 0.10  -0.09   0.04   0.12   0.17   0.30   226 1.01</span></span>
-<span><span class="co">#&gt; omega_s[50]  -0.08    0.01 0.09  -0.25  -0.13  -0.08  -0.02   0.10   186 1.02</span></span>
-<span><span class="co">#&gt; omega_s[51]   0.25    0.01 0.11   0.05   0.18   0.25   0.32   0.46   241 1.01</span></span>
-<span><span class="co">#&gt; omega_s[52]  -0.20    0.01 0.11  -0.41  -0.28  -0.20  -0.13   0.01   258 1.01</span></span>
-<span><span class="co">#&gt; omega_s[53]   0.04    0.01 0.09  -0.14  -0.02   0.04   0.10   0.23   137 1.02</span></span>
-<span><span class="co">#&gt; omega_s[54]   0.04    0.01 0.09  -0.14  -0.02   0.04   0.10   0.23   245 1.01</span></span>
-<span><span class="co">#&gt; omega_s[55]  -0.07    0.01 0.12  -0.28  -0.16  -0.08   0.00   0.16   306 1.01</span></span>
-<span><span class="co">#&gt; omega_s[56]  -0.41    0.01 0.11  -0.62  -0.48  -0.41  -0.34  -0.19   210 1.01</span></span>
-<span><span class="co">#&gt; omega_s[57]   0.01    0.01 0.11  -0.21  -0.06   0.01   0.08   0.22   280 1.01</span></span>
-<span><span class="co">#&gt; omega_s[58]  -0.20    0.01 0.10  -0.39  -0.27  -0.21  -0.14  -0.01   224 1.02</span></span>
-<span><span class="co">#&gt; omega_s[59]   0.05    0.01 0.23  -0.44  -0.10   0.05   0.20   0.48   954 1.00</span></span>
-<span><span class="co">#&gt; omega_s[60]  -0.20    0.01 0.26  -0.72  -0.37  -0.19  -0.05   0.31  1245 1.00</span></span>
-<span><span class="co">#&gt; omega_s[61]  -0.24    0.01 0.24  -0.73  -0.39  -0.23  -0.08   0.23   701 1.00</span></span>
-<span><span class="co">#&gt; omega_s[62]  -0.24    0.01 0.23  -0.69  -0.40  -0.24  -0.09   0.20   638 1.00</span></span>
-<span><span class="co">#&gt; omega_s[63]  -0.25    0.01 0.23  -0.70  -0.41  -0.25  -0.10   0.18   591 1.00</span></span>
-<span><span class="co">#&gt; omega_s[64]   0.09    0.01 0.23  -0.35  -0.07   0.09   0.24   0.55   950 1.00</span></span>
-<span><span class="co">#&gt; omega_s[65]   0.18    0.01 0.23  -0.27   0.04   0.17   0.32   0.63   432 1.01</span></span>
-<span><span class="co">#&gt; omega_s[66]   0.17    0.01 0.22  -0.26   0.03   0.16   0.30   0.61   456 1.01</span></span>
-<span><span class="co">#&gt; omega_s[67]  -0.02    0.01 0.23  -0.44  -0.17  -0.02   0.14   0.42  1140 1.00</span></span>
-<span><span class="co">#&gt; omega_s[68]  -0.01    0.01 0.26  -0.52  -0.18  -0.01   0.17   0.49   749 1.00</span></span>
-<span><span class="co">#&gt; omega_s[69]   0.01    0.01 0.21  -0.40  -0.13   0.00   0.15   0.42   690 1.00</span></span>
-<span><span class="co">#&gt; omega_s[70]   0.01    0.01 0.21  -0.37  -0.13   0.00   0.15   0.43   569 1.01</span></span>
-<span><span class="co">#&gt; omega_s[71]   0.17    0.01 0.22  -0.26   0.02   0.17   0.32   0.59  1017 1.00</span></span>
-<span><span class="co">#&gt; omega_s[72]  -0.11    0.01 0.23  -0.60  -0.26  -0.11   0.05   0.34   560 1.00</span></span>
-<span><span class="co">#&gt; omega_s[73]  -0.14    0.01 0.22  -0.60  -0.29  -0.13   0.00   0.27   388 1.00</span></span>
-<span><span class="co">#&gt; omega_s[74]  -0.14    0.01 0.21  -0.57  -0.27  -0.14   0.00   0.26   341 1.00</span></span>
-<span><span class="co">#&gt; omega_s[75]  -0.37    0.01 0.22  -0.76  -0.52  -0.37  -0.23   0.04   556 1.00</span></span>
-<span><span class="co">#&gt; omega_s[76]   0.10    0.01 0.18  -0.25  -0.03   0.10   0.22   0.47   767 1.00</span></span>
-<span><span class="co">#&gt; omega_s[77]   0.09    0.01 0.21  -0.33  -0.03   0.09   0.23   0.48   832 1.00</span></span>
-<span><span class="co">#&gt; omega_s[78]  -0.06    0.01 0.23  -0.49  -0.21  -0.05   0.10   0.38   921 1.00</span></span>
-<span><span class="co">#&gt; omega_s[79]   0.06    0.01 0.15  -0.24  -0.05   0.05   0.16   0.36   453 1.00</span></span>
-<span><span class="co">#&gt; omega_s[80]  -0.17    0.01 0.22  -0.56  -0.32  -0.17  -0.02   0.27   626 1.00</span></span>
-<span><span class="co">#&gt; omega_s[81]  -0.06    0.01 0.20  -0.42  -0.19  -0.06   0.06   0.32   760 1.00</span></span>
-<span><span class="co">#&gt; omega_s[82]  -0.13    0.01 0.20  -0.51  -0.26  -0.13   0.01   0.27   672 1.00</span></span>
-<span><span class="co">#&gt; omega_s[83]  -0.02    0.01 0.23  -0.46  -0.17  -0.02   0.13   0.42   705 1.00</span></span>
-<span><span class="co">#&gt; omega_s[84]   0.13    0.01 0.19  -0.23   0.00   0.12   0.26   0.52   554 1.00</span></span>
-<span><span class="co">#&gt; omega_s[85]  -0.29    0.01 0.20  -0.69  -0.42  -0.29  -0.16   0.13  1236 1.00</span></span>
-<span><span class="co">#&gt; lp__        136.88    0.65 9.70 117.30 131.03 136.71 143.60 154.86   221 1.00</span></span>
+<span><span class="co">#&gt; b_j[1]        0.80    0.01 0.06   0.68   0.76   0.80   0.84   0.92    82 1.02</span></span>
+<span><span class="co">#&gt; b_j[2]       -0.40    0.00 0.01  -0.41  -0.40  -0.40  -0.39  -0.38  1747 1.00</span></span>
+<span><span class="co">#&gt; ln_tau_O     -1.67    0.01 0.14  -1.93  -1.76  -1.67  -1.57  -1.42   169 1.01</span></span>
+<span><span class="co">#&gt; ln_phi       -1.63    0.00 0.03  -1.69  -1.65  -1.63  -1.61  -1.56  1360 1.00</span></span>
+<span><span class="co">#&gt; omega_s[1]   -0.09    0.01 0.09  -0.26  -0.14  -0.09  -0.03   0.09   162 1.01</span></span>
+<span><span class="co">#&gt; omega_s[2]   -0.06    0.01 0.09  -0.25  -0.12  -0.06   0.01   0.11   196 1.01</span></span>
+<span><span class="co">#&gt; omega_s[3]    0.01    0.01 0.10  -0.17  -0.05   0.01   0.08   0.20   196 1.01</span></span>
+<span><span class="co">#&gt; omega_s[4]   -0.21    0.01 0.09  -0.40  -0.27  -0.21  -0.15  -0.02   206 1.01</span></span>
+<span><span class="co">#&gt; omega_s[5]   -0.34    0.01 0.10  -0.53  -0.41  -0.33  -0.27  -0.13   247 1.00</span></span>
+<span><span class="co">#&gt; omega_s[6]   -0.08    0.01 0.10  -0.27  -0.15  -0.08   0.00   0.13   268 1.01</span></span>
+<span><span class="co">#&gt; omega_s[7]   -0.02    0.01 0.09  -0.19  -0.08  -0.02   0.04   0.15   172 1.01</span></span>
+<span><span class="co">#&gt; omega_s[8]   -0.23    0.01 0.10  -0.42  -0.29  -0.23  -0.16  -0.05   219 1.01</span></span>
+<span><span class="co">#&gt; omega_s[9]   -0.32    0.01 0.09  -0.50  -0.38  -0.32  -0.26  -0.13   166 1.02</span></span>
+<span><span class="co">#&gt; omega_s[10]   0.29    0.01 0.09   0.11   0.23   0.28   0.35   0.46   147 1.01</span></span>
+<span><span class="co">#&gt; omega_s[11]  -0.16    0.01 0.09  -0.34  -0.22  -0.16  -0.09   0.02   208 1.01</span></span>
+<span><span class="co">#&gt; omega_s[12]   0.00    0.01 0.10  -0.19  -0.07   0.01   0.07   0.21   205 1.01</span></span>
+<span><span class="co">#&gt; omega_s[13]   0.19    0.01 0.09   0.02   0.13   0.19   0.25   0.36   166 1.01</span></span>
+<span><span class="co">#&gt; omega_s[14]  -0.09    0.01 0.10  -0.29  -0.16  -0.09  -0.03   0.11   253 1.01</span></span>
+<span><span class="co">#&gt; omega_s[15]   0.22    0.01 0.09   0.06   0.16   0.22   0.28   0.40   152 1.01</span></span>
+<span><span class="co">#&gt; omega_s[16]  -0.02    0.01 0.10  -0.21  -0.08  -0.02   0.05   0.16   198 1.01</span></span>
+<span><span class="co">#&gt; omega_s[17]  -0.15    0.01 0.09  -0.34  -0.21  -0.14  -0.08   0.04   198 1.01</span></span>
+<span><span class="co">#&gt; omega_s[18]  -0.28    0.01 0.11  -0.50  -0.35  -0.28  -0.21  -0.09   270 1.00</span></span>
+<span><span class="co">#&gt; omega_s[19]   0.00    0.01 0.10  -0.18  -0.06   0.00   0.07   0.19   211 1.01</span></span>
+<span><span class="co">#&gt; omega_s[20]   0.03    0.01 0.08  -0.14  -0.03   0.02   0.09   0.19   180 1.01</span></span>
+<span><span class="co">#&gt; omega_s[21]   0.08    0.01 0.10  -0.11   0.02   0.08   0.15   0.26   191 1.01</span></span>
+<span><span class="co">#&gt; omega_s[22]  -0.01    0.01 0.10  -0.21  -0.08  -0.01   0.05   0.17   212 1.00</span></span>
+<span><span class="co">#&gt; omega_s[23]   0.12    0.01 0.09  -0.04   0.06   0.12   0.18   0.30   156 1.01</span></span>
+<span><span class="co">#&gt; omega_s[24]   0.20    0.01 0.10   0.00   0.13   0.19   0.26   0.40   256 1.00</span></span>
+<span><span class="co">#&gt; omega_s[25]   0.08    0.01 0.09  -0.09   0.01   0.07   0.14   0.26   167 1.01</span></span>
+<span><span class="co">#&gt; omega_s[26]  -0.01    0.01 0.10  -0.21  -0.08  -0.01   0.06   0.20   215 1.01</span></span>
+<span><span class="co">#&gt; omega_s[27]  -0.11    0.01 0.09  -0.30  -0.18  -0.10  -0.05   0.06   216 1.00</span></span>
+<span><span class="co">#&gt; omega_s[28]   0.12    0.01 0.10  -0.08   0.05   0.11   0.18   0.32   229 1.00</span></span>
+<span><span class="co">#&gt; omega_s[29]   0.30    0.01 0.09   0.12   0.23   0.30   0.36   0.47   212 1.01</span></span>
+<span><span class="co">#&gt; omega_s[30]  -0.04    0.01 0.09  -0.22  -0.10  -0.04   0.02   0.14   193 1.01</span></span>
+<span><span class="co">#&gt; omega_s[31]   0.09    0.01 0.09  -0.08   0.04   0.09   0.15   0.26   154 1.01</span></span>
+<span><span class="co">#&gt; omega_s[32]   0.05    0.01 0.12  -0.18  -0.02   0.05   0.14   0.28   244 1.01</span></span>
+<span><span class="co">#&gt; omega_s[33]   0.08    0.01 0.09  -0.10   0.01   0.07   0.14   0.26   219 1.01</span></span>
+<span><span class="co">#&gt; omega_s[34]   0.04    0.01 0.09  -0.13  -0.03   0.04   0.10   0.20   163 1.01</span></span>
+<span><span class="co">#&gt; omega_s[35]   0.07    0.01 0.10  -0.10   0.00   0.07   0.14   0.26   230 1.01</span></span>
+<span><span class="co">#&gt; omega_s[36]   0.14    0.01 0.09  -0.04   0.08   0.15   0.20   0.33   197 1.01</span></span>
+<span><span class="co">#&gt; omega_s[37]   0.16    0.01 0.11  -0.06   0.09   0.16   0.24   0.39   275 1.00</span></span>
+<span><span class="co">#&gt; omega_s[38]   0.12    0.01 0.10  -0.09   0.05   0.11   0.19   0.31   217 1.01</span></span>
+<span><span class="co">#&gt; omega_s[39]  -0.22    0.01 0.10  -0.40  -0.28  -0.22  -0.15  -0.04   186 1.01</span></span>
+<span><span class="co">#&gt; omega_s[40]  -0.03    0.01 0.09  -0.21  -0.09  -0.03   0.03   0.17   197 1.01</span></span>
+<span><span class="co">#&gt; omega_s[41]   0.19    0.01 0.08   0.03   0.13   0.19   0.24   0.35   143 1.01</span></span>
+<span><span class="co">#&gt; omega_s[42]   0.21    0.01 0.09   0.01   0.14   0.21   0.27   0.38   173 1.01</span></span>
+<span><span class="co">#&gt; omega_s[43]   0.15    0.01 0.10  -0.04   0.07   0.15   0.21   0.35   221 1.01</span></span>
+<span><span class="co">#&gt; omega_s[44]   0.14    0.01 0.10  -0.07   0.08   0.14   0.20   0.32   194 1.01</span></span>
+<span><span class="co">#&gt; omega_s[45]   0.10    0.01 0.10  -0.10   0.02   0.10   0.16   0.30   248 1.00</span></span>
+<span><span class="co">#&gt; omega_s[46]   0.06    0.01 0.10  -0.14  -0.01   0.06   0.12   0.26   187 1.01</span></span>
+<span><span class="co">#&gt; omega_s[47]   0.31    0.01 0.09   0.13   0.24   0.31   0.37   0.50   166 1.01</span></span>
+<span><span class="co">#&gt; omega_s[48]  -0.24    0.01 0.10  -0.44  -0.31  -0.24  -0.18  -0.06   196 1.01</span></span>
+<span><span class="co">#&gt; omega_s[49]   0.10    0.01 0.10  -0.10   0.04   0.10   0.17   0.32   255 1.01</span></span>
+<span><span class="co">#&gt; omega_s[50]  -0.09    0.01 0.09  -0.26  -0.14  -0.09  -0.03   0.08   178 1.01</span></span>
+<span><span class="co">#&gt; omega_s[51]   0.25    0.01 0.11   0.04   0.17   0.25   0.32   0.48   247 1.01</span></span>
+<span><span class="co">#&gt; omega_s[52]  -0.21    0.01 0.11  -0.43  -0.29  -0.21  -0.14  -0.01   251 1.01</span></span>
+<span><span class="co">#&gt; omega_s[53]   0.04    0.01 0.10  -0.16  -0.03   0.04   0.10   0.22   213 1.00</span></span>
+<span><span class="co">#&gt; omega_s[54]   0.03    0.01 0.10  -0.16  -0.04   0.03   0.10   0.22   214 1.00</span></span>
+<span><span class="co">#&gt; omega_s[55]  -0.09    0.01 0.11  -0.30  -0.16  -0.09  -0.01   0.15   311 1.01</span></span>
+<span><span class="co">#&gt; omega_s[56]  -0.42    0.01 0.10  -0.62  -0.48  -0.41  -0.35  -0.24   229 1.01</span></span>
+<span><span class="co">#&gt; omega_s[57]   0.01    0.01 0.11  -0.20  -0.07   0.00   0.08   0.24   274 1.00</span></span>
+<span><span class="co">#&gt; omega_s[58]  -0.21    0.01 0.10  -0.40  -0.28  -0.21  -0.14  -0.01   201 1.01</span></span>
+<span><span class="co">#&gt; omega_s[59]   0.04    0.01 0.24  -0.43  -0.11   0.05   0.20   0.47   992 1.00</span></span>
+<span><span class="co">#&gt; omega_s[60]  -0.23    0.01 0.28  -0.78  -0.41  -0.23  -0.03   0.27  1087 1.00</span></span>
+<span><span class="co">#&gt; omega_s[61]  -0.26    0.01 0.24  -0.69  -0.41  -0.27  -0.10   0.20   662 1.00</span></span>
+<span><span class="co">#&gt; omega_s[62]  -0.26    0.01 0.23  -0.72  -0.42  -0.26  -0.11   0.19   693 1.00</span></span>
+<span><span class="co">#&gt; omega_s[63]  -0.27    0.01 0.23  -0.72  -0.43  -0.28  -0.12   0.18   807 1.00</span></span>
+<span><span class="co">#&gt; omega_s[64]   0.08    0.01 0.22  -0.37  -0.07   0.09   0.23   0.51   866 1.00</span></span>
+<span><span class="co">#&gt; omega_s[65]   0.17    0.01 0.22  -0.29   0.02   0.17   0.32   0.57   693 1.00</span></span>
+<span><span class="co">#&gt; omega_s[66]   0.16    0.01 0.22  -0.27   0.02   0.16   0.31   0.60   525 1.00</span></span>
+<span><span class="co">#&gt; omega_s[67]  -0.03    0.01 0.22  -0.49  -0.17  -0.01   0.13   0.42  1154 1.00</span></span>
+<span><span class="co">#&gt; omega_s[68]  -0.02    0.01 0.25  -0.50  -0.17  -0.02   0.15   0.47  1152 1.00</span></span>
+<span><span class="co">#&gt; omega_s[69]   0.00    0.01 0.22  -0.46  -0.15   0.00   0.15   0.43   458 1.01</span></span>
+<span><span class="co">#&gt; omega_s[70]   0.01    0.01 0.21  -0.42  -0.13   0.01   0.15   0.40   431 1.00</span></span>
+<span><span class="co">#&gt; omega_s[71]   0.17    0.01 0.24  -0.30   0.01   0.17   0.33   0.67   884 1.00</span></span>
+<span><span class="co">#&gt; omega_s[72]  -0.12    0.01 0.24  -0.62  -0.29  -0.11   0.04   0.35  1064 1.00</span></span>
+<span><span class="co">#&gt; omega_s[73]  -0.14    0.01 0.22  -0.58  -0.28  -0.15   0.01   0.30   600 1.00</span></span>
+<span><span class="co">#&gt; omega_s[74]  -0.14    0.01 0.22  -0.56  -0.29  -0.14   0.01   0.26   624 1.00</span></span>
+<span><span class="co">#&gt; omega_s[75]  -0.38    0.01 0.20  -0.76  -0.51  -0.38  -0.25   0.00   654 1.00</span></span>
+<span><span class="co">#&gt; omega_s[76]   0.10    0.01 0.21  -0.31  -0.04   0.10   0.23   0.51   848 1.00</span></span>
+<span><span class="co">#&gt; omega_s[77]   0.09    0.01 0.22  -0.34  -0.04   0.09   0.23   0.52  1053 1.00</span></span>
+<span><span class="co">#&gt; omega_s[78]  -0.06    0.01 0.21  -0.47  -0.19  -0.06   0.08   0.35  1693 1.00</span></span>
+<span><span class="co">#&gt; omega_s[79]   0.06    0.01 0.16  -0.27  -0.05   0.06   0.17   0.37   622 1.00</span></span>
+<span><span class="co">#&gt; omega_s[80]  -0.18    0.01 0.23  -0.65  -0.33  -0.18  -0.02   0.27   632 1.00</span></span>
+<span><span class="co">#&gt; omega_s[81]  -0.07    0.01 0.20  -0.45  -0.20  -0.07   0.05   0.33  1165 1.00</span></span>
+<span><span class="co">#&gt; omega_s[82]  -0.14    0.01 0.21  -0.55  -0.28  -0.14   0.00   0.29   810 1.00</span></span>
+<span><span class="co">#&gt; omega_s[83]  -0.02    0.01 0.23  -0.47  -0.18  -0.01   0.14   0.44  1096 1.00</span></span>
+<span><span class="co">#&gt; omega_s[84]   0.12    0.01 0.20  -0.26  -0.02   0.12   0.25   0.53   952 1.00</span></span>
+<span><span class="co">#&gt; omega_s[85]  -0.29    0.01 0.21  -0.68  -0.44  -0.30  -0.15   0.11  1111 1.00</span></span>
+<span><span class="co">#&gt; lp__        136.06    0.93 9.26 118.11 129.87 136.38 142.46 152.88   100 1.02</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Tue Jan  3 19:49:44 2023.</span></span>
+<span><span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Mon Aug 26 18:29:22 2024.</span></span>
 <span><span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span></span>
 <span><span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span></span>
 <span><span class="co">#&gt; convergence, Rhat=1).</span></span></code></pre></div>
@@ -434,10 +416,12 @@ model can generate predictive data that are consistent with the
 observations. For this, we can make use of
 <code><a href="../reference/simulate.sdmTMB.html">simulate.sdmTMB()</a></code> while passing in our Stan model.
 <code><a href="../reference/simulate.sdmTMB.html">simulate.sdmTMB()</a></code> will take draws from the joint parameter
-posterior and add observation error.</p>
+posterior and add observation error. We need to ensure <code>nsim</code>
+is less than or equal to the total number of post-warmup samples.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">19292</span><span class="op">)</span></span>
-<span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/simulate.html" class="external-link">simulate</a></span><span class="op">(</span><span class="va">fit_mle</span>, tmbstan_model <span class="op">=</span> <span class="va">fit_stan</span>, nsim <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span>
+<span><span class="va">samps</span> <span class="op">&lt;-</span> <span class="fu">sdmTMBextra</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/sdmTMBextra/man/extract_mcmc.html" class="external-link">extract_mcmc</a></span><span class="op">(</span><span class="va">fit_stan</span><span class="op">)</span></span>
+<span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/simulate.html" class="external-link">simulate</a></span><span class="op">(</span><span class="va">fit_mle</span>, mcmc_samples <span class="op">=</span> <span class="va">samps</span>, nsim <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span>
 <span><span class="fu">bayesplot</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/pp_check.html" class="external-link">pp_check</a></span><span class="op">(</span></span>
 <span>  <span class="va">sim_dat</span><span class="op">$</span><span class="va">observed</span>,</span>
 <span>  yrep <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">s</span><span class="op">)</span>,</span>
@@ -452,11 +436,11 @@ simulated data seem consistent with the observed data.</p>
 <div class="section level2">
 <h2 id="plotting-predictions">Plotting predictions<a class="anchor" aria-label="anchor" href="#plotting-predictions"></a>
 </h2>
-<p>We can make predictions with our Bayesian model by supplying it to
-the <code>tmbstan_model</code> argument in
+<p>We can make predictions with our Bayesian model by supplying the
+posterior samples to the <code>mcmc_samples</code> argument in
 <code><a href="../reference/predict.sdmTMB.html">predict.sdmTMB()</a></code>.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">pred</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit_mle</span>, tmbstan_model <span class="op">=</span> <span class="va">fit_stan</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">pred</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit_mle</span>, mcmc_samples <span class="op">=</span> <span class="va">samps</span><span class="op">)</span></span></code></pre></div>
 <p>The output is a matrix where each row corresponds to a row of
 predicted data and each column corresponds to a sample.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
@@ -484,7 +468,7 @@ predicted data and each column corresponds to a sample.</p>
 <span>  Y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">70</span><span class="op">)</span>,</span>
 <span>  a1 <span class="op">=</span> <span class="fl">0</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">pred</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit_mle</span>, newdata <span class="op">=</span> <span class="va">nd</span>, tmbstan_model <span class="op">=</span> <span class="va">fit_stan</span><span class="op">)</span></span>
+<span><span class="va">pred</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit_mle</span>, newdata <span class="op">=</span> <span class="va">nd</span>, mcmc_samples <span class="op">=</span> <span class="va">samps</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">nd</span><span class="op">$</span><span class="va">post_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">pred</span>, <span class="fl">1</span>, <span class="va">mean</span><span class="op">)</span></span>
 <span><span class="va">nd</span><span class="op">$</span><span class="va">post_sd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">pred</span>, <span class="fl">1</span>, <span class="va">sd</span><span class="op">)</span></span>
@@ -541,7 +525,7 @@ argument.</p>
 <code class="sourceCode R"><span><span class="va">fit_pred</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span></span>
 <span>  <span class="va">fit_mle</span>,</span>
 <span>  newdata <span class="op">=</span> <span class="va">nd</span>,</span>
-<span>  tmbstan_model <span class="op">=</span> <span class="va">fit_stan</span>,</span>
+<span>  mcmc_samples <span class="op">=</span> <span class="va">samps</span>,</span>
 <span>  sims_var <span class="op">=</span> <span class="st">"omega_s"</span> <span class="co">#&lt;</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -594,28 +578,26 @@ interface to <span>Stan</span>. Retrieved from <a href="https://mc-stan.org/" cl
 </div>
 </div>
 </div>
-  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
 </div>
 
 
 
     <footer><div class="pkgdown-footer-left">
-  <p></p>
-<p>Developed by Sean C. Anderson, Eric J. Ward, Lewis A. K. Barnett, Philina A. English.</p>
+  <p>Developed by Sean C. Anderson, Eric J. Ward, Philina A. English, Lewis A. K. Barnett, James T. Thorson.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
 </div>
 
     </footer>
 </div>
 
-  
 
-  
+
+
 
   </body>
 </html>

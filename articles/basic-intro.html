@@ -5,75 +5,60 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="description" content="sdmTMB">
 <title>Introduction to modelling with sdmTMB • sdmTMB</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Introduction to modelling with sdmTMB">
-<meta property="og:description" content="sdmTMB">
-<!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
-<script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-<![endif]-->
+<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Introduction to modelling with sdmTMB">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
-    
 
-    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light"><div class="container">
-    
+
+    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9004</small>
 
-    
+
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item">
-  <a class="nav-link" href="../reference/index.html">Reference</a>
-</li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item dropdown">
-  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
-  <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/basic-intro.html">Introduction to modelling with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/bayesian.html">Bayesian estimation with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/cross-validation.html">Cross-validation for model evaluation and comparison</a>
-    <a class="dropdown-item" href="../articles/delta-models.html">Fitting delta (hurdle) models with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/ggeffects.html">Visualizing marginal effects in sdmTMB models with ggeffects</a>
-    <a class="dropdown-item" href="../articles/index-standardization.html">Index standardization with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/model-description.html">sdmTMB model description</a>
-    <a class="dropdown-item" href="../articles/pretty-plots.html">Making pretty maps with sdmTMB output</a>
-    <a class="dropdown-item" href="../articles/residual-checking.html">Residual checking with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/spatial-trend-models.html">Fitting spatial trend models with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/threshold-models.html">Threshold modeling with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/visreg.html">Visualizing sdmTMB conditional effects using visreg</a>
-  </div>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="../articles/basic-intro.html">Introduction to modelling with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/bayesian.html">Bayesian estimation with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/cross-validation.html">Cross-validation for model evaluation and comparison</a></li>
+    <li><a class="dropdown-item" href="../articles/delta-models.html">Fitting delta (hurdle) models with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/ggeffects.html">Visualizing marginal effects in sdmTMB models with ggeffects</a></li>
+    <li><a class="dropdown-item" href="../articles/index-standardization.html">Index standardization with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/model-description.html">sdmTMB model description</a></li>
+    <li><a class="dropdown-item" href="../articles/poisson-link.html">Poisson-link delta models</a></li>
+    <li><a class="dropdown-item" href="../articles/pretty-plots.html">Making pretty maps with sdmTMB output</a></li>
+    <li><a class="dropdown-item" href="../articles/residual-checking.html">Residual checking with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/spatial-trend-models.html">Fitting spatial trend models with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/threshold-models.html">Threshold modeling with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/visreg.html">Visualizing sdmTMB conditional effects using visreg</a></li>
+  </ul>
 </li>
-<li class="nav-item">
-  <a class="nav-link" href="../news/index.html">Changelog</a>
-</li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
-<form class="form-inline my-2 my-lg-0" role="search">
-        <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off">
-</form>
-
-      <ul class="navbar-nav">
-<li class="nav-item">
-  <a class="external-link nav-link" href="https://github.com/pbs-assess/sdmTMB/" aria-label="github">
-    <span class="fab fa fab fa-github fa-lg"></span>
-     
-  </a>
-</li>
+<ul class="navbar-nav">
+<li class="nav-item"><form class="form-inline" role="search">
+ <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
+</form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/pbs-assess/sdmTMB/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
-    
+
   </div>
 </nav><div class="container template-article">
 
@@ -82,11 +67,12 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="" class="logo" alt=""><h1>Introduction to modelling with sdmTMB</h1>
+
+      <h1>Introduction to modelling with sdmTMB</h1>
             
-            <h4 data-toc-skip class="date">2023-01-03</h4>
+            <h4 data-toc-skip class="date">2024-08-26</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/HEAD/vignettes/basic-intro.Rmd" class="external-link"><code>vignettes/basic-intro.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/vignettes/articles/basic-intro.Rmd" class="external-link"><code>vignettes/articles/basic-intro.Rmd</code></a></small>
       <div class="d-none name"><code>basic-intro.Rmd</code></div>
     </div>
 
@@ -98,7 +84,7 @@ site</a> under ‘Articles’.</strong></p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pbs-assess.github.io/sdmTMB/index.html">sdmTMB</a></span><span class="op">)</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pbs-assess.github.io/sdmTMB/">sdmTMB</a></span><span class="op">)</span></span></code></pre></div>
 <p>In this vignette, we describe the basic steps to fitting a spatial or
 spatiotemporal GLMM with sdmTMB. This type of model can be useful for
 (dynamic, i.e. changing through time) species distribution models and
@@ -157,7 +143,6 @@ scenarios, but care must be taken to avoid overfitting. The circles
 represent observations and the vertices are the knot locations.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mesh</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_mesh.html">make_mesh</a></span><span class="op">(</span><span class="va">pcod</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="st">"Y"</span><span class="op">)</span>, cutoff <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
-<span><span class="co">#&gt; as(&lt;dgCMatrix&gt;, "dgTMatrix") is deprecated since Matrix 1.5-0; do as(., "TsparseMatrix") instead</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mesh</span><span class="op">)</span></span></code></pre></div>
 <p><img src="basic-intro_files/figure-html/spde-1.png" width="672"></p>
 <p>We will start with a logistic regression of Pacific cod presence in
@@ -172,14 +157,10 @@ tows as a function of depth and depth squared. We will first use
 <span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"logit"</span><span class="op">)</span>,</span>
 <span>  spatial <span class="op">=</span> <span class="st">"off"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in checkMatrixPackageVersion(): Package version inconsistency detected.</span></span>
-<span><span class="co">#&gt; TMB was built with Matrix version 1.5.3</span></span>
-<span><span class="co">#&gt; Current Matrix version is 1.5.1</span></span>
-<span><span class="co">#&gt; Please re-install 'TMB' from source using install.packages('TMB', type = 'source') or ask CRAN for a binary version of 'TMB' matching CRAN's 'Matrix' package</span></span>
 <span><span class="va">m</span></span>
 <span><span class="co">#&gt; Model fit by ML ['sdmTMB']</span></span>
 <span><span class="co">#&gt; Formula: present ~ depth_scaled + depth_scaled2</span></span>
-<span><span class="co">#&gt; Mesh: mesh</span></span>
+<span><span class="co">#&gt; Mesh: mesh (isotropic covariance)</span></span>
 <span><span class="co">#&gt; Data: pcod</span></span>
 <span><span class="co">#&gt; Family: binomial(link = 'logit')</span></span>
 <span><span class="co">#&gt;  </span></span>
@@ -205,10 +186,6 @@ tows as a function of depth and depth squared. We will first use
 <span><span class="co">#&gt; Call:</span></span>
 <span><span class="co">#&gt; glm(formula = present ~ depth_scaled + depth_scaled2, family = binomial(link = "logit"), </span></span>
 <span><span class="co">#&gt;     data = pcod)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Deviance Residuals: </span></span>
-<span><span class="co">#&gt;     Min       1Q   Median       3Q      Max  </span></span>
-<span><span class="co">#&gt; -1.5468  -0.9878  -0.1665   0.9056   3.1445  </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients:</span></span>
 <span><span class="co">#&gt;               Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
@@ -241,7 +218,7 @@ changes coefficient estimates:</p>
 <span><span class="va">m1</span></span>
 <span><span class="co">#&gt; Spatial model fit by ML ['sdmTMB']</span></span>
 <span><span class="co">#&gt; Formula: present ~ depth_scaled + depth_scaled2</span></span>
-<span><span class="co">#&gt; Mesh: mesh</span></span>
+<span><span class="co">#&gt; Mesh: mesh (isotropic covariance)</span></span>
 <span><span class="co">#&gt; Data: pcod</span></span>
 <span><span class="co">#&gt; Family: binomial(link = 'logit')</span></span>
 <span><span class="co">#&gt;  </span></span>
@@ -250,7 +227,7 @@ changes coefficient estimates:</p>
 <span><span class="co">#&gt; depth_scaled     -2.17    0.21</span></span>
 <span><span class="co">#&gt; depth_scaled2    -1.59    0.13</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Matern range: 43.54</span></span>
+<span><span class="co">#&gt; Matérn range: 43.54</span></span>
 <span><span class="co">#&gt; Spatial SD: 1.65</span></span>
 <span><span class="co">#&gt; ML criterion at convergence: 1042.157</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -279,7 +256,7 @@ examples.</p>
 <span><span class="va">m2</span></span>
 <span><span class="co">#&gt; Spatiotemporal model fit by ML ['sdmTMB']</span></span>
 <span><span class="co">#&gt; Formula: present ~ depth_scaled + depth_scaled2</span></span>
-<span><span class="co">#&gt; Mesh: mesh</span></span>
+<span><span class="co">#&gt; Mesh: mesh (isotropic covariance)</span></span>
 <span><span class="co">#&gt; Time column: year</span></span>
 <span><span class="co">#&gt; Data: pcod</span></span>
 <span><span class="co">#&gt; Family: binomial(link = 'logit')</span></span>
@@ -289,9 +266,9 @@ examples.</p>
 <span><span class="co">#&gt; depth_scaled     -2.47    0.25</span></span>
 <span><span class="co">#&gt; depth_scaled2    -1.83    0.15</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Matern range: 49.96</span></span>
+<span><span class="co">#&gt; Matérn range: 49.96</span></span>
 <span><span class="co">#&gt; Spatial SD: 1.91</span></span>
-<span><span class="co">#&gt; Spatiotemporal SD: 0.95</span></span>
+<span><span class="co">#&gt; Spatiotemporal IID SD: 0.95</span></span>
 <span><span class="co">#&gt; ML criterion at convergence: 1014.753</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; See ?tidy.sdmTMB to extract these values as a data frame.</span></span></code></pre></div>
@@ -311,7 +288,7 @@ easier.</p>
 <span><span class="va">m3</span></span>
 <span><span class="co">#&gt; Spatiotemporal model fit by ML ['sdmTMB']</span></span>
 <span><span class="co">#&gt; Formula: density ~ poly(log(depth), 2)</span></span>
-<span><span class="co">#&gt; Mesh: mesh</span></span>
+<span><span class="co">#&gt; Mesh: mesh (isotropic covariance)</span></span>
 <span><span class="co">#&gt; Time column: year</span></span>
 <span><span class="co">#&gt; Data: pcod</span></span>
 <span><span class="co">#&gt; Family: tweedie(link = 'log')</span></span>
@@ -323,9 +300,9 @@ easier.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Dispersion parameter: 11.03</span></span>
 <span><span class="co">#&gt; Tweedie p: 1.50</span></span>
-<span><span class="co">#&gt; Matern range: 19.75</span></span>
+<span><span class="co">#&gt; Matérn range: 19.75</span></span>
 <span><span class="co">#&gt; Spatial SD: 1.40</span></span>
-<span><span class="co">#&gt; Spatiotemporal SD: 1.55</span></span>
+<span><span class="co">#&gt; Spatiotemporal IID SD: 1.55</span></span>
 <span><span class="co">#&gt; ML criterion at convergence: 6277.624</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; See ?tidy.sdmTMB to extract these values as a data frame.</span></span></code></pre></div>
@@ -347,12 +324,12 @@ the tidy function:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">m3</span>, <span class="st">"ran_pars"</span>, conf.int <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 5</span></span></span>
 <span><span class="co">#&gt;   term      estimate std.error conf.low conf.high</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> range        19.8  <span style="color: #BB0000;">NA</span>           14.6      26.7 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> phi          11.0  <span style="color: #BB0000;">NA</span>           10.3      11.8 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> sigma_O       1.40 <span style="color: #BB0000;">NA</span>            1.12      1.76</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> sigma_E       1.55 <span style="color: #BB0000;">NA</span>            1.32      1.83</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> tweedie_p     1.50 <span style="color: #BB0000;">NA</span>            1.48      1.52</span></span></code></pre></div>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> range        19.8     3.03      14.6      26.7 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> phi          11.0     0.377     10.3      11.8 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> sigma_O       1.40    0.162      1.12      1.76</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> sigma_E       1.55    0.129      1.32      1.83</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> tweedie_p     1.50    0.011<span style="text-decoration: underline;">9</span>     1.48      1.52</span></span></code></pre></div>
 <p>Note that standard errors are not reported when coefficients are in
 log space, but the confidence intervals are reported. These parameters
 are defined as follows:</p>
@@ -386,6 +363,10 @@ then:</p>
 <p>We can inspect randomized quantile residuals:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pcod</span><span class="op">$</span><span class="va">resids</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">m3</span><span class="op">)</span> <span class="co"># randomized quantile residuals</span></span>
+<span><span class="co">#&gt; Note what used to be the default sdmTMB residuals (before version 0.4.3.9005)</span></span>
+<span><span class="co">#&gt; are now `type = 'mle-eb'`. We recommend using the current default `'mle-mvn'`,</span></span>
+<span><span class="co">#&gt; which takes one sample from the approximate posterior of the random effects or</span></span>
+<span><span class="co">#&gt; `dharma_residuals()` using a similar approach.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqnorm</a></span><span class="op">(</span><span class="va">pcod</span><span class="op">$</span><span class="va">resids</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqline</a></span><span class="op">(</span><span class="va">pcod</span><span class="op">$</span><span class="va">resids</span><span class="op">)</span></span></code></pre></div>
 <p><img src="basic-intro_files/figure-html/residuals-1.png" width="768"></p>
@@ -398,17 +379,20 @@ then:</p>
 <p><img src="basic-intro_files/figure-html/residuals-2.png" width="768"></p>
 <p>Those were fast to calculate but can look ‘off’ even when the model
 is consistent with the data. MCMC-based residuals are more reliable but
-slow. In practice you would like want more <code>mcmc_iter</code> and
+slow. We can calculate them through some help from the sdmTMBextra
+package. <a href="https://github.com/pbs-assess/sdmTMBextra" class="external-link uri">https://github.com/pbs-assess/sdmTMBextra</a>. In practice
+you would like want more <code>mcmc_iter</code> and
 <code>mcmc_warmup</code>. Total samples is
 <code>mcmc_iter - mcmc_warmup</code>. We will also just use the spatial
 model here so the vignette builds quickly.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">m3</span>, <span class="st">"mle-mcmc"</span>, mcmc_warmup <span class="op">=</span> <span class="fl">100</span>, mcmc_iter <span class="op">=</span> <span class="fl">101</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
+<span><span class="va">samps</span> <span class="op">&lt;-</span> <span class="fu">sdmTMBextra</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/sdmTMBextra/man/predict_mle_mcmc.html" class="external-link">predict_mle_mcmc</a></span><span class="op">(</span><span class="va">m3</span>, mcmc_warmup <span class="op">=</span> <span class="fl">100</span>, mcmc_iter <span class="op">=</span> <span class="fl">101</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.013175 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 131.75 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.01007 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 100.7 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -433,10 +417,11 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; Chain 1: Iteration: 100 / 101 [ 99%]  (Warmup)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 101 / 101 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 31.4246 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                0.241641 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                31.6663 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 26.202 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                0.198 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                26.4 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
+<span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">m3</span>, <span class="st">"mle-mcmc"</span>, mcmc_samples <span class="op">=</span> <span class="va">samps</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqnorm</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqline</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span></span></code></pre></div>
 <p><img src="basic-intro_files/figure-html/residuals-mcmc-1.png" width="768"></p>
@@ -452,19 +437,21 @@ grid built into the package for Queen Charlotte Sound named
 covariates that we used in the model above.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">qcs_grid</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Rows: 65,826</span></span>
-<span><span class="co">#&gt; Columns: 6</span></span>
+<span><span class="co">#&gt; Rows: 7,314</span></span>
+<span><span class="co">#&gt; Columns: 5</span></span>
 <span><span class="co">#&gt; $ X             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 456, 458, 460, 462, 464, 466, 468, 470, 472, 474, 476, 4…</span></span>
 <span><span class="co">#&gt; $ Y             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 5636, 5636, 5636, 5636, 5636, 5636, 5636, 5636, 5636, 56…</span></span>
 <span><span class="co">#&gt; $ depth         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 347.08345, 223.33479, 203.74085, 183.29868, 182.99983, 1…</span></span>
-<span><span class="co">#&gt; $ depth_scaled  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 1.56081222, 0.56976987, 0.36336929, 0.12570465, 0.122036…</span></span>
-<span><span class="co">#&gt; $ depth_scaled2 <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 2.436134789, 0.324637708, 0.132037240, 0.015801658, 0.01…</span></span>
-<span><span class="co">#&gt; $ year          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 2003, 2003, 2003, 2003, 2003, 2003, 2003, 2003, 2003, 20…</span></span></code></pre></div>
-<p>Now we will make the predictions on new data:</p>
+<span><span class="co">#&gt; $ depth_scaled  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 1.56081222, 0.56976988, 0.36336929, 0.12570465, 0.122036…</span></span>
+<span><span class="co">#&gt; $ depth_scaled2 <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 2.436134794, 0.324637712, 0.132037240, 0.015801659, 0.01…</span></span></code></pre></div>
+<p>We can replicate our grid across all necessary years:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">predictions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">m3</span>, newdata <span class="op">=</span> <span class="va">qcs_grid</span><span class="op">)</span></span></code></pre></div>
-<p>Let’s make a small function to help make maps.</p>
+<code class="sourceCode R"><span><span class="va">grid_yrs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/replicate_df.html">replicate_df</a></span><span class="op">(</span><span class="va">qcs_grid</span>, <span class="st">"year"</span>, <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">pcod</span><span class="op">$</span><span class="va">year</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Now we will make the predictions on new data:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">predictions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">m3</span>, newdata <span class="op">=</span> <span class="va">grid_yrs</span><span class="op">)</span></span></code></pre></div>
+<p>Let’s make a small function to help make maps.</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plot_map</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">dat</span>, <span class="va">column</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">dat</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">Y</span>, fill <span class="op">=</span> <span class="op">{</span><span class="op">{</span> <span class="va">column</span> <span class="op">}</span><span class="op">}</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_tile.html" class="external-link">geom_raster</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
@@ -473,7 +460,7 @@ covariates that we used in the model above.</p>
 <p>There are four kinds of predictions that we get out of the model.</p>
 <p>First, we will show the predictions that incorporate all fixed
 effects and random effects:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">plot_map</span><span class="op">(</span><span class="va">predictions</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">est</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span></span>
 <span>    trans <span class="op">=</span> <span class="st">"sqrt"</span>,</span>
@@ -487,7 +474,7 @@ effects and random effects:</p>
 <p><img src="basic-intro_files/figure-html/plot-all-effects-1.png" width="768"></p>
 <p>We can also look at just the fixed effects, here only a quadratic
 effect of depth:</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">plot_map</span><span class="op">(</span><span class="va">predictions</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">est_non_rf</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span>trans <span class="op">=</span> <span class="st">"sqrt"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Prediction (fixed effects only)"</span><span class="op">)</span></span></code></pre></div>
@@ -497,7 +484,7 @@ deviations in space through time that are not accounted for by our fixed
 effects. In other words, these deviations represent consistent biotic
 and abiotic factors that are affecting biomass density but are not
 accounted for in the model.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">plot_map</span><span class="op">(</span><span class="va">predictions</span>, <span class="va">omega_s</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient2</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Spatial random effects only"</span><span class="op">)</span></span></code></pre></div>
@@ -507,7 +494,7 @@ represent deviation from the fixed effect predictions and the spatial
 random effect deviations. These represent biotic and abiotic factors
 that are changing through time and are not accounted for in the
 model.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">plot_map</span><span class="op">(</span><span class="va">predictions</span>, <span class="va">epsilon_st</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient2</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">year</span><span class="op">)</span> <span class="op">+</span></span>
@@ -519,16 +506,16 @@ predictions using simulations from the joint precision matrix by setting
 estimates and use <code><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply()</a></code> to calculate upper and lower
 confidence intervals, a standard deviation, and a coefficient of
 variation (CV).</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">m3</span>, newdata <span class="op">=</span> <span class="va">qcs_grid</span>, nsim <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
-<span><span class="va">sim_last</span> <span class="op">&lt;-</span> <span class="va">sim</span><span class="op">[</span><span class="va">qcs_grid</span><span class="op">$</span><span class="va">year</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">qcs_grid</span><span class="op">$</span><span class="va">year</span><span class="op">)</span>, <span class="op">]</span> <span class="co"># just plot last year</span></span>
-<span><span class="va">pred_last</span> <span class="op">&lt;-</span> <span class="va">predictions</span><span class="op">[</span><span class="va">predictions</span><span class="op">$</span><span class="va">year</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">qcs_grid</span><span class="op">$</span><span class="va">year</span><span class="op">)</span>, <span class="op">]</span></span>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">m3</span>, newdata <span class="op">=</span> <span class="va">grid_yrs</span>, nsim <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<span><span class="va">sim_last</span> <span class="op">&lt;-</span> <span class="va">sim</span><span class="op">[</span><span class="va">grid_yrs</span><span class="op">$</span><span class="va">year</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">grid_yrs</span><span class="op">$</span><span class="va">year</span><span class="op">)</span>, <span class="op">]</span> <span class="co"># just plot last year</span></span>
+<span><span class="va">pred_last</span> <span class="op">&lt;-</span> <span class="va">predictions</span><span class="op">[</span><span class="va">predictions</span><span class="op">$</span><span class="va">year</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">grid_yrs</span><span class="op">$</span><span class="va">year</span><span class="op">)</span>, <span class="op">]</span></span>
 <span><span class="va">pred_last</span><span class="op">$</span><span class="va">lwr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">sim_last</span><span class="op">)</span>, <span class="fl">1</span>, <span class="va">quantile</span>, probs <span class="op">=</span> <span class="fl">0.025</span><span class="op">)</span></span>
 <span><span class="va">pred_last</span><span class="op">$</span><span class="va">upr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">sim_last</span><span class="op">)</span>, <span class="fl">1</span>, <span class="va">quantile</span>, probs <span class="op">=</span> <span class="fl">0.975</span><span class="op">)</span></span>
 <span><span class="va">pred_last</span><span class="op">$</span><span class="va">sd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">sim_last</span><span class="op">)</span>, <span class="fl">1</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">pred_last</span><span class="op">$</span><span class="va">cv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">sim_last</span><span class="op">)</span>, <span class="fl">1</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
 <p>Plot the CV on the estimates:</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">pred_last</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">Y</span>, fill <span class="op">=</span> <span class="va">cv</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_tile.html" class="external-link">geom_raster</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
@@ -541,7 +528,7 @@ variation (CV).</p>
 simplified data frames to the predict function that fix covariate values
 we want fixed (e.g., at means) and vary parameters we want to visualize
 (across a range of values):</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  depth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">pcod</span><span class="op">$</span><span class="va">depth</span><span class="op">)</span>,</span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">pcod</span><span class="op">$</span><span class="va">depth</span><span class="op">)</span>,</span>
@@ -565,15 +552,16 @@ we want fixed (e.g., at means) and vary parameters we want to visualize
 link space and the residuals are partial randomized quantile residuals.
 See the <code>scale</code> argument in visreg for response scale
 plots.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">visreg</span><span class="fu">::</span><span class="fu"><a href="http://pbreheny.github.io/visreg/reference/visreg.html" class="external-link">visreg</a></span><span class="op">(</span><span class="va">m3</span>, <span class="st">"depth"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="basic-intro_files/figure-html/visreg-1.png" width="672"></p>
 <p>Or the ggeffects package for a <em>marginal</em> effects plot. This
 will also be faster since it relies on the already estimated
 coefficients and variance-covariance matrix.</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">ggeffects</span><span class="fu">::</span><span class="fu"><a href="https://strengejacke.github.io/ggeffects/reference/ggpredict.html" class="external-link">ggeffect</a></span><span class="op">(</span><span class="va">m3</span>,  <span class="st">"depth [0:500 by=1]"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: Removed 1 row containing missing values (`geom_line()`).</span></span></code></pre></div>
+<span><span class="co">#&gt; Warning: Removed 1 row containing missing values or values outside the scale range</span></span>
+<span><span class="co">#&gt; (`geom_line()`).</span></span></code></pre></div>
 <p><img src="basic-intro_files/figure-html/ggeffects-1.png" width="672"></p>
 <div class="section level3">
 <h3 id="time-varying-effects">Time-varying effects<a class="anchor" aria-label="anchor" href="#time-varying-effects"></a>
@@ -584,7 +572,7 @@ example, it helps to give each year a separate mean effect
 omits the intercept. For models like this that take longer to fit, we
 might want to set <code>silent = FALSE</code> so we can monitor
 progress.</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">m4</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdmTMB.html">sdmTMB</a></span><span class="op">(</span></span>
 <span>  <span class="va">density</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">as.factor</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">pcod</span>,</span>
@@ -598,13 +586,50 @@ progress.</p>
 <span><span class="co">#&gt; Detected irregular time spacing with an AR(1) or random walk process.</span></span>
 <span><span class="co">#&gt; Consider filling in the missing time slices with `extra_time`.</span></span>
 <span><span class="co">#&gt; `extra_time = c(2006, 2008, 2010, 2012, 2014, 2016)`</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(cov)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning: The model may not have converged: non-positive-definite Hessian</span></span>
+<span><span class="co">#&gt; matrix.</span></span>
 <span><span class="va">m4</span></span>
 <span><span class="co">#&gt; Spatiotemporal model fit by ML ['sdmTMB']</span></span>
 <span><span class="co">#&gt; Formula: density ~ 0 + as.factor(year)</span></span>
-<span><span class="co">#&gt; Mesh: mesh</span></span>
+<span><span class="co">#&gt; Mesh: mesh (isotropic covariance)</span></span>
 <span><span class="co">#&gt; Time column: year</span></span>
 <span><span class="co">#&gt; Data: pcod</span></span>
 <span><span class="co">#&gt; Family: tweedie(link = 'log')</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
 <span><span class="co">#&gt;  </span></span>
 <span><span class="co">#&gt;                     coef.est coef.se</span></span>
 <span><span class="co">#&gt; as.factor(year)2003     3.36    0.30</span></span>
@@ -640,18 +665,20 @@ progress.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Dispersion parameter: 10.86</span></span>
 <span><span class="co">#&gt; Tweedie p: 1.50</span></span>
-<span><span class="co">#&gt; Matern range: 13.58</span></span>
+<span><span class="co">#&gt; Matérn range: 13.58</span></span>
 <span><span class="co">#&gt; Spatial SD: 1.63</span></span>
-<span><span class="co">#&gt; Spatiotemporal SD: 1.66</span></span>
+<span><span class="co">#&gt; Spatiotemporal IID SD: 1.66</span></span>
 <span><span class="co">#&gt; ML criterion at convergence: 6251.146</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; See ?tidy.sdmTMB to extract these values as a data frame.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; **Possible issues detected! Check output of sanity().**</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC</a></span><span class="op">(</span><span class="va">m4</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 12534.29</span></span></code></pre></div>
 <p>To plot these, we make a data frame that contains all combinations of
 the time-varying covariate and time. This is easily created using
 <code><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid()</a></code> or <code><a href="https://tidyr.tidyverse.org/reference/expand_grid.html" class="external-link">tidyr::expand_grid()</a></code>.</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span></span>
 <span>  depth_scaled <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">pcod</span><span class="op">$</span><span class="va">depth_scaled</span><span class="op">)</span> <span class="op">+</span> <span class="fl">0.2</span>,</span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">pcod</span><span class="op">$</span><span class="va">depth_scaled</span><span class="op">)</span> <span class="op">-</span> <span class="fl">0.2</span>,</span>
@@ -674,34 +701,30 @@ the time-varying covariate and time. This is easily created using
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_x_continuous</a></span><span class="op">(</span>labels <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">x</span> <span class="op">*</span> <span class="va">pcod</span><span class="op">$</span><span class="va">depth_sd</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">+</span> <span class="va">pcod</span><span class="op">$</span><span class="va">depth_mean</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_cartesian.html" class="external-link">coord_cartesian</a></span><span class="op">(</span>expand <span class="op">=</span> <span class="cn">F</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Depth (m)"</span>, y <span class="op">=</span> <span class="st">"Biomass density (kg/km2)"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Please use `linewidth` instead.</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Depth (m)"</span>, y <span class="op">=</span> <span class="st">"Biomass density (kg/km2)"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="basic-intro_files/figure-html/tv-depth-eff-1.png" width="576"></p>
 </div>
 </div>
-  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
 </div>
 
 
 
     <footer><div class="pkgdown-footer-left">
-  <p></p>
-<p>Developed by Sean C. Anderson, Eric J. Ward, Lewis A. K. Barnett, Philina A. English.</p>
+  <p>Developed by Sean C. Anderson, Eric J. Ward, Philina A. English, Lewis A. K. Barnett, James T. Thorson.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
 </div>
 
     </footer>
 </div>
 
-  
 
-  
+
+
 
   </body>
 </html>

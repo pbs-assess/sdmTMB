@@ -5,76 +5,60 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="description" content="sdmTMB">
 <title>sdmTMB model description • sdmTMB</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js" integrity="sha512-7O5pXpc0oCRrxk8RUfDYFgn0nO1t+jLuIOQdOMRp4APB7uZ4vSjspzp5y6YDtDs4VzUSTbWzBFZ/LKJhnyFOKw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="sdmTMB model description">
-<meta property="og:description" content="sdmTMB">
-<!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
-<script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-<![endif]-->
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="sdmTMB model description">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
-    
 
-    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light" data-bs-theme="light"><div class="container">
-    
+
+    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
     <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9004</small>
 
-    
+
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item">
-  <a class="nav-link" href="../reference/index.html">Reference</a>
-</li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item dropdown">
-  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
-  <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/web_only/basic-intro.html">Introduction to modelling with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/web_only/bayesian.html">Bayesian estimation with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/web_only/cross-validation.html">Cross-validation for model evaluation and comparison</a>
-    <a class="dropdown-item" href="../articles/web_only/delta-models.html">Fitting delta (hurdle) models with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/web_only/ggeffects.html">Visualizing marginal effects in sdmTMB models with ggeffects</a>
-    <a class="dropdown-item" href="../articles/web_only/index-standardization.html">Index standardization with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/model-description.html">sdmTMB model description</a>
-    <a class="dropdown-item" href="../articles/web_only/poisson-link.html">Poisson-link delta models</a>
-    <a class="dropdown-item" href="../articles/web_only/pretty-plots.html">Making pretty maps with sdmTMB output</a>
-    <a class="dropdown-item" href="../articles/web_only/residual-checking.html">Residual checking with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/web_only/spatial-trend-models.html">Fitting spatial trend models with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/web_only/threshold-models.html">Threshold modeling with sdmTMB</a>
-    <a class="dropdown-item" href="../articles/web_only/visreg.html">Visualizing sdmTMB conditional effects using visreg</a>
-  </div>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="../articles/basic-intro.html">Introduction to modelling with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/bayesian.html">Bayesian estimation with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/cross-validation.html">Cross-validation for model evaluation and comparison</a></li>
+    <li><a class="dropdown-item" href="../articles/delta-models.html">Fitting delta (hurdle) models with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/ggeffects.html">Visualizing marginal effects in sdmTMB models with ggeffects</a></li>
+    <li><a class="dropdown-item" href="../articles/index-standardization.html">Index standardization with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/model-description.html">sdmTMB model description</a></li>
+    <li><a class="dropdown-item" href="../articles/poisson-link.html">Poisson-link delta models</a></li>
+    <li><a class="dropdown-item" href="../articles/pretty-plots.html">Making pretty maps with sdmTMB output</a></li>
+    <li><a class="dropdown-item" href="../articles/residual-checking.html">Residual checking with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/spatial-trend-models.html">Fitting spatial trend models with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/threshold-models.html">Threshold modeling with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/visreg.html">Visualizing sdmTMB conditional effects using visreg</a></li>
+  </ul>
 </li>
-<li class="nav-item">
-  <a class="nav-link" href="../news/index.html">Changelog</a>
-</li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
-<form class="form-inline my-2 my-lg-0" role="search">
-        <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off">
-</form>
-
-      <ul class="navbar-nav">
-<li class="nav-item">
-  <a class="external-link nav-link" href="https://github.com/pbs-assess/sdmTMB/" aria-label="github">
-    <span class="fab fa fab fa-github fa-lg"></span>
-     
-  </a>
-</li>
+<ul class="navbar-nav">
+<li class="nav-item"><form class="form-inline" role="search">
+ <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
+</form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/pbs-assess/sdmTMB/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
-    
+
   </div>
 </nav><div class="container template-article">
 
@@ -83,10 +67,11 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="" class="logo" alt=""><h1>sdmTMB model description</h1>
+
+      <h1>sdmTMB model description</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/HEAD/vignettes/model-description.Rmd" class="external-link"><code>vignettes/model-description.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/vignettes/model-description.Rmd" class="external-link"><code>vignettes/model-description.Rmd</code></a></small>
       <div class="d-none name"><code>model-description.Rmd</code></div>
     </div>
 
@@ -112,25 +97,39 @@ generally follow the guidance in <span class="citation">Edwards &amp;
 Auger-Méthé (2019)</span>:</p>
 <ul>
 <li><p>Greek symbols for parameters,</p></li>
-<li><p>the Latin/Roman alphabet for data (except <span class="math inline">\(\boldsymbol{Q}\)</span> and <span class="math inline">\(\boldsymbol{H}\)</span>, which are used by
-convention),</p></li>
-<li><p>bold symbols for vectors or matrices (e.g., <span class="math inline">\(\boldsymbol{\omega}\)</span> is a vector and <span class="math inline">\(\omega_{\boldsymbol{s}}\)</span> is the value of
-<span class="math inline">\(\boldsymbol{\omega}\)</span> at point in
-space <span class="math inline">\(\boldsymbol{s}\)</span>),</p></li>
-<li><p><span class="math inline">\(\phi\)</span> for all distribution
-dispersion parameters for consistency with the code,</p></li>
-<li><p><span class="math inline">\(\mathbb{E}[y]\)</span> to define the
-expected value (mean) of variable <span class="math inline">\(y\)</span>,</p></li>
-<li><p><span class="math inline">\(\mathrm{Var}[y]\)</span> to define
-the expected variance of the variable <span class="math inline">\(y\)</span>,</p></li>
-<li><p>a <span class="math inline">\(^*\)</span> superscript represents
-interpolated or projected values as opposed to values at knot locations
-(e.g., <span class="math inline">\(\boldsymbol{\omega}\)</span>
-vs. <span class="math inline">\(\boldsymbol{\omega}^*\)</span>),
+<li><p>the Latin/Roman alphabet for data (except
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐐</mi><annotation encoding="application/x-tex">\boldsymbol{Q}</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐇</mi><annotation encoding="application/x-tex">\boldsymbol{H}</annotation></semantics></math>,
+which are used by convention),</p></li>
+<li><p>bold symbols for vectors or matrices (e.g.,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛚</mi><annotation encoding="application/x-tex">\boldsymbol{\omega}</annotation></semantics></math>
+is a vector and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ω</mi><mi>𝐬</mi></msub><annotation encoding="application/x-tex">\omega_{\boldsymbol{s}}</annotation></semantics></math>
+is the value of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛚</mi><annotation encoding="application/x-tex">\boldsymbol{\omega}</annotation></semantics></math>
+at point in space
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐬</mi><annotation encoding="application/x-tex">\boldsymbol{s}</annotation></semantics></math>),</p></li>
+<li><p><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϕ</mi><annotation encoding="application/x-tex">\phi</annotation></semantics></math>
+for all distribution dispersion parameters for consistency with the
+code,</p></li>
+<li><p><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝔼</mi><mrow><mo stretchy="true" form="prefix">[</mo><mi>y</mi><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">\mathbb{E}[y]</annotation></semantics></math>
+to define the expected value (mean) of variable
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>y</mi><annotation encoding="application/x-tex">y</annotation></semantics></math>,</p></li>
+<li><p><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">V</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">r</mi></mrow><mrow><mo stretchy="true" form="prefix">[</mo><mi>y</mi><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">\mathrm{Var}[y]</annotation></semantics></math>
+to define the expected variance of the variable
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>y</mi><annotation encoding="application/x-tex">y</annotation></semantics></math>,</p></li>
+<li><p>a
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi></mi><mo>*</mo></msup><annotation encoding="application/x-tex">^*</annotation></semantics></math>
+superscript represents interpolated or projected values as opposed to
+values at knot locations (e.g.,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛚</mi><annotation encoding="application/x-tex">\boldsymbol{\omega}</annotation></semantics></math>
+vs. <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>𝛚</mi><mo>*</mo></msup><annotation encoding="application/x-tex">\boldsymbol{\omega}^*</annotation></semantics></math>),
 and</p></li>
 <li><p>where possible, notation has been chosen to match VAST <span class="citation">(Thorson 2019)</span> to maintain consistency (e.g.,
-<span class="math inline">\(\boldsymbol{\omega}\)</span> for spatial
-fields and <span class="math inline">\(\boldsymbol{\epsilon}_t\)</span>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛚</mi><annotation encoding="application/x-tex">\boldsymbol{\omega}</annotation></semantics></math>
+for spatial fields and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝛜</mi><mi>t</mi></msub><annotation encoding="application/x-tex">\boldsymbol{\epsilon}_t</annotation></semantics></math>
 for spatiotemporal fields).</p></li>
 </ul>
 <p>We include tables of all major indices (Table 1) and symbols (Table
@@ -143,15 +142,15 @@ for spatiotemporal fields).</p></li>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left"><span class="math inline">\(\boldsymbol{s}\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐬</mi><annotation encoding="application/x-tex">\boldsymbol{s}</annotation></semantics></math></td>
 <td align="left">Index for space; a vector of x and y coordinates</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(t\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math></td>
 <td align="left">Index for time</td>
 </tr>
 <tr class="odd">
-<td align="left"><span class="math inline">\(g\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>g</mi><annotation encoding="application/x-tex">g</annotation></semantics></math></td>
 <td align="left">Group</td>
 </tr>
 </tbody>
@@ -171,176 +170,191 @@ or in model template code), and descriptions.</caption>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left"><span class="math inline">\(y\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>y</mi><annotation encoding="application/x-tex">y</annotation></semantics></math></td>
 <td align="left"><code>y_i</code></td>
 <td align="left">Observed response data</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(\mu\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>μ</mi><annotation encoding="application/x-tex">\mu</annotation></semantics></math></td>
 <td align="left"><code>mu_i</code></td>
 <td align="left">Mean</td>
 </tr>
 <tr class="odd">
-<td align="left"><span class="math inline">\(\phi\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϕ</mi><annotation encoding="application/x-tex">\phi</annotation></semantics></math></td>
 <td align="left"><code>phi</code></td>
 <td align="left">A dispersion parameter for a distribution</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(f\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>f</mi><annotation encoding="application/x-tex">f</annotation></semantics></math></td>
 <td align="left"><code>fit$family$link</code></td>
 <td align="left">Link function</td>
 </tr>
 <tr class="odd">
-<td align="left"><span class="math inline">\(f^{-1}\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>f</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><annotation encoding="application/x-tex">f^{-1}</annotation></semantics></math></td>
 <td align="left"><code>fit$family$linkinv</code></td>
 <td align="left">Inverse link function</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(\boldsymbol{\beta}\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛃</mi><annotation encoding="application/x-tex">\boldsymbol{\beta}</annotation></semantics></math></td>
 <td align="left"><code>b_j</code></td>
 <td align="left">Parameter vector</td>
 </tr>
 <tr class="odd">
-<td align="left"><span class="math inline">\(\boldsymbol{X}\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐗</mi><annotation encoding="application/x-tex">\boldsymbol{X}</annotation></semantics></math></td>
 <td align="left"><code>X_ij</code></td>
 <td align="left">A predictor model matrix</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(O_{\boldsymbol{s},
-t}\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>O</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub><annotation encoding="application/x-tex">O_{\boldsymbol{s}, t}</annotation></semantics></math></td>
 <td align="left"><code>offset</code></td>
-<td align="left">An offset variable at point <span class="math inline">\(\boldsymbol{s}\)</span> and time <span class="math inline">\(t\)</span>
+<td align="left">An offset variable at point
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐬</mi><annotation encoding="application/x-tex">\boldsymbol{s}</annotation></semantics></math>
+and time
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
 </td>
 </tr>
 <tr class="odd">
-<td align="left"><span class="math inline">\(\omega_{\boldsymbol{s}}\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ω</mi><mi>𝐬</mi></msub><annotation encoding="application/x-tex">\omega_{\boldsymbol{s}}</annotation></semantics></math></td>
 <td align="left"><code>omega_s</code></td>
-<td align="left">Spatial random field at point <span class="math inline">\(\boldsymbol{s}\)</span> (knot)</td>
+<td align="left">Spatial random field at point
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐬</mi><annotation encoding="application/x-tex">\boldsymbol{s}</annotation></semantics></math>
+(knot)</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(\omega_{\boldsymbol{s}}^*\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>ω</mi><mi>𝐬</mi><mo>*</mo></msubsup><annotation encoding="application/x-tex">\omega_{\boldsymbol{s}}^*</annotation></semantics></math></td>
 <td align="left"><code>omega_s_A</code></td>
-<td align="left">Spatial random field at point <span class="math inline">\(\boldsymbol{s}\)</span> (interpolated)</td>
+<td align="left">Spatial random field at point
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐬</mi><annotation encoding="application/x-tex">\boldsymbol{s}</annotation></semantics></math>
+(interpolated)</td>
 </tr>
 <tr class="odd">
-<td align="left"><span class="math inline">\(\zeta_{\boldsymbol{s}}\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ζ</mi><mi>𝐬</mi></msub><annotation encoding="application/x-tex">\zeta_{\boldsymbol{s}}</annotation></semantics></math></td>
 <td align="left"><code>zeta_s</code></td>
 <td align="left">Spatially varying coefficient random field at point
-<span class="math inline">\(\boldsymbol{s}\)</span> (knot)</td>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐬</mi><annotation encoding="application/x-tex">\boldsymbol{s}</annotation></semantics></math>
+(knot)</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(\zeta_{\boldsymbol{s}}^*\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>ζ</mi><mi>𝐬</mi><mo>*</mo></msubsup><annotation encoding="application/x-tex">\zeta_{\boldsymbol{s}}^*</annotation></semantics></math></td>
 <td align="left"><code>zeta_s_A</code></td>
 <td align="left">Spatially varying coefficient random field at point
-<span class="math inline">\(\boldsymbol{s}\)</span> (interpolated)</td>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐬</mi><annotation encoding="application/x-tex">\boldsymbol{s}</annotation></semantics></math>
+(interpolated)</td>
 </tr>
 <tr class="odd">
-<td align="left"><span class="math inline">\(\epsilon_{\boldsymbol{s},
-t}\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ϵ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub><annotation encoding="application/x-tex">\epsilon_{\boldsymbol{s}, t}</annotation></semantics></math></td>
 <td align="left"><code>epsilon_st</code></td>
-<td align="left">Spatiotemporal random field at point <span class="math inline">\(\boldsymbol{s}\)</span> and time <span class="math inline">\(t\)</span> (knot)</td>
+<td align="left">Spatiotemporal random field at point
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐬</mi><annotation encoding="application/x-tex">\boldsymbol{s}</annotation></semantics></math>
+and time
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
+(knot)</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(\epsilon_{\boldsymbol{s},
-t}^*\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>ϵ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow><mo>*</mo></msubsup><annotation encoding="application/x-tex">\epsilon_{\boldsymbol{s}, t}^*</annotation></semantics></math></td>
 <td align="left"><code>epsilon_st_A</code></td>
-<td align="left">Spatiotemporal random field at point <span class="math inline">\(\boldsymbol{s}\)</span> and time <span class="math inline">\(t\)</span> (interpolated)</td>
+<td align="left">Spatiotemporal random field at point
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐬</mi><annotation encoding="application/x-tex">\boldsymbol{s}</annotation></semantics></math>
+and time
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
+(interpolated)</td>
 </tr>
 <tr class="odd">
-<td align="left"><span class="math inline">\(\delta_{\boldsymbol{s},t}\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>δ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub><annotation encoding="application/x-tex">\delta_{\boldsymbol{s},t}</annotation></semantics></math></td>
 <td align="left"><code>b_t</code></td>
 <td align="left">AR(1) or random walk spatiotemporal deviations
 (knot)</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(\alpha_g\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>α</mi><mi>g</mi></msub><annotation encoding="application/x-tex">\alpha_g</annotation></semantics></math></td>
 <td align="left"><code>RE</code></td>
-<td align="left">IID random intercept deviation for group <span class="math inline">\(g\)</span>
+<td align="left">IID random intercept deviation for group
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>g</mi><annotation encoding="application/x-tex">g</annotation></semantics></math>
 </td>
 </tr>
 <tr class="odd">
-<td align="left"><span class="math inline">\(\boldsymbol{\Sigma}_\omega\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝚺</mi><mi>ω</mi></msub><annotation encoding="application/x-tex">\boldsymbol{\Sigma}_\omega</annotation></semantics></math></td>
 <td align="left"><code>-</code></td>
 <td align="left">Spatial random field covariance matrix</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(\boldsymbol{\Sigma}_\zeta\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝚺</mi><mi>ζ</mi></msub><annotation encoding="application/x-tex">\boldsymbol{\Sigma}_\zeta</annotation></semantics></math></td>
 <td align="left"><code>-</code></td>
 <td align="left">Spatially varying coefficient random field covariance
 matrix</td>
 </tr>
 <tr class="odd">
-<td align="left"><span class="math inline">\(\boldsymbol{\Sigma}_\epsilon\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝚺</mi><mi>ϵ</mi></msub><annotation encoding="application/x-tex">\boldsymbol{\Sigma}_\epsilon</annotation></semantics></math></td>
 <td align="left"><code>-</code></td>
 <td align="left">Spatiotemporal random field covariance matrix</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(\boldsymbol{Q}_\omega\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝐐</mi><mi>ω</mi></msub><annotation encoding="application/x-tex">\boldsymbol{Q}_\omega</annotation></semantics></math></td>
 <td align="left"><code>Q_s</code></td>
 <td align="left">Spatial random field precision matrix</td>
 </tr>
 <tr class="odd">
-<td align="left"><span class="math inline">\(\boldsymbol{Q}_\zeta\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝐐</mi><mi>ζ</mi></msub><annotation encoding="application/x-tex">\boldsymbol{Q}_\zeta</annotation></semantics></math></td>
 <td align="left"><code>Q_s</code></td>
 <td align="left">Spatially varying coefficient random field precision
 matrix</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(\boldsymbol{Q}_\epsilon\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝐐</mi><mi>ϵ</mi></msub><annotation encoding="application/x-tex">\boldsymbol{Q}_\epsilon</annotation></semantics></math></td>
 <td align="left"><code>Q_st</code></td>
 <td align="left">Spatiotemporal random field precision matrix</td>
 </tr>
 <tr class="odd">
-<td align="left"><span class="math inline">\(\sigma_\alpha^2\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>σ</mi><mi>α</mi><mn>2</mn></msubsup><annotation encoding="application/x-tex">\sigma_\alpha^2</annotation></semantics></math></td>
 <td align="left"><code>sigma_G</code></td>
 <td align="left">IID random intercept variance</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(\sigma_\epsilon^2\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>σ</mi><mi>ϵ</mi><mn>2</mn></msubsup><annotation encoding="application/x-tex">\sigma_\epsilon^2</annotation></semantics></math></td>
 <td align="left"><code>sigma_E</code></td>
 <td align="left">Spatiotemporal random field marginal variance</td>
 </tr>
 <tr class="odd">
-<td align="left"><span class="math inline">\(\sigma_\omega^2\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>σ</mi><mi>ω</mi><mn>2</mn></msubsup><annotation encoding="application/x-tex">\sigma_\omega^2</annotation></semantics></math></td>
 <td align="left"><code>sigma_O</code></td>
 <td align="left">Spatial random field marginal variance</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(\sigma_\zeta^2\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>σ</mi><mi>ζ</mi><mn>2</mn></msubsup><annotation encoding="application/x-tex">\sigma_\zeta^2</annotation></semantics></math></td>
 <td align="left"><code>sigma_Z</code></td>
 <td align="left">Spatially varying coefficient random field marginal
 variance</td>
 </tr>
 <tr class="odd">
-<td align="left"><span class="math inline">\(\kappa_\omega\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>κ</mi><mi>ω</mi></msub><annotation encoding="application/x-tex">\kappa_\omega</annotation></semantics></math></td>
 <td align="left"><code>kappa(0)</code></td>
 <td align="left">Spatial decorrelation rate</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(\kappa_\epsilon\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>κ</mi><mi>ϵ</mi></msub><annotation encoding="application/x-tex">\kappa_\epsilon</annotation></semantics></math></td>
 <td align="left"><code>kappa(1)</code></td>
 <td align="left">Spatiotemporal decorrelation rate</td>
 </tr>
 <tr class="odd">
-<td align="left"><span class="math inline">\(\rho\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ρ</mi><annotation encoding="application/x-tex">\rho</annotation></semantics></math></td>
 <td align="left"><code>ar1_rho</code></td>
 <td align="left">Correlation between random fields in subsequent time
 steps</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(\rho_{\gamma}\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ρ</mi><mi>γ</mi></msub><annotation encoding="application/x-tex">\rho_{\gamma}</annotation></semantics></math></td>
 <td align="left"><code>rho_time</code></td>
 <td align="left">Correlation between time-varying coefficients in
 subsequent time steps</td>
 </tr>
 <tr class="odd">
-<td align="left"><span class="math inline">\(\boldsymbol{A}\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐀</mi><annotation encoding="application/x-tex">\boldsymbol{A}</annotation></semantics></math></td>
 <td align="left"><code>A</code></td>
 <td align="left">Sparse projection matrix to interpolate between knot
 and data locations</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(\boldsymbol{H}\)</span></td>
+<td align="left"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐇</mi><annotation encoding="application/x-tex">\boldsymbol{H}</annotation></semantics></math></td>
 <td align="left"><code>H</code></td>
 <td align="left">2-parameter rotation matrix used to define
 anisotropy</td>
@@ -352,87 +366,92 @@ anisotropy</td>
 <h2 id="sdmtmb-model-structure">sdmTMB model structure<a class="anchor" aria-label="anchor" href="#sdmtmb-model-structure"></a>
 </h2>
 <p>The complete sdmTMB model can be written as</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mi>𝔼</mi><mrow><mo stretchy="true" form="prefix">[</mo><msub><mi>y</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub><mo stretchy="true" form="postfix">]</mo></mrow></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msub><mi>μ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>μ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msup><mi>f</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mrow><mo stretchy="true" form="prefix">(</mo><msubsup><mi>𝐗</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow><mrow><mi mathvariant="normal">m</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">n</mi></mrow></msubsup><mi>𝛃</mi><mo>+</mo><msub><mi>O</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>+</mo><msub><mi>α</mi><mi>g</mi></msub><mo>+</mo><msubsup><mi>𝐗</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow><mrow><mi mathvariant="normal">t</mi><mi mathvariant="normal">v</mi><mi mathvariant="normal">c</mi></mrow></msubsup><msub><mi>𝛄</mi><mi>𝐭</mi></msub><mo>+</mo><msubsup><mi>𝐗</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow><mrow><mi mathvariant="normal">s</mi><mi mathvariant="normal">v</mi><mi mathvariant="normal">c</mi></mrow></msubsup><msub><mi>ζ</mi><mi>𝐬</mi></msub><mo>+</mo><msub><mi>ω</mi><mi>𝐬</mi></msub><mo>+</mo><msub><mi>ϵ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{aligned}
 \mathbb{E}[y_{\boldsymbol{s},t}] &amp;= \mu_{\boldsymbol{s},t},\\
 \mu_{\boldsymbol{s},t} &amp;=
-f^{-1} \left( \boldsymbol{X}^{\mathrm{main}}_{\boldsymbol{s},t}
-\boldsymbol{\beta} +
+f^{-1} \left( \boldsymbol{X}^{\mathrm{main}}_{\boldsymbol{s},t} \boldsymbol{\beta} +
 O_{\boldsymbol{s},t} +
 \alpha_g +
 \boldsymbol{X}^{\mathrm{tvc}}_{\boldsymbol{s},t} \boldsymbol{\gamma_t} +
-\boldsymbol{X}^{\mathrm{svc}}_{\boldsymbol{s},t} \zeta_{\boldsymbol{s}}
-+
+\boldsymbol{X}^{\mathrm{svc}}_{\boldsymbol{s},t} \zeta_{\boldsymbol{s}} +
 \omega_{\boldsymbol{s}} +
 \epsilon_{\boldsymbol{s},t} \right),
 \end{aligned}
-\]</span></p>
+</annotation></semantics></math></p>
 <p>where</p>
 <ul>
 <li>
-<span class="math inline">\(y_{\boldsymbol{s},t}\)</span> represents
-the response data at point <span class="math inline">\(\boldsymbol{s}\)</span> and time <span class="math inline">\(t\)</span>;</li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>y</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub><annotation encoding="application/x-tex">y_{\boldsymbol{s},t}</annotation></semantics></math>
+represents the response data at point
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐬</mi><annotation encoding="application/x-tex">\boldsymbol{s}</annotation></semantics></math>
+and time
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>;</li>
 <li>
-<span class="math inline">\(\mu\)</span> represents the mean;</li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>μ</mi><annotation encoding="application/x-tex">\mu</annotation></semantics></math>
+represents the mean;</li>
 <li>
-<span class="math inline">\(f\)</span> represents a link function
-(e.g., log or logit) and <span class="math inline">\(f^{-1}\)</span>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>f</mi><annotation encoding="application/x-tex">f</annotation></semantics></math>
+represents a link function (e.g., log or logit) and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>f</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><annotation encoding="application/x-tex">f^{-1}</annotation></semantics></math>
 represents its inverse;</li>
 <li>
-<span class="math inline">\(\boldsymbol{X}^{\mathrm{main}}\)</span>,
-<span class="math inline">\(\boldsymbol{X}^{\mathrm{tvc}}\)</span>, and
-<span class="math inline">\(\boldsymbol{X}^{\mathrm{svc}}\)</span>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>𝐗</mi><mrow><mi mathvariant="normal">m</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">n</mi></mrow></msup><annotation encoding="application/x-tex">\boldsymbol{X}^{\mathrm{main}}</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>𝐗</mi><mrow><mi mathvariant="normal">t</mi><mi mathvariant="normal">v</mi><mi mathvariant="normal">c</mi></mrow></msup><annotation encoding="application/x-tex">\boldsymbol{X}^{\mathrm{tvc}}</annotation></semantics></math>,
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>𝐗</mi><mrow><mi mathvariant="normal">s</mi><mi mathvariant="normal">v</mi><mi mathvariant="normal">c</mi></mrow></msup><annotation encoding="application/x-tex">\boldsymbol{X}^{\mathrm{svc}}</annotation></semantics></math>
 represent design matrices (the superscript identifiers ‘main’ = main
 effects, ‘tvc’ = time varying coefficients, and ‘svc’ = spatially
 varying coefficients);</li>
 <li>
-<span class="math inline">\(\boldsymbol{\beta}\)</span> represents a
-vector of fixed-effect coefficients;</li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛃</mi><annotation encoding="application/x-tex">\boldsymbol{\beta}</annotation></semantics></math>
+represents a vector of fixed-effect coefficients;</li>
 <li>
-<span class="math inline">\(O_{\boldsymbol{s},t}\)</span> represents
-an offset: a covariate (usually log transformed) with a coefficient
-fixed at one;</li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>O</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub><annotation encoding="application/x-tex">O_{\boldsymbol{s},t}</annotation></semantics></math>
+represents an offset: a covariate (usually log transformed) with a
+coefficient fixed at one;</li>
 <li>
-<span class="math inline">\(\alpha_{g}\)</span> represents random
-intercepts by group <span class="math inline">\(g\)</span>, <span class="math inline">\(\alpha_{g}\sim
-\mathrm{N}(0,\sigma^2_\alpha)\)</span>;</li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>α</mi><mi>g</mi></msub><annotation encoding="application/x-tex">\alpha_{g}</annotation></semantics></math>
+represents random intercepts by group
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>g</mi><annotation encoding="application/x-tex">g</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>α</mi><mi>g</mi></msub><mo>∼</mo><mi mathvariant="normal">N</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><msubsup><mi>σ</mi><mi>α</mi><mn>2</mn></msubsup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\alpha_{g}\sim \mathrm{N}(0,\sigma^2_\alpha)</annotation></semantics></math>;</li>
 <li>
-<span class="math inline">\(\gamma_{t}\)</span> represents
-time-varying coefficients (a random walk), <span class="math inline">\(\gamma_{t} \sim
-\mathrm{N}(\gamma_{t-1},\sigma^2_\gamma)\)</span>;</li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>γ</mi><mi>t</mi></msub><annotation encoding="application/x-tex">\gamma_{t}</annotation></semantics></math>
+represents time-varying coefficients (a random walk),
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>γ</mi><mi>t</mi></msub><mo>∼</mo><mi mathvariant="normal">N</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>γ</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>,</mo><msubsup><mi>σ</mi><mi>γ</mi><mn>2</mn></msubsup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\gamma_{t} \sim \mathrm{N}(\gamma_{t-1},\sigma^2_\gamma)</annotation></semantics></math>;</li>
 <li>
-<span class="math inline">\(\zeta_{\boldsymbol{s}}\)</span>
-represents spatially varying coefficients (a random field), <span class="math inline">\(\zeta_{\boldsymbol{s}} \sim
-\mathrm{MVN}(\boldsymbol{0},\boldsymbol{\Sigma}_\zeta)\)</span>;</li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ζ</mi><mi>𝐬</mi></msub><annotation encoding="application/x-tex">\zeta_{\boldsymbol{s}}</annotation></semantics></math>
+represents spatially varying coefficients (a random field),
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ζ</mi><mi>𝐬</mi></msub><mo>∼</mo><mrow><mi mathvariant="normal">M</mi><mi mathvariant="normal">V</mi><mi mathvariant="normal">N</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>𝟎</mn><mo>,</mo><msub><mi>𝚺</mi><mi>ζ</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\zeta_{\boldsymbol{s}} \sim \mathrm{MVN}(\boldsymbol{0},\boldsymbol{\Sigma}_\zeta)</annotation></semantics></math>;</li>
 <li>
-<span class="math inline">\(\omega_{\boldsymbol{s}}\)</span>
-represents a spatial component (a random field), <span class="math inline">\(\omega_{\boldsymbol{s}} \sim
-\mathrm{MVN}(\boldsymbol{0},\boldsymbol{\Sigma}_\omega)\)</span>;
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ω</mi><mi>𝐬</mi></msub><annotation encoding="application/x-tex">\omega_{\boldsymbol{s}}</annotation></semantics></math>
+represents a spatial component (a random field),
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ω</mi><mi>𝐬</mi></msub><mo>∼</mo><mrow><mi mathvariant="normal">M</mi><mi mathvariant="normal">V</mi><mi mathvariant="normal">N</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>𝟎</mn><mo>,</mo><msub><mi>𝚺</mi><mi>ω</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\omega_{\boldsymbol{s}} \sim \mathrm{MVN}(\boldsymbol{0},\boldsymbol{\Sigma}_\omega)</annotation></semantics></math>;
 and</li>
 <li>
-<span class="math inline">\(\epsilon_{\boldsymbol{s},t}\)</span>
-represents a spatiotemporal component (a random field), <span class="math inline">\(\epsilon_{\boldsymbol{s},t} \sim
-\mathrm{MVN}(\boldsymbol{0},\boldsymbol{\Sigma}_{\epsilon})\)</span>.</li>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ϵ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub><annotation encoding="application/x-tex">\epsilon_{\boldsymbol{s},t}</annotation></semantics></math>
+represents a spatiotemporal component (a random field),
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ϵ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>∼</mo><mrow><mi mathvariant="normal">M</mi><mi mathvariant="normal">V</mi><mi mathvariant="normal">N</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>𝟎</mn><mo>,</mo><msub><mi>𝚺</mi><mi>ϵ</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\epsilon_{\boldsymbol{s},t} \sim \mathrm{MVN}(\boldsymbol{0},\boldsymbol{\Sigma}_{\epsilon})</annotation></semantics></math>.</li>
 </ul>
 <p>A single sdmTMB model will rarely, if ever, contain all of the above
 components. Next, we will split the model to describe the various parts
-in more detail using ‘<span class="math inline">\(\ldots\)</span>’ to
-represent the other optional components.</p>
+in more detail using
+‘<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>…</mi><annotation encoding="application/x-tex">\ldots</annotation></semantics></math>’
+to represent the other optional components.</p>
 <div class="section level3">
 <h3 id="main-effects">Main effects<a class="anchor" aria-label="anchor" href="#main-effects"></a>
 </h3>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>μ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msup><mi>f</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mrow><mo stretchy="true" form="prefix">(</mo><msubsup><mi>𝐗</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow><mrow><mi mathvariant="normal">m</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">n</mi></mrow></msubsup><mi>𝛃</mi><mi>…</mi><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{aligned}
-\mu_{\boldsymbol{s},t} &amp;= f^{-1} \left(
-\boldsymbol{X}^{\mathrm{main}}_{\boldsymbol{s},t} \boldsymbol{\beta}
-\ldots \right)
+\mu_{\boldsymbol{s},t} &amp;= f^{-1} \left( \boldsymbol{X}^{\mathrm{main}}_{\boldsymbol{s},t} \boldsymbol{\beta} \ldots \right)
 \end{aligned}
-\]</span></p>
-<p>Within <code><a href="../reference/sdmTMB.html">sdmTMB()</a></code>, <span class="math inline">\(\boldsymbol{X}^{\mathrm{main}}_{\boldsymbol{s},t}
-\boldsymbol{\beta}\)</span> is defined by the <code>formula</code>
-argument and represents the main-effect model matrix and a corresponding
-vector of coefficients. This main effect formula can contain optional
-penalized smoothers or non-linear functions as defined below.</p>
+</annotation></semantics></math></p>
+<p>Within <code><a href="../reference/sdmTMB.html">sdmTMB()</a></code>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>𝐗</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow><mrow><mi mathvariant="normal">m</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">n</mi></mrow></msubsup><mi>𝛃</mi></mrow><annotation encoding="application/x-tex">\boldsymbol{X}^{\mathrm{main}}_{\boldsymbol{s},t} \boldsymbol{\beta}</annotation></semantics></math>
+is defined by the <code>formula</code> argument and represents the
+main-effect model matrix and a corresponding vector of coefficients.
+This main effect formula can contain optional penalized smoothers or
+non-linear functions as defined below.</p>
 <div class="section level4">
 <h4 id="smoothers">Smoothers<a class="anchor" aria-label="anchor" href="#smoothers"></a>
 </h4>
@@ -466,13 +485,21 @@ Scheipl 2020)</span> and brms <span class="citation">(Bürkner
 </h4>
 <p>The linear break-point or “hockey stick” model can be used to
 describe threshold or asymptotic responses. This function consists of
-two pieces, so that for <span class="math inline">\(x &lt;
-b_{1}\)</span>, <span class="math inline">\(s(x) = x \cdot
-b_{0}\)</span>, and for <span class="math inline">\(x &gt;
-b_{1}\)</span>, <span class="math inline">\(s(x) = b_{1} \cdot
-b_{0}\)</span>. In both cases, <span class="math inline">\(b_{0}\)</span> represents the slope of the
-function up to a threshold, and the product <span class="math inline">\(b_{1} \cdot b_{0}\)</span> represents the value at
-the asymptote. No constraints are placed on parameters <span class="math inline">\(b_{0}\)</span> or <span class="math inline">\(b_{1}\)</span>.</p>
+two pieces, so that for
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>&lt;</mo><msub><mi>b</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">x &lt; b_{1}</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>x</mi><mo>⋅</mo><msub><mi>b</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">s(x) = x \cdot b_{0}</annotation></semantics></math>,
+and for
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>&gt;</mo><msub><mi>b</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">x &gt; b_{1}</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><msub><mi>b</mi><mn>1</mn></msub><mo>⋅</mo><msub><mi>b</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">s(x) = b_{1} \cdot b_{0}</annotation></semantics></math>.
+In both cases,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>b</mi><mn>0</mn></msub><annotation encoding="application/x-tex">b_{0}</annotation></semantics></math>
+represents the slope of the function up to a threshold, and the product
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>b</mi><mn>1</mn></msub><mo>⋅</mo><msub><mi>b</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">b_{1} \cdot b_{0}</annotation></semantics></math>
+represents the value at the asymptote. No constraints are placed on
+parameters
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>b</mi><mn>0</mn></msub><annotation encoding="application/x-tex">b_{0}</annotation></semantics></math>
+or
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>b</mi><mn>1</mn></msub><annotation encoding="application/x-tex">b_{1}</annotation></semantics></math>.</p>
 <p>These models can be fit by including <code>+ breakpt(x)</code> in the
 model formula, where <code>x</code> is a covariate. The formula can
 contain a single break-point covariate.</p>
@@ -482,20 +509,31 @@ contain a single break-point covariate.</p>
 </h4>
 <p>Models with logistic threshold relationships between a predictor and
 the response can be fit with the form</p>
-<p><span class="math display">\[
-s(x)=\tau + \psi\ { \left[ 1+{ e }^{ -\ln \left(19\right) \cdot \left(
-x-s50 \right)
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>τ</mi><mo>+</mo><mi>ψ</mi><mspace width="0.222em"></mspace><msup><mrow><mo stretchy="true" form="prefix">[</mo><mn>1</mn><mo>+</mo><msup><mi>e</mi><mrow><mo>−</mo><mo>ln</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>19</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>⋅</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo>−</mo><mi>s</mi><mn>50</mn><mo stretchy="true" form="postfix">)</mo></mrow><mi>/</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>s</mi><mn>95</mn><mo>−</mo><mi>s</mi><mn>50</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow></msup><mo stretchy="true" form="postfix">]</mo></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msup><mo>,</mo></mrow><annotation encoding="application/x-tex">
+s(x)=\tau + \psi\ { \left[ 1+{ e }^{ -\ln \left(19\right) \cdot \left( x-s50 \right)
      / \left(s95 - s50 \right) } \right] }^{-1},
-\]</span></p>
-<p>where <span class="math inline">\(s\)</span> represents the logistic
-function, <span class="math inline">\(\psi\)</span> is a scaling
-parameter (controlling the height of the y-axis for the response;
-unconstrained), <span class="math inline">\(\tau\)</span> is an
-intercept, <span class="math inline">\(s50\)</span> is a parameter
-controlling the point at which the function reaches 50% of the maximum
-(<span class="math inline">\(\psi\)</span>), and <span class="math inline">\(s95\)</span> is a parameter controlling the point
-at which the function reaches 95% of the maximum. The parameter <span class="math inline">\(s50\)</span> is unconstrained but <span class="math inline">\(s95\)</span> is constrained to be larger than
-<span class="math inline">\(s50\)</span>.</p>
+</annotation></semantics></math></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math>
+represents the logistic function,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ψ</mi><annotation encoding="application/x-tex">\psi</annotation></semantics></math>
+is a scaling parameter (controlling the height of the y-axis for the
+response; unconstrained),
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>τ</mi><annotation encoding="application/x-tex">\tau</annotation></semantics></math>
+is an intercept,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mn>50</mn></mrow><annotation encoding="application/x-tex">s50</annotation></semantics></math>
+is a parameter controlling the point at which the function reaches 50%
+of the maximum
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ψ</mi><annotation encoding="application/x-tex">\psi</annotation></semantics></math>),
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mn>95</mn></mrow><annotation encoding="application/x-tex">s95</annotation></semantics></math>
+is a parameter controlling the point at which the function reaches 95%
+of the maximum. The parameter
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mn>50</mn></mrow><annotation encoding="application/x-tex">s50</annotation></semantics></math>
+is unconstrained but
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mn>95</mn></mrow><annotation encoding="application/x-tex">s95</annotation></semantics></math>
+is constrained to be larger than
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mn>50</mn></mrow><annotation encoding="application/x-tex">s50</annotation></semantics></math>.</p>
 <p>These models can be fit by including <code>+ logistic(x)</code> in
 the model formula, where <code>x</code> is a covariate. The formula can
 contain a single logistic covariate.</p>
@@ -504,29 +542,30 @@ contain a single logistic covariate.</p>
 <div class="section level3">
 <h3 id="spatial-random-fields">Spatial random fields<a class="anchor" aria-label="anchor" href="#spatial-random-fields"></a>
 </h3>
-<p>Spatial random fields, <span class="math inline">\(\omega_{\boldsymbol{s}}\)</span>, are included if
-<code>spatial = 'on'</code> (or <code>TRUE</code>) and omitted if
-<code>spatial = 'off'</code> (or <code>FALSE</code>).</p>
-<p><span class="math display">\[
+<p>Spatial random fields,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ω</mi><mi>𝐬</mi></msub><annotation encoding="application/x-tex">\omega_{\boldsymbol{s}}</annotation></semantics></math>,
+are included if <code>spatial = 'on'</code> (or <code>TRUE</code>) and
+omitted if <code>spatial = 'off'</code> (or <code>FALSE</code>).</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>μ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msup><mi>f</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>…</mi><mo>+</mo><msub><mi>ω</mi><mi>𝐬</mi></msub><mo>+</mo><mi>…</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mi>𝛚</mi></mtd><mtd columnalign="left" style="text-align: left"><mo>∼</mo><mo>MVNormal</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>𝟎</mn><mo>,</mo><msub><mi>𝚺</mi><mi>ω</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{aligned}
-\mu_{\boldsymbol{s},t} &amp;= f^{-1} \left( \ldots +
-\omega_{\boldsymbol{s}} + \ldots \right),\\
-\boldsymbol{\omega} &amp;\sim \operatorname{MVNormal} \left(
-\boldsymbol{0}, \boldsymbol{\Sigma}_\omega \right),\\
+\mu_{\boldsymbol{s},t} &amp;= f^{-1} \left( \ldots + \omega_{\boldsymbol{s}} + \ldots \right),\\
+\boldsymbol{\omega} &amp;\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_\omega \right),\\
 \end{aligned}
-\]</span> The marginal standard deviation of <span class="math inline">\(\boldsymbol{\omega}\)</span> is indicated by
-<code>Spatial SD</code> in the printed model output or as
-<code>sigma_O</code> in the output of
+</annotation></semantics></math> The marginal standard deviation of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛚</mi><annotation encoding="application/x-tex">\boldsymbol{\omega}</annotation></semantics></math>
+is indicated by <code>Spatial SD</code> in the printed model output or
+as <code>sigma_O</code> in the output of
 <code>sdmTMB::tidy(fit, "ran_pars")</code>. The ‘O’ is for ‘omega’
-(<span class="math inline">\(\omega\)</span>).</p>
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ω</mi><annotation encoding="application/x-tex">\omega</annotation></semantics></math>).</p>
 <p>Internally, the random fields follow a Gaussian Markov random field
 (GMRF)</p>
-<p><span class="math display">\[
-\boldsymbol{\omega} \sim \mathrm{MVNormal}\left(\boldsymbol{0},
-\sigma_\omega^2 \boldsymbol{Q}^{-1}_\omega\right),
-\]</span> where <span class="math inline">\(\boldsymbol{Q}_\omega\)</span> is a sparse
-precision matrix and <span class="math inline">\(\sigma_\omega^2\)</span> is the marginal
-variance.</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝛚</mi><mo>∼</mo><mrow><mi mathvariant="normal">M</mi><mi mathvariant="normal">V</mi><mi mathvariant="normal">N</mi><mi mathvariant="normal">o</mi><mi mathvariant="normal">r</mi><mi mathvariant="normal">m</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">l</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>𝟎</mn><mo>,</mo><msubsup><mi>σ</mi><mi>ω</mi><mn>2</mn></msubsup><msubsup><mi>𝐐</mi><mi>ω</mi><mrow><mo>−</mo><mn>1</mn></mrow></msubsup><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">
+\boldsymbol{\omega} \sim \mathrm{MVNormal}\left(\boldsymbol{0}, \sigma_\omega^2 \boldsymbol{Q}^{-1}_\omega\right),
+</annotation></semantics></math> where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝐐</mi><mi>ω</mi></msub><annotation encoding="application/x-tex">\boldsymbol{Q}_\omega</annotation></semantics></math>
+is a sparse precision matrix and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>σ</mi><mi>ω</mi><mn>2</mn></msubsup><annotation encoding="application/x-tex">\sigma_\omega^2</annotation></semantics></math>
+is the marginal variance.</p>
 </div>
 <div class="section level3">
 <h3 id="spatiotemporal-random-fields">Spatiotemporal random fields<a class="anchor" aria-label="anchor" href="#spatiotemporal-random-fields"></a>
@@ -538,36 +577,41 @@ distributed, <code>'iid'</code>; default), AR(1) (<code>'ar1'</code>),
 random walk (<code>'rw'</code>), or off (<code>'off'</code>) via the
 <code>spatiotemporal</code> argument. These text values are case
 insensitive.</p>
-<p>Spatiotemporal random fields are represented by <span class="math inline">\(\boldsymbol{\epsilon}_t\)</span> within sdmTMB.
-This has been chosen to match the representation in VAST <span class="citation">(Thorson 2019)</span>. The marginal standard deviation
-of <span class="math inline">\(\boldsymbol{\epsilon}_t\)</span> is
-indicated by <code>Spatiotemporal SD</code> in the printed model output
-or as <code>sigma_E</code> in the output of
+<p>Spatiotemporal random fields are represented by
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝛜</mi><mi>t</mi></msub><annotation encoding="application/x-tex">\boldsymbol{\epsilon}_t</annotation></semantics></math>
+within sdmTMB. This has been chosen to match the representation in VAST
+<span class="citation">(Thorson 2019)</span>. The marginal standard
+deviation of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝛜</mi><mi>t</mi></msub><annotation encoding="application/x-tex">\boldsymbol{\epsilon}_t</annotation></semantics></math>
+is indicated by <code>Spatiotemporal SD</code> in the printed model
+output or as <code>sigma_E</code> in the output of
 <code>sdmTMB::tidy(fit, "ran_pars")</code>. The ‘E’ is for ‘epsilon’
-(<span class="math inline">\(\epsilon\)</span>).</p>
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϵ</mi><annotation encoding="application/x-tex">\epsilon</annotation></semantics></math>).</p>
 <div class="section level4">
 <h4 id="iid-spatiotemporal-random-fields">IID spatiotemporal random fields<a class="anchor" aria-label="anchor" href="#iid-spatiotemporal-random-fields"></a>
 </h4>
 <p>IID spatiotemporal random fields
 (<code>spatiotemporal = 'iid'</code>) can be represented as</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>μ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msup><mi>f</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>…</mi><mo>+</mo><msub><mi>ϵ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>+</mo><mi>…</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>𝛜</mi><mi>𝐭</mi></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>∼</mo><mo>MVNormal</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>𝟎</mn><mo>,</mo><msub><mi>𝚺</mi><mi>ϵ</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{aligned}
-\mu_{\boldsymbol{s},t} &amp;= f^{-1} \left( \ldots +
-\epsilon_{\boldsymbol{s},t} + \ldots \right),\\
-\boldsymbol{\epsilon_{t}} &amp;\sim \operatorname{MVNormal} \left(
-\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right).
+\mu_{\boldsymbol{s},t} &amp;= f^{-1} \left( \ldots + \epsilon_{\boldsymbol{s},t} + \ldots \right),\\
+\boldsymbol{\epsilon_{t}} &amp;\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right).
 \end{aligned}
-\]</span></p>
-<p>where <span class="math inline">\(\epsilon_{\boldsymbol{s},t}\)</span> represent
-random field deviations at point <span class="math inline">\(\boldsymbol{s}\)</span> and time <span class="math inline">\(t\)</span>. The random fields are assumed
-independent across time steps.</p>
+</annotation></semantics></math></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ϵ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub><annotation encoding="application/x-tex">\epsilon_{\boldsymbol{s},t}</annotation></semantics></math>
+represent random field deviations at point
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐬</mi><annotation encoding="application/x-tex">\boldsymbol{s}</annotation></semantics></math>
+and time
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>.
+The random fields are assumed independent across time steps.</p>
 <p>Similarly to the spatial random fields, these spatiotemporal random
 fields (including all versions described below) are parameterized
-internally with a sparse precision matrix (<span class="math inline">\(\boldsymbol{Q}_\epsilon\)</span>)</p>
-<p><span class="math display">\[
-\boldsymbol{\epsilon_{t}} \sim \mathrm{MVNormal}\left(\boldsymbol{0},
-\sigma_\epsilon^2 \boldsymbol{Q}^{-1}_\epsilon\right).
-\]</span></p>
+internally with a sparse precision matrix
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝐐</mi><mi>ϵ</mi></msub><annotation encoding="application/x-tex">\boldsymbol{Q}_\epsilon</annotation></semantics></math>)</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>𝛜</mi><mi>𝐭</mi></msub><mo>∼</mo><mrow><mi mathvariant="normal">M</mi><mi mathvariant="normal">V</mi><mi mathvariant="normal">N</mi><mi mathvariant="normal">o</mi><mi mathvariant="normal">r</mi><mi mathvariant="normal">m</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">l</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>𝟎</mn><mo>,</mo><msubsup><mi>σ</mi><mi>ϵ</mi><mn>2</mn></msubsup><msubsup><mi>𝐐</mi><mi>ϵ</mi><mrow><mo>−</mo><mn>1</mn></mrow></msubsup><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\boldsymbol{\epsilon_{t}} \sim \mathrm{MVNormal}\left(\boldsymbol{0}, \sigma_\epsilon^2 \boldsymbol{Q}^{-1}_\epsilon\right).
+</annotation></semantics></math></p>
 </div>
 <div class="section level4">
 <h4 id="ar1-spatiotemporal-random-fields">AR(1) spatiotemporal random fields<a class="anchor" aria-label="anchor" href="#ar1-spatiotemporal-random-fields"></a>
@@ -576,26 +620,28 @@ internally with a sparse precision matrix (<span class="math inline">\(\boldsymb
 (<code>spatiotemporal = 'ar1'</code>) add a parameter defining the
 correlation between random field deviations from one time step to the
 next. They are defined as</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>μ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msup><mi>f</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>…</mi><mo>+</mo><msub><mi>δ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub><mi>…</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>𝛅</mi><mrow><mi>t</mi><mo>=</mo><mn>1</mn></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>∼</mo><mo>MVNormal</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>𝟎</mn><mo>,</mo><msub><mi>𝚺</mi><mi>ϵ</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>𝛅</mi><mrow><mi>t</mi><mo>&gt;</mo><mn>1</mn></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mi>ρ</mi><msub><mi>𝛅</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><msqrt><mrow><mn>1</mn><mo>−</mo><msup><mi>ρ</mi><mn>2</mn></msup></mrow></msqrt><msub><mi>𝛜</mi><mi>𝐭</mi></msub><mo>,</mo><mspace width="0.222em"></mspace><msub><mi>𝛜</mi><mi>𝐭</mi></msub><mo>∼</mo><mo>MVNormal</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>𝟎</mn><mo>,</mo><msub><mi>𝚺</mi><mi>ϵ</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{aligned}
-\mu_{\boldsymbol{s},t} &amp;= f^{-1} \left( \ldots +
-\delta_{\boldsymbol{s},t} \ldots \right),\\
-\boldsymbol{\delta}_{t=1} &amp;\sim \operatorname{MVNormal}
-(\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon}),\\
-\boldsymbol{\delta}_{t&gt;1} &amp;= \rho \boldsymbol{\delta}_{t-1} +
-\sqrt{1 - \rho^2} \boldsymbol{\epsilon_{t}},  \:
-\boldsymbol{\epsilon_{t}} \sim \operatorname{MVNormal}
-\left(\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right),
+\mu_{\boldsymbol{s},t} &amp;= f^{-1} \left( \ldots + \delta_{\boldsymbol{s},t} \ldots \right),\\
+\boldsymbol{\delta}_{t=1} &amp;\sim \operatorname{MVNormal} (\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon}),\\
+\boldsymbol{\delta}_{t&gt;1} &amp;= \rho \boldsymbol{\delta}_{t-1} + \sqrt{1 - \rho^2} \boldsymbol{\epsilon_{t}},  \:
+\boldsymbol{\epsilon_{t}} \sim \operatorname{MVNormal} \left(\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right),
 \end{aligned}
-\]</span> where <span class="math inline">\(\rho\)</span> is the
-correlation between subsequent spatiotemporal random fields. The <span class="math inline">\(\rho \boldsymbol{\delta}_{t-1} + \sqrt{1 -
-\rho^2}\)</span> term scales the spatiotemporal variance by the
-correlation such that it represents the steady-state marginal variance.
-The correlation <span class="math inline">\(\rho\)</span> allows for
-mean-reverting spatiotemporal fields, and is constrained to be <span class="math inline">\(-1 &lt; \rho &lt; 1\)</span>. Internally, the
-parameter is estimated as <code>ar1_phi</code>, which is unconstrained.
-The parameter <code>ar1_phi</code> is transformed to <span class="math inline">\(\rho\)</span> with <span class="math inline">\(\rho = 2 \left(
-\mathrm{logit}^{-1}(\texttt{ar1\_phi}) - 1 \right)\)</span>.</p>
+</annotation></semantics></math> where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ρ</mi><annotation encoding="application/x-tex">\rho</annotation></semantics></math>
+is the correlation between subsequent spatiotemporal random fields. The
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ρ</mi><msub><mi>𝛅</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><msqrt><mrow><mn>1</mn><mo>−</mo><msup><mi>ρ</mi><mn>2</mn></msup></mrow></msqrt></mrow><annotation encoding="application/x-tex">\rho \boldsymbol{\delta}_{t-1} + \sqrt{1 - \rho^2}</annotation></semantics></math>
+term scales the spatiotemporal variance by the correlation such that it
+represents the steady-state marginal variance. The correlation
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ρ</mi><annotation encoding="application/x-tex">\rho</annotation></semantics></math>
+allows for mean-reverting spatiotemporal fields, and is constrained to
+be
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mn>1</mn><mo>&lt;</mo><mi>ρ</mi><mo>&lt;</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">-1 &lt; \rho &lt; 1</annotation></semantics></math>.
+Internally, the parameter is estimated as <code>ar1_phi</code>, which is
+unconstrained. The parameter <code>ar1_phi</code> is transformed to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ρ</mi><annotation encoding="application/x-tex">\rho</annotation></semantics></math>
+with
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ρ</mi><mo>=</mo><mn>2</mn><mrow><mo stretchy="true" form="prefix">(</mo><msup><mrow><mi mathvariant="normal">l</mi><mi mathvariant="normal">o</mi><mi mathvariant="normal">g</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">t</mi></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msup><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="monospace">𝚊𝚛𝟷_𝚙𝚑𝚒</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\rho = 2 \left( \mathrm{logit}^{-1}(\texttt{ar1\_phi}) - 1 \right)</annotation></semantics></math>.</p>
 </div>
 <div class="section level4">
 <h4 id="random-walk-spatiotemporal-random-fields-rw">Random walk spatiotemporal random fields (RW)<a class="anchor" aria-label="anchor" href="#random-walk-spatiotemporal-random-fields-rw"></a>
@@ -604,24 +650,20 @@ The parameter <code>ar1_phi</code> is transformed to <span class="math inline">\
 (<code>spatiotemporal = 'rw'</code>) represent a model where the
 difference in spatiotemporal deviations from one time step to the next
 are IID. They are defined as</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>μ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msup><mi>f</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>…</mi><mo>+</mo><msub><mi>δ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>+</mo><mi>…</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>𝛅</mi><mrow><mi>t</mi><mo>=</mo><mn>1</mn></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>∼</mo><mo>MVNormal</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>𝟎</mn><mo>,</mo><msub><mi>𝚺</mi><mi>ϵ</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>𝛅</mi><mrow><mi>t</mi><mo>&gt;</mo><mn>1</mn></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msub><mi>𝛅</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><msub><mi>𝛜</mi><mi>𝐭</mi></msub><mo>,</mo><mspace width="0.222em"></mspace><msub><mi>𝛜</mi><mi>𝐭</mi></msub><mo>∼</mo><mo>MVNormal</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>𝟎</mn><mo>,</mo><msub><mi>𝚺</mi><mi>ϵ</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{aligned}
-\mu_{\boldsymbol{s},t} &amp;= f^{-1} \left( \ldots +
-\delta_{\boldsymbol{s},t} + \ldots \right),\\
-\boldsymbol{\delta}_{t=1} &amp;\sim \operatorname{MVNormal}
-(\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon}),\\
-\boldsymbol{\delta}_{t&gt;1} &amp;= \boldsymbol{\delta}_{t-1}
-+  \boldsymbol{\epsilon_{t}},  \:
-\boldsymbol{\epsilon_{t}} \sim \operatorname{MVNormal}
-\left(\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right),
+\mu_{\boldsymbol{s},t} &amp;= f^{-1} \left( \ldots + \delta_{\boldsymbol{s},t} + \ldots \right),\\
+\boldsymbol{\delta}_{t=1} &amp;\sim \operatorname{MVNormal} (\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon}),\\
+\boldsymbol{\delta}_{t&gt;1} &amp;= \boldsymbol{\delta}_{t-1} +  \boldsymbol{\epsilon_{t}},  \:
+\boldsymbol{\epsilon_{t}} \sim \operatorname{MVNormal} \left(\boldsymbol{0}, \boldsymbol{\Sigma}_{\epsilon} \right),
 \end{aligned}
-\]</span></p>
+</annotation></semantics></math></p>
 <p>where the distribution of the spatiotemporal field in the initial
 time step is the same as for the AR(1) model, but the absence of the
-<span class="math inline">\(\rho\)</span> parameter allows the
-spatiotemporal field to be non-stationary in time. Note that, in
-contrast to the AR(1) parametrization, the variance is no longer the
-steady-state marginal variance.</p>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ρ</mi><annotation encoding="application/x-tex">\rho</annotation></semantics></math>
+parameter allows the spatiotemporal field to be non-stationary in time.
+Note that, in contrast to the AR(1) parametrization, the variance is no
+longer the steady-state marginal variance.</p>
 </div>
 </div>
 <div class="section level3">
@@ -630,14 +672,14 @@ steady-state marginal variance.</p>
 <p>Parameters can be modelled as time-varying according to a random walk
 or first-order autoregressive, AR(1), process. The time-series model is
 defined by <code>time_varying_type</code>. For all types:</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>μ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msup><mi>f</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>…</mi><mo>+</mo><msubsup><mi>𝐗</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow><mrow><mi mathvariant="normal">t</mi><mi mathvariant="normal">v</mi><mi mathvariant="normal">c</mi></mrow></msubsup><msub><mi>𝛄</mi><mi>𝐭</mi></msub><mo>+</mo><mi>…</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{aligned}
-  \mu_{\boldsymbol{s},t} &amp;= f^{-1} \left( \ldots
-+  \boldsymbol{X}^{\mathrm{tvc}}_{\boldsymbol{s},t}
-\boldsymbol{\gamma_{t}} + \ldots \right),
+  \mu_{\boldsymbol{s},t} &amp;= f^{-1} \left( \ldots +  \boldsymbol{X}^{\mathrm{tvc}}_{\boldsymbol{s},t} \boldsymbol{\gamma_{t}} + \ldots \right),
 \end{aligned}
-\]</span> where <span class="math inline">\(\boldsymbol{\gamma_t}\)</span> is an optional
-vector of time-varying regression parameters and <span class="math inline">\(\boldsymbol{X}^{\mathrm{tvc}}_{\boldsymbol{s},t}\)</span>
+</annotation></semantics></math> where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝛄</mi><mi>𝐭</mi></msub><annotation encoding="application/x-tex">\boldsymbol{\gamma_t}</annotation></semantics></math>
+is an optional vector of time-varying regression parameters and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>𝐗</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow><mrow><mi mathvariant="normal">t</mi><mi mathvariant="normal">v</mi><mi mathvariant="normal">c</mi></mrow></msubsup><annotation encoding="application/x-tex">\boldsymbol{X}^{\mathrm{tvc}}_{\boldsymbol{s},t}</annotation></semantics></math>
 is the corresponding model matrix with covariate values. This is defined
 via the <code>time_varying</code> argument, assuming that the
 <code>time</code> argument is also supplied a column name.
@@ -645,14 +687,12 @@ via the <code>time_varying</code> argument, assuming that the
 <code>~ 1</code> implies a time-varying intercept.</p>
 <p>For <code>time_varying_type = 'rw'</code>, the first time step is
 estimated independently:</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>γ</mi><mrow><mi>t</mi><mo>=</mo><mn>1</mn></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>∼</mo><mo>Uniform</mo><mrow><mo stretchy="true" form="prefix">(</mo><mo>−</mo><mi>∞</mi><mo>,</mo><mi>∞</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>γ</mi><mrow><mi>t</mi><mo>&gt;</mo><mn>1</mn></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>∼</mo><mo>Normal</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>γ</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>,</mo><msubsup><mi>σ</mi><mi>γ</mi><mn>2</mn></msubsup><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{aligned}
-  \gamma_{t=1} &amp;\sim \operatorname{Uniform} \left(-\infty, \infty
-\right),\\
-  \gamma_{t&gt;1} &amp;\sim \operatorname{Normal} \left(\gamma_{t-1},
-\sigma^2_{\gamma} \right).
+  \gamma_{t=1} &amp;\sim \operatorname{Uniform} \left(-\infty, \infty \right),\\
+  \gamma_{t&gt;1} &amp;\sim \operatorname{Normal} \left(\gamma_{t-1}, \sigma^2_{\gamma} \right).
 \end{aligned}
-\]</span></p>
+</annotation></semantics></math></p>
 <p>In this case, the first time-step value is given an implicit uniform
 prior. I.e., the same variable should not appear in the fixed effect
 formula since the initial value is estimated as part of the time-varying
@@ -663,77 +703,76 @@ omitted from the main effects (<code>formula ~ + 0 + ...</code> or
 <code>formula ~ -1 + ...</code>).</p>
 <p>For <code>time_varying_type = 'rw0'</code>, the first time step is
 estimated from a mean-zero prior:</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>γ</mi><mrow><mi>t</mi><mo>=</mo><mn>1</mn></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>∼</mo><mo>Normal</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><msubsup><mi>σ</mi><mi>γ</mi><mn>2</mn></msubsup><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>γ</mi><mrow><mi>t</mi><mo>&gt;</mo><mn>1</mn></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>∼</mo><mo>Normal</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>γ</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>,</mo><msubsup><mi>σ</mi><mi>γ</mi><mn>2</mn></msubsup><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{aligned}
-  \gamma_{t=1} &amp;\sim \operatorname{Normal} \left(0,
-\sigma^2_{\gamma} \right),\\
-  \gamma_{t&gt;1} &amp;\sim \operatorname{Normal} \left(\gamma_{t-1},
-\sigma^2_{\gamma} \right).
+  \gamma_{t=1} &amp;\sim \operatorname{Normal} \left(0, \sigma^2_{\gamma} \right),\\
+  \gamma_{t&gt;1} &amp;\sim \operatorname{Normal} \left(\gamma_{t-1}, \sigma^2_{\gamma} \right).
 \end{aligned}
-\]</span> In this case, the time-varying variable (including the
-intercept) <em>should</em> be included in the main effects. We suggest
-using this formulation, but leave the <code>'rw'</code> option so that
-legacy code works.</p>
+</annotation></semantics></math> In this case, the time-varying variable
+(including the intercept) <em>should</em> be included in the main
+effects. We suggest using this formulation, but leave the
+<code>'rw'</code> option so that legacy code works.</p>
 <p>For <code>time_varying_type = 'ar1'</code>:</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>γ</mi><mrow><mi>t</mi><mo>=</mo><mn>1</mn></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>∼</mo><mo>Normal</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><msubsup><mi>σ</mi><mi>γ</mi><mn>2</mn></msubsup><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>γ</mi><mrow><mi>t</mi><mo>&gt;</mo><mn>1</mn></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>∼</mo><mo>Normal</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>ρ</mi><mi>γ</mi></msub><msub><mi>γ</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>,</mo><msqrt><mrow><mn>1</mn><mo>−</mo><msubsup><mi>ρ</mi><mi>γ</mi><mn>2</mn></msubsup></mrow></msqrt><msubsup><mi>σ</mi><mi>γ</mi><mn>2</mn></msubsup><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{aligned}
-  \gamma_{t=1} &amp;\sim \operatorname{Normal} \left(0,
-\sigma^2_{\gamma} \right),\\
-  \gamma_{t&gt;1} &amp;\sim \operatorname{Normal}
-\left(\rho_\gamma\gamma_{t-1}, \sqrt{1 - \rho_\gamma^2}
-\sigma^2_{\gamma} \right),
+  \gamma_{t=1} &amp;\sim \operatorname{Normal} \left(0, \sigma^2_{\gamma} \right),\\
+  \gamma_{t&gt;1} &amp;\sim \operatorname{Normal} \left(\rho_\gamma\gamma_{t-1}, \sqrt{1 - \rho_\gamma^2} \sigma^2_{\gamma} \right),
 \end{aligned}
-\]</span> where <span class="math inline">\(\rho_{\gamma}\)</span> is
-the correlation between subsequent time steps. The first time step is
+</annotation></semantics></math> where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ρ</mi><mi>γ</mi></msub><annotation encoding="application/x-tex">\rho_{\gamma}</annotation></semantics></math>
+is the correlation between subsequent time steps. The first time step is
 given a mean-zero prior.</p>
 </div>
 <div class="section level3">
 <h3 id="spatially-varying-coefficients-svc">Spatially varying coefficients (SVC)<a class="anchor" aria-label="anchor" href="#spatially-varying-coefficients-svc"></a>
 </h3>
 <p>Spatially varying coefficient models are defined as</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>μ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msup><mi>f</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>…</mi><mo>+</mo><msubsup><mi>𝐗</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow><mrow><mi mathvariant="normal">s</mi><mi mathvariant="normal">v</mi><mi mathvariant="normal">c</mi></mrow></msubsup><msub><mi>ζ</mi><mi>𝐬</mi></msub><mo>+</mo><mi>…</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mi>𝛇</mi></mtd><mtd columnalign="left" style="text-align: left"><mo>∼</mo><mo>MVNormal</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>𝟎</mn><mo>,</mo><msub><mi>𝚺</mi><mi>ζ</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{aligned}
-  \mu_{\boldsymbol{s},t} &amp;= f^{-1} \left( \ldots +
-\boldsymbol{X}^{\mathrm{svc}}_{\boldsymbol{s}, t} \zeta_{\boldsymbol{s}}
-+ \ldots \right),\\
-  \boldsymbol{\zeta} &amp;\sim \operatorname{MVNormal} \left(
-\boldsymbol{0}, \boldsymbol{\Sigma}_\zeta \right),
+  \mu_{\boldsymbol{s},t} &amp;= f^{-1} \left( \ldots + \boldsymbol{X}^{\mathrm{svc}}_{\boldsymbol{s}, t} \zeta_{\boldsymbol{s}} + \ldots \right),\\
+  \boldsymbol{\zeta} &amp;\sim \operatorname{MVNormal} \left( \boldsymbol{0}, \boldsymbol{\Sigma}_\zeta \right),
 \end{aligned}
-\]</span></p>
-<p>where <span class="math inline">\(\boldsymbol{\zeta}\)</span> is a
-random field representing a spatially varying coefficient. Usually,
-<span class="math inline">\(\boldsymbol{X}^{\mathrm{svc}}_{\boldsymbol{s},
-t}\)</span> would represent a prediction matrix that is constant
-spatially for a given time <span class="math inline">\(t\)</span> as
-defined by a one-sided formula supplied to <code>spatial_varying</code>.
-For example <code>spatial_varying = ~ 0 + x</code>, where <code>0</code>
-omits the intercept.</p>
+</annotation></semantics></math></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛇</mi><annotation encoding="application/x-tex">\boldsymbol{\zeta}</annotation></semantics></math>
+is a random field representing a spatially varying coefficient. Usually,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>𝐗</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow><mrow><mi mathvariant="normal">s</mi><mi mathvariant="normal">v</mi><mi mathvariant="normal">c</mi></mrow></msubsup><annotation encoding="application/x-tex">\boldsymbol{X}^{\mathrm{svc}}_{\boldsymbol{s}, t}</annotation></semantics></math>
+would represent a prediction matrix that is constant spatially for a
+given time
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
+as defined by a one-sided formula supplied to
+<code>spatial_varying</code>. For example
+<code>spatial_varying = ~ 0 + x</code>, where <code>0</code> omits the
+intercept.</p>
 <p>The random fields are parameterized internally with a sparse
-precision matrix (<span class="math inline">\(\boldsymbol{Q}_\zeta\)</span>)</p>
-<p><span class="math display">\[
-\boldsymbol{\zeta} \sim \mathrm{MVNormal}\left(\boldsymbol{0},
-\sigma_\zeta^2 \boldsymbol{Q}^{-1}_\zeta\right).
-\]</span></p>
+precision matrix
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝐐</mi><mi>ζ</mi></msub><annotation encoding="application/x-tex">\boldsymbol{Q}_\zeta</annotation></semantics></math>)</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝛇</mi><mo>∼</mo><mrow><mi mathvariant="normal">M</mi><mi mathvariant="normal">V</mi><mi mathvariant="normal">N</mi><mi mathvariant="normal">o</mi><mi mathvariant="normal">r</mi><mi mathvariant="normal">m</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">l</mi></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>𝟎</mn><mo>,</mo><msubsup><mi>σ</mi><mi>ζ</mi><mn>2</mn></msubsup><msubsup><mi>𝐐</mi><mi>ζ</mi><mrow><mo>−</mo><mn>1</mn></mrow></msubsup><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\boldsymbol{\zeta} \sim \mathrm{MVNormal}\left(\boldsymbol{0}, \sigma_\zeta^2 \boldsymbol{Q}^{-1}_\zeta\right).
+</annotation></semantics></math></p>
 </div>
 <div class="section level3">
 <h3 id="iid-random-or-multi-level-intercepts">IID random or multi-level intercepts<a class="anchor" aria-label="anchor" href="#iid-random-or-multi-level-intercepts"></a>
 </h3>
 <p>Multilevel/hierarchical intercepts are defined as</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>μ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msup><mi>f</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>…</mi><mo>+</mo><msub><mi>α</mi><mi>g</mi></msub><mo>+</mo><mi>…</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>α</mi><mi>g</mi></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>∼</mo><mo>Normal</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><msubsup><mi>σ</mi><mi>α</mi><mn>2</mn></msubsup><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{aligned}
-  \mu_{\boldsymbol{s},t} &amp;= f^{-1} \left( \ldots + \alpha_{g} +
-\ldots \right),\\
-  \alpha_g &amp;\sim \operatorname{Normal} \left(0, \sigma_\alpha^2
-\right),\\
+  \mu_{\boldsymbol{s},t} &amp;= f^{-1} \left( \ldots + \alpha_{g} + \ldots \right),\\
+  \alpha_g &amp;\sim \operatorname{Normal} \left(0, \sigma_\alpha^2 \right),\\
 \end{aligned}
-\]</span></p>
-<p>where <span class="math inline">\(\alpha_g\)</span> is an example
-optional “random” intercept—an intercept with mean zero that varies by
-level <span class="math inline">\(g\)</span> and is constrained by <span class="math inline">\(\sigma_\alpha\)</span>. This is defined by the
-<code>formula</code> argument via the <code>(1 | g)</code> syntax as in
-lme4 or glmmTMB. There can be multiple random intercepts, despite only
-showing one above. E.g., <code>(1 | g1) + (1 | g2)</code>, in which case
-they are assumed independent and uncorrelated from each other.</p>
+</annotation></semantics></math></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>α</mi><mi>g</mi></msub><annotation encoding="application/x-tex">\alpha_g</annotation></semantics></math>
+is an example optional “random” intercept—an intercept with mean zero
+that varies by level
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>g</mi><annotation encoding="application/x-tex">g</annotation></semantics></math>
+and is constrained by
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>σ</mi><mi>α</mi></msub><annotation encoding="application/x-tex">\sigma_\alpha</annotation></semantics></math>.
+This is defined by the <code>formula</code> argument via the
+<code>(1 | g)</code> syntax as in lme4 or glmmTMB. There can be multiple
+random intercepts, despite only showing one above. E.g.,
+<code>(1 | g1) + (1 | g2)</code>, in which case they are assumed
+independent and uncorrelated from each other.</p>
 </div>
 <div class="section level3">
 <h3 id="offset-terms">Offset terms<a class="anchor" aria-label="anchor" href="#offset-terms"></a>
@@ -741,14 +780,14 @@ they are assumed independent and uncorrelated from each other.</p>
 <p>Offset terms can be included through the <code>offset</code> argument
 in <code><a href="../reference/sdmTMB.html">sdmTMB()</a></code>. These are included in the linear predictor
 as</p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msub><mi>μ</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msup><mi>f</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>…</mi><mo>+</mo><msub><mi>O</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>+</mo><mi>…</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{aligned}
-  \mu_{\boldsymbol{s},t} &amp;= f^{-1} \left( \ldots +
-O_{\boldsymbol{s},t} + \ldots \right),
+  \mu_{\boldsymbol{s},t} &amp;= f^{-1} \left( \ldots + O_{\boldsymbol{s},t} + \ldots \right),
 \end{aligned}
-\]</span></p>
-<p>where <span class="math inline">\(O_{\boldsymbol{s},t}\)</span> is an
-offset term—a <strong>log transformed</strong> variable without a
+</annotation></semantics></math></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>O</mi><mrow><mi>𝐬</mi><mo>,</mo><mi>t</mi></mrow></msub><annotation encoding="application/x-tex">O_{\boldsymbol{s},t}</annotation></semantics></math>
+is an offset term—a <strong>log transformed</strong> variable without a
 coefficient (assuming a log link). The offset is <em>not</em> included
 in the prediction. Therefore, if <code>offset</code> represents a
 measure of effort, for example, the prediction is for one unit of effort
@@ -764,13 +803,16 @@ utility, and code representation in sdmTMB.</p>
 <div class="section level3">
 <h3 id="binomial">Binomial<a class="anchor" aria-label="anchor" href="#binomial"></a>
 </h3>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>Binomial</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>N</mi><mo>,</mo><mi>μ</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
 \operatorname{Binomial} \left(N, \mu \right)
-\]</span> where <span class="math inline">\(N\)</span> is the size or
-number of trials, and <span class="math inline">\(\mu\)</span> is the
-probability of success for each trial. If <span class="math inline">\(N
-= 1\)</span>, the distribution becomes the Bernoulli distribution.
-Internally, the distribution is parameterized as the <a href="https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaecb5a18095a320b42e2d20c4b120f5f5" class="external-link">robust
+</annotation></semantics></math> where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math>
+is the size or number of trials, and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>μ</mi><annotation encoding="application/x-tex">\mu</annotation></semantics></math>
+is the probability of success for each trial. If
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">N = 1</annotation></semantics></math>,
+the distribution becomes the Bernoulli distribution. Internally, the
+distribution is parameterized as the <a href="https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaecb5a18095a320b42e2d20c4b120f5f5" class="external-link">robust
 version</a> in TMB, which is numerically stable when probabilities
 approach 0 or 1. Following the structure of <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">stats::glm()</a></code>,
 lme4, and glmmTMB, a binomial family can be specified in one of 4
@@ -783,8 +825,8 @@ level versus all others)</li>
 <code>cbind(success, failure)</code>, or</li>
 <li>the response may be the observed proportions, and the
 <code>weights</code> argument is used to specify the Binomial size
-(<span class="math inline">\(N\)</span>) parameter
-(<code>probabilty ~ ..., weights = N</code>).</li>
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math>)
+parameter (<code>probabilty ~ ..., weights = N</code>).</li>
 </ol>
 <p>Code defined <a href="https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaee11f805f02bc1febc6d7bf0487671be" class="external-link">within
 TMB</a>.</p>
@@ -793,13 +835,16 @@ TMB</a>.</p>
 <div class="section level3">
 <h3 id="beta">Beta<a class="anchor" aria-label="anchor" href="#beta"></a>
 </h3>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>Beta</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>μ</mi><mi>ϕ</mi><mo>,</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>μ</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>ϕ</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
 \operatorname{Beta} \left(\mu \phi, (1 - \mu) \phi \right)
-\]</span> where <span class="math inline">\(\mu\)</span> is the mean and
-<span class="math inline">\(\phi\)</span> is a precision parameter. This
-parametrization follows <span class="citation">Ferrari &amp;
-Cribari-Neto (2004)</span> and the betareg R package <span class="citation">(Cribari-Neto &amp; Zeileis 2010)</span>. The variance
-is <span class="math inline">\(\mu (1 - \mu) / (\phi + 1)\)</span>.</p>
+</annotation></semantics></math> where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>μ</mi><annotation encoding="application/x-tex">\mu</annotation></semantics></math>
+is the mean and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϕ</mi><annotation encoding="application/x-tex">\phi</annotation></semantics></math>
+is a precision parameter. This parametrization follows <span class="citation">Ferrari &amp; Cribari-Neto (2004)</span> and the
+betareg R package <span class="citation">(Cribari-Neto &amp; Zeileis
+2010)</span>. The variance is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>μ</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>/</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>ϕ</mi><mo>+</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mu (1 - \mu) / (\phi + 1)</annotation></semantics></math>.</p>
 <p>Code defined <a href="https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga5324c83759d5211c7c2fbbad37fa8e59" class="external-link">within
 TMB</a>.</p>
 <p>Example: <code>family = Beta(link = "logit")</code></p>
@@ -807,11 +852,16 @@ TMB</a>.</p>
 <div class="section level3">
 <h3 id="gamma">Gamma<a class="anchor" aria-label="anchor" href="#gamma"></a>
 </h3>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>Gamma</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>ϕ</mi><mo>,</mo><mfrac><mi>μ</mi><mi>ϕ</mi></mfrac><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
 \operatorname{Gamma} \left( \phi, \frac{\mu}{\phi}  \right)
-\]</span> where <span class="math inline">\(\phi\)</span> represents the
-Gamma shape and <span class="math inline">\(\mu / \phi\)</span>
-represents the scale. The mean is <span class="math inline">\(\mu\)</span> and variance is <span class="math inline">\(\mu \cdot \phi^2\)</span>.</p>
+</annotation></semantics></math> where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϕ</mi><annotation encoding="application/x-tex">\phi</annotation></semantics></math>
+represents the Gamma shape and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi><mi>/</mi><mi>ϕ</mi></mrow><annotation encoding="application/x-tex">\mu / \phi</annotation></semantics></math>
+represents the scale. The mean is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>μ</mi><annotation encoding="application/x-tex">\mu</annotation></semantics></math>
+and variance is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi><mo>⋅</mo><msup><mi>ϕ</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">\mu \cdot \phi^2</annotation></semantics></math>.</p>
 <p>Code defined <a href="https://kaskr.github.io/adcomp/group__R__style__distribution.html#gab0e2205710a698ad6a0ed39e0652c9a3" class="external-link">within
 TMB</a>.</p>
 <p>Example: <code>family = Gamma(link = "log")</code></p>
@@ -819,11 +869,14 @@ TMB</a>.</p>
 <div class="section level3">
 <h3 id="gaussian">Gaussian<a class="anchor" aria-label="anchor" href="#gaussian"></a>
 </h3>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>Normal</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>μ</mi><mo>,</mo><msup><mi>ϕ</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
 \operatorname{Normal} \left( \mu, \phi^2 \right)
-\]</span> where <span class="math inline">\(\mu\)</span> is the mean and
-<span class="math inline">\(\phi\)</span> is the standard deviation. The
-variance is <span class="math inline">\(\phi^2\)</span>.</p>
+</annotation></semantics></math> where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>μ</mi><annotation encoding="application/x-tex">\mu</annotation></semantics></math>
+is the mean and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϕ</mi><annotation encoding="application/x-tex">\phi</annotation></semantics></math>
+is the standard deviation. The variance is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>ϕ</mi><mn>2</mn></msup><annotation encoding="application/x-tex">\phi^2</annotation></semantics></math>.</p>
 <p>Example: <code>family = Gaussian(link = "identity")</code></p>
 <p>Code defined <a href="https://kaskr.github.io/adcomp/dnorm_8hpp.html" class="external-link">within
 TMB</a>.</p>
@@ -832,12 +885,15 @@ TMB</a>.</p>
 <h3 id="lognormal">Lognormal<a class="anchor" aria-label="anchor" href="#lognormal"></a>
 </h3>
 <!-- \operatorname{Lognormal} \left( \log \mu - \frac{\phi^2}{2}, \phi^2 \right) -->
-<p>sdmTMB uses the bias-corrected lognormal distribution where <span class="math inline">\(\phi\)</span> represents the standard deviation in
-log-space:</p>
-<p><span class="math display">\[
-\operatorname{Lognormal} \left( \log \mu - \frac{\phi^2}{2}, \phi^2
-\right).
-\]</span> Because of the bias correction, <span class="math inline">\(\mathbb{E}[y] = \mu\)</span> and <span class="math inline">\(\mathrm{Var}[\log y] = \phi^2\)</span>.</p>
+<p>sdmTMB uses the bias-corrected lognormal distribution where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϕ</mi><annotation encoding="application/x-tex">\phi</annotation></semantics></math>
+represents the standard deviation in log-space:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>Lognormal</mo><mrow><mo stretchy="true" form="prefix">(</mo><mo>log</mo><mi>μ</mi><mo>−</mo><mfrac><msup><mi>ϕ</mi><mn>2</mn></msup><mn>2</mn></mfrac><mo>,</mo><msup><mi>ϕ</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\operatorname{Lognormal} \left( \log \mu - \frac{\phi^2}{2}, \phi^2 \right).
+</annotation></semantics></math> Because of the bias correction,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝔼</mi><mrow><mo stretchy="true" form="prefix">[</mo><mi>y</mi><mo stretchy="true" form="postfix">]</mo></mrow><mo>=</mo><mi>μ</mi></mrow><annotation encoding="application/x-tex">\mathbb{E}[y] = \mu</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">V</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">r</mi></mrow><mrow><mo stretchy="true" form="prefix">[</mo><mo>log</mo><mi>y</mi><mo stretchy="true" form="postfix">]</mo></mrow><mo>=</mo><msup><mi>ϕ</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">\mathrm{Var}[\log y] = \phi^2</annotation></semantics></math>.</p>
 <p>Code defined <a href="https://github.com/pbs-assess/sdmTMB/blob/18a39eabc111e2179fa589f942c8820d87ad10df/src/utils.h#L47-L54" class="external-link">within
 sdmTMB</a> based on the TMB <code><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm()</a></code> normal density.</p>
 <p>Example: <code>family = lognormal(link = "log")</code></p>
@@ -845,12 +901,16 @@ sdmTMB</a> based on the TMB <code><a href="https://rdrr.io/r/stats/Normal.html" 
 <div class="section level3">
 <h3 id="negative-binomial-1-nb1">Negative Binomial 1 (NB1)<a class="anchor" aria-label="anchor" href="#negative-binomial-1-nb1"></a>
 </h3>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>NB1</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>μ</mi><mo>,</mo><mi>ϕ</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
 \operatorname{NB1} \left( \mu, \phi \right)
-\]</span></p>
-<p>where <span class="math inline">\(\mu\)</span> is the mean and <span class="math inline">\(\phi\)</span> is the dispersion parameter. The
-variance scales linearly with the mean <span class="math inline">\(\mathrm{Var}[y] = \mu + \mu / \phi\)</span> <span class="citation">(Hilbe 2011)</span>. Internally, the distribution is
-parameterized as the <a href="https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa23e3ede4669d941b0b54314ed42a75c" class="external-link">robust
+</annotation></semantics></math></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>μ</mi><annotation encoding="application/x-tex">\mu</annotation></semantics></math>
+is the mean and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϕ</mi><annotation encoding="application/x-tex">\phi</annotation></semantics></math>
+is the dispersion parameter. The variance scales linearly with the mean
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">V</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">r</mi></mrow><mrow><mo stretchy="true" form="prefix">[</mo><mi>y</mi><mo stretchy="true" form="postfix">]</mo></mrow><mo>=</mo><mi>μ</mi><mo>+</mo><mi>μ</mi><mi>/</mi><mi>ϕ</mi></mrow><annotation encoding="application/x-tex">\mathrm{Var}[y] = \mu + \mu / \phi</annotation></semantics></math><span class="citation">(Hilbe 2011)</span>. Internally, the distribution
+is parameterized as the <a href="https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa23e3ede4669d941b0b54314ed42a75c" class="external-link">robust
 version</a> in TMB.</p>
 <p>Code defined <a href="https://github.com/pbs-assess/sdmTMB/blob/18a39eabc111e2179fa589f942c8820d87ad10df/src/sdmTMB.cpp#L577-L582" class="external-link">within
 sdmTMB</a> based on NB2 and borrowed from glmmTMB.</p>
@@ -859,12 +919,16 @@ sdmTMB</a> based on NB2 and borrowed from glmmTMB.</p>
 <div class="section level3">
 <h3 id="negative-binomial-2-nb2">Negative Binomial 2 (NB2)<a class="anchor" aria-label="anchor" href="#negative-binomial-2-nb2"></a>
 </h3>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>NB2</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>μ</mi><mo>,</mo><mi>ϕ</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
 \operatorname{NB2} \left( \mu, \phi \right)
-\]</span></p>
-<p>where <span class="math inline">\(\mu\)</span> is the mean and <span class="math inline">\(\phi\)</span> is the dispersion parameter. The
-variance scales quadratically with the mean <span class="math inline">\(\mathrm{Var}[y] = \mu + \mu^2 / \phi\)</span>
-<span class="citation">(Hilbe 2011)</span>. The NB2 parametrization is
+</annotation></semantics></math></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>μ</mi><annotation encoding="application/x-tex">\mu</annotation></semantics></math>
+is the mean and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϕ</mi><annotation encoding="application/x-tex">\phi</annotation></semantics></math>
+is the dispersion parameter. The variance scales quadratically with the
+mean
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">V</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">r</mi></mrow><mrow><mo stretchy="true" form="prefix">[</mo><mi>y</mi><mo stretchy="true" form="postfix">]</mo></mrow><mo>=</mo><mi>μ</mi><mo>+</mo><msup><mi>μ</mi><mn>2</mn></msup><mi>/</mi><mi>ϕ</mi></mrow><annotation encoding="application/x-tex">\mathrm{Var}[y] = \mu + \mu^2 / \phi</annotation></semantics></math><span class="citation">(Hilbe 2011)</span>. The NB2 parametrization is
 more commonly seen in ecology than the NB1. Internally, the distribution
 is parameterized as the <a href="https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa23e3ede4669d941b0b54314ed42a75c" class="external-link">robust
 version</a> in TMB.</p>
@@ -875,10 +939,12 @@ TMB</a>.</p>
 <div class="section level3">
 <h3 id="poisson">Poisson<a class="anchor" aria-label="anchor" href="#poisson"></a>
 </h3>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>Poisson</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>μ</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
 \operatorname{Poisson} \left( \mu \right)
-\]</span> where <span class="math inline">\(\mu\)</span> represents the
-mean and <span class="math inline">\(\mathrm{Var}[y] = \mu\)</span>.</p>
+</annotation></semantics></math> where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>μ</mi><annotation encoding="application/x-tex">\mu</annotation></semantics></math>
+represents the mean and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">V</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">r</mi></mrow><mrow><mo stretchy="true" form="prefix">[</mo><mi>y</mi><mo stretchy="true" form="postfix">]</mo></mrow><mo>=</mo><mi>μ</mi></mrow><annotation encoding="application/x-tex">\mathrm{Var}[y] = \mu</annotation></semantics></math>.</p>
 <p>Code defined <a href="https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa1ed15503e1441a381102a8c4c9baaf1" class="external-link">within
 TMB</a>.</p>
 <p>Example: <code>family = poisson(link = "log")</code></p>
@@ -886,18 +952,21 @@ TMB</a>.</p>
 <div class="section level3">
 <h3 id="student-t">Student-t<a class="anchor" aria-label="anchor" href="#student-t"></a>
 </h3>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>Student-t</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>μ</mi><mo>,</mo><mi>ϕ</mi><mo>,</mo><mi>ν</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
 \operatorname{Student-t} \left( \mu, \phi, \nu \right)
-\]</span></p>
-<p>where <span class="math inline">\(\nu\)</span>, the degrees of
-freedom (<code>df</code>), is a user-supplied fixed parameter. Lower
-values of <span class="math inline">\(\nu\)</span> result in heavier
-tails compared to the Gaussian distribution. Above approximately
-<code>df = 20</code>, the distribution becomes very similar to the
-Gaussian. The Student-t distribution with a low degrees of freedom
-(e.g., <span class="math inline">\(\nu \le 7\)</span>) can be helpful
-for modelling data that would otherwise be suitable for Gaussian but
-needs an approach that is robust to outliers <span class="citation">(e.g., Anderson <em>et al.</em> 2017)</span>.</p>
+</annotation></semantics></math></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ν</mi><annotation encoding="application/x-tex">\nu</annotation></semantics></math>,
+the degrees of freedom (<code>df</code>), is a user-supplied fixed
+parameter. Lower values of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ν</mi><annotation encoding="application/x-tex">\nu</annotation></semantics></math>
+result in heavier tails compared to the Gaussian distribution. Above
+approximately <code>df = 20</code>, the distribution becomes very
+similar to the Gaussian. The Student-t distribution with a low degrees
+of freedom (e.g.,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ν</mi><mo>≤</mo><mn>7</mn></mrow><annotation encoding="application/x-tex">\nu \le 7</annotation></semantics></math>)
+can be helpful for modelling data that would otherwise be suitable for
+Gaussian but needs an approach that is robust to outliers <span class="citation">(e.g., Anderson <em>et al.</em> 2017)</span>.</p>
 <p>Code defined <a href="https://github.com/pbs-assess/sdmTMB/blob/18a39eabc111e2179fa589f942c8820d87ad10df/src/utils.h#L37-L45" class="external-link">within
 sdmTMB</a> based on the <code><a href="https://rdrr.io/r/stats/TDist.html" class="external-link">dt()</a></code> distribution in TMB.</p>
 <p>Example: <code>family = student(link = "log", df = 7)</code></p>
@@ -905,18 +974,24 @@ sdmTMB</a> based on the <code><a href="https://rdrr.io/r/stats/TDist.html" class
 <div class="section level3">
 <h3 id="tweedie">Tweedie<a class="anchor" aria-label="anchor" href="#tweedie"></a>
 </h3>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>Tweedie</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>μ</mi><mo>,</mo><mi>p</mi><mo>,</mo><mi>ϕ</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo><mspace width="0.222em"></mspace><mn>1</mn><mo>&lt;</mo><mi>p</mi><mo>&lt;</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">
 \operatorname{Tweedie} \left(\mu, p, \phi \right), \: 1 &lt; p &lt; 2
-\]</span></p>
-<p>where <span class="math inline">\(\mu\)</span> is the mean, <span class="math inline">\(p\)</span> is the power parameter constrained
-between 1 and 2, and <span class="math inline">\(\phi\)</span> is the
-dispersion parameter. The Tweedie distribution can be helpful for
+</annotation></semantics></math></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>μ</mi><annotation encoding="application/x-tex">\mu</annotation></semantics></math>
+is the mean,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
+is the power parameter constrained between 1 and 2, and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϕ</mi><annotation encoding="application/x-tex">\phi</annotation></semantics></math>
+is the dispersion parameter. The Tweedie distribution can be helpful for
 modelling data that are positive and continuous but also contain
 zeros.</p>
-<p>Internally, <span class="math inline">\(p\)</span> is transformed
-from <span class="math inline">\(\mathrm{logit}^{-1} (\texttt{thetaf}) +
-1\)</span> to constrain it between 1 and 2 and is estimated as an
-unconstrained variable.</p>
+<p>Internally,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
+is transformed from
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mrow><mi mathvariant="normal">l</mi><mi mathvariant="normal">o</mi><mi mathvariant="normal">g</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">t</mi></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msup><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="monospace">𝚝𝚑𝚎𝚝𝚊𝚏</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\mathrm{logit}^{-1} (\texttt{thetaf}) + 1</annotation></semantics></math>
+to constrain it between 1 and 2 and is estimated as an unconstrained
+variable.</p>
 <p>The <a href="https://kaskr.github.io/adcomp/tweedie_8cpp_source.html" class="external-link">source
 code</a> is implemented as in the <a href="https://CRAN.R-project.org/package=cplm" class="external-link">cplm</a> package <span class="citation">(Zhang 2013)</span> and is based on <span class="citation">Dunn &amp; Smyth (2005)</span>. The TMB version is
 defined <a href="https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga262f3c2d1cf36f322a62d902a608aae0" class="external-link">here</a>.</p>
@@ -927,22 +1002,24 @@ defined <a href="https://kaskr.github.io/adcomp/group__R__style__distribution.ht
 </h3>
 <p>This is a 2 component mixture that extends the Gamma
 distribution,</p>
-<p><span class="math display">\[
-(1 - p) \cdot \operatorname{Gamma} \left( \phi,
-\frac{\mu_{1}}{\phi}  \right) + p \cdot \operatorname{Gamma} \left(
-\phi, \frac{\mu_{2}}{\phi}  \right),
-\]</span> where <span class="math inline">\(\phi\)</span> represents the
-Gamma shape, <span class="math inline">\(\mu_{1} / \phi\)</span>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>p</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>⋅</mo><mo>Gamma</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>ϕ</mi><mo>,</mo><mfrac><msub><mi>μ</mi><mn>1</mn></msub><mi>ϕ</mi></mfrac><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mi>p</mi><mo>⋅</mo><mo>Gamma</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>ϕ</mi><mo>,</mo><mfrac><msub><mi>μ</mi><mn>2</mn></msub><mi>ϕ</mi></mfrac><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">
+(1 - p) \cdot \operatorname{Gamma} \left( \phi, \frac{\mu_{1}}{\phi}  \right) + p \cdot \operatorname{Gamma} \left( \phi, \frac{\mu_{2}}{\phi}  \right),
+</annotation></semantics></math> where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϕ</mi><annotation encoding="application/x-tex">\phi</annotation></semantics></math>
+represents the Gamma shape,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>μ</mi><mn>1</mn></msub><mi>/</mi><mi>ϕ</mi></mrow><annotation encoding="application/x-tex">\mu_{1} / \phi</annotation></semantics></math>
 represents the scale for the first (smaller component) of the
-distribution, <span class="math inline">\(\mu_{2} / \phi\)</span>
+distribution,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>μ</mi><mn>2</mn></msub><mi>/</mi><mi>ϕ</mi></mrow><annotation encoding="application/x-tex">\mu_{2} / \phi</annotation></semantics></math>
 represents the scale for the second (larger component) of the
-distribution, and <span class="math inline">\(p\)</span> controls the
-contribution of each component to the mixture (also interpreted as the
-probability of larger events).</p>
-<p>The mean is <span class="math inline">\((1-p) \cdot \mu_{1} + p \cdot
-\mu_{2}\)</span> and the variance is <span class="math inline">\((1-p) ^
-2 \cdot \mu_{1} \cdot \phi^2 + (p) ^ 2 \cdot \mu_{2} \cdot
-\phi^2\)</span>.</p>
+distribution, and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
+controls the contribution of each component to the mixture (also
+interpreted as the probability of larger events).</p>
+<p>The mean is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>p</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>⋅</mo><msub><mi>μ</mi><mn>1</mn></msub><mo>+</mo><mi>p</mi><mo>⋅</mo><msub><mi>μ</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">(1-p) \cdot \mu_{1} + p \cdot \mu_{2}</annotation></semantics></math>
+and the variance is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>p</mi><mo stretchy="true" form="postfix">)</mo></mrow><mn>2</mn></msup><mo>⋅</mo><msub><mi>μ</mi><mn>1</mn></msub><mo>⋅</mo><msup><mi>ϕ</mi><mn>2</mn></msup><mo>+</mo><msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>p</mi><mo stretchy="true" form="postfix">)</mo></mrow><mn>2</mn></msup><mo>⋅</mo><msub><mi>μ</mi><mn>2</mn></msub><mo>⋅</mo><msup><mi>ϕ</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">(1-p) ^ 2 \cdot \mu_{1} \cdot \phi^2 + (p) ^ 2 \cdot \mu_{2} \cdot \phi^2</annotation></semantics></math>.</p>
 <p>Here, and for the other mixture distributions, the probability of the
 larger mean can be obtained from
 <code>plogis(fit$model$par[["logit_p_mix"]])</code> and the ratio of the
@@ -969,15 +1046,15 @@ this distribution with delta models.</p>
 </h3>
 <p>This is a 2 component mixture that extends the lognormal
 distribution,</p>
-<p><span class="math display">\[
-(1 - p) \cdot \operatorname{Lognormal} \left( \log \mu_{1} -
-\frac{\phi^2}{2}, \phi^2 \right) + p \cdot \operatorname{Lognormal}
-\left( \log \mu_{2} - \frac{\phi^2}{2}, \phi^2 \right).
-\]</span></p>
-<p>Because of the bias correction, <span class="math inline">\(\mathbb{E}[y] = (1-p) \cdot \mu_{1} + p \cdot
-\mu_{2}\)</span> and <span class="math inline">\(\mathrm{Var}[\log y] =
-(1-p)^2 \cdot \phi^2 + p^2 \cdot \phi^2\)</span>.</p>
-<p>As with the Gamma mixture, <span class="math inline">\(p\)</span>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>p</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>⋅</mo><mo>Lognormal</mo><mrow><mo stretchy="true" form="prefix">(</mo><mo>log</mo><msub><mi>μ</mi><mn>1</mn></msub><mo>−</mo><mfrac><msup><mi>ϕ</mi><mn>2</mn></msup><mn>2</mn></mfrac><mo>,</mo><msup><mi>ϕ</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mi>p</mi><mo>⋅</mo><mo>Lognormal</mo><mrow><mo stretchy="true" form="prefix">(</mo><mo>log</mo><msub><mi>μ</mi><mn>2</mn></msub><mo>−</mo><mfrac><msup><mi>ϕ</mi><mn>2</mn></msup><mn>2</mn></mfrac><mo>,</mo><msup><mi>ϕ</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">
+(1 - p) \cdot \operatorname{Lognormal} \left( \log \mu_{1} - \frac{\phi^2}{2}, \phi^2 \right) + p \cdot \operatorname{Lognormal} \left( \log \mu_{2} - \frac{\phi^2}{2}, \phi^2 \right).
+</annotation></semantics></math></p>
+<p>Because of the bias correction,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝔼</mi><mrow><mo stretchy="true" form="prefix">[</mo><mi>y</mi><mo stretchy="true" form="postfix">]</mo></mrow><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>p</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>⋅</mo><msub><mi>μ</mi><mn>1</mn></msub><mo>+</mo><mi>p</mi><mo>⋅</mo><msub><mi>μ</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">\mathbb{E}[y] = (1-p) \cdot \mu_{1} + p \cdot \mu_{2}</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">V</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">r</mi></mrow><mrow><mo stretchy="true" form="prefix">[</mo><mo>log</mo><mi>y</mi><mo stretchy="true" form="postfix">]</mo></mrow><mo>=</mo><msup><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>p</mi><mo stretchy="true" form="postfix">)</mo></mrow><mn>2</mn></msup><mo>⋅</mo><msup><mi>ϕ</mi><mn>2</mn></msup><mo>+</mo><msup><mi>p</mi><mn>2</mn></msup><mo>⋅</mo><msup><mi>ϕ</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">\mathrm{Var}[\log y] = (1-p)^2 \cdot \phi^2 + p^2 \cdot \phi^2</annotation></semantics></math>.</p>
+<p>As with the Gamma mixture,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
 controls the contribution of each component to the mixture (also
 interpreted as the probability of larger events).</p>
 <p>Example: <code>family = lognormal_mix(link = "log")</code>. See also
@@ -988,14 +1065,16 @@ incorporating this distribution with delta models.</p>
 <h3 id="negative-binomial-2-mixture">Negative binomial 2 mixture<a class="anchor" aria-label="anchor" href="#negative-binomial-2-mixture"></a>
 </h3>
 <p>This is a 2 component mixture that extends the NB2 distribution,</p>
-<p><span class="math display">\[
-(1 - p) \cdot \operatorname{NB2} \left( \mu_1, \phi \right) + p \cdot
-\operatorname{NB2} \left( \mu_2, \phi \right)
-\]</span></p>
-<p>where <span class="math inline">\(\mu_1\)</span> is the mean of the
-first (smaller component) of the distribution, <span class="math inline">\(\mu_2\)</span> is the mean of the larger
-component, and <span class="math inline">\(p\)</span> controls the
-contribution of each component to the mixture.</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>p</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>⋅</mo><mo>NB2</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>μ</mi><mn>1</mn></msub><mo>,</mo><mi>ϕ</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mi>p</mi><mo>⋅</mo><mo>NB2</mo><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>μ</mi><mn>2</mn></msub><mo>,</mo><mi>ϕ</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
+(1 - p) \cdot \operatorname{NB2} \left( \mu_1, \phi \right) + p \cdot \operatorname{NB2} \left( \mu_2, \phi \right)
+</annotation></semantics></math></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>μ</mi><mn>1</mn></msub><annotation encoding="application/x-tex">\mu_1</annotation></semantics></math>
+is the mean of the first (smaller component) of the distribution,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>μ</mi><mn>2</mn></msub><annotation encoding="application/x-tex">\mu_2</annotation></semantics></math>
+is the mean of the larger component, and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
+controls the contribution of each component to the mixture.</p>
 <p>Example: <code>family = nbinom2_mix(link = "log")</code></p>
 </div>
 </div>
@@ -1005,58 +1084,91 @@ contribution of each component to the mixture.</p>
 <div class="section level3">
 <h3 id="matérn-parameterization">Matérn parameterization<a class="anchor" aria-label="anchor" href="#mat%C3%A9rn-parameterization"></a>
 </h3>
-<p>The Matérn defines the covariance <span class="math inline">\(\Phi
-\left( s_j, s_k \right)\)</span> between spatial locations <span class="math inline">\(s_j\)</span> and <span class="math inline">\(s_k\)</span> as</p>
-<p><span class="math display">\[
-\Phi\left( s_j,s_k \right) = \tau^2/\Gamma(\nu)2^{\nu - 1} (\kappa
-d_{jk})^\nu K_\nu \left( \kappa d_{jk} \right),
-\]</span>
-<!-- TODO: paraphrase this to avoid self plagiarizing the synopsis report! --></p>
-<p>where <span class="math inline">\(\tau^2\)</span> controls the
-spatial variance, <span class="math inline">\(\nu\)</span> controls the
-smoothness, <span class="math inline">\(\Gamma\)</span> represents the
-Gamma function, <span class="math inline">\(d_{jk}\)</span> represents
-the distance between locations <span class="math inline">\(s_j\)</span>
-and <span class="math inline">\(s_k\)</span>, <span class="math inline">\(K_\nu\)</span> represents the modified Bessel
-function of the second kind, and <span class="math inline">\(\kappa\)</span> represents the decorrelation rate.
-The parameter <span class="math inline">\(\nu\)</span> is set to 1 to
-take advantage of the Stochastic Partial Differential Equation (SPDE)
-approximation to the GRF to greatly increase computational efficiency
-<span class="citation">(Lindgren <em>et al.</em> 2011)</span>.
-Internally, the parameters <span class="math inline">\(\kappa\)</span>
-and <span class="math inline">\(\tau\)</span> are converted to range and
-marginal standard deviation <span class="math inline">\(\sigma\)</span>
-as <span class="math inline">\(\textrm{range} = \sqrt{8} /
-\kappa\)</span> and <span class="math inline">\(\sigma = 1 / \sqrt{4 \pi
-\exp \left(2 \log(\tau) + 2 \log(\kappa) \right) }\)</span>.</p>
+<p>The Matérn defines the covariance
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Φ</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>s</mi><mi>j</mi></msub><mo>,</mo><msub><mi>s</mi><mi>k</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\Phi \left( s_j, s_k \right)</annotation></semantics></math>
+between spatial locations
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>s</mi><mi>j</mi></msub><annotation encoding="application/x-tex">s_j</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>s</mi><mi>k</mi></msub><annotation encoding="application/x-tex">s_k</annotation></semantics></math>
+as</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Φ</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>s</mi><mi>j</mi></msub><mo>,</mo><msub><mi>s</mi><mi>k</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><msup><mi>τ</mi><mn>2</mn></msup><mi>/</mi><mi>Γ</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>ν</mi><mo stretchy="true" form="postfix">)</mo></mrow><msup><mn>2</mn><mrow><mi>ν</mi><mo>−</mo><mn>1</mn></mrow></msup><msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>κ</mi><msub><mi>d</mi><mrow><mi>j</mi><mi>k</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mi>ν</mi></msup><msub><mi>K</mi><mi>ν</mi></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>κ</mi><msub><mi>d</mi><mrow><mi>j</mi><mi>k</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">
+\Phi\left( s_j,s_k \right) = \tau^2/\Gamma(\nu)2^{\nu - 1} (\kappa d_{jk})^\nu K_\nu \left( \kappa d_{jk} \right),
+</annotation></semantics></math><!-- TODO: paraphrase this to avoid self plagiarizing the synopsis report! --></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>τ</mi><mn>2</mn></msup><annotation encoding="application/x-tex">\tau^2</annotation></semantics></math>
+controls the spatial variance,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ν</mi><annotation encoding="application/x-tex">\nu</annotation></semantics></math>
+controls the smoothness,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Γ</mi><annotation encoding="application/x-tex">\Gamma</annotation></semantics></math>
+represents the Gamma function,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>d</mi><mrow><mi>j</mi><mi>k</mi></mrow></msub><annotation encoding="application/x-tex">d_{jk}</annotation></semantics></math>
+represents the distance between locations
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>s</mi><mi>j</mi></msub><annotation encoding="application/x-tex">s_j</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>s</mi><mi>k</mi></msub><annotation encoding="application/x-tex">s_k</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>K</mi><mi>ν</mi></msub><annotation encoding="application/x-tex">K_\nu</annotation></semantics></math>
+represents the modified Bessel function of the second kind, and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>κ</mi><annotation encoding="application/x-tex">\kappa</annotation></semantics></math>
+represents the decorrelation rate. The parameter
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ν</mi><annotation encoding="application/x-tex">\nu</annotation></semantics></math>
+is set to 1 to take advantage of the Stochastic Partial Differential
+Equation (SPDE) approximation to the GRF to greatly increase
+computational efficiency <span class="citation">(Lindgren <em>et
+al.</em> 2011)</span>. Internally, the parameters
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>κ</mi><annotation encoding="application/x-tex">\kappa</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>τ</mi><annotation encoding="application/x-tex">\tau</annotation></semantics></math>
+are converted to range and marginal standard deviation
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>σ</mi><annotation encoding="application/x-tex">\sigma</annotation></semantics></math>
+as
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">range</mtext><mo>=</mo><msqrt><mn>8</mn></msqrt><mi>/</mi><mi>κ</mi></mrow><annotation encoding="application/x-tex">\textrm{range} = \sqrt{8} / \kappa</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><mo>=</mo><mn>1</mn><mi>/</mi><msqrt><mrow><mn>4</mn><mi>π</mi><mo>exp</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>2</mn><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>τ</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mn>2</mn><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>κ</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mrow></msqrt></mrow><annotation encoding="application/x-tex">\sigma = 1 / \sqrt{4 \pi \exp \left(2 \log(\tau) + 2 \log(\kappa) \right) }</annotation></semantics></math>.</p>
 <p>In the case of a spatiotemporal model with both spatial and
 spatiotemporal fields, if <code>share_range = TRUE</code> in
-<code><a href="../reference/sdmTMB.html">sdmTMB()</a></code> (the default), then a single <span class="math inline">\(\kappa\)</span> and range are estimated with
-separate <span class="math inline">\(\sigma_\omega\)</span> and <span class="math inline">\(\sigma_\epsilon\)</span>. This often makes sense
-since data are often only weakly informative about <span class="math inline">\(\kappa\)</span>. If
-<code>share_range = FALSE</code>, then separate <span class="math inline">\(\kappa_\omega\)</span> and <span class="math inline">\(\kappa_\epsilon\)</span> are estimated. The
-spatially varying coefficient field always shares <span class="math inline">\(\kappa\)</span> with the spatial random field.</p>
+<code><a href="../reference/sdmTMB.html">sdmTMB()</a></code> (the default), then a single
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>κ</mi><annotation encoding="application/x-tex">\kappa</annotation></semantics></math>
+and range are estimated with separate
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>σ</mi><mi>ω</mi></msub><annotation encoding="application/x-tex">\sigma_\omega</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>σ</mi><mi>ϵ</mi></msub><annotation encoding="application/x-tex">\sigma_\epsilon</annotation></semantics></math>.
+This often makes sense since data are often only weakly informative
+about
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>κ</mi><annotation encoding="application/x-tex">\kappa</annotation></semantics></math>.
+If <code>share_range = FALSE</code>, then separate
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>κ</mi><mi>ω</mi></msub><annotation encoding="application/x-tex">\kappa_\omega</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>κ</mi><mi>ϵ</mi></msub><annotation encoding="application/x-tex">\kappa_\epsilon</annotation></semantics></math>
+are estimated. The spatially varying coefficient field always shares
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>κ</mi><annotation encoding="application/x-tex">\kappa</annotation></semantics></math>
+with the spatial random field.</p>
 </div>
 <div class="section level3">
-<h3 id="projection-boldsymbola-matrix">Projection <span class="math inline">\(\boldsymbol{A}\)</span>
+<h3 id="projection-boldsymbola-matrix">Projection
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐀</mi><annotation encoding="application/x-tex">\boldsymbol{A}</annotation></semantics></math>
 matrix<a class="anchor" aria-label="anchor" href="#projection-boldsymbola-matrix"></a>
 </h3>
 <p>The values of the spatial variables at the knots are multiplied by a
-projection matrix <span class="math inline">\(\boldsymbol{A}\)</span>
+projection matrix
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐀</mi><annotation encoding="application/x-tex">\boldsymbol{A}</annotation></semantics></math>
 that bilinearly interpolates from the knot locations to the values at
 the locations of the observed or predicted data <span class="citation">(Lindgren &amp; Rue 2015)</span></p>
-<p><span class="math display">\[
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>𝛚</mi><mo>*</mo></msup><mo>=</mo><mi>𝐀</mi><mi>𝛚</mi><mo>,</mo></mrow><annotation encoding="application/x-tex">
 \boldsymbol{\omega}^* = \boldsymbol{A} \boldsymbol{\omega},
-\]</span> where <span class="math inline">\(\boldsymbol{\omega}^*\)</span> represents the
-values of the spatial random fields at the observed locations or
-predicted data locations. The matrix <span class="math inline">\(\boldsymbol{A}\)</span> has a row for each data
-point or prediction point and a column for each knot. Three non-zero
-elements on each row define the weight of the neighbouring 3 knot
-locations for location <span class="math inline">\(\boldsymbol{s}\)</span>. The same bilinear
-interpolation happens for any spatiotemporal random fields</p>
-<p><span class="math display">\[
+</annotation></semantics></math> where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>𝛚</mi><mo>*</mo></msup><annotation encoding="application/x-tex">\boldsymbol{\omega}^*</annotation></semantics></math>
+represents the values of the spatial random fields at the observed
+locations or predicted data locations. The matrix
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐀</mi><annotation encoding="application/x-tex">\boldsymbol{A}</annotation></semantics></math>
+has a row for each data point or prediction point and a column for each
+knot. Three non-zero elements on each row define the weight of the
+neighbouring 3 knot locations for location
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐬</mi><annotation encoding="application/x-tex">\boldsymbol{s}</annotation></semantics></math>.
+The same bilinear interpolation happens for any spatiotemporal random
+fields</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>𝛜</mi><mi>t</mi><mo>*</mo></msubsup><mo>=</mo><mi>𝐀</mi><msub><mi>𝛜</mi><mi>t</mi></msub><mi>.</mi></mrow><annotation encoding="application/x-tex">
 \boldsymbol{\epsilon}_t^* = \boldsymbol{A} \boldsymbol{\epsilon}_t.
-\]</span></p>
+</annotation></semantics></math></p>
 </div>
 <div class="section level3">
 <h3 id="anisotropy">Anisotropy<a class="anchor" aria-label="anchor" href="#anisotropy"></a>
@@ -1066,8 +1178,17 @@ with respect to latitude and longitude (<a href="https://kaskr.github.io/adcomp/
 details</a>). Anisotropy can be turned on or off with the logical
 <code>anisotropy</code> argument to <code><a href="../reference/sdmTMB.html">sdmTMB()</a></code>. There are a
 number of ways to implement anisotropic covariance <span class="citation">(Fuglstad <em>et al.</em> 2015)</span>, and we adopt a
-2-parameter rotation matrix <span class="math inline">\(\textbf{H}\)</span>. The elements of <span class="math inline">\(\textbf{H}\)</span> are defined by the parameter
-vector <span class="math inline">\(\boldsymbol{x}\)</span> so that <span class="math inline">\(H_{1,1} = x_{1}\)</span>, <span class="math inline">\(H_{1,2} = H_{2,1} = x_{2}\)</span> and <span class="math inline">\(H_{2,2} = (1 + x_{2}^2) / x_{1}\)</span>.</p>
+2-parameter rotation matrix
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="bold">𝐇</mtext><annotation encoding="application/x-tex">\textbf{H}</annotation></semantics></math>.
+The elements of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtext mathvariant="bold">𝐇</mtext><annotation encoding="application/x-tex">\textbf{H}</annotation></semantics></math>
+are defined by the parameter vector
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐱</mi><annotation encoding="application/x-tex">\boldsymbol{x}</annotation></semantics></math>
+so that
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>H</mi><mrow><mn>1</mn><mo>,</mo><mn>1</mn></mrow></msub><mo>=</mo><msub><mi>x</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">H_{1,1} = x_{1}</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>H</mi><mrow><mn>1</mn><mo>,</mo><mn>2</mn></mrow></msub><mo>=</mo><msub><mi>H</mi><mrow><mn>2</mn><mo>,</mo><mn>1</mn></mrow></msub><mo>=</mo><msub><mi>x</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">H_{1,2} = H_{2,1} = x_{2}</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>H</mi><mrow><mn>2</mn><mo>,</mo><mn>2</mn></mrow></msub><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>+</mo><msubsup><mi>x</mi><mn>2</mn><mn>2</mn></msubsup><mo stretchy="true" form="postfix">)</mo></mrow><mi>/</mi><msub><mi>x</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">H_{2,2} = (1 + x_{2}^2) / x_{1}</annotation></semantics></math>.</p>
 <p>Once a model is fitted with <code><a href="../reference/sdmTMB.html">sdmTMB()</a></code>, the anisotropy
 relationships may be plotted using the <code><a href="../reference/plot_anisotropy.html">plot_anisotropy()</a></code>
 function, which takes the fitted object as an argument. If a barrier
@@ -1169,11 +1290,13 @@ of <code>print.sdmTMB()</code> or by checking
 <code>fit$sd_report</code>. The maximum gradient of the marginal
 likelihood with respect to fixed-effect parameters can be checked by
 inspecting (<code>fit$gradients</code>). Guidance varies, but the
-maximum gradient should likely be at least <span class="math inline">\(&lt; 0.001\)</span> before assuming the fitting
-routine is consistent with convergence. If maximum gradients are already
-relatively small, they can often be reduced further with additional
-optimization calls beginning at the previous best parameter vector as
-described above with <code><a href="../reference/run_extra_optimization.html">sdmTMB::run_extra_optimization()</a></code>.</p>
+maximum gradient should likely be at least
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>&lt;</mo><mn>0.001</mn></mrow><annotation encoding="application/x-tex">&lt; 0.001</annotation></semantics></math>
+before assuming the fitting routine is consistent with convergence. If
+maximum gradients are already relatively small, they can often be
+reduced further with additional optimization calls beginning at the
+previous best parameter vector as described above with
+<code><a href="../reference/run_extra_optimization.html">sdmTMB::run_extra_optimization()</a></code>.</p>
 </div>
 </div>
 <div class="section level2">
@@ -1287,7 +1410,7 @@ Computing</em>, <strong>23</strong>, 743–757.
 </div>
 </div>
 </div>
-  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
 </div>
 
@@ -1298,15 +1421,15 @@ Computing</em>, <strong>23</strong>, 743–757.
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
 </div>
 
     </footer>
 </div>
 
-  
 
-  
+
+
 
   </body>
 </html>
