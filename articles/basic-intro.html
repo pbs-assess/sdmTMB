@@ -391,8 +391,8 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.01007 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 100.7 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.012596 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 125.96 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -417,9 +417,9 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; Chain 1: Iteration: 100 / 101 [ 99%]  (Warmup)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 101 / 101 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 26.202 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                0.198 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                26.4 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 27.083 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                0.197 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                27.28 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
 <span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">m3</span>, <span class="st">"mle-mcmc"</span>, mcmc_samples <span class="op">=</span> <span class="va">samps</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqnorm</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span></span>
@@ -586,9 +586,6 @@ progress.</p>
 <span><span class="co">#&gt; Detected irregular time spacing with an AR(1) or random walk process.</span></span>
 <span><span class="co">#&gt; Consider filling in the missing time slices with `extra_time`.</span></span>
 <span><span class="co">#&gt; `extra_time = c(2006, 2008, 2010, 2012, 2014, 2016)`</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(cov)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning: The model may not have converged: non-positive-definite Hessian</span></span>
-<span><span class="co">#&gt; matrix.</span></span>
 <span><span class="va">m4</span></span>
 <span><span class="co">#&gt; Spatiotemporal model fit by ML ['sdmTMB']</span></span>
 <span><span class="co">#&gt; Formula: density ~ 0 + as.factor(year)</span></span>
@@ -596,40 +593,6 @@ progress.</p>
 <span><span class="co">#&gt; Time column: year</span></span>
 <span><span class="co">#&gt; Data: pcod</span></span>
 <span><span class="co">#&gt; Family: tweedie(link = 'log')</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
 <span><span class="co">#&gt;  </span></span>
 <span><span class="co">#&gt;                     coef.est coef.se</span></span>
 <span><span class="co">#&gt; as.factor(year)2003     3.36    0.30</span></span>
@@ -668,13 +631,13 @@ progress.</p>
 <span><span class="co">#&gt; Matérn range: 13.58</span></span>
 <span><span class="co">#&gt; Spatial SD: 1.63</span></span>
 <span><span class="co">#&gt; Spatiotemporal IID SD: 1.66</span></span>
-<span><span class="co">#&gt; ML criterion at convergence: 6251.146</span></span>
+<span><span class="co">#&gt; ML criterion at convergence: 6251.245</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; See ?tidy.sdmTMB to extract these values as a data frame.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; **Possible issues detected! Check output of sanity().**</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC</a></span><span class="op">(</span><span class="va">m4</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 12534.29</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 12534.49</span></span></code></pre></div>
 <p>To plot these, we make a data frame that contains all combinations of
 the time-varying covariate and time. This is easily created using
 <code><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid()</a></code> or <code><a href="https://tidyr.tidyverse.org/reference/expand_grid.html" class="external-link">tidyr::expand_grid()</a></code>.</p>
@@ -689,6 +652,7 @@ the time-varying covariate and time. This is easily created using
 <span><span class="va">nd</span><span class="op">$</span><span class="va">depth_scaled2</span> <span class="op">&lt;-</span> <span class="va">nd</span><span class="op">$</span><span class="va">depth_scaled</span><span class="op">^</span><span class="fl">2</span></span>
 <span></span>
 <span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">m4</span>, newdata <span class="op">=</span> <span class="va">nd</span>, se_fit <span class="op">=</span> <span class="cn">TRUE</span>, re_form <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning in sqrt(diag(cov)): NaNs produced</span></span>
 <span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">p</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">depth_scaled</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">est</span><span class="op">)</span>,</span>
 <span>  ymin <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">est</span> <span class="op">-</span> <span class="fl">1.96</span> <span class="op">*</span> <span class="va">est_se</span><span class="op">)</span>,</span>
