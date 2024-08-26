@@ -729,7 +729,7 @@ for more details.
 
 The fitted model can be passed to the tmbstan package to sample from the
 posterior with Stan. See the [Bayesian
-vignette](https://pbs-assess.github.io/sdmTMB/articles/web_only/bayesian.html).
+vignette](https://pbs-assess.github.io/sdmTMB/articles/bayesian.html).
 
 ### Turning off random fields
 

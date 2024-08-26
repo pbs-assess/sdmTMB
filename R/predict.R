@@ -45,7 +45,7 @@
 #' @param mcmc_samples See `extract_mcmc()` in the
 #'   \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package for
 #'   more details and the
-#'   \href{https://pbs-assess.github.io/sdmTMB/articles/web_only/bayesian.html}{Bayesian vignette}.
+#'   \href{https://pbs-assess.github.io/sdmTMB/articles/bayesian.html}{Bayesian vignette}.
 #'   If specified, the predict function will return a matrix of a similar form
 #'   as if `nsim > 0` but representing Bayesian posterior samples from the Stan
 #'   model.

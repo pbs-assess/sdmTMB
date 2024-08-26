@@ -61,7 +61,7 @@
 # sdmTMB 0.5.0
 
 * Overhaul residuals vignette ('article') 
-  <https://pbs-assess.github.io/sdmTMB/articles/web_only/residual-checking.html>
+  <https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html>
   including brief intros to randomized quantile residuals, simulation-based
   residuals, 'one-sample' residuals, and uniform vs. Gaussian residuals.
 
