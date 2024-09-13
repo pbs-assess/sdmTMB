@@ -271,6 +271,21 @@ sdmTMB_simulate <- function(formula,
   d[["omega_s"]] <- if (all(s$omega_s_A != 0)) s$omega_s_A
   d[["epsilon_st"]] <- if (all(s$epsilon_st_A_vec != 0)) s$epsilon_st_A_vec
   d[["zeta_s"]] <- if (all(s$zeta_s_A != 0)) s$zeta_s_A
+  
+    # Warnings for pieces collapsing to 0. The sum() > 0 piece is needed because parameters that are input are turned to 0x0 matrices
+  if (sum(sigma_O) > 0) {
+    if(is.null(d[["omega_s"]])) cli::cli_alert_info(paste("Warning: spatial field is collapsing to 0 but sigma_O was specified.",
+                                                        "Please check the spatial range and cutoff distance used to construct the mesh."))
+  }
+  if (sum(sigma_E) > 0) {
+    if(is.null(d[["epsilon_st"]])) cli::cli_alert_info(paste("Warning: spatiotemporal field is collapsing to 0 but sigma_E was specified.",
+                                                        "Please check the spatial range and cutoff distance used to construct the mesh."))
+  }
+  if (sum(sigma_Z) > 0) {
+    if(is.null(d[["zeta_s"]])) cli::cli_alert_info(paste("Warning: spatially varying coefficient field is collapsing to 0 but sigma_Z was specified.",
+                                                               "Please check the spatial range and cutoff distance used to construct the mesh."))
+  }
+  
   if (any(family$family %in% c("truncated_nbinom1", "truncated_nbinom2"))) {
     d[["mu"]] <- family$linkinv(s$eta_i, phi = phi)
   } else {
