@@ -138,6 +138,28 @@ test_that("Offset prediction matches glm()", {
   # p_glmmTMB <- predict(fit_glmmTMB, newdata = dat)
   # expect_equal(p$est, unname(p_glmmTMB))
 })
+
+test_that("offset gets passed through cross validation as expected #372", {
+  dat <- subset(dogfish, catch_weight > 0)
+  expect_error(
+    x <- sdmTMB_cv(catch_weight ~ 1,
+      data = dat,
+      family = Gamma("log"), offset = log(dat$area_swept), spatial = "off"
+    ),
+    "offset"
+  )
+  set.seed(1)
+  x <- sdmTMB_cv(catch_weight ~ 1,
+    data = dat, family = Gamma("log"),
+    offset = "area_swept", spatial = "off",
+    mesh = make_mesh(dat, c("X", "Y"), cutoff = 10), k_folds = 2
+  )
+  y <- x$data[, c("catch_weight", "cv_predicted")]
+  # plot(y$catch_weight, y$cv_predicted)
+  # if offset is applied, will have unique values because an intercept-only model:
+  expect_true(length(unique(y$cv_predicted)) == 684L)
+})
+
 # #
 # # offset/prediction setting checks:
 #

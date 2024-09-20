@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Fix passing of `offset` argument through in `sdmTMB_cv()`. Before it was being
+  omitted in the prediction (i.e., set to 0). #372
+
 * Fig bug in `exponentiate` argument for `tidy()`. Set `conf.int = TRUE` as
   default. #353
 

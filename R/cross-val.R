@@ -287,10 +287,10 @@ sdmTMB_cv <- function(
     cli_abort("`weights` cannot be specified within sdmTMB_cv().")
   }
   if ("offset" %in% names(dot_args)) {
-    .offset <- eval(dot_args$offset)
-    if (parallel && !is.character(.offset) && !is.null(.offset)) {
-      cli_abort("We recommend using a character value for 'offset' (indicating the column name) when applying parallel cross validation.")
+    if (!is.character(dot_args$offset)) {
+      cli_abort("Please use a character value for 'offset' (indicating the column name) for cross validation.")
     }
+    .offset <- eval(dot_args$offset)
   } else {
     .offset <- NULL
   }
@@ -369,7 +369,9 @@ sdmTMB_cv <- function(
 
     # FIXME: only use TMB report() below to be faster!
     # predict for withheld data:
-    predicted <- predict(object, newdata = cv_data, type = "response")
+    predicted <- predict(object, newdata = cv_data, type = "response",
+      offset = if (!is.null(.offset)) cv_data[[.offset]] else rep(0, nrow(cv_data)))
+
     cv_data$cv_predicted <- predicted$est
     response <- get_response(object$formula[[1]])
     withheld_y <- predicted[[response]]
