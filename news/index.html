@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,8 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="sdmtmb-development-version">sdmTMB (development version)<a class="anchor" aria-label="anchor" href="#sdmtmb-development-version"></a></h2>
-<ul><li><p>Fig bug in <code>exponentiate</code> argument for <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>. Set <code>conf.int = TRUE</code> as default. <a href="https://github.com/pbs-assess/sdmTMB/issues/353" class="external-link">#353</a></p></li>
+<ul><li><p>Fix passing of <code>offset</code> argument through in <code><a href="../reference/sdmTMB_cv.html">sdmTMB_cv()</a></code>. Before it was being omitted in the prediction (i.e., set to 0). <a href="https://github.com/pbs-assess/sdmTMB/issues/372" class="external-link">#372</a></p></li>
+<li><p>Fig bug in <code>exponentiate</code> argument for <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>. Set <code>conf.int = TRUE</code> as default. <a href="https://github.com/pbs-assess/sdmTMB/issues/353" class="external-link">#353</a></p></li>
 <li><p>Fix bug in prediction from <code><a href="../reference/families.html">delta_truncated_nbinom1()</a></code> and <code><a href="../reference/families.html">delta_truncated_nbinom2()</a></code> families. The positive component needs to be transformed to represent the mean of the <em>un</em>truncated distribution first before multiplying by the probability of a non-zero. Thanks to <a href="https://github.com/tom-peatman" class="external-link">@tom-peatman</a> <a href="https://github.com/pbs-assess/sdmTMB/issues/350" class="external-link">#350</a></p></li>
 <li><p>Add <code><a href="../reference/get_index.html">get_eao()</a></code> to calculate effective area occupied.</p></li>
 </ul></div>
@@ -443,7 +444,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>
