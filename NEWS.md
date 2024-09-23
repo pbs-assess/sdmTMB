@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Add helpful error message if some coordinates in make_mesh() are NA. #365
+
 * Add informative message if fitting with an offset but predicting with offset
   argument left at NULL on newdata. #372
 
