@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Add `model` (linear predictor number) argument to coef() method. Also,
+  write documentation for `?coef.sdmTMB`. #351
+
 * Add helpful error message if some coordinates in make_mesh() are NA. #365
 
 * Add informative message if fitting with an offset but predicting with offset
