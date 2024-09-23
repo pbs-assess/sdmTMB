@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Add print method for `sdmTMB_cv()` output. #319
+
 * Add progress bar to `simulate.sdmTMB()`. #346
 
 * Add AUC and TSS examples to cross validation vignette. #268
