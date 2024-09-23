@@ -495,6 +495,15 @@ predict.sdmTMB <- function(object, newdata = NULL,
       cli_abort("`area` should be of the same length as `nrow(newdata)` or of length 1.")
     }
 
+    # newdata, null offset in predict, and non-null in fit #372
+    if (isFALSE(nd_arg_was_null) && is.null(offset) && !all(object$offset == 0)) {
+      msg <- c(
+        "Fitted object contains an offset but the offset is `NULL` in `predict.sdmTMB()`.",
+        "Prediction will proceed assuming the offset vector is 0 in the prediction.",
+        "Specify an offset vector in `predict.sdmTMB()` to override this.")
+      cli_inform(msg)
+    }
+
     if (!is.null(offset)) {
       if (nrow(proj_X_ij[[1]]) != length(offset))
         cli_abort("Prediction offset vector does not equal number of rows in prediction dataset.")

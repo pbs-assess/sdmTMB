@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Add informative message if fitting with an offset but predicting with offset
+  argument left at NULL on newdata. #372
+
 * Fix passing of `offset` argument through in `sdmTMB_cv()`. Before it was being
   omitted in the prediction (i.e., set to 0). #372
 
