@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Add AUC and TSS examples to cross validation vignette. #268
+
 * Add `model` (linear predictor number) argument to coef() method. Also,
   write documentation for `?coef.sdmTMB`. #351
 

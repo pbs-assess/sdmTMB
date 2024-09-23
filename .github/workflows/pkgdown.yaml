@@ -40,6 +40,7 @@ jobs:
           remotes::install_cran("cowplot")
           remotes::install_cran("rnaturalearth")
           remotes::install_cran("rnaturalearthdata")
+          remotes::install_cran("pROC")
           install.packages("Matrix", type = "source")
           install.packages("TMB", type = "source")
         shell: Rscript {0}
