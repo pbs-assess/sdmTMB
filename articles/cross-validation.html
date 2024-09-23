@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9008</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9009</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -297,6 +297,90 @@ test set, we could specify that using the <code>include_folds</code>
 argument.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">weights</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdmTMB_stacking.html">sdmTMB_stacking</a></span><span class="op">(</span><span class="va">model_list</span>, include_folds <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="calculating-measures-of-predictive-skill-for-binary-data">Calculating measures of predictive skill for binary data<a class="anchor" aria-label="anchor" href="#calculating-measures-of-predictive-skill-for-binary-data"></a>
+</h2>
+<p>For delta models, or models of presence-absence data, several
+measures of predictive ability are available. These are applicable to
+cross validation, although we demonstrate them here first in a non-cross
+validation context for simplicity.</p>
+<p>A first commonly used diagnostic is the AUC (Area Under the Curve),
+which quantifies the ability of a model to discriminate between the two
+classes; this is done from the Receiver Operating Characteristic (ROC)
+curve, which plots the true positive rate vs. false positive rate. There
+are several packages to calculate AUC in R, but this can be done with
+the <code>pROC</code> package, where inputs are a vector of 0s and 1s
+(or factor equivalents) in the raw data, and a vector of estimated
+probabilities (generated from a call to <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code>, as shown
+below). The <code><a href="https://rdrr.io/r/stats/Logistic.html" class="external-link">plogis()</a></code> function is needed to convert
+estimated values in logit space to probabilities in natural (zero to
+one) space.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mesh</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_mesh.html">make_mesh</a></span><span class="op">(</span><span class="va">pcod</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="st">"Y"</span><span class="op">)</span>, cutoff <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdmTMB.html">sdmTMB</a></span><span class="op">(</span><span class="va">present</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">depth</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">pcod</span>, mesh <span class="op">=</span> <span class="va">mesh</span><span class="op">)</span></span>
+<span><span class="va">pred</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span> <span class="co"># presence-absence model</span></span>
+<span><span class="va">roc</span> <span class="op">&lt;-</span> <span class="fu">pROC</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/pROC/man/roc.html" class="external-link">roc</a></span><span class="op">(</span><span class="va">pcod</span><span class="op">$</span><span class="va">present</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Logistic.html" class="external-link">plogis</a></span><span class="op">(</span><span class="va">pred</span><span class="op">$</span><span class="va">est</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Setting levels: control = 0, case = 1</span></span>
+<span><span class="co">#&gt; Setting direction: controls &lt; cases</span></span>
+<span><span class="va">auc</span> <span class="op">&lt;-</span> <span class="fu">pROC</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/pROC/man/auc.html" class="external-link">auc</a></span><span class="op">(</span><span class="va">roc</span><span class="op">)</span></span>
+<span><span class="va">auc</span></span>
+<span><span class="co">#&gt; Area under the curve: 0.8831</span></span></code></pre></div>
+<p>With a delta model, two estimated values are returned, so only the
+first would be used. E.g.,</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdmTMB.html">sdmTMB</a></span><span class="op">(</span><span class="va">density</span> <span class="op">~</span> <span class="fl">1</span>, data <span class="op">=</span> <span class="va">pcod</span>, </span>
+<span>  mesh <span class="op">=</span> <span class="va">mesh</span>, family <span class="op">=</span> <span class="fu"><a href="../reference/families.html">delta_gamma</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">pred</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># the first linear predictor is the binomial component (est1):</span></span>
+<span><span class="va">roc</span> <span class="op">&lt;-</span> <span class="fu">pROC</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/pROC/man/roc.html" class="external-link">roc</a></span><span class="op">(</span><span class="va">pcod</span><span class="op">$</span><span class="va">present</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Logistic.html" class="external-link">plogis</a></span><span class="op">(</span><span class="va">pred</span><span class="op">$</span><span class="va">est1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Setting levels: control = 0, case = 1</span></span>
+<span><span class="co">#&gt; Setting direction: controls &lt; cases</span></span>
+<span><span class="va">auc</span> <span class="op">&lt;-</span> <span class="fu">pROC</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/pROC/man/auc.html" class="external-link">auc</a></span><span class="op">(</span><span class="va">roc</span><span class="op">)</span></span>
+<span><span class="va">auc</span></span>
+<span><span class="co">#&gt; Area under the curve: 0.8604</span></span></code></pre></div>
+<p>If we wanted to apply this in the context of cross validation, we
+could do it like this:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdmTMB_cv.html">sdmTMB_cv</a></span><span class="op">(</span></span>
+<span>  <span class="va">present</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">depth</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">pcod</span>, spatial <span class="op">=</span> <span class="st">"off"</span>,</span>
+<span>  mesh <span class="op">=</span> <span class="va">mesh</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, k_folds <span class="op">=</span> <span class="fl">2</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">roc</span> <span class="op">&lt;-</span> <span class="fu">pROC</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/pROC/man/roc.html" class="external-link">roc</a></span><span class="op">(</span><span class="va">x</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">present</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Logistic.html" class="external-link">plogis</a></span><span class="op">(</span><span class="va">x</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">cv_predicted</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">auc</span> <span class="op">&lt;-</span> <span class="fu">pROC</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/pROC/man/auc.html" class="external-link">auc</a></span><span class="op">(</span><span class="va">roc</span><span class="op">)</span></span>
+<span><span class="va">auc</span></span></code></pre></div>
+<p>AUC may be sensitive to imbalances in the data, however, and
+alternative metrics may better approximate skill. Here we highlight an
+example of using true skill score (implemented in packages such as
+SDMtune):</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mesh</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_mesh.html">make_mesh</a></span><span class="op">(</span><span class="va">pcod</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="st">"Y"</span><span class="op">)</span>, cutoff <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdmTMB.html">sdmTMB</a></span><span class="op">(</span><span class="va">present</span> <span class="op">~</span> <span class="fl">1</span>, data <span class="op">=</span> <span class="va">pcod</span>, </span>
+<span>  mesh <span class="op">=</span> <span class="va">mesh</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Next, we can generate predicted probabilities and classes using a
+threshold of 0.5 as an example:</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">pred</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="va">pred</span><span class="op">$</span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Logistic.html" class="external-link">plogis</a></span><span class="op">(</span><span class="va">pred</span><span class="op">$</span><span class="va">est</span><span class="op">)</span></span>
+<span><span class="va">pred</span><span class="op">$</span><span class="va">pred_01</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">pred</span><span class="op">$</span><span class="va">p</span> <span class="op">&lt;</span> <span class="fl">0.5</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<p>Next we create a confusion matrix and calculate the true skill
+score:</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">conmat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">pred</span><span class="op">$</span><span class="va">pred_01</span>, <span class="va">pred</span><span class="op">$</span><span class="va">present</span><span class="op">)</span></span>
+<span><span class="va">true_neg</span> <span class="op">&lt;-</span> <span class="va">conmat</span><span class="op">[</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">]</span></span>
+<span><span class="va">false_neg</span> <span class="op">&lt;-</span> <span class="va">conmat</span><span class="op">[</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">]</span></span>
+<span><span class="va">false_pos</span> <span class="op">&lt;-</span> <span class="va">conmat</span><span class="op">[</span><span class="fl">2</span>, <span class="fl">1</span><span class="op">]</span></span>
+<span><span class="va">true_pos</span> <span class="op">&lt;-</span> <span class="va">conmat</span><span class="op">[</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">]</span></span>
+<span></span>
+<span><span class="co"># Calculate TSS:</span></span>
+<span><span class="va">true_pos_rate</span> <span class="op">&lt;-</span> <span class="va">true_pos</span> <span class="op">/</span> <span class="op">(</span><span class="va">true_pos</span> <span class="op">+</span> <span class="va">false_neg</span><span class="op">)</span></span>
+<span><span class="va">true_neg_rate</span> <span class="op">&lt;-</span> <span class="va">true_neg</span> <span class="op">/</span> <span class="op">(</span><span class="va">true_neg</span> <span class="op">+</span> <span class="va">false_pos</span><span class="op">)</span></span>
+<span><span class="va">TSS</span> <span class="op">&lt;-</span> <span class="va">true_pos_rate</span> <span class="op">+</span> <span class="va">true_neg_rate</span> <span class="op">-</span> <span class="fl">1</span></span>
+<span><span class="va">TSS</span></span>
+<span><span class="co">#&gt; [1] 0.5238745</span></span></code></pre></div>
+<p>In some cases, reporting the true negative or true positive rate
+might be of interest in addition to TSS.</p>
 </div>
 <div class="section level2">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
