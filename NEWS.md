@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Add progress bar to `simulate.sdmTMB()`. #346
+
 * Add AUC and TSS examples to cross validation vignette. #268
 
 * Add `model` (linear predictor number) argument to coef() method. Also,

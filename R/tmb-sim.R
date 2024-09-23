@@ -381,7 +381,7 @@ sdmTMB_simulate <- function(formula,
 simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
                             type = c("mle-eb", "mle-mvn"),
                             model = c(NA, 1, 2),
-                            re_form = NULL, mcmc_samples = NULL, silent = TRUE, ...) {
+                            re_form = NULL, mcmc_samples = NULL, silent = FALSE, ...) {
   set.seed(seed)
   type <- tolower(type)
   type <- match.arg(type)
@@ -421,18 +421,21 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
     new_par <- mcmc_samples
   }
 
-  # do the sim
+  # do the simulation
+  if (!silent) cli::cli_progress_bar("Simulating...", total = nsim)
+  ret <- list()
   if (!is.null(mcmc_samples)) { # we have a matrix
-    ret <- lapply(seq_len(nsim), function(i) {
-      if (!silent) cat("-")
-      newobj$simulate(par = new_par[, i, drop = TRUE], complete = FALSE)$y_i
-    })
+    for (i in seq_len(nsim)) {
+      if (!silent) cli::cli_progress_update()
+      ret[[i]] <- newobj$simulate(par = new_par[, i, drop = TRUE], complete = FALSE)$y_i
+    }
   } else {
-    ret <- lapply(seq_len(nsim), function(i) {
-      if (!silent) cat("-")
-      newobj$simulate(par = new_par, complete = FALSE)$y_i
-      })
+    for (i in seq_len(nsim)) {
+      if (!silent) cli::cli_progress_update()
+      ret[[i]] <- newobj$simulate(par = new_par, complete = FALSE)$y_i
+    }
   }
+  cli::cli_progress_done()
 
   if (isTRUE(object$family$delta)) {
     if (is.na(model[[1]])) {
