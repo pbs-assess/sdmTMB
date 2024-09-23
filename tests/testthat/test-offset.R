@@ -140,6 +140,7 @@ test_that("Offset prediction matches glm()", {
 })
 
 test_that("offset gets passed through cross validation as expected #372", {
+  skip_on_cran()
   dat <- subset(dogfish, catch_weight > 0)
   expect_error(
     x <- sdmTMB_cv(catch_weight ~ 1,
@@ -161,6 +162,7 @@ test_that("offset gets passed through cross validation as expected #372", {
 })
 
 test_that("predicting on newdata with a non-null offset in fit but a null offset in predict informs the user appropriately", {
+  skip_on_cran()
   dat <- subset(dogfish, catch_weight > 0)
   fit <- sdmTMB(
     catch_weight ~ 1,
