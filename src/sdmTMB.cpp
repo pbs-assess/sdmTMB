@@ -202,6 +202,7 @@ Type objective_function<Type>::operator()()
   DATA_IVECTOR(link);
   DATA_SCALAR(df);  // Student-t DF
   DATA_VECTOR(size); // binomial, via glmmTMB
+  DATA_INTEGER(mean_adjust);
 
   // SPDE objects from R-INLA
   DATA_STRUCT(spde_aniso, spde_aniso_t);
@@ -903,8 +904,13 @@ Type objective_function<Type>::operator()()
             break;
           }
           case lognormal_family: {
-            if (notNA) tmp_ll = sdmTMB::dlnorm(y_i(i,m), log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
-            SIMULATE{y_i(i,m) = exp(rnorm(log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m)));}
+            if (mean_adjust) {
+              if (notNA) tmp_ll = sdmTMB::dlnorm(y_i(i,m), log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
+              SIMULATE{y_i(i,m) = exp(rnorm(log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m)));}
+            } else {
+              if (notNA) tmp_ll = sdmTMB::dlnorm(y_i(i,m), log(mu_i(i,m)), phi(m), true);
+              SIMULATE{y_i(i,m) = exp(rnorm(log(mu_i(i,m)), phi(m)));}
+            }
             break;
           }
           case student_family: {

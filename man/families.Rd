@@ -29,7 +29,7 @@
 \usage{
 Beta(link = "logit")
 
-lognormal(link = "log")
+lognormal(link = "log", mean_adjustment = TRUE)
 
 gengamma(link = "log")
 
@@ -59,7 +59,12 @@ delta_gamma_mix(link1 = "logit", link2 = "log")
 
 delta_gengamma(link1, link2 = "log", type = c("standard", "poisson-link"))
 
-delta_lognormal(link1, link2 = "log", type = c("standard", "poisson-link"))
+delta_lognormal(
+  link1,
+  link2 = "log",
+  type = c("standard", "poisson-link"),
+  mean_adjustment = TRUE
+)
 
 delta_lognormal_mix(link1, link2 = "log", type = c("standard", "poisson-link"))
 
@@ -75,6 +80,12 @@ delta_beta(link1 = "logit", link2 = "logit")
 }
 \arguments{
 \item{link}{Link.}
+
+\item{mean_adjustment}{Whether to adjust the mean of the lognormal density
+contributing to the log likelihood.
+If \code{TRUE} (default), \code{dlnorm(meanlog = mu - phi^2/2, sdlog = phi)};
+if \code{FALSE}, \code{dlnorm(meanlog = mu, sdlog = phi)}, where \code{mu} is the linear
+predictor and \code{phi} is the standard deviation on the log scale.}
 
 \item{df}{Student-t degrees of freedom fixed value parameter.}
 

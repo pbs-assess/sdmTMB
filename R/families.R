@@ -57,9 +57,14 @@ Beta <- function(link = "logit") {
 
 #' @export
 #' @rdname families
+#' @param mean_adjust Whether to adjust the mean of the lognormal density
+#'  contributing to the log likelihood.
+#'  If `TRUE` (default), `dlnorm(meanlog = mu - phi^2/2, sdlog = phi)`;
+#'  if `FALSE`, `dlnorm(meanlog = mu, sdlog = phi)`, where `mu` is the linear
+#'  predictor and `phi` is the standard deviation on the log scale.
 #' @examples
 #' lognormal(link = "log")
-lognormal <- function(link = "log") {
+lognormal <- function(link = "log", mean_adjust = TRUE) {
   linktemp <- substitute(link)
   if (!is.character(linktemp))
     linktemp <- deparse(linktemp)
@@ -68,7 +73,7 @@ lognormal <- function(link = "log") {
     stats <- stats::make.link(linktemp)
   else if (is.character(link))
     stats <- stats::make.link(link)
-  x <- c(list(family = "lognormal", link = linktemp), stats)
+  x <- c(list(family = "lognormal", link = linktemp), stats, mean_adjust = as.integer(mean_adjust))
   add_to_family(x)
 }
 
@@ -415,7 +420,7 @@ delta_gengamma <- function(link1,
 #' delta_lognormal()
 #' @rdname families
 delta_lognormal <- function(link1,
-  link2 = "log", type = c("standard", "poisson-link")) {
+  link2 = "log", type = c("standard", "poisson-link"), mean_adjust = TRUE) {
   type <- match.arg(type)
   if (missing(link1)) link1 <- if (type == "standard") "logit" else "log"
   l1 <- substitute(link1)
@@ -433,7 +438,7 @@ delta_lognormal <- function(link1,
   }
   structure(list(f1, f2, delta = TRUE, link = c(l1, l2),
     family = c("binomial", "lognormal"), type = .type,
-    clean_name = clean_name), class = "family")
+    clean_name = clean_name, mean_adjust = as.integer(mean_adjust)), class = "family")
 }
 
 #' @export

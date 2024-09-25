@@ -1046,6 +1046,7 @@ sdmTMB <- function(
   n_t <- nrow(time_df)
 
   random_walk <- if (!is.null(time_varying)) switch(time_varying_type, rw = 1L, rw0 = 2L, ar1 = 0L) else 0L
+
   tmb_data <- list(
     y_i        = y_i,
     n_t        = n_t,
@@ -1109,6 +1110,7 @@ sdmTMB <- function(
     size = c(size),
     link       = .valid_link[family$link],
     df         = df,
+    mean_adjust = if (!is.null(family$mean_adjust)) family$mean_adjust else 0L,
     spatial_only = as.integer(spatial_only),
     spatial_covariate = as.integer(!is.null(spatial_varying)),
     calc_quadratic_range = as.integer(quadratic_roots),
