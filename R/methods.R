@@ -45,12 +45,20 @@ fitted.sdmTMB <- function(object, ...) {
 #'
 #' @param object The fitted sdmTMB model object
 #' @param complete Currently ignored
+#' @param model Linear predictor for delta models. Defaults to the first
+#'   linear predictor.
 #' @param ... Currently ignored
 #' @importFrom stats coef
 #' @export
-#' @noRd
-coef.sdmTMB <- function(object, complete = FALSE, ...) {
-  x <- tidy(object)
+coef.sdmTMB <- function(object, complete = FALSE, model = 1, ...) {
+  if (is_delta(object)) {
+    assert_that(length(model) == 1L)
+    model <- as.integer(model)
+    assert_that(model %in% c(1L, 2L))
+    msg <- paste0("Returning coefficients from linear predictor ", model, " based on the `model` argument.")
+    cli_inform(msg)
+  }
+  x <- tidy(object, model = model)
   out <- x$estimate
   names(out) <- x$term
   out

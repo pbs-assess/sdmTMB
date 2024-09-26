@@ -47,7 +47,7 @@ Here and with other delta models, the `link1` and `link2` can be omitted and lef
 2. Delta-lognormal: `family = delta_lognormal()`.
 This fits a binomial presence-absence model (i.e., `binomial(link = "logit")`) and then a model for the positive catches only with a lognormal observation distribution and a log link (i.e., `lognormal(link = "log")`
 
-3. Poisson-link delta-Gamma or delta-lognormal. See the [Poisson-link delta model vignette](https://pbs-assess.github.io/sdmTMB/articles/web_only/poisson-link.html).
+3. Poisson-link delta-Gamma or delta-lognormal. See the [Poisson-link delta model vignette](https://pbs-assess.github.io/sdmTMB/articles/poisson-link.html).
 
 4. Delta-truncated-negative-binomial: `family = delta_truncated_nbinom1()` or `family = delta_truncated_nbinom2()`.
 This fits a binomial presence-absence model (`binomial(link = "logit")`) and a `truncated_nbinom1(link = "log")` or `truncated_nbinom1(link = "log")` distribution for positive catches.

@@ -268,9 +268,25 @@ sdmTMB_simulate <- function(formula,
   if (!is.null(fit$time)) d[[fit$time]] <- data[[fit$time]]
   d[[mesh$xy_cols[1]]] <- data[[mesh$xy_cols[1]]]
   d[[mesh$xy_cols[2]]] <- data[[mesh$xy_cols[2]]]
-  d[["omega_s"]] <- if (all(s$omega_s_A != 0)) s$omega_s_A
-  d[["epsilon_st"]] <- if (all(s$epsilon_st_A_vec != 0)) s$epsilon_st_A_vec
-  d[["zeta_s"]] <- if (all(s$zeta_s_A != 0)) s$zeta_s_A
+
+  d[["omega_s"]] <- if (sum(sigma_O) > 0) s$omega_s_A
+  d[["epsilon_st"]] <- if (sum(sigma_E) > 0) s$epsilon_st_A_vec
+  d[["zeta_s"]] <- if (sum(sigma_Z) > 0) s$zeta_s_A
+
+  # # Warnings for fields collapsing to 0
+  # info_collapse <- function(sig, vec, .par, .name) {
+  #   if (sum(sig) > 0 && all (vec == 0)) {
+  #     msg <- paste0("The ", .name, " has been returned as all zeros although ", .par,
+  #       " was specified as > 0. Try making your mesh finer, e.g., with a lower ",
+  #       "`cutoff` or a higher number of knots. Triangle edge length needs to be ",
+  #       "lower than the range size (distance correlation is effectively independent.")
+  #     cli::cli_alert_info(msg)
+  #   }
+  # }
+  # info_collapse(sigma_O, s$omega_s_A, "sigma_O", "spatial field")
+  # info_collapse(sigma_E, s$epsilon_st_A_vec, "sigma_E", "spatiotemporal field")
+  # info_collapse(sigma_Z, s$zeta_s_A, "sigma_Z", "spatially varying coefficient field")
+
   if (any(family$family %in% c("truncated_nbinom1", "truncated_nbinom2"))) {
     d[["mu"]] <- family$linkinv(s$eta_i, phi = phi)
   } else {
@@ -365,7 +381,7 @@ sdmTMB_simulate <- function(formula,
 simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
                             type = c("mle-eb", "mle-mvn"),
                             model = c(NA, 1, 2),
-                            re_form = NULL, mcmc_samples = NULL, silent = TRUE, ...) {
+                            re_form = NULL, mcmc_samples = NULL, silent = FALSE, ...) {
   set.seed(seed)
   type <- tolower(type)
   type <- match.arg(type)
@@ -405,18 +421,21 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
     new_par <- mcmc_samples
   }
 
-  # do the sim
+  # do the simulation
+  if (!silent) cli::cli_progress_bar("Simulating...", total = nsim)
+  ret <- list()
   if (!is.null(mcmc_samples)) { # we have a matrix
-    ret <- lapply(seq_len(nsim), function(i) {
-      if (!silent) cat("-")
-      newobj$simulate(par = new_par[, i, drop = TRUE], complete = FALSE)$y_i
-    })
+    for (i in seq_len(nsim)) {
+      if (!silent) cli::cli_progress_update()
+      ret[[i]] <- newobj$simulate(par = new_par[, i, drop = TRUE], complete = FALSE)$y_i
+    }
   } else {
-    ret <- lapply(seq_len(nsim), function(i) {
-      if (!silent) cat("-")
-      newobj$simulate(par = new_par, complete = FALSE)$y_i
-      })
+    for (i in seq_len(nsim)) {
+      if (!silent) cli::cli_progress_update()
+      ret[[i]] <- newobj$simulate(par = new_par, complete = FALSE)$y_i
+    }
   }
+  cli::cli_progress_done()
 
   if (isTRUE(object$family$delta)) {
     if (is.na(model[[1]])) {

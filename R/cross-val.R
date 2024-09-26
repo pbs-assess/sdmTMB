@@ -287,10 +287,10 @@ sdmTMB_cv <- function(
     cli_abort("`weights` cannot be specified within sdmTMB_cv().")
   }
   if ("offset" %in% names(dot_args)) {
-    .offset <- eval(dot_args$offset)
-    if (parallel && !is.character(.offset) && !is.null(.offset)) {
-      cli_abort("We recommend using a character value for 'offset' (indicating the column name) when applying parallel cross validation.")
+    if (!is.character(dot_args$offset)) {
+      cli_abort("Please use a character value for 'offset' (indicating the column name) for cross validation.")
     }
+    .offset <- eval(dot_args$offset)
   } else {
     .offset <- NULL
   }
@@ -369,7 +369,9 @@ sdmTMB_cv <- function(
 
     # FIXME: only use TMB report() below to be faster!
     # predict for withheld data:
-    predicted <- predict(object, newdata = cv_data, type = "response")
+    predicted <- predict(object, newdata = cv_data, type = "response",
+      offset = if (!is.null(.offset)) cv_data[[.offset]] else rep(0, nrow(cv_data)))
+
     cv_data$cv_predicted <- predicted$est
     response <- get_response(object$formula[[1]])
     withheld_y <- predicted[[response]]
@@ -451,7 +453,7 @@ sdmTMB_cv <- function(
   pdHess <- vapply(out, `[[`, "pdHess", FUN.VALUE = logical(1L))
   max_grad <- vapply(out, `[[`, "max_gradient", FUN.VALUE = numeric(1L))
   converged <- all(pdHess)
-  list(
+  out <- list(
     data = data,
     models = models,
     fold_loglik = fold_cv_ll,
@@ -460,9 +462,35 @@ sdmTMB_cv <- function(
     pdHess = pdHess,
     max_gradients = max_grad
   )
+  `class<-`(out, "sdmTMB_cv")
 }
 
 log_sum_exp <- function(x) {
   max_x <- max(x)
   max_x + log(sum(exp(x - max_x)))
+}
+
+#' @export
+#' @import methods
+print.sdmTMB_cv <- function(x, ...) {
+  nmods <- length(x$models)
+  nconverged <- sum(x$converged)
+  cat(paste0("Cross validation of sdmTMB models with ", nmods, " folds.\n"))
+  cat("\n")
+  cat("Summary of the first fold model fit:\n")
+  cat("\n")
+  print(x$models[[1]])
+  cat("\n")
+  cat("Access the rest of the models in a list element named `models`.\n")
+  cat("E.g. `object$models[[2]]` for the 2nd fold model fit.\n")
+  cat("\n")
+  cat(paste0(nconverged, " out of ", nmods, " models are consistent with convergence.\n"))
+  cat("Figure out which folds these are in the `converged` list element.\n")
+  cat("\n")
+  cat(paste0("Out-of-sample log likelihood for each fold: ", paste(round(x$fold_loglik, 2), collapse = ", "), ".\n"))
+  cat("Access these values in the `fold_loglik` list element.\n")
+  cat("\n")
+  cat("Sum of out-of-sample log likelihoods:", round(x$sum_loglik, 2), "\n")
+  cat("More positive values imply better out-of-sample prediction.\n")
+  cat("Access this value in the `sum_loglik` list element.\n")
 }

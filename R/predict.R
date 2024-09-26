@@ -45,7 +45,7 @@
 #' @param mcmc_samples See `extract_mcmc()` in the
 #'   \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package for
 #'   more details and the
-#'   \href{https://pbs-assess.github.io/sdmTMB/articles/web_only/bayesian.html}{Bayesian vignette}.
+#'   \href{https://pbs-assess.github.io/sdmTMB/articles/bayesian.html}{Bayesian vignette}.
 #'   If specified, the predict function will return a matrix of a similar form
 #'   as if `nsim > 0` but representing Bayesian posterior samples from the Stan
 #'   model.
@@ -493,6 +493,15 @@ predict.sdmTMB <- function(object, newdata = NULL,
 
     if (length(area) != nrow(proj_X_ij[[1]]) && length(area) != 1L) {
       cli_abort("`area` should be of the same length as `nrow(newdata)` or of length 1.")
+    }
+
+    # newdata, null offset in predict, and non-null in fit #372
+    if (isFALSE(nd_arg_was_null) && is.null(offset) && !all(object$offset == 0)) {
+      msg <- c(
+        "Fitted object contains an offset but the offset is `NULL` in `predict.sdmTMB()`.",
+        "Prediction will proceed assuming the offset vector is 0 in the prediction.",
+        "Specify an offset vector in `predict.sdmTMB()` to override this.")
+      cli_inform(msg)
     }
 
     if (!is.null(offset)) {
