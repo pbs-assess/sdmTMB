@@ -498,7 +498,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
     # newdata, null offset in predict, and non-null in fit #372
     if (isFALSE(nd_arg_was_null) && is.null(offset) && !all(object$offset == 0)) {
       msg <- c(
-        "Fitted object contains an offset but the offset is `NULL` in `predict.sdmTMB()`.",
+        "Fitted object contains an offset but the offset is `NULL` in `predict.sdmTMB()` and `newdata` were supplied.",
         "Prediction will proceed assuming the offset vector is 0 in the prediction.",
         "Specify an offset vector in `predict.sdmTMB()` to override this.")
       cli_inform(msg)
