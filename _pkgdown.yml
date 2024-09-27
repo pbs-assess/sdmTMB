@@ -83,6 +83,7 @@ reference:
   contents:
   - simulate.sdmTMB
   - sdmTMB_simulate
+  - project
 
 - title: 'Plotting'
   desc: |
