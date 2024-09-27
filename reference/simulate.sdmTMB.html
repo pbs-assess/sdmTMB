@@ -13,7 +13,7 @@ among other uses."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9011</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9012</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,7 +71,9 @@ among other uses.</p>
 <span>  seed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample.int</a></span><span class="op">(</span><span class="fl">1e+06</span>, <span class="fl">1L</span><span class="op">)</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mle-eb"</span>, <span class="st">"mle-mvn"</span><span class="op">)</span>,</span>
 <span>  model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  newdata <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  re_form <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  mle_mvn_samples <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"single"</span>, <span class="st">"multiple"</span><span class="op">)</span>,</span>
 <span>  mcmc_samples <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  silent <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -108,11 +110,21 @@ used for goodness of fit testing (e.g., with the DHARMa package).</p></dd>
 <code>NA</code> = combined, <code>1</code> = first model, <code>2</code> = second mdoel.</p></dd>
 
 
+<dt id="arg-newdata">newdata<a class="anchor" aria-label="anchor" href="#arg-newdata"></a></dt>
+<dd><p>Optional new data frame from which to simulate.</p></dd>
+
+
 <dt id="arg-re-form">re_form<a class="anchor" aria-label="anchor" href="#arg-re-form"></a></dt>
 <dd><p><code>NULL</code> to specify a simulation conditional on fitted random
 effects (this only simulates observation error). <code>~0</code> or <code>NA</code> to simulate
 new random affects (smoothers, which internally are random effects, will
 not be simulated as new).</p></dd>
+
+
+<dt id="arg-mle-mvn-samples">mle_mvn_samples<a class="anchor" aria-label="anchor" href="#arg-mle-mvn-samples"></a></dt>
+<dd><p>Applies if <code>type = "mle-mvn"</code>. If <code>"single"</code>, take
+a single MVN draw from the random effects. If <code>"multiple"</code>, take an MVN
+draw from the random effects for each of the <code>nsim</code>.</p></dd>
 
 
 <dt id="arg-mcmc-samples">mcmc_samples<a class="anchor" aria-label="anchor" href="#arg-mcmc-samples"></a></dt>
