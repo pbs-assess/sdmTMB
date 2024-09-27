@@ -1501,6 +1501,16 @@ sdmTMB <- function(
   sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision)
   conv <- get_convergence_diagnostics(sd_report)
 
+  ## save params that families need to grab from environments:
+  if (any(family$family %in% c("truncated_nbinom1", "truncated_nbinom2"))) {
+    phi <- exp(tmb_obj$par[["ln_phi"]])
+    if (delta) {
+      assign(".phi", phi, environment(out_structure[["family"]][[2]][["linkinv"]]))
+    } else {
+      assign(".phi", phi, environment(out_structure[["family"]][["linkinv"]]))
+    }
+  }
+
   out_structure$tmb_obj <- tmb_obj
   out <- c(out_structure, list(
     model      = tmb_opt,

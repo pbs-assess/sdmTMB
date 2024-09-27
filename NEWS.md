@@ -2,7 +2,31 @@
 
 * Add `project()` experimental function.
 
-* Add progress bar to `simulate.sdmTMB()`.
+* Add print method for `sdmTMB_cv()` output. #319
+
+* Add progress bar to `simulate.sdmTMB()`. #346
+
+* Add AUC and TSS examples to cross validation vignette. #268
+
+* Add `model` (linear predictor number) argument to coef() method. Also,
+  write documentation for `?coef.sdmTMB`. #351
+
+* Add helpful error message if some coordinates in make_mesh() are NA. #365
+
+* Add informative message if fitting with an offset but predicting with offset
+  argument left at NULL on newdata. #372
+
+* Fix passing of `offset` argument through in `sdmTMB_cv()`. Before it was being
+  omitted in the prediction (i.e., set to 0). #372
+
+* Fig bug in `exponentiate` argument for `tidy()`. Set `conf.int = TRUE` as
+  default. #353
+
+* Fix bug in prediction from `delta_truncated_nbinom1()` and 
+  `delta_truncated_nbinom2()` families. The positive component
+  needs to be transformed to represent the mean of the *un*truncated
+  distribution first before multiplying by the probability of a non-zero.
+  Thanks to @tom-peatman #350
 
 * Add `get_eao()` to calculate effective area occupied.
 
@@ -56,7 +80,7 @@
 # sdmTMB 0.5.0
 
 * Overhaul residuals vignette ('article') 
-  <https://pbs-assess.github.io/sdmTMB/articles/web_only/residual-checking.html>
+  <https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html>
   including brief intros to randomized quantile residuals, simulation-based
   residuals, 'one-sample' residuals, and uniform vs. Gaussian residuals.
 

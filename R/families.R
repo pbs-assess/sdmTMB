@@ -222,6 +222,8 @@ nbinom1 <- function(link = "log") {
   add_to_family(x)
 }
 
+utils::globalVariables(".phi") ## avoid R CMD check NOTE
+
 #' @export
 #' @examples
 #' truncated_nbinom2(link = "log")
@@ -235,10 +237,20 @@ truncated_nbinom2 <- function(link = "log") {
     stats <- stats::make.link(linktemp)
   else if (is.character(link))
     stats <- stats::make.link(link)
-
+  linkinv <- function(eta, phi = NULL) {
+    s1 <- eta
+    if (is.null(phi)) phi <- .phi
+    s2 <- logspace_add(0, s1 - log(phi)) # log(1 + mu/phi)
+    log_nzprob <- logspace_sub(0, -phi * s2)
+    exp(eta) / exp(log_nzprob)
+  }
   structure(list(family = "truncated_nbinom2", link = linktemp, linkfun = stats$linkfun,
-    linkinv = stats$linkinv), class = "family")
+    linkinv = linkinv), class = "family")
 }
+
+logspace_sub <- function (lx, ly) lx + log1mexp(lx - ly)
+logspace_add <- function (lx, ly) pmax(lx, ly) + log1p(exp(-abs(lx - ly)))
+log1mexp <- function(x) ifelse(x <= log(2), log(-expm1(-x)), log1p(-exp(-x)))
 
 #' @export
 #' @examples
@@ -253,9 +265,15 @@ truncated_nbinom1 <- function(link = "log") {
     stats <- stats::make.link(linktemp)
   else if (is.character(link))
     stats <- stats::make.link(link)
-
+  linkinv <- function(eta, phi = NULL) {
+    mu <- exp(eta)
+    if (is.null(phi)) phi <- .phi
+    s2 <- logspace_add(0, log(phi)) # log(1 + phi)
+    log_nzprob <- logspace_sub(0, -mu / phi * s2) # 1 - prob(0)
+    mu / exp(log_nzprob)
+  }
   structure(list(family = "truncated_nbinom1", link = linktemp, linkfun = stats$linkfun,
-    linkinv = stats$linkinv), class = "family")
+    linkinv = linkinv), class = "family")
 }
 
 #' @param df Student-t degrees of freedom fixed value parameter.
