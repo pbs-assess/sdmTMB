@@ -1,5 +1,12 @@
 # sdmTMB (development version)
 
+* Add `newdata` argument to `simulate.sdmTMB()`. This enables simulating on
+  a new data frame similar to how one would predict on new data.
+
+* Add `mle_mvn_samples` argument to `simulate.sdmTMB()`. Defaults to "single".
+  If "multiple", then a sample from the random effects is taken for each
+  simulation iteration.
+
 * Add `project()` experimental function.
 
 * Add print method for `sdmTMB_cv()` output. #319
