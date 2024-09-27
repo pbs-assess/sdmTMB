@@ -52,7 +52,9 @@ package.}
 
 \item{silent}{Logical. Silent?}
 
-\item{...}{Extra arguments (not used)}
+\item{...}{Extra arguments passed to \code{\link[=predict.sdmTMB]{predict.sdmTMB()}}. E.g., one may wish
+to pass an \code{offset} argument if \code{newdata} are supplied in a model with an
+offset.}
 }
 \value{
 Returns a matrix; number of columns is \code{nsim}.

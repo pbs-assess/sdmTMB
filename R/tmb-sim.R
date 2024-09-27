@@ -342,7 +342,9 @@ sdmTMB_simulate <- function(formula,
 #'   in the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
 #'   package.
 #' @param silent Logical. Silent?
-#' @param ... Extra arguments (not used)
+#' @param ... Extra arguments passed to [predict.sdmTMB()]. E.g., one may wish
+#'   to pass an `offset` argument if `newdata` are supplied in a model with an
+#'   offset.
 #' @return Returns a matrix; number of columns is `nsim`.
 #' @importFrom stats simulate
 #'
