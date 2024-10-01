@@ -14,6 +14,7 @@
   re_form = NULL,
   mle_mvn_samples = c("single", "multiple"),
   mcmc_samples = NULL,
+  return_tmb_report = FALSE,
   silent = FALSE,
   ...
 )
@@ -49,6 +50,10 @@ draw from the random effects for each of the \code{nsim}.}
 \item{mcmc_samples}{An optional matrix of MCMC samples. See \code{extract_mcmc()}
 in the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
 package.}
+
+\item{return_tmb_report}{Return the \pkg{TMB} report from \code{simulate()}? This
+lets you parse out whatever elements you want from the simulation.
+Not usually needed.}
 
 \item{silent}{Logical. Silent?}
 

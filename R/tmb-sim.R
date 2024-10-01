@@ -341,6 +341,9 @@ sdmTMB_simulate <- function(formula,
 #' @param mcmc_samples An optional matrix of MCMC samples. See `extract_mcmc()`
 #'   in the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
 #'   package.
+#' @param return_tmb_report Return the \pkg{TMB} report from `simulate()`? This
+#'   lets you parse out whatever elements you want from the simulation.
+#'   Not usually needed.
 #' @param silent Logical. Silent?
 #' @param ... Extra arguments passed to [predict.sdmTMB()]. E.g., one may wish
 #'   to pass an `offset` argument if `newdata` are supplied in a model with an
@@ -391,6 +394,7 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
                             re_form = NULL,
                             mle_mvn_samples = c("single", "multiple"),
                             mcmc_samples = NULL,
+                            return_tmb_report = FALSE,
                             silent = FALSE,
                             ...) {
   set.seed(seed)
@@ -457,29 +461,33 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
   if (!is.null(mcmc_samples)) { # we have a matrix
     for (i in seq_len(nsim)) {
       if (!silent) cli::cli_progress_update()
-      ret[[i]] <- newobj$simulate(par = new_par[, i, drop = TRUE], complete = FALSE)$y_i
+      ret[[i]] <- newobj$simulate(par = new_par[, i, drop = TRUE], complete = FALSE)
+      if (!return_tmb_report) ret[[i]] <- ret[[i]]$y_i
     }
   } else {
     for (i in seq_len(nsim)) {
       if (!silent) cli::cli_progress_update()
-      ret[[i]] <- newobj$simulate(par = new_par[, i, drop = TRUE], complete = FALSE)$y_i
+      ret[[i]] <- newobj$simulate(par = new_par[, i, drop = TRUE], complete = FALSE)
+      if (!return_tmb_report) ret[[i]] <- ret[[i]]$y_i
     }
   }
   if (!silent) cli::cli_progress_done()
 
-  if (isTRUE(object$family$delta)) {
-    if (is.na(model[[1]])) {
-      ret <- lapply(ret, function(.x) .x[,1] * .x[,2])
-    } else if (model[[1]] == 1) {
-      ret <- lapply(ret, function(.x) .x[,1])
-    } else if (model[[1]] == 2) {
-      ret <- lapply(ret, function(.x) .x[,2])
-    } else {
-      cli_abort("`model` argument isn't valid; should be NA, 1, or 2.")
+  if (!return_tmb_report) {
+    if (isTRUE(object$family$delta)) {
+      if (is.na(model[[1]])) {
+        ret <- lapply(ret, function(.x) .x[,1] * .x[,2])
+      } else if (model[[1]] == 1) {
+        ret <- lapply(ret, function(.x) .x[,1])
+      } else if (model[[1]] == 2) {
+        ret <- lapply(ret, function(.x) .x[,2])
+      } else {
+        cli_abort("`model` argument isn't valid; should be NA, 1, or 2.")
+      }
     }
-  }
 
-  ret <- do.call(cbind, ret)
-  attr(ret, "type") <- type
+    ret <- do.call(cbind, ret)
+    attr(ret, "type") <- type
+  }
   ret
 }

@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Add `return_tmb_report` to `simulate.sdmTMB()`.
+
 * Add `newdata` argument to `simulate.sdmTMB()`. This enables simulating on
   a new data frame similar to how one would predict on new data.
 
