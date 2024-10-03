@@ -222,6 +222,27 @@ test_that("simulate() method works with newdata", {
   sd3 <- apply(s3, 1, sd)
 
   expect_lt(mean(sd1), mean(sd2))
+
+  # offset?
+  fit <- sdmTMB(
+    catch_weight ~ 1,
+    data = dogfish,
+    offset = log(dogfish$area_swept),
+    spatial = "off",
+    family = tweedie()
+  )
+
+  set.seed(1)
+  s1 <- simulate(fit)
+  set.seed(1)
+  s2 <- simulate(fit, newdata = dogfish)
+  set.seed(1)
+  s3 <- simulate(fit, newdata = dogfish, offset = rep(0, nrow(dogfish)))
+  set.seed(1)
+  s4 <- simulate(fit, newdata = dogfish, offset = log(dogfish$area_swept))
+
+  expect_equal(s1, s4)
+  expect_equal(s2, s3)
 })
 
 
