@@ -10,7 +10,7 @@ vignette: >
 
 **If the code in this vignette has not been evaluated, a rendered version is available on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html) under 'Articles'.**
 
-```{r setup, include = FALSE, cache=FALSE}
+```{r setup, include = FALSE, cache = FALSE}
 dplyr_installed <- require("dplyr", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
 pkgs <- dplyr_installed && ggplot_installed
@@ -27,15 +27,15 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r packages, message=FALSE, warning=TRUE}
+```{r packages, message = FALSE, warning = TRUE}
 library(ggplot2)
 library(dplyr)
 library(sdmTMB)
 ```
 
-For some applications, we might be interested in fitting a model that includes multiple responses (such as 2+ species). The most important step in fitting these models is understanding which parameters are shared, and which parameters are species specific.
+For some applications, we might be interested in fitting a model that includes multiple responses (such as 2+ species, or multiple size or age classes within a species). The most important step in fitting these models is understanding which parameters are shared, and which parameters are species-specific.
 
-Below, we illustrate a series of models that may be used to answer different questions. We'll start by simulating a 2-species dataset. Each species is allowed to have unique spatial ranges and variances, as well as different year effects.
+Below, we illustrate a series of models that may be used to answer a few different common questions. We'll start by simulating a 2-species dataset. Each species is allowed to have unique spatial ranges and variances, as well as different year effects.
 
 ```{r sim_dat}
   set.seed(123)
@@ -82,42 +82,50 @@ Below, we illustrate a series of models that may be used to answer different que
   sim_dat$fyear <- as.factor(sim_dat$year)
 ```
 
-We'll start by making the mesh across the full dataset
+We'll start by making the mesh across the full dataset.
 
 ```{r mesh_fig, fig.asp=1}
 spde <- make_mesh(sim_dat, c("X", "Y"), cutoff = 0.1)
 plot(spde)
 ```
 
-### Model 1: species specific intercepts
+### Model 1: species-specific intercepts
 
-As a first model, we can include species specific year effects. This can be done in a couple ways -- one option would be to estimate the `species*year` interaction, letting the year effects for each species be independent. All other parameters (range, spatial field, spatial variance, spatiotemporal fields, spatiotemporal variances) are shared.
+As a first model, we can include species-specific year effects. This can be done in a couple ways -- one option would be to estimate the `species*year` interaction, letting the year effects for each species be independent. All other parameters (range, spatial field, spatial variance, spatiotemporal fields, spatiotemporal variances) are shared.
 
 ```{r}
 fit <- sdmTMB(
-  formula = observed ~ fyear*species,
+  formula = observed ~ fyear * species,
   data = sim_dat, 
   time = "year", 
   spatiotemporal = "iid",
-  mesh = spde, family = gaussian())
+  mesh = spde, 
+  family = gaussian()
+  )
+
+fit
+
+print(sanity(fit))
 ```
 
 This model doesn't appear to converge, and the results from `sanity(fit)` indicate problems with the spatial and spatiotemporal variances. This is likely a sign that our assumptions in the estimation model are wrong for this particular dataset (not surprising, as our simulated data has different parameters by species).
 
-Our simulated dataset only has 5 years of data -- if we had a longer time series, an alternative formulation for our year effects could be to fit smooth terms, like in a GAM with `mgcv`. 
+Our simulated dataset only has 5 years of data -- if we had a longer time series, an alternative formulation for our year effects could be to fit smooth terms, like in a GAM with `mgcv`.
 
 ```{r eval=FALSE}
 fit <- sdmTMB(
-  formula = observed ~ s(year,by="species"),
+  formula = observed ~ s(year, by = "species"),
   data = sim_dat, 
   time = "year", 
   spatiotemporal = "iid",
-  mesh = spde, family = gaussian())
+  mesh = spde, 
+  family = gaussian()
+  )
 ```
 
-### Model 2: species specific fields
+### Model 2: species-specific fields
 
-We may be interested in fitting a model that lets the spatial patterning differ by species. These kinds of models can be expressed using spatially varying coefficients. Note that we use `spatial = off` because this represents a global spatial intercept -- turning this off is equivalent to using a `-1` of `0` in a main formula including a factor. 
+We may be interested in fitting a model that lets the spatial patterning differ by species. These kinds of models can be expressed using spatially varying coefficients. Note that we use `spatial = off` because this represents a global spatial intercept -- turning this off is akin to using a `-1` of `0` in a main formula including a factor.
 
 ```{r}
 fit <- sdmTMB(
@@ -130,15 +138,17 @@ fit <- sdmTMB(
   spatiotemporal = "iid",
   spatial_varying = ~ 0 + as.factor(species)
 )
+
+fit
 ```
 
-This model also appears to be problematic. If we look at the estimated parameters, you'll notice that there are two row entries for `sigma_Z`. This means that our model is trying to estimate separate species specific variance terms for the species specific spatial fields. 
+This model also appears to be problematic. If we look at the estimated parameters, you'll notice that there are two rows of entries for `sigma_Z`. This means that our model is trying to estimate separate species-specific variance terms for the species-specific spatial fields (say *that* 10 times fast!).
 
 ```{r}
 fit$sd_report
 ```
 
-If we wanted to estimate species specific spatial fields with a single shared variance (meaning the magnitude of the peaks and valleys in the field was similar), we could do that by specifying a custom map argument and passing it into `sdmTMBcontrol()`
+If we wanted to estimate species-specific spatial fields with a single shared variance (meaning the net magnitude of the peaks and valleys in the fields were similar), we could do that by specifying a custom map argument and passing it into `sdmTMBcontrol()`
 
 ```{r}
 map_list = list(ln_tau_Z = factor(c(1, 1)))
@@ -154,13 +164,15 @@ fit <- sdmTMB(
   spatial_varying = ~ 0 + as.factor(species),
   control = sdmTMBcontrol(map = map_list)
 )
+
+fit
 ```
 
-### Model 3: species specific spatiotemporal fields
+### Model 3: species-specific spatiotemporal fields
 
-As a last example, we can set up a model that also includes spatiotemporal fields unique to each species. In all of the examples above, spatiotemporal fields are included -- but shared among species.
+In all of the examples above, spatiotemporal fields are included -- but shared among species. As a last example, we can extend the above approaches to set up a model that includes spatiotemporal fields unique to each species.
 
-One approach to including spatiotemporal fields is creating a new variable combining species and year. We can then include this spatiotemporal variation by changing the `time` argument to be `time = "species_year"`
+One approach to including separate spatiotemporal fields by species is creating a new variable that is a concatenation of species and year (or any given time step factor). For example, we can then implement this form of species-specific spatiotemporal variation by changing the `time` argument to be `time = "species_year"`
 
 ```{r}
 # This needs to be a factor
@@ -180,9 +192,12 @@ fit <- sdmTMB(
   control = sdmTMBcontrol(map = map_list)
 )
 
+fit
+
+print(sanity(fit))
 ```
 
-This is getting a little better -- there is a gradient warning, but the Hessian appears to be ok.
+This is getting a little better -- there is a gradient warning, but the Hessian appears to be invertible (`hessian_ok == TRUE)`, which is critical to convergence.
 
 ### Putting it all together
 
@@ -200,33 +215,40 @@ fit <- sdmTMB(
   spatial_varying = ~ 0 + as.factor(species),
   control = sdmTMBcontrol(map = map_list)
 )
+
+
+fit
+
+print(sanity(fit))
+
+fit$sd_report
 ```
 
-These examples illustrate a number of ways that species - specific effects can be included in `sdmTMB` models, and can be extended to other types of groupings. A brief summary of these can be summarized as:
+These examples illustrate a number of ways that species-specific effects can be included in `sdmTMB` models, and can be extended to other categories/groups/cohorts within a species for which one wants to control the amount of information shared between groups (e.g., age-, size-, or stage-specific estimates). A brief summary of these approaches can be summarized as:
 
 ```{r echo=FALSE}
 desc <- data.frame("Form" = c("Main effects", "Spatial effects", "Spatial effects w/shared variance", "Spatiotemporal effects"), "Implementation" = c("Year by species interactions, or smooths", "Spatially varying coefficients", "Spatially varying coefficients + map argument", "Species-year factor as time variable"))
 knitr::kable(desc)
 ```
 
-### Extensions
+### Further extensions
 
-Including spatiotemporal effects like species-year combinations in the `time` argument is relatively straightforward, but these models could get more complicated if we wanted to also include other grouping factors (such as cohort effects for each species). There may be some identifiability issues that would have to be resolved, but even if the `time` argument is being used, it's possible to add other factors through the `spatial_varying` formula. As an example, if our dataframe included a cohort variable for each species, we could first create a new combination  
+Including spatiotemporal effects like species-year combinations in the `time` argument is relatively straightforward, but these models could get more complicated if we wanted to also include other grouping factors (such as cohort effects for each species). There may be some identifiability issues that would have to be resolved, but even if the `time` argument is being used, it's possible to add other factors through the `spatial_varying` formula. As an example, if our dataframe included a cohort variable for each species, we could first create a new factor that is a concatenation of species and cohort
 
 ```{r eval=FALSE}
 sim_dat$species_cohort <- as.factor(paste(sim_dat$species, sim_dat$cohort))
 ```
 
-If there were ~ 10 levels of `species_cohort`, and we were including our original spatial effects in `spatial_varying`, we could create a new map list that would indicate we wanted all species-cohort fields to have the same spatial variance, 
+If there were \~ 10 levels of `species_cohort`, and we were including our original spatial effects in the `spatial_varying` term, we could create a new map list that would indicate we wanted all species-cohort fields to have the same spatial variance as below.
 
 ```{r eval=FALSE}
 sim_dat$species_year <- as.factor(paste(sim_dat$species, sim_dat$year))
 
-# The first 2 elements correspond to species, remaining 10 to species-cohort
+# The first 2 elements correspond to species, the remaining 10 to species-cohort
 map_list = list(ln_tau_Z = factor(c(1, 1, rep(2, 10))))
 
 fit <- sdmTMB(
-  observed ~ 0 + fyear*species,
+  observed ~ 0 + fyear * species,
   data = sim_dat,
   mesh = spde, 
   family = gaussian(),
@@ -237,11 +259,3 @@ fit <- sdmTMB(
   control = sdmTMBcontrol(map = map_list)
 )
 ```
-
-
-
-
-
-
-
-
