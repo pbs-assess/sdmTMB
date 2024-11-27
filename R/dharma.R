@@ -27,7 +27,7 @@
 #'
 #' @details
 #'
-#' See the [residuals vignette](https://pbs-assess.github.io/sdmTMB/articles/web_only/residual-checking.html).
+#' See the [residuals vignette](https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html).
 #'
 #' Advantages to these residuals over the ones from the [residuals.sdmTMB()]
 #' method are (1) they work with delta/hurdle models for the combined

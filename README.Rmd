@@ -509,7 +509,7 @@ See [`?sdmTMBpriors`](https://pbs-assess.github.io/sdmTMB/reference/priors.html)
 
 ### Bayesian MCMC sampling with Stan
 
-The fitted model can be passed to the tmbstan package to sample from the posterior with Stan. See the [Bayesian vignette](https://pbs-assess.github.io/sdmTMB/articles/web_only/bayesian.html).
+The fitted model can be passed to the tmbstan package to sample from the posterior with Stan. See the [Bayesian vignette](https://pbs-assess.github.io/sdmTMB/articles/bayesian.html).
 
 ### Turning off random fields
 

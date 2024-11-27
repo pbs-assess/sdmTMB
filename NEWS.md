@@ -4,6 +4,34 @@
   splitting a prediction grid by time, undoing the prediction and 
   area-integration index calculations for each chunk to save memory.
 
+* Add `return_tmb_report` to `simulate.sdmTMB()`.
+
+* Add `newdata` argument to `simulate.sdmTMB()`. This enables simulating on
+  a new data frame similar to how one would predict on new data.
+
+* Add `mle_mvn_samples` argument to `simulate.sdmTMB()`. Defaults to "single".
+  If "multiple", then a sample from the random effects is taken for each
+  simulation iteration.
+
+* Add `project()` experimental function.
+
+* Add print method for `sdmTMB_cv()` output. #319
+
+* Add progress bar to `simulate.sdmTMB()`. #346
+
+* Add AUC and TSS examples to cross validation vignette. #268
+
+* Add `model` (linear predictor number) argument to coef() method. Also,
+  write documentation for `?coef.sdmTMB`. #351
+
+* Add helpful error message if some coordinates in make_mesh() are NA. #365
+
+* Add informative message if fitting with an offset but predicting with offset
+  argument left at NULL on newdata. #372
+
+* Fix passing of `offset` argument through in `sdmTMB_cv()`. Before it was being
+  omitted in the prediction (i.e., set to 0). #372
+
 * Fig bug in `exponentiate` argument for `tidy()`. Set `conf.int = TRUE` as
   default. #353
 
@@ -65,7 +93,7 @@
 # sdmTMB 0.5.0
 
 * Overhaul residuals vignette ('article') 
-  <https://pbs-assess.github.io/sdmTMB/articles/web_only/residual-checking.html>
+  <https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html>
   including brief intros to randomized quantile residuals, simulation-based
   residuals, 'one-sample' residuals, and uniform vs. Gaussian residuals.
 

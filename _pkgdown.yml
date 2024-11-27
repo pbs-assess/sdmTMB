@@ -32,15 +32,16 @@ reference:
     Core tools for model fitting, prediction, and inspection.
   contents:
   - sdmTMB
-  - predict.sdmTMB
-  - tidy.sdmTMB
   - sanity
-  - sdmTMBcontrol
-  - run_extra_optimization
+  - tidy.sdmTMB
+  - predict.sdmTMB
   - residuals.sdmTMB
   - dharma_residuals
+  - sdmTMBcontrol
+  - run_extra_optimization
   - replicate_df
   - set_delta_model
+  - coef.sdmTMB
 
 - title: 'Families'
   desc: |
@@ -82,6 +83,7 @@ reference:
   contents:
   - simulate.sdmTMB
   - sdmTMB_simulate
+  - project
 
 - title: 'Plotting'
   desc: |
