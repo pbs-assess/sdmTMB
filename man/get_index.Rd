@@ -44,7 +44,7 @@ get_eao(obj, bias_correct = FALSE, level = 0.95, area = 1, silent = TRUE, ...)
 \arguments{
 \item{obj}{Output from \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} with \code{return_tmb_object = TRUE}.
 Alternatively, if \code{\link[=sdmTMB]{sdmTMB()}} was called with \code{do_index = TRUE} or if using
-the helper function \code{\link[=get_index_chunks]{get_index_chunks()}}, the an object from \code{\link[=sdmTMB]{sdmTMB()}}.}
+the helper function \code{\link[=get_index_split]{get_index_split()}}, an object from \code{\link[=sdmTMB]{sdmTMB()}}.}
 
 \item{bias_correct}{Should bias correction be implemented \code{\link[TMB:sdreport]{TMB::sdreport()}}?}
 
@@ -58,7 +58,8 @@ internally to match.}
 
 \item{...}{Passed to \code{\link[TMB:sdreport]{TMB::sdreport()}}.}
 
-\item{newdata}{New data (e.g., a prediction grid by year) to pass to \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} in the case of \code{get_index_split()}.}
+\item{newdata}{New data (e.g., a prediction grid by year) to pass to
+\code{\link[=predict.sdmTMB]{predict.sdmTMB()}} in the case of \code{get_index_split()}.}
 
 \item{nsplit}{The number of splits to do the calculation in. For memory
 intensive operations (large grids and/or models), it can be helpful to

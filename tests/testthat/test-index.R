@@ -36,8 +36,31 @@ test_that("get_index works", {
   expect_s3_class(cog, "data.frame")
 
   expect_error(get_index(predictions, area = c(1, 2, 3)), regexp = "area")
-})
 
+  # splits work with areas:
+  set.seed(1)
+  areas <- rlnorm(nrow(nd), meanlog = 0, sdlog = 0.1)
+  ind <- get_index(predictions, area = areas)
+  indsp <- get_index_split(m, nd, nsplit = 2, area = areas)
+  expect_equal(ind, indsp)
+
+  # splits work with offsets:
+  m2 <- sdmTMB(
+    data = dogfish,
+    formula = catch_weight ~ 0 + as.factor(year),
+    offset = log(dogfish$area_swept),
+    spatiotemporal = "off", spatial = "off",
+    time = "year",
+    family = tweedie(link = "log")
+  )
+  nd2 <- replicate_df(wcvi_grid, "year", unique(dogfish$year))
+  set.seed(1)
+  fake_offset <- rnorm(nrow(nd2), 0, 0.1)
+  predictions2 <- predict(m2, newdata = nd2, return_tmb_object = TRUE, offset = fake_offset)
+  ind <- get_index(predictions2)
+  indsp <- get_index_split(m2, nd2, nsplit = 2, predict_args = list(offset = fake_offset))
+  expect_equal(ind, indsp)
+})
 
 test_that("get_index works with subsets of years", {
   skip_on_cran()

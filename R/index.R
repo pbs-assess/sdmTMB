@@ -3,7 +3,7 @@
 #'
 #' @param obj Output from [predict.sdmTMB()] with `return_tmb_object = TRUE`.
 #'   Alternatively, if [sdmTMB()] was called with `do_index = TRUE` or if using
-#'   the helper function [get_index_chunks()], the an object from [sdmTMB()].
+#'   the helper function [get_index_split()], an object from [sdmTMB()].
 #' @param bias_correct Should bias correction be implemented [TMB::sdreport()]?
 #' @param level The confidence level.
 #' @param area Grid cell area. A vector of length `newdata` from
@@ -134,7 +134,8 @@ chunk_time <- function(x, chunks) {
 }
 
 #' @rdname get_index
-#' @param newdata New data (e.g., a prediction grid by year) to pass to [predict.sdmTMB()] in the case of `get_index_split()`.
+#' @param newdata New data (e.g., a prediction grid by year) to pass to
+#'   [predict.sdmTMB()] in the case of `get_index_split()`.
 #' @param nsplit The number of splits to do the calculation in. For memory
 #'   intensive operations (large grids and/or models), it can be helpful to
 #'   do the prediction, area integration, and bias correction on subsets of
@@ -156,6 +157,17 @@ get_index_split <- function(
 
   times <- sort(obj$time_lu$time_from_data)
   time_chunks <- chunk_time(times, nsplit)
+
+  if ("offset" %in% names(predict_args)) {
+    if (!is.numeric(predict_args$offset))
+      cli_abort("`offset` should be a numeric vector for use with `get_index_split()`")
+    offset <- predict_args$offset
+    predict_args$offset <- NULL
+  } else {
+    offset <- rep(0, nrow(newdata))
+  }
+  if (length(area) == 1L) area <- rep(area, nrow(newdata))
+
   msg <- paste0("Calculating index in ", nsplit, " chunks")
   if (!silent) cli::cli_progress_bar(msg, total = length(time_chunks))
   index_list <- list()
@@ -163,15 +175,18 @@ get_index_split <- function(
     if (!silent) {
       cli::cli_progress_update(set = i, total = length(time_chunks), force = TRUE)
     }
-    nd <- newdata[newdata[[obj$time]] %in% time_chunks[[i]], , drop = FALSE]
+    this_chunk_i <- newdata[[obj$time]] %in% time_chunks[[i]]
+    nd <- newdata[this_chunk_i, , drop = FALSE]
+
     predict_args[["newdata"]] <- nd
+    predict_args[["offset"]] <- offset[this_chunk_i]
     pred <- do.call(predict, predict_args)
     index_list[[i]] <-
       get_index(
         pred,
         bias_correct = bias_correct,
         level = level,
-        area = area,
+        area = area[this_chunk_i],
         silent = TRUE,
         ...
       )
