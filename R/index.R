@@ -289,6 +289,12 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   d$lwr <- as.numeric(trans(d$trans_est + stats::qnorm((1-level)/2) * d$se))
   d$upr <- as.numeric(trans(d$trans_est + stats::qnorm(1-(1-level)/2) * d$se))
 
+  # also grab natural space SE:
+  if (value_name == "link_total") {
+    .total <- ssr[row.names(ssr) %in% "total", , drop = FALSE]
+    d$se_natural <- as.numeric(.total[,1])
+  }
+
   if ("pred_tmb_data" %in% names(obj)) { # standard case
     ii <- sort(unique(obj$pred_tmb_data$proj_year))
   } else { # fit with do_index = TRUE
@@ -307,5 +313,9 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   if ("do_index_time_missing_from_nd" %in% names(obj$fit_obj)) {
     d <- d[!d[[obj$fit_obj$time]] %in% obj$fit_obj$do_index_time_missing_from_nd, ,drop = FALSE]
   }
-  d[,c(time_name, 'est', 'lwr', 'upr', 'trans_est', 'se'), drop = FALSE]
+  if (value_name != "link_total") {
+    ret <- d[,c(time_name, 'est', 'lwr', 'upr', 'trans_est', 'se'), drop = FALSE]
+  } else {
+    ret <- d[,c(time_name, 'est', 'lwr', 'upr', 'trans_est', 'se', 'se_natural'), drop = FALSE]
+  }
 }
