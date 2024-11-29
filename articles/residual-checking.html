@@ -8,8 +8,8 @@
 <title>Residual checking with sdmTMB • sdmTMB</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Residual checking with sdmTMB">
 </head>
 <body>
@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9013</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9014</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -214,8 +214,8 @@ the fixed effects held at their MLEs. We do this with the
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.000964 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 9.64 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.000936 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 9.36 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -232,9 +232,9 @@ the fixed effects held at their MLEs. We do this with the
 <span><span class="co">#&gt; Chain 1: Iteration: 720 / 800 [ 90%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 800 / 800 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 6.718 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                4.796 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                11.514 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 6.573 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                4.668 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                11.241 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
 <span><span class="va">mcmc_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">fit_nb2</span>, type <span class="op">=</span> <span class="st">"mle-mcmc"</span>, mcmc_samples <span class="op">=</span> <span class="va">samps</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqnorm</a></span><span class="op">(</span><span class="va">mcmc_res</span><span class="op">)</span></span>
@@ -280,39 +280,6 @@ DHARMa tools:</p>
 <code class="sourceCode R"><span><span class="fu">DHARMa</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/DHARMa/man/testResiduals.html" class="external-link">testResiduals</a></span><span class="op">(</span><span class="va">r_pois</span><span class="op">)</span></span></code></pre></div>
 <p><img src="residual-checking_files/figure-html/unnamed-chunk-9-2.png" width="672"></p>
 <pre><code><span><span class="co">#&gt; $uniformity</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  Asymptotic one-sample Kolmogorov-Smirnov test</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; data:  simulationOutput$scaledResiduals</span></span>
-<span><span class="co">#&gt; D = 0.23338, p-value &lt; 2.2e-16</span></span>
-<span><span class="co">#&gt; alternative hypothesis: two-sided</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $dispersion</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  DHARMa nonparametric dispersion test via sd of residuals fitted vs.</span></span>
-<span><span class="co">#&gt;  simulated</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; data:  simulationOutput</span></span>
-<span><span class="co">#&gt; dispersion = 8.6989, p-value &lt; 2.2e-16</span></span>
-<span><span class="co">#&gt; alternative hypothesis: two.sided</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $outliers</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  DHARMa outlier test based on exact binomial test with approximate</span></span>
-<span><span class="co">#&gt;  expectations</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; data:  simulationOutput</span></span>
-<span><span class="co">#&gt; outliers at both margin(s) = 111, observations = 1000, p-value &lt;</span></span>
-<span><span class="co">#&gt; 2.2e-16</span></span>
-<span><span class="co">#&gt; alternative hypothesis: true probability of success is not equal to 0.003992016</span></span>
-<span><span class="co">#&gt; 95 percent confidence interval:</span></span>
-<span><span class="co">#&gt;  0.09219791 0.13212606</span></span>
-<span><span class="co">#&gt; sample estimates:</span></span>
-<span><span class="co">#&gt; frequency of outliers (expected: 0.00399201596806387 ) </span></span>
-<span><span class="co">#&gt;                                                  0.111</span></span>
-<span><span class="co">#&gt; $uniformity</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  Asymptotic one-sample Kolmogorov-Smirnov test</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -488,8 +455,8 @@ assumptions, but is much more time intensive for large models.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.002123 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 21.23 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.00208 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 20.8 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -506,9 +473,9 @@ assumptions, but is much more time intensive for large models.</p>
 <span><span class="co">#&gt; Chain 1: Iteration: 360 / 400 [ 90%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 400 / 400 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 31.155 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                30.582 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                61.737 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 30.962 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                30.401 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                61.363 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
 <span><span class="co">#&gt; Warning: The largest R-hat is 1.08, indicating chains have not mixed.</span></span>
 <span><span class="co">#&gt; Running the chains for more iterations may help. See</span></span>
