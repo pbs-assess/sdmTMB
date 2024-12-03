@@ -64,7 +64,6 @@ Depends:
 Imports:
     assertthat,
     abind,
-    clisymbols,
     cli,
     fmesher,
     fishMod,

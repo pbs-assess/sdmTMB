@@ -207,12 +207,12 @@ binary_search_knots <- function(loc_xy,
     cat("cutoff =", pretty_cutoff, "| knots =", realized_knots)
     if (realized_knots > n_knots) {
       L <- m + 1
-      cat(" |", clisymbols::symbol$arrow_down, "\n")
+      cat(" |", cli::symbol$arrow_down, "\n")
     } else if (realized_knots < n_knots) {
       R <- m - 1
-      cat(" |", clisymbols::symbol$arrow_up, "\n")
+      cat(" |", cli::symbol$arrow_up, "\n")
     } else {
-      cat(" |", clisymbols::symbol$tick, "\n")
+      cat(" |", cli::symbol$tick, "\n")
       return(mesh)
     }
   }
