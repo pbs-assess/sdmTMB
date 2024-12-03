@@ -17,8 +17,8 @@ pkgs <- dplyr_installed && ggplot_installed
 EVAL <- identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
 knitr::opts_chunk$set(
   collapse = TRUE,
-  warning=FALSE,
-  message=FALSE,
+  warning = FALSE,
+  message = FALSE,
   comment = "#>",
   fig.width = 7,
   fig.asp = 0.618,
@@ -33,53 +33,53 @@ library(dplyr)
 library(sdmTMB)
 ```
 
-For some applications, we might be interested in fitting a model that includes multiple responses (such as 2+ species, or multiple size or age classes within a species). The most important step in fitting these models is understanding which parameters are shared, and which parameters are species-specific.
+For some applications, we might be interested in fitting a model that includes multiple responses such as 2+ species, or multiple size or age classes within a species. The most important step in fitting these models is understanding which parameters are shared, and which parameters are species-specific.
 
 Below, we illustrate a series of models that may be used to answer a few different common questions. We'll start by simulating a 2-species dataset. Each species is allowed to have unique spatial ranges and variances, as well as different year effects.
 
 ```{r sim_dat}
-  set.seed(123)
+set.seed(123)
 
-  # make fake predictor(s) (a1) and sampling locations:
-  predictor_dat <- data.frame(
-    X = runif(500), Y = runif(500),
-    year = rep(1:5, each = 100)
-  )
-  predictor_dat$fyear <- as.factor(predictor_dat$year)
-  mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.1)
+# make fake predictor(s) (a1) and sampling locations:
+predictor_dat <- data.frame(
+  X = runif(500), Y = runif(500),
+  year = rep(1:5, each = 100)
+)
+predictor_dat$fyear <- as.factor(predictor_dat$year)
+mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.1)
 
-  sim_dat_A <- sdmTMB_simulate(
-    formula = ~ 0 + fyear,
-    data = predictor_dat,
-    time = "year",
-    mesh = mesh,
-    range = 0.5,
-    family = tweedie(),
-    seed = 42,
-    sigma_O = 0.2,
-    phi = 0.1,
-    sigma_E = 0.1,
-    B = runif(5, min = 5, max = 8) # 5 random year effects
-  )
-  sim_dat_A$species <- "A"
-  
-  sim_dat_B <- sdmTMB_simulate(
-    formula = ~ 0 + fyear,
-    data = predictor_dat,
-    time = "year",
-    mesh = mesh,
-    range = 0.2,
-    family = gaussian(),
-    seed = 42,
-    sigma_O = 0.3,
-    phi = 0.1,
-    sigma_E = 0.1,
-    B = runif(5, min = 5, max = 8) # 5 random year effects
-  )
-  sim_dat_B$species <- "B"
-  
-  sim_dat <- rbind(sim_dat_A, sim_dat_B)
-  sim_dat$fyear <- as.factor(sim_dat$year)
+sim_dat_A <- sdmTMB_simulate(
+  formula = ~ 0 + fyear,
+  data = predictor_dat,
+  time = "year",
+  mesh = mesh,
+  range = 0.5,
+  family = tweedie(),
+  seed = 42,
+  sigma_O = 0.2,
+  phi = 0.1,
+  sigma_E = 0.1,
+  B = runif(5, min = 5, max = 8) # 5 random year effects
+)
+sim_dat_A$species <- "A"
+
+sim_dat_B <- sdmTMB_simulate(
+  formula = ~ 0 + fyear,
+  data = predictor_dat,
+  time = "year",
+  mesh = mesh,
+  range = 0.2,
+  family = gaussian(),
+  seed = 42,
+  sigma_O = 0.3,
+  phi = 0.1,
+  sigma_E = 0.1,
+  B = runif(5, min = 5, max = 8) # 5 random year effects
+)
+sim_dat_B$species <- "B"
+
+sim_dat <- rbind(sim_dat_A, sim_dat_B)
+sim_dat$fyear <- as.factor(sim_dat$year)
 ```
 
 We'll start by making the mesh across the full dataset.
@@ -96,12 +96,12 @@ As a first model, we can include species-specific year effects. This can be done
 ```{r}
 fit <- sdmTMB(
   formula = observed ~ fyear * species,
-  data = sim_dat, 
-  time = "year", 
+  data = sim_dat,
+  time = "year",
   spatiotemporal = "iid",
-  mesh = spde, 
+  mesh = spde,
   family = gaussian()
-  )
+)
 
 fit
 
@@ -115,12 +115,12 @@ Our simulated dataset only has 5 years of data -- if we had a longer time series
 ```{r eval=FALSE}
 fit <- sdmTMB(
   formula = observed ~ s(year, by = "species"),
-  data = sim_dat, 
-  time = "year", 
+  data = sim_dat,
+  time = "year",
   spatiotemporal = "iid",
-  mesh = spde, 
+  mesh = spde,
   family = gaussian()
-  )
+)
 ```
 
 ### Model 2: species-specific fields
@@ -129,9 +129,9 @@ We may be interested in fitting a model that lets the spatial patterning differ 
 
 ```{r}
 fit <- sdmTMB(
-  observed ~ 0 + fyear, # shared year effects  
+  observed ~ 0 + fyear, # shared year effects
   data = sim_dat,
-  mesh = spde, 
+  mesh = spde,
   family = gaussian(),
   spatial = "off",
   time = "year",
@@ -151,12 +151,12 @@ fit$sd_report
 If we wanted to estimate species-specific spatial fields with a single shared variance (meaning the net magnitude of the peaks and valleys in the fields were similar), we could do that by specifying a custom map argument and passing it into `sdmTMBcontrol()`
 
 ```{r}
-map_list = list(ln_tau_Z = factor(c(1, 1)))
+map_list <- list(ln_tau_Z = factor(c(1, 1)))
 
 fit <- sdmTMB(
-  observed ~ 0 + fyear, # shared year effects  
+  observed ~ 0 + fyear, # shared year effects
   data = sim_dat,
-  mesh = spde, 
+  mesh = spde,
   family = gaussian(),
   spatial = "off",
   time = "year",
@@ -178,12 +178,12 @@ One approach to including separate spatiotemporal fields by species is creating 
 # This needs to be a factor
 sim_dat$species_year <- as.factor(paste(sim_dat$species, sim_dat$year))
 
-map_list = list(ln_tau_Z = factor(c(1, 1)))
+map_list <- list(ln_tau_Z = factor(c(1, 1)))
 
 fit <- sdmTMB(
-  observed ~ 0 + fyear, # shared year effects  
+  observed ~ 0 + fyear, # shared year effects
   data = sim_dat,
-  mesh = spde, 
+  mesh = spde,
   family = gaussian(),
   spatial = "off",
   time = "species_year",
@@ -205,9 +205,9 @@ Our spatiotemporal model above came close to passing all sanity() checks, and co
 
 ```{r}
 fit <- sdmTMB(
-  observed ~ 0 + fyear*species, # shared year effects  
+  observed ~ 0 + fyear * species, # shared year effects
   data = sim_dat,
-  mesh = spde, 
+  mesh = spde,
   family = gaussian(),
   spatial = "off",
   time = "species_year",
@@ -245,12 +245,12 @@ If there were \~ 10 levels of `species_cohort`, and we were including our origin
 sim_dat$species_year <- as.factor(paste(sim_dat$species, sim_dat$year))
 
 # The first 2 elements correspond to species, the remaining 10 to species-cohort
-map_list = list(ln_tau_Z = factor(c(1, 1, rep(2, 10))))
+map_list <- list(ln_tau_Z = factor(c(1, 1, rep(2, 10))))
 
 fit <- sdmTMB(
   observed ~ 0 + fyear * species,
   data = sim_dat,
-  mesh = spde, 
+  mesh = spde,
   family = gaussian(),
   spatial = "off",
   time = "species_year",
