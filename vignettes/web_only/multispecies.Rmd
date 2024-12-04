@@ -35,7 +35,7 @@ library(sdmTMB)
 
 For some applications, we might be interested in fitting a model that includes multiple responses such as 2+ species, or multiple size or age classes within a species. The most important step in fitting these models is understanding which parameters are shared, and which parameters are species-specific.
 
-Below, we illustrate a series of models that may be used to answer a few different common questions. We'll start by simulating a 2-species dataset. Each species is allowed to have unique spatial standard deviations (`sigma_O`) as well as different year effects.
+Below, we illustrate a series of models. We'll start by simulating a 2-species dataset. Each species is allowed to have unique spatial standard deviations (`sigma_O`) as well as different year effects.
 
 ```{r sim_dat}
 set.seed(1)
@@ -77,7 +77,7 @@ sim_dat <- rbind(sim_dat_A, sim_dat_B)
 sim_dat$fyear <- factor(sim_dat$year)
 ```
 
-We'll start by making the mesh across the full dataset.
+We'll start by making an SPDE mesh across the full dataset.
 
 ```{r mesh_fig, fig.asp=1}
 mesh <- make_mesh(sim_dat, c("X", "Y"), cutoff = 0.1)
@@ -86,7 +86,7 @@ plot(mesh)
 
 ### Model 1: species-specific intercepts
 
-As a first model, we can include species-specific year effects. This can be done in a couple ways. One option would be to estimate the `species * year` interaction, letting the year effects for each species be independent. Here, all other parameters (range, spatial field, spatial variance, spatiotemporal fields, spatiotemporal variances) are shared. Also, both species share a single spatial random field.
+As a first model, we can include species-specific year effects. This can be done in a couple ways. One option would be to estimate the `species * year` interaction, letting the year effects for each species be independent. Here, all other parameters and random effect values (range, spatial field, spatial variance, spatiotemporal fields, spatiotemporal variances) are shared.
 
 ```{r}
 fit <- sdmTMB(
@@ -118,13 +118,13 @@ fit <- sdmTMB(
 fit
 ```
 
-You'll notice that there are two rows of entries for `sigma_Z`:
+You'll notice that there are two rows of entries for `sigma_Z` our spatially varying random field standard deviation:
 
 ```{r}
 tidy(fit, "ran_pars")
 ```
 
-This means that our model is trying to estimate separate species-specific variance terms for the species-specific spatial fields (say *that* 10 times fast!). It's struggling.
+This means that our model is trying to estimate separate species-specific variance terms for the species-specific spatial fields (say *that* 10 times fast!). Here, that matches how we simulated the data. In other contexts, especially if we ran into estimation issues, we might want to share those SDs.
 
 If we wanted to estimate species-specific spatial fields with a single shared variance (meaning the net magnitude of the peaks and valleys in the fields were similar but the wiggles themselves were species specific), we could do that by specifying a custom map argument and passing it into `sdmTMBcontrol()`. Any shared factor levels in the `map` are gathered to have 'mirrored' or shared parameter values. We assign these to `ln_tau_Z` because, internally, this is the parameter that gets converted into the spatially-varying field variances (the SDs of those fields are `sigma_Z`).
 
