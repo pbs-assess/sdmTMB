@@ -62,11 +62,50 @@ fit <- sdmTMB(
   family = delta_gamma(type = "poisson-link")
 )
 
-fit$sd_report
-# but that induces weird 2nd linear predictors since r = nw / p
-# so, p is effectively fixed at 1, therefore:
-# r = n * w, but n = fixed high, so weight must be low...
+# compare to a different fixed value on n:
+.start2 <- rep(0, length(yrs))
+.start2[yrs == 2013] <- 30
+fit2 <- sdmTMB(
+  density ~ 0 + factor(year),
+  data = d,
+  mesh = mesh,
+  time = "year",
+  spatial = "on",
+  spatiotemporal = "off", # make the example fast
+  control =
+    sdmTMBcontrol(
+      map = list(b_j = .map),
+      start = list(b_j = .start2)
+    ),
+  family = delta_gamma(type = "poisson-link")
+)
 
-# so... I'm not sure what we'd want to do in this case
-# thankfully no zeros is probably a pretty rare case
-# in contexts where you'd use the poisson-link delta models
+.start3 <- rep(0, length(yrs))
+.start3[yrs == 2013] <- 5
+fit3 <- sdmTMB(
+  density ~ 0 + factor(year),
+  data = d,
+  mesh = mesh,
+  time = "year",
+  spatial = "on",
+  spatiotemporal = "off", # make the example fast
+  control =
+    sdmTMBcontrol(
+      map = list(b_j = .map),
+      start = list(b_j = .start3)
+    ),
+  family = delta_gamma(type = "poisson-link")
+)
+
+logLik(fit)
+logLik(fit2)
+logLik(fit3)
+
+fit$sd_report
+fit2$sd_report
+fit3$sd_report
+
+# Conclusion: map the first linear predictor to any
+# value but note that it affects the scale of the
+# matching second linear predictor. In the end the
+# predictions and the model are the same.
