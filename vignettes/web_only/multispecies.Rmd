@@ -66,7 +66,7 @@ sim_dat_B <- sdmTMB_simulate(
   mesh = mesh,
   range = 0.2,
   family = gaussian(),
-  seed = 42,
+  seed = 43,
   sigma_O = 0.3,
   phi = 0.1,
   sigma_E = 0.3,
@@ -117,8 +117,6 @@ fit <- sdmTMB(
 )
 fit
 ```
-
-Here we had some convergence issues: one of the spatially varying SDs has collapsed to zero.
 
 You'll notice that there are two rows of entries for `sigma_Z`:
 
@@ -229,43 +227,11 @@ logLik(fit_svc)
 These examples illustrate a number of ways that species-specific effects can be included in `sdmTMB` models, and can be extended to other categories/groups/cohorts within a species for which one wants to control the amount of information shared between groups (e.g., age-, size-, or stage-specific estimates). A brief summary of these approaches can be summarized as:
 
 ```{r echo=FALSE}
-desc <- data.frame("Form" = c("Main effects", "Spatial effects", "Spatial effects w/shared variance", "Spatiotemporal effects"), "Implementation" = c("Year-by-species interactions or smooths", "Spatially varying coefficients", "Spatially varying coefficients + map argument", "Species-year factor as time variable"))
+desc <- data.frame("Form" = c("Main effects", "Spatial effects", "Spatial effects w/shared variance", "Spatiotemporal effects"), "Implementation" = c("Year-by-species interactions or smooths by year", "Spatially varying coefficients", "Spatially varying coefficients + map argument", "Species-year factor as time variable"))
 knitr::kable(desc)
 ```
 
 ### Further extensions
 
-Including spatiotemporal effects like species-year combinations in the `time` argument is relatively straightforward, but these models could get more complicated if we wanted to also include other grouping factors (such as cohort effects for each species). There may be some identifiability issues that would have to be resolved, but even if the `time` argument is being used, it's possible to add other factors through the `spatial_varying` formula. As an example, if our dataframe included a cohort variable for each species, we could first create a new factor that is a concatenation of species and cohort.
+As long as you're willing to treat spatiotemporal and group-level fields (e.g., for different species or age cohorts) as independent, sdmTMB can be used to fit models to these data. For example, this allows sdmTMB to be used for standardization of age or length composition data as in [Thorson and Haltuch (2018) CJFAS](https://doi.org/10.1139/cjfas-2018-0015). The approach is to similar to the above and we plan to write a separate vignette on the topic.
 
-```{r eval=TRUE}
-sim_dat$cohort <- rep(seq_len(10), 200)
-sim_dat$species_cohort <- as.factor(paste(sim_dat$species, sim_dat$cohort))
-```
-
-If there were 10 levels of `species_cohort`, and we were including our original spatial effects in the `spatial_varying` term, we could create a new map list that would indicate we wanted all species-cohort fields to have the same spatial variance as below.
-
-Figure out how our spatial-varying formula will be parsed:
-
-```{r, eval=TRUE}
-colnames(model.matrix(~0 + as.factor(species) + species_cohort, data = sim_dat))
-```
-
-```{r eval=FALSE}
-sim_dat$species_year <- factor(paste(sim_dat$species, sim_dat$year))
-
-# The first 2 elements correspond to species, the remaining 10 to species-cohort
-map_list <- list(ln_tau_Z = factor(c(1, 1, rep(2, 10))))
-
-fit <- sdmTMB(
-  observed ~ 0 + fyear * species_cohort,
-  data = sim_dat,
-  mesh = mesh,
-  family = gaussian(),
-  spatial = "off",
-  time = "species_year",
-  spatiotemporal = "iid",
-  spatial_varying = ~ 0 + as.factor(species) + species_cohort,
-  do_fit = FALSE
-  # control = sdmTMBcontrol(map = map_list)
-)
-```
