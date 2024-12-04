@@ -11,10 +11,7 @@ vignette: >
 **If the code in this vignette has not been evaluated, a rendered version is available on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html) under 'Articles'.**
 
 ```{r setup, include = FALSE, cache = FALSE}
-dplyr_installed <- require("dplyr", quietly = TRUE)
-ggplot_installed <- require("ggplot2", quietly = TRUE)
-pkgs <- dplyr_installed && ggplot_installed
-EVAL <- identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
+EVAL <- identical(Sys.getenv("NOT_CRAN"), "true")
 knitr::opts_chunk$set(
   collapse = TRUE,
   warning = FALSE,
@@ -27,9 +24,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r packages, message = FALSE, warning = TRUE}
-library(ggplot2)
-library(dplyr)
+```{r packages, message=FALSE}
 library(sdmTMB)
 ```
 
@@ -227,11 +222,24 @@ logLik(fit_svc)
 These examples illustrate a number of ways that species-specific effects can be included in `sdmTMB` models, and can be extended to other categories/groups/cohorts within a species for which one wants to control the amount of information shared between groups (e.g., age-, size-, or stage-specific estimates). A brief summary of these approaches can be summarized as:
 
 ```{r echo=FALSE}
-desc <- data.frame("Form" = c("Main effects", "Spatial effects", "Spatial effects w/shared variance", "Spatiotemporal effects"), "Implementation" = c("Year-by-species interactions or smooths by year", "Spatially varying coefficients", "Spatially varying coefficients + map argument", "Species-year factor as time variable"))
-knitr::kable(desc)
+desc <- data.frame(
+  Form = c(
+    "Main effects", 
+    "Spatial effects", 
+    "Spatial effects w/shared variance", 
+    "Spatiotemporal effects"),
+  Implementation = c(
+    "Year-by-species interactions or smooths by year", 
+    "Spatially varying coefficients",
+    "Spatially varying coefficients + map argument",
+    "Species-year factor as time variable")
+)
+if (require("knitr", quietly = TRUE)) {
+  knitr::kable(desc)
+} else 
+  print(desc)
 ```
 
 ### Further extensions
 
 As long as you're willing to treat spatiotemporal and group-level fields (e.g., for different species or age cohorts) as independent, sdmTMB can be used to fit models to these data. For example, this allows sdmTMB to be used for standardization of age or length composition data as in [Thorson and Haltuch (2018) CJFAS](https://doi.org/10.1139/cjfas-2018-0015). The approach is to similar to the above and we plan to write a separate vignette on the topic.
-
