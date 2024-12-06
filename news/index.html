@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9014</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9015</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,8 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="sdmtmb-development-version">sdmTMB (development version)<a class="anchor" aria-label="anchor" href="#sdmtmb-development-version"></a></h2>
-<ul><li><p>Fix bug in <code>s95</code> param reporting from the <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> method. <code>s95</code> is present in the logistic threshold models. The model itself was fine but the <code>s95</code> parameter was supposed to be reported by <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> as a combination of two other parameters. This also affected the output in <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>/<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>.</p></li>
+<ul><li><p>Fix bug in <code>est</code> column when predicting on new data with Poisson-link delta models with <code>type = "link"</code> and <code>re_form = NA</code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/389" class="external-link">#389</a></p></li>
+<li><p>Fix bug in <code>s95</code> param reporting from the <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> method. <code>s95</code> is present in the logistic threshold models. The model itself was fine but the <code>s95</code> parameter was supposed to be reported by <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> as a combination of two other parameters. This also affected the output in <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>/<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>.</p></li>
 <li><p>Add <code>return_tmb_report</code> to <code><a href="../reference/simulate.sdmTMB.html">simulate.sdmTMB()</a></code>.</p></li>
 <li><p>Add <code>newdata</code> argument to <code><a href="../reference/simulate.sdmTMB.html">simulate.sdmTMB()</a></code>. This enables simulating on a new data frame similar to how one would predict on new data.</p></li>
 <li><p>Add <code>mle_mvn_samples</code> argument to <code><a href="../reference/simulate.sdmTMB.html">simulate.sdmTMB()</a></code>. Defaults to “single”. If “multiple”, then a sample from the random effects is taken for each simulation iteration.</p></li>
