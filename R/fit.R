@@ -656,6 +656,8 @@ sdmTMB <- function(
   spde <- mesh
   epsilon_model <- NULL
   epsilon_predictor <- NULL
+  slope_group <- NULL
+  slope_covariate <- NULL
   if (!is.null(experimental)) {
     if ("epsilon_predictor" %in% names(experimental)) {
       epsilon_predictor <- experimental$epsilon_predictor
@@ -667,6 +669,18 @@ sdmTMB <- function(
       epsilon_model <- experimental$epsilon_model
     } else {
       epsilon_model <- NULL
+    }
+
+    if ("slope_group" %in% names(experimental)) {
+      slope_group <- experimental$slope_group
+      if (delta) cli_abort("Random slope not set up for delta families yet; ask Sean.")
+    } else {
+      slope_group <- NULL
+    }
+    if ("slope_covariate" %in% names(experimental)) {
+      slope_covariate <- experimental$slope_covariate
+    } else {
+      slope_covariate <- NULL
     }
   }
 
@@ -878,6 +892,16 @@ sdmTMB <- function(
   ln_tau_G_index <- ln_tau_G_index[[1]]
   sm <- sm[[1]]
 
+  if (!is.null(slope_group)) {
+    RS_indexes <- as.numeric(factor(data[[slope_group]])) - 1L
+    RS_x <- data[[slope_covariate]]
+    n_RS <- length(unique(RS_indexes))
+  } else {
+    RS_indexes <- NULL
+    RS_x <- NULL
+    n_RS <- 0
+  }
+
   y_i <- model.response(mf[[1]], "numeric")
   if (delta) {
     y_i2 <- model.response(mf[[2]], "numeric")
@@ -1073,6 +1097,12 @@ sdmTMB <- function(
     pop_pred   = 0L,
     short_newdata = 0L,
     exclude_RE = rep(0L, ncol(RE_indexes)),
+
+    RS_indexes = if (n_RS > 0) RS_indexes else integer(0),
+    RS_x = if (n_RS > 0) RS_x else numeric(0),
+    proj_RS_indexes = integer(0),
+    proj_RS_x = numeric(0),
+
     weights_i  = if (!is.null(weights)) weights else rep(1, length(y_i)),
     area_i     = rep(1, length(y_i)),
     normalize_in_r = 0L, # not used first time
@@ -1158,6 +1188,10 @@ sdmTMB <- function(
     ar1_phi    = rep(0, n_m),
     ln_tau_G   = matrix(0, ncol(RE_indexes), n_m),
     RE         = matrix(0, sum(nobs_RE), n_m),
+
+    RS         = if (n_RS > 0) rep(0, n_RS) else numeric(0),
+
+    ln_tau_RS = 0,
     b_rw_t     = array(0, dim = c(tmb_data$n_t, ncol(X_rw_ik), n_m)),
     omega_s    = matrix(0, if (!omit_spatial_intercept) n_s else 0L, n_m),
     zeta_s    = array(0, dim = c(n_s, n_z, n_m)),
@@ -1256,6 +1290,9 @@ sdmTMB <- function(
     tmb_random <- c(tmb_random, "epsilon_re")
     tmb_map <- unmap(tmb_map, c("epsilon_re"))
   }
+  if (n_RS > 0) {
+    tmb_random <- c(tmb_random, "RS")
+  }
 
   tmb_map$ar1_phi <- as.numeric(tmb_map$ar1_phi) # strip factors
   for (i in seq_along(spatiotemporal)) {
@@ -1351,6 +1388,10 @@ sdmTMB <- function(
       tmb_map$log_ratio_mix <- NULL
       tmb_map$logit_p_mix <- NULL
     }
+  }
+  if (n_RS > 0) {
+    tmb_map$RS <- NULL
+    tmb_map$ln_tau_RS <- NULL
   }
 
   if (tmb_data$threshold_func > 0) tmb_map$b_threshold <- NULL

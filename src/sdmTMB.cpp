@@ -156,6 +156,12 @@ Type objective_function<Type>::operator()()
   DATA_IVECTOR(ln_tau_G_index);
   DATA_INTEGER(n_g); // number of random intercepts
 
+  // Random slope hack:
+  DATA_VECTOR(RS_x);
+  DATA_VECTOR(proj_RS_x);
+  DATA_IVECTOR(RS_indexes);
+  DATA_IVECTOR(proj_RS_indexes);
+
   DATA_SPARSE_MATRIX(A_st); // INLA 'A' projection matrix for unique stations
   DATA_IVECTOR(A_spatial_index); // Vector of stations to match up A_st output
 
@@ -280,6 +286,10 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(epsilon_re);
   PARAMETER_ARRAY(b_smooth);  // P-spline smooth parameters
   PARAMETER_ARRAY(ln_smooth_sigma);  // variances of spline REs if included
+
+  // Random slopes hack
+  PARAMETER_VECTOR(RS);
+  PARAMETER(ln_tau_RS);
 
   // Joint negative log-likelihood
   Type jnll = 0.;
@@ -577,6 +587,16 @@ Type objective_function<Type>::operator()()
   REPORT(sigma_G);
   ADREPORT(sigma_G); // time-varying SD
 
+  // Random slope:
+  //vector<Type> sigma_RS(n_m);
+  Type sigma_RS;
+  sigma_RS = exp(ln_tau_RS);
+  int n_RS = RS.size();
+  for (int g = 0; g < n_RS; g++) {
+    PARALLEL_REGION jnll -= dnorm(RS(g), Type(0), sigma_RS, true);
+    if (sim_re(3)) SIMULATE{RS(g) = rnorm(Type(0), sigma_RS);}
+  }
+
   array<Type> sigma_V(X_rw_ik.cols(),n_m);
   // Time-varying effects (dynamic regression):
   if (random_walk == 1 || ar1_time || random_walk == 2) {
@@ -745,6 +765,9 @@ Type objective_function<Type>::operator()()
           eta_iid_re_i(i,m) += RE(RE_indexes(i, k) + temp,m); // record it
         }
       }
+
+      if (n_RS > 0) eta_iid_re_i(i,m) += RS_x(i) * RS(RS_indexes(i)); // record it
+
       eta_i(i,m) += eta_iid_re_i(i,m);
       if (family(m) == binomial_family && !poisson_link_delta) { // regular binomial
         mu_i(i,m) = LogitInverseLink(eta_i(i,m), link(m));
@@ -1112,9 +1135,12 @@ Type objective_function<Type>::operator()()
             if (!exclude_RE(k)) proj_iid_re_i(i,m) += RE(proj_RE_indexes(i, k) + temp,m);
           }
         }
+        if (n_RS > 0) proj_iid_re_i(i,m) += proj_RS_x(i) * RS(proj_RS_indexes(i));
         proj_fe(i,m) += proj_iid_re_i(i,m);
       }
     }
+
+
 
     // Random walk covariates:
     array<Type> proj_rw_i(n_p,n_m);
