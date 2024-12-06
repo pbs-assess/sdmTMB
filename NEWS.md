@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Fix bug in `est` column when predicting on new data with Poisson-link
+  delta models with `type = "link"` and `re_form = NA`. #389
+
 * Fix bug in `s95` param reporting from the `tidy()` method. `s95` is present
   in the logistic threshold models. The model itself was fine but the `s95`
   parameter was supposed to be reported by `tidy()` as a combination of two 
