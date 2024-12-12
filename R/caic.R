@@ -100,7 +100,7 @@ cAIC.sdmTMB <- function(object, what = c("cAIC", "EDF"), ...) {
   par <- obj$env$parList()
   parDataMode <- obj$env$last.par
   indx <- obj$env$lrandom()
-  q <- length(indx)
+  q <- sum(indx)
   p <- length(object$model$par)
 
   ## use '-' for Hess because model returns negative loglikelihood
@@ -115,8 +115,8 @@ cAIC.sdmTMB <- function(object, what = c("cAIC", "EDF"), ...) {
   if (what == "caic") {
     jnll <- obj$env$f(parDataMode)
     cnll <- jnll - obj_new$env$f(parDataMode)
-    cAIC <- 2 * cnll + 2 * (p + q) - 2 * sum(negEDF)
-    return(cAIC)
+    cAIC_out <- 2 * cnll + 2 * (p + q) - 2 * sum(negEDF)
+    return(cAIC_out)
   } else if (what == "edf") {
     ## Figure out group for each random-effect coefficient
     group <- factor(names(object$last.par.best[obj$env$random]))
