@@ -1,5 +1,11 @@
 # sdmTMB (development version)
 
+* Add `cAIC()` for calculating *conditional* AIC. Theory based on
+  <https://arxiv.org/abs/2411.14185>; also see
+  <https://doi.org/10.1002/ecy.4327>. J.T. Thorson wrote the function code.
+  EDF (effective degrees of freedom) will ultimately be further split
+  (e.g., split by smoothers) and added to `summary.sdmTMB()`. #383 #387
+
 * Fix bug in `est` column when predicting on new data with Poisson-link
   delta models with `type = "link"` and `re_form = NA`. #389
 
