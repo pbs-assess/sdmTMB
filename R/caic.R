@@ -67,7 +67,7 @@ cAIC <- function(object, what = c("cAIC", "EDF"), ...) {
 }
 
 #' @exportS3Method
-cAIC.sdmTMB <- function(object, what = c("cAIC", "EDF")) {
+cAIC.sdmTMB <- function(object, what = c("cAIC", "EDF"), ...) {
   what <- match.arg(what)
   what <- tolower(what)
   tmb_data <- object$tmb_data
