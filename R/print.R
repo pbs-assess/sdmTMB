@@ -139,8 +139,10 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
 
     if (!is.null(edf)) {
       if (is_delta(x)) {
-        lp_regex <- paste0("^", m, "LP-")
+        lp_regex <- paste0("^", m, "LP-s\\(")
         edf <- edf[grepl(lp_regex, names(edf))]
+      } else {
+        edf <- edf[grepl("^s\\(", names(edf))]
       }
       edf <- round(edf, 2)
       re_sm_mat <- cbind(re_sm_mat, matrix(edf, ncol = 1))
