@@ -71,7 +71,11 @@ cAIC.sdmTMB <- function(object, what = c("cAIC", "EDF"), ...) {
 
   what <- tolower(what)
   what <- match.arg(what, choices = c("caic", "edf"))
-  what <- tolower(what)
+
+  if ("edf" %in% names(object) && what == "edf") {
+    return(object$edf)
+  }
+
   tmb_data <- object$tmb_data
 
   ## Ensure profile = NULL
