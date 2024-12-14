@@ -1521,8 +1521,10 @@ sdmTMB <- function(
     bad_eig    = conv$bad_eig,
     pos_def_hessian = sd_report$pdHess))
   out <- `class<-`(out, "sdmTMB")
-  edf <- cAIC(out, what = "EDF")
-  out$edf <- edf
+  if (out$tmb_data$has_smooths) {
+    edf <- suppressMessages(cAIC(out, what = "EDF"))
+    out$edf <- edf
+  }
   out
 }
 
