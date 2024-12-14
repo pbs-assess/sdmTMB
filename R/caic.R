@@ -68,7 +68,9 @@ cAIC <- function(object, what = c("cAIC", "EDF"), ...) {
 
 #' @exportS3Method
 cAIC.sdmTMB <- function(object, what = c("cAIC", "EDF"), ...) {
-  what <- match.arg(what)
+
+  what <- tolower(what)
+  what <- match.arg(what, choices = c("caic", "edf"))
   what <- tolower(what)
   tmb_data <- object$tmb_data
 
@@ -104,6 +106,10 @@ cAIC.sdmTMB <- function(object, what = c("cAIC", "EDF"), ...) {
   p <- length(object$model$par)
 
   ## use '-' for Hess because model returns negative loglikelihood
+  if (is.null(object$tmb_random)) {
+    cli_inform(c("This model has no random effects.", "cAIC and EDF only apply to models with random effects."))
+    return(invisible(NULL))
+  }
   Hess_new <- -Matrix::Matrix(obj_new$env$f(parDataMode, order = 1, type = "ADGrad"), sparse = TRUE)
   Hess_new <- Hess_new[indx, indx] ## marginal precision matrix of REs
 
@@ -119,7 +125,21 @@ cAIC.sdmTMB <- function(object, what = c("cAIC", "EDF"), ...) {
     return(cAIC_out)
   } else if (what == "edf") {
     ## Figure out group for each random-effect coefficient
-    group <- factor(names(object$last.par.best[obj$env$random]))
+    group <- names(object$last.par.best[obj$env$random])
+
+    convert_bsmooth2names <- function(object, model = 1) {
+      sn <- row.names(print_smooth_effects(object, m = model, silent = TRUE)$smooth_sds)
+      sn <- gsub("^sd", "", sn)
+      dms <- object$smoothers$sm_dims
+      unlist(lapply(seq_along(dms), \(i) rep(sn[i], dms[i])))
+
+    }
+    s_groups <- convert_bsmooth2names(object)
+    # smoothers always shared in delta models
+    if (is_delta(object)) s_groups <- c(paste0("1LP-", s_groups), paste0("2LP-", s_groups))
+    group[group == "b_smooth"] <- s_groups
+    group <- factor(group)
+
     ## Calculate total EDF by group
     EDF <- tapply(negEDF, INDEX = group, FUN = length) - tapply(negEDF, INDEX = group, FUN = sum)
     return(EDF)
