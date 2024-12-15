@@ -1561,7 +1561,12 @@ sdmTMB <- function(
     gradients  = conv$final_grads,
     bad_eig    = conv$bad_eig,
     pos_def_hessian = sd_report$pdHess))
-  `class<-`(out, "sdmTMB")
+  out <- `class<-`(out, "sdmTMB")
+  if (out$tmb_data$has_smooths) {
+    edf <- suppressMessages(cAIC(out, what = "EDF"))
+    out$edf <- edf
+  }
+  out
 }
 
 check_bounds <- function(.par, lower, upper) {

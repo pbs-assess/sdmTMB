@@ -1,5 +1,17 @@
 # sdmTMB (development version)
 
+* Add EDF (effective degrees of freedom) printing to smoothers with 
+  `print.sdmTMB()` and `summary.sdmTMB()`. #383 #387
+
+* Add `cAIC()` for calculating *conditional* AIC. Theory based on
+  <https://arxiv.org/abs/2411.14185>; also see
+  <https://doi.org/10.1002/ecy.4327>. J.T. Thorson wrote the function code.
+  EDF (effective degrees of freedom) will ultimately be further split
+  (e.g., split by smoothers) and added to `summary.sdmTMB()`. #383 #387
+
+* Fix bug in `est` column when predicting on new data with Poisson-link
+  delta models with `type = "link"` and `re_form = NA`. #389
+
 * Fix bug in `s95` param reporting from the `tidy()` method. `s95` is present
   in the logistic threshold models. The model itself was fine but the `s95`
   parameter was supposed to be reported by `tidy()` as a combination of two 

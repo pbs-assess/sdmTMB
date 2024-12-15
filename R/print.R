@@ -88,7 +88,7 @@ print_main_effects <- function(x, m = 1) {
   mm
 }
 
-print_smooth_effects <- function(x, m = 1) {
+print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
   sr <- x$sd_report
   sr_se <- as.list(sr, "Std. Error")
   sr_est <- as.list(sr, "Estimate")
@@ -122,7 +122,7 @@ print_smooth_effects <- function(x, m = 1) {
           "This does not affect model fitting.",
           "We'll use generic covariate names ('scovariate') here intead."
         )
-        cli_warn(msg)
+        if (!silent) cli_warn(msg)
         row.names(mm_sm) <- paste0("scovariate-", seq_len(nrow(mm_sm)))
       } else {
         mm_sm <- NULL
@@ -136,6 +136,18 @@ print_smooth_effects <- function(x, m = 1) {
     re_sm_mat[, 1] <- smooth_sds
     rownames(re_sm_mat) <- sm_names_sds
     colnames(re_sm_mat) <- "Std. Dev."
+
+    if (!is.null(edf)) {
+      if (is_delta(x)) {
+        lp_regex <- paste0("^", m, "LP-s\\(")
+        edf <- edf[grepl(lp_regex, names(edf))]
+      } else {
+        edf <- edf[grepl("^s\\(", names(edf))]
+      }
+      edf <- round(edf, 2)
+      re_sm_mat <- cbind(re_sm_mat, matrix(edf, ncol = 1))
+      colnames(re_sm_mat)[2] <- "EDF"
+    }
   } else {
     re_sm_mat <- NULL
     mm_sm <- NULL
@@ -312,10 +324,15 @@ print_header <- function(x) {
   cat(info$overall_family)
 }
 
-print_one_model <- function(x, m = 1) {
+print_one_model <- function(x, m = 1, edf = TRUE, silent = FALSE) {
+  if (edf) {
+    .edf <- suppressMessages(cAIC(x, what = "EDF"))
+  } else {
+    .edf <- NULL
+  }
   info <- print_model_info(x)
   main <- print_main_effects(x, m = m)
-  smooth <- print_smooth_effects(x, m = m)
+  smooth <- print_smooth_effects(x, m = m, edf = .edf, silent = silent)
   iid_re <- print_iid_re(x, m = m)
   tv <- print_time_varying(x, m = m)
   range <- print_range(x, m = m)
@@ -381,10 +398,10 @@ print.sdmTMB <- function(x, ...) {
   delta <- isTRUE(x$family$delta)
   print_header(x)
   if (delta) cat("\nDelta/hurdle model 1: -----------------------------------\n")
-  print_one_model(x, 1)
+  print_one_model(x, 1, ...)
   if (delta) {
     cat("\nDelta/hurdle model 2: -----------------------------------\n")
-    print_one_model(x, 2)
+    print_one_model(x, 2, ...)
   }
   if (delta) cat("\n")
   print_footer(x)
