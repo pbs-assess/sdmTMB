@@ -324,7 +324,7 @@ print_header <- function(x) {
   cat(info$overall_family)
 }
 
-print_one_model <- function(x, m = 1, edf = TRUE, silent = FALSE) {
+print_one_model <- function(x, m = 1, edf = FALSE, silent = FALSE) {
   if (edf) {
     .edf <- suppressMessages(cAIC(x, what = "EDF"))
   } else {
