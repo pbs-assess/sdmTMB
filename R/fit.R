@@ -893,7 +893,8 @@ sdmTMB <- function(
   sm <- sm[[1]]
 
   if (!is.null(slope_group)) {
-    RS_indexes <- as.numeric(factor(data[[slope_group]])) - 1L
+    if (!is.factor(data[[slope_group]])) cli_abort("Random slope grouping column must be a factor.")
+    RS_indexes <- as.numeric(data[[slope_group]]) - 1L
     RS_x <- data[[slope_covariate]]
     n_RS <- length(unique(RS_indexes))
   } else {
@@ -1188,10 +1189,6 @@ sdmTMB <- function(
     ar1_phi    = rep(0, n_m),
     ln_tau_G   = matrix(0, ncol(RE_indexes), n_m),
     RE         = matrix(0, sum(nobs_RE), n_m),
-
-    RS         = if (n_RS > 0) rep(0, n_RS) else numeric(0),
-
-    ln_tau_RS = 0,
     b_rw_t     = array(0, dim = c(tmb_data$n_t, ncol(X_rw_ik), n_m)),
     omega_s    = matrix(0, if (!omit_spatial_intercept) n_s else 0L, n_m),
     zeta_s    = array(0, dim = c(n_s, n_z, n_m)),
@@ -1201,7 +1198,10 @@ sdmTMB <- function(
     ln_epsilon_re_sigma = rep(0, n_m),
     epsilon_re = matrix(0, tmb_data$n_t, n_m),
     b_smooth = if (sm$has_smooths) matrix(0, sum(sm$sm_dims), n_m) else array(0),
-    ln_smooth_sigma = if (sm$has_smooths) matrix(0, length(sm$sm_dims), n_m) else array(0)
+    ln_smooth_sigma = if (sm$has_smooths) matrix(0, length(sm$sm_dims), n_m) else array(0),
+    RS         = if (n_RS > 0) rep(0, n_RS) else numeric(0),
+
+    ln_tau_RS = 0
   )
   if (identical(family$link, "inverse") && family$family[1] %in% c("Gamma", "gaussian", "student") && !delta) {
     fam <- family
