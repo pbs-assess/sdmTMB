@@ -1,7 +1,8 @@
 # sdmTMB (development version)
 
 * Add EDF (effective degrees of freedom) printing to smoothers with 
-  `print.sdmTMB()` and `summary.sdmTMB()`. #383 #387
+  `print.sdmTMB()` and `summary.sdmTMB()`. Set argument `edf = TRUE`.
+  E.g. `print(fit, edf = TRUE)`. #383 #387
 
 * Add `cAIC()` for calculating *conditional* AIC. Theory based on
   <https://arxiv.org/abs/2411.14185>; also see
