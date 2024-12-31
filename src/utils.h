@@ -199,7 +199,7 @@ Type linear_threshold(Type x, Type slope, Type cutpoint) {
   // as can cutpoint if covariate is scaled ~ N(0,1).
   Type pred;
   if (x < cutpoint) {
-    pred = (x - cutpoint) * slope;
+    pred = (x - cutpoint) * exp(slope);
   } else {
     pred = 0;
   }
