@@ -266,7 +266,7 @@ Type objective_function<Type>::operator()()
   vector<Type> s_slope(n_m), s_cut(n_m), s50(n_m), s95(n_m), s_max(n_m), Eo(n_m);
   for (int m = 0; m < n_m; m++) {
     if (threshold_func == 1) { // linear hockey stick
-      s_slope(m) = b_threshold(0,m);
+      s_slope(m) = log(b_threshold(0,m));
       s_cut(m) = b_threshold(1,m);
     } else if (threshold_func == 2) { // logistic
       s50(m) = b_threshold(0,m); // threshold at which function is 50% of max
