@@ -1440,6 +1440,8 @@ sdmTMB <- function(
     spatial = spatial,
     spatiotemporal = spatiotemporal,
     spatial_varying_formula = spatial_varying_formula,
+    slope_group = slope_group,
+    slope_covariate = slope_covariate,
     reml       = reml,
     priors     = priors,
     nlminb_control = .control,

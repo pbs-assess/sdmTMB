@@ -19,3 +19,17 @@ rs_sdmTMB <- pars$RS
 plot(rs_glmmTMB, rs_sdmTMB);abline(0, 1)
 
 rs_glmmTMB - rs_sdmTMB
+
+m2$tmb_data$RS_indexes
+m2$tmb_data$RS_x
+
+m2$tmb_data$proj_RS_indexes
+m2$tmb_data$proj_RS_x
+m2$slope_group
+m2$slope_covariate
+
+nd <- dplyr::select(sleepstudy, Subject) |> dplyr::distinct()
+nd$Days <- 8
+p <- predict(m, newdata = nd)
+p2 <- predict(m2, newdata = nd)
+

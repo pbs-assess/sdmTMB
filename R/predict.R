@@ -471,6 +471,14 @@ predict.sdmTMB <- function(object, newdata = NULL,
           cli_abort(msg)
         }
       }
+      if (!is.null(object$slope_group)) {
+        if (!is.factor(newdata[[object$slope_group]])) cli_abort("Random slope grouping column must be a factor.")
+        tmb_data$proj_RS_indexes <- as.numeric(newdata[[object$slope_group]]) - 1L
+        tmb_data$proj_RS_x <- newdata[[object$slope_covariate]]
+        n_RS_check <- length(unique(tmb_data$proj_RS_indexes))
+        if (n_RS_check != length(unique(object$tmb_data$RS_indexes)))
+          cli_abort("Number of random slope groups in newdata doesn't match fitted data.")
+      } 
     }
 
     proj_X_ij <- list()
