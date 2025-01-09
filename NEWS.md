@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Add vignette on multispecies models with sdmTMB (or any case where one wants
+  additional spatial and or spatiotemporal fields by some group).
+
 * Add EDF (effective degrees of freedom) printing to smoothers with 
   `print.sdmTMB()` and `summary.sdmTMB()`. Set argument `edf = TRUE`.
   E.g. `print(fit, edf = TRUE)`. #383 #387

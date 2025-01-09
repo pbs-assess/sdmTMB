@@ -170,14 +170,95 @@ fit <- sdmTMB(
   family = gaussian(),
   spatial = "off",
   time = "species_year",
-  spatiotemporal = "iid",
-  spatial_varying = ~ 0 + factor(species),
-  control = sdmTMBcontrol(map = map_list)
+  spatiotemporal = "iid"
+  # spatial_varying = ~ 0 + factor(species),
+  # control = sdmTMBcontrol(map = map_list)
 )
 fit
 ```
 
-### Model 4: hack species into the time element for spatial models
+### Model 4: species-specific spatiotemporal fields using the `spatial_varying` argument
+
+We can fit the same model by using the `spatial_varying` argument. This would give us the added flexibility of letting each species' spatiotemporal field have its own variance if we wanted or if expanding our model to have another category of independent random fields. E.g., we might also have age or length bins.
+
+First, we'll have the spatial fields share their variance and the spatiotemporal fields share their variance:
+
+```{r}
+# quick hack to force all levels of species and species:factor interactions in formula:
+mm1 <- model.matrix(~ 0 + factor(species), sim_dat)
+mm2 <- model.matrix(~ 0 + factor(year):factor(species), sim_dat)
+mm <- cbind(mm1, mm2)
+sim_dat2 <- cbind(sim_dat, mm)
+
+# make our map vector:
+n_sp <- ncol(mm1)
+n_st <- ncol(mm2)
+map_list2 <- list(ln_tau_Z = factor(
+  c(rep(1, n_sp),
+  rep(2, n_st))
+))
+map_list2
+
+# hack together a model formula based on our hand constructed model matrix:
+svc_formula <- as.formula(paste0("~ `", paste(colnames(mm), collapse = "` + `"), "`"))
+svc_formula
+
+fit_svc <- sdmTMB(
+  observed ~ fyear * factor(species),
+  data = sim_dat2,
+  mesh = mesh,
+  family = gaussian(),
+  spatial = "off",
+  time = "year",
+  spatiotemporal = "off",
+  spatial_varying = svc_formula,
+  control = sdmTMBcontrol(map = map_list2)
+)
+```
+
+We now have exactly the same model, just specified differently:
+
+```{r}
+logLik(fit)
+logLik(fit_svc)
+```
+
+Say we wanted to let the spatial and spatiotemporal variances be different for each species. We could do that by changing the map vector:
+
+```{r}
+colnames(mm)
+map_list3 <- list(ln_tau_Z = factor(
+  c(c(1, 2),
+  rep(3, n_st/2),
+  rep(4, n_st/2)
+)))
+# check:
+data.frame(map_value = map_list3$ln_tau_Z, svc_term = colnames(mm))
+
+fit_svc_separate <- sdmTMB(
+  observed ~ fyear * factor(species),
+  data = sim_dat2,
+  mesh = mesh,
+  family = gaussian(),
+  spatial = "off",
+  time = "year",
+  spatiotemporal = "off",
+  spatial_varying = svc_formula,
+  control = sdmTMBcontrol(map = map_list3)
+)
+fit_svc_separate
+```
+
+Now we have separate SDs for the spatial and spatiotemporal fields across species.
+
+But in this case, marginal AIC does not indicate an improvement from this added flexibility:
+
+```{r}
+AIC(fit_svc, fit_svc_separate)
+```
+
+
+### Model 5: hack species into the time element for spatial models
 
 If we only wanted to fit a spatial model but had several species (or other groups), one approach is to pretend our species (or other group) is the time element.
 
@@ -198,7 +279,7 @@ fit_fake_time
 This is just a convenience though. We could instead do the same thing using the `spatial_varying` argument making sure to 'map' the field variances to be shared to match the above:
 
 ```{r}
-fit_svc <- sdmTMB(
+fit_svc3 <- sdmTMB(
   observed ~ 0 + factor(species),
   data = sim_dat,
   mesh = mesh,
@@ -207,14 +288,14 @@ fit_svc <- sdmTMB(
   spatial_varying = ~ 0 + factor(species),
   control = sdmTMBcontrol(map = list(ln_tau_Z = factor(c(1, 1))))
 )
-fit_svc
+fit_svc3
 ```
 
 We can prove they're identical:
 
 ```{r}
 logLik(fit_fake_time)
-logLik(fit_svc)
+logLik(fit_svc3)
 ```
 
 ### Putting it all together
