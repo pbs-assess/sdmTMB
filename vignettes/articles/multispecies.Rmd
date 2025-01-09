@@ -28,7 +28,7 @@ knitr::opts_chunk$set(
 library(sdmTMB)
 ```
 
-For some applications, we might be interested in fitting a model that includes multiple responses such as 2+ species, or multiple size or age classes within a species. The most important step in fitting these models is understanding which parameters are shared, and which parameters are species-specific.
+For some applications, we might be interested in fitting a model that includes multiple responses such as 2+ species, or multiple size or age classes within a species. This is a form of multivariate model. The most important step in fitting these models is understanding which parameters are shared, and which parameters are species-specific.
 
 Below, we illustrate a series of models. We'll start by simulating a 2-species dataset. Each species is allowed to have unique spatial standard deviations (`sigma_O`) as well as different year effects.
 
@@ -168,11 +168,11 @@ fit <- sdmTMB(
   data = sim_dat,
   mesh = mesh,
   family = gaussian(),
-  spatial = "off",
+  spatial = "on",
   time = "species_year",
-  spatiotemporal = "iid"
-  # spatial_varying = ~ 0 + factor(species),
-  # control = sdmTMBcontrol(map = map_list)
+  spatiotemporal = "iid",
+  spatial_varying = ~ 0 + factor(species),
+  control = sdmTMBcontrol(map = map_list)
 )
 fit
 ```
@@ -307,13 +307,18 @@ desc <- data.frame(
   Form = c(
     "Main effects", 
     "Spatial effects", 
-    "Spatial effects w/shared variance", 
-    "Spatiotemporal effects"),
+    "Spatial effects, shared variance", 
+    "Spatiotemporal effects, shared variance",
+    "Spatiotemporal effects, group-specific variances",
+    "Any set of spatial and spatiotemporal effects"
+    ),
   Implementation = c(
     "Year-by-species interactions or smooths by year", 
     "Spatially varying coefficients",
     "Spatially varying coefficients + map argument",
-    "Species-year factor as time variable")
+    "Species-year factor as time variable",
+    "Spatially varying coefficients + map argument",
+    "Spatially varying coefficients + map argument")
 )
 if (require("knitr", quietly = TRUE)) {
   knitr::kable(desc)
