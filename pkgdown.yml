@@ -9,14 +9,14 @@ articles:
   articles/ggeffects: ggeffects.html
   articles/index-standardization: index-standardization.html
   model-description: model-description.html
-  web_only/multispecies: web_only/multispecies.html
+  articles/multispecies: multispecies.html
   articles/poisson-link: poisson-link.html
   articles/pretty-plots: pretty-plots.html
   articles/residual-checking: residual-checking.html
   articles/spatial-trend-models: spatial-trend-models.html
   articles/threshold-models: threshold-models.html
   articles/visreg: visreg.html
-last_built: 2024-12-16T06:29Z
+last_built: 2025-01-09T00:41Z
 urls:
   reference: https://pbs-assess.github.io/sdmTMB/reference
   article: https://pbs-assess.github.io/sdmTMB/articles
