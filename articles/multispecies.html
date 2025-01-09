@@ -91,9 +91,9 @@ site</a> under ‘Articles’.</strong></p>
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pbs-assess.github.io/sdmTMB/">sdmTMB</a></span><span class="op">)</span></span></code></pre></div>
 <p>For some applications, we might be interested in fitting a model that
 includes multiple responses such as 2+ species, or multiple size or age
-classes within a species. The most important step in fitting these
-models is understanding which parameters are shared, and which
-parameters are species-specific.</p>
+classes within a species. This is a form of multivariate model. The most
+important step in fitting these models is understanding which parameters
+are shared, and which parameters are species-specific.</p>
 <p>Below, we illustrate a series of models. We’ll start by simulating a
 2-species dataset. Each species is allowed to have unique spatial
 standard deviations (<code>sigma_O</code>) as well as different year
@@ -338,11 +338,11 @@ form of species-specific spatiotemporal variation by changing the
 <span>  data <span class="op">=</span> <span class="va">sim_dat</span>,</span>
 <span>  mesh <span class="op">=</span> <span class="va">mesh</span>,</span>
 <span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  spatial <span class="op">=</span> <span class="st">"off"</span>,</span>
+<span>  spatial <span class="op">=</span> <span class="st">"on"</span>,</span>
 <span>  time <span class="op">=</span> <span class="st">"species_year"</span>,</span>
-<span>  spatiotemporal <span class="op">=</span> <span class="st">"iid"</span></span>
-<span>  <span class="co"># spatial_varying = ~ 0 + factor(species),</span></span>
-<span>  <span class="co"># control = sdmTMBcontrol(map = map_list)</span></span>
+<span>  spatiotemporal <span class="op">=</span> <span class="st">"iid"</span>,</span>
+<span>  spatial_varying <span class="op">=</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">species</span><span class="op">)</span>,</span>
+<span>  control <span class="op">=</span> <span class="fu"><a href="../reference/sdmTMBcontrol.html">sdmTMBcontrol</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">map_list</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">fit</span></span>
 <span><span class="co">#&gt; Spatiotemporal model fit by ML ['sdmTMB']</span></span>
@@ -354,20 +354,23 @@ form of species-specific spatiotemporal variation by changing the
 <span><span class="co">#&gt;  </span></span>
 <span><span class="co">#&gt;                         coef.est coef.se</span></span>
 <span><span class="co">#&gt; (Intercept)                 7.56    0.07</span></span>
-<span><span class="co">#&gt; fyear2                      0.39    0.10</span></span>
-<span><span class="co">#&gt; fyear3                      0.06    0.10</span></span>
-<span><span class="co">#&gt; fyear4                     -1.18    0.10</span></span>
-<span><span class="co">#&gt; fyear5                     -1.91    0.10</span></span>
-<span><span class="co">#&gt; factor(species)B           -1.42    0.10</span></span>
-<span><span class="co">#&gt; fyear2:factor(species)B    -0.04    0.14</span></span>
-<span><span class="co">#&gt; fyear3:factor(species)B    -0.80    0.14</span></span>
-<span><span class="co">#&gt; fyear4:factor(species)B     0.66    0.14</span></span>
-<span><span class="co">#&gt; fyear5:factor(species)B     3.39    0.14</span></span>
+<span><span class="co">#&gt; fyear2                      0.38    0.08</span></span>
+<span><span class="co">#&gt; fyear3                      0.06    0.08</span></span>
+<span><span class="co">#&gt; fyear4                     -1.19    0.08</span></span>
+<span><span class="co">#&gt; fyear5                     -1.92    0.08</span></span>
+<span><span class="co">#&gt; factor(species)B           -1.43    0.10</span></span>
+<span><span class="co">#&gt; fyear2:factor(species)B    -0.03    0.11</span></span>
+<span><span class="co">#&gt; fyear3:factor(species)B    -0.79    0.11</span></span>
+<span><span class="co">#&gt; fyear4:factor(species)B     0.67    0.11</span></span>
+<span><span class="co">#&gt; fyear5:factor(species)B     3.41    0.11</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Dispersion parameter: 0.10</span></span>
-<span><span class="co">#&gt; Matérn range: 0.17</span></span>
-<span><span class="co">#&gt; Spatiotemporal IID SD: 0.39</span></span>
-<span><span class="co">#&gt; ML criterion at convergence: -861.162</span></span>
+<span><span class="co">#&gt; Matérn range: 0.16</span></span>
+<span><span class="co">#&gt; Spatial SD: 0.06</span></span>
+<span><span class="co">#&gt; Spatially varying coefficient SD (factor(species)A): 0.24</span></span>
+<span><span class="co">#&gt; Spatially varying coefficient SD (factor(species)B): 0.24</span></span>
+<span><span class="co">#&gt; Spatiotemporal IID SD: 0.31</span></span>
+<span><span class="co">#&gt; ML criterion at convergence: -917.577</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; See ?tidy.sdmTMB to extract these values as a data frame.</span></span></code></pre></div>
 </div>
@@ -425,7 +428,7 @@ spatiotemporal fields share their variance:</p>
 <p>We now have exactly the same model, just specified differently:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 'log Lik.' 861.162 (df=13)</span></span>
+<span><span class="co">#&gt; 'log Lik.' 917.5774 (df=15)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik</a></span><span class="op">(</span><span class="va">fit_svc</span><span class="op">)</span></span>
 <span><span class="co">#&gt; 'log Lik.' 917.5177 (df=14)</span></span></code></pre></div>
 <p>Say we wanted to let the spatial and spatiotemporal variances be
@@ -602,8 +605,8 @@ one wants to control the amount of information shared between groups
 these approaches can be summarized as:</p>
 <table class="table">
 <colgroup>
-<col width="41%">
-<col width="58%">
+<col width="50%">
+<col width="49%">
 </colgroup>
 <thead><tr class="header">
 <th align="left">Form</th>
@@ -619,12 +622,20 @@ these approaches can be summarized as:</p>
 <td align="left">Spatially varying coefficients</td>
 </tr>
 <tr class="odd">
-<td align="left">Spatial effects w/shared variance</td>
+<td align="left">Spatial effects, shared variance</td>
 <td align="left">Spatially varying coefficients + map argument</td>
 </tr>
 <tr class="even">
-<td align="left">Spatiotemporal effects</td>
+<td align="left">Spatiotemporal effects, shared variance</td>
 <td align="left">Species-year factor as time variable</td>
+</tr>
+<tr class="odd">
+<td align="left">Spatiotemporal effects, group-specific variances</td>
+<td align="left">Spatially varying coefficients + map argument</td>
+</tr>
+<tr class="even">
+<td align="left">Any set of spatial and spatiotemporal effects</td>
+<td align="left">Spatially varying coefficients + map argument</td>
 </tr>
 </tbody>
 </table>
