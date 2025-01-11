@@ -33,3 +33,20 @@ nd$Days <- 8
 p <- predict(m, newdata = nd)
 p2 <- predict(m2, newdata = nd)
 
+plot(p, p2$est);abline(0, 1)
+
+est <- as.list(m2$sd_report, "Estimate", report = TRUE)
+se <- as.list(m2$sd_report, "Std. Error", report = TRUE)
+
+upr <- est$RS_combined + qnorm(0.975) * se$RS_combined
+lwr <- est$RS_combined + qnorm(0.025) * se$RS_combined
+
+est$RS_combined
+upr
+lwr
+
+est_par <- as.list(m2$sd_report, "Estimate", report = FALSE)
+
+RS_check <- est_par$RS + est_par$b_j[2]
+
+plot(RS_check, est$RS_combined);abline(0, 1)

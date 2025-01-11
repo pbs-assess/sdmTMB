@@ -159,6 +159,7 @@ Type objective_function<Type>::operator()()
   // Random slope hack:
   DATA_VECTOR(RS_x);
   DATA_VECTOR(proj_RS_x);
+  DATA_INTEGER(RS_fe_index);
   DATA_IVECTOR(RS_indexes);
   DATA_IVECTOR(proj_RS_indexes);
 
@@ -766,7 +767,15 @@ Type objective_function<Type>::operator()()
         }
       }
 
-      if (n_RS > 0) eta_iid_re_i(i,m) += RS_x(i) * RS(RS_indexes(i)); // record it
+      if (n_RS > 0) {
+        eta_iid_re_i(i,m) += RS_x(i) * RS(RS_indexes(i)); // record it
+        vector<Type> RS_combined(RS.size());
+        for (int g = 0; g < RS.size(); g++) {
+          if (n_m > 1) error("Random slopes only work with non-delta families");
+          RS_combined(g) = b_j(RS_fe_index) + RS(g);
+        }
+        ADREPORT(RS_combined);
+      }
 
       eta_i(i,m) += eta_iid_re_i(i,m);
       if (family(m) == binomial_family && !poisson_link_delta) { // regular binomial

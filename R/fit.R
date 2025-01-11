@@ -897,10 +897,12 @@ sdmTMB <- function(
     RS_indexes <- as.numeric(data[[slope_group]]) - 1L
     RS_x <- data[[slope_covariate]]
     n_RS <- length(unique(RS_indexes))
+    RS_fe_index <- grep(slope_covariate, colnames(X_ij[[1]])) - 1L
   } else {
     RS_indexes <- NULL
     RS_x <- NULL
     n_RS <- 0
+    RS_fe_index <- 0
   }
 
   y_i <- model.response(mf[[1]], "numeric")
@@ -1101,6 +1103,7 @@ sdmTMB <- function(
 
     RS_indexes = if (n_RS > 0) RS_indexes else integer(0),
     RS_x = if (n_RS > 0) RS_x else numeric(0),
+    RS_fe_index = RS_fe_index,
     proj_RS_indexes = integer(0),
     proj_RS_x = numeric(0),
 
