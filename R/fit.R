@@ -897,7 +897,7 @@ sdmTMB <- function(
     RS_indexes <- as.numeric(data[[slope_group]]) - 1L
     RS_x <- data[[slope_covariate]]
     n_RS <- length(unique(RS_indexes))
-    RS_fe_index <- grep(slope_covariate, colnames(X_ij[[1]])) - 1L
+    RS_fe_index <- grep(paste0("^", slope_covariate, "$"), colnames(X_ij[[1]])) - 1L
   } else {
     RS_indexes <- NULL
     RS_x <- NULL
