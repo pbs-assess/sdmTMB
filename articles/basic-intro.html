@@ -76,7 +76,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Introduction to modelling with sdmTMB</h1>
             
-            <h4 data-toc-skip class="date">2025-01-09</h4>
+            <h4 data-toc-skip class="date">2025-01-13</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/vignettes/articles/basic-intro.Rmd" class="external-link"><code>vignettes/articles/basic-intro.Rmd</code></a></small>
       <div class="d-none name"><code>basic-intro.Rmd</code></div>
@@ -397,8 +397,8 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.01013 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 101.3 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.011399 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 113.99 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -423,9 +423,9 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; Chain 1: Iteration: 100 / 101 [ 99%]  (Warmup)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 101 / 101 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 26.611 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                0.197 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                26.808 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 27.621 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                0.204 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                27.825 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
 <span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">m3</span>, <span class="st">"mle-mcmc"</span>, mcmc_samples <span class="op">=</span> <span class="va">samps</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqnorm</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span></span>
@@ -583,6 +583,7 @@ progress.</p>
 <span>  <span class="va">density</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">as.factor</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">pcod</span>,</span>
 <span>  time_varying <span class="op">=</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">depth_scaled</span> <span class="op">+</span> <span class="va">depth_scaled2</span>,</span>
+<span>  time_varying_type <span class="op">=</span> <span class="st">"rw0"</span>,</span>
 <span>  mesh <span class="op">=</span> <span class="va">mesh</span>,</span>
 <span>  family <span class="op">=</span> <span class="fu"><a href="../reference/families.html">tweedie</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span>,</span>
 <span>  spatial <span class="op">=</span> <span class="st">"on"</span>,</span>
@@ -592,9 +593,6 @@ progress.</p>
 <span><span class="co">#&gt; Detected irregular time spacing with an AR(1) or random walk process.</span></span>
 <span><span class="co">#&gt; Consider filling in the missing time slices with `extra_time`.</span></span>
 <span><span class="co">#&gt; `extra_time = c(2006, 2008, 2010, 2012, 2014, 2016)`</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(cov)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning: The model may not have converged: non-positive-definite Hessian</span></span>
-<span><span class="co">#&gt; matrix.</span></span>
 <span><span class="va">m4</span></span>
 <span><span class="co">#&gt; Spatiotemporal model fit by ML ['sdmTMB']</span></span>
 <span><span class="co">#&gt; Formula: density ~ 0 + as.factor(year)</span></span>
@@ -602,85 +600,49 @@ progress.</p>
 <span><span class="co">#&gt; Time column: year</span></span>
 <span><span class="co">#&gt; Data: pcod</span></span>
 <span><span class="co">#&gt; Family: tweedie(link = 'log')</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(object$cov.fixed)): NaNs produced</span></span>
 <span><span class="co">#&gt;  </span></span>
 <span><span class="co">#&gt;                     coef.est coef.se</span></span>
-<span><span class="co">#&gt; as.factor(year)2003     3.36    0.30</span></span>
+<span><span class="co">#&gt; as.factor(year)2003     3.31    0.30</span></span>
 <span><span class="co">#&gt; as.factor(year)2004     4.04    0.28</span></span>
-<span><span class="co">#&gt; as.factor(year)2005     3.77    0.28</span></span>
-<span><span class="co">#&gt; as.factor(year)2007     2.64    0.30</span></span>
-<span><span class="co">#&gt; as.factor(year)2009     2.65    0.29</span></span>
-<span><span class="co">#&gt; as.factor(year)2011     3.72    0.29</span></span>
-<span><span class="co">#&gt; as.factor(year)2013     3.51    0.27</span></span>
-<span><span class="co">#&gt; as.factor(year)2015     3.76    0.28</span></span>
-<span><span class="co">#&gt; as.factor(year)2017     3.21    0.30</span></span>
+<span><span class="co">#&gt; as.factor(year)2005     3.76    0.28</span></span>
+<span><span class="co">#&gt; as.factor(year)2007     2.64    0.31</span></span>
+<span><span class="co">#&gt; as.factor(year)2009     2.63    0.29</span></span>
+<span><span class="co">#&gt; as.factor(year)2011     3.74    0.29</span></span>
+<span><span class="co">#&gt; as.factor(year)2013     3.49    0.27</span></span>
+<span><span class="co">#&gt; as.factor(year)2015     3.78    0.28</span></span>
+<span><span class="co">#&gt; as.factor(year)2017     3.18    0.31</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Time-varying parameters:</span></span>
 <span><span class="co">#&gt;                    coef.est coef.se</span></span>
-<span><span class="co">#&gt; depth_scaled-2003     -0.96    0.08</span></span>
-<span><span class="co">#&gt; depth_scaled-2004     -0.96    0.08</span></span>
-<span><span class="co">#&gt; depth_scaled-2005     -0.96    0.08</span></span>
-<span><span class="co">#&gt; depth_scaled-2007     -0.96    0.08</span></span>
-<span><span class="co">#&gt; depth_scaled-2009     -0.96    0.08</span></span>
-<span><span class="co">#&gt; depth_scaled-2011     -0.96    0.08</span></span>
-<span><span class="co">#&gt; depth_scaled-2013     -0.96    0.08</span></span>
-<span><span class="co">#&gt; depth_scaled-2015     -0.96    0.08</span></span>
-<span><span class="co">#&gt; depth_scaled-2017     -0.96    0.08</span></span>
-<span><span class="co">#&gt; depth_scaled2-2003    -1.50    0.23</span></span>
-<span><span class="co">#&gt; depth_scaled2-2004    -1.70    0.17</span></span>
-<span><span class="co">#&gt; depth_scaled2-2005    -1.68    0.22</span></span>
-<span><span class="co">#&gt; depth_scaled2-2007    -1.82    0.28</span></span>
-<span><span class="co">#&gt; depth_scaled2-2009    -0.99    0.17</span></span>
-<span><span class="co">#&gt; depth_scaled2-2011    -2.02    0.25</span></span>
-<span><span class="co">#&gt; depth_scaled2-2013    -1.09    0.12</span></span>
-<span><span class="co">#&gt; depth_scaled2-2015    -1.80    0.22</span></span>
-<span><span class="co">#&gt; depth_scaled2-2017    -2.10    0.26</span></span>
+<span><span class="co">#&gt; depth_scaled-2003     -0.91    0.16</span></span>
+<span><span class="co">#&gt; depth_scaled-2004     -0.87    0.12</span></span>
+<span><span class="co">#&gt; depth_scaled-2005     -0.94    0.14</span></span>
+<span><span class="co">#&gt; depth_scaled-2007     -1.03    0.17</span></span>
+<span><span class="co">#&gt; depth_scaled-2009     -0.91    0.14</span></span>
+<span><span class="co">#&gt; depth_scaled-2011     -0.90    0.15</span></span>
+<span><span class="co">#&gt; depth_scaled-2013     -0.91    0.14</span></span>
+<span><span class="co">#&gt; depth_scaled-2015     -0.89    0.14</span></span>
+<span><span class="co">#&gt; depth_scaled-2017     -1.34    0.21</span></span>
+<span><span class="co">#&gt; depth_scaled2-2003    -1.38    0.24</span></span>
+<span><span class="co">#&gt; depth_scaled2-2004    -1.63    0.18</span></span>
+<span><span class="co">#&gt; depth_scaled2-2005    -1.66    0.24</span></span>
+<span><span class="co">#&gt; depth_scaled2-2007    -1.92    0.33</span></span>
+<span><span class="co">#&gt; depth_scaled2-2009    -0.92    0.18</span></span>
+<span><span class="co">#&gt; depth_scaled2-2011    -2.03    0.28</span></span>
+<span><span class="co">#&gt; depth_scaled2-2013    -1.04    0.14</span></span>
+<span><span class="co">#&gt; depth_scaled2-2015    -1.79    0.24</span></span>
+<span><span class="co">#&gt; depth_scaled2-2017    -2.49    0.34</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Dispersion parameter: 10.86</span></span>
+<span><span class="co">#&gt; Dispersion parameter: 10.85</span></span>
 <span><span class="co">#&gt; Tweedie p: 1.50</span></span>
-<span><span class="co">#&gt; Matérn range: 13.58</span></span>
-<span><span class="co">#&gt; Spatial SD: 1.63</span></span>
-<span><span class="co">#&gt; Spatiotemporal IID SD: 1.66</span></span>
-<span><span class="co">#&gt; ML criterion at convergence: 6251.146</span></span>
+<span><span class="co">#&gt; Matérn range: 13.91</span></span>
+<span><span class="co">#&gt; Spatial SD: 1.59</span></span>
+<span><span class="co">#&gt; Spatiotemporal IID SD: 1.65</span></span>
+<span><span class="co">#&gt; ML criterion at convergence: 6260.885</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; See ?tidy.sdmTMB to extract these values as a data frame.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; **Possible issues detected! Check output of sanity().**</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC</a></span><span class="op">(</span><span class="va">m4</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 12534.29</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 12553.77</span></span></code></pre></div>
 <p>To plot these, we make a data frame that contains all combinations of
 the time-varying covariate and time. This is easily created using
 <code><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid()</a></code> or <code><a href="https://tidyr.tidyverse.org/reference/expand_grid.html" class="external-link">tidyr::expand_grid()</a></code>.</p>
@@ -695,7 +657,6 @@ the time-varying covariate and time. This is easily created using
 <span><span class="va">nd</span><span class="op">$</span><span class="va">depth_scaled2</span> <span class="op">&lt;-</span> <span class="va">nd</span><span class="op">$</span><span class="va">depth_scaled</span><span class="op">^</span><span class="fl">2</span></span>
 <span></span>
 <span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">m4</span>, newdata <span class="op">=</span> <span class="va">nd</span>, se_fit <span class="op">=</span> <span class="cn">TRUE</span>, re_form <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(cov)): NaNs produced</span></span>
 <span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">p</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">depth_scaled</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">est</span><span class="op">)</span>,</span>
 <span>  ymin <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">est</span> <span class="op">-</span> <span class="fl">1.96</span> <span class="op">*</span> <span class="va">est_se</span><span class="op">)</span>,</span>
