@@ -81,7 +81,7 @@ plot(g2)
 We can add in data points
 
 ```{r}
-plot(g, add.data = TRUE)
+plot(g, show_data = TRUE)
 ```
 
 We can also use `ggeffect` to plot multiple variables by listing them in `terms = c()`, with the first term listed indicating the variable to be plotted on the x-axis, and the remaining listed terms (up to four total) indicating the groups. 
@@ -120,7 +120,7 @@ g2 <- ggeffect(fit2, "depth_scaled [-3:2.7 by=0.05]")
 plot(g2)
 
 # note the high density values dwarf the fitted curve here
-plot(g2, add.dat = TRUE)
+plot(g2, show_data = TRUE)
 ```
 
 We can fit a model with an interaction of two continuous variables:

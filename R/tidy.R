@@ -135,14 +135,18 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
   if (x$tmb_data$threshold_func > 0) {
     if (x$threshold_function == 1L) {
       par_name <- paste0(x$threshold_parameter, c("-slope", "-breakpt"))
+      estimates <- est$b_threshold[,model,drop=TRUE]
+      ses <- se$b_threshold[,model,drop=TRUE]
     } else {
       par_name <- paste0(x$threshold_parameter, c("-s50", "-s95", "-smax"))
+      estimates <- c(est$s50[model], est$s95[model], est$s_max[model])
+      ses <- c(se$s50[model], se$s95[model], se$s_max[model])
     }
     out <- rbind(
       out,
       data.frame(
-        term = par_name, estimate = est$b_threshold[,model,drop=TRUE],
-        std.error = se$b_threshold[,model,drop=TRUE], stringsAsFactors = FALSE
+        term = par_name, estimate = estimates,
+        std.error = ses, stringsAsFactors = FALSE
       )
     )
   }

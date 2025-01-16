@@ -785,14 +785,28 @@ predict.sdmTMB <- function(object, newdata = NULL,
         if (type == "response") {
           nd$est1 <- object$family[[1]]$linkinv(r$proj_fe[,1])
           nd$est2 <- object$family[[2]]$linkinv(r$proj_fe[,2])
-          nd$est <- nd$est1 * nd$est2
+          if (object$tmb_data$poisson_link_delta) {
+            .n <- nd$est1 # expected group density (already exp())
+            .p <- 1 - exp(-.n) # expected encounter rate
+            .w <- nd$est2 # expected biomass per group (already exp())
+            .r <- (.n * .w) / .p # (n * w)/p # positive expectation
+            nd$est1 <- .p # expected encounter rate
+            nd$est2 <- .r # positive expectation
+            nd$est <- .n * .w # expected combined value
+          } else {
+            nd$est <- nd$est1 * nd$est2
+          }
         } else {
           nd$est1 <- r$proj_fe[,1]
           nd$est2 <- r$proj_fe[,2]
           if (is.na(model)) {
             p1 <- object$family[[1]]$linkinv(r$proj_fe[,1])
             p2 <- object$family[[2]]$linkinv(r$proj_fe[,2])
-            nd$est <- object$family[[2]]$linkfun(p1 * p1)
+            if (object$tmb_data$poisson_link_delta) {
+              nd$est <- nd$est1 + nd$est2
+            } else {
+              nd$est <- object$family[[2]]$linkfun(p1 * p1)
+            }
             if (se_fit) {
               nd$est <- sr_est_rep$proj_rf_delta
               nd$est_se <- sr_se_rep$proj_rf_delta

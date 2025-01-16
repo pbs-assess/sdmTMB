@@ -45,11 +45,11 @@ test_that("Prior fitting works", {
   )
 
   # all the priors
-  mp <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+  mp <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2,
     data = d, time = "year", mesh = pcod_spde, family = tweedie(link = "log"),
     share_range = FALSE, spatiotemporal = "AR1",
     priors = sdmTMBpriors(
-      b = normal(c(0, 0, NA, NA, NA, NA), c(2, 2, NA, NA, NA, NA)),
+      # b = normal(c(0, 0, NA, NA, NA, NA), c(2, 2, NA, NA, NA, NA)),
       phi = halfnormal(0, 10),
       # tweedie_p = normal(1.5, 2),
       ar1_rho = normal(0, 1),

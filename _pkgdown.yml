@@ -42,6 +42,7 @@ reference:
   - replicate_df
   - set_delta_model
   - coef.sdmTMB
+  - cAIC
 
 - title: 'Families'
   desc: |

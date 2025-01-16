@@ -343,6 +343,7 @@ m4 <- sdmTMB(
   density ~ 0 + as.factor(year),
   data = pcod,
   time_varying = ~ 0 + depth_scaled + depth_scaled2,
+  time_varying_type = "rw0",
   mesh = mesh,
   family = tweedie(link = "log"),
   spatial = "on",
