@@ -50,3 +50,13 @@ est_par <- as.list(m2$sd_report, "Estimate", report = FALSE)
 RS_check <- est_par$RS + est_par$b_j[2]
 
 plot(RS_check, est$RS_combined);abline(0, 1)
+
+
+sleepstudy$fake <- rnorm(nrow(sleepstudy))
+
+m2 <- sdmTMB(
+  Reaction ~ Days + Days*fake  + (1 | Subject), data = sleepstudy,
+  experimental = list(slope_group = "Subject", slope_covariate = "Days"),
+  spatial = "off")
+
+m2$sd_report
