@@ -40,3 +40,9 @@
 #' @format `wcvi_grid`: A survey domain grid to go with `dogfish`. A data frame.
 #' @rdname surveydata
 "wcvi_grid"
+
+#' @format `dover_lengths`: Length composition samples for Dover Sole from the
+#'   West Coast Vancouver Island Synoptic Survey off the coast of
+#'   British Columbia. Each row is a fish sampled.
+#' @rdname surveydata
+"dover_lengths"

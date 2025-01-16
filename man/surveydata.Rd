@@ -10,6 +10,7 @@
 \alias{yelloweye}
 \alias{hbll_s_grid}
 \alias{wcvi_grid}
+\alias{dover_lengths}
 \title{Example fish survey data}
 \format{
 \code{pcod}: Trawl survey data for Pacific Cod in Queen Charlotte Sound. A
@@ -33,6 +34,10 @@ Longline Survey (South) off West Coast Vancouver Island.
 \code{hbll_s_grid}: A survey domain grid to go with \code{yelloweye}. A data frame.
 
 \code{wcvi_grid}: A survey domain grid to go with \code{dogfish}. A data frame.
+
+\code{dover_lengths}: Length composition samples for Dover Sole from the
+West Coast Vancouver Island Synoptic Survey off the coast of
+British Columbia. Each row is a fish sampled.
 }
 \usage{
 pcod
@@ -50,6 +55,8 @@ yelloweye
 hbll_s_grid
 
 wcvi_grid
+
+dover_lengths
 }
 \description{
 Various fish survey datasets.
