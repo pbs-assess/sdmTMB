@@ -774,7 +774,6 @@ Type objective_function<Type>::operator()()
           if (n_m > 1) error("Random slopes only work with non-delta families");
           RS_combined(g) = b_j(RS_fe_index) + RS(g);
         }
-        ADREPORT(RS_combined);
       }
 
       eta_i(i,m) += eta_iid_re_i(i,m);
@@ -1489,6 +1488,8 @@ Type objective_function<Type>::operator()()
       ADREPORT(phi);
       REPORT(phi);
   }
+
+  if (n_RS > 0) ADREPORT(RS_combined);
 
   if (family(0) == tweedie_family) ADREPORT(tweedie_p); // #302
 
