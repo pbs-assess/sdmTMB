@@ -34,37 +34,30 @@ library(ggplot2)
 theme_set(theme_light())
 ```
 
-```{r, eval=FALSE, echo=FALSE}
-if (FALSE) {
-
-}
-```
-
-Read in Dover Sole length composition data for SYN WCVI survey
+Read in Dover Sole length composition data for SYN WCVI survey:
 
 ```{r}
-d <- readRDS("scratch/dover_lengths.rds")
-d <- sdmTMB::add_utm_columns(d, c("lon", "lat"))
+dat <- sdmTMB::add_utm_columns(dover_lengths, c("lon", "lat"))
 ```
 
-Look at the distribution of lengths
+Look at the distribution of lengths:
 
 ```{r}
-range(d$length)
-hist(d$length)
+range(dat$length)
+hist(dat$length)
 ```
 
 Decide on some bins. I'm aiming to have adequate data in each bin while encompassing all data.
 
 ```{r}
 bins <- c(0, seq(25, 50, 5), 80)
-d$length_bin <- factor(bins[findInterval(d$length, bins)])
+dat$length_bin <- factor(bins[findInterval(dat$length, bins)])
 ```
 
-Check what that looks like
+Check what that looks like:
 
 ```{r}
-ggplot(d, aes(lon, lat)) +
+ggplot(dat, aes(lon, lat)) +
   geom_point(aes(colour = length)) +
   facet_grid(length_bin ~ year) +
   scale_colour_viridis_c()
@@ -73,13 +66,13 @@ ggplot(d, aes(lon, lat)) +
 And make sure we have data in each bin. If not, we'd either have to adjust our bin structure or map off the estimation of some year-bin combinations...
 
 ```{r}
-table(d$year, d$length_bin)
+table(dat$year, dat$length_bin)
 ```
 
-Now condense our data into counts per bin-year combination
+Now condense our data into counts per bin-year combination:
 
 ```{r}
-dg <- group_by(d, year, trawl_id, X, Y, length_bin) |>
+dg <- group_by(dat, year, trawl_id, X, Y, length_bin) |>
   summarise(n = n(), .groups = "drop")
 
 ggplot(dg, aes(X, Y)) +
@@ -88,23 +81,23 @@ ggplot(dg, aes(X, Y)) +
   scale_colour_viridis_c()
 ```
 
-Make our SPDE mesh
+Make our SPDE mesh:
 
 ```{r}
-mesh <- make_mesh(dg, c("X", "Y"), cutoff = 8)
+mesh <- make_mesh(dg, c("X", "Y"), cutoff = 10)
 plot(mesh)
 mesh$mesh$n
 ```
 
-we now have a decision to make about what random field variances we want to share vs. allow to vary
+Now we have to make a decision about what random field variances we want to share vs. allow to vary.
 
-here, I'm going to estimate a separate SD for the spatiotemporal fields within each bin
+Here, I'm going to estimate a separate SD for the spatiotemporal fields within each bin.
 
-we'll also have an overall spatial field
+We'll also have an overall spatial field.
 
-for this spatiotemporal-bin random field variance structure, we need a different factor level for each column in our spatially varying coefficient model matrix for a given length bin
+For this spatiotemporal-bin random field variance structure, we need a different factor level for each column in our spatially varying coefficient model matrix for a given length bin.
 
-this gets a little crazy... sorry... maybe we can work out a function to automate this
+The following code is me working it out for this case. It should be the same as long as you set up your spatially varying formula the same way with `~ 0 + factor(year) * factor(bin)`.
 
 ```{r}
 na <- colnames(model.matrix(~ 0 + factor(year) * length_bin, data = dg))
@@ -120,7 +113,7 @@ svc_map <- factor(svc_map)
 svc_map
 ```
 
-check this makes sense:
+Check that this makes sense:
 
 ```{r}
 length(svc_map)
@@ -128,7 +121,7 @@ length(na)
 data.frame(na, svc_map)
 ```
 
-fit our model... `profile = TRUE` is likely faster here because of all the fixed effects (moves the fixed effects into the inner optimization with the random effects)
+Now, fit our model. We'll use `profile = TRUE`, which is likely faster here because of all the fixed effects (moves the fixed effects into the inner optimization with the random effects).
 
 ```{r, results="hide", message=FALSE, warning=FALSE}
 # dg$id <- factor(seq(1, nrow(dg))) # for lognormal Poisson
@@ -152,7 +145,7 @@ sanity(fit)
 summary(fit)
 ```
 
-We we have estimation issues on the SDs of some bins/categories, we may need to share some of the SDs. Adjust the map vector as needed.
+If we have estimation issues on the SDs of some bins/categories then we may need to share some of the SDs. Adjust the map vector as needed. May expand vignette to show that...
 
 ```{r}
 set.seed(1)
@@ -172,22 +165,24 @@ nd <- replicate_df(sdmTMB::wcvi_grid, "year", unique(dg$year))
 bins <- sort(unique(dg$length_bin))
 ```
 
-loop over ages and calculate index for each:
+Loop over the bins and calculate an index for each:
 
-```{r}
+```{r, results='hide', warning=FALSE, message=FALSE}
 ind_list <- lapply(bins, \(b) {
   cat("Calculating index for bin:", as.character(b), "\n")
   nd$length_bin <- b
   pred <- predict(fit, newdata = nd, return_tmb_object = TRUE)
-  ind <- get_index(pred, area = 4, bias_correct = TRUE)
+  # base_correct = FALSE here just for vignette building speed
+  ind <- get_index(pred, area = 4, bias_correct = FALSE)
   data.frame(ind, bin = b)
 })
 ind <- do.call(rbind, ind_list)
 ```
 
-here is our index by bin
+Here is our index by bin:
 
 ```{r}
+head(ind)
 ggplot(ind, aes(year, est)) +
   geom_ribbon(aes(ymin = lwr, ymax = upr)) +
   geom_line(colour = "white") +
@@ -278,20 +273,15 @@ out <- get_comp_neff(dg, ind, "year", "length_bin")
 head(out)
 ```
 
-And visualize the output
+And visualize the output. Here I'm plotting +/- 1 SE.
 
 ```{r}
 ggplot(out, aes(as.numeric(length_bin), prop)) +
   facet_wrap(~year) +
-  geom_linerange(aes(ymin = prop - .5 * prop_se, ymax = prop + .5 * prop_se)) +
+  geom_linerange(aes(ymin = prop - 1 * prop_se, ymax = prop + 1 * prop_se)) +
   geom_line() +
-  scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.04)))
-
-ggplot(out, aes(as.numeric(length_bin), prop, colour = factor(year))) +
-  geom_linerange(aes(ymin = prop - .5 * prop_se, ymax = prop + .5 * prop_se), position = position_dodge(width = 0.2)) +
-  geom_line(position = position_dodge(width = 0.2)) +
-  scale_colour_viridis_d() +
-  scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.04)))
+  coord_cartesian(ylim = c(0, NA)) +
+  ylab("Proportion") + xlab("Length bin")
 ```
 
 These are our median effective sample sizes by year across bins:
