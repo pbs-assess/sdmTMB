@@ -1,6 +1,5 @@
 test_that("REML works", {
   skip_on_cran()
-  skip_on_ci()
 
   set.seed(1)
 
@@ -74,7 +73,6 @@ test_that("REML works", {
 
 test_that("REML works for delta models", {
   skip_on_cran()
-  skip_on_ci()
 
   set.seed(1)
 

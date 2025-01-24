@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# sdmTMB <a href='https://github.com/pbs-assess/sdmTMB'><img src='man/figures/logo-sdmTMB.png' align="right" style="height:139px;"/></a>
+# sdmTMB <a href='https://github.com/pbs-assess/sdmTMB'><img src='man/figures/logo.png' align="right" style="height:139px;"/></a>
 
 > Spatial and spatiotemporal GLMMs with TMB
 
@@ -9,12 +9,13 @@
 [![](https://www.r-pkg.org/badges/version/sdmTMB)](https://cran.r-project.org/package=sdmTMB)
 [![Documentation](https://img.shields.io/badge/documentation-sdmTMB-orange.svg?colorB=E91E63)](https://pbs-assess.github.io/sdmTMB/)
 [![R-CMD-check](https://github.com/pbs-assess/sdmTMB/workflows/R-CMD-check/badge.svg)](https://github.com/pbs-assess/sdmTMB/actions)
-[![downloads](http://cranlogs.r-pkg.org/badges/sdmTMB)](https://cranlogs.r-pkg.org/)
+[![Codecov test coverage](https://codecov.io/gh/pbs-assess/sdmTMB/branch/main/graph/badge.svg)](https://app.codecov.io/gh/pbs-assess/sdmTMB?branch=main)
+[![downloads](https://cranlogs.r-pkg.org/badges/sdmTMB)](https://cranlogs.r-pkg.org/)
 <!-- badges: end -->
 
 sdmTMB is an R package that fits spatial and spatiotemporal GLMMs (Generalized Linear Mixed Effects Models) using Template Model Builder ([TMB](https://github.com/kaskr/adcomp)), [R-INLA](https://www.r-inla.org/), and Gaussian Markov random fields. One common application is for species distribution models (SDMs). See the [documentation site](https://pbs-assess.github.io/sdmTMB/) and a preprint:
 
-Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett. 2022. sdmTMB: an R package for fast, flexible, and user-friendly generalized linear mixed effects models with spatial and spatiotemporal random fields. bioRxiv 2022.03.24.485545; doi: https://doi.org/10.1101/2022.03.24.485545
+Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett, J.T. Thorson. 2024. sdmTMB: an R package for fast, flexible, and user-friendly generalized linear mixed effects models with spatial and spatiotemporal random fields. bioRxiv 2022.03.24.485545; doi: https://doi.org/10.1101/2022.03.24.485545
 
 ## Table of contents
 
@@ -54,15 +55,28 @@ install.packages("sdmTMB", dependencies = TRUE)
 
 Assuming you have a [C++
 compiler](https://support.posit.co/hc/en-us/articles/200486498-Package-Development-Prerequisites)
-installed, the development version can be installed:
+installed, the development version is recommended and can be installed:
 
 ``` r
-# install.packages("remotes")
-remotes::install_github("pbs-assess/sdmTMB", dependencies = TRUE)
+# install.packages("pak")
+pak::pkg_install("pbs-assess/sdmTMB", dependencies = TRUE)
 ```
 
 There are some extra utilities in the
 [sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra) package.
+
+**Importantly**, it is recommended to use an optimized BLAS library, which will result in major speed improvements for TMB (and other) models in R (e.g., often 8-fold speed increases for sdmTMB models).
+Suggested installation instructions for [Mac users](https://www.mail-archive.com/r-sig-mac@r-project.org/msg06199.html), [Linux users](https://prdm0.github.io/ropenblas/), [Windows users](https://github.com/david-cortes/R-openblas-in-windows), and [Windows users without admin privileges](https://gist.github.com/seananderson/08a51e296a854f227a908ddd365fb9c1).
+To check that you've successfully linked the optimized BLAS, start a new session and run:
+
+``` r
+m <- 1e4; n <- 1e3; k <- 3e2
+X <- matrix(rnorm(m*k), nrow=m); Y <- matrix(rnorm(n*k), ncol=n)
+system.time(X %*% Y)
+```
+
+The result (‘elapsed’) should take a fraction of a second (e.g., 0.03
+s), not multiple seconds.
 
 ## Overview
 
@@ -135,10 +149,10 @@ To cite sdmTMB in publications use:
 citation("sdmTMB")
 ```
 
-Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett. 2022. sdmTMB:
-an R package for fast, flexible, and user-friendly generalized linear
-mixed effects models with spatial and spatiotemporal random fields.
-bioRxiv 2022.03.24.485545; doi:
+Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett., J.T. Thorson.
+2024. sdmTMB: an R package for fast, flexible, and user-friendly
+generalized linear mixed effects models with spatial and spatiotemporal
+random fields. bioRxiv 2022.03.24.485545; doi:
 <https://doi.org/10.1101/2022.03.24.485545>
 
 A list of (known) publications that use sdmTMB can be found
@@ -278,6 +292,9 @@ tidy(fit, conf.int = TRUE)
 #>   term        estimate std.error conf.low conf.high
 #>   <chr>          <dbl>     <dbl>    <dbl>     <dbl>
 #> 1 (Intercept)     2.37     0.215     1.95      2.79
+```
+
+``` r
 tidy(fit, effects = "ran_pars", conf.int = TRUE)
 #> # A tibble: 4 × 5
 #>   term      estimate std.error conf.low conf.high
@@ -304,8 +321,7 @@ sanity(fit)
 ```
 
 Use the [ggeffects](https://github.com/strengejacke/ggeffects) package
-(**the GitHub version until the next ggeffects CRAN update**) to plot
-the smoother effect:
+to plot the smoother effect:
 
 ``` r
 ggeffects::ggpredict(fit, "depth [50:400, by=2]") |> plot()
@@ -313,7 +329,14 @@ ggeffects::ggpredict(fit, "depth [50:400, by=2]") |> plot()
 
 <img src="man/figures/README-plot-ggpredict-link-1.png" width="50%" />
 
-Predict on new data:
+If the depth effect was parametric and not a penalized smoother, we
+could have alternatively used `ggeffects::ggeffect()` for a fast
+marginal effect plot.
+
+Next, we can predict on new data. We will use a data frame `qcs_grid`
+from the package, which contains all the locations (and covariates) at
+which we wish to predict. Here, these `newdata` are a grid, or raster,
+covering our survey.
 
 ``` r
 p <- predict(fit, newdata = qcs_grid)
@@ -547,6 +570,9 @@ head(sim_dat)
 #> 4 0.0303     0  -0.282  2.05 0.718        2             1
 #> 5 0.0404     0  -0.325  1.96 0.675        3             1
 #> 6 0.0505     0  -0.367  1.88 0.633        2             1
+```
+
+``` r
 
 # sample 200 points for fitting:
 set.seed(1)
@@ -653,6 +679,9 @@ m_cv <- sdmTMB_cv(
 )
 #> Running fits with `future.apply()`.
 #> Set a parallel `future::plan()` to use parallel processing.
+```
+
+``` r
 # Sum of log likelihoods of left-out data:
 m_cv$sum_loglik
 #> [1] -6756.28
@@ -700,7 +729,7 @@ for more details.
 
 The fitted model can be passed to the tmbstan package to sample from the
 posterior with Stan. See the [Bayesian
-vignette](https://pbs-assess.github.io/sdmTMB/articles/web_only/bayesian.html).
+vignette](https://pbs-assess.github.io/sdmTMB/articles/bayesian.html).
 
 ### Turning off random fields
 
@@ -726,6 +755,9 @@ tidy(fit_sdmTMB)
 #> 1 (Intercept)              -0.426    0.0573
 #> 2 poly(depth_scaled, 2)1  -31.7      3.03  
 #> 3 poly(depth_scaled, 2)2  -66.9      4.09
+```
+
+``` r
 broom::tidy(fit_glm)
 #> # A tibble: 3 × 5
 #>   term                   estimate std.error statistic  p.value

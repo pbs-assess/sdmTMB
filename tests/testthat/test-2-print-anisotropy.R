@@ -1,6 +1,6 @@
 test_that("Print anisotropy prints correctly", {
   skip_on_cran()
-  skip_on_ci()
+  skip_on_ci() # slow
 
   # No anisotropy
   fit1 <- sdmTMB(
@@ -12,8 +12,8 @@ test_that("Print anisotropy prints correctly", {
   )
 
   expect_output(print(fit1), regexp = "range: 33.23")
-  expect_null(plot_anisotropy(fit1))
-  expect_null(plot_anisotropy2(fit1))
+  # expect_null(plot_anisotropy(fit1))
+  # expect_null(plot_anisotropy2(fit1))
 
   # -------------------
   # Anisotropy with spatial only

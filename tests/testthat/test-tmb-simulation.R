@@ -1,5 +1,4 @@
 test_that("TMB IID simulation works", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -32,7 +31,6 @@ test_that("TMB IID simulation works", {
 })
 
 test_that("TMB AR1 simulation works", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -70,7 +68,6 @@ test_that("TMB AR1 simulation works", {
 })
 
 test_that("TMB RW simulation works", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -121,7 +118,6 @@ test_that("TMB RW simulation works", {
 })
 
 test_that("TMB breakpt sims work", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -168,4 +164,47 @@ test_that("TMB breakpt sims work", {
   plot(predictor_dat$a1, sim_dat$observed)
   expect_lt(max(sim_dat$observed), 0.53)
   expect_gt(min(sim_dat$observed), -0.05)
+})
+
+test_that("simulate.sdmTMB returns the right length", {
+  skip_on_cran()
+  pcod$os <- rep(log(0.01), nrow(pcod)) # offset
+  m <- sdmTMB(
+    data = pcod,
+    formula = density ~ 0,
+    time_varying = ~ 1,
+    offset = pcod$os,
+    family = tweedie(link = "log"),
+    spatial = "off",
+    time = "year",
+    extra_time = c(2006, 2008, 2010, 2012, 2014, 2016),
+    spatiotemporal = "off"
+  )
+  s <- simulate(m, nsim = 2)
+  expect_equal(nrow(s), nrow(pcod))
+})
+
+test_that("coarse meshes with zeros in simulation still return fields #370", {
+  set.seed(123)
+  predictor_dat <- data.frame(
+    X = runif(100), Y = runif(100),
+    a1 = rnorm(100), year = rep(1:2, each = 50))
+  mesh <- sdmTMB::make_mesh(predictor_dat, xy_cols = c("X", "Y"), n_knots = 30)
+  sim_dat <- sdmTMB::sdmTMB_simulate(
+    formula = ~ 1 + a1,
+    data = predictor_dat,
+    time = "year",
+    mesh = mesh,
+    family = gaussian(),
+    range = 0.5,
+    sigma_E = 0.1,
+    phi = 0.1,
+    sigma_O = 0.2,
+    seed = 42,
+    B = c(0.2, -0.4) # B0 = intercept, B1 = a1 slope
+  )
+  nm <- names(sim_dat)
+  expect_true("omega_s" %in% nm)
+  expect_true("epsilon_st" %in% nm)
+  expect_false("zeta_s" %in% nm)
 })

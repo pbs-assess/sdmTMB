@@ -152,7 +152,7 @@ m <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
   priors = sdmTMBpriors(
     b = normal(c(0, 0, NA, NA, NA), c(2, 2, NA, NA, NA)),
     phi = halfnormal(0, 10),
-    tweedie_p = normal(1.5, 2),
+    # tweedie_p = normal(1.5, 2),
     ar1_rho = normal(0, 1),
     matern_s = pc_matern(range_gt = 5, sigma_lt = 1),
     matern_st = pc_matern(range_gt = 5, sigma_lt = 1))

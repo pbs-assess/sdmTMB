@@ -61,10 +61,8 @@ Distance to extend non-convex hull from data.}
 from \code{fmesher_func} (default is \code{\link[fmesher:fm_mesh_2d]{fmesher::fm_mesh_2d_inla()}}). See
 \code{mesh$mesh$n} for the number of vertices.
 
-\code{plot.sdmTMBmesh()}: A plot of the mesh and data points. If
-\pkg{ggplot2} is installed, a \pkg{ggplot2} object is
-returned, otherwise a base graphics R plot is returned. To make your own,
-pass \code{your_mesh$mesh} to \code{inlabru::gg()}.
+\code{plot.sdmTMBmesh()}: A plot of the mesh and data points. To make your
+own \pkg{ggplot2} version, pass \code{your_mesh$mesh} to \code{inlabru::gg()}.
 }
 \description{
 Construct an SPDE mesh for use with sdmTMB.

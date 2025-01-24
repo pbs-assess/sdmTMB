@@ -78,7 +78,7 @@ both sets of predictions are returned.}
 \item{mcmc_samples}{See \code{extract_mcmc()} in the
 \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package for
 more details and the
-\href{https://pbs-assess.github.io/sdmTMB/articles/web_only/bayesian.html}{Bayesian vignette}.
+\href{https://pbs-assess.github.io/sdmTMB/articles/bayesian.html}{Bayesian vignette}.
 If specified, the predict function will return a matrix of a similar form
 as if \code{nsim > 0} but representing Bayesian posterior samples from the Stan
 model.}
@@ -202,7 +202,8 @@ plot_map(predictions, epsilon_st) +
 
 # Visualizing a marginal effect ----------------------------------------
 
-# See the visreg package or the ggeffects::ggeffect() function
+# See the visreg package or the ggeffects::ggeffect() or
+# ggeffects::ggpredict() functions
 # To do this manually:
 
 nd <- data.frame(depth_scaled =
@@ -223,7 +224,7 @@ m_gam <- sdmTMB(
  data = d, formula = density ~ 0 + as.factor(year) + s(depth_scaled, k = 5),
  time = "year", mesh = mesh, family = tweedie(link = "log")
 )
-if (require("visreg", quietly = TRUE)) { # just for help docs
+if (require("visreg", quietly = TRUE)) {
   visreg::visreg(m_gam, "depth_scaled")
 }
 

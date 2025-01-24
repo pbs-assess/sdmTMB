@@ -1,6 +1,5 @@
 # test_that("Test that MCMC residuals are working", {
 #   skip_on_cran()
-#   skip_on_ci()
 #   skip_if_not_installed("INLA")
 #   skip_if_not_installed("tmbstan")
 #

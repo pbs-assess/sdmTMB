@@ -1,6 +1,5 @@
 test_that("visreg works", {
   skip_on_cran()
-  skip_on_ci()
   skip_if_not_installed("visreg")
 
   # first test against glmmTMB outputs
@@ -75,13 +74,12 @@ test_that("visreg works", {
   mean(abs(v2$res$visregRes))
   mean(abs(v1$res$visregRes))
 
-
   # with smoother, tweedie, and reml
   fit <- sdmTMB(
     density ~ s(depth_scaled) + fyear,
     data = pcod_2011, mesh = pcod_mesh_2011,
     spatial = "off",
-    reml = T,
+    reml = TRUE,
     family = tweedie()
   )
   visreg::visreg(fit, xvar = "depth_scaled", nn = 10)
@@ -185,4 +183,21 @@ test_that("visreg works", {
 
   v <- visreg2d_delta(fit_dg, xvar = "depth_scaled", yvar = "year", model = 2, nn = 10)
   expect_identical(class(v), "visreg2d")
+})
+
+test_that("visreg works with extra time #330", {
+  skip_on_cran()
+  pcod_2011$fyear <- as.factor(pcod_2011$year)
+  fit <- sdmTMB(
+    density ~ 0 + depth_scaled,
+    time = "year",
+    spatial = "off",
+    spatiotemporal = "off",
+    time_varying = ~ 1,
+    data = pcod_2011,
+    family = tweedie(),
+    extra_time = c(2012, 2014, 2016)
+  )
+  v <- visreg::visreg(fit, "depth_scaled")
+  expect_s3_class(v, 'visreg')
 })

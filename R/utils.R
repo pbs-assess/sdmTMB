@@ -114,6 +114,8 @@ sdmTMBcontrol <- function(
     parallel <- as.integer(parallel)
   }
 
+  assert_that(is.logical(profile) || is.character(profile))
+
   out <- named_list(
     eval.max,
     iter.max,
@@ -164,6 +166,23 @@ get_convergence_diagnostics <- function(sd_report) {
 make_year_i <- function(x) {
   x <- as.integer(as.factor(x))
   x - min(x)
+}
+
+make_time_lu <- function(time_vec_from_data, full_time_vec = sort(unique(time_vec_from_data))) {
+  if (!all(time_vec_from_data %in% full_time_vec)) {
+    stop("All time elements not in full time vector.")
+  }
+  lu <- unique(
+    data.frame(
+      year_i = make_year_i(full_time_vec),
+      time_from_data = full_time_vec,
+      stringsAsFactors = FALSE
+    )
+  )
+  lu$extra_time <- !lu$time_from_data %in% time_vec_from_data
+  lu <- lu[order(lu$time_from_data),]
+  row.names(lu) <- NULL
+  lu
 }
 
 check_offset <- function(formula) {
@@ -229,13 +248,13 @@ parse_threshold_formula <- function(formula, thresh_type_short = "lin_thresh",
 }
 
 expand_time <- function(df, time_slices, time_column, weights, offset, upr) {
-  if (!is.null(weights)) df[["__weight_sdmTMB__"]] <- weights
-  if (!is.null(offset)) df[["__sdmTMB_offset__"]] <- offset
-  if (!is.null(upr)) df[["__dcens_upr__"]] <- upr
+  df[["__weight_sdmTMB__"]] <- if (!is.null(weights)) weights else  1
+  df[["__sdmTMB_offset__"]] <- if (!is.null(offset)) offset else 0
+  df[["__dcens_upr__"]] <- if (!is.null(upr)) upr else NA_real_
+  df[["__fake_data__"]] <- FALSE
   fake_df <- df[1L, , drop = FALSE]
-  if (!is.null(weights)) fake_df[["__weight_sdmTMB__"]] <- 0
-  if (!is.null(offset))fake_df[["__sdmTMB_offset__"]] <- 0
-  if (!is.null(upr)) fake_df[["__dcens_upr__"]] <- NA_real_
+  fake_df[["__fake_data__"]] <- TRUE
+  fake_df[["__weight_sdmTMB__"]] <- 0 # IMPORTANT: this turns off these data in the likelihood
   missing_years <- time_slices[!time_slices %in% df[[time_column]]]
   fake_df <- do.call("rbind", replicate(length(missing_years), fake_df, simplify = FALSE))
   fake_df[[time_column]] <- missing_years
@@ -584,4 +603,62 @@ set_delta_model <- function(x, model = c(NA, 1, 2)) {
     msg = "`model` argument not valid; should be one of NA, 1, 2")
   attr(x, "delta_model_predict") <- model[[1]]
   x
+}
+
+get_fitted_time <- function(x) {
+  if (!"fitted_time" %in% names(x))
+    cli_abort("Missing 'fitted_time' element in fitted object. Please refit the model with a current version of sdmTMB.")
+  x$fitted_time
+}
+
+reload_model <- function(object) {
+  if ("parlist" %in% names(object)) {
+    # tinyVAST does this to be extra sure... I've found one case where it was needed
+    obj <- TMB::MakeADFun(
+      data = object$tmb_data,
+      parameters = object$parlist, #!! important part
+      map = object$tmb_map,
+      random = object$tmb_random,
+      DLL = "sdmTMB",
+      profile = object$control$profile
+    )
+    obj$env$beSilent()
+    nll_new <- obj$fn(object$model$par) #!! important: need to eval once (restores last.par.best etc.)
+    if (abs(nll_new - object$model$objective) > 0.01) {
+      cli_abort(c("Model fit is not identical to recorded value:", "
+        something is not working as expected"))
+    }
+    object$tmb_obj <- obj
+    object
+  } else {
+    cli_abort("`reload_model()` only works with models fit with sdmTMB 0.5.0.9006 and higher.")
+  }
+}
+
+reinitialize <- function(x) {
+  # replacement for TMB:::isNullPointer; modified from glmmTMB source
+  # https://github.com/glmmTMB/glmmTMB/issues/651#issuecomment-912920255
+  # https://github.com/glmmTMB/glmmTMB/issues/651#issuecomment-914542795
+  is_null_pointer <- function(x) {
+    x <- x$tmb_obj$env$ADFun$ptr
+    attributes(x) <- NULL
+    identical(x, new("externalptr"))
+  }
+  if (is_null_pointer(x)) {
+    x$tmb_obj$env$beSilent()
+    x$tmb_obj$fn(x$model$par)
+    # x$tmb_obj$retape()
+    if ("parlist" %in% names(x) && "last.par.best" %in% names(x)) {
+      if (!identical(x$tmb_obj$env$last.par.best, x$last.par.best)) {
+        cli_warn(c("Detected a potential issue reloading a saved sdmTMB model.",
+          "Please run `fit <- sdmTMB:::reload_model(fit)`,",
+          "where `fit` is your fitted model."))
+      }
+    }
+  }
+}
+
+chunk_time <- function(x, chunks) {
+  ny <- length(x)
+  split(x, rep(seq_len(chunks), each = ceiling(ny/chunks))[seq_along(x)])
 }

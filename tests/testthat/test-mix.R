@@ -1,5 +1,4 @@
 test_that("Gamma, NB2, and lognormal mixtures fit and recover mixing proportion", {
-  skip_on_ci()
   skip_on_cran()
   d <- pcod[pcod$year == 2017 & pcod$density > 0, ]
   spde <- make_mesh(d, c("X", "Y"), cutoff = 10)
@@ -58,7 +57,6 @@ test_that("Gamma, NB2, and lognormal mixtures fit and recover mixing proportion"
 })
 
 test_that("Test that residuals and prediction functions work with mixture models", {
-  skip_on_ci()
   skip_on_cran()
   d <- pcod[pcod$year == 2017 & pcod$density > 0, ]
   m <- sdmTMB(
@@ -74,7 +72,6 @@ test_that("Test that residuals and prediction functions work with mixture models
 })
 
 test_that("Test that delta Gamma mixture fits", {
-  skip_on_ci()
   skip_on_cran()
   d <- pcod
   m <- sdmTMB(
@@ -93,7 +90,6 @@ test_that("Test that delta Gamma mixture fits", {
 })
 
 test_that("Test that delta lognormal mixture fits", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -113,7 +109,6 @@ test_that("Test that delta lognormal mixture fits", {
 })
 
 test_that("Test that simulation functions work with mixture models", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(123)

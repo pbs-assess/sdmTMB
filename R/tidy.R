@@ -61,6 +61,8 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   crit <- stats::qnorm(1 - (1 - conf.level) / 2)
   if (exponentiate) trans <- exp else trans <- I
 
+  reinitialize(x)
+
   delta <- isTRUE(x$family$delta)
   assert_that(is.numeric(model))
   assert_that(length(model) == 1L)
@@ -128,19 +130,22 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   b_j_se <- se$b_j[!fe_names == "offset", drop = TRUE]
   fe_names <- fe_names[!fe_names == "offset"]
   out <- data.frame(term = fe_names, estimate = b_j, std.error = b_j_se, stringsAsFactors = FALSE)
-  if (exponentiate) out$estimate <- trans(out$estimate)
 
   if (x$tmb_data$threshold_func > 0) {
     if (x$threshold_function == 1L) {
       par_name <- paste0(x$threshold_parameter, c("-slope", "-breakpt"))
+      estimates <- est$b_threshold[,model,drop=TRUE]
+      ses <- se$b_threshold[,model,drop=TRUE]
     } else {
       par_name <- paste0(x$threshold_parameter, c("-s50", "-s95", "-smax"))
+      estimates <- c(est$s50[model], est$s95[model], est$s_max[model])
+      ses <- c(se$s50[model], se$s95[model], se$s_max[model])
     }
     out <- rbind(
       out,
       data.frame(
-        term = par_name, estimate = est$b_threshold[,model,drop=TRUE],
-        std.error = se$b_threshold[,model,drop=TRUE], stringsAsFactors = FALSE
+        term = par_name, estimate = estimates,
+        std.error = ses, stringsAsFactors = FALSE
       )
     )
   }
@@ -149,6 +154,9 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     out$conf.low <- as.numeric(trans(out$estimate - crit * out$std.error))
     out$conf.high <- as.numeric(trans(out$estimate + crit * out$std.error))
   }
+  # must wrap in as.numeric() otherwise I() leaves 'AsIs' class that affects emmeans package
+  out$estimate <- as.numeric(trans(out$estimate))
+  if (exponentiate) out$std.error <- NULL
 
   out_re <- list()
   log_name <- c("log_range")

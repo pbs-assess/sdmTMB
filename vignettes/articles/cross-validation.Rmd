@@ -221,4 +221,82 @@ If we had just wanted to use the predictions from the first fold onto the 10% te
 weights <- sdmTMB_stacking(model_list, include_folds = 1)
 ```
 
+# Calculating measures of predictive skill for binary data
+
+For delta models, or models of presence-absence data, several measures of predictive ability are available.
+These are applicable to cross validation, although we demonstrate them here first in a non-cross validation context for simplicity.
+
+A first commonly used diagnostic is the AUC (Area Under the Curve), which quantifies the ability of a model to discriminate between the two classes; this is done from the Receiver Operating Characteristic (ROC) curve, which plots the true positive rate vs. false positive rate.
+There are several packages to calculate AUC in R, but this can be done with the `pROC` package, where inputs are a vector of 0s and 1s (or factor equivalents) in the raw data, and a vector of estimated probabilities (generated from a call to `predict()`, as shown below).
+The `plogis()` function is needed to convert estimated values in logit space to probabilities in natural (zero to one) space. 
+
+```{r roc}
+mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
+fit <- sdmTMB(present ~ s(depth), data = pcod, mesh = mesh)
+pred <- predict(fit) # presence-absence model
+roc <- pROC::roc(pcod$present, plogis(pred$est))
+auc <- pROC::auc(roc)
+auc
+```
+
+With a delta model, two estimated values are returned, so only the first would be used. E.g.,
+
+```{r}
+fit <- sdmTMB(density ~ 1, data = pcod, 
+  mesh = mesh, family = delta_gamma())
+pred <- predict(fit)
+
+# the first linear predictor is the binomial component (est1):
+roc <- pROC::roc(pcod$present, plogis(pred$est1))
+auc <- pROC::auc(roc)
+auc
+```
+
+If we wanted to apply this in the context of cross validation, we could do it like this:
+
+```{r, eval=FALSE}
+x <- sdmTMB_cv(
+  present ~ s(depth), data = pcod, spatial = "off",
+  mesh = mesh, family = binomial(), k_folds = 2
+)
+roc <- pROC::roc(x$data$present, plogis(x$data$cv_predicted))
+auc <- pROC::auc(roc)
+auc
+```
+
+AUC may be sensitive to imbalances in the data, however, and alternative metrics may better approximate skill.
+Here we highlight an example of using true skill score (implemented in packages such as SDMtune):
+
+```{r}
+mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
+fit <- sdmTMB(present ~ 1, data = pcod, 
+  mesh = mesh, family = binomial())
+```
+
+Next, we can generate predicted probabilities and classes using a threshold of 0.5 as an example:
+
+```{r}
+pred <- predict(fit)
+pred$p <- plogis(pred$est)
+pred$pred_01 <- ifelse(pred$p < 0.5, 0, 1)
+```
+
+Next we create a confusion matrix and calculate the true skill score:
+
+```{r}
+conmat <- table(pred$pred_01, pred$present)
+true_neg <- conmat[1, 1]
+false_neg <- conmat[1, 2]
+false_pos <- conmat[2, 1]
+true_pos <- conmat[2, 2]
+
+# Calculate TSS:
+true_pos_rate <- true_pos / (true_pos + false_neg)
+true_neg_rate <- true_neg / (true_neg + false_pos)
+TSS <- true_pos_rate + true_neg_rate - 1
+TSS
+```
+
+In some cases, reporting the true negative or true positive rate might be of interest in addition to TSS.
+
 # References

@@ -5,6 +5,7 @@ The sdmTMB package includes other open source software components. The following
 is a list of these components.
 
 - VAST, https://github.com/James-Thorson-NOAA/VAST
+- flexsurv, https://github.com/chjackson/flexsurv
 - glmmTMB, https://github.com/glmmTMB/glmmTMB
 - SPDE barrier implementation, https://github.com/skaug/tmb-case-studies
 - mgcv, https://CRAN.R-project.org/package=mgcv
@@ -19,6 +20,9 @@ The following are licensed under GPL-3 as included for sdmTMB:
    into R/plot.R plot_anisotropy() and plot_anisotropy2()), approach to
    bias correction (R/index.R get_generic()), and approach to optimization
    (modified into R/extra-optimization.R)
+
+2. flexsurv for the cumulative distribution function for the generalised
+   gamma distribution (modified into R/residuals.R pgengamma())
 
 The following are licensed under AGPL-3:
 

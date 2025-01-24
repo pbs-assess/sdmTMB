@@ -1,6 +1,5 @@
 test_that("SVC are estimated correctly for binomial and delta models", {
   skip_on_cran()
-  skip_on_ci()
   local_edition(2)
   d <- pcod
   d$year_scaled <- as.numeric(scale(d$year))
@@ -12,6 +11,13 @@ test_that("SVC are estimated correctly for binomial and delta models", {
     mesh = mesh10,
     family = binomial()
   )
+
+  p <- predict(m1)
+  pnd <- predict(m1, newdata = d)
+  expect_identical(names(p), names(pnd))
+  expect_equal(p$est, pnd$est)
+  expect_equal(p$zeta_s_year_scaled, pnd$zeta_s_year_scaled)
+
   # m1.1 <- sdmTMB(
   #   data = d,
   #   formula = present ~ 1 + year_scaled,
@@ -86,7 +92,6 @@ test_that("SVC are estimated correctly for binomial and delta models", {
 test_that("Delta model with spatially varying factor predictor and no spatiotemporal field works #237", {
   # https://github.com/pbs-assess/sdmTMB/issues/237
   skip_on_cran()
-  skip_on_ci()
   pcod_q2 <- pcod_2011
   pcod_q1 <- pcod_2011
   pcod_q1$quarter <- as.factor(1)
@@ -112,7 +117,6 @@ test_that("Delta model with spatially varying factor predictor and no spatiotemp
 
 test_that("Factor handling for SVC models works #269", {
   skip_on_cran()
-  skip_on_ci()
   set.seed(1)
   pcod_2011$vessel <- sample(c("A", "B"), size = nrow(pcod_2011), replace = TRUE)
   pcod_2011$vessel <- as.factor(pcod_2011$vessel)
@@ -133,7 +137,6 @@ test_that("Factor handling for SVC models works #269", {
 
 test_that("SVC throws a warning if character class #269", {
   skip_on_cran()
-  skip_on_ci()
   pcod_2011$vessel <- sample(c("A", "B"), size = nrow(pcod_2011), replace = TRUE)
   expect_warning({
     fit <- sdmTMB(present ~ vessel,
@@ -144,3 +147,4 @@ test_that("SVC throws a warning if character class #269", {
     )
   }, regexp = "character")
 })
+

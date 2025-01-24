@@ -21,9 +21,9 @@ jobs:
         config:
           - {os: windows-latest, r: 'release'}
           - {os: macOS-latest, r: 'release'}
-          - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
+        # - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,   r: 'release'}
-          - {os: ubuntu-latest,   r: 'oldrel-1'}
+        # - {os: ubuntu-latest,   r: 'oldrel-1'}
 
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
@@ -72,6 +72,9 @@ jobs:
           remotes::install_cran("sf")
           remotes::install_cran("rcmdcheck")
           remotes::install_cran("textshaping")
+          remotes::install_github("pbs-assess/sdmTMBextra")
+          install.packages("Matrix", type = "source")
+          install.packages("TMB", type = "source")
         shell: Rscript {0}
 
       - name: Install dependencies Ubuntu
@@ -81,6 +84,9 @@ jobs:
           remotes::install_cran("knitr")
           remotes::install_cran("rmarkdown")
           remotes::install_cran("rcmdcheck")
+          remotes::install_github("pbs-assess/sdmTMBextra")
+          install.packages("Matrix", type = "source")
+          install.packages("TMB", type = "source")
         shell: Rscript {0}
 
       - name: Install dependencies Windows
@@ -90,6 +96,9 @@ jobs:
           remotes::install_cran("knitr")
           remotes::install_cran("rmarkdown")
           remotes::install_cran("rcmdcheck")
+          remotes::install_github("pbs-assess/sdmTMBextra")
+          install.packages("Matrix", type = "source")
+          install.packages("TMB", type = "source")
         shell: Rscript {0}
 
       - name: Check

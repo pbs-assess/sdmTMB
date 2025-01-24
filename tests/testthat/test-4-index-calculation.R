@@ -1,6 +1,5 @@
 test_that("get_index(), get_index_sims(), and get_cog() work", {
   local_edition(3)
-  skip_on_ci()
   skip_on_cran()
   pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
   m <- sdmTMB(
@@ -51,12 +50,11 @@ test_that("get_index(), get_index_sims(), and get_cog() work", {
 
   cog_wide <- get_cog(predictions, bias_correct = FALSE, format="wide")
   expect_equal(class(cog_wide), "data.frame")
-  expect_equal(names(cog_wide), c("year", "est_x", "lwr_x","upr_x", "se_x","est_y","lwr_y","upr_y","se_y"))
+  expect_equal(names(cog_wide), c("year", "est_x", "lwr_x","upr_x", "se_x","est_y","lwr_y","upr_y","se_y", "type"))
   expect_equal(cog$est[which(cog$coord=="X")], cog_wide$est_x)
 })
 
 test_that("index errors are returned as needed", {
-  skip_on_ci()
   skip_on_cran()
 
   g <- replicate_df(qcs_grid, "year", unique(pcod_2011$year))

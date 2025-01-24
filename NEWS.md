@@ -1,5 +1,216 @@
 # sdmTMB (development version)
 
+* Add vignette on multispecies models with sdmTMB (or any case where one wants
+  additional spatial and or spatiotemporal fields by some group).
+
+* Add EDF (effective degrees of freedom) printing to smoothers with 
+  `print.sdmTMB()` and `summary.sdmTMB()`. Set argument `edf = TRUE`.
+  E.g. `print(fit, edf = TRUE)`. #383 #387
+
+* Add `cAIC()` for calculating *conditional* AIC. Theory based on
+  <https://arxiv.org/abs/2411.14185>; also see
+  <https://doi.org/10.1002/ecy.4327>. J.T. Thorson wrote the function code.
+  EDF (effective degrees of freedom) will ultimately be further split
+  (e.g., split by smoothers) and added to `summary.sdmTMB()`. #383 #387
+
+* Fix bug in `est` column when predicting on new data with Poisson-link
+  delta models with `type = "link"` and `re_form = NA`. #389
+
+* Fix bug in `s95` param reporting from the `tidy()` method. `s95` is present
+  in the logistic threshold models. The model itself was fine but the `s95`
+  parameter was supposed to be reported by `tidy()` as a combination of two 
+  other parameters. This also affected the output in `print()`/`summary()`.
+
+* Add `return_tmb_report` to `simulate.sdmTMB()`.
+
+* Add `newdata` argument to `simulate.sdmTMB()`. This enables simulating on
+  a new data frame similar to how one would predict on new data.
+
+* Add `mle_mvn_samples` argument to `simulate.sdmTMB()`. Defaults to "single".
+  If "multiple", then a sample from the random effects is taken for each
+  simulation iteration.
+
+* Add `project()` experimental function.
+
+* Add print method for `sdmTMB_cv()` output. #319
+
+* Add progress bar to `simulate.sdmTMB()`. #346
+
+* Add AUC and TSS examples to cross validation vignette. #268
+
+* Add `model` (linear predictor number) argument to coef() method. Also,
+  write documentation for `?coef.sdmTMB`. #351
+
+* Add helpful error message if some coordinates in make_mesh() are NA. #365
+
+* Add informative message if fitting with an offset but predicting with offset
+  argument left at NULL on newdata. #372
+
+* Fix passing of `offset` argument through in `sdmTMB_cv()`. Before it was being
+  omitted in the prediction (i.e., set to 0). #372
+
+* Fig bug in `exponentiate` argument for `tidy()`. Set `conf.int = TRUE` as
+  default. #353
+
+* Fix bug in prediction from `delta_truncated_nbinom1()` and 
+  `delta_truncated_nbinom2()` families. The positive component
+  needs to be transformed to represent the mean of the *un*truncated
+  distribution first before multiplying by the probability of a non-zero.
+  Thanks to @tom-peatman #350
+
+* Add `get_eao()` to calculate effective area occupied.
+
+# sdmTMB 0.6.0
+
+* Pass several arguments to `DHARMa::plotQQunif()`.
+
+* Add `silent` option in `simulate.sdmTMB()`. Setting it to `FALSE` allows
+  monitoring simulations from larger models.
+
+* Fix bug in `est_non_rf1` and `est_non_rf2` columns when all the following
+  conditions were true:
+  - predicting on new data
+  - using a delta model
+  - including IID random intercepts or time-varying coefficients
+  See #342. Thanks to @tom-peatman for the issue report.
+
+* Fix delta-gamma binomial link printing for `type = 'poisson-link'` #340
+
+* Add suggestion to use an optimized BLAS library to README.
+
+* Add warning if it's detected that there were problems reloading (e.g., with
+  `readRDS()`) a fitted model. Simultaneously revert the approach to 
+  how reloaded models are reattached.
+
+* Move `log_ratio_mix` parameter to 2nd phase with starting value of -1 instead
+  of 0 to improve convergence.
+
+* Fix bugs for `nbinom1()` and `nbinom2_mix()` simulation.
+
+* Allow `profile` argument in the control list to take a character vector of
+  parameters. This move these parameters from the outer optimization problem to
+  the inner problem (but omits from the from the Laplace approximation). See
+  documentation in TMB. This can considerably speed up fitting models with many
+  fixed effects.
+  
+* Add theoretical quantile residuals for the generalized gamma distribution.
+  Thanks to J.C. Dunic. #333 
+  
+* Add `"poisson-link"` option to delta-mixture lognormal.
+
+* Fix bug in simulation from Poisson-link delta models.
+
+* Simplify the internal treatment of extra time slices (`extra_time`). #329
+  This is much less bug prone and also fixes a recently introduced bug. #335
+  This can slightly affect model results compared to the previous approach if
+  extra time was used along with smoothers since the 'fake' extra data
+  previously used was included when mgcv determined knot locations for
+  smoothers.
+
+# sdmTMB 0.5.0
+
+* Overhaul residuals vignette ('article') 
+  <https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html>
+  including brief intros to randomized quantile residuals, simulation-based
+  residuals, 'one-sample' residuals, and uniform vs. Gaussian residuals.
+
+* Add check if prediction coordinates appear outside of fitted coordinates. #285
+
+* Fix memory issue with Tweedie family on large datasets. #302
+
+* Add experimental option to return standard normal residuals from 
+  `dharma_residuals()`.
+
+* Make `simulate.sdmTMB()` not include `extra_time` elements.
+
+* Improved re-initialization of saved fitted model objects in new sessions.
+
+* Fix important bug in `simulate.sdmTMB()` method for delta families where
+  the positive linear predictor was only getting simulated for observations
+  present in the fitted data.
+
+* Add new `"mle-mvn"` type to `residuals.sdmTMB()` and make it the default.
+  This is a fast option for evaluating goodness of fit that should be better
+  than the previous default. See the details section in `?residuals.sdmTMB`
+  for details. The previous default is now called `"mvn-eb"` but is not
+  recommended.
+  
+* Bring `dharma_residuals()` back over from sdmTMBextra to sdmTMB. Add a new
+  option in the `type` argument (`"mle-mvn"`) that should make the
+  simulation residuals consistent with the expected distribution.
+  See the same new documentation in `?residuals.sdmTMB`. The examples
+  in `?dharma_residuals` illustrate suggested use.
+
+* Fix bug in `sanity()` where gradient checks were missing `abs()` such that
+  large negative gradients weren't getting caught. #324
+
+* Return `offset` vector in fitted object as an element. Ensure any extra time
+  rows of data in the `data` element of the fitted object do not include the
+  extra time slices.
+
+* Add experimental residuals option "mle-mvn" where a single approximate 
+  posterior sample of the random effects is drawn and these are combined
+  with the MLE fixed effects to produce residuals. This may become the
+  default option.
+
+* Add the generalized gamma distribution (thanks to J.T. Thorson with additional
+  work by J.C. Dunic.) See `gengamma()`. This distribution is still in a testing
+  phase and is not recommended for applied use yet. #286
+  
+* Detect possible issue with factor(time) in formula if same column name is used
+  for `time` and `extra_time` is specified. #320
+
+* Improve `sanity()` check output when there are NA fixed effect standard
+  errors.
+
+* Set `intern = FALSE` within index bias correction, which seems to be
+  considerably faster when testing with most models.
+
+# sdmTMB 0.4.3
+
+* Fix a bug likely introduced in July 2023 that caused issues when
+  `extra_time` was specified. This is an important bug and models fit with
+  `extra_time` between that date (if using the GitHub version) and v0.4.2.9004
+  (2024-02-24) should be checked against a current version of sdmTMB
+  (v0.4.2.9005 or greater). On CRAN, this affected v0.4.0 (2023-10-20) to 
+  v0.4.2. Details:
+  
+  * The essence of the bug was that `extra_time` works by padding the data
+    with a fake row of data for every extra time element (using the first row of
+    data as the template). This is supposed to then be omitted from the 
+    likelihood so it has no impact on model fitting beyond spacing
+    time-series processes appropriately and setting up internal structures for
+    forecasting. Unfortunately, a bug was introduced that caused these fake data
+    (1 per extra time element) to be included in the likelihood.
+
+* Issue error if `time` column has NAs. #298 #299
+
+* Fix bug in `get_cog(..., format = "wide")` where the time column was
+  hardcoded to `"year"` by accident.
+
+* Poisson-link delta models now use a `type` argument in `delta_gamma()` and
+  `delta_lognormal()`. `delta_poisson_link_gamma()` and
+  `delta_poisson_link_lognormal()` are deprecated. #290
+  
+* Delta families can now pass links that are different from the default 
+  `"logit"` and `"log"`. #290
+
+# sdmTMB 0.4.2
+
+* Force rebuild of CRAN binaries to fix issue with breaking Matrix ABI change
+  causing `NaN gradient` errors. #288 #287
+
+* Fix crash in if `sdmTMB(..., do_index = TRUE)` and `extra_time` supplied along
+  with `predict_args = list(newdata = ...)` that lacked `extra_time` elements.
+
+* Allow `get_index()` to work with missing time elements.
+
+* Add the ability to pass a custom randomized quantile function `qres_func`
+  to `residuals.sdmTMB()`.
+
+* Add check for factor random intercept columns in `newdata` to avoid a crash.
+  #278 #280
+
 * Improve warnings/errors around use of `do_index = TRUE` and `get_index()`
   if `newdata = NULL`. #276
 

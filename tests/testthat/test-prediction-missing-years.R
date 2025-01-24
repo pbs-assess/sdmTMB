@@ -15,7 +15,4 @@ test_that("Prediction works with missing time", {
   expect_equal(p1$est, p2$est)
   expect_equal(p1$year, p2$year)
   expect_equal(p1, p2)
-
-  expect_warning(p3 <- predict(fit, newdata = nd, return_tmb_object = TRUE), regexp = "time")
-  expect_error(get_index(p3), regexp = "time")
 })

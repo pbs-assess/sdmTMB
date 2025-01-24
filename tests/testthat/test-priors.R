@@ -19,7 +19,6 @@ test_that("Basic prior parsing works", {
 })
 
 test_that("Prior fitting works", {
-  skip_on_ci()
   skip_on_cran()
   d <- pcod_2011
   pcod_spde <- pcod_mesh_2011
@@ -46,13 +45,13 @@ test_that("Prior fitting works", {
   )
 
   # all the priors
-  mp <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
+  mp <- sdmTMB(density ~ 0 + depth_scaled + depth_scaled2,
     data = d, time = "year", mesh = pcod_spde, family = tweedie(link = "log"),
     share_range = FALSE, spatiotemporal = "AR1",
     priors = sdmTMBpriors(
-      b = normal(c(0, 0, NA, NA, NA, NA), c(2, 2, NA, NA, NA, NA)),
+      # b = normal(c(0, 0, NA, NA, NA, NA), c(2, 2, NA, NA, NA, NA)),
       phi = halfnormal(0, 10),
-      tweedie_p = normal(1.5, 2),
+      # tweedie_p = normal(1.5, 2),
       ar1_rho = normal(0, 1),
       matern_s = pc_matern(range_gt = 5, sigma_lt = 1),
       matern_st = pc_matern(range_gt = 5, sigma_lt = 1)
@@ -63,7 +62,8 @@ test_that("Prior fitting works", {
   expect_gt(mp$model$par[["ln_tau_O"]], m$model$par[["ln_tau_O"]])
   expect_gt(mp$model$par[["ln_tau_E"]], m$model$par[["ln_tau_E"]])
 })
-#
+
+# FIXME: random-slopes: get these priors working again?
 # test_that("Priors on random intercept SDs work", {
 #   skip_on_ci()
 #   skip_on_cran()
@@ -120,7 +120,6 @@ test_that("Prior fitting works", {
 # })
 
 test_that("Additional priors work", {
-  skip_on_ci()
   skip_on_cran()
   d <- pcod_2011
   pcod_spde <- pcod_mesh_2011

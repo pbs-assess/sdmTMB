@@ -88,7 +88,7 @@ print_main_effects <- function(x, m = 1) {
   mm
 }
 
-print_smooth_effects <- function(x, m = 1) {
+print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
   sr <- x$sd_report
   sr_se <- as.list(sr, "Std. Error")
   sr_est <- as.list(sr, "Estimate")
@@ -122,7 +122,7 @@ print_smooth_effects <- function(x, m = 1) {
           "This does not affect model fitting.",
           "We'll use generic covariate names ('scovariate') here intead."
         )
-        cli_warn(msg)
+        if (!silent) cli_warn(msg)
         row.names(mm_sm) <- paste0("scovariate-", seq_len(nrow(mm_sm)))
       } else {
         mm_sm <- NULL
@@ -136,6 +136,18 @@ print_smooth_effects <- function(x, m = 1) {
     re_sm_mat[, 1] <- smooth_sds
     rownames(re_sm_mat) <- sm_names_sds
     colnames(re_sm_mat) <- "Std. Dev."
+
+    if (!is.null(edf)) {
+      if (is_delta(x)) {
+        lp_regex <- paste0("^", m, "LP-s\\(")
+        edf <- edf[grepl(lp_regex, names(edf))]
+      } else {
+        edf <- edf[grepl("^s\\(", names(edf))]
+      }
+      edf <- round(edf, 2)
+      re_sm_mat <- cbind(re_sm_mat, matrix(edf, ncol = 1))
+      colnames(re_sm_mat)[2] <- "EDF"
+    }
   } else {
     re_sm_mat <- NULL
     mm_sm <- NULL
@@ -167,7 +179,7 @@ print_time_varying <- function(x, m = 1) {
     tv_names <- colnames(model.matrix(x$time_varying, x$data))
     mm_tv <- cbind(round(as.numeric(b_rw_t_est), 2L), round(as.numeric(b_rw_t_se), 2L))
     colnames(mm_tv) <- c("coef.est", "coef.se")
-    time_slices <- sort(unique(x$data[[x$time]]))
+    time_slices <- x$time_lu$time_from_data
     row.names(mm_tv) <- paste(rep(tv_names, each = length(time_slices)), time_slices, sep = "-")
   } else {
     mm_tv <- NULL
@@ -261,8 +273,12 @@ print_other_parameters <- function(x, m = 1L) {
   b <- tidy(x, "ran_pars", model = m, silent = TRUE)
 
   get_term_text <- function(term_name = "", pretext = "") {
+    b2 <- as.list(x$sd_report, what = "Estimate")
     if (term_name %in% b$term) {
       a <- mround(b$estimate[b$term == term_name], 2L)
+      a <- paste0(pretext, ": ", a, "\n")
+    } else if (term_name %in% names(b2)) {
+      a <- mround(b2[[term_name]], 2L)
       a <- paste0(pretext, ": ", a, "\n")
     } else {
       a <- ""
@@ -272,6 +288,9 @@ print_other_parameters <- function(x, m = 1L) {
 
   phi <- get_term_text("phi", "Dispersion parameter")
   tweedie_p <- get_term_text("tweedie_p", "Tweedie p")
+  gengamma_par <- if ('gengamma' %in% family(x)[[m]]) {
+    get_term_text("gengamma_Q", "Generalized gamma Q")
+    } else ""
   sigma_O <- get_term_text("sigma_O", "Spatial SD")
   xtra <- if (x$spatiotemporal[m] == "ar1") "marginal " else ""
   sigma_E <- get_term_text("sigma_E",
@@ -292,7 +311,7 @@ print_other_parameters <- function(x, m = 1L) {
     sigma_Z <- ""
   }
 
-  named_list(phi, tweedie_p, sigma_O, sigma_E, sigma_Z, rho)
+  named_list(phi, tweedie_p, sigma_O, sigma_E, sigma_Z, rho, gengamma_par)
 }
 
 print_header <- function(x) {
@@ -305,10 +324,15 @@ print_header <- function(x) {
   cat(info$overall_family)
 }
 
-print_one_model <- function(x, m = 1) {
+print_one_model <- function(x, m = 1, edf = FALSE, silent = FALSE) {
+  if (edf) {
+    .edf <- suppressMessages(cAIC(x, what = "EDF"))
+  } else {
+    .edf <- NULL
+  }
   info <- print_model_info(x)
   main <- print_main_effects(x, m = m)
-  smooth <- print_smooth_effects(x, m = m)
+  smooth <- print_smooth_effects(x, m = m, edf = .edf, silent = silent)
   iid_re <- print_iid_re(x, m = m)
   tv <- print_time_varying(x, m = m)
   range <- print_range(x, m = m)
@@ -340,6 +364,7 @@ print_one_model <- function(x, m = 1) {
 
   cat(other$phi)
   cat(other$tweedie_p)
+  cat(other$gengamma_par)
   cat(other$rho)
   cat(range)
   cat(other$sigma_O)
@@ -366,21 +391,17 @@ print_footer <- function(x) {
 #' @export
 #' @import methods
 print.sdmTMB <- function(x, ...) {
-
-  # or x$tmb_obj$retape()!?
-  sink(tempfile())
-  # tmp <- x$tmb_obj$fn(x$tmb_obj$par) # FIXME needed?
+  reinitialize(x)
   lp <- x$tmb_obj$env$last.par.best
   r <- x$tmb_obj$report(lp)
-  sink()
 
   delta <- isTRUE(x$family$delta)
   print_header(x)
   if (delta) cat("\nDelta/hurdle model 1: -----------------------------------\n")
-  print_one_model(x, 1)
+  print_one_model(x, 1, ...)
   if (delta) {
     cat("\nDelta/hurdle model 2: -----------------------------------\n")
-    print_one_model(x, 2)
+    print_one_model(x, 2, ...)
   }
   if (delta) cat("\n")
   print_footer(x)

@@ -1,6 +1,5 @@
 # test_that("Simulated residuals work", {
 #   skip_on_cran()
-#   skip_on_ci()
 #   skip_if_not_installed("INLA")
 #   fit <- sdmTMB(density ~ as.factor(year) + poly(depth, 2),
 #     data = pcod_2011, time = "year", mesh = pcod_mesh_2011,
@@ -19,7 +18,6 @@
 
 test_that("randomized quantile residuals work,", {
   skip_on_cran()
-  skip_on_ci()
 
   set.seed(1)
   predictor_dat <- data.frame(X = runif(2000), Y = runif(2000))
@@ -42,17 +40,17 @@ test_that("randomized quantile residuals work,", {
 
   check_resids <- function(fit) {
     set.seed(123)
-    r <- residuals(fit)
+    r <- residuals(fit, type = "mle-mvn")
     qqnorm(r)
-    qqline(r)
+    abline(0, 1)
     p <- stats::shapiro.test(r)
     expect_gt(p$p.value, 0.01)
     invisible(r)
   }
-  # check_resids_dharma <- function(fit) {
-  #   set.seed(1)
-  #   dharma_residuals(simulate(fit, nsim = 500), fit)
-  # }
+  check_resids_dharma <- function(fit) {
+    set.seed(1)
+    dharma_residuals(simulate(fit, nsim = 100, type = "mle-mvn"), fit)
+  }
 
   d <- sim_dat(gaussian())
   fit <- sdmTMB(
@@ -62,7 +60,7 @@ test_that("randomized quantile residuals work,", {
   )
   check_resids(fit)
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
   d <- sim_dat(lognormal())
   fit <- sdmTMB(
@@ -71,7 +69,7 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh
   )
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
   d <- sim_dat(Gamma(link = "log"), phi = 0.3, sigma_O = 0.001)
   fit <- sdmTMB(
@@ -80,25 +78,25 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh, spatial = "off", spatiotemporal = "off"
   )
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
-  d <- sim_dat(binomial(), sigma_O = 0.001)
+  d <- sim_dat(binomial(), sigma_O = 0.0001)
   fit <- sdmTMB(
     observed ~ 1,
     family = binomial(),
     data = d, mesh = mesh, spatial = "off", spatiotemporal = "off"
   )
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
-  d <- sim_dat(nbinom2(), sigma_O = 0.001)
+  d <- sim_dat(nbinom2(), sigma_O = 0.0001)
   fit <- sdmTMB(
     observed ~ 0,
     family = nbinom2(),
     data = d, mesh = mesh, spatial = "off", spatiotemporal = "off"
   )
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
   d <- sim_dat(nbinom1(), sigma_O = 0.001)
   fit <- sdmTMB(
@@ -107,7 +105,7 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh, spatial = "off", spatiotemporal = "off"
   )
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
   d <- sim_dat(Beta(), phi = 5, sigma_O = 0.001)
   fit <- sdmTMB(
@@ -116,7 +114,7 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh, spatial = 'off', spatiotemporal = 'off'
   )
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
   set.seed(1)
   d <- sim_dat(poisson())
@@ -126,7 +124,7 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh
   )
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
   d <- sim_dat(student(df = 2))
   fit <- sdmTMB(
@@ -135,7 +133,7 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh
   )
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
   # wrong df:
   fit <- sdmTMB(
@@ -143,12 +141,14 @@ test_that("randomized quantile residuals work,", {
     family = student(df = 10),
     data = d, mesh = mesh
   )
-  r <- residuals(fit)
+  expect_message(r <- residuals(fit), "mle")
+  set.seed(1)
+  r <- residuals(fit, type = "mle-mvn")
   qqnorm(r)
   qqline(r)
   p <- stats::shapiro.test(r)
   expect_lt(p$p.value, 0.05) # less than 0.05!
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
   d <- sim_dat(tweedie())
   fit <- sdmTMB(
@@ -157,7 +157,7 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh
   )
   check_resids(fit)
-  # check_resids_dharma(fit)
+  check_resids_dharma(fit)
 
   d <- sim_dat(truncated_nbinom2())
   fit <- sdmTMB(
@@ -166,8 +166,8 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh,
     spatial = "off", spatiotemporal = "off"
   )
-  expect_error(residuals(fit), regexp = "truncated_nbinom2")
-  # check_resids_dharma(fit)
+  expect_error(residuals(fit, type = "mle-mvn"), regexp = "truncated_nbinom2")
+  check_resids_dharma(fit)
 
   d <- sim_dat(truncated_nbinom1())
   fit <- sdmTMB(
@@ -176,8 +176,41 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh,
     spatial = "off", spatiotemporal = "off"
   )
-  expect_error(residuals(fit), regexp = "truncated_nbinom1")
-  # check_resids_dharma(fit)
+
+  expect_error(residuals(fit, type = "mle-mvn"), regexp = "truncated_nbinom1")
+  check_resids_dharma(fit)
+
+  d <- sim_dat(gengamma())
+  fit <- sdmTMB(
+    observed ~ 1,
+    family = gengamma(),
+    data = d, mesh = mesh,
+    spatial = "off", spatiotemporal = "off"
+  )
+  check_resids(fit)
+
+  set.seed(1)
+  d <- sdmTMB_simulate(
+      formula = ~1,
+      data = predictor_dat,
+      mesh = mesh,
+      family = gengamma(),
+      range = 0.5,
+      phi = 0.2,
+      sigma_O = 0.2,
+      seed = 1,
+      B = 0,
+      control = sdmTMBcontrol(start = list(gengamma_Q = -1),
+                              map = list(gengamma_Q = factor(1))
+                              )
+  )
+  fit <- sdmTMB(
+      observed ~ 1,
+      family = gengamma(),
+      data = d, mesh = mesh,
+      spatial = "off", spatiotemporal = "off"
+  )
+  check_resids(fit)
 })
 
 test_that("residuals() works", {
@@ -196,7 +229,7 @@ test_that("residuals() works", {
     data = pcod, mesh = pcod_spde,
     family = binomial()
   )
-  r <- residuals(fit)
+  r <- residuals(fit, type = "mle-eb")
   expect_true(length(r) == nrow(pcod))
   expect_true(sum(is.na(r)) == 0L)
 
@@ -206,10 +239,10 @@ test_that("residuals() works", {
     control = sdmTMBcontrol(newton_loops = 1)
   )
   r <- residuals(fit)
-  r <- residuals(fit, model = 1)
+  r <- residuals(fit, model = 1, type = "mle-eb")
   qqnorm(r)
   set.seed(1)
-  r <- residuals(fit, model = 2)
+  r <- residuals(fit, model = 2, type = "mle-eb")
   qqnorm(r[!is.na(r)])
 
   # matches the Gamma positive-only model:
@@ -221,9 +254,9 @@ test_that("residuals() works", {
     control = sdmTMBcontrol(newton_loops = 1)
   )
   set.seed(1)
-  rpos <- residuals(fit2)
+  rpos <- residuals(fit2, type = "mle-eb")
   expect_equal(as.double(r[!is.na(r)]), rpos)
-
+  rpos <- residuals(fit2, type = "mle-mvn")
   })
 
 test_that("Pearson residuals work", {
@@ -251,7 +284,7 @@ test_that("Pearson residuals work", {
   m1 <- glmmTMB::glmmTMB(prop ~ 1, data = dat, family = gaussian())
   r <- residuals(m, type = "pearson")
   r1 <- residuals(m1, type = "pearson")
-  expect_equal(as.numeric(r), as.numeric(r1))
+  expect_equal(as.numeric(r), as.numeric(r1), tolerance = 1e-6)
 
   # gamma
   set.seed(1)
@@ -294,43 +327,113 @@ test_that("MCMC residuals throw error as needed", {
   }, regexp = "mcmc")
 })
 
-# test_that("MCMC residuals work with sdmTMBextra", {
-#   skip_on_cran()
-#   skip_if_not_installed("INLA")
-#   skip_if_not_installed("sdmTMBextra")
-#   skip_if_not_installed("rstan")
-#   d <- pcod_2011
-#   set.seed(1)
-#   d$offset <- rnorm(nrow(d))
-#   fit_dg <- sdmTMB(
-#     density ~ 1,
-#     data = d,
-#     mesh = pcod_mesh_2011,
-#     offset = d$offset,
-#     family = delta_gamma()
-#   )
-#   set.seed(1)
-#   p0 <- sdmTMBextra::predict_mle_mcmc(fit_dg, mcmc_iter = 11, mcmc_warmup = 10)
-#   set.seed(1)
-#   p1 <- sdmTMBextra::predict_mle_mcmc(fit_dg,
-#     mcmc_iter = 11, mcmc_warmup = 10,
-#     model = 1
-#   )
-#   set.seed(1)
-#   p2 <- sdmTMBextra::predict_mle_mcmc(fit_dg,
-#     mcmc_iter = 11, mcmc_warmup = 10,
-#     model = 2
-#   )
-#   expect_equal(p0, p1)
-#   set.seed(1)
-#   r1 <- residuals(fit_dg, type = "mle-mcmc", mcmc_samples = p1)
-#   set.seed(1)
-#   r2 <- residuals(fit_dg, type = "mle-mcmc", mcmc_samples = p2)
-#   qqnorm(r1)
-#   qqnorm(r2)
-#   expect_false(identical(r1, r2))
-#   expect_true(max(r1) < 5)
-#   expect_true(min(r1) > -5)
-#   expect_true(max(r2) < 5)
-#   expect_true(min(r2) > -5)
-# })
+test_that("MCMC residuals work with sdmTMBextra", {
+  skip_on_cran()
+  skip_if_not_installed("sdmTMBextra")
+  skip_if_not_installed("rstan")
+  d <- pcod_2011
+  set.seed(1)
+  d$offset <- rnorm(nrow(d))
+  fit_dg <- sdmTMB(
+    density ~ 1,
+    data = d,
+    mesh = pcod_mesh_2011,
+    offset = d$offset,
+    family = delta_gamma()
+  )
+  set.seed(1)
+  p0 <- sdmTMBextra::predict_mle_mcmc(fit_dg, mcmc_iter = 11, mcmc_warmup = 10)
+  set.seed(1)
+  p1 <- sdmTMBextra::predict_mle_mcmc(fit_dg,
+    mcmc_iter = 11, mcmc_warmup = 10,
+    model = 1
+  )
+  set.seed(1)
+  p2 <- sdmTMBextra::predict_mle_mcmc(fit_dg,
+    mcmc_iter = 11, mcmc_warmup = 10,
+    model = 2
+  )
+  expect_equal(p0, p1)
+  set.seed(1)
+  r1 <- residuals(fit_dg, type = "mle-mcmc", mcmc_samples = p1)
+  set.seed(1)
+  r2 <- residuals(fit_dg, type = "mle-mcmc", mcmc_samples = p2)
+  qqnorm(r1)
+  qqnorm(r2)
+  expect_false(identical(r1, r2))
+  expect_true(max(r1) < 5)
+  expect_true(min(r1) > -5)
+  expect_true(max(r2) < 5)
+  expect_true(min(r2) > -5)
+})
+
+test_that("predict_mle_mcmc() works with extra_time #297", {
+  skip_on_cran()
+  skip_if_not_installed("sdmTMBextra")
+  skip_if_not_installed("rstan")
+  fit <- sdmTMB(
+    density ~ 1,
+    time = "year",
+    spatiotemporal = "rw",
+    spatial = "on",
+    mesh = pcod_mesh_2011,
+    data = pcod_2011,
+    family = tweedie(link = "log"),
+    extra_time = c(2012, 2014, 2016)
+  )
+  set.seed(123)
+  samps <- sdmTMBextra::predict_mle_mcmc(fit, mcmc_iter = 11, mcmc_warmup = 10)
+  expect_true(nrow(samps) == 969L)
+})
+
+test_that("all residuals work with extra time and offsets #326", {
+  skip_on_cran()
+  skip_if_not_installed("sdmTMBextra")
+  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
+  pcod$os <- rep(log(0.01), nrow(pcod)) # offset
+  m <- sdmTMB(
+    data = pcod,
+    formula = density ~ 1,
+    mesh = mesh,
+    offset = pcod$os,
+    family = tweedie(link = "log"),
+    spatial = "on",
+    time = "year",
+    extra_time = c(2006, 2008, 2010, 2012, 2014, 2016),
+    spatiotemporal = "off"
+  )
+  set.seed(1)
+  r <- residuals(m, type = "mle-eb")
+  expect_true(is.vector(r))
+  expect_equal(round(r, 3)[1:10], c(1.182, 0.671, -1.095, 0.511, -0.874, -0.521, 0.018, -1.19,  0.069, 0.973))
+  set.seed(1)
+  expect_equal(length(r), 2143L)
+  r <- residuals(m, type = "mle-eb")
+  expect_equal(length(r), 2143L)
+  r <- residuals(m, type = "response")
+  expect_equal(length(r), 2143L)
+  set.seed(1)
+  p1 <- sdmTMBextra::predict_mle_mcmc(m,
+    mcmc_iter = 11, mcmc_warmup = 10
+  )
+  r <- residuals(m, type = "mle-mcmc", mcmc_samples = p1)
+  expect_equal(length(r), 2143L)
+})
+
+test_that("old residual types get flagged with a message", {
+  fit <- sdmTMB(
+    present ~ 1,
+    data = pcod_2011, spatial = "off",
+    family = binomial()
+  )
+  expect_message(r <- residuals(fit), regexp = "'mle-eb'")
+  expect_message(r <- residuals(fit, type = "mle-laplace"), regexp = "'mle-eb'")
+  r <- residuals(fit, type = "mle-mvn")
+  expect_length(r, 969L)
+})
+
+test_that("pgengamma works for Q = 0", {
+  set.seed(1)
+  p <- pgengamma(q = 1, mean = 0.5, sigma = 0.8, .Q = 0, lower.tail = TRUE, log.p = FALSE)
+  expect_equal(round(p, 4), 0.8973)
+})

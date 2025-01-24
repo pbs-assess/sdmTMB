@@ -1,5 +1,4 @@
 test_that("TMB IID simulation works", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -32,7 +31,6 @@ test_that("TMB IID simulation works", {
 })
 
 test_that("TMB AR1 simulation works", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -68,7 +66,6 @@ test_that("TMB AR1 simulation works", {
 })
 
 test_that("TMB RW simulation works", {
-  skip_on_ci()
   skip_on_cran()
 
   set.seed(1)
@@ -121,7 +118,6 @@ test_that("TMB RW simulation works", {
 
 test_that("TMB (custom) AR1 simulation is unbiased", {
   # run many times; check for bias
-  skip_on_ci()
   skip_on_cran()
 
   do_sim_fit <- function(i) {
@@ -163,9 +159,94 @@ test_that("TMB (custom) AR1 simulation is unbiased", {
   expect_true(median(out$sigma_E) > 0.09 && median(out$sigma_E) < 0.11)
 })
 
+test_that("simulate() behaves OK with or without random effects across types", {
+  skip_on_cran()
+  m <- sdmTMB(
+    data = pcod_2011,
+    formula = density ~ 1,
+    mesh = pcod_mesh_2011,
+    family = tweedie(link = "log")
+  )
+  set.seed(1)
+  s <- simulate(m)
+  expect_length(s, 969)
+
+  m2 <- update(m, spatial = "off")
+  s <- simulate(m2)
+  expect_length(s, 969)
+
+  # has no random effects, switches to standard as needed:
+  s <- simulate(m2, type = "mle-mvn")
+  expect_length(s, 969)
+})
+
+test_that("simulate() method works with newdata", {
+  skip_on_cran()
+  fit <- sdmTMB(
+    present ~ 1,
+    time = "year",
+    data = pcod_2011, spatial = "on",
+    spatiotemporal = "iid",
+    family = binomial(),
+    mesh = pcod_mesh_2011
+  )
+  s <- simulate(fit)
+  expect_true(nrow(s) == nrow(pcod_2011))
+  g <- replicate_df(qcs_grid, "year", unique(pcod_2011$year))
+  s <- simulate(fit, newdata = g)
+  expect_true(nrow(s) == nrow(g))
+  s <- simulate(fit, newdata = subset(g, year == 2011))
+  nrow(s)
+  expect_true(nrow(s) == nrow(subset(g, year == 2011)))
+
+  gg <- subset(g, year == 2011)
+  set.seed(1)
+  s <- simulate(fit, newdata = gg, nsim = 400L)
+  a <- apply(s, 1, mean)
+  p <- predict(fit, newdata = gg)
+  plot(a, plogis(p$est))
+  expect_gt(cor(a, plogis(p$est)), 0.98)
+
+  set.seed(1)
+  s1 <- simulate(fit, type = "mle-mvn", mle_mvn_samples = "single", nsim = 100)
+  set.seed(1)
+  s2 <- simulate(fit, type = "mle-mvn", mle_mvn_samples = "multiple", nsim = 100)
+  set.seed(1)
+  s3 <- simulate(fit, type = "mle-eb", nsim = 100)
+
+  expect_false(identical(s1, s2))
+  expect_false(identical(s1, s3))
+
+  sd1 <- apply(s1, 1, sd)
+  sd2 <- apply(s2, 1, sd)
+  sd3 <- apply(s3, 1, sd)
+
+  expect_lt(mean(sd1), mean(sd2))
+
+  # offset?
+  fit <- sdmTMB(
+    catch_weight ~ 1,
+    data = dogfish,
+    offset = log(dogfish$area_swept),
+    spatial = "off",
+    family = tweedie()
+  )
+
+  set.seed(1)
+  s1 <- simulate(fit)
+  set.seed(1)
+  s2 <- simulate(fit, newdata = dogfish)
+  set.seed(1)
+  s3 <- simulate(fit, newdata = dogfish, offset = rep(0, nrow(dogfish)))
+  set.seed(1)
+  s4 <- simulate(fit, newdata = dogfish, offset = log(dogfish$area_swept))
+
+  expect_equal(s1, s4)
+  expect_equal(s2, s3)
+})
+
 
 # test_that("TMB Delta simulation works", {
-#   skip_on_ci()
 #   skip_on_cran()
 #   skip_if_not_installed("INLA")
 #

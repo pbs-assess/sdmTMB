@@ -27,8 +27,10 @@ NULL
 #'   \code{\link[sdmTMB:families]{censored_poisson()}},
 #'   \code{\link[sdmTMB:families]{gamma_mix()}},
 #'   \code{\link[sdmTMB:families]{lognormal_mix()}},
-#'   \code{\link[sdmTMB:families]{student()}}, and
-#'   \code{\link[sdmTMB:families]{tweedie()}}. Supports the delta/hurdle models:
+#'   \code{\link[sdmTMB:families]{student()}},
+#'   \code{\link[sdmTMB:families]{tweedie()}}, and
+#'   \code{\link[sdmTMB:families]{gengamma()}}.
+#'   Supports the delta/hurdle models:
 #'   \code{\link[sdmTMB:families]{delta_beta()}},
 #'   \code{\link[sdmTMB:families]{delta_gamma()}},
 #'   \code{\link[sdmTMB:families]{delta_gamma_mix()}},
@@ -239,6 +241,9 @@ NULL
 #' `extra_time` can also be used to fill in missing time steps for the purposes
 #' of a random walk or AR(1) process if the gaps between time steps are uneven.
 #'
+#' `extra_time` can include only extra time steps or all time steps including
+#' those found in the fitted data. This latter option may be simpler.
+#'
 #' **Regularization and priors**
 #'
 #' You can achieve regularization via penalties (priors) on the fixed effect
@@ -295,7 +300,7 @@ NULL
 #'
 #' *Reference for local trends:*
 #'
-#' Barnett, L.A.K., E.J. Ward, S.C. Anderson. Improving estimates of species
+#' Barnett, L.A.K., E.J. Ward, S.C. Anderson. 2021. Improving estimates of species
 #' distribution change by incorporating local trends. Ecography. 44(3):427-439.
 #' \doi{10.1111/ecog.05176}.
 #'
@@ -311,14 +316,14 @@ NULL
 #' *Discussion of and illustration of some decision points when fitting these
 #' models:*
 #'
-#' Commander, C.J.C., Barnett, L.A.K., Ward, E.J., Anderson, S.C., and
-#' Essington, T.E. 2022. The shadow model: how and why small choices in
+#' Commander, C.J.C., L.A.K. Barnett, E.J. Ward, S.C. Anderson, T.E.
+#' Essington. 2022. The shadow model: how and why small choices in
 #' spatially explicit species distribution models affect predictions. PeerJ 10:
 #' e12783. \doi{10.7717/peerj.12783}.
 #'
 #' *Application and description of threshold/break-point models:*
 #'
-#' Essington, T.E. S.C. Anderson, L.A.K. Barnett, H.M. Berger, S.A. Siedlecki,
+#' Essington, T.E., S.C. Anderson, L.A.K. Barnett, H.M. Berger, S.A. Siedlecki,
 #' E.J. Ward. 2022. Advancing statistical models to reveal the effect of
 #' dissolved oxygen on the spatial distribution of marine taxa using thresholds
 #' and a physiologically based index. Ecography. 2022: e06249
@@ -333,7 +338,7 @@ NULL
 #' *Several sections of the original TMB model code were adapted from the
 #' VAST R package:*
 #'
-#' Thorson, J.T., 2019. Guidance for decisions using the Vector Autoregressive
+#' Thorson, J.T. 2019. Guidance for decisions using the Vector Autoregressive
 #' Spatio-Temporal (VAST) package in stock, ecosystem, habitat and climate
 #' assessments. Fish. Res. 210:143–161.
 #' \doi{10.1016/j.fishres.2018.10.013}.
@@ -343,23 +348,23 @@ NULL
 #' idea behind the TMB prediction approach were adapted from the glmmTMB R
 #' package:*
 #'
-#' Mollie E. Brooks, Kasper Kristensen, Koen J. van Benthem, Arni Magnusson,
-#' Casper W. Berg, Anders Nielsen, Hans J. Skaug, Martin Maechler and Benjamin
-#' M. Bolker (2017). glmmTMB Balances Speed and Flexibility Among Packages for
+#' Brooks, M.E., K. Kristensen, K.J. van Benthem, A. Magnusson,
+#' C.W. Berg, A. Nielsen, H.J. Skaug, M. Maechler, B.M. Bolker.
+#'  2017. glmmTMB Balances Speed and Flexibility Among Packages for
 #' Zero-inflated Generalized Linear Mixed Modeling. The R Journal, 9(2):378-400.
 #' \doi{10.32614/rj-2017-066}.
 #'
 #' *Implementation of geometric anisotropy with the SPDE and use of random
 #' field GLMMs for index standardization*:
 #'
-#' Thorson, J.T., Shelton, A.O., Ward, E.J., and Skaug, H.J. 2015.
+#' Thorson, J.T., A.O. Shelton, E.J. Ward, H.J. Skaug. 2015.
 #' Geostatistical delta-generalized linear mixed models improve precision for
 #' estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 #' 72(5): 1297–1310. \doi{10.1093/icesjms/fsu243}.
 #'
 #' @export
 #'
-#' @examplesIf require("visreg", quietly = TRUE)
+#' @examplesIf require("visreg", quietly = TRUE) && require("ggeffects", quietly = TRUE)
 #' library(sdmTMB)
 #'
 #' # Build a mesh to implement the SPDE approach:
@@ -399,7 +404,10 @@ NULL
 #' head(p)
 #'
 #' \donttest{
-#' # Visualize depth effect: (see ?visreg_delta)
+#' # Visualize the depth effect with ggeffects:
+#' ggeffects::ggpredict(fit,  "depth [all]") |> plot()
+#'
+#' # Visualize depth effect with visreg: (see ?visreg_delta)
 #' visreg::visreg(fit, xvar = "depth") # link space; randomized quantile residuals
 #' visreg::visreg(fit, xvar = "depth", scale = "response")
 #' visreg::visreg(fit, xvar = "depth", scale = "response", gg = TRUE, rug = FALSE)
@@ -698,14 +706,23 @@ sdmTMB <- function(
   assert_that(class(formula) %in% c("formula", "list"))
   assert_that(inherits(data, "data.frame"))
   time_varying_type <- match.arg(time_varying_type)
-  if (!is.null(map) && length(map) != length(start)) {
-    cli_warn(c("`length(map) != length(start)`.",
-      "You likely want to specify `start` values if you are setting the `map` argument."))
-  }
+  # if (!is.null(map) && length(map) != length(start)) {
+  #   cli_warn(c("`length(map) != length(start)`.",
+  #     "You likely want to specify `start` values if you are setting the `map` argument."))
+  # }
 
   if (!is.null(time)) {
     assert_that(time %in% names(data),
       msg = "Specified `time` column is missing from `data`.")
+    assert_that(sum(is.na(as.numeric(data[[time]]))) == 0L,
+      msg = "Specified `time` column can't be coerced to a numeric value or contains NAs. Please remove any NAs in the time column.")
+    if (!is.null(extra_time)) { #320 protect against factor(time), extra_time clash
+      if (!is.list(formula)) .form <- list(formula)
+      x <- unlist(lapply(list(formula), \(x) attr(stats::terms(x), "term.labels")))
+      xf <- x[grep("factor\\(", x)]
+      if (any(c(grep(time, xf), grep(paste0("^", time, "$"), x))))
+        cli::cli_warn("Detected potential formula-time column clash. E.g., assuming 'year' is your time column: `formula = ... + factor(year)` combined with `time = 'year'`, and 'extra_time' specified. This can produce a non-identiable model because extra factor levels for the missing time slices will be created. To avoid this, rename your factor time column used in your formula. E.g. create a new column 'year_factor' in your data and use that in the formula. See issue https://github.com/pbs-assess/sdmTMB/issues/320.")
+    }
   }
   if (is.null(time)) {
     time <- "_sdmTMB_time"
@@ -761,17 +778,7 @@ sdmTMB <- function(
     offset <- data[[offset]]
   }
 
-  if (!is.null(extra_time)) { # for forecasting or interpolating
-    data <- expand_time(df = data, time_slices = extra_time, time_column = time, weights = weights, offset = offset, upr = upr)
-    if (!is.null(offset)) offset <- data[["__sdmTMB_offset__"]] # expanded
-    if (!is.null(weights)) weights <- data[["__weight_sdmTMB__"]] # expanded
-    if (!is.null(upr)) upr <- data[["__dcens_upr__"]] # expanded
-    data[["__dcens_upr__"]] <- NULL
-    spde$loc_xy <- as.matrix(data[,spde$xy_cols,drop=FALSE])
-    spde$A_st <- fmesher::fm_basis(spde$mesh, loc = spde$loc_xy)
-    spde$sdm_spatial_id <- seq(1, nrow(data)) # FIXME
-  }
-  check_irregalar_time(data, time, spatiotemporal, time_varying)
+  check_irregalar_time(data, time, spatiotemporal, time_varying, extra_time = extra_time)
 
   spatial_varying_formula <- spatial_varying # save it
   if (!is.null(spatial_varying)) {
@@ -788,14 +795,15 @@ sdmTMB <- function(
     if (length(attr(z_i, "contrasts")) && !.int && !omit_spatial_intercept) { # factors with ~ 0 or ~ -1
       msg <- c("Detected predictors with factor levels in `spatial_varying` with the intercept omitted from the `spatial_varying` formula.",
         "You likely want to set `spatial = 'off'` since the constant spatial field (`omega_s`) also represents a spatial intercept.`")
-        # "As of version 0.3.1, sdmTMB turns off the constant spatial field `omega_s` when `spatial_varying` is specified so that the intercept or factor-level means are fully described by the spatially varying random fields `zeta_s`.")
       cli_inform(paste(msg, collapse = " "))
     }
     .int <- grep("(Intercept)", colnames(z_i))
     if (sum(.int) > 0) z_i <- z_i[,-.int,drop=FALSE]
     spatial_varying <- colnames(z_i)
+    svc_contrasts <- attr(z_i, which = "contrasts")
   } else {
     z_i <- matrix(0, nrow(data), 0L)
+    svc_contrasts <- NULL
   }
   n_z <- ncol(z_i)
 
@@ -1038,7 +1046,8 @@ sdmTMB <- function(
   X_ij_list <- list()
   for (i in seq_len(n_m)) X_ij_list[[i]] <- X_ij[[i]]
 
-  n_t <- length(unique(data[[time]]))
+  time_df <- make_time_lu(data[[time]], full_time_vec = union(data[[time]], extra_time))
+  n_t <- nrow(time_df)
 
   random_walk <- if (!is.null(time_varying)) switch(time_varying_type, rw = 1L, rw0 = 2L, ar1 = 0L) else 0L
   tmb_data <- list(
@@ -1050,7 +1059,7 @@ sdmTMB <- function(
     A_st       = spde$A_st,
     sim_re     = if ("sim_re" %in% names(experimental)) as.integer(experimental$sim_re) else rep(0L, 6),
     A_spatial_index = spde$sdm_spatial_id - 1L,
-    year_i     = make_year_i(data[[time]]),
+    year_i     = time_df$year_i[match(data[[time]], time_df$time_from_data)],
     ar1_fields = ar1_fields,
     simulate_t = rep(1L, n_t),
     rw_fields =  rw_fields,
@@ -1073,6 +1082,7 @@ sdmTMB <- function(
     flag = 1L, # part of TMB::normalize()
     calc_index_totals = 0L,
     calc_cog = 0L,
+    calc_eao = 0L,
     random_walk = random_walk,
     ar1_time = as.integer(!is.null(time_varying) && time_varying_type == "ar1"),
     priors_b_n = length(not_na),
@@ -1089,6 +1099,8 @@ sdmTMB <- function(
     proj_year  = 0, # dummy
     proj_spatial_index = 0, # dummy
     proj_z_i = matrix(0, nrow = 1, ncol = n_m), # dummy
+    indexes_total = numeric(0), # dummy
+    n_integration = 0L, # dummy
     spde_aniso = make_anisotropy_spde(spde, anisotropy),
     spde       = get_spde_matrices(spde),
     barrier = as.integer(barrier),
@@ -1137,8 +1149,9 @@ sdmTMB <- function(
     ln_kappa   = matrix(0, 2L, n_m),
     # ln_kappa   = rep(log(sqrt(8) / median(stats::dist(spde$mesh$loc))), 2),
     thetaf     = 0,
+    gengamma_Q = 0.5, # Not defined at exactly 0
     logit_p_mix = 0,
-    log_ratio_mix = 0,
+    log_ratio_mix = -1, # ratio is 1 + exp(log_ratio_mix) so 0 would start fairly high
     ln_phi     = rep(0, n_m),
     ln_tau_V   = matrix(0, ncol(X_rw_ik), n_m),
     rho_time_unscaled = matrix(0, ncol(X_rw_ik), n_m),
@@ -1168,16 +1181,7 @@ sdmTMB <- function(
   tmb_map$b_j <- NULL
   if (delta) tmb_map$b_j2 <- NULL
   if (family$family[[1]] == "tweedie") tmb_map$thetaf <- NULL
-  if (family$family[[1]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
-    tmb_map$log_ratio_mix <- NULL
-    tmb_map$logit_p_mix <- NULL
-  }
-  if (delta) {
-    if(family$family[[2]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
-      tmb_map$log_ratio_mix <- NULL
-      tmb_map$logit_p_mix <- NULL
-    }
-  }
+  if ("gengamma" %in% family$family) tmb_map$gengamma_Q <- factor(NA)
   tmb_map$ln_phi <- rep(1, n_m)
   if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson"))
     tmb_map$ln_phi[1] <- factor(NA)
@@ -1199,7 +1203,6 @@ sdmTMB <- function(
 
   if (multiphase && is.null(previous_fit) && do_fit) {
 
-
     original_tmb_data <- tmb_data
     # much faster on first phase!?
     tmb_data$no_spatial <- 1L
@@ -1212,6 +1215,7 @@ sdmTMB <- function(
 
     tmb_obj1 <- TMB::MakeADFun(
       data = tmb_data, parameters = tmb_params,
+      profile = control$profile,
       map = tmb_map, DLL = "sdmTMB", silent = silent)
     lim <- set_limits(tmb_obj1, lower = lower, upper = upper, silent = TRUE)
 
@@ -1349,27 +1353,46 @@ sdmTMB <- function(
   }
 
   if (anisotropy && delta && !"ln_H_input" %in% names(map)) {
-    tmb_map$ln_H_input <- factor(c(1, 2, 1, 2)) # share anistropy as in VAST
+    tmb_map$ln_H_input <- factor(c(1, 2, 1, 2)) # share anisotropy as in VAST
+  }
+
+  if (family$family[[1]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
+    tmb_map$log_ratio_mix <- NULL # performs better starting this in 2nd phase
+    tmb_map$logit_p_mix <- NULL # performs better starting this in 2nd phase
+  }
+  if (delta) {
+    if (family$family[[2]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
+      tmb_map$log_ratio_mix <- NULL
+      tmb_map$logit_p_mix <- NULL
+    }
   }
 
   if (tmb_data$threshold_func > 0) tmb_map$b_threshold <- NULL
-
-  if (control$profile && delta)
-    cli_abort("Profile not yet working with delta models.")
+  if ("gengamma" %in% family$family) tmb_map$gengamma_Q <- NULL
 
   for (i in seq_along(map)) { # user supplied
-    cli_inform(c(i = paste0("Fixing (mapping) `", names(map)[i],
-      "` at specified starting value(s) of:"),
-      paste0("  ",
-        paste(round(tmb_params[[names(map)[i]]], 3), collapse = ", "))))
+    cli_inform(c(i = paste0("Fixing or mirroring `", names(map)[i], "`")))
+    # ,
+    #   "` at specified starting value(s) of:"),
+    #   paste0("  ",
+    #     paste(round(tmb_params[[names(map)[i]]], 3), collapse = ", "))))
   }
   tmb_map <- c(map, tmb_map) # add user-supplied mapping
 
-  prof <- c("b_j")
-  if (delta) prof <- c(prof, "b_j2")
+  if (isTRUE(control$profile)) {
+    prof <- c("b_j")
+    if (delta) prof <- c(prof, "b_j2")
+    control$profile <- prof
+  } else if (is.character(control$profile)) {
+    prof <- control$profile
+    control$profile <- prof
+  } else {
+    control$profile <- NULL
+  }
 
-  out_structure <- structure(list(
+    out_structure <- structure(list(
     data       = data,
+    offset     = offset,
     spde       = spde,
     formula    = original_formula,
     split_formula = split_formula,
@@ -1378,6 +1401,7 @@ sdmTMB <- function(
     threshold_function = thresh[[1]]$threshold_func,
     epsilon_predictor = epsilon_predictor,
     time       = time,
+    time_lu    = time_df,
     family     = family,
     smoothers = sm,
     response   = y_i,
@@ -1396,6 +1420,7 @@ sdmTMB <- function(
     contrasts  = lapply(X_ij, attr, which = "contrasts"),
     terms  = lapply(mf, attr, which = "terms"),
     extra_time = extra_time,
+    fitted_time = sort(unique(data[[time]])),
     xlevels    = lapply(seq_along(mf), function(i) stats::.getXlevels(mt[[i]], mf[[i]])),
     call       = match.call(expand.dots = TRUE),
     version    = utils::packageVersion("sdmTMB")),
@@ -1408,10 +1433,10 @@ sdmTMB <- function(
   if (do_index) {
     args <- list(object = out_structure, return_tmb_data = TRUE)
     args <- c(args, predict_args)
-    tmb_data <- do.call(predict.sdmTMB, args)
     if (!"newdata" %in% names(predict_args)) {
       cli_warn("`newdata` must be supplied if `do_index = TRUE`.")
     }
+    tmb_data <- do.call(predict.sdmTMB, args)
     if ("bias_correct" %in% names(index_args)) {
       cli_warn("`bias_correct` must be done later with `get_index(..., bias_correct = TRUE)`.")
       index_args$bias_correct <- NULL
@@ -1422,7 +1447,7 @@ sdmTMB <- function(
       index_args[["area"]] <- 1
     }
     if (length(index_args$area) == 1L) {
-      tmb_data$area_i <- rep(index_args[["area"]], nrow(predict_args[["newdata"]]))
+      tmb_data$area_i <- rep(index_args[["area"]], length(tmb_data$proj_year)) # proj_year includes padded extra_time! otherwise, crash
     } else {
       if (length(index_args$area) != nrow(predict_args[["newdata"]]))
         cli_abort("`area` length does not match `nrow(newdata)`.")
@@ -1431,13 +1456,16 @@ sdmTMB <- function(
     tmb_data$calc_index_totals <- 1L
     tmb_params[["eps_index"]] <- numeric(0) # for bias correction
     out_structure$do_index <- TRUE
+    do_index_time_missing_from_nd <-
+    out_structure$do_index_time_missing_from_nd <-
+      setdiff(data[[time]], predict_args$newdata[[time]])
   } else {
     out_structure$do_index <- FALSE
   }
 
   tmb_obj <- TMB::MakeADFun(
     data = tmb_data, parameters = tmb_params, map = tmb_map,
-    profile = if (control$profile) prof else NULL,
+    profile = control$profile,
     random = tmb_random, DLL = "sdmTMB", silent = silent)
   lim <- set_limits(tmb_obj, lower = lower, upper = upper,
     loc = spde$mesh$loc, silent = FALSE)
@@ -1447,6 +1475,7 @@ sdmTMB <- function(
   out_structure$tmb_params <- tmb_params
   out_structure$lower <- lim$lower
   out_structure$upper <- lim$upper
+
 
   if (!do_fit) return(out_structure)
 
@@ -1482,17 +1511,35 @@ sdmTMB <- function(
   }
   check_bounds(tmb_opt$par, lim$lower, lim$upper)
 
+  if (!silent) cli_inform("running TMB sdreport\n")
   sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision)
   conv <- get_convergence_diagnostics(sd_report)
+
+  ## save params that families need to grab from environments:
+  if (any(family$family %in% c("truncated_nbinom1", "truncated_nbinom2"))) {
+    phi <- exp(tmb_obj$par[["ln_phi"]])
+    if (delta) {
+      assign(".phi", phi, environment(out_structure[["family"]][[2]][["linkinv"]]))
+    } else {
+      assign(".phi", phi, environment(out_structure[["family"]][["linkinv"]]))
+    }
+  }
 
   out_structure$tmb_obj <- tmb_obj
   out <- c(out_structure, list(
     model      = tmb_opt,
     sd_report  = sd_report,
+    parlist = tmb_obj$env$parList(par = tmb_obj$env$last.par.best),
+    last.par.best = tmb_obj$env$last.par.best,
     gradients  = conv$final_grads,
     bad_eig    = conv$bad_eig,
     pos_def_hessian = sd_report$pdHess))
-  `class<-`(out, "sdmTMB")
+  out <- `class<-`(out, "sdmTMB")
+  # if (out$tmb_data$has_smooths) {
+  #   edf <- suppressMessages(cAIC(out, what = "EDF"))
+  #   out$edf <- edf
+  # }
+  out
 }
 
 check_bounds <- function(.par, lower, upper) {
@@ -1573,12 +1620,12 @@ parse_spatial_arg <- function(spatial) {
   spatial
 }
 
-check_irregalar_time <- function(data, time, spatiotemporal, time_varying) {
+check_irregalar_time <- function(data, time, spatiotemporal, time_varying, extra_time) {
   if (any(spatiotemporal %in% c("ar1", "rw")) || !is.null(time_varying)) {
     if (!is.numeric(data[[time]])) {
       cli_abort("Time column should be integer or numeric if using AR(1) or random walk processes.")
     }
-    ti <- sort(unique(data[[time]]))
+    ti <- sort(union(unique(data[[time]]), extra_time))
     if (length(unique(diff(ti))) > 1L) {
       missed <- find_missing_time(data[[time]])
       msg <- c(

@@ -113,8 +113,10 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' * `data`: Original data plus columns for fold ID, CV predicted value,
 #'           and CV log likelihood.
 #' * `models`: A list of models; one per fold.
-#' * `fold_loglik`: Sum of left-out log likelihoods per fold.
-#' * `sum_loglik`: Sum of `fold_loglik` across all left-out data.
+#' * `fold_loglik`: Sum of left-out log likelihoods per fold. More positive
+#'   values are better.
+#' * `sum_loglik`: Sum of `fold_loglik` across all left-out data. More positive
+#'   values are better.
 #' * `pdHess`: Logical vector: Hessian was invertible each fold?
 #' * `converged`: Logical: all `pdHess` `TRUE`?
 #' * `max_gradients`: Max gradient per fold.
@@ -188,23 +190,23 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'   family = tweedie(link = "log"),
 #'   fold_ids = rep(seq(1, 3), nrow(pcod))[seq(1, nrow(pcod))]
 #' )
-#'
-#' # LFOCV:
-#' m_lfocv <- sdmTMB_cv(
-#'   present ~ s(year, k = 4),
-#'   data = pcod,
-#'   mesh = mesh,
-#'   lfo = TRUE,
-#'   lfo_forecast = 2,
-#'   lfo_validations = 3,
-#'   family = binomial(),
-#'   spatiotemporal = "off",
-#'   time = "year" # must be specified
-#' )
-#'
-#' # See how the LFOCV folds were assigned:
-#' example_data <- m_lfocv$models[[1]]$data
-#' table(example_data$cv_fold, example_data$year)
+#
+# # LFOCV:
+# m_lfocv <- sdmTMB_cv(
+#   present ~ s(year, k = 4),
+#   data = pcod,
+#   mesh = mesh,
+#   lfo = TRUE,
+#   lfo_forecast = 2,
+#   lfo_validations = 3,
+#   family = binomial(),
+#   spatiotemporal = "off",
+#   time = "year" # must be specified
+# )
+#
+# # See how the LFOCV folds were assigned:
+# example_data <- m_lfocv$models[[1]]$data
+# table(example_data$cv_fold, example_data$year)
 #' }
 sdmTMB_cv <- function(
     formula, data, mesh_args, mesh = NULL, time = NULL,
@@ -285,10 +287,10 @@ sdmTMB_cv <- function(
     cli_abort("`weights` cannot be specified within sdmTMB_cv().")
   }
   if ("offset" %in% names(dot_args)) {
-    .offset <- eval(dot_args$offset)
-    if (parallel && !is.character(.offset) && !is.null(.offset)) {
-      cli_abort("We recommend using a character value for 'offset' (indicating the column name) when applying parallel cross validation.")
+    if (!is.character(dot_args$offset)) {
+      cli_abort("Please use a character value for 'offset' (indicating the column name) for cross validation.")
     }
+    .offset <- eval(dot_args$offset)
   } else {
     .offset <- NULL
   }
@@ -357,9 +359,6 @@ sdmTMB_cv <- function(
         weights = weights, previous_fit = if (use_initial_fit) fit1 else NULL
       ), dot_args)
       object <- do.call(sdmTMB, args)
-      # if (max(object$gradients) > 0.01) {
-      # object <- run_extra_optimization(object, nlminb_loops = 1L, newton_loops = 0L)
-      # }
     }
 
     if (lfo) {
@@ -370,7 +369,9 @@ sdmTMB_cv <- function(
 
     # FIXME: only use TMB report() below to be faster!
     # predict for withheld data:
-    predicted <- predict(object, newdata = cv_data, type = "response")
+    predicted <- predict(object, newdata = cv_data, type = "response",
+      offset = if (!is.null(.offset)) cv_data[[.offset]] else rep(0, nrow(cv_data)))
+
     cv_data$cv_predicted <- predicted$est
     response <- get_response(object$formula[[1]])
     withheld_y <- predicted[[response]]
@@ -452,7 +453,7 @@ sdmTMB_cv <- function(
   pdHess <- vapply(out, `[[`, "pdHess", FUN.VALUE = logical(1L))
   max_grad <- vapply(out, `[[`, "max_gradient", FUN.VALUE = numeric(1L))
   converged <- all(pdHess)
-  list(
+  out <- list(
     data = data,
     models = models,
     fold_loglik = fold_cv_ll,
@@ -461,9 +462,35 @@ sdmTMB_cv <- function(
     pdHess = pdHess,
     max_gradients = max_grad
   )
+  `class<-`(out, "sdmTMB_cv")
 }
 
 log_sum_exp <- function(x) {
   max_x <- max(x)
   max_x + log(sum(exp(x - max_x)))
+}
+
+#' @export
+#' @import methods
+print.sdmTMB_cv <- function(x, ...) {
+  nmods <- length(x$models)
+  nconverged <- sum(x$converged)
+  cat(paste0("Cross validation of sdmTMB models with ", nmods, " folds.\n"))
+  cat("\n")
+  cat("Summary of the first fold model fit:\n")
+  cat("\n")
+  print(x$models[[1]])
+  cat("\n")
+  cat("Access the rest of the models in a list element named `models`.\n")
+  cat("E.g. `object$models[[2]]` for the 2nd fold model fit.\n")
+  cat("\n")
+  cat(paste0(nconverged, " out of ", nmods, " models are consistent with convergence.\n"))
+  cat("Figure out which folds these are in the `converged` list element.\n")
+  cat("\n")
+  cat(paste0("Out-of-sample log likelihood for each fold: ", paste(round(x$fold_loglik, 2), collapse = ", "), ".\n"))
+  cat("Access these values in the `fold_loglik` list element.\n")
+  cat("\n")
+  cat("Sum of out-of-sample log likelihoods:", round(x$sum_loglik, 2), "\n")
+  cat("More positive values imply better out-of-sample prediction.\n")
+  cat("Access this value in the `sum_loglik` list element.\n")
 }

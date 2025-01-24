@@ -25,16 +25,19 @@ nobs.sdmTMB <- function(object, ...) {
 #' @export
 #' @noRd
 fitted.sdmTMB <- function(object, ...) {
+
+  if (!"offset" %in% names(object))
+    cli_abort("It looks like this was fit with an older version of sdmTMB. Try sdmTMB:::update_version(fit).")
   if (isTRUE(object$family$delta)) {
     inv1 <- object$family[[1]]$linkinv
-    p <- predict(object, type = "link", offset = object$tmb_data$offset_i)
+    p <- predict(object, type = "link", offset = object$offset)
     p1 <- inv1(p$est1)
     inv2 <- object$family[[2]]$linkinv
     p2 <- inv2(p$est2)
     p1 * p2
   } else {
     inv <- object$family$linkinv
-    inv(predict(object, type = "link", offset = object$tmb_data$offset_i)$est)
+    inv(predict(object, type = "link", offset = object$offset)$est)
   }
 }
 
@@ -42,12 +45,20 @@ fitted.sdmTMB <- function(object, ...) {
 #'
 #' @param object The fitted sdmTMB model object
 #' @param complete Currently ignored
+#' @param model Linear predictor for delta models. Defaults to the first
+#'   linear predictor.
 #' @param ... Currently ignored
 #' @importFrom stats coef
 #' @export
-#' @noRd
-coef.sdmTMB <- function(object, complete = FALSE, ...) {
-  x <- tidy(object)
+coef.sdmTMB <- function(object, complete = FALSE, model = 1, ...) {
+  if (is_delta(object)) {
+    assert_that(length(model) == 1L)
+    model <- as.integer(model)
+    assert_that(model %in% c(1L, 2L))
+    msg <- paste0("Returning coefficients from linear predictor ", model, " based on the `model` argument.")
+    cli_inform(msg)
+  }
+  x <- tidy(object, model = model)
   out <- x$estimate
   names(out) <- x$term
   out
@@ -112,15 +123,9 @@ confint.sdmTMB <- function(object, parm, level = 0.95, ...) {
 logLik.sdmTMB <- function(object, ...) {
   val <- -object$model$objective
   nobs <- nobs.sdmTMB(object)
-  df <- length(object$model$par) # fixed effects only
-  if (isTRUE(object$reml)) {
-    s <- as.list(object$sd_report, "Estimate")
-    n_bs <- 0 # smoother FE
-    if (s$bs[1] != 0) { # starting value if mapped off
-      n_bs <- length(s$bs)
-    }
-    df <- df + length(s$b_j) + length(s$b_j2) + n_bs
-  }
+  lpb <- names(object$tmb_obj$env$last.par.best)
+  ran <- c("omega_s", "epsilon_st", "zeta_s", "b_rw_t", "epsilon_re", "RE", "b_smooth")
+  df <- sum(!lpb %in% ran)
   structure(val,
     nobs = nobs, nall = nobs, df = df,
     class = "logLik"

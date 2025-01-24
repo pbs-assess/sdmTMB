@@ -8,10 +8,14 @@
   object,
   nsim = 1L,
   seed = sample.int(1e+06, 1L),
-  params = c("mle", "mvn"),
+  type = c("mle-eb", "mle-mvn"),
   model = c(NA, 1, 2),
+  newdata = NULL,
   re_form = NULL,
+  mle_mvn_samples = c("single", "multiple"),
   mcmc_samples = NULL,
+  return_tmb_report = FALSE,
+  silent = FALSE,
   ...
 )
 }
@@ -22,24 +26,40 @@
 
 \item{seed}{Random number seed}
 
-\item{params}{Whether the parameters used in the simulation should come from
-the Maximum Likelihood Estimate (\code{"mle"}) or from new draws from the joint
-precision matrix assuming they are multivariate normal distributed
-(\code{"mvn"}).}
+\item{type}{How parameters should be treated. \code{"mle-eb"}: fixed effects
+are at their maximum likelihood (MLE) estimates  and random effects are at
+their empirical Bayes (EB) estimates. \code{"mle-mvn"}: fixed effects are at
+their MLEs but random effects are taken from a single approximate sample.
+This latter option is a suggested approach if these simulations will be
+used for goodness of fit testing (e.g., with the DHARMa package).}
 
 \item{model}{If a delta/hurdle model, which model to simulate from?
 \code{NA} = combined, \code{1} = first model, \code{2} = second mdoel.}
+
+\item{newdata}{Optional new data frame from which to simulate.}
 
 \item{re_form}{\code{NULL} to specify a simulation conditional on fitted random
 effects (this only simulates observation error). \code{~0} or \code{NA} to simulate
 new random affects (smoothers, which internally are random effects, will
 not be simulated as new).}
 
+\item{mle_mvn_samples}{Applies if \code{type = "mle-mvn"}. If \code{"single"}, take
+a single MVN draw from the random effects. If \code{"multiple"}, take an MVN
+draw from the random effects for each of the \code{nsim}.}
+
 \item{mcmc_samples}{An optional matrix of MCMC samples. See \code{extract_mcmc()}
 in the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
 package.}
 
-\item{...}{Extra arguments (not used)}
+\item{return_tmb_report}{Return the \pkg{TMB} report from \code{simulate()}? This
+lets you parse out whatever elements you want from the simulation.
+Not usually needed.}
+
+\item{silent}{Logical. Silent?}
+
+\item{...}{Extra arguments passed to \code{\link[=predict.sdmTMB]{predict.sdmTMB()}}. E.g., one may wish
+to pass an \code{offset} argument if \code{newdata} are supplied in a model with an
+offset.}
 }
 \value{
 Returns a matrix; number of columns is \code{nsim}.
@@ -76,14 +96,12 @@ dim(s1)
 sum(s1 == 0)/length(s1)
 sum(dat$observed == 0) / length(dat$observed)
 
-# simulate with the parameters drawn from the joint precision matrix:
-s2 <- simulate(fit, nsim = 1, params = "MVN")
+# simulate with random effects sampled from their approximate posterior
+s2 <- simulate(fit, nsim = 1, params = "mle-mvn")
+# these may be useful in conjunction with DHARMa simulation-based residuals
 
 # simulate with new random fields:
 s3 <- simulate(fit, nsim = 1, re_form = ~ 0)
-
-# simulate with new random fields and new parameter draws:
-s3 <- simulate(fit, nsim = 1, params = "MVN", re_form = ~ 0)
 }
 \seealso{
 \code{\link[=sdmTMB_simulate]{sdmTMB_simulate()}}

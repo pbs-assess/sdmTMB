@@ -1,5 +1,4 @@
 test_that("coef and vcov and confint work", {
-  skip_on_ci()
   skip_on_cran()
   fit <- sdmTMB(
     density ~ depth,
@@ -28,8 +27,19 @@ test_that("coef and vcov and confint work", {
   expect_true(grepl("Estimate", colnames(x))[3])
 })
 
+test_that("coef works with delta models and informs as needed", {
+  skip_on_cran()
+  fit <- sdmTMB(
+    density ~ depth,
+    data = pcod_2011, spatial = "off",
+    family = delta_gamma()
+  )
+  expect_message(x <- coef(fit), regexp = "model")
+  expect_message(x <- coef(fit, model = 1), regexp = "model")
+  expect_message(x <- coef(fit, model = 2), regexp = "model")
+})
+
 test_that("various methods work", {
-  skip_on_ci()
   skip_on_cran()
   fit <- sdmTMB(
     density ~ depth,
