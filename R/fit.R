@@ -1556,6 +1556,8 @@ set_limits <- function(tmb_obj, lower, upper, loc = NULL, silent = TRUE) {
       if (!silent) message("Setting lower limit for ", i_name, " to ",
         lower[[i_name]], ".")
     }
+  }
+  for (i_name in names(upper)) {
     if (i_name %in% names(.upper)) {
       .upper[names(.upper) %in% i_name] <- upper[[i_name]]
       if (!silent) message("Setting upper limit for ", i_name, " to ",

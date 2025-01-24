@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Allow for specifying only lower or upper limits. #394
+
 * Add vignette on multispecies models with sdmTMB (or any case where one wants
   additional spatial and or spatiotemporal fields by some group).
 
