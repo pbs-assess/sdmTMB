@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9022</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9023</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,8 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="sdmtmb-development-version">sdmTMB (development version)<a class="anchor" aria-label="anchor" href="#sdmtmb-development-version"></a></h2>
-<ul><li><p>Allow for specifying only lower or upper limits. <a href="https://github.com/pbs-assess/sdmTMB/issues/394" class="external-link">#394</a></p></li>
+<ul><li><p>Warn if parameter limits are set with <code>newton_loops &gt; 0</code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/394" class="external-link">#394</a></p></li>
+<li><p>Allow for specifying only lower or upper limits. <a href="https://github.com/pbs-assess/sdmTMB/issues/394" class="external-link">#394</a></p></li>
 <li><p>Add vignette on multispecies models with sdmTMB (or any case where one wants additional spatial and or spatiotemporal fields by some group).</p></li>
 <li><p>Add EDF (effective degrees of freedom) printing to smoothers with <code>print.sdmTMB()</code> and <code>summary.sdmTMB()</code>. Set argument <code>edf = TRUE</code>. E.g. <code>print(fit, edf = TRUE)</code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/383" class="external-link">#383</a> <a href="https://github.com/pbs-assess/sdmTMB/issues/387" class="external-link">#387</a></p></li>
 <li><p>Add <code><a href="../reference/cAIC.html">cAIC()</a></code> for calculating <em>conditional</em> AIC. Theory based on <a href="https://arxiv.org/abs/2411.14185" class="external-link uri">https://arxiv.org/abs/2411.14185</a>; also see <a href="https://doi.org/10.1002/ecy.4327" class="external-link uri">https://doi.org/10.1002/ecy.4327</a>. J.T. Thorson wrote the function code. EDF (effective degrees of freedom) will ultimately be further split (e.g., split by smoothers) and added to <code>summary.sdmTMB()</code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/383" class="external-link">#383</a> <a href="https://github.com/pbs-assess/sdmTMB/issues/387" class="external-link">#387</a></p></li>
