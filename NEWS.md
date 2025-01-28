@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Warn if parameter limits are set with `newton_loops > 0`. #394
+
 * Allow for specifying only lower or upper limits. #394
 
 * Add vignette on multispecies models with sdmTMB (or any case where one wants
