@@ -1057,7 +1057,7 @@ sdmTMB <- function(
   random_walk <- if (!is.null(time_varying)) switch(time_varying_type, rw = 1L, rw0 = 2L, ar1 = 0L) else 0L
 
   cats <- if (!is.null(mvrw_category)) make_groups(data[[mvrw_category]]) else numeric(0L)
-  if (!is.null(mvrw_category) && spatiotemporal != "rwc") {
+  if (!is.null(mvrw_category) && spatiotemporal == "rwc") {
     mvrw_u <- matrix(0, nrow = max(cats) + 1L, ncol = n_t)
   } else {
     mvrw_u <- matrix(0, nrow = 0L, ncol = 0L)
