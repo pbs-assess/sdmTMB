@@ -10,9 +10,12 @@
   seed = sample.int(1e+06, 1L),
   type = c("mle-eb", "mle-mvn"),
   model = c(NA, 1, 2),
+  newdata = NULL,
   re_form = NULL,
+  mle_mvn_samples = c("single", "multiple"),
   mcmc_samples = NULL,
-  silent = TRUE,
+  return_tmb_report = FALSE,
+  silent = FALSE,
   ...
 )
 }
@@ -33,18 +36,30 @@ used for goodness of fit testing (e.g., with the DHARMa package).}
 \item{model}{If a delta/hurdle model, which model to simulate from?
 \code{NA} = combined, \code{1} = first model, \code{2} = second mdoel.}
 
+\item{newdata}{Optional new data frame from which to simulate.}
+
 \item{re_form}{\code{NULL} to specify a simulation conditional on fitted random
 effects (this only simulates observation error). \code{~0} or \code{NA} to simulate
 new random affects (smoothers, which internally are random effects, will
 not be simulated as new).}
 
+\item{mle_mvn_samples}{Applies if \code{type = "mle-mvn"}. If \code{"single"}, take
+a single MVN draw from the random effects. If \code{"multiple"}, take an MVN
+draw from the random effects for each of the \code{nsim}.}
+
 \item{mcmc_samples}{An optional matrix of MCMC samples. See \code{extract_mcmc()}
 in the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
 package.}
 
+\item{return_tmb_report}{Return the \pkg{TMB} report from \code{simulate()}? This
+lets you parse out whatever elements you want from the simulation.
+Not usually needed.}
+
 \item{silent}{Logical. Silent?}
 
-\item{...}{Extra arguments (not used)}
+\item{...}{Extra arguments passed to \code{\link[=predict.sdmTMB]{predict.sdmTMB()}}. E.g., one may wish
+to pass an \code{offset} argument if \code{newdata} are supplied in a model with an
+offset.}
 }
 \value{
 Returns a matrix; number of columns is \code{nsim}.

@@ -45,7 +45,7 @@
 #' @param mcmc_samples See `extract_mcmc()` in the
 #'   \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package for
 #'   more details and the
-#'   \href{https://pbs-assess.github.io/sdmTMB/articles/web_only/bayesian.html}{Bayesian vignette}.
+#'   \href{https://pbs-assess.github.io/sdmTMB/articles/bayesian.html}{Bayesian vignette}.
 #'   If specified, the predict function will return a matrix of a similar form
 #'   as if `nsim > 0` but representing Bayesian posterior samples from the Stan
 #'   model.
@@ -495,6 +495,15 @@ predict.sdmTMB <- function(object, newdata = NULL,
       cli_abort("`area` should be of the same length as `nrow(newdata)` or of length 1.")
     }
 
+    # newdata, null offset in predict, and non-null in fit #372
+    if (isFALSE(nd_arg_was_null) && is.null(offset) && !all(object$offset == 0)) {
+      msg <- c(
+        "Fitted object contains an offset but the offset is `NULL` in `predict.sdmTMB()` and `newdata` were supplied.",
+        "Prediction will proceed assuming the offset vector is 0 in the prediction.",
+        "Specify an offset vector in `predict.sdmTMB()` to override this.")
+      cli_inform(msg)
+    }
+
     if (!is.null(offset)) {
       if (nrow(proj_X_ij[[1]]) != length(offset))
         cli_abort("Prediction offset vector does not equal number of rows in prediction dataset.")
@@ -777,14 +786,28 @@ predict.sdmTMB <- function(object, newdata = NULL,
         if (type == "response") {
           nd$est1 <- object$family[[1]]$linkinv(r$proj_fe[,1])
           nd$est2 <- object$family[[2]]$linkinv(r$proj_fe[,2])
-          nd$est <- nd$est1 * nd$est2
+          if (object$tmb_data$poisson_link_delta) {
+            .n <- nd$est1 # expected group density (already exp())
+            .p <- 1 - exp(-.n) # expected encounter rate
+            .w <- nd$est2 # expected biomass per group (already exp())
+            .r <- (.n * .w) / .p # (n * w)/p # positive expectation
+            nd$est1 <- .p # expected encounter rate
+            nd$est2 <- .r # positive expectation
+            nd$est <- .n * .w # expected combined value
+          } else {
+            nd$est <- nd$est1 * nd$est2
+          }
         } else {
           nd$est1 <- r$proj_fe[,1]
           nd$est2 <- r$proj_fe[,2]
           if (is.na(model)) {
             p1 <- object$family[[1]]$linkinv(r$proj_fe[,1])
             p2 <- object$family[[2]]$linkinv(r$proj_fe[,2])
-            nd$est <- object$family[[2]]$linkfun(p1 * p1)
+            if (object$tmb_data$poisson_link_delta) {
+              nd$est <- nd$est1 + nd$est2
+            } else {
+              nd$est <- object$family[[2]]$linkfun(p1 * p1)
+            }
             if (se_fit) {
               nd$est <- sr_est_rep$proj_rf_delta
               nd$est_se <- sr_se_rep$proj_rf_delta

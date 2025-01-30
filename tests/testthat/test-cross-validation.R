@@ -12,6 +12,7 @@ test_that("Basic cross validation works", {
     data = d, mesh = spde,
     family = tweedie(link = "log"), time = "year", k_folds = 2
   )
+  print(x)
   expect_equal(class(x$sum_loglik), "numeric")
   expect_equal(x$sum_loglik, sum(x$data$cv_loglik))
   expect_equal(x$sum_loglik, sum(x$fold_loglik))

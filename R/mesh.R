@@ -88,6 +88,14 @@ make_mesh <- function(data, xy_cols,
     cli_abort(msg)
   }
 
+  all_x_non_na <- sum(is.na(data[[xy_cols[[1]]]])) == 0L
+  all_y_non_na <- sum(is.na(data[[xy_cols[[2]]]])) == 0L
+  if (!all_x_non_na || !all_y_non_na) {
+    msg <- c("Some coordinates in `xy_cols` were NA.", "
+      Remove or fix these rows before proceeding.")
+    cli_abort(msg)
+  }
+
   if (max(data[[xy_cols[1]]]) > 1e4 || max(data[[xy_cols[2]]] > 1e4)) {
     msg <- paste0(
       "The x or y column values are fairly large. ",
@@ -199,12 +207,12 @@ binary_search_knots <- function(loc_xy,
     cat("cutoff =", pretty_cutoff, "| knots =", realized_knots)
     if (realized_knots > n_knots) {
       L <- m + 1
-      cat(" |", clisymbols::symbol$arrow_down, "\n")
+      cat(" |", cli::symbol$arrow_down, "\n")
     } else if (realized_knots < n_knots) {
       R <- m - 1
-      cat(" |", clisymbols::symbol$arrow_up, "\n")
+      cat(" |", cli::symbol$arrow_up, "\n")
     } else {
-      cat(" |", clisymbols::symbol$tick, "\n")
+      cat(" |", cli::symbol$tick, "\n")
       return(mesh)
     }
   }

@@ -138,6 +138,46 @@ test_that("Offset prediction matches glm()", {
   # p_glmmTMB <- predict(fit_glmmTMB, newdata = dat)
   # expect_equal(p$est, unname(p_glmmTMB))
 })
+
+test_that("offset gets passed through cross validation as expected #372", {
+  skip_on_cran()
+  dat <- subset(dogfish, catch_weight > 0)
+  expect_error(
+    x <- sdmTMB_cv(catch_weight ~ 1,
+      data = dat,
+      family = Gamma("log"), offset = log(dat$area_swept), spatial = "off"
+    ),
+    "offset"
+  )
+  set.seed(1)
+  x <- sdmTMB_cv(catch_weight ~ 1,
+    data = dat, family = Gamma("log"),
+    offset = "area_swept", spatial = "off",
+    mesh = make_mesh(dat, c("X", "Y"), cutoff = 10), k_folds = 2
+  )
+  y <- x$data[, c("catch_weight", "cv_predicted")]
+  # plot(y$catch_weight, y$cv_predicted)
+  # if offset is applied, will have unique values because an intercept-only model:
+  expect_true(length(unique(y$cv_predicted)) == 684L)
+})
+
+test_that("predicting on newdata with a non-null offset in fit but a null offset in predict informs the user appropriately", {
+  skip_on_cran()
+  dat <- subset(dogfish, catch_weight > 0)
+  fit <- sdmTMB(
+    catch_weight ~ 1,
+    data = dat,
+    family = Gamma("log"),
+    offset = "area_swept",
+    spatial = "off"
+  )
+  pred <- predict(fit)
+  pred <- predict(fit, offset = rep(0, nrow(dat)))
+  pred <- predict(fit, newdata = qcs_grid, offset = rep(0, nrow(qcs_grid)))
+  pred <- predict(fit, newdata = qcs_grid)
+  expect_message({pred <- predict(fit, newdata = qcs_grid)}, regexp = "offset")
+})
+
 # #
 # # offset/prediction setting checks:
 #

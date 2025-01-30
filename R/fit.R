@@ -1511,6 +1511,11 @@ sdmTMB <- function(
       tmb_opt[["evaluations"]] <- tmb_opt[["evaluations"]] + temp[["evaluations"]]
     }
   }
+  if (!is.null(control$upper) || !is.null(control$lower)) {
+    if (newton_loops > 0) {
+      cli_inform("Upper or lower limits were set. `stats::optimHess()` will ignore these limits. Set `control = sdmTMBcontrol(newton_loops = 0)` to avoid the `stats::optimHess()` optimization if desired.")
+    }
+  }
   if (newton_loops > 0) {
     if (!silent) cli_inform("attempting to improve convergence with optimHess\n")
     for (i in seq_len(newton_loops)) {
@@ -1545,7 +1550,12 @@ sdmTMB <- function(
     gradients  = conv$final_grads,
     bad_eig    = conv$bad_eig,
     pos_def_hessian = sd_report$pdHess))
-  `class<-`(out, "sdmTMB")
+  out <- `class<-`(out, "sdmTMB")
+  # if (out$tmb_data$has_smooths) {
+  #   edf <- suppressMessages(cAIC(out, what = "EDF"))
+  #   out$edf <- edf
+  # }
+  out
 }
 
 check_bounds <- function(.par, lower, upper) {
@@ -1576,6 +1586,8 @@ set_limits <- function(tmb_obj, lower, upper, loc = NULL, silent = TRUE) {
       if (!silent) message("Setting lower limit for ", i_name, " to ",
         lower[[i_name]], ".")
     }
+  }
+  for (i_name in names(upper)) {
     if (i_name %in% names(.upper)) {
       .upper[names(.upper) %in% i_name] <- upper[[i_name]]
       if (!silent) message("Setting upper limit for ", i_name, " to ",

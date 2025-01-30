@@ -50,7 +50,7 @@ around \code{\link[DHARMa:createDHARMa]{DHARMa::createDHARMa()}} to facilitate i
 expected distribution. This is \emph{not} the default.
 }
 \details{
-See the \href{https://pbs-assess.github.io/sdmTMB/articles/web_only/residual-checking.html}{residuals vignette}.
+See the \href{https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html}{residuals vignette}.
 
 Advantages to these residuals over the ones from the \code{\link[=residuals.sdmTMB]{residuals.sdmTMB()}}
 method are (1) they work with delta/hurdle models for the combined

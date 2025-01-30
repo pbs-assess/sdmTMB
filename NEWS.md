@@ -1,5 +1,58 @@
 # sdmTMB (development version)
 
+* Warn if parameter limits are set with `newton_loops > 0`. #394
+
+* Allow for specifying only lower or upper limits. #394
+
+* Add vignette on multispecies models with sdmTMB (or any case where one wants
+  additional spatial and or spatiotemporal fields by some group).
+
+* Add EDF (effective degrees of freedom) printing to smoothers with 
+  `print.sdmTMB()` and `summary.sdmTMB()`. Set argument `edf = TRUE`.
+  E.g. `print(fit, edf = TRUE)`. #383 #387
+
+* Add `cAIC()` for calculating *conditional* AIC. Theory based on
+  <https://arxiv.org/abs/2411.14185>; also see
+  <https://doi.org/10.1002/ecy.4327>. J.T. Thorson wrote the function code.
+  EDF (effective degrees of freedom) will ultimately be further split
+  (e.g., split by smoothers) and added to `summary.sdmTMB()`. #383 #387
+
+* Fix bug in `est` column when predicting on new data with Poisson-link
+  delta models with `type = "link"` and `re_form = NA`. #389
+
+* Fix bug in `s95` param reporting from the `tidy()` method. `s95` is present
+  in the logistic threshold models. The model itself was fine but the `s95`
+  parameter was supposed to be reported by `tidy()` as a combination of two 
+  other parameters. This also affected the output in `print()`/`summary()`.
+
+* Add `return_tmb_report` to `simulate.sdmTMB()`.
+
+* Add `newdata` argument to `simulate.sdmTMB()`. This enables simulating on
+  a new data frame similar to how one would predict on new data.
+
+* Add `mle_mvn_samples` argument to `simulate.sdmTMB()`. Defaults to "single".
+  If "multiple", then a sample from the random effects is taken for each
+  simulation iteration.
+
+* Add `project()` experimental function.
+
+* Add print method for `sdmTMB_cv()` output. #319
+
+* Add progress bar to `simulate.sdmTMB()`. #346
+
+* Add AUC and TSS examples to cross validation vignette. #268
+
+* Add `model` (linear predictor number) argument to coef() method. Also,
+  write documentation for `?coef.sdmTMB`. #351
+
+* Add helpful error message if some coordinates in make_mesh() are NA. #365
+
+* Add informative message if fitting with an offset but predicting with offset
+  argument left at NULL on newdata. #372
+
+* Fix passing of `offset` argument through in `sdmTMB_cv()`. Before it was being
+  omitted in the prediction (i.e., set to 0). #372
+
 * Fig bug in `exponentiate` argument for `tidy()`. Set `conf.int = TRUE` as
   default. #353
 
@@ -61,7 +114,7 @@
 # sdmTMB 0.5.0
 
 * Overhaul residuals vignette ('article') 
-  <https://pbs-assess.github.io/sdmTMB/articles/web_only/residual-checking.html>
+  <https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html>
   including brief intros to randomized quantile residuals, simulation-based
   residuals, 'one-sample' residuals, and uniform vs. Gaussian residuals.
 
