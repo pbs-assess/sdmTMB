@@ -287,10 +287,6 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(b_smooth);  // P-spline smooth parameters
   PARAMETER_ARRAY(ln_smooth_sigma);  // variances of spline REs if included
 
-  PARAMETER(mvrw_rho); // -Inf to Inf to be converted to mvrw_rho -1 to 1
-  PARAMETER_VECTOR(mvrw_logsds); // MVRW log process SDs
-  PARAMETER_ARRAY(mvrw_u); // MVRW states
-
   // Joint negative log-likelihood
   Type jnll = 0.;
 
@@ -660,22 +656,6 @@ Type objective_function<Type>::operator()()
     ADREPORT(sigma_V); // time-varying SD
   }
 
-  // Multivariate-random-walk time-varying intercepts:
-  if (mvrw_u.cols() > 0 && !rw_fields(n_m)) {
-    if (n_m > 1) error("MVRW is not yet coded for delta models.");
-    // FIXME: add MVRW to delta model
-    // if (simulate_t(0)) error("Simulation not yet coded for delta models.");
-    // FIXME: add MVRW to simulation
-    vector<Type> mvrw_sds = exp(mvrw_logsds);
-    Type mvrw_rho_01 = sdmTMB::minus_one_to_one(mvrw_rho);
-    // modified from https://github.com/kaskr/adcomp/blob/master/tmb_examples/mvrw_sparse.cpp
-    // Set up object for evaluating multivariate normal likelihood
-    VECSCALE_t<AR1_t<N01<Type>>> neg_log_density = VECSCALE(AR1(mvrw_rho_01), mvrw_sds);
-    jnll -= dnorm(mvrw_u.col(0).vec(), Type(0), Type(1), true).sum();
-    for(int t = 1; t < n_t; t++)
-      jnll += neg_log_density(mvrw_u.col(t) - mvrw_u.col(t-1));
-  }
-
   // ------------------ INLA projections ---------------------------------------
 
   // Here we are projecting the spatiotemporal and spatial random effects to the
@@ -778,9 +758,6 @@ Type objective_function<Type>::operator()()
           eta_rw_i(i,m) += X_rw_ik(i, k) * b_rw_t(year_i(i), k, m); // record it
           eta_i(i,m) += eta_rw_i(i,m);
         }
-      }
-      if (mvrw_u.cols() > 0) {
-       eta_i(i,m) += mvrw_u(mvrw_cat_i(i), year_i(i)); // note reversed category/year row/column indexing to rest of sdmTMB!
       }
 
       // Spatially varying effects:
@@ -1195,17 +1172,6 @@ Type objective_function<Type>::operator()()
           }
         }
       }
-    }
-    array<Type> proj_mvrw_i(n_p,n_m);
-    proj_mvrw_i.setZero();
-    if (mvrw_u.cols() > 0) {
-      for (int m = 0; m < n_m; m++) {
-        for (int i = 0; i < n_p; i++) {
-          proj_mvrw_i(i,m) += mvrw_u(proj_mvrw_cat_i(i), proj_year(i)); // note reversed category/year row/column indexing to rest of sdmTMB!
-          proj_fe(i) += proj_mvrw_i(i,m);
-        }
-      }
-      REPORT(proj_mvrw_i);
     }
 
     // Spatial and spatiotemporal random fields (by unique location):

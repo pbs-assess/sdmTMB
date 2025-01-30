@@ -1057,11 +1057,6 @@ sdmTMB <- function(
   random_walk <- if (!is.null(time_varying)) switch(time_varying_type, rw = 1L, rw0 = 2L, ar1 = 0L) else 0L
 
   cats <- if (!is.null(mvrw_category)) make_groups(data[[mvrw_category]]) else numeric(0L)
-  if (!is.null(mvrw_category) && spatiotemporal != "rwc") {
-    mvrw_u <- matrix(0, nrow = max(cats) + 1L, ncol = n_t)
-  } else {
-    mvrw_u <- matrix(0, nrow = 0L, ncol = 0L)
-  }
   n_c <- if (!is.null(mvrw_category)) length(unique(data[[mvrw_category]])) else 0L
 
   tmb_data <- list(
@@ -1190,11 +1185,7 @@ sdmTMB <- function(
     ln_epsilon_re_sigma = rep(0, n_m),
     epsilon_re = matrix(0, tmb_data$n_t, n_m),
     b_smooth = if (sm$has_smooths) matrix(0, sum(sm$sm_dims), n_m) else array(0),
-    ln_smooth_sigma = if (sm$has_smooths) matrix(0, length(sm$sm_dims), n_m) else array(0),
-    # mvrw_rho = if (nrow(mvrw_u) > 0L) rep(0, nrow(mvrw_u)*(nrow(mvrw_u)-1)/2) else 0,
-    mvrw_rho = if (nrow(mvrw_u) > 0L) 0 else numeric(0),
-    mvrw_logsds = rep(0, nrow(mvrw_u)),
-    mvrw_u = mvrw_u
+    ln_smooth_sigma = if (sm$has_smooths) matrix(0, length(sm$sm_dims), n_m) else array(0)
   )
   if (identical(family$link, "inverse") && family$family[1] %in% c("Gamma", "gaussian", "student") && !delta) {
     fam <- family
@@ -1288,10 +1279,6 @@ sdmTMB <- function(
   if (est_epsilon_re) {
     tmb_random <- c(tmb_random, "epsilon_re")
     tmb_map <- unmap(tmb_map, c("epsilon_re"))
-  }
-  if (nrow(mvrw_u) > 0L) {
-    tmb_random <- c(tmb_random, "mvrw_u")
-    tmb_map <- unmap(tmb_map, c("mvrw_u", "mvrw_rho", "mvrw_logsds"))
   }
 
   tmb_map$ar1_phi <- as.numeric(tmb_map$ar1_phi) # strip factors
