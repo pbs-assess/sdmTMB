@@ -173,14 +173,6 @@ Type objective_function<Type>::operator()()
   DATA_STRUCT(Zt_list, LOSM_t); // list of model matrices for random effects
   DATA_IMATRIX(var_indx_matrix); // matrix of indices of each level/group with the appropriate sd
 
-  // commenting out, old RE
-  // Random intercepts:
-  //DATA_IMATRIX(RE_indexes);
-  // DATA_IMATRIX(proj_RE_indexes);
-  // DATA_IVECTOR(nobs_RE);
-  // DATA_IVECTOR(ln_tau_G_index);
-  // DATA_INTEGER(n_g); // number of random intercepts
-
   DATA_SPARSE_MATRIX(A_st); // INLA 'A' projection matrix for unique stations
   DATA_IVECTOR(A_spatial_index); // Vector of stations to match up A_st output
 
@@ -208,7 +200,6 @@ Type objective_function<Type>::operator()()
   DATA_MATRIX(priors_b_Sigma); // beta priors matrix
   DATA_INTEGER(priors_b_n);
   DATA_IVECTOR(priors_b_index);
-  // remove old RE DATA_MATRIX(priors_sigma_G); // random intercept SD
   DATA_VECTOR(priors); // all other priors as a vector
   DATA_IVECTOR(ar1_fields);
   DATA_IVECTOR(rw_fields);
@@ -216,7 +207,6 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(omit_spatial_intercept);
   DATA_INTEGER(random_walk);
   DATA_INTEGER(ar1_time);
-  //commenting out old RE DATA_IVECTOR(exclude_RE); // DELTA TODO currently shared...
   DATA_INTEGER(no_spatial); // omit all spatial calculations
 
   DATA_VECTOR(proj_lon);
@@ -293,8 +283,6 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(rho_time_unscaled); // (k, m) dimension ar1 time correlation rho -Inf to Inf
   PARAMETER_VECTOR(ar1_phi);          // AR1 fields correlation
 
-  //commenting out old RE PARAMETER_ARRAY(ln_tau_G);  // random intercept sigmas
-  //commenting out old RE PARAMETER_ARRAY(RE);        // random intercept deviations
   // Random effects
   PARAMETER_ARRAY(re_cov_pars); // covariance parameters for random slopes/intercepts
   PARAMETER_ARRAY(re_b_pars); // beta parameters for random slopes/intercepts
@@ -317,8 +305,6 @@ Type objective_function<Type>::operator()()
   // DELTA DONE
   int n_i = y_i.rows();   // number of observations
   int n_m = y_i.cols();   // number of models (delta)
-  // commenting out, old RE
-  //int n_RE = RE_indexes.cols();  // number of random effect intercepts
 
   // DELTA TODO
   // ------------------ Derived variables -------------------------------------------------
@@ -616,10 +602,10 @@ Type objective_function<Type>::operator()()
       for(jj = re_cov_df_map(g_index, 2); jj <= re_cov_df_map(g_index, 3); jj++) {
          if(re_cov_df(jj,3) == 1) { // standard deviation, is_sd indexed as col 3
            sds(re_cov_df(jj,2)) = exp(re_cov_pars(jj,m)); // sd estimated in log_space
-         } else {
-           unconstrained_params(par_indx) = re_cov_pars(jj,m);
-           par_indx = par_indx + 1;
-         }
+        } else {
+          unconstrained_params(par_indx) = re_cov_pars(jj,m);
+          par_indx = par_indx + 1;
+        }
       }
 
       // covariance matrix has now been constructed. we have to cycle through all of the levels
@@ -643,6 +629,7 @@ Type objective_function<Type>::operator()()
           if(n > 1) {
             // multivariate densities from from namespace 'density' return the negative log likelihood. So code should be:
             jnll += VECSCALE(UNSTRUCTURED_CORR(unconstrained_params),sds)(b_re_vec);
+            if (sim_re(3)) error("Simulation not implemented for random slopes/intercepts yet")
           }
       } // end for levels
 
@@ -652,20 +639,6 @@ Type objective_function<Type>::operator()()
   ADREPORT(re_cov_pars);
   REPORT(re_b_pars);
   ADREPORT(re_b_pars);
-
-  // commenting out, old RE
-  // IID random intercepts:
-  // array<Type> sigma_G(n_g,n_m);
-  // for (int m = 0; m < n_m; m++) {
-  //   for (int h = 0; h < RE.rows(); h++) {
-  //     int g = ln_tau_G_index(h);
-  //     sigma_G(g,m) = exp(ln_tau_G(g,m));
-  //     PARALLEL_REGION jnll -= dnorm(RE(h,m), Type(0), sigma_G(g,m), true);
-  //     if (sim_re(3)) SIMULATE{RE(h,m) = rnorm(Type(0), sigma_G(g,m));}
-  //   }
-  // }
-  // REPORT(sigma_G);
-  // ADREPORT(sigma_G); // time-varying SD
 
   array<Type> sigma_V(X_rw_ik.cols(),n_m);
   // Time-varying effects (dynamic regression):
@@ -837,16 +810,6 @@ Type objective_function<Type>::operator()()
       if (!no_spatial) epsilon_st_A_vec(i,m) = epsilon_st_A(A_spatial_index(i), year_i(i),m); // record it
       eta_i(i,m) += epsilon_st_A_vec(i,m); // spatiotemporal
 
-// commenting out, old RE
-      // IID random intercepts:
-      // int temp = 0;
-      // for (int k = 0; k < n_RE; k++) {
-      //   if (k == 0) eta_iid_re_i(i,m) += RE(RE_indexes(i, k),m); // record it
-      //   if (k > 0) {
-      //     temp += nobs_RE(k - 1);
-      //     eta_iid_re_i(i,m) += RE(RE_indexes(i, k) + temp,m); // record it
-      //   }
-      // }
       eta_i(i,m) += eta_iid_re_i(i,m);
       if (family(m) == binomial_family && !poisson_link_delta) { // regular binomial
         mu_i(i,m) = LogitInverseLink(eta_i(i,m), link(m));
@@ -1200,24 +1163,6 @@ Type objective_function<Type>::operator()()
         proj_fe.col(m) += proj_smooth_i.col(m);
       }
     }
-
-    // IID random intercepts:
-// commenting out, old RE
-    // array<Type> proj_iid_re_i(n_p,n_m);
-    // proj_iid_re_i.setZero();
-    // for (int m = 0; m < n_m; m++) {
-    //   for (int i = 0; i < n_p; i++) {
-    //     int temp = 0;
-    //     for (int k = 0; k < n_RE; k++) {
-    //       if (k == 0 && !exclude_RE(0)) proj_iid_re_i(i,m) += RE(proj_RE_indexes(i, k),m);
-    //       if (k > 0) {
-    //         temp += nobs_RE(k - 1);
-    //         if (!exclude_RE(k)) proj_iid_re_i(i,m) += RE(proj_RE_indexes(i, k) + temp,m);
-    //       }
-    //     }
-    //     proj_fe(i) += proj_iid_re_i(i,m);
-    //   }
-    // }
 
     // Random walk covariates:
     array<Type> proj_rw_i(n_p,n_m);
