@@ -27,11 +27,25 @@ test_that("Model with random intercepts fits appropriately.", {
   expect_equal(as.numeric(p1), p2$est, tolerance = 1e-4)
   expect_equal(p0$est, p2$est, tolerance = 1e-4)
 
+  # fixed effect only prediction:
   p0 <- predict(glmmTMB_fit, re.form = NA)
   p1 <- predict(sdmTMB_fit, re_form_iid = NA)
   expect_equal(p0, p1$est, tolerance = 1e-4)
 
-  # fixed effect only prediction:
+  # missing factor level:
+  ndtest <- sleepstudy
+  ndtest <- ndtest[ndtest$Subject != "308", ]
+  p1 <- predict(lmer_fit, newdata = ndtest)
+  p2 <- predict(sdmTMB_fit, newdata = ndtest)
+  expect_equal(as.numeric(p1), p2$est, tolerance = 1e-4)
+
+  # levels themselves missing:
+  ndtest <- sleepstudy
+  ndtest <- ndtest[ndtest$Subject == "308", ]
+  ndtest$Subject <- factor(as.character(ndtest$Subject))
+  p1 <- predict(lmer_fit, newdata = ndtest)
+  p2 <- predict(sdmTMB_fit, newdata = ndtest)
+  expect_equal(as.numeric(p1), p2$est, tolerance = 1e-4)
 
   # Check fixed effects are identical
   expect_equal(fixef(lmer_fit)[1], coef(sdmTMB_fit)[1])

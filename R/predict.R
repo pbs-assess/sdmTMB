@@ -451,11 +451,33 @@ predict.sdmTMB <- function(object, newdata = NULL,
 
     # FIXME check if random slopes and intercepts are the same in both linear predictors?
     # parse random intercept/slope sparse model matrices on new data:
-    sf_nd <- list()
     Zt_list <- list()
-    for (ii in seq_len(length(formula))) {
-        sf_nd[[ii]] <- parse_formula(formula[[ii]], newdata)
-        Zt_list[[ii]] <- sf_nd[[ii]]$re_cov_terms$Zt 
+
+    if (object$tmb_data$n_re_groups > 0 && isFALSE(pop_pred_iid)) {
+      for (ii in seq_len(length(formula))) {
+        xx <- parse_formula(formula[[ii]], newdata)
+        # factor level checks:
+        RE_names <- xx$barnames
+        for (i in seq_along(RE_names)) {
+          assert_that(is.factor(newdata[[RE_names[i]]]),
+            msg = sprintf("Random effect group column `%s` in newdata is not a factor.", RE_names[i]))
+          levels_fit <- levels(object$data[[RE_names[i]]])
+          levels_nd <- levels(newdata[[RE_names[i]]])
+          if (sum(!levels_nd %in% levels_fit)) {
+            msg <- paste0("Extra levels found in random intercept factor levels for `", RE_names[i],
+              "`. Please remove them.")
+            cli_abort(msg)
+          }
+        }
+
+        # now do with a joint data frame to ensure factor levels match
+        common_cols <- intersect(colnames(object$data), colnames(newdata))
+        joint_df <- rbind(object$data[,common_cols,drop=FALSE], newdata[,common_cols,drop=FALSE])
+        xx <- parse_formula(formula[[ii]], joint_df)
+        # drop the original data:
+        Zt <- xx$re_cov_terms$Zt[,seq(nrow(object$data) + 1, nrow(object$data) + nrow(newdata))]
+        Zt_list[[ii]] <- Zt
+      }
     }
 
     # deal with prediction IID random intercepts:
