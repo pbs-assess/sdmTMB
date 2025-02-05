@@ -339,11 +339,8 @@ predict.sdmTMB <- function(object, newdata = NULL,
   # from glmmTMB:
   pop_pred <- (!is.null(re_form) && ((re_form == ~0) || identical(re_form, NA)))
   pop_pred_iid <- (!is.null(re_form_iid) && ((re_form_iid == ~0) || identical(re_form_iid, NA)))
-  if (pop_pred_iid) {
-    exclude_RE <- rep(1L, length(object$tmb_data$exclude_RE))
-  } else {
-    exclude_RE <- object$tmb_data$exclude_RE
-  }
+
+  exclude_RE <- if (pop_pred_iid) 1L else object$tmb_data$exclude_RE
 
   tmb_data <- object$tmb_data
   tmb_data$do_predict <- 1L

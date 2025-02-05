@@ -1135,7 +1135,8 @@ sdmTMB <- function(
     re_b_map = as.matrix(re_b_map),
     var_indx_matrix = var_indx_matrix,
     Zt_list = Zt_list, # list of RE matrices
-    Zt_list_proj = list()
+    Zt_list_proj = list(),
+    exclude_RE = 0L
   )
   b_thresh <- matrix(0, 2L, n_m)
   if (thresh[[1]]$threshold_func == 2L) b_thresh <- matrix(0, 3L, n_m) # logistic #TODO: change hard coding on index of thresh[[1]]

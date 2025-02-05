@@ -27,6 +27,12 @@ test_that("Model with random intercepts fits appropriately.", {
   expect_equal(as.numeric(p1), p2$est, tolerance = 1e-4)
   expect_equal(p0$est, p2$est, tolerance = 1e-4)
 
+  p0 <- predict(glmmTMB_fit, re.form = NA)
+  p1 <- predict(sdmTMB_fit, re_form_iid = NA)
+  expect_equal(p0, p1$est, tolerance = 1e-4)
+
+  # fixed effect only prediction:
+
   # Check fixed effects are identical
   expect_equal(fixef(lmer_fit)[1], coef(sdmTMB_fit)[1])
   expect_equal(fixef(lmer_fit)[2], coef(sdmTMB_fit)[2])

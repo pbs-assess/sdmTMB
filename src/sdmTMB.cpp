@@ -208,6 +208,7 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(omit_spatial_intercept);
   DATA_INTEGER(random_walk);
   DATA_INTEGER(ar1_time);
+  DATA_INTEGER(exclude_RE); // DELTA TODO currently shared...
   DATA_INTEGER(no_spatial); // omit all spatial calculations
 
   DATA_VECTOR(proj_lon);
@@ -631,6 +632,10 @@ Type objective_function<Type>::operator()()
       } // end for levels
     } // end for g
   } // end for m
+  REPORT(re_cov_pars);
+  ADREPORT(re_cov_pars);
+  REPORT(re_b_pars);
+  ADREPORT(re_b_pars);
 
   array<Type> sigma_V(X_rw_ik.cols(),n_m);
   // Time-varying effects (dynamic regression):
@@ -1159,20 +1164,22 @@ Type objective_function<Type>::operator()()
     // Random slopes and intercepts:
     array<Type> proj_iid_re_i(n_p, n_m);
     proj_iid_re_i.setZero();
-    for (int m = 0; m < n_m; m++) {
-      if (n_re_groups(m) > 0) {
-        // Extract the m-th column an Eigen vector
-        Eigen::Matrix<Type, Eigen::Dynamic, 1> col_vec = re_b_pars.col(m);
-        Eigen::SparseMatrix<Type> temp_Z = Zt_list_proj(m);
-        for (int j = 0; j < temp_Z.rows(); j++) {
-          proj_iid_re_i.col(m) += Zt_list_proj(m).row(j) * col_vec(j);
+    if (!exclude_RE) {
+      for (int m = 0; m < n_m; m++) {
+        if (n_re_groups(m) > 0) {
+          // Extract the m-th column an Eigen vector
+          Eigen::Matrix<Type, Eigen::Dynamic, 1> col_vec = re_b_pars.col(m);
+          Eigen::SparseMatrix<Type> temp_Z = Zt_list_proj(m);
+          for (int j = 0; j < temp_Z.rows(); j++) {
+            proj_iid_re_i.col(m) += Zt_list_proj(m).row(j) * col_vec(j);
+          }
         }
       }
-    }
-    for (int m = 0; m < n_m; m++) {
-      if (n_re_groups(m) > 0) {
-        for (int i = 0; i < n_p; i++) {
-          proj_fe(i, m) += proj_iid_re_i(i, m);
+      for (int m = 0; m < n_m; m++) {
+        if (n_re_groups(m) > 0) {
+          for (int i = 0; i < n_p; i++) {
+            proj_fe(i, m) += proj_iid_re_i(i, m);
+          }
         }
       }
     }
