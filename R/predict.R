@@ -453,7 +453,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
     # parse random intercept/slope sparse model matrices on new data:
     Zt_list <- list()
 
-    if (object$tmb_data$n_re_groups > 0 && isFALSE(pop_pred_iid)) {
+    if (sum(object$tmb_data$n_re_groups) > 0 && isFALSE(pop_pred_iid)) {
       for (ii in seq_len(length(formula))) {
         xx <- parse_formula(formula[[ii]], newdata)
         # factor level checks:

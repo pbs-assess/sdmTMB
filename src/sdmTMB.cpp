@@ -775,7 +775,7 @@ Type objective_function<Type>::operator()()
   for (int m = 0; m < n_m; m++) {
 
     // this is the matrix multiplication for all random effects for this model.
-    if(n_re_groups(m) > 0) {
+    if (n_re_groups(m) > 0) {
       // Extract the m-th column an Eigen vector
       Eigen::Matrix<Type, Eigen::Dynamic, 1> col_vec = re_b_pars.col(m);
       Eigen::SparseMatrix<Type> temp_Z = Zt_list(m);
