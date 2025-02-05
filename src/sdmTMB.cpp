@@ -1218,21 +1218,6 @@ Type objective_function<Type>::operator()()
     //     proj_fe(i) += proj_iid_re_i(i,m);
     //   }
     // }
-    array<Type> proj_iid_re_i(n_p,n_m);
-    proj_iid_re_i.setZero();
-    for (int m = 0; m < n_m; m++) {
-      for (int i = 0; i < n_p; i++) {
-        int temp = 0;
-        for (int k = 0; k < n_RE; k++) {
-          if (k == 0 && !exclude_RE(0)) proj_iid_re_i(i,m) += RE(proj_RE_indexes(i, k),m);
-          if (k > 0) {
-            temp += nobs_RE(k - 1);
-            if (!exclude_RE(k)) proj_iid_re_i(i,m) += RE(proj_RE_indexes(i, k) + temp,m);
-          }
-        }
-        proj_fe(i,m) += proj_iid_re_i(i,m);
-      }
-    }
 
     // Random walk covariates:
     array<Type> proj_rw_i(n_p,n_m);
