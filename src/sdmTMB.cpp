@@ -171,6 +171,7 @@ Type objective_function<Type>::operator()()
   DATA_IMATRIX(re_b_map);// dataframe describing the groups of random effects parameters
   DATA_IVECTOR(n_re_groups);
   DATA_STRUCT(Zt_list, LOSM_t); // list of model matrices for random effects
+  DATA_STRUCT(Zt_list_proj, LOSM_t); // list of model matrices for random effects (prediction)
   DATA_IMATRIX(var_indx_matrix); // matrix of indices of each level/group with the appropriate sd
 
   DATA_SPARSE_MATRIX(A_st); // INLA 'A' projection matrix for unique stations
@@ -630,10 +631,6 @@ Type objective_function<Type>::operator()()
       } // end for levels
     } // end for g
   } // end for m
-  REPORT(re_cov_pars);
-  ADREPORT(re_cov_pars);
-  REPORT(re_b_pars);
-  ADREPORT(re_b_pars);
 
   array<Type> sigma_V(X_rw_ik.cols(),n_m);
   // Time-varying effects (dynamic regression):
@@ -777,7 +774,7 @@ Type objective_function<Type>::operator()()
       // Extract the m-th column an Eigen vector
       Eigen::Matrix<Type, Eigen::Dynamic, 1> col_vec = re_b_pars.col(m);
       Eigen::SparseMatrix<Type> temp_Z = Zt_list(m);
-      for(int j = 0; j < temp_Z.rows(); j++) {
+      for (int j = 0; j < temp_Z.rows(); j++) {
         eta_iid_re_i.col(m) += Zt_list(m).row(j) * col_vec(j);
       }
     }
@@ -1159,6 +1156,27 @@ Type objective_function<Type>::operator()()
       }
     }
 
+    // Random slopes and intercepts:
+    array<Type> proj_iid_re_i(n_p, n_m);
+    proj_iid_re_i.setZero();
+    for (int m = 0; m < n_m; m++) {
+      if (n_re_groups(m) > 0) {
+        // Extract the m-th column an Eigen vector
+        Eigen::Matrix<Type, Eigen::Dynamic, 1> col_vec = re_b_pars.col(m);
+        Eigen::SparseMatrix<Type> temp_Z = Zt_list_proj(m);
+        for (int j = 0; j < temp_Z.rows(); j++) {
+          proj_iid_re_i.col(m) += Zt_list_proj(m).row(j) * col_vec(j);
+        }
+      }
+    }
+    for (int m = 0; m < n_m; m++) {
+      if (n_re_groups(m) > 0) {
+        for (int i = 0; i < n_p; i++) {
+          proj_fe(i, m) += proj_iid_re_i(i, m);
+        }
+      }
+    }
+
     // Random walk covariates:
     array<Type> proj_rw_i(n_p,n_m);
     proj_rw_i.setZero();
@@ -1288,7 +1306,7 @@ Type objective_function<Type>::operator()()
     REPORT(proj_eta);           // combined projections (in link space)
     REPORT(proj_rf);            // combined random field projections
     REPORT(proj_rw_i);          // random walk projections
-    // remove old RE REPORT(proj_iid_re_i);      // IID random intercept projections
+    REPORT(proj_iid_re_i);      // random intercept/slope projections
 
     if (calc_se) {
       if (pop_pred) {

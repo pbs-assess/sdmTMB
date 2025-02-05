@@ -835,6 +835,7 @@ sdmTMB <- function(
     sm[[ii]] <- parse_smoothers(formula = formula[[ii]], data = data, knots = knots)
   }
 
+  # random slopes and intercepts --------------------------------------------
   # bind the elements of split_formula[[ii]] together to pass into TMB
   # add a new column to each dataframe storing the model number (1, 2, ...)
   split_formula_dfs <- add_model_index(split_formula, "re_df")
@@ -1133,7 +1134,8 @@ sdmTMB <- function(
     re_b_df = as.matrix(re_b_df[,-1]),# data frame containing indidivual level ids. Don't pass in first col (can be char)
     re_b_map = as.matrix(re_b_map),
     var_indx_matrix = var_indx_matrix,
-    Zt_list = Zt_list # list of RE matrices
+    Zt_list = Zt_list, # list of RE matrices
+    Zt_list_proj = list()
   )
   b_thresh <- matrix(0, 2L, n_m)
   if (thresh[[1]]$threshold_func == 2L) b_thresh <- matrix(0, 3L, n_m) # logistic #TODO: change hard coding on index of thresh[[1]]

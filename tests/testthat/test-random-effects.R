@@ -17,8 +17,15 @@ test_that("Model with random intercepts fits appropriately.", {
   # Classic lme4 random effects model
   data("sleepstudy", package="lme4")
   lmer_fit <- lme4::lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
+  glmmTMB_fit <- glmmTMB::glmmTMB(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
   # Same model in sdmTMB
   sdmTMB_fit <- sdmTMB(Reaction ~ Days + (Days | Subject), sleepstudy, spatial="off")
+
+  p0 <- predict(sdmTMB_fit, newdata = NULL)
+  p1 <- predict(lmer_fit, newdata = sleepstudy)
+  p2 <- predict(sdmTMB_fit, newdata = sleepstudy)
+  expect_equal(as.numeric(p1), p2$est, tolerance = 1e-4)
+  expect_equal(p0$est, p2$est, tolerance = 1e-4)
 
   # Check fixed effects are identical
   expect_equal(fixef(lmer_fit)[1], coef(sdmTMB_fit)[1])

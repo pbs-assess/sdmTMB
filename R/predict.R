@@ -452,26 +452,36 @@ predict.sdmTMB <- function(object, newdata = NULL,
 
     if (!"mgcv" %in% names(object)) object[["mgcv"]] <- FALSE
 
+    # FIXME check if random slopes and intercepts are the same in both linear predictors?
+    # parse random intercept/slope sparse model matrices on new data:
+    sf_nd <- list()
+    Zt_list <- list()
+    for (ii in seq_len(length(formula))) {
+        sf_nd[[ii]] <- parse_formula(formula[[ii]], newdata)
+        Zt_list[[ii]] <- sf_nd[[ii]]$re_cov_terms$Zt 
+    }
+
     # deal with prediction IID random intercepts:
-    RE_names <- object$split_formula[[1]]$barnames # TODO DELTA HARDCODED TO 1 here; fine for now
+    # RE_names <- object$split_formula[[1]]$barnames # TODO DELTA HARDCODED TO 1 here; fine for now
+
     ## not checking so that not all factors need to be in prediction:
     # fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
-    proj_RE_indexes <- vapply(RE_names, function(x) as.integer(nd[[x]]) - 1L, rep(1L, nrow(nd)))
+    # proj_RE_indexes <- vapply(RE_names, function(x) as.integer(nd[[x]]) - 1L, rep(1L, nrow(nd)))
 
-    if (isFALSE(pop_pred_iid)) {
-      for (i in seq_along(RE_names)) {
-        # checking newdata random intercept columns are factors
-        assert_that(is.factor(newdata[[RE_names[i]]]),
-                    msg = sprintf("Random effect group column `%s` in newdata is not a factor.", RE_names[i]))
-        levels_fit <- levels(object$data[[RE_names[i]]])
-        levels_nd <- levels(newdata[[RE_names[i]]])
-        if (sum(!levels_nd %in% levels_fit)) {
-          msg <- paste0("Extra levels found in random intercept factor levels for `", RE_names[i],
-            "`. Please remove them.")
-          cli_abort(msg)
-        }
-      }
-    }
+    # if (isFALSE(pop_pred_iid)) {
+    #   for (i in seq_along(RE_names)) {
+    #     # checking newdata random intercept columns are factors
+    #     assert_that(is.factor(newdata[[RE_names[i]]]),
+    #                 msg = sprintf("Random effect group column `%s` in newdata is not a factor.", RE_names[i]))
+    #     levels_fit <- levels(object$data[[RE_names[i]]])
+    #     levels_nd <- levels(newdata[[RE_names[i]]])
+    #     if (sum(!levels_nd %in% levels_fit)) {
+    #       msg <- paste0("Extra levels found in random intercept factor levels for `", RE_names[i],
+    #         "`. Please remove them.")
+    #       cli_abort(msg)
+    #     }
+    #   }
+    # }
 
     proj_X_ij <- list()
     for (i in seq_along(object$formula)) {
@@ -515,7 +525,9 @@ predict.sdmTMB <- function(object, newdata = NULL,
     tmb_data$proj_mesh <- proj_mesh
     tmb_data$proj_X_ij <- proj_X_ij
     tmb_data$proj_X_rw_ik <- proj_X_rw_ik
-    tmb_data$proj_RE_indexes <- proj_RE_indexes
+    # tmb_data$proj_RE_indexes <- proj_RE_indexes
+
+    tmb_data$Zt_list_proj <- Zt_list
     time_lu <- object$time_lu
     tmb_data$proj_year <- time_lu$year_i[match(nd[[object$time]], time_lu$time_from_data)] # was make_year_i(nd[[object$time]])
     tmb_data$proj_lon <- newdata[[xy_cols[[1]]]]
