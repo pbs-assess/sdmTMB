@@ -1,6 +1,6 @@
-library(glmmTMB)
-library(sdmTMB)
-library(lme4)
+# library(glmmTMB)
+# library(sdmTMB)
+# library(lme4)
 # test_that("RE group factor levels are properly checked.", {
 #   expect_error(check_valid_factor_levels(c(1, 2, 3), "test"))
 #   expect_error(check_valid_factor_levels(c("A", "B")))
