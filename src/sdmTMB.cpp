@@ -581,7 +581,7 @@ Type objective_function<Type>::operator()()
   // re_cov_pars , re_b_pars will be a 2D PARAMETER_ARRAY
   int g_index = -1;
   for (int m = 0; m < n_m; m++) {
-    for(int g = 0; g < n_re_groups(m); g++) { // loop over each group in the model
+    for (int g = 0; g < n_re_groups(m); g++) { // loop over each group in the model
       // construct the variance covariance matrix based on the dimension
       // for example, (1|x) would have 1 dimension; (day+school|x) would have 3
 
@@ -592,14 +592,12 @@ Type objective_function<Type>::operator()()
       // cycle through rows of re_cov_df_map
       g_index = g_index + 1;
       int n = re_cov_df_map(g_index, 1); // dimension of random effects for this group
-
       // unconstrained params here are the lower triangular of the cholesky corr matrix, and sds are the diagonal
       vector<Type> unconstrained_params(n*(n-1)/2);  // Dummy parameterization of correlation matrix
       vector<Type> sds(n);                           // Standard deviations
       int par_indx = 0;
       int jj = 0;
-
-      for(jj = re_cov_df_map(g_index, 2); jj <= re_cov_df_map(g_index, 3); jj++) {
+      for (jj = re_cov_df_map(g_index, 2); jj <= re_cov_df_map(g_index, 3); jj++) {
          if(re_cov_df(jj,3) == 1) { // standard deviation, is_sd indexed as col 3
            sds(re_cov_df(jj,2)) = exp(re_cov_pars(jj,m)); // sd estimated in log_space
         } else {
@@ -607,32 +605,29 @@ Type objective_function<Type>::operator()()
           par_indx = par_indx + 1;
         }
       }
-
       // covariance matrix has now been constructed. we have to cycle through all of the levels
       // for this group to evaluate the probability of joint random effects
       vector<Type> b_re_vec(n); // this is the vectorized version of the corr matrix for this group
-      for(int levels = re_b_map(g_index,1); levels <= re_b_map(g_index,2); levels++) {
+      for (int levels = re_b_map(g_index,1); levels <= re_b_map(g_index,2); levels++) {
           // this is indexing of indexing
           jj = 0;
           // this_level is indexing the elements of b_re_vec re_b_pars(,m) associated with this group and level
-          for(int this_level = re_b_df(levels,0); this_level <= re_b_df(levels,1); this_level++) {
+          for (int this_level = re_b_df(levels,0); this_level <= re_b_df(levels,1); this_level++) {
             b_re_vec(jj) = re_b_pars(this_level,m);
-            if(n == 1) {
+            if (n == 1) {
               // evaluate univariate / uncorrelated REs. can be slopes or intercepts
               PARALLEL_REGION jnll -= dnorm(re_b_pars(this_level,m), Type(0), Type(sds(var_indx_matrix(jj,m))), true);
               if (sim_re(3)) SIMULATE{re_b_pars(this_level,m) = rnorm(Type(0), Type(sds(var_indx_matrix(jj,m))));}
             }
             jj = jj + 1;
           }
-
           // evaluate likelihood for the betas corresponding to this group + level
-          if(n > 1) {
+          if (n > 1) {
             // multivariate densities from from namespace 'density' return the negative log likelihood. So code should be:
             jnll += VECSCALE(UNSTRUCTURED_CORR(unconstrained_params),sds)(b_re_vec);
-            if (sim_re(3)) error("Simulation not implemented for random slopes/intercepts yet")
+            if (sim_re(3)) error("Simulation not implemented for random slopes/intercepts yet");
           }
       } // end for levels
-
     } // end for g
   } // end for m
   REPORT(re_cov_pars);
