@@ -337,6 +337,12 @@ We could also let the effect of depth vary through time.
 We set up the time-varying coefficients to follow an AR1 process by setting `type_varying_type = "ar1"`.
 With `"ar1"` or `"rw0" (random walk), the fixed effects represent the starting point of the time series
 and the time-varying process represents deviations from this over time.
+If, instead, we had used `time_varying_type = "rw"`, the first time step of the random effect process would represent the initial year values and we would want to omit the matching effects in the main formula. For example:
+
+```r
+formula = density ~ 0, time_varying = ~ 1 + depth_scaled + depth_scaled2`, time_varying_type = "rw"
+```
+
 We include a full length of time increments with `extra_time` to ensure we estimate time-varying coefficient values
 for each year, including any years that are missing from our data.
 For this example, we turn off the spatiotemporal random effects because we were having convergence issues with them turned on.
