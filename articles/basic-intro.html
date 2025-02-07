@@ -397,8 +397,8 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.011296 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 112.96 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.011315 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 113.15 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -423,9 +423,9 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; Chain 1: Iteration: 100 / 101 [ 99%]  (Warmup)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 101 / 101 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 27.86 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 27.839 seconds (Warm-up)</span></span>
 <span><span class="co">#&gt; Chain 1:                0.205 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                28.065 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:                28.044 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
 <span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">m3</span>, <span class="st">"mle-mcmc"</span>, mcmc_samples <span class="op">=</span> <span class="va">samps</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqnorm</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span></span>
@@ -575,12 +575,17 @@ coefficients and variance-covariance matrix.</p>
 <p>We could also let the effect of depth vary through time. We set up
 the time-varying coefficients to follow an AR1 process by setting
 <code>type_varying_type = "ar1"</code>. With <code>"ar1"</code> or
-<code>"rw0" (random walk), the fixed effects represent the starting point of the time series and the time-varying process represents deviations from this over time. We include a full length of time increments with</code>extra_time`
-to ensure we estimate time-varying coefficient values for each year,
-including any years that are missing from our data. For this example, we
-turn off the spatiotemporal random effects because we were having
-convergence issues with them turned on.</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<code>"rw0" (random walk), the fixed effects represent the starting point of the time series and the time-varying process represents deviations from this over time. If, instead, we had used</code>time_varying_type
+= “rw”`, the first time step of the random effect process would
+represent the initial year values and we would want to omit the matching
+effects in the main formula. For example:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a>formula <span class="ot">=</span> density <span class="sc">~</span> <span class="dv">0</span>, time_varying <span class="ot">=</span> <span class="er">~</span> <span class="dv">1</span> <span class="sc">+</span> depth_scaled <span class="sc">+</span> depth_scaled2<span class="st">`</span><span class="at">, time_varying_type = "rw"</span></span></code></pre></div>
+<p>We include a full length of time increments with
+<code>extra_time</code> to ensure we estimate time-varying coefficient
+values for each year, including any years that are missing from our
+data. For this example, we turn off the spatiotemporal random effects
+because we were having convergence issues with them turned on.</p>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">m4</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdmTMB.html">sdmTMB</a></span><span class="op">(</span></span>
 <span>  <span class="va">density</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">depth_scaled</span> <span class="op">+</span> <span class="va">depth_scaled2</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">pcod</span>,</span>
@@ -664,7 +669,7 @@ convergence issues with them turned on.</p>
 <p>To plot these, we make a data frame that contains all combinations of
 the time-varying covariate and time. This is easily created using
 <code><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid()</a></code> or <code><a href="https://tidyr.tidyverse.org/reference/expand_grid.html" class="external-link">tidyr::expand_grid()</a></code>.</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span></span>
 <span>  depth_scaled <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">pcod</span><span class="op">$</span><span class="va">depth_scaled</span><span class="op">)</span> <span class="op">+</span> <span class="fl">0.2</span>,</span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">pcod</span><span class="op">$</span><span class="va">depth_scaled</span><span class="op">)</span> <span class="op">-</span> <span class="fl">0.2</span>,</span>
