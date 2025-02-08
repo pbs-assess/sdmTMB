@@ -78,8 +78,43 @@ test_that("Model with random intercepts fits appropriately.", {
   devs <- rnorm(5,0,1)
   sleepstudy$Reaction <- sleepstudy$Reaction + devs[rep(1:5,36)] + rnorm(nrow(sleepstudy),0,0.03)
 
-  glmmtmb_fit <- glmmTMB::glmmTMB(Reaction ~ Days + (Days | Subject) + (1|age), sleepstudy, REML = FALSE)
   sdmTMB_fit <- sdmTMB(Reaction ~ Days + (1 + Days | Subject) + (1 | age), sleepstudy, spatial="off")
+  # glmmtmb_fit <- glmmTMB::glmmTMB(Reaction ~ Days + (Days | Subject) + (1|age), sleepstudy, REML = FALSE)
+
+  x <- capture.output(sdmTMB_fit)
+  expect_true(any(grepl("Corr", x)))
+  expect_true(any(grepl("Std.Dev.", x)))
+  expect_true(any(grepl("Variance", x)))
+  expect_true(any(grepl("565.71", x)))
+  expect_true(any(grepl("0.08", x)))
+
+  # library(sdmTMB)
+  # data("sleepstudy", package="lme4")
+  # sleepstudy$age <- as.factor(rep(letters[1:5],36))
+  # set.seed(1)
+  # devs <- rnorm(5,0,1)
+  # sleepstudy$Reaction <- sleepstudy$Reaction + devs[rep(1:5,36)] + rnorm(nrow(sleepstudy),0,0.03)
+  #
+  # # random slopes and intercepts by subject
+  # sdmTMB_fit <- sdmTMB(Reaction ~ Days + (Days | Subject) + (1 | age), sleepstudy, spatial="off")
+  # sdmTMB_fit
+  #
+  # # random intercepts only by subject
+  # sdmTMB_fit <- sdmTMB(Reaction ~ Days + (1 | Subject) + (1 | age), sleepstudy, spatial="off")
+  # sdmTMB_fit
+  #
+  # # random slopes only by subject
+  # sdmTMB_fit <- sdmTMB(Reaction ~ Days + (0 + Days | Subject) + (1 | age), sleepstudy, spatial="off")
+  # sdmTMB_fit
+
+  # sdmTMB_fit <- sdmTMB(Reaction ~ Days + (1 | Subject) + (1 | age), sleepstudy, spatial="off")
+  # glmmtmb_fit <- glmmTMB::glmmTMB(Reaction ~ Days + (1 | Subject) + (1 | age), sleepstudy)
+  # summary(glmmtmb_fit)
+  # sdmTMB_fit
+
+
+  sdmTMB_fit <- sdmTMB(Reaction ~ Days + (1 + Days | Subject) + (1 | age), sleepstudy, spatial="off")
+
 
   expect_equal(fixef(glmmtmb_fit)$cond[1], coef(sdmTMB_fit)[1], tolerance = 1e-5)
   expect_equal(fixef(glmmtmb_fit)$cond[2], coef(sdmTMB_fit)[2], tolerance = 1e-5)

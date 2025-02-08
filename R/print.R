@@ -155,6 +155,41 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
   list(smooth_effects = mm_sm, smooth_sds = re_sm_mat)
 }
 
+print_int_slope_re <- function(x, m = 1) {
+  if (sum(x$tmb_data$n_re_groups)) {
+    v <- tidy(x, effects = "ran_vcov", model = m)
+    cnms <- x$split_formula[[m]]$re_cov_terms$cnms
+    ll <- vapply(cnms, length, FUN.VALUE = 1L)
+    mmc2 <- unlist(cnms, use.names = FALSE)
+    mmc1 <- lapply(names(ll), \(na) rep(na, ll[[na]])) |> unlist()
+    mmc1[duplicated(mmc1)] <- ""
+    mmsd <- lapply(v, \(x) {
+      if (ncol(x) == 2L) {
+        c(x[1,1], x[2,2])
+      } else {
+        c(x[1,1])
+      }
+    })
+    mmsd <- unlist(mmsd, use.names = FALSE)
+    mmvar <- mmsd^2
+    mmcor <- lapply(v, \(x) {
+      if (ncol(x) == 2L) {
+        c("", mround(x[2,1], 2))
+      } else {
+        ""
+      }
+    })
+    mmcor <- unlist(mmcor, use.names = FALSE)
+    mm <- cbind(mmc1, mmc2, mround(mmvar, 2), mround(mmsd, 2), mmcor)
+    colnames(mm) <- c("Groups", "Name", "Variance", "Std.Dev.", "Corr")
+    rownames(mm) <- rep("", nrow(mm))
+    if (all(mm[,"Corr"] == "")) mm <- mm[,-5]
+    mm
+  } else {
+    NULL
+  }
+}
+
 print_iid_re <- function(x, m = 1) {
   .tidy <- tidy(x, "ran_pars", model = m, silent = TRUE)
   if ("sigma_G" %in% .tidy$term) {
@@ -333,7 +368,8 @@ print_one_model <- function(x, m = 1, edf = FALSE, silent = FALSE) {
   info <- print_model_info(x)
   main <- print_main_effects(x, m = m)
   smooth <- print_smooth_effects(x, m = m, edf = .edf, silent = silent)
-  iid_re <- print_iid_re(x, m = m)
+  # iid_re <- print_iid_re(x, m = m)
+  re <- print_int_slope_re(x, m = m)
   tv <- print_time_varying(x, m = m)
   range <- print_range(x, m = m)
   other <- print_other_parameters(x, m = m)
@@ -341,18 +377,20 @@ print_one_model <- function(x, m = 1, edf = FALSE, silent = FALSE) {
   if (m == 1) cat(info$family1, "\n")
   if (m == 2) cat(info$family2, "\n")
 
+  if (!is.null(re)) {
+    cat("Random intercepts and/or slopes:\n\n")
+    cat("Conditional model:\n")
+    print(re, quote = FALSE)
+    cat("\n")
+  }
+
+  cat("Conditional model:\n")
   print(rbind(main, smooth$smooth_effects))
   cat("\n")
 
   if (!is.null(smooth$smooth_sds)) {
     cat("Smooth terms:\n")
     print(smooth$smooth_sds)
-    cat("\n")
-  }
-
-  if (!is.null(iid_re)) {
-    cat("Random intercepts:\n")
-    print(iid_re)
     cat("\n")
   }
 
