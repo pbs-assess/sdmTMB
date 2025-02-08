@@ -276,7 +276,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   } else if (effects == "ran_pars") {
     return(frm(out_re))
   } else if (effects == "ran_vcov") {
-    return(frm(cov_mat_list))
+    return(cov_mat_list)
   } else {
     cli_abort("The specified 'effects' type is not available.")
   }
@@ -379,7 +379,7 @@ create_cov_matrices <- function(df) {
   for (model in unique(df$model)) {
     model_df <- subset(df, model == model)
     for (group in unique(model_df$group)) {
-      group_df <- subset(model_df, group == group)
+      group_df <- model_df[model_df$group == group,,drop=FALSE]
       # Create an empty matrix
       cov_matrix <- matrix(NA_real_, nrow = max(group_df$rows), ncol = max(group_df$cols))
       # Fill the matrix with the estimates
