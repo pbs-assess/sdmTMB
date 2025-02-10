@@ -2,7 +2,6 @@
 #define EIGEN_DONT_PARALLELIZE
 #include <TMB.hpp>
 #include "utils.h"
-// #include <omp.h>
 
 enum valid_family {
   gaussian_family = 0,
@@ -198,8 +197,8 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(proj_lat);
 
   // Distribution
-  DATA_IVECTOR(family);
-  DATA_IVECTOR(link);
+  DATA_IARRAY(family);
+  DATA_IARRAY(link);
   DATA_SCALAR(df);  // Student-t DF
   DATA_VECTOR(size); // binomial, via glmmTMB
 
@@ -243,7 +242,7 @@ Type objective_function<Type>::operator()()
 
   DATA_VECTOR(lwr); // lower bound for censpois on counts
   DATA_VECTOR(upr); // upper bound for censpois on counts
-  DATA_INTEGER(poisson_link_delta); // logical
+  DATA_IVECTOR(poisson_link_delta); // logical
 
   DATA_INTEGER(stan_flag); // logical whether to pass the model to Stan
   // ------------------ Parameters ---------------------------------------------
@@ -716,7 +715,7 @@ Type objective_function<Type>::operator()()
     for (int i = 0; i < n_i; i++) {
       eta_i(i,m) = eta_fixed_i(i,m) + eta_smooth_i(i,m);
       if ((n_m == 2 && m == 1) || n_m == 1) {
-        if (!poisson_link_delta) eta_i(i,m) += offset_i(i);
+        if (!poisson_link_delta(i)) eta_i(i,m) += offset_i(i);
       }
       if (random_walk == 1 || ar1_time || random_walk == 2) {
         for (int k = 0; k < X_rw_ik.cols(); k++) {
@@ -746,9 +745,9 @@ Type objective_function<Type>::operator()()
         }
       }
       eta_i(i,m) += eta_iid_re_i(i,m);
-      if (family(m) == binomial_family && !poisson_link_delta) { // regular binomial
+      if (family(i,m) == binomial_family && !poisson_link_delta(i)) { // regular binomial
         mu_i(i,m) = LogitInverseLink(eta_i(i,m), link(m));
-      } else if (poisson_link_delta) { // a tweak on cloglog:
+      } else if (poisson_link_delta(i)) { // a tweak on cloglog:
         // eta_i(i,0) = log numbers density
         // eta_i(i,1) = log average weight
         // mu_i(i,0) = probability of occurrence
@@ -786,7 +785,8 @@ Type objective_function<Type>::operator()()
     pos_model = 0;
   }
   vector<Type> mu_i_large(n_i);
-  switch (family(pos_model)) {
+  // TODO integrated model: make sure mixture models stop() for integrated models!
+  switch (family(0, pos_model)) {
   case gamma_mix_family:
   case lognormal_mix_family:
   case nbinom2_mix_family: {
@@ -810,7 +810,7 @@ Type objective_function<Type>::operator()()
   for (int m = 0; m < n_m; m++) PARALLEL_REGION {
     for (int i = 0; i < n_i; i++) {
       bool notNA = !sdmTMB::isNA(y_i(i,m));
-        switch (family(m)) {
+        switch (family(i,m)) {
           case gaussian_family: {
             if (notNA) tmp_ll = dnorm(y_i(i,m), mu_i(i,m), phi(m), true);
             SIMULATE{y_i(i,m) = rnorm(mu_i(i,m), phi(m));}
@@ -830,7 +830,7 @@ Type objective_function<Type>::operator()()
             break;
           }
           case binomial_family: {
-            if (poisson_link_delta) {
+            if (poisson_link_delta(i)) {
               if (notNA) tmp_ll = poisson_link_m0_ll(i); // needed for robustness; must be first model component
               SIMULATE{y_i(i,m) = rbinom(size(i), mu_i(i,m));}
             } else {
@@ -1210,7 +1210,8 @@ Type objective_function<Type>::operator()()
     // for families that implement mixture models, adjust proj_eta by
     // proportion and ratio of means
     // (1 - p_mix) * mu_i(i,m) + p_mix * (mu(i,m) * mix_ratio);
-    switch (family(pos_model)) {
+    // TODO integrated model
+    switch (family(0,pos_model)) {
       case gamma_mix_family:
       case lognormal_mix_family:
       case nbinom2_mix_family:
@@ -1225,7 +1226,7 @@ Type objective_function<Type>::operator()()
       Type t1, t2;
       vector<Type> proj_rf_delta(n_p);
       for (int i = 0; i < n_p; i++) {
-        if (poisson_link_delta) {
+        if (poisson_link_delta(i)) {
           proj_rf_delta(i) = proj_fe(i,0) + proj_fe(i,1); // check
         } else {
           t1 = InverseLink(proj_fe(i,0), link(0));
@@ -1261,6 +1262,7 @@ Type objective_function<Type>::operator()()
     vector<Type> mu_combined(n_p);
     mu_combined.setZero();
 
+    // TODO integrated model
     int truncated_dist;
     switch (family(pos_model)) {
       case truncated_nbinom1_family:
@@ -1280,34 +1282,35 @@ Type objective_function<Type>::operator()()
 
       for (int i = 0; i < n_p; i++) {
         if (n_m > 1) { // delta model
-          if (poisson_link_delta) {
+          if (poisson_link_delta(i)) {
             // Type R1 = Type(1.) - exp(-exp(proj_eta(i,0)));
             // Type R2 = exp(proj_eta(i,0)) / R1 * exp(proj_eta(i,1))
             mu_combined(i) = exp(proj_eta(i,0) + proj_eta(i,1)); // prevent numerical issues
           } else if (truncated_dist) {
-            t1 = InverseLink(proj_eta(i,0), link(0));
+            t1 = InverseLink(proj_eta(i,0), link(i,0));
             // convert from mean of *un-truncated* to mean of *truncated* distribution
-            Type log_nzprob = calc_log_nzprob(exp(proj_eta(i,1)), phi(1), family(1));
+            Type log_nzprob = calc_log_nzprob(exp(proj_eta(i,1)), phi(1), family(i,1));
             t2 = exp(proj_eta(i,1)) / exp(log_nzprob);
             mu_combined(i) = t1 * t2;
           } else  {
-            t1 = InverseLink(proj_eta(i,0), link(0));
-            t2 = InverseLink(proj_eta(i,1), link(1));
+            t1 = InverseLink(proj_eta(i,0), link(i,0));
+            t2 = InverseLink(proj_eta(i,1), link(i,1));
             mu_combined(i) = t1 * t2;
           }
           total(proj_year(i)) += mu_combined(i) * area_i(i);
         } else { // non-delta model
           if (truncated_dist) {
             // convert from mean of *un-truncated* to mean of *truncated* distribution
-            Type log_nzprob = calc_log_nzprob(exp(proj_eta(i,0)), phi(0), family(0));
+            Type log_nzprob = calc_log_nzprob(exp(proj_eta(i,0)), phi(0), family(i,0));
             mu_combined(i) = exp(proj_eta(i,0)) / exp(log_nzprob);
           } else  {
-            mu_combined(i) = InverseLink(proj_eta(i,0), link(0));
+            mu_combined(i) = InverseLink(proj_eta(i,0), link(i,0));
           }
           total(proj_year(i)) += mu_combined(i) * area_i(i);
         }
       }
       vector<Type> link_total(n_t);
+      // TODO integrated model
       if (n_m > 1) {
         link_tmp = link(1); // 2nd link should always be log/exp in this case
       } else {
