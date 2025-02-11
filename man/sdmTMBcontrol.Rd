@@ -74,7 +74,9 @@ fixed value.}
 \item{lower}{An optional named list of lower bounds within the optimization.
 Parameter vectors with the same name (e.g., \code{b_j} or \code{ln_kappa} in some
 cases) can be specified as a numeric vector. E.g.
-\code{lower = list(b_j = c(-5, -5))}.}
+\code{lower = list(b_j = c(-5, -5))}. Note that \code{\link[stats:optim]{stats::optimHess()}} does not
+implement lower and upper bounds, so you must set \code{newton_loops = 0} if
+setting limits.}
 
 \item{upper}{An optional named list of upper bounds within the optimization.}
 
