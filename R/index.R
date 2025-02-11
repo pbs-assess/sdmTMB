@@ -5,8 +5,9 @@
 #' @param bias_correct Should bias correction be implemented [TMB::sdreport()]?
 #' @param level The confidence level.
 #' @param area Grid cell area. A vector of length `newdata` from
-#'   [predict.sdmTMB()] or a value of length 1, which will be repeated
-#'   internally to match.
+#'   [predict.sdmTMB()] *or* a value of length 1 which will be repeated
+#'   internally to match *or* a character value representing the column
+#'   used for area weighting.
 #' @param silent Silent?
 #' @param ... Passed to [TMB::sdreport()].
 #'
@@ -107,6 +108,11 @@
 #' }
 #' @export
 get_index <- function(obj, bias_correct = FALSE, level = 0.95, area = 1, silent = TRUE, ...)  {
+  # if offset is a character vector, use the value in the dataframe
+  if (is.character(area)) {
+    area <- obj$data[[area]]
+  }
+
   d <- get_generic(obj, value_name = "link_total",
     bias_correct = bias_correct, level = level, trans = exp, area = area, ...)
   names(d)[names(d) == "trans_est"] <- "log_est"
@@ -119,6 +125,12 @@ get_index <- function(obj, bias_correct = FALSE, level = 0.95, area = 1, silent 
 #' @export
 get_cog <- function(obj, bias_correct = FALSE, level = 0.95, format = c("long", "wide"), area = 1, silent = TRUE, ...)  {
   if (bias_correct) cli_abort("Bias correction with get_cog() is currently disabled.")
+
+  # if offset is a character vector, use the value in the dataframe
+  if (is.character(area)) {
+    area <- obj$data[[area]]
+  }
+
   d <- get_generic(obj, value_name = c("cog_x", "cog_y"),
     bias_correct = bias_correct, level = level, trans = I, area = area, ...)
   d <- d[, names(d) != "trans_est", drop = FALSE]
@@ -145,6 +157,12 @@ get_eao <- function(obj,
   ...
 )  {
   if (bias_correct) cli_abort("Bias correction with get_eao() is currently disabled.")
+
+  # if offset is a character vector, use the value in the dataframe
+  if (is.character(area)) {
+    area <- obj$data[[area]]
+  }
+
   d <- get_generic(obj, value_name = c("log_eao"),
     bias_correct = bias_correct, level = level, trans = exp, area = area, ...)
   names(d)[names(d) == "trans_est"] <- "log_est"
@@ -154,6 +172,11 @@ get_eao <- function(obj,
 
 get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   trans = I, area = 1, silent = TRUE, ...) {
+
+  # if offset is a character vector, use the value in the dataframe
+  if (is.character(area)) {
+    area <- obj$data[[area]]
+  }
 
   reinitialize(obj$fit_obj)
 

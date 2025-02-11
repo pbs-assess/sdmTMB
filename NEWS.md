@@ -64,6 +64,10 @@
 
 * Add `get_eao()` to calculate effective area occupied.
 
+* Add option for `area` to be passed in as the name of a column in the 
+  dataframe to be used for area weighting. Used in `get_index()`, 
+  `get_cog()`, `get_eao()`, etc.
+
 # sdmTMB 0.6.0
 
 * Pass several arguments to `DHARMa::plotQQunif()`.
