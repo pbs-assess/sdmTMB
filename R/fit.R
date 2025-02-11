@@ -822,17 +822,25 @@ sdmTMB <- function(
 
     # RE_names is either the names of the groups OR a character w/length 0 if none exist
     # anything in a list here needs to be saved for tmb data
-    split_formula[[ii]] <- parse_formula(formula[ii][[1]], data)
 
-    # Save formula with no bars -- this is used for parsing smoothing, etc below
-    formula[[ii]] <- lme4::nobars(formula[[ii]])
-    formula_no_sm <- remove_s_and_t2(formula[[ii]])
-    X_ij[[ii]] <- model.matrix(formula_no_sm, data)
-    mf[[ii]] <- model.frame(formula_no_sm, data)
+    # smoothers removed, but random effects remain:
+    formula_no_sm <- remove_s_and_t2(formula[ii][[1]])
+    # random effects parsed into data structures:
+    split_formula[[ii]] <- parse_formula(formula_no_sm, data)
+
+    # save formula with no bars (but with smoothers)
+    formula_no_bars <- lme4::nobars(formula[ii][[1]])
+    formula_no_bars_no_sm <- remove_s_and_t2(formula_no_bars)
+    X_ij[[ii]] <- model.matrix(formula_no_bars_no_sm, data)
+    mf[[ii]] <- model.frame(formula_no_bars_no_sm, data)
 
     mt[[ii]] <- attr(mf[[ii]], "terms")
     # parse everything mgcv + smoothers:
-    sm[[ii]] <- parse_smoothers(formula = formula[[ii]], data = data, knots = knots)
+    sm[[ii]] <- parse_smoothers(formula = formula_no_bars, data = data, knots = knots)
+    sm[[ii]]$split_formula <- split_formula
+    sm[[ii]]$formula_no_sm <- formula_no_sm
+    sm[[ii]]$formula_no_bars <- formula_no_bars
+    sm[[ii]]$formula_no_bars_no_sm <- formula_no_bars_no_sm
   }
 
   # random slopes and intercepts --------------------------------------------
@@ -884,6 +892,7 @@ sdmTMB <- function(
     }
   }
 
+  # always shared; only keep track of one:
   sm <- sm[[1]]
 
   y_i <- model.response(mf[[1]], "numeric")

@@ -20,6 +20,12 @@ test_that("Model with random intercepts fits appropriately.", {
   glmmTMB_fit <- glmmTMB::glmmTMB(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
   # Same model in sdmTMB
   sdmTMB_fit <- sdmTMB(Reaction ~ Days + (Days | Subject), sleepstudy, spatial="off")
+  
+  # with smoothers! (was broken)
+  sdmTMB_fit_smooth <- sdmTMB(Reaction ~ s(Days) + (Days | Subject), sleepstudy, spatial="off")
+  ps1 <- predict(sdmTMB_fit_smooth)
+  ps2 <- predict(sdmTMB_fit_smooth, newdata = sleepstudy)
+  expect_equal(ps1$est, ps2$est, tolerance = 1e-4)
 
   p0 <- predict(sdmTMB_fit, newdata = NULL)
   p1 <- predict(lmer_fit, newdata = sleepstudy)

@@ -455,7 +455,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
 
     if (sum(object$tmb_data$n_re_groups) > 0 && isFALSE(pop_pred_iid)) {
       for (ii in seq_len(length(formula))) {
-        xx <- parse_formula(formula[[ii]], newdata)
+        xx <- parse_formula(object$smoothers$formula_no_sm, newdata)
         # factor level checks:
         RE_names <- xx$barnames
         for (i in seq_along(RE_names)) {
@@ -473,7 +473,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
         # now do with a joint data frame to ensure factor levels match
         common_cols <- intersect(colnames(object$data), colnames(newdata))
         joint_df <- rbind(object$data[,common_cols,drop=FALSE], newdata[,common_cols,drop=FALSE])
-        xx <- parse_formula(formula[[ii]], joint_df)
+        xx <- parse_formula(object$smoothers$formula_no_sm, joint_df)
         # drop the original data:
         Zt <- xx$re_cov_terms$Zt[,seq(nrow(object$data) + 1, nrow(object$data) + nrow(newdata))]
         Zt_list[[ii]] <- Zt
@@ -504,7 +504,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
 
     proj_X_ij <- list()
     for (i in seq_along(object$formula)) {
-      f2 <- remove_s_and_t2(object$split_formula[[i]]$form_no_bars)
+      f2 <- object$smoothers$formula_no_bars_no_sm
       tt <- stats::terms(f2)
       attr(tt, "predvars") <- attr(object$terms[[i]], "predvars")
       Terms <- stats::delete.response(tt)
@@ -513,7 +513,8 @@ predict.sdmTMB <- function(object, newdata = NULL,
     }
 
     # TODO DELTA hardcoded to 1:
-    sm <- parse_smoothers(object$formula[[1]], data = object$data, newdata = nd, basis_prev = object$smoothers$basis_out)
+    sm <- parse_smoothers(object$smoothers$formula_no_bars, data = object$data, 
+      newdata = nd, basis_prev = object$smoothers$basis_out)
 
     if (!is.null(object$time_varying))
       proj_X_rw_ik <- model.matrix(object$time_varying, data = nd)
