@@ -23,6 +23,34 @@ test_that("Model with random intercepts fits appropriately.", {
   
   # with smoothers! (was broken)
   sdmTMB_fit_smooth <- sdmTMB(Reaction ~ s(Days) + (Days | Subject), sleepstudy, spatial="off")
+
+  # demo MVN draws:
+  if (FALSE) {
+    object <- sdmTMB_fit
+    n_sims <- 200
+    tmb_sd <- object$sd_report
+    set.seed(1)
+    samps <- sdmTMB:::rmvnorm_prec(object$tmb_obj$env$last.par.best, tmb_sd, n_sims)
+    pars <- c(tmb_sd$par.fixed, tmb_sd$par.random)
+    pn <- names(pars)
+    samps[1:20,1:3]
+    b_j <- which(pn == "b_j")[2]
+    re_b_pars <- which(pn == "re_b_pars") # intercepts followed by random slopes here...
+    re <- samps[re_b_pars, ]
+    intercepts <- re[1:18,]
+    slopes <- re[19:36,]
+    b <- samps[b_j,,drop=FALSE]
+    out <- matrix(nrow = nrow(slopes), ncol = ncol(slopes))
+    for (i in 1:ncol(slopes)) {
+      out[,i] <- b[,i] + slopes[,i]
+    }
+    med <- apply(out, 1, quantile, probs = 0.50)
+    lwr <- apply(out, 1, quantile, probs = 0.05)
+    upr <- apply(out, 1, quantile, probs = 0.95)
+    plot(med, 1:18, xlim = range(c(lwr, upr)))
+    segments(lwr, 1:18, upr, 1:18)
+  }
+
   ps1 <- predict(sdmTMB_fit_smooth)
   ps2 <- predict(sdmTMB_fit_smooth, newdata = sleepstudy)
   expect_equal(ps1$est, ps2$est, tolerance = 1e-4)
