@@ -7,7 +7,7 @@
 #' @param area Grid cell area. A vector of length `newdata` from
 #'   [predict.sdmTMB()] *or* a value of length 1 which will be repeated
 #'   internally to match *or* a character value representing the column
-#'   name of the offset.
+#'   used for area weighting.
 #' @param silent Silent?
 #' @param ... Passed to [TMB::sdreport()].
 #'
