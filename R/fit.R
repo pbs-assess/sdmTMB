@@ -1139,7 +1139,6 @@ sdmTMB <- function(
   if (thresh[[1]]$threshold_func == 2L) b_thresh <- matrix(0, 3L, n_m) # logistic #TODO: change hard coding on index of thresh[[1]]
 
   tmb_params <- list(
-    log_t_df = 0,
     ln_H_input = matrix(0, nrow = 2L, ncol = n_m),
     b_j        = rep(0, ncol(X_ij[[1]])), # TODO: verify ok
     b_j2       = if (delta) rep(0, ncol(X_ij[[2]])) else numeric(0), # TODO: verify ok
@@ -1179,7 +1178,6 @@ sdmTMB <- function(
 
   # Map off parameters not needed
   tmb_map <- map_all_params(tmb_params)
-  tmb_map$log_t_df <- NULL
   tmb_map$b_j <- NULL
   if (delta) tmb_map$b_j2 <- NULL
   if (family$family[[1]] == "tweedie") tmb_map$thetaf <- NULL
@@ -1488,6 +1486,11 @@ sdmTMB <- function(
       tmb_opt[["evaluations"]] <- tmb_opt[["evaluations"]] + temp[["evaluations"]]
     }
   }
+  if (!is.null(control$upper) || !is.null(control$lower)) {
+    if (newton_loops > 0) {
+      cli_inform("Upper or lower limits were set. `stats::optimHess()` will ignore these limits. Set `control = sdmTMBcontrol(newton_loops = 0)` to avoid the `stats::optimHess()` optimization if desired.")
+    }
+  }
   if (newton_loops > 0) {
     if (!silent) cli_inform("attempting to improve convergence with optimHess\n")
     for (i in seq_len(newton_loops)) {
@@ -1522,7 +1525,12 @@ sdmTMB <- function(
     gradients  = conv$final_grads,
     bad_eig    = conv$bad_eig,
     pos_def_hessian = sd_report$pdHess))
-  `class<-`(out, "sdmTMB")
+  out <- `class<-`(out, "sdmTMB")
+  # if (out$tmb_data$has_smooths) {
+  #   edf <- suppressMessages(cAIC(out, what = "EDF"))
+  #   out$edf <- edf
+  # }
+  out
 }
 
 check_bounds <- function(.par, lower, upper) {
@@ -1553,6 +1561,8 @@ set_limits <- function(tmb_obj, lower, upper, loc = NULL, silent = TRUE) {
       if (!silent) message("Setting lower limit for ", i_name, " to ",
         lower[[i_name]], ".")
     }
+  }
+  for (i_name in names(upper)) {
     if (i_name %in% names(.upper)) {
       .upper[names(.upper) %in% i_name] <- upper[[i_name]]
       if (!silent) message("Setting upper limit for ", i_name, " to ",
