@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9023</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9024</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -150,7 +150,9 @@ fixed value.</p></dd>
 <dd><p>An optional named list of lower bounds within the optimization.
 Parameter vectors with the same name (e.g., <code>b_j</code> or <code>ln_kappa</code> in some
 cases) can be specified as a numeric vector. E.g.
-<code>lower = list(b_j = c(-5, -5))</code>.</p></dd>
+<code>lower = list(b_j = c(-5, -5))</code>. Note that <code><a href="https://rdrr.io/r/stats/optim.html" class="external-link">stats::optimHess()</a></code> does not
+implement lower and upper bounds, so you must set <code>newton_loops = 0</code> if
+setting limits.</p></dd>
 
 
 <dt id="arg-upper">upper<a class="anchor" aria-label="anchor" href="#arg-upper"></a></dt>
