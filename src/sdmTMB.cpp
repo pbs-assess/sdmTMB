@@ -838,7 +838,7 @@ Type objective_function<Type>::operator()()
   // close to zero: use for count data (cf binomial()$initialize)
 #define zt_lik_nearzero(x,loglik_exp) ((x < Type(0.001)) ? -INFINITY : loglik_exp)
 
-  Type s1, s2, s3, lognzprob, tmp_ll, ll_1, ll_2, p_mix, mix_ratio, tweedie_p, s1_large, s2_large;
+  Type s1, s2, s3, lognzprob, tmp_ll, ll_1, ll_2, p_mix, mix_ratio, tweedie_p, s2_large;
 
   // calcs for mix distr. first:
   int pos_model;
