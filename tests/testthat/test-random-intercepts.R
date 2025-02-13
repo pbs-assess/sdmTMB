@@ -99,11 +99,11 @@ test_that("Model with random intercepts fits appropriately.", {
     formula = observed ~ 1 + (1 | g) + (1 | h)
   )
   .v <- glmmTMB::VarCorr(m.glmmTMB)
-  expect_equal(as.numeric(.t[[1]]),
+  expect_equal(as.numeric(.t[[1]])[1],
     sqrt(as.numeric(.v$cond$g)),
     tolerance = 1e-5
   )
-  expect_equal(as.numeric(.t[[2]]),
+  expect_equal(as.numeric(.t[[1]])[2],
     sqrt(as.numeric(.v$cond$h)),
     tolerance = 1e-5
   )

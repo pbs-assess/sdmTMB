@@ -163,7 +163,7 @@ print_int_slope_re <- function(x, m = 1) {
     mmc2 <- unlist(cnms, use.names = FALSE)
     mmc1 <- lapply(names(ll), \(na) rep(na, ll[[na]])) |> unlist()
     mmc1[duplicated(mmc1)] <- ""
-    mmsd <- lapply(v, \(x) {
+    mmsd <- lapply(v[[1]], \(x) {
       if (ncol(x) == 2L) {
         c(x[1,1], x[2,2])
       } else {
@@ -172,7 +172,7 @@ print_int_slope_re <- function(x, m = 1) {
     })
     mmsd <- unlist(mmsd, use.names = FALSE)
     mmvar <- mmsd^2
-    mmcor <- lapply(v, \(x) {
+    mmcor <- lapply(v[[1]], \(x) {
       if (ncol(x) == 2L) {
         c("", mround(x[2,1], 2))
       } else {
