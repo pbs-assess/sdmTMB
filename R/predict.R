@@ -504,7 +504,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
 
     proj_X_ij <- list()
     for (i in seq_along(object$formula)) {
-      f2 <- object$smoothers$formula_no_bars_no_sm
+      f2 <- remove_s_and_t2(object$split_formula[[i]]$form_no_bars)#object$smoothers$formula_no_bars_no_sm
       tt <- stats::terms(f2)
       attr(tt, "predvars") <- attr(object$terms[[i]], "predvars")
       Terms <- stats::delete.response(tt)
@@ -513,7 +513,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
     }
 
     # TODO DELTA hardcoded to 1:
-    sm <- parse_smoothers(object$smoothers$formula_no_bars, data = object$data, 
+    sm <- parse_smoothers(object$smoothers$formula_no_bars, data = object$data,
       newdata = nd, basis_prev = object$smoothers$basis_out)
 
     if (!is.null(object$time_varying))
