@@ -108,6 +108,21 @@ test_that("Model with random intercepts fits appropriately.", {
     tolerance = 1e-5
   )
 
+  # with CIs on "vcov" works:
+  .t <- tidy(m, effects="ran_vcov", conf.int = FALSE)
+  expect_equal(length(.t$est), 2)
+  expect_equal(names(.t$est), c("Model 1 Group g", "Model 1 Group h"))
+  .t <- tidy(m, effects="ran_vcov", conf.int = TRUE)
+  expect_equal(names(.t), c("est","lo","hi"))
+  expect_equal(length(.t$lo), 2)
+  expect_equal(names(.t$lo), c("Model 1 Group g", "Model 1 Group h"))
+  expect_equal(length(.t$hi), 2)
+  expect_equal(names(.t$hi), c("Model 1 Group g", "Model 1 Group h"))
+  expect_equal(as.numeric(unlist(.t$hi)), c(0.5628, 0.2600), tolerance = 0.001)
+  expect_equal(as.numeric(unlist(.t$lo)), c(0.3217, 0.132), tolerance = 0.001)
+  expect_equal(as.numeric(unlist(.t$est)), c(0.4422, 0.1960), tolerance = 0.001)
+
+
   sdmTMB_re <- as.list(m$sd_report, "Estimate")
   glmmTMB_re <- glmmTMB::ranef(m.glmmTMB)$cond
   expect_equal(c(glmmTMB_re$g$`(Intercept)`, glmmTMB_re$h$`(Intercept)`),

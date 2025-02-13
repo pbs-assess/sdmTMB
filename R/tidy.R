@@ -10,7 +10,9 @@
 #' @param conf.level Confidence level for CI.
 #' @param exponentiate Whether to exponentiate the fixed-effect coefficient
 #'   estimates and confidence intervals.
-#' @param model Which model to tidy if a delta model (1 or 2).
+#' @param model Which model to tidy if a delta model (1 or 2). The `model` will be
+#'   ignored when effects is `"ran_vals"` (all returned in a single dataframe)
+#'
 #' @param silent Omit any messages?
 #' @param ... Extra arguments (not used).
 #'
@@ -253,7 +255,11 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
 
   if (sum(x$tmb_data$n_re_groups) > 0L) { # we have random intercepts/slopes
     temp <- get_re_tidy_list(x, crit = crit)
-    cov_mat_list <- temp$cov_matrices
+    cov_mat_list <- list(est = temp$cov_matrices)
+    if(conf.int) {
+      cov_mat_list[["lo"]] <- temp$cov_matrices_lo
+      cov_mat_list[["hi"]] <- temp$cov_matrices_hi
+    }
     out_ranef <- temp$out_ranef
   } else {
     cov_mat_list <- NULL
@@ -372,18 +378,22 @@ get_re_tidy_list <- function(x, crit) {
   re_cov_df$conf.low <- re_cov_df$estimate - crit * re_cov_df$std.error
   re_cov_df$conf.hi <- re_cov_df$estimate + crit * re_cov_df$std.error
   # the SD parameters are returned in log space -- use delta method to generate CIs
-  est <- exp(re_cov_df$estimate)
-  sd_est <- exp(sqrt((est)^2 * (re_cov_df$std.error)^2))
-  sds <- which(re_cov_df$is_sd == 1)
+  est <- exp(re_cov_df$estimate) # estimate in normal space
+  sd_est <- est * re_cov_df$std.error # SE in normal space
+  sds <- which(re_cov_df$is_sd == 1) # index which elements are SDs
   re_cov_df$estimate[sds] <- est[sds]
-  re_cov_df$conf.low[sds] <- est[sds] - crit * est[sds]
-  re_cov_df$conf.hi[sds] <- est[sds] + crit * est[sds]
+  re_cov_df$conf.low[sds] <- est[sds] - crit * sd_est[sds]
+  re_cov_df$conf.hi[sds] <- est[sds] + crit * sd_est[sds]
 
   re_cov_df <- re_cov_df[, c("rows", "cols", "model", "group", "estimate", "std.error", "conf.low", "conf.hi")]
-  list(out_ranef = out_ranef, cov_matrices = create_cov_matrices(re_cov_df))
+  cov_matrices_lo = create_cov_matrices(re_cov_df, col_name = "conf.low")
+  cov_matrices_hi = create_cov_matrices(re_cov_df, col_name = "conf.hi")
+  list(out_ranef = out_ranef, cov_matrices = create_cov_matrices(re_cov_df),
+       cov_matrices_lo = create_cov_matrices(re_cov_df, col_name = "conf.low"),
+       cov_matrices_hi = create_cov_matrices(re_cov_df, col_name = "conf.hi"))
 }
 
-create_cov_matrices <- function(df) {
+create_cov_matrices <- function(df, col_name = "estimate") {
   # Initialize an empty list to store the covariance matrices
   cov_matrices <- list()
 
@@ -396,7 +406,7 @@ create_cov_matrices <- function(df) {
       cov_matrix <- matrix(NA_real_, nrow = max(group_df$rows), ncol = max(group_df$cols))
       # Fill the matrix with the estimates
       for (i in seq_len(nrow(group_df))) {
-        cov_matrix[group_df$rows[i], group_df$cols[i]] <- group_df$estimate[i]
+        cov_matrix[group_df$rows[i], group_df$cols[i]] <- group_df[[col_name]][i]
       }
       # Add the matrix to the list
       cov_matrices[[paste("Model", model, "Group", group)]] <- cov_matrix
