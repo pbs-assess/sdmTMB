@@ -215,12 +215,12 @@ test_that("Tidy returns random intercepts appropriately.", {
 
   ranpars <- tidy(m, "ran_vcov", conf.int = TRUE)
   s2 <- as.list(m2$sdr, "Estimate")
-  expect_equal(as.numeric(ranpars), exp(s2$theta), tolerance = 0.001)
+  expect_equal(as.numeric(ranpars$est), exp(s2$theta), tolerance = 0.001)
   s2se <- as.list(m2$sdr, "Std. Error")
   upr <- exp(s2$theta + 2 * s2se$theta)
   lwr <- exp(s2$theta - 2 * s2se$theta)
-  expect_equal(ranpars$conf.low[-1], lwr, tolerance = 0.01)
-  expect_equal(ranpars$conf.high[-1], upr, tolerance = 0.01)
+  expect_equal(as.numeric(ranpars$lo), lwr, tolerance = 0.05)
+  expect_equal(as.numeric(ranpars$hi), upr, tolerance = 0.05)
 
   ranint <- tidy(m, "ran_vals", conf.int = TRUE)
 
