@@ -24,7 +24,8 @@ random effect and dispersion-related terms), \code{"ran_vals"} (individual
 random intercepts, if included; behaves like \code{ranef()}), or \code{"ran_vcov"} (list
 of variance covariance matrices for the random effects, by model and group).}
 
-\item{model}{Which model to tidy if a delta model (1 or 2).}
+\item{model}{Which model to tidy if a delta model (1 or 2). The \code{model} will be
+ignored when effects is \code{"ran_vals"} (all returned in a single dataframe)}
 
 \item{conf.int}{Include a confidence interval?}
 
