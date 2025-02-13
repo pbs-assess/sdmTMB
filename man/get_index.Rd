@@ -36,8 +36,9 @@ get_eao(obj, bias_correct = FALSE, level = 0.95, area = 1, silent = TRUE, ...)
 \item{level}{The confidence level.}
 
 \item{area}{Grid cell area. A vector of length \code{newdata} from
-\code{\link[=predict.sdmTMB]{predict.sdmTMB()}} or a value of length 1, which will be repeated
-internally to match.}
+\code{\link[=predict.sdmTMB]{predict.sdmTMB()}} \emph{or} a value of length 1 which will be repeated
+internally to match \emph{or} a character value representing the column
+used for area weighting.}
 
 \item{silent}{Silent?}
 

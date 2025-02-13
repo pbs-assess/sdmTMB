@@ -1,5 +1,9 @@
 # sdmTMB (development version)
 
+* Warn if parameter limits are set with `newton_loops > 0`. #394
+
+* Allow for specifying only lower or upper limits. #394
+
 * Add vignette on multispecies models with sdmTMB (or any case where one wants
   additional spatial and or spatiotemporal fields by some group).
 
@@ -59,6 +63,10 @@
   Thanks to @tom-peatman #350
 
 * Add `get_eao()` to calculate effective area occupied.
+
+* Add option for `area` to be passed in as the name of a column in the 
+  dataframe to be used for area weighting. Used in `get_index()`, 
+  `get_cog()`, `get_eao()`, etc.
 
 # sdmTMB 0.6.0
 
