@@ -40,10 +40,6 @@ parse_formula <- function(f, data) {
   fe_form <- lme4::nobars(f) # fixed effect formula, no bars
   re_cov_terms <- NULL
 
-  # For prediction models -- put a dummy value of the response in the dataframe
-  resp_var <- all.vars(f)[1]
-  if(is.null(data[[resp_var]])) data[[resp_var]] <- 0
-
   re_cov_terms <- list(
     Zt = NULL, theta = NULL, Lind = NULL, Gp = NULL,
     lower = NULL, Lambdat = NULL, flist = NULL,
