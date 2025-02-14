@@ -68,6 +68,11 @@
   dataframe to be used for area weighting. Used in `get_index()`, 
   `get_cog()`, `get_eao()`, etc.
 
+* Add option for random slopes, or random intercepts to be passed in in 
+  `lme4` style formulas, `density ~ (1 | fyear)` or `density ~ (depth | fyear)`,
+  Matches output of `lme4` and `glmmTMB`, and summarizes output with `tidy()`.
+  
+  
 # sdmTMB 0.6.0
 
 * Pass several arguments to `DHARMa::plotQQunif()`.
