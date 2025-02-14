@@ -4,7 +4,7 @@
 #' @param effects A character value. One of `"fixed"` ('fixed' or main-effect
 #'   parameters), `"ran_pars"` (standard deviations, spatial range, and other
 #'   random effect and dispersion-related terms), `"ran_vals"` (individual
-#'   random intercepts, if included; behaves like `ranef()`), or `"ran_vcov"` (list
+#'   random intercepts or slopes, if included; behaves like `ranef()`), or `"ran_vcov"` (list
 #'   of variance covariance matrices for the random effects, by model and group).
 #' @param conf.int Include a confidence interval?
 #' @param conf.level Confidence level for CI.
