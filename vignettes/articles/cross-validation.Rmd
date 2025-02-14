@@ -27,7 +27,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r packages, message=FALSE, warning=TRUE}
+```{r packages, message=FALSE, warning=TRUE, eval=TRUE}
 library(ggplot2)
 library(dplyr)
 library(sdmTMB)
@@ -54,7 +54,7 @@ In LFOCV, data up to year $t$ are used to predict observations at $t+1$, etc.
 Cross validation in sdmTMB is implemented using the `sdmTMB_cv()` function, with the `k_folds` argument specifying the number of folds (defaults to 8).
 The function uses parallelization by default a `future::plan()` is set, but this can be turned off with the `parallel` argument.
 
-```{r ex0}
+```{r ex0, eval=TRUE}
 data(pcod)
 mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 pcod$fyear <- as.factor(pcod$year)
@@ -65,7 +65,7 @@ pcod$fyear <- as.factor(pcod$year)
 # Set parallel processing if desired:
 library(future)
 plan(multisession, workers = 2)
-m_cv <- sdmTMB_cv(
+m_cv <- sdmTMB::sdmTMB_cv(
   density ~ 0 + s(depth_scaled) + fyear,
   data = pcod,
   mesh = mesh,
@@ -80,7 +80,7 @@ Without getting into the complexities of the `blockCV` or `spatialsample` packag
 ```{r ex2, eval=TRUE}
 clust <- kmeans(pcod[, c("X", "Y")], 20)$cluster
 
-m_cv <- sdmTMB_cv(
+m_cv <- sdmTMB::sdmTMB_cv(
   density ~ 0 + s(depth_scaled) + fyear,
   data = pcod,
   mesh = mesh,
@@ -94,7 +94,7 @@ Or similarly, these clusters could be assigned in time---here, each year to a un
 ```{r ex3, eval=TRUE}
 clust <- as.numeric(as.factor(pcod$year))
 
-m_cv <- sdmTMB_cv(
+m_cv <- sdmTMB::sdmTMB_cv(
   density ~ 0 + s(depth_scaled),
   data = pcod,
   mesh = mesh,
@@ -133,16 +133,16 @@ m <- sdmTMB_cv(
 )
 
 # RMSE across entire dataset:
-sqrt(mean((d$density - d$cv_predicted)^2)) 
+sqrt(mean((m$data$density - m$data$cv_predicted)^2)) 
 # MAE across entire dataset:
-mean(abs(d$density - d$cv_predicted))
+mean(abs(m$data$density - m$data$cv_predicted))
 ```
 
 Alternatively, we might be interested in calculating RMSE and MAE by fold,
 
-```{r ex5, eval=TRUE}
+```{r ex5b, eval=TRUE}
 # RMSE and MAE by fold:
-group_by(d, cv_fold) |> 
+group_by(m$data, cv_fold) |> 
   summarize(
     rmse = sqrt(mean((density - cv_predicted)^2)),
     mae = mean(abs(density - cv_predicted))
@@ -207,7 +207,7 @@ In this example, using either the predictive log-likelihood or ELPD would lead o
 ```{r ex7, eval=TRUE}
 clust <- sample(seq_len(10), size = nrow(pcod), replace = TRUE)
 
-m1 <- sdmTMB_cv(
+m1 <- sdmTMB::sdmTMB_cv(
   density ~ 0 + fyear,
   data = pcod,
   mesh = mesh,
@@ -215,7 +215,7 @@ m1 <- sdmTMB_cv(
   family = tweedie(link = "log")
 )
 
-m2 <- sdmTMB_cv(
+m2 <- sdmTMB::sdmTMB_cv(
   density ~ 0 + fyear + s(depth_scaled),
   data = pcod,
   mesh = mesh,
