@@ -133,7 +133,7 @@ test_that("Model with random intercepts fits appropriately.", {
   # predicting with new levels throws error for now:
   m <- sdmTMB(data = s, formula = observed ~ 1 + (1 | g), spatial = "off")
   nd <- data.frame(g = factor(c(1, 2, 3, 800)))
-  expect_error(predict(m, newdata = nd), regexp = "object 'observed' not found")
+  expect_error(predict(m, newdata = nd), regexp = "Extra levels found")
 })
 
 test_that("Random intercepts and cross validation play nicely", {

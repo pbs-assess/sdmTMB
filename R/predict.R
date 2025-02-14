@@ -455,7 +455,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
 
     if (sum(object$tmb_data$n_re_groups) > 0 && isFALSE(pop_pred_iid)) {
       for (ii in seq_len(length(formula))) {
-        xx <- parse_formula(object$smoothers$formula_no_sm, newdata)
+        xx <- parse_formula(remove_s_and_t2(object$formula[[ii]]), newdata)
         # factor level checks:
         RE_names <- xx$barnames
         for (i in seq_along(RE_names)) {
