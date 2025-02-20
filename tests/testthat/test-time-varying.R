@@ -68,6 +68,79 @@ test_that("AR1 time-varying works", {
   expect_equal(dim(ss), c(4000L, 1L))
   expect_gt(exp(s$ln_tau_V)[1,1], 0.75)
   expect_gt(m121(s$rho_time_unscaled)[1,1], 0.65)
+
+  # test that tidy works
+  fit <- sdmTMB(density ~ 1, time = "year",
+                time_varying = ~ 1,
+                time_varying_type = "ar1",
+                data = pcod_2011, spatial="off",
+                spatiotemporal = "off",
+                family = tweedie())
+  s <- tidy(fit, "ran_pars")
+  expect_equal(dim(s), c(3L, 5L))
+  expect_equal(s$term, c("phi","rho_time","tweedie_p"))
+
+  # test that tidy works -- RW
+  fit <- sdmTMB(density ~ as.factor(year), time = "year",
+                time_varying = ~ -1 + depth_scaled,
+                data = pcod_2011, spatial="off",
+                spatiotemporal = "off",
+                family = tweedie())
+  s <- tidy(fit, "ran_pars")
+  expect_equal(dim(s), c(2L, 5L))
+  expect_equal(s$term, c("phi","tweedie_p"))
+
+  # test that tidy works -- AR1
+  fit <- sdmTMB(density ~ as.factor(year), time = "year",
+                time_varying = ~ -1 + depth_scaled,
+                data = pcod_2011, spatial="off",
+                time_varying_type = "ar1",
+                spatiotemporal = "off",
+                family = tweedie())
+  s <- tidy(fit, "ran_pars")
+  expect_equal(dim(s), c(3L, 5L))
+  expect_equal(s$term, c("phi", "rho_time", "tweedie_p"))
+
+  # test that tidy works -- no time varying
+  fit <- sdmTMB(density ~ as.factor(year), time = "year",
+                data = pcod_2011, spatial="off",
+                spatiotemporal = "off",
+                family = tweedie())
+  s <- tidy(fit, "ran_pars")
+  expect_equal(dim(s), c(2L, 5L))
+  expect_equal(s$term, c("phi","tweedie_p"))
+
+  # test that tidy works with 2 parameters
+  fit <- sdmTMB(density ~ 1, time = "year",
+                time_varying = ~ -1+depth_scaled + I(depth_scaled^2),
+                time_varying_type = "ar1",
+                data = pcod_2011, spatial="off",
+                spatiotemporal = "off",
+                family = tweedie())
+  s <- tidy(fit, "ran_pars")
+  expect_equal(dim(s), c(4L, 5L))
+  expect_equal(s$term, c("phi","rho_time","rho_time","tweedie_p"))
+
+  # test that tidy works with delta
+  fit <- sdmTMB(density ~ 1, time = "year",
+                time_varying = ~ -1+depth_scaled + I(depth_scaled^2),
+                time_varying_type = "ar1",
+                data = pcod_2011, spatial="off",
+                spatiotemporal = "off",
+                family = delta_gamma())
+  s <- tidy(fit, "ran_pars")
+  expect_equal(dim(s), c(2L, 5L))
+  expect_equal(s$term, c("rho_time","rho_time"))
+
+  s <- tidy(fit, "ran_pars", model = 1)
+  expect_equal(dim(s), c(2L, 5L))
+  expect_equal(s$term, c("rho_time","rho_time"))
+  expect_equal(s$estimate, c(1.0, 0.9582931))
+
+  s <- tidy(fit, "ran_pars", model = 2)
+  expect_equal(s$term, c("phi", "rho_time","rho_time"))
+  expect_equal(s$estimate, c(0.652, 1.0, 0.868), tolerance = 0.001)
+
 })
 
 
