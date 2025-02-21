@@ -70,6 +70,8 @@
   
 * Add time varying AR(1) correlation to tidy() and print() #374
 
+* Add priors for `breakpt()` and `logistic()` parameters
+
 # sdmTMB 0.6.0
 
 * Pass several arguments to `DHARMa::plotQQunif()`.

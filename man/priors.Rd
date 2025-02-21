@@ -16,8 +16,8 @@ sdmTMBpriors(
   tweedie_p = normal(NA, NA),
   b = normal(NA, NA),
   sigma_G = halfnormal(NA, NA),
-  threshold_linear_slope = normal(NA, NA),
-  threshold_linear_cut = normal(NA, NA),
+  threshold_breakpt_slope = normal(NA, NA),
+  threshold_breakpt_cut = normal(NA, NA),
   threshold_logistic_s50 = normal(NA, NA),
   threshold_logistic_s95 = normal(NA, NA),
   threshold_logistic_smax = normal(NA, NA)
@@ -53,10 +53,10 @@ parameter has support \verb{1 < tweedie_p < 2} so choose a mean appropriately.}
 
 \item{sigma_G}{\code{halfnormal()} priors for the random intercept SDs.}
 
-\item{threshold_linear_slope}{prior for the slope of the linear (hockey stick)
+\item{threshold_breakpt_slope}{prior for the slope of the linear (hockey stick)
 function}
 
-\item{threshold_linear_cut}{prior for the cutoff of the linear (hockey stick)
+\item{threshold_breakpt_cut}{prior for the cutoff of the linear (hockey stick)
 function}
 
 \item{threshold_logistic_s50}{prior for which f(x) = 0.5}
