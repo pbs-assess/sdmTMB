@@ -273,7 +273,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     yrs <- rep(time_slices, times = length(tv_names))
 
     out_ranef_tv <- data.frame(
-      term = paste0(rep(tv_names, times = length(time_slices)), ":", yrs),
+      term = paste0(rep(tv_names, each = length(time_slices)), ":", yrs),
       estimate = c(est$b_rw_t),
       std.error = c(se$b_rw_t),
       conf.low = c(est$b_rw_t) - crit * c(se$b_rw_t),
