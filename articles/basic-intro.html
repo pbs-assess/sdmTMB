@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9024</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9025</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,7 +76,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Introduction to modelling with sdmTMB</h1>
             
-            <h4 data-toc-skip class="date">2025-02-14</h4>
+            <h4 data-toc-skip class="date">2025-02-21</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/vignettes/articles/basic-intro.Rmd" class="external-link"><code>vignettes/articles/basic-intro.Rmd</code></a></small>
       <div class="d-none name"><code>basic-intro.Rmd</code></div>
@@ -397,8 +397,8 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.011273 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 112.73 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.011259 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 112.59 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -423,9 +423,9 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; Chain 1: Iteration: 100 / 101 [ 99%]  (Warmup)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 101 / 101 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 27.64 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                0.203 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                27.843 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 27.636 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                0.204 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                27.84 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
 <span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">m3</span>, <span class="st">"mle-mcmc"</span>, mcmc_samples <span class="op">=</span> <span class="va">samps</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqnorm</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span></span>
@@ -612,52 +612,55 @@ because we were having convergence issues with them turned on.</p>
 <span><span class="co">#&gt; depth_scaled2    -1.72    0.18</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Time-varying parameters:</span></span>
-<span><span class="co">#&gt;                    coef.est coef.se</span></span>
-<span><span class="co">#&gt; (Intercept)-2003       0.00    0.08</span></span>
-<span><span class="co">#&gt; (Intercept)-2004       0.21    0.08</span></span>
-<span><span class="co">#&gt; (Intercept)-2005       0.17    0.08</span></span>
-<span><span class="co">#&gt; (Intercept)-2006      -0.03    0.16</span></span>
-<span><span class="co">#&gt; (Intercept)-2007      -0.25    0.09</span></span>
-<span><span class="co">#&gt; (Intercept)-2008      -0.15    0.21</span></span>
-<span><span class="co">#&gt; (Intercept)-2009      -0.25    0.08</span></span>
-<span><span class="co">#&gt; (Intercept)-2010      -0.03    0.16</span></span>
-<span><span class="co">#&gt; (Intercept)-2011       0.15    0.08</span></span>
-<span><span class="co">#&gt; (Intercept)-2012       0.05    0.17</span></span>
-<span><span class="co">#&gt; (Intercept)-2013       0.03    0.08</span></span>
-<span><span class="co">#&gt; (Intercept)-2014       0.04    0.17</span></span>
-<span><span class="co">#&gt; (Intercept)-2015       0.12    0.08</span></span>
-<span><span class="co">#&gt; (Intercept)-2016       0.02    0.16</span></span>
-<span><span class="co">#&gt; (Intercept)-2017      -0.06    0.08</span></span>
-<span><span class="co">#&gt; depth_scaled-2003      0.00    0.04</span></span>
-<span><span class="co">#&gt; depth_scaled-2004      0.00    0.04</span></span>
-<span><span class="co">#&gt; depth_scaled-2005     -0.01    0.05</span></span>
-<span><span class="co">#&gt; depth_scaled-2006      0.00    0.05</span></span>
-<span><span class="co">#&gt; depth_scaled-2007     -0.01    0.07</span></span>
-<span><span class="co">#&gt; depth_scaled-2008      0.00    0.04</span></span>
-<span><span class="co">#&gt; depth_scaled-2009      0.01    0.06</span></span>
-<span><span class="co">#&gt; depth_scaled-2010      0.00    0.05</span></span>
-<span><span class="co">#&gt; depth_scaled-2011      0.01    0.05</span></span>
-<span><span class="co">#&gt; depth_scaled-2012      0.00    0.04</span></span>
-<span><span class="co">#&gt; depth_scaled-2013      0.00    0.04</span></span>
-<span><span class="co">#&gt; depth_scaled-2014      0.00    0.05</span></span>
-<span><span class="co">#&gt; depth_scaled-2015      0.03    0.11</span></span>
-<span><span class="co">#&gt; depth_scaled-2016      0.00    0.04</span></span>
-<span><span class="co">#&gt; depth_scaled-2017     -0.02    0.10</span></span>
-<span><span class="co">#&gt; depth_scaled2-2003    -0.05    0.22</span></span>
-<span><span class="co">#&gt; depth_scaled2-2004    -0.04    0.19</span></span>
-<span><span class="co">#&gt; depth_scaled2-2005    -0.11    0.22</span></span>
-<span><span class="co">#&gt; depth_scaled2-2006     0.00    0.42</span></span>
-<span><span class="co">#&gt; depth_scaled2-2007    -0.02    0.24</span></span>
-<span><span class="co">#&gt; depth_scaled2-2008     0.01    0.50</span></span>
-<span><span class="co">#&gt; depth_scaled2-2009     0.69    0.19</span></span>
-<span><span class="co">#&gt; depth_scaled2-2010     0.00    0.42</span></span>
-<span><span class="co">#&gt; depth_scaled2-2011    -0.50    0.23</span></span>
-<span><span class="co">#&gt; depth_scaled2-2012     0.00    0.42</span></span>
-<span><span class="co">#&gt; depth_scaled2-2013     0.56    0.17</span></span>
-<span><span class="co">#&gt; depth_scaled2-2014     0.00    0.46</span></span>
-<span><span class="co">#&gt; depth_scaled2-2015    -0.06    0.23</span></span>
-<span><span class="co">#&gt; depth_scaled2-2016     0.00    0.46</span></span>
-<span><span class="co">#&gt; depth_scaled2-2017    -0.45    0.25</span></span>
+<span><span class="co">#&gt;                        coef.est   coef.se</span></span>
+<span><span class="co">#&gt; (Intercept)-2003    0.000000000 0.0800000</span></span>
+<span><span class="co">#&gt; (Intercept)-2004    0.210000000 0.0800000</span></span>
+<span><span class="co">#&gt; (Intercept)-2005    0.170000000 0.0800000</span></span>
+<span><span class="co">#&gt; (Intercept)-2006   -0.030000000 0.1600000</span></span>
+<span><span class="co">#&gt; (Intercept)-2007   -0.250000000 0.0900000</span></span>
+<span><span class="co">#&gt; (Intercept)-2008   -0.150000000 0.2100000</span></span>
+<span><span class="co">#&gt; (Intercept)-2009   -0.250000000 0.0800000</span></span>
+<span><span class="co">#&gt; (Intercept)-2010   -0.030000000 0.1600000</span></span>
+<span><span class="co">#&gt; (Intercept)-2011    0.150000000 0.0800000</span></span>
+<span><span class="co">#&gt; (Intercept)-2012    0.050000000 0.1700000</span></span>
+<span><span class="co">#&gt; (Intercept)-2013    0.030000000 0.0800000</span></span>
+<span><span class="co">#&gt; (Intercept)-2014    0.040000000 0.1700000</span></span>
+<span><span class="co">#&gt; (Intercept)-2015    0.120000000 0.0800000</span></span>
+<span><span class="co">#&gt; (Intercept)-2016    0.020000000 0.1600000</span></span>
+<span><span class="co">#&gt; (Intercept)-2017   -0.060000000 0.0800000</span></span>
+<span><span class="co">#&gt; depth_scaled-2003   0.000000000 0.0400000</span></span>
+<span><span class="co">#&gt; depth_scaled-2004   0.000000000 0.0400000</span></span>
+<span><span class="co">#&gt; depth_scaled-2005  -0.010000000 0.0500000</span></span>
+<span><span class="co">#&gt; depth_scaled-2006   0.000000000 0.0500000</span></span>
+<span><span class="co">#&gt; depth_scaled-2007  -0.010000000 0.0700000</span></span>
+<span><span class="co">#&gt; depth_scaled-2008   0.000000000 0.0400000</span></span>
+<span><span class="co">#&gt; depth_scaled-2009   0.010000000 0.0600000</span></span>
+<span><span class="co">#&gt; depth_scaled-2010   0.000000000 0.0500000</span></span>
+<span><span class="co">#&gt; depth_scaled-2011   0.010000000 0.0500000</span></span>
+<span><span class="co">#&gt; depth_scaled-2012   0.000000000 0.0400000</span></span>
+<span><span class="co">#&gt; depth_scaled-2013   0.000000000 0.0400000</span></span>
+<span><span class="co">#&gt; depth_scaled-2014   0.000000000 0.0500000</span></span>
+<span><span class="co">#&gt; depth_scaled-2015   0.030000000 0.1100000</span></span>
+<span><span class="co">#&gt; depth_scaled-2016   0.000000000 0.0400000</span></span>
+<span><span class="co">#&gt; depth_scaled-2017  -0.020000000 0.1000000</span></span>
+<span><span class="co">#&gt; depth_scaled2-2003 -0.050000000 0.2200000</span></span>
+<span><span class="co">#&gt; depth_scaled2-2004 -0.040000000 0.1900000</span></span>
+<span><span class="co">#&gt; depth_scaled2-2005 -0.110000000 0.2200000</span></span>
+<span><span class="co">#&gt; depth_scaled2-2006  0.000000000 0.4200000</span></span>
+<span><span class="co">#&gt; depth_scaled2-2007 -0.020000000 0.2400000</span></span>
+<span><span class="co">#&gt; depth_scaled2-2008  0.010000000 0.5000000</span></span>
+<span><span class="co">#&gt; depth_scaled2-2009  0.690000000 0.1900000</span></span>
+<span><span class="co">#&gt; depth_scaled2-2010  0.000000000 0.4200000</span></span>
+<span><span class="co">#&gt; depth_scaled2-2011 -0.500000000 0.2300000</span></span>
+<span><span class="co">#&gt; depth_scaled2-2012  0.000000000 0.4200000</span></span>
+<span><span class="co">#&gt; depth_scaled2-2013  0.560000000 0.1700000</span></span>
+<span><span class="co">#&gt; depth_scaled2-2014  0.000000000 0.4600000</span></span>
+<span><span class="co">#&gt; depth_scaled2-2015 -0.060000000 0.2300000</span></span>
+<span><span class="co">#&gt; depth_scaled2-2016  0.000000000 0.4600000</span></span>
+<span><span class="co">#&gt; depth_scaled2-2017 -0.450000000 0.2500000</span></span>
+<span><span class="co">#&gt; rho-(Intercept)     0.337509991 0.3881079</span></span>
+<span><span class="co">#&gt; rho-depth_scaled   -0.003024529 1.1882776</span></span>
+<span><span class="co">#&gt; rho-depth_scaled2   0.009479088 0.4032570</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Dispersion parameter: 12.37</span></span>
 <span><span class="co">#&gt; Tweedie p: 1.58</span></span>
