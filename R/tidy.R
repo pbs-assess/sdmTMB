@@ -266,6 +266,30 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     out_ranef <- NULL
   }
 
+  # optional time-varying random components
+  if(!is.null(x$time_varying)) {
+    tv_names <- colnames(model.matrix(x$time_varying, x$data))
+    time_slices <- x$time_lu$time_from_data
+    yrs <- rep(time_slices, times = length(tv_names))
+
+    out_ranef_tv <- data.frame(
+      term = paste0(rep(tv_names, times = length(time_slices)), ":", yrs),
+      estimate = c(est$b_rw_t),
+      std.error = c(se$b_rw_t),
+      conf.low = c(est$b_rw_t) - crit * c(se$b_rw_t),
+      conf.high = c(est$b_rw_t) + crit * c(se$b_rw_t),
+      stringsAsFactors = FALSE
+    )
+
+    if(is.null(out_ranef)) {
+      out_ranef <- out_ranef_tv
+    } else {
+      out_ranef <- rbind(out_ranef, out_ranef_tv)
+    }
+  }
+
+
+
   out <- unique(out) # range can be duplicated
   out_re <- unique(out_re)
 
