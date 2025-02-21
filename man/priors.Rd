@@ -15,7 +15,12 @@ sdmTMBpriors(
   ar1_rho = normal(NA, NA),
   tweedie_p = normal(NA, NA),
   b = normal(NA, NA),
-  sigma_G = halfnormal(NA, NA)
+  sigma_G = halfnormal(NA, NA),
+  threshold_linear_slope = normal(NA, NA),
+  threshold_linear_cut = normal(NA, NA),
+  threshold_logistic_s50 = normal(NA, NA),
+  threshold_logistic_s95 = normal(NA, NA),
+  threshold_logistic_smax = normal(NA, NA)
 )
 
 normal(location = 0, scale = 1)
@@ -47,6 +52,18 @@ parameter has support \verb{1 < tweedie_p < 2} so choose a mean appropriately.}
 \item{b}{\code{normal()} priors for the main population-level 'beta' effects.}
 
 \item{sigma_G}{\code{halfnormal()} priors for the random intercept SDs.}
+
+\item{threshold_linear_slope}{prior for the slope of the linear (hockey stick)
+function}
+
+\item{threshold_linear_cut}{prior for the cutoff of the linear (hockey stick)
+function}
+
+\item{threshold_logistic_s50}{prior for which f(x) = 0.5}
+
+\item{threshold_logistic_s95}{prior for which f(x) = 0.95}
+
+\item{threshold_logistic_smax}{prior for the value for which f(x) is maximized}
 
 \item{location}{Location parameter(s).}
 

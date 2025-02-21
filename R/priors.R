@@ -62,9 +62,9 @@
 #'   parameter has support `1 < tweedie_p < 2` so choose a mean appropriately.
 #' @param b `normal()` priors for the main population-level 'beta' effects.
 #' @param sigma_G `halfnormal()` priors for the random intercept SDs.
-#' @param threshold_linear_slope prior for the slope of the linear (hockey stick)
+#' @param threshold_breakpt_slope prior for the slope of the linear (hockey stick)
 #' function
-#' @param threshold_linear_cut prior for the cutoff of the linear (hockey stick)
+#' @param threshold_breakpt_cut prior for the cutoff of the linear (hockey stick)
 #' function
 #' @param threshold_logistic_s50 prior for which f(x) = 0.5
 #' @param threshold_logistic_s95 prior for which f(x) = 0.95
@@ -84,8 +84,8 @@ sdmTMBpriors <- function(
   tweedie_p = normal(NA, NA),
   b = normal(NA, NA),
   sigma_G = halfnormal(NA, NA),
-  threshold_linear_slope = normal(NA, NA),
-  threshold_linear_cut = normal(NA, NA),
+  threshold_breakpt_slope = normal(NA, NA),
+  threshold_breakpt_cut = normal(NA, NA),
   threshold_logistic_s50 = normal(NA, NA),
   threshold_logistic_s95 = normal(NA, NA),
   threshold_logistic_smax = normal(NA, NA)
@@ -104,8 +104,8 @@ sdmTMBpriors <- function(
     tweedie_p = tweedie_p,
     b = b,
     sigma_G = sigma_G,
-    threshold_linear_slope = threshold_linear_slope,
-    threshold_linear_cut = threshold_linear_cut,
+    threshold_breakpt_slope = threshold_breakpt_slope,
+    threshold_breakpt_cut = threshold_breakpt_cut,
     threshold_logistic_s50 = threshold_logistic_s50,
     threshold_logistic_s95 = threshold_logistic_s95,
     threshold_logistic_smax = threshold_logistic_smax

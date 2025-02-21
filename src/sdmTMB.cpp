@@ -1035,21 +1035,20 @@ Type objective_function<Type>::operator()()
       // log abs derivative = log((2 * exp(x)) / (1 + exp(x))^2)
       if (stan_flag) jnll -= log(2.) + ar1_phi(m) - 2. * log(1. + exp(ar1_phi(m)));
     }
-    if(!sdmTMB::isNA(priors(15)) && !sdmTMB::isNA(priors(16))) {
-      jnll -= dnorm(s_slope(m), priors(15), priors(16), true);
-      //if (stan_flag) jnll -= ln_phi(m); // Jacobian adjustment
+    if(!sdmTMB::isNA(priors(14)) && !sdmTMB::isNA(priors(15))) { // hockeystick
+      jnll -= dnorm(s_slope(m), priors(14), priors(15), true);
     }
-    if(!sdmTMB::isNA(priors(17)) && !sdmTMB::isNA(priors(18))) {
-      jnll -= dnorm(s_cut(m), priors(17), priors(18), true);
+    if(!sdmTMB::isNA(priors(16)) && !sdmTMB::isNA(priors(17))) { // hockeystick
+      jnll -= dnorm(s_cut(m), priors(16), priors(17), true);
     }
-    if(!sdmTMB::isNA(priors(19)) && !sdmTMB::isNA(priors(20))) {
-      jnll -= dnorm(s50(m), priors(19), priors(20), true);
+    if(!sdmTMB::isNA(priors(18)) && !sdmTMB::isNA(priors(19))) { // logistic
+      jnll -= dnorm(s50(m), priors(18), priors(19), true);
     }
-    if(!sdmTMB::isNA(priors(21)) && !sdmTMB::isNA(priors(22))) {
-      jnll -= dnorm(s95(m), priors(21), priors(22), true);
+    if(!sdmTMB::isNA(priors(20)) && !sdmTMB::isNA(priors(21))) { // logistic
+      jnll -= dnorm(s95(m), priors(20), priors(21), true);
     }
-    if(!sdmTMB::isNA(priors(23)) && !sdmTMB::isNA(priors(24))) {
-      jnll -= dnorm(s_max(m), priors(23), priors(24), true);
+    if(!sdmTMB::isNA(priors(22)) && !sdmTMB::isNA(priors(23))) { // logistic
+      jnll -= dnorm(s_max(m), priors(22), priors(23), true);
     }
     if (priors_sigma_G.rows() != sigma_G.rows())
       error("sigma_G prior dimensions are incorrect");
