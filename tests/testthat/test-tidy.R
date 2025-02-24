@@ -49,7 +49,7 @@ test_that("tidy works", {
   # test smooth handling
   fit <- sdmTMB(
     density ~ s(depth),
-    data = pcod_2011, mesh = mesh,
+    data = pcod_2011, mesh = pcod_mesh_2011,
     family = tweedie(link = "log")
   )
   x <- tidy(fit)
