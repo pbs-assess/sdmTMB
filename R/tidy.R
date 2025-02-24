@@ -48,7 +48,7 @@
 #' tidy(fit, "ran_vals")
 
 tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vcov"), model = 1,
-                 conf.int = FALSE, conf.level = 0.95, exponentiate = FALSE,
+                 conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE,
                  silent = FALSE, ...) {
   effects <- match.arg(effects)
   assert_that(is.logical(exponentiate))
@@ -108,8 +108,12 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     p$sigma_E <- as.numeric(p$sigma_E[1,model])
     p$sigma_O <- as.numeric(p$sigma_O[1,model])
     p$sigma_Z <- as.numeric(p$sigma_Z[,model])
+
+    # if delta, a single AR1 -> rho_time_unscaled is a 1x2 matrix
+    p$rho_time <- 2 * plogis(p$rho_time_unscaled[,model]) - 1
     p
   }
+
   est <- subset_pars(est, model)
   se <- subset_pars(se, model)
 
@@ -183,6 +187,11 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     log_name <- c(log_name, "ln_tau_V")
     name <- c(name, "tau_V")
   }
+  if (!all(est$rho_time == 0)) {
+    log_name <- c(log_name, "rho_time_unscaled")
+    name <- c(name, "rho_time")
+  }
+
   j <- 0
   if (!"log_range" %in% names(est)) {
     cli_warn("This model was fit with an old version of sdmTMB. Some parameters may not be available to the tidy() method. Re-fit the model with the current version of sdmTMB if you need access to any missing parameters.")
@@ -199,6 +208,8 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
       non_log_name <- gsub("ln_", "", gsub("log_", "", log_name))
       this <- non_log_name[j]
       if (this == "tau_V") this <- "sigma_V"
+      if (this == "rho_time_unscaled") this <- "rho_time"
+
       this_se <- as.numeric(se[[this]])
       this_est <- as.numeric(est[[this]])
       if (length(this_est) && !(all(this_se == 0) && all(this_est == 0))) {
@@ -208,6 +219,19 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
           conf.high = exp(.e + crit * .se),
           stringsAsFactors = FALSE
         )
+        if(this == "rho_time") {
+          out_re[[i]] <- data.frame(
+            term = i,
+            estimate = this_est,
+            # use delta method to get SE in normal space
+            std.error = 2 * plogis (.e[,model]) * (1 - plogis (.e[,model])) * .se[,model],
+            # don't use delta-method for CIs, because they can be outside (-1,1)
+            conf.low = 2 * plogis(.e[,model] - crit * .se[,model]) - 1,
+            conf.high = 2 * plogis(.e[,model] + crit * .se[,model]) - 1,
+            stringsAsFactors = FALSE
+          )
+
+        }
       }
       ii <- ii + 1
     }

@@ -67,6 +67,8 @@
 * Add option for `area` to be passed in as the name of a column in the 
   dataframe to be used for area weighting. Used in `get_index()`, 
   `get_cog()`, `get_eao()`, etc.
+  
+* Add time varying AR(1) correlation to tidy() and print() #374
 
 * Add option for random slopes, or random intercepts to be passed in in 
   `lme4` style formulas, `density ~ (1 | fyear)` or `density ~ (depth | fyear)`,
