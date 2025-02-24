@@ -45,4 +45,14 @@ test_that("tidy works", {
   x <- tidy(fit, "ran_pars", conf.int = TRUE)
   x
   expect_true(sum(is.na(x$std.error)) == 0L)
+
+  # test smooth handling
+  fit <- sdmTMB(
+    density ~ s(depth),
+    data = pcod_2011, mesh = mesh,
+    family = tweedie(link = "log")
+  )
+  x <- tidy(fit)
+  expect_equal(x$term, c("(Intercept)", "sdepth"))
+
 })
