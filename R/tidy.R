@@ -347,18 +347,18 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   }
 }
 
-#' Extract and format random effect estimates from sdmTMB model output
-#'
-#' This function extracts random effect estimates, including individual random intercepts
-#' and slopes, as well as covariance matrices, from an `sdmTMB` model output. It formats
-#' them into a structured list for further analysis.
-#'
-#' @param x An `sdmTMB` model object containing estimated random effects.
-#' @param crit The critical value for confidence interval computation,
-#'   typically derived from a normal distribution quantile, e.g.
-#'   crit = stats::qnorm(1 - (1 - conf.level) / 2)
-#' @importFrom stats aggregate
-#'
+# Extract and format random effect estimates from sdmTMB model output
+#
+# This function extracts random effect estimates, including individual random intercepts
+# and slopes, as well as covariance matrices, from an `sdmTMB` model output. It formats
+# them into a structured list for further analysis.
+#
+# @param x An `sdmTMB` model object containing estimated random effects.
+# @param crit The critical value for confidence interval computation,
+#   typically derived from a normal distribution quantile, e.g.
+#   crit = stats::qnorm(1 - (1 - conf.level) / 2)
+# @importFrom stats aggregate
+
 get_re_tidy_list <- function(x, crit) {
   re_b_dfs <- add_model_index(x$split_formula, "re_b_df")
   re_b_df <- do.call(rbind, re_b_dfs)
