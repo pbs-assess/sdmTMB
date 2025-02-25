@@ -1,6 +1,8 @@
 # sdmTMB (development version)
 
-* Add time varying AR(1) correlation to tidy() and print() #374
+* Add linear component of smoothers to `tidy()`. #90
+
+* Add time varying AR(1) correlation to tidy() and print(). #374
 
 * Add option for random slopes, or random intercepts to be passed in in 
   `lme4` style formulas, `density ~ (1 | fyear)` or `density ~ (depth | fyear)`,
