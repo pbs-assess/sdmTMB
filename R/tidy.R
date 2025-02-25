@@ -403,7 +403,7 @@ get_re_tidy_list <- function(x, crit) {
       re_b_df$par_name[model_grp] <- rep(x$split_formula[[i]]$re_cov_terms$cnms[[j]], length.out = length(model_grp))
     }
   }
-  group_key <- aggregate(group_name ~ model + group_id, data = re_b_df, FUN = function(x) x[1])
+  group_key <- stats::aggregate(group_name ~ model + group_id, data = re_b_df, FUN = function(x) x[1])
 
   # more sensible re-ordering
   re_b_df$group_id <- NULL
