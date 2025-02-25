@@ -187,3 +187,17 @@ test_that("get_index works", {
 #
 # })
 
+# https://github.com/pbs-assess/sdmTMB/issues/408
+test_that("Models error our nicely with Inf or -Inf covariates before get_index()", {
+  d <- pcod
+  d$depth_scaled[1] <- -Inf
+  expect_error(m <- sdmTMB(
+    data = d,
+    formula = density ~ 0 + as.factor(year) + depth_scaled,
+    spatiotemporal = "off", # speed
+    spatial = "off", # speed
+    time = "year",
+    family = delta_gamma(type = "poisson-link")
+  ), regexp = "Inf")
+})
+

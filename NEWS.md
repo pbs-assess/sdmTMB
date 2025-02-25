@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Add check for `Inf`/`-Inf` values before fitting. #408
+
 * Add priors for `breakpt()` and `logistic()` parameters. #403
 
 * Add linear component of smoothers to `tidy()`. #90

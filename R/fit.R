@@ -859,6 +859,12 @@ sdmTMB <- function(
     formula_no_bars_no_sm <- remove_s_and_t2(formula_no_bars)
     X_ij[[ii]] <- model.matrix(formula_no_bars_no_sm, data)
     mf[[ii]] <- model.frame(formula_no_bars_no_sm, data)
+    vars <- colnames(mf[[ii]])
+    for (g in seq_along(vars)) {
+      if (any(is.infinite(mf[[ii]][, g, drop = TRUE]))) {
+        cli_abort("Column `{vars[g]}` had an Inf/-Inf value. Please remove this before fitting the model.")
+      }
+    }
 
     mt[[ii]] <- attr(mf[[ii]], "terms")
     # parse everything mgcv + smoothers:
