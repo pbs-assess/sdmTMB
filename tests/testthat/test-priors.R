@@ -165,3 +165,48 @@ test_that("Additional priors work", {
       abs(tidy(m_mvn_na)$estimate[tidy(m_mvn_na)$term == "depth_scaled"])
   )
 })
+
+test_that("Threshold priors work", {
+  skip_on_cran()
+  d <- pcod_2011
+
+  m <- sdmTMB(density ~ 0 + logistic(depth_scaled),
+    data = d,
+    family = tweedie(link = "log"),
+    priors = sdmTMBpriors(threshold_logistic_s50 = normal(-1, 0.005)),
+    spatial = "off", spatiotemporal = "off"
+  )
+  expect_equal(tidy(m)$estimate[1], -1, tolerance = 0.01)
+
+  m <- sdmTMB(density ~ 0 + logistic(depth_scaled),
+    data = d,
+    family = tweedie(link = "log"),
+    priors = sdmTMBpriors(threshold_logistic_s95 = normal(-1, 0.005)),
+    spatial = "off", spatiotemporal = "off"
+  )
+  expect_equal(tidy(m)$estimate[2], -1, tolerance = 0.01)
+
+  m <- sdmTMB(density ~ 0 + logistic(depth_scaled),
+    data = d,
+    family = tweedie(link = "log"),
+    priors = sdmTMBpriors(threshold_logistic_smax = normal(4.0, 0.005)),
+    spatial = "off", spatiotemporal = "off"
+  )
+  expect_equal(tidy(m)$estimate[3], 4.0, tolerance = 0.01)
+
+  m <- sdmTMB(density ~ 0 + breakpt(depth_scaled),
+    data = d,
+    family = tweedie(link = "log"),
+    priors = sdmTMBpriors(threshold_breakpt_slope = normal(-4, 0.005)),
+    spatial = "off", spatiotemporal = "off"
+  )
+  expect_equal(tidy(m)$estimate[1], -4, tolerance = 0.01)
+
+  m <- sdmTMB(density ~ 0 + breakpt(depth_scaled),
+    data = d,
+    family = tweedie(link = "log"),
+    priors = sdmTMBpriors(threshold_breakpt_cut = normal(-1, 0.005)),
+    spatial = "off", spatiotemporal = "off"
+  )
+  expect_equal(tidy(m)$estimate[2], -1, tolerance = 0.01)
+})

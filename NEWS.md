@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Add priors for `breakpt()` and `logistic()` parameters. #403
+
 * Add linear component of smoothers to `tidy()`. #90
 
 * Add time varying AR(1) correlation to tidy() and print(). #374
