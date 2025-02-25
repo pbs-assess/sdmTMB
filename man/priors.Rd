@@ -53,17 +53,20 @@ parameter has support \verb{1 < tweedie_p < 2} so choose a mean appropriately.}
 
 \item{sigma_G}{\code{halfnormal()} priors for the random intercept SDs.}
 
-\item{threshold_breakpt_slope}{prior for the slope of the linear (hockey stick)
-function}
+\item{threshold_breakpt_slope}{A \code{normal()} prior for the slope of the
+linear (hockey stick) function.}
 
-\item{threshold_breakpt_cut}{prior for the cutoff of the linear (hockey stick)
-function}
+\item{threshold_breakpt_cut}{A \code{normal()} prior for the cutoff of the
+linear (hockey stick) function.}
 
-\item{threshold_logistic_s50}{prior for which f(x) = 0.5}
+\item{threshold_logistic_s50}{A \code{normal()} prior for the parameter at which
+f(x) = 0.5.}
 
-\item{threshold_logistic_s95}{prior for which f(x) = 0.95}
+\item{threshold_logistic_s95}{A \code{normal()} prior for the parameter at which
+f(x) = 0.95.}
 
-\item{threshold_logistic_smax}{prior for the value for which f(x) is maximized}
+\item{threshold_logistic_smax}{A \code{normal()} prior for the paramter at which
+f(x) is maximized.}
 
 \item{location}{Location parameter(s).}
 

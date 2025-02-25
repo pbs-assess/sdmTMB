@@ -62,13 +62,16 @@
 #'   parameter has support `1 < tweedie_p < 2` so choose a mean appropriately.
 #' @param b `normal()` priors for the main population-level 'beta' effects.
 #' @param sigma_G `halfnormal()` priors for the random intercept SDs.
-#' @param threshold_breakpt_slope prior for the slope of the linear (hockey stick)
-#' function
-#' @param threshold_breakpt_cut prior for the cutoff of the linear (hockey stick)
-#' function
-#' @param threshold_logistic_s50 prior for which f(x) = 0.5
-#' @param threshold_logistic_s95 prior for which f(x) = 0.95
-#' @param threshold_logistic_smax prior for the value for which f(x) is maximized
+#' @param threshold_breakpt_slope A `normal()` prior for the slope of the
+#'   linear (hockey stick) function.
+#' @param threshold_breakpt_cut A `normal()` prior for the cutoff of the
+#'   linear (hockey stick) function.
+#' @param threshold_logistic_s50 A `normal()` prior for the parameter at which
+#'   f(x) = 0.5.
+#' @param threshold_logistic_s95 A `normal()` prior for the parameter at which
+#'   f(x) = 0.95.
+#' @param threshold_logistic_smax A `normal()` prior for the paramter at which
+#'   f(x) is maximized.
 #'
 #' @rdname priors
 #'
@@ -96,6 +99,11 @@ sdmTMBpriors <- function(
   assert_that(attr(sigma_G, "dist") == "normal")
   assert_that(attr(tweedie_p, "dist") == "normal")
   assert_that(attr(b, "dist") %in% c("normal", "mvnormal"))
+  assert_that(attr(threshold_breakpt_slope, "dist") == "normal")
+  assert_that(attr(threshold_breakpt_cut, "dist") == "normal")
+  assert_that(attr(threshold_logistic_s50, "dist") == "normal")
+  assert_that(attr(threshold_logistic_s95, "dist") == "normal")
+  assert_that(attr(threshold_logistic_smax, "dist") == "normal")
   list(
     matern_s = matern_s,
     matern_st = matern_st,

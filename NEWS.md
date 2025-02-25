@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Add priors for `breakpt()` and `logistic()` parameters. #403
+
 * Warn if parameter limits are set with `newton_loops > 0`. #394
 
 * Allow for specifying only lower or upper limits. #394
@@ -69,8 +71,6 @@
   `get_cog()`, `get_eao()`, etc.
   
 * Add time varying AR(1) correlation to tidy() and print() #374
-
-* Add priors for `breakpt()` and `logistic()` parameters
 
 # sdmTMB 0.6.0
 
