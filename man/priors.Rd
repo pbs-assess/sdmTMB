@@ -15,7 +15,6 @@ sdmTMBpriors(
   ar1_rho = normal(NA, NA),
   tweedie_p = normal(NA, NA),
   b = normal(NA, NA),
-  sigma_G = halfnormal(NA, NA),
   threshold_breakpt_slope = normal(NA, NA),
   threshold_breakpt_cut = normal(NA, NA),
   threshold_logistic_s50 = normal(NA, NA),
@@ -50,8 +49,6 @@ the parameter has support \verb{-1 < ar1_rho < 1}.}
 parameter has support \verb{1 < tweedie_p < 2} so choose a mean appropriately.}
 
 \item{b}{\code{normal()} priors for the main population-level 'beta' effects.}
-
-\item{sigma_G}{\code{halfnormal()} priors for the random intercept SDs.}
 
 \item{threshold_breakpt_slope}{A \code{normal()} prior for the slope of the
 linear (hockey stick) function.}
