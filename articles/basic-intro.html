@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9025</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9027</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,7 +76,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Introduction to modelling with sdmTMB</h1>
             
-            <h4 data-toc-skip class="date">2025-02-21</h4>
+            <h4 data-toc-skip class="date">2025-02-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/vignettes/articles/basic-intro.Rmd" class="external-link"><code>vignettes/articles/basic-intro.Rmd</code></a></small>
       <div class="d-none name"><code>basic-intro.Rmd</code></div>
@@ -170,6 +170,7 @@ tows as a function of depth and depth squared. We will first use
 <span><span class="co">#&gt; Data: pcod</span></span>
 <span><span class="co">#&gt; Family: binomial(link = 'logit')</span></span>
 <span><span class="co">#&gt;  </span></span>
+<span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;               coef.est coef.se</span></span>
 <span><span class="co">#&gt; (Intercept)       0.57    0.06</span></span>
 <span><span class="co">#&gt; depth_scaled     -1.04    0.07</span></span>
@@ -228,6 +229,7 @@ changes coefficient estimates:</p>
 <span><span class="co">#&gt; Data: pcod</span></span>
 <span><span class="co">#&gt; Family: binomial(link = 'logit')</span></span>
 <span><span class="co">#&gt;  </span></span>
+<span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;               coef.est coef.se</span></span>
 <span><span class="co">#&gt; (Intercept)       1.14    0.44</span></span>
 <span><span class="co">#&gt; depth_scaled     -2.17    0.21</span></span>
@@ -267,6 +269,7 @@ examples.</p>
 <span><span class="co">#&gt; Data: pcod</span></span>
 <span><span class="co">#&gt; Family: binomial(link = 'logit')</span></span>
 <span><span class="co">#&gt;  </span></span>
+<span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;               coef.est coef.se</span></span>
 <span><span class="co">#&gt; (Intercept)       1.37    0.58</span></span>
 <span><span class="co">#&gt; depth_scaled     -2.47    0.25</span></span>
@@ -299,6 +302,7 @@ easier.</p>
 <span><span class="co">#&gt; Data: pcod</span></span>
 <span><span class="co">#&gt; Family: tweedie(link = 'log')</span></span>
 <span><span class="co">#&gt;  </span></span>
+<span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;                      coef.est coef.se</span></span>
 <span><span class="co">#&gt; (Intercept)              1.86    0.21</span></span>
 <span><span class="co">#&gt; poly(log(depth), 2)1   -65.13    6.32</span></span>
@@ -397,8 +401,8 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.011259 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 112.59 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.010167 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 101.67 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -423,9 +427,9 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; Chain 1: Iteration: 100 / 101 [ 99%]  (Warmup)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 101 / 101 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 27.636 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                0.204 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                27.84 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 27.598 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                0.206 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                27.804 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
 <span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">m3</span>, <span class="st">"mle-mcmc"</span>, mcmc_samples <span class="op">=</span> <span class="va">samps</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqnorm</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span></span>
@@ -606,6 +610,7 @@ because we were having convergence issues with them turned on.</p>
 <span><span class="co">#&gt; Data: pcod</span></span>
 <span><span class="co">#&gt; Family: tweedie(link = 'log')</span></span>
 <span><span class="co">#&gt;  </span></span>
+<span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;               coef.est coef.se</span></span>
 <span><span class="co">#&gt; (Intercept)       3.84    0.28</span></span>
 <span><span class="co">#&gt; depth_scaled     -1.91    0.16</span></span>

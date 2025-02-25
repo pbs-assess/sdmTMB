@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9025</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9027</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,7 +76,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Fitting multispecies models with sdmTMB</h1>
             
-            <h4 data-toc-skip class="date">2025-02-21</h4>
+            <h4 data-toc-skip class="date">2025-02-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/vignettes/articles/multispecies.Rmd" class="external-link"><code>vignettes/articles/multispecies.Rmd</code></a></small>
       <div class="d-none name"><code>multispecies.Rmd</code></div>
@@ -167,6 +167,7 @@ fields, spatiotemporal variances) are shared.</p>
 <span><span class="co">#&gt; Data: sim_dat</span></span>
 <span><span class="co">#&gt; Family: gaussian(link = 'identity')</span></span>
 <span><span class="co">#&gt;  </span></span>
+<span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;                 coef.est coef.se</span></span>
 <span><span class="co">#&gt; (Intercept)         7.59    0.05</span></span>
 <span><span class="co">#&gt; fyear2              0.36    0.05</span></span>
@@ -217,6 +218,7 @@ here.</p>
 <span><span class="co">#&gt; Data: sim_dat</span></span>
 <span><span class="co">#&gt; Family: gaussian(link = 'identity')</span></span>
 <span><span class="co">#&gt;  </span></span>
+<span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;                 coef.est coef.se</span></span>
 <span><span class="co">#&gt; (Intercept)         7.60    0.06</span></span>
 <span><span class="co">#&gt; fyear2              0.36    0.05</span></span>
@@ -296,6 +298,7 @@ coefficient SDs:</p>
 <span><span class="co">#&gt; Data: sim_dat</span></span>
 <span><span class="co">#&gt; Family: gaussian(link = 'identity')</span></span>
 <span><span class="co">#&gt;  </span></span>
+<span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;                         coef.est coef.se</span></span>
 <span><span class="co">#&gt; (Intercept)                 7.60    0.06</span></span>
 <span><span class="co">#&gt; fyear2                      0.35    0.05</span></span>
@@ -352,6 +355,7 @@ form of species-specific spatiotemporal variation by changing the
 <span><span class="co">#&gt; Data: sim_dat</span></span>
 <span><span class="co">#&gt; Family: gaussian(link = 'identity')</span></span>
 <span><span class="co">#&gt;  </span></span>
+<span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;                         coef.est coef.se</span></span>
 <span><span class="co">#&gt; (Intercept)                 7.56    0.07</span></span>
 <span><span class="co">#&gt; fyear2                      0.38    0.08</span></span>
@@ -482,6 +486,7 @@ vector:</p>
 <span><span class="co">#&gt; Data: sim_dat2</span></span>
 <span><span class="co">#&gt; Family: gaussian(link = 'identity')</span></span>
 <span><span class="co">#&gt;  </span></span>
+<span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;                         coef.est coef.se</span></span>
 <span><span class="co">#&gt; (Intercept)                 7.56    0.07</span></span>
 <span><span class="co">#&gt; fyear2                      0.38    0.08</span></span>
@@ -546,6 +551,7 @@ is the time element.</p>
 <span><span class="co">#&gt; Data: sim_dat</span></span>
 <span><span class="co">#&gt; Family: gaussian(link = 'identity')</span></span>
 <span><span class="co">#&gt;  </span></span>
+<span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;                  coef.est coef.se</span></span>
 <span><span class="co">#&gt; factor(species)A     7.01    0.08</span></span>
 <span><span class="co">#&gt; factor(species)B     6.27    0.08</span></span>
@@ -576,6 +582,7 @@ field variances to be shared to match the above:</p>
 <span><span class="co">#&gt; Data: sim_dat</span></span>
 <span><span class="co">#&gt; Family: gaussian(link = 'identity')</span></span>
 <span><span class="co">#&gt;  </span></span>
+<span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;                  coef.est coef.se</span></span>
 <span><span class="co">#&gt; factor(species)A     7.01    0.08</span></span>
 <span><span class="co">#&gt; factor(species)B     6.27    0.08</span></span>

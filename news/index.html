@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9025</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9027</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,10 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="sdmtmb-development-version">sdmTMB (development version)<a class="anchor" aria-label="anchor" href="#sdmtmb-development-version"></a></h2>
-<ul><li><p>Warn if parameter limits are set with <code>newton_loops &gt; 0</code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/394" class="external-link">#394</a></p></li>
+<ul><li><p>Add linear component of smoothers to <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/90" class="external-link">#90</a></p></li>
+<li><p>Add time varying AR(1) correlation to tidy() and print(). <a href="https://github.com/pbs-assess/sdmTMB/issues/374" class="external-link">#374</a></p></li>
+<li><p>Add option for random slopes, or random intercepts to be passed in in <code>lme4</code> style formulas, <code>density ~ (1 | fyear)</code> or <code>density ~ (depth | fyear)</code>, Matches output of <code>lme4</code> and <code>glmmTMB</code>, and summarizes output with <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>.</p></li>
+<li><p>Warn if parameter limits are set with <code>newton_loops &gt; 0</code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/394" class="external-link">#394</a></p></li>
 <li><p>Allow for specifying only lower or upper limits. <a href="https://github.com/pbs-assess/sdmTMB/issues/394" class="external-link">#394</a></p></li>
 <li><p>Add vignette on multispecies models with sdmTMB (or any case where one wants additional spatial and or spatiotemporal fields by some group).</p></li>
 <li><p>Add EDF (effective degrees of freedom) printing to smoothers with <code>print.sdmTMB()</code> and <code>summary.sdmTMB()</code>. Set argument <code>edf = TRUE</code>. E.g. <code>print(fit, edf = TRUE)</code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/383" class="external-link">#383</a> <a href="https://github.com/pbs-assess/sdmTMB/issues/387" class="external-link">#387</a></p></li>
@@ -72,7 +75,6 @@
 <li><p>Fix bug in prediction from <code><a href="../reference/families.html">delta_truncated_nbinom1()</a></code> and <code><a href="../reference/families.html">delta_truncated_nbinom2()</a></code> families. The positive component needs to be transformed to represent the mean of the <em>un</em>truncated distribution first before multiplying by the probability of a non-zero. Thanks to <a href="https://github.com/tom-peatman" class="external-link">@tom-peatman</a> <a href="https://github.com/pbs-assess/sdmTMB/issues/350" class="external-link">#350</a></p></li>
 <li><p>Add <code><a href="../reference/get_index.html">get_eao()</a></code> to calculate effective area occupied.</p></li>
 <li><p>Add option for <code>area</code> to be passed in as the name of a column in the dataframe to be used for area weighting. Used in <code><a href="../reference/get_index.html">get_index()</a></code>, <code><a href="../reference/get_index.html">get_cog()</a></code>, <code><a href="../reference/get_index.html">get_eao()</a></code>, etc.</p></li>
-<li><p>Add time varying AR(1) correlation to tidy() and print() <a href="https://github.com/pbs-assess/sdmTMB/issues/374" class="external-link">#374</a></p></li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.6.0" id="sdmtmb-060">sdmTMB 0.6.0<a class="anchor" aria-label="anchor" href="#sdmtmb-060"></a></h2><p class="text-muted">CRAN release: 2024-05-29</p>

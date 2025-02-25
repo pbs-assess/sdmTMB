@@ -11,7 +11,7 @@ partial differential equation) approximation to Gaussian random fields."><meta p
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9025</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9027</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,8 +97,8 @@ partial differential equation) approximation to Gaussian random fields.</p>
 
 
 <dl><dt id="arg-formula">formula<a class="anchor" aria-label="anchor" href="#arg-formula"></a></dt>
-<dd><p>Model formula. IID random intercepts are possible using
-<span class="pkg">lme4</span> syntax, e.g., <code>+ (1 | g)</code> where <code>g</code> is a column of class
+<dd><p>Model formula. IID random intercepts and slopes are possible using
+<span class="pkg">lme4</span> syntax, e.g., <code>+ (1 | g)</code> or <code>+ (0 + depth | g)</code> or <code>+ (1 + depth | g)</code> where <code>g</code> is a column of class
 character or factor representing groups. Penalized splines are possible via
 <span class="pkg">mgcv</span> with <code>s()</code>. Optionally a list for delta (hurdle) models.  See
 examples and details below.</p></dd>
@@ -395,8 +395,8 @@ and <code>share_range</code>. The first element of the list is for the binomial 
 and the second element is for the positive component (e.g., Gamma).
 Other elements must be shared for now (e.g., spatially varying coefficients,
 time-varying coefficients). Furthermore, there are currently limitations if
-specifying two formulas as a list: the two formulas cannot have smoothers,
-threshold effects, or random intercepts. For now, these must be specified
+specifying two formulas as a list: the two formulas cannot have smoothers or
+threshold effects. For now, these must be specified
 through a single formula that is shared across the two models.</p>
 <p>The main advantage of specifying such models using a delta family (compared
 to fitting two separate models) is (1) coding simplicity and (2) calculation
@@ -509,8 +509,10 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> Data: pcod_2011</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: tweedie(link = 'log')</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             coef.est coef.se</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)     2.16    0.34</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          1.94    3.13</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          1.94    3.13</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Smooth terms:</span>
@@ -527,10 +529,11 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Extract coefficients:</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit</span>, conf.int <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   term        estimate std.error conf.low conf.high</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> (Intercept)     2.16     0.340     1.50      2.83</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> sdepth          1.94     3.13     -<span style="color: #BB0000;">4.19</span>      8.07</span>
 <span class="r-in"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit</span>, effects <span class="op">=</span> <span class="st">"ran_par"</span>, conf.int <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   term      estimate std.error conf.low conf.high</span>
@@ -575,7 +578,7 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="co"># Visualize the depth effect with ggeffects:</span></span></span>
-<span class="r-in"><span><span class="fu">ggeffects</span><span class="fu">::</span><span class="fu"><a href="https://strengejacke.github.io/ggeffects/reference/ggpredict.html" class="external-link">ggpredict</a></span><span class="op">(</span><span class="va">fit</span>,  <span class="st">"depth [all]"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">ggeffects</span><span class="fu">::</span><span class="fu"><a href="https://strengejacke.github.io/ggeffects/reference/ggpredict.html" class="external-link">ggpredict</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"depth [all]"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="sdmTMB-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Visualize depth effect with visreg: (see ?visreg_delta)</span></span></span>
@@ -601,6 +604,7 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> Data: pcod_2011</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: tweedie(link = 'log')</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                     coef.est coef.se</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> as.factor(year)2011     2.76    0.36</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> as.factor(year)2013     3.10    0.35</span>
@@ -633,8 +637,10 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> Data: pcod_2011</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: tweedie(link = 'log')</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             coef.est coef.se</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)     1.84    0.33</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          1.96    3.27</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          1.96    3.27</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Smooth terms:</span>
@@ -667,8 +673,10 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> Data: pcod_2011</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: tweedie(link = 'log')</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             coef.est coef.se</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)     1.95    0.34</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          1.96    3.18</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          1.96    3.18</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Smooth terms:</span>
@@ -700,8 +708,13 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> Data: pcod_2011</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: tweedie(link = 'log')</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                             coef.est coef.se</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)                     1.76    0.34</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sdepth):as.factor(year)2011     0.07    4.02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sdepth):as.factor(year)2013     4.59    3.28</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sdepth):as.factor(year)2015     5.97    6.01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sdepth):as.factor(year)2017    -1.97    3.22</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepth):as.factor(year)2011     0.07    4.02</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepth):as.factor(year)2013     4.59    3.28</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepth):as.factor(year)2015     5.97    6.01</span>
@@ -736,8 +749,11 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> Data: pcod_2011</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: tweedie(link = 'log')</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>              coef.est coef.se</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)      2.55    0.24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sdepthyear_1     0.15    0.09</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sdepthyear_2     2.93    2.07</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepthyear_1     0.15    0.09</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepthyear_2     2.93    2.07</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -765,6 +781,7 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> Data: pcod_2011</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: binomial(link = 'logit')</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                  coef.est coef.se</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)         -0.16    0.07</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> poly(log(depth))   -13.19    2.14</span>
@@ -821,6 +838,7 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Delta/hurdle model 1: -----------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: binomial(link = 'logit') </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                      coef.est coef.se</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)             -0.48    0.09</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> poly(log(depth), 2)1   -23.06    3.15</span>
@@ -829,6 +847,7 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Delta/hurdle model 2: -----------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: Gamma(link = 'log') </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                      coef.est coef.se</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)              4.24    0.08</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> poly(log(depth), 2)1    -5.49    3.50</span>
@@ -856,6 +875,7 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Delta/hurdle model 1: -----------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: binomial(link = 'logit') </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>              coef.est coef.se</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)     -0.17    0.07</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> depth_scaled    -0.43    0.07</span>
@@ -863,6 +883,7 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Delta/hurdle model 2: -----------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: Gamma(link = 'log') </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                        coef.est coef.se</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)                4.08    0.14</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> poly(depth_scaled, 2)1    -6.15    4.52</span>
@@ -895,8 +916,10 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Delta/hurdle model 1: -----------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: binomial(link = 'logit') </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             coef.est coef.se</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)    -0.69    0.21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          0.29    2.37</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          0.29    2.37</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Smooth terms:</span>
@@ -906,8 +929,10 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Delta/hurdle model 2: -----------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: truncated_nbinom2(link = 'log') </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             coef.est coef.se</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)     4.18    0.22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          0.29    2.37</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepth         -0.37    1.77</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Smooth terms:</span>
@@ -934,8 +959,10 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> Data: pcod_2011</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: nbinom2(link = 'log')</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             coef.est coef.se</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)     2.49    0.27</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          3.61    3.96</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          3.61    3.96</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Smooth terms:</span>
@@ -961,17 +988,21 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> Data: pcod_2011</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: tweedie(link = 'log')</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Random intercepts and/or slopes:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      Groups        Name    Variance    Std.Dev. </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       fyear (Intercept)        0.09        0.30 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             coef.est coef.se</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)     2.13    0.37</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          1.82    2.99</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          1.82    2.99</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Smooth terms:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>            Std. Dev.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth)     12.51</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Random intercepts:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       Std. Dev.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> fyear       0.3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Dispersion parameter: 13.55</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Tweedie p: 1.58</span>
@@ -980,6 +1011,14 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> ML criterion at convergence: 2933.138</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> See ?tidy.sdmTMB to extract these values as a data frame.</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># IID random slopes and intercepts (implicit) by year:</span></span></span>
+<span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu">sdmTMB</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">density</span> <span class="op">~</span> <span class="op">(</span><span class="va">depth</span> <span class="op">|</span> <span class="va">fyear</span><span class="op">)</span>, <span class="co">#&lt;</span></span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">pcod_2011</span>, mesh <span class="op">=</span> <span class="va">mesh</span>,</span></span>
+<span class="r-in"><span>  family <span class="op">=</span> <span class="fu"><a href="families.html">tweedie</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>The model may not have converged: non-positive-definite Hessian matrix.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Spatially varying coefficient of year:</span></span></span>
 <span class="r-in"><span><span class="va">pcod_2011</span><span class="op">$</span><span class="va">year_scaled</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/scale.html" class="external-link">scale</a></span><span class="op">(</span><span class="va">pcod_2011</span><span class="op">$</span><span class="va">year</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -996,6 +1035,7 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> Data: pcod_2011</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: tweedie(link = 'log')</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             coef.est coef.se</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)     2.86    0.33</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> year_scaled    -0.06    0.15</span>
@@ -1025,6 +1065,7 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> Data: pcod_2011</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: tweedie(link = 'log')</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                     coef.est coef.se</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> as.factor(year)2011     3.73    0.30</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> as.factor(year)2013     3.64    0.28</span>
@@ -1082,6 +1123,7 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> Data: pcod_2011</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: tweedie(link = 'log')</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                      coef.est coef.se</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)              4.11    0.33</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> depth_scaled-slope       1.07    0.22</span>

@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9025</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9027</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,7 +78,7 @@
                         <h4 data-toc-skip class="author">Julia Indivero,
 Philina English, Sean Anderson, Eric Ward, Lewis Barnett</h4>
             
-            <h4 data-toc-skip class="date">2025-02-21</h4>
+            <h4 data-toc-skip class="date">2025-02-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/vignettes/articles/delta-models.Rmd" class="external-link"><code>vignettes/articles/delta-models.Rmd</code></a></small>
       <div class="d-none name"><code>delta-models.Rmd</code></div>
@@ -253,8 +253,10 @@ parameters for each model separately.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Delta/hurdle model 1: -----------------------------------</span></span>
 <span><span class="co">#&gt; Family: binomial(link = 'logit') </span></span>
+<span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;             coef.est coef.se</span></span>
 <span><span class="co">#&gt; (Intercept)    -0.34    0.61</span></span>
+<span><span class="co">#&gt; sdepth          1.28    2.91</span></span>
 <span><span class="co">#&gt; sdepth          1.28    2.91</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Smooth terms:</span></span>
@@ -267,8 +269,10 @@ parameters for each model separately.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Delta/hurdle model 2: -----------------------------------</span></span>
 <span><span class="co">#&gt; Family: Gamma(link = 'log') </span></span>
+<span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;             coef.est coef.se</span></span>
 <span><span class="co">#&gt; (Intercept)     3.67    0.12</span></span>
+<span><span class="co">#&gt; sdepth          1.28    2.91</span></span>
 <span><span class="co">#&gt; sdepth          0.31    1.29</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Smooth terms:</span></span>
@@ -290,15 +294,17 @@ dataframe. See <code><a href="../reference/tidy.sdmTMB.html">tidy.sdmTMB()</a></
 options.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit_dg</span><span class="op">)</span> <span class="co"># model = 1 is default</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 5</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
 <span><span class="co">#&gt;   term        estimate std.error conf.low conf.high</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> (Intercept)   -<span style="color: #BB0000;">0.343</span>     0.614    -<span style="color: #BB0000;">1.55</span>     0.860</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> sdepth         1.28      2.91     -<span style="color: #BB0000;">4.42</span>     6.98</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit_dg</span>, model <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 5</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
 <span><span class="co">#&gt;   term        estimate std.error conf.low conf.high</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> (Intercept)   -<span style="color: #BB0000;">0.343</span>     0.614    -<span style="color: #BB0000;">1.55</span>     0.860</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> sdepth         1.28      2.91     -<span style="color: #BB0000;">4.42</span>     6.98</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit_dg</span>, model <span class="op">=</span> <span class="fl">1</span>, <span class="st">"ran_pars"</span>, conf.int <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 5</span></span></span>
 <span><span class="co">#&gt;   term    estimate std.error conf.low conf.high</span></span>
@@ -307,10 +313,11 @@ options.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> sigma_O    1.71      0.265    1.26       2.32</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> sigma_E    0.806     0.142    0.570      1.14</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit_dg</span>, model <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 5</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
 <span><span class="co">#&gt;   term        estimate std.error conf.low conf.high</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> (Intercept)     3.67     0.120     3.44      3.91</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> sdepth          1.28     2.91     -<span style="color: #BB0000;">4.42</span>      6.98</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit_dg</span>, model <span class="op">=</span> <span class="fl">2</span>, <span class="st">"ran_pars"</span>, conf.int <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 5</span></span></span>
 <span><span class="co">#&gt;   term    estimate std.error conf.low conf.high</span></span>
@@ -447,6 +454,7 @@ to modelling with sdmTMB</a> vignette, except that we will use
 <span><span class="co">#&gt; Data: pcod</span></span>
 <span><span class="co">#&gt; Family: binomial(link = 'logit')</span></span>
 <span><span class="co">#&gt;  </span></span>
+<span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;                     coef.est coef.se</span></span>
 <span><span class="co">#&gt; as.factor(year)2003    -0.76    0.42</span></span>
 <span><span class="co">#&gt; as.factor(year)2004    -0.40    0.42</span></span>
@@ -457,6 +465,7 @@ to modelling with sdmTMB</a> vignette, except that we will use
 <span><span class="co">#&gt; as.factor(year)2013    -0.38    0.42</span></span>
 <span><span class="co">#&gt; as.factor(year)2015    -0.65    0.42</span></span>
 <span><span class="co">#&gt; as.factor(year)2017    -1.56    0.42</span></span>
+<span><span class="co">#&gt; sdepth                 -5.66    0.50</span></span>
 <span><span class="co">#&gt; sdepth                 -5.66    0.50</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Smooth terms:</span></span>
@@ -490,6 +499,7 @@ will just let the depth effect be more wiggly by not specifying
 <span><span class="co">#&gt; Data: dat2</span></span>
 <span><span class="co">#&gt; Family: Gamma(link = 'log')</span></span>
 <span><span class="co">#&gt;  </span></span>
+<span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;                     coef.est coef.se</span></span>
 <span><span class="co">#&gt; as.factor(year)2003     4.06    0.20</span></span>
 <span><span class="co">#&gt; as.factor(year)2004     4.22    0.20</span></span>
@@ -500,6 +510,7 @@ will just let the depth effect be more wiggly by not specifying
 <span><span class="co">#&gt; as.factor(year)2013     4.02    0.19</span></span>
 <span><span class="co">#&gt; as.factor(year)2015     4.13    0.20</span></span>
 <span><span class="co">#&gt; as.factor(year)2017     3.84    0.22</span></span>
+<span><span class="co">#&gt; sdepth                 -0.28    0.36</span></span>
 <span><span class="co">#&gt; sdepth                 -0.28    0.36</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Smooth terms:</span></span>
