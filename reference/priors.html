@@ -25,7 +25,7 @@ covariance function."><meta property="og:image" content="https://pbs-assess.gith
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9027</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9028</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,7 +89,11 @@ covariance function.</p>
 <span>  ar1_rho <span class="op">=</span> <span class="fu">normal</span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span>,</span>
 <span>  tweedie_p <span class="op">=</span> <span class="fu">normal</span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span>,</span>
 <span>  b <span class="op">=</span> <span class="fu">normal</span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span>,</span>
-<span>  sigma_G <span class="op">=</span> <span class="fu">halfnormal</span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span></span>
+<span>  threshold_breakpt_slope <span class="op">=</span> <span class="fu">normal</span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span>,</span>
+<span>  threshold_breakpt_cut <span class="op">=</span> <span class="fu">normal</span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span>,</span>
+<span>  threshold_logistic_s50 <span class="op">=</span> <span class="fu">normal</span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span>,</span>
+<span>  threshold_logistic_s95 <span class="op">=</span> <span class="fu">normal</span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span>,</span>
+<span>  threshold_logistic_smax <span class="op">=</span> <span class="fu">normal</span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">normal</span><span class="op">(</span>location <span class="op">=</span> <span class="fl">0</span>, scale <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
@@ -136,8 +140,29 @@ parameter has support <code>1 &lt; tweedie_p &lt; 2</code> so choose a mean appr
 <dd><p><code>normal()</code> priors for the main population-level 'beta' effects.</p></dd>
 
 
-<dt id="arg-sigma-g">sigma_G<a class="anchor" aria-label="anchor" href="#arg-sigma-g"></a></dt>
-<dd><p><code>halfnormal()</code> priors for the random intercept SDs.</p></dd>
+<dt id="arg-threshold-breakpt-slope">threshold_breakpt_slope<a class="anchor" aria-label="anchor" href="#arg-threshold-breakpt-slope"></a></dt>
+<dd><p>A <code>normal()</code> prior for the slope of the
+linear (hockey stick) function.</p></dd>
+
+
+<dt id="arg-threshold-breakpt-cut">threshold_breakpt_cut<a class="anchor" aria-label="anchor" href="#arg-threshold-breakpt-cut"></a></dt>
+<dd><p>A <code>normal()</code> prior for the cutoff of the
+linear (hockey stick) function.</p></dd>
+
+
+<dt id="arg-threshold-logistic-s-">threshold_logistic_s50<a class="anchor" aria-label="anchor" href="#arg-threshold-logistic-s-"></a></dt>
+<dd><p>A <code>normal()</code> prior for the parameter at which
+f(x) = 0.5.</p></dd>
+
+
+<dt id="arg-threshold-logistic-s-">threshold_logistic_s95<a class="anchor" aria-label="anchor" href="#arg-threshold-logistic-s-"></a></dt>
+<dd><p>A <code>normal()</code> prior for the parameter at which
+f(x) = 0.95.</p></dd>
+
+
+<dt id="arg-threshold-logistic-smax">threshold_logistic_smax<a class="anchor" aria-label="anchor" href="#arg-threshold-logistic-smax"></a></dt>
+<dd><p>A <code>normal()</code> prior for the paramter at which
+f(x) is maximized.</p></dd>
 
 
 <dt id="arg-location">location<a class="anchor" aria-label="anchor" href="#arg-location"></a></dt>
