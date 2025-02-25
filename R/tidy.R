@@ -159,13 +159,16 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   if (x$tmb_data$has_smooths) {
     p <- print_smooth_effects(x)
     mm <- p$smooth_effects
-    out <- rbind(out,
-                 data.frame(term = rownames(mm),
-                            estimate = mm[,"bs"],
-                            std.error = mm[,"bs_se"],
-                            stringsAsFactors = FALSE))
+    out <- rbind(
+      out,
+      data.frame(
+        term = rownames(mm),
+        estimate = mm[, "bs"],
+        std.error = mm[, "bs_se"],
+        stringsAsFactors = FALSE
+      )
+    )
   }
-
 
   if (conf.int) {
     out$conf.low <- as.numeric(trans(out$estimate - crit * out$std.error))
