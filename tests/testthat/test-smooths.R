@@ -65,14 +65,14 @@ test_that("A model with t2() works", {
   dat$x1 <- NULL
   dat$x2 <- NULL
 
-  m_mgcv <- mgcv::gam(observed ~ t2(.x0, .x1, k = 9),
+  m_mgcv <- mgcv::gam(observed ~ t2(.x0, .x1, k = 4),
                       data = dat,
                       method = "REML"
   )
   p_mgcv <- predict(m_mgcv)
-  m <- sdmTMB(observed ~ t2(.x0, .x1, k = 9),
+  m <- sdmTMB(observed ~ t2(.x0, .x1, k = 4),
               data = dat,
-              spatial = 'off'
+              spatial = 'off', reml = TRUE
   )
   p <- predict(m, newdata = NULL)
   expect_error(pnd <- predict(m, newdata = dat), "t2")
@@ -80,6 +80,13 @@ test_that("A model with t2() works", {
   abline(a = 0, b = 1)
   expect_gt(cor(p$est, p_mgcv), 0.9999)
   expect_equal(as.numeric(p$est), as.numeric(p_mgcv), tolerance = 0.001)
+
+  ## prediction on newdata isn't quite right:
+  ## switch cli_abort() to cli_warn() in predict.sdmTMB()
+  ## currently on line 328 in predict.R
+  ## pnd <- predict(m, newdata = dat)
+  ## plot(p$est, pnd$est) ## don't match
+  ## expect_equal(as.numeric(p$est), as.numeric(pnd$est), tolerance = 0.001) ## fails
 })
 
 test_that("A model with dimensions specified in t2() works", {
