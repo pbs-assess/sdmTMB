@@ -325,7 +325,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
     }
   }
   if (any(grepl("t2\\(", object$formula[[1]])) && !is.null(newdata)) {
-    cli_abort("There are unresolved issues with predicting on newdata when the formula includes t2() terms. Either predict with `newdata = NULL` or use s(). Post an issue if you'd like us to prioritize fixing this.")
+    cli_warn("There are unresolved issues with predicting on newdata when the formula includes t2() terms. Either predict with `newdata = NULL` or use s(). Post an issue if you'd like us to prioritize fixing this.")
   }
 
   sys_calls <- unlist(lapply(sys.calls(), deparse)) # retrieve function that called this
