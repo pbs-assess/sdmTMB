@@ -12,15 +12,15 @@ vignette: >
 ```{r setup, include = FALSE, cache=FALSE}
 dplyr_installed <- require("dplyr", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
-patstat.data_installed <- require("spatstat.data", quietly = TRUE)
+spatstat.data_installed <- require("spatstat.data", quietly = TRUE)
 pkgs <- dplyr_installed && ggplot_installed && spatstat.data_installed
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.width = 7,
   fig.asp = 0.618,
-  eval = EVAL,
-  purl = EVAL
+  eval = identical(Sys.getenv("NOT_CRAN"), "true") && pkgs,
+  purl = identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
 )
 ```
 

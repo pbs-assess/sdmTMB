@@ -94,6 +94,7 @@ Suggests:
     knitr,
     rmarkdown,
     sf,
+    spatstat.data,
     splancs,
     testthat,
     tibble,

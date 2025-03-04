@@ -29,7 +29,6 @@ knitr::opts_chunk$set(
 library(sdmTMB)
 library(dplyr)
 library(ggplot2)
-library(spatstat.data)
 ```
 
 Here we will cover using sdmTMB for forecasting data in time or extrapolating spatially to unsampled areas. 
@@ -151,7 +150,7 @@ We can also add a smoother on year as a variable in the model equation with `s(y
 
 ```{r, fit-sm, results='hide', message=FALSE, warning=FALSE}
 fit_sm <- sdmTMB(
-  density ~ s(year) + depth_scaled + depth_scaled2, #<< add smoother on year
+  density ~ s(year, k = 5) + depth_scaled + depth_scaled2, #<< add smoother on year
   time = "year",
   extra_time = extra_years, #<<
   spatiotemporal = "AR1", #<<
@@ -221,11 +220,7 @@ ggplot(pred_df, aes(year, exp(est), ymin = exp(est - 2 * est_se), ymax = exp(est
 We can see how AR(1) spatiotemporal fields evolve towards mean zero by mapping the magnitude of the spatio-temporal term epsilon over the entire period 2003--2025
 
 ```{r pred-ar1-plot-eps, echo=FALSE}
-one_yr <- dplyr::filter(qcs_grid, year == 2017)
-grid <- purrr::map_dfr(unique(fit_ar1$data$year), function(i) { # FIXME remove purrr or add to suggests!
-  one_yr$year <- i
-  one_yr
-})
+grid <- replicate_df(qcs_grid, "year", time_values = unique(fit_ar1$data$year))
 p_ar1 <- predict(fit_ar1, newdata = grid)
 ggplot(p_ar1, aes(X, Y, fill = epsilon_st)) +
   geom_raster() +
@@ -406,7 +401,7 @@ Here, we expand the geographic domain by 100 in all directions, and keep the res
 
 Then, we can use the same model fit to predict to the expanded geographic domain.
 
-```{r pred-fit2, echo=FALSE, eval=TRUE}
+```{r pred-fit2, echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE}
 # makes all combinations of x and y:
 newdf <- expand.grid(
   x = seq(min(dat$x) - 100, max(dat$x) + 100, 5),
