@@ -43,7 +43,7 @@ jobs:
           extra-packages: |
             any::rcmdcheck
             any::textshaping
-            github::pbs-asssess/sdmTMBextra
+            github::pbs-assess/sdmTMBextra
           needs: check
 
       - uses: r-lib/actions/check-r-package@v2
