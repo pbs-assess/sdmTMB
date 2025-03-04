@@ -299,10 +299,9 @@ ggplot(newdf, aes(x, y)) +
 We can also visualize uncertainty in the forecasts by mapping the standard error of predicted densities at each point in space. 
 We see that uncertainty is higher at vertices. 
 This is because there are fewer neighbors, e.g. [this tutorial](https://ourcodingclub.github.io/tutorials/spatial-modelling-inla/)
-  
+
 ```{r vis-vert}
 ggplot() +
-  inlabru::gg(mesh$mesh) +
   geom_point(data = p, aes(x = x, y = y, col = est_se)) +
   coord_equal() +
   labs(col = "Standard error\nof spatiotemporal field")
