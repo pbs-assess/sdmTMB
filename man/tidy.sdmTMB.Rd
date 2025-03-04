@@ -2,6 +2,7 @@
 % Please edit documentation in R/tidy.R
 \name{tidy.sdmTMB}
 \alias{tidy.sdmTMB}
+\alias{tidy.sdmTMB_cv}
 \title{Turn sdmTMB model output into a tidy data frame}
 \usage{
 \method{tidy}{sdmTMB}(
@@ -14,6 +15,8 @@
   silent = FALSE,
   ...
 )
+
+\method{tidy}{sdmTMB_cv}(x, ...)
 }
 \arguments{
 \item{x}{Output from \code{\link[=sdmTMB]{sdmTMB()}}.}

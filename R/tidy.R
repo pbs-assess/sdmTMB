@@ -480,3 +480,15 @@ create_cov_matrices <- function(df, col_name = "estimate") {
 #' @importFrom generics tidy
 #' @export
 generics::tidy
+
+#' @rdname tidy.sdmTMB
+#' @export
+tidy.sdmTMB_cv <- function(x, ...) {
+  x <- x$models
+  out <- lapply(seq_along(x), function(i) {
+    df <- tidy.sdmTMB(x[[i]], ...)
+    df$cv_split <- i # add a model index column
+    df
+  })
+  do.call("rbind", out)
+}

@@ -72,4 +72,17 @@ test_that("tidy works", {
   )
   x <- tidy(fit)
   expect_equal(x$term, c("(Intercept)", "sdepth"))
+
+  # Test with sdmTMB_cv
+  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
+  m_cv <- sdmTMB_cv(
+    density ~ 0 + depth_scaled + depth_scaled2,
+    data = pcod, mesh = mesh,
+    family = tweedie(link = "log"), k_folds = 2
+  )
+  model1 <- tidy(m_cv$models[[1]])
+  allmodels <- tidy(m_cv)
+  expect_equal(allmodels[1:2,1:5], model1[,1:5])
+  expect_true("cv_split" %in% names(allmodels))
+  expect_equal(allmodels$cv_split, sort(rep(1:2,2)))
 })
