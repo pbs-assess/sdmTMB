@@ -163,13 +163,20 @@ fit_mle <- update(
 
 Adding priors / penalties and fixing spatial parameters represent strategies to help successful convergence for maximum likelihood estimation. If we want to do true Bayesian sampling we need to make one more adjustment to our function call: accounting for non-linear transformations of parameters with Jacobian adjustments. 
 
-What are Jacobian adjustments and why do we need them? Jacobian adjustments are necessary when the parameters of a model are transformed in a way that changes their scale or distribution. A good example of this is the estimation of variance parameters. Whether we're interested in spatial, spatiotemporal, or residual variation, the quantity of interest is usually the variance or standard deviation $\sigma$. These quantities are constrained to be greater than 0, so a widely used estimation strategy is to estimate them in log space, which is not constrained. With 'ln_sigma' estimated, 'sigma = exp(ln_sigma)' can be calculated internal to a model and used to calculate the likelihood. There are a number of helpful references detailing the math behind this in greater detail including the [Stan manual](https://mc-stan.org/docs/stan-users-guide/reparameterization.html#changes-of-variables). Without equations, the Jacobian adjustment can be thought of as properly stretching the posterior distribution of parameters to account for the transformation of variables. 
+What are Jacobian adjustments and why do we need them? Jacobian adjustments are necessary when the parameters of a model are transformed in a way that changes their scale or distribution. 
+A good example of this is the estimation of variance parameters. 
+Whether we're interested in spatial, spatiotemporal, or residual variation, the quantity of interest is usually the variance or standard deviation $\sigma$. 
+These quantities are constrained to be greater than 0, so a widely used estimation strategy is to estimate them in log space, which is not constrained. 
+With 'ln_sigma' estimated, 'sigma = exp(ln_sigma)' can be calculated internal to a model and used to calculate the likelihood. 
+There are a number of helpful references detailing the math behind this in greater detail including the [Stan manual](https://mc-stan.org/docs/stan-users-guide/reparameterization.html#changes-of-variables). 
+Without equations, the Jacobian adjustment can be thought of as properly stretching the posterior distribution of parameters to account for the transformation of variables. 
 
 In `sdmTMB`, we can turn these Jacobian adjustments on with the flag `bayesian = TRUE`. Applying this to our `fit_mle` object, 
 
 ```{r}
 fit_bayes <- update(fit_mle,
-                    bayesian = TRUE)
+  bayesian = TRUE
+)
 ```
 
 It is important to emphasize that this `bayesian` flag needs to be enabled to any model passed to Stan; MCMC estimation without it will lead to biased parameter estimates.
