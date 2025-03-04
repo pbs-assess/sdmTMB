@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Add forecasting and presence-only article vignettes. See
+  <https://pbs-assess.github.io/sdmTMB/articles/>
+
 * Add a `tidy()` method for `sdmTMB_cv()` output. `?tidy.sdmTMB_cv` #319
 
 * Allow predicting on new data with `t2()` smoothers. #413
