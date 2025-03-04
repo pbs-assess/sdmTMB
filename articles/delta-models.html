@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9029</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9030</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,7 +78,7 @@
                         <h4 data-toc-skip class="author">Julia Indivero,
 Philina English, Sean Anderson, Eric Ward, Lewis Barnett</h4>
             
-            <h4 data-toc-skip class="date">2025-02-27</h4>
+            <h4 data-toc-skip class="date">2025-03-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/vignettes/articles/delta-models.Rmd" class="external-link"><code>vignettes/articles/delta-models.Rmd</code></a></small>
       <div class="d-none name"><code>delta-models.Rmd</code></div>
@@ -256,8 +256,8 @@ parameters for each model separately.</p>
 <span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;             coef.est coef.se</span></span>
 <span><span class="co">#&gt; (Intercept)    -0.34    0.61</span></span>
-<span><span class="co">#&gt; sdepth          1.28    2.91</span></span>
-<span><span class="co">#&gt; sdepth          1.28    2.91</span></span>
+<span><span class="co">#&gt; sdepth         12.77   29.02</span></span>
+<span><span class="co">#&gt; sdepth         12.77   29.02</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Smooth terms:</span></span>
 <span><span class="co">#&gt;            Std. Dev.</span></span>
@@ -272,8 +272,8 @@ parameters for each model separately.</p>
 <span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;             coef.est coef.se</span></span>
 <span><span class="co">#&gt; (Intercept)     3.67    0.12</span></span>
-<span><span class="co">#&gt; sdepth          1.28    2.91</span></span>
-<span><span class="co">#&gt; sdepth          0.31    1.29</span></span>
+<span><span class="co">#&gt; sdepth         12.77   29.02</span></span>
+<span><span class="co">#&gt; sdepth          3.06   12.83</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Smooth terms:</span></span>
 <span><span class="co">#&gt;            Std. Dev.</span></span>
@@ -298,13 +298,13 @@ options.</p>
 <span><span class="co">#&gt;   term        estimate std.error conf.low conf.high</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> (Intercept)   -<span style="color: #BB0000;">0.343</span>     0.614    -<span style="color: #BB0000;">1.55</span>     0.860</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> sdepth         1.28      2.91     -<span style="color: #BB0000;">4.42</span>     6.98</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> sdepth        12.8      29.0     -<span style="color: #BB0000;">44.1</span>     69.6</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit_dg</span>, model <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
 <span><span class="co">#&gt;   term        estimate std.error conf.low conf.high</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> (Intercept)   -<span style="color: #BB0000;">0.343</span>     0.614    -<span style="color: #BB0000;">1.55</span>     0.860</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> sdepth         1.28      2.91     -<span style="color: #BB0000;">4.42</span>     6.98</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> sdepth        12.8      29.0     -<span style="color: #BB0000;">44.1</span>     69.6</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit_dg</span>, model <span class="op">=</span> <span class="fl">1</span>, <span class="st">"ran_pars"</span>, conf.int <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 5</span></span></span>
 <span><span class="co">#&gt;   term    estimate std.error conf.low conf.high</span></span>
@@ -317,7 +317,7 @@ options.</p>
 <span><span class="co">#&gt;   term        estimate std.error conf.low conf.high</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> (Intercept)     3.67     0.120     3.44      3.91</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> sdepth          1.28     2.91     -<span style="color: #BB0000;">4.42</span>      6.98</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> sdepth         12.8     29.0     -<span style="color: #BB0000;">44.1</span>      69.6</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit_dg</span>, model <span class="op">=</span> <span class="fl">2</span>, <span class="st">"ran_pars"</span>, conf.int <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 5</span></span></span>
 <span><span class="co">#&gt;   term    estimate std.error conf.low conf.high</span></span>
@@ -510,8 +510,8 @@ will just let the depth effect be more wiggly by not specifying
 <span><span class="co">#&gt; as.factor(year)2013     4.02    0.19</span></span>
 <span><span class="co">#&gt; as.factor(year)2015     4.13    0.20</span></span>
 <span><span class="co">#&gt; as.factor(year)2017     3.84    0.22</span></span>
-<span><span class="co">#&gt; sdepth                 -0.28    0.36</span></span>
-<span><span class="co">#&gt; sdepth                 -0.28    0.36</span></span>
+<span><span class="co">#&gt; sdepth                  2.50    3.21</span></span>
+<span><span class="co">#&gt; sdepth                  2.50    3.21</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Smooth terms:</span></span>
 <span><span class="co">#&gt;            Std. Dev.</span></span>
@@ -519,8 +519,8 @@ will just let the depth effect be more wiggly by not specifying
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Dispersion parameter: 0.94</span></span>
 <span><span class="co">#&gt; Matérn range: 0.01</span></span>
-<span><span class="co">#&gt; Spatial SD: 727.53</span></span>
-<span><span class="co">#&gt; Spatiotemporal IID SD: 2065.59</span></span>
+<span><span class="co">#&gt; Spatial SD: 748.14</span></span>
+<span><span class="co">#&gt; Spatiotemporal IID SD: 2124.12</span></span>
 <span><span class="co">#&gt; ML criterion at convergence: 5102.136</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; See ?tidy.sdmTMB to extract these values as a data frame.</span></span>
