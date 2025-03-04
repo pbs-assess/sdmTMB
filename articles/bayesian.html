@@ -175,15 +175,16 @@ priors <span class="citation">(e.g., Monnahan <em>et al.</em>
 <div class="section level2">
 <h2 id="adding-priors">Adding priors<a class="anchor" aria-label="anchor" href="#adding-priors"></a>
 </h2>
-<p>In that first model fit we did not use any priors. In that case, the
-priors are implied as uniform on the internal parameter space. However,
-sdmTMB provides the option of applying priors. Here we will show an
-example of applying a Normal(0, 5) (mean, SD) prior on the intercept and
-a Normal(0, 1) prior on the slope parameter. We could guess at the model
-matrix structure based on our formula, but we can verify it by looking
-at the internal model matrix from the previous fit (using
-<code>do_fit = FALSE</code> would save time if you didn’t want to fit it
-the first time).</p>
+<p>In that first model fit we did not use any priors (with maximum
+likelihood estimation, these also can be thought of as penalties on the
+likelihood). For this first model, the priors are implied as uniform on
+the internal parameter space. However, sdmTMB provides the option of
+applying additional priors. Here we will show an example of applying a
+Normal(0, 5) (mean, SD) prior on the intercept and a Normal(0, 1) prior
+on the slope parameter. We could guess at the model matrix structure
+based on our formula, but we can verify it by looking at the internal
+model matrix from the previous fit (using <code>do_fit = FALSE</code>
+would save time if you didn’t want to fit it the first time).</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">tmb_data</span><span class="op">$</span><span class="va">X_ij</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   (Intercept)          a1</span></span>
@@ -268,20 +269,58 @@ fitting the updated model since it’s not necessary.</p>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Fixing or mirroring `ln_kappa`</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="jacobian-adjustments">Jacobian adjustments<a class="anchor" aria-label="anchor" href="#jacobian-adjustments"></a>
+</h2>
+<p>Adding priors / penalties and fixing spatial parameters represent
+strategies to help successful convergence for maximum likelihood
+estimation. If we want to do true Bayesian sampling we need to make one
+more adjustment to our function call: accounting for non-linear
+transformations of parameters with Jacobian adjustments.</p>
+<p>What are Jacobian adjustments and why do we need them? Jacobian
+adjustments are necessary when the parameters of a model are transformed
+in a way that changes their scale or distribution. A good example of
+this is the estimation of variance parameters. Whether we’re interested
+in spatial, spatiotemporal, or residual variation, the quantity of
+interest is usually the variance or standard deviation
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>σ</mi><annotation encoding="application/x-tex">\sigma</annotation></semantics></math>.
+These quantities are constrained to be greater than 0, so a widely used
+estimation strategy is to estimate them in log space, which is not
+constrained. With ‘ln_sigma’ estimated, ‘sigma = exp(ln_sigma)’ can be
+calculated internal to a model and used to calculate the likelihood.
+There are a number of helpful references detailing the math behind this
+in greater detail including the <a href="https://mc-stan.org/docs/stan-users-guide/reparameterization.html#changes-of-variables" class="external-link">Stan
+manual</a>. Without equations, the Jacobian adjustment can be thought of
+as properly stretching the posterior distribution of parameters to
+account for the transformation of variables.</p>
+<p>In <code>sdmTMB</code>, we can turn these Jacobian adjustments on
+with the flag <code>bayesian = TRUE</code>. Applying this to our
+<code>fit_mle</code> object,</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit_bayes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/update.html" class="external-link">update</a></span><span class="op">(</span><span class="va">fit_mle</span>,</span>
+<span>  bayesian <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Initiating `ln_kappa` at specified starting value(s) of:</span></span>
+<span><span class="co">#&gt; 2.173, 2.173</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Fixing or mirroring `ln_kappa`</span></span></code></pre></div>
+<p>It is important to emphasize that this <code>bayesian</code> flag
+needs to be enabled to any model passed to Stan; MCMC estimation without
+it will lead to biased parameter estimates.</p>
+</div>
+<div class="section level2">
 <h2 id="passing-the-model-to-tmbstan">Passing the model to tmbstan<a class="anchor" aria-label="anchor" href="#passing-the-model-to-tmbstan"></a>
 </h2>
 <p>Now we can pass the <code>$tmb_obj</code> element of our model to
 <code><a href="https://rdrr.io/pkg/tmbstan/man/tmbstan.html" class="external-link">tmbstan::tmbstan()</a></code>. We are only using 1000 iterations and 2
 chains so this vignette builds quickly. In practice, you will likely
 want to use more (e.g., 2000 iterations, 4 chains).</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_stan</span> <span class="op">&lt;-</span> <span class="fu">tmbstan</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tmbstan/man/tmbstan.html" class="external-link">tmbstan</a></span><span class="op">(</span></span>
-<span>  <span class="va">fit_mle</span><span class="op">$</span><span class="va">tmb_obj</span>,</span>
+<span>  <span class="va">fit_bayes</span><span class="op">$</span><span class="va">tmb_obj</span>,</span>
 <span>  iter <span class="op">=</span> <span class="fl">1000</span>, chains <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">8217</span> <span class="co"># ensures repeatability</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Sometimes you may need to adjust the sampler settings such as:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">tmbstan</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tmbstan/man/tmbstan.html" class="external-link">tmbstan</a></span><span class="op">(</span></span>
 <span>  <span class="va">...</span>,</span>
 <span>  control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>adapt_delta <span class="op">=</span> <span class="fl">0.9</span>, max_treedepth <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span>
@@ -291,7 +330,7 @@ want to use more (e.g., 2000 iterations, 4 chains).</p>
 working with model predictions becomes cumbersome given a large number
 of required samples.</p>
 <p>We can look at the model:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_stan</span></span>
 <span><span class="co">#&gt; Inference for Stan model: sdmTMB.</span></span>
 <span><span class="co">#&gt; 2 chains, each with iter=1000; warmup=500; thin=1; </span></span>
@@ -389,7 +428,7 @@ of required samples.</p>
 <span><span class="co">#&gt; omega_s[85]  -0.28    0.01 0.21  -0.69  -0.41  -0.27  -0.13   0.12   858 1.00</span></span>
 <span><span class="co">#&gt; lp__        136.55    0.58 8.96 118.37 130.74 136.80 142.94 153.03   242 1.00</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Tue Mar  4 18:06:44 2025.</span></span>
+<span><span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Tue Mar  4 20:38:39 2025.</span></span>
 <span><span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span></span>
 <span><span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span></span>
 <span><span class="co">#&gt; convergence, Rhat=1).</span></span></code></pre></div>
@@ -401,20 +440,20 @@ correlation in the MCMC samples for <code>b_j[1]</code>. We could try
 running for more iterations and chains and/or placing priors on this and
 other parameters as described below (highly recommended).</p>
 <p>Now we can use various functions to visualize the posterior:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit_stan</span><span class="op">)</span></span>
 <span><span class="co">#&gt; 'pars' not specified. Showing first 10 parameters by default.</span></span>
 <span><span class="co">#&gt; ci_level: 0.8 (80% intervals)</span></span>
 <span><span class="co">#&gt; outer_level: 0.95 (95% intervals)</span></span></code></pre></div>
-<p><img src="bayesian_files/figure-html/unnamed-chunk-8-1.png" width="672"></p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<p><img src="bayesian_files/figure-html/unnamed-chunk-9-1.png" width="672"></p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pars_plot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b_j[1]"</span>, <span class="st">"b_j[2]"</span>, <span class="st">"ln_tau_O"</span>, <span class="st">"omega_s[1]"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">bayesplot</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-traces.html" class="external-link">mcmc_trace</a></span><span class="op">(</span><span class="va">fit_stan</span>, pars <span class="op">=</span> <span class="va">pars_plot</span><span class="op">)</span></span></code></pre></div>
-<p><img src="bayesian_files/figure-html/unnamed-chunk-8-2.png" width="672"></p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<p><img src="bayesian_files/figure-html/unnamed-chunk-9-2.png" width="672"></p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">bayesplot</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-scatterplots.html" class="external-link">mcmc_pairs</a></span><span class="op">(</span><span class="va">fit_stan</span>, pars <span class="op">=</span> <span class="va">pars_plot</span><span class="op">)</span></span></code></pre></div>
-<p><img src="bayesian_files/figure-html/unnamed-chunk-8-3.png" width="672"></p>
+<p><img src="bayesian_files/figure-html/unnamed-chunk-9-3.png" width="672"></p>
 </div>
 <div class="section level2">
 <h2 id="posterior-predictive-checks">Posterior predictive checks<a class="anchor" aria-label="anchor" href="#posterior-predictive-checks"></a>
@@ -426,7 +465,7 @@ observations. For this, we can make use of
 <code><a href="../reference/simulate.sdmTMB.html">simulate.sdmTMB()</a></code> will take draws from the joint parameter
 posterior and add observation error. We need to ensure <code>nsim</code>
 is less than or equal to the total number of post-warmup samples.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">19292</span><span class="op">)</span></span>
 <span><span class="va">samps</span> <span class="op">&lt;-</span> <span class="fu">sdmTMBextra</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/sdmTMBextra/man/extract_mcmc.html" class="external-link">extract_mcmc</a></span><span class="op">(</span><span class="va">fit_stan</span><span class="op">)</span></span>
 <span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/simulate.html" class="external-link">simulate</a></span><span class="op">(</span><span class="va">fit_mle</span>, mcmc_samples <span class="op">=</span> <span class="va">samps</span>, nsim <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span>
@@ -435,7 +474,7 @@ is less than or equal to the total number of post-warmup samples.</p>
 <span>  yrep <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">s</span><span class="op">)</span>,</span>
 <span>  fun <span class="op">=</span> <span class="fu">bayesplot</span><span class="fu">::</span><span class="va"><a href="https://mc-stan.org/bayesplot/reference/PPC-distributions.html" class="external-link">ppc_dens_overlay</a></span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="bayesian_files/figure-html/unnamed-chunk-9-1.png" width="672"></p>
+<p><img src="bayesian_files/figure-html/unnamed-chunk-10-1.png" width="672"></p>
 <p>See <code><a href="https://mc-stan.org/bayesplot/reference/pp_check.html" class="external-link">?bayesplot::pp_check</a></code>. The solid line represents the
 density of the observed data and the light blue lines represent the
 density of 50 posterior predictive simulations. In this case, the
@@ -447,30 +486,30 @@ simulated data seem consistent with the observed data.</p>
 <p>We can make predictions with our Bayesian model by supplying the
 posterior samples to the <code>mcmc_samples</code> argument in
 <code><a href="../reference/predict.sdmTMB.html">predict.sdmTMB()</a></code>.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pred</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit_mle</span>, mcmc_samples <span class="op">=</span> <span class="va">samps</span><span class="op">)</span></span></code></pre></div>
 <p>The output is a matrix where each row corresponds to a row of
 predicted data and each column corresponds to a sample.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">pred</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1]  500 1000</span></span></code></pre></div>
 <p>We can summarize these draws in various ways to visualize them:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sim_dat</span><span class="op">$</span><span class="va">post_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">pred</span>, <span class="fl">1</span>, <span class="va">mean</span><span class="op">)</span></span>
 <span><span class="va">sim_dat</span><span class="op">$</span><span class="va">post_sd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">pred</span>, <span class="fl">1</span>, <span class="va">sd</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">sim_dat</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">Y</span>, colour <span class="op">=</span> <span class="va">post_mean</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_color_viridis_c</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="bayesian_files/figure-html/unnamed-chunk-12-1.png" width="672"></p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<p><img src="bayesian_files/figure-html/unnamed-chunk-13-1.png" width="672"></p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">sim_dat</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">Y</span>, colour <span class="op">=</span> <span class="va">post_sd</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_color_viridis_c</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="bayesian_files/figure-html/unnamed-chunk-12-2.png" width="672"></p>
+<p><img src="bayesian_files/figure-html/unnamed-chunk-13-2.png" width="672"></p>
 <p>Or predict on a grid for a given value of <code>a1</code>:</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span></span>
 <span>  X <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">70</span><span class="op">)</span>,</span>
 <span>  Y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">70</span><span class="op">)</span>,</span>
@@ -485,37 +524,37 @@ predicted data and each column corresponds to a sample.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_tile.html" class="external-link">geom_raster</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_fixed.html" class="external-link">coord_fixed</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="bayesian_files/figure-html/unnamed-chunk-13-1.png" width="672"></p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<p><img src="bayesian_files/figure-html/unnamed-chunk-14-1.png" width="672"></p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">nd</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">Y</span>, fill <span class="op">=</span> <span class="va">post_sd</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_tile.html" class="external-link">geom_raster</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_fixed.html" class="external-link">coord_fixed</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="bayesian_files/figure-html/unnamed-chunk-13-2.png" width="672"></p>
+<p><img src="bayesian_files/figure-html/unnamed-chunk-14-2.png" width="672"></p>
 </div>
 <div class="section level2">
 <h2 id="extracting-parameter-posterior-samples">Extracting parameter posterior samples<a class="anchor" aria-label="anchor" href="#extracting-parameter-posterior-samples"></a>
 </h2>
 <p>We can extract posterior samples with
 <code><a href="https://mc-stan.org/rstan/reference/stanfit-method-extract.html" class="external-link">rstan::extract()</a></code>,</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">post</span> <span class="op">&lt;-</span> <span class="fu">rstan</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stanfit-method-extract.html" class="external-link">extract</a></span><span class="op">(</span><span class="va">fit_stan</span><span class="op">)</span></span></code></pre></div>
 <p>The result is a list where each element corresponds to a parameter or
 set of parameters:</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">post</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "b_j"      "ln_tau_O" "ln_phi"   "omega_s"  "lp__"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">post</span><span class="op">$</span><span class="va">b_j</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
-<p><img src="bayesian_files/figure-html/unnamed-chunk-14-1.png" width="672"></p>
+<p><img src="bayesian_files/figure-html/unnamed-chunk-15-1.png" width="672"></p>
 <p>As an example of calculating a derived parameter, here we will
 calculate the marginal spatial random field standard deviation:</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ln_kappa</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_pars.html">get_pars</a></span><span class="op">(</span><span class="va">fit_mle</span><span class="op">)</span><span class="op">$</span><span class="va">ln_kappa</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="co"># 2 elements since 2nd would be for spatiotemporal</span></span>
 <span><span class="va">ln_tau_O</span> <span class="op">&lt;-</span> <span class="va">post</span><span class="op">$</span><span class="va">ln_tau_O</span></span>
 <span><span class="va">sigma_O</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fl">4</span> <span class="op">*</span> <span class="va">pi</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">ln_tau_O</span> <span class="op">+</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">ln_kappa</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">sigma_O</span><span class="op">)</span></span></code></pre></div>
-<p><img src="bayesian_files/figure-html/unnamed-chunk-15-1.png" width="672"></p>
+<p><img src="bayesian_files/figure-html/unnamed-chunk-16-1.png" width="672"></p>
 </div>
 <div class="section level2">
 <h2 id="extracting-the-posterior-of-other-predicted-elements">Extracting the posterior of other predicted elements<a class="anchor" aria-label="anchor" href="#extracting-the-posterior-of-other-predicted-elements"></a>
@@ -529,7 +568,7 @@ argument.</p>
 <p>For example, let’s extract the spatial random field values
 <code>"omega_s"</code>. Other options are documented in
 <code>?predict.sdmTMB()</code>.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_pred</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span></span>
 <span>  <span class="va">fit_mle</span>,</span>
 <span>  newdata <span class="op">=</span> <span class="va">nd</span>,</span>
@@ -544,14 +583,14 @@ argument.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_tile.html" class="external-link">geom_raster</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient2</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_fixed.html" class="external-link">coord_fixed</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="bayesian_files/figure-html/unnamed-chunk-16-1.png" width="672"></p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<p><img src="bayesian_files/figure-html/unnamed-chunk-17-1.png" width="672"></p>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">nd</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">Y</span>, fill <span class="op">=</span> <span class="va">spatial_rf_sd</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_tile.html" class="external-link">geom_raster</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_fixed.html" class="external-link">coord_fixed</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="bayesian_files/figure-html/unnamed-chunk-16-2.png" width="672"></p>
+<p><img src="bayesian_files/figure-html/unnamed-chunk-17-2.png" width="672"></p>
 <!-- As a more complex example, we'll fit a spatial model with a quadratic effect of depth to Pacific cod using a presence-absence response.  -->
 <!-- One major difference between this example and the model above is that we also implement penalized complexity (PC) priors on the range and variance of the Matérn correlation (using `sdmTMB::sdmTMBpriors()`).  -->
 <!-- Without the prior, the MCMC sampling won't converge (and takes a long time to run). -->
