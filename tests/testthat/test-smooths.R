@@ -455,7 +455,7 @@ test_that("A model with s(x, bs = 'fs') works", {
   m <- sdmTMB(
     data = d,
     formula = log(density) ~ s(depth_scaled, by = year, bs = "fs"),
-    spatial = "off", control = sdmTMBcontrol(newton_loops = 1)
+    spatial = "off", reml = TRUE
   )
   # FIXME:
   suppressWarnings(print(m))
@@ -463,7 +463,7 @@ test_that("A model with s(x, bs = 'fs') works", {
   p <- predict(m)
   p2 <- predict(m_mgcv)
   # plot(p$est, p2)
-  expect_gt(stats::cor(p$est, p2), 0.995)
+  expect_gt(stats::cor(p$est, p2), 0.999)
 })
 
 test_that("An fx=TRUE smoother errors out", {
