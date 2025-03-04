@@ -47,23 +47,6 @@
 #' )
 #' tidy(fit, "ran_vals")
 
-tidy <- function(x, ...) {
-  if (inherits(x, "sdmTMB_cv") && !is.null(x$models)) {
-    x <- x$models
-  }
-  # if a list(), then apply tidy to each list element
-  if (is.list(x) && all(sapply(x, inherits, "sdmTMB"))) {
-    result <- lapply(seq_along(x), function(i) {
-      df <- tidy.sdmTMB(x[[i]], ...)
-      df$model <- i # add a model index column
-      return(df)
-    })
-    return(do.call(rbind, result))
-  }
-  # if just a single model then return tidy() on that model
-  return(tidy.sdmTMB(x, ...))
-}
-
 tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vcov"), model = 1,
                  conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE,
                  silent = FALSE, ...) {
@@ -497,3 +480,15 @@ create_cov_matrices <- function(df, col_name = "estimate") {
 #' @importFrom generics tidy
 #' @export
 generics::tidy
+
+#' @rdname tidy.sdmTMB
+#' @export
+tidy.sdmTMB_cv <- function(x, ...) {
+  x <- x$models
+  out <- lapply(seq_along(x), function(i) {
+    df <- tidy.sdmTMB(x[[i]], ...)
+    df$cv_split <- i # add a model index column
+    df
+  })
+  do.call("rbind", out)
+}

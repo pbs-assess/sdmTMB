@@ -83,5 +83,6 @@ test_that("tidy works", {
   model1 <- tidy(m_cv$models[[1]])
   allmodels <- tidy(m_cv)
   expect_equal(allmodels[1:2,1:5], model1[,1:5])
-  expect_equal(allmodels$model, sort(rep(1:4,2)))
+  expect_true("cv_split" %in% names(allmodels))
+  expect_equal(allmodels$cv_split, sort(rep(1:2,2)))
 })
