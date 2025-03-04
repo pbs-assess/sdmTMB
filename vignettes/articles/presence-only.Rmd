@@ -19,10 +19,12 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.width = 7,
   fig.asp = 0.618,
-  eval = identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
+  eval = EVAL,
+  purl = EVAL
 )
 ```
 
+While some geostatistical datasets contain information on presences and absences of species, others only include only locations where presence is observed. While presence-only modelling is commonly used in ecology and fisheries, there are also applications in other fields (e.g. dynamics of rare diseases). There are several approaches for analyzing these types of data -- we illustrate two applications below, and in both utilize simulated zeros (pseudo-absences).
 
 ```{r libs, message=FALSE, warning=FALSE}
 library(dplyr)
@@ -33,7 +35,7 @@ library(spatstat.data)
 
 By adding pseudo-absences to presence-only data, we can estimate a spatial range that isn't sensitive to choice of raster or lattice resolution.
 
-This example of modeling presence-absence will use data on the locations of 3605 trees (species Beilschmiedia pendula) in a tropical rainforest from [the spatst.data package](https://rdrr.io/cran/spatstat.data/man/bei.html)
+As an example dataset, we will use data on the locations of 3605 trees (species Beilschmiedia pendula) in a tropical rainforest from [the spatst.data package](https://rdrr.io/cran/spatstat.data/man/bei.html)
 
 # Data
 ## Presence data

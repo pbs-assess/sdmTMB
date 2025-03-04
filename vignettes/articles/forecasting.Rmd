@@ -1,6 +1,6 @@
 ---
 title: "Forecasting with sdmTMB"
-author: "Julia Indivero, Sean Anderson, Lewis Barnett, Philina English, Eric Ward"
+author: "Julia Indivero, Sean Anderson, Lewis Barnett, Philina English, Eric Ward, Jim Thorson"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
@@ -259,6 +259,43 @@ ggplot(grid, aes(X, Y, fill = se)) +
   coord_fixed() +
   labs(fill = "Standard error\nof spatiotemporal field")
 ```
+
+# project() function for faster forecasting
+
+Because forecasting can be slow -- especially for large datasets, `sdmTMB` also includes a `project()` function for doing projections via simulations. Keeping with the `pcod` dataset, we'll first define the years for the historical (fitting) and projection period.
+
+```{r}
+mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
+historical_years <- 2003:2017
+to_project <- 5
+future_years <- seq(max(historical_years) + 1, max(historical_years) + to_project)
+all_years <- c(historical_years, future_years)
+proj_grid <- replicate_df(qcs_grid, "year", all_years)
+```
+
+Next, we'll fit the model. This is a binomial model of presence-absence, with no covariates and an AR(1) spatiotemporal field that is responsible for future forecasts. 
+
+```{r}
+fit <- sdmTMB(
+present ~ 1,
+time = "year",
+extra_time = historical_years, #< does *not* include projection years -->
+spatial = "on",
+spatiotemporal = "ar1",
+data = pcod,
+mesh = mesh,
+family = binomial()
+)
+```
+
+Finally, we'll do the projections for the last 5 years. We'll only use 20 draws for simplicity, but you can increase this for real world applications.
+
+```{r}
+set.seed(1)
+out <- project(fit, newdata = proj_grid, nsim = 20)
+```
+
+The `out` object now contains two objects: `out$est` and `out$epsilon_est`, each with dimensions of the number of rows in the prediction data (`proj_grid`) and number of draws for this example (n = 20). These can be summarized and visualized in a number of ways to show trends in both the mean, as well as the confidence intervals.
 
 # Forecasting space: Interpolating in space to unsampled areas within 
 
