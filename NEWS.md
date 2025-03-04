@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Allow predicting on new data with `t2()` smoothers. #413
+
 * Add check for `Inf`/`-Inf` values before fitting. #408
 
 * Add priors for `breakpt()` and `logistic()` parameters. #403
