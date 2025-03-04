@@ -99,9 +99,9 @@ fit
 
 # Adding priors
 
-In that first model fit we did not use any priors.
-In that case, the priors are implied as uniform on the internal parameter space.
-However, sdmTMB provides the option of applying priors.
+In that first model fit we did not use any priors (with maximum likelihood estimation, these also can be thought of as penalties on the likelihood).
+For this first model, the priors are implied as uniform on the internal parameter space.
+However, sdmTMB provides the option of applying additional priors.
 Here we will show an example of applying a Normal(0, 5) (mean, SD) prior on the intercept and a Normal(0, 1) prior on the slope parameter.
 We could guess at the model matrix structure based on our formula, but we can verify it by looking at the internal model matrix from the previous fit (using `do_fit = FALSE` would save time if you didn't want to fit it the first time).
 
@@ -159,6 +159,21 @@ fit_mle <- update(
 )
 ```
 
+# Jacobian adjustments
+
+Adding priors / penalties and fixing spatial parameters represent strategies to help successful convergence for maximum likelihood estimation. If we want to do true Bayesian sampling we need to make one more adjustment to our function call: accounting for non-linear transformations of parameters with Jacobian adjustments. 
+
+What are Jacobian adjustments and why do we need them? Jacobian adjustments are necessary when the parameters of a model are transformed in a way that changes their scale or distribution. A good example of this is the estimation of variance parameters. Whether we're interested in spatial, spatiotemporal, or residual variation, the quantity of interest is usually the variance or standard deviation $\sigma$. These quantities are constrained to be greater than 0, so a widely used estimation strategy is to estimate them in log space, which is not constrained. With 'ln_sigma' estimated, 'sigma = exp(ln_sigma)' can be calculated internal to a model and used to calculate the likelihood. There are a number of helpful references detailing the math behind this in greater detail including the [Stan manual](https://mc-stan.org/docs/stan-users-guide/reparameterization.html#changes-of-variables). Without equations, the Jacobian adjustment can be thought of as properly stretching the posterior distribution of parameters to account for the transformation of variables. 
+
+In `sdmTMB`, we can turn these Jacobian adjustments on with the flag `bayesian = TRUE`. Applying this to our `fit_mle` object, 
+
+```{r}
+fit_bayes <- update(fit_mle,
+                    bayesian = TRUE)
+```
+
+It is important to emphasize that this `bayesian` flag needs to be enabled to any model passed to Stan; MCMC estimation without it will lead to biased parameter estimates.
+
 # Passing the model to tmbstan
 
 Now we can pass the `$tmb_obj` element of our model to `tmbstan::tmbstan()`.
@@ -167,7 +182,7 @@ In practice, you will likely want to use more (e.g., 2000 iterations, 4 chains).
 
 ```{r fit_stan, message=FALSE, warning=FALSE}
 fit_stan <- tmbstan::tmbstan(
-  fit_mle$tmb_obj,
+  fit_bayes$tmb_obj,
   iter = 1000, chains = 2,
   seed = 8217 # ensures repeatability
 )
