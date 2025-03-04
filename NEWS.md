@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Add a `tidy()` method for `sdmTMB_cv()` output. `?tidy.sdmTMB_cv` #319
+
 * Allow predicting on new data with `t2()` smoothers. #413
 
 * Add check for `Inf`/`-Inf` values before fitting. #408
