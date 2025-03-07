@@ -332,14 +332,14 @@ ggplot(p, aes(X, Y, fill = zeta_s_year_scaled)) + geom_raster() +
 
 See the vignette on [Fitting spatial trend models with sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html) for more details.
 
-### Random intercepts
+### Random intercepts and slopes
 
-We can use the same syntax (`1 | group`) as lme4 or glmmTMB to fit random intercepts:
+We can use the same syntax (`1 | group`) as lme4 or glmmTMB to fit random intercepts and slopes:
 
 ```{r, eval=FALSE, echo=TRUE, warning=FALSE, message=FALSE}
 pcod$year_factor <- as.factor(pcod$year)
 fit <- sdmTMB(
-  density ~ s(depth, k = 5) + (1 | year_factor),
+  density ~ (1 + depth| year_factor),
   data = pcod, mesh = mesh,
   time = "year",
   family = tweedie(link = "log")
