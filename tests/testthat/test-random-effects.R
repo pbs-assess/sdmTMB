@@ -266,6 +266,14 @@ test_that("Model with random intercepts fits appropriately.", {
   m <- sdmTMB(data = s, formula = observed ~ 1 + (1 | g), spatial = "off")
   nd <- data.frame(g = factor(c(1, 2, 3, 800)), observed=1)
   expect_error(predict(m, newdata = nd), regexp = "Extra")
+
+  # predicting with missing factors works with the right re_form_iid
+  m <- sdmTMB(data = s, formula = observed ~ 1 + (1 | g), spatial = "off")
+  nd <- s[, !names(s) %in% "g", drop = FALSE]
+  p1 <- predict(m, newdata = nd, re_form_iid = ~0)
+  p2 <- predict(m, newdata = nd, re_form_iid = NA)
+  # and this fails when not correct
+  expect_error(predict(m, newdata = nd), regexp = "variable lengths differ")
 })
 
 test_that("Random intercepts and cross validation play nicely", {
