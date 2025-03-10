@@ -43,11 +43,13 @@
     <li><a class="dropdown-item" href="../articles/bayesian.html">Bayesian estimation with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/cross-validation.html">Cross-validation for model evaluation and comparison</a></li>
     <li><a class="dropdown-item" href="../articles/delta-models.html">Fitting delta (hurdle) models with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/forecasting.html">Forecasting with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/ggeffects.html">Visualizing marginal effects in sdmTMB models with ggeffects</a></li>
     <li><a class="dropdown-item" href="../articles/index-standardization.html">Index standardization with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/model-description.html">sdmTMB model description</a></li>
     <li><a class="dropdown-item" href="../articles/multispecies.html">Fitting multispecies models with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/poisson-link.html">Poisson-link delta models</a></li>
+    <li><a class="dropdown-item" href="../articles/presence-only.html">Spatial Modeling of Presence-Only Data with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/pretty-plots.html">Making pretty maps with sdmTMB output</a></li>
     <li><a class="dropdown-item" href="../articles/residual-checking.html">Residual checking with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-trend-models.html">Fitting spatial trend models with sdmTMB</a></li>
@@ -76,7 +78,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Introduction to modelling with sdmTMB</h1>
             
-            <h4 data-toc-skip class="date">2025-03-04</h4>
+            <h4 data-toc-skip class="date">2025-03-10</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/vignettes/articles/basic-intro.Rmd" class="external-link"><code>vignettes/articles/basic-intro.Rmd</code></a></small>
       <div class="d-none name"><code>basic-intro.Rmd</code></div>
@@ -401,8 +403,8 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.010374 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 103.74 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.010119 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 101.19 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -427,9 +429,9 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; Chain 1: Iteration: 100 / 101 [ 99%]  (Warmup)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 101 / 101 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 27.327 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                0.201 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                27.528 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 27.607 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                0.204 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                27.811 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
 <span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">m3</span>, <span class="st">"mle-mcmc"</span>, mcmc_samples <span class="op">=</span> <span class="va">samps</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqnorm</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span></span>

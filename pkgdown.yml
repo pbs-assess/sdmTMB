@@ -6,17 +6,19 @@ articles:
   articles/bayesian: bayesian.html
   articles/cross-validation: cross-validation.html
   articles/delta-models: delta-models.html
+  articles/forecasting: forecasting.html
   articles/ggeffects: ggeffects.html
   articles/index-standardization: index-standardization.html
   model-description: model-description.html
   articles/multispecies: multispecies.html
   articles/poisson-link: poisson-link.html
+  articles/presence-only: presence-only.html
   articles/pretty-plots: pretty-plots.html
   articles/residual-checking: residual-checking.html
   articles/spatial-trend-models: spatial-trend-models.html
   articles/threshold-models: threshold-models.html
   articles/visreg: visreg.html
-last_built: 2025-03-04T20:59Z
+last_built: 2025-03-10T22:55Z
 urls:
   reference: https://pbs-assess.github.io/sdmTMB/reference
   article: https://pbs-assess.github.io/sdmTMB/articles

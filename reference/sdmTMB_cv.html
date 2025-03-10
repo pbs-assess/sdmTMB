@@ -30,11 +30,13 @@ randomly but folds can be manually assigned via the fold_ids argument."><meta pr
     <li><a class="dropdown-item" href="../articles/bayesian.html">Bayesian estimation with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/cross-validation.html">Cross-validation for model evaluation and comparison</a></li>
     <li><a class="dropdown-item" href="../articles/delta-models.html">Fitting delta (hurdle) models with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/forecasting.html">Forecasting with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/ggeffects.html">Visualizing marginal effects in sdmTMB models with ggeffects</a></li>
     <li><a class="dropdown-item" href="../articles/index-standardization.html">Index standardization with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/model-description.html">sdmTMB model description</a></li>
     <li><a class="dropdown-item" href="../articles/multispecies.html">Fitting multispecies models with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/poisson-link.html">Poisson-link delta models</a></li>
+    <li><a class="dropdown-item" href="../articles/presence-only.html">Spatial Modeling of Presence-Only Data with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/pretty-plots.html">Making pretty maps with sdmTMB output</a></li>
     <li><a class="dropdown-item" href="../articles/residual-checking.html">Residual checking with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-trend-models.html">Fitting spatial trend models with sdmTMB</a></li>
@@ -211,16 +213,16 @@ with, but not ELPD. For maximum likelihood, <a href="https://github.com/pbs-asse
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">m_cv</span> <span class="op">&lt;-</span> <span class="fu">sdmTMB_cv</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">density</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">depth_scaled</span> <span class="op">+</span> <span class="va">depth_scaled2</span>,</span></span>
-<span class="r-in"><span>  data <span class="op">=</span> <span class="va">pcod</span>, mesh <span class="op">=</span> <span class="va">mesh</span>,</span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">pcod</span>, mesh <span class="op">=</span> <span class="va">mesh</span>, spatial <span class="op">=</span> <span class="st">"off"</span>,</span></span>
 <span class="r-in"><span>  family <span class="op">=</span> <span class="fu"><a href="families.html">tweedie</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span>, k_folds <span class="op">=</span> <span class="fl">2</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Running fits with `future.apply()`.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Set a parallel `future::plan()` to use parallel processing.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">m_cv</span><span class="op">$</span><span class="va">fold_loglik</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] -3351.292 -3298.167</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] -4410.955 -4203.036</span>
 <span class="r-in"><span><span class="va">m_cv</span><span class="op">$</span><span class="va">sum_loglik</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] -6649.459</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] -8613.992</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">m_cv</span><span class="op">$</span><span class="va">data</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 15</span></span>
@@ -235,24 +237,22 @@ with, but not ELPD. For maximum likelihood, <a href="https://github.com/pbs-asse
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 5 more variables: depth_scaled &lt;dbl&gt;, depth_scaled2 &lt;dbl&gt;, cv_fold &lt;int&gt;,</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   cv_predicted &lt;dbl&gt;, cv_loglik &lt;dbl&gt;</span></span>
 <span class="r-in"><span><span class="va">m_cv</span><span class="op">$</span><span class="va">models</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Spatial model fit by ML ['sdmTMB']</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Model fit by ML ['sdmTMB']</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Formula: density ~ 0 + depth_scaled + depth_scaled2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: tweedie(link = 'log')</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Conditional model:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>               coef.est coef.se</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> depth_scaled     -2.07    0.23</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> depth_scaled2    -1.57    0.14</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> depth_scaled     -1.85    0.16</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> depth_scaled2     2.42    0.23</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Dispersion parameter: 14.61</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Tweedie p: 1.64</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Matérn range: 100.81</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Spatial SD: 3.11</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ML criterion at convergence: 3191.001</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Dispersion parameter: 75.76</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Tweedie p: 1.90</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ML criterion at convergence: 4161.255</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> See ?tidy.sdmTMB to extract these values as a data frame.</span>
 <span class="r-in"><span><span class="va">m_cv</span><span class="op">$</span><span class="va">max_gradients</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2.788227e-08 6.945717e-10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3.687402e-11 8.739528e-10</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="co"># Create mesh each fold:</span></span></span>
