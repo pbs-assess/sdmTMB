@@ -231,12 +231,12 @@ To evaluate the predictive performance, there are multiple options for binary da
 AUC (Area Under the receiver operating characteristic curve) is a common metric, where values near 0.5 are essentially random, and values close to 1 indicate better predictive performance. 
 We can use the package [ROCR](https://cran.rstudio.com/web/packages/ROCR/vignettes/ROCR.html).
 
-```{r auc, echo=TRUE}
+```{r auc, echo=TRUE, eval=FALSE}
 all_dat$p <- predict(fit)$est # total predictions, logit
 rocr <- ROCR::prediction(exp(all_dat$p), all_dat$present)
 ROCR::performance(rocr, measure = "auc")@y.values[[1]]
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, eval=FALSE}
 AUC <- ROCR::performance(rocr, measure = "auc")@y.values[[1]]
 ```
