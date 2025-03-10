@@ -1,10 +1,10 @@
 ---
-title: "Spatial Modeling of Presence-Only Data with Adding Pseudo-Absences"
+title: "Spatial Modeling of Presence-Only Data with sdmTMB"
 author: "Julia Indivero, Sean Anderson, Lewis Barnett, Philina English, Eric Ward, Jim Thorson"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Presence Data with sdmTMB}
+  %\VignetteIndexEntry{Spatial Modeling of Presence-Only Data with sdmTMB}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -115,12 +115,11 @@ mesh <- make_mesh(
 The dimensions of the mesh (or number of vertices or knots) can be accessed with `mesh$mesh$n`. 
 A cutoff distance of 15 yields ~ 1399 knots, and a cutoff distance of 25 yields a mesh with 624 knots. 
 
-Blue dots are data, red grid dots are quadrature points, and grey triangles are from the SPDE mesh.
+In the following plot, blue dots are data and red grid dots are quadrature points.
 
 ```{r mesh-viz, fig.asp=0.5, echo=FALSE}
 all_dat$fpres <- as.factor(all_dat$present)
 ggplot() +
-  inlabru::gg(mesh$mesh) +
   geom_point(
     data = all_dat,
     aes(x = x, y = y, col = fpres), size = 0.1, alpha = 0.3
