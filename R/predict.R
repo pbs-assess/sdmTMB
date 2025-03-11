@@ -445,29 +445,13 @@ predict.sdmTMB <- function(object, newdata = NULL,
 
     if (!"mgcv" %in% names(object)) object[["mgcv"]] <- FALSE
 
-    # This next ~ 10 lines fills in random effect columns that are missing in newdata
-    # extract all random effect names across all model components
-    RE_names_all <- unique(unlist(lapply(object$split_formula, function(x) x$barnames)))
-    # if re_form_iid is ~0 or NA, exclude them and just set NA
-    pop_pred_iid <- (!is.null(re_form_iid) && ((re_form_iid == ~0) || identical(re_form_iid, NA)))
-    # if we the re_form_iid is ~0 or NA
-    if (!pop_pred_iid) {
-      # loop over all names, finding names not in newdata. Add a column of NAs and add a new warning
-      for (re in RE_names_all) {
-        if (!re %in% names(newdata)) {
-          newdata[[re]] <- NA
-          cli_warn(sprintf("Column `%s` missing from `newdata`. Setting to `NA`.", re))
-        }
-      }
-    }
-
     # FIXME check if random slopes and intercepts are the same in both linear predictors?
     # parse random intercept/slope sparse model matrices on new data:
     Zt_list <- list()
 
     if (sum(object$tmb_data$n_re_groups) > 0 && isFALSE(pop_pred_iid)) {
       for (ii in seq_len(length(formula))) {
-        xx <- parse_formula(remove_s_and_t2(object$formula[[ii]]), nd)
+        xx <- parse_formula(remove_s_and_t2(object$smoothers$formula_no_sm), nd)
         # factor level checks:
         RE_names <- xx$barnames
         for (i in seq_along(RE_names)) {

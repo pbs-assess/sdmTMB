@@ -509,3 +509,39 @@ test_that("Delta model works with random effects", {
   #   spatial = "off"
   # )
 })
+
+test_that("issue breakpt() version of formula doesn't break random effect prediction #423", {
+  d <- pcod
+  d$year_f <- as.factor(pcod$year)
+  m <- sdmTMB(
+    data = d,
+    formula = density ~ 0 + breakpt(depth_scaled) + (1 | year_f),
+    spatial = "off",
+    priors = sdmTMBpriors(
+      threshold_breakpt_slope = normal(0, 1),
+      threshold_breakpt_cut = normal(0, 1)
+    ),
+    family = tweedie(link = "log")
+  )
+  nd <- data.frame(
+    depth_scaled = seq(min(pcod$depth_scaled) + 0.5,
+      max(pcod$depth_scaled) - 0.2,
+      length.out = 100
+    ),
+    year = 2015L
+  )
+  # Works because I turn off random intercepts
+  p <- predict(m,
+    newdata = nd, se_fit = TRUE, re_form = NA,
+    re_form_iid = NA, xy_cols = c("X", "Y")
+  )
+  # Throws breakpoint-related error but it's actually because I
+  # don't have the random factor in newdata but trying to predict with it
+  expect_error({
+  p <- predict(m,
+    newdata = nd, se_fit = TRUE, re_form = NA,
+    xy_cols = c("X", "Y")
+  )}, regexp = "year_f")
+})
+
+
