@@ -98,7 +98,6 @@ test_that("printing/tidying works with a delta model that has random intercepts 
     extra_time = c(2006, 2008, 2010, 2012, 2014, 2016),
     time_varying = ~1,
     time_varying_type = "ar1",
-    mesh = mesh,
     spatial = "off",
     spatiotemporal = "off",
     family = delta_gamma(type = "poisson-link")
