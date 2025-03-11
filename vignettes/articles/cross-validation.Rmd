@@ -174,9 +174,13 @@ m_cv$fold_loglik[[1]]
 ```
 
 # Leave Future Out Cross-Validation
-<<<<<<< Updated upstream
 
-Next, we can illustrate a special kind of cross-validation for temporally structured data called leave future out cross-validation (LFOCV). With LFOCV, data historical training data are only used to predict the future (e.g. data from time steps 1-8 used to predict time step 9, data from time-steps 1-9 used to predict time step 10, etc). To implement this kind of cross validation, we can turn on `lfo = TRUE`. The two other important parameters to set are how many time steps in the future will be generating predictions for with each fold (`lfo_forecast`, defaults to 1 time step) and how many years at the end of the data should be peeled off and used as test datasets (`lfo_validation`, for this example we'll use 3 time steps).   
+Next, we can illustrate a special kind of cross-validation for temporally structured data called leave future out cross-validation (LFOCV). With LFOCV, data historical training data are only used to predict the future. This means that the cross validation will: 
+- Fit data to time steps 1 to 6, predict and validate step 7.
+- Fit data to time steps 1 to 7, predict and validate step 8.
+- Fit data to time steps 1 to 8, predict and validate step 9.
+To implement this kind of cross validation, we can turn on `lfo = TRUE`. The two other important parameters to set are how many time steps in the future will be generating predictions for with each fold (`lfo_forecast`, defaults to 1 time step) and how many years at the end of the data should be peeled off and used as test datasets (`lfo_validation`, for this example we'll use 3 time steps).
+
 ```{r}
 m_lfocv <- sdmTMB_cv(
   present ~ s(year, k = 3),
@@ -208,93 +212,14 @@ sdmTMB_cv_test <- sdmTMB(
 
 The `weights` argument is used here so that we can use the identical mesh to the full dataset, but specify which points contribute to the likelihood (1) or not (0).
 
-As a more complicated example, we can demonstrate making predictions 2 timesteps ahead. As a side note, this doesn't work exactly with the `pcod` data because of the unevenly spaced years. One could create a new time column, like below, but this would not preserve the same interpretation across folds. 
+As a more complicated example, we can demonstrate making predictions 2 timesteps ahead. As a side note, the interpretation doesn't work exactly with the `pcod` data because of the unevenly spaced years. One could create a new time column, like below, but this would not preserve the same interpretation across folds. 
 
-```{r}
-# create a new variable that is 1-9, and has no missing years
-pcod$yearn <- as.numeric(as.factor(pcod$year))
-```
-
-Instead, we'll generate simulated data, 
-
-```{r}
-
-set.seed(123)
-
-# example based on documentation in ?sdmTMB_simulate
-predictor_dat <- data.frame(
-  X = runif(2000), Y = runif(2000),
-  a1 = rnorm(2000), year = rep(1:10, each = 200)
-)
-mesh <- make_mesh(predictor_dat, 
-                  xy_cols = c("X", "Y"), 
-                  cutoff = 0.1)
-
-sim_dat <- sdmTMB_simulate(
-  formula = ~ 1 + a1,
-  data = predictor_dat,
-  time = "year",
-  mesh = mesh,
-  family = gaussian(),
-  range = 0.5,
-  sigma_E = 0.1,
-  phi = 0.1,
-  sigma_O = 0.2,
-  seed = 42,
-  B = c(0.2, -0.4) # B0 = intercept, B1 = a1 slope
-)
-
-est_mesh <- make_mesh(sim_dat, 
-                      xy_cols = c("X","Y"), 
-                      cutoff=0.16)
-
-m_lfocv <- sdmTMB_cv(
-  observed ~ s(year, k = 3),
-  data = sim_dat,
-  mesh = est_mesh,
-  lfo = TRUE, # do LFOCV
-  lfo_forecast = 2, # number of time steps to forecast
-  lfo_validations = 4, # number of time steps to validate
-  spatiotemporal = "off",
-  time = "year" # must be specified
-)
-```
-=======
->>>>>>> Stashed changes
-
-We can do LFOCV, using 3 parameters to `sdmTMB()` that control the type of cross validation. First, we enable LFOCV by setting `lfo = TRUE`. Second, we have to decide how many years of data to hold back as test or validation data (`lfo_validations`) and how many time steps ahead to forecast (`lfo_forecast`). Our dataset has 9 time steps, and we will begin with an example that uses 
-`lfo_forecast=1` and `lfo_validations=3`. This means that the cross validation will: 
-- Fit data to time steps 1 to 6, predict and validate step 7.
-- Fit data to time steps 1 to 7, predict and validate step 8.
-- Fit data to time steps 1 to 8, predict and validate step 9.
-
-```{r, eval=FALSE, include=FALSE}
-m_lfocv <- sdmTMB_cv(
-  present ~ s(year, k = 3),
-  data = pcod,
-  mesh = mesh,
-  lfo = TRUE, # do LFOCV
-  lfo_forecast = 1, # number of time steps to forecast
-  lfo_validations = 3, # number of time steps to validate
-  family = binomial(),
-  spatiotemporal = "off",
-  time = "nyear" # must be specified
-)
-```
-
-We can inspect how the folds are assigned with 
-
-```{r}
-example_data <- m_lfocv$models[[1]]$data
-table(example_data$cv_fold, example_data$year)
-```
-
-Next, we will change the `lfo_forecast` parameter to 2. This changes the structure so that we forecast 2 time steps ahead:
+Changing the `lfo_forecast` parameter to 2 changes the structure so that we forecast 2 time steps ahead:
 - Fit data to time steps 1 to 5, predict and validate step 7.
 - Fit data to time steps 1 to 6, predict and validate step 8.
 - Fit data to time steps 1 to 7, predict and validate step 9.
 
-```{r, eval=FALSE, include=FALSE}
+```{r, eval=TRUE, include=FALSE}
 m_lfocv <- sdmTMB_cv(
   present ~ s(year, k = 3),
   data = pcod,
