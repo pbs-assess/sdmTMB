@@ -86,3 +86,33 @@ test_that("tidy works", {
   expect_true("cv_split" %in% names(allmodels))
   expect_equal(allmodels$cv_split, sort(rep(1:2,2)))
 })
+
+test_that("printing/tidying works with a delta model that has random intercepts + an AR1 time series #426", {
+  skip_on_cran()
+  d <- pcod
+  d$fake <- rep(c("a", "b", "c"), 9999)[1:nrow(d)]
+  fit <- sdmTMB(
+    density ~ breakpt(depth_scaled) + (1|fake),
+    data = d,
+    time = "year",
+    extra_time = c(2006, 2008, 2010, 2012, 2014, 2016),
+    time_varying = ~1,
+    time_varying_type = "ar1",
+    mesh = mesh,
+    spatial = "off",
+    spatiotemporal = "off",
+    family = delta_gamma(type = "poisson-link")
+  )
+  b <- tidy(fit, effects = "ran_pars")
+  b <- tidy(fit, effects = "ran_vals")
+  expect_identical(b$term, c("(Intercept)", "(Intercept)", "(Intercept)", "(Intercept)",
+    "(Intercept)", "(Intercept)", "(Intercept):2003", "(Intercept):2004",
+    "(Intercept):2005", "(Intercept):2006", "(Intercept):2007", "(Intercept):2008",
+    "(Intercept):2009", "(Intercept):2010", "(Intercept):2011", "(Intercept):2012",
+    "(Intercept):2013", "(Intercept):2014", "(Intercept):2015", "(Intercept):2016",
+    "(Intercept):2017", "(Intercept):2003", "(Intercept):2004", "(Intercept):2005",
+    "(Intercept):2006", "(Intercept):2007", "(Intercept):2008", "(Intercept):2009",
+    "(Intercept):2010", "(Intercept):2011", "(Intercept):2012", "(Intercept):2013",
+    "(Intercept):2014", "(Intercept):2015", "(Intercept):2016", "(Intercept):2017"
+  ))
+})

@@ -186,12 +186,12 @@ ranef.sdmTMB <- function(object, ...) {
     for (j in 1:length(groups)) {
       sub <- .t[which(.t$group_name == groups[j]), ]
       level_ids <- unique(sub$level_ids)
-      sub <- sub[, c("group_name", "par_name", "estimate")]
+      sub <- sub[, c("group_name", "term", "estimate")]
       if (nrow(sub) > 0) {
         # convert long to wide, storing just estimates
-        split_data <- split(sub$estimate, sub$par_name)
+        split_data <- split(sub$estimate, sub$term)
         wide_df <- as.data.frame(split_data) # Convert to wide format
-        names(wide_df) <- unique(sub$par_name) # rename, fix .X issue
+        names(wide_df) <- unique(sub$term) # rename, fix .X issue
         rownames(wide_df) <- level_ids # add rownames, like lmer does
         # Create a list with the dataframe as an element named 'Dog'
         group_list[[j]] <- wide_df

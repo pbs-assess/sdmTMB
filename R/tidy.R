@@ -305,12 +305,13 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   }
 
   # optional time-varying random components
-  if(!is.null(x$time_varying)) {
+  if (!is.null(x$time_varying)) {
     tv_names <- colnames(model.matrix(x$time_varying, x$data))
     time_slices <- x$time_lu$time_from_data
     yrs <- rep(time_slices, times = length(tv_names))
 
     out_ranef_tv <- data.frame(
+      model = model,
       term = paste0(rep(tv_names, each = length(time_slices)), ":", yrs),
       estimate = c(est$b_rw_t),
       std.error = c(se$b_rw_t),
@@ -322,6 +323,8 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     if(is.null(out_ranef)) {
       out_ranef <- out_ranef_tv
     } else {
+      out_ranef_tv$group_name <- NA
+      out_ranef_tv$level_ids <- NA
       out_ranef <- rbind(out_ranef, out_ranef_tv)
     }
   }
@@ -395,23 +398,23 @@ get_re_tidy_list <- function(x, crit) {
   re_b_df$estimate <- x$sd_report$value[re_indx][non_nas]
   re_b_df$std.error <- x$sd_report$sd[re_indx][non_nas]
   re_b_df$conf.low <- re_b_df$estimate - crit * re_b_df$std.error
-  re_b_df$conf.hi <- re_b_df$estimate + crit * re_b_df$std.error
+  re_b_df$conf.high <- re_b_df$estimate + crit * re_b_df$std.error
   re_b_df$index <- NULL
   re_b_df$group_name <- NA
-  re_b_df$par_name <- NA
+  re_b_df$term <- NA
   for (i in seq_len(length(x$split_formula))) {
     groupnames <- names(x$split_formula[[i]]$re_cov_terms$cnms)
     for (j in seq_len(length(x$split_formula[[i]]$barnames))) {
       model_grp <- which(re_b_df$model == i & re_b_df$group_id == j)
       re_b_df$group_name[model_grp] <- groupnames[j]
-      re_b_df$par_name[model_grp] <- rep(x$split_formula[[i]]$re_cov_terms$cnms[[j]], length.out = length(model_grp))
+      re_b_df$term[model_grp] <- rep(x$split_formula[[i]]$re_cov_terms$cnms[[j]], length.out = length(model_grp))
     }
   }
   group_key <- stats::aggregate(group_name ~ model + group_id, data = re_b_df, FUN = function(x) x[1])
 
   # more sensible re-ordering
   re_b_df$group_id <- NULL
-  re_b_df <- re_b_df[, c("model", "group_name", "par_name", "level_ids", "estimate", "std.error", "conf.low", "conf.hi")]
+  re_b_df <- re_b_df[, c("model", "group_name", "term", "level_ids", "estimate", "std.error", "conf.low", "conf.high")]
   # remove ":" in the level_ids
   re_b_df$level_ids <- sapply(strsplit(re_b_df$level_ids, ":"), function(x) x[2])
   out_ranef <- re_b_df
@@ -439,21 +442,21 @@ get_re_tidy_list <- function(x, crit) {
   re_cov_df$estimate <- x$sd_report$value[re_indx][non_nas]
   re_cov_df$std.error <- x$sd_report$sd[re_indx][non_nas]
   re_cov_df$conf.low <- re_cov_df$estimate - crit * re_cov_df$std.error
-  re_cov_df$conf.hi <- re_cov_df$estimate + crit * re_cov_df$std.error
+  re_cov_df$conf.high <- re_cov_df$estimate + crit * re_cov_df$std.error
   # the SD parameters are returned in log space -- use delta method to generate CIs
   est <- exp(re_cov_df$estimate) # estimate in normal space
   sd_est <- est * re_cov_df$std.error # SE in normal space
   sds <- which(re_cov_df$is_sd == 1) # index which elements are SDs
   re_cov_df$estimate[sds] <- est[sds]
   re_cov_df$conf.low[sds] <- est[sds] - crit * sd_est[sds]
-  re_cov_df$conf.hi[sds] <- est[sds] + crit * sd_est[sds]
+  re_cov_df$conf.high[sds] <- est[sds] + crit * sd_est[sds]
 
-  re_cov_df <- re_cov_df[, c("rows", "cols", "model", "group", "estimate", "std.error", "conf.low", "conf.hi")]
+  re_cov_df <- re_cov_df[, c("rows", "cols", "model", "group", "estimate", "std.error", "conf.low", "conf.high")]
   cov_matrices_lo = create_cov_matrices(re_cov_df, col_name = "conf.low")
-  cov_matrices_hi = create_cov_matrices(re_cov_df, col_name = "conf.hi")
+  cov_matrices_hi = create_cov_matrices(re_cov_df, col_name = "conf.high")
   list(out_ranef = out_ranef, cov_matrices = create_cov_matrices(re_cov_df),
        cov_matrices_lo = create_cov_matrices(re_cov_df, col_name = "conf.low"),
-       cov_matrices_hi = create_cov_matrices(re_cov_df, col_name = "conf.hi"))
+       cov_matrices_hi = create_cov_matrices(re_cov_df, col_name = "conf.high"))
 }
 
 create_cov_matrices <- function(df, col_name = "estimate") {
