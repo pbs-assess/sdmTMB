@@ -365,7 +365,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
 get_re_tidy_list <- function(x, crit) {
   re_b_dfs <- add_model_index(x$split_formula, "re_b_df")
   re_b_df <- do.call(rbind, re_b_dfs)
-  names(re_b_df)[which(names(re_b_df) == "group_indices")] <- "group_id"
+  names(re_b_df)[names(re_b_df) == "group_indices"] <- "group_id"
 
   # this function just expands each row from start: end
   expand_row <- function(level_id, start, end, group_id, model) {
@@ -390,7 +390,8 @@ get_re_tidy_list <- function(x, crit) {
 
   # this is all as before
   re_indx <- grep("re_b_pars", names(x$sd_report$value), fixed = TRUE)
-  non_nas <- which(x$sd_report$value[re_indx] != 0) # remove parameter that get mapped off
+  non_nas <- !is.na(x$tmb_map$re_b_pars) # parameters that don't get mapped off
+
   re_b_df$estimate <- x$sd_report$value[re_indx][non_nas]
   re_b_df$std.error <- x$sd_report$sd[re_indx][non_nas]
   re_b_df$conf.low <- re_b_df$estimate - crit * re_b_df$std.error
