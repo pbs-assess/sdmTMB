@@ -1411,6 +1411,8 @@ Type objective_function<Type>::operator()()
         vector<Type> cog_y(n_t);
         cog_x.setZero();
         cog_y.setZero();
+        // Low-rank sparse hessian bias-correction
+        PARAMETER_VECTOR(eps_index);
         for (int i = 0; i < n_p; i++) {
           cog_x(proj_year(i)) += proj_lon(i) * mu_combined(i) * area_i(i);
           cog_y(proj_year(i)) += proj_lat(i) * mu_combined(i) * area_i(i);
@@ -1423,6 +1425,19 @@ Type objective_function<Type>::operator()()
         ADREPORT(cog_x);
         REPORT(cog_y);
         ADREPORT(cog_y);
+        if (eps_index.size() > 0) {
+          Type S;
+          for (int t=0; t < n_t; t++) {
+            S = cog_x(t);
+            S = newton::Tag(S); // Set lowrank tag on S
+            jnll += eps_index(t) * S;
+          }
+          for (int t=0; t < n_t; t++) {
+            S = cog_y(t);
+            S = newton::Tag(S); // Set lowrank tag on S
+            jnll += eps_index(t + n_t) * S;
+          }
+        }
       }
       if (calc_eao) { // effective area occupied: Thorson et al. 2016 doi:10.1098/rspb.2016.1853
         vector<Type> sum_dens(n_t);

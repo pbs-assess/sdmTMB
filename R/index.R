@@ -124,12 +124,14 @@ get_index <- function(obj, bias_correct = FALSE, level = 0.95, area = 1, silent 
 #' @param format Long or wide.
 #' @export
 get_cog <- function(obj, bias_correct = FALSE, level = 0.95, format = c("long", "wide"), area = 1, silent = TRUE, ...)  {
-  if (bias_correct) cli_abort("Bias correction with get_cog() is currently disabled.")
-
   # if offset is a character vector, use the value in the dataframe
   if (is.character(area)) {
     area <- obj$data[[area]]
   }
+  pred_time <- sort(unique(obj$data[[obj$fit_obj$time]]))
+  fitted_time <- obj$fit_obj$fitted_time
+  if (bias_correct && sum(!fitted_time %in% pred_time) > 0L)
+    cli_abort("Please include all time elements in the prediction data frame if using bias_correct = TRUE with get_cog().")
 
   d <- get_generic(obj, value_name = c("cog_x", "cog_y"),
     bias_correct = bias_correct, level = level, trans = I, area = area, ...)
@@ -156,8 +158,6 @@ get_eao <- function(obj,
   silent = TRUE,
   ...
 )  {
-  if (bias_correct) cli_abort("Bias correction with get_eao() is currently disabled.")
-
   # if offset is a character vector, use the value in the dataframe
   if (is.character(area)) {
     area <- obj$data[[area]]
@@ -239,13 +239,7 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
     old_par <- obj$fit_obj$model$par
     new_obj$fn(old_par) # (sometimes) need to initialize the new TMB object once!
 
-    # if (value_name[[1]] == "link_total") {
-      bc <- FALSE ## done below
-    # } else if (bias_correct) {
-    #   bc <- TRUE
-    # } else {
-    #   bc <- FALSE
-    # }
+    bc <- FALSE ## done below
     sr <- TMB::sdreport(new_obj, bias.correct = bc, ...)
   } else {
     sr <- obj$sd_report # already done in sdmTMB(do_index = TRUE)
@@ -256,10 +250,10 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   }
   sr_est <- as.list(sr, "Estimate", report = TRUE)
 
-  if (bias_correct && value_name[[1]] %in% c("link_total")) {
+  if (bias_correct && value_name[[1]] %in% c("link_total", "cog_x")) {
     # extract and modify parameters
     if (value_name[[1]] == "link_total") .n <- length(sr_est$total)
-    # if (value_name[[1]] == "log_eao") .n <- length(sr_est$log_eao)
+    if (value_name[[1]] == "cog_x") .n <- length(sr_est$cog_x) * 2 # 2 b/c x and y
     pars[[eps_name]] <- rep(0, .n)
     new_values <- rep(0, .n)
     names(new_values) <- rep(eps_name, length(new_values))
@@ -278,33 +272,23 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
     gradient <- new_obj2$gr(fixed)
     corrected_vals <- gradient[names(fixed) == eps_name]
   } else {
-    if (value_name[1] == "link_total")
+    if (value_name[[1]] == "link_total" || value_name[[1]] == "cog_x")
       cli_inform(c("Bias correction is turned off.", "
         It is recommended to turn this on for final inference."))
   }
-
-  # # need to initialize the new TMB object once?
-  # # new_obj$fn(obj$fit_obj$model$par)
-  # if ("ADreportIndex" %in% names(new_obj$env)) {
-  #   ind <- new_obj$env$ADreportIndex()
-  #   to_split <- as.vector(unlist(ind[value_name]))
-  # } else {
-  #   to_split <- NULL
-  # }
-  #
-  # sr <- TMB::sdreport(new_obj, bias.correct = bias_correct,
-  #   bias.correct.control = list(sd = FALSE, split = to_split, nsplit = NULL), ...)
   conv <- get_convergence_diagnostics(sr)
   ssr <- summary(sr, "report")
   log_total <- ssr[row.names(ssr) %in% value_name, , drop = FALSE]
   row.names(log_total) <- NULL
   d <- as.data.frame(log_total)
-  # if (bias_correct)
-  #   d <- d[,3:2,drop=FALSE]
   time_name <- obj$fit_obj$time
   names(d) <- c("trans_est", "se")
   if (bias_correct) {
-    d$trans_est <- log(corrected_vals)
+    if (value_name[[1]] == "cog_x") {
+      d$trans_est <- corrected_vals
+    } else {
+      d$trans_est <- log(corrected_vals)
+    }
     d$est <- corrected_vals
   } else {
     d$est <- as.numeric(trans(d$trans_est))

@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Re-enable bias correction for `get_cog()` (get center of gravity).
+
 * Add forecasting and presence-only article vignettes. See
   <https://pbs-assess.github.io/sdmTMB/articles/>
 
