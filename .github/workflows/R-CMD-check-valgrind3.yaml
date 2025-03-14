@@ -36,6 +36,15 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
+      - name: Install system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          while read -r cmd
+          do
+            eval sudo $cmd
+          done < <(Rscript -e 'writeLines(remotes::system_requirements("ubuntu", "20.04.2"))')
+          sudo apt-get install --yes valgrind
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: |
