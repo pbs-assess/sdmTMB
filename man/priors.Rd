@@ -134,6 +134,7 @@ model fit to a similar system but with more spatial information in the data.
 \examples{
 normal(0, 1)
 halfnormal(0, 1)
+gamma_cv(0.5, 0.2)
 mvnormal(c(0, 0))
 pc_matern(range_gt = 5, sigma_lt = 1)
 plot_pc_matern(range_gt = 5, sigma_lt = 1)

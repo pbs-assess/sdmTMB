@@ -147,6 +147,7 @@ halfnormal <- function(location = 0, scale = 1) {
 #' @rdname priors
 #' @param cv Coefficient of variation (SD/mean).
 #' @examples
+#' gamma_cv(0.5, 0.2)
 gamma_cv <- function(location, cv) {
   assert_that(all(cv[!is.na(cv)] > 0))
   assert_that(length(location) == length(cv))
