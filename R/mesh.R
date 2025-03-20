@@ -96,7 +96,7 @@ make_mesh <- function(data, xy_cols,
     cli_abort(msg)
   }
 
-  if (max(data[[xy_cols[1]]]) > 1e4 || max(data[[xy_cols[2]]] > 1e4)) {
+  if (max(data[[xy_cols[1]]] > 1e4) || max(data[[xy_cols[2]]] > 1e4)) {
     msg <- paste0(
       "The x or y column values are fairly large. ",
       "This can cause estimation problems since the spatial range ",
