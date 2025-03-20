@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Fix bug in a check in `make_mesh()` around if coordinates look
+  overly large. #427
+
 * Re-enable bias correction for `get_cog()` (get center of gravity).
 
 * Add forecasting and presence-only article vignettes. See
