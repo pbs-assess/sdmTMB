@@ -1054,8 +1054,10 @@ sdmTMB <- function(
   }
 
   priors_b <- priors$b
+  priors_sigma_V <- priors$sigma_V
   .priors <- priors
   .priors$b <- NULL # removes this in the list, so not passed in as data
+  .priors$sigma_V <- NULL # removes this in the list, so not passed in as data
   if (nrow(priors_b) == 1L && ncol(X_ij[[1]]) > 1L) { # TODO change hard coded index on X_ij
     if (!is.na(priors_b[[1]])) {
       message("Expanding `b` priors to match model matrix.")
@@ -1085,6 +1087,14 @@ sdmTMB <- function(
   } else {
     Sigma <- as.matrix(priors_b[, -1])
     priors_b_Sigma <- as.matrix(Sigma[not_na, not_na])
+  }
+
+  # expand sigma_V priors if needed
+  if (nrow(priors_sigma_V) == 1L && ncol(X_rw_ik) > 1L) {
+    priors_sigma_V <- replicate(ncol(X_rw_ik), priors_sigma_V, simplify = "matrix")
+  }
+  if (nrow(priors_sigma_V) != ncol(X_rw_ik)) {
+    cli_abort("sigma_V (time-varying SD) priors do not match the fitted model.")
   }
 
   if (!"A_st" %in% names(spde)) cli_abort("`mesh` was created with an old version of `make_mesh()`.")
