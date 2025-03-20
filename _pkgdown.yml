@@ -42,6 +42,7 @@ reference:
   - replicate_df
   - set_delta_model
   - coef.sdmTMB
+  - cAIC
 
 - title: 'Families'
   desc: |
@@ -83,6 +84,7 @@ reference:
   contents:
   - simulate.sdmTMB
   - sdmTMB_simulate
+  - project
 
 - title: 'Plotting'
   desc: |

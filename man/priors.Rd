@@ -16,8 +16,12 @@ sdmTMBpriors(
   ar1_rho = normal(NA, NA),
   tweedie_p = normal(NA, NA),
   b = normal(NA, NA),
-  sigma_G = halfnormal(NA, NA),
-  sigma_V = gamma_cv(NA, NA)
+  sigma_V = gamma_cv(NA, NA),
+  threshold_breakpt_slope = normal(NA, NA),
+  threshold_breakpt_cut = normal(NA, NA),
+  threshold_logistic_s50 = normal(NA, NA),
+  threshold_logistic_s95 = normal(NA, NA),
+  threshold_logistic_smax = normal(NA, NA)
 )
 
 normal(location = 0, scale = 1)
@@ -50,9 +54,22 @@ parameter has support \verb{1 < tweedie_p < 2} so choose a mean appropriately.}
 
 \item{b}{\code{normal()} priors for the main population-level 'beta' effects.}
 
-\item{sigma_G}{\code{halfnormal()} priors for the random intercept SDs.}
-
 \item{sigma_V}{\code{gamma_cv()} priors for any time-varying parameter SDs.}
+
+\item{threshold_breakpt_slope}{A \code{normal()} prior for the slope of the
+linear (hockey stick) function.}
+
+\item{threshold_breakpt_cut}{A \code{normal()} prior for the cutoff of the
+linear (hockey stick) function.}
+
+\item{threshold_logistic_s50}{A \code{normal()} prior for the parameter at which
+f(x) = 0.5.}
+
+\item{threshold_logistic_s95}{A \code{normal()} prior for the parameter at which
+f(x) = 0.95.}
+
+\item{threshold_logistic_smax}{A \code{normal()} prior for the paramter at which
+f(x) is maximized.}
 
 \item{location}{Location parameter(s). Typically the mean.}
 

@@ -3,13 +3,16 @@
 #' @param x Output from [sdmTMB()].
 #' @param effects A character value. One of `"fixed"` ('fixed' or main-effect
 #'   parameters), `"ran_pars"` (standard deviations, spatial range, and other
-#'   random effect and dispersion-related terms), or `"ran_vals"` (individual
-#'   random intercepts, if included; behaves like `ranef()`).
+#'   random effect and dispersion-related terms), `"ran_vals"` (individual
+#'   random intercepts or slopes, if included; behaves like `ranef()`), or `"ran_vcov"` (list
+#'   of variance covariance matrices for the random effects, by model and group).
 #' @param conf.int Include a confidence interval?
 #' @param conf.level Confidence level for CI.
 #' @param exponentiate Whether to exponentiate the fixed-effect coefficient
 #'   estimates and confidence intervals.
-#' @param model Which model to tidy if a delta model (1 or 2).
+#' @param model Which model to tidy if a delta model (1 or 2). The `model` will be
+#'   ignored when effects is `"ran_vals"` (all returned in a single dataframe)
+#'
 #' @param silent Omit any messages?
 #' @param ... Extra arguments (not used).
 #'
@@ -44,7 +47,7 @@
 #' )
 #' tidy(fit, "ran_vals")
 
-tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model = 1,
+tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vcov"), model = 1,
                  conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE,
                  silent = FALSE, ...) {
   effects <- match.arg(effects)
@@ -95,7 +98,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     p$ln_phi <- p$ln_phi[model]
     p$ln_tau_V <- as.numeric(p$ln_tau_V[,model])
     p$ar1_phi <- as.numeric(p$ar1_phi[model])
-    p$ln_tau_G <- as.numeric(p$ln_tau_G[,model])
     p$log_sigma_O <- as.numeric(p$log_sigma_O[1,model])
     p$log_sigma_E <- as.numeric(p$log_sigma_E[1,model])
     p$log_sigma_Z <- as.numeric(p$log_sigma_Z[,model])
@@ -106,9 +108,12 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     p$sigma_E <- as.numeric(p$sigma_E[1,model])
     p$sigma_O <- as.numeric(p$sigma_O[1,model])
     p$sigma_Z <- as.numeric(p$sigma_Z[,model])
-    p$sigma_G <- as.numeric(p$sigma_G[,model])
+
+    # if delta, a single AR1 -> rho_time_unscaled is a 1x2 matrix
+    p$rho_time <- 2 * plogis(p$rho_time_unscaled[,model]) - 1
     p
   }
+
   est <- subset_pars(est, model)
   se <- subset_pars(se, model)
 
@@ -135,14 +140,32 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
   if (x$tmb_data$threshold_func > 0) {
     if (x$threshold_function == 1L) {
       par_name <- paste0(x$threshold_parameter, c("-slope", "-breakpt"))
+      estimates <- est$b_threshold[,model,drop=TRUE]
+      ses <- se$b_threshold[,model,drop=TRUE]
     } else {
       par_name <- paste0(x$threshold_parameter, c("-s50", "-s95", "-smax"))
+      estimates <- c(est$s50[model], est$s95[model], est$s_max[model])
+      ses <- c(se$s50[model], se$s95[model], se$s_max[model])
     }
     out <- rbind(
       out,
       data.frame(
-        term = par_name, estimate = est$b_threshold[,model,drop=TRUE],
-        std.error = se$b_threshold[,model,drop=TRUE], stringsAsFactors = FALSE
+        term = par_name, estimate = estimates,
+        std.error = ses, stringsAsFactors = FALSE
+      )
+    )
+  }
+
+  if (x$tmb_data$has_smooths) {
+    p <- print_smooth_effects(x)
+    mm <- p$smooth_effects
+    out <- rbind(
+      out,
+      data.frame(
+        term = rownames(mm),
+        estimate = mm[, "bs"],
+        std.error = mm[, "bs_se"],
+        stringsAsFactors = FALSE
       )
     )
   }
@@ -178,9 +201,9 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     log_name <- c(log_name, "ln_tau_V")
     name <- c(name, "tau_V")
   }
-  if (length(est$ln_tau_G) > 0L) {
-    log_name <- c(log_name, "ln_tau_G")
-    name <- c(name, "sigma_G")
+  if (!all(est$rho_time == 0)) {
+    log_name <- c(log_name, "rho_time_unscaled")
+    name <- c(name, "rho_time")
   }
 
   j <- 0
@@ -198,8 +221,9 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
 
       non_log_name <- gsub("ln_", "", gsub("log_", "", log_name))
       this <- non_log_name[j]
-      if (this == "tau_G") this <- "sigma_G"
       if (this == "tau_V") this <- "sigma_V"
+      if (this == "rho_time_unscaled") this <- "rho_time"
+
       this_se <- as.numeric(se[[this]])
       this_est <- as.numeric(est[[this]])
       if (length(this_est) && !(all(this_se == 0) && all(this_est == 0))) {
@@ -209,6 +233,19 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
           conf.high = exp(.e + crit * .se),
           stringsAsFactors = FALSE
         )
+        if(this == "rho_time") {
+          out_re[[i]] <- data.frame(
+            term = i,
+            estimate = this_est,
+            # use delta method to get SE in normal space
+            std.error = 2 * plogis (.e[,model]) * (1 - plogis (.e[,model])) * .se[,model],
+            # don't use delta-method for CIs, because they can be outside (-1,1)
+            conf.low = 2 * plogis(.e[,model] - crit * .se[,model]) - 1,
+            conf.high = 2 * plogis(.e[,model] + crit * .se[,model]) - 1,
+            stringsAsFactors = FALSE
+          )
+
+        }
       }
       ii <- ii + 1
     }
@@ -245,7 +282,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
 
   if (identical(est$ln_tau_E, 0)) out_re <- out_re[out_re$term != "sigma_E", ]
   if (identical(est$ln_tau_V, 0)) out_re <- out_re[out_re$term != "sigma_V", ]
-  if (identical(est$ln_tau_G, 0)) out_re <- out_re[out_re$term != "sigma_G", ]
   if (identical(est$ln_tau_O, 0)) out_re <- out_re[out_re$term != "sigma_O", ]
   if (identical(est$ln_tau_Z, 0)) out_re <- out_re[out_re$term != "sigma_Z", ]
   if (is.na(x$tmb_map$ar1_phi[model])) out_re <- out_re[out_re$term != "rho", ]
@@ -255,43 +291,45 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     out_re[["conf.high"]] <- NULL
   }
 
-  # random intercepts
-  n_re_int <- x$split_formula[[model]]$n_bars
-  if (n_re_int == 0 && effects == "ran_vals") {
-    cli::cli_abort("effects = 'ran_vals' currently only works with random intercepts (e.g., `+ (1 | g)`).")
-  }
-  if (n_re_int > 0) {
-    out_ranef <- list()
-    re_est <- as.list(x$sd_report, "Estimate")$RE
-    re_ses <- as.list(x$sd_report, "Std. Error")$RE
-    for(jj in 1:n_re_int) {
-      level_names <- levels(x$data[[x$split_formula[[model]]$barnames[jj]]])
-      n_levels <- length(level_names)
-      re_name <- x$split_formula[[model]]$barnames[jj]
-
-      if(jj==1) {
-        start_pos <- 1
-        end_pos <- n_levels
-      } else {
-        start_pos <- end_pos + 1
-        end_pos <- start_pos + n_levels - 1
-      }
-      out_ranef[[jj]] <- data.frame(
-        term = paste0(re_name,"_",level_names),
-        estimate = re_est[start_pos:end_pos,model],
-        std.error = re_ses[start_pos:end_pos,model],
-        conf.low = re_est[start_pos:end_pos,model] - crit * re_ses[start_pos:end_pos,model],
-        conf.high = re_est[start_pos:end_pos,model] + crit * re_ses[start_pos:end_pos,model],
-        stringsAsFactors = FALSE
-      )
-      if (!conf.int) {
-        out_ranef[[jj]][["conf.low"]] <- NULL
-        out_ranef[[jj]][["conf.high"]] <- NULL
-      }
+  if (sum(x$tmb_data$n_re_groups) > 0L) { # we have random intercepts/slopes
+    temp <- get_re_tidy_list(x, crit = crit)
+    cov_mat_list <- list(est = temp$cov_matrices)
+    if(conf.int) {
+      cov_mat_list[["lo"]] <- temp$cov_matrices_lo
+      cov_mat_list[["hi"]] <- temp$cov_matrices_hi
     }
-    out_ranef <- do.call("rbind", out_ranef)
-    row.names(out_ranef) <- NULL
+    out_ranef <- temp$out_ranef
+  } else {
+    cov_mat_list <- NULL
+    out_ranef <- NULL
   }
+
+  # optional time-varying random components
+  if (!is.null(x$time_varying)) {
+    tv_names <- colnames(model.matrix(x$time_varying, x$data))
+    time_slices <- x$time_lu$time_from_data
+    yrs <- rep(time_slices, times = length(tv_names))
+
+    out_ranef_tv <- data.frame(
+      model = model,
+      term = paste0(rep(tv_names, each = length(time_slices)), ":", yrs),
+      estimate = c(est$b_rw_t),
+      std.error = c(se$b_rw_t),
+      conf.low = c(est$b_rw_t) - crit * c(se$b_rw_t),
+      conf.high = c(est$b_rw_t) + crit * c(se$b_rw_t),
+      stringsAsFactors = FALSE
+    )
+
+    if(is.null(out_ranef)) {
+      out_ranef <- out_ranef_tv
+    } else {
+      out_ranef_tv$group_name <- NA
+      out_ranef_tv$level_ids <- NA
+      out_ranef <- rbind(out_ranef, out_ranef_tv)
+    }
+  }
+
+
 
   out <- unique(out) # range can be duplicated
   out_re <- unique(out_re)
@@ -308,11 +346,153 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals"), model =
     return(frm(out_ranef))
   } else if (effects == "ran_pars") {
     return(frm(out_re))
+  } else if (effects == "ran_vcov") {
+    return(cov_mat_list)
   } else {
     cli_abort("The specified 'effects' type is not available.")
   }
 }
 
+# Extract and format random effect estimates from sdmTMB model output
+#
+# This function extracts random effect estimates, including individual random intercepts
+# and slopes, as well as covariance matrices, from an `sdmTMB` model output. It formats
+# them into a structured list for further analysis.
+#
+# @param x An `sdmTMB` model object containing estimated random effects.
+# @param crit The critical value for confidence interval computation,
+#   typically derived from a normal distribution quantile, e.g.
+#   crit = stats::qnorm(1 - (1 - conf.level) / 2)
+# @importFrom stats aggregate
+
+get_re_tidy_list <- function(x, crit) {
+  re_b_dfs <- add_model_index(x$split_formula, "re_b_df")
+  re_b_df <- do.call(rbind, re_b_dfs)
+  names(re_b_df)[names(re_b_df) == "group_indices"] <- "group_id"
+
+  # this function just expands each row from start: end
+  expand_row <- function(level_id, start, end, group_id, model) {
+    seq_len <- end - start + 1
+    data.frame(
+      level_ids = rep(level_id, seq_len),
+      index = seq(from = start, to = end),
+      group_id = rep(group_id, seq_len),
+      model = rep(model, seq_len)
+    )
+  }
+
+  # apply to each row and combine the results
+  expanded_rows <- Map(
+    expand_row, re_b_df$level_ids,
+    re_b_df$start, re_b_df$end,
+    re_b_df$group_id, re_b_df$model
+  )
+
+  re_b_df <- do.call(rbind, expanded_rows) # list to df
+  rownames(re_b_df) <- NULL # reset row names
+
+  # this is all as before
+  re_indx <- grep("re_b_pars", names(x$sd_report$value), fixed = TRUE)
+  non_nas <- !is.na(x$tmb_map$re_b_pars) # parameters that don't get mapped off
+
+  re_b_df$estimate <- x$sd_report$value[re_indx][non_nas]
+  re_b_df$std.error <- x$sd_report$sd[re_indx][non_nas]
+  re_b_df$conf.low <- re_b_df$estimate - crit * re_b_df$std.error
+  re_b_df$conf.high <- re_b_df$estimate + crit * re_b_df$std.error
+  re_b_df$index <- NULL
+  re_b_df$group_name <- NA
+  re_b_df$term <- NA
+  for (i in seq_len(length(x$split_formula))) {
+    groupnames <- names(x$split_formula[[i]]$re_cov_terms$cnms)
+    for (j in seq_len(length(x$split_formula[[i]]$barnames))) {
+      model_grp <- which(re_b_df$model == i & re_b_df$group_id == j)
+      re_b_df$group_name[model_grp] <- groupnames[j]
+      re_b_df$term[model_grp] <- rep(x$split_formula[[i]]$re_cov_terms$cnms[[j]], length.out = length(model_grp))
+    }
+  }
+  group_key <- stats::aggregate(group_name ~ model + group_id, data = re_b_df, FUN = function(x) x[1])
+
+  # more sensible re-ordering
+  re_b_df$group_id <- NULL
+  re_b_df <- re_b_df[, c("model", "group_name", "term", "level_ids", "estimate", "std.error", "conf.low", "conf.high")]
+  # remove ":" in the level_ids
+  re_b_df$level_ids <- sapply(strsplit(re_b_df$level_ids, ":"), function(x) x[2])
+  out_ranef <- re_b_df
+  row.names(out_ranef) <- NULL
+
+  re_cov_dfs <- add_model_index(x$split_formula, "re_df")
+  # add group names
+  re_cov_dfs <- lapply(re_cov_dfs, function(df) {
+    df$group <- row.names(df)
+    df
+  })
+  re_cov_df <- do.call(rbind, re_cov_dfs)
+  re_cov_df$rows <- re_cov_df$rows + 1 # increement rows/cols from 1, not 0
+  re_cov_df$cols <- re_cov_df$cols + 1
+  row.names(re_cov_df) <- NULL
+
+  # make sure group index is included correctly
+  for (i in seq_len(nrow(re_cov_df))) {
+    indx <- which(group_key$model == re_cov_df$model[i] & group_key$group_id == (re_cov_df$group_indices[i] + 1))
+    re_cov_df$group[i] <- group_key$group_name[indx]
+  }
+
+  re_indx <- grep("re_cov_pars", names(x$sd_report$value), fixed = TRUE)
+  non_nas <- which(x$sd_report$value[re_indx] != 0) # remove parameter that gets mapped off
+  re_cov_df$estimate <- x$sd_report$value[re_indx][non_nas]
+  re_cov_df$std.error <- x$sd_report$sd[re_indx][non_nas]
+  re_cov_df$conf.low <- re_cov_df$estimate - crit * re_cov_df$std.error
+  re_cov_df$conf.high <- re_cov_df$estimate + crit * re_cov_df$std.error
+  # the SD parameters are returned in log space -- use delta method to generate CIs
+  est <- exp(re_cov_df$estimate) # estimate in normal space
+  sd_est <- est * re_cov_df$std.error # SE in normal space
+  sds <- which(re_cov_df$is_sd == 1) # index which elements are SDs
+  re_cov_df$estimate[sds] <- est[sds]
+  re_cov_df$conf.low[sds] <- est[sds] - crit * sd_est[sds]
+  re_cov_df$conf.high[sds] <- est[sds] + crit * sd_est[sds]
+
+  re_cov_df <- re_cov_df[, c("rows", "cols", "model", "group", "estimate", "std.error", "conf.low", "conf.high")]
+  cov_matrices_lo = create_cov_matrices(re_cov_df, col_name = "conf.low")
+  cov_matrices_hi = create_cov_matrices(re_cov_df, col_name = "conf.high")
+  list(out_ranef = out_ranef, cov_matrices = create_cov_matrices(re_cov_df),
+       cov_matrices_lo = create_cov_matrices(re_cov_df, col_name = "conf.low"),
+       cov_matrices_hi = create_cov_matrices(re_cov_df, col_name = "conf.high"))
+}
+
+create_cov_matrices <- function(df, col_name = "estimate") {
+  # Initialize an empty list to store the covariance matrices
+  cov_matrices <- list()
+
+  # Group by model and group, and then create a covariance matrix for each group
+  for (model in unique(df$model)) {
+    model_df <- subset(df, model == model)
+    for (group in unique(model_df$group)) {
+      group_df <- model_df[model_df$group == group,,drop=FALSE]
+      # Create an empty matrix
+      cov_matrix <- matrix(NA_real_, nrow = max(group_df$rows), ncol = max(group_df$cols))
+      # Fill the matrix with the estimates
+      for (i in seq_len(nrow(group_df))) {
+        cov_matrix[group_df$rows[i], group_df$cols[i]] <- group_df[[col_name]][i]
+      }
+      # Add the matrix to the list
+      cov_matrices[[paste("Model", model, "Group", group)]] <- cov_matrix
+    }
+  }
+  cov_matrices
+}
+
 #' @importFrom generics tidy
 #' @export
 generics::tidy
+
+#' @rdname tidy.sdmTMB
+#' @export
+tidy.sdmTMB_cv <- function(x, ...) {
+  x <- x$models
+  out <- lapply(seq_along(x), function(i) {
+    df <- tidy.sdmTMB(x[[i]], ...)
+    df$cv_split <- i # add a model index column
+    df
+  })
+  do.call("rbind", out)
+}

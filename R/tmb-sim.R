@@ -332,13 +332,22 @@ sdmTMB_simulate <- function(formula,
 #'   effects (this only simulates observation error). `~0` or `NA` to simulate
 #'   new random affects (smoothers, which internally are random effects, will
 #'   not be simulated as new).
+#' @param mle_mvn_samples Applies if `type = "mle-mvn"`. If `"single"`, take
+#'   a single MVN draw from the random effects. If `"multiple"`, take an MVN
+#'   draw from the random effects for each of the `nsim`.
 #' @param model If a delta/hurdle model, which model to simulate from?
 #'   `NA` = combined, `1` = first model, `2` = second mdoel.
+#' @param newdata Optional new data frame from which to simulate.
 #' @param mcmc_samples An optional matrix of MCMC samples. See `extract_mcmc()`
 #'   in the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
 #'   package.
+#' @param return_tmb_report Return the \pkg{TMB} report from `simulate()`? This
+#'   lets you parse out whatever elements you want from the simulation.
+#'   Not usually needed.
 #' @param silent Logical. Silent?
-#' @param ... Extra arguments (not used)
+#' @param ... Extra arguments passed to [predict.sdmTMB()]. E.g., one may wish
+#'   to pass an `offset` argument if `newdata` are supplied in a model with an
+#'   offset.
 #' @return Returns a matrix; number of columns is `nsim`.
 #' @importFrom stats simulate
 #'
@@ -381,10 +390,17 @@ sdmTMB_simulate <- function(formula,
 simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
                             type = c("mle-eb", "mle-mvn"),
                             model = c(NA, 1, 2),
-                            re_form = NULL, mcmc_samples = NULL, silent = FALSE, ...) {
+                            newdata = NULL,
+                            re_form = NULL,
+                            mle_mvn_samples = c("single", "multiple"),
+                            mcmc_samples = NULL,
+                            return_tmb_report = FALSE,
+                            silent = FALSE,
+                            ...) {
   set.seed(seed)
   type <- tolower(type)
   type <- match.arg(type)
+  mle_mvn_samples <- match.arg(mle_mvn_samples)
   assert_that(as.integer(model[[1]]) %in% c(NA_integer_, 1L, 2L))
 
   # need to re-attach environment if in fresh session
@@ -403,6 +419,16 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
     stopifnot(length(object$tmb_data$sim_re) == 6L) # in case this gets changed
     tmb_dat$sim_re <- c(rep(1L, 5L), 0L) # last is smoothers; don't simulate them
   }
+
+  if (!is.null(newdata)) {
+    # generate prediction TMB data list
+    p <- predict(object, newdata = newdata, return_tmb_data = TRUE, ...)
+    # move data elements over
+    p <- move_proj_to_tmbdat(p, object, newdata)
+    p$sim_re <- tmb_dat$sim_re
+    tmb_dat <- p
+  }
+
   newobj <- TMB::MakeADFun(
     data = tmb_dat, map = object$tmb_map,
     random = object$tmb_random, parameters = object$tmb_obj$env$parList(), DLL = "sdmTMB"
@@ -411,9 +437,17 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
   # params MLE/MVN stuff
   if (is.null(mcmc_samples)) {
     if (type == "mle-mvn") {
-      new_par <- .one_sample_posterior(object)
+      if (mle_mvn_samples == "single") {
+        new_par <- .one_sample_posterior(object)
+        new_par <- replicate(nsim, new_par)
+      } else {
+        new_par <- lapply(seq_len(nsim), \(i) .one_sample_posterior(object))
+        new_par <- do.call(cbind, new_par)
+      }
     } else if (type == "mle-eb") {
       new_par <- object$tmb_obj$env$last.par.best
+      new_par <- lapply(seq_len(nsim), \(i) new_par)
+      new_par <- do.call(cbind, new_par)
     } else {
       cli_abort("`type` type not defined")
     }
@@ -422,34 +456,38 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
   }
 
   # do the simulation
-  if (!silent) cli::cli_progress_bar("Simulating...", total = nsim)
+  if (!silent) cli::cli_progress_bar("Simulating", total = nsim)
   ret <- list()
   if (!is.null(mcmc_samples)) { # we have a matrix
     for (i in seq_len(nsim)) {
       if (!silent) cli::cli_progress_update()
-      ret[[i]] <- newobj$simulate(par = new_par[, i, drop = TRUE], complete = FALSE)$y_i
+      ret[[i]] <- newobj$simulate(par = new_par[, i, drop = TRUE], complete = FALSE)
+      if (!return_tmb_report) ret[[i]] <- ret[[i]]$y_i
     }
   } else {
     for (i in seq_len(nsim)) {
       if (!silent) cli::cli_progress_update()
-      ret[[i]] <- newobj$simulate(par = new_par, complete = FALSE)$y_i
+      ret[[i]] <- newobj$simulate(par = new_par[, i, drop = TRUE], complete = FALSE)
+      if (!return_tmb_report) ret[[i]] <- ret[[i]]$y_i
     }
   }
-  cli::cli_progress_done()
+  if (!silent) cli::cli_progress_done()
 
-  if (isTRUE(object$family$delta)) {
-    if (is.na(model[[1]])) {
-      ret <- lapply(ret, function(.x) .x[,1] * .x[,2])
-    } else if (model[[1]] == 1) {
-      ret <- lapply(ret, function(.x) .x[,1])
-    } else if (model[[1]] == 2) {
-      ret <- lapply(ret, function(.x) .x[,2])
-    } else {
-      cli_abort("`model` argument isn't valid; should be NA, 1, or 2.")
+  if (!return_tmb_report) {
+    if (isTRUE(object$family$delta)) {
+      if (is.na(model[[1]])) {
+        ret <- lapply(ret, function(.x) .x[,1] * .x[,2])
+      } else if (model[[1]] == 1) {
+        ret <- lapply(ret, function(.x) .x[,1])
+      } else if (model[[1]] == 2) {
+        ret <- lapply(ret, function(.x) .x[,2])
+      } else {
+        cli_abort("`model` argument isn't valid; should be NA, 1, or 2.")
+      }
     }
-  }
 
-  ret <- do.call(cbind, ret)
-  attr(ret, "type") <- type
+    ret <- do.call(cbind, ret)
+    attr(ret, "type") <- type
+  }
   ret
 }

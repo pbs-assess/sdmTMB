@@ -65,21 +65,25 @@ test_that("A model with t2() works", {
   dat$x1 <- NULL
   dat$x2 <- NULL
 
-  m_mgcv <- mgcv::gam(observed ~ t2(.x0, .x1, k = 9),
+  m_mgcv <- mgcv::gam(observed ~ t2(.x0, .x1, k = 4),
                       data = dat,
                       method = "REML"
   )
   p_mgcv <- predict(m_mgcv)
-  m <- sdmTMB(observed ~ t2(.x0, .x1, k = 9),
+  m <- sdmTMB(observed ~ t2(.x0, .x1, k = 4),
               data = dat,
-              spatial = 'off'
+              spatial = 'off', reml = TRUE
   )
   p <- predict(m, newdata = NULL)
-  expect_error(pnd <- predict(m, newdata = dat), "t2")
   plot(p$est, p_mgcv)
   abline(a = 0, b = 1)
   expect_gt(cor(p$est, p_mgcv), 0.9999)
   expect_equal(as.numeric(p$est), as.numeric(p_mgcv), tolerance = 0.001)
+
+  # prediction on newdata
+  pnd <- predict(m, newdata = dat)
+  # plot(p$est, pnd$est)
+  expect_equal(as.numeric(p$est), as.numeric(pnd$est), tolerance = 0.00001)
 })
 
 test_that("A model with dimensions specified in t2() works", {
@@ -187,7 +191,6 @@ test_that("A model with by in spline (and s(x, y)) works", {
   pnd <- predict(m, newdata = dat[.s,])
   expect_equal(p$est[.s], pnd$est, tolerance = 0.001)
 })
-
 
 test_that("Formula removal of s and t2 works", {
   expect_identical(remove_s_and_t2(y ~ x + s(z)), y ~ x)
@@ -448,15 +451,14 @@ test_that("A model with s(x, bs = 'fs') works", {
   m <- sdmTMB(
     data = d,
     formula = log(density) ~ s(depth_scaled, by = year, bs = "fs"),
-    spatial = "off", control = sdmTMBcontrol(newton_loops = 1)
+    spatial = "off", reml = TRUE
   )
-  # FIXME:
   suppressWarnings(print(m))
   m_mgcv <- mgcv::gam(log(density) ~ s(depth_scaled, by = year, bs = "fs"), data = d, method = "REML")
   p <- predict(m)
   p2 <- predict(m_mgcv)
-  # plot(p$est, p2)
-  expect_gt(stats::cor(p$est, p2), 0.995)
+  plot(p$est, p2)
+  expect_gt(stats::cor(p$est, p2), 0.9999)
 })
 
 test_that("An fx=TRUE smoother errors out", {

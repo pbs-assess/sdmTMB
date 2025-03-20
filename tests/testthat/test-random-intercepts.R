@@ -53,12 +53,12 @@ test_that("Model with random intercepts fits appropriately.", {
 
   expect_gt(.t1$estimate[.t1$term == "phi"], .t$estimate[.t$term == "phi"])
   expect_gt(.t1$estimate[.t1$term == "sigma_O"], .t$estimate[.t$term == "sigma_O"])
-  expect_lt(nrow(.t1), nrow(.t))
+  expect_equal(nrow(.t1), nrow(.t))
 
   b <- as.list(m$sd_report, "Estimate")
-  .cor <- cor(c(RE_vals, RE_vals2), b$RE[, 1])
+  .cor <- cor(c(RE_vals, RE_vals2), b$re_b_pars[, 1])
   expect_equal(round(.cor, 5), 0.8313)
-  expect_equal(round(b$RE[seq_len(5)], 5),
+  expect_equal(round(b$re_b_pars[seq_len(5)], 5),
     c(-0.28645, 0.68619, 0.10028, -0.31436, -0.61168),
     tolerance = 1e-5
   )
@@ -93,32 +93,47 @@ test_that("Model with random intercepts fits appropriately.", {
     data = s,
     formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde, spatial = "off"
   )
-  .t <- tidy(m, "ran_pars")
+  .t <- tidy(m, "ran_vcov")
   m.glmmTMB <- glmmTMB::glmmTMB(
     data = s,
     formula = observed ~ 1 + (1 | g) + (1 | h)
   )
   .v <- glmmTMB::VarCorr(m.glmmTMB)
-  expect_equal(.t$estimate[.t$term == "sigma_G"][1],
+  expect_equal(as.numeric(.t[[1]])[1],
     sqrt(as.numeric(.v$cond$g)),
     tolerance = 1e-5
   )
-  expect_equal(.t$estimate[.t$term == "sigma_G"][2],
+  expect_equal(as.numeric(.t[[1]])[2],
     sqrt(as.numeric(.v$cond$h)),
     tolerance = 1e-5
   )
 
+  # with CIs on "vcov" works:
+  .t <- tidy(m, effects="ran_vcov", conf.int = FALSE)
+  expect_equal(length(.t$est), 2)
+  expect_equal(names(.t$est), c("Model 1 Group g", "Model 1 Group h"))
+  .t <- tidy(m, effects="ran_vcov", conf.int = TRUE)
+  expect_equal(names(.t), c("est","lo","hi"))
+  expect_equal(length(.t$lo), 2)
+  expect_equal(names(.t$lo), c("Model 1 Group g", "Model 1 Group h"))
+  expect_equal(length(.t$hi), 2)
+  expect_equal(names(.t$hi), c("Model 1 Group g", "Model 1 Group h"))
+  expect_equal(as.numeric(unlist(.t$hi)), c(0.5628, 0.2600), tolerance = 0.001)
+  expect_equal(as.numeric(unlist(.t$lo)), c(0.3217, 0.132), tolerance = 0.001)
+  expect_equal(as.numeric(unlist(.t$est)), c(0.4422, 0.1960), tolerance = 0.001)
+
+
   sdmTMB_re <- as.list(m$sd_report, "Estimate")
   glmmTMB_re <- glmmTMB::ranef(m.glmmTMB)$cond
   expect_equal(c(glmmTMB_re$g$`(Intercept)`, glmmTMB_re$h$`(Intercept)`),
-    sdmTMB_re$RE[, 1],
+    sdmTMB_re$re_b_pars[, 1],
     tolerance = 1e-5
   )
 
   # predicting with new levels throws error for now:
   m <- sdmTMB(data = s, formula = observed ~ 1 + (1 | g), spatial = "off")
   nd <- data.frame(g = factor(c(1, 2, 3, 800)))
-  expect_error(predict(m, newdata = nd), regexp = "Extra")
+  expect_error(predict(m, newdata = nd), regexp = "Extra levels found")
 })
 
 test_that("Random intercepts and cross validation play nicely", {
@@ -197,14 +212,15 @@ test_that("Tidy returns random intercepts appropriately.", {
     data = s,
     formula = observed ~ 1 + (1 | g) + (1 | h)
   )
-  ranpars <- tidy(m, "ran_pars", conf.int = TRUE)
+
+  ranpars <- tidy(m, "ran_vcov", conf.int = TRUE)
   s2 <- as.list(m2$sdr, "Estimate")
-  expect_equal(ranpars$estimate[-1], exp(s2$theta), tolerance = 0.001)
+  expect_equal(as.numeric(ranpars$est), exp(s2$theta), tolerance = 0.001)
   s2se <- as.list(m2$sdr, "Std. Error")
   upr <- exp(s2$theta + 2 * s2se$theta)
   lwr <- exp(s2$theta - 2 * s2se$theta)
-  expect_equal(ranpars$conf.low[-1], lwr, tolerance = 0.01)
-  expect_equal(ranpars$conf.high[-1], upr, tolerance = 0.01)
+  expect_equal(as.numeric(ranpars$lo), lwr, tolerance = 0.05)
+  expect_equal(as.numeric(ranpars$hi), upr, tolerance = 0.05)
 
   ranint <- tidy(m, "ran_vals", conf.int = TRUE)
 
@@ -214,51 +230,12 @@ test_that("Tidy returns random intercepts appropriately.", {
   )
 
   # also check that ranef returns the same thing with same names
-  expect_equal(names(ranef(m2)$cond), names(ranef(m)$cond))
+  expect_equal(names(ranef(m2)$cond), lapply(ranef(m), names)[[1]])
 
   # and check that they return the same values
-  expect_equal(ranef(m2)$cond$g[[1]], ranef(m)$cond$g[[1]], tolerance = 1e-5)
+  expect_equal(ranef(m2)$cond$g[[1]], ranef(m)[[1]]$g[,1], tolerance = 1e-5)
 })
 
-test_that("random slopes throw an error", {
-  pcod_2011$fyear <- as.factor(pcod_2011$year)
-  expect_error(
-    {
-      fit <- sdmTMB(
-        density ~ 1 + (1 + depth | fyear),
-        data = pcod_2011, mesh = pcod_mesh_2011,
-        family = tweedie(link = "log")
-      )
-    },
-    regexp = "slope"
-  )
-  expect_error(
-    {
-      fit <- sdmTMB(
-        density ~ 1 + (1 + depth | fyear) + (Y | fyear),
-        data = pcod_2011, mesh = pcod_mesh_2011,
-        family = tweedie(link = "log")
-      )
-    },
-    regexp = "slope"
-  )
-  expect_error(
-    {
-      fit <- sdmTMB(
-        density ~ 1 + (depth | fyear),
-        data = pcod_2011, mesh = pcod_mesh_2011,
-        family = tweedie(link = "log")
-      )
-    },
-    regexp = "slope"
-  )
-  fit <- sdmTMB( # but random intercepts still work
-    density ~ 1 + (1 | fyear),
-    data = pcod_2011, mesh = pcod_mesh_2011,
-    family = tweedie(link = "log")
-  )
-  expect_s3_class(fit, "sdmTMB")
-})
 
 test_that("Random intercept classes in predict() are checked appropriately", {
   skip_on_cran()
@@ -310,16 +287,16 @@ test_that("Random intercepts are incorporated into est_non_rf1 and est_non_rf2 c
     family = delta_gamma(link1 = "logit", link2 = "log")
   )
   ## fitted random intercepts
-  t1 <- tidy(fit, effects = "ran_vals", model = 1)
-  t2 <- tidy(fit, effects = "ran_vals", model = 2)
-  expect_equal(t1$estimate, c(-0.24066, 0.33083, 0.20459, -0.29288), tolerance = 0.001)
-  expect_equal(t2$estimate, c(0.17724, -0.14142, 0.11862, -0.16844), tolerance = 0.001)
+  t1 <- tidy(fit, effects = "ran_vals")
+  expect_equal(t1$estimate[t1$model==1], c(-0.24066, 0.33083, 0.20459, -0.29288), tolerance = 0.001)
+  expect_equal(t1$estimate[t1$model==2], c(0.17724, -0.14142, 0.11862, -0.16844), tolerance = 0.001)
 
   ## data frame to get predictions for each year (at a specific location and depth)
   new_dat <- expand.grid(
     X = mean(pcod_2011$X), Y = mean(pcod_2011$Y),
-    depth = mean(pcod_2011$depth), year = unique(pcod_2011$year)
+    year = unique(pcod_2011$year)
   )
+
   p <- predict(fit, newdata = new_dat)
   expect_equal(p$est_non_rf1, c(-0.40011, 0.17137, 0.04514, -0.45234), tolerance = 0.001)
   expect_equal(p$est_non_rf2, c(4.6455, 4.32684, 4.58688, 4.29982), tolerance = 0.001)

@@ -18,3 +18,5 @@ README_cache/*
 Dockerfile
 revdep/
 scratch/VAST-EAO*
+tags
+Session.vim

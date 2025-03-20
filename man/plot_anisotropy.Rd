@@ -46,7 +46,6 @@ fit <- sdmTMB(
   mesh = mesh,
   family = tweedie(),
   share_range = FALSE,
-  time = "year",
   anisotropy = TRUE #<
 )
 plot_anisotropy(fit)

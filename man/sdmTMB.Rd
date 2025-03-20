@@ -35,8 +35,8 @@ sdmTMB(
 )
 }
 \arguments{
-\item{formula}{Model formula. IID random intercepts are possible using
-\pkg{lme4} syntax, e.g., \code{+ (1 | g)} where \code{g} is a column of class
+\item{formula}{Model formula. IID random intercepts and slopes are possible using
+\pkg{lme4} syntax, e.g., \code{+ (1 | g)} or \code{+ (0 + depth | g)} or \code{+ (1 + depth | g)} where \code{g} is a column of class
 character or factor representing groups. Penalized splines are possible via
 \pkg{mgcv} with \code{s()}. Optionally a list for delta (hurdle) models.  See
 examples and details below.}
@@ -302,8 +302,8 @@ and \code{share_range}. The first element of the list is for the binomial compon
 and the second element is for the positive component (e.g., Gamma).
 Other elements must be shared for now (e.g., spatially varying coefficients,
 time-varying coefficients). Furthermore, there are currently limitations if
-specifying two formulas as a list: the two formulas cannot have smoothers,
-threshold effects, or random intercepts. For now, these must be specified
+specifying two formulas as a list: the two formulas cannot have smoothers or
+threshold effects. For now, these must be specified
 through a single formula that is shared across the two models.
 
 The main advantage of specifying such models using a delta family (compared
@@ -364,7 +364,7 @@ head(p)
 
 \donttest{
 # Visualize the depth effect with ggeffects:
-ggeffects::ggpredict(fit,  "depth [all]") |> plot()
+ggeffects::ggpredict(fit, "depth [all]") |> plot()
 
 # Visualize depth effect with visreg: (see ?visreg_delta)
 visreg::visreg(fit, xvar = "depth") # link space; randomized quantile residuals
@@ -485,6 +485,13 @@ fit <- sdmTMB(
   family = tweedie(link = "log")
 )
 fit
+
+# IID random slopes and intercepts (implicit) by year:
+fit <- sdmTMB(
+  density ~ (depth | fyear), #<
+  data = pcod_2011, mesh = mesh,
+  family = tweedie(link = "log")
+)
 
 # Spatially varying coefficient of year:
 pcod_2011$year_scaled <- as.numeric(scale(pcod_2011$year))
