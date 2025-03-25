@@ -267,12 +267,11 @@ sanity <- function(object, big_sd_log10 = 2, gradient_thresh = 0.001, silent = F
 
 par_df <- function() {
   data.frame(
-    internal = c("ln_tau_O", "ln_tau_E", "ln_tau_G", "ln_tau_V", "ln_tau_Z", "ln_kappa"),
-    external = c("sigma_O", "sigma_E", "sigma_G", "sigma_V", "sigma_Z", "range"),
+    internal = c("ln_tau_O", "ln_tau_E", "ln_tau_V", "ln_tau_Z", "ln_kappa"),
+    external = c("sigma_O", "sigma_E", "sigma_V", "sigma_Z", "range"),
     meaning = c(
       "spatial standard deviation",
       "spatiotemporal standard deviation",
-      "random intercept standard deviation",
       "time-varying coefficient standard deviation",
       "spatially varying coefficient standard deviation",
       "distance at which data are effectively independent"

@@ -324,10 +324,6 @@ predict.sdmTMB <- function(object, newdata = NULL,
       nd_arg_was_null <- TRUE # will be used to carry over the offset
     }
   }
-  if (any(grepl("t2\\(", object$formula[[1]])) && !is.null(newdata)) {
-    cli_abort("There are unresolved issues with predicting on newdata when the formula includes t2() terms. Either predict with `newdata = NULL` or use s(). Post an issue if you'd like us to prioritize fixing this.")
-  }
-
   sys_calls <- unlist(lapply(sys.calls(), deparse)) # retrieve function that called this
   vr <- check_visreg(sys_calls)
   visreg_df <- vr$visreg_df
@@ -339,11 +335,8 @@ predict.sdmTMB <- function(object, newdata = NULL,
   # from glmmTMB:
   pop_pred <- (!is.null(re_form) && ((re_form == ~0) || identical(re_form, NA)))
   pop_pred_iid <- (!is.null(re_form_iid) && ((re_form_iid == ~0) || identical(re_form_iid, NA)))
-  if (pop_pred_iid) {
-    exclude_RE <- rep(1L, length(object$tmb_data$exclude_RE))
-  } else {
-    exclude_RE <- object$tmb_data$exclude_RE
-  }
+
+  exclude_RE <- if (pop_pred_iid) 1L else object$tmb_data$exclude_RE
 
   tmb_data <- object$tmb_data
   tmb_data$do_predict <- 1L
@@ -452,30 +445,62 @@ predict.sdmTMB <- function(object, newdata = NULL,
 
     if (!"mgcv" %in% names(object)) object[["mgcv"]] <- FALSE
 
-    # deal with prediction IID random intercepts:
-    RE_names <- object$split_formula[[1]]$barnames # TODO DELTA HARDCODED TO 1 here; fine for now
-    ## not checking so that not all factors need to be in prediction:
-    # fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
-    proj_RE_indexes <- vapply(RE_names, function(x) as.integer(nd[[x]]) - 1L, rep(1L, nrow(nd)))
+    # FIXME check if random slopes and intercepts are the same in both linear predictors?
+    # parse random intercept/slope sparse model matrices on new data:
+    Zt_list <- list()
 
-    if (isFALSE(pop_pred_iid)) {
-      for (i in seq_along(RE_names)) {
-        # checking newdata random intercept columns are factors
-        assert_that(is.factor(newdata[[RE_names[i]]]),
-                    msg = sprintf("Random effect group column `%s` in newdata is not a factor.", RE_names[i]))
-        levels_fit <- levels(object$data[[RE_names[i]]])
-        levels_nd <- levels(newdata[[RE_names[i]]])
-        if (sum(!levels_nd %in% levels_fit)) {
-          msg <- paste0("Extra levels found in random intercept factor levels for `", RE_names[i],
-            "`. Please remove them.")
-          cli_abort(msg)
+    if (sum(object$tmb_data$n_re_groups) > 0 && isFALSE(pop_pred_iid)) {
+      for (ii in seq_len(length(formula))) {
+        xx <- parse_formula(remove_s_and_t2(object$smoothers$formula_no_sm), nd)
+        # factor level checks:
+        RE_names <- xx$barnames
+        for (i in seq_along(RE_names)) {
+          assert_that(is.factor(newdata[[RE_names[i]]]),
+            msg = sprintf("Random effect group column `%s` in newdata is not a factor.", RE_names[i]))
+          levels_fit <- levels(object$data[[RE_names[i]]])
+          levels_nd <- levels(newdata[[RE_names[i]]])
+          if (sum(!levels_nd %in% levels_fit)) {
+            msg <- paste0("Extra levels found in random intercept factor levels for `", RE_names[i],
+              "`. Please remove them.")
+            cli_abort(msg)
+          }
         }
+
+        # now do with a joint data frame to ensure factor levels match
+        common_cols <- intersect(colnames(object$data), colnames(nd))
+        joint_df <- rbind(object$data[,common_cols,drop=FALSE], nd[,common_cols,drop=FALSE])
+        xx <- parse_formula(object$smoothers$formula_no_sm, joint_df)
+        # drop the original data:
+        Zt <- xx$re_cov_terms$Zt[,seq(nrow(object$data) + 1, nrow(object$data) + nrow(nd))]
+        Zt_list[[ii]] <- Zt
       }
     }
 
+    # deal with prediction IID random intercepts:
+    # RE_names <- object$split_formula[[1]]$barnames # TODO DELTA HARDCODED TO 1 here; fine for now
+
+    ## not checking so that not all factors need to be in prediction:
+    # fct_check <- vapply(RE_names, function(x) check_valid_factor_levels(data[[x]], .name = x), TRUE)
+    # proj_RE_indexes <- vapply(RE_names, function(x) as.integer(nd[[x]]) - 1L, rep(1L, nrow(nd)))
+
+    # if (isFALSE(pop_pred_iid)) {
+    #   for (i in seq_along(RE_names)) {
+    #     # checking newdata random intercept columns are factors
+    #     assert_that(is.factor(newdata[[RE_names[i]]]),
+    #                 msg = sprintf("Random effect group column `%s` in newdata is not a factor.", RE_names[i]))
+    #     levels_fit <- levels(object$data[[RE_names[i]]])
+    #     levels_nd <- levels(newdata[[RE_names[i]]])
+    #     if (sum(!levels_nd %in% levels_fit)) {
+    #       msg <- paste0("Extra levels found in random intercept factor levels for `", RE_names[i],
+    #         "`. Please remove them.")
+    #       cli_abort(msg)
+    #     }
+    #   }
+    # }
+
     proj_X_ij <- list()
     for (i in seq_along(object$formula)) {
-      f2 <- remove_s_and_t2(object$split_formula[[i]]$form_no_bars)
+      f2 <- remove_s_and_t2(object$split_formula[[i]]$form_no_bars)#object$smoothers$formula_no_bars_no_sm
       tt <- stats::terms(f2)
       attr(tt, "predvars") <- attr(object$terms[[i]], "predvars")
       Terms <- stats::delete.response(tt)
@@ -484,7 +509,8 @@ predict.sdmTMB <- function(object, newdata = NULL,
     }
 
     # TODO DELTA hardcoded to 1:
-    sm <- parse_smoothers(object$formula[[1]], data = object$data, newdata = nd, basis_prev = object$smoothers$basis_out)
+    sm <- parse_smoothers(object$smoothers$formula_no_bars, data = object$data,
+      newdata = nd, basis_prev = object$smoothers$basis_out)
 
     if (!is.null(object$time_varying))
       proj_X_rw_ik <- model.matrix(object$time_varying, data = nd)
@@ -515,7 +541,9 @@ predict.sdmTMB <- function(object, newdata = NULL,
     tmb_data$proj_mesh <- proj_mesh
     tmb_data$proj_X_ij <- proj_X_ij
     tmb_data$proj_X_rw_ik <- proj_X_rw_ik
-    tmb_data$proj_RE_indexes <- proj_RE_indexes
+    # tmb_data$proj_RE_indexes <- proj_RE_indexes
+
+    tmb_data$Zt_list_proj <- Zt_list
     time_lu <- object$time_lu
     tmb_data$proj_year <- time_lu$year_i[match(nd[[object$time]], time_lu$time_from_data)] # was make_year_i(nd[[object$time]])
     tmb_data$proj_lon <- newdata[[xy_cols[[1]]]]

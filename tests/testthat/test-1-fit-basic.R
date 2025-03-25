@@ -166,7 +166,7 @@ test_that("A spatiotemporal version works with predictions on new data points", 
   })
   # Predictions at original data locations:
   predictions <- predict(m)
-  predictions$resids <- residuals(m) # randomized quantile residuals
+  predictions$resids <- residuals(m, type="mle-mvn") # randomized quantile residuals
   # Predictions onto new data:
   nd <- replicate_df(qcs_grid, "year", unique(d$year))
   predictions <- predict(m, newdata = subset(nd, year >= 2011))

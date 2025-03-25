@@ -76,5 +76,5 @@ test_that("various methods work", {
     family = tweedie(link = "log")
   )
   x <- ranef(fit)
-  expect_length(x$cond$fyear[,1], 4L)
+  expect_equal(nrow(x[[1]]$fyear), 4L)
 })

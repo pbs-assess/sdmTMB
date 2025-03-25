@@ -1,5 +1,29 @@
 # sdmTMB (development version)
 
+* Fix bug in a check in `make_mesh()` around if coordinates look
+  overly large. #427
+
+* Re-enable bias correction for `get_cog()` (get center of gravity).
+
+* Add forecasting and presence-only article vignettes. See
+  <https://pbs-assess.github.io/sdmTMB/articles/>
+
+* Add a `tidy()` method for `sdmTMB_cv()` output. `?tidy.sdmTMB_cv` #319
+
+* Allow predicting on new data with `t2()` smoothers. #413
+
+* Add check for `Inf`/`-Inf` values before fitting. #408
+
+* Add priors for `breakpt()` and `logistic()` parameters. #403
+
+* Add linear component of smoothers to `tidy()`. #90
+
+* Add time varying AR(1) correlation to tidy() and print(). #374
+
+* Add option for random slopes, or random intercepts to be passed in in 
+  `lme4` style formulas, `density ~ (1 | fyear)` or `density ~ (depth | fyear)`,
+  Matches output of `lme4` and `glmmTMB`, and summarizes output with `tidy()`.
+  
 * Warn if parameter limits are set with `newton_loops > 0`. #394
 
 * Allow for specifying only lower or upper limits. #394
@@ -64,6 +88,10 @@
 
 * Add `get_eao()` to calculate effective area occupied.
 
+* Add option for `area` to be passed in as the name of a column in the 
+  dataframe to be used for area weighting. Used in `get_index()`, 
+  `get_cog()`, `get_eao()`, etc.
+  
 # sdmTMB 0.6.0
 
 * Pass several arguments to `DHARMa::plotQQunif()`.

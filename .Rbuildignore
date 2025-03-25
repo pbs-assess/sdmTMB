@@ -22,3 +22,5 @@
 ^vignettes/web_only$
 revdep/
 ^vignettes/articles$
+^doc$
+^Meta$

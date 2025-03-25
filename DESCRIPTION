@@ -1,7 +1,7 @@
 Type: Package
 Package: sdmTMB
 Title: Spatial and Spatiotemporal SPDE-Based GLMMs with 'TMB'
-Version: 0.6.0.9023
+Version: 0.6.0.9036
 Authors@R: c(
     person(c("Sean", "C."), "Anderson", , "sean@seananderson.ca",
            role = c("aut", "cre"),
@@ -60,7 +60,7 @@ Copyright: inst/COPYRIGHTS
 URL: https://pbs-assess.github.io/sdmTMB/, https://github.com/pbs-assess/sdmTMB
 BugReports: https://github.com/pbs-assess/sdmTMB/issues
 Depends:
-    R (>= 3.5.0)
+    R (>= 4.1.0)
 Imports:
     assertthat,
     abind,
@@ -94,6 +94,7 @@ Suggests:
     knitr,
     rmarkdown,
     sf,
+    spatstat.data,
     splancs,
     testthat,
     tibble,
