@@ -65,9 +65,17 @@ pak::pkg_install("pbs-assess/sdmTMB", dependencies = TRUE)
 There are some extra utilities in the
 [sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra) package.
 
-**Importantly**, it is recommended to use an optimized BLAS library, which will result in major speed improvements for TMB (and other) models in R (e.g., often 8-fold speed increases for sdmTMB models).
-Suggested installation instructions for [Mac users](https://www.mail-archive.com/r-sig-mac@r-project.org/msg06199.html), [Linux users](https://prdm0.github.io/ropenblas/), [Windows users](https://github.com/david-cortes/R-openblas-in-windows), and [Windows users without admin privileges](https://gist.github.com/seananderson/08a51e296a854f227a908ddd365fb9c1).
-To check that you've successfully linked the optimized BLAS, start a new session and run:
+**Importantly**, it is recommended to use an optimized BLAS library,
+which will result in major speed improvements for TMB (and other) models
+in R (e.g., often 8-fold speed increases for sdmTMB models). Suggested
+installation instructions for [Mac
+users](https://www.mail-archive.com/r-sig-mac@r-project.org/msg06199.html),
+[Linux users](https://prdm0.github.io/ropenblas/), [Windows
+users](https://github.com/david-cortes/R-openblas-in-windows), and
+[Windows users without admin
+privileges](https://gist.github.com/seananderson/08a51e296a854f227a908ddd365fb9c1).
+To check that you’ve successfully linked the optimized BLAS, start a new
+session and run:
 
 ``` r
 m <- 1e4; n <- 1e3; k <- 3e2
@@ -152,8 +160,8 @@ citation("sdmTMB")
 Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett., J.T. Thorson.
 2024. sdmTMB: an R package for fast, flexible, and user-friendly
 generalized linear mixed effects models with spatial and spatiotemporal
-random fields. bioRxiv 2022.03.24.485545; doi:
-<https://doi.org/10.1101/2022.03.24.485545>
+random fields. In press at Journal of Statistical Software. Preprint
+DOI: <https://doi.org/10.1101/2022.03.24.485545>
 
 A list of (known) publications that use sdmTMB can be found
 [here](https://github.com/pbs-assess/sdmTMB/wiki/Publications-using-sdmTMB).
@@ -258,6 +266,7 @@ fit
 #> Data: pcod
 #> Family: tweedie(link = 'log')
 #>  
+#> Conditional model:
 #>             coef.est coef.se
 #> (Intercept)     2.37    0.21
 #> sdepth          0.62    2.53
@@ -288,13 +297,11 @@ We can extract parameters as a data frame:
 
 ``` r
 tidy(fit, conf.int = TRUE)
-#> # A tibble: 1 × 5
+#> # A tibble: 2 × 5
 #>   term        estimate std.error conf.low conf.high
 #>   <chr>          <dbl>     <dbl>    <dbl>     <dbl>
 #> 1 (Intercept)     2.37     0.215     1.95      2.79
-```
-
-``` r
+#> 2 sdepth          0.62     2.53     -4.34      5.58
 tidy(fit, effects = "ran_pars", conf.int = TRUE)
 #> # A tibble: 4 × 5
 #>   term      estimate std.error conf.low conf.high
@@ -570,9 +577,6 @@ head(sim_dat)
 #> 4 0.0303     0  -0.282  2.05 0.718        2             1
 #> 5 0.0404     0  -0.325  1.96 0.675        3             1
 #> 6 0.0505     0  -0.367  1.88 0.633        2             1
-```
-
-``` r
 
 # sample 200 points for fitting:
 set.seed(1)
@@ -679,9 +683,6 @@ m_cv <- sdmTMB_cv(
 )
 #> Running fits with `future.apply()`.
 #> Set a parallel `future::plan()` to use parallel processing.
-```
-
-``` r
 # Sum of log likelihoods of left-out data:
 m_cv$sum_loglik
 #> [1] -6756.28
@@ -749,15 +750,12 @@ fit_glm <- glm(
 )
 
 tidy(fit_sdmTMB)
-#> # A tibble: 3 × 3
-#>   term                   estimate std.error
-#>   <chr>                     <dbl>     <dbl>
-#> 1 (Intercept)              -0.426    0.0573
-#> 2 poly(depth_scaled, 2)1  -31.7      3.03  
-#> 3 poly(depth_scaled, 2)2  -66.9      4.09
-```
-
-``` r
+#> # A tibble: 3 × 5
+#>   term                   estimate std.error conf.low conf.high
+#>   <chr>                     <dbl>     <dbl>    <dbl>     <dbl>
+#> 1 (Intercept)              -0.426    0.0573   -0.538    -0.314
+#> 2 poly(depth_scaled, 2)1  -31.7      3.03    -37.6     -25.8  
+#> 3 poly(depth_scaled, 2)2  -66.9      4.09    -74.9     -58.9
 broom::tidy(fit_glm)
 #> # A tibble: 3 × 5
 #>   term                   estimate std.error statistic  p.value
