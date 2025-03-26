@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9036</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9038</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,7 +80,7 @@
                         <h4 data-toc-skip class="author">Julia Indivero,
 Sean Anderson, Lewis Barnett, Philina English, Eric Ward</h4>
             
-            <h4 data-toc-skip class="date">2025-03-20</h4>
+            <h4 data-toc-skip class="date">2025-03-26</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/vignettes/articles/visreg.Rmd" class="external-link"><code>vignettes/articles/visreg.Rmd</code></a></small>
       <div class="d-none name"><code>visreg.Rmd</code></div>
@@ -142,12 +142,12 @@ plot:</p>
 <span><span class="co"># residuals are in d$res</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">res</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   depth_scaled fyear density visregRes visregPos</span></span>
-<span><span class="co">#&gt; 1    0.7408840  2011       0  5.618792      TRUE</span></span>
-<span><span class="co">#&gt; 2   -2.7062455  2011       0  2.163694     FALSE</span></span>
-<span><span class="co">#&gt; 3   -2.9334899  2011       0  2.634565      TRUE</span></span>
-<span><span class="co">#&gt; 4   -0.2224156  2011       0  1.875219     FALSE</span></span>
-<span><span class="co">#&gt; 5    1.8685071  2011       0 -4.873903      TRUE</span></span>
-<span><span class="co">#&gt; 6    2.3175211  2011       0 -8.426072      TRUE</span></span>
+<span><span class="co">#&gt; 1    0.7408840  2011       0  5.633490      TRUE</span></span>
+<span><span class="co">#&gt; 2   -2.7062455  2011       0  2.135630     FALSE</span></span>
+<span><span class="co">#&gt; 3   -2.9334899  2011       0  2.532105     FALSE</span></span>
+<span><span class="co">#&gt; 4   -0.2224156  2011       0  1.894249     FALSE</span></span>
+<span><span class="co">#&gt; 5    1.8685071  2011       0 -4.864248      TRUE</span></span>
+<span><span class="co">#&gt; 6    2.3175211  2011       0 -8.423270      TRUE</span></span>
 <span></span>
 <span><span class="va">g</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">visregRes</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">d</span><span class="op">$</span><span class="va">res</span>, size <span class="op">=</span> <span class="fl">1</span>, alpha <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visreg_files/figure-html/unnamed-chunk-5-1.png" width="672"></p>

@@ -25,7 +25,7 @@ covariance function."><meta property="og:image" content="https://pbs-assess.gith
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9036</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9038</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,6 +91,7 @@ covariance function.</p>
 <span>  ar1_rho <span class="op">=</span> <span class="fu">normal</span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span>,</span>
 <span>  tweedie_p <span class="op">=</span> <span class="fu">normal</span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span>,</span>
 <span>  b <span class="op">=</span> <span class="fu">normal</span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span>,</span>
+<span>  sigma_V <span class="op">=</span> <span class="fu">gamma_cv</span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span>,</span>
 <span>  threshold_breakpt_slope <span class="op">=</span> <span class="fu">normal</span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span>,</span>
 <span>  threshold_breakpt_cut <span class="op">=</span> <span class="fu">normal</span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span>,</span>
 <span>  threshold_logistic_s50 <span class="op">=</span> <span class="fu">normal</span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span>,</span>
@@ -101,6 +102,8 @@ covariance function.</p>
 <span><span class="fu">normal</span><span class="op">(</span>location <span class="op">=</span> <span class="fl">0</span>, scale <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">halfnormal</span><span class="op">(</span>location <span class="op">=</span> <span class="fl">0</span>, scale <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">gamma_cv</span><span class="op">(</span><span class="va">location</span>, <span class="va">cv</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">mvnormal</span><span class="op">(</span>location <span class="op">=</span> <span class="fl">0</span>, scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">location</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
@@ -142,6 +145,10 @@ parameter has support <code>1 &lt; tweedie_p &lt; 2</code> so choose a mean appr
 <dd><p><code>normal()</code> priors for the main population-level 'beta' effects.</p></dd>
 
 
+<dt id="arg-sigma-v">sigma_V<a class="anchor" aria-label="anchor" href="#arg-sigma-v"></a></dt>
+<dd><p><code>gamma_cv()</code> priors for any time-varying parameter SDs.</p></dd>
+
+
 <dt id="arg-threshold-breakpt-slope">threshold_breakpt_slope<a class="anchor" aria-label="anchor" href="#arg-threshold-breakpt-slope"></a></dt>
 <dd><p>A <code>normal()</code> prior for the slope of the
 linear (hockey stick) function.</p></dd>
@@ -168,12 +175,16 @@ f(x) is maximized.</p></dd>
 
 
 <dt id="arg-location">location<a class="anchor" aria-label="anchor" href="#arg-location"></a></dt>
-<dd><p>Location parameter(s).</p></dd>
+<dd><p>Location parameter(s). Typically the mean.</p></dd>
 
 
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
 <dd><p>Scale parameter. For <code>normal()</code>/<code>halfnormal()</code>: standard
 deviation(s). For <code>mvnormal()</code>: variance-covariance matrix.</p></dd>
+
+
+<dt id="arg-cv">cv<a class="anchor" aria-label="anchor" href="#arg-cv"></a></dt>
+<dd><p>Coefficient of variation (SD/mean).</p></dd>
 
 
 <dt id="arg-range-gt">range_gt<a class="anchor" aria-label="anchor" href="#arg-range-gt"></a></dt>
@@ -247,6 +258,11 @@ constructing priors. arXiv:1403.4630</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1,]    0    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"dist")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "normal"</span>
+<span class="r-in"><span><span class="fu">gamma_cv</span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">0.2</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      [,1] [,2]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1,]   25 0.02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"dist")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "gamma"</span>
 <span class="r-in"><span><span class="fu">mvnormal</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      [,1] [,2] [,3]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1,]    0    1    0</span>

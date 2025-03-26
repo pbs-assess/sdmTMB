@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9036</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9038</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,7 +78,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Cross-validation for model evaluation and comparison</h1>
             
-            <h4 data-toc-skip class="date">2025-03-20</h4>
+            <h4 data-toc-skip class="date">2025-03-26</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/vignettes/articles/cross-validation.Rmd" class="external-link"><code>vignettes/articles/cross-validation.Rmd</code></a></small>
       <div class="d-none name"><code>cross-validation.Rmd</code></div>
@@ -148,9 +148,7 @@ but this can be turned off with the <code>parallel</code> argument.</p>
 <span>  k_folds <span class="op">=</span> <span class="fl">4</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running fits with `future.apply()`.</span></span>
-<span><span class="co">#&gt; Set a parallel `future::plan()` to use parallel processing.</span></span>
-<span><span class="co">#&gt; Warning: The model may not have converged: non-positive-definite Hessian</span></span>
-<span><span class="co">#&gt; matrix.</span></span></code></pre></div>
+<span><span class="co">#&gt; Set a parallel `future::plan()` to use parallel processing.</span></span></code></pre></div>
 <p>In the above example, folds are assigned randomly—but these can be
 modified to specific spatial or temporal applications. Without getting
 into the complexities of the <code>blockCV</code> or
@@ -167,10 +165,7 @@ into the complexities of the <code>blockCV</code> or
 <span>  family <span class="op">=</span> <span class="fu"><a href="../reference/families.html">tweedie</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running fits with `future.apply()`.</span></span>
-<span><span class="co">#&gt; Set a parallel `future::plan()` to use parallel processing.</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(cov)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning: The model may not have converged: non-positive-definite Hessian</span></span>
-<span><span class="co">#&gt; matrix.</span></span></code></pre></div>
+<span><span class="co">#&gt; Set a parallel `future::plan()` to use parallel processing.</span></span></code></pre></div>
 <p>Or similarly, these clusters could be assigned in time—here, each
 year to a unique fold. Note that year is not included as a factor and
 spatiotemporal fields are turned off because they cannot be estimated in
@@ -213,9 +208,9 @@ folds that are difficult to predict.</p>
 <span><span class="co">#&gt; Set a parallel `future::plan()` to use parallel processing.</span></span>
 <span></span>
 <span><span class="va">m_cv</span><span class="op">$</span><span class="va">fold_loglik</span> <span class="co"># fold log-likelihood</span></span>
-<span><span class="co">#&gt; [1] -1720.122 -1756.138 -1502.947 -1661.257</span></span>
+<span><span class="co">#&gt; [1] -1720.122 -1756.138 -1502.946 -1661.257</span></span>
 <span><span class="va">m_cv</span><span class="op">$</span><span class="va">sum_loglik</span> <span class="co"># total log-likelihood</span></span>
-<span><span class="co">#&gt; [1] -6640.464</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] -6640.463</span></span></code></pre></div>
 <p>The <code>fold_loglik</code> values represent the sum of predictive
 log-likelihood values across observations for each fold, and the
 <code>sum_loglik</code> value represents the sum of
@@ -318,9 +313,6 @@ the model.</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running fits with `future.apply()`.</span></span>
 <span><span class="co">#&gt; Set a parallel `future::plan()` to use parallel processing.</span></span>
-<span><span class="co">#&gt; Warning in sqrt(diag(cov)): NaNs produced</span></span>
-<span><span class="co">#&gt; Warning: The model may not have converged: non-positive-definite Hessian</span></span>
-<span><span class="co">#&gt; matrix.</span></span>
 <span></span>
 <span><span class="co"># Compare log-likelihoods -- higher is better!</span></span>
 <span><span class="va">m1</span><span class="op">$</span><span class="va">sum_loglik</span></span>

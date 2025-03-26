@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9036</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9038</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,40 +51,49 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="sdmtmb-development-version">sdmTMB (development version)<a class="anchor" aria-label="anchor" href="#sdmtmb-development-version"></a></h2>
-<ul><li><p>Fix bug in a check in <code><a href="../reference/make_mesh.html">make_mesh()</a></code> around if coordinates look overly large. <a href="https://github.com/pbs-assess/sdmTMB/issues/427" class="external-link">#427</a></p></li>
-<li><p>Re-enable bias correction for <code><a href="../reference/get_index.html">get_cog()</a></code> (get center of gravity).</p></li>
-<li><p>Add forecasting and presence-only article vignettes. See <a href="https://pbs-assess.github.io/sdmTMB/articles/" class="uri">https://pbs-assess.github.io/sdmTMB/articles/</a></p></li>
-<li><p>Add a <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> method for <code><a href="../reference/sdmTMB_cv.html">sdmTMB_cv()</a></code> output. <code><a href="../reference/tidy.sdmTMB.html">?tidy.sdmTMB_cv</a></code> <a href="https://github.com/pbs-assess/sdmTMB/issues/319" class="external-link">#319</a></p></li>
+<h2 class="pkg-version" data-toc-text="0.7.0" id="sdmtmb-070">sdmTMB 0.7.0<a class="anchor" aria-label="anchor" href="#sdmtmb-070"></a></h2>
+<div class="section level3">
+<h3 id="new-features-0-7-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-7-0"></a></h3>
+<ul><li><p>Add option for random slopes, or random intercepts to be passed in in <code>lme4</code> style formulas, <code>density ~ (1 | fyear)</code> or <code>density ~ (depth | fyear)</code>, Matches output of <code>lme4</code> and <code>glmmTMB</code>, and summarizes output with <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>.</p></li>
+<li><p>Add <code><a href="../reference/project.html">project()</a></code> experimental function.</p></li>
+<li><p>Add <code><a href="../reference/get_index.html">get_eao()</a></code> to calculate effective area occupied.</p></li>
 <li><p>Allow predicting on new data with <code>t2()</code> smoothers. <a href="https://github.com/pbs-assess/sdmTMB/issues/413" class="external-link">#413</a></p></li>
-<li><p>Add check for <code>Inf</code>/<code>-Inf</code> values before fitting. <a href="https://github.com/pbs-assess/sdmTMB/issues/408" class="external-link">#408</a></p></li>
 <li><p>Add priors for <code>breakpt()</code> and <code>logistic()</code> parameters. <a href="https://github.com/pbs-assess/sdmTMB/issues/403" class="external-link">#403</a></p></li>
-<li><p>Add linear component of smoothers to <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/90" class="external-link">#90</a></p></li>
-<li><p>Add time varying AR(1) correlation to tidy() and print(). <a href="https://github.com/pbs-assess/sdmTMB/issues/374" class="external-link">#374</a></p></li>
-<li><p>Add option for random slopes, or random intercepts to be passed in in <code>lme4</code> style formulas, <code>density ~ (1 | fyear)</code> or <code>density ~ (depth | fyear)</code>, Matches output of <code>lme4</code> and <code>glmmTMB</code>, and summarizes output with <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>.</p></li>
-<li><p>Warn if parameter limits are set with <code>newton_loops &gt; 0</code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/394" class="external-link">#394</a></p></li>
-<li><p>Allow for specifying only lower or upper limits. <a href="https://github.com/pbs-assess/sdmTMB/issues/394" class="external-link">#394</a></p></li>
-<li><p>Add vignette on multispecies models with sdmTMB (or any case where one wants additional spatial and or spatiotemporal fields by some group).</p></li>
-<li><p>Add EDF (effective degrees of freedom) printing to smoothers with <code>print.sdmTMB()</code> and <code>summary.sdmTMB()</code>. Set argument <code>edf = TRUE</code>. E.g. <code>print(fit, edf = TRUE)</code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/383" class="external-link">#383</a> <a href="https://github.com/pbs-assess/sdmTMB/issues/387" class="external-link">#387</a></p></li>
+<li><p>Add priors on time-varying SD parameters (<code>sigma_V</code>).</p></li>
 <li><p>Add <code><a href="../reference/cAIC.html">cAIC()</a></code> for calculating <em>conditional</em> AIC. Theory based on <a href="https://arxiv.org/abs/2411.14185" class="external-link uri">https://arxiv.org/abs/2411.14185</a>; also see <a href="https://doi.org/10.1002/ecy.4327" class="external-link uri">https://doi.org/10.1002/ecy.4327</a>. J.T. Thorson wrote the function code. EDF (effective degrees of freedom) will ultimately be further split (e.g., split by smoothers) and added to <code>summary.sdmTMB()</code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/383" class="external-link">#383</a> <a href="https://github.com/pbs-assess/sdmTMB/issues/387" class="external-link">#387</a></p></li>
-<li><p>Fix bug in <code>est</code> column when predicting on new data with Poisson-link delta models with <code>type = "link"</code> and <code>re_form = NA</code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/389" class="external-link">#389</a></p></li>
-<li><p>Fix bug in <code>s95</code> param reporting from the <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> method. <code>s95</code> is present in the logistic threshold models. The model itself was fine but the <code>s95</code> parameter was supposed to be reported by <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> as a combination of two other parameters. This also affected the output in <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>/<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>.</p></li>
-<li><p>Add <code>return_tmb_report</code> to <code><a href="../reference/simulate.sdmTMB.html">simulate.sdmTMB()</a></code>.</p></li>
+<li><p>Add EDF (effective degrees of freedom) printing to smoothers with <code>print.sdmTMB()</code> and <code>summary.sdmTMB()</code>. Set argument <code>edf = TRUE</code>. E.g. <code>print(fit, edf = TRUE)</code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/383" class="external-link">#383</a> <a href="https://github.com/pbs-assess/sdmTMB/issues/387" class="external-link">#387</a></p></li>
 <li><p>Add <code>newdata</code> argument to <code><a href="../reference/simulate.sdmTMB.html">simulate.sdmTMB()</a></code>. This enables simulating on a new data frame similar to how one would predict on new data.</p></li>
 <li><p>Add <code>mle_mvn_samples</code> argument to <code><a href="../reference/simulate.sdmTMB.html">simulate.sdmTMB()</a></code>. Defaults to “single”. If “multiple”, then a sample from the random effects is taken for each simulation iteration.</p></li>
-<li><p>Add <code><a href="../reference/project.html">project()</a></code> experimental function.</p></li>
-<li><p>Add print method for <code><a href="../reference/sdmTMB_cv.html">sdmTMB_cv()</a></code> output. <a href="https://github.com/pbs-assess/sdmTMB/issues/319" class="external-link">#319</a></p></li>
+<li><p>Allow for specifying only lower or upper limits. <a href="https://github.com/pbs-assess/sdmTMB/issues/394" class="external-link">#394</a></p></li>
+<li><p><code><a href="../reference/sdmTMB_cv.html">sdmTMB_cv()</a></code> gains a <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> and <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> method for output. <a href="https://github.com/pbs-assess/sdmTMB/issues/319" class="external-link">#319</a></p></li>
+<li><p><code><a href="../reference/simulate.sdmTMB.html">simulate.sdmTMB()</a></code> method now has an <code>return_tmb_report</code> argument.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-vignettesarticles-0-7-0">New vignettes/articles<a class="anchor" aria-label="anchor" href="#new-vignettesarticles-0-7-0"></a></h3>
+<ul><li><p>Add forecasting and presence-only article vignettes. See <a href="https://pbs-assess.github.io/sdmTMB/articles/" class="uri">https://pbs-assess.github.io/sdmTMB/articles/</a></p></li>
+<li><p>Add vignette on multispecies models with sdmTMB (or any case where one wants additional spatial and or spatiotemporal fields by some group). See <a href="https://pbs-assess.github.io/sdmTMB/articles/" class="uri">https://pbs-assess.github.io/sdmTMB/articles/</a></p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="minor-improvements-and-fixes-0-7-0">Minor improvements and fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-fixes-0-7-0"></a></h3>
+<ul><li><p>Fix bug in a check in <code><a href="../reference/make_mesh.html">make_mesh()</a></code> around if coordinates look overly large. <a href="https://github.com/pbs-assess/sdmTMB/issues/427" class="external-link">#427</a></p></li>
+<li><p>Re-enable bias correction for <code><a href="../reference/get_index.html">get_cog()</a></code> (get center of gravity).</p></li>
+<li><p>Add check for <code>Inf</code>/<code>-Inf</code> values before fitting. <a href="https://github.com/pbs-assess/sdmTMB/issues/408" class="external-link">#408</a></p></li>
+<li><p>Add linear component of smoothers to <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/90" class="external-link">#90</a></p></li>
+<li><p>Add time varying AR(1) correlation to <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> and <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/374" class="external-link">#374</a></p></li>
+<li><p>Warn if parameter limits are set with <code>newton_loops &gt; 0</code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/394" class="external-link">#394</a></p></li>
+<li><p>Fix bug in <code>est</code> column when predicting on new data with Poisson-link delta models with <code>type = "link"</code> and <code>re_form = NA</code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/389" class="external-link">#389</a></p></li>
+<li><p>Fix bug in <code>s95</code> parameter reporting from the <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> method. <code>s95</code> is present in the logistic threshold models. The model itself was fine but the <code>s95</code> parameter was supposed to be reported by <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> as a combination of two other parameters. This also affected the output in <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>/<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>.</p></li>
 <li><p>Add progress bar to <code><a href="../reference/simulate.sdmTMB.html">simulate.sdmTMB()</a></code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/346" class="external-link">#346</a></p></li>
 <li><p>Add AUC and TSS examples to cross validation vignette. <a href="https://github.com/pbs-assess/sdmTMB/issues/268" class="external-link">#268</a></p></li>
-<li><p>Add <code>model</code> (linear predictor number) argument to coef() method. Also, write documentation for <code><a href="../reference/coef.sdmTMB.html">?coef.sdmTMB</a></code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/351" class="external-link">#351</a></p></li>
-<li><p>Add helpful error message if some coordinates in make_mesh() are NA. <a href="https://github.com/pbs-assess/sdmTMB/issues/365" class="external-link">#365</a></p></li>
-<li><p>Add informative message if fitting with an offset but predicting with offset argument left at NULL on newdata. <a href="https://github.com/pbs-assess/sdmTMB/issues/372" class="external-link">#372</a></p></li>
+<li><p>Add <code>model</code> (linear predictor number) argument to <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code> method. Also, write documentation for <code><a href="../reference/coef.sdmTMB.html">?coef.sdmTMB</a></code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/351" class="external-link">#351</a></p></li>
+<li><p>Add helpful error message if some coordinates in <code><a href="../reference/make_mesh.html">make_mesh()</a></code> are <code>NA</code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/365" class="external-link">#365</a></p></li>
+<li><p>Add informative message if fitting with an offset but predicting with offset argument left at <code>NULL</code> on <code>newdata</code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/372" class="external-link">#372</a></p></li>
 <li><p>Fix passing of <code>offset</code> argument through in <code><a href="../reference/sdmTMB_cv.html">sdmTMB_cv()</a></code>. Before it was being omitted in the prediction (i.e., set to 0). <a href="https://github.com/pbs-assess/sdmTMB/issues/372" class="external-link">#372</a></p></li>
 <li><p>Fig bug in <code>exponentiate</code> argument for <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>. Set <code>conf.int = TRUE</code> as default. <a href="https://github.com/pbs-assess/sdmTMB/issues/353" class="external-link">#353</a></p></li>
 <li><p>Fix bug in prediction from <code><a href="../reference/families.html">delta_truncated_nbinom1()</a></code> and <code><a href="../reference/families.html">delta_truncated_nbinom2()</a></code> families. The positive component needs to be transformed to represent the mean of the <em>un</em>truncated distribution first before multiplying by the probability of a non-zero. Thanks to <a href="https://github.com/tom-peatman" class="external-link">@tom-peatman</a> <a href="https://github.com/pbs-assess/sdmTMB/issues/350" class="external-link">#350</a></p></li>
-<li><p>Add <code><a href="../reference/get_index.html">get_eao()</a></code> to calculate effective area occupied.</p></li>
-<li><p>Add option for <code>area</code> to be passed in as the name of a column in the dataframe to be used for area weighting. Used in <code><a href="../reference/get_index.html">get_index()</a></code>, <code><a href="../reference/get_index.html">get_cog()</a></code>, <code><a href="../reference/get_index.html">get_eao()</a></code>, etc.</p></li>
+<li><p>Add option for <code>area</code> to be passed in as the name of a column in the data frame to be used for area weighting. Used in <code><a href="../reference/get_index.html">get_index()</a></code>, <code><a href="../reference/get_index.html">get_cog()</a></code>, <code><a href="../reference/get_index.html">get_eao()</a></code>, etc.</p></li>
 </ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.6.0" id="sdmtmb-060">sdmTMB 0.6.0<a class="anchor" aria-label="anchor" href="#sdmtmb-060"></a></h2><p class="text-muted">CRAN release: 2024-05-29</p>
 <ul><li><p>Pass several arguments to <code><a href="https://rdrr.io/pkg/DHARMa/man/plotQQunif.html" class="external-link">DHARMa::plotQQunif()</a></code>.</p></li>
