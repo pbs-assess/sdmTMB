@@ -9,7 +9,7 @@ area occupied"><meta property="og:image" content="https://pbs-assess.github.io/s
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9038</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9039</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,6 +69,18 @@ area occupied</p>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
+<span><span class="fu">get_index_split</span><span class="op">(</span></span>
+<span>  <span class="va">obj</span>,</span>
+<span>  <span class="va">newdata</span>,</span>
+<span>  bias_correct <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  nsplit <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>  area <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  silent <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  predict_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu">get_cog</span><span class="op">(</span></span>
 <span>  <span class="va">obj</span>,</span>
 <span>  bias_correct <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -87,7 +99,9 @@ area occupied</p>
 
 
 <dl><dt id="arg-obj">obj<a class="anchor" aria-label="anchor" href="#arg-obj"></a></dt>
-<dd><p>Output from <code><a href="predict.sdmTMB.html">predict.sdmTMB()</a></code> with <code>return_tmb_object = TRUE</code>.</p></dd>
+<dd><p>Output from <code><a href="predict.sdmTMB.html">predict.sdmTMB()</a></code> with <code>return_tmb_object = TRUE</code>.
+Alternatively, if <code><a href="sdmTMB.html">sdmTMB()</a></code> was called with <code>do_index = TRUE</code> or if using
+the helper function <code>get_index_split()</code>, an object from <code><a href="sdmTMB.html">sdmTMB()</a></code>.</p></dd>
 
 
 <dt id="arg-bias-correct">bias_correct<a class="anchor" aria-label="anchor" href="#arg-bias-correct"></a></dt>
@@ -111,6 +125,24 @@ used for area weighting.</p></dd>
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Passed to <code><a href="https://rdrr.io/pkg/TMB/man/sdreport.html" class="external-link">TMB::sdreport()</a></code>.</p></dd>
+
+
+<dt id="arg-newdata">newdata<a class="anchor" aria-label="anchor" href="#arg-newdata"></a></dt>
+<dd><p>New data (e.g., a prediction grid by year) to pass to
+<code><a href="predict.sdmTMB.html">predict.sdmTMB()</a></code> in the case of <code>get_index_split()</code>.</p></dd>
+
+
+<dt id="arg-nsplit">nsplit<a class="anchor" aria-label="anchor" href="#arg-nsplit"></a></dt>
+<dd><p>The number of splits to do the calculation in. For memory
+intensive operations (large grids and/or models), it can be helpful to
+do the prediction, area integration, and bias correction on subsets of
+time slices (e.g., years) instead of all at once. If <code>nsplit &gt; 1</code>, this
+will usually be slower but with reduced memory use.</p></dd>
+
+
+<dt id="arg-predict-args">predict_args<a class="anchor" aria-label="anchor" href="#arg-predict-args"></a></dt>
+<dd><p>A list of arguments to pass to <code><a href="predict.sdmTMB.html">predict.sdmTMB()</a></code> in the
+case of <code>get_index_split()</code>.</p></dd>
 
 
 <dt id="arg-format">format<a class="anchor" aria-label="anchor" href="#arg-format"></a></dt>
@@ -170,13 +202,13 @@ population dynamics examples. Fisheries Research 175: 66–74.
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># use a small number of knots for this example to make it fast:</span></span></span>
-<span class="r-in"><span><span class="va">pcod_spde</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_mesh.html">make_mesh</a></span><span class="op">(</span><span class="va">pcod</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="st">"Y"</span><span class="op">)</span>, n_knots <span class="op">=</span> <span class="fl">60</span>, type <span class="op">=</span> <span class="st">"kmeans"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mesh</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_mesh.html">make_mesh</a></span><span class="op">(</span><span class="va">pcod</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="st">"Y"</span><span class="op">)</span>, n_knots <span class="op">=</span> <span class="fl">60</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># fit a spatiotemporal model:</span></span></span>
 <span class="r-in"><span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="sdmTMB.html">sdmTMB</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span> data <span class="op">=</span> <span class="va">pcod</span>,</span></span>
 <span class="r-in"><span> formula <span class="op">=</span> <span class="va">density</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">as.factor</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span> time <span class="op">=</span> <span class="st">"year"</span>, mesh <span class="op">=</span> <span class="va">pcod_spde</span>, family <span class="op">=</span> <span class="fu"><a href="families.html">tweedie</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span></span></span>
+<span class="r-in"><span> time <span class="op">=</span> <span class="st">"year"</span>, mesh <span class="op">=</span> <span class="va">mesh</span>, family <span class="op">=</span> <span class="fu"><a href="families.html">tweedie</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># prepare a prediction grid:</span></span></span>
@@ -186,24 +218,30 @@ population dynamics examples. Fisheries Research 175: 66–74.
 <span class="r-in"><span><span class="va">predictions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">m</span>, newdata <span class="op">=</span> <span class="va">nd</span>, return_tmb_object <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># biomass index:</span></span></span>
-<span class="r-in"><span><span class="va">ind</span> <span class="op">&lt;-</span> <span class="fu">get_index</span><span class="op">(</span><span class="va">predictions</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Bias correction is turned off.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> It is recommended to turn this on for final inference.</span>
+<span class="r-in"><span><span class="va">ind</span> <span class="op">&lt;-</span> <span class="fu">get_index</span><span class="op">(</span><span class="va">predictions</span>, bias_correct <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ind</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   year       est       lwr      upr  log_est        se  type</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 2003 213396.64 152643.77 298329.4 12.27091 0.1709448 index</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 2004 328514.13 255929.66 421684.4 12.70234 0.1273887 index</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 2005 349502.73 266053.44 459126.4 12.76427 0.1391935 index</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 2007  92900.11  67251.16 128331.3 11.43928 0.1648452 index</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 2009 161751.50 116785.32 224031.1 11.99382 0.1661887 index</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 2011 276264.20 213411.78 357627.4 12.52911 0.1317035 index</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7 2013 276664.42 203691.14 375780.7 12.53056 0.1562276 index</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8 2015 306744.07 228767.84 411298.8 12.63377 0.1496487 index</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9 2017 148187.40 105354.60 208434.2 11.90623 0.1740572 index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   year      est       lwr      upr  log_est        se  type</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 2003 277556.6 198537.77 388025.4 12.53378 0.1709448 index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 2004 399682.6 311373.58 513036.9 12.89843 0.1273887 index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 2005 430225.5 327502.38 565168.4 12.97206 0.1391935 index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 2007 119509.7  86514.07 165089.6 11.69115 0.1648452 index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 2009 210258.6 151807.71 291215.1 12.25609 0.1661887 index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 2011 339420.7 262199.67 439384.3 12.73500 0.1317035 index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7 2013 351455.2 258755.05 477365.7 12.76984 0.1562276 index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8 2015 383241.4 285819.07 513870.4 12.85642 0.1496487 index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9 2017 192367.9 136764.93 270576.6 12.16716 0.1740572 index</span>
 <span class="r-in"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">ind</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">year</span>, <span class="va">est</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_ribbon.html" class="external-link">geom_ribbon</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>ymin <span class="op">=</span> <span class="va">lwr</span>, ymax <span class="op">=</span> <span class="va">upr</span><span class="op">)</span>, alpha <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="cn">NA</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="get_index-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># do that in 2 chunks</span></span></span>
+<span class="r-in"><span><span class="co"># only necessary for very large grids to save memory</span></span></span>
+<span class="r-in"><span><span class="co"># will be slower but save memory</span></span></span>
+<span class="r-in"><span><span class="co"># note the first argument is the model fit object:</span></span></span>
+<span class="r-in"><span><span class="va">ind</span> <span class="op">&lt;-</span> <span class="fu">get_index_split</span><span class="op">(</span><span class="va">m</span>, newdata <span class="op">=</span> <span class="va">nd</span>, nsplit <span class="op">=</span> <span class="fl">2</span>, bias_correct <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating index in 2 chunks <span style="color: #00BB00;">■■■■■■■■■■■■■■■■                </span>  50% | ETA:  0s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating index in 2 chunks <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># center of gravity:</span></span></span>
 <span class="r-in"><span><span class="va">cog</span> <span class="op">&lt;-</span> <span class="fu">get_cog</span><span class="op">(</span><span class="va">predictions</span>, format <span class="op">=</span> <span class="st">"wide"</span><span class="op">)</span></span></span>
