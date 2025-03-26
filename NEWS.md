@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Add priors on time-varying SD parameters (`sigma_V`).
+
 * Fix bug in a check in `make_mesh()` around if coordinates look
   overly large. #427
 
