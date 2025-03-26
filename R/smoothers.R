@@ -46,7 +46,7 @@ parse_smoothers <- function(formula, data, knots = NULL, newdata = NULL, basis_p
         basis_out[[i]] <- basis[[i]] <- mgcv::smoothCon(
           object = obj, data = data,
           knots = knots, absorb.cons = TRUE, modCon = 3,
-          diagonal.penalty = TRUE
+          diagonal.penalty = FALSE
         )
       } else {
         basis[[i]] <- basis_prev[[i]] # predicting on new data
