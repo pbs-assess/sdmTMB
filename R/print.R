@@ -96,8 +96,10 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
     bs_se <- round(sr_se$bs[, m], 2L)
     bs <- round(sr_est$bs[, m], 2L)
     sm <- parse_smoothers(formula = x$formula[[m]], data = x$data)
-    sm_names <- unlist(lapply(sm$Zs, function(x) attr(x, "s.label")))
-    sm_names <- gsub("\\)$", "", gsub("s\\(", "", sm_names))
+    sm_names_orig <- unlist(lapply(sm$Zs, function(x) attr(x, "s.label")))
+    sm_names <- gsub("s\\(", "", sm_names_orig)
+    sm_names <- gsub("t2\\(", "", sm_names)
+    sm_names <- gsub("\\)$", "", sm_names)
     sm_names_bs <- paste0("s", sm_names)
     sm_classes <- unlist(sm$classes)
     xx <- lapply(sm_names_bs, function(.x) { # split out 2D + smooths
@@ -118,11 +120,12 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
       if (nrow(mm_sm) > 0L) {
         msg <- c(
           "Smoother fixed effect matrix names could not be retrieved.",
-          "This could be from setting m != 2 in s() or other unanticipated s() arguments.",
+          "This could be from using t2(), setting m != 2 in s(), or other unanticipated s() arguments.",
           "This does not affect model fitting.",
-          "We'll use generic covariate names ('scovariate') here intead."
+          "We'll use generic covariate names ('scovariate') here instead.",
+          ""
         )
-        if (!silent) cli_warn(msg)
+        if (!silent) cli_inform(msg)
         row.names(mm_sm) <- paste0("scovariate-", seq_len(nrow(mm_sm)))
       } else {
         mm_sm <- NULL
@@ -376,7 +379,7 @@ print_one_model <- function(x, m = 1, edf = FALSE, silent = FALSE) {
   }
   info <- print_model_info(x)
   main <- print_main_effects(x, m = m)
-  smooth <- print_smooth_effects(x, m = m, edf = .edf, silent = silent)
+  smooth <- print_smooth_effects(x, m = m, edf = .edf, silent = TRUE)
   # iid_re <- print_iid_re(x, m = m)
   re <- print_int_slope_re(x, m = m)
   tv <- print_time_varying(x, m = m)
@@ -394,7 +397,7 @@ print_one_model <- function(x, m = 1, edf = FALSE, silent = FALSE) {
   }
 
   cat("Conditional model:\n")
-  print(rbind(main, smooth$smooth_effects))
+  print(main)
   cat("\n")
 
   if (!is.null(smooth$smooth_sds)) {
