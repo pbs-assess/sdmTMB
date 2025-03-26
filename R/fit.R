@@ -1091,7 +1091,7 @@ sdmTMB <- function(
 
   # expand sigma_V priors if needed
   if (nrow(priors_sigma_V) == 1L && ncol(X_rw_ik) > 1L) {
-    priors_sigma_V <- replicate(ncol(X_rw_ik), priors_sigma_V, simplify = "matrix")
+    priors_sigma_V <- t(replicate(ncol(X_rw_ik), priors_sigma_V, simplify = "matrix"))
   }
   if (nrow(priors_sigma_V) != ncol(X_rw_ik)) {
     cli_abort("sigma_V (time-varying SD) priors do not match the fitted model.")
