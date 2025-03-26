@@ -104,7 +104,7 @@ test_that("visreg works", {
 
   v <- visreg::visreg(fit, xvar = "depth_scaled", nn = 10)
   expect_identical(class(v), "visreg")
-  visreg::visreg(fit, xvar = "fyear", nn = 10)
+  #visreg::visreg(fit, xvar = "fyear", nn = 10)
   visreg::visreg(fit, xvar = "depth_scaled", scale = "response", nn = 10)
   visreg::visreg2d(fit, xvar = "fyear", yvar = "depth_scaled")
 

@@ -135,7 +135,7 @@ mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
 
 m_cv <- sdmTMB_cv(
   density ~ 0 + depth_scaled + depth_scaled2,
-  data = pcod, mesh = mesh,
+  data = pcod, mesh = mesh, spatial = "off",
   family = tweedie(link = "log"), k_folds = 2
 )
 

@@ -146,6 +146,43 @@ test_that("Index integration with area vector works with extra time and possibly
   expect_equal(ind$se - ind0$se[ind0$year %in% seq(2011, 2017, 2)], c(0, 0, 0, 0))
 })
 
+test_that("get_index works", {
+  skip_on_cran()
+
+  pcod_spde <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
+  m <- sdmTMB(
+    data = pcod,
+    formula = density ~ 0 + as.factor(year),
+    spatiotemporal = "off", # speed
+    time = "year", mesh = pcod_spde,
+    family = tweedie(link = "log")
+  )
+
+  # add some jittered area data to qcs_grid for testing
+  qcs_grid$area <- runif(nrow(qcs_grid), 0.9, 1.1)
+  nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
+
+  predictions <- predict(m, newdata = nd, return_tmb_object = TRUE)
+
+  # get predictions with area passed as vector
+  ind <- get_index(predictions, area = nd$area)
+  # get predictions with area as a named column
+  ind2 <- get_index(predictions, area = "area")
+  expect_equal(ind, ind2)
+
+  # get predictions with area passed as vector
+  eao <- get_eao(predictions, area = nd$area)
+  # get predictions with area as a named column
+  eao2 <- get_eao(predictions, area = "area")
+  expect_equal(eao, eao2)
+
+  # get predictions with area passed as vector
+  cog <- get_cog(predictions, area = nd$area)
+  # get predictions with area as a named column
+  cog2 <- get_cog(predictions, area = "area")
+  expect_equal(cog, cog2)
+})
+
 # test_that("get_index faster epsilon bias correction", {
 #   skip_on_cran()
 #
@@ -181,4 +218,18 @@ test_that("Index integration with area vector works with extra time and possibly
 #   index <- get_index(p, bias_correct = TRUE)
 #
 # })
+
+# https://github.com/pbs-assess/sdmTMB/issues/408
+test_that("Models error our nicely with Inf or -Inf covariates before get_index()", {
+  d <- pcod
+  d$depth_scaled[1] <- -Inf
+  expect_error(m <- sdmTMB(
+    data = d,
+    formula = density ~ 0 + as.factor(year) + depth_scaled,
+    spatiotemporal = "off", # speed
+    spatial = "off", # speed
+    time = "year",
+    family = delta_gamma(type = "poisson-link")
+  ), regexp = "Inf")
+})
 

@@ -43,15 +43,10 @@ parse_smoothers <- function(formula, data, knots = NULL, newdata = NULL, basis_p
       labels[[i]] <- obj$label
       classes[[i]] <- attr(obj, "class")
       if (is.null(newdata)) {
-        basis[[i]] <- mgcv::smoothCon(
+        basis_out[[i]] <- basis[[i]] <- mgcv::smoothCon(
           object = obj, data = data,
-          knots = knots, absorb.cons = TRUE,
+          knots = knots, absorb.cons = TRUE, modCon = 3,
           diagonal.penalty = FALSE
-        )
-        basis_out[[i]] <- mgcv::smoothCon( # to be used on prediction
-          object = obj, data = data,
-          knots = knots, absorb.cons = TRUE,
-          diagonal.penalty = FALSE#  modCon = 3 # modCon set differently as per brms
         )
       } else {
         basis[[i]] <- basis_prev[[i]] # predicting on new data

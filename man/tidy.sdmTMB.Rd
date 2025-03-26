@@ -2,11 +2,12 @@
 % Please edit documentation in R/tidy.R
 \name{tidy.sdmTMB}
 \alias{tidy.sdmTMB}
+\alias{tidy.sdmTMB_cv}
 \title{Turn sdmTMB model output into a tidy data frame}
 \usage{
 \method{tidy}{sdmTMB}(
   x,
-  effects = c("fixed", "ran_pars", "ran_vals"),
+  effects = c("fixed", "ran_pars", "ran_vals", "ran_vcov"),
   model = 1,
   conf.int = TRUE,
   conf.level = 0.95,
@@ -14,16 +15,20 @@
   silent = FALSE,
   ...
 )
+
+\method{tidy}{sdmTMB_cv}(x, ...)
 }
 \arguments{
 \item{x}{Output from \code{\link[=sdmTMB]{sdmTMB()}}.}
 
 \item{effects}{A character value. One of \code{"fixed"} ('fixed' or main-effect
 parameters), \code{"ran_pars"} (standard deviations, spatial range, and other
-random effect and dispersion-related terms), or \code{"ran_vals"} (individual
-random intercepts, if included; behaves like \code{ranef()}).}
+random effect and dispersion-related terms), \code{"ran_vals"} (individual
+random intercepts or slopes, if included; behaves like \code{ranef()}), or \code{"ran_vcov"} (list
+of variance covariance matrices for the random effects, by model and group).}
 
-\item{model}{Which model to tidy if a delta model (1 or 2).}
+\item{model}{Which model to tidy if a delta model (1 or 2). The \code{model} will be
+ignored when effects is \code{"ran_vals"} (all returned in a single dataframe)}
 
 \item{conf.int}{Include a confidence interval?}
 

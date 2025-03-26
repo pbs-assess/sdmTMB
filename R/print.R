@@ -88,7 +88,7 @@ print_main_effects <- function(x, m = 1) {
   mm
 }
 
-print_smooth_effects <- function(x, m = 1) {
+print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
   sr <- x$sd_report
   sr_se <- as.list(sr, "Std. Error")
   sr_est <- as.list(sr, "Estimate")
@@ -96,8 +96,10 @@ print_smooth_effects <- function(x, m = 1) {
     bs_se <- round(sr_se$bs[, m], 2L)
     bs <- round(sr_est$bs[, m], 2L)
     sm <- parse_smoothers(formula = x$formula[[m]], data = x$data)
-    sm_names <- unlist(lapply(sm$Zs, function(x) attr(x, "s.label")))
-    sm_names <- gsub("\\)$", "", gsub("s\\(", "", sm_names))
+    sm_names_orig <- unlist(lapply(sm$Zs, function(x) attr(x, "s.label")))
+    sm_names <- gsub("s\\(", "", sm_names_orig)
+    sm_names <- gsub("t2\\(", "", sm_names)
+    sm_names <- gsub("\\)$", "", sm_names)
     sm_names_bs <- paste0("s", sm_names)
     sm_classes <- unlist(sm$classes)
     xx <- lapply(sm_names_bs, function(.x) { # split out 2D + smooths
@@ -118,11 +120,12 @@ print_smooth_effects <- function(x, m = 1) {
       if (nrow(mm_sm) > 0L) {
         msg <- c(
           "Smoother fixed effect matrix names could not be retrieved.",
-          "This could be from setting m != 2 in s() or other unanticipated s() arguments.",
+          "This could be from using t2(), setting m != 2 in s(), or other unanticipated s() arguments.",
           "This does not affect model fitting.",
-          "We'll use generic covariate names ('scovariate') here intead."
+          "We'll use generic covariate names ('scovariate') here instead.",
+          ""
         )
-        cli_warn(msg)
+        if (!silent) cli_inform(msg)
         row.names(mm_sm) <- paste0("scovariate-", seq_len(nrow(mm_sm)))
       } else {
         mm_sm <- NULL
@@ -136,11 +139,58 @@ print_smooth_effects <- function(x, m = 1) {
     re_sm_mat[, 1] <- smooth_sds
     rownames(re_sm_mat) <- sm_names_sds
     colnames(re_sm_mat) <- "Std. Dev."
+
+    if (!is.null(edf)) {
+      if (is_delta(x)) {
+        lp_regex <- paste0("^", m, "LP-s\\(")
+        edf <- edf[grepl(lp_regex, names(edf))]
+      } else {
+        edf <- edf[grepl("^s\\(", names(edf))]
+      }
+      edf <- round(edf, 2)
+      re_sm_mat <- cbind(re_sm_mat, matrix(edf, ncol = 1))
+      colnames(re_sm_mat)[2] <- "EDF"
+    }
   } else {
     re_sm_mat <- NULL
     mm_sm <- NULL
   }
   list(smooth_effects = mm_sm, smooth_sds = re_sm_mat)
+}
+
+print_int_slope_re <- function(x, m = 1) {
+  if (sum(x$tmb_data$n_re_groups)) {
+    v <- tidy(x, effects = "ran_vcov", model = m)
+    cnms <- x$split_formula[[m]]$re_cov_terms$cnms
+    ll <- vapply(cnms, length, FUN.VALUE = 1L)
+    mmc2 <- unlist(cnms, use.names = FALSE)
+    mmc1 <- lapply(names(ll), \(na) rep(na, ll[[na]])) |> unlist()
+    mmc1[duplicated(mmc1)] <- ""
+    mmsd <- lapply(v[[1]], \(x) {
+      if (ncol(x) == 2L) {
+        c(x[1,1], x[2,2])
+      } else {
+        c(x[1,1])
+      }
+    })
+    mmsd <- unlist(mmsd, use.names = FALSE)
+    mmvar <- mmsd^2
+    mmcor <- lapply(v[[1]], \(x) {
+      if (ncol(x) == 2L) {
+        c("", mround(x[2,1], 2))
+      } else {
+        ""
+      }
+    })
+    mmcor <- unlist(mmcor, use.names = FALSE)
+    mm <- cbind(mmc1, mmc2, mround(mmvar, 2), mround(mmsd, 2), mmcor)
+    colnames(mm) <- c("Groups", "Name", "Variance", "Std.Dev.", "Corr")
+    rownames(mm) <- rep("", nrow(mm))
+    if (all(mm[,"Corr"] == "")) mm <- mm[,-5]
+    mm
+  } else {
+    NULL
+  }
 }
 
 print_iid_re <- function(x, m = 1) {
@@ -169,6 +219,15 @@ print_time_varying <- function(x, m = 1) {
     colnames(mm_tv) <- c("coef.est", "coef.se")
     time_slices <- x$time_lu$time_from_data
     row.names(mm_tv) <- paste(rep(tv_names, each = length(time_slices)), time_slices, sep = "-")
+
+    # append AR(1) parameters if they are estimated
+    p <- tidy(x, effects = "ran_pars", model = m, silent = TRUE)
+    if(any(p$term == "rho_time")) {
+      rho_tv <- as.matrix(p[p$term=="rho_time",c("estimate","std.error")])
+      colnames(rho_tv) <- colnames(mm_tv)
+      row.names(rho_tv) <- paste("rho", tv_names, sep = "-")
+      mm_tv <- rbind(mm_tv, rho_tv)
+    }
   } else {
     mm_tv <- NULL
   }
@@ -312,11 +371,17 @@ print_header <- function(x) {
   cat(info$overall_family)
 }
 
-print_one_model <- function(x, m = 1) {
+print_one_model <- function(x, m = 1, edf = FALSE, silent = FALSE) {
+  if (edf) {
+    .edf <- suppressMessages(cAIC(x, what = "EDF"))
+  } else {
+    .edf <- NULL
+  }
   info <- print_model_info(x)
   main <- print_main_effects(x, m = m)
-  smooth <- print_smooth_effects(x, m = m)
-  iid_re <- print_iid_re(x, m = m)
+  smooth <- print_smooth_effects(x, m = m, edf = .edf, silent = TRUE)
+  # iid_re <- print_iid_re(x, m = m)
+  re <- print_int_slope_re(x, m = m)
   tv <- print_time_varying(x, m = m)
   range <- print_range(x, m = m)
   other <- print_other_parameters(x, m = m)
@@ -324,18 +389,20 @@ print_one_model <- function(x, m = 1) {
   if (m == 1) cat(info$family1, "\n")
   if (m == 2) cat(info$family2, "\n")
 
-  print(rbind(main, smooth$smooth_effects))
+  if (!is.null(re)) {
+    cat("Random intercepts and/or slopes:\n\n")
+    cat("Conditional model:\n")
+    print(re, quote = FALSE)
+    cat("\n")
+  }
+
+  cat("Conditional model:\n")
+  print(main)
   cat("\n")
 
   if (!is.null(smooth$smooth_sds)) {
     cat("Smooth terms:\n")
     print(smooth$smooth_sds)
-    cat("\n")
-  }
-
-  if (!is.null(iid_re)) {
-    cat("Random intercepts:\n")
-    print(iid_re)
     cat("\n")
   }
 
@@ -381,10 +448,10 @@ print.sdmTMB <- function(x, ...) {
   delta <- isTRUE(x$family$delta)
   print_header(x)
   if (delta) cat("\nDelta/hurdle model 1: -----------------------------------\n")
-  print_one_model(x, 1)
+  print_one_model(x, 1, ...)
   if (delta) {
     cat("\nDelta/hurdle model 2: -----------------------------------\n")
-    print_one_model(x, 2)
+    print_one_model(x, 2, ...)
   }
   if (delta) cat("\n")
   print_footer(x)

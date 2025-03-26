@@ -47,7 +47,9 @@
 #' @param lower An optional named list of lower bounds within the optimization.
 #'   Parameter vectors with the same name (e.g., `b_j` or `ln_kappa` in some
 #'   cases) can be specified as a numeric vector. E.g.
-#'   `lower = list(b_j = c(-5, -5))`.
+#'   `lower = list(b_j = c(-5, -5))`. Note that [stats::optimHess()] does not
+#'   implement lower and upper bounds, so you must set `newton_loops = 0` if
+#'   setting limits.
 #' @param upper An optional named list of upper bounds within the optimization.
 #' @param censored_upper An optional vector of upper bounds for
 #'   [sdmTMBcontrol()]. Values of `NA` indicate an unbounded right-censored to

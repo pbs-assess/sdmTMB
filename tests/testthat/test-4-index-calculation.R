@@ -54,6 +54,33 @@ test_that("get_index(), get_index_sims(), and get_cog() work", {
   expect_equal(cog$est[which(cog$coord=="X")], cog_wide$est_x)
 })
 
+test_that("get_cog() with bias correction works", {
+  skip_on_cran()
+  skip_on_ci() # a little slow
+  pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
+  m <- sdmTMB(
+    data = pcod,
+    formula = density ~ 0 + as.factor(year),
+    time = "year", mesh = pcod_spde, family = tweedie(link = "log")
+  )
+
+  # unresolved issues if not all time elements!? comes back NA at least on this test!?
+  nd <- replicate_df(qcs_grid, "year", unique(pcod$year)[1:2])
+  predictions <- predict(m, newdata = nd, return_tmb_object = TRUE)
+  expect_error(get_cog(predictions, bias_correct = TRUE), regexp = "time")
+
+  nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
+  predictions <- predict(m, newdata = nd, return_tmb_object = TRUE)
+  system.time({
+    cog_bc <- get_cog(predictions, bias_correct = TRUE)
+  })
+  cached <- c(463.4799, 482.7737, 471.7401, 481.6446, 485.0965, 470.2728,
+    475.3523, 460.7445, 465.8458, 5755.4058, 5727.3907, 5758.6983,
+    5733.3987, 5726.0713, 5744.0075, 5745.9221, 5753.5249, 5752.7965
+  )
+  expect_lt(sum(abs(cog_bc$est - cached) / cached), 1e-04)
+})
+
 test_that("index errors are returned as needed", {
   skip_on_cran()
 

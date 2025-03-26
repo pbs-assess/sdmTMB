@@ -51,8 +51,9 @@ the helper function \code{\link[=get_index_split]{get_index_split()}}, an object
 \item{level}{The confidence level.}
 
 \item{area}{Grid cell area. A vector of length \code{newdata} from
-\code{\link[=predict.sdmTMB]{predict.sdmTMB()}} or a value of length 1, which will be repeated
-internally to match.}
+\code{\link[=predict.sdmTMB]{predict.sdmTMB()}} \emph{or} a value of length 1 which will be repeated
+internally to match \emph{or} a character value representing the column
+used for area weighting.}
 
 \item{silent}{Silent?}
 
