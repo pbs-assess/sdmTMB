@@ -386,6 +386,15 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   d <- d[!is.na(d$est), ,drop=FALSE] # these were not predicted on
   lu <- obj$fit_obj$time_lu
   tt <- lu$time_from_data[match(ii, lu$year_i)]
+  if (nrow(d) == 0L) {
+    msg <- c(
+      "There were no results returned by TMB.",
+      "It's possible TMB ran out of memory.",
+      "You could try a computer with more RAM or see the function `get_index_split()` with `nsplit > 1`",
+      "which lets you split the TMB sdreport and bias correction into chunks."
+    )
+    cli_error(msg)
+  }
   d[[time_name]] <- tt
 
   # remove padded extra time fake data:
