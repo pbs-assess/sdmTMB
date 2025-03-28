@@ -262,7 +262,7 @@ print_range <- function(x, m = 1L, digits = 2L) {
   range_text
 }
 
-print_anisotropy <- function(x, m = 1L, digits = 1L) {
+print_anisotropy <- function(x, m = 1L, digits = 1L, return_dat = FALSE) {
   aniso_df <- plot_anisotropy(x, return_data = TRUE)
   aniso_df$degree <- aniso_df$angle * 180 / pi
 
@@ -313,6 +313,7 @@ print_anisotropy <- function(x, m = 1L, digits = 1L) {
   if (x$tmb_data$share_range[m] == 0L && x$spatial[m] == "on" && x$spatiotemporal[m] != "off") {
     range_text <- paste0(aniso_df_sp[[4]], aniso_df_st[[4]])
   }
+  if (return_dat) return(list(sp = aniso_df_sp, st = aniso_df_st))
   range_text
 }
 
