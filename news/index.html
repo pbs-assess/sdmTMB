@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9039</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9040</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,7 +76,8 @@
 </ul></div>
 <div class="section level3">
 <h3 id="minor-improvements-and-fixes-0-7-0">Minor improvements and fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-fixes-0-7-0"></a></h3>
-<ul><li><p>Fix bug in a check in <code><a href="../reference/make_mesh.html">make_mesh()</a></code> around if coordinates look overly large. <a href="https://github.com/pbs-assess/sdmTMB/issues/427" class="external-link">#427</a></p></li>
+<ul><li><p>Add a useful error if memory error occurs on index calculation.</p></li>
+<li><p>Fix bug in a check in <code><a href="../reference/make_mesh.html">make_mesh()</a></code> around if coordinates look overly large. <a href="https://github.com/pbs-assess/sdmTMB/issues/427" class="external-link">#427</a></p></li>
 <li><p>Re-enable bias correction for <code><a href="../reference/get_index.html">get_cog()</a></code> (get center of gravity).</p></li>
 <li><p>Add check for <code>Inf</code>/<code>-Inf</code> values before fitting. <a href="https://github.com/pbs-assess/sdmTMB/issues/408" class="external-link">#408</a></p></li>
 <li><p>Add linear component of smoothers to <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/90" class="external-link">#90</a></p></li>
