@@ -54,6 +54,8 @@
 
 ## Minor improvements and fixes
 
+* Add a useful error if memory error occurs on index calculation.
+
 * Fix bug in a check in `make_mesh()` around if coordinates look
   overly large. #427
 
