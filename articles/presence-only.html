@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9041</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -131,7 +131,7 @@ the map has very few trees.</p>
 <div class="section level3">
 <h3 id="generate-pseudo-absences">Generate pseudo-absences<a class="anchor" aria-label="anchor" href="#generate-pseudo-absences"></a>
 </h3>
-<p>There are several approaches to generating pseduo-absences from these
+<p>There are several approaches to generating pseudo-absences from these
 data. We first use a method called quadrature points (<a href="https://doi.org/10.1111/2041-210X.12352" class="external-link">Renner et al. 2015</a>).
 For this method, we have to decide:</p>
 <ol style="list-style-type: decimal">
@@ -248,7 +248,7 @@ al. 2015</a>)</p>
 <p>Another option is the Downweighted Poisson Regression, which is
 similar to IWLR but uses different weights and doesn’t have the same
 arbitrary effects on intercept and likelihood</p>
-<p>First we re-calculate weights (note they’re differnt than IWLR):</p>
+<p>First we re-calculate weights (note they’re different than IWLR):</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># small values at presence locations</span></span>
 <span><span class="va">all_dat</span><span class="op">$</span><span class="va">wt</span> <span class="op">&lt;-</span> <span class="fl">1e-6</span></span>

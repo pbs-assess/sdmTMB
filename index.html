@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0.9041</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -167,7 +167,7 @@
 <p>To cite sdmTMB in publications use:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">"sdmTMB"</span><span class="op">)</span></span></code></pre></div>
-<p>Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett., J.T. Thorson. 2024. sdmTMB: an R package for fast, flexible, and user-friendly generalized linear mixed effects models with spatial and spatiotemporal random fields. In press at Journal of Statistical Software. Preprint DOI: <a href="https://doi.org/10.1101/2022.03.24.485545" class="external-link uri">https://doi.org/10.1101/2022.03.24.485545</a></p>
+<p>Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett., J.T. Thorson. 2025. sdmTMB: an R package for fast, flexible, and user-friendly generalized linear mixed effects models with spatial and spatiotemporal random fields. In press at Journal of Statistical Software. bioRxiv preprint: <a href="https://doi.org/10.1101/2022.03.24.485545" class="external-link uri">https://doi.org/10.1101/2022.03.24.485545</a>.</p>
 <p>A list of (known) publications that use sdmTMB can be found <a href="https://github.com/pbs-assess/sdmTMB/wiki/Publications-using-sdmTMB" class="external-link">here</a>. Please use the above citation so we can track publications.</p>
 </div>
 <div class="section level2">
@@ -221,7 +221,7 @@
 <span><span class="co">#&gt; Conditional model:</span></span>
 <span><span class="co">#&gt;             coef.est coef.se</span></span>
 <span><span class="co">#&gt; (Intercept)     2.37    0.21</span></span>
-<span><span class="co">#&gt; sdepth          0.62    2.53</span></span>
+<span><span class="co">#&gt; sdepth         -0.62    2.53</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Smooth terms:</span></span>
 <span><span class="co">#&gt;            Std. Dev.</span></span>
@@ -242,7 +242,7 @@
 <span><span class="co">#&gt;   term        estimate std.error conf.low conf.high</span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1 (Intercept)     2.37     0.215     1.95      2.79</span></span>
-<span><span class="co">#&gt; 2 sdepth          0.62     2.53     -4.34      5.58</span></span>
+<span><span class="co">#&gt; 2 sdepth         -0.62     2.53     -5.58      4.34</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit</span>, effects <span class="op">=</span> <span class="st">"ran_pars"</span>, conf.int <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 4 × 5</span></span>
 <span><span class="co">#&gt;   term      estimate std.error conf.low conf.high</span></span>
