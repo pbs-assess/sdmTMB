@@ -68,7 +68,7 @@ f(x) = 0.5.}
 \item{threshold_logistic_s95}{A \code{normal()} prior for the parameter at which
 f(x) = 0.95.}
 
-\item{threshold_logistic_smax}{A \code{normal()} prior for the paramter at which
+\item{threshold_logistic_smax}{A \code{normal()} prior for the parameter at which
 f(x) is maximized.}
 
 \item{location}{Location parameter(s). Typically the mean.}

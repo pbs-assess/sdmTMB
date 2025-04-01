@@ -70,7 +70,7 @@
 #'   f(x) = 0.5.
 #' @param threshold_logistic_s95 A `normal()` prior for the parameter at which
 #'   f(x) = 0.95.
-#' @param threshold_logistic_smax A `normal()` prior for the paramter at which
+#' @param threshold_logistic_smax A `normal()` prior for the parameter at which
 #'   f(x) is maximized.
 #'
 #' @rdname priors

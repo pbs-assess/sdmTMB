@@ -66,7 +66,7 @@ ggplot(dat, aes(x, y)) +
 
 ## Generate pseudo-absences 
 
-There are several approaches to generating pseduo-absences from these data. We first use a method called quadrature points ([Renner et al. 2015](https://doi.org/10.1111/2041-210X.12352)). For this method, we have to decide:  
+There are several approaches to generating pseudo-absences from these data. We first use a method called quadrature points ([Renner et al. 2015](https://doi.org/10.1111/2041-210X.12352)). For this method, we have to decide:  
 
 1. Distribution of zeroes  
 - Regularly spaced (e.g. on a grid or lattice?)
@@ -166,7 +166,7 @@ A criticism of this approach is that the intercept and log-likelihood can be aff
 
 Another option is the Downweighted Poisson Regression, which is similar to IWLR but uses different weights and doesn't have the same arbitrary effects on intercept and likelihood  
 
-First we re-calculate weights (note they're differnt than IWLR):
+First we re-calculate weights (note they're different than IWLR):
 
 ```{r make-dwpr, echo=TRUE}
 # small values at presence locations
