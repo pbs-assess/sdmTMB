@@ -1,4 +1,6 @@
-This version fixes several bugs and adds minor functionality.
+This version fixes several bugs and adds minor functionality. CRAN has
+requested an update before 2025-04-05; the issues identified on CRAN
+have been fixed.
 
 ## R CMD check results
 
