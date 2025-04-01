@@ -158,10 +158,10 @@ citation("sdmTMB")
 ```
 
 Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett., J.T. Thorson.
-2024. sdmTMB: an R package for fast, flexible, and user-friendly
+2025. sdmTMB: an R package for fast, flexible, and user-friendly
 generalized linear mixed effects models with spatial and spatiotemporal
-random fields. In press at Journal of Statistical Software. Preprint
-DOI: <https://doi.org/10.1101/2022.03.24.485545>
+random fields. In press at Journal of Statistical Software. bioRxiv
+preprint: <https://doi.org/10.1101/2022.03.24.485545>.
 
 A list of (known) publications that use sdmTMB can be found
 [here](https://github.com/pbs-assess/sdmTMB/wiki/Publications-using-sdmTMB).
@@ -269,7 +269,7 @@ fit
 #> Conditional model:
 #>             coef.est coef.se
 #> (Intercept)     2.37    0.21
-#> sdepth          0.62    2.53
+#> sdepth         -0.62    2.53
 #> 
 #> Smooth terms:
 #>            Std. Dev.
@@ -301,7 +301,7 @@ tidy(fit, conf.int = TRUE)
 #>   term        estimate std.error conf.low conf.high
 #>   <chr>          <dbl>     <dbl>    <dbl>     <dbl>
 #> 1 (Intercept)     2.37     0.215     1.95      2.79
-#> 2 sdepth          0.62     2.53     -4.34      5.58
+#> 2 sdepth         -0.62     2.53     -5.58      4.34
 tidy(fit, effects = "ran_pars", conf.int = TRUE)
 #> # A tibble: 4 × 5
 #>   term      estimate std.error conf.low conf.high

@@ -88,11 +88,11 @@ To cite sdmTMB in publications use:
 citation("sdmTMB")
 ```
 
-Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett., J.T. Thorson. 2024.
+Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett., J.T. Thorson. 2025.
 sdmTMB: an R package for fast, flexible, and user-friendly generalized linear
 mixed effects models with spatial and spatiotemporal random fields.
 In press at Journal of Statistical Software. 
-Preprint DOI: <https://doi.org/10.1101/2022.03.24.485545>
+bioRxiv preprint: <https://doi.org/10.1101/2022.03.24.485545>.
 
 A list of (known) publications that use sdmTMB can be found [here](https://github.com/pbs-assess/sdmTMB/wiki/Publications-using-sdmTMB). Please use the above citation so we can track publications.
 
