@@ -393,7 +393,7 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
       "You could try a computer with more RAM or see the function `get_index_split()` with `nsplit > 1`",
       "which lets you split the TMB sdreport and bias correction into chunks."
     )
-    cli_error(msg)
+    cli_abort(msg)
   }
   d[[time_name]] <- tt
 
