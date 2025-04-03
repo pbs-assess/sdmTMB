@@ -13,7 +13,7 @@ among other uses."><meta property="og:image" content="https://pbs-assess.github.
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,6 +78,7 @@ among other uses.</p>
 <span>  mle_mvn_samples <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"single"</span>, <span class="st">"multiple"</span><span class="op">)</span>,</span>
 <span>  mcmc_samples <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  return_tmb_report <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  observation_error <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  silent <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -140,6 +141,10 @@ package.</p></dd>
 <dd><p>Return the <span class="pkg">TMB</span> report from <code><a href="https://rdrr.io/r/stats/simulate.html" class="external-link">simulate()</a></code>? This
 lets you parse out whatever elements you want from the simulation.
 Not usually needed.</p></dd>
+
+
+<dt id="arg-observation-error">observation_error<a class="anchor" aria-label="anchor" href="#arg-observation-error"></a></dt>
+<dd><p>Logical. Simulate observation error?</p></dd>
 
 
 <dt id="arg-silent">silent<a class="anchor" aria-label="anchor" href="#arg-silent"></a></dt>
