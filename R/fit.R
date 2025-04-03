@@ -1125,6 +1125,7 @@ sdmTMB <- function(
     proj_offset_i = 0,
     A_st = spde$A_st,
     sim_re = if ("sim_re" %in% names(experimental)) as.integer(experimental$sim_re) else rep(0L, 6),
+    sim_obs = 1L,
     A_spatial_index = spde$sdm_spatial_id - 1L,
     year_i = time_df$year_i[match(data[[time]], time_df$time_from_data)],
     ar1_fields = ar1_fields,

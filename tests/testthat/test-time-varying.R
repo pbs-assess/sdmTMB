@@ -91,7 +91,7 @@ test_that("AR1 time-varying works", {
   expect_equal(s$term, c("phi","tweedie_p"))
 
   # test that tidy works -- AR1
-  fit <- sdmTMB(density ~ as.factor(year), time = "year",
+  fit <- sdmTMB(density ~ 1, time = "year",
                 time_varying = ~ -1 + depth_scaled,
                 data = pcod_2011, spatial="off",
                 time_varying_type = "ar1",

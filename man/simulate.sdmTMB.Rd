@@ -15,6 +15,7 @@
   mle_mvn_samples = c("single", "multiple"),
   mcmc_samples = NULL,
   return_tmb_report = FALSE,
+  observation_error = TRUE,
   silent = FALSE,
   ...
 )
@@ -54,6 +55,8 @@ package.}
 \item{return_tmb_report}{Return the \pkg{TMB} report from \code{simulate()}? This
 lets you parse out whatever elements you want from the simulation.
 Not usually needed.}
+
+\item{observation_error}{Logical. Simulate observation error?}
 
 \item{silent}{Logical. Silent?}
 

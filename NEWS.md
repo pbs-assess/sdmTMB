@@ -1,5 +1,10 @@
 # sdmTMB (development version)
 
+* Add `observation_error` argument to `simulate.sdmTMB()` to allow
+  turning off observation error simulation. The intended use-case
+  is for simulating from random effects but not adding observation
+  error. #431
+
 # sdmTMB 0.7.0
 
 ## New features

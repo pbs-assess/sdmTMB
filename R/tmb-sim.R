@@ -344,6 +344,7 @@ sdmTMB_simulate <- function(formula,
 #' @param return_tmb_report Return the \pkg{TMB} report from `simulate()`? This
 #'   lets you parse out whatever elements you want from the simulation.
 #'   Not usually needed.
+#' @param observation_error Logical. Simulate observation error?
 #' @param silent Logical. Silent?
 #' @param ... Extra arguments passed to [predict.sdmTMB()]. E.g., one may wish
 #'   to pass an `offset` argument if `newdata` are supplied in a model with an
@@ -395,6 +396,7 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
                             mle_mvn_samples = c("single", "multiple"),
                             mcmc_samples = NULL,
                             return_tmb_report = FALSE,
+                            observation_error = TRUE,
                             silent = FALSE,
                             ...) {
   set.seed(seed)
@@ -428,6 +430,8 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
     p$sim_re <- tmb_dat$sim_re
     tmb_dat <- p
   }
+
+  tmb_dat$sim_obs <- as.integer(observation_error)
 
   newobj <- TMB::MakeADFun(
     data = tmb_dat, map = object$tmb_map,
@@ -487,7 +491,19 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
     }
 
     ret <- do.call(cbind, ret)
+
+    if (!is.null(newdata)) {
+      rownames(ret) <- newdata[[object$time]] # for use in index calcs
+      attr(ret, "time") <- object$time
+      if (is_delta(object)) {
+        attr(ret, "link") <- object$family[[2]]$link
+      } else {
+        attr(ret, "link") <- object$family$link
+      }
+    }
+
     attr(ret, "type") <- type
+    attr(ret, "mle_mvn_samples") <- mle_mvn_samples
   }
   ret
 }

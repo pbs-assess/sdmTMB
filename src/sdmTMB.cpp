@@ -258,6 +258,7 @@ Type objective_function<Type>::operator()()
 
   DATA_IVECTOR(sim_re); // sim random effects? 0,1; order: omega, epsilon, zeta, IID, RW, smoothers
   DATA_IVECTOR(simulate_t); // sim this specific time step? (used for forecasting)
+  DATA_INTEGER(sim_obs);
 
   DATA_VECTOR(lwr); // lower bound for censpois on counts
   DATA_VECTOR(upr); // upper bound for censpois on counts
@@ -868,6 +869,14 @@ Type objective_function<Type>::operator()()
     break;
   }
 
+  if (!sim_obs) {
+    for (int m = 0; m < n_m; m++) {
+      for (int i = 0; i < n_i; i++) {
+        y_i(i,m) = mu_i(i,m);
+      }
+    }
+  }
+
   vector<Type> jnll_obs(n_i); // for cross validation
   jnll_obs.setZero();
   for (int m = 0; m < n_m; m++) PARALLEL_REGION {
@@ -876,7 +885,7 @@ Type objective_function<Type>::operator()()
         switch (family(m)) {
           case gaussian_family: {
             if (notNA) tmp_ll = dnorm(y_i(i,m), mu_i(i,m), phi(m), true);
-            SIMULATE{y_i(i,m) = rnorm(mu_i(i,m), phi(m));}
+            if (sim_obs) SIMULATE{y_i(i,m) = rnorm(mu_i(i,m), phi(m));}
             break;
           }
           case tweedie_family: {
@@ -889,34 +898,34 @@ Type objective_function<Type>::operator()()
               if (stan_flag) jnll -= thetaf - 2 * log(1 + exp(thetaf)); // Jacobian adjustment
             }
             if (notNA) tmp_ll = dtweedie(y_i(i,m), mu_i(i,m), phi(m), tweedie_p, true);
-            SIMULATE{y_i(i,m) = rtweedie(mu_i(i,m), phi(m), tweedie_p);}
+            if (sim_obs) SIMULATE{y_i(i,m) = rtweedie(mu_i(i,m), phi(m), tweedie_p);}
             break;
           }
           case binomial_family: {
             if (poisson_link_delta) {
               if (notNA) tmp_ll = poisson_link_m0_ll(i); // needed for robustness; must be first model component
-              SIMULATE{y_i(i,m) = rbinom(size(i), mu_i(i,m));}
+              if (sim_obs) SIMULATE{y_i(i,m) = rbinom(size(i), mu_i(i,m));}
             } else {
               if (notNA) tmp_ll = dbinom_robust(y_i(i,m), size(i), mu_i(i,m), true);
-              SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));} // hardcoded invlogit b/c mu_i in logit space
+              if (sim_obs) SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));} // hardcoded invlogit b/c mu_i in logit space
             }
             break;
           }
           case poisson_family: {
             if (notNA) tmp_ll = dpois(y_i(i,m), mu_i(i,m), true);
-            SIMULATE{y_i(i,m) = rpois(mu_i(i,m));}
+            if (sim_obs) SIMULATE{y_i(i,m) = rpois(mu_i(i,m));}
             break;
           }
           case censored_poisson_family: {
             if (notNA) tmp_ll = sdmTMB::dcenspois2(y_i(i,m), mu_i(i,m), upr(i), true);
-            SIMULATE{y_i(i,m) = rpois(mu_i(i,m));}
+            if (sim_obs) SIMULATE{y_i(i,m) = rpois(mu_i(i,m));}
             break;
           }
           case Gamma_family: {
             s1 = exp(ln_phi(m));        // shape
             s2 = mu_i(i,m) / s1;        // scale
             if (notNA) tmp_ll = dgamma(y_i(i,m), s1, s2, true);
-            SIMULATE{y_i(i,m) = rgamma(s1, s2);}
+            if (sim_obs) SIMULATE{y_i(i,m) = rgamma(s1, s2);}
             // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
             // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
             break;
@@ -925,7 +934,7 @@ Type objective_function<Type>::operator()()
             s1 = log(mu_i(i,m)); // log(mu_i)
             s2 = 2. * s1 - ln_phi(m); // log(var - mu)
             if (notNA) tmp_ll = dnbinom_robust(y_i(i,m), s1, s2, true);
-            SIMULATE { // from glmmTMB
+            if (sim_obs) SIMULATE { // from glmmTMB
               s1 = mu_i(i,m);
               s2 = mu_i(i,m) * (Type(1) + mu_i(i,m) / phi(m));
               y_i(i,m) = rnbinom2(s1, s2);
@@ -940,14 +949,14 @@ Type objective_function<Type>::operator()()
             lognzprob = logspace_sub(Type(0), -phi(m) * s3);
             if (notNA) tmp_ll -= lognzprob;
             if (notNA) tmp_ll = zt_lik_nearzero(y_i(i,m), tmp_ll); // from glmmTMB
-            SIMULATE{y_i(i,m) = sdmTMB::rtruncated_nbinom(asDouble(phi(m)), 0, asDouble(mu_i(i,m)));}
+            if (sim_obs) SIMULATE{y_i(i,m) = sdmTMB::rtruncated_nbinom(asDouble(phi(m)), 0, asDouble(mu_i(i,m)));}
             break;
           }
           case nbinom1_family: {
             s1 = log(mu_i(i,m));
             s2 = s1 + ln_phi(m);
             if (notNA) tmp_ll = dnbinom_robust(y_i(i,m), s1, s2, true);
-            SIMULATE { // from glmmTMB
+            if (sim_obs) SIMULATE { // from glmmTMB
               s1 = mu_i(i,m);
               s2 = mu_i(i,m) * (Type(1)+phi(m));
               y_i(i,m) = rnbinom2(s1, s2);
@@ -962,24 +971,24 @@ Type objective_function<Type>::operator()()
             lognzprob = logspace_sub(Type(0), -mu_i(i,m) / phi(m) * s3); // 1-prob(0)
             if (notNA) tmp_ll -= lognzprob;
             if (notNA) tmp_ll = zt_lik_nearzero(y_i(i,m), tmp_ll);
-            SIMULATE{y_i(i,m) = sdmTMB::rtruncated_nbinom(asDouble(mu_i(i,m)/phi(m)), 0, asDouble(mu_i(i,m)));}
+            if (sim_obs) SIMULATE{y_i(i,m) = sdmTMB::rtruncated_nbinom(asDouble(mu_i(i,m)/phi(m)), 0, asDouble(mu_i(i,m)));}
             break;
           }
           case lognormal_family: {
             if (notNA) tmp_ll = sdmTMB::dlnorm(y_i(i,m), log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
-            SIMULATE{y_i(i,m) = exp(rnorm(log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m)));}
+            if (sim_obs) SIMULATE{y_i(i,m) = exp(rnorm(log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m)));}
             break;
           }
           case student_family: {
             if (notNA) tmp_ll = sdmTMB::dstudent(y_i(i,m), mu_i(i,m), exp(ln_phi(m)), df, true);
-            SIMULATE{y_i(i,m) = mu_i(i,m) + phi(m) * rt(df);}
+            if (sim_obs) SIMULATE{y_i(i,m) = mu_i(i,m) + phi(m) * rt(df);}
             break;
           }
           case Beta_family: { // Ferrari and Cribari-Neto 2004; betareg package
             s1 = mu_i(i,m) * phi(m);
             s2 = (Type(1) - mu_i(i,m)) * phi(m);
             if (notNA) tmp_ll = dbeta(y_i(i,m), s1, s2, true);
-            SIMULATE{y_i(i,m) = rbeta(s1, s2);}
+            if (sim_obs) SIMULATE{y_i(i,m) = rbeta(s1, s2);}
             break;
           }
           case gamma_mix_family: {
@@ -989,7 +998,7 @@ Type objective_function<Type>::operator()()
             s2_large = mu_i_large(i) / s1;    // scale
             ll_2 = log(p_mix) + dgamma(y_i(i,m), s1, s2_large, true);
             if (notNA) tmp_ll = sdmTMB::log_sum_exp(ll_1, ll_2);
-            SIMULATE{
+            if (sim_obs) SIMULATE{
               if(rbinom(Type(1),p_mix) == 0) {
                 y_i(i,m) = rgamma(s1, s2);
               } else {
@@ -1002,7 +1011,7 @@ Type objective_function<Type>::operator()()
           ll_1 = log(Type(1. - p_mix)) + sdmTMB::dlnorm(y_i(i,m), log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
           ll_2 = log(p_mix) + sdmTMB::dlnorm(y_i(i,m), log(mu_i_large(i)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
           if (notNA) tmp_ll = sdmTMB::log_sum_exp(ll_1, ll_2);
-          SIMULATE{
+          if (sim_obs) SIMULATE{
             if (rbinom(Type(1), p_mix) == 0) {
               y_i(i,m) = exp(rnorm(log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m)));;
             } else {
@@ -1019,7 +1028,7 @@ Type objective_function<Type>::operator()()
           ll_1 = log(Type(1. - p_mix)) + dnbinom_robust(y_i(i,m), s1, s2, true);
           ll_2 = log(p_mix) + dnbinom_robust(y_i(i,m), s1_large, s2_large, true);
           if (notNA) tmp_ll = sdmTMB::log_sum_exp(ll_1, ll_2);
-          SIMULATE{
+          if (sim_obs) SIMULATE{
             s1 = mu_i(i,m);
             s2 = mu_i(i,m) * (Type(1) + mu_i(i,m) / phi(m));
             s1_large = mu_i_large(i);
@@ -1034,7 +1043,7 @@ Type objective_function<Type>::operator()()
         }
           case gengamma_family: {
             if (notNA) tmp_ll = sdmTMB::dgengamma(y_i(i,m), mu_i(i,m), phi(m), gengamma_Q, true);
-            SIMULATE{y_i(i,m) = sdmTMB::rgengamma(mu_i(i,m), phi(m), gengamma_Q);}
+            if (sim_obs) SIMULATE{y_i(i,m) = sdmTMB::rgengamma(mu_i(i,m), phi(m), gengamma_Q);}
             break;
           }
         default:
