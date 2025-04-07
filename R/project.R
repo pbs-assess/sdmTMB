@@ -358,7 +358,7 @@ move_proj_to_tmbdat <- function(x, object, newdata) {
   x$z_i <- x$proj_z_i
   x$Zs <- x$proj_Zs
   x$Xs <- x$proj_Xs
-  x$RE_indexes <- x$proj_RE_indexes
+  x$Zt_list <- x$Zt_list_proj
   x$offset_i <- x$proj_offset_i
   n_m <- length(x$X_ij) ## n linear predictor [m]odels
   x$y_i <- matrix(NA, ncol = n_m, nrow = nrow(x$proj_X_ij[[1]])) # fake
@@ -369,5 +369,16 @@ move_proj_to_tmbdat <- function(x, object, newdata) {
     cli_abort("This function hasn't been set up to work with binomial size specified yet.")
   }
   x$size <- rep(1, nrow(x$y_i)) # FIXME: bring in?
+  x$do_predict <- 0L
+
+  # nullify large data objects that are no longer needed:
+  x$proj_X_ij <- list(matrix(0, ncol = 1, nrow = 1))
+  x$proj_X_rw_ik <- matrix(0, ncol = 1, nrow = 1) # dummy
+  x$proj_mesh <- Matrix::Matrix(c(0, 0, 2:0), 3, 5) # dummy
+  x$proj_Zs <- list()
+  x$proj_Xs <- matrix(nrow = 0L, ncol = 0L)
+  x$proj_lon <- 0
+  x$proj_lat <- 0
+
   x
 }

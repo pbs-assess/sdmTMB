@@ -5,6 +5,12 @@
   is for simulating from random effects but not adding observation
   error. #431
 
+* Fix `project()` and `simulate.sdmTMB(..., newdata = ...)` when 
+  random intercepts/slopes are present. #431
+  
+* Remove extra TMB data slots for `project()` and
+  `simulate.sdmTMB(..., newdata = ...)` to save memory. #431
+
 # sdmTMB 0.7.0
 
 ## New features
