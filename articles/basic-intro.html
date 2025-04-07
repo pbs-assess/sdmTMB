@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0.9001</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,7 +78,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Introduction to modelling with sdmTMB</h1>
             
-            <h4 data-toc-skip class="date">2025-04-03</h4>
+            <h4 data-toc-skip class="date">2025-04-07</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/vignettes/articles/basic-intro.Rmd" class="external-link"><code>vignettes/articles/basic-intro.Rmd</code></a></small>
       <div class="d-none name"><code>basic-intro.Rmd</code></div>
@@ -115,18 +115,18 @@ squared (<code>depth_scaled2</code>).</li>
 <code class="sourceCode R"><span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">pcod</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Rows: 2,143</span></span>
 <span><span class="co">#&gt; Columns: 12</span></span>
-<span><span class="co">#&gt; $ year          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 2003, 2003, 2003, 2003, 2003, 2003, 2003, 2003, 2003, 20…</span></span>
-<span><span class="co">#&gt; $ X             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 446.4752, 446.4594, 448.5987, 436.9157, 420.6101, 417.71…</span></span>
-<span><span class="co">#&gt; $ Y             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 5793.426, 5800.136, 5801.687, 5802.305, 5771.055, 5772.2…</span></span>
-<span><span class="co">#&gt; $ depth         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 201, 212, 220, 197, 256, 293, 410, 387, 285, 270, 381, 1…</span></span>
-<span><span class="co">#&gt; $ density       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 113.138476, 41.704922, 0.000000, 15.706138, 0.000000, 0.…</span></span>
-<span><span class="co">#&gt; $ present       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,…</span></span>
-<span><span class="co">#&gt; $ lat           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 52.28858, 52.34890, 52.36305, 52.36738, 52.08437, 52.094…</span></span>
-<span><span class="co">#&gt; $ lon           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> -129.7847, -129.7860, -129.7549, -129.9265, -130.1586, -…</span></span>
-<span><span class="co">#&gt; $ depth_mean    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 5.155194, 5.155194, 5.155194, 5.155194, 5.155194, 5.1551…</span></span>
-<span><span class="co">#&gt; $ depth_sd      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.4448783, 0.4448783, 0.4448783, 0.4448783, 0.4448783, 0…</span></span>
-<span><span class="co">#&gt; $ depth_scaled  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.3329252, 0.4526914, 0.5359529, 0.2877417, 0.8766077, 1…</span></span>
-<span><span class="co">#&gt; $ depth_scaled2 <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.11083919, 0.20492947, 0.28724555, 0.08279527, 0.768440…</span></span></code></pre></div>
+<span><span class="co">#&gt; $ year          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 2003<span style="color: #949494;">, </span>2003<span style="color: #949494;">, </span>2003<span style="color: #949494;">, </span>2003<span style="color: #949494;">, </span>2003<span style="color: #949494;">, </span>2003<span style="color: #949494;">, </span>2003<span style="color: #949494;">, </span>2003<span style="color: #949494;">, </span>2003<span style="color: #949494;">, </span>20…</span></span>
+<span><span class="co">#&gt; $ X             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 446.4752<span style="color: #949494;">, </span>446.4594<span style="color: #949494;">, </span>448.5987<span style="color: #949494;">, </span>436.9157<span style="color: #949494;">, </span>420.6101<span style="color: #949494;">, </span>417.71…</span></span>
+<span><span class="co">#&gt; $ Y             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 5793.426<span style="color: #949494;">, </span>5800.136<span style="color: #949494;">, </span>5801.687<span style="color: #949494;">, </span>5802.305<span style="color: #949494;">, </span>5771.055<span style="color: #949494;">, </span>5772.2…</span></span>
+<span><span class="co">#&gt; $ depth         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 201<span style="color: #949494;">, </span>212<span style="color: #949494;">, </span>220<span style="color: #949494;">, </span>197<span style="color: #949494;">, </span>256<span style="color: #949494;">, </span>293<span style="color: #949494;">, </span>410<span style="color: #949494;">, </span>387<span style="color: #949494;">, </span>285<span style="color: #949494;">, </span>270<span style="color: #949494;">, </span>381<span style="color: #949494;">, </span>1…</span></span>
+<span><span class="co">#&gt; $ density       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 113.138476<span style="color: #949494;">, </span>41.704922<span style="color: #949494;">, </span>0.000000<span style="color: #949494;">, </span>15.706138<span style="color: #949494;">, </span>0.000000<span style="color: #949494;">, </span>0.…</span></span>
+<span><span class="co">#&gt; $ present       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>0<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>0<span style="color: #949494;">, </span>0<span style="color: #949494;">, </span>0<span style="color: #949494;">, </span>0<span style="color: #949494;">, </span>0<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>0<span style="color: #949494;">, </span>0<span style="color: #949494;">, </span>0<span style="color: #949494;">, </span>0<span style="color: #949494;">, </span>0<span style="color: #949494;">, </span>0<span style="color: #949494;">, </span>0<span style="color: #949494;">, </span>0<span style="color: #949494;">, </span>0<span style="color: #949494;">,</span>…</span></span>
+<span><span class="co">#&gt; $ lat           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 52.28858<span style="color: #949494;">, </span>52.34890<span style="color: #949494;">, </span>52.36305<span style="color: #949494;">, </span>52.36738<span style="color: #949494;">, </span>52.08437<span style="color: #949494;">, </span>52.094…</span></span>
+<span><span class="co">#&gt; $ lon           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> -129.7847<span style="color: #949494;">, </span>-129.7860<span style="color: #949494;">, </span>-129.7549<span style="color: #949494;">, </span>-129.9265<span style="color: #949494;">, </span>-130.1586<span style="color: #949494;">, </span>-…</span></span>
+<span><span class="co">#&gt; $ depth_mean    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 5.155194<span style="color: #949494;">, </span>5.155194<span style="color: #949494;">, </span>5.155194<span style="color: #949494;">, </span>5.155194<span style="color: #949494;">, </span>5.155194<span style="color: #949494;">, </span>5.1551…</span></span>
+<span><span class="co">#&gt; $ depth_sd      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.4448783<span style="color: #949494;">, </span>0.4448783<span style="color: #949494;">, </span>0.4448783<span style="color: #949494;">, </span>0.4448783<span style="color: #949494;">, </span>0.4448783<span style="color: #949494;">, </span>0…</span></span>
+<span><span class="co">#&gt; $ depth_scaled  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.3329252<span style="color: #949494;">, </span>0.4526914<span style="color: #949494;">, </span>0.5359529<span style="color: #949494;">, </span>0.2877417<span style="color: #949494;">, </span>0.8766077<span style="color: #949494;">, </span>1…</span></span>
+<span><span class="co">#&gt; $ depth_scaled2 <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.11083919<span style="color: #949494;">, </span>0.20492947<span style="color: #949494;">, </span>0.28724555<span style="color: #949494;">, </span>0.08279527<span style="color: #949494;">, </span>0.768440…</span></span></code></pre></div>
 <p>The most basic model structure possible in sdmTMB replicates a GLM as
 can be fit with <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code> or a GLMM as can be fit with lme4 or
 glmmTMB, for example. The spatial components in sdmTMB are included as
@@ -403,8 +403,8 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.010241 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 102.41 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.01149 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 114.9 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -429,9 +429,9 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; Chain 1: Iteration: 100 / 101 [ 99%]  (Warmup)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 101 / 101 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 28.032 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                0.205 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                28.237 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 29.003 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                0.222 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                29.225 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
 <span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">m3</span>, <span class="st">"mle-mcmc"</span>, mcmc_samples <span class="op">=</span> <span class="va">samps</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqnorm</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span></span>
@@ -451,11 +451,11 @@ covariates that we used in the model above.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">qcs_grid</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Rows: 7,314</span></span>
 <span><span class="co">#&gt; Columns: 5</span></span>
-<span><span class="co">#&gt; $ X             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 456, 458, 460, 462, 464, 466, 468, 470, 472, 474, 476, 4…</span></span>
-<span><span class="co">#&gt; $ Y             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 5636, 5636, 5636, 5636, 5636, 5636, 5636, 5636, 5636, 56…</span></span>
-<span><span class="co">#&gt; $ depth         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 347.08345, 223.33479, 203.74085, 183.29868, 182.99983, 1…</span></span>
-<span><span class="co">#&gt; $ depth_scaled  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 1.56081222, 0.56976988, 0.36336929, 0.12570465, 0.122036…</span></span>
-<span><span class="co">#&gt; $ depth_scaled2 <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 2.436134794, 0.324637712, 0.132037240, 0.015801659, 0.01…</span></span></code></pre></div>
+<span><span class="co">#&gt; $ X             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 456<span style="color: #949494;">, </span>458<span style="color: #949494;">, </span>460<span style="color: #949494;">, </span>462<span style="color: #949494;">, </span>464<span style="color: #949494;">, </span>466<span style="color: #949494;">, </span>468<span style="color: #949494;">, </span>470<span style="color: #949494;">, </span>472<span style="color: #949494;">, </span>474<span style="color: #949494;">, </span>476<span style="color: #949494;">, </span>4…</span></span>
+<span><span class="co">#&gt; $ Y             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 5636<span style="color: #949494;">, </span>5636<span style="color: #949494;">, </span>5636<span style="color: #949494;">, </span>5636<span style="color: #949494;">, </span>5636<span style="color: #949494;">, </span>5636<span style="color: #949494;">, </span>5636<span style="color: #949494;">, </span>5636<span style="color: #949494;">, </span>5636<span style="color: #949494;">, </span>56…</span></span>
+<span><span class="co">#&gt; $ depth         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 347.08345<span style="color: #949494;">, </span>223.33479<span style="color: #949494;">, </span>203.74085<span style="color: #949494;">, </span>183.29868<span style="color: #949494;">, </span>182.99983<span style="color: #949494;">, </span>1…</span></span>
+<span><span class="co">#&gt; $ depth_scaled  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 1.56081222<span style="color: #949494;">, </span>0.56976988<span style="color: #949494;">, </span>0.36336929<span style="color: #949494;">, </span>0.12570465<span style="color: #949494;">, </span>0.122036…</span></span>
+<span><span class="co">#&gt; $ depth_scaled2 <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 2.436134794<span style="color: #949494;">, </span>0.324637712<span style="color: #949494;">, </span>0.132037240<span style="color: #949494;">, </span>0.015801659<span style="color: #949494;">, </span>0.01…</span></span></code></pre></div>
 <p>We can replicate our grid across all necessary years:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">grid_yrs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/replicate_df.html">replicate_df</a></span><span class="op">(</span><span class="va">qcs_grid</span>, <span class="st">"year"</span>, <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">pcod</span><span class="op">$</span><span class="va">year</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
