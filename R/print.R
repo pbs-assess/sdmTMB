@@ -265,6 +265,7 @@ print_range <- function(x, m = 1L, digits = 2L) {
 print_anisotropy <- function(x, m = 1L, digits = 1L, return_dat = FALSE) {
   aniso_df <- plot_anisotropy(x, return_data = TRUE)
   aniso_df$degree <- aniso_df$angle * 180 / pi
+  aniso_df_st <- aniso_df_sp <- NULL
 
   if (isTRUE(x$family$delta)) {
     aniso_df_sp <- aniso_df[aniso_df$random_field == "spatial" &
