@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,8 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="sdmtmb-development-version">sdmTMB (development version)<a class="anchor" aria-label="anchor" href="#sdmtmb-development-version"></a></h2>
-<ul><li><p>Add <code>observation_error</code> argument to <code><a href="../reference/simulate.sdmTMB.html">simulate.sdmTMB()</a></code> to allow turning off observation error simulation. The intended use-case is for simulating from random effects but not adding observation error. <a href="https://github.com/pbs-assess/sdmTMB/issues/431" class="external-link">#431</a></p></li>
+<ul><li><p>Remove warning about old default residuals type.</p></li>
+<li><p>Add <code>observation_error</code> argument to <code><a href="../reference/simulate.sdmTMB.html">simulate.sdmTMB()</a></code> to allow turning off observation error simulation. The intended use-case is for simulating from random effects but not adding observation error. <a href="https://github.com/pbs-assess/sdmTMB/issues/431" class="external-link">#431</a></p></li>
 <li><p>Fix <code><a href="../reference/project.html">project()</a></code> and <code>simulate.sdmTMB(..., newdata = ...)</code> when random intercepts/slopes are present. <a href="https://github.com/pbs-assess/sdmTMB/issues/431" class="external-link">#431</a></p></li>
 <li><p>Remove extra TMB data slots for <code><a href="../reference/project.html">project()</a></code> and <code>simulate.sdmTMB(..., newdata = ...)</code> to save memory. <a href="https://github.com/pbs-assess/sdmTMB/issues/431" class="external-link">#431</a></p></li>
 </ul></div>

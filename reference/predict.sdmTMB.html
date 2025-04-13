@@ -9,7 +9,7 @@ new data."><meta property="og:image" content="https://pbs-assess.github.io/sdmTM
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -250,10 +250,6 @@ The other elements are included for other functions.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   est_non_rf &lt;dbl&gt;, est_rf &lt;dbl&gt;, omega_s &lt;dbl&gt;, epsilon_st &lt;dbl&gt;</span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">predictions</span><span class="op">$</span><span class="va">resids</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">m</span><span class="op">)</span> <span class="co"># randomized quantile residuals</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Note what used to be the default sdmTMB residuals (before version 0.4.3.9005)</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> are now `type = 'mle-eb'`. We recommend using the current default `'mle-mvn'`,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> which takes one sample from the approximate posterior of the random effects or</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> `dharma_residuals()` using a similar approach.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">predictions</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">Y</span>, col <span class="op">=</span> <span class="va">resids</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_colour_gradient2</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span></span>

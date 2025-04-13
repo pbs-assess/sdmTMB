@@ -9,7 +9,7 @@ See notes about types of residuals in 'Details' section below."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -224,10 +224,6 @@ spatiotemporal dynamics of marine species. Ecological Applications. e02453.
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">82728</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, nsim <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="co"># pretend these are from sdmTMBextra::predict_mle_mcmc()</span></span></span>
 <span class="r-in"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">fit</span>, mcmc_samples <span class="op">=</span> <span class="va">p</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Note what used to be the default sdmTMB residuals (before version 0.4.3.9005)</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> are now `type = 'mle-eb'`. We recommend using the current default `'mle-mvn'`,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> which takes one sample from the approximate posterior of the random effects or</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> `dharma_residuals()` using a similar approach.</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqnorm</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="residuals.sdmTMB-4.png" alt="" width="700" height="433"></span>
