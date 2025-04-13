@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Remove warning about old default residuals type.
+
 * Add `observation_error` argument to `simulate.sdmTMB()` to allow
   turning off observation error simulation. The intended use-case
   is for simulating from random effects but not adding observation

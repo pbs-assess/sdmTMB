@@ -141,7 +141,6 @@ test_that("randomized quantile residuals work,", {
     family = student(df = 10),
     data = d, mesh = mesh
   )
-  expect_message(r <- residuals(fit), "mle")
   set.seed(1)
   r <- residuals(fit, type = "mle-mvn")
   qqnorm(r)
@@ -418,18 +417,6 @@ test_that("all residuals work with extra time and offsets #326", {
   )
   r <- residuals(m, type = "mle-mcmc", mcmc_samples = p1)
   expect_equal(length(r), 2143L)
-})
-
-test_that("old residual types get flagged with a message", {
-  fit <- sdmTMB(
-    present ~ 1,
-    data = pcod_2011, spatial = "off",
-    family = binomial()
-  )
-  expect_message(r <- residuals(fit), regexp = "'mle-eb'")
-  expect_message(r <- residuals(fit, type = "mle-laplace"), regexp = "'mle-eb'")
-  r <- residuals(fit, type = "mle-mvn")
-  expect_length(r, 969L)
 })
 
 test_that("pgengamma works for Q = 0", {
