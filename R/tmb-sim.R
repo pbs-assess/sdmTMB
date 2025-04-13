@@ -478,7 +478,15 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
   if (!silent) cli::cli_progress_done()
 
   if (!return_tmb_report) {
-    if (isTRUE(object$family$delta)) {
+    if (is_delta(object)) {
+      if (object$family[[1]]$family == "binomial" &&
+          object$family$type == "standard" &&
+          !observation_error) {
+        ret <- lapply(ret, function(.x) {
+          .x[,1] <- stats::plogis(.x[,1]) # using robust dbinom in logit space
+          .x
+        })
+      }
       if (is.na(model[[1]])) {
         ret <- lapply(ret, function(.x) .x[,1] * .x[,2])
       } else if (model[[1]] == 1) {
@@ -487,6 +495,13 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
         ret <- lapply(ret, function(.x) .x[,2])
       } else {
         cli_abort("`model` argument isn't valid; should be NA, 1, or 2.")
+      }
+    }
+
+    if (!is_delta(object) && !observation_error) {
+      if (object$family$family == "binomial") {
+        # using robust dbinom in logit space
+        ret <- lapply(ret, function(.x) stats::plogis(.x))
       }
     }
 

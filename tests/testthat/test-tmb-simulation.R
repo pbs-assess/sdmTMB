@@ -208,3 +208,40 @@ test_that("coarse meshes with zeros in simulation still return fields #370", {
   expect_true("epsilon_st" %in% nm)
   expect_false("zeta_s" %in% nm)
 })
+
+test_that("simulate without observation error works for binomial likelihoods #431", {
+  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
+  fit.dg <- sdmTMB(density ~ 1,
+    data = pcod, mesh = mesh, family = delta_gamma(type="standard")
+  )
+  s.dg <- simulate(
+    fit.dg,
+    newdata = qcs_grid,
+    type = "mle-mvn", # fixed effects at MLE values and random effect MVN draws
+    mle_mvn_samples = "multiple", # take an MVN draw for each sample
+    nsim = 50, # increase this for more stable results
+    observation_error = FALSE, # do not include observation error
+    seed = 23859
+  )
+  expect_gt(min(s.dg), 0)
+  m <- apply(s.dg, 1, mean)
+  p <- predict(fit.dg, newdata = qcs_grid)
+  expect_gt(cor(plogis(p$est1) * exp(p$est2), m), 0.95)
+
+  fit.b <- sdmTMB(present ~ 1,
+    data = pcod, mesh = mesh, family = binomial()
+  )
+  s.b <- simulate(
+    fit.b,
+    newdata = qcs_grid,
+    type = "mle-mvn", # fixed effects at MLE values and random effect MVN draws
+    mle_mvn_samples = "multiple", # take an MVN draw for each sample
+    nsim = 50, # increase this for more stable results
+    observation_error = FALSE, # do not include observation error
+    seed = 23859
+  )
+  expect_gt(min(s.dg), 0)
+  m <- apply(s.b, 1, mean)
+  p <- predict(fit.b, newdata = qcs_grid)
+  expect_gt(cor(plogis(p$est), m), 0.95)
+})
