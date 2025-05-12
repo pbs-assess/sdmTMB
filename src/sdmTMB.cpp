@@ -879,6 +879,9 @@ Type objective_function<Type>::operator()()
 
   vector<Type> jnll_obs(n_i); // for cross validation
   jnll_obs.setZero();
+  matrix<Type> devresid(n_i,n_m);
+  devresid.setZero();
+
   for (int m = 0; m < n_m; m++) PARALLEL_REGION {
     for (int i = 0; i < n_i; i++) {
       bool notNA = !sdmTMB::isNA(y_i(i,m));
@@ -886,6 +889,7 @@ Type objective_function<Type>::operator()()
           case gaussian_family: {
             if (notNA) tmp_ll = dnorm(y_i(i,m), mu_i(i,m), phi(m), true);
             if (sim_obs) SIMULATE{y_i(i,m) = rnorm(mu_i(i,m), phi(m));}
+            if (notNA) devresid(i,m) = y_i(i,m) - mu_i(i,m);
             break;
           }
           case tweedie_family: {
@@ -899,6 +903,7 @@ Type objective_function<Type>::operator()()
             }
             if (notNA) tmp_ll = dtweedie(y_i(i,m), mu_i(i,m), phi(m), tweedie_p, true);
             if (sim_obs) SIMULATE{y_i(i,m) = rtweedie(mu_i(i,m), phi(m), tweedie_p);}
+            if (notNA) devresid(i,m) = sdmTMB::devresid_tweedie(y_i(i,m), mu_i(i,m), tweedie_p);
             break;
           }
           case binomial_family: {
@@ -908,12 +913,16 @@ Type objective_function<Type>::operator()()
             } else {
               if (notNA) tmp_ll = dbinom_robust(y_i(i,m), size(i), mu_i(i,m), true);
               if (sim_obs) SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));} // hardcoded invlogit b/c mu_i in logit space
+              if (notNA) devresid(i,m) = sdmTMB::sign(y_i(i,m) - invlogit(mu_i(i,m))) *
+                pow(-2.*((1-y_i(i,m))*log(1.-invlogit(mu_i(i,m))) + y_i(i,m)*log(invlogit(mu_i(i,m)))), 0.5);
             }
             break;
           }
           case poisson_family: {
             if (notNA) tmp_ll = dpois(y_i(i,m), mu_i(i,m), true);
             if (sim_obs) SIMULATE{y_i(i,m) = rpois(mu_i(i,m));}
+            if (notNA) devresid(i,m) = sdmTMB::sign(y_i(i,m) - mu_i(i,m)) *
+              pow(2.*(y_i(i,m)*log((Type(1e-10) + y_i(i,m))/mu_i(i,m)) - (y_i(i,m)-mu_i(i,m))), 0.5);
             break;
           }
           case censored_poisson_family: {
@@ -926,6 +935,8 @@ Type objective_function<Type>::operator()()
             s2 = mu_i(i,m) / s1;        // scale
             if (notNA) tmp_ll = dgamma(y_i(i,m), s1, s2, true);
             if (sim_obs) SIMULATE{y_i(i,m) = rgamma(s1, s2);}
+            if (notNA) devresid(i,m) = sdmTMB::sign(y_i(i,m) - mu_i(i,m)) *
+              pow(2.*( (y_i(i,m)-mu_i(i,m))/mu_i(i,m) - log(y_i(i,m)/mu_i(i,m))), 0.5);
             // s1 = Type(1) / (pow(phi, Type(2)));  // s1=shape, ln_phi=CV,shape=1/CV^2
             // tmp_ll = dgamma(y_i(i,m), s1, mu_i(i,m) / s1, true);
             break;
@@ -939,6 +950,7 @@ Type objective_function<Type>::operator()()
               s2 = mu_i(i,m) * (Type(1) + mu_i(i,m) / phi(m));
               y_i(i,m) = rnbinom2(s1, s2);
             }
+            if (notNA) devresid(i,m) = sdmTMB::devresid_nbinom2(y_i(i,m), s1, ln_phi(m));
             break;
           }
           case truncated_nbinom2_family: {
@@ -961,6 +973,7 @@ Type objective_function<Type>::operator()()
               s2 = mu_i(i,m) * (Type(1)+phi(m));
               y_i(i,m) = rnbinom2(s1, s2);
               }
+            if (notNA) devresid(i,m) = sdmTMB::devresid_nbinom2(y_i(i,m), s1, s1 - ln_phi(m));
             break;
           }
           case truncated_nbinom1_family: {
@@ -1054,6 +1067,8 @@ Type objective_function<Type>::operator()()
         if (notNA) jnll -= tmp_ll; // * keep
       }
   }
+
+  // Type deviance = 0.0;
 
   // ------------------ Priors -------------------------------------------------
 
@@ -1575,6 +1590,8 @@ Type objective_function<Type>::operator()()
   REPORT(eta_rw_i);     // time-varying predictions in link space
   REPORT(eta_iid_re_i); // IID intercept random effect estimates
   REPORT(jnll_obs); // for cross validation
+
+  REPORT(devresid);
 
   SIMULATE {
     REPORT(y_i);
