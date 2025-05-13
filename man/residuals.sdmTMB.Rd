@@ -6,7 +6,7 @@
 \usage{
 \method{residuals}{sdmTMB}(
   object,
-  type = c("mle-mvn", "mle-eb", "mle-mcmc", "response", "pearson"),
+  type = c("mle-mvn", "mle-eb", "mle-mcmc", "response", "pearson", "deviance"),
   model = c(1, 2),
   mcmc_samples = NULL,
   qres_func = NULL,

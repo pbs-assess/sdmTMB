@@ -770,6 +770,8 @@ Type objective_function<Type>::operator()()
   eta_iid_re_i.setZero();
   mu_i.setZero();
   eta_i.setZero();
+  matrix<Type> devresid(n_i,n_m);
+  devresid.setZero();
 
   vector<Type> poisson_link_m0_ll(n_i);
 
@@ -822,8 +824,11 @@ Type objective_function<Type>::operator()()
         if (m == 0) {
           if (y_i(i,0) > Type(0.0)) {
             poisson_link_m0_ll(i) = log_p; // calc ll here; more robust than dbinom_robust(logit(p))
+            devresid(i,m) = sqrt(-2.0 * log_p);
+            // dev = -2 * logmu1;
           } else {
             poisson_link_m0_ll(i) = log_one_minus_p; // log(1 - p)
+            devresid(i,m) = sqrt(-2.0 * log_one_minus_p);
           }
           mu_i(i,0) = exp(log_p); // just for recording; not used in ll b/c robustness
         }
@@ -879,8 +884,6 @@ Type objective_function<Type>::operator()()
 
   vector<Type> jnll_obs(n_i); // for cross validation
   jnll_obs.setZero();
-  matrix<Type> devresid(n_i,n_m);
-  devresid.setZero();
 
   for (int m = 0; m < n_m; m++) PARALLEL_REGION {
     for (int i = 0; i < n_i; i++) {
@@ -989,12 +992,15 @@ Type objective_function<Type>::operator()()
           }
           case lognormal_family: {
             if (notNA) tmp_ll = sdmTMB::dlnorm(y_i(i,m), log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m), true);
+            if (notNA) devresid(i,m) = log(y_i(i,m)) - (log(mu_i(i,m)) - 0.5*exp(2.0*log(phi(m))));
             if (sim_obs) SIMULATE{y_i(i,m) = exp(rnorm(log(mu_i(i,m)) - pow(phi(m), Type(2)) / Type(2), phi(m)));}
             break;
           }
           case student_family: {
             if (notNA) tmp_ll = sdmTMB::dstudent(y_i(i,m), mu_i(i,m), exp(ln_phi(m)), df, true);
+            if (notNA) devresid(i,m) = sdmTMB::devresid_nbinom2(y_i(i,m), s1, s1 - ln_phi(m));
             if (sim_obs) SIMULATE{y_i(i,m) = mu_i(i,m) + phi(m) * rt(df);}
+
             break;
           }
           case Beta_family: { // Ferrari and Cribari-Neto 2004; betareg package

@@ -1,5 +1,12 @@
 # sdmTMB (development version)
 
+* Add deviance residuals (`residuals(fit, type = "deviance")`) and
+  `deviance.sdmTMB()` method (`deviance(fit)`). Proportion deviance explained
+  can be calculated as `1 - deviance(fit) / deviance(fit_null)` where 
+  `fit_null` is a null model, e.g., fit with `formula = ~ 1` and turning 
+  off any random fields as desired
+  (e.g. `spatial = "off", spatiotemporal = "off"`).
+
 * Remove warning about old default residuals type.
 
 * Add `observation_error` argument to `simulate.sdmTMB()` to allow

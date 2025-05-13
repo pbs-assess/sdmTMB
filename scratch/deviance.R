@@ -8,14 +8,3 @@
 # fit
 # r <- fit$tmb_obj$report()
 
-x <- rnorm(10)
-y <- rpois(10, exp(x))
-d <- data.frame(x = x, y = y)
-m <- sdmTMB(y ~ 1 + x, family = poisson(), spatial = "off", data = d)
-mglm <- glm(y ~ 1 + x, family = poisson(), data = d)
-r1 <- unname(residuals(mglm))
-rep <- m$tmb_obj$report()
-r2 <- rep$devresid[, 1]
-expect_equal(r1, r2, tolerance = 0.01)
-deviance(mglm)
-sum(r2^2)
