@@ -205,6 +205,7 @@ ranef.sdmTMB <- function(object, ...) {
 
 #' @importFrom stats deviance
 #' @method deviance sdmTMB
+#' @importFrom stats residuals
 #' @export
 deviance.sdmTMB <- function(object, ...) {
   implemented <- c("poisson", "Gamma", "binomial",

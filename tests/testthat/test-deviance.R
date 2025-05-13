@@ -146,7 +146,7 @@ test_that("Deviance calculations are correct", {
 
   # # deviance explained
   # mnull <- sdmTMB(
-  #   density ~ 1, spatial = "on", mesh = mesh,
+  #   density ~ 1, spatial = "off", mesh = mesh,
   #   family = delta_gamma(type = "poisson-link"), data = pcod,
   # )
   # (devexplained <- 1 - deviance(m0) / deviance(mnull))
