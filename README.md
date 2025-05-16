@@ -59,7 +59,7 @@ installed, the development version is recommended and can be installed:
 
 ``` r
 # install.packages("pak")
-pak::pkg_install("pbs-assess/sdmTMB", dependencies = TRUE)
+pak::pak("pbs-assess/sdmTMB", dependencies = TRUE)
 ```
 
 There are some extra utilities in the
