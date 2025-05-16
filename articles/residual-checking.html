@@ -224,8 +224,8 @@ the fixed effects held at their MLEs. We do this with the
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.000972 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 9.72 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.00096 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 9.6 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -242,9 +242,9 @@ the fixed effects held at their MLEs. We do this with the
 <span><span class="co">#&gt; Chain 1: Iteration: 720 / 800 [ 90%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 800 / 800 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 7.076 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                4.693 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                11.769 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 7.088 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                4.7 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                11.788 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
 <span><span class="va">mcmc_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">fit_nb2</span>, type <span class="op">=</span> <span class="st">"mle-mcmc"</span>, mcmc_samples <span class="op">=</span> <span class="va">samps</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqnorm</a></span><span class="op">(</span><span class="va">mcmc_res</span><span class="op">)</span></span>
@@ -465,8 +465,8 @@ assumptions, but is much more time intensive for large models.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.002135 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 21.35 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.002128 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 21.28 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -483,9 +483,9 @@ assumptions, but is much more time intensive for large models.</p>
 <span><span class="co">#&gt; Chain 1: Iteration: 360 / 400 [ 90%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 400 / 400 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 30.336 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                27.65 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                57.986 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 30.089 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                27.416 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                57.505 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
 <span><span class="co">#&gt; Warning: The largest R-hat is 1.08, indicating chains have not mixed.</span></span>
 <span><span class="co">#&gt; Running the chains for more iterations may help. See</span></span>
@@ -676,8 +676,6 @@ the appearance of the expected residuals.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/simulate.html" class="external-link">simulate</a></span><span class="op">(</span><span class="va">fit2</span>, nsim <span class="op">=</span> <span class="fl">1500</span>, type <span class="op">=</span> <span class="st">"mle-mvn"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/dharma_residuals.html">dharma_residuals</a></span><span class="op">(</span><span class="va">fit2</span>, return_DHARMa <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Simulating <span style="color: #00BB00;">■■■■■■■■■■■■■■■■                </span>  50% | ETA:  1s</span></span>
-<span><span class="co">#&gt; Simulating <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s</span></span>
 <span><span class="va">u</span> <span class="op">&lt;-</span> <span class="va">s</span><span class="op">$</span><span class="va">scaledResiduals</span></span>
 <span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">qnorm</a></span><span class="op">(</span><span class="va">u</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqnorm</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span></span>
