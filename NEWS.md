@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Fix reporting of converged models with `sdmTMB_cv()`. A recent change
+  resulted in reporting only 1 model converged if all models converged.
+
 * Add deviance residuals (`residuals(fit, type = "deviance")`) and
   `deviance.sdmTMB()` method (`deviance(fit)`). Proportion deviance explained
   can be calculated as `1 - deviance(fit) / deviance(fit_null)` where 

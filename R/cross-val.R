@@ -474,7 +474,7 @@ log_sum_exp <- function(x) {
 #' @import methods
 print.sdmTMB_cv <- function(x, ...) {
   nmods <- length(x$models)
-  nconverged <- sum(x$converged)
+  nconverged <- sum(x$pdHess)
   cat(paste0("Cross validation of sdmTMB models with ", nmods, " folds.\n"))
   cat("\n")
   cat("Summary of the first fold model fit:\n")
