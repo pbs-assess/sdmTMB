@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -125,7 +125,7 @@
 <p>Assuming you have a <a href="https://support.posit.co/hc/en-us/articles/200486498-Package-Development-Prerequisites" class="external-link">C++ compiler</a> installed, the development version is recommended and can be installed:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
-<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pkg_install.html" class="external-link">pkg_install</a></span><span class="op">(</span><span class="st">"pbs-assess/sdmTMB"</span>, dependencies <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"pbs-assess/sdmTMB"</span>, dependencies <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>There are some extra utilities in the <a href="https://github.com/pbs-assess/sdmTMBextra" class="external-link">sdmTMBextra</a> package.</p>
 <p><strong>Importantly</strong>, it is recommended to use an optimized BLAS library, which will result in major speed improvements for TMB (and other) models in R (e.g., often 8-fold speed increases for sdmTMB models). Suggested installation instructions for <a href="https://www.mail-archive.com/r-sig-mac@r-project.org/msg06199.html" class="external-link">Mac users</a>, <a href="https://prdm0.github.io/ropenblas/" class="external-link">Linux users</a>, <a href="https://github.com/david-cortes/R-openblas-in-windows" class="external-link">Windows users</a>, and <a href="https://gist.github.com/seananderson/08a51e296a854f227a908ddd365fb9c1" class="external-link">Windows users without admin privileges</a>. To check that you’ve successfully linked the optimized BLAS, start a new session and run:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
