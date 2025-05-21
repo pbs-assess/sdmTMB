@@ -1,13 +1,13 @@
 # # Build sdmTMB citations list
 #
-# These are papers/theses/preprints/reports that use sdmTM
+# These are papers/theses/preprints/reports that use sdmTMB
 # as a modelling platform.
 #
 # To build the list:
 #
 # 1. Add a reference to the Zotero collection.
 # 2. That collection will auto-export to the .bib files shown here.
-# 3. Source `build.R` in R.
+# 3. Source build.R in R.
 # 4. That will update the README.md file.
 
 setwd(here::here("scratch", "citations"))
