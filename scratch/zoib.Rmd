@@ -1,0 +1,173 @@
+---
+title: "ZOIB models with sdmTMB"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{ZOIB models with sdmTMB}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  fig.width = 5,
+  fig.height = 3.5
+)
+```
+
+```{r}
+library(sdmTMB)
+library(ggplot2)
+theme_set(theme_light())
+```
+
+Simulate some data:
+
+```{r}
+set.seed(123)
+N <- 800
+x <- rnorm(N)
+b_0 <- c(-1, -0.4)
+b_1 <- c(-1, 0.6)
+b_prop <- c(0.2, 0.5)
+phi <- 30
+```
+
+```{r}
+p <- plogis(cbind(rep(1, N), x) %*% b_0)
+y_p <- rbinom(N, 1, p)
+
+q <- plogis(cbind(rep(1, N), x) %*% b_1)
+y_q <- rbinom(N, 1, q)
+
+mu <- plogis(cbind(rep(1, N), x) %*% b_prop)
+
+a <- phi * mu
+b <- phi * (1 - mu)
+y_r <- rbeta(N, a, b)
+```
+
+```{r}
+y <- numeric(length = N)
+y[y_p == 1] <- 0
+y[y_p != 1 & y_q == 1] <- 1
+y[y_p != 1 & y_q != 1] <- y_r[y_p != 1 & y_q != 1]
+dat <- data.frame(x, y)
+ggplot(dat, aes(x, y)) + geom_point()
+```
+
+# Fitting models
+
+```{r}
+dat$y_zero <- ifelse(dat$y == 0, 1, 0)
+dat$y_one <- ifelse(dat$y == 1, 1, ifelse(dat$y < 1 & dat$y != 0, 0, NA))
+dat$y_proportion <- ifelse(dat$y < 1 & dat$y > 0, dat$y, NA)
+```
+
+```{r}
+fit_zero <- sdmTMB(
+  y_zero ~ x,
+  data = dat,
+  family = binomial(link = "logit"),
+  spatial = "off"
+)
+
+fit_one <- sdmTMB(
+  y_one ~ x,
+  data = subset(dat, !is.na(y_one)),
+  family = binomial(link = "logit"),
+  spatial = "off"
+)
+
+fit_proportion <- sdmTMB(
+  y_proportion ~ x,
+  data = subset(dat, !is.na(y_proportion)),
+  family = Beta(link = "logit"),
+  spatial = "off"
+)
+```
+
+```{r}
+coef(fit_zero)
+b_0
+
+coef(fit_one)
+b_1
+
+coef(fit_proportion)
+b_prop
+
+tidy(fit_proportion, "ran_pars")
+phi
+```
+
+```{r}
+nd <- data.frame(x = seq(min(x), max(x), length.out = 100))
+```
+
+```{r}
+p0 <- plogis(predict(fit_zero, newdata = nd)$est)
+p1 <- plogis(predict(fit_one, newdata = nd)$est)
+pp <- plogis(predict(fit_proportion, newdata = nd)$est)
+```
+
+```{r}
+nd$est <- (1 - p0) * (p1 + (1 - p1) * pp)
+```
+
+```{r}
+ggplot(dat, aes(x, y)) + geom_point() +
+  geom_line(aes(x, est), data = nd, colour = "red")
+```
+
+Uncertainty:
+
+```{r}
+p0 <- plogis(predict(fit_zero, newdata = nd, nsim = 500))
+p1 <- plogis(predict(fit_one, newdata = nd, nsim = 500))
+pp <- plogis(predict(fit_proportion, newdata = nd, nsim = 500))
+```
+
+```{r}
+combined <- (1 - p0) * (p1 + (1 - p1) * pp)
+nd$est2 <- apply(combined, 1, median)
+nd$lwr <- apply(combined, 1, quantile, probs = 0.025)
+nd$upr <- apply(combined, 1, quantile, probs = 0.975)
+```
+
+```{r}
+ggplot(dat, aes(x, y)) + geom_point() +
+  geom_line(aes(x, est2), data = nd, colour = "red") +
+  geom_ribbon(aes(x, est2, ymin = lwr, ymax = upr), data = nd, colour = NA, fill = "#FF000030") +
+  geom_line(aes(x, est), data = nd, colour = "blue")
+```
+
+```{r, message=FALSE, results="hide", eval=FALSE}
+library(zoib)
+m <- zoib(y ~ x | 1 | x | x,
+  data = dat,
+  zero.inflation = TRUE,
+  one.inflation = TRUE,
+  joint = FALSE,
+  n.iter = 600,
+  n.thin = 1,
+  n.burn = 100
+)
+```
+
+```{r, eval=FALSE}
+sample1 <- m$coeff
+summary(sample1, quantiles = 0.5)
+coef(fit_proportion)
+coef(fit_zero)
+coef(fit_one)
+```
+
+```{r, eval=FALSE}
+pred <- pred.zoib(m, xnew = nd)
+nd2 <- data.frame(x = nd$x, zoib = pred$summary[, "mean"])
+
+ggplot(dat, aes(x, y)) + geom_point() +
+  geom_line(aes(x, est), data = nd, colour = "red") +
+  geom_line(aes(x, zoib), data = nd2, colour = "blue")
+```
