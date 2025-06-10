@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Fix bug in simulation with time-varying AR(1) when using the 
+  `project()` function. Thanks to A. Allyn for pointing out the bug.
+
 * Fix reporting of converged models with `sdmTMB_cv()`. A recent change
   resulted in reporting only 1 model converged if all models converged.
 

@@ -672,17 +672,25 @@ Type objective_function<Type>::operator()()
           }
         } else if (ar1_time) { // type = 'ar1'
           rho_time(k, m) = sdmTMB::minus_one_to_one(rho_time_unscaled(k, m));
+          Type ar1_sigma = sqrt(Type(1) - rho_time(k, m) * rho_time(k, m));
           jnll += SCALE(AR1(rho_time(k, m)), sigma_V(k,m))(vector<Type>(b_rw_t.col(m).col(k)));
-          if (sim_re(4)) {
-            // https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html
-            vector<Type> tmp(n_t);
-            Type ar1_sigma = sqrt(Type(1) - rho_time(k, m) * rho_time(k, m));
-            Type x0 = rnorm(Type(0), sigma_V(k,m));
-            tmp(0) = rho_time(k, m) * x0 + ar1_sigma * rnorm(Type(0), sigma_V(k,m));
-            for (int t = 1; t < n_t; t++)
-              tmp(t) = rho_time(k, m) * tmp(t-1) + ar1_sigma * rnorm(Type(0), sigma_V(k,m));
-            for(int t = 0; t < n_t; t++)
-              if (simulate_t(t)) SIMULATE{b_rw_t(t, k, m) = tmp(t);}
+          for (int t = 0; t < n_t; t++) {
+            if (t == 0) {
+              if (sim_re(4) && simulate_t(t)) {
+                // https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html
+                SIMULATE{
+                  b_rw_t(t, k, m) = rho_time(k, m) * rnorm(Type(0), sigma_V(k,m)) + 
+                    ar1_sigma * rnorm(Type(0), sigma_V(k,m));
+                }
+              }
+            } else {
+              if (sim_re(4) && simulate_t(t)) {
+                SIMULATE{
+                  b_rw_t(t, k, m) = rho_time(k, m) * b_rw_t(t-1, k, m) + 
+                    ar1_sigma * rnorm(Type(0), sigma_V(k,m));
+                }
+              }
+            }
           }
         } else {
           error("Time-varying type not found.");
