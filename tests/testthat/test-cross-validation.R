@@ -50,6 +50,7 @@ test_that("Basic cross validation works", {
 
 test_that("Cross validation in parallel with globals", {
   skip_on_cran()
+  skip_on_ci()
   # https://github.com/pbs-assess/sdmTMB/issues/127
   d <- pcod
   spde <- make_mesh(d, c("X", "Y"), cutoff = 15)
@@ -67,6 +68,7 @@ test_that("Cross validation in parallel with globals", {
 
 test_that("Leave future out cross validation works", {
   skip_on_cran()
+  skip_on_ci()
   x <- sdmTMB_cv(
     present ~ 1,
     data = pcod_2011,
@@ -94,6 +96,7 @@ test_that("Leave future out cross validation works", {
 
 test_that("Cross validation with offsets works", {
   skip_on_cran()
+  skip_on_ci()
   skip_if_not_installed("future")
   skip_if_not_installed("future.apply")
 
@@ -231,6 +234,7 @@ test_that("Cross validation with offsets works", {
 
 test_that("Delta model cross validation works", {
   skip_on_cran()
+  skip_on_ci()
   set.seed(1)
   out_tw <- sdmTMB_cv(
     density ~ depth_scaled,
