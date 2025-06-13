@@ -9,7 +9,7 @@ dharma_residuals(
   object,
   plot = TRUE,
   return_DHARMa = FALSE,
-  test_uniformity = TRUE,
+  test_uniformity = FALSE,
   test_outliers = FALSE,
   test_dispersion = FALSE,
   ...
