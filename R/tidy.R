@@ -157,7 +157,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   }
 
   if (x$tmb_data$has_smooths) {
-    p <- print_smooth_effects(x, silent = FALSE)
+    p <- print_smooth_effects(x, silent = FALSE, m = model)
     mm <- p$smooth_effects
     out <- rbind(
       out,
