@@ -1,5 +1,13 @@
 # sdmTMB (development version)
 
+* Change the default in `dharma_residuals()` to
+  `test_uniformity = FALSE`. Based on simulation testing, we
+  generally do not recommend these p-values for rejecting models.
+
+* Fix a bug introduced in version 0.7.0 where printing of the 2nd
+  linear predictor smoother fixed effects was accidentally a copy
+  of the 1st linear predictor smoother fixed effects.
+
 * Fix bug in simulation with time-varying AR(1) when using the 
   `project()` function. Thanks to A. Allyn for pointing out the bug.
 
