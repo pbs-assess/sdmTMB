@@ -13,9 +13,9 @@
 [![downloads](https://cranlogs.r-pkg.org/badges/sdmTMB)](https://cranlogs.r-pkg.org/)
 <!-- badges: end -->
 
-sdmTMB is an R package for fitting spatial and spatiotemporal generalized linear mixed effect models (GLMMs) using ([TMB](https://github.com/kaskr/adcomp)), [fmesher](https://github.com/inlabru-org/fmesher), and the [SPDE](https://doi.org/10.1111/j.1467-9868.2011.00777.x) (Stochastic Partial Differential Equation) approach to approximating Gaussian random fields with Gaussian Markov random fields. One common application is spatially explicit species distribution modeling (SDM). See the [documentation site](https://pbs-assess.github.io/sdmTMB/) and a preprint:
+sdmTMB is an R package that fits spatial and spatiotemporal GLMMs (Generalized Linear Mixed Effects Models) using Template Model Builder ([TMB](https://github.com/kaskr/adcomp)), [R-INLA](https://www.r-inla.org/), and Gaussian Markov random fields. One common application is for species distribution models (SDMs). See the [documentation site](https://pbs-assess.github.io/sdmTMB/) and a preprint:
 
-Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett, J.T. Thorson. 2024. sdmTMB: an R package for fast, flexible, and user-friendly generalized linear mixed effects models with spatial and spatiotemporal random fields. In press at Journal of Statistical Software. bioRxiv preprint doi: https://doi.org/10.1101/2022.03.24.485545
+Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett, J.T. Thorson. 2024. sdmTMB: an R package for fast, flexible, and user-friendly generalized linear mixed effects models with spatial and spatiotemporal random fields. bioRxiv 2022.03.24.485545; doi: https://doi.org/10.1101/2022.03.24.485545
 
 ## Table of contents
 
@@ -59,17 +59,19 @@ installed, the development version is recommended and can be installed:
 
 ``` r
 # install.packages("pak")
-pak::pak("pbs-assess/sdmTMB", dependencies = TRUE)
+pak::pkg_install("pbs-assess/sdmTMB", dependencies = TRUE)
 ```
 
 There are some extra utilities in the
 [sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra) package.
 
-**Importantly**, it is recommended to use an optimized BLAS library,
-which will result in major speed improvements for TMB (and other) models
-in R (e.g., often 8-fold speed increases for sdmTMB models). Suggested
-installation instructions for [Mac
-users](https://www.mail-archive.com/r-sig-mac@r-project.org/msg06199.html),
+**Importantly**, for large models, it is recommended to use an optimized
+BLAS library, which will result in major speed improvements for TMB (and
+other) models in R (e.g., often 8-fold speed increases for sdmTMB
+models). Suggested installation instructions for [Mac
+users](https://www.mail-archive.com/r-sig-mac@r-project.org/msg06199.html)
+(pre R 4.5.0) or [with OpenBLAS on a
+Mac](https://gist.github.com/seananderson/3c6cbf640ba566ce936c79442b9a6068),
 [Linux users](https://prdm0.github.io/ropenblas/), [Windows
 users](https://github.com/david-cortes/R-openblas-in-windows), and
 [Windows users without admin
@@ -84,7 +86,7 @@ system.time(X %*% Y)
 ```
 
 The result (‘elapsed’) should take a fraction of a second (e.g., 0.03
-s), not multiple seconds.
+s), not \> 1 second.
 
 ## Overview
 
@@ -164,7 +166,7 @@ random fields. In press at Journal of Statistical Software. bioRxiv
 preprint: <https://doi.org/10.1101/2022.03.24.485545>.
 
 A list of (known) publications that use sdmTMB can be found
-[here](https://github.com/pbs-assess/sdmTMB/wiki/Publications-using-sdmTMB).
+[here](https://github.com/pbs-assess/sdmTMB/tree/main/scratch/citations).
 Please use the above citation so we can track publications.
 
 ## Related software
@@ -269,7 +271,7 @@ fit
 #> Conditional model:
 #>             coef.est coef.se
 #> (Intercept)     2.37    0.21
-#> sdepth         -0.62    2.53
+#> sdepth          0.62    2.53
 #> 
 #> Smooth terms:
 #>            Std. Dev.
@@ -301,7 +303,7 @@ tidy(fit, conf.int = TRUE)
 #>   term        estimate std.error conf.low conf.high
 #>   <chr>          <dbl>     <dbl>    <dbl>     <dbl>
 #> 1 (Intercept)     2.37     0.215     1.95      2.79
-#> 2 sdepth         -0.62     2.53     -5.58      4.34
+#> 2 sdepth          0.62     2.53     -4.34      5.58
 tidy(fit, effects = "ran_pars", conf.int = TRUE)
 #> # A tibble: 4 × 5
 #>   term      estimate std.error conf.low conf.high
