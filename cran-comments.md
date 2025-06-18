@@ -1,6 +1,4 @@
-This version fixes several bugs and adds minor functionality. CRAN has
-requested an update before 2025-04-05; the issues identified on CRAN
-have been fixed.
+This version fixes minor bugs and adds minor functionality.
 
 ## R CMD check results
 
@@ -8,7 +6,7 @@ have been fixed.
 
 ## Test environments
 
-* Local M2 macOS install, R 4.4.3
+* Local M2 macOS install, R 4.5.0
 * Intel macOS (on github-actions), R-release
 * Ubuntu 24.04.2 (on github-actions), R-release
 * Windows (on github-actions), R-release
