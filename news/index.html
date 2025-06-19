@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0.9006</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,19 +47,27 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/v0.7.2/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="sdmtmb-development-version">sdmTMB (development version)<a class="anchor" aria-label="anchor" href="#sdmtmb-development-version"></a></h2>
-<ul><li><p>Fix bug in simulation with time-varying AR(1) when using the <code><a href="../reference/project.html">project()</a></code> function. Thanks to A. Allyn for pointing out the bug.</p></li>
-<li><p>Fix reporting of converged models with <code><a href="../reference/sdmTMB_cv.html">sdmTMB_cv()</a></code>. A recent change resulted in reporting only 1 model converged if all models converged.</p></li>
-<li><p>Add deviance residuals (<code>residuals(fit, type = "deviance")</code>) and <code>deviance.sdmTMB()</code> method (<code>deviance(fit)</code>). Proportion deviance explained can be calculated as <code>1 - deviance(fit) / deviance(fit_null)</code> where <code>fit_null</code> is a null model, e.g., fit with <code>formula = ~ 1</code> and turning off any random fields as desired (e.g. <code>spatial = "off", spatiotemporal = "off"</code>).</p></li>
-<li><p>Remove warning about old default residuals type.</p></li>
+<h2 class="pkg-version" data-toc-text="0.7.2" id="sdmtmb-072">sdmTMB 0.7.2<a class="anchor" aria-label="anchor" href="#sdmtmb-072"></a></h2><p class="text-muted">CRAN release: 2025-06-19</p>
+<div class="section level3">
+<h3 id="new-features-0-7-2">New features<a class="anchor" aria-label="anchor" href="#new-features-0-7-2"></a></h3>
+<ul><li><p>Add deviance residuals (<code>residuals(fit, type = "deviance")</code>) and <code>deviance.sdmTMB()</code> method (<code>deviance(fit)</code>). Proportion deviance explained can be calculated as <code>1 - deviance(fit) / deviance(fit_null)</code> where <code>fit_null</code> is a null model, e.g., fit with <code>formula = ~ 1</code> and turning off any random fields as desired (e.g., <code>spatial = "off", spatiotemporal = "off"</code>).</p></li>
 <li><p>Add <code>observation_error</code> argument to <code><a href="../reference/simulate.sdmTMB.html">simulate.sdmTMB()</a></code> to allow turning off observation error simulation. The intended use-case is for simulating from random effects but not adding observation error. <a href="https://github.com/pbs-assess/sdmTMB/issues/431" class="external-link">#431</a></p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="minor-improvements-and-fixes-0-7-2">Minor improvements and fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-fixes-0-7-2"></a></h3>
+<ul><li><p>Change the default in <code><a href="../reference/dharma_residuals.html">dharma_residuals()</a></code> to <code>test_uniformity = FALSE</code>. Based on simulation testing, we generally do not recommend using these p-values to reject models.</p></li>
+<li><p>Fix a bug introduced in version 0.7.0 where printing of the 2nd linear predictor smoother fixed effects (<code>bs</code>) was accidentally a copy of the 1st linear predictor smoother fixed effects.</p></li>
+<li><p>Fix bug in simulation with time-varying AR(1) when using the <code><a href="../reference/project.html">project()</a></code> function. Thanks to A. Allyn for pointing out the bug.</p></li>
+<li><p>Fix reporting of converged models with <code><a href="../reference/sdmTMB_cv.html">sdmTMB_cv()</a></code>. A recent change resulted in reporting only 1 model converged if all models converged.</p></li>
+<li><p>Remove warning about old default residuals type.</p></li>
 <li><p>Fix <code><a href="../reference/project.html">project()</a></code> and <code>simulate.sdmTMB(..., newdata = ...)</code> when random intercepts/slopes are present. <a href="https://github.com/pbs-assess/sdmTMB/issues/431" class="external-link">#431</a></p></li>
 <li><p>Remove extra TMB data slots for <code><a href="../reference/project.html">project()</a></code> and <code>simulate.sdmTMB(..., newdata = ...)</code> to save memory. <a href="https://github.com/pbs-assess/sdmTMB/issues/431" class="external-link">#431</a></p></li>
 </ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.7.0" id="sdmtmb-070">sdmTMB 0.7.0<a class="anchor" aria-label="anchor" href="#sdmtmb-070"></a></h2><p class="text-muted">CRAN release: 2025-04-01</p>
 <div class="section level3">
