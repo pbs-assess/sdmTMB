@@ -1,4 +1,5 @@
-This version fixes minor bugs and adds minor functionality.
+This version reduces the size of the tarball by removing a large file that
+was accidentally included in the previous submission.
 
 ## R CMD check results
 

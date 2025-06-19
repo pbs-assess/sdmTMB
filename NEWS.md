@@ -1,4 +1,4 @@
-# sdmTMB 0.7.1
+# sdmTMB 0.7.2
 
 ## New features
 
