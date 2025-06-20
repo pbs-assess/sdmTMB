@@ -248,7 +248,7 @@ sdmTMB_cv <- function(
         # fold id increasing order + forecast
         data$cv_fold[data[[time]] == t_validate[t]] <- lfo_validations - t + 1 + lfo_forecast
       }
-      data$cv_fold <- as.numeric(as.factor(data$cv_fold))
+      #data$cv_fold <- as.numeric(as.factor(data$cv_fold))
     } else {
       dd <- lapply(split(data, data[[time]]), function(x) {
         x$cv_fold <- sample(rep(seq(1L, k_folds), nrow(x)), size = nrow(x))

@@ -173,14 +173,53 @@ We can ignore the total log-likelihood, and just focus on the first element of l
 m_cv$fold_loglik[[1]]
 ```
 
-<!-- # Leave Future Out Cross-Validation -->
+# Leave Future Out Cross-Validation
 
-<!-- We can do LFOCV using the relevant arguments. Our dataset has 9 time steps. Therefore, if we use the arguments `lfo_forecast=2` and `lfo_validations=3`, the cross validation will: -->
-<!-- - Fit data to time steps 1 to 5, predict and validate step 7. -->
-<!-- - Fit data to time steps 1 to 6, predict and validate step 8. -->
-<!-- - Fit data to time steps 1 to 7, predict and validate step 9. -->
+Next, we can illustrate a special kind of cross-validation for temporally structured data called leave future out cross-validation (LFOCV). With LFOCV, data historical training data are only used to predict the future. This means that the cross validation will: 
+- Fit data to time steps 1 to 6, predict and validate step 7.
+- Fit data to time steps 1 to 7, predict and validate step 8.
+- Fit data to time steps 1 to 8, predict and validate step 9.
+To implement this kind of cross validation, we can turn on `lfo = TRUE`. The two other important parameters to set are how many time steps in the future will be generating predictions for with each fold (`lfo_forecast`, defaults to 1 time step) and how many years at the end of the data should be peeled off and used as test datasets (`lfo_validation`, for this example we'll use 3 time steps).
 
-```{r, eval=FALSE, include=FALSE}
+```{r}
+m_lfocv <- sdmTMB_cv(
+  present ~ s(year, k = 3),
+  data = pcod,
+  mesh = mesh,
+  lfo = TRUE, # do LFOCV
+  lfo_forecast = 1, # number of time steps to forecast
+  lfo_validations = 3, # number of time steps to validate
+  family = binomial(),
+  spatiotemporal = "off",
+  time = "year" # must be specified
+)
+```
+
+If we wanted to verify the LFOCV training models, we could inspect them and compare them to manual fits with `sdmTMB`. Using the above example, we could replicate the 2nd model (`m_lfocv$models[[2]]`) with this call:
+
+```{r eval=FALSE}
+yrs <- unique(pcod$year)
+sdmTMB_cv_test <- sdmTMB(
+  present ~ s(year, k = 3),
+  data = pcod,
+  mesh = mesh,
+  weights = ifelse(pcod$year < yrs[length(yrs)-1], 1, 0),
+  family = binomial(),
+  spatiotemporal = "off",
+  time = "year" 
+)
+```
+
+The `weights` argument is used here so that we can use the identical mesh to the full dataset, but specify which points contribute to the likelihood (1) or not (0).
+
+As a more complicated example, we can demonstrate making predictions 2 timesteps ahead. As a side note, the interpretation doesn't work exactly with the `pcod` data because of the unevenly spaced years. One could create a new time column, like below, but this would not preserve the same interpretation across folds. 
+
+Changing the `lfo_forecast` parameter to 2 changes the structure so that we forecast 2 time steps ahead:
+- Fit data to time steps 1 to 5, predict and validate step 7.
+- Fit data to time steps 1 to 6, predict and validate step 8.
+- Fit data to time steps 1 to 7, predict and validate step 9.
+
+```{r, eval=TRUE, include=FALSE}
 m_lfocv <- sdmTMB_cv(
   present ~ s(year, k = 3),
   data = pcod,
@@ -192,10 +231,30 @@ m_lfocv <- sdmTMB_cv(
   spatiotemporal = "off",
   time = "year" # must be specified
 )
+```
 
-# See how the LFOCV folds were assigned:
-example_data <- m_lfocv$models[[2]]$data
+Again, we can examine the fold assignment. Note that we still have 4 folds, but for the sake of bookkeeping they're no longer labeled "1, 2, 3, 4" like above, but now are "1, 3, 4, 5":
+
+```{r}
+example_data <- m_lfocv$models[[1]]$data
 table(example_data$cv_fold, example_data$year)
+```
+
+We can also construct a similar model manually to make sure this is giving the approriate results. We will build a model using data through the 6th time step to predict time step 8. We use the `weights` argument here to turn off the contribution of data in time steps 8 and 9, using the same mesh as the full model above.
+
+```{r}
+yrs <- sort(unique(pcod$year))
+lfocv_validate <- sdmTMB(
+  present ~ s(year, k = 3),
+  data = pcod,
+  mesh = mesh,
+  family = binomial(),
+  spatiotemporal = "off",
+  time = "year", # must be specified
+  weights = ifelse(pcod$year %in% yrs[1:6], 1, 0)
+)
+
+cor(fitted(lfocv_validate), fitted(m_lfocv$models[[2]]))
 ```
 
 # Comparing two or more models
