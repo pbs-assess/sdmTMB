@@ -1,5 +1,9 @@
 # sdmTMB (development version)
 
+## Minor improvements and fixes
+
+* Round time-varying AR(1) rho to 2 decimals in model printing/summary.
+
 # sdmTMB 0.7.2
 
 ## New features
