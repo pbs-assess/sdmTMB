@@ -2,6 +2,9 @@
 
 ## Minor improvements and fixes
 
+* Fix reported gradient if Newton loops used in optimization. Previously,
+  the gradients would have looked overly pessimistic for some models. #455
+
 * Round time-varying AR(1) rho to 2 decimals in model printing/summary.
 
 # sdmTMB 0.7.2
