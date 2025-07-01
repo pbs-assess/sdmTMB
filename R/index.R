@@ -357,7 +357,6 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
       cli_inform(c("Bias correction is turned off.", "
         It is recommended to turn this on for final inference."))
   }
-  conv <- get_convergence_diagnostics(sr)
   ssr <- summary(sr, "report")
   log_total <- ssr[row.names(ssr) %in% value_name, , drop = FALSE]
   row.names(log_total) <- NULL
