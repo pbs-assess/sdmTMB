@@ -1609,11 +1609,13 @@ sdmTMB <- function(
       tmb_opt$par <- tmb_opt$par - solve(h, g)
       tmb_opt$objective <- tmb_obj$fn(tmb_opt$par)
     }
+    tmb_obj$fn(tmb_opt$par) # run obj$fn() once to update environment
   }
   check_bounds(tmb_opt$par, lim$lower, lim$upper)
 
   if (!silent) cli_inform("running TMB sdreport\n")
-  sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision)
+  sd_report <- TMB::sdreport(tmb_obj, par.fixed = tmb_opt$par,
+    getJointPrecision = get_joint_precision)
   conv <- get_convergence_diagnostics(sd_report)
 
   ## save params that families need to grab from environments:

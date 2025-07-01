@@ -43,6 +43,13 @@ run_extra_optimization <- function(object,
     tmb_opt[["iterations"]] <- tmb_opt[["iterations"]] + temp[["iterations"]]
     tmb_opt[["evaluations"]] <- tmb_opt[["evaluations"]] + temp[["evaluations"]]
   }
+
+  if (any(!is.infinite(object$upper)) || any(!is.infinite(object$lower))) {
+    if (newton_loops > 0) {
+      cli_inform("Upper or lower limits were set. `stats::optimHess()` will ignore these limits. Set `control = sdmTMBcontrol(newton_loops = 0)` to avoid the `stats::optimHess()` optimization if desired.")
+    }
+  }
+
   for (i in seq_len(newton_loops)) {
     g <- as.numeric(new_obj$tmb_obj$gr(tmb_opt$par))
     h <- stats::optimHess(
@@ -54,9 +61,12 @@ run_extra_optimization <- function(object,
     )
     tmb_opt$par <- tmb_opt$par - solve(h, g)
     tmb_opt$objective <- new_obj$tmb_obj$fn(tmb_opt$par)
+    if (i == newton_loops) {
+      new_obj$tmb_obj$fn(tmb_opt$par) # call once to update environment
+    }
   }
   new_obj$model <- tmb_opt
-  new_obj$sd_report <- TMB::sdreport(new_obj$tmb_obj,
+  new_obj$sd_report <- TMB::sdreport(new_obj$tmb_obj, par.fixed = tmb_opt$par,
     getJointPrecision = "jointPrecision" %in% names(object$sd_report))
   conv <- get_convergence_diagnostics(new_obj$sd_report)
   new_obj$gradients <- conv$final_grads
