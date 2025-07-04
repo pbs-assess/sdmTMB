@@ -1609,21 +1609,12 @@ sdmTMB <- function(
       cli_inform("Upper or lower limits were set. `stats::optimHess()` will ignore these limits. Set `control = sdmTMBcontrol(newton_loops = 0)` to avoid the `stats::optimHess()` optimization if desired.")
     }
   }
-  if (newton_loops > 0) {
-    if (!silent) cli_inform("attempting to improve convergence with optimHess\n")
-    for (i in seq_len(newton_loops)) {
-      g <- as.numeric(tmb_obj$gr(tmb_opt$par))
-      if (max(abs(g)) < 1e-6) break
-      h <- stats::optimHess(tmb_opt$par, fn = tmb_obj$fn, gr = tmb_obj$gr)
-      tmb_opt$par <- tmb_opt$par - solve(h, g)
-      tmb_opt$objective <- tmb_obj$fn(tmb_opt$par)
-    }
-  }
+
+  tmb_opt <- run_newton_loops(newton_loops = newton_loops, tmb_opt, tmb_obj, silent)
   check_bounds(tmb_opt$par, lim$lower, lim$upper)
 
   if (!silent) cli_inform("running TMB sdreport\n")
-  sd_report <- TMB::sdreport(tmb_obj, par.fixed = tmb_opt$par,
-    getJointPrecision = get_joint_precision)
+  sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision)
   conv <- get_convergence_diagnostics(sd_report)
 
   ## save params that families need to grab from environments:

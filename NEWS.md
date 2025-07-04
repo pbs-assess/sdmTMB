@@ -2,15 +2,15 @@
 
 ## Minor improvements and fixes
 
+* Only retain Newton update parameters if they improve the objective function.
+  #455
+  
 * Suppress `nlminb()` warnings by default, which can usually be ignored by the
   user and may be confusing. This can be controlled via
   `sdmTMB(..., control = sdmTMBcontrol(suppress_nlminb_warnings = FALSE))`.
+  This option now mirrors tinyVAST.
 
-* Only run Newton optimization steps if maximum absolute gradient is >= -1e6
-  to save time.
-
-* Fix reported gradient if Newton loops used in optimization. Previously,
-  the gradients would have looked overly pessimistic for some models. #455
+* Only run Newton updates if maximum absolute gradient is >= 1e-9 to save time.
 
 * Round time-varying AR(1) rho to 2 decimals in model printing/summary.
 
