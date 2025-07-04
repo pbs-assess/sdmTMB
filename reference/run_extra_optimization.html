@@ -92,11 +92,12 @@ values aids convergence.</p></dd>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">pcod_2011</span>, mesh <span class="op">=</span> <span class="va">pcod_mesh_2011</span>, family <span class="op">=</span> <span class="fu"><a href="families.html">tweedie</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit_1</span> <span class="op">&lt;-</span> <span class="fu">run_extra_optimization</span><span class="op">(</span><span class="va">fit</span>, newton_loops <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> attempting to improve convergence with a Newton update</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in obj$gr(opt$par):</span> attempt to apply non-function</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> retaining parameters from before Newton update</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> and skipping further Newton updates</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">gradients</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 5.790958e-09</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">fit_1</span><span class="op">$</span><span class="va">gradients</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'fit_1' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 5.790958e-09</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
