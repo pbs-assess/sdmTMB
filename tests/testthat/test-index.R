@@ -11,11 +11,11 @@ test_that("get_index works", {
   )
   nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
   predictions <- predict(m, newdata = nd, return_tmb_object = TRUE)
-  ind <- get_index(predictions)
+  ind <- get_index(predictions, bias_correct = FALSE)
   ind
   expect_s3_class(ind, "data.frame")
 
-  indsp <- get_index_split(m, nd, nsplit = 2)
+  indsp <- get_index_split(m, nd, nsplit = 2, bias_correct = FALSE)
   expect_equal(ind, indsp)
   expect_identical(chunk_time(c(1, 2, 3), 2), list(`1` = c(1, 2), `2` = 3))
   expect_error(chunk_time(c(1, 2), 0))
@@ -40,8 +40,8 @@ test_that("get_index works", {
   # splits work with areas:
   set.seed(1)
   areas <- rlnorm(nrow(nd), meanlog = 0, sdlog = 0.1)
-  ind <- get_index(predictions, area = areas)
-  indsp <- get_index_split(m, nd, nsplit = 2, area = areas)
+  ind <- get_index(predictions, area = areas, bias_correct = FALSE)
+  indsp <- get_index_split(m, nd, nsplit = 2, area = areas, bias_correct = FALSE)
   expect_equal(ind, indsp)
 
   # splits work with offsets:
@@ -57,8 +57,8 @@ test_that("get_index works", {
   set.seed(1)
   fake_offset <- rnorm(nrow(nd2), 0, 0.1)
   predictions2 <- predict(m2, newdata = nd2, return_tmb_object = TRUE, offset = fake_offset)
-  ind <- get_index(predictions2)
-  indsp <- get_index_split(m2, nd2, nsplit = 2, predict_args = list(offset = fake_offset))
+  ind <- get_index(predictions2, bias_correct = FALSE)
+  indsp <- get_index_split(m2, nd2, nsplit = 2, predict_args = list(offset = fake_offset), bias_correct = FALSE)
   expect_equal(ind, indsp)
 })
 
@@ -130,13 +130,13 @@ test_that("Index integration with area vector works with extra time and possibly
   nd <- replicate_df(qcs_grid, "year", seq(2011, 2017))
   nd$area <- 4
   p <- predict(fit, newdata = nd, return_tmb_object = TRUE)
-  ind0 <- get_index(p, area = nd$area)
+  ind0 <- get_index(p, area = nd$area, bias_correct = FALSE)
 
   # newdata doesn't have all fitted years:
   nd <- replicate_df(qcs_grid, "year", unique(pcod_2011$year))
   nd$area <- 4
   p <- predict(fit, newdata = nd, return_tmb_object = TRUE)
-  ind <- get_index(p, area = nd$area)
+  ind <- get_index(p, area = nd$area, bias_correct = FALSE)
   if (FALSE) {
     library(ggplot2)
     ggplot(ind, aes(year, est, ymin = lwr, ymax = upr)) + geom_pointrange() +
@@ -165,9 +165,9 @@ test_that("get_index works", {
   predictions <- predict(m, newdata = nd, return_tmb_object = TRUE)
 
   # get predictions with area passed as vector
-  ind <- get_index(predictions, area = nd$area)
+  ind <- get_index(predictions, area = nd$area, bias_correct = FALSE)
   # get predictions with area as a named column
-  ind2 <- get_index(predictions, area = "area")
+  ind2 <- get_index(predictions, area = "area", bias_correct = FALSE)
   expect_equal(ind, ind2)
 
   # get predictions with area passed as vector

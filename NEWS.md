@@ -2,6 +2,10 @@
 
 ## Minor improvements and fixes
 
+* Change default in `get_index()` etc. to `bias_correct = TRUE`. This is the
+  recommended setting for final inference and speed improvements within TMB
+  have made it more viable to include the bias correction by default. #456
+
 * Only retain Newton update parameters if they improve the objective function.
   #455
   
