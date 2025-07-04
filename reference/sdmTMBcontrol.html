@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.2.9001</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.2.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,6 +75,7 @@
 <span>  profile <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  get_joint_precision <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"sdmTMB.cores"</span>, <span class="fl">1L</span><span class="op">)</span>,</span>
+<span>  suppress_nlminb_warnings <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -193,6 +194,12 @@ experimental at this stage.</em></p></dd>
 cores, as an example, use <code>TMB::openmp(n = 3, DLL = "sdmTMB")</code>. But be
 careful, because it's not always faster with more cores and there is
 definitely an upper limit.</p></dd>
+
+
+<dt id="arg-suppress-nlminb-warnings">suppress_nlminb_warnings<a class="anchor" aria-label="anchor" href="#arg-suppress-nlminb-warnings"></a></dt>
+<dd><p>Suppress uninformative warnings
+from <code><a href="https://rdrr.io/r/stats/nlminb.html" class="external-link">stats::nlminb()</a></code> arising when a function evaluation is <code>NA</code>, which
+are then replaced with <code>Inf</code> and avoided during estimation?</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

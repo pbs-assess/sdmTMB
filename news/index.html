@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.2.9001</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.2.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,10 @@
 <h2 class="pkg-version" data-toc-text="development version" id="sdmtmb-development-version">sdmTMB (development version)<a class="anchor" aria-label="anchor" href="#sdmtmb-development-version"></a></h2>
 <div class="section level3">
 <h3 id="minor-improvements-and-fixes-development-version">Minor improvements and fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-fixes-development-version"></a></h3>
-<ul><li>Round time-varying AR(1) rho to 2 decimals in model printing/summary.</li>
+<ul><li><p>Suppress <code><a href="https://rdrr.io/r/stats/nlminb.html" class="external-link">nlminb()</a></code> warnings by default, which can usually be ignored by the user and may be confusing. This can be controlled via <code>sdmTMB(..., control = sdmTMBcontrol(suppress_nlminb_warnings = FALSE))</code>.</p></li>
+<li><p>Only run Newton optimization steps if maximum absolute gradient is &gt;= -1e6 to save time.</p></li>
+<li><p>Fix reported gradient if Newton loops used in optimization. Previously, the gradients would have looked overly pessimistic for some models. <a href="https://github.com/pbs-assess/sdmTMB/issues/455" class="external-link">#455</a></p></li>
+<li><p>Round time-varying AR(1) rho to 2 decimals in model printing/summary.</p></li>
 </ul></div>
 </div>
     <div class="section level2">
