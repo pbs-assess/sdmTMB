@@ -5,6 +5,9 @@
 #'   Alternatively, if [sdmTMB()] was called with `do_index = TRUE` or if using
 #'   the helper function [get_index_split()], an object from [sdmTMB()].
 #' @param bias_correct Should bias correction be implemented [TMB::sdreport()]?
+#'   This is recommended to be `TRUE` for any final analyses, but one may wish
+#'   to set this to `FALSE` for slightly faster calculations while experimenting
+#'   with models.
 #' @param level The confidence level.
 #' @param area Grid cell area. A vector of length `newdata` from
 #'   [predict.sdmTMB()] *or* a value of length 1 which will be repeated
@@ -115,7 +118,7 @@
 #'   ylim(0, NA)
 #' }
 #' @export
-get_index <- function(obj, bias_correct = FALSE, level = 0.95, area = 1, silent = TRUE, ...)  {
+get_index <- function(obj, bias_correct = TRUE, level = 0.95, area = 1, silent = TRUE, ...)  {
   # if offset is a character vector, use the value in the dataframe
   if (is.character(area)) {
     area <- obj$data[[area]]

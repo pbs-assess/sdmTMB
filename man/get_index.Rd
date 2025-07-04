@@ -8,14 +8,7 @@
 \title{Extract a relative biomass/abundance index, center of gravity, or effective
 area occupied}
 \usage{
-get_index(
-  obj,
-  bias_correct = FALSE,
-  level = 0.95,
-  area = 1,
-  silent = TRUE,
-  ...
-)
+get_index(obj, bias_correct = TRUE, level = 0.95, area = 1, silent = TRUE, ...)
 
 get_index_split(
   obj,
@@ -46,7 +39,10 @@ get_eao(obj, bias_correct = FALSE, level = 0.95, area = 1, silent = TRUE, ...)
 Alternatively, if \code{\link[=sdmTMB]{sdmTMB()}} was called with \code{do_index = TRUE} or if using
 the helper function \code{\link[=get_index_split]{get_index_split()}}, an object from \code{\link[=sdmTMB]{sdmTMB()}}.}
 
-\item{bias_correct}{Should bias correction be implemented \code{\link[TMB:sdreport]{TMB::sdreport()}}?}
+\item{bias_correct}{Should bias correction be implemented \code{\link[TMB:sdreport]{TMB::sdreport()}}?
+This is recommended to be \code{TRUE} for any final analyses, but one may wish
+to set this to \code{FALSE} for slightly faster calculations while experimenting
+with models.}
 
 \item{level}{The confidence level.}
 
