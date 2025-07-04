@@ -50,7 +50,7 @@ run_extra_optimization <- function(object,
     }
   }
 
-  tmb_opt <- run_newton_loops(newton_loops = newton_loops, tmb_opt, new_obj, silent = FALSE)
+  tmb_opt <- run_newton_loops(newton_loops = newton_loops, opt = tmb_opt, obj = new_obj$tmb_obj, silent = FALSE)
   new_obj$model <- tmb_opt
   new_obj$sd_report <- TMB::sdreport(new_obj$tmb_obj,
     getJointPrecision = "jointPrecision" %in% names(object$sd_report))
