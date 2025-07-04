@@ -62,23 +62,25 @@ run_extra_optimization <- function(object,
 
 run_newton_loops <- function(newton_loops, opt, obj, silent = TRUE) {
   if (newton_loops > 0) {
-    if (!silent) cli_inform("attempting to improve convergence with a Newton update\n")
+    if (!silent) cli_inform("attempting to improve convergence with a Newton update")
     for (i in seq_len(newton_loops)) {
       g <- as.numeric(obj$gr(opt$par))
       if (max(abs(g)) < 1e-9) {
         if (!silent) cli_inform(c("maximum absolute gradient is already < 1e-9;",
-          "skipping any remaining Newton updates for speed\n"))
+          "skipping any remaining Newton updates for speed"))
         break
       }
       h <- stats::optimHess(opt$par, fn = obj$fn, gr = obj$gr)
       new_par <- opt$par - solve(h, g)
       new_objective <- obj$fn(new_par) # also updates obj$env$last.par and obj$env$last.par.best!
       if (new_objective < opt$objective) {
-        if (!silent) cli_inform("accepting parameters from Newton update\n")
+        if (!silent) cli_inform("accepting parameters from Newton update")
         opt$par <- new_par
         opt$objective <- new_objective
       } else {
-        if (!silent) cli_inform("retaining parameters from before Newton update\n")
+        if (!silent) cli_inform(c("retaining parameters from before Newton update",
+          "and skipping further Newton updates"))
+        break
       }
     }
   }
