@@ -11,7 +11,7 @@ partial differential equation) approximation to Gaussian random fields."><meta p
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.2.9003</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.2.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -563,19 +563,19 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-in"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, newdata <span class="op">=</span> <span class="va">qcs_grid</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     X    Y    depth depth_scaled depth_scaled2       est est_non_rf      est_rf</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 456 5636 347.0834    1.5608122    2.43613479 -4.726638  -4.567385 -0.15925308</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 458 5636 223.3348    0.5697699    0.32463771  2.342470   2.368314 -0.02584421</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 460 5636 203.7408    0.3633693    0.13203724  3.087513   2.979948  0.10756466</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 462 5636 183.2987    0.1257046    0.01580166  3.878560   3.637586  0.24097353</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 464 5636 182.9998    0.1220368    0.01489297  4.020914   3.646532  0.37438240</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 466 5636 186.3892    0.1632882    0.02666303  4.050895   3.543104  0.50779127</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 456 5636 347.0834    1.5608122    2.43613479 -4.726631  -4.567379 -0.15925224</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 458 5636 223.3348    0.5697699    0.32463771  2.342471   2.368314 -0.02584342</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 460 5636 203.7408    0.3633693    0.13203724  3.087513   2.979948  0.10756540</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 462 5636 183.2987    0.1257046    0.01580166  3.878560   3.637586  0.24097423</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 464 5636 182.9998    0.1220368    0.01489297  4.020914   3.646531  0.37438305</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 466 5636 186.3892    0.1632882    0.02666303  4.050895   3.543104  0.50779187</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       omega_s</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 -0.15925308</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 -0.02584421</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  0.10756466</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  0.24097353</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  0.37438240</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6  0.50779127</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 -0.15925224</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 -0.02584342</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  0.10756540</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  0.24097423</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  0.37438305</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  0.50779187</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="co"># Visualize the depth effect with ggeffects:</span></span></span>
