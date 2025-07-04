@@ -63,6 +63,9 @@
 #'   cores, as an example, use `TMB::openmp(n = 3, DLL = "sdmTMB")`. But be
 #'   careful, because it's not always faster with more cores and there is
 #'   definitely an upper limit.
+#' @param suppress_nlminb_warnings Suppress uninformative warnings
+#'   from [stats::nlminb()] arising when a function evaluation is `NA`, which
+#'   are then replaced with `Inf` and avoided during estimation?
 #' @param ... Anything else. See the 'Control parameters' section of
 #'   [stats::nlminb()].
 #'
@@ -94,6 +97,7 @@ sdmTMBcontrol <- function(
   profile = FALSE,
   get_joint_precision = TRUE,
   parallel = getOption("sdmTMB.cores", 1L),
+  suppress_nlminb_warnings = TRUE,
   ...) {
 
   if (is_present(mgcv)) {

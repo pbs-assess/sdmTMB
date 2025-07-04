@@ -22,6 +22,7 @@ sdmTMBcontrol(
   profile = FALSE,
   get_joint_precision = TRUE,
   parallel = getOption("sdmTMB.cores", 1L),
+  suppress_nlminb_warnings = TRUE,
   ...
 )
 }
@@ -103,6 +104,10 @@ experimental at this stage.}}
 cores, as an example, use \code{TMB::openmp(n = 3, DLL = "sdmTMB")}. But be
 careful, because it's not always faster with more cores and there is
 definitely an upper limit.}
+
+\item{suppress_nlminb_warnings}{Suppress uninformative warnings
+from \code{\link[stats:nlminb]{stats::nlminb()}} arising when a function evaluation is \code{NA}, which
+are then replaced with \code{Inf} and avoided during estimation?}
 
 \item{...}{Anything else. See the 'Control parameters' section of
 \code{\link[stats:nlminb]{stats::nlminb()}}.}
