@@ -2,6 +2,13 @@
 
 ## Minor improvements and fixes
 
+* Suppress `nlminb()` warnings by default, which can usually be ignored by the
+  user and may be confusing. This can be controlled via
+  `sdmTMB(..., control = sdmTMBcontrol(suppress_nlminb_warnings = FALSE))`.
+
+* Only run Newton optimization steps if maximum absolute gradient is >= -1e6
+  to save time.
+
 * Fix reported gradient if Newton loops used in optimization. Previously,
   the gradients would have looked overly pessimistic for some models. #455
 
