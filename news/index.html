@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.2.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.2.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,8 @@
 <h2 class="pkg-version" data-toc-text="development version" id="sdmtmb-development-version">sdmTMB (development version)<a class="anchor" aria-label="anchor" href="#sdmtmb-development-version"></a></h2>
 <div class="section level3">
 <h3 id="minor-improvements-and-fixes-development-version">Minor improvements and fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-fixes-development-version"></a></h3>
-<ul><li><p>Only retain Newton update parameters if they improve the objective function. <a href="https://github.com/pbs-assess/sdmTMB/issues/455" class="external-link">#455</a></p></li>
+<ul><li><p>Change default in <code><a href="../reference/get_index.html">get_index()</a></code> etc. to <code>bias_correct = TRUE</code>. This is the recommended setting for final inference and speed improvements within TMB have made it more viable to include the bias correction by default. <a href="https://github.com/pbs-assess/sdmTMB/issues/456" class="external-link">#456</a></p></li>
+<li><p>Only retain Newton update parameters if they improve the objective function. <a href="https://github.com/pbs-assess/sdmTMB/issues/455" class="external-link">#455</a></p></li>
 <li><p>Suppress <code><a href="https://rdrr.io/r/stats/nlminb.html" class="external-link">nlminb()</a></code> warnings by default, which can usually be ignored by the user and may be confusing. This can be controlled via <code>sdmTMB(..., control = sdmTMBcontrol(suppress_nlminb_warnings = FALSE))</code>. This option now mirrors tinyVAST.</p></li>
 <li><p>Only run Newton updates if maximum absolute gradient is &gt;= 1e-9 to save time.</p></li>
 <li><p>Round time-varying AR(1) rho to 2 decimals in model printing/summary.</p></li>

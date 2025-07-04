@@ -9,7 +9,7 @@ area occupied"><meta property="og:image" content="https://pbs-assess.github.io/s
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.2.9004</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.2.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,14 +60,7 @@ area occupied</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_index</span><span class="op">(</span></span>
-<span>  <span class="va">obj</span>,</span>
-<span>  bias_correct <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
-<span>  area <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  silent <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  <span class="va">...</span></span>
-<span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_index</span><span class="op">(</span><span class="va">obj</span>, bias_correct <span class="op">=</span> <span class="cn">TRUE</span>, level <span class="op">=</span> <span class="fl">0.95</span>, area <span class="op">=</span> <span class="fl">1</span>, silent <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">get_index_split</span><span class="op">(</span></span>
 <span>  <span class="va">obj</span>,</span>
@@ -105,7 +98,10 @@ the helper function <code>get_index_split()</code>, an object from <code><a href
 
 
 <dt id="arg-bias-correct">bias_correct<a class="anchor" aria-label="anchor" href="#arg-bias-correct"></a></dt>
-<dd><p>Should bias correction be implemented <code><a href="https://rdrr.io/pkg/TMB/man/sdreport.html" class="external-link">TMB::sdreport()</a></code>?</p></dd>
+<dd><p>Should bias correction be implemented <code><a href="https://rdrr.io/pkg/TMB/man/sdreport.html" class="external-link">TMB::sdreport()</a></code>?
+This is recommended to be <code>TRUE</code> for any final analyses, but one may wish
+to set this to <code>FALSE</code> for slightly faster calculations while experimenting
+with models.</p></dd>
 
 
 <dt id="arg-level">level<a class="anchor" aria-label="anchor" href="#arg-level"></a></dt>
