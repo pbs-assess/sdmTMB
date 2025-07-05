@@ -21,7 +21,7 @@ legend("bottomleft",
 )
 
 #
-family <- list(
+.family <- list(
   "Encounter" = binomial(link = "cloglog"),
   "Count" = poisson(link = "log"),
   "Biomass_KG" = tweedie(link = "log")
@@ -45,19 +45,37 @@ red_snapper$var <- "logdens"
 fit <- tinyVAST(
   data = red_snapper,
   formula = formula,
-  sem = "logdens <-> logdens, sd_space",
-  dsem = "logdens <-> logdens, 0, sd_spacetime",
+  space_term = "logdens <-> logdens, sd_space",
+  spacetime_term = "logdens <-> logdens, 0, sd_spacetime",
   space_columns = c("Lon", "Lat"),
-  spatial_graph = mesh,
+  spatial_domain = mesh,
   time_column = "Year",
   distribution_column = "Data_type",
-  family = family,
-  variable_column = "var",
-  control = tinyVASTcontrol(silent = FALSE)
+  family = .family,
+  variable_column = "var"
 )
 
 # now do it in sdmTMB
 
 head(red_snapper)
+distribution_column <- "Data_type"
+data <- red_snapper
 
+# match(data[, distribution_column], names(.family))
 
+f <- .family[data[[distribution_column]]]
+.valid_family[unlist(lapply(f, `[[`, "family"))]
+.valid_link[unlist(lapply(f, `[[`, "link"))]
+
+f <- list(poisson(), poisson(), delta_gamma(), delta_gamma(type = "poisson-link"))
+ff <- lapply(f, `[[`, "family")
+ff <- lapply(ff, \(x) if (length(x) == 1) c(x, NA) else x)
+ff <- do.call(rbind, ff)
+
+.valid_family[ff[, 1]]
+.valid_family[ff[, 2]]
+as.integer(!is.na(ff[, 2]))
+as.integer(lapply(f, `[[`, "type") == "standard")
+as.integer(lapply(f, `[[`, "type") == "poisson_link_delta")
+
+.valid_link[family$link]
