@@ -61,6 +61,7 @@
 #' @param tweedie_p A `normal()` prior for the Tweedie power parameter. Note the
 #'   parameter has support `1 < tweedie_p < 2` so choose a mean appropriately.
 #' @param b `normal()` priors for the main population-level 'beta' effects.
+#' @param sigma_V `gamma_cv()` priors for any time-varying parameter SDs.
 #' @param threshold_breakpt_slope A `normal()` prior for the slope of the
 #'   linear (hockey stick) function.
 #' @param threshold_breakpt_cut A `normal()` prior for the cutoff of the
@@ -69,7 +70,7 @@
 #'   f(x) = 0.5.
 #' @param threshold_logistic_s95 A `normal()` prior for the parameter at which
 #'   f(x) = 0.95.
-#' @param threshold_logistic_smax A `normal()` prior for the paramter at which
+#' @param threshold_logistic_smax A `normal()` prior for the parameter at which
 #'   f(x) is maximized.
 #'
 #' @rdname priors
@@ -85,6 +86,7 @@ sdmTMBpriors <- function(
   ar1_rho = normal(NA, NA),
   tweedie_p = normal(NA, NA),
   b = normal(NA, NA),
+  sigma_V = gamma_cv(NA, NA),
   threshold_breakpt_slope = normal(NA, NA),
   threshold_breakpt_cut = normal(NA, NA),
   threshold_logistic_s50 = normal(NA, NA),
@@ -94,6 +96,7 @@ sdmTMBpriors <- function(
   assert_that(attr(matern_s, "dist") == "pc_matern")
   assert_that(attr(matern_st, "dist") == "pc_matern")
   assert_that(attr(phi, "dist") == "normal")
+  assert_that(attr(sigma_V, "dist") == "gamma")
   assert_that(attr(tweedie_p, "dist") == "normal")
   assert_that(attr(b, "dist") %in% c("normal", "mvnormal"))
   assert_that(attr(threshold_breakpt_slope, "dist") == "normal")
@@ -108,6 +111,7 @@ sdmTMBpriors <- function(
     ar1_rho = ar1_rho,
     tweedie_p = tweedie_p,
     b = b,
+    sigma_V = sigma_V,
     threshold_breakpt_slope = threshold_breakpt_slope,
     threshold_breakpt_cut = threshold_breakpt_cut,
     threshold_logistic_s50 = threshold_logistic_s50,
@@ -116,7 +120,7 @@ sdmTMBpriors <- function(
   )
 }
 
-#' @param location Location parameter(s).
+#' @param location Location parameter(s). Typically the mean.
 #' @param scale Scale parameter. For `normal()`/`halfnormal()`: standard
 #'   deviation(s). For `mvnormal()`: variance-covariance matrix.
 #' @export
@@ -137,6 +141,24 @@ normal <- function(location = 0, scale = 1) {
 #' halfnormal(0, 1)
 halfnormal <- function(location = 0, scale = 1) {
   normal(location, scale)
+}
+
+#' @export
+#' @rdname priors
+#' @param cv Coefficient of variation (SD/mean).
+#' @examples
+#' gamma_cv(0.5, 0.2)
+gamma_cv <- function(location, cv) {
+  assert_that(all(cv[!is.na(cv)] > 0))
+  assert_that(length(location) == length(cv))
+  assert_that(sum(is.na(location)) == sum(is.na(cv)))
+  ## dgamma(shape, scale) in TMB
+  ## check:
+  # mu <- 1.8;cv <- 0.3
+  # x <- rgamma(1e6, shape = 1/cv^2, scale = cv^2*mu)
+  # mean(x);sd(x) / mean(x)
+  x <- matrix(c(1/cv^2, cv^2*location), ncol = 2L)
+  `attr<-`(x, "dist", "gamma")
 }
 
 #' @export

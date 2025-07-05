@@ -116,7 +116,7 @@
 #' }
 
 dharma_residuals <- function(simulated_response, object, plot = TRUE,
-  return_DHARMa = FALSE, test_uniformity = TRUE, test_outliers = FALSE,
+  return_DHARMa = FALSE, test_uniformity = FALSE, test_outliers = FALSE,
   test_dispersion = FALSE, ...) {
 
   if (!requireNamespace("DHARMa", quietly = TRUE)) {

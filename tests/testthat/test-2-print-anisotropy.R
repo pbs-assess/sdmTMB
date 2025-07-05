@@ -57,7 +57,7 @@ test_that("Print anisotropy prints correctly", {
     share_range = FALSE,
     time = "year",
     anisotropy = TRUE,
-    control = sdmTMBcontrol(newton_loops = 2)
+    control = sdmTMBcontrol(nlminb_loops = 2, newton_loops = 0)
   )
 
   expect_output(cat(print_anisotropy(fit2)), regexp = "\\(spatial\\): ")
@@ -86,8 +86,7 @@ test_that("Print anisotropy prints correctly", {
     family = delta_gamma(),
     share_range = FALSE,
     time = "year",
-    anisotropy = TRUE,
-    control = sdmTMBcontrol(newton_loops = 1L)
+    anisotropy = TRUE
   )
 
   expect_output(cat(print_anisotropy(fit_dg_not_shared, m = 1)), regexp = "\\(spatial\\): 19")
@@ -95,4 +94,3 @@ test_that("Print anisotropy prints correctly", {
   expect_output(cat(print_anisotropy(fit_dg_not_shared, m = 2)), regexp = "\\(spatial\\): 0")
   expect_output(cat(print_anisotropy(fit_dg_not_shared, m = 2)), regexp = "\\(spatiotemporal\\): 9")
 })
-

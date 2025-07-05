@@ -123,7 +123,7 @@ m_cv$fold_loglik # fold log-likelihood
 m_cv$sum_loglik # total log-likelihood
 ```
 
-The `fold_loglik` values represent the sum of predictive log-likelihood values across observations for each fold, and the `sum_loglik` value represents the sum of `fold_loglik` values, representing the sum for the entire dataset. We can also calculate derived statistics based on the predictive values -- here, using examples with Root Mean Square Error (RMSE) and Mean Abolute Error (MAE).
+The `fold_loglik` values represent the sum of predictive log-likelihood values across observations for each fold, and the `sum_loglik` value represents the sum of `fold_loglik` values, representing the sum for the entire dataset. We can also calculate derived statistics based on the predictive values -- here, using examples with Root Mean Square Error (RMSE) and Mean Absolute Error (MAE).
 
 ```{r ex5, eval=TRUE}
 m <- sdmTMB_cv(

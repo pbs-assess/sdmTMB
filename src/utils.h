@@ -407,4 +407,37 @@ Type logit_invcloglog(Type x) {
   return logit_invcloglog(tx)[0];
 }
 
+// get sign of double, only for REPORT use, from tinyVAST
+template<class Type>
+Type sign(Type x){
+  return x / pow(pow(x,2.0),0.5);
+}
+
+// Deviance for the Tweedie
+// https://en.wikipedia.org/wiki/Tweedie_distribution#Properties
+// From tinyVAST:
+template<class Type>
+Type devresid_tweedie( Type y,
+                       Type mu,
+                       Type p ){
+  Type c1 = pow( y, 2.0-p ) / (1.0-p) / (2.0-p);
+  Type c2 = y * pow( mu, 1.0-p ) / (1.0-p);
+  Type c3 = pow( mu, 2.0-p ) / (2.0-p);
+  Type deviance = 2 * (c1 - c2 + c3 );
+  Type devresid = sign( y - mu ) * pow( deviance, 0.5 );
+  return devresid;
+}
+
+// From tinyVAST:
+template<class Type>
+Type devresid_nbinom2( Type y,
+                       Type logmu,
+                       Type logtheta ){
+  Type logp1 = dnbinom_robust( y, log(y + Type(1e-10)), Type(2.0) * log(y + Type(1e-10)) - logtheta, true );
+  Type logp2 = dnbinom_robust( y, logmu, Type(2.0) * logmu - logtheta, true );
+  Type deviance = 2 * (logp1 - logp2);
+  Type devresid = sign( y - exp(logmu) ) * pow( deviance, 0.5 );
+  return devresid;
+}
+
 }  // namespace sdmTMB

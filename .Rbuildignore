@@ -24,3 +24,5 @@ revdep/
 ^vignettes/articles$
 ^doc$
 ^Meta$
+^man/figures/logo.png$
+^man/figures/README-*

@@ -326,27 +326,17 @@ qres_gengamma <- function(object, y, mu, ...) {
 #' qqnorm(r)
 #' abline(0, 1)
 residuals.sdmTMB <- function(object,
-                             type = c("mle-mvn", "mle-eb", "mle-mcmc", "response", "pearson"),
+                             type = c("mle-mvn", "mle-eb", "mle-mcmc", "response", "pearson", "deviance"),
                              model = c(1, 2),
                              mcmc_samples = NULL,
                              qres_func = NULL,
                              ...) {
   type_was_missing <- missing(type)
-  type <- match.arg(type[[1]], choices = c("mle-mvn", "mle-laplace", "mle-eb", "mle-mcmc", "response", "pearson"))
+  type <- match.arg(type[[1]], choices = c("mle-mvn", "mle-laplace", "mle-eb", "mle-mcmc", "response", "pearson", "deviance"))
 
   # retrieve function that called this:
   sys_calls <- unlist(lapply(sys.calls(), deparse))
   visreg_call <- any(grepl("setupV", substr(sys_calls, 1, 7)))
-  if (!visreg_call) {
-    if (type_was_missing || type == "mle-laplace") {
-      msg <- paste0("Note what used to be the default sdmTMB residuals ",
-        "(before version 0.4.3.9005) are now `type = 'mle-eb'`. We recommend using ",
-        "the current default `'mle-mvn'`, which takes one sample from the approximate ",
-        "posterior of the random effects or `dharma_residuals()` using a similar ",
-        "approach.")
-      cli_inform(msg)
-    }
-  }
   if (type == "mle-laplace") type <- "mle-eb"
   model_missing <- FALSE
   if (identical(model, c(1, 2))) model_missing <- TRUE
@@ -392,7 +382,6 @@ residuals.sdmTMB <- function(object,
   if (!"offset" %in% names(object)) cli_abort("This model appears to have been fit with an older sdmTMB.")
   if (type %in% c("mle-eb", "response", "pearson")) {
     mu <- linkinv(predict(object, newdata = object$data, offset = object$offset)[[est_column]]) # not newdata = NULL
-    # }
   } else if (type == "mvn-laplace") {
     mu <- linkinv(predict(object, nsim = 1L, model = model, offset = object$offset)[, 1L, drop = TRUE])
   } else if (type == "mle-mcmc") {
@@ -422,6 +411,21 @@ residuals.sdmTMB <- function(object,
       offset = object$offset
     )
     mu <- linkinv(pred[, 1L, drop = TRUE])
+  } else if (type == "deviance") {
+    # if (is_delta(object)) {
+    #   cli_abort("Deviance residuals not implemented for delta models")
+    # }
+    if (!is_delta(object)) {
+      if (object$family$family=="binomial" && !all(object$tmb_data$size == 1)) {
+        cli_abort("Deviance residuals not implemented for binomial family with size > 1.")
+      }
+    }
+    report <- object$tmb_obj$report(object$tmb_obj$env$last.par.best)
+    resids <- report$devresid[, model, drop = TRUE]
+    if (all(resids == 0)) {
+      cli_abort("Deviance residuals not implemented for this family.")
+    }
+    return(resids)
   } else {
     cli_abort("residual type not implemented")
   }

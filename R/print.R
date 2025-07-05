@@ -96,8 +96,10 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
     bs_se <- round(sr_se$bs[, m], 2L)
     bs <- round(sr_est$bs[, m], 2L)
     sm <- parse_smoothers(formula = x$formula[[m]], data = x$data)
-    sm_names <- unlist(lapply(sm$Zs, function(x) attr(x, "s.label")))
-    sm_names <- gsub("\\)$", "", gsub("s\\(", "", sm_names))
+    sm_names_orig <- unlist(lapply(sm$Zs, function(x) attr(x, "s.label")))
+    sm_names <- gsub("s\\(", "", sm_names_orig)
+    sm_names <- gsub("t2\\(", "", sm_names)
+    sm_names <- gsub("\\)$", "", sm_names)
     sm_names_bs <- paste0("s", sm_names)
     sm_classes <- unlist(sm$classes)
     xx <- lapply(sm_names_bs, function(.x) { # split out 2D + smooths
@@ -118,11 +120,12 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
       if (nrow(mm_sm) > 0L) {
         msg <- c(
           "Smoother fixed effect matrix names could not be retrieved.",
-          "This could be from setting m != 2 in s() or other unanticipated s() arguments.",
+          "This could be from using t2(), setting m != 2 in s(), or other unanticipated s() arguments.",
           "This does not affect model fitting.",
-          "We'll use generic covariate names ('scovariate') here intead."
+          "We'll use generic covariate names ('scovariate') here instead.",
+          ""
         )
-        if (!silent) cli_warn(msg)
+        if (!silent) cli_inform(msg)
         row.names(mm_sm) <- paste0("scovariate-", seq_len(nrow(mm_sm)))
       } else {
         mm_sm <- NULL
@@ -221,6 +224,7 @@ print_time_varying <- function(x, m = 1) {
     p <- tidy(x, effects = "ran_pars", model = m, silent = TRUE)
     if(any(p$term == "rho_time")) {
       rho_tv <- as.matrix(p[p$term=="rho_time",c("estimate","std.error")])
+      rho_tv[] <- round(rho_tv, 2L)
       colnames(rho_tv) <- colnames(mm_tv)
       row.names(rho_tv) <- paste("rho", tv_names, sep = "-")
       mm_tv <- rbind(mm_tv, rho_tv)
@@ -259,9 +263,10 @@ print_range <- function(x, m = 1L, digits = 2L) {
   range_text
 }
 
-print_anisotropy <- function(x, m = 1L, digits = 1L) {
+print_anisotropy <- function(x, m = 1L, digits = 1L, return_dat = FALSE) {
   aniso_df <- plot_anisotropy(x, return_data = TRUE)
   aniso_df$degree <- aniso_df$angle * 180 / pi
+  aniso_df_st <- aniso_df_sp <- NULL
 
   if (isTRUE(x$family$delta)) {
     aniso_df_sp <- aniso_df[aniso_df$random_field == "spatial" &
@@ -310,6 +315,7 @@ print_anisotropy <- function(x, m = 1L, digits = 1L) {
   if (x$tmb_data$share_range[m] == 0L && x$spatial[m] == "on" && x$spatiotemporal[m] != "off") {
     range_text <- paste0(aniso_df_sp[[4]], aniso_df_st[[4]])
   }
+  if (return_dat) return(list(sp = aniso_df_sp, st = aniso_df_st))
   range_text
 }
 
@@ -376,7 +382,7 @@ print_one_model <- function(x, m = 1, edf = FALSE, silent = FALSE) {
   }
   info <- print_model_info(x)
   main <- print_main_effects(x, m = m)
-  smooth <- print_smooth_effects(x, m = m, edf = .edf, silent = silent)
+  smooth <- print_smooth_effects(x, m = m, edf = .edf, silent = TRUE)
   # iid_re <- print_iid_re(x, m = m)
   re <- print_int_slope_re(x, m = m)
   tv <- print_time_varying(x, m = m)
@@ -394,7 +400,7 @@ print_one_model <- function(x, m = 1, edf = FALSE, silent = FALSE) {
   }
 
   cat("Conditional model:\n")
-  print(rbind(main, smooth$smooth_effects))
+  print(main)
   cat("\n")
 
   if (!is.null(smooth$smooth_sds)) {

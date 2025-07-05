@@ -203,6 +203,33 @@ ranef.sdmTMB <- function(object, ...) {
   model_list
 }
 
+#' @importFrom stats deviance
+#' @method deviance sdmTMB
+#' @importFrom stats residuals
+#' @export
+deviance.sdmTMB <- function(object, ...) {
+  implemented <- c("poisson", "Gamma", "binomial",
+    "gaussian", "lognormal", "tweedie", "nbinom1", "nbinom2")
+  if (!is_delta(object)) {
+    if (!object$family$family %in% implemented) {
+      cli_abort("Deviance not implemented for the fitted family")
+    }
+  } else {
+    if (!object$family$family[[2]] %in% implemented) {
+      cli_abort("Deviance not implemented for the fitted family")
+    }
+  }
+  if (is_delta(object)) {
+    r1 <- residuals(object, type = "deviance", model = 1)
+    r2 <- residuals(object, type = "deviance", model = 2)
+    r <- sum(r1^2 + r2^2)
+  } else {
+    r <- residuals(object, type = "deviance")
+    r <- sum(r^2)
+  }
+  r
+}
+
 #' @importFrom stats df.residual
 #' @method df.residual sdmTMB
 #' @export

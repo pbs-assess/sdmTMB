@@ -43,18 +43,14 @@ run_extra_optimization <- function(object,
     tmb_opt[["iterations"]] <- tmb_opt[["iterations"]] + temp[["iterations"]]
     tmb_opt[["evaluations"]] <- tmb_opt[["evaluations"]] + temp[["evaluations"]]
   }
-  for (i in seq_len(newton_loops)) {
-    g <- as.numeric(new_obj$tmb_obj$gr(tmb_opt$par))
-    h <- stats::optimHess(
-      tmb_opt$par,
-      fn = new_obj$tmb_obj$fn,
-      gr = new_obj$tmb_obj$gr,
-      lower = object$lower,
-      upper = object$upper
-    )
-    tmb_opt$par <- tmb_opt$par - solve(h, g)
-    tmb_opt$objective <- new_obj$tmb_obj$fn(tmb_opt$par)
+
+  if (any(!is.infinite(object$upper)) || any(!is.infinite(object$lower))) {
+    if (newton_loops > 0) {
+      cli_inform("Upper or lower limits were set. `stats::optimHess()` will ignore these limits. Set `control = sdmTMBcontrol(newton_loops = 0)` to avoid the `stats::optimHess()` optimization if desired.")
+    }
   }
+
+  tmb_opt <- run_newton_loops(newton_loops = newton_loops, opt = tmb_opt, obj = new_obj$tmb_obj, silent = FALSE)
   new_obj$model <- tmb_opt
   new_obj$sd_report <- TMB::sdreport(new_obj$tmb_obj,
     getJointPrecision = "jointPrecision" %in% names(object$sd_report))
@@ -62,4 +58,31 @@ run_extra_optimization <- function(object,
   new_obj$gradients <- conv$final_grads
   new_obj$bad_eig <- conv$bad_eig
   new_obj
+}
+
+run_newton_loops <- function(newton_loops, opt, obj, silent = TRUE) {
+  if (newton_loops > 0) {
+    if (!silent) cli_inform("attempting to improve convergence with a Newton update")
+    for (i in seq_len(newton_loops)) {
+      g <- as.numeric(obj$gr(opt$par))
+      if (max(abs(g)) < 1e-9) {
+        if (!silent) cli_inform(c("maximum absolute gradient is already < 1e-9;",
+          "skipping any remaining Newton updates for speed"))
+        break
+      }
+      h <- stats::optimHess(opt$par, fn = obj$fn, gr = obj$gr)
+      new_par <- opt$par - solve(h, g)
+      new_objective <- obj$fn(new_par) # also updates obj$env$last.par and obj$env$last.par.best!
+      if (new_objective < opt$objective) {
+        if (!silent) cli_inform("accepting parameters from Newton update")
+        opt$par <- new_par
+        opt$objective <- new_objective
+      } else {
+        if (!silent) cli_inform(c("retaining parameters from before Newton update",
+          "and skipping further Newton updates"))
+        break
+      }
+    }
+  }
+  opt
 }

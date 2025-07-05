@@ -692,11 +692,13 @@ sdmTMB <- function(
   upper <- control$upper
   get_joint_precision <- control$get_joint_precision
   upr <- control$censored_upper
+  suppress_nlminb_warnings <- control$suppress_nlminb_warnings
 
   dot_checks <- c(
     "lower", "upper", "profile", "parallel", "censored_upper",
     "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",
-    "newton_loops", "start", "map", "get_joint_precision", "normalize"
+    "newton_loops", "start", "map", "get_joint_precision", "normalize",
+    "suppress_nlminb_warnings"
   )
   .control <- control
   # FIXME; automate this from sdmTMcontrol args?
@@ -1054,8 +1056,10 @@ sdmTMB <- function(
   }
 
   priors_b <- priors$b
+  priors_sigma_V <- priors$sigma_V
   .priors <- priors
   .priors$b <- NULL # removes this in the list, so not passed in as data
+  .priors$sigma_V <- NULL # removes this in the list, so not passed in as data
   if (nrow(priors_b) == 1L && ncol(X_ij[[1]]) > 1L) { # TODO change hard coded index on X_ij
     if (!is.na(priors_b[[1]])) {
       message("Expanding `b` priors to match model matrix.")
@@ -1087,6 +1091,14 @@ sdmTMB <- function(
     priors_b_Sigma <- as.matrix(Sigma[not_na, not_na])
   }
 
+  # expand sigma_V priors if needed
+  if (nrow(priors_sigma_V) == 1L && ncol(X_rw_ik) > 1L) {
+    priors_sigma_V <- t(replicate(ncol(X_rw_ik), priors_sigma_V, simplify = "matrix"))
+  }
+  if (nrow(priors_sigma_V) != ncol(X_rw_ik)) {
+    cli_abort("sigma_V (time-varying SD) priors do not match the fitted model.")
+  }
+
   if (!"A_st" %in% names(spde)) cli_abort("`mesh` was created with an old version of `make_mesh()`.")
   if (delta) y_i <- cbind(ifelse(y_i > 0, 1, 0), ifelse(y_i > 0, y_i, NA_real_))
   if (!delta) y_i <- matrix(y_i, ncol = 1L)
@@ -1115,6 +1127,7 @@ sdmTMB <- function(
     proj_offset_i = 0,
     A_st = spde$A_st,
     sim_re = if ("sim_re" %in% names(experimental)) as.integer(experimental$sim_re) else rep(0L, 6),
+    sim_obs = 1L,
     A_spatial_index = spde$sdm_spatial_id - 1L,
     year_i = time_df$year_i[match(data[[time]], time_df$time_from_data)],
     ar1_fields = ar1_fields,
@@ -1146,6 +1159,7 @@ sdmTMB <- function(
     priors_b_index = not_na - 1L,
     priors_b_mean = priors_b[not_na, 1],
     priors_b_Sigma = priors_b_Sigma,
+    priors_sigma_V = priors_sigma_V,
     priors = as.numeric(unlist(.priors)),
     share_range = as.integer(if (length(share_range) == 1L) rep(share_range, 2L) else share_range),
     include_spatial = as.integer(include_spatial), # changed later
@@ -1572,14 +1586,20 @@ sdmTMB <- function(
     tmb_opt <- list(par = tmb_obj$par, objective = tmb_obj$fn(tmb_obj$par))
   }
 
+  if (isTRUE(suppress_nlminb_warnings)) {
+    maybe_suppress_warnings <- suppressWarnings
+  } else {
+    maybe_suppress_warnings <- I
+  }
+
   if (nlminb_loops > 1) {
     if (!silent) cli_inform("running extra nlminb optimization\n")
     for (i in seq(2, nlminb_loops, length = max(0, nlminb_loops - 1))) {
       temp <- tmb_opt[c("iterations", "evaluations")]
-      tmb_opt <- stats::nlminb(
+      tmb_opt <- maybe_suppress_warnings(stats::nlminb(
         start = tmb_opt$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
         control = .control, lower = lim$lower, upper = lim$upper
-      )
+      ))
       tmb_opt[["iterations"]] <- tmb_opt[["iterations"]] + temp[["iterations"]]
       tmb_opt[["evaluations"]] <- tmb_opt[["evaluations"]] + temp[["evaluations"]]
     }
@@ -1589,15 +1609,8 @@ sdmTMB <- function(
       cli_inform("Upper or lower limits were set. `stats::optimHess()` will ignore these limits. Set `control = sdmTMBcontrol(newton_loops = 0)` to avoid the `stats::optimHess()` optimization if desired.")
     }
   }
-  if (newton_loops > 0) {
-    if (!silent) cli_inform("attempting to improve convergence with optimHess\n")
-    for (i in seq_len(newton_loops)) {
-      g <- as.numeric(tmb_obj$gr(tmb_opt$par))
-      h <- stats::optimHess(tmb_opt$par, fn = tmb_obj$fn, gr = tmb_obj$gr)
-      tmb_opt$par <- tmb_opt$par - solve(h, g)
-      tmb_opt$objective <- tmb_obj$fn(tmb_opt$par)
-    }
-  }
+
+  tmb_opt <- run_newton_loops(newton_loops = newton_loops, tmb_opt, tmb_obj, silent)
   check_bounds(tmb_opt$par, lim$lower, lim$upper)
 
   if (!silent) cli_inform("running TMB sdreport\n")

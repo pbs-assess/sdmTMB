@@ -23,7 +23,6 @@ Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett, J.T. Thorson. 2024. sdm
 - [Overview](#overview)
 - [Getting help](#getting-help)
 - [Citation](#citation)
-- [Related software](#related-software)
 - [Basic use](#basic-use)
 - [Advanced functionality](#advanced-functionality)
   - [Time-varying coefficients](#time-varying-coefficients)
@@ -44,6 +43,7 @@ Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett, J.T. Thorson. 2024. sdm
   - [Turning off random fields](#turning-off-random-fields)
   - [Using a custom fmesher mesh](#using-a-custom-fmesher-mesh)
   - [Barrier meshes](#barrier-meshes)
+- [Related software](#related-software)
 
 ## Installation
 
@@ -59,15 +59,25 @@ installed, the development version is recommended and can be installed:
 
 ``` r
 # install.packages("pak")
-pak::pkg_install("pbs-assess/sdmTMB", dependencies = TRUE)
+pak::pak("pbs-assess/sdmTMB", dependencies = TRUE)
 ```
 
 There are some extra utilities in the
 [sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra) package.
 
-**Importantly**, it is recommended to use an optimized BLAS library, which will result in major speed improvements for TMB (and other) models in R (e.g., often 8-fold speed increases for sdmTMB models).
-Suggested installation instructions for [Mac users](https://www.mail-archive.com/r-sig-mac@r-project.org/msg06199.html), [Linux users](https://prdm0.github.io/ropenblas/), [Windows users](https://github.com/david-cortes/R-openblas-in-windows), and [Windows users without admin privileges](https://gist.github.com/seananderson/08a51e296a854f227a908ddd365fb9c1).
-To check that you've successfully linked the optimized BLAS, start a new session and run:
+For large models, it is recommended to use an optimized BLAS library,
+which will result in major speed improvements for TMB (and other) models
+in R (e.g., often 8-fold speed increases for sdmTMB models). Suggested
+installation instructions for [Mac
+users](https://www.mail-archive.com/r-sig-mac@r-project.org/msg06199.html)
+(other than R 4.5.0) or [with OpenBLAS on a
+Mac](https://gist.github.com/seananderson/3c6cbf640ba566ce936c79442b9a6068),
+[Linux users](https://prdm0.github.io/ropenblas/), [Windows
+users](https://github.com/david-cortes/R-openblas-in-windows), and
+[Windows users without admin
+privileges](https://gist.github.com/seananderson/08a51e296a854f227a908ddd365fb9c1).
+To check that you’ve successfully linked the optimized BLAS, start a new
+session and run:
 
 ``` r
 m <- 1e4; n <- 1e3; k <- 3e2
@@ -76,21 +86,22 @@ system.time(X %*% Y)
 ```
 
 The result (‘elapsed’) should take a fraction of a second (e.g., 0.03
-s), not multiple seconds.
+s), not \> 1 second.
 
 ## Overview
 
 Analyzing geostatistical data (coordinate-referenced observations from
-some underlying spatial process) is becoming increasingly common in
-ecology. sdmTMB implements geostatistical spatial and spatiotemporal
-GLMMs using TMB for model fitting and R-INLA to set up SPDE (stochastic
-partial differential equation) matrices. One common application is for
-species distribution models (SDMs), hence the package name. The goal of
-sdmTMB is to provide a fast, flexible, and user-friendly
-interface—similar to the popular R package glmmTMB—but with a focus on
-spatial and spatiotemporal models with an SPDE approach. We extend the
-generalized linear mixed models (GLMMs) familiar to ecologists to
-include the following optional features:
+some underlying spatial process) is becoming increasingly common in many
+fields. sdmTMB implements geostatistical spatial and spatiotemporal
+GLMMs using [TMB](https://cran.r-project.org/package=TMB) for model
+fitting and [fmesher](https://CRAN.R-project.org/package=fmesher) to set
+up SPDE (stochastic partial differential equation) matrices. One common
+application is for species distribution models (SDMs), hence the package
+name. The goal of sdmTMB is to provide a fast, flexible, and
+user-friendly interface—similar to the popular R package glmmTMB—but
+with a focus on spatial and spatiotemporal models with an SPDE approach.
+We extend common generalized linear mixed models (GLMMs) to include the
+following optional features:
 
 - spatial random fields
 - spatiotemporal random fields that may be independent by year or
@@ -102,16 +113,18 @@ include the following optional features:
 - spatially varying coefficient models (SVCs)
 - interpolation or forecasting over missing or future time slices
 - a wide range of families: all standard R families plus `tweedie()`,
-  `nbinom1()`, `nbinom2()`, `lognormal()`, and `student()`, plus some
-  truncated and censored families
+  `nbinom1()`, `nbinom2()`, `lognormal()`, `student()`, `gengamma()`,
+  plus some truncated and censored families
 - delta/hurdle models including `delta_gamma()`, `delta_lognormal()`,
   and `delta_truncated_nbinom2()`
 
-Estimation is performed in sdmTMB via maximum marginal likelihood with
-the objective function calculated in TMB and minimized in R via
-`stats::nlminb()` with the random effects integrated over via the
-Laplace approximation. The sdmTMB package also allows for models to be
-passed to Stan via tmbstan, allowing for Bayesian model estimation.
+Estimation is via maximum marginal likelihood with the objective
+function calculated in [TMB](https://cran.r-project.org/package=TMB) and
+minimized in R via `stats::nlminb()` with the random effects integrated
+over via the Laplace approximation. The sdmTMB package also allows for
+models to be passed to Stan via
+[tmbstan](https://cran.r-project.org/package=tmbstan), allowing for
+Bayesian model estimation.
 
 See
 [`?sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB.html)
@@ -119,7 +132,8 @@ and
 [`?predict.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/predict.sdmTMB.html)
 for the most complete examples. Also see the vignettes (‘Articles’) on
 the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html)
-and the preprint and appendices linked to below.
+and the [preprint](https://doi.org/10.1101/2022.03.24.485545) listed
+below.
 
 ## Getting help
 
@@ -136,61 +150,28 @@ do that.
 For bugs or feature requests, please post in the [issue
 tracker](https://github.com/pbs-assess/sdmTMB/issues).
 
-[Slides](https://pbs-assess.github.io/sdmTMB-teaching/noaa-psaw-2022/)
-and
+There is [material](https://github.com/pbs-assess/sdmTMB-teaching) from
+past workshops on sdmTMB and
 [recordings](https://www.youtube.com/channel/UCYoFG51RjJVx7m9mZGaj-Ng/videos)
-from a workshop on sdmTMB.
+from some of those workshops.
 
 ## Citation
 
-To cite sdmTMB in publications use:
+To cite sdmTMB in publications, please use:
 
 ``` r
 citation("sdmTMB")
 ```
 
 Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett., J.T. Thorson.
-2024. sdmTMB: an R package for fast, flexible, and user-friendly
+2025. sdmTMB: an R package for fast, flexible, and user-friendly
 generalized linear mixed effects models with spatial and spatiotemporal
-random fields. bioRxiv 2022.03.24.485545; doi:
-<https://doi.org/10.1101/2022.03.24.485545>
+random fields. In press at Journal of Statistical Software. bioRxiv
+preprint: <https://doi.org/10.1101/2022.03.24.485545>.
 
-A list of (known) publications that use sdmTMB can be found
-[here](https://github.com/pbs-assess/sdmTMB/wiki/Publications-using-sdmTMB).
+A list of known publications that use sdmTMB can be found
+[here](https://github.com/pbs-assess/sdmTMB/tree/main/scratch/citations).
 Please use the above citation so we can track publications.
-
-## Related software
-
-sdmTMB is heavily inspired by the
-[VAST](https://github.com/James-Thorson-NOAA/VAST) R package:
-
-Thorson, J.T. 2019. Guidance for decisions using the Vector
-Autoregressive Spatio-Temporal (VAST) package in stock, ecosystem,
-habitat and climate assessments. Fisheries Research 210: 143–161.
-<https://doi.org/10.1016/j.fishres.2018.10.013>.
-
-and the [glmmTMB](https://github.com/glmmTMB/glmmTMB) R package:
-
-Brooks, M.E., Kristensen, K., van Benthem, K.J., Magnusson, A., Berg,
-C.W., Nielsen, A., Skaug, H.J., Maechler, M., and Bolker, B.M. 2017.
-glmmTMB balances speed and flexibility among packages for zero-inflated
-generalized linear mixed modeling. The R Journal 9(2): 378–400.
-<https://doi.org/10.32614/rj-2017-066>.
-
-[INLA](https://www.r-inla.org/) and
-[inlabru](https://sites.google.com/inlabru.org/inlabru) can fit many of
-the same models as sdmTMB (and many more) in an approximate Bayesian
-inference framework.
-
-[mgcv](https://cran.r-project.org/package=mgcv) can fit similar
-SPDE-based Gaussian random field models with code included in [Miller et
-al. (2019)](https://doi.org/10.1007/s13253-019-00377-z).
-
-A table in the [sdmTMB
-preprint](https://doi.org/10.1101/2022.03.24.485545) describes
-functionality and timing comparisons between sdmTMB, VAST, INLA/inlabru,
-and mgcv and the discussion makes suggestions about when you might
-choose one package over another.
 
 ## Basic use
 
@@ -231,7 +212,7 @@ mesh <- make_mesh(pcod, xy_cols = c("X", "Y"), cutoff = 10)
 ```
 
 Here, `cutoff` defines the minimum allowed distance between points in
-the units of `X` and `Y` (km). Alternatively, we could have created any
+the units of `X` and `Y` (km). Alternatively, we could have created a
 mesh via the fmesher or INLA packages and supplied it to `make_mesh()`.
 We can inspect our mesh object with the associated plotting method
 `plot(mesh)`.
@@ -258,6 +239,7 @@ fit
 #> Data: pcod
 #> Family: tweedie(link = 'log')
 #>  
+#> Conditional model:
 #>             coef.est coef.se
 #> (Intercept)     2.37    0.21
 #> sdepth          0.62    2.53
@@ -288,13 +270,11 @@ We can extract parameters as a data frame:
 
 ``` r
 tidy(fit, conf.int = TRUE)
-#> # A tibble: 1 × 5
+#> # A tibble: 2 × 5
 #>   term        estimate std.error conf.low conf.high
 #>   <chr>          <dbl>     <dbl>    <dbl>     <dbl>
 #> 1 (Intercept)     2.37     0.215     1.95      2.79
-```
-
-``` r
+#> 2 sdepth          0.62     2.53     -4.34      5.58
 tidy(fit, effects = "ran_pars", conf.int = TRUE)
 #> # A tibble: 4 × 5
 #>   term      estimate std.error conf.low conf.high
@@ -570,9 +550,6 @@ head(sim_dat)
 #> 4 0.0303     0  -0.282  2.05 0.718        2             1
 #> 5 0.0404     0  -0.325  1.96 0.675        3             1
 #> 6 0.0505     0  -0.367  1.88 0.633        2             1
-```
-
-``` r
 
 # sample 200 points for fitting:
 set.seed(1)
@@ -679,9 +656,6 @@ m_cv <- sdmTMB_cv(
 )
 #> Running fits with `future.apply()`.
 #> Set a parallel `future::plan()` to use parallel processing.
-```
-
-``` r
 # Sum of log likelihoods of left-out data:
 m_cv$sum_loglik
 #> [1] -6756.28
@@ -749,15 +723,12 @@ fit_glm <- glm(
 )
 
 tidy(fit_sdmTMB)
-#> # A tibble: 3 × 3
-#>   term                   estimate std.error
-#>   <chr>                     <dbl>     <dbl>
-#> 1 (Intercept)              -0.426    0.0573
-#> 2 poly(depth_scaled, 2)1  -31.7      3.03  
-#> 3 poly(depth_scaled, 2)2  -66.9      4.09
-```
-
-``` r
+#> # A tibble: 3 × 5
+#>   term                   estimate std.error conf.low conf.high
+#>   <chr>                     <dbl>     <dbl>    <dbl>     <dbl>
+#> 1 (Intercept)              -0.426    0.0573   -0.538    -0.314
+#> 2 poly(depth_scaled, 2)1  -31.7      3.03    -37.6     -25.8  
+#> 3 poly(depth_scaled, 2)2  -66.9      4.09    -74.9     -58.9
 broom::tidy(fit_glm)
 #> # A tibble: 3 × 5
 #>   term                   estimate std.error statistic  p.value
@@ -796,3 +767,31 @@ fit <- sdmTMB(
 A barrier mesh limits correlation across barriers (e.g., land or water).
 See `add_barrier_mesh()` in
 [sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra).
+
+## Related software
+
+sdmTMB is heavily inspired by the
+[VAST](https://github.com/James-Thorson-NOAA/VAST) and the
+[glmmTMB](https://github.com/glmmTMB/glmmTMB) R packages.
+
+The newer [tinyVAST](https://github.com/vast-lib/tinyVAST) R package can
+fit many of the models that VAST and sdmTMB can with an interface
+similar to sdmTMB. Generally, we recommend tinyVAST for multivariate
+applications or for (dynamic) structural equation modelling with
+optional spatial and/or spatiotemporal components.
+
+[INLA](https://www.r-inla.org/) and
+[inlabru](https://sites.google.com/inlabru.org/inlabru) can fit many of
+the same models as sdmTMB (and more) in an approximate Bayesian
+inference framework.
+
+[mgcv](https://cran.r-project.org/package=mgcv) can fit similar
+SPDE-based Gaussian Markov random field models with code included in
+[Miller et al. (2019)](https://doi.org/10.1007/s13253-019-00377-z), but
+this will be slower for large spatial datasets.
+
+A table in the [sdmTMB
+preprint](https://doi.org/10.1101/2022.03.24.485545) describes
+functionality and timing comparisons between sdmTMB, VAST, INLA/inlabru,
+and mgcv and the discussion makes suggestions about when you might
+choose one package over another.

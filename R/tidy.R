@@ -157,7 +157,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   }
 
   if (x$tmb_data$has_smooths) {
-    p <- print_smooth_effects(x)
+    p <- print_smooth_effects(x, silent = FALSE, m = model)
     mm <- p$smooth_effects
     out <- rbind(
       out,
@@ -292,7 +292,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   }
 
   if (sum(x$tmb_data$n_re_groups) > 0L) { # we have random intercepts/slopes
-    temp <- get_re_tidy_list(x, crit = crit)
+    temp <- get_re_tidy_list(x, crit = crit, model = model)
     cov_mat_list <- list(est = temp$cov_matrices)
     if(conf.int) {
       cov_mat_list[["lo"]] <- temp$cov_matrices_lo
@@ -329,8 +329,6 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     }
   }
 
-
-
   out <- unique(out) # range can be duplicated
   out_re <- unique(out_re)
 
@@ -365,7 +363,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
 #   crit = stats::qnorm(1 - (1 - conf.level) / 2)
 # @importFrom stats aggregate
 
-get_re_tidy_list <- function(x, crit) {
+get_re_tidy_list <- function(x, crit, model = 1) {
   re_b_dfs <- add_model_index(x$split_formula, "re_b_df")
   re_b_df <- do.call(rbind, re_b_dfs)
   names(re_b_df)[names(re_b_df) == "group_indices"] <- "group_id"
@@ -452,20 +450,24 @@ get_re_tidy_list <- function(x, crit) {
   re_cov_df$conf.high[sds] <- est[sds] + crit * sd_est[sds]
 
   re_cov_df <- re_cov_df[, c("rows", "cols", "model", "group", "estimate", "std.error", "conf.low", "conf.high")]
-  cov_matrices_lo = create_cov_matrices(re_cov_df, col_name = "conf.low")
-  cov_matrices_hi = create_cov_matrices(re_cov_df, col_name = "conf.high")
-  list(out_ranef = out_ranef, cov_matrices = create_cov_matrices(re_cov_df),
-       cov_matrices_lo = create_cov_matrices(re_cov_df, col_name = "conf.low"),
-       cov_matrices_hi = create_cov_matrices(re_cov_df, col_name = "conf.high"))
+  cov_matrices_lo = create_cov_matrices(re_cov_df, col_name = "conf.low", model = model)
+  cov_matrices_hi = create_cov_matrices(re_cov_df, col_name = "conf.high", model = model)
+  cov_matrices_est = create_cov_matrices(re_cov_df, model = model)
+  list(
+    out_ranef = out_ranef,
+    cov_matrices = cov_matrices_est,
+    cov_matrices_lo = cov_matrices_lo,
+    cov_matrices_hi = cov_matrices_hi
+  )
 }
 
-create_cov_matrices <- function(df, col_name = "estimate") {
+create_cov_matrices <- function(df, col_name = "estimate", model = 1) {
   # Initialize an empty list to store the covariance matrices
   cov_matrices <- list()
 
   # Group by model and group, and then create a covariance matrix for each group
-  for (model in unique(df$model)) {
-    model_df <- subset(df, model == model)
+  for (m in model) {
+    model_df <- df[df$model == m,,drop=FALSE]
     for (group in unique(model_df$group)) {
       group_df <- model_df[model_df$group == group,,drop=FALSE]
       # Create an empty matrix
@@ -475,7 +477,7 @@ create_cov_matrices <- function(df, col_name = "estimate") {
         cov_matrix[group_df$rows[i], group_df$cols[i]] <- group_df[[col_name]][i]
       }
       # Add the matrix to the list
-      cov_matrices[[paste("Model", model, "Group", group)]] <- cov_matrix
+      cov_matrices[[paste("Model", m, "Group", group)]] <- cov_matrix
     }
   }
   cov_matrices

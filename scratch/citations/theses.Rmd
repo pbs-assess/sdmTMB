@@ -1,0 +1,14 @@
+---
+title: "Thesis chapters"
+bibliography: theses.bib
+nocite: '@*'
+output:
+  md_document: 
+    pandoc_args: ["--wrap=preserve"]
+csl: apa-cv.csl
+---
+
+# Thesis chapters
+
+::: {#refs}
+:::

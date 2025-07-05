@@ -4,6 +4,7 @@
 \alias{sdmTMBpriors}
 \alias{normal}
 \alias{halfnormal}
+\alias{gamma_cv}
 \alias{mvnormal}
 \alias{pc_matern}
 \title{Prior distributions}
@@ -15,6 +16,7 @@ sdmTMBpriors(
   ar1_rho = normal(NA, NA),
   tweedie_p = normal(NA, NA),
   b = normal(NA, NA),
+  sigma_V = gamma_cv(NA, NA),
   threshold_breakpt_slope = normal(NA, NA),
   threshold_breakpt_cut = normal(NA, NA),
   threshold_logistic_s50 = normal(NA, NA),
@@ -25,6 +27,8 @@ sdmTMBpriors(
 normal(location = 0, scale = 1)
 
 halfnormal(location = 0, scale = 1)
+
+gamma_cv(location, cv)
 
 mvnormal(location = 0, scale = diag(length(location)))
 
@@ -50,6 +54,8 @@ parameter has support \verb{1 < tweedie_p < 2} so choose a mean appropriately.}
 
 \item{b}{\code{normal()} priors for the main population-level 'beta' effects.}
 
+\item{sigma_V}{\code{gamma_cv()} priors for any time-varying parameter SDs.}
+
 \item{threshold_breakpt_slope}{A \code{normal()} prior for the slope of the
 linear (hockey stick) function.}
 
@@ -62,13 +68,15 @@ f(x) = 0.5.}
 \item{threshold_logistic_s95}{A \code{normal()} prior for the parameter at which
 f(x) = 0.95.}
 
-\item{threshold_logistic_smax}{A \code{normal()} prior for the paramter at which
+\item{threshold_logistic_smax}{A \code{normal()} prior for the parameter at which
 f(x) is maximized.}
 
-\item{location}{Location parameter(s).}
+\item{location}{Location parameter(s). Typically the mean.}
 
 \item{scale}{Scale parameter. For \code{normal()}/\code{halfnormal()}: standard
 deviation(s). For \code{mvnormal()}: variance-covariance matrix.}
+
+\item{cv}{Coefficient of variation (SD/mean).}
 
 \item{range_gt}{A value one expects the spatial or spatiotemporal range is
 \strong{g}reater \strong{t}han with \code{1 - range_prob} probability.}
@@ -126,6 +134,7 @@ model fit to a similar system but with more spatial information in the data.
 \examples{
 normal(0, 1)
 halfnormal(0, 1)
+gamma_cv(0.5, 0.2)
 mvnormal(c(0, 0))
 pc_matern(range_gt = 5, sigma_lt = 1)
 plot_pc_matern(range_gt = 5, sigma_lt = 1)

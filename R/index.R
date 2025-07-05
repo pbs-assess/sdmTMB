@@ -2,7 +2,12 @@
 #' area occupied
 #'
 #' @param obj Output from [predict.sdmTMB()] with `return_tmb_object = TRUE`.
+#'   Alternatively, if [sdmTMB()] was called with `do_index = TRUE` or if using
+#'   the helper function [get_index_split()], an object from [sdmTMB()].
 #' @param bias_correct Should bias correction be implemented [TMB::sdreport()]?
+#'   This is recommended to be `TRUE` for any final analyses, but one may wish
+#'   to set this to `FALSE` for slightly faster calculations while experimenting
+#'   with models.
 #' @param level The confidence level.
 #' @param area Grid cell area. A vector of length `newdata` from
 #'   [predict.sdmTMB()] *or* a value of length 1 which will be repeated
@@ -68,13 +73,13 @@
 #' library(ggplot2)
 #'
 #' # use a small number of knots for this example to make it fast:
-#' pcod_spde <- make_mesh(pcod, c("X", "Y"), n_knots = 60, type = "kmeans")
+#' mesh <- make_mesh(pcod, c("X", "Y"), n_knots = 60)
 #'
 #' # fit a spatiotemporal model:
 #' m <- sdmTMB(
 #'  data = pcod,
 #'  formula = density ~ 0 + as.factor(year),
-#'  time = "year", mesh = pcod_spde, family = tweedie(link = "log")
+#'  time = "year", mesh = mesh, family = tweedie(link = "log")
 #' )
 #'
 #' # prepare a prediction grid:
@@ -84,11 +89,17 @@
 #' predictions <- predict(m, newdata = nd, return_tmb_object = TRUE)
 #'
 #' # biomass index:
-#' ind <- get_index(predictions)
+#' ind <- get_index(predictions, bias_correct = TRUE)
 #' ind
 #' ggplot(ind, aes(year, est)) + geom_line() +
 #'   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4) +
 #'   ylim(0, NA)
+#'
+#' # do that in 2 chunks
+#' # only necessary for very large grids to save memory
+#' # will be slower but save memory
+#' # note the first argument is the model fit object:
+#' ind <- get_index_split(m, newdata = nd, nsplit = 2, bias_correct = TRUE)
 #'
 #' # center of gravity:
 #' cog <- get_cog(predictions, format = "wide")
@@ -107,7 +118,7 @@
 #'   ylim(0, NA)
 #' }
 #' @export
-get_index <- function(obj, bias_correct = FALSE, level = 0.95, area = 1, silent = TRUE, ...)  {
+get_index <- function(obj, bias_correct = TRUE, level = 0.95, area = 1, silent = TRUE, ...)  {
   # if offset is a character vector, use the value in the dataframe
   if (is.character(area)) {
     area <- obj$data[[area]]
@@ -118,6 +129,79 @@ get_index <- function(obj, bias_correct = FALSE, level = 0.95, area = 1, silent 
   names(d)[names(d) == "trans_est"] <- "log_est"
   d$type <- "index"
   d
+}
+
+chunk_time <- function(x, chunks) {
+  assert_that(is.numeric(chunks))
+  assert_that(chunks > 0)
+  chunks <- as.integer(chunks)
+  if (chunks == 1L) {
+    list(x)
+  } else {
+    return(split(x, cut(seq_along(x), chunks, labels = FALSE)))
+  }
+}
+
+#' @rdname get_index
+#' @param newdata New data (e.g., a prediction grid by year) to pass to
+#'   [predict.sdmTMB()] in the case of `get_index_split()`.
+#' @param nsplit The number of splits to do the calculation in. For memory
+#'   intensive operations (large grids and/or models), it can be helpful to
+#'   do the prediction, area integration, and bias correction on subsets of
+#'   time slices (e.g., years) instead of all at once. If `nsplit > 1`, this
+#'   will usually be slower but with reduced memory use.
+#' @param predict_args A list of arguments to pass to [predict.sdmTMB()] in the
+#'   case of `get_index_split()`.
+#' @export
+get_index_split <- function(
+    obj, newdata, bias_correct = FALSE, nsplit = 1,
+    level = 0.95, area = 1, silent = FALSE, predict_args = list(), ...) {
+  if (!inherits(obj, "sdmTMB")) {
+    cli_abort("get_index_split() is meant to be run on a fitted object from sdmTMB() and not a prediction object as in get_index().")
+  }
+  assert_that(is.list(predict_args))
+
+  predict_args[["return_tmb_object"]] <- TRUE
+  predict_args[["object"]] <- obj
+
+  times <- sort(obj$time_lu$time_from_data)
+  time_chunks <- chunk_time(times, nsplit)
+
+  if ("offset" %in% names(predict_args)) {
+    if (!is.numeric(predict_args$offset))
+      cli_abort("`offset` should be a numeric vector for use with `get_index_split()`")
+    offset <- predict_args$offset
+    predict_args$offset <- NULL
+  } else {
+    offset <- rep(0, nrow(newdata))
+  }
+  if (length(area) == 1L) area <- rep(area, nrow(newdata))
+
+  msg <- paste0("Calculating index in ", nsplit, " chunks")
+  if (!silent) cli::cli_progress_bar(msg, total = length(time_chunks))
+  index_list <- list()
+  for (i in seq_along(time_chunks)) {
+    if (!silent) {
+      cli::cli_progress_update(set = i, total = length(time_chunks), force = TRUE)
+    }
+    this_chunk_i <- newdata[[obj$time]] %in% time_chunks[[i]]
+    nd <- newdata[this_chunk_i, , drop = FALSE]
+
+    predict_args[["newdata"]] <- nd
+    predict_args[["offset"]] <- offset[this_chunk_i]
+    pred <- do.call(predict, predict_args)
+    index_list[[i]] <-
+      get_index(
+        pred,
+        bias_correct = bias_correct,
+        level = level,
+        area = area[this_chunk_i],
+        silent = TRUE,
+        ...
+      )
+  }
+  if (!silent) cli::cli_progress_done()
+  do.call(rbind, index_list)
 }
 
 #' @rdname get_index
@@ -276,7 +360,6 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
       cli_inform(c("Bias correction is turned off.", "
         It is recommended to turn this on for final inference."))
   }
-  conv <- get_convergence_diagnostics(sr)
   ssr <- summary(sr, "report")
   log_total <- ssr[row.names(ssr) %in% value_name, , drop = FALSE]
   row.names(log_total) <- NULL
@@ -305,6 +388,15 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   d <- d[!is.na(d$est), ,drop=FALSE] # these were not predicted on
   lu <- obj$fit_obj$time_lu
   tt <- lu$time_from_data[match(ii, lu$year_i)]
+  if (nrow(d) == 0L) {
+    msg <- c(
+      "There were no results returned by TMB.",
+      "It's possible TMB ran out of memory.",
+      "You could try a computer with more RAM or see the function `get_index_split()` with `nsplit > 1`",
+      "which lets you split the TMB sdreport and bias correction into chunks."
+    )
+    cli_abort(msg)
+  }
   d[[time_name]] <- tt
 
   # remove padded extra time fake data:

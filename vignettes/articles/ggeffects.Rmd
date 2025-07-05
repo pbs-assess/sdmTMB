@@ -40,7 +40,8 @@ Another important distinction is that `ggeffects::ggeffect()` is plotting **marg
 This means the effects are "marginalized" or "averaged" over the other fixed effects.
 `visreg::visreg()` is plotting **conditional** effects.
 This means they are conditional on the other predictors being set to certain values.
-`ggeffects::ggpredict()` also does conditional effects, but this has not yet been set up in sdmTMB using the CRAN version of ggeffects.
+
+`ggeffects::ggpredict()` also does conditional effects, and this is explored at the end of this vignette.
 
 ```{r}
 library(sdmTMB)
@@ -148,4 +149,52 @@ To specify the levels rather than letting `ggeffect()` choose them, use brackets
 ```{r}
 g6 <- ggeffect(fit3, terms = c("depth_scaled [-3:2.7 by=0.01]", "numeric_year [1,7,15]"))
 plot(g6)
+```
+
+# `ggpredict()`
+
+`ggeffects::ggpredict()` can be used to make conditional effects plots of sdmTMB models, including models with smoothers (but not currently including delta models [due to a recent change in ggeffects](https://github.com/pbs-assess/sdmTMB/issues/435)).
+
+Here's an example:
+
+```{r}
+pcod$fyear <- as.factor(pcod$year)
+mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 20)
+fit <- sdmTMB(present ~ s(depth) + fyear,
+  data = pcod,
+  mesh = mesh,
+  spatial = "on",
+  family = binomial()
+)
+```
+
+```{r}
+g <- ggpredict(fit, "depth [0:400 by=2]")
+plot(g)
+```
+
+```{r}
+g <- ggpredict(fit, terms = c("depth [0:350 by=5]", "fyear"))
+plot(g)
+plot(g, facet = TRUE)
+```
+
+We can extract the data to make our own plot:
+
+```{r}
+df <- as.data.frame(g)
+glimpse(df)
+```
+
+```{r}
+ggplot(df, aes(
+  x, predicted,
+  ymin = conf.low,
+  ymax = conf.high,
+  colour = group, fill = group
+)) +
+  geom_ribbon(alpha = 0.4, colour = NA) +
+  geom_line() +
+  facet_wrap(vars(group)) +
+  labs(x = "Depth (m)", y = "Predicted", colour = "Year", fill = "Year")
 ```

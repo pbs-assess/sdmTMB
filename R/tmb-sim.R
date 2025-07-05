@@ -344,6 +344,7 @@ sdmTMB_simulate <- function(formula,
 #' @param return_tmb_report Return the \pkg{TMB} report from `simulate()`? This
 #'   lets you parse out whatever elements you want from the simulation.
 #'   Not usually needed.
+#' @param observation_error Logical. Simulate observation error?
 #' @param silent Logical. Silent?
 #' @param ... Extra arguments passed to [predict.sdmTMB()]. E.g., one may wish
 #'   to pass an `offset` argument if `newdata` are supplied in a model with an
@@ -395,6 +396,7 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
                             mle_mvn_samples = c("single", "multiple"),
                             mcmc_samples = NULL,
                             return_tmb_report = FALSE,
+                            observation_error = TRUE,
                             silent = FALSE,
                             ...) {
   set.seed(seed)
@@ -428,6 +430,8 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
     p$sim_re <- tmb_dat$sim_re
     tmb_dat <- p
   }
+
+  tmb_dat$sim_obs <- as.integer(observation_error)
 
   newobj <- TMB::MakeADFun(
     data = tmb_dat, map = object$tmb_map,
@@ -474,7 +478,15 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
   if (!silent) cli::cli_progress_done()
 
   if (!return_tmb_report) {
-    if (isTRUE(object$family$delta)) {
+    if (is_delta(object)) {
+      if (object$family[[1]]$family == "binomial" &&
+          object$family$type == "standard" &&
+          !observation_error) {
+        ret <- lapply(ret, function(.x) {
+          .x[,1] <- stats::plogis(.x[,1]) # using robust dbinom in logit space
+          .x
+        })
+      }
       if (is.na(model[[1]])) {
         ret <- lapply(ret, function(.x) .x[,1] * .x[,2])
       } else if (model[[1]] == 1) {
@@ -486,8 +498,27 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
       }
     }
 
+    if (!is_delta(object) && !observation_error) {
+      if (object$family$family == "binomial") {
+        # using robust dbinom in logit space
+        ret <- lapply(ret, function(.x) stats::plogis(.x))
+      }
+    }
+
     ret <- do.call(cbind, ret)
+
+    if (!is.null(newdata)) {
+      rownames(ret) <- newdata[[object$time]] # for use in index calcs
+      attr(ret, "time") <- object$time
+      if (is_delta(object)) {
+        attr(ret, "link") <- object$family[[2]]$link
+      } else {
+        attr(ret, "link") <- object$family$link
+      }
+    }
+
     attr(ret, "type") <- type
+    attr(ret, "mle_mvn_samples") <- mle_mvn_samples
   }
   ret
 }

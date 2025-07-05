@@ -1,0 +1,14 @@
+---
+title: "Journal articles"
+bibliography: journals.bib
+nocite: '@*'
+output:
+  md_document: 
+    pandoc_args: ["--wrap=preserve"]
+csl: apa-cv.csl
+---
+
+# Journal articles
+
+::: {#refs}
+:::

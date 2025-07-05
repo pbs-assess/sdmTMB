@@ -241,10 +241,77 @@ test_that("simulate() method works with newdata", {
   set.seed(1)
   s4 <- simulate(fit, newdata = dogfish, offset = log(dogfish$area_swept))
 
+  attributes(s1) <- NULL
+  attributes(s2) <- NULL
+  attributes(s3) <- NULL
+  attributes(s4) <- NULL
+
+  row.names(s1) <- NULL
+  row.names(s2) <- NULL
+  row.names(s3) <- NULL
+  row.names(s4) <- NULL
+
   expect_equal(s1, s4)
   expect_equal(s2, s3)
 })
 
+test_that("simulate() can turn off observation error", {
+  skip_on_cran()
+  fit <- sdmTMB(
+    density ~ 1,
+    mesh = pcod_mesh_2011,
+    data = pcod_2011,
+    spatial = "on",
+    family = tweedie()
+  )
+  set.seed(1)
+  s_no_obs <- simulate(fit, observation_error = FALSE)
+  set.seed(1)
+  s_obs <- simulate(fit, observation_error = TRUE)
+  expect_false(identical(s_no_obs, s_obs))
+  expect_equal(sum(s_no_obs[,1] == 0), 0L)
+  expect_equal(stats::cor(s_no_obs[,1], s_obs[,1]), 0.449853, tolerance = 0.01)
+
+  # with newdata:
+  g <- replicate_df(qcs_grid, "year", unique(pcod_2011$year))
+  s_no_obs <- simulate(fit, observation_error = FALSE, newdata = g)
+  expect_equal(sum(s_no_obs[,1] == 0), 0L)
+
+  fit2 <- sdmTMB(
+    present ~ 1,
+    mesh = pcod_mesh_2011,
+    data = pcod_2011,
+    spatial = "off",
+    spatiotemporal = "iid",
+    time = "year",
+    family = binomial()
+  )
+  s <- simulate(fit2, observation_error = FALSE, newdata = g)
+  expect_true(any(grepl("year", attributes(s))))
+  expect_true(any(grepl("2017", row.names(s))))
+
+  # for indexes:
+  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
+  fit <- sdmTMB(density ~ 0 + as.factor(year), spatiotemporal = "off",
+    data = pcod, mesh = mesh, family = tweedie(link = "log"),
+    time = "year"
+  )
+  qcs_grid <- replicate_df(qcs_grid, "year", unique(pcod$year))
+  set.seed(1)
+  s <- simulate(
+    fit,
+    newdata = qcs_grid,
+    type = "mle-mvn",
+    mle_mvn_samples = "multiple",
+    nsim = 10, # increase this
+    observation_error = FALSE
+  )
+  ind <- get_index_sims(log(s))
+  expect_s3_class(ind, "data.frame")
+  # ggplot(ind, aes(year, est, ymin = lwr, ymax = upr)) +
+  #   geom_line() +
+  #   geom_ribbon(alpha = 0.4)
+})
 
 # test_that("TMB Delta simulation works", {
 #   skip_on_cran()

@@ -1,39 +1,80 @@
 # sdmTMB (development version)
 
-* Fix bug in a check in `make_mesh()` around if coordinates look
-  overly large. #427
+## Minor improvements and fixes
 
-* Re-enable bias correction for `get_cog()` (get center of gravity).
+* Change default in `get_index()` etc. to `bias_correct = TRUE`. This is the
+  recommended setting for final inference and speed improvements within TMB
+  have made it more viable to include the bias correction by default. #456
 
-* Add forecasting and presence-only article vignettes. See
-  <https://pbs-assess.github.io/sdmTMB/articles/>
+* Only retain Newton update parameters if they improve the objective function.
+  #455
+  
+* Suppress `nlminb()` warnings by default, which can usually be ignored by the
+  user and may be confusing. This can be controlled via
+  `sdmTMB(..., control = sdmTMBcontrol(suppress_nlminb_warnings = FALSE))`.
+  This option now mirrors tinyVAST.
 
-* Add a `tidy()` method for `sdmTMB_cv()` output. `?tidy.sdmTMB_cv` #319
+* Only run Newton updates if maximum absolute gradient is >= 1e-9 to save time.
 
-* Allow predicting on new data with `t2()` smoothers. #413
+* Round time-varying AR(1) rho to 2 decimals in model printing/summary.
 
-* Add check for `Inf`/`-Inf` values before fitting. #408
+# sdmTMB 0.7.2
 
-* Add priors for `breakpt()` and `logistic()` parameters. #403
+## New features
 
-* Add linear component of smoothers to `tidy()`. #90
+* Add deviance residuals (`residuals(fit, type = "deviance")`) and
+  `deviance.sdmTMB()` method (`deviance(fit)`). Proportion deviance explained
+  can be calculated as `1 - deviance(fit) / deviance(fit_null)` where 
+  `fit_null` is a null model, e.g., fit with `formula = ~ 1` and turning 
+  off any random fields as desired
+  (e.g., `spatial = "off", spatiotemporal = "off"`).
 
-* Add time varying AR(1) correlation to tidy() and print(). #374
+* Add `observation_error` argument to `simulate.sdmTMB()` to allow
+  turning off observation error simulation. The intended use-case
+  is for simulating from random effects but not adding observation
+  error. #431
+
+## Minor improvements and fixes
+
+* Change the default in `dharma_residuals()` to
+  `test_uniformity = FALSE`. Based on simulation testing, we
+  generally do not recommend using these p-values to reject models.
+
+* Fix a bug introduced in version 0.7.0 where printing of the 2nd
+  linear predictor smoother fixed effects (`bs`) was accidentally a copy
+  of the 1st linear predictor smoother fixed effects.
+
+* Fix bug in simulation with time-varying AR(1) when using the 
+  `project()` function. Thanks to A. Allyn for pointing out the bug.
+
+* Fix reporting of converged models with `sdmTMB_cv()`. A recent change
+  resulted in reporting only 1 model converged if all models converged.
+
+* Remove warning about old default residuals type.
+
+* Fix `project()` and `simulate.sdmTMB(..., newdata = ...)` when 
+  random intercepts/slopes are present. #431
+  
+* Remove extra TMB data slots for `project()` and
+  `simulate.sdmTMB(..., newdata = ...)` to save memory. #431
+
+# sdmTMB 0.7.0
+
+## New features
 
 * Add option for random slopes, or random intercepts to be passed in in 
   `lme4` style formulas, `density ~ (1 | fyear)` or `density ~ (depth | fyear)`,
   Matches output of `lme4` and `glmmTMB`, and summarizes output with `tidy()`.
-  
-* Warn if parameter limits are set with `newton_loops > 0`. #394
 
-* Allow for specifying only lower or upper limits. #394
+* Add `project()` experimental function.
 
-* Add vignette on multispecies models with sdmTMB (or any case where one wants
-  additional spatial and or spatiotemporal fields by some group).
+* Add `get_eao()` to calculate effective area occupied.
 
-* Add EDF (effective degrees of freedom) printing to smoothers with 
-  `print.sdmTMB()` and `summary.sdmTMB()`. Set argument `edf = TRUE`.
-  E.g. `print(fit, edf = TRUE)`. #383 #387
+* Allow predicting on new data with `t2()` smoothers. #413
+
+* Add priors for `breakpt()` and `logistic()` parameters. #403
+
+* Add priors on time-varying SD parameters (`sigma_V`).
 
 * Add `cAIC()` for calculating *conditional* AIC. Theory based on
   <https://arxiv.org/abs/2411.14185>; also see
@@ -41,15 +82,13 @@
   EDF (effective degrees of freedom) will ultimately be further split
   (e.g., split by smoothers) and added to `summary.sdmTMB()`. #383 #387
 
-* Fix bug in `est` column when predicting on new data with Poisson-link
-  delta models with `type = "link"` and `re_form = NA`. #389
+* Add EDF (effective degrees of freedom) printing to smoothers with 
+  `print.sdmTMB()` and `summary.sdmTMB()`. Set argument `edf = TRUE`.
+  E.g. `print(fit, edf = TRUE)`. #383 #387
 
-* Fix bug in `s95` param reporting from the `tidy()` method. `s95` is present
-  in the logistic threshold models. The model itself was fine but the `s95`
-  parameter was supposed to be reported by `tidy()` as a combination of two 
-  other parameters. This also affected the output in `print()`/`summary()`.
-
-* Add `return_tmb_report` to `simulate.sdmTMB()`.
+* At experimental function `get_index_split()`, which takes care of 
+  splitting a prediction grid by time, undoing the prediction and 
+  area-integration index calculations for each chunk to save memory.
 
 * Add `newdata` argument to `simulate.sdmTMB()`. This enables simulating on
   a new data frame similar to how one would predict on new data.
@@ -58,21 +97,57 @@
   If "multiple", then a sample from the random effects is taken for each
   simulation iteration.
 
-* Add `project()` experimental function.
+* Allow for specifying only lower or upper limits. #394
 
-* Add print method for `sdmTMB_cv()` output. #319
+* `sdmTMB_cv()` gains a `tidy()` and `print()` method for output. #319
+
+* `simulate.sdmTMB()` method now has an `return_tmb_report` argument.
+
+## New vignettes/articles
+
+* Add forecasting and presence-only article vignettes. See
+  <https://pbs-assess.github.io/sdmTMB/articles/>
+
+* Add vignette on multispecies models with sdmTMB (or any case where one wants
+  additional spatial and or spatiotemporal fields by some group).
+  See <https://pbs-assess.github.io/sdmTMB/articles/>
+
+## Minor improvements and fixes
+
+* Add a useful error if memory error occurs on index calculation.
+
+* Fix bug in a check in `make_mesh()` around if coordinates look
+  overly large. #427
+
+* Re-enable bias correction for `get_cog()` (get center of gravity).
+
+* Add check for `Inf`/`-Inf` values before fitting. #408
+
+* Add linear component of smoothers to `tidy()`. #90
+
+* Add time varying AR(1) correlation to `tidy()` and `print()`. #374
+
+* Warn if parameter limits are set with `newton_loops > 0`. #394
+
+* Fix bug in `est` column when predicting on new data with Poisson-link
+  delta models with `type = "link"` and `re_form = NA`. #389
+
+* Fix bug in `s95` parameter reporting from the `tidy()` method. `s95` is
+  present in the logistic threshold models. The model itself was fine but the
+  `s95` parameter was supposed to be reported by `tidy()` as a combination of two
+  other parameters. This also affected the output in `print()`/`summary()`.
 
 * Add progress bar to `simulate.sdmTMB()`. #346
 
 * Add AUC and TSS examples to cross validation vignette. #268
 
-* Add `model` (linear predictor number) argument to coef() method. Also,
+* Add `model` (linear predictor number) argument to `coef()` method. Also,
   write documentation for `?coef.sdmTMB`. #351
 
-* Add helpful error message if some coordinates in make_mesh() are NA. #365
+* Add helpful error message if some coordinates in `make_mesh()` are `NA`. #365
 
 * Add informative message if fitting with an offset but predicting with offset
-  argument left at NULL on newdata. #372
+  argument left at `NULL` on `newdata`. #372
 
 * Fix passing of `offset` argument through in `sdmTMB_cv()`. Before it was being
   omitted in the prediction (i.e., set to 0). #372
@@ -86,10 +161,8 @@
   distribution first before multiplying by the probability of a non-zero.
   Thanks to @tom-peatman #350
 
-* Add `get_eao()` to calculate effective area occupied.
-
 * Add option for `area` to be passed in as the name of a column in the 
-  dataframe to be used for area weighting. Used in `get_index()`, 
+  data frame to be used for area weighting. Used in `get_index()`, 
   `get_cog()`, `get_eao()`, etc.
   
 # sdmTMB 0.6.0
