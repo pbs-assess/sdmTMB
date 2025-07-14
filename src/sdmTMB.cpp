@@ -219,6 +219,10 @@ Type objective_function<Type>::operator()()
   DATA_IARRAY(link);
   DATA_SCALAR(df);  // Student-t DF
   DATA_VECTOR(size); // binomial, via glmmTMB
+  
+  // Component usage for mixed delta/non-delta families
+  DATA_IARRAY(component_usage);  // component_usage(i,m): 1 if obs i uses component m, 0 otherwise
+  DATA_IVECTOR(components_per_obs);  // number of components needed for each observation
 
   // SPDE objects from R-INLA
   DATA_STRUCT(spde_aniso, spde_aniso_t);
@@ -802,6 +806,9 @@ Type objective_function<Type>::operator()()
     }
 
     for (int i = 0; i < n_i; i++) {
+      // Skip parameter calculation for inactive components
+      if (!component_usage(i,m)) continue;
+      
       eta_i(i,m) = eta_fixed_i(i,m) + eta_smooth_i(i,m);
       if ((n_m == 2 && m == 1) || n_m == 1) {
         if (!poisson_link_delta(i)) eta_i(i,m) += offset_i(i);
@@ -891,6 +898,8 @@ Type objective_function<Type>::operator()()
   if (!sim_obs) {
     for (int m = 0; m < n_m; m++) {
       for (int i = 0; i < n_i; i++) {
+        // Skip inactive components for mixed delta/non-delta families
+        if (!component_usage(i,m)) continue;
         y_i(i,m) = mu_i(i,m);
       }
     }
@@ -901,6 +910,9 @@ Type objective_function<Type>::operator()()
 
   for (int m = 0; m < n_m; m++) PARALLEL_REGION {
     for (int i = 0; i < n_i; i++) {
+      // Skip inactive components for mixed delta/non-delta families
+      if (!component_usage(i,m)) continue;
+      
       bool notNA = !sdmTMB::isNA(y_i(i,m));
         switch (family(i,m)) {
           case gaussian_family: {

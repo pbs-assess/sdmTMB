@@ -605,6 +605,17 @@ sdmTMB <- function(
   data <- droplevels(data) # if data was subset, strips absent factors
 
   delta <- isTRUE(family$delta)
+  
+  # Fix delta detection for mixed families EARLY (before formula processing)
+  if (!is.null(distribution_column)) {
+    # For mixed families, check if any family is delta
+    family_list <- family
+    dist_values <- data[[distribution_column]]
+    obs_families <- family_list[dist_values]
+    has_delta_families <- any(vapply(obs_families, function(x) isTRUE(x$delta), logical(1)))
+    delta <- has_delta_families
+  }
+  
   n_m <- if (delta) 2L else 1L
 
   if (!missing(spatial)) {
