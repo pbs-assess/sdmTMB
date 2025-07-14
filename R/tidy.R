@@ -117,7 +117,22 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   est <- subset_pars(est, model)
   se <- subset_pars(se, model)
 
-  if (x$family$family[[model]] %in% c("binomial", "poisson")) {
+  # Check if families don't need phi parameters
+  # Handle both single family and distribution_column cases
+  family_check <- if ("distribution_column" %in% names(x) && !is.null(x$distribution_column)) {
+    # For distribution_column case, we can't easily determine which families don't need phi
+    # So we'll keep phi parameters for mixed cases
+    FALSE
+  } else {
+    # Single family case
+    if (length(x$family$family) >= model) {
+      x$family$family[[model]] %in% c("binomial", "poisson")
+    } else {
+      FALSE
+    }
+  }
+  
+  if (family_check) {
     se$ln_phi <- NULL
     est$ln_phi <- NULL
     se$phi <- NULL

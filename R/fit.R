@@ -134,6 +134,13 @@ NULL
 #'   `do_index = TRUE`. Currently, only `area` is supported. Bias correction
 #'   can be done when calling [get_index()] on the resulting fitted object.
 #'   Most users can ignore this option.
+#' @param distribution_column An optional character string indicating the column
+#'   name in `data` that specifies the distribution for each observation. When
+#'   provided, `family` must be a named list of family objects, and the values
+#'   in the distribution column must match the names in the family list. This
+#'   enables fitting integrated models with different distributions for different
+#'   observations (e.g., binomial for presence/absence data and Poisson for
+#'   count data in the same model).
 #' @param bayesian Logical indicating if the model will be passed to
 #'   \pkg{tmbstan}. If `TRUE`, Jacobian adjustments are applied to account for
 #'   parameter transformations when priors are applied.
@@ -593,6 +600,7 @@ sdmTMB <- function(
     do_index = FALSE,
     predict_args = NULL,
     index_args = NULL,
+    distribution_column = NULL,
     experimental = NULL) {
   data <- droplevels(data) # if data was subset, strips absent factors
 
@@ -621,23 +629,17 @@ sdmTMB <- function(
       FUN.VALUE = character(1L)
     )
   } else {
-    if (is.null(time)) {
-      spatiotemporal <- rep("off", n_m)
-    } else {
-      spatiotemporal <- rep("iid", n_m)
-    }
+    # Keep as single value, vector expansion moved to after n_m finalization
+    spatiotemporal <- if (is.null(time)) "off" else "iid"
   }
 
-  if (is.null(time)) {
-    spatial_only <- rep(TRUE, n_m)
-  } else {
-    spatial_only <- ifelse(spatiotemporal == "off", TRUE, FALSE)
-  }
+  # Keep base logic, vector expansion moved to after n_m finalization
+  is_time_null <- is.null(time)
 
   if (is.list(spatial)) {
     spatial <- vapply(spatial, parse_spatial_arg, FUN.VALUE = character(1L))
   } else {
-    spatial <- rep(parse_spatial_arg(spatial), n_m)
+    spatial <- parse_spatial_arg(spatial)  # Keep as single value
   }
   include_spatial <- "on" %in% spatial
 
@@ -660,9 +662,7 @@ sdmTMB <- function(
   }
 
   share_range <- unlist(share_range)
-  if (length(share_range) == 1L) share_range <- rep(share_range, n_m)
-  share_range[spatiotemporal == "off"] <- TRUE
-  share_range[spatial == "off"] <- TRUE
+  # Note: share_range length adjustment moved to after n_m finalization
 
   spde <- mesh
   epsilon_model <- NULL
@@ -770,13 +770,8 @@ sdmTMB <- function(
   }
   # FIXME parallel setup here?
 
-  if (family$family[1] == "censored_poisson") {
-    if ("lwr" %in% names(experimental) || "upr" %in% names(experimental)) {
-      cli_abort("Detected `lwr` or `upr` in `experimental`. `lwr` is no longer needed and `upr` is now specified as `control = sdmTMBcontrol(censored_upper = ...)`.")
-    }
-    if (is.null(upr)) cli_abort("`censored_upper` must be defined in `control = sdmTMBcontrol()` to use the censored Poisson distribution.")
-    assert_that(length(upr) == nrow(data))
-  }
+  # Validate early family constraints (before distribution processing)
+  validate_early_family_constraints(family, distribution_column, y_i, delta, upr, experimental, control, data)
   if (is.null(upr)) upr <- Inf
 
   # thresholds not yet enabled for delta model, where formula is a list
@@ -939,12 +934,6 @@ sdmTMB <- function(
     }
   }
 
-  if (family$family[1] %in% c("Gamma", "lognormal") && min(y_i) <= 0 && !delta) {
-    cli_abort("Gamma and lognormal must have response values > 0.")
-  }
-  if (family$family[1] == "censored_poisson") {
-    assert_that(mean(upr - y_i, na.rm = TRUE) >= 0)
-  }
 
   # This is taken from approach in glmmTMB to match how they handle binomial
   # yobs could be a factor -> treat as binary following glm
@@ -952,50 +941,12 @@ sdmTMB <- function(
   # yobs could be binary
   # (yobs, weights) could be (proportions, size)
   # On the C++ side 'yobs' must be the number of successes.
-  size <- rep(1, nrow(X_ij[[1]])) # for non-binomial case TODO: change hard coded index
-  if (identical(family$family[1], "binomial") && !delta) {
-    ## call this to catch the factor / matrix cases
-    y_i <- model.response(mf[[1]], type = "any")
-    ## allow character
-    if (is.character(y_i)) {
-      y_i <- model.response(mf[[1]], type = "factor")
-      if (nlevels(y_i) > 2) {
-        cli_abort("More than 2 levels detected for response")
-      }
-    }
-    if (is.factor(y_i)) {
-      if (nlevels(y_i) > 2) {
-        cli_abort("More than 2 levels detected for response")
-      }
-      ## following glm, ‘success’ is interpreted as the factor not
-      ## having the first level (and hence usually of having the
-      ## second level).
-      y_i <- pmin(as.numeric(y_i) - 1, 1)
-      size <- rep(1, length(y_i))
-    } else {
-      if (is.matrix(y_i)) { # yobs=cbind(success, failure)
-        size <- y_i[, 1] + y_i[, 2]
-        yobs <- y_i[, 1] # successes
-        y_i <- yobs
-      } else {
-        if (all(y_i %in% c(0, 1))) { # binary
-          size <- rep(1, length(y_i))
-        } else { # proportions
-          y_i <- weights * y_i
-          size <- weights
-          weights <- rep(1, length(y_i))
-        }
-      }
-    } # https://github.com/pbs-assess/sdmTMB/issues/172
-    if (is.logical(y_i)) {
-      msg <- paste0(
-        "We recommend against using `TRUE`/`FALSE` ",
-        "response values if you are going to use the `visreg::visreg()` ",
-        "function after. Consider converting to integer with `as.integer()`."
-      )
-      cli_warn(msg)
-    }
-  }
+
+  # Process binomial response if needed
+  binomial_result <- process_binomial_response(family, mf, X_ij, delta, distribution_column, weights)
+  if (!is.null(binomial_result$y_i)) y_i <- binomial_result$y_i
+  size <- binomial_result$size
+  if (!is.null(binomial_result$weights)) weights <- binomial_result$weights
 
   if (identical(family$link[1], "log") && min(y_i, na.rm = TRUE) < 0 && !delta) {
     cli_abort("`link = 'log'` but the reponse data include values < 0.")
@@ -1022,7 +973,10 @@ sdmTMB <- function(
     anisotropy <- FALSE
   }
 
-  df <- if (family$family[1] == "student" && "df" %in% names(family)) family$df else 3
+  # Get family constraints for later processing
+  family_info <- safe_family_check(family, distribution_column)
+  late_constraints <- validate_late_family_constraints(family_info, NULL, delta)
+  df <- late_constraints$df
 
   est_epsilon_model <- 0L
   epsilon_covariate <- rep(0, length(unique(data[[time]])))
@@ -1119,6 +1073,36 @@ sdmTMB <- function(
   } else {
     0L
   }
+
+  # Process distribution column for observation-level families
+  dist_result <- process_distribution_column(family, distribution_column, data, y_i, n_m)
+
+  # Update n_m to effective value for mixed families
+  n_m <- dist_result$n_m_effective
+
+  # Expand all n_m-dependent parameters with final n_m value
+  if (is.list(spatiotemporal)) {
+    # spatiotemporal is already a vector from early processing
+  } else {
+    spatiotemporal <- rep(spatiotemporal, n_m)
+  }
+
+  if (is_time_null) {
+    spatial_only <- rep(TRUE, n_m)
+  } else {
+    spatial_only <- ifelse(spatiotemporal == "off", TRUE, FALSE)
+  }
+
+  if (is.list(spatial)) {
+    # spatial is already processed as a vector
+  } else {
+    spatial <- rep(spatial, n_m)
+  }
+
+  if (length(share_range) == 1L) share_range <- rep(share_range, n_m)
+  share_range[spatiotemporal == "off"] <- TRUE
+  share_range[spatial == "off"] <- TRUE
+
   tmb_data <- list(
     y_i = y_i,
     n_t = n_t,
@@ -1178,10 +1162,12 @@ sdmTMB <- function(
     spde_barrier = make_barrier_spde(spde),
     barrier_scaling = if (barrier) spde$barrier_scaling else c(1, 1),
     anisotropy = as.integer(anisotropy),
-    family = .valid_family[family$family],
+    family = dist_result$tmb_family,
     size = c(size),
-    link = .valid_link[family$link],
+    link = dist_result$tmb_link,
     df = df,
+    component_usage = array(as.integer(dist_result$component_usage), dim = dim(dist_result$component_usage)),
+    components_per_obs = as.integer(dist_result$components_per_obs),
     spatial_only = as.integer(spatial_only),
     spatial_covariate = as.integer(!is.null(spatial_varying)),
     calc_quadratic_range = as.integer(quadratic_roots),
@@ -1195,7 +1181,8 @@ sdmTMB <- function(
     has_smooths = as.integer(sm$has_smooths),
     upr = upr,
     lwr = 0L, # in case we want to reintroduce this
-    poisson_link_delta = as.integer(isTRUE(family$type == "poisson_link_delta")),
+    poisson_link_delta = dist_result$tmb_poisson_link_delta,
+    d_i = dist_result$d_i,
     stan_flag = as.integer(bayesian),
     no_spatial = no_spatial,
     re_cov_df_map = as.matrix(re_cov_df_map), # dataframe used to map parameters to cov matrices,
@@ -1225,7 +1212,7 @@ sdmTMB <- function(
     gengamma_Q = 0.5, # Not defined at exactly 0
     logit_p_mix = 0,
     log_ratio_mix = -1, # ratio is 1 + exp(log_ratio_mix) so 0 would start fairly high
-    ln_phi = rep(0, n_m),
+    ln_phi = matrix(0, nrow = length(unique(dist_result$d_i)), ncol = n_m),
     ln_tau_V = matrix(0, ncol(X_rw_ik), n_m),
     rho_time_unscaled = matrix(0, ncol(X_rw_ik), n_m),
     ar1_phi = rep(0, n_m),
@@ -1242,9 +1229,9 @@ sdmTMB <- function(
     b_smooth = if (sm$has_smooths) matrix(0, sum(sm$sm_dims), n_m) else array(0),
     ln_smooth_sigma = if (sm$has_smooths) matrix(0, length(sm$sm_dims), n_m) else array(0)
   )
-  if (identical(family$link, "inverse") && family$family[1] %in% c("Gamma", "gaussian", "student") && !delta) {
+  if (family_info$is_single && identical(family$link, "inverse") && family_info$first_family %in% c("Gamma", "gaussian", "student") && !delta) {
     fam <- family
-    if (family$family == "student") fam$family <- "gaussian"
+    if (family_info$first_family == "student") fam$family <- "gaussian"
     temp <- mgcv::gam(formula = formula[[1]], data = data, family = fam)
     tmb_params$b_j <- stats::coef(temp)
   }
@@ -1253,20 +1240,40 @@ sdmTMB <- function(
   tmb_map <- map_all_params(tmb_params)
   tmb_map$b_j <- NULL
   if (delta) tmb_map$b_j2 <- NULL
-  if (family$family[[1]] == "tweedie") tmb_map$thetaf <- NULL
-  if ("gengamma" %in% family$family) tmb_map$gengamma_Q <- factor(NA)
-  tmb_map$ln_phi <- rep(1, n_m)
-  if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson")) {
-    tmb_map$ln_phi[1] <- factor(NA)
+  # Check processed families for parameter mapping
+  if (family_info$is_single) {
+    if (family_info$first_family == "tweedie") tmb_map$thetaf <- NULL
+    if ("gengamma" %in% family_info$all_families) tmb_map$gengamma_Q <- factor(NA)
+  } else {
+    # For distribution_column cases, check if any families need special handling
+    unique_families <- unique(as.vector(dist_result$tmb_family))
+    unique_families <- unique_families[!is.na(unique_families)]
+    if (.valid_family["tweedie"] %in% unique_families) tmb_map$thetaf <- NULL
+    family_names <- names(.valid_family)[unique_families + 1]
+    if ("gengamma" %in% family_names) tmb_map$gengamma_Q <- factor(NA)
   }
-  if (delta) {
-    if (family$family[[2]] %in% c("binomial", "poisson", "censored_poisson")) {
-      tmb_map$ln_phi[2] <- factor(NA)
-    } else {
-      tmb_map$ln_phi[2] <- 2
+  # Unified phi mapping for all distribution cases
+  n_phi_groups <- length(unique(dist_result$d_i))
+  phi_map <- matrix(seq_len(n_phi_groups * n_m), nrow = n_phi_groups, ncol = n_m)
+
+  # Families that don't need phi parameters
+  families_no_phi <- c(.valid_family[c("binomial", "poisson", "censored_poisson")])
+
+  # Check each phi group and model component combination
+  for (group in seq_len(n_phi_groups)) {
+    for (m in seq_len(n_m)) {
+      # Get representative observation for this phi group
+      group_obs <- which(dist_result$d_i == (group - 1))  # Convert to 0-indexed
+      representative_family <- dist_result$tmb_family[group_obs[1], m]
+
+      # Map to NA if family doesn't need phi or if NA (unused component)
+      if (is.na(representative_family) || representative_family %in% families_no_phi) {
+        phi_map[group, m] <- NA
+      }
     }
   }
-  tmb_map$ln_phi <- as.factor(tmb_map$ln_phi)
+
+  tmb_map$ln_phi <- as.factor(phi_map)
   if (!is.null(thresh[[1]]$threshold_parameter)) tmb_map$b_threshold <- NULL
 
   if (est_epsilon_re == 1L) {
@@ -1285,7 +1292,9 @@ sdmTMB <- function(
     # tmb_data$spatial_only <- rep(1L, length(tmb_data$spatial_only))
 
     # Poisson on first phase increases stability:
-    if (family$family[[1]] == "censored_poisson") tmb_data$family <- .valid_family["poisson"]
+    if (family_info$is_single && family_info$first_family == "censored_poisson") {
+      tmb_data$family <- .valid_family["poisson"]
+    }
 
     tmb_obj1 <- TMB::MakeADFun(
       data = tmb_data, parameters = tmb_params,
@@ -1441,19 +1450,32 @@ sdmTMB <- function(
     tmb_map$ln_H_input <- factor(c(1, 2, 1, 2)) # share anisotropy as in VAST
   }
 
-  if (family$family[[1]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
-    tmb_map$log_ratio_mix <- NULL # performs better starting this in 2nd phase
-    tmb_map$logit_p_mix <- NULL # performs better starting this in 2nd phase
-  }
-  if (delta) {
-    if (family$family[[2]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
+  # Handle mixture family parameter mapping
+  if (family_info$is_single) {
+    if (family_info$first_family %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
+      tmb_map$log_ratio_mix <- NULL # performs better starting this in 2nd phase
+      tmb_map$logit_p_mix <- NULL # performs better starting this in 2nd phase
+    }
+    if (delta && length(family_info$all_families) > 1) {
+      if (family_info$all_families[2] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
+        tmb_map$log_ratio_mix <- NULL
+        tmb_map$logit_p_mix <- NULL
+      }
+    }
+    if ("gengamma" %in% family_info$all_families) tmb_map$gengamma_Q <- NULL
+  } else {
+    # For distribution_column cases, check processed families
+    unique_families <- unique(as.vector(dist_result$tmb_family))
+    unique_families <- unique_families[!is.na(unique_families)]
+    family_names <- names(.valid_family)[unique_families + 1]
+    if (any(c("gamma_mix", "lognormal_mix", "nbinom2_mix") %in% family_names)) {
       tmb_map$log_ratio_mix <- NULL
       tmb_map$logit_p_mix <- NULL
     }
+    if ("gengamma" %in% family_names) tmb_map$gengamma_Q <- NULL
   }
 
   if (tmb_data$threshold_func > 0) tmb_map$b_threshold <- NULL
-  if ("gengamma" %in% family$family) tmb_map$gengamma_Q <- NULL
 
   for (i in seq_along(map)) { # user supplied
     cli_inform(c(i = paste0("Fixing or mirroring `", names(map)[i], "`")))
@@ -1618,7 +1640,15 @@ sdmTMB <- function(
   conv <- get_convergence_diagnostics(sd_report)
 
   ## save params that families need to grab from environments:
-  if (any(family$family %in% c("truncated_nbinom1", "truncated_nbinom2"))) {
+  truncated_nbinom_check <- if (family_info$is_single) {
+    any(family_info$all_families %in% c("truncated_nbinom1", "truncated_nbinom2"))
+  } else {
+    unique_families <- unique(as.vector(dist_result$tmb_family))
+    unique_families <- unique_families[!is.na(unique_families)]
+    family_names <- names(.valid_family)[unique_families + 1]
+    any(c("truncated_nbinom1", "truncated_nbinom2") %in% family_names)
+  }
+  if (truncated_nbinom_check) {
     phi <- exp(tmb_obj$par[["ln_phi"]])
     if (delta) {
       assign(".phi", phi, environment(out_structure[["family"]][[2]][["linkinv"]]))

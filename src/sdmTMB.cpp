@@ -326,7 +326,12 @@ Type objective_function<Type>::operator()()
   // DELTA DONE
   vector<Type> rho(n_m);
   for (int m = 0; m < n_m; m++) rho(m) = sdmTMB::minus_one_to_one(ar1_phi(m));
-  array<Type> phi = exp(ln_phi); // n_phi_groups x n_m
+  array<Type> phi(ln_phi.rows(), ln_phi.cols()); // n_phi_groups x n_m
+  for (int i = 0; i < ln_phi.rows(); i++) {
+    for (int m = 0; m < ln_phi.cols(); m++) {
+      phi(i,m) = exp(ln_phi(i,m));
+    }
+  }
 
   // ------------------ Geospatial ---------------------------------------------
 
