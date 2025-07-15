@@ -21,7 +21,7 @@
 #' @keywords internal
 #' @noRd
 process_distribution_column <- function(family, distribution_column, data, y_i, n_m) {
-  n_obs <- nrow(y_i)
+  n_obs <- length(y_i)
   
   # Normalize inputs - convert single family to distribution_column format
   if (is.null(distribution_column)) {
@@ -70,39 +70,45 @@ process_distribution_column <- function(family, distribution_column, data, y_i, 
     n_m_effective <- n_m
   }
   
-  # Build arrays using adaptive logic
+  # Build arrays using vectorized logic
   family_array <- array(NA_integer_, dim = c(n_obs, n_m_effective))
   link_array <- array(NA_integer_, dim = c(n_obs, n_m_effective))
-  poisson_link_delta_vec <- integer(n_obs)
-  # Track which components are actually used for each observation
   component_usage <- array(FALSE, dim = c(n_obs, n_m_effective))
   
-  for (i in seq_len(n_obs)) {
-    obs_fam <- obs_families[[i]]
-    n_components_needed <- components_per_obs[i]
-    
-    if (isTRUE(obs_fam$delta)) {
-      # Delta family: always fill both components (preserve full delta behavior)
-      family_array[i, 1] <- .valid_family[obs_fam$family[1]]
-      family_array[i, 2] <- .valid_family[obs_fam$family[2]]
-      link_array[i, 1] <- .valid_link[obs_fam$link[1]]
-      link_array[i, 2] <- .valid_link[obs_fam$link[2]]
-      component_usage[i, 1:2] <- TRUE
-    } else {
-      # Non-delta family: fill only first component
-      family_array[i, 1] <- .valid_family[obs_fam$family]
-      link_array[i, 1] <- .valid_link[obs_fam$link]
-      component_usage[i, 1] <- TRUE
-      
-      # For mixed cases, second component is unused for non-delta families
-      if (n_m_effective > 1L) {
-        family_array[i, 2] <- NA_integer_  # Mark as unused
-        link_array[i, 2] <- NA_integer_
-        component_usage[i, 2] <- FALSE
-      }
-    }
-    poisson_link_delta_vec[i] <- as.integer(isTRUE(obs_fam$type == "poisson_link_delta"))
+  # Create logical vector for delta vs non-delta observations
+  is_delta_obs <- is_delta
+  
+  # Separate delta and non-delta indices for efficient processing
+  delta_indices <- which(is_delta_obs)
+  non_delta_indices <- which(!is_delta_obs)
+  
+  # Process non-delta observations (vectorized)
+  if (length(non_delta_indices) > 0) {
+    non_delta_families <- obs_families[non_delta_indices]
+    family_array[non_delta_indices, 1] <- .valid_family[vapply(non_delta_families, function(x) x$family, character(1))]
+    link_array[non_delta_indices, 1] <- .valid_link[vapply(non_delta_families, function(x) x$link, character(1))]
+    component_usage[non_delta_indices, 1] <- TRUE
   }
+  
+  # Process delta observations (vectorized)
+  if (length(delta_indices) > 0) {
+    delta_families <- obs_families[delta_indices]
+    # Extract first component (binomial part)
+    family_array[delta_indices, 1] <- .valid_family[vapply(delta_families, function(x) x$family[1], character(1))]
+    link_array[delta_indices, 1] <- .valid_link[vapply(delta_families, function(x) x$link[1], character(1))]
+    component_usage[delta_indices, 1] <- TRUE
+    
+    # Extract second component (positive part) if needed
+    if (n_m_effective > 1L) {
+      family_array[delta_indices, 2] <- .valid_family[vapply(delta_families, function(x) x$family[2], character(1))]
+      link_array[delta_indices, 2] <- .valid_link[vapply(delta_families, function(x) x$link[2], character(1))]
+      component_usage[delta_indices, 2] <- TRUE
+    }
+  }
+  
+  # Vectorized poisson_link_delta extraction
+  poisson_link_delta_vec <- as.integer(vapply(obs_families, 
+    function(x) isTRUE(x$type == "poisson_link_delta"), logical(1)))
   
   return(list(
     tmb_family = family_array,
@@ -280,5 +286,49 @@ validate_late_family_constraints <- function(family_info, dist_result = NULL, de
       first_family = NULL,
       family_obj = NULL
     ))
+  }
+}
+
+#' Transform response matrix for mixed delta/non-delta families
+#'
+#' @param y_i Original response vector
+#' @param delta Logical indicating if single family is delta
+#' @param distribution_column Character string of column name, or NULL
+#' @param dist_result Result from process_distribution_column()
+#' @return Transformed response matrix
+#' @keywords internal
+#' @noRd
+transform_response_matrix <- function(y_i, delta, distribution_column, dist_result) {
+  if (is.null(distribution_column)) {
+    # Single family case - use original logic
+    if (delta) {
+      return(cbind(ifelse(y_i > 0, 1, 0), ifelse(y_i > 0, y_i, NA_real_)))
+    } else {
+      return(matrix(y_i, ncol = 1L))
+    }
+  } else {
+    # Mixed family case - vectorized transformation based on component usage
+    n_obs <- length(y_i)
+    n_m_effective <- dist_result$n_m_effective
+    
+    # Create logical vector for delta vs non-delta observations
+    is_delta_obs <- dist_result$components_per_obs == 2L
+    
+    # Initialize transformed response matrix
+    y_i_transformed <- array(NA_real_, dim = c(n_obs, n_m_effective))
+    
+    # Vectorized assignment for first component
+    y_i_transformed[, 1] <- ifelse(is_delta_obs, 
+                                   ifelse(y_i > 0, 1, 0),  # Delta: 0/1 indicator
+                                   y_i)                     # Non-delta: original values
+    
+    # For second component (if needed)
+    if (n_m_effective > 1L) {
+      y_i_transformed[, 2] <- ifelse(is_delta_obs,
+                                     ifelse(y_i > 0, y_i, NA_real_),  # Delta: positive values
+                                     NA_real_)                        # Non-delta: unused
+    }
+    
+    return(y_i_transformed)
   }
 }

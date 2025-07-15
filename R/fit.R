@@ -1065,8 +1065,13 @@ sdmTMB <- function(
   }
 
   if (!"A_st" %in% names(spde)) cli_abort("`mesh` was created with an old version of `make_mesh()`.")
-  if (delta) y_i <- cbind(ifelse(y_i > 0, 1, 0), ifelse(y_i > 0, y_i, NA_real_))
-  if (!delta) y_i <- matrix(y_i, ncol = 1L)
+  
+  # Process distribution column for observation-level families first
+  # This needs to happen before y_i transformation to preserve original response data
+  dist_result <- process_distribution_column(family, distribution_column, data, y_i, n_m)
+  
+  # Transform response matrix based on family types (delta vs non-delta)
+  y_i <- transform_response_matrix(y_i, delta, distribution_column, dist_result)
 
   # TODO: make this cleaner
   X_ij_list <- list()
@@ -1084,9 +1089,6 @@ sdmTMB <- function(
   } else {
     0L
   }
-
-  # Process distribution column for observation-level families
-  dist_result <- process_distribution_column(family, distribution_column, data, y_i, n_m)
 
   # Update n_m to effective value for mixed families
   n_m <- dist_result$n_m_effective
