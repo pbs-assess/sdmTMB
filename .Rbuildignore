@@ -26,3 +26,5 @@ revdep/
 ^Meta$
 ^man/figures/logo.png$
 ^man/figures/README-*
+^.claude$
+^CLAUDE.md$
