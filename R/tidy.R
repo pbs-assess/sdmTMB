@@ -506,6 +506,15 @@ tidy.sdmTMB_cv <- function(x, ...) {
   do.call("rbind", out)
 }
 
+# Flatten a list of estimated random effects into a dataframe
+#
+# This function extracts random effect estimates from a list of matrices representing
+# the mean, lower and upper confidence intervals. Ignoring the off-diagonal elements,
+# it returns a dataframe of random effects estimates, their standard errors, and confidence intervals,
+# consistent with the other tidy output from `sdmTMB` models.
+#
+# @param v A list of 3 random effects; for multiple grouping variables this will be a list of lists
+# @param cnms A list of vectors of coefficient names for each set of grouping variable
 flatten_cov_output <- function(v, cnms) {
   results <- list()
   idx <- 1
@@ -514,13 +523,13 @@ flatten_cov_output <- function(v, cnms) {
     est_mat <- v$est[[name]]
     lo_mat  <- v$lo[[name]]
     hi_mat  <- v$hi[[name]]
-
+    # Split_name is the name of the model and group
     split_name <- strsplit(name, " +")[[1]]
     model <- as.integer(split_name[2])
     group_name <- split_name[4]
 
     term_names <- cnms[[group_name]]
-    n <- nrow(est_mat)  # number of levels
+    n <- nrow(est_mat)  # number of coefficients being estimated
 
     # Extract diagonal values only
     for (i in seq_len(n)) {
@@ -535,7 +544,7 @@ flatten_cov_output <- function(v, cnms) {
         group_name = group_name,
         term = term_names[i],
         estimate = est,
-        std.error = NA,
+        std.error = NA, # we may want to change this and also report std.error?
         conf.low = conf_low,
         conf.high = conf_high,
         stringsAsFactors = FALSE
