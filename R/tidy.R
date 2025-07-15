@@ -299,6 +299,13 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
       cov_mat_list[["hi"]] <- temp$cov_matrices_hi
     }
     out_ranef <- temp$out_ranef
+
+    # get names
+    cnms <- x$split_formula[[model]]$re_cov_terms$cnms
+    flattened_cov <- flatten_cov_output(cov_mat_list, cnms)
+    flattened_cov$model <- NULL
+    out_re$group_name <- NA
+    out_re <- rbind(out_re, flattened_cov)
   } else {
     cov_mat_list <- NULL
     out_ranef <- NULL
@@ -497,4 +504,47 @@ tidy.sdmTMB_cv <- function(x, ...) {
     df
   })
   do.call("rbind", out)
+}
+
+flatten_cov_output <- function(v, cnms) {
+  results <- list()
+  idx <- 1
+
+  for (name in names(v$est)) {
+    est_mat <- v$est[[name]]
+    lo_mat  <- v$lo[[name]]
+    hi_mat  <- v$hi[[name]]
+
+    split_name <- strsplit(name, " +")[[1]]
+    model <- as.integer(split_name[2])
+    group_name <- split_name[4]
+
+    term_names <- cnms[[group_name]]
+    n <- nrow(est_mat)  # number of levels
+
+    # Extract diagonal values only
+    for (i in seq_len(n)) {
+      est <- est_mat[i, i]
+      if (is.na(est)) next
+
+      conf_low <- if (!is.null(lo_mat)) lo_mat[i, i] else NA
+      conf_high <- if (!is.null(hi_mat)) hi_mat[i, i] else NA
+
+      results[[idx]] <- data.frame(
+        model = model,
+        group_name = group_name,
+        term = term_names[i],
+        estimate = est,
+        std.error = NA,
+        conf.low = conf_low,
+        conf.high = conf_high,
+        stringsAsFactors = FALSE
+      )
+      idx <- idx + 1
+    }
+  }
+
+  df <- do.call(rbind, results)
+  rownames(df) <- NULL
+  df
 }
