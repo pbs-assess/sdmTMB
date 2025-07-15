@@ -168,7 +168,7 @@ NULL
 #' * `gradients`: marginal log likelihood gradients with respect to each fixed effect
 #' * `model`: output from [stats::nlminb()]
 #' * `data`: the fitted data
-#' * `mesh`: the object that was supplied to the `mesh` argument
+#' * `spde`: the object that was supplied to the `mesh` argument
 #' * `family`: the family object, which includes the inverse link function as `family$linkinv()`
 #' * `tmb_params`: The parameters list passed to [TMB::MakeADFun()]
 #' * `tmb_map`: The 'map' list passed to [TMB::MakeADFun()]

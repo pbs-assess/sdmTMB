@@ -347,3 +347,71 @@ Effect.sdmTMB <- function(focal.predictors, mod, ...) {
 model.frame.sdmTMB <- function(formula, ...) {
   as.data.frame(formula$data) # no tibbles!
 }
+
+# Update an sdmTMB model
+#
+# This method updates an sdmTMB model with new arguments, automatically
+# handling the mesh object to avoid environment issues when loading
+# models from saved files.
+#
+# @param object An sdmTMB model object
+# @param formula. Optional updated formula
+# @param ... Other arguments to update in the model call
+# @param evaluate If `TRUE` (default), the updated call is evaluated;
+#   if `FALSE`, the call is returned unevaluated
+#
+# @return An updated sdmTMB model object (if `evaluate = TRUE`) or
+#   an unevaluated call (if `evaluate = FALSE`)
+#
+# @examples
+# mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
+# fit <- sdmTMB(density ~ 1, data = pcod_2011, mesh = mesh,
+#   family = tweedie(link = "log"))
+# fit2 <- update(fit, family = delta_gamma())
+#' @export
+update.sdmTMB <- function(object, formula., ..., evaluate = TRUE) {
+  call <- object$call
+  new_args <- list(...)
+
+  # handle formula update if provided
+  if (!missing(formula.)) {
+    if (is.null(call$formula)) {
+      call$formula <- formula.
+    } else {
+      call$formula <- stats::update.formula(call$formula, formula.)
+    }
+  }
+
+  # update other arguments
+  if (length(new_args) > 0) {
+    for (arg_name in names(new_args)) {
+      call[[arg_name]] <- new_args[[arg_name]]
+    }
+  }
+
+  # if mesh is not provided in new arguments,
+  # use the mesh from the fitted object to avoid environment issues
+  if (!"mesh" %in% names(new_args)) {
+    call$mesh <- object$spde
+  }
+
+  # if data is not provided, use the original data
+  if (!"data" %in% names(new_args)) {
+    call$data <- object$data
+  }
+
+  # evaluate the updated call if requested
+  if (evaluate) {
+    # create an environment with the necessary objects
+    eval_env <- new.env(parent = parent.frame())
+
+    # add the objects from the fitted model to the evaluation environment
+    eval_env$mesh <- object$spde
+    eval_env$data <- object$data
+
+    # evaluate the call in this environment
+    eval(call, envir = eval_env)
+  } else {
+    call
+  }
+}

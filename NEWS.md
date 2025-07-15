@@ -2,6 +2,9 @@
 
 ## Minor improvements and fixes
 
+* Add `update.sdmTMB()` so that the mesh argument doesn't have to be 
+  specified if model is loaded in a fresh session. #461
+
 * Change default in `get_index()` etc. to `bias_correct = TRUE`. This is the
   recommended setting for final inference and speed improvements within TMB
   have made it more viable to include the bias correction by default. #456
