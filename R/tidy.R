@@ -311,6 +311,20 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     out_ranef <- NULL
   }
 
+  # optional smooth SDs models with smooths
+  if (x$tmb_data$has_smooths) {
+    p <- print_smooth_effects(x, m = model, silent = TRUE)
+    ln_sds <- p$ln_sd_estimates
+    # add on CIs
+    ln_sds_df <- data.frame(term = row.names(ln_sds),
+                            estimate = ln_sds[,1],
+                            std.error = ln_sds[,2],
+                            conf.low = ln_sds[,1] - crit*ln_sds[,2],
+                            conf.high = ln_sds[,1] + crit*ln_sds[,2],
+                            group_name = NA)
+    row.names(ln_sds_df) <- NULL
+    out_re <- rbind(out_re, ln_sds_df)
+  }
   # optional time-varying random components
   if (!is.null(x$time_varying)) {
     tv_names <- colnames(model.matrix(x$time_varying, x$data))
@@ -335,6 +349,10 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
       out_ranef <- rbind(out_ranef, out_ranef_tv)
     }
   }
+
+  # re-order names to match those in "ran_vals"
+  out_re$model <- model
+  out_re <- out_re[,c("model", "group_name", "term", "estimate", "std.error", "conf.low", "conf.high")]
 
   out <- unique(out) # range can be duplicated
   out_re <- unique(out_re)
