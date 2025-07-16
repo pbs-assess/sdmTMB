@@ -353,7 +353,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   }
 
   # re-order names to match those in "ran_vals"
-  out_re$model <- model
+  out_re$model <- rep(model, nrow(out_re))
   # group_name and term might not exist
   new_names <- c("model", "group_name", "term", "estimate", "std.error", "conf.low", "conf.high")
   new_names <- new_names[which(new_names %in% names(out_re))]
