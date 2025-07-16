@@ -304,6 +304,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     cnms <- x$split_formula[[model]]$re_cov_terms$cnms
     flattened_cov <- flatten_cov_output(cov_mat_list, cnms)
     flattened_cov$model <- NULL
+    flattened_cov$term <- paste0("ln_SD_", flattened_cov$term)
     out_re$group_name <- NA
     out_re <- rbind(out_re, flattened_cov)
   } else {
@@ -352,7 +353,10 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
 
   # re-order names to match those in "ran_vals"
   out_re$model <- model
-  out_re <- out_re[,c("model", "group_name", "term", "estimate", "std.error", "conf.low", "conf.high")]
+  # group_name and term might not exist
+  new_names <- c("model", "group_name", "term", "estimate", "std.error", "conf.low", "conf.high")
+  new_names <- new_names[which(new_names %in% names(out_re))]
+  out_re <- out_re[, new_names]
 
   out <- unique(out) # range can be duplicated
   out_re <- unique(out_re)
