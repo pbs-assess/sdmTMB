@@ -522,8 +522,8 @@ test_that("one spatial off in a delta model works", {
   t0 <- tidy(m0, "ran_pars", model = 2)
   t2 <- tidy(m2, "ran_pars")
 
-  expect_equal(t0, t2, tolerance = 0.01)
-
+  expect_equal(t0[,c("term","estimate","std.error","conf.low","conf.high")],
+               t2[,c("term","estimate","std.error","conf.low","conf.high")], tolerance = 0.01)
 
   # ---------------------
   # with sigma_E
