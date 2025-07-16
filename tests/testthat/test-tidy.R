@@ -92,7 +92,7 @@ test_that("tidy works", {
                 formula = density ~ (depth_scaled+1 + binned_lon|year) + (1 | binned_lon),
                 family = nbinom2(link = "log"), spatial = "off")
   t1 <- tidy(fit, "ran_par")
-  expect_identical(t1$term, c("phi", "(Intercept)","depth_scaled","binned_lon","(Intercept)"))
+  expect_identical(t1$term, c("phi", "ln_SD_(Intercept)","ln_SD_depth_scaled","ln_SD_binned_lon","ln_SD_(Intercept)"))
   expect_identical(t1$group_name[2:5], c("year", "year", "year", "binned_lon"))
 
   # test that a models smooth SDs tidies
@@ -101,11 +101,11 @@ test_that("tidy works", {
                 formula = density ~ (binned_lon|year) + s(depth_scaled, by = fyear),
                 family = nbinom2(link = "log"), spatial = "off")
   t2 <- tidy(fit, "ran_par")
-  expect_identical(t2$term, c("phi", "(Intercept)","binned_lon","ln_SDs(depth_scaled):fyear2003",
-                              "ln_SDs(depth_scaled):fyear2004", "ln_SDs(depth_scaled):fyear2005",
-                              "ln_SDs(depth_scaled):fyear2007", "ln_SDs(depth_scaled):fyear2009",
-                              "ln_SDs(depth_scaled):fyear2011", "ln_SDs(depth_scaled):fyear2013",
-                              "ln_SDs(depth_scaled):fyear2015", "ln_SDs(depth_scaled):fyear2017"))
+  expect_identical(t2$term, c("phi", "ln_SD_(Intercept)","ln_SD_binned_lon","ln_SD_s(depth_scaled):fyear2003",
+                              "ln_SD_s(depth_scaled):fyear2004", "ln_SD_s(depth_scaled):fyear2005",
+                              "ln_SD_s(depth_scaled):fyear2007", "ln_SD_s(depth_scaled):fyear2009",
+                              "ln_SD_s(depth_scaled):fyear2011", "ln_SD_s(depth_scaled):fyear2013",
+                              "ln_SD_s(depth_scaled):fyear2015", "ln_SD_s(depth_scaled):fyear2017"))
 })
 
 test_that("printing/tidying works with a delta model that has random intercepts + an AR1 time series #426", {
