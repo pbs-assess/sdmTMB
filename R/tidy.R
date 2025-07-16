@@ -299,11 +299,42 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
       cov_mat_list[["hi"]] <- temp$cov_matrices_hi
     }
     out_ranef <- temp$out_ranef
+
+    # get names
+    cnms <- x$split_formula[[model]]$re_cov_terms$cnms
+    flattened_cov <- flatten_cov_output(cov_mat_list, cnms)
+    flattened_cov$model <- NULL
+    flattened_cov$term <- paste0("ln_SD_", flattened_cov$term)
+    if (!conf.int) {
+      flattened_cov[["conf.low"]] <- NULL
+      flattened_cov[["conf.high"]] <- NULL
+    }
+    out_re$group_name <- rep(NA, nrow(out_re))
+    out_re <- rbind(out_re, flattened_cov)
   } else {
     cov_mat_list <- NULL
     out_ranef <- NULL
   }
 
+  # optional smooth SDs models with smooths
+  if (x$tmb_data$has_smooths) {
+    p <- print_smooth_effects(x, m = model, silent = TRUE)
+    ln_sds <- p$ln_sd_estimates
+    # add on CIs
+    ln_sds_df <- data.frame(term = row.names(ln_sds),
+                            estimate = ln_sds[,1],
+                            std.error = ln_sds[,2],
+                            conf.low = ln_sds[,1] - crit*ln_sds[,2],
+                            conf.high = ln_sds[,1] + crit*ln_sds[,2],
+                            group_name = NA)
+    if (!conf.int) {
+      ln_sds_df[["conf.low"]] <- NULL
+      ln_sds_df[["conf.high"]] <- NULL
+    }
+    row.names(ln_sds_df) <- NULL
+    if("group_name" %in% names(out_re) == FALSE) out_re$group_name <- rep(NA, nrow(out_re))
+    out_re <- rbind(out_re, ln_sds_df)
+  }
   # optional time-varying random components
   if (!is.null(x$time_varying)) {
     tv_names <- colnames(model.matrix(x$time_varying, x$data))
@@ -328,6 +359,14 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
       out_ranef <- rbind(out_ranef, out_ranef_tv)
     }
   }
+
+  # re-order names to match those in "ran_vals"
+  out_re$model <- rep(model, nrow(out_re))
+  # group_name and term might not exist
+  new_names <- c("model", "group_name", "term", "estimate", "std.error")
+  if(conf.int) new_names <- c(new_names, "conf.low", "conf.high")
+  new_names <- new_names[which(new_names %in% names(out_re))]
+  out_re <- out_re[, new_names]
 
   out <- unique(out) # range can be duplicated
   out_re <- unique(out_re)
@@ -497,4 +536,56 @@ tidy.sdmTMB_cv <- function(x, ...) {
     df
   })
   do.call("rbind", out)
+}
+
+# Flatten a list of estimated random effects into a dataframe
+#
+# This function extracts random effect estimates from a list of matrices representing
+# the mean, lower and upper confidence intervals. Ignoring the off-diagonal elements,
+# it returns a dataframe of random effects estimates, their standard errors, and confidence intervals,
+# consistent with the other tidy output from `sdmTMB` models.
+#
+# @param v A list of 3 random effects; for multiple grouping variables this will be a list of lists
+# @param cnms A list of vectors of coefficient names for each set of grouping variable
+flatten_cov_output <- function(v, cnms) {
+  results <- list()
+  idx <- 1
+
+  for (name in names(v$est)) {
+    est_mat <- v$est[[name]]
+    lo_mat  <- v$lo[[name]]
+    hi_mat  <- v$hi[[name]]
+    # Split_name is the name of the model and group
+    split_name <- strsplit(name, " +")[[1]]
+    model <- as.integer(split_name[2])
+    group_name <- split_name[4]
+
+    term_names <- cnms[[group_name]]
+    n <- nrow(est_mat)  # number of coefficients being estimated
+
+    # Extract diagonal values only
+    for (i in seq_len(n)) {
+      est <- est_mat[i, i]
+      if (is.na(est)) next
+
+      conf_low <- if (!is.null(lo_mat)) lo_mat[i, i] else NA
+      conf_high <- if (!is.null(hi_mat)) hi_mat[i, i] else NA
+
+      results[[idx]] <- data.frame(
+        model = model,
+        group_name = group_name,
+        term = term_names[i],
+        estimate = est,
+        std.error = NA, # we may want to change this and also report std.error?
+        conf.low = conf_low,
+        conf.high = conf_high,
+        stringsAsFactors = FALSE
+      )
+      idx <- idx + 1
+    }
+  }
+
+  df <- do.call(rbind, results)
+  rownames(df) <- NULL
+  df
 }

@@ -200,7 +200,8 @@ test_that("Model with random intercepts fits appropriately.", {
 
   expect_gt(.t1$estimate[.t1$term == "phi"], .t$estimate[.t$term == "phi"])
   expect_gt(.t1$estimate[.t1$term == "sigma_O"], .t$estimate[.t$term == "sigma_O"])
-  expect_equal(nrow(.t1), nrow(.t))
+  expect_equal(nrow(.t1), 3)
+  expect_equal(nrow(.t), 5)
 
   b <- as.list(m$sd_report, "Estimate")
   .cor <- cor(c(RE_vals, RE_vals2), b$re_b_pars)
