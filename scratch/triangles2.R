@@ -41,7 +41,7 @@ point_in_hexagon <- function(x, y) {
 # Generate random points inside the hexagon
 # seed <- sample(1:1e6, 1)
 set.seed(42)  # For reproducible results
-n_points <- 100
+n_points <- 150
 attempts <- 0
 max_attempts <- 1000
 
@@ -104,7 +104,7 @@ vertex_grf <- numeric(n_vertices)
 
 # Add covariate effect: darker diagonally (60 degrees clockwise from horizontal)
 # Rotate coordinates 60 degrees clockwise
-angle <- -60 * pi / 180  # Convert to radians, negative for clockwise
+angle <- 10 * pi / 180  # Convert to radians, negative for clockwise
 rotation_matrix <- matrix(c(cos(angle), -sin(angle), sin(angle), cos(angle)), nrow = 2)
 
 # Apply rotation to points
@@ -112,7 +112,7 @@ rotated_points <- t(rotation_matrix %*% t(points))
 
 # Use the rotated x-coordinate for the covariate effect
 x_rotated_normalized <- (rotated_points[, 1] - min(rotated_points[, 1])) / (max(rotated_points[, 1]) - min(rotated_points[, 1]))
-covariate_effect <- 5 * x_rotated_normalized  # Adjust coefficient to control strength
+covariate_effect <- 3 * x_rotated_normalized  # Adjust coefficient to control strength
 
 # Generate correlated field using a simple exponential correlation
 correlation_range <- 0.2  # Adjust this to control spatial correlation
@@ -178,9 +178,18 @@ g <- ggplot() +
   # geom_polygon(data = triangle_data,
   #   aes(x = x, y = y, group = triangle_id), fill = NA,
   #   color = "#FFFFFF70", linewidth = 0.5) +
+  # geom_polygon(data = triangle_data,
+  #   aes(x = x, y = y, group = triangle_id),
+  #   color = NA, linewidth = 0.3, fill = "#D54545") +
+
+  # geom_polygon(data = triangle_data,
+  #   aes(x = x, y = y, group = triangle_id),
+  #   color = "#FFFFFF85", linewidth = 0.3, fill = "#D54545") +
+
   geom_polygon(data = triangle_data,
-    aes(x = x, y = y, group = triangle_id),
-    color = "white", linewidth = 0.3, fill = "#D54545") +
+    aes(x = x, y = y, group = triangle_id, fill = color_value),
+    color = "#FFFFFF85", linewidth = 0.3) +
+
   geom_polygon(data = hexagon_data, aes(x = x, y = y),
     fill = NA, color = border_col, linewidth = 0.3) +
   # geom_text(aes(x = 0.35, y = 0.8), label = "sdmTMB",
@@ -189,8 +198,8 @@ g <- ggplot() +
   # geom_text(aes(x = 0.5, y = 0.58), label = "sdmTMB",
   # size = 14, color = "grey25", angle = 0, family = "roboto condensed") +
 
-  geom_text(aes(x = 0.47, y = 0.57), label = "sdmTMB",
-    size = 16, color = "white", angle = 30, family = "roboto condensed") +
+  geom_text(aes(x = 0.44, y = 0.57), label = "sdmTMB",
+    size = 22.5, color = "white", angle = 30, family = "roboto condensed", fontface = "italic") +
 
   # geom_text(aes(x = 0.343, y = 0.755), label = "sdmTMB",
     # size = 16, color = "white", angle = 30, family = "roboto condensed", fontface = "italic") +
@@ -203,16 +212,22 @@ g <- ggplot() +
   # Filter out points that overlap with the diagonal text area
   # Create a diagonal exclusion zone around the text "sdmTMB"
   # Create a wider diagonal exclusion zone around the text "sdmTMB" at 30 degrees
-  geom_point(data = obs[!(abs((obs$y - 0.57) - tan(30 * pi/180) * (obs$x - 0.47)) < 0.12 & 
-                          obs$x > 0.2 & obs$x < 0.8 & obs$y > 0.35 & obs$y < 0.8), ], 
+  geom_point(data = obs[!(abs((obs$y - 0.57) - tan(30 * pi/180) * (obs$x - 0.47)) < 0.12 &
+                          obs$x > 0.1 & obs$x < 0.8 & obs$y > 0.35 & obs$y < 0.8), ],
              aes(x, y, size = value), colour = "white", alpha = 0.8, pch = 20) +
   # scale_fill_viridis_c(option = viridis_option, direction = -1) +
   # scale_fill_distiller(palette = "Reds", direction = 1, ) +
   # scale_fill_gradient(low = "white", high = RColorBrewer::brewer.pal(8, "Blues")[8]) +
+  scale_fill_gradient(low = "#9e3434", high = "#D54545") +
+  scale_fill_gradient(low = "grey22", high = "#D54545") +
+  # scale_fill_gradient(high = "grey22", low = "#D54545") +
+  # scale_fill_gradient(low = "#D54545", high = "grey20") +
   scale_size_area(max_size = 4) +
   guides(size = FALSE, fill = FALSE) +
   coord_fixed(ratio = 1) +
-  theme_minimal()
-  # theme_void()
+  # theme_minimal()
+  theme_void()
 print(g)
 
+ggsave("logo.pdf", width = 4, height = 4.5)
+ggsave("logo.svg", width = 4, height = 4.5)
