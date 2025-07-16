@@ -77,7 +77,7 @@ test_that("AR1 time-varying works", {
                 spatiotemporal = "off",
                 family = tweedie())
   s <- tidy(fit, "ran_pars")
-  expect_equal(dim(s), c(3L, 5L))
+  expect_equal(dim(s), c(3L, 6L))
   expect_equal(s$term, c("phi","rho_time","tweedie_p"))
 
   # test that tidy works -- RW
@@ -87,7 +87,7 @@ test_that("AR1 time-varying works", {
                 spatiotemporal = "off",
                 family = tweedie())
   s <- tidy(fit, "ran_pars")
-  expect_equal(dim(s), c(2L, 5L))
+  expect_equal(dim(s), c(2L, 6L))
   expect_equal(s$term, c("phi","tweedie_p"))
 
   # test that tidy works -- AR1
@@ -98,7 +98,7 @@ test_that("AR1 time-varying works", {
                 spatiotemporal = "off",
                 family = tweedie())
   s <- tidy(fit, "ran_pars")
-  expect_equal(dim(s), c(3L, 5L))
+  expect_equal(dim(s), c(3L, 6L))
   expect_equal(s$term, c("phi", "rho_time", "tweedie_p"))
 
   # test that tidy works -- no time varying
@@ -107,7 +107,7 @@ test_that("AR1 time-varying works", {
                 spatiotemporal = "off",
                 family = tweedie())
   s <- tidy(fit, "ran_pars")
-  expect_equal(dim(s), c(2L, 5L))
+  expect_equal(dim(s), c(2L, 6L))
   expect_equal(s$term, c("phi","tweedie_p"))
 
   # test that tidy works with 2 parameters
@@ -118,7 +118,7 @@ test_that("AR1 time-varying works", {
                 spatiotemporal = "off",
                 family = tweedie())
   s <- tidy(fit, "ran_pars")
-  expect_equal(dim(s), c(4L, 5L))
+  expect_equal(dim(s), c(4L, 6L))
   expect_equal(s$term, c("phi","rho_time","rho_time","tweedie_p"))
 
   # test that tidy works with delta
@@ -129,11 +129,11 @@ test_that("AR1 time-varying works", {
                 spatiotemporal = "off",
                 family = delta_gamma())
   s <- tidy(fit, "ran_pars")
-  expect_equal(dim(s), c(2L, 5L))
+  expect_equal(dim(s), c(2L, 6L))
   expect_equal(s$term, c("rho_time","rho_time"))
 
   s <- tidy(fit, "ran_pars", model = 1)
-  expect_equal(dim(s), c(2L, 5L))
+  expect_equal(dim(s), c(2L, 6L))
   expect_equal(s$term, c("rho_time","rho_time"))
   expect_equal(s$estimate, c(1.0, 0.9582931))
 
