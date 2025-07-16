@@ -175,7 +175,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' m_cv$models[[1]]
 #' m_cv$max_gradients
 #'
-#' \donttest{
+#'
 #' # Create mesh each fold:
 #' m_cv2 <- sdmTMB_cv(
 #'   density ~ 0 + depth_scaled + depth_scaled2,
@@ -190,24 +190,24 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'   family = tweedie(link = "log"),
 #'   fold_ids = rep(seq(1, 3), nrow(pcod))[seq(1, nrow(pcod))]
 #' )
-#
-# # LFOCV:
-# m_lfocv <- sdmTMB_cv(
-#   present ~ s(year, k = 4),
-#   data = pcod,
-#   mesh = mesh,
-#   lfo = TRUE,
-#   lfo_forecast = 2,
-#   lfo_validations = 3,
-#   family = binomial(),
-#   spatiotemporal = "off",
-#   time = "year" # must be specified
-# )
-#
-# # See how the LFOCV folds were assigned:
-# example_data <- m_lfocv$models[[1]]$data
-# table(example_data$cv_fold, example_data$year)
-#' }
+#'
+#' # LFOCV:
+#' m_lfocv <- sdmTMB_cv(
+#'   present ~ s(year, k = 4),
+#'   data = pcod,
+#'   mesh = mesh,
+#'   lfo = TRUE,
+#'   lfo_forecast = 2,
+#'   lfo_validations = 3,
+#'   family = binomial(),
+#'   spatiotemporal = "off",
+#'   time = "year" # must be specified
+#' )
+#'
+#' # See how the LFOCV folds were assigned:
+#' example_data <- m_lfocv$models[[1]]$data
+#' table(example_data$cv_fold, example_data$year)
+#'
 sdmTMB_cv <- function(
     formula, data, mesh_args, mesh = NULL, time = NULL,
     k_folds = 8, fold_ids = NULL,
@@ -244,11 +244,10 @@ sdmTMB_cv <- function(
       # Create lfo_validations + 1 folds, ordered sequentially
       data$cv_fold <- 1
       t_validate <- sort(unique(data[[time]]), decreasing = TRUE)
-      for (t in seq(1, lfo_validations)) {
+      for (t in seq(1, lfo_validations+lfo_forecast)) {
         # fold id increasing order + forecast
         data$cv_fold[data[[time]] == t_validate[t]] <- lfo_validations - t + 1 + lfo_forecast
       }
-      data$cv_fold <- as.numeric(as.factor(data$cv_fold))
     } else {
       dd <- lapply(split(data, data[[time]]), function(x) {
         x$cv_fold <- sample(rep(seq(1L, k_folds), nrow(x)), size = nrow(x))
