@@ -305,7 +305,11 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     flattened_cov <- flatten_cov_output(cov_mat_list, cnms)
     flattened_cov$model <- NULL
     flattened_cov$term <- paste0("ln_SD_", flattened_cov$term)
-    out_re$group_name <- NA
+    if (!conf.int) {
+      flattened_cov[["conf.low"]] <- NULL
+      flattened_cov[["conf.high"]] <- NULL
+    }
+    out_re$group_name <- rep(NA, nrow(out_re))
     out_re <- rbind(out_re, flattened_cov)
   } else {
     cov_mat_list <- NULL
@@ -323,6 +327,10 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
                             conf.low = ln_sds[,1] - crit*ln_sds[,2],
                             conf.high = ln_sds[,1] + crit*ln_sds[,2],
                             group_name = NA)
+    if (!conf.int) {
+      ln_sds_df[["conf.low"]] <- NULL
+      ln_sds_df[["conf.high"]] <- NULL
+    }
     row.names(ln_sds_df) <- NULL
     if("group_name" %in% names(out_re) == FALSE) out_re$group_name <- NA
     out_re <- rbind(out_re, ln_sds_df)
@@ -355,7 +363,8 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   # re-order names to match those in "ran_vals"
   out_re$model <- rep(model, nrow(out_re))
   # group_name and term might not exist
-  new_names <- c("model", "group_name", "term", "estimate", "std.error", "conf.low", "conf.high")
+  new_names <- c("model", "group_name", "term", "estimate", "std.error")
+  if(conf.int) new_names <- c(new_names, "conf.low", "conf.high")
   new_names <- new_names[which(new_names %in% names(out_re))]
   out_re <- out_re[, new_names]
 
