@@ -324,6 +324,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
                             conf.high = ln_sds[,1] + crit*ln_sds[,2],
                             group_name = NA)
     row.names(ln_sds_df) <- NULL
+    if("group_name" %in% names(out_re) == FALSE) out_re$group_name <- NA
     out_re <- rbind(out_re, ln_sds_df)
   }
   # optional time-varying random components
