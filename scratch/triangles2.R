@@ -160,11 +160,12 @@ for(i in 1:nrow(triangles)) {
 # Create the plot
 border_col <- "grey25"
 border_col <- RColorBrewer::brewer.pal(8, "Blues")[8]
-viridis_option <- "G"
+viridis_option <- "B"
 border_col <- viridis::viridis(option = viridis_option, n = 8)[2]
 
 border_col <- "grey25"
-border_col <- "#9e3434"
+# border_col <- "#752626"
+# border_col <- "#204c63"
 
 g <- ggplot() +
   geom_polygon(data = hexagon_data, aes(x = x, y = y),
@@ -190,16 +191,22 @@ g <- ggplot() +
     aes(x = x, y = y, group = triangle_id, fill = color_value),
     color = "#FFFFFF85", linewidth = 0.3) +
 
-  geom_polygon(data = hexagon_data, aes(x = x, y = y),
-    fill = NA, color = border_col, linewidth = 0.3) +
+  # geom_polygon(data = hexagon_data, aes(x = x, y = y),
+    # fill = NA, color = border_col, linewidth = 0.3) +
   # geom_text(aes(x = 0.35, y = 0.8), label = "sdmTMB",
             # size = 13, color = "white", angle = 30, family = "roboto condensed") +
 
   # geom_text(aes(x = 0.5, y = 0.58), label = "sdmTMB",
   # size = 14, color = "grey25", angle = 0, family = "roboto condensed") +
 
-  geom_text(aes(x = 0.44, y = 0.57), label = "sdmTMB",
-    size = 22.5, color = "white", angle = 30, family = "roboto condensed", fontface = "italic") +
+  # geom_text(aes(x = 0.44, y = 0.57), label = "sdmTMB",
+    # size = 22.5, color = "white", angle = 30, family = "roboto condensed", fontface = "italic") +
+  annotate("text", x = 0.435, y = 0.56, hjust = .5, parse = TRUE, angle = 30,
+           label = '"sdm" * phantom("TMB")', color = "black",
+           size = 22.5, family = "roboto condensed", fontface = "italic") +
+  annotate("text", x = 0.435, y = 0.56, hjust = .5, parse = TRUE, angle = 30,
+           label = 'phantom("sdm") * "TMB"', color = "white",
+           size = 22.5, family = "roboto condensed", fontface = "italic") +
 
   # geom_text(aes(x = 0.343, y = 0.755), label = "sdmTMB",
     # size = 16, color = "white", angle = 30, family = "roboto condensed", fontface = "italic") +
@@ -215,12 +222,13 @@ g <- ggplot() +
   geom_point(data = obs[!(abs((obs$y - 0.57) - tan(30 * pi/180) * (obs$x - 0.47)) < 0.12 &
                           obs$x > 0.1 & obs$x < 0.8 & obs$y > 0.35 & obs$y < 0.8), ],
              aes(x, y, size = value), colour = "white", alpha = 0.8, pch = 20) +
-  # scale_fill_viridis_c(option = viridis_option, direction = -1) +
+  scale_fill_viridis_c(option = viridis_option, direction = -1) +
   # scale_fill_distiller(palette = "Reds", direction = 1, ) +
   # scale_fill_gradient(low = "white", high = RColorBrewer::brewer.pal(8, "Blues")[8]) +
-  scale_fill_gradient(low = "#9e3434", high = "#D54545") +
-  scale_fill_gradient(low = "grey22", high = "#D54545") +
-  # scale_fill_gradient(high = "grey22", low = "#D54545") +
+  # scale_fill_gradient(low = "#752626", high = "#D54545") +
+  # scale_fill_gradient(low = border_col, high = "#D54545") +
+  # scale_fill_gradient(low = "#204c63", high = "#45a3d5") +
+  # scale_fill_gradient(low = "grey22", high = "#D54545") +
   # scale_fill_gradient(low = "#D54545", high = "grey20") +
   scale_size_area(max_size = 4) +
   guides(size = FALSE, fill = FALSE) +
@@ -229,5 +237,5 @@ g <- ggplot() +
   theme_void()
 print(g)
 
-ggsave("logo.pdf", width = 4, height = 4.5)
+ggsave("logo-viridis-B-2-tone.pdf", width = 4, height = 4.5)
 ggsave("logo.svg", width = 4, height = 4.5)
