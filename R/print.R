@@ -162,6 +162,7 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
   } else {
     re_sm_mat <- NULL
     mm_sm <- NULL
+    ln_re_sm_mat <- NULL
   }
   list(smooth_effects = mm_sm, smooth_sds = re_sm_mat, ln_sd_estimates = ln_re_sm_mat)
 }
