@@ -85,6 +85,27 @@ test_that("tidy works", {
   expect_equal(allmodels[1:2,1:5], model1[,1:5])
   expect_true("cv_split" %in% names(allmodels))
   expect_equal(allmodels$cv_split, sort(rep(1:2,2)))
+
+  # test that a model with multiple grouping factors tidies
+  pcod$binned_lon <- round((pcod$lon - min(pcod$lon)) * 5)
+  fit <- sdmTMB(data = pcod,
+                formula = density ~ (depth_scaled+1 + binned_lon|year) + (1 | binned_lon),
+                family = nbinom2(link = "log"), spatial = "off")
+  t1 <- tidy(fit, "ran_par")
+  expect_identical(t1$term, c("phi", "(Intercept)","depth_scaled","binned_lon","(Intercept)"))
+  expect_identical(t1$group_name[2:5], c("year", "year", "year", "binned_lon"))
+
+  # test that a models smooth SDs tidies
+  pcod$fyear <- as.factor(pcod$year)
+  fit <- sdmTMB(data = pcod,
+                formula = density ~ (binned_lon|year) + s(depth_scaled, by = fyear),
+                family = nbinom2(link = "log"), spatial = "off")
+  t2 <- tidy(fit, "ran_par")
+  expect_identical(t2$term, c("phi", "(Intercept)","binned_lon","ln_SDs(depth_scaled):fyear2003",
+                              "ln_SDs(depth_scaled):fyear2004", "ln_SDs(depth_scaled):fyear2005",
+                              "ln_SDs(depth_scaled):fyear2007", "ln_SDs(depth_scaled):fyear2009",
+                              "ln_SDs(depth_scaled):fyear2011", "ln_SDs(depth_scaled):fyear2013",
+                              "ln_SDs(depth_scaled):fyear2015", "ln_SDs(depth_scaled):fyear2017"))
 })
 
 test_that("printing/tidying works with a delta model that has random intercepts + an AR1 time series #426", {
@@ -115,3 +136,6 @@ test_that("printing/tidying works with a delta model that has random intercepts 
     "(Intercept):2014", "(Intercept):2015", "(Intercept):2016", "(Intercept):2017"
   ))
 })
+
+
+
