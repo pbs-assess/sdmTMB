@@ -113,7 +113,7 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
     })
     sm_names_bs <- unlist(xx)
     sm_names_sds <- paste0("sds(", sm_names)
-    ln_sm_names_sds <- paste0("ln_SD_s(", sm_names)
+    sm_names_sds_tidy <- paste0("SD_s(", sm_names)
     mm_sm <- cbind(bs, bs_se)
 
     .sm_names_bs <- sm_names_bs[!sm_classes %in% c("cc.smooth.spec", "cs.smooth.spec")]
@@ -145,7 +145,7 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
     ln_re_sm_mat <- matrix(NA_real_, nrow = length(smooth_sds), ncol = 2L)
     ln_re_sm_mat[, 1] <- sr_est$ln_smooth_sigma[, m]
     ln_re_sm_mat[, 2] <- sr_se$ln_smooth_sigma[, m]
-    rownames(ln_re_sm_mat) <- ln_sm_names_sds
+    rownames(ln_re_sm_mat) <- sm_names_sds_tidy
     colnames(ln_re_sm_mat) <- c("estimate", "std.error")
 
     if (!is.null(edf)) {

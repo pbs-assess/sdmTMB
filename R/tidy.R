@@ -304,7 +304,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     cnms <- x$split_formula[[model]]$re_cov_terms$cnms
     flattened_cov <- flatten_cov_output(cov_mat_list, cnms)
     flattened_cov$model <- NULL
-    flattened_cov$term <- paste0("ln_SD_", flattened_cov$term)
+    flattened_cov$term <- paste0("SD_", flattened_cov$term)
     if (!conf.int) {
       flattened_cov[["conf.low"]] <- NULL
       flattened_cov[["conf.high"]] <- NULL
@@ -320,12 +320,14 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   if (x$tmb_data$has_smooths) {
     p <- print_smooth_effects(x, m = model, silent = TRUE)
     ln_sds <- p$ln_sd_estimates
-    # add on CIs
-    ln_sds_df <- data.frame(term = row.names(ln_sds),
-                            estimate = ln_sds[,1],
-                            std.error = ln_sds[,2],
-                            conf.low = ln_sds[,1] - crit*ln_sds[,2],
-                            conf.high = ln_sds[,1] + crit*ln_sds[,2],
+    # Convert from log-scale to natural scale and update term names
+    term_names <- gsub("^ln_SD_s\\(", "SD_s(", row.names(ln_sds))
+    # add on CIs - calculate in log space then transform
+    ln_sds_df <- data.frame(term = term_names,
+                            estimate = exp(ln_sds[,1]),
+                            std.error = NA_real_,
+                            conf.low = exp(ln_sds[,1] - crit*ln_sds[,2]),
+                            conf.high = exp(ln_sds[,1] + crit*ln_sds[,2]),
                             group_name = NA)
     if (!conf.int) {
       ln_sds_df[["conf.low"]] <- NULL
@@ -480,13 +482,13 @@ get_re_tidy_list <- function(x, crit, model = 1) {
   re_cov_df$std.error <- x$sd_report$sd[re_indx][non_nas]
   re_cov_df$conf.low <- re_cov_df$estimate - crit * re_cov_df$std.error
   re_cov_df$conf.high <- re_cov_df$estimate + crit * re_cov_df$std.error
-  # the SD parameters are returned in log space -- use delta method to generate CIs
-  est <- exp(re_cov_df$estimate) # estimate in normal space
-  sd_est <- est * re_cov_df$std.error # SE in normal space
+  # the SD parameters are returned in log space -- calculate CIs in log space then transform
   sds <- which(re_cov_df$is_sd == 1) # index which elements are SDs
-  re_cov_df$estimate[sds] <- est[sds]
-  re_cov_df$conf.low[sds] <- est[sds] - crit * sd_est[sds]
-  re_cov_df$conf.high[sds] <- est[sds] + crit * sd_est[sds]
+  # Calculate CIs in log space first
+  re_cov_df$conf.low[sds] <- exp(re_cov_df$estimate[sds] - crit * re_cov_df$std.error[sds])
+  re_cov_df$conf.high[sds] <- exp(re_cov_df$estimate[sds] + crit * re_cov_df$std.error[sds])
+  # Transform estimates to natural space
+  re_cov_df$estimate[sds] <- exp(re_cov_df$estimate[sds])
 
   re_cov_df <- re_cov_df[, c("rows", "cols", "model", "group", "estimate", "std.error", "conf.low", "conf.high")]
   cov_matrices_lo = create_cov_matrices(re_cov_df, col_name = "conf.low", model = model)
