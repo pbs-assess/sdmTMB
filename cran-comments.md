@@ -1,5 +1,4 @@
-This version reduces the size of the tarball by removing a large file that
-was accidentally included in the previous submission.
+This version fixes several bugs and adds minor functionality.
 
 ## R CMD check results
 
@@ -7,7 +6,7 @@ was accidentally included in the previous submission.
 
 ## Test environments
 
-* Local M2 macOS install, R 4.5.0
+* Local M2 macOS install, R 4.5.1
 * Intel macOS (on github-actions), R-release
 * Ubuntu 24.04.2 (on github-actions), R-release
 * Windows (on github-actions), R-release
