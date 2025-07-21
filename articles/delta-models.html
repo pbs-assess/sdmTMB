@@ -306,13 +306,13 @@ options.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> (Intercept)   -<span style="color: #BB0000;">0.343</span>     0.614    -<span style="color: #BB0000;">1.55</span>     0.860</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> sdepth         1.28      2.91     -<span style="color: #BB0000;">4.42</span>     6.98</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit_dg</span>, model <span class="op">=</span> <span class="fl">1</span>, <span class="st">"ran_pars"</span>, conf.int <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 7</span></span></span>
-<span><span class="co">#&gt;   model group_name term        estimate std.error conf.low conf.high</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1 <span style="color: #BB0000;">NA</span>         range         61.4      14.1     39.2       96.3 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     1 <span style="color: #BB0000;">NA</span>         sigma_O        1.71      0.265    1.26       2.32</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     1 <span style="color: #BB0000;">NA</span>         sigma_E        0.806     0.142    0.570      1.14</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     1 <span style="color: #BB0000;">NA</span>         sd__s(depth   14.4      <span style="color: #BB0000;">NA</span>        7.93      26.1</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 6</span></span></span>
+<span><span class="co">#&gt;   model term         estimate std.error conf.low conf.high</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1 range          61.4      14.1     39.2       96.3 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     1 sigma_O         1.71      0.265    1.26       2.32</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     1 sigma_E         0.806     0.142    0.570      1.14</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     1 sd__s(depth)   14.4      <span style="color: #BB0000;">NA</span>        7.93      26.1</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit_dg</span>, model <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
 <span><span class="co">#&gt;   term        estimate std.error conf.low conf.high</span></span>
@@ -320,14 +320,14 @@ options.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> (Intercept)     3.67     0.120     3.44      3.91</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> sdepth          0.31     1.29     -<span style="color: #BB0000;">2.22</span>      2.84</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit_dg</span>, model <span class="op">=</span> <span class="fl">2</span>, <span class="st">"ran_pars"</span>, conf.int <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 7</span></span></span>
-<span><span class="co">#&gt;   model group_name term        estimate std.error conf.low conf.high</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     2 <span style="color: #BB0000;">NA</span>         range         14.8      5.02      7.62      28.8 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     2 <span style="color: #BB0000;">NA</span>         phi            1.03     0.050<span style="text-decoration: underline;">2</span>    0.939      1.14</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     2 <span style="color: #BB0000;">NA</span>         sigma_O        0.691    0.228     0.361      1.32</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     2 <span style="color: #BB0000;">NA</span>         sigma_E        1.45     0.336     0.919      2.28</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     2 <span style="color: #BB0000;">NA</span>         sd__s(depth    5.41    <span style="color: #BB0000;">NA</span>         2.43      12.1</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 6</span></span></span>
+<span><span class="co">#&gt;   model term         estimate std.error conf.low conf.high</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     2 range          14.8      5.02      7.62      28.8 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     2 phi             1.03     0.050<span style="text-decoration: underline;">2</span>    0.939      1.14</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     2 sigma_O         0.691    0.228     0.361      1.32</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     2 sigma_E         1.45     0.336     0.919      2.28</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     2 sd__s(depth)    5.41    <span style="color: #BB0000;">NA</span>         2.43      12.1</span></span></code></pre></div>
 <!-- We can use `predict()` to predict density in either log space (the default) or transformed into the response scale (`type = "response"`). -->
 <p>For built-in delta models, the default function will return estimated
 response and parameters for each grid cell for each model separately,
