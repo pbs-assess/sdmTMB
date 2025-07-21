@@ -113,7 +113,7 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
     })
     sm_names_bs <- unlist(xx)
     sm_names_sds <- paste0("sds(", sm_names)
-    sm_names_sds_tidy <- paste0("SD_s(", sm_names, ")")
+    sm_names_sds_tidy <- paste0("SD_s(", sm_names, ifelse(grepl(":", sm_names), "", ")"))
     mm_sm <- cbind(bs, bs_se)
 
     .sm_names_bs <- sm_names_bs[!sm_classes %in% c("cc.smooth.spec", "cs.smooth.spec")]
