@@ -369,6 +369,8 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   if(conf.int) new_names <- c(new_names, "conf.low", "conf.high")
   new_names <- new_names[new_names %in% names(out_re)]
   out_re <- out_re[, new_names]
+  # remove group_name if not used for simplicity:
+  if (all(is.na(out_re$group_name))) out_re$group_name <- NULL
 
   out <- unique(out) # range can be duplicated
   out_re <- unique(out_re)
