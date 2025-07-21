@@ -112,7 +112,8 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
       }
     })
     sm_names_bs <- unlist(xx)
-    sm_names_sds <- paste0("sds(", sm_names, ")")
+    sm_names_sds <- paste0("sds(", sm_names)
+    sm_names_sds_tidy <- paste0("SD_s(", sm_names)
     mm_sm <- cbind(bs, bs_se)
 
     .sm_names_bs <- sm_names_bs[!sm_classes %in% c("cc.smooth.spec", "cs.smooth.spec")]
@@ -140,6 +141,13 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
     rownames(re_sm_mat) <- sm_names_sds
     colnames(re_sm_mat) <- "Std. Dev."
 
+    # second matrix for ran_pars
+    ln_re_sm_mat <- matrix(NA_real_, nrow = length(smooth_sds), ncol = 2L)
+    ln_re_sm_mat[, 1] <- sr_est$ln_smooth_sigma[, m]
+    ln_re_sm_mat[, 2] <- sr_se$ln_smooth_sigma[, m]
+    rownames(ln_re_sm_mat) <- sm_names_sds_tidy
+    colnames(ln_re_sm_mat) <- c("estimate", "std.error")
+
     if (!is.null(edf)) {
       if (is_delta(x)) {
         lp_regex <- paste0("^", m, "LP-s\\(")
@@ -154,8 +162,9 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
   } else {
     re_sm_mat <- NULL
     mm_sm <- NULL
+    ln_re_sm_mat <- NULL
   }
-  list(smooth_effects = mm_sm, smooth_sds = re_sm_mat)
+  list(smooth_effects = mm_sm, smooth_sds = re_sm_mat, ln_sd_estimates = ln_re_sm_mat)
 }
 
 print_int_slope_re <- function(x, m = 1) {

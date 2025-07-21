@@ -299,11 +299,44 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
       cov_mat_list[["hi"]] <- temp$cov_matrices_hi
     }
     out_ranef <- temp$out_ranef
+
+    # get names
+    cnms <- x$split_formula[[model]]$re_cov_terms$cnms
+    flattened_cov <- flatten_cov_output(cov_mat_list, cnms)
+    flattened_cov$model <- NULL
+    flattened_cov$term <- paste0("sd__", flattened_cov$term)
+    if (!conf.int) {
+      flattened_cov[["conf.low"]] <- NULL
+      flattened_cov[["conf.high"]] <- NULL
+    }
+    out_re$group_name <- rep(NA, nrow(out_re))
+    out_re <- rbind(out_re, flattened_cov)
   } else {
     cov_mat_list <- NULL
     out_ranef <- NULL
   }
 
+  # optional smooth SDs models with smooths
+  if (x$tmb_data$has_smooths) {
+    p <- print_smooth_effects(x, m = model, silent = TRUE)
+    ln_sds <- p$ln_sd_estimates
+    # Convert from log-scale to natural scale and update term names
+    term_names <- gsub("^SD_s\\(", "sd__s(", row.names(ln_sds))
+    # add on CIs - calculate in log space then transform
+    ln_sds_df <- data.frame(term = term_names,
+                            estimate = exp(ln_sds[,1]),
+                            std.error = NA_real_,
+                            conf.low = exp(ln_sds[,1] - crit*ln_sds[,2]),
+                            conf.high = exp(ln_sds[,1] + crit*ln_sds[,2]),
+                            group_name = NA)
+    if (!conf.int) {
+      ln_sds_df[["conf.low"]] <- NULL
+      ln_sds_df[["conf.high"]] <- NULL
+    }
+    row.names(ln_sds_df) <- NULL
+    if (!"group_name" %in% names(out_re)) out_re$group_name <- rep(NA, nrow(out_re))
+    out_re <- rbind(out_re, ln_sds_df)
+  }
   # optional time-varying random components
   if (!is.null(x$time_varying)) {
     tv_names <- colnames(model.matrix(x$time_varying, x$data))
@@ -328,6 +361,14 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
       out_ranef <- rbind(out_ranef, out_ranef_tv)
     }
   }
+
+  # re-order names to match those in "ran_vals"
+  out_re$model <- rep(model, nrow(out_re))
+  # group_name and term might not exist
+  new_names <- c("model", "group_name", "term", "estimate", "std.error")
+  if(conf.int) new_names <- c(new_names, "conf.low", "conf.high")
+  new_names <- new_names[new_names %in% names(out_re)]
+  out_re <- out_re[, new_names]
 
   out <- unique(out) # range can be duplicated
   out_re <- unique(out_re)
@@ -441,13 +482,13 @@ get_re_tidy_list <- function(x, crit, model = 1) {
   re_cov_df$std.error <- x$sd_report$sd[re_indx][non_nas]
   re_cov_df$conf.low <- re_cov_df$estimate - crit * re_cov_df$std.error
   re_cov_df$conf.high <- re_cov_df$estimate + crit * re_cov_df$std.error
-  # the SD parameters are returned in log space -- use delta method to generate CIs
-  est <- exp(re_cov_df$estimate) # estimate in normal space
-  sd_est <- est * re_cov_df$std.error # SE in normal space
+  # the SD parameters are returned in log space -- calculate CIs in log space then transform
   sds <- which(re_cov_df$is_sd == 1) # index which elements are SDs
-  re_cov_df$estimate[sds] <- est[sds]
-  re_cov_df$conf.low[sds] <- est[sds] - crit * sd_est[sds]
-  re_cov_df$conf.high[sds] <- est[sds] + crit * sd_est[sds]
+  # Calculate CIs in log space first
+  re_cov_df$conf.low[sds] <- exp(re_cov_df$estimate[sds] - crit * re_cov_df$std.error[sds])
+  re_cov_df$conf.high[sds] <- exp(re_cov_df$estimate[sds] + crit * re_cov_df$std.error[sds])
+  # Transform estimates to natural space
+  re_cov_df$estimate[sds] <- exp(re_cov_df$estimate[sds])
 
   re_cov_df <- re_cov_df[, c("rows", "cols", "model", "group", "estimate", "std.error", "conf.low", "conf.high")]
   cov_matrices_lo = create_cov_matrices(re_cov_df, col_name = "conf.low", model = model)
@@ -497,4 +538,56 @@ tidy.sdmTMB_cv <- function(x, ...) {
     df
   })
   do.call("rbind", out)
+}
+
+# Flatten a list of estimated random effects into a dataframe
+#
+# This function extracts random effect estimates from a list of matrices representing
+# the mean, lower and upper confidence intervals. Ignoring the off-diagonal elements,
+# it returns a dataframe of random effects estimates, their standard errors, and confidence intervals,
+# consistent with the other tidy output from `sdmTMB` models.
+#
+# @param v A list of 3 random effects; for multiple grouping variables this will be a list of lists
+# @param cnms A list of vectors of coefficient names for each set of grouping variable
+flatten_cov_output <- function(v, cnms) {
+  results <- list()
+  idx <- 1
+
+  for (name in names(v$est)) {
+    est_mat <- v$est[[name]]
+    lo_mat  <- v$lo[[name]]
+    hi_mat  <- v$hi[[name]]
+    # Split_name is the name of the model and group
+    split_name <- strsplit(name, " +")[[1]]
+    model <- as.integer(split_name[2])
+    group_name <- split_name[4]
+
+    term_names <- cnms[[group_name]]
+    n <- nrow(est_mat)  # number of coefficients being estimated
+
+    # Extract diagonal values only
+    for (i in seq_len(n)) {
+      est <- est_mat[i, i]
+      if (is.na(est)) next
+
+      conf_low <- if (!is.null(lo_mat)) lo_mat[i, i] else NA
+      conf_high <- if (!is.null(hi_mat)) hi_mat[i, i] else NA
+
+      results[[idx]] <- data.frame(
+        model = model,
+        group_name = group_name,
+        term = term_names[i],
+        estimate = est,
+        std.error = NA, # we may want to change this and also report std.error?
+        conf.low = conf_low,
+        conf.high = conf_high,
+        stringsAsFactors = FALSE
+      )
+      idx <- idx + 1
+    }
+  }
+
+  df <- do.call(rbind, results)
+  rownames(df) <- NULL
+  df
 }

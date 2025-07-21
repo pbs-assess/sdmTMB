@@ -53,7 +53,8 @@ test_that("Model with random intercepts fits appropriately.", {
 
   expect_gt(.t1$estimate[.t1$term == "phi"], .t$estimate[.t$term == "phi"])
   expect_gt(.t1$estimate[.t1$term == "sigma_O"], .t$estimate[.t$term == "sigma_O"])
-  expect_equal(nrow(.t1), nrow(.t))
+  expect_equal(nrow(.t1), 3)
+  expect_equal(nrow(.t), 5)
 
   b <- as.list(m$sd_report, "Estimate")
   .cor <- cor(c(RE_vals, RE_vals2), b$re_b_pars[, 1])
@@ -91,7 +92,8 @@ test_that("Model with random intercepts fits appropriately.", {
   # random ints match glmmTMB exactly:
   m <- sdmTMB(
     data = s,
-    formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde, spatial = "off"
+    formula = observed ~ 1 + (1 | g) + (1 | h), mesh = spde, spatial = "off",
+    control = sdmTMBcontrol(nlminb_loops = 3, newton_loops = 5)
   )
   .t <- tidy(m, "ran_vcov")
   m.glmmTMB <- glmmTMB::glmmTMB(
@@ -108,6 +110,10 @@ test_that("Model with random intercepts fits appropriately.", {
     tolerance = 1e-5
   )
 
+  a <- as.list(m.glmmTMB$sdr, "Std. Error")
+  b <- as.list(m$sd_report, "Std. Error")
+  expect_equal(b$re_b_pars[,1,drop=TRUE], a$b, tolerance = 1e-3)
+
   # with CIs on "vcov" works:
   .t <- tidy(m, effects="ran_vcov", conf.int = FALSE)
   expect_equal(length(.t$est), 2)
@@ -118,9 +124,9 @@ test_that("Model with random intercepts fits appropriately.", {
   expect_equal(names(.t$lo), c("Model 1 Group g", "Model 1 Group h"))
   expect_equal(length(.t$hi), 2)
   expect_equal(names(.t$hi), c("Model 1 Group g", "Model 1 Group h"))
-  expect_equal(as.numeric(unlist(.t$hi)), c(0.5628, 0.2600), tolerance = 0.001)
-  expect_equal(as.numeric(unlist(.t$lo)), c(0.3217, 0.132), tolerance = 0.001)
-  expect_equal(as.numeric(unlist(.t$est)), c(0.4422, 0.1960), tolerance = 0.001)
+  expect_equal(as.numeric(unlist(.t$hi)), c(0.5808372, 0.2717274), tolerance = 0.001)
+  expect_equal(as.numeric(unlist(.t$lo)), c(0.3367532, 0.1414036), tolerance = 0.001)
+  expect_equal(as.numeric(unlist(.t$est)), c(0.4422655, 0.1960184), tolerance = 0.001)
 
 
   sdmTMB_re <- as.list(m$sd_report, "Estimate")
