@@ -332,7 +332,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
       ln_sds_df[["conf.high"]] <- NULL
     }
     row.names(ln_sds_df) <- NULL
-    if("group_name" %in% names(out_re) == FALSE) out_re$group_name <- rep(NA, nrow(out_re))
+    if (!"group_name" %in% names(out_re)) out_re$group_name <- rep(NA, nrow(out_re))
     out_re <- rbind(out_re, ln_sds_df)
   }
   # optional time-varying random components
@@ -365,7 +365,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   # group_name and term might not exist
   new_names <- c("model", "group_name", "term", "estimate", "std.error")
   if(conf.int) new_names <- c(new_names, "conf.low", "conf.high")
-  new_names <- new_names[which(new_names %in% names(out_re))]
+  new_names <- new_names[new_names %in% names(out_re)]
   out_re <- out_re[, new_names]
 
   out <- unique(out) # range can be duplicated
