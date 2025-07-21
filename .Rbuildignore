@@ -28,3 +28,4 @@ revdep/
 ^man/figures/README-*
 ^.claude$
 ^CLAUDE.md$
+^tests/testthat/Rplots.pdf$
