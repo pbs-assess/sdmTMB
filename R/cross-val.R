@@ -154,6 +154,11 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' - Fit data to time steps 1 to 6, predict and validate step 8.
 #' - Fit data to time steps 1 to 7, predict and validate step 9.
 #'
+#' Note these are time steps as they are presented in order in the data.
+#' For example, in the `pcod` data example below steps between data points
+#' are not always one year but an `lfo_forecast = 2` forecasts 2 time
+#' steps as presented not two years.
+#'
 #' See example below.
 #'
 #' @examples
@@ -205,9 +210,8 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' )
 #'
 #' # See how the LFOCV folds were assigned:
-#' example_data <- m_lfocv$models[[1]]$data
-#' table(example_data$cv_fold, example_data$year)
-#'
+#' fold_table <- table(m_lfocv$data$cv_fold, m_lfocv$data$year)
+#' fold_table
 sdmTMB_cv <- function(
     formula, data, mesh_args, mesh = NULL, time = NULL,
     k_folds = 8, fold_ids = NULL,

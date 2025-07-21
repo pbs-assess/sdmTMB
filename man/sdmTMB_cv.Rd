@@ -125,6 +125,11 @@ An example of LFOCV with 9 time steps, \code{lfo_forecast = 2}, and
 \item Fit data to time steps 1 to 7, predict and validate step 9.
 }
 
+Note these are time steps as they are presented in order in the data.
+For example, in the \code{pcod} data example below steps between data points
+are not always one year but an \code{lfo_forecast = 2} forecasts 2 time
+steps as presented not two years.
+
 See example below.
 }
 \examples{
@@ -176,7 +181,6 @@ m_lfocv <- sdmTMB_cv(
 )
 
 # See how the LFOCV folds were assigned:
-example_data <- m_lfocv$models[[1]]$data
-table(example_data$cv_fold, example_data$year)
-
+fold_table <- table(m_lfocv$data$cv_fold, m_lfocv$data$year)
+fold_table
 }

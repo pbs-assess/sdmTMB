@@ -94,6 +94,78 @@ test_that("Leave future out cross validation works", {
   expect_equal(cor(x$data$cv_fold[x$data$cv_fold!=1], x$data$year[x$data$cv_fold!=1]), 1.0)
 })
 
+test_that("LFO fold assignments follow documented structure", {
+  skip_on_cran()
+  skip_on_ci()
+  
+  # Test the documented example from help: 9 time steps, lfo_forecast = 2, lfo_validations = 3
+  # Expected:
+  # - Fit data to time steps 1 to 5, predict and validate step 7.
+  # - Fit data to time steps 1 to 6, predict and validate step 8. 
+  # - Fit data to time steps 1 to 7, predict and validate step 9.
+  
+  # Use pcod data which has 9 time steps: 2003, 2004, 2005, 2007, 2009, 2011, 2013, 2015, 2017
+  time_steps <- sort(unique(pcod$year))
+  expect_equal(length(time_steps), 9)
+  
+  # This should work if we have enough validation periods
+  # With lfo_forecast = 2 and lfo_validations = 2 instead of 3
+  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
+  x <- sdmTMB_cv(
+    present ~ 1,
+    data = pcod,
+    mesh = mesh,
+    lfo = TRUE,
+    lfo_forecast = 2,
+    lfo_validations = 2,  # Reduced to 2 to fit in 9 time steps
+    family = binomial(),
+    spatiotemporal = "off",
+    time = "year"
+  )
+  
+  # Check fold structure
+  fold_table <- table(x$data$cv_fold, x$data$year)
+  
+  # Validation 1: Should train on years 2003-2011 (time steps 1-5), validate on 2015 (step 7)
+  # Validation 2: Should train on years 2003-2013 (time steps 1-6), validate on 2017 (step 8)
+  
+  # Check that validation years have the right fold assignments
+  # For lfo_forecast = 2, validation data should be in folds k + lfo_forecast
+  expect_true(all(x$data$cv_fold[x$data$year == 2015] == 3))  # fold 1 + 2
+  expect_true(all(x$data$cv_fold[x$data$year == 2017] == 4))  # fold 2 + 2
+  
+  # Check that training years are properly assigned
+  # For validation 1: years 2003-2011 should have fold <= 1
+  train_years_1 <- c(2003, 2004, 2005, 2007, 2009, 2011)
+  expect_true(all(x$data$cv_fold[x$data$year %in% train_years_1] <= 1))
+  
+  # For validation 2: years 2003-2013 should have fold <= 2  
+  train_years_2 <- c(2003, 2004, 2005, 2007, 2009, 2011, 2013)
+  expect_true(all(x$data$cv_fold[x$data$year %in% train_years_2] <= 2))
+})
+
+test_that("LFO parameter validation works", {
+  skip_on_cran()
+  skip_on_ci()
+  
+  mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 25)
+  
+  # Should error when lfo_validations + lfo_forecast > number of time steps
+  expect_error(
+    sdmTMB_cv(
+      present ~ 1,
+      data = pcod_2011,  # Only 2 time steps  
+      mesh = mesh,
+      lfo = TRUE,
+      lfo_forecast = 2,
+      lfo_validations = 3,  # 3 + 2 = 5 > 2 time steps
+      family = binomial(),
+      time = "year"
+    ),
+    "Not enough time steps"
+  )
+})
+
 test_that("Cross validation with offsets works", {
   skip_on_cran()
   skip_on_ci()
