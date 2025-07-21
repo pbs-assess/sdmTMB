@@ -304,7 +304,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     cnms <- x$split_formula[[model]]$re_cov_terms$cnms
     flattened_cov <- flatten_cov_output(cov_mat_list, cnms)
     flattened_cov$model <- NULL
-    flattened_cov$term <- paste0("SD_", flattened_cov$term)
+    flattened_cov$term <- paste0("sd__", flattened_cov$term)
     if (!conf.int) {
       flattened_cov[["conf.low"]] <- NULL
       flattened_cov[["conf.high"]] <- NULL
@@ -321,7 +321,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     p <- print_smooth_effects(x, m = model, silent = TRUE)
     ln_sds <- p$ln_sd_estimates
     # Convert from log-scale to natural scale and update term names
-    term_names <- gsub("^ln_SD_s\\(", "SD_s(", row.names(ln_sds))
+    term_names <- gsub("^SD_s\\(", "sd__s(", row.names(ln_sds))
     # add on CIs - calculate in log space then transform
     ln_sds_df <- data.frame(term = term_names,
                             estimate = exp(ln_sds[,1]),
