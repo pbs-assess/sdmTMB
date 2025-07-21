@@ -517,8 +517,8 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          1.94    3.13</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Smooth terms:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            Std. Dev.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth)     13.07</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           Std. Dev.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth     13.07</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Dispersion parameter: 13.68</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Tweedie p: 1.58</span>
@@ -536,13 +536,14 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> (Intercept)     2.16     0.340     1.50      2.83</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> sdepth          1.94     3.13     -<span style="color: #BB0000;">4.19</span>      8.07</span>
 <span class="r-in"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit</span>, effects <span class="op">=</span> <span class="st">"ran_par"</span>, conf.int <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 5</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   term      estimate std.error conf.low conf.high</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> range        16.8    13.7       3.40      83.3 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> phi          13.7     0.663    12.4       15.0 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> sigma_O       2.20    1.23      0.735      6.59</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> tweedie_p     1.58    0.015<span style="text-decoration: underline;">3</span>    1.55       1.61</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 5 × 7</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   model group_name term        estimate std.error conf.low conf.high</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1 <span style="color: #BB0000;">NA</span>         range          16.8    13.7       3.40      83.3 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1 <span style="color: #BB0000;">NA</span>         phi            13.7     0.663    12.4       15.0 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     1 <span style="color: #BB0000;">NA</span>         sigma_O         2.20    1.23      0.735      6.59</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     1 <span style="color: #BB0000;">NA</span>         tweedie_p       1.58    0.015<span style="text-decoration: underline;">3</span>    1.55       1.61</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>     1 <span style="color: #BB0000;">NA</span>         sd__s(depth    13.1    <span style="color: #BB0000;">NA</span>         6.07      28.2 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Perform several 'sanity' checks:</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="sanity.html">sanity</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
@@ -644,8 +645,8 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          1.96    3.27</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Smooth terms:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            Std. Dev.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth)      13.6</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           Std. Dev.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth      13.6</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Dispersion parameter: 12.84</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Tweedie p: 1.55</span>
@@ -679,8 +680,8 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          1.96    3.18</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Smooth terms:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            Std. Dev.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth)     13.22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           Std. Dev.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth     13.22</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Dispersion parameter: 12.84</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Tweedie p: 1.56</span>
@@ -716,11 +717,11 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepth):as.factor(year)2017    -1.97    3.22</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Smooth terms:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                 Std. Dev.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth):as.factor(year)2011)     16.62</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth):as.factor(year)2013)     13.57</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth):as.factor(year)2015)     28.24</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth):as.factor(year)2017)     18.65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                Std. Dev.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth):as.factor(year)2011     16.62</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth):as.factor(year)2013     13.57</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth):as.factor(year)2015     28.24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth):as.factor(year)2017     18.65</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Dispersion parameter: 12.70</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Tweedie p: 1.55</span>
@@ -751,8 +752,8 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepthyear_2     2.93    2.07</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Smooth terms:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 Std. Dev.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth,year)      6.08</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                Std. Dev.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth,year      6.08</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Dispersion parameter: 14.95</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Tweedie p: 1.60</span>
@@ -915,8 +916,8 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          0.29    2.37</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Smooth terms:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            Std. Dev.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth)       9.6</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           Std. Dev.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth       9.6</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Delta/hurdle model 2: -----------------------------------</span>
@@ -927,8 +928,8 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepth         -0.37    1.77</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Smooth terms:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            Std. Dev.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth)      6.73</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           Std. Dev.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth      6.73</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Dispersion parameter: 0.49</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -956,8 +957,8 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          3.61    3.96</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Smooth terms:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            Std. Dev.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth)      16.4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           Std. Dev.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth      16.4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Dispersion parameter: 0.14</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ML criterion at convergence: 3006.939</span>
@@ -990,8 +991,8 @@ estimated abundance indices for West Coast groundfishes. ICES J. Mar. Sci.
 <span class="r-out co"><span class="r-pr">#&gt;</span> sdepth          1.82    2.99</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Smooth terms:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            Std. Dev.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth)     12.51</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           Std. Dev.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sds(depth     12.51</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Dispersion parameter: 13.55</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Tweedie p: 1.58</span>
