@@ -121,11 +121,11 @@ test_that("tidy() correctly handles random effects standard deviations", {
   t1 <- tidy(fit, "ran_pars")
 
   # Test parameter structure
-  expect_identical(t1$term, c("phi", "tweedie_p", "SD_(Intercept)","SD_depth_scaled","SD_binned_lon","SD_(Intercept)"))
+  expect_identical(t1$term, c("phi", "tweedie_p", "sd__(Intercept)","sd__depth_scaled","sd__binned_lon","sd__(Intercept)"))
   expect_identical(t1$group_name[3:6], c("year", "year", "year", "binned_lon"))
 
   # Test that all SD estimates are positive
-  sd_rows <- grepl("^SD_", t1$term)
+  sd_rows <- grepl("^sd__", t1$term)
   expect_true(all(t1$estimate[sd_rows] > 0), "All SD estimates should be positive")
   expect_true(all(t1$conf.low[sd_rows] > 0), "All SD confidence intervals should be positive")
   expect_true(all(t1$conf.high[sd_rows] > 0), "All SD confidence intervals should be positive")
@@ -135,13 +135,13 @@ test_that("tidy() correctly handles random effects standard deviations", {
   expect_true(all(t1$estimate[sd_rows] < t1$conf.high[sd_rows]), "Estimates should be less than CI upper bounds")
 
   # Test specific estimate values and CIs (regression tests)
-  expect_equal(t1$estimate[t1$term == "SD_(Intercept)" & t1$group_name == "year"], 0.925, tolerance = 1e-3)
-  expect_equal(t1$conf.low[t1$term == "SD_(Intercept)" & t1$group_name == "year"], 0.374, tolerance = 1e-2)
-  expect_equal(t1$conf.high[t1$term == "SD_(Intercept)" & t1$group_name == "year"], 2.29, tolerance = 1e-2)
+  expect_equal(t1$estimate[t1$term == "sd__(Intercept)" & t1$group_name == "year"], 0.925, tolerance = 1e-3)
+  expect_equal(t1$conf.low[t1$term == "sd__(Intercept)" & t1$group_name == "year"], 0.374, tolerance = 1e-2)
+  expect_equal(t1$conf.high[t1$term == "sd__(Intercept)" & t1$group_name == "year"], 2.29, tolerance = 1e-2)
 
-  expect_equal(t1$estimate[t1$term == "SD_depth_scaled"], 0.565, tolerance = 1e-3)
-  expect_equal(t1$conf.low[t1$term == "SD_depth_scaled"], 0.333, tolerance = 1e-2)
-  expect_equal(t1$conf.high[t1$term == "SD_depth_scaled"], 0.959, tolerance = 1e-2)
+  expect_equal(t1$estimate[t1$term == "sd__depth_scaled"], 0.565, tolerance = 1e-3)
+  expect_equal(t1$conf.low[t1$term == "sd__depth_scaled"], 0.333, tolerance = 1e-2)
+  expect_equal(t1$conf.high[t1$term == "sd__depth_scaled"], 0.959, tolerance = 1e-2)
 })
 
 test_that("tidy() correctly handles smoother standard deviations", {
@@ -156,14 +156,14 @@ test_that("tidy() correctly handles smoother standard deviations", {
   t2 <- tidy(fit, "ran_par")
 
   # Test parameter structure
-  expect_identical(t2$term, c("phi", "tweedie_p", "SD_s(depth_scaled):fyear2003", "SD_s(depth_scaled):fyear2004",
-    "SD_s(depth_scaled):fyear2005", "SD_s(depth_scaled):fyear2007",
-    "SD_s(depth_scaled):fyear2009", "SD_s(depth_scaled):fyear2011",
-    "SD_s(depth_scaled):fyear2013", "SD_s(depth_scaled):fyear2015",
-    "SD_s(depth_scaled):fyear2017"))
+  expect_identical(t2$term, c("phi", "tweedie_p", "sd__s(depth_scaled):fyear2003", "sd__s(depth_scaled):fyear2004",
+    "sd__s(depth_scaled):fyear2005", "sd__s(depth_scaled):fyear2007",
+    "sd__s(depth_scaled):fyear2009", "sd__s(depth_scaled):fyear2011",
+    "sd__s(depth_scaled):fyear2013", "sd__s(depth_scaled):fyear2015",
+    "sd__s(depth_scaled):fyear2017"))
 
   # Test that all smooth SD estimates are positive
-  smooth_sd_rows <- grepl("^SD_s\\(", t2$term)
+  smooth_sd_rows <- grepl("^sd__s\\(", t2$term)
   expect_true(all(t2$estimate[smooth_sd_rows] > 0), "All smooth SD estimates should be positive")
   expect_true(all(t2$conf.low[smooth_sd_rows] > 0), "All smooth SD confidence intervals should be positive")
   expect_true(all(t2$conf.high[smooth_sd_rows] > 0), "All smooth SD confidence intervals should be positive")
@@ -176,13 +176,13 @@ test_that("tidy() correctly handles smoother standard deviations", {
   expect_true(all(is.na(t2$std.error[smooth_sd_rows])), "Smooth SD std.error should be NA")
 
   # Test specific smooth SD estimate values and CIs (regression tests)
-  expect_equal(t2$estimate[t2$term == "SD_s(depth_scaled):fyear2003"], 10.01841, tolerance = 1e-3)
-  expect_equal(t2$conf.low[t2$term == "SD_s(depth_scaled):fyear2003"], 3.414768, tolerance = 1e-2)
-  expect_equal(t2$conf.high[t2$term == "SD_s(depth_scaled):fyear2003"], 29.39249, tolerance = 1e-2)
+  expect_equal(t2$estimate[t2$term == "sd__s(depth_scaled):fyear2003"], 10.01841, tolerance = 1e-3)
+  expect_equal(t2$conf.low[t2$term == "sd__s(depth_scaled):fyear2003"], 3.414768, tolerance = 1e-2)
+  expect_equal(t2$conf.high[t2$term == "sd__s(depth_scaled):fyear2003"], 29.39249, tolerance = 1e-2)
 
-  expect_equal(t2$estimate[t2$term == "SD_s(depth_scaled):fyear2011"], 13.56432, tolerance = 1e-3)
-  expect_equal(t2$conf.low[t2$term == "SD_s(depth_scaled):fyear2011"], 6.740783, tolerance = 1e-2)
-  expect_equal(t2$conf.high[t2$term == "SD_s(depth_scaled):fyear2011"], 27.29518, tolerance = 1e-2)
+  expect_equal(t2$estimate[t2$term == "sd__s(depth_scaled):fyear2011"], 13.56432, tolerance = 1e-3)
+  expect_equal(t2$conf.low[t2$term == "sd__s(depth_scaled):fyear2011"], 6.740783, tolerance = 1e-2)
+  expect_equal(t2$conf.high[t2$term == "sd__s(depth_scaled):fyear2011"], 27.29518, tolerance = 1e-2)
 })
 
 test_that("tidy() works with delta model with random intercepts and AR1 time series", {
