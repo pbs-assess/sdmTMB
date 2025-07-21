@@ -66,8 +66,6 @@ objects are used to specify arguments like priors, families, etc.}
 
 \item{...}{All other arguments required to run \code{\link[=sdmTMB]{sdmTMB()}} model with the
 exception of \code{weights}, which are used to define the folds.}
-
-\item{spde}{\strong{Depreciated.} Use \code{mesh} instead.}
 }
 \value{
 A list:

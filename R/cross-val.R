@@ -103,7 +103,6 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'   object. This vector is appended to `TRUE` and passed to the argument
 #'   `future.globals` in [future.apply::future_lapply()]. Useful if global
 #'   objects are used to specify arguments like priors, families, etc.
-#' @param spde **Depreciated.** Use `mesh` instead.
 #' @param ... All other arguments required to run [sdmTMB()] model with the
 #'   exception of `weights`, which are used to define the folds.
 #'
