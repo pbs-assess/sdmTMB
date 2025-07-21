@@ -185,18 +185,18 @@ sanity <- function(object, big_sd_log10 = 2, gradient_thresh = 0.001, silent = F
   # tidying objects with different names -- fixed won't have model or group_name
   b <- tidy(object, conf.int = TRUE, silent = TRUE)
   br <- tidy(object, "ran_pars", conf.int = TRUE, silent = TRUE)
-  b[, names(br)[which(names(br) %in% names(b) == FALSE)]] <- NA
+  b[, names(br)[!names(br) %in% names(b)]] <- NA
   b <- rbind(b, br)
 
   if (isTRUE(object$family$delta)) {
     b2 <- tidy(object, conf.int = TRUE, model = 2, silent = TRUE)
     br2 <- tidy(object, "ran_pars", conf.int = TRUE, model = 2, silent = TRUE)
-    b2[, names(br2)[which(names(br2) %in% names(b2) == FALSE)]] <- NA
+    b2[, names(br2)[!names(br2) %in% names(b2)]] <- NA
     b2 <- rbind(b2, br2)
 
     # also check for missing names -- will occur when one model has no random effects
-    b[, names(b2)[which(names(b2) %in% names(b) == FALSE)]] <- NA
-    b2[, names(b)[which(names(b) %in% names(b2) == FALSE)]] <- NA
+    b[, names(b2)[!names(b2) %in% names(b)]] <- NA
+    b2[, names(b)[!names(b) %in% names(b2)]] <- NA
     b <- rbind(b, b2)
   }
   s <- grep("sigma", b$term)
