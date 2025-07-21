@@ -221,15 +221,10 @@ sdmTMB_cv <- function(
     parallel = TRUE,
     use_initial_fit = FALSE,
     future_globals = NULL,
-    spde = deprecated(),
     ...) {
   if (k_folds < 1) cli_abort("`k_folds` must be >= 1.")
 
-  if (is_present(spde)) {
-    deprecate_warn("0.0.20", "sdmTMB_cv(spde)", "sdmTMB_cv(mesh)")
-  } else {
-    spde <- mesh
-  }
+  spde <- mesh
   data[["_sdm_order_"]] <- seq_len(nrow(data))
   constant_mesh <- missing(mesh_args)
   if (missing(mesh_args)) mesh_args <- NULL

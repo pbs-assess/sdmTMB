@@ -18,7 +18,6 @@ sdmTMB_cv(
   parallel = TRUE,
   use_initial_fit = FALSE,
   future_globals = NULL,
-  spde = deprecated(),
   ...
 )
 }
@@ -65,10 +64,10 @@ object. This vector is appended to \code{TRUE} and passed to the argument
 \code{future.globals} in \code{\link[future.apply:future_lapply]{future.apply::future_lapply()}}. Useful if global
 objects are used to specify arguments like priors, families, etc.}
 
-\item{spde}{\strong{Depreciated.} Use \code{mesh} instead.}
-
 \item{...}{All other arguments required to run \code{\link[=sdmTMB]{sdmTMB()}} model with the
 exception of \code{weights}, which are used to define the folds.}
+
+\item{spde}{\strong{Depreciated.} Use \code{mesh} instead.}
 }
 \value{
 A list:
