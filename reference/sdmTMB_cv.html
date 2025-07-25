@@ -83,7 +83,6 @@ randomly but folds can be manually assigned via the <code>fold_ids</code> argume
 <span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  use_initial_fit <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  future_globals <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  spde <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -158,10 +157,6 @@ arguments if an error is returned that <span class="pkg">future.apply</span> can
 object. This vector is appended to <code>TRUE</code> and passed to the argument
 <code>future.globals</code> in <code><a href="https://future.apply.futureverse.org/reference/future_lapply.html" class="external-link">future.apply::future_lapply()</a></code>. Useful if global
 objects are used to specify arguments like priors, families, etc.</p></dd>
-
-
-<dt id="arg-spde">spde<a class="anchor" aria-label="anchor" href="#arg-spde"></a></dt>
-<dd><p><strong>Depreciated.</strong> Use <code>mesh</code> instead.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
