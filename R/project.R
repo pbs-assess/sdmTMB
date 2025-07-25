@@ -343,7 +343,7 @@ insert_pars <- function(par, nm, .n, delta_model = FALSE) {
   ret
 }
 
-move_proj_to_tmbdat <- function(x, object, newdata, called_by_simulate = FALSE) {
+move_proj_to_tmbdat <- function(x, object, newdata, called_by_simulate = FALSE, size = NULL) {
   x$do_predict <- 0L
   x$year_i <- x$proj_year
   ## x$A_st <- x$proj_mesh
@@ -364,12 +364,29 @@ move_proj_to_tmbdat <- function(x, object, newdata, called_by_simulate = FALSE) 
   x$y_i <- matrix(NA, ncol = n_m, nrow = nrow(x$proj_X_ij[[1]])) # fake
   x$weights_i <- rep(1, nrow(x$y_i)) # fake: FIXME: bring in?
   x$area_i <- rep(1, nrow(x$y_i)) # fake FIXME: bring in for index??
+
   if (!called_by_simulate) {
     unique_size <- unique(x$size)
     if (length(unique_size) != 1L) {
       cli_abort("This function hasn't been set up to work with binomial size specified yet.")
     }
     x$size <- rep(1, nrow(x$y_i)) # FIXME: bring in?
+  }
+  if (!is.null(size)) {
+    if (length(size) != nrow(x$y_i)) cli_abort("size argument doesn't match rows of newdata")
+    x$size <- size
+  }
+  if (!all(x$size == 1L)) {
+    if (is.null(size)) {
+      msg <- c(
+        "It looks like the size/trials were specified for a binomial family with the weights argument.",
+        "When simulating with newdata all sizes/trials will be assumed to be 1 unless you specify a vector via the `size` argument."
+      )
+      cli_inform(msg)
+      x$size <- rep(1, nrow(x$y_i))
+    }
+  } else { # all 1s, but newdata; expand as needed silently
+    x$size <- rep(1, nrow(x$y_i))
   }
   x$do_predict <- 0L
 

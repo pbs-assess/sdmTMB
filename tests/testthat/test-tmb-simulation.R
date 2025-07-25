@@ -195,10 +195,10 @@ test_that("simulate.sdmTMB works with sizes in binomial GLMs #465", {
   fit <- sdmTMB(prop ~ x, data = dat, weights = w, family = binomial(), spatial = "off")
   dat$X <- dat$Y <- NA # FIXME
   set.seed(1)
-  snd <- simulate(fit, nsim = 500, newdata = dat)
+  snd <- simulate(fit, nsim = 500, newdata = dat, size = w)
   set.seed(1)
-  s <- simulate(fit, nsim = 500, newdata = dat)
-  expect_identical(s, snd)
+  s <- simulate(fit, nsim = 500)
+  expect_equal(as.matrix(s), as.matrix(snd), ignore_attr = TRUE)
   expect_true(nrow(snd) == 200L)
   expect_true(ncol(snd) == 500L)
   sim_means <- rowMeans(snd)
@@ -265,4 +265,25 @@ test_that("simulate without observation error works for binomial likelihoods #43
   m <- apply(s.b, 1, mean)
   p <- predict(fit.b, newdata = qcs_grid)
   expect_gt(cor(plogis(p$est), m), 0.95)
+
+  # with size specified
+  expect_error({simulate(
+    fit.b,
+    newdata = qcs_grid,
+    nsim = 1,
+    observation_error = FALSE,
+    size = c(1, 2, 3)
+  )}, regexp = "size")
+
+  s.b1 <- simulate(
+    fit.b,
+    newdata = qcs_grid,
+    type = "mle-mvn", # fixed effects at MLE values and random effect MVN draws
+    mle_mvn_samples = "multiple", # take an MVN draw for each sample
+    nsim = 50, # increase this for more stable results
+    observation_error = FALSE, # do not include observation error
+    seed = 23859,
+    size = sample(1:9, size = nrow(qcs_grid), replace = TRUE)
+  )
+  expect_false(identical(s.b, s.b1))
 })

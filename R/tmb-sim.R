@@ -345,6 +345,9 @@ sdmTMB_simulate <- function(formula,
 #'   lets you parse out whatever elements you want from the simulation.
 #'   Not usually needed.
 #' @param observation_error Logical. Simulate observation error?
+#' @param size A vector of size (trials) in the case of a binomial family with
+#'   `newdata` specified. If left `NULL` with `newdata`, will be assumed to
+#'   be a vector of 1s.
 #' @param silent Logical. Silent?
 #' @param ... Extra arguments passed to [predict.sdmTMB()]. E.g., one may wish
 #'   to pass an `offset` argument if `newdata` are supplied in a model with an
@@ -397,6 +400,7 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
                             mcmc_samples = NULL,
                             return_tmb_report = FALSE,
                             observation_error = TRUE,
+                            size = NULL,
                             silent = FALSE,
                             ...) {
   set.seed(seed)
@@ -426,7 +430,7 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
     # generate prediction TMB data list
     p <- predict(object, newdata = newdata, return_tmb_data = TRUE, ...)
     # move data elements over
-    p <- move_proj_to_tmbdat(p, object, newdata, called_by_simulate = TRUE)
+    p <- move_proj_to_tmbdat(p, object, newdata, called_by_simulate = TRUE, size = size)
     p$sim_re <- tmb_dat$sim_re
     tmb_dat <- p
   }

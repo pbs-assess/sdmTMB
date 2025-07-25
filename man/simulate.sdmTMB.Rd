@@ -16,6 +16,7 @@
   mcmc_samples = NULL,
   return_tmb_report = FALSE,
   observation_error = TRUE,
+  size = NULL,
   silent = FALSE,
   ...
 )
@@ -57,6 +58,10 @@ lets you parse out whatever elements you want from the simulation.
 Not usually needed.}
 
 \item{observation_error}{Logical. Simulate observation error?}
+
+\item{size}{A vector of size (trials) in the case of a binomial family with
+\code{newdata} specified. If left \code{NULL} with \code{newdata}, will be assumed to
+be a vector of 1s.}
 
 \item{silent}{Logical. Silent?}
 
