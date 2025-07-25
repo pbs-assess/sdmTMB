@@ -343,7 +343,7 @@ insert_pars <- function(par, nm, .n, delta_model = FALSE) {
   ret
 }
 
-move_proj_to_tmbdat <- function(x, object, newdata) {
+move_proj_to_tmbdat <- function(x, object, newdata, called_by_simulate = FALSE) {
   x$do_predict <- 0L
   x$year_i <- x$proj_year
   ## x$A_st <- x$proj_mesh
@@ -364,11 +364,13 @@ move_proj_to_tmbdat <- function(x, object, newdata) {
   x$y_i <- matrix(NA, ncol = n_m, nrow = nrow(x$proj_X_ij[[1]])) # fake
   x$weights_i <- rep(1, nrow(x$y_i)) # fake: FIXME: bring in?
   x$area_i <- rep(1, nrow(x$y_i)) # fake FIXME: bring in for index??
-  unique_size <- unique(x$size)
-  if (length(unique_size) != 1L) {
-    cli_abort("This function hasn't been set up to work with binomial size specified yet.")
+  if (!called_by_simulate) {
+    unique_size <- unique(x$size)
+    if (length(unique_size) != 1L) {
+      cli_abort("This function hasn't been set up to work with binomial size specified yet.")
+    }
+    x$size <- rep(1, nrow(x$y_i)) # FIXME: bring in?
   }
-  x$size <- rep(1, nrow(x$y_i)) # FIXME: bring in?
   x$do_predict <- 0L
 
   # nullify large data objects that are no longer needed:

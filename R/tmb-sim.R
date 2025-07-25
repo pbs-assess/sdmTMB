@@ -426,7 +426,7 @@ simulate.sdmTMB <- function(object, nsim = 1L, seed = sample.int(1e6, 1L),
     # generate prediction TMB data list
     p <- predict(object, newdata = newdata, return_tmb_data = TRUE, ...)
     # move data elements over
-    p <- move_proj_to_tmbdat(p, object, newdata)
+    p <- move_proj_to_tmbdat(p, object, newdata, called_by_simulate = TRUE)
     p$sim_re <- tmb_dat$sim_re
     tmb_dat <- p
   }

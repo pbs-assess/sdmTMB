@@ -184,6 +184,27 @@ test_that("simulate.sdmTMB returns the right length", {
   expect_equal(nrow(s), nrow(pcod))
 })
 
+test_that("simulate.sdmTMB works with sizes in binomial GLMs #465", {
+  skip_on_cran()
+  set.seed(1)
+  w <- sample(1:10, size = 200, replace = TRUE)
+  x <- rnorm(200)
+  dat <- data.frame(y = stats::rbinom(length(w), size = w, prob = plogis(x * 0.5)))
+  dat$prop <- dat$y / w
+  dat$x <- x
+  fit <- sdmTMB(prop ~ x, data = dat, weights = w, family = binomial(), spatial = "off")
+  dat$X <- dat$Y <- NA # FIXME
+  set.seed(1)
+  snd <- simulate(fit, nsim = 500, newdata = dat)
+  set.seed(1)
+  s <- simulate(fit, nsim = 500, newdata = dat)
+  expect_identical(s, snd)
+  expect_true(nrow(snd) == 200L)
+  expect_true(ncol(snd) == 500L)
+  sim_means <- rowMeans(snd)
+  expect_gt(cor(sim_means, dat$y), 0.7)
+})
+
 test_that("coarse meshes with zeros in simulation still return fields #370", {
   set.seed(123)
   predictor_dat <- data.frame(

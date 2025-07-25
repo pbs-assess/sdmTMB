@@ -2,9 +2,11 @@
 
 ## Minor improvements and fixes
 
+* Let `simulate.sdmTMB()` work with binomial GLMs with size specified via
+  `weights` and `newdata` supplied. #465
+
 * Fix issue with fold logic in LFO (leave-future-out) cross validation 
   for `lfo_forecast > 1`. #454 Thanks to @Joseph-Barss.
-
 
 * Add `update.sdmTMB()` so that the mesh argument doesn't have to be 
   specified if model is loaded in a fresh session. #461
