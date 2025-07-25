@@ -79,6 +79,7 @@ among other uses.</p>
 <span>  mcmc_samples <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  return_tmb_report <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  observation_error <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  size <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  silent <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -145,6 +146,12 @@ Not usually needed.</p></dd>
 
 <dt id="arg-observation-error">observation_error<a class="anchor" aria-label="anchor" href="#arg-observation-error"></a></dt>
 <dd><p>Logical. Simulate observation error?</p></dd>
+
+
+<dt id="arg-size">size<a class="anchor" aria-label="anchor" href="#arg-size"></a></dt>
+<dd><p>A vector of size (trials) in the case of a binomial family with
+<code>newdata</code> specified. If left <code>NULL</code> with <code>newdata</code>, will be assumed to
+be a vector of 1s.</p></dd>
 
 
 <dt id="arg-silent">silent<a class="anchor" aria-label="anchor" href="#arg-silent"></a></dt>
