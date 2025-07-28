@@ -885,7 +885,11 @@ Type objective_function<Type>::operator()()
   if (!sim_obs) {
     for (int m = 0; m < n_m; m++) {
       for (int i = 0; i < n_i; i++) {
-        y_i(i,m) = mu_i(i,m);
+        if (family(m) == binomial_family && !poisson_link_delta) {
+          y_i(i,m) = invlogit(mu_i(i,m)) * size(i); // hardcoded invlogit b/c mu_i in logit space
+        } else {
+          y_i(i,m) = mu_i(i,m);
+        }
       }
     }
   }
