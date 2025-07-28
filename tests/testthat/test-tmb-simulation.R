@@ -231,6 +231,7 @@ test_that("coarse meshes with zeros in simulation still return fields #370", {
 })
 
 test_that("simulate without observation error works for binomial likelihoods #431", {
+  skip_on_cran()
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
   fit.dg <- sdmTMB(density ~ 1,
     data = pcod, mesh = mesh, family = delta_gamma(type="standard")
@@ -247,7 +248,7 @@ test_that("simulate without observation error works for binomial likelihoods #43
   expect_gt(min(s.dg), 0)
   m <- apply(s.dg, 1, mean)
   p <- predict(fit.dg, newdata = qcs_grid)
-  expect_gt(cor(plogis(p$est1) * exp(p$est2), m), 0.95)
+  expect_gt(cor(plogis(p$est1) * exp(p$est2), m), 0.98)
 
   fit.b <- sdmTMB(present ~ 1,
     data = pcod, mesh = mesh, family = binomial()
@@ -266,7 +267,7 @@ test_that("simulate without observation error works for binomial likelihoods #43
   p <- predict(fit.b, newdata = qcs_grid)
   expect_gt(cor(plogis(p$est), m), 0.95)
 
-  # with size specified
+  # with size specified (but wrong length at first)
   expect_error({simulate(
     fit.b,
     newdata = qcs_grid,
@@ -275,15 +276,41 @@ test_that("simulate without observation error works for binomial likelihoods #43
     size = c(1, 2, 3)
   )}, regexp = "size")
 
+  set.seed(1)
+  w <- sample(1:9, size = nrow(qcs_grid), replace = TRUE)
   s.b1 <- simulate(
     fit.b,
     newdata = qcs_grid,
+    type = "mle-mvn",
+    mle_mvn_samples = "multiple",
+    nsim = 50,
+    observation_error = FALSE,
+    seed = 23859,
+    size = w
+  )
+  expect_true(max(s.b1) > 1)
+  expect_equal(mean(s.b1[1,]), m[1] * w[1])
+  expect_equal(mean(s.b1[51,]), m[51] * w[51])
+})
+
+test_that("simulate without observation error works for binomial likelihoods and Poisson-link delta", {
+  skip_on_cran()
+  skip_on_ci()
+  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 30)
+  fit.dg <- sdmTMB(density ~ 1,
+    data = pcod, mesh = mesh, family = delta_gamma(type="poisson-link")
+  )
+  s.dg <- simulate(
+    fit.dg,
+    newdata = qcs_grid,
     type = "mle-mvn", # fixed effects at MLE values and random effect MVN draws
     mle_mvn_samples = "multiple", # take an MVN draw for each sample
-    nsim = 50, # increase this for more stable results
+    nsim = 200, # increase this for more stable results
     observation_error = FALSE, # do not include observation error
-    seed = 23859,
-    size = sample(1:9, size = nrow(qcs_grid), replace = TRUE)
+    seed = 23859
   )
-  expect_false(identical(s.b, s.b1))
+  expect_gt(min(s.dg), 0)
+  m <- apply(s.dg, 1, mean)
+  p <- predict(fit.dg, newdata = qcs_grid)
+  expect_gt(cor(exp(p$est1) * exp(p$est2), m), 0.98)
 })
