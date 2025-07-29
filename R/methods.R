@@ -335,7 +335,9 @@ Effect.sdmTMB <- function(focal.predictors, mod, ...) {
     # formula = formula(mod) # includes random intercepts...
     formula = remove_s_and_t2(mod$split_formula[[1]]$form_no_bars)
   )
-  effects::Effect.default(focal.predictors, mod, ..., sources = args)
+
+  e <- utils::getS3method("Effect", "default", envir = asNamespace("effects"))
+  e(focal.predictors, mod, ..., sources = args)
 }
 
 # get_term_names <- function(model) {

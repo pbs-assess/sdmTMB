@@ -1,4 +1,4 @@
-# sdmTMB 0.7.3
+# sdmTMB 0.7.4
 
 ## Minor improvements and fixes
 

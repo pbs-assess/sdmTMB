@@ -1,4 +1,7 @@
-This version fixes several bugs and adds minor functionality.
+This version fixes several bugs and adds minor functionality. This version
+also works around a pre-check FAIL due to the 'effects' package 4.2-3 that
+was submitted to CRAN the same day---and therefore installed on the Windows
+check server---dropping an export of Effects.default.
 
 ## R CMD check results
 
