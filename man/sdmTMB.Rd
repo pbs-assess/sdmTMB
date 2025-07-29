@@ -323,7 +323,7 @@ example of index standardization in the relevant
 You will need to specify the \code{time} argument. See \code{\link[=get_index]{get_index()}}.
 }
 \examples{
-\dontshow{if (require("visreg", quietly = TRUE) && require("ggeffects", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (require("visreg", quietly = TRUE) && require("ggeffects", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 library(sdmTMB)
 
 # Build a mesh to implement the SPDE approach:

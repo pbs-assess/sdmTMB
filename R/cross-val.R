@@ -180,6 +180,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' m_cv$max_gradients
 #'
 #'
+#' \donttest{
 #' # Create mesh each fold:
 #' m_cv2 <- sdmTMB_cv(
 #'   density ~ 0 + depth_scaled + depth_scaled2,
@@ -199,18 +200,20 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' m_lfocv <- sdmTMB_cv(
 #'   present ~ s(year, k = 4),
 #'   data = pcod,
-#'   mesh = mesh,
 #'   lfo = TRUE,
 #'   lfo_forecast = 2,
 #'   lfo_validations = 3,
 #'   family = binomial(),
-#'   spatiotemporal = "off",
+#'   mesh = mesh,
+#'   spatial = "off", # fast example
+#'   spatiotemporal = "off", # fast example
 #'   time = "year" # must be specified
 #' )
 #'
 #' # See how the LFOCV folds were assigned:
 #' fold_table <- table(m_lfocv$data$cv_fold, m_lfocv$data$year)
 #' fold_table
+#' }
 sdmTMB_cv <- function(
     formula, data, mesh_args, mesh = NULL, time = NULL,
     k_folds = 8, fold_ids = NULL,

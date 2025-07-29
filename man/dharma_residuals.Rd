@@ -71,7 +71,7 @@ are consistent with the model whereas randomized quantile residuals from
 \code{\link[=residuals.sdmTMB]{residuals.sdmTMB()}} are expected to be normal(0, 1).
 }
 \examples{
-\dontshow{if (requireNamespace("DHARMa", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("DHARMa", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 # Try Tweedie family:
 fit <- sdmTMB(density ~ as.factor(year) + s(depth, k = 3),
   data = pcod_2011, mesh = pcod_mesh_2011,

@@ -51,7 +51,7 @@ is on CRAN. For now, you can install the GitHub version of \pkg{ggeffects}.
 \url{https://github.com/strengejacke/ggeffects}.
 }
 \examples{
-\dontshow{if (require("ggeffects", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (require("ggeffects", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 fit <- sdmTMB(density ~ poly(depth_scaled, 2), data = pcod_2011,
   spatial = "off", family = delta_gamma())
 

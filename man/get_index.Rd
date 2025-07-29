@@ -89,7 +89,7 @@ Extract a relative biomass/abundance index, center of gravity, or effective
 area occupied
 }
 \examples{
-\dontshow{if (ggplot2_installed()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (ggplot2_installed()) withAutoprint(\{ # examplesIf}
 \donttest{
 library(ggplot2)
 
