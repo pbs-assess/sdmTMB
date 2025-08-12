@@ -1,5 +1,9 @@
 # sdmTMB (development version)
 
+* Fix `emmeans` support for models with smoothers (`s()` terms). Previously, 
+  `emmeans` would fail with "Non-conformable elements in reference grid" when 
+  smoothers were included in the model formula.
+
 # sdmTMB 0.7.4
 
 ## Minor improvements and fixes

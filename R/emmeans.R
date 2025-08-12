@@ -70,11 +70,21 @@ emm_basis.sdmTMB <- function(object, trms, xlev, grid, ...) {
   contrasts <- contrasts[names(contrasts) %in% all.vars(terms(object))]
   m <- model.frame(trms, grid, na.action = stats::na.pass, xlev = xlev)
   X <- model.matrix(trms, m, contrasts.arg = contrasts)
-  bhat <- fixef(object)
+  
+  # Get coefficients using existing fixef method and filter to parametric terms only
+  # This fixes the issue with smoothers by only including parametric terms
+  all_bhat <- fixef(object)
+  
+  # Only keep coefficients that correspond to columns in the design matrix X
+  bhat <- all_bhat[names(all_bhat) %in% colnames(X)]
+  # Ensure coefficient order matches design matrix column order
+  bhat <- bhat[colnames(X)]
+  
   if (length(bhat) < ncol(X)) {
     kept <- match(names(bhat), dimnames(X)[[2]])
-    bhat <- NA * X[1, ]
-    bhat[kept] <- fixef(object)
+    full_bhat <- NA * X[1, ]
+    full_bhat[kept] <- bhat
+    bhat <- full_bhat
     modmat <- model.matrix(
       trms, model.frame(object),
       contrasts.arg = contrasts
