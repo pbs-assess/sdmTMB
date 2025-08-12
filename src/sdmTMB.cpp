@@ -542,9 +542,11 @@ Type objective_function<Type>::operator()()
                   // https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html
                   Type ar1_scaler = sqrt(1. - rho(m) * rho(m));
                   if (t == 0) {
-                    epsilon_st.col(m).col(0) = epsilon_st_tmp; // no scaling of first step
+                    // marginal variance for first time step
+                    epsilon_st.col(m).col(0) = epsilon_st_tmp;
                   } else {
-                    epsilon_st.col(m).col(t) = rho(m) * epsilon_st.col(m).col(t-1) + epsilon_st_tmp * ar1_scaler;
+                    // scaled (innovation) SD for subsequent steps to achieve desired marginal SD
+                    epsilon_st.col(m).col(t) = rho(m) * epsilon_st.col(m).col(t-1) + epsilon_st_tmp * ar1_scaler; 
                   }
                 }
               }
