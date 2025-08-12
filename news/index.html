@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,9 +52,10 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="sdmtmb-development-version">sdmTMB (development version)<a class="anchor" aria-label="anchor" href="#sdmtmb-development-version"></a></h2>
-</div>
+<ul><li>Fix <code>emmeans</code> support for models with smoothers (<code>s()</code> terms). Previously, <code>emmeans</code> would fail with “Non-conformable elements in reference grid” when smoothers were included in the model formula.</li>
+</ul></div>
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.7.4" id="sdmtmb-074">sdmTMB 0.7.4<a class="anchor" aria-label="anchor" href="#sdmtmb-074"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.7.4" id="sdmtmb-074">sdmTMB 0.7.4<a class="anchor" aria-label="anchor" href="#sdmtmb-074"></a></h2><p class="text-muted">CRAN release: 2025-07-29</p>
 <div class="section level3">
 <h3 id="minor-improvements-and-fixes-0-7-4">Minor improvements and fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-fixes-0-7-4"></a></h3>
 <ul><li><p>Let <code><a href="../reference/simulate.sdmTMB.html">simulate.sdmTMB()</a></code> work with binomial GLMs with size specified via <code>weights</code> and <code>newdata</code> supplied. <a href="https://github.com/pbs-assess/sdmTMB/issues/465" class="external-link">#465</a></p></li>
