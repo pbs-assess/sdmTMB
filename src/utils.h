@@ -205,6 +205,7 @@ Eigen::SparseMatrix<Type> Q_spde(spde_barrier_t<Type> spde, Type kappa,
   Eigen::SparseMatrix<Type> Cinv(dimLatent, dimLatent);
 
   Cdiag = spde.C0 * pow(range(0), 2) + spde.C1 * pow(range(1), 2);
+  
   for (int i = 0; i < dimLatent; ++i) {
     Cinv.coeffRef(i, i) = 1 / Cdiag(i);
   }
@@ -212,9 +213,67 @@ Eigen::SparseMatrix<Type> Q_spde(spde_barrier_t<Type> spde, Type kappa,
   Eigen::SparseMatrix<Type> A = spde.I;
   A = A + (pow(range(0), 2) / 8) * spde.D0 + (pow(range(1), 2) / 8) * spde.D1;
 
-  Eigen::SparseMatrix<Type> Q = A.transpose() * Cinv * A / M_PI * 2 * 3;
+  Eigen::SparseMatrix<Type> Q = A.transpose() * Cinv * A / M_PI * 2;
 
   return Q;
+}
+
+// Alternative barrier SPDE function matching INLAspacetime implementation
+// This version uses INLAspacetime's mathematical formulation but lets sdmTMB
+// handle variance scaling through its existing tau mechanism
+template <class Type>
+Eigen::SparseMatrix<Type> Q_spde_inlaspacetime(spde_barrier_t<Type> spde, 
+                                              Type ln_kappa,
+                                              vector<Type> barrier_scaling) {
+  int n = spde.I.rows();
+
+  // Convert from sdmTMB parameterization 
+  Type kappa = exp(ln_kappa);
+  Type range = sqrt(Type(8)) / kappa;  // sdmTMB range formula
+
+  // Combine domains as in INLAspacetime:
+  // CC = C[[1]] + C[[2]] * range_fraction^2
+  // Dmat = D[[1]] + D[[2]] * range_fraction^2
+  // Use barrier_scaling(1) as the range_fraction (like sdmTMB's c(1))
+  Type range_fraction = barrier_scaling.size() > 1 ? barrier_scaling(1) : Type(0.1);
+  vector<Type> CC = spde.C0 + spde.C1 * pow(range_fraction, 2);
+  Eigen::SparseMatrix<Type> Dmat = spde.D0 + spde.D1 * pow(range_fraction, 2);
+
+  // Create inverse C diagonal matrix: iC = Diagonal(n, 1 / CC)
+  Eigen::SparseMatrix<Type> iC(n, n);
+  for (int i = 0; i < n; ++i) {
+    iC.coeffRef(i, i) = Type(1) / CC(i);
+  }
+
+  // Construct the four combined matrices as in INLAspacetime:
+  Eigen::SparseMatrix<Type> ICI = spde.I.transpose() * iC * spde.I;
+  Eigen::SparseMatrix<Type> ICD = spde.I.transpose() * iC * Dmat;
+  Eigen::SparseMatrix<Type> DCI = Dmat.transpose() * iC * spde.I;
+  Eigen::SparseMatrix<Type> DCD = Dmat.transpose() * iC * Dmat;
+
+  // Apply INLAspacetime parameter scaling
+  // We use sigma = 1 here since we'll handle the proper scaling later in GMRF calls
+  Type range2 = pow(range, 2);
+  Type sigma2 = Type(1);  // Unit sigma - actual scaling handled in GMRF
+  Type pi2s2 = Type(2) / (M_PI * sigma2);  // 2/(π*σ²) = 2/π with unit sigma
+
+  Type param0 = pi2s2 / range2;              // 2/(π*σ²*r²)
+  Type param1 = pi2s2 / Type(8);             // 2/(π*σ²*8)
+  Type param2 = param1;                      // 2/(π*σ²*8)  
+  Type param3 = range2 * pi2s2 / Type(64);   // 2*r²/(π*σ²*64)
+
+  // Construct precision matrix using INLAspacetime's structure
+  Eigen::SparseMatrix<Type> Q = param0 * ICI + param1 * ICD + param2 * DCI + param3 * DCD;
+
+  return Q;
+}
+
+template <class Type>
+Type barrier_scaling_factor(Type ln_tau, Type ln_kappa) {
+  Type tau = exp(ln_tau);
+  Type kappa = exp(ln_kappa);
+  // marginal std. dev. for SPDE in 2D (alpha = 2)
+  return Type(1) / (tau * kappa * sqrt(Type(4.0) * M_PI));
 }
 
 template <class Type>

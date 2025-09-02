@@ -1,5 +1,10 @@
 # sdmTMB (development version)
 
+* **Fix barrier model implementation**. The SPDE input matrices for the barrier
+  model from INLA and INLAspacetime had changed. sdmTMB now appropriately 
+  uses these new matrices and unit tests in sdmTMBextra should catch such a
+  change in the future. #457
+
 * Fix `emmeans` support for models with smoothers (`s()` terms). Previously, 
   `emmeans` would fail with "Non-conformable elements in reference grid" when 
   smoothers were included in the model formula.

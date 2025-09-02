@@ -429,10 +429,10 @@ Type objective_function<Type>::operator()()
   Eigen::SparseMatrix<Type> Q_st2; // Precision matrix
 
   if (barrier) {
-    Q_s = Q_spde(spde_barrier, exp(ln_kappa(0,0)), barrier_scaling);
-    if (n_m > 1) Q_s2 = Q_spde(spde_barrier, exp(ln_kappa(0,1)), barrier_scaling);
-    if (!share_range(0)) Q_st = Q_spde(spde_barrier, exp(ln_kappa(1,0)), barrier_scaling);
-    if (!share_range(1) && n_m > 1) Q_st2 = Q_spde(spde_barrier, exp(ln_kappa(1,1)), barrier_scaling);
+    Q_s = sdmTMB::Q_spde_inlaspacetime(spde_barrier, ln_kappa(0,0), barrier_scaling);
+    if (n_m > 1) Q_s2 = sdmTMB::Q_spde_inlaspacetime(spde_barrier, ln_kappa(0,1), barrier_scaling);
+    if (!share_range(0)) Q_st = sdmTMB::Q_spde_inlaspacetime(spde_barrier, ln_kappa(1,0), barrier_scaling);
+    if (!share_range(1) && n_m > 1) Q_st2 = sdmTMB::Q_spde_inlaspacetime(spde_barrier, ln_kappa(1,1), barrier_scaling);
   } else {
     if (anisotropy) {
       matrix<Type> H = sdmTMB::MakeH(vector<Type>(ln_H_input.col(0)));
@@ -470,23 +470,37 @@ Type objective_function<Type>::operator()()
         Q_temp = Q_s2;
       }
       if (!omit_spatial_intercept) {
-        PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_O(m)))(omega_s.col(m));
+        Type spatial_scale = barrier ? 
+          sdmTMB::barrier_scaling_factor(ln_tau_O(m), ln_kappa(0,m)) : 
+          1. / exp(ln_tau_O(m));
+        PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), spatial_scale)(omega_s.col(m));
         if (sim_re(0)) {
           vector<Type> omega_s_tmp(omega_s.rows());
           SIMULATE {
             GMRF(Q_temp, s).simulate(omega_s_tmp);
-            omega_s.col(m) = omega_s_tmp / exp(ln_tau_O(m));
+            if (barrier) {
+              omega_s.col(m) = omega_s_tmp * sdmTMB::barrier_scaling_factor(ln_tau_O(m), ln_kappa(0,m));
+            } else {
+              omega_s.col(m) = omega_s_tmp / exp(ln_tau_O(m));
+            }
           }
         }
       }
       if (spatial_covariate) {
         for (int z = 0; z < n_z; z++) {
-          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_Z(z,m)))(zeta_s.col(m).col(z));
+          Type spatial_cov_scale = barrier ? 
+            sdmTMB::barrier_scaling_factor(ln_tau_Z(z,m), ln_kappa(0,m)) : 
+            1. / exp(ln_tau_Z(z,m));
+          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), spatial_cov_scale)(zeta_s.col(m).col(z));
           if (sim_re(3)) {
             vector<Type> zeta_s_tmp(zeta_s.col(m).rows());
             SIMULATE {
               GMRF(Q_s, s).simulate(zeta_s_tmp);
-              zeta_s.col(m).col(z) = zeta_s_tmp / exp(ln_tau_Z(z,m));
+              if (barrier) {
+                zeta_s.col(m).col(z) = zeta_s_tmp * sdmTMB::barrier_scaling_factor(ln_tau_Z(z,m), ln_kappa(0,m));
+              } else {
+                zeta_s.col(m).col(z) = zeta_s_tmp / exp(ln_tau_Z(z,m));
+              }
             }
           }
         }
@@ -505,14 +519,22 @@ Type objective_function<Type>::operator()()
     }
     if (!spatial_only(m)) {
       if (!ar1_fields(m) && !rw_fields(m)) {
-        for (int t = 0; t < n_t; t++)
-          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E_vec(t,m)))(epsilon_st.col(m).col(t));
+        for (int t = 0; t < n_t; t++) {
+          Type spatiotemporal_scale = barrier ? 
+            sdmTMB::barrier_scaling_factor(ln_tau_E_vec(t,m), ln_kappa(1,m)) : 
+            1. / exp(ln_tau_E_vec(t,m));
+          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), spatiotemporal_scale)(epsilon_st.col(m).col(t));
+        }
         if (sim_re(1)) {
           for (int t = 0; t < n_t; t++) {
             if (simulate_t(t)) {
               vector<Type> epsilon_st_tmp(epsilon_st.col(m).rows());
               SIMULATE {GMRF(Q_temp, s).simulate(epsilon_st_tmp);
-                epsilon_st.col(m).col(t) = epsilon_st_tmp / exp(ln_tau_E_vec(t,m));}
+                if (barrier) {
+                  epsilon_st.col(m).col(t) = epsilon_st_tmp * sdmTMB::barrier_scaling_factor(ln_tau_E_vec(t,m), ln_kappa(1,m));
+                } else {
+                  epsilon_st.col(m).col(t) = epsilon_st_tmp / exp(ln_tau_E_vec(t,m));
+                }}
             }
           }
         }
@@ -520,9 +542,15 @@ Type objective_function<Type>::operator()()
         if (ar1_fields(m)) { // not using separable(ar1()) so we can simulate by time step
           // PARALLEL_REGION jnll += SCALE(SEPARABLE(AR1(rho(m)), GMRF(Q_temp, s)), 1./exp(ln_tau_E(m)))(epsilon_st.col(m));
           // Split out by year so we can turn on/off simulation by year and model covariates of ln_tau_E:
-          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. / exp(ln_tau_E_vec(0,m)))(epsilon_st.col(m).col(0));
+          Type ar1_scale_0 = barrier ? 
+            sdmTMB::barrier_scaling_factor(ln_tau_E_vec(0,m), ln_kappa(1,m)) : 
+            1. / exp(ln_tau_E_vec(0,m));
+          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), ar1_scale_0)(epsilon_st.col(m).col(0));
           for (int t = 1; t < n_t; t++) {
-            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1. /exp(ln_tau_E_vec(t,m)))((epsilon_st.col(m).col(t) -
+            Type ar1_scale_t = barrier ? 
+              sdmTMB::barrier_scaling_factor(ln_tau_E_vec(t,m), ln_kappa(1,m)) : 
+              1. / exp(ln_tau_E_vec(t,m));
+            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), ar1_scale_t)((epsilon_st.col(m).col(t) -
               rho(m) * epsilon_st.col(m).col(t - 1))/sqrt(1. - rho(m) * rho(m)));
           }
           Type n_cols = epsilon_st.col(m).cols();
@@ -554,10 +582,15 @@ Type objective_function<Type>::operator()()
           }
           ADREPORT(rho);
         } else if (rw_fields(m)) {
-          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), 1./exp(ln_tau_E_vec(0,m)))(epsilon_st.col(m).col(0));
+          Type rw_scale_0 = barrier ? 
+            sdmTMB::barrier_scaling_factor(ln_tau_E_vec(0,m), ln_kappa(1,m)) : 
+            1. / exp(ln_tau_E_vec(0,m));
+          PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), rw_scale_0)(epsilon_st.col(m).col(0));
           for (int t = 1; t < n_t; t++) {
-            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s),
-                1./exp(ln_tau_E_vec(t,m)))(epsilon_st.col(m).col(t) - epsilon_st.col(m).col(t - 1));
+            Type rw_scale_t = barrier ? 
+              sdmTMB::barrier_scaling_factor(ln_tau_E_vec(t,m), ln_kappa(1,m)) : 
+              1. / exp(ln_tau_E_vec(t,m));
+            PARALLEL_REGION jnll += SCALE(GMRF(Q_temp, s), rw_scale_t)(epsilon_st.col(m).col(t) - epsilon_st.col(m).col(t - 1));
           }
           if (sim_re(1)) {
             for (int t = 0; t < n_t; t++) {
