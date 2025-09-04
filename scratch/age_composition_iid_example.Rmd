@@ -1,0 +1,287 @@
+---
+title: "Age composition standardization with sdmTMB"
+output: html_document
+---
+
+```{r setup, message=FALSE, warning=FALSE}
+library(tinyVAST)
+library(fmesher)
+library(sf)
+```
+
+This document shows area-weighted age composition expansion with sdmTMB and shows equivalence with tinyVAST.
+
+```{r load_data}
+# Load and prepare data
+data(bering_sea_pollock_ages)
+
+# Subset to Years 2010-2023 (to speed up the example)
+Data <- subset(bering_sea_pollock_ages, Year >= 2010)
+
+# Add Year-Age interaction
+Data$Age <- factor(paste0("Age_", Data$Age))
+Data$Year_Age <- interaction(Data$Year, Data$Age)
+
+# Project data to UTM
+Data <- st_as_sf(Data,
+  coords = c("Lon", "Lat"),
+  crs = st_crs(4326)
+)
+Data <- st_transform(Data,
+  crs = st_crs("+proj=utm +zone=2 +units=km")
+)
+# Add UTM coordinates as columns X & Y
+Data <- cbind(st_drop_geometry(Data), st_coordinates(Data))
+```
+
+Set up the spatial and spatiotemporal fields. If we wanted to have different SDs for any of these, we could name the parameters uniquely. E.g. `space_sd1`, `space_sd2`.
+
+```{r setup_model}
+# Spatial term with shared SD across all ages
+sem <- "
+  Age_1 <-> Age_1, space_sd
+  Age_2 <-> Age_2, space_sd
+  Age_3 <-> Age_3, space_sd
+  Age_4 <-> Age_4, space_sd
+  Age_5 <-> Age_5, space_sd
+  Age_6 <-> Age_6, space_sd
+  Age_7 <-> Age_7, space_sd
+  Age_8 <-> Age_8, space_sd
+  Age_9 <-> Age_9, space_sd
+  Age_10 <-> Age_10, space_sd
+  Age_11 <-> Age_11, space_sd
+  Age_12 <-> Age_12, space_sd
+  Age_13 <-> Age_13, space_sd
+  Age_14 <-> Age_14, space_sd
+  Age_15 <-> Age_15, space_sd
+"
+
+# IID spatiotemporal term with shared SD across all ages
+dsem <- "
+  Age_1 <-> Age_1, 0, spacetime_sd
+  Age_2 <-> Age_2, 0, spacetime_sd
+  Age_3 <-> Age_3, 0, spacetime_sd
+  Age_4 <-> Age_4, 0, spacetime_sd
+  Age_5 <-> Age_5, 0, spacetime_sd
+  Age_6 <-> Age_6, 0, spacetime_sd
+  Age_7 <-> Age_7, 0, spacetime_sd
+  Age_8 <-> Age_8, 0, spacetime_sd
+  Age_9 <-> Age_9, 0, spacetime_sd
+  Age_10 <-> Age_10, 0, spacetime_sd
+  Age_11 <-> Age_11, 0, spacetime_sd
+  Age_12 <-> Age_12, 0, spacetime_sd
+  Age_13 <-> Age_13, 0, spacetime_sd
+  Age_14 <-> Age_14, 0, spacetime_sd
+  Age_15 <-> Age_15, 0, spacetime_sd
+"
+
+# Create mesh
+mesh <- fm_mesh_2d(loc = Data[, c("X", "Y")], cutoff = 50)
+
+# Control settings
+control <- tinyVASTcontrol(
+  getsd = FALSE,
+  profile = c("alpha_j"),
+  trace = 0, silent = FALSE
+)
+
+# Single Tweedie family for all ages
+Family <- tweedie()
+# This could instead by a list of families to have different family parameters per age
+```
+
+```{r fit_model}
+tictoc::tic()
+fit_tinyVAST <- tinyVAST(
+  data = Data,
+  formula = Abundance_per_hectare ~ 0 + Year_Age,
+  space_term = sem,
+  spacetime_term = dsem,
+  family = Family,
+  space_column = c("X", "Y"),
+  variable_column = "Age",
+  time_column = "Year",
+  spatial_domain = mesh,
+  control = control
+)
+tictoc::toc()
+fit_tinyVAST$opt
+```
+
+```{r show_results}
+print(fit_tinyVAST)
+```
+
+## Equivalent sdmTMB model
+
+Now let's fit the same model using sdmTMB. The key is to use the `spatial_varying` argument to create age-specific spatial and spatiotemporal fields.
+
+```{r setup_sdmTMB}
+library(sdmTMB)
+
+# Create sdmTMB mesh
+mesh_sdm <- make_mesh(Data, c("X", "Y"), mesh = mesh) # use same mesh as before
+
+# Use the helper function to set up the model components
+svc_setup <- sdmTMB:::setup_category_svc(
+  data = Data,
+  category_column = "Age",
+  time_column = "Year",
+  share_spatial_sd = TRUE, # All ages share spatial SD
+  share_spatiotemporal_sd = TRUE # All age-year combinations share spatiotemporal SD
+)
+
+# Inspect what the helper created
+svc_setup$info
+```
+
+```{r svc-example, echo=FALSE, eval=FALSE}
+# Here we'll show what was done above in that helper function so it's clear:
+
+# Set up spatial varying coefficients for both spatial and spatiotemporal components
+# We need: Age (spatial) + Year*Age (spatiotemporal) terms
+spatial_terms <- model.matrix(~ 0 + Age, data = Data)
+spatiotemporal_terms <- model.matrix(~ 0 + factor(Year):Age, data = Data)
+
+# Combine them
+combined_matrix <- cbind(spatial_terms, spatiotemporal_terms)
+colnames_combined <- colnames(combined_matrix)
+
+# Create mapping:
+# - All spatial age terms share SD #1 (constant spatial fields by age)
+# - All spatiotemporal year-age terms share SD #2 (IID spatiotemporal fields)
+n_spatial <- ncol(spatial_terms) # number of ages
+n_spatiotemporal <- ncol(spatiotemporal_terms) # number of year-age combinations
+
+svc_map <- factor(c(
+  rep(1, n_spatial), # spatial age terms share SD #1
+  rep(2, n_spatiotemporal) # spatiotemporal year-age terms share SD #2
+))
+
+# Add to data for formula construction
+Data_expanded <- cbind(Data, combined_matrix)
+
+# Create formula from column names
+svc_formula <- as.formula(paste0("~ `", paste(colnames_combined, collapse = "` + `"), "`"))
+````
+
+```{r fit_sdmTMB}
+control_sdmTMB <- sdmTMBcontrol(
+  map = svc_setup$svc_map, # critical part
+  multiphase = FALSE, # often faster here
+  newton_loops = 0, # speed up example
+  profile = "b_j", # often faster here
+  getsd = FALSE # skip running sdreport() for speed
+)
+
+# Fit sdmTMB model
+tictoc::tic()
+fit_sdmTMB <- sdmTMB(
+  Abundance_per_hectare ~ 0 + Year_Age,
+  mesh = mesh_sdm,
+  data = svc_setup$data_expanded, # Use expanded data
+  family = tweedie(),
+  time = "Year",
+  silent = FALSE,
+  spatial = "off", # handle all spatial variation through spatial_varying
+  spatiotemporal = "off", # handle all spatiotemporal variation through spatial_varying
+  spatial_varying = svc_setup$svc_formula,
+  control = control_sdmTMB
+)
+tictoc::toc()
+```
+
+These should be identical:
+
+```{r compare}
+fit_sdmTMB$model$objective
+fit_tinyVAST$opt$objective
+```
+
+## Area expansion with sdmTMB
+
+Now let's calculate area-weighted abundance indices for each age class, similar to the tinyVAST example:
+
+```{r area_expansion_setup}
+library(ggplot2)
+
+# Get shapefile for survey extent (from tinyVAST example)
+data(bering_sea)
+
+# Make extrapolation grid based on shapefile
+bering_sea_utm <- st_transform(
+  bering_sea,
+  st_crs("+proj=utm +zone=2 +units=km")
+)
+grid <- st_make_grid(bering_sea_utm, n = c(50, 50))
+grid <- st_intersection(grid, bering_sea_utm)
+grid <- st_make_valid(grid)
+loc_gz <- st_coordinates(st_centroid(grid))
+
+# Get area for extrapolation grid
+library(units)
+areas <- set_units(st_area(grid), "hectares")
+
+# Create prediction grid - replicate over years and ages
+ages <- sort(unique(Data$Age))
+years <- sort(unique(Data$Year))
+
+# Create base grid
+nd_base <- data.frame(
+  X = loc_gz[, "X"],
+  Y = loc_gz[, "Y"]
+)
+
+# Replicate over years and ages
+nd <- replicate_df(nd_base, "Year", years)
+nd <- nd[rep(1:nrow(nd), length(ages)), ]
+nd$Age <- rep(ages, each = nrow(nd) / length(ages))
+nd$Year_Age <- interaction(nd$Year, nd$Age)
+
+# Use helper function to add model matrix columns
+nd_setup <- sdmTMB:::setup_category_svc(
+  data = nd,
+  category_column = "Age",
+  time_column = "Year",
+  share_spatial_sd = TRUE,
+  share_spatiotemporal_sd = TRUE
+)
+```
+
+Loop over ages and calculate an index for each
+
+```{r calculate_indices, results='hide', warning=FALSE, message=FALSE}
+ind_list <- lapply(ages, function(age) {
+  cat("Calculating index for age:", as.character(age), "\n")
+
+  # Subset prediction data for this age
+  nd_age <- nd_setup$data_expanded[nd_setup$data_expanded$Age == age, ]
+
+  # Get predictions
+  pred <- predict(fit_sdmTMB, newdata = nd_age, return_tmb_object = TRUE)
+
+  # Calculate area-weighted index
+  ind <- get_index(pred,
+    area = rep(as.numeric(areas), length(years)),
+    bias_correct = FALSE # set to TRUE in practice
+  ) 
+  data.frame(ind, age = age)
+})
+
+ind <- do.call(rbind, ind_list)
+```
+
+Plot abundance indices by age
+
+```{r plot_indices}
+ggplot(ind, aes(year, est)) +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.3) +
+  geom_line() +
+  facet_wrap(~age, scales = "free_y", labeller = label_both) +
+  scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.05))) +
+  labs(
+    x = "Year",
+    y = "Abundance index",
+    title = "Age-specific abundance indices from sdmTMB"
+  )
+```
