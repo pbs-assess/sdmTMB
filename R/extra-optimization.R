@@ -62,7 +62,7 @@ run_extra_optimization <- function(object,
 
 run_newton_loops <- function(newton_loops, opt, obj, silent = TRUE) {
   if (newton_loops > 0) {
-    if (!silent) cli_inform("attempting to improve convergence with a Newton update")
+    if (!silent) cli_inform("attempting to improve convergence with Newton update(s)")
     for (i in seq_len(newton_loops)) {
       g <- as.numeric(obj$gr(opt$par))
       if (max(abs(g)) < 1e-9) {
