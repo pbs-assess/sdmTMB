@@ -4,6 +4,9 @@
   model from INLA and INLAspacetime had changed. sdmTMB now appropriately 
   uses these new matrices and unit tests in sdmTMBextra should catch such a
   change in the future. #457
+  
+* Add vignette on age (or length) composition standardization. To help with this
+  add a new experimental function `setup_category_svc()`.
 
 * Fix `emmeans` support for models with smoothers (`s()` terms). Previously, 
   `emmeans` would fail with "Non-conformable elements in reference grid" when 

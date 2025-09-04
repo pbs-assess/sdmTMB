@@ -668,20 +668,23 @@ reinitialize <- function(x) {
 }
 
 #' Set up spatially varying coefficients for category composition models
-#' 
+#'
 #' This function helps set up the data structure, formula, and mapping needed
 #' for fitting spatially varying coefficient models with categories (e.g., ages,
-#' length bins, species) that have both spatial and spatiotemporal random fields.
-#' It's particularly useful for age or length composition standardization models.
-#' 
+#' length bins, species) that have both spatial and spatiotemporal random
+#' fields. It's particularly useful for age or length composition
+#' standardization models.
+#'
 #' @param data Data frame containing the composition data.
-#' @param category_column Character. Name of the category column (e.g., "Age", "length_bin", "species").
+#' @param category_column Character. Name of the category column (e.g., "Age",
+#'   "length_bin", "species").
 #' @param time_column Character. Name of the time column (e.g., "Year").
-#' @param share_spatial_sd Logical. If `TRUE`, all categories share the same spatial SD.
-#'   If `FALSE`, each category gets its own spatial SD.
-#' @param share_spatiotemporal_sd Logical. If `TRUE`, all category-time combinations 
-#'   share the same spatiotemporal SD. If `FALSE`, each gets its own.
-#' 
+#' @param share_spatial_sd Logical. If `TRUE`, all categories share the same
+#'   spatial SD. If `FALSE`, each category gets its own spatial SD.
+#' @param share_spatiotemporal_sd Logical. If `TRUE`, all category-time
+#'   combinations share the same spatiotemporal SD. If `FALSE`, each gets its
+#'   own.
+#'
 #' @return A list containing:
 #' \itemize{
 #'   \item `data_expanded`: Data frame with added model matrix columns for use in [sdmTMB()].
@@ -689,96 +692,80 @@ reinitialize <- function(x) {
 #'   \item `svc_map`: Map list for the `map` argument in [sdmTMBcontrol()].
 #'   \item `info`: List with summary information about the model structure.
 #' }
-#' 
-#' @details
-#' This function creates spatially varying coefficient structures for composition 
-#' models by setting up:
-#' 
-#' 1. **Spatial fields**: One field per category (e.g., age-specific spatial fields)
-#' 2. **Spatiotemporal fields**: One field per category-time combination (e.g., age-year fields)
-#' 
-#' The sharing of variance parameters is controlled by `share_spatial_sd` and 
-#' `share_spatiotemporal_sd`. When `TRUE`, all fields of that type share the same
-#' variance parameter, which is more parsimonious but assumes similar variance 
-#' magnitudes across categories.
-#' 
-#' The resulting model structure allows each category to have its own spatial 
-#' pattern and temporal variation while controlling parameter sharing for 
+#'
+#' @details This function creates spatially varying coefficient structures for
+#' composition models by setting up:
+#'
+#' 1. **Spatial fields**: One field per category (e.g., age-specific spatial
+#' fields) 2. **Spatiotemporal fields**: One field per category-time combination
+#' (e.g., age-year fields)
+#'
+#' The sharing of variance parameters is controlled by `share_spatial_sd` and
+#' `share_spatiotemporal_sd`. When `TRUE`, all fields of that type share the
+#' same variance parameter, which is more parsimonious but assumes similar
+#' variance magnitudes across categories.
+#'
+#' The resulting model structure allows each category to have its own spatial
+#' pattern and temporal variation while controlling parameter sharing for
 #' identifiability and computational efficiency.
-#' 
+#'
 #' @examples
-#' # Example with age composition data
 #' set.seed(123)
 #' data <- data.frame(
 #'   age = factor(rep(1:3, each = 20)),
-#'   year = rep(2020:2022, 20), 
+#'   year = rep(2020:2022, 20),
 #'   abundance = rnorm(60),
 #'   x = runif(60), y = runif(60)
 #' )
-#' 
+#'
 #' # Set up model components
 #' setup <- setup_category_svc(
 #'   data = data,
-#'   category_column = "age", 
+#'   category_column = "age",
 #'   time_column = "year",
 #'   share_spatial_sd = TRUE,
 #'   share_spatiotemporal_sd = TRUE
 #' )
-#' 
+#'
 #' # Check the setup
 #' setup$info
-#' 
-#' \dontrun{
-#' # Use in sdmTMB model
-#' mesh <- make_mesh(setup$data_expanded, c("x", "y"), cutoff = 0.1)
-#' fit <- sdmTMB(
-#'   abundance ~ 1,
-#'   data = setup$data_expanded,
-#'   mesh = mesh,
-#'   spatial = "off",
-#'   spatiotemporal = "off", 
-#'   time = "year",
-#'   spatial_varying = setup$svc_formula,
-#'   control = sdmTMBcontrol(map = setup$svc_map)
-#' )
-#' }
-#' 
+#'
+#' # See the age composition standardization vignette for more details
 #' @export
-setup_category_svc <- function(data, 
-                               category_column, 
+setup_category_svc <- function(data,
+                               category_column,
                                time_column,
                                share_spatial_sd = TRUE,
                                share_spatiotemporal_sd = TRUE) {
-  
   # Input validation
   assert_that(is.data.frame(data))
   assert_that(is.character(category_column), length(category_column) == 1L)
   assert_that(is.character(time_column), length(time_column) == 1L)
   assert_that(is.logical(share_spatial_sd), length(share_spatial_sd) == 1L)
   assert_that(is.logical(share_spatiotemporal_sd), length(share_spatiotemporal_sd) == 1L)
-  
+
   if (!category_column %in% names(data)) {
     cli_abort(paste0("Column '", category_column, "' not found in data."))
   }
   if (!time_column %in% names(data)) {
     cli_abort(paste0("Column '", time_column, "' not found in data."))
   }
-  
+
   # Create model matrices
   spatial_formula <- as.formula(paste0("~ 0 + ", category_column))
   spatiotemporal_formula <- as.formula(paste0("~ 0 + factor(", time_column, "):", category_column))
-  
+
   spatial_terms <- model.matrix(spatial_formula, data = data)
   spatiotemporal_terms <- model.matrix(spatiotemporal_formula, data = data)
-  
+
   # Combine matrices
   combined_matrix <- cbind(spatial_terms, spatiotemporal_terms)
   colnames_combined <- colnames(combined_matrix)
-  
+
   # Create mapping based on sharing preferences
   n_spatial <- ncol(spatial_terms)
   n_spatiotemporal <- ncol(spatiotemporal_terms)
-  
+
   if (share_spatial_sd && share_spatiotemporal_sd) {
     # Two shared SDs: one for spatial, one for spatiotemporal
     svc_map <- factor(c(rep(1, n_spatial), rep(2, n_spatiotemporal)))
@@ -792,13 +779,13 @@ setup_category_svc <- function(data,
     # All separate SDs
     svc_map <- factor(1:(n_spatial + n_spatiotemporal))
   }
-  
+
   # Expand data
   data_expanded <- cbind(data, combined_matrix)
-  
+
   # Create formula
   svc_formula <- as.formula(paste0("~ `", paste(colnames_combined, collapse = "` + `"), "`"))
-  
+
   # Create info summary
   info <- list(
     n_categories = length(unique(data[[category_column]])),
@@ -811,7 +798,7 @@ setup_category_svc <- function(data,
     share_spatial_sd = share_spatial_sd,
     share_spatiotemporal_sd = share_spatiotemporal_sd
   )
-  
+
   return(list(
     data_expanded = data_expanded,
     svc_formula = svc_formula,

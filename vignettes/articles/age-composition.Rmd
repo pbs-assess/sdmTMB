@@ -1,0 +1,404 @@
+---
+title: "Area-weighted age composition standardization with sdmTMB"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Area-weighted age composition standardization with sdmTMB}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+has_ggplot <- requireNamespace("ggplot2", quietly = TRUE)
+has_dplyr <- requireNamespace("dplyr", quietly = TRUE)
+EVAL <- identical(Sys.getenv("NOT_CRAN"), "true") && has_dplyr && has_ggplot
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = EVAL,
+  purl = EVAL
+)
+knitr::opts_chunk$set(fig.width = 6, fig.height = 4)
+```
+
+```{r setup, message=FALSE, warning=FALSE}
+library(sdmTMB)
+library(fmesher)
+library(ggplot2)
+library(dplyr)
+theme_set(theme_minimal())
+```
+
+This document shows area-weighted age composition expansion with sdmTMB using simulated data. In other words, we use area-expansion to calculate proportion-at-age using (potentially) spatially unbalanced sampling data. Please see Thorson and Haltuch (2018) for further description.
+
+We will start by simulating some data. This simulation code chunk is hidden for simplicity.
+
+```{r simulate_data, echo=FALSE}
+# Set up spatial domain on 0-1 grid
+set.seed(123)
+n_locations <- 200
+n_years <- 8
+years <- 2018:(2018 + n_years - 1)
+ages <- paste0("age_", 1:6)
+
+# Create spatial grid
+loc_grid <- data.frame(
+  x = runif(n_locations * n_years, 0, 1),
+  y = runif(n_locations * n_years, 0, 1),
+  year = factor(rep(years, each = n_locations))
+)
+
+# Create mesh for simulation
+mesh_sim <- make_mesh(loc_grid, c("x", "y"), cutoff = 0.1)
+
+# Simulate data for each age across all years
+simulate_age_data <- function(age_idx) {
+  # Different abundance patterns by age
+  base_intercept <- 1 + age_idx * -0.2 # younger ages more abundant
+  B <- rnorm(n_years, base_intercept, 0.2)
+
+  # Create data for all years for this age
+  # Simulate with spatiotemporal variation
+  sim_dat <- sdmTMB_simulate(
+    formula = ~ 0 + factor(year), # year effects
+    data = loc_grid,
+    mesh = mesh_sim,
+    family = tweedie(link = "log"),
+    time = "year",
+    range = 0.25,
+    sigma_O = 0.5, # spatial SD
+    sigma_E = 0.5, # spatiotemporal SD
+    phi = 3, # Tweedie dispersion
+    tweedie_p = 1.6, # Tweedie power
+    B = B, # intercept for each year
+    seed = 123 + age_idx * 10
+  )
+
+  if (nrow(sim_dat) > 0) {
+    sim_dat$age <- ages[age_idx]
+    sim_dat$year <- as.integer(as.character(loc_grid$year))
+    sim_dat$year_age <- paste(sim_dat$year, sim_dat$age, sep = "_")
+  }
+
+  return(sim_dat)
+}
+
+# Simulate data for all ages
+data_list <- list()
+for (age_idx in 1:length(ages)) {
+  data_list[[length(data_list) + 1]] <- simulate_age_data(age_idx)
+}
+
+data <- do.call(rbind, data_list)
+# Rename observed column
+names(data)[names(data) == "observed"] <- "abundance_per_area"
+data <- dplyr::select(data, year, x, y, abundance_per_area, age, year_age)
+```
+
+We can look at the simulated data:
+
+```{r}
+head(data)
+```
+
+We are assuming that the these data have already gone "first stage expansion". I.e., each subsample has been expanded to represent the total abundance (or biomass) of the primary sample from which it came.
+Although we model abundance per area here, we could alternatively model abundance with an offset for (log) area.
+
+Plot the raw simulated data:
+
+```{r plot_data}
+ggplot(data, aes(x, y, colour = log(abundance_per_area + 1))) +
+  geom_point() +
+  facet_grid(year ~ age) +
+  scale_colour_viridis_c() +
+  labs(colour = "Abundance\nper\narea")
+
+# Show data for one year
+data_subset <- filter(data, year == 2021)
+ggplot(data_subset, aes(x, y, size = abundance_per_area, colour = age)) +
+  geom_point(alpha = 0.7) +
+  facet_wrap(~age) +
+  labs(title = "Simulated data (2021)", size = "Abundance per area")
+```
+
+Now we will set up the spatial and spatiotemporal fields with shared SDs across ages.
+This could alternatively be set up to have different spatial SDs by age and/or different spatiotemporal SDs by age.
+
+```{r setup_model}
+mesh_sdm <- make_mesh(data, c("x", "y"), cutoff = 0.1)
+
+# Use a helper function to set up the model components
+svc_setup <- sdmTMB::setup_category_svc(
+  data = data,
+  category_column = "age",
+  time_column = "year",
+  share_spatial_sd = TRUE, # All ages share spatial SD
+  share_spatiotemporal_sd = TRUE # All age-year combinations share spatiotemporal SD
+)
+```
+
+This would return information on what just ran:
+
+```{r, eval=FALSE}
+svc_setup$info
+```
+
+The important parts are the following.
+
+Our data frame has additional columns for use in the `spatial_varying` argument:
+
+```{r}
+colnames(svc_setup$data_expanded)
+```
+
+We have a formula for the `spatial_varying` argument:
+
+```{r}
+svc_setup$svc_formula
+```
+
+And we have a TMB 'map' list, which controls which random field SDs are shared vs. estimated separately. Factor levels that are the same get shared; those that are different are estimated separately.
+
+```{r}
+svc_setup$svc_map
+```
+
+Internally, `ln_tau_Z` is a precision parameter that affects the SD of the SVC fields.
+
+We'll set up a control list. The only critical part is the map argument.
+
+```{r fit_sdmTMB}
+control_sdmTMB <- sdmTMBcontrol(
+  map = svc_setup$svc_map, # critical part
+  multiphase = FALSE, # often faster here
+  newton_loops = 0, # for a faster example
+  profile = "b_j", # often faster here
+  getsd = TRUE # skip running sdreport() if desired for speed while testing
+)
+```
+
+Fit our model:
+
+```{r, echo=TRUE, results="hide"}
+fit_sdmTMB <- sdmTMB(
+  abundance_per_area ~ 0 + year_age,
+  mesh = mesh_sdm,
+  data = svc_setup$data_expanded, # Use expanded data
+  family = tweedie(),
+  time = "year",
+  spatial = "off", # all spatial variation with spatial_varying
+  spatiotemporal = "off", # all spatiotemporal variation with spatial_varying
+  spatial_varying = svc_setup$svc_formula,
+  silent = FALSE,
+  control = control_sdmTMB
+)
+```
+
+```{r}
+sanity(fit_sdmTMB)
+fit_sdmTMB
+```
+
+## Area expansion
+
+Now let's calculate area-weighted abundance indices for each age class. First, we need to set up our 'grid' data frame over which we will predict. Here we make a simple grid over our 0-1 simulated survey domain.
+
+```{r area_expansion_setup}
+# Create prediction grid on the same 0-1 spatial domain
+n_pred <- 10
+pred_grid <- expand.grid(
+  x = seq(0, 1, length.out = n_pred),
+  y = seq(0, 1, length.out = n_pred)
+)
+
+# Each grid cell area (since we're on 0-1 domain)
+cell_area <- (1 / n_pred)^2
+
+# Replicate over years and ages
+nd <- replicate_df(pred_grid, "year", years)
+nd <- replicate_df(nd, "age", ages)
+nd$year_age <- paste(nd$year, nd$age, sep = "_")
+
+# Use helper function to add model matrix columns
+nd_setup <- sdmTMB::setup_category_svc(
+  data = nd,
+  category_column = "age",
+  time_column = "year",
+  share_spatial_sd = TRUE,
+  share_spatiotemporal_sd = TRUE
+)
+```
+
+Calculate indices for each age:
+
+```{r calculate_indices, results='hide', warning=FALSE, message=FALSE}
+ind_list <- lapply(ages, function(age) {
+  cat("Calculating index for age:", age, "\n")
+
+  # Subset prediction data for this age
+  nd_age <- nd_setup$data_expanded[nd_setup$data_expanded$age == age, ]
+
+  # Get predictions
+  pred <- predict(fit_sdmTMB, newdata = nd_age, return_tmb_object = TRUE)
+
+  # Calculate area-weighted index
+  ind <- get_index(pred, area = cell_area, bias_correct = TRUE)
+  data.frame(ind, age = age)
+})
+
+ind <- do.call(rbind, ind_list)
+```
+
+Plot abundance indices by age:
+
+```{r plot_indices}
+ggplot(ind, aes(year, est)) +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.3) +
+  geom_line() +
+  facet_wrap(~age, scales = "free_y") +
+  scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.05))) +
+  labs(
+    x = "Year",
+    y = "Abundance index",
+    title = "Age-specific abundance indices"
+  )
+```
+
+## Convert to age composition (proportions)
+
+Convert the abundance indices to proportions-at-age:
+
+```{r age_proportions}
+ind_props <- ind |>
+  group_by(year) |>
+  mutate(
+    total = sum(est),
+    proportion = est / total
+  ) |>
+  ungroup()
+```
+
+Plot age composition:
+
+```{r plot_age_composition}
+ggplot(ind_props, aes(year, proportion, fill = factor(age, levels = rev(ages)))) +
+  geom_area(position = "stack", alpha = 0.7) +
+  labs(
+    x = "Year",
+    y = "Proportion",
+    fill = "Age",
+  )
+
+ggplot(ind_props, aes(year, proportion, colour = age)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    x = "Year",
+    y = "Proportion",
+    colour = "Age",
+  )
+```
+
+## Calculate effective sample sizes
+
+Here we'll calculate effective sample sizes for the age composition, following the method from VAST (Thorson 2019) as described in Thorson and Haltuch (2018).
+
+```{r calculate_neff}
+# Function to calculate effective sample sizes from index estimates
+# This may be folded into sdmTMB eventually
+get_comp_neff <- function(dat, index_df, time_column = "year", bin_column = "age") {
+  # Get unique years and ages in original order
+  years_unique <- unique(dat[[time_column]])
+  bins_unique <- unique(dat[[bin_column]])
+  nyrs <- length(years_unique)
+  nbins <- length(bins_unique)
+
+  # Reshape estimates and SEs to matrices (bins x years)
+  est_mat <- t(matrix(index_df$est, nrow = nyrs, ncol = nbins))
+  se_mat <- t(matrix(index_df$se_natural, nrow = nyrs, ncol = nbins))
+
+  # Calculate total abundance and SE by year
+  total_by_year <- colSums(est_mat)
+  total_se_by_year <- sqrt(colSums(se_mat^2))
+
+  # Calculate proportions
+  prop_mat <- est_mat / rep(total_by_year, each = nbins)
+
+  # Calculate proportion variance and effective sample sizes using delta method
+  var_prop_mat <- matrix(NA, nrow = nbins, ncol = nyrs)
+  neff_mat <- matrix(NA, nrow = nbins, ncol = nyrs)
+
+  for (i in 1:nbins) {
+    for (j in 1:nyrs) {
+      if (est_mat[i, j] > 0) {
+        var_prop_mat[i, j] <- est_mat[i, j]^2 / total_by_year[j]^2 *
+          (se_mat[i, j]^2 / est_mat[i, j]^2 -
+            2 * se_mat[i, j]^2 / (est_mat[i, j] * total_by_year[j]) +
+            total_se_by_year[j]^2 / total_by_year[j]^2)
+        neff_mat[i, j] <- prop_mat[i, j] * (1 - prop_mat[i, j]) / var_prop_mat[i, j]
+      } else {
+        var_prop_mat[i, j] <- 0
+        neff_mat[i, j] <- 0
+      }
+    }
+  }
+
+  # Calculate median Neff by year
+  neff_median <- apply(neff_mat, 2, median, na.rm = TRUE)
+
+  # Convert to data frame
+  bin_indices <- rep(1:nbins, nyrs)
+  year_indices <- rep(1:nyrs, each = nbins)
+  result <- data.frame(
+    prop_se = sqrt(as.vector(var_prop_mat)),
+    prop = as.vector(prop_mat),
+    neff = as.vector(neff_mat),
+    neff_median = rep(neff_median, each = nbins)
+  )
+
+  # Add year and bin columns
+  result[[time_column]] <- years_unique[year_indices]
+  result[[bin_column]] <- bins_unique[bin_indices]
+  result
+}
+
+# Calculate effective sample sizes
+neff_results <- get_comp_neff(data, ind)
+
+# Show results
+head(neff_results)
+```
+
+Plot effective sample sizes:
+
+```{r plot_neff}
+ggplot(neff_results, aes(year, neff, colour = age)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    x = "Year",
+    y = "Effective sample size",
+    colour = "Age",
+    title = "Effective sample sizes by age"
+  )
+
+# Plot median effective sample size across ages
+neff_median <- neff_results |>
+  select(year, neff_median) |>
+  distinct()
+
+ggplot(neff_median, aes(year, neff_median)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    x = "Year",
+    y = "Median effective sample size",
+    title = "Median effective sample size across ages"
+  )
+```
+
+## References
+
+Thorson, J.T., and Haltuch, M.A. 2018. Spatio-temporal analysis of compositional data: increased precision and improved workflow using model-based inputs to stock assessment. Can. J. Fish. Aquat. Sci. doi:10.1139/cjfas-2018-0015.
+
+Thorson, J.T. 2019. Guidance for decisions using the Vector Autoregressive Spatio-Temporal (VAST) package in stock, ecosystem, habitat and climate assessments. Fisheries Research 210: 143–161. doi:10.1016/j.fishres.2018.10.013.
