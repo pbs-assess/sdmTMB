@@ -687,6 +687,7 @@ sdmTMB <- function(
   quadratic_roots <- control$quadratic_roots
   start <- control$start
   multiphase <- control$multiphase
+  getsd <- control$getsd
   map <- control$map
   lower <- control$lower
   upper <- control$upper
@@ -695,7 +696,7 @@ sdmTMB <- function(
   suppress_nlminb_warnings <- control$suppress_nlminb_warnings
 
   dot_checks <- c(
-    "lower", "upper", "profile", "parallel", "censored_upper",
+    "lower", "upper", "profile", "parallel", "censored_upper", "getsd",
     "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",
     "newton_loops", "start", "map", "get_joint_precision", "normalize",
     "suppress_nlminb_warnings"
@@ -1613,9 +1614,14 @@ sdmTMB <- function(
   tmb_opt <- run_newton_loops(newton_loops = newton_loops, tmb_opt, tmb_obj, silent)
   check_bounds(tmb_opt$par, lim$lower, lim$upper)
 
-  if (!silent) cli_inform("running TMB sdreport\n")
-  sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision)
-  conv <- get_convergence_diagnostics(sd_report)
+  if (!silent && getsd) cli_inform("running TMB sdreport\n")
+  if (getsd) {
+    sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision)
+    conv <- get_convergence_diagnostics(sd_report)
+  } else {
+    sd_report <- NULL
+    conv <- NULL
+  }
 
   ## save params that families need to grab from environments:
   if (any(family$family %in% c("truncated_nbinom1", "truncated_nbinom2"))) {

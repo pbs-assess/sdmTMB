@@ -10,6 +10,7 @@ sdmTMBcontrol(
   normalize = FALSE,
   nlminb_loops = 1L,
   newton_loops = 1L,
+  getsd = TRUE,
   mgcv = deprecated(),
   quadratic_roots = FALSE,
   start = NULL,
@@ -48,6 +49,8 @@ log-likelihood gradient with respect to the fixed effects. This calculates
 the Hessian at the current MLE with \code{\link[stats:optim]{stats::optimHess()}} using a
 finite-difference approach and uses this to update the fixed effect
 estimates.}
+
+\item{getsd}{Logical indicating whether to call \code{\link[TMB:sdreport]{TMB::sdreport()}}.}
 
 \item{mgcv}{\strong{Deprecated} Parse the formula with \code{\link[mgcv:gam]{mgcv::gam()}}?}
 
