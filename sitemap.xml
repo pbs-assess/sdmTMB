@@ -1,5 +1,6 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://pbs-assess.github.io/sdmTMB/404.html</loc></url>
+<url><loc>https://pbs-assess.github.io/sdmTMB/articles/age-composition.html</loc></url>
 <url><loc>https://pbs-assess.github.io/sdmTMB/articles/basic-intro.html</loc></url>
 <url><loc>https://pbs-assess.github.io/sdmTMB/articles/bayesian.html</loc></url>
 <url><loc>https://pbs-assess.github.io/sdmTMB/articles/cross-validation.html</loc></url>
@@ -54,6 +55,7 @@
 <url><loc>https://pbs-assess.github.io/sdmTMB/reference/sdmTMB_stacking.html</loc></url>
 <url><loc>https://pbs-assess.github.io/sdmTMB/reference/sdmTMBcontrol.html</loc></url>
 <url><loc>https://pbs-assess.github.io/sdmTMB/reference/set_delta_model.html</loc></url>
+<url><loc>https://pbs-assess.github.io/sdmTMB/reference/setup_category_svc.html</loc></url>
 <url><loc>https://pbs-assess.github.io/sdmTMB/reference/simulate.sdmTMB.html</loc></url>
 <url><loc>https://pbs-assess.github.io/sdmTMB/reference/surveydata.html</loc></url>
 <url><loc>https://pbs-assess.github.io/sdmTMB/reference/tidy.sdmTMB.html</loc></url>

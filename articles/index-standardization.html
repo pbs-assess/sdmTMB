@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,7 +38,8 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/basic-intro.html">Introduction to modelling with sdmTMB</a></li>
+<li><a class="dropdown-item" href="../articles/age-composition.html">Area-weighted age composition standardization with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/basic-intro.html">Introduction to modelling with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/bayesian.html">Bayesian estimation with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/cross-validation.html">Cross-validation for model evaluation and comparison</a></li>
     <li><a class="dropdown-item" href="../articles/delta-models.html">Fitting delta (hurdle) models with sdmTMB</a></li>
@@ -77,7 +78,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Index standardization with sdmTMB</h1>
             
-            <h4 data-toc-skip class="date">2025-09-03</h4>
+            <h4 data-toc-skip class="date">2025-09-04</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/vignettes/articles/index-standardization.Rmd" class="external-link"><code>vignettes/articles/index-standardization.Rmd</code></a></small>
       <div class="d-none name"><code>index-standardization.Rmd</code></div>
@@ -238,6 +239,7 @@ number of grid cells.</p>
 <th align="right">est</th>
 <th align="right">lwr</th>
 <th align="right">upr</th>
+<th align="right">se_natural</th>
 <th align="left">type</th>
 <th align="right">cv</th>
 </tr></thead>
@@ -247,6 +249,7 @@ number of grid cells.</p>
 <td align="right">936176</td>
 <td align="right">653699</td>
 <td align="right">1340716</td>
+<td align="right">660600.7</td>
 <td align="left">index</td>
 <td align="right">0</td>
 </tr>
@@ -255,6 +258,7 @@ number of grid cells.</p>
 <td align="right">1832130</td>
 <td align="right">1359020</td>
 <td align="right">2469943</td>
+<td align="right">1352139.9</td>
 <td align="left">index</td>
 <td align="right">0</td>
 </tr>
@@ -263,6 +267,7 @@ number of grid cells.</p>
 <td align="right">1757227</td>
 <td align="right">1224189</td>
 <td align="right">2522360</td>
+<td align="right">1331654.2</td>
 <td align="left">index</td>
 <td align="right">0</td>
 </tr>
@@ -271,6 +276,7 @@ number of grid cells.</p>
 <td align="right">452112</td>
 <td align="right">328786</td>
 <td align="right">621698</td>
+<td align="right">317355.0</td>
 <td align="left">index</td>
 <td align="right">0</td>
 </tr>
@@ -279,6 +285,7 @@ number of grid cells.</p>
 <td align="right">722982</td>
 <td align="right">518713</td>
 <td align="right">1007692</td>
+<td align="right">499241.8</td>
 <td align="left">index</td>
 <td align="right">0</td>
 </tr>
@@ -287,6 +294,7 @@ number of grid cells.</p>
 <td align="right">1357885</td>
 <td align="right">1028851</td>
 <td align="right">1792147</td>
+<td align="right">992261.7</td>
 <td align="left">index</td>
 <td align="right">0</td>
 </tr>
@@ -295,6 +303,7 @@ number of grid cells.</p>
 <td align="right">1422648</td>
 <td align="right">1037721</td>
 <td align="right">1950358</td>
+<td align="right">1015518.9</td>
 <td align="left">index</td>
 <td align="right">0</td>
 </tr>
@@ -303,6 +312,7 @@ number of grid cells.</p>
 <td align="right">1487473</td>
 <td align="right">1116301</td>
 <td align="right">1982062</td>
+<td align="right">1073671.5</td>
 <td align="left">index</td>
 <td align="right">0</td>
 </tr>
@@ -311,6 +321,7 @@ number of grid cells.</p>
 <td align="right">750051</td>
 <td align="right">543622</td>
 <td align="right">1034867</td>
+<td align="right">528911.2</td>
 <td align="left">index</td>
 <td align="right">0</td>
 </tr>
@@ -327,13 +338,13 @@ intersect the polygon on the prediction grid using something like
 <span>  return_tmb_object <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">index_south</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_index.html">get_index</a></span><span class="op">(</span><span class="va">predictions_south</span>, area <span class="op">=</span> <span class="fl">4</span>, bias_correct <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">index_south</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   year      est      lwr      upr  log_est        se  type</span></span>
-<span><span class="co">#&gt; 1 2003 264679.9 156368.9 448013.9 12.48628 0.2685270 index</span></span>
-<span><span class="co">#&gt; 2 2004 602466.8 403037.0 900577.8 13.30879 0.2051079 index</span></span>
-<span><span class="co">#&gt; 3 2005 411739.0 263138.9 644256.8 12.92814 0.2284265 index</span></span>
-<span><span class="co">#&gt; 4 2007 184945.7 117598.4 290861.9 12.12782 0.2310178 index</span></span>
-<span><span class="co">#&gt; 5 2009 316483.8 203600.9 491952.5 12.66503 0.2250603 index</span></span>
-<span><span class="co">#&gt; 6 2011 432243.6 292909.8 637857.0 12.97674 0.1985366 index</span></span></code></pre></div>
+<span><span class="co">#&gt;   year      est      lwr      upr  log_est        se se_natural  type</span></span>
+<span><span class="co">#&gt; 1 2003 264679.9 156368.9 448013.9 12.48628 0.2685270   185738.6 index</span></span>
+<span><span class="co">#&gt; 2 2004 602466.8 403037.0 900577.8 13.30879 0.2051079   436313.4 index</span></span>
+<span><span class="co">#&gt; 3 2005 411739.0 263138.9 644256.8 12.92814 0.2284265   289069.4 index</span></span>
+<span><span class="co">#&gt; 4 2007 184945.7 117598.4 290861.9 12.12782 0.2310178   130549.1 index</span></span>
+<span><span class="co">#&gt; 5 2009 316483.8 203600.9 491952.5 12.66503 0.2250603   226418.1 index</span></span>
+<span><span class="co">#&gt; 6 2011 432243.6 292909.8 637857.0 12.97674 0.1985366   328539.5 index</span></span></code></pre></div>
 <p>We can visually compare the two indexes:</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span><span class="va">index</span>, region <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>

@@ -9,7 +9,7 @@ area occupied"><meta property="og:image" content="https://pbs-assess.github.io/s
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,7 +20,8 @@ area occupied"><meta property="og:image" content="https://pbs-assess.github.io/s
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/basic-intro.html">Introduction to modelling with sdmTMB</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/age-composition.html">Area-weighted age composition standardization with sdmTMB</a></li>
+    <li><a class="dropdown-item" href="../articles/basic-intro.html">Introduction to modelling with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/bayesian.html">Bayesian estimation with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/cross-validation.html">Cross-validation for model evaluation and comparison</a></li>
     <li><a class="dropdown-item" href="../articles/delta-models.html">Fitting delta (hurdle) models with sdmTMB</a></li>
@@ -216,16 +217,16 @@ population dynamics examples. Fisheries Research 175: 66–74.
 <span class="r-in"><span><span class="co"># biomass index:</span></span></span>
 <span class="r-in"><span><span class="va">ind</span> <span class="op">&lt;-</span> <span class="fu">get_index</span><span class="op">(</span><span class="va">predictions</span>, bias_correct <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ind</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   year      est       lwr      upr  log_est        se  type</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 2003 277556.6 198537.77 388025.4 12.53378 0.1709448 index</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 2004 399682.6 311373.58 513036.9 12.89843 0.1273887 index</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 2005 430225.5 327502.38 565168.4 12.97206 0.1391935 index</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 2007 119509.7  86514.07 165089.6 11.69115 0.1648452 index</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 2009 210258.6 151807.71 291215.1 12.25609 0.1661887 index</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 2011 339420.7 262199.67 439384.3 12.73500 0.1317035 index</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7 2013 351455.2 258755.05 477365.7 12.76984 0.1562276 index</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8 2015 383241.4 285819.07 513870.4 12.85642 0.1496487 index</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9 2017 192367.9 136764.93 270576.6 12.16716 0.1740572 index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   year      est       lwr      upr  log_est        se se_natural  type</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 2003 277556.6 198537.77 388025.4 12.53378 0.1709448  213396.64 index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 2004 399682.6 311373.58 513036.9 12.89843 0.1273887  328514.13 index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 2005 430225.5 327502.38 565168.4 12.97206 0.1391935  349502.73 index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 2007 119509.7  86514.07 165089.6 11.69115 0.1648452   92900.11 index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 2009 210258.6 151807.71 291215.1 12.25609 0.1661887  161751.50 index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 2011 339420.7 262199.67 439384.3 12.73500 0.1317035  276264.20 index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7 2013 351455.2 258755.05 477365.7 12.76984 0.1562276  276664.42 index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8 2015 383241.4 285819.07 513870.4 12.85642 0.1496487  306744.07 index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9 2017 192367.9 136764.93 270576.6 12.16716 0.1740572  148187.40 index</span>
 <span class="r-in"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">ind</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">year</span>, <span class="va">est</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_ribbon.html" class="external-link">geom_ribbon</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>ymin <span class="op">=</span> <span class="va">lwr</span>, ymax <span class="op">=</span> <span class="va">upr</span><span class="op">)</span>, alpha <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="cn">NA</span><span class="op">)</span></span></span>
