@@ -101,8 +101,9 @@ We can look at the simulated data:
 head(data)
 ```
 
-We are assuming that the these data have already gone "first stage expansion". I.e., each subsample has been expanded to represent the total abundance (or biomass) of the primary sample from which it came.
+We are assuming that these data have already gone "first stage expansion". I.e., each subsample has been expanded to represent the total abundance (or biomass) of the primary sample from which it came.
 Although we model abundance per area here, we could alternatively model abundance with an offset for (log) area.
+And instead of a Tweedie distribution, we could use a delta-gamma or delta-lognormal family or even a Poisson or negative binomial.
 
 Plot the raw simulated data:
 
@@ -396,6 +397,150 @@ ggplot(neff_median, aes(year, neff_median)) +
     title = "Median effective sample size across ages"
   )
 ```
+
+# Troubleshooting and advanced options
+
+The previous example assumed shared spatial and spatiotemporal SDs across ages. However, there are several common scenarios where you might want to modify this behaviour or handle challenging data structures.
+
+## sdmTMB vs. tinyVAST for age composition models
+
+If you want independent spatial/spatiotemporal fields across ages (as shown in the examples here), you can fit identical models with either sdmTMB or tinyVAST. 
+The choice doesn't matter functionally. 
+However, if you want correlation between the age-specific spatial fields, you'll need to use tinyVAST. 
+Most published applications, including the approach described by Thorson and Haltuch (2018), use independent fields across ages. 
+Also, if you want to have different levels of observation error by age, you'll need to use tinyVAST. 
+There is a branch that has this in sdmTMB, but it hasn't been merged into main yet.
+
+## Different spatial/spatiotemporal SDs by age
+
+If you expect different magnitude of spatial or spatiotemporal variation by age, you can specify independent SDs for each age. This will be harder to estimate.
+
+```{r different_sds, eval=FALSE}
+# Set up model with independent spatial and spatiotemporal SDs for each age
+svc_setup_independent <- sdmTMB::setup_category_svc(
+  data = data,
+  category_column = "age",
+  time_column = "year",
+  share_spatial_sd = FALSE,      # Each age has its own spatial SD
+  share_spatiotemporal_sd = FALSE # Each age has its own spatiotemporal SD
+)
+
+# Now there's one factor level for each field
+print(svc_setup_independent$svc_map)
+
+# Then fit the model as before with the new 'map'
+```
+
+## Selective sharing of spatial SDs
+
+Sometimes you may want some ages to share SDs while others are kept independent.
+You can manually manipulate the map after creating it with the helper function.
+Here we will share all spatiotemporal SDs but share only some of the spatial SDs.
+
+```{r selective_sharing}
+# Start with independent SDs using the helper function
+svc_setup_selective <- sdmTMB::setup_category_svc(
+  data = data,
+  category_column = "age",
+  time_column = "year",
+  share_spatial_sd = FALSE,
+  share_spatiotemporal_sd = TRUE
+)
+```
+
+Look at the original map structure
+
+```{r}
+print(svc_setup_selective$svc_map)
+```
+
+Look at the order of the fields in the column names. `ageage1` through `ageage_6` are the spatial fields. Then the rest are the spatiotemporal fields.
+
+```{r}
+print(colnames(svc_setup_selective$data_expanded))
+```
+
+Manually modify the map to share SDs between some ages.
+For example, share spatial SDs between ages 1-4, but keep 5-6 independent:
+
+```{r}
+modified_map <- svc_setup_selective$svc_map
+
+modified_map$ln_tau_Z[1:4] <- factor(1)
+
+# get rid of empty factor levels:
+modified_map$ln_tau_Z <- droplevels(modified_map$ln_tau_Z)
+
+print(modified_map$ln_tau_Z)
+
+# Now use the modified map in the model
+```
+
+## Fixing spatial SDs to zero (turning off spatial variation)
+
+If some ages have spatial or spatiotemporal SDs that want to collapse to zero or you want to turn off spatial variation for specific ages, you can map the corresponding `ln_tau_Z` elements to `factor(NA)` and set their starting values to a large value.
+
+Among other times, this will be necessary if you have empty categories (age-year combinations) and separate spatiotemporal SDs by age.
+
+```{r fix_sds_zero}
+# Set up independent SDs first using the helper function
+svc_setup_fixed <- sdmTMB::setup_category_svc(
+  data = data,
+  category_column = "age",
+  time_column = "year",
+  share_spatial_sd = FALSE,
+  share_spatiotemporal_sd = TRUE
+)
+
+# Create map and starting values to fix some SDs to effectively zero
+# Suppose we want to turn off spatial variation for ages 5 and 6
+modified_map_fixed <- svc_setup_fixed$svc_map
+
+print(modified_map_fixed)
+
+modified_map_fixed$ln_tau_Z[5:6] <- factor(NA)
+modified_map_fixed$ln_tau_Z <- droplevels(modified_map_fixed$ln_tau_Z)
+
+print(modified_map_fixed)
+
+# Set starting ln_tau_Z values to large for fixed parameters to imply
+# a near zero marginal SD
+# sdmTMB is expecting a matrix here
+# for a 'delta' model, sdmTMB would be expecting a 2 column matrix
+# we can check this with:
+head(fit_sdmTMB$tmb_params$ln_tau_Z)
+
+# all 0s as default:
+ln_tau_start <- matrix(0, ncol = 1, nrow = length(modified_map_fixed$ln_tau_Z))
+
+# find the correct index:
+cn <- colnames(svc_setup$data_expanded)
+cn[7:60]
+
+# large value means a very small marginal field SD for age 5 and 6 spatial fields here:
+ln_tau_start[5:6,1] <- 10
+
+head(ln_tau_start)
+```
+
+```{r, results="hide", message=FALSE, eval=FALSE}
+fit_fixed <- sdmTMB(
+  abundance_per_area ~ 0 + year_age,
+  mesh = mesh_sdm,
+  data = svc_setup_fixed$data_expanded,
+  family = tweedie(),
+  time = "year",
+  spatial = "off",
+  spatiotemporal = "off",
+  spatial_varying = svc_setup_fixed$svc_formula,
+  control = sdmTMBcontrol(
+    map = modified_map_fixed, #< new
+    start = list(ln_tau_Z = ln_tau_start) #< new
+  )
+)
+```
+
+You can then ignore the warning from `sanity()` about `sigma_Z` being less than 0.01; we've set it up that way on purpose! Do check the output of `summary()` though to make sure *other* spatially varying SDs haven't collapsed.
 
 ## References
 
