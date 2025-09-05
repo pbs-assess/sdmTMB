@@ -78,7 +78,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Area-weighted age composition standardization with sdmTMB</h1>
             
-            <h4 data-toc-skip class="date">2025-09-04</h4>
+            <h4 data-toc-skip class="date">2025-09-05</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/vignettes/articles/age-composition.Rmd" class="external-link"><code>vignettes/articles/age-composition.Rmd</code></a></small>
       <div class="d-none name"><code>age-composition.Rmd</code></div>
@@ -109,11 +109,13 @@ hidden for simplicity.</p>
 <span><span class="co">#&gt; 4 2018 0.8830174 0.82057469         0.04387091 age_1 2018_age_1</span></span>
 <span><span class="co">#&gt; 5 2018 0.9404673 0.80378039         1.27301974 age_1 2018_age_1</span></span>
 <span><span class="co">#&gt; 6 2018 0.0455565 0.04583463         0.86470310 age_1 2018_age_1</span></span></code></pre></div>
-<p>We are assuming that the these data have already gone “first stage
+<p>We are assuming that these data have already gone “first stage
 expansion”. I.e., each subsample has been expanded to represent the
 total abundance (or biomass) of the primary sample from which it came.
 Although we model abundance per area here, we could alternatively model
-abundance with an offset for (log) area.</p>
+abundance with an offset for (log) area. And instead of a Tweedie
+distribution, we could use a delta-gamma or delta-lognormal family or
+even a Poisson or negative binomial.</p>
 <p>Plot the raw simulated data:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">data</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, colour <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">abundance_per_area</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -211,7 +213,7 @@ spatial SDs by age and/or different spatiotemporal SDs by age.</p>
 <span><span class="co">#&gt;     `factor(year)2020:ageage_6` + `factor(year)2021:ageage_6` + </span></span>
 <span><span class="co">#&gt;     `factor(year)2022:ageage_6` + `factor(year)2023:ageage_6` + </span></span>
 <span><span class="co">#&gt;     `factor(year)2024:ageage_6` + `factor(year)2025:ageage_6`</span></span>
-<span><span class="co">#&gt; &lt;environment: 0x561542dc5b08&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; &lt;environment: 0x55c02991e150&gt;</span></span></code></pre></div>
 <p>And we have a TMB ‘map’ list, which controls which random field SDs
 are shared vs. estimated separately. Factor levels that are the same get
 shared; those that are different are estimated separately.</p>
@@ -379,9 +381,9 @@ argument.</p>
 <span><span class="co">#&gt; ML criterion at convergence: 17325.664</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; See ?tidy.sdmTMB to extract these values as a data frame.</span></span></code></pre></div>
-<div class="section level2">
-<h2 id="area-expansion">Area expansion<a class="anchor" aria-label="anchor" href="#area-expansion"></a>
-</h2>
+<div class="section level3">
+<h3 id="area-expansion">Area expansion<a class="anchor" aria-label="anchor" href="#area-expansion"></a>
+</h3>
 <p>Now let’s calculate area-weighted abundance indices for each age
 class. First, we need to set up our ‘grid’ data frame over which we will
 predict. Here we make a simple grid over our 0-1 simulated survey
@@ -441,9 +443,9 @@ domain.</p>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p><img src="age-composition_files/figure-html/plot_indices-1.png" width="576"></p>
 </div>
-<div class="section level2">
-<h2 id="convert-to-age-composition-proportions">Convert to age composition (proportions)<a class="anchor" aria-label="anchor" href="#convert-to-age-composition-proportions"></a>
-</h2>
+<div class="section level3">
+<h3 id="convert-to-age-composition-proportions">Convert to age composition (proportions)<a class="anchor" aria-label="anchor" href="#convert-to-age-composition-proportions"></a>
+</h3>
 <p>Convert the abundance indices to proportions-at-age:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ind_props</span> <span class="op">&lt;-</span> <span class="va">ind</span> <span class="op">|&gt;</span></span>
@@ -475,9 +477,9 @@ domain.</p>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p><img src="age-composition_files/figure-html/plot_age_composition-2.png" width="576"></p>
 </div>
-<div class="section level2">
-<h2 id="calculate-effective-sample-sizes">Calculate effective sample sizes<a class="anchor" aria-label="anchor" href="#calculate-effective-sample-sizes"></a>
-</h2>
+<div class="section level3">
+<h3 id="calculate-effective-sample-sizes">Calculate effective sample sizes<a class="anchor" aria-label="anchor" href="#calculate-effective-sample-sizes"></a>
+</h3>
 <p>Here we’ll calculate effective sample sizes for the age composition,
 following the method from VAST (Thorson 2019) as described in Thorson
 and Haltuch (2018).</p>
@@ -582,14 +584,251 @@ and Haltuch (2018).</p>
 <p><img src="age-composition_files/figure-html/plot_neff-2.png" width="576"></p>
 </div>
 <div class="section level2">
-<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+<h2 id="troubleshooting-and-advanced-options">Troubleshooting and advanced options<a class="anchor" aria-label="anchor" href="#troubleshooting-and-advanced-options"></a>
 </h2>
+<p>The previous example assumed shared spatial and spatiotemporal SDs
+across ages. However, there are several common scenarios where you might
+want to modify this behaviour or handle challenging data structures.</p>
+<div class="section level3">
+<h3 id="sdmtmb-vs--tinyvast-for-age-composition-models">sdmTMB vs. tinyVAST for age composition models<a class="anchor" aria-label="anchor" href="#sdmtmb-vs--tinyvast-for-age-composition-models"></a>
+</h3>
+<p>If you want independent spatial/spatiotemporal fields across ages (as
+shown in the examples here), you can fit identical models with either
+sdmTMB or tinyVAST. The choice doesn’t matter functionally. However, if
+you want correlation between the age-specific spatial fields, you’ll
+need to use tinyVAST. Most published applications, including the
+approach described by Thorson and Haltuch (2018), use independent fields
+across ages. Also, if you want to have different levels of observation
+error by age, you’ll need to use tinyVAST. There is a branch that has
+this in sdmTMB, but it hasn’t been merged into main yet.</p>
+</div>
+<div class="section level3">
+<h3 id="different-spatialspatiotemporal-sds-by-age">Different spatial/spatiotemporal SDs by age<a class="anchor" aria-label="anchor" href="#different-spatialspatiotemporal-sds-by-age"></a>
+</h3>
+<p>If you expect different magnitude of spatial or spatiotemporal
+variation by age, you can specify independent SDs for each age. This
+will be harder to estimate.</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Set up model with independent spatial and spatiotemporal SDs for each age</span></span>
+<span><span class="va">svc_setup_independent</span> <span class="op">&lt;-</span> <span class="fu">sdmTMB</span><span class="fu">::</span><span class="fu"><a href="../reference/setup_category_svc.html">setup_category_svc</a></span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="va">data</span>,</span>
+<span>  category_column <span class="op">=</span> <span class="st">"age"</span>,</span>
+<span>  time_column <span class="op">=</span> <span class="st">"year"</span>,</span>
+<span>  share_spatial_sd <span class="op">=</span> <span class="cn">FALSE</span>,      <span class="co"># Each age has its own spatial SD</span></span>
+<span>  share_spatiotemporal_sd <span class="op">=</span> <span class="cn">FALSE</span> <span class="co"># Each age has its own spatiotemporal SD</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Now there's one factor level for each field</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">svc_setup_independent</span><span class="op">$</span><span class="va">svc_map</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Then fit the model as before with the new 'map'</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="selective-sharing-of-spatial-sds">Selective sharing of spatial SDs<a class="anchor" aria-label="anchor" href="#selective-sharing-of-spatial-sds"></a>
+</h3>
+<p>Sometimes you may want some ages to share SDs while others are kept
+independent. You can manually manipulate the map after creating it with
+the helper function. Here we will share all spatiotemporal SDs but share
+only some of the spatial SDs.</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Start with independent SDs using the helper function</span></span>
+<span><span class="va">svc_setup_selective</span> <span class="op">&lt;-</span> <span class="fu">sdmTMB</span><span class="fu">::</span><span class="fu"><a href="../reference/setup_category_svc.html">setup_category_svc</a></span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="va">data</span>,</span>
+<span>  category_column <span class="op">=</span> <span class="st">"age"</span>,</span>
+<span>  time_column <span class="op">=</span> <span class="st">"year"</span>,</span>
+<span>  share_spatial_sd <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  share_spatiotemporal_sd <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Look at the original map structure</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">svc_setup_selective</span><span class="op">$</span><span class="va">svc_map</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $ln_tau_Z</span></span>
+<span><span class="co">#&gt;  [1] 1 2 3 4 5 6 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7</span></span>
+<span><span class="co">#&gt; [39] 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7</span></span>
+<span><span class="co">#&gt; Levels: 1 2 3 4 5 6 7</span></span></code></pre></div>
+<p>Look at the order of the fields in the column names.
+<code>ageage1</code> through <code>ageage_6</code> are the spatial
+fields. Then the rest are the spatiotemporal fields.</p>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">svc_setup_selective</span><span class="op">$</span><span class="va">data_expanded</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  [1] "year"                      "x"                        </span></span>
+<span><span class="co">#&gt;  [3] "y"                         "abundance_per_area"       </span></span>
+<span><span class="co">#&gt;  [5] "age"                       "year_age"                 </span></span>
+<span><span class="co">#&gt;  [7] "ageage_1"                  "ageage_2"                 </span></span>
+<span><span class="co">#&gt;  [9] "ageage_3"                  "ageage_4"                 </span></span>
+<span><span class="co">#&gt; [11] "ageage_5"                  "ageage_6"                 </span></span>
+<span><span class="co">#&gt; [13] "factor(year)2018:ageage_1" "factor(year)2019:ageage_1"</span></span>
+<span><span class="co">#&gt; [15] "factor(year)2020:ageage_1" "factor(year)2021:ageage_1"</span></span>
+<span><span class="co">#&gt; [17] "factor(year)2022:ageage_1" "factor(year)2023:ageage_1"</span></span>
+<span><span class="co">#&gt; [19] "factor(year)2024:ageage_1" "factor(year)2025:ageage_1"</span></span>
+<span><span class="co">#&gt; [21] "factor(year)2018:ageage_2" "factor(year)2019:ageage_2"</span></span>
+<span><span class="co">#&gt; [23] "factor(year)2020:ageage_2" "factor(year)2021:ageage_2"</span></span>
+<span><span class="co">#&gt; [25] "factor(year)2022:ageage_2" "factor(year)2023:ageage_2"</span></span>
+<span><span class="co">#&gt; [27] "factor(year)2024:ageage_2" "factor(year)2025:ageage_2"</span></span>
+<span><span class="co">#&gt; [29] "factor(year)2018:ageage_3" "factor(year)2019:ageage_3"</span></span>
+<span><span class="co">#&gt; [31] "factor(year)2020:ageage_3" "factor(year)2021:ageage_3"</span></span>
+<span><span class="co">#&gt; [33] "factor(year)2022:ageage_3" "factor(year)2023:ageage_3"</span></span>
+<span><span class="co">#&gt; [35] "factor(year)2024:ageage_3" "factor(year)2025:ageage_3"</span></span>
+<span><span class="co">#&gt; [37] "factor(year)2018:ageage_4" "factor(year)2019:ageage_4"</span></span>
+<span><span class="co">#&gt; [39] "factor(year)2020:ageage_4" "factor(year)2021:ageage_4"</span></span>
+<span><span class="co">#&gt; [41] "factor(year)2022:ageage_4" "factor(year)2023:ageage_4"</span></span>
+<span><span class="co">#&gt; [43] "factor(year)2024:ageage_4" "factor(year)2025:ageage_4"</span></span>
+<span><span class="co">#&gt; [45] "factor(year)2018:ageage_5" "factor(year)2019:ageage_5"</span></span>
+<span><span class="co">#&gt; [47] "factor(year)2020:ageage_5" "factor(year)2021:ageage_5"</span></span>
+<span><span class="co">#&gt; [49] "factor(year)2022:ageage_5" "factor(year)2023:ageage_5"</span></span>
+<span><span class="co">#&gt; [51] "factor(year)2024:ageage_5" "factor(year)2025:ageage_5"</span></span>
+<span><span class="co">#&gt; [53] "factor(year)2018:ageage_6" "factor(year)2019:ageage_6"</span></span>
+<span><span class="co">#&gt; [55] "factor(year)2020:ageage_6" "factor(year)2021:ageage_6"</span></span>
+<span><span class="co">#&gt; [57] "factor(year)2022:ageage_6" "factor(year)2023:ageage_6"</span></span>
+<span><span class="co">#&gt; [59] "factor(year)2024:ageage_6" "factor(year)2025:ageage_6"</span></span></code></pre></div>
+<p>Manually modify the map to share SDs between some ages. For example,
+share spatial SDs between ages 1-4, but keep 5-6 independent:</p>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">modified_map</span> <span class="op">&lt;-</span> <span class="va">svc_setup_selective</span><span class="op">$</span><span class="va">svc_map</span></span>
+<span></span>
+<span><span class="va">modified_map</span><span class="op">$</span><span class="va">ln_tau_Z</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># get rid of empty factor levels:</span></span>
+<span><span class="va">modified_map</span><span class="op">$</span><span class="va">ln_tau_Z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/droplevels.html" class="external-link">droplevels</a></span><span class="op">(</span><span class="va">modified_map</span><span class="op">$</span><span class="va">ln_tau_Z</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">modified_map</span><span class="op">$</span><span class="va">ln_tau_Z</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  [1] 1 1 1 1 5 6 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7</span></span>
+<span><span class="co">#&gt; [39] 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7</span></span>
+<span><span class="co">#&gt; Levels: 1 5 6 7</span></span>
+<span></span>
+<span><span class="co"># Now use the modified map in the model</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="fixing-spatial-sds-to-zero-turning-off-spatial-variation">Fixing spatial SDs to zero (turning off spatial variation)<a class="anchor" aria-label="anchor" href="#fixing-spatial-sds-to-zero-turning-off-spatial-variation"></a>
+</h3>
+<p>If some ages have spatial or spatiotemporal SDs that want to collapse
+to zero or you want to turn off spatial variation for specific ages, you
+can map the corresponding <code>ln_tau_Z</code> elements to
+<code>factor(NA)</code> and set their starting values to a large
+value.</p>
+<p>Among other times, this will be necessary if you have empty
+categories (age-year combinations) and separate spatiotemporal SDs by
+age.</p>
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Set up independent SDs first using the helper function</span></span>
+<span><span class="va">svc_setup_fixed</span> <span class="op">&lt;-</span> <span class="fu">sdmTMB</span><span class="fu">::</span><span class="fu"><a href="../reference/setup_category_svc.html">setup_category_svc</a></span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="va">data</span>,</span>
+<span>  category_column <span class="op">=</span> <span class="st">"age"</span>,</span>
+<span>  time_column <span class="op">=</span> <span class="st">"year"</span>,</span>
+<span>  share_spatial_sd <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  share_spatiotemporal_sd <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Create map and starting values to fix some SDs to effectively zero</span></span>
+<span><span class="co"># Suppose we want to turn off spatial variation for ages 5 and 6</span></span>
+<span><span class="va">modified_map_fixed</span> <span class="op">&lt;-</span> <span class="va">svc_setup_fixed</span><span class="op">$</span><span class="va">svc_map</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">modified_map_fixed</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $ln_tau_Z</span></span>
+<span><span class="co">#&gt;  [1] 1 2 3 4 5 6 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7</span></span>
+<span><span class="co">#&gt; [39] 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7</span></span>
+<span><span class="co">#&gt; Levels: 1 2 3 4 5 6 7</span></span>
+<span></span>
+<span><span class="va">modified_map_fixed</span><span class="op">$</span><span class="va">ln_tau_Z</span><span class="op">[</span><span class="fl">5</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="cn">NA</span><span class="op">)</span></span>
+<span><span class="va">modified_map_fixed</span><span class="op">$</span><span class="va">ln_tau_Z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/droplevels.html" class="external-link">droplevels</a></span><span class="op">(</span><span class="va">modified_map_fixed</span><span class="op">$</span><span class="va">ln_tau_Z</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">modified_map_fixed</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $ln_tau_Z</span></span>
+<span><span class="co">#&gt;  [1] 1    2    3    4    &lt;NA&gt; &lt;NA&gt; 7    7    7    7    7    7    7    7    7   </span></span>
+<span><span class="co">#&gt; [16] 7    7    7    7    7    7    7    7    7    7    7    7    7    7    7   </span></span>
+<span><span class="co">#&gt; [31] 7    7    7    7    7    7    7    7    7    7    7    7    7    7    7   </span></span>
+<span><span class="co">#&gt; [46] 7    7    7    7    7    7    7    7    7   </span></span>
+<span><span class="co">#&gt; Levels: 1 2 3 4 7</span></span>
+<span></span>
+<span><span class="co"># Set starting ln_tau_Z values to large for fixed parameters to imply</span></span>
+<span><span class="co"># a near zero marginal SD</span></span>
+<span><span class="co"># sdmTMB is expecting a matrix here</span></span>
+<span><span class="co"># for a 'delta' model, sdmTMB would be expecting a 2 column matrix</span></span>
+<span><span class="co"># we can check this with:</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">fit_sdmTMB</span><span class="op">$</span><span class="va">tmb_params</span><span class="op">$</span><span class="va">ln_tau_Z</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      [,1]</span></span>
+<span><span class="co">#&gt; [1,]    0</span></span>
+<span><span class="co">#&gt; [2,]    0</span></span>
+<span><span class="co">#&gt; [3,]    0</span></span>
+<span><span class="co">#&gt; [4,]    0</span></span>
+<span><span class="co">#&gt; [5,]    0</span></span>
+<span><span class="co">#&gt; [6,]    0</span></span>
+<span></span>
+<span><span class="co"># all 0s as default:</span></span>
+<span><span class="va">ln_tau_start</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>, ncol <span class="op">=</span> <span class="fl">1</span>, nrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">modified_map_fixed</span><span class="op">$</span><span class="va">ln_tau_Z</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># find the correct index:</span></span>
+<span><span class="va">cn</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">svc_setup</span><span class="op">$</span><span class="va">data_expanded</span><span class="op">)</span></span>
+<span><span class="va">cn</span><span class="op">[</span><span class="fl">7</span><span class="op">:</span><span class="fl">60</span><span class="op">]</span></span>
+<span><span class="co">#&gt;  [1] "ageage_1"                  "ageage_2"                 </span></span>
+<span><span class="co">#&gt;  [3] "ageage_3"                  "ageage_4"                 </span></span>
+<span><span class="co">#&gt;  [5] "ageage_5"                  "ageage_6"                 </span></span>
+<span><span class="co">#&gt;  [7] "factor(year)2018:ageage_1" "factor(year)2019:ageage_1"</span></span>
+<span><span class="co">#&gt;  [9] "factor(year)2020:ageage_1" "factor(year)2021:ageage_1"</span></span>
+<span><span class="co">#&gt; [11] "factor(year)2022:ageage_1" "factor(year)2023:ageage_1"</span></span>
+<span><span class="co">#&gt; [13] "factor(year)2024:ageage_1" "factor(year)2025:ageage_1"</span></span>
+<span><span class="co">#&gt; [15] "factor(year)2018:ageage_2" "factor(year)2019:ageage_2"</span></span>
+<span><span class="co">#&gt; [17] "factor(year)2020:ageage_2" "factor(year)2021:ageage_2"</span></span>
+<span><span class="co">#&gt; [19] "factor(year)2022:ageage_2" "factor(year)2023:ageage_2"</span></span>
+<span><span class="co">#&gt; [21] "factor(year)2024:ageage_2" "factor(year)2025:ageage_2"</span></span>
+<span><span class="co">#&gt; [23] "factor(year)2018:ageage_3" "factor(year)2019:ageage_3"</span></span>
+<span><span class="co">#&gt; [25] "factor(year)2020:ageage_3" "factor(year)2021:ageage_3"</span></span>
+<span><span class="co">#&gt; [27] "factor(year)2022:ageage_3" "factor(year)2023:ageage_3"</span></span>
+<span><span class="co">#&gt; [29] "factor(year)2024:ageage_3" "factor(year)2025:ageage_3"</span></span>
+<span><span class="co">#&gt; [31] "factor(year)2018:ageage_4" "factor(year)2019:ageage_4"</span></span>
+<span><span class="co">#&gt; [33] "factor(year)2020:ageage_4" "factor(year)2021:ageage_4"</span></span>
+<span><span class="co">#&gt; [35] "factor(year)2022:ageage_4" "factor(year)2023:ageage_4"</span></span>
+<span><span class="co">#&gt; [37] "factor(year)2024:ageage_4" "factor(year)2025:ageage_4"</span></span>
+<span><span class="co">#&gt; [39] "factor(year)2018:ageage_5" "factor(year)2019:ageage_5"</span></span>
+<span><span class="co">#&gt; [41] "factor(year)2020:ageage_5" "factor(year)2021:ageage_5"</span></span>
+<span><span class="co">#&gt; [43] "factor(year)2022:ageage_5" "factor(year)2023:ageage_5"</span></span>
+<span><span class="co">#&gt; [45] "factor(year)2024:ageage_5" "factor(year)2025:ageage_5"</span></span>
+<span><span class="co">#&gt; [47] "factor(year)2018:ageage_6" "factor(year)2019:ageage_6"</span></span>
+<span><span class="co">#&gt; [49] "factor(year)2020:ageage_6" "factor(year)2021:ageage_6"</span></span>
+<span><span class="co">#&gt; [51] "factor(year)2022:ageage_6" "factor(year)2023:ageage_6"</span></span>
+<span><span class="co">#&gt; [53] "factor(year)2024:ageage_6" "factor(year)2025:ageage_6"</span></span>
+<span></span>
+<span><span class="co"># large value means a very small marginal field SD for age 5 and 6 spatial fields here:</span></span>
+<span><span class="va">ln_tau_start</span><span class="op">[</span><span class="fl">5</span><span class="op">:</span><span class="fl">6</span>,<span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">ln_tau_start</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      [,1]</span></span>
+<span><span class="co">#&gt; [1,]    0</span></span>
+<span><span class="co">#&gt; [2,]    0</span></span>
+<span><span class="co">#&gt; [3,]    0</span></span>
+<span><span class="co">#&gt; [4,]    0</span></span>
+<span><span class="co">#&gt; [5,]   10</span></span>
+<span><span class="co">#&gt; [6,]   10</span></span></code></pre></div>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit_fixed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sdmTMB.html">sdmTMB</a></span><span class="op">(</span></span>
+<span>  <span class="va">abundance_per_area</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">year_age</span>,</span>
+<span>  mesh <span class="op">=</span> <span class="va">mesh_sdm</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">svc_setup_fixed</span><span class="op">$</span><span class="va">data_expanded</span>,</span>
+<span>  family <span class="op">=</span> <span class="fu"><a href="../reference/families.html">tweedie</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  time <span class="op">=</span> <span class="st">"year"</span>,</span>
+<span>  spatial <span class="op">=</span> <span class="st">"off"</span>,</span>
+<span>  spatiotemporal <span class="op">=</span> <span class="st">"off"</span>,</span>
+<span>  spatial_varying <span class="op">=</span> <span class="va">svc_setup_fixed</span><span class="op">$</span><span class="va">svc_formula</span>,</span>
+<span>  control <span class="op">=</span> <span class="fu"><a href="../reference/sdmTMBcontrol.html">sdmTMBcontrol</a></span><span class="op">(</span></span>
+<span>    map <span class="op">=</span> <span class="va">modified_map_fixed</span>, <span class="co">#&lt; new</span></span>
+<span>    start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>ln_tau_Z <span class="op">=</span> <span class="va">ln_tau_start</span><span class="op">)</span> <span class="co">#&lt; new</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>You can then ignore the warning from <code><a href="../reference/sanity.html">sanity()</a></code> about
+<code>sigma_Z</code> being less than 0.01; we’ve set it up that way on
+purpose! Do check the output of <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> though to make
+sure <em>other</em> spatially varying SDs haven’t collapsed.</p>
+</div>
+<div class="section level3">
+<h3 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h3>
 <p>Thorson, J.T., and Haltuch, M.A. 2018. Spatio-temporal analysis of
 compositional data: increased precision and improved workflow using
 model-based inputs to stock assessment. Can. J. Fish. Aquat. Sci. <a href="doi:10.1139/cjfas-2018-0015" class="uri">doi:10.1139/cjfas-2018-0015</a>.</p>
 <p>Thorson, J.T. 2019. Guidance for decisions using the Vector
 Autoregressive Spatio-Temporal (VAST) package in stock, ecosystem,
 habitat and climate assessments. Fisheries Research 210: 143–161. <a href="doi:10.1016/j.fishres.2018.10.013" class="uri">doi:10.1016/j.fishres.2018.10.013</a>.</p>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
