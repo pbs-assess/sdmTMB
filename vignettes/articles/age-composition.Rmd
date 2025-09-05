@@ -129,7 +129,7 @@ This could alternatively be set up to have different spatial SDs by age and/or d
 mesh_sdm <- make_mesh(data, c("x", "y"), cutoff = 0.1)
 
 # Use a helper function to set up the model components
-svc_setup <- sdmTMB::setup_category_svc(
+svc_setup <- sdmTMB::make_category_svc(
   data = data,
   category_column = "age",
   time_column = "year",
@@ -221,7 +221,7 @@ nd <- replicate_df(nd, "age", ages)
 nd$year_age <- paste(nd$year, nd$age, sep = "_")
 
 # Use helper function to add model matrix columns
-nd_setup <- sdmTMB::setup_category_svc(
+nd_setup <- sdmTMB::make_category_svc(
   data = nd,
   category_column = "age",
   time_column = "year",
@@ -417,7 +417,7 @@ If you expect different magnitude of spatial or spatiotemporal variation by age,
 
 ```{r different_sds, eval=FALSE}
 # Set up model with independent spatial and spatiotemporal SDs for each age
-svc_setup_independent <- sdmTMB::setup_category_svc(
+svc_setup_independent <- sdmTMB::make_category_svc(
   data = data,
   category_column = "age",
   time_column = "year",
@@ -439,7 +439,7 @@ Here we will share all spatiotemporal SDs but share only some of the spatial SDs
 
 ```{r selective_sharing}
 # Start with independent SDs using the helper function
-svc_setup_selective <- sdmTMB::setup_category_svc(
+svc_setup_selective <- sdmTMB::make_category_svc(
   data = data,
   category_column = "age",
   time_column = "year",
@@ -484,7 +484,7 @@ Among other times, this will be necessary if you have empty categories (age-year
 
 ```{r fix_sds_zero}
 # Set up independent SDs first using the helper function
-svc_setup_fixed <- sdmTMB::setup_category_svc(
+svc_setup_fixed <- sdmTMB::make_category_svc(
   data = data,
   category_column = "age",
   time_column = "year",

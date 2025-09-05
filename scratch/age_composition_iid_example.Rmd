@@ -123,7 +123,7 @@ library(sdmTMB)
 mesh_sdm <- make_mesh(Data, c("X", "Y"), mesh = mesh) # use same mesh as before
 
 # Use the helper function to set up the model components
-svc_setup <- sdmTMB:::setup_category_svc(
+svc_setup <- sdmTMB::make_category_svc(
   data = Data,
   category_column = "Age",
   time_column = "Year",
@@ -239,7 +239,7 @@ nd$Age <- rep(ages, each = nrow(nd) / length(ages))
 nd$Year_Age <- interaction(nd$Year, nd$Age)
 
 # Use helper function to add model matrix columns
-nd_setup <- sdmTMB:::setup_category_svc(
+nd_setup <- sdmTMB::make_category_svc(
   data = nd,
   category_column = "Age",
   time_column = "Year",

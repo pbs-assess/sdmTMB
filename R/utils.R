@@ -719,7 +719,7 @@ reinitialize <- function(x) {
 #' )
 #'
 #' # Set up model components
-#' setup <- setup_category_svc(
+#' setup <- make_category_svc(
 #'   data = data,
 #'   category_column = "age",
 #'   time_column = "year",
@@ -732,7 +732,7 @@ reinitialize <- function(x) {
 #'
 #' # See the age composition standardization vignette for more details
 #' @export
-setup_category_svc <- function(data,
+make_category_svc <- function(data,
                                category_column,
                                time_column,
                                share_spatial_sd = TRUE,

@@ -1,4 +1,4 @@
-test_that("setup_category_svc works with basic data", {
+test_that("make_category_svc works with basic data", {
   # Create test data
   set.seed(123)
   data <- data.frame(
@@ -10,7 +10,7 @@ test_that("setup_category_svc works with basic data", {
   )
   
   # Basic setup with shared SDs
-  setup <- setup_category_svc(
+  setup <- make_category_svc(
     data = data,
     category_column = "age", 
     time_column = "year",
@@ -41,7 +41,7 @@ test_that("setup_category_svc works with basic data", {
   expect_equal(setup$info$n_variance_parameters, 2) # shared spatial + shared spatiotemporal
 })
 
-test_that("setup_category_svc works with different sharing options", {
+test_that("make_category_svc works with different sharing options", {
   # Create small test data
   data <- data.frame(
     age = factor(rep(1:2, each = 4)),
@@ -52,10 +52,10 @@ test_that("setup_category_svc works with different sharing options", {
   )
   
   # Test all sharing combinations
-  setup1 <- setup_category_svc(data, "age", "year", TRUE, TRUE)   # both shared
-  setup2 <- setup_category_svc(data, "age", "year", TRUE, FALSE)  # spatial shared only
-  setup3 <- setup_category_svc(data, "age", "year", FALSE, TRUE)  # spatiotemporal shared only
-  setup4 <- setup_category_svc(data, "age", "year", FALSE, FALSE) # none shared
+  setup1 <- make_category_svc(data, "age", "year", TRUE, TRUE)   # both shared
+  setup2 <- make_category_svc(data, "age", "year", TRUE, FALSE)  # spatial shared only
+  setup3 <- make_category_svc(data, "age", "year", FALSE, TRUE)  # spatiotemporal shared only
+  setup4 <- make_category_svc(data, "age", "year", FALSE, FALSE) # none shared
   
   # Check number of variance parameters
   expect_equal(setup1$info$n_variance_parameters, 2)  # 1 spatial + 1 spatiotemporal
@@ -70,7 +70,7 @@ test_that("setup_category_svc works with different sharing options", {
   expect_equal(max(as.numeric(setup4$svc_map$ln_tau_Z)), 6)
 })
 
-test_that("setup_category_svc validates inputs", {
+test_that("make_category_svc validates inputs", {
   data <- data.frame(
     age = factor(1:2),
     year = 2020:2021,
@@ -79,39 +79,39 @@ test_that("setup_category_svc validates inputs", {
   
   # Valid case should work
   expect_no_error(
-    setup_category_svc(data, "age", "year")
+    make_category_svc(data, "age", "year")
   )
   
   # Invalid data frame
   expect_error(
-    setup_category_svc("not_a_df", "age", "year"),
+    make_category_svc("not_a_df", "age", "year"),
     "data is not a data frame"
   )
   
   # Missing column
   expect_error(
-    setup_category_svc(data, "missing_col", "year"),
+    make_category_svc(data, "missing_col", "year"),
     "Column 'missing_col' not found in data"
   )
   
   expect_error(
-    setup_category_svc(data, "age", "missing_col"),
+    make_category_svc(data, "age", "missing_col"),
     "Column 'missing_col' not found in data"
   )
   
   # Invalid logical arguments
   expect_error(
-    setup_category_svc(data, "age", "year", share_spatial_sd = "not_logical"),
+    make_category_svc(data, "age", "year", share_spatial_sd = "not_logical"),
     "is.logical\\(share_spatial_sd\\) is not TRUE"
   )
   
   expect_error(
-    setup_category_svc(data, "age", "year", share_spatiotemporal_sd = 1),
+    make_category_svc(data, "age", "year", share_spatiotemporal_sd = 1),
     "is.logical\\(share_spatiotemporal_sd\\) is not TRUE"
   )
 })
 
-test_that("setup_category_svc handles different category types", {
+test_that("make_category_svc handles different category types", {
   # Test with different category column types
   data1 <- data.frame(
     cat = factor(rep(letters[1:3], 2)),  # factor categories
@@ -125,8 +125,8 @@ test_that("setup_category_svc handles different category types", {
     x = 1:6
   )
   
-  setup1 <- setup_category_svc(data1, "cat", "year")
-  setup2 <- setup_category_svc(data2, "cat", "year")
+  setup1 <- make_category_svc(data1, "cat", "year")
+  setup2 <- make_category_svc(data2, "cat", "year")
   
   # Both should work and produce valid outputs
   expect_type(setup1, "list")
@@ -135,14 +135,14 @@ test_that("setup_category_svc handles different category types", {
   expect_equal(setup2$info$n_categories, 3)
 })
 
-test_that("setup_category_svc creates correct model matrices", {
+test_that("make_category_svc creates correct model matrices", {
   data <- data.frame(
     age = factor(rep(1:2, 2)),
     year = rep(2020:2021, each = 2),
     x = 1:4
   )
   
-  setup <- setup_category_svc(data, "age", "year")
+  setup <- make_category_svc(data, "age", "year")
   
   # Check that spatial terms match expected structure
   expected_spatial_cols <- paste0("age", 1:2)
