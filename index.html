@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9003</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -584,8 +584,8 @@
 </h3>
 <p>Defining a mesh directly with INLA:</p>
 <div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">bnd</span> <span class="op">&lt;-</span> <span class="fu">INLA</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/INLA/man/inla.nonconvex.hull.html" class="external-link">inla.nonconvex.hull</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">pcod</span><span class="op">$</span><span class="va">X</span>, <span class="va">pcod</span><span class="op">$</span><span class="va">Y</span><span class="op">)</span>, convex <span class="op">=</span> <span class="op">-</span><span class="fl">0.1</span><span class="op">)</span></span>
-<span><span class="va">mesh_inla</span> <span class="op">&lt;-</span> <span class="fu">INLA</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/INLA/man/inla.mesh.2d.html" class="external-link">inla.mesh.2d</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">bnd</span> <span class="op">&lt;-</span> <span class="fu">INLA</span><span class="fu">::</span><span class="fu">inla.nonconvex.hull</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">pcod</span><span class="op">$</span><span class="va">X</span>, <span class="va">pcod</span><span class="op">$</span><span class="va">Y</span><span class="op">)</span>, convex <span class="op">=</span> <span class="op">-</span><span class="fl">0.1</span><span class="op">)</span></span>
+<span><span class="va">mesh_inla</span> <span class="op">&lt;-</span> <span class="fu">INLA</span><span class="fu">::</span><span class="fu">inla.mesh.2d</span><span class="op">(</span></span>
 <span>  boundary <span class="op">=</span> <span class="va">bnd</span>,</span>
 <span>  max.edge <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">25</span>, <span class="fl">50</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
