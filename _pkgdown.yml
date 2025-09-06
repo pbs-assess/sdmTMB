@@ -41,7 +41,7 @@ reference:
   - run_extra_optimization
   - replicate_df
   - set_delta_model
-  - setup_category_svc
+  - make_category_svc
   - coef.sdmTMB
   - cAIC
 
