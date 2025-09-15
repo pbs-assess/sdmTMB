@@ -1,5 +1,5 @@
-#' Extract a relative biomass/abundance index, center of gravity, or effective
-#' area occupied
+#' Extract a relative biomass/abundance index, center of gravity, effective
+#' area occupied, or weighted average
 #'
 #' @param obj Output from [predict.sdmTMB()] with `return_tmb_object = TRUE`.
 #'   Alternatively, if [sdmTMB()] was called with `do_index = TRUE` or if using
@@ -31,6 +31,11 @@
 #' A data frame with a columns for time, estimate (effective area occupied; EAO),
 #' lower and upper confidence intervals,
 #' log EAO, and standard error of the log EAO estimates.
+#'
+#' For `get_weighted_average()`:
+#' A data frame with columns for time, estimate (weighted average of the provided
+#' vector), lower and upper confidence intervals, and standard error of the
+#' weighted average estimates.
 #'
 #' @references
 #'
@@ -116,6 +121,12 @@
 #' ggplot(eao, aes(year, est)) + geom_line() +
 #'   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4) +
 #'   ylim(0, NA)
+#'
+#' # weighted average (e.g., depth-weighted by biomass):
+#' wa <- get_weighted_average(predictions, vector = nd$depth)
+#' wa
+#' ggplot(wa, aes(year, est)) + geom_line() +
+#'   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4)
 #' }
 #' @export
 get_index <- function(obj, bias_correct = TRUE, level = 0.95, area = 1, silent = TRUE, ...)  {
@@ -234,6 +245,29 @@ get_cog <- function(obj, bias_correct = FALSE, level = 0.95, format = c("long", 
 }
 
 #' @rdname get_index
+#' @param vector A numeric vector of the same length as the prediction data,
+#'   containing the values to be averaged (e.g., depth, temperature).
+#' @export
+get_weighted_average <- function(obj, vector, bias_correct = FALSE, level = 0.95,
+  area = 1, silent = TRUE, ...)  {
+  # if offset is a character vector, use the value in the dataframe
+  if (is.character(area)) {
+    area <- obj$data[[area]]
+  }
+
+  if (is.null(vector)) {
+    cli_abort("A vector must be provided for weighted average calculation.")
+  }
+
+  d <- get_generic(obj, value_name = "weighted_avg",
+    bias_correct = bias_correct, level = level, trans = I, area = area,
+    vector = vector, ...)
+  d <- d[, names(d) != "trans_est", drop = FALSE]
+  d$type <- "weighted_average"
+  d
+}
+
+#' @rdname get_index
 #' @export
 get_eao <- function(obj,
   bias_correct = FALSE,
@@ -255,7 +289,7 @@ get_eao <- function(obj,
 }
 
 get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
-  trans = I, area = 1, silent = TRUE, ...) {
+  trans = I, area = 1, vector = NULL, silent = TRUE, ...) {
 
   # if offset is a character vector, use the value in the dataframe
   if (is.character(area)) {
@@ -264,7 +298,7 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
 
   reinitialize(obj$fit_obj)
 
-  if ((!isTRUE(obj$do_index) && value_name[1] == "link_total") || value_name[1] == "cog_x" || value_name[[1]] == "log_eao") {
+  if ((!isTRUE(obj$do_index) && value_name[1] == "link_total") || value_name[1] == "cog_x" || value_name[[1]] == "log_eao" || value_name[1] == "weighted_avg") {
     if (is.null(obj[["obj"]])) {
       cli_abort(paste0("`obj` needs to be created with ",
         "`predict(..., return_tmb_object = TRUE).`"))
@@ -304,6 +338,16 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
       tmb_data$calc_cog <- 1L
     if (value_name[1] == "log_eao")
       tmb_data$calc_eao <- 1L
+    if (value_name[1] == "weighted_avg") {
+      if (is.null(vector)) {
+        cli_abort("A vector must be provided for weighted average calculation.")
+      }
+      if (length(vector) != nrow(obj$pred_tmb_data$proj_X_ij[[1]])) {
+        cli_abort("`vector` should be of the same length as `nrow(newdata)`.")
+      }
+      tmb_data$proj_vector <- vector
+      tmb_data$calc_weighted_avg <- 1L
+    }
 
     pars <- get_pars(obj$fit_obj)
 
@@ -334,10 +378,11 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   }
   sr_est <- as.list(sr, "Estimate", report = TRUE)
 
-  if (bias_correct && value_name[[1]] %in% c("link_total", "cog_x")) {
+  if (bias_correct && value_name[[1]] %in% c("link_total", "cog_x", "weighted_avg")) {
     # extract and modify parameters
     if (value_name[[1]] == "link_total") .n <- length(sr_est$total)
     if (value_name[[1]] == "cog_x") .n <- length(sr_est$cog_x) * 2 # 2 b/c x and y
+    if (value_name[[1]] == "weighted_avg") .n <- length(sr_est$weighted_avg)
     pars[[eps_name]] <- rep(0, .n)
     new_values <- rep(0, .n)
     names(new_values) <- rep(eps_name, length(new_values))
@@ -356,7 +401,7 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
     gradient <- new_obj2$gr(fixed)
     corrected_vals <- gradient[names(fixed) == eps_name]
   } else {
-    if (value_name[[1]] == "link_total" || value_name[[1]] == "cog_x")
+    if (value_name[[1]] == "link_total" || value_name[[1]] == "cog_x" || value_name[[1]] == "weighted_avg")
       cli_inform(c("Bias correction is turned off.", "
         It is recommended to turn this on for final inference."))
   }
@@ -367,7 +412,7 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
   time_name <- obj$fit_obj$time
   names(d) <- c("trans_est", "se")
   if (bias_correct) {
-    if (value_name[[1]] == "cog_x") {
+    if (value_name[[1]] == "cog_x" || value_name[[1]] == "weighted_avg") {
       d$trans_est <- corrected_vals
     } else {
       d$trans_est <- log(corrected_vals)

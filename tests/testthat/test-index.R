@@ -233,3 +233,80 @@ test_that("Models error our nicely with Inf or -Inf covariates before get_index(
   ), regexp = "Inf")
 })
 
+test_that("get_weighted_average works", {
+  skip_on_cran()
+
+  pcod_spde <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
+  m <- sdmTMB(
+    data = pcod,
+    formula = density ~ 0 + as.factor(year),
+    spatiotemporal = "off", # speed
+    time = "year", mesh = pcod_spde,
+    family = tweedie(link = "log")
+  )
+
+  # Create prediction grid with a test vector (depth)
+  nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
+  nd$test_vector <- nd$depth # use depth as our test vector
+
+  predictions <- predict(m, newdata = nd, return_tmb_object = TRUE)
+
+  # Test the weighted average function
+  wa <- get_weighted_average(predictions, vector = nd$test_vector, bias_correct = FALSE)
+  expect_s3_class(wa, "data.frame")
+  expect_true("est" %in% names(wa))
+  expect_true("se" %in% names(wa))
+  expect_true("year" %in% names(wa))
+  expect_equal(nrow(wa), length(unique(pcod$year)))
+
+  # Test with bias correction
+  wa_bc <- get_weighted_average(predictions, vector = nd$test_vector, bias_correct = TRUE)
+  expect_s3_class(wa_bc, "data.frame")
+
+  # Test with area weighting
+  nd$area <- runif(nrow(nd), 0.9, 1.1)
+  predictions_area <- predict(m, newdata = nd, return_tmb_object = TRUE)
+  wa_area <- get_weighted_average(predictions_area, vector = nd$test_vector, area = nd$area, bias_correct = FALSE)
+  expect_s3_class(wa_area, "data.frame")
+
+  # Test error conditions
+  expect_error(get_weighted_average(predictions, vector = c(1, 2, 3)), regexp = "length")
+  expect_error(get_weighted_average(predictions, vector = NULL), regexp = "vector")
+})
+
+test_that("get_weighted_average matches get_cog when using latitude", {
+  skip_on_cran()
+
+  pcod_spde <- make_mesh(pcod, c("X", "Y"), n_knots = 50, type = "kmeans")
+  m <- sdmTMB(
+    data = pcod,
+    formula = density ~ 0 + as.factor(year),
+    spatiotemporal = "off", # speed
+    time = "year", mesh = pcod_spde,
+    family = tweedie(link = "log")
+  )
+
+  # Create prediction grid
+  nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
+  predictions <- predict(m, newdata = nd, return_tmb_object = TRUE)
+
+  # Get center of gravity
+  cog <- get_cog(predictions, bias_correct = FALSE, format = "wide")
+
+  # Get weighted average using latitude (same as Y coordinate)
+  wa_lat <- get_weighted_average(predictions, vector = nd$Y, bias_correct = FALSE)
+
+  # They should be very similar (within tolerance for numerical differences)
+  expect_equal(wa_lat$est, cog$est_y, tolerance = 1e-6)
+  expect_equal(wa_lat$se, cog$se_y, tolerance = 1e-6)
+  expect_equal(wa_lat$lwr, cog$lwr_y, tolerance = 1e-6)
+  expect_equal(wa_lat$upr, cog$upr_y, tolerance = 1e-6)
+
+  # Test with bias correction too
+  cog_bc <- get_cog(predictions, bias_correct = TRUE, format = "wide")
+  wa_lat_bc <- get_weighted_average(predictions, vector = nd$Y, bias_correct = TRUE)
+
+  expect_equal(wa_lat_bc$est, cog_bc$est_y, tolerance = 1e-6)
+  expect_equal(wa_lat_bc$se, cog_bc$se_y, tolerance = 1e-6)
+})
+

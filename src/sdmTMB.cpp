@@ -194,6 +194,7 @@ Type objective_function<Type>::operator()()
   DATA_INTEGER(calc_index_totals);
   DATA_INTEGER(calc_cog);
   DATA_INTEGER(calc_eao);
+  DATA_INTEGER(calc_weighted_avg);
   // DATA_INTEGER(calc_quadratic_range); // DELTA TODO
   DATA_VECTOR(area_i); // area per prediction grid cell for index standardization
 
@@ -214,6 +215,7 @@ Type objective_function<Type>::operator()()
 
   DATA_VECTOR(proj_lon);
   DATA_VECTOR(proj_lat);
+  DATA_VECTOR(proj_vector);  // User-provided vector for weighted average
 
   // Distribution
   DATA_IVECTOR(family);
@@ -1433,7 +1435,7 @@ Type objective_function<Type>::operator()()
         break;
     }
 
-    if (calc_index_totals || calc_cog || calc_eao) {
+    if (calc_index_totals || calc_cog || calc_eao || calc_weighted_avg) {
       // ------------------ Derived quantities ---------------------------------
       Type t1;
       Type t2;
@@ -1527,6 +1529,31 @@ Type objective_function<Type>::operator()()
           }
         }
       }
+
+      if (calc_weighted_avg) {
+        // Weighted average of user-provided vector:
+        vector<Type> weighted_avg(n_t);
+        weighted_avg.setZero();
+        // Low-rank sparse hessian bias-correction
+        PARAMETER_VECTOR(eps_index);
+        for (int i = 0; i < n_p; i++) {
+          weighted_avg(proj_year(i)) += proj_vector(i) * mu_combined(i) * area_i(i);
+        }
+        for (int t = 0; t < n_t; t++) {
+          weighted_avg(t) /= total(t);
+        }
+        REPORT(weighted_avg);
+        ADREPORT(weighted_avg);
+        if (eps_index.size() > 0) {
+          Type S;
+          for (int t=0; t < n_t; t++) {
+            S = weighted_avg(t);
+            S = newton::Tag(S); // Set lowrank tag on S
+            jnll += eps_index(t) * S;
+          }
+        }
+      }
+
       if (calc_eao) { // effective area occupied: Thorson et al. 2016 doi:10.1098/rspb.2016.1853
         vector<Type> sum_dens(n_t);
         vector<Type> mean_dens(n_t);

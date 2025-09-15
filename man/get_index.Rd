@@ -4,9 +4,10 @@
 \alias{get_index}
 \alias{get_index_split}
 \alias{get_cog}
+\alias{get_weighted_average}
 \alias{get_eao}
-\title{Extract a relative biomass/abundance index, center of gravity, or effective
-area occupied}
+\title{Extract a relative biomass/abundance index, center of gravity, effective
+area occupied, or weighted average}
 \usage{
 get_index(obj, bias_correct = TRUE, level = 0.95, area = 1, silent = TRUE, ...)
 
@@ -27,6 +28,16 @@ get_cog(
   bias_correct = FALSE,
   level = 0.95,
   format = c("long", "wide"),
+  area = 1,
+  silent = TRUE,
+  ...
+)
+
+get_weighted_average(
+  obj,
+  vector,
+  bias_correct = FALSE,
+  level = 0.95,
   area = 1,
   silent = TRUE,
   ...
@@ -68,6 +79,9 @@ will usually be slower but with reduced memory use.}
 case of \code{get_index_split()}.}
 
 \item{format}{Long or wide.}
+
+\item{vector}{A numeric vector of the same length as the prediction data,
+containing the values to be averaged (e.g., depth, temperature).}
 }
 \value{
 For \code{get_index()}:
@@ -83,10 +97,15 @@ For \code{get_eao()}:
 A data frame with a columns for time, estimate (effective area occupied; EAO),
 lower and upper confidence intervals,
 log EAO, and standard error of the log EAO estimates.
+
+For \code{get_weighted_average()}:
+A data frame with columns for time, estimate (weighted average of the provided
+vector), lower and upper confidence intervals, and standard error of the
+weighted average estimates.
 }
 \description{
-Extract a relative biomass/abundance index, center of gravity, or effective
-area occupied
+Extract a relative biomass/abundance index, center of gravity, effective
+area occupied, or weighted average
 }
 \examples{
 \dontshow{if (ggplot2_installed()) withAutoprint(\{ # examplesIf}
@@ -137,6 +156,12 @@ eao
 ggplot(eao, aes(year, est)) + geom_line() +
   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4) +
   ylim(0, NA)
+
+# weighted average (e.g., depth-weighted by biomass):
+wa <- get_weighted_average(predictions, vector = nd$depth)
+wa
+ggplot(wa, aes(year, est)) + geom_line() +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.4)
 }
 \dontshow{\}) # examplesIf}
 }

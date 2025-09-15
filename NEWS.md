@@ -1,15 +1,20 @@
 # sdmTMB (development version)
 
+* Add new function `get_weighted_average()` to calculate biomass-weighted averages
+  of user-supplied vectors (e.g., depth, temperature). This function follows the
+  same pattern as `get_cog()` but allows users to specify any variable for
+  weighted averaging. Supports bias correction and area weighting.
+
 * **Fix barrier model implementation**. The SPDE input matrices for the barrier
-  model from INLA and INLAspacetime had changed. sdmTMB now appropriately 
+  model from INLA and INLAspacetime had changed. sdmTMB now appropriately
   uses these new matrices and unit tests in sdmTMBextra should catch such a
   change in the future. #457
-  
+
 * Add vignette on age (or length) composition standardization. To help with this
   add a new experimental function `make_category_svc()`.
 
-* Fix `emmeans` support for models with smoothers (`s()` terms). Previously, 
-  `emmeans` would fail with "Non-conformable elements in reference grid" when 
+* Fix `emmeans` support for models with smoothers (`s()` terms). Previously,
+  `emmeans` would fail with "Non-conformable elements in reference grid" when
   smoothers were included in the model formula.
 
 # sdmTMB 0.7.4
