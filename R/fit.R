@@ -20,6 +20,7 @@ NULL
 #'   downstream, supply the time argument.
 #' @param family The family and link. Supports [gaussian()], [Gamma()],
 #'   [binomial()], [poisson()], \code{\link[sdmTMB:families]{Beta()}},
+#'   \code{\link[sdmTMB:families]{betabinomial()}},
 #'   \code{\link[sdmTMB:families]{nbinom2()}},
 #'   \code{\link[sdmTMB:families]{truncated_nbinom2()}},
 #'   \code{\link[sdmTMB:families]{nbinom1()}},
