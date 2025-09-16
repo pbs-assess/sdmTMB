@@ -265,6 +265,7 @@ Type objective_function<Type>::operator()()
   DATA_VECTOR(lwr); // lower bound for censpois on counts
   DATA_VECTOR(upr); // upper bound for censpois on counts
   DATA_INTEGER(poisson_link_delta); // logical
+  DATA_INTEGER(zi_flag); // logical whether to include zero inflation
 
   DATA_INTEGER(stan_flag); // logical whether to pass the model to Stan
   // ------------------ Parameters ---------------------------------------------
@@ -283,6 +284,7 @@ Type objective_function<Type>::operator()()
   PARAMETER(gengamma_Q);           // gengamma only
   PARAMETER(logit_p_mix);           // ECE / positive mixture only
   PARAMETER(log_ratio_mix);           // ECE / positive mixture only
+  PARAMETER(zi_logit_p);           // zero inflation probability on logit scale
 
   PARAMETER_VECTOR(ln_phi);           // sigma / dispersion / etc.
   PARAMETER_ARRAY(ln_tau_V);  // random walk sigma
@@ -1117,6 +1119,27 @@ Type objective_function<Type>::operator()()
         default:
           error("Family not implemented.");
         }
+
+        // Add zero inflation if enabled
+        if (zi_flag && notNA) {
+          Type zi_prob = invlogit(zi_logit_p);
+          if (y_i(i,m) == Type(0)) {
+            // P(Y=0) = zi_prob + (1-zi_prob)*P(Y=0|conditional model)
+            tmp_ll = logspace_add(log(zi_prob), log(Type(1) - zi_prob) + tmp_ll);
+          } else {
+            // P(Y=y) = (1-zi_prob)*P(Y=y|conditional model) for y>0
+            tmp_ll += log(Type(1) - zi_prob);
+          }
+        }
+
+        // Add zero inflation simulation if enabled
+        if (zi_flag && sim_obs) {
+          Type zi_prob = invlogit(zi_logit_p);
+          SIMULATE{
+            y_i(i,m) = y_i(i,m) * rbinom(Type(1), Type(1) - zi_prob);
+          }
+        }
+
         if (notNA) tmp_ll *= weights_i(i);
         if (notNA) jnll_obs(i) -= tmp_ll; // for cross validation
         if (notNA) jnll -= tmp_ll; // * keep
@@ -1458,6 +1481,13 @@ Type objective_function<Type>::operator()()
             t2 = InverseLink(proj_eta(i,1), link(1));
             mu_combined(i) = t1 * t2;
           }
+
+          // Apply zero inflation adjustment if enabled (delta model case)
+          if (zi_flag) {
+            Type zi_prob = invlogit(zi_logit_p);
+            mu_combined(i) *= (Type(1) - zi_prob); // E[Y] = (1-zi_prob) * E[Y|Y>0]
+          }
+
           total(proj_year(i)) += mu_combined(i) * area_i(i);
         } else { // non-delta model
           if (truncated_dist) {
@@ -1467,6 +1497,13 @@ Type objective_function<Type>::operator()()
           } else  {
             mu_combined(i) = InverseLink(proj_eta(i,0), link(0));
           }
+
+          // Apply zero inflation adjustment if enabled
+          if (zi_flag) {
+            Type zi_prob = invlogit(zi_logit_p);
+            mu_combined(i) *= (Type(1) - zi_prob); // E[Y] = (1-zi_prob) * E[Y|Y>0]
+          }
+
           total(proj_year(i)) += mu_combined(i) * area_i(i);
         }
       }
@@ -1659,6 +1696,12 @@ Type objective_function<Type>::operator()()
   }
 
   if (family(0) == tweedie_family) ADREPORT(tweedie_p); // #302
+
+  // Zero inflation probability on probability scale
+  if (zi_flag) {
+    Type zi_p = invlogit(zi_logit_p);
+    ADREPORT(zi_p);
+  }
 
   REPORT(epsilon_st_A_vec);   // spatio-temporal effects; vector
   REPORT(b_rw_t);   // time-varying effects

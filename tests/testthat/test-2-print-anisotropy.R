@@ -57,7 +57,7 @@ test_that("Print anisotropy prints correctly", {
     share_range = FALSE,
     time = "year",
     anisotropy = TRUE,
-    control = sdmTMBcontrol(nlminb_loops = 2, newton_loops = 0)
+    control = sdmTMBcontrol(nlminb_loops = 2, newton_loops = 2)
   )
 
   expect_output(cat(print_anisotropy(fit2)), regexp = "\\(spatial\\): ")

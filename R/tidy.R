@@ -156,6 +156,17 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     )
   }
 
+  # Zero inflation probability (fixed effect)
+  if (as.logical(x$tmb_data$zi_flag)) {
+    out <- rbind(
+      out,
+      data.frame(
+        term = "zi_prob", estimate = est$zi_p,
+        std.error = se$zi_p, stringsAsFactors = FALSE
+      )
+    )
+  }
+
   if (x$tmb_data$has_smooths) {
     p <- print_smooth_effects(x, silent = FALSE, m = model)
     mm <- p$smooth_effects
@@ -261,6 +272,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     out_re$tweedie_p$conf.high <- plogis(est$thetaf + crit * se$thetaf) + 1
     ii <- ii + 1
   }
+
 
   if ("ar1_phi" %in% names(est)) {
     ar_phi <- est$ar1_phi

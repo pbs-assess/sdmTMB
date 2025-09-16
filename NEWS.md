@@ -1,5 +1,10 @@
 # sdmTMB (development version)
 
+* Add zero inflation support via the `zi` argument in `sdmTMB()`. When
+  `zi = TRUE`, estimates a single zero inflation probability that applies to all
+  observations. This implements a zero inflation mixture model similar to
+  glmmTMB. Cannot be combined with delta/hurdle models.
+
 * Add new function `get_weighted_average()` to calculate biomass-weighted averages
   of user-supplied vectors (e.g., depth, temperature). This function follows the
   same pattern as `get_cog()` but allows users to specify any variable for

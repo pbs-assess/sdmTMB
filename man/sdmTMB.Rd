@@ -10,6 +10,7 @@ sdmTMB(
   mesh,
   time = NULL,
   family = gaussian(link = "identity"),
+  zi = FALSE,
   spatial = c("on", "off"),
   spatiotemporal = c("iid", "ar1", "rw", "off"),
   share_range = TRUE,
@@ -71,6 +72,10 @@ Supports the delta/hurdle models:
 \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}},
 For binomial family options, see 'Binomial families' in the Details
 section below.}
+
+\item{zi}{Logical indicating whether to include zero inflation. If \code{TRUE},
+estimates a single zero inflation probability that applies to all
+observations. Cannot be combined with delta/hurdle models.}
 
 \item{spatial}{Estimate spatial random fields? Options are \code{'on'} / \code{'off'}
 or \code{TRUE} / \code{FALSE}. Optionally, a list for delta models, e.g. \code{list('on', 'off')}.}

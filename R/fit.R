@@ -39,6 +39,9 @@ NULL
 #'   \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}},
 #'   For binomial family options, see 'Binomial families' in the Details
 #'   section below.
+#' @param zi Logical indicating whether to include zero inflation. If `TRUE`,
+#'   estimates a single zero inflation probability that applies to all
+#'   observations. Cannot be combined with delta/hurdle models.
 #' @param spatial Estimate spatial random fields? Options are `'on'` / `'off'`
 #'   or `TRUE` / `FALSE`. Optionally, a list for delta models, e.g. `list('on',
 #'   'off')`.
@@ -572,6 +575,7 @@ sdmTMB <- function(
     mesh,
     time = NULL,
     family = gaussian(link = "identity"),
+    zi = FALSE,
     spatial = c("on", "off"),
     spatiotemporal = c("iid", "ar1", "rw", "off"),
     share_range = TRUE,
@@ -598,6 +602,11 @@ sdmTMB <- function(
 
   delta <- isTRUE(family$delta)
   n_m <- if (delta) 2L else 1L
+
+  # Zero inflation validation
+  if (zi && delta) {
+    cli_abort("Zero inflation (`zi = TRUE`) cannot be combined with delta/hurdle models.")
+  }
 
   if (!missing(spatial)) {
     if (length(spatial) > 1 && !is.list(spatial)) {
@@ -1199,6 +1208,7 @@ sdmTMB <- function(
     upr = upr,
     lwr = 0L, # in case we want to reintroduce this
     poisson_link_delta = as.integer(isTRUE(family$type == "poisson_link_delta")),
+    zi_flag = as.integer(zi),
     stan_flag = as.integer(bayesian),
     no_spatial = no_spatial,
     re_cov_df_map = as.matrix(re_cov_df_map), # dataframe used to map parameters to cov matrices,
@@ -1228,6 +1238,7 @@ sdmTMB <- function(
     gengamma_Q = 0.5, # Not defined at exactly 0
     logit_p_mix = 0,
     log_ratio_mix = -1, # ratio is 1 + exp(log_ratio_mix) so 0 would start fairly high
+    zi_logit_p = 0, # zero inflation probability on logit scale
     ln_phi = rep(0, n_m),
     ln_tau_V = matrix(0, ncol(X_rw_ik), n_m),
     rho_time_unscaled = matrix(0, ncol(X_rw_ik), n_m),
@@ -1258,6 +1269,11 @@ sdmTMB <- function(
   if (delta) tmb_map$b_j2 <- NULL
   if (family$family[[1]] == "tweedie") tmb_map$thetaf <- NULL
   if ("gengamma" %in% family$family) tmb_map$gengamma_Q <- factor(NA)
+  if (zi) {
+    tmb_map$zi_logit_p <- NULL
+  } else {
+    tmb_map$zi_logit_p <- factor(NA)
+  }
   tmb_map$ln_phi <- rep(1, n_m)
   if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson")) {
     tmb_map$ln_phi[1] <- factor(NA)
