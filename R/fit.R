@@ -955,9 +955,13 @@ sdmTMB <- function(
   # (yobs, weights) could be (proportions, size)
   # On the C++ side 'yobs' must be the number of successes.
   size <- rep(1, nrow(X_ij[[1]])) # for non-binomial case TODO: change hard coded index
-  if (identical(family$family[1], "binomial") && !delta) {
+
+  # Helper function for binomial-type response processing
+  process_binomial_response <- function(mf, weights) {
     ## call this to catch the factor / matrix cases
     y_i <- model.response(mf[[1]], type = "any")
+    size <- rep(1, length(y_i))
+
     ## allow character
     if (is.character(y_i)) {
       y_i <- model.response(mf[[1]], type = "factor")
@@ -969,7 +973,7 @@ sdmTMB <- function(
       if (nlevels(y_i) > 2) {
         cli_abort("More than 2 levels detected for response")
       }
-      ## following glm, ‘success’ is interpreted as the factor not
+      ## following glm, 'success' is interpreted as the factor not
       ## having the first level (and hence usually of having the
       ## second level).
       y_i <- pmin(as.numeric(y_i) - 1, 1)
@@ -997,47 +1001,15 @@ sdmTMB <- function(
       )
       cli_warn(msg)
     }
+
+    list(y_i = y_i, size = size, weights = weights)
   }
 
-  if (identical(family$family[1], "betabinomial") && !delta) {
-    ## betabinomial uses same structure as binomial
-    y_i <- model.response(mf[[1]], type = "any")
-    ## allow character
-    if (is.character(y_i)) {
-      y_i <- model.response(mf[[1]], type = "factor")
-      if (nlevels(y_i) > 2) {
-        cli_abort("More than 2 levels detected for response")
-      }
-    }
-    if (is.factor(y_i)) {
-      if (nlevels(y_i) > 2) {
-        cli_abort("More than 2 levels detected for response")
-      }
-      y_i <- pmin(as.numeric(y_i) - 1, 1)
-      size <- rep(1, length(y_i))
-    } else {
-      if (is.matrix(y_i)) { # yobs=cbind(success, failure)
-        size <- y_i[, 1] + y_i[, 2]
-        yobs <- y_i[, 1] # successes
-        y_i <- yobs
-      } else {
-        if (all(y_i %in% c(0, 1))) { # binary
-          size <- rep(1, length(y_i))
-        } else { # proportions
-          y_i <- weights * y_i
-          size <- weights
-          weights <- rep(1, length(y_i))
-        }
-      }
-    }
-    if (is.logical(y_i)) {
-      msg <- paste0(
-        "We recommend against using `TRUE`/`FALSE` ",
-        "response values if you are going to use the `visreg::visreg()` ",
-        "function after. Consider converting to integer with `as.integer()`."
-      )
-      cli_warn(msg)
-    }
+  if ((identical(family$family[1], "binomial") || identical(family$family[1], "betabinomial")) && !delta) {
+    result <- process_binomial_response(mf, weights)
+    y_i <- result$y_i
+    size <- result$size
+    weights <- result$weights
   }
 
   if (identical(family$link[1], "log") && min(y_i, na.rm = TRUE) < 0 && !delta) {
