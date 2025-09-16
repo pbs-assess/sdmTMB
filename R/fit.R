@@ -998,6 +998,47 @@ sdmTMB <- function(
     }
   }
 
+  if (identical(family$family[1], "betabinomial") && !delta) {
+    ## betabinomial uses same structure as binomial
+    y_i <- model.response(mf[[1]], type = "any")
+    ## allow character
+    if (is.character(y_i)) {
+      y_i <- model.response(mf[[1]], type = "factor")
+      if (nlevels(y_i) > 2) {
+        cli_abort("More than 2 levels detected for response")
+      }
+    }
+    if (is.factor(y_i)) {
+      if (nlevels(y_i) > 2) {
+        cli_abort("More than 2 levels detected for response")
+      }
+      y_i <- pmin(as.numeric(y_i) - 1, 1)
+      size <- rep(1, length(y_i))
+    } else {
+      if (is.matrix(y_i)) { # yobs=cbind(success, failure)
+        size <- y_i[, 1] + y_i[, 2]
+        yobs <- y_i[, 1] # successes
+        y_i <- yobs
+      } else {
+        if (all(y_i %in% c(0, 1))) { # binary
+          size <- rep(1, length(y_i))
+        } else { # proportions
+          y_i <- weights * y_i
+          size <- weights
+          weights <- rep(1, length(y_i))
+        }
+      }
+    }
+    if (is.logical(y_i)) {
+      msg <- paste0(
+        "We recommend against using `TRUE`/`FALSE` ",
+        "response values if you are going to use the `visreg::visreg()` ",
+        "function after. Consider converting to integer with `as.integer()`."
+      )
+      cli_warn(msg)
+    }
+  }
+
   if (identical(family$link[1], "log") && min(y_i, na.rm = TRUE) < 0 && !delta) {
     cli_abort("`link = 'log'` but the reponse data include values < 0.")
   }

@@ -24,6 +24,7 @@
 \alias{delta_truncated_nbinom1}
 \alias{delta_poisson_link_gamma}
 \alias{delta_poisson_link_lognormal}
+\alias{betabinomial}
 \alias{delta_beta}
 \title{Additional families}
 \usage{
@@ -70,6 +71,8 @@ delta_truncated_nbinom1(link1 = "logit", link2 = "log")
 delta_poisson_link_gamma(link1 = "log", link2 = "log")
 
 delta_poisson_link_lognormal(link1 = "log", link2 = "log")
+
+betabinomial(link = "logit")
 
 delta_beta(link1 = "logit", link2 = "logit")
 }
@@ -142,6 +145,7 @@ delta_lognormal()
 delta_lognormal_mix()
 delta_truncated_nbinom2()
 delta_truncated_nbinom1()
+betabinomial(link = "logit")
 delta_beta()
 }
 \references{

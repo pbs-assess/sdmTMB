@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Add beta-binomial family (`betabinomial()`) for modeling overdispersed binomial
+  data. Supports logit and cloglog links, and includes proper residuals support.
+
 * Add new function `get_weighted_average()` to calculate biomass-weighted averages
   of user-supplied vectors (e.g., depth, temperature). This function follows the
   same pattern as `get_cog()` but allows users to specify any variable for

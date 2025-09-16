@@ -507,6 +507,31 @@ delta_poisson_link_lognormal <- function(link1 = "log", link2 = "log") {
 
 #' @export
 #' @examples
+#' betabinomial(link = "logit")
+#' @rdname families
+betabinomial <- function(link = "logit") {
+  linktemp <- substitute(link)
+  if (!is.character(linktemp))
+    linktemp <- deparse(linktemp)
+  okLinks <- c("logit", "cloglog")
+  if (linktemp %in% okLinks)
+    stats <- stats::make.link(linktemp)
+  else if (is.character(link)) {
+    if (link %in% okLinks) {
+      stats <- stats::make.link(link)
+    } else {
+      stop(paste("link", link, "not available for betabinomial family; available links are", paste(okLinks, collapse = ", ")))
+    }
+  } else {
+    stop(paste("link", linktemp, "not available for betabinomial family; available links are", paste(okLinks, collapse = ", ")))
+  }
+  x <- c(list(family = "betabinomial", link = linktemp), stats)
+  add_to_family(x)
+}
+
+
+#' @export
+#' @examples
 #' delta_beta()
 #' @rdname families
 delta_beta <- function(link1 = "logit", link2 = "logit") {

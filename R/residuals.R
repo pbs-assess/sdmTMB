@@ -20,6 +20,29 @@ qres_binomial <- function(object, y, mu, .n = NULL) {
   stats::qnorm(u)
 }
 
+qres_betabinomial <- function(object, y, mu, .n = NULL) {
+  # Extract dispersion parameter
+  phi <- exp(object$model$par[["ln_phi"]])
+  if (is_delta(object)) phi <- phi[2]
+
+  # TMB parameterization: alpha = mu * phi, beta = (1 - mu) * phi
+  # where mu is already on probability scale from linkinv
+  alpha <- mu * phi
+  beta <- (1 - mu) * phi
+
+  if (is.null(.n)) .n <- rep(1, length(y))
+
+  # Use extraDistr for beta-binomial CDF
+  if (!requireNamespace("extraDistr", quietly = TRUE)) {
+    cli_abort("The extraDistr package is required for beta-binomial residuals. Please install it with: install.packages('extraDistr')")
+  }
+
+  a <- extraDistr::pbbinom(pmax(0, y - 1), size = .n, alpha = alpha, beta = beta)
+  b <- extraDistr::pbbinom(y, size = .n, alpha = alpha, beta = beta)
+  u <- stats::runif(n = length(y), min = pmin(a, b), max = pmax(a, b))
+  stats::qnorm(u)
+}
+
 qres_nbinom2 <- function(object, y, mu, ...) {
   phi <- exp(object$model$par[["ln_phi"]])
   if (is_delta(object)) phi <- phi[2]
@@ -361,6 +384,7 @@ residuals.sdmTMB <- function(object,
     res_func <- switch(fam,
       gaussian = qres_gaussian,
       binomial = qres_binomial,
+      betabinomial = qres_betabinomial,
       tweedie  = qres_tweedie,
       Beta     = qres_beta,
       Gamma    = qres_gamma,

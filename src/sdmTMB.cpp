@@ -21,7 +21,8 @@ enum valid_family {
   gamma_mix_family = 13,
   lognormal_mix_family = 14,
   nbinom2_mix_family = 15,
-  gengamma_family = 16
+  gengamma_family = 16,
+  betabinomial_family = 17
 };
 
 enum valid_link {
@@ -135,6 +136,19 @@ Type calc_log_nzprob(Type mu, Type phi, int family) {
   default: ans = Type(0);
   }
   return ans;
+}
+
+// Beta-binomial distribution
+// Modified from glmmTMB
+template<class Type>
+Type dbetabinom_robust(Type y, Type loga, Type logb, Type n, int give_log=0)
+{
+  Type logres =
+    lgamma(n + Type(1)) - lgamma(y + Type(1)) - lgamma(n - y + Type(1)) +
+    lgamma(exp(loga) + exp(logb)) + lgamma(y + exp(loga)) + lgamma(n - y + exp(logb)) -
+    lgamma(n + exp(loga) + exp(logb)) - lgamma(exp(loga)) - lgamma(exp(logb));
+  if(!give_log) return exp(logres);
+  else return logres;
 }
 
 // ------------------ Main TMB template ----------------------------------------
@@ -967,6 +981,18 @@ Type objective_function<Type>::operator()()
               if (sim_obs) SIMULATE{y_i(i,m) = rbinom(size(i), invlogit(mu_i(i,m)));} // hardcoded invlogit b/c mu_i in logit space
               if (notNA) devresid(i,m) = sdmTMB::sign(y_i(i,m) - invlogit(mu_i(i,m))) *
                 pow(-2.*((1-y_i(i,m))*log(1.-invlogit(mu_i(i,m))) + y_i(i,m)*log(invlogit(mu_i(i,m)))), 0.5);
+            }
+            break;
+          }
+          case betabinomial_family: {
+            // Transform to logit scale independent of link
+            s3 = LogitInverseLink(eta_i(i,m), link(m)); // logit(p)
+            s1 = log(InverseLink(s3, logit_link)) + log(phi(m)); // log(mu*phi)
+            s2 = log(InverseLink(-s3, logit_link)) + log(phi(m)); // log((1-mu)*phi)
+            if (notNA) tmp_ll = dbetabinom_robust(y_i(i,m), s1, s2, size(i), true);
+            if (sim_obs) SIMULATE{
+              Type rbeta_val = rbeta(exp(s1), exp(s2));
+              y_i(i,m) = rbinom(size(i), rbeta_val);
             }
             break;
           }
