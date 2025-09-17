@@ -138,19 +138,6 @@ Type calc_log_nzprob(Type mu, Type phi, int family) {
   return ans;
 }
 
-// Beta-binomial distribution
-// Modified from glmmTMB
-template<class Type>
-Type dbetabinom_robust(Type y, Type loga, Type logb, Type n, int give_log=0)
-{
-  Type logres =
-    lgamma(n + Type(1)) - lgamma(y + Type(1)) - lgamma(n - y + Type(1)) +
-    lgamma(exp(loga) + exp(logb)) + lgamma(y + exp(loga)) + lgamma(n - y + exp(logb)) -
-    lgamma(n + exp(loga) + exp(logb)) - lgamma(exp(loga)) - lgamma(exp(logb));
-  if(!give_log) return exp(logres);
-  else return logres;
-}
-
 // ------------------ Main TMB template ----------------------------------------
 
 template <class Type>
@@ -989,7 +976,7 @@ Type objective_function<Type>::operator()()
             s3 = LogitInverseLink(eta_i(i,m), link(m)); // logit(p)
             s1 = log(InverseLink(s3, logit_link)) + log(phi(m)); // log(mu*phi)
             s2 = log(InverseLink(-s3, logit_link)) + log(phi(m)); // log((1-mu)*phi)
-            if (notNA) tmp_ll = dbetabinom_robust(y_i(i,m), s1, s2, size(i), true);
+            if (notNA) tmp_ll = sdmTMB::dbetabinom_robust(y_i(i,m), s1, s2, size(i), true);
             if (sim_obs) SIMULATE{
               Type rbeta_val = rbeta(exp(s1), exp(s2));
               y_i(i,m) = rbinom(size(i), rbeta_val);

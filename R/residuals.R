@@ -32,11 +32,6 @@ qres_betabinomial <- function(object, y, mu, .n = NULL) {
 
   if (is.null(.n)) .n <- rep(1, length(y))
 
-  # Use extraDistr for beta-binomial CDF
-  if (!requireNamespace("extraDistr", quietly = TRUE)) {
-    cli_abort("The extraDistr package is required for beta-binomial residuals. Please install it with: install.packages('extraDistr')")
-  }
-
   a <- extraDistr::pbbinom(pmax(0, y - 1), size = .n, alpha = alpha, beta = beta)
   b <- extraDistr::pbbinom(y, size = .n, alpha = alpha, beta = beta)
   u <- stats::runif(n = length(y), min = pmin(a, b), max = pmax(a, b))

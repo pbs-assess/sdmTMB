@@ -65,6 +65,7 @@ Imports:
     assertthat,
     abind,
     cli,
+    extraDistr,
     fmesher,
     fishMod,
     generics,

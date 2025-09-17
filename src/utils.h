@@ -499,4 +499,17 @@ Type devresid_nbinom2( Type y,
   return devresid;
 }
 
+// Beta-binomial distribution
+// Modified from glmmTMB
+template<class Type>
+Type dbetabinom_robust(Type y, Type loga, Type logb, Type n, int give_log=0)
+{
+  Type logres =
+    lgamma(n + Type(1)) - lgamma(y + Type(1)) - lgamma(n - y + Type(1)) +
+    lgamma(exp(loga) + exp(logb)) + lgamma(y + exp(loga)) + lgamma(n - y + exp(logb)) -
+    lgamma(n + exp(loga) + exp(logb)) - lgamma(exp(loga)) - lgamma(exp(logb));
+  if(!give_log) return exp(logres);
+  else return logres;
+}
+
 }  // namespace sdmTMB
