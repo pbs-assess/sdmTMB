@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9005</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9006</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,8 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="sdmtmb-development-version">sdmTMB (development version)<a class="anchor" aria-label="anchor" href="#sdmtmb-development-version"></a></h2>
-<ul><li><p>Add new function <code><a href="../reference/get_index.html">get_weighted_average()</a></code> to calculate biomass-weighted averages of user-supplied vectors (e.g., depth, temperature). This function follows the same pattern as <code><a href="../reference/get_index.html">get_cog()</a></code> but allows users to specify any variable for weighted averaging. Supports bias correction and area weighting.</p></li>
+<ul><li><p>Add beta-binomial family (<code><a href="../reference/families.html">betabinomial()</a></code>) for modeling overdispersed binomial data. Supports logit and cloglog links, and includes proper residuals support.</p></li>
+<li><p>Add new function <code><a href="../reference/get_index.html">get_weighted_average()</a></code> to calculate biomass-weighted averages of user-supplied vectors (e.g., depth, temperature). This function follows the same pattern as <code><a href="../reference/get_index.html">get_cog()</a></code> but allows users to specify any variable for weighted averaging. Supports bias correction and area weighting.</p></li>
 <li><p><strong>Fix barrier model implementation</strong>. The SPDE input matrices for the barrier model from INLA and INLAspacetime had changed. sdmTMB now appropriately uses these new matrices and unit tests in sdmTMBextra should catch such a change in the future. <a href="https://github.com/pbs-assess/sdmTMB/issues/457" class="external-link">#457</a></p></li>
 <li><p>Add vignette on age (or length) composition standardization. To help with this add a new experimental function <code><a href="../reference/make_category_svc.html">make_category_svc()</a></code>.</p></li>
 <li><p>Fix <code>emmeans</code> support for models with smoothers (<code>s()</code> terms). Previously, <code>emmeans</code> would fail with “Non-conformable elements in reference grid” when smoothers were included in the model formula.</p></li>
