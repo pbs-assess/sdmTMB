@@ -100,9 +100,23 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
     sm_names <- gsub("s\\(", "", sm_names_orig)
     sm_names <- gsub("t2\\(", "", sm_names)
     sm_names <- gsub("\\)$", "", sm_names)
-    sm_names_bs <- paste0("s", sm_names)
+
+    sm_names_bs <- sapply(seq_along(sm_names), function(i) {
+      if (grepl("^t2\\(", sm_names_orig[i])) {
+        paste0("st2(", gsub(",", "", sm_names[i]), ")")
+      } else {
+        paste0("s", sm_names[i])
+      }
+    })
     sm_classes <- unlist(sm$classes)
-    xx <- lapply(sm_names_bs, function(.x) { # split out 2D + smooths
+
+    xx <- lapply(seq_along(sm_names_bs), function(i) {
+      .x <- sm_names_bs[i]
+      # For t2() smooths, don't expand - just use the base name
+      if (grepl("^t2\\(", sm_names_orig[i])) {
+        return(.x)
+      }
+      # original approach for regular univariate smooths
       n_sm <- grep(",", .x) + 1
       if (length(n_sm)) {
         .x <- paste(.x, seq_len(n_sm), sep = "_")
@@ -111,12 +125,109 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
         .x
       }
     })
+
+    # Expand sm_classes to match the expanded names
+    sm_classes_expanded <- unlist(mapply(function(cls, n_expanded) {
+      rep(cls, n_expanded)
+    }, sm_classes, lengths(xx), SIMPLIFY = FALSE))
+
     sm_names_bs <- unlist(xx)
-    sm_names_sds <- paste0("sds(", sm_names, ")")
-    sm_names_sds_tidy <- paste0("SD_s(", sm_names, ifelse(grepl(":", sm_names), "", ")"))
+
+    # Add indices to distinguish the multiple t2 components
+    # Example: t2(X,Y) creates 3 marginal smooths, each appearing as "st2(XY)"
+    # in sm_names_bs. But we need to convert ["st2(XY)", "st2(XY)", "st2(XY)"]
+    # to ["st2(XY)_1", "st2(XY)_2", "st2(XY)_3"]
+    sm_names_bs_indexed <- character(length(sm_names_bs))
+    i <- 1
+    while (i <= length(sm_names_bs)) {
+      if (grepl("^t2\\(", sm_names_orig[i])) {
+        current_name <- sm_names_bs[i]
+        j <- i
+        while (j <= length(sm_names_bs) && sm_names_bs[j] == current_name) {
+          j <- j + 1
+        }
+        count <- j - i
+        if (count > 1) {
+          sm_names_bs_indexed[i:(j-1)] <- paste0(gsub(",", "", current_name), "_", seq_len(count))
+        } else {
+          sm_names_bs_indexed[i] <- gsub(",", "", current_name)
+        }
+        i <- j
+      } else {
+        sm_names_bs_indexed[i] <- gsub(",", "", sm_names_bs[i])
+        i <- i + 1
+      }
+    }
+    sm_names_bs <- sm_names_bs_indexed
+
+    # Helper function for smooth SD names - just returns one name per component
+    # For regular s(): "depth" becomes sds(depth) or ln_SD_s(depth)
+    # For smooths with by: depth):year2003 becomes sds(depth):year2003
+    # For t2 smooths: returns one name per component, e.g., [sds(X,Y), sds(X,Y), sds(X,Y)]
+    # These will be indexed later to become ..._1, ..._2, ..._3
+    expand_smooth_sd_names <- function(prefix, sm_names, sm_names_orig) {
+      lapply(seq_along(sm_names), function(i) {
+        has_colon <- grepl(":", sm_names[i])
+        paste0(prefix, sm_names[i], ifelse(has_colon, "", ")"))
+      })
+    }
+
+    sm_names_sds_list <- expand_smooth_sd_names("sds(", sm_names, sm_names_orig)
+    ln_sm_names_sds_list <- expand_smooth_sd_names("ln_SD_s(", sm_names, sm_names_orig)
+
+    # Add indices to consecutive identical t2 SD names -- as above
+    sm_names_sds <- unlist(sm_names_sds_list)
+    i <- 1
+    sm_names_sds_indexed <- character(length(sm_names_sds))
+    while (i <= length(sm_names_sds)) {
+      if (grepl("^t2\\(", sm_names_orig[i])) {
+        current_name <- sm_names_sds[i]
+        j <- i
+        while (j <= length(sm_names_sds) && sm_names_sds[j] == current_name) {
+          j <- j + 1
+        }
+        count <- j - i
+        if (count > 1) {
+          sm_names_sds_indexed[i:(j-1)] <- paste0(gsub("\\)$", "", current_name), ")_", seq_len(count))
+        } else {
+          sm_names_sds_indexed[i] <- current_name
+        }
+        i <- j
+      } else {
+        sm_names_sds_indexed[i] <- sm_names_sds[i]
+        i <- i + 1
+      }
+    }
+    sm_names_sds <- sm_names_sds_indexed
+
+    # Same for ln_SD -- as above
+    ln_sm_names_sds <- unlist(ln_sm_names_sds_list)
+    i <- 1
+    ln_sm_names_sds_indexed <- character(length(ln_sm_names_sds))
+    while (i <= length(ln_sm_names_sds)) {
+      if (grepl("^t2\\(", sm_names_orig[i])) {
+        current_name <- ln_sm_names_sds[i]
+        j <- i
+        while (j <= length(ln_sm_names_sds) && ln_sm_names_sds[j] == current_name) {
+          j <- j + 1
+        }
+        count <- j - i
+        if (count > 1) {
+          ln_sm_names_sds_indexed[i:(j-1)] <- paste0(gsub("\\)$", "", current_name), ")_", seq_len(count))
+        } else {
+          ln_sm_names_sds_indexed[i] <- current_name
+        }
+        i <- j
+      } else {
+        ln_sm_names_sds_indexed[i] <- ln_sm_names_sds[i]
+        i <- i + 1
+      }
+    }
+    ln_sm_names_sds <- ln_sm_names_sds_indexed
+
     mm_sm <- cbind(bs, bs_se)
 
-    .sm_names_bs <- sm_names_bs[!sm_classes %in% c("cc.smooth.spec", "cs.smooth.spec")]
+    .sm_names_bs <- sm_names_bs[!sm_classes_expanded %in% c("cc.smooth.spec", "cs.smooth.spec")]
     if (length(.sm_names_bs) != nrow(mm_sm)) {
       if (nrow(mm_sm) > 0L) {
         msg <- c(
@@ -145,7 +256,7 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
     ln_re_sm_mat <- matrix(NA_real_, nrow = length(smooth_sds), ncol = 2L)
     ln_re_sm_mat[, 1] <- sr_est$ln_smooth_sigma[, m]
     ln_re_sm_mat[, 2] <- sr_se$ln_smooth_sigma[, m]
-    rownames(ln_re_sm_mat) <- sm_names_sds_tidy
+    rownames(ln_re_sm_mat) <- ln_sm_names_sds
     colnames(ln_re_sm_mat) <- c("estimate", "std.error")
 
     if (!is.null(edf)) {
