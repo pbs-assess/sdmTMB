@@ -131,34 +131,48 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
       rep(cls, n_expanded)
     }, sm_classes, lengths(xx), SIMPLIFY = FALSE))
 
-    sm_names_bs <- unlist(xx)
-
-    # Add indices to distinguish the multiple t2 components
-    # Example: t2(X,Y) creates 3 marginal smooths, each appearing as "st2(XY)"
-    # in sm_names_bs. But we need to convert ["st2(XY)", "st2(XY)", "st2(XY)"]
-    # to ["st2(XY)_1", "st2(XY)_2", "st2(XY)_3"]
-    sm_names_bs_indexed <- character(length(sm_names_bs))
-    i <- 1
-    while (i <= length(sm_names_bs)) {
-      if (grepl("^t2\\(", sm_names_orig[i])) {
-        current_name <- sm_names_bs[i]
-        j <- i
-        while (j <= length(sm_names_bs) && sm_names_bs[j] == current_name) {
-          j <- j + 1
-        }
-        count <- j - i
-        if (count > 1) {
-          sm_names_bs_indexed[i:(j-1)] <- paste0(gsub(",", "", current_name), "_", seq_len(count))
+    # For coefficient names (sd_name = FALSE) removes commas and adds indices,
+    #   "st2(X,Y)" to "st2(XY)_1"
+    # For SD names (is_sd_name = TRUE) adding indices after parenthesis
+    #   "sds(X,Y)" to "sds(X,Y)_1"
+    index_sm_names <- function(x, orig_names, is_sd_name = FALSE) {
+      names_indexed <- character(length(x))
+      i <- 1
+      while (i <= length(x)) {
+        if (grepl("^t2\\(", orig_names[i])) { # t2 case
+          current_name <- x[i]
+          j <- i
+          while (j <= length(x) && x[j] == current_name) {
+            j <- j + 1
+          }
+          count <- j - i
+          if (count > 1) {
+            if (is_sd_name) {
+              # SD case: remove end ), add index, add ) back
+              names_indexed[i:(j-1)] <- paste0(gsub("\\)$", "", current_name), ")_", seq_len(count))
+            } else {
+              # For coef names just remove commas
+              names_indexed[i:(j-1)] <- paste0(gsub(",", "", current_name), "_", seq_len(count))
+            }
+          } else {
+            if (is_sd_name) {
+              names_indexed[i] <- current_name
+            } else {
+              names_indexed[i] <- gsub(",", "", current_name)
+            }
+          }
+          i <- j
         } else {
-          sm_names_bs_indexed[i] <- gsub(",", "", current_name)
+          if (is_sd_name) {
+            names_indexed[i] <- x[i]
+          } else {
+            names_indexed[i] <- gsub(",", "", x[i])
+          }
+          i <- i + 1
         }
-        i <- j
-      } else {
-        sm_names_bs_indexed[i] <- gsub(",", "", sm_names_bs[i])
-        i <- i + 1
       }
+      return(names_indexed)
     }
-    sm_names_bs <- sm_names_bs_indexed
 
     # Helper function for smooth SD names - just returns one name per component
     # For regular s(): "depth" becomes sds(depth) or ln_SD_s(depth)
@@ -172,58 +186,20 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
       })
     }
 
+    # Create the SD name lists
     sm_names_sds_list <- expand_smooth_sd_names("sds(", sm_names, sm_names_orig)
     ln_sm_names_sds_list <- expand_smooth_sd_names("ln_SD_s(", sm_names, sm_names_orig)
 
-    # Add indices to consecutive identical t2 SD names -- as above
-    sm_names_sds <- unlist(sm_names_sds_list)
-    i <- 1
-    sm_names_sds_indexed <- character(length(sm_names_sds))
-    while (i <= length(sm_names_sds)) {
-      if (grepl("^t2\\(", sm_names_orig[i])) {
-        current_name <- sm_names_sds[i]
-        j <- i
-        while (j <= length(sm_names_sds) && sm_names_sds[j] == current_name) {
-          j <- j + 1
-        }
-        count <- j - i
-        if (count > 1) {
-          sm_names_sds_indexed[i:(j-1)] <- paste0(gsub("\\)$", "", current_name), ")_", seq_len(count))
-        } else {
-          sm_names_sds_indexed[i] <- current_name
-        }
-        i <- j
-      } else {
-        sm_names_sds_indexed[i] <- sm_names_sds[i]
-        i <- i + 1
-      }
-    }
-    sm_names_sds <- sm_names_sds_indexed
-
-    # Same for ln_SD -- as above
-    ln_sm_names_sds <- unlist(ln_sm_names_sds_list)
-    i <- 1
-    ln_sm_names_sds_indexed <- character(length(ln_sm_names_sds))
-    while (i <= length(ln_sm_names_sds)) {
-      if (grepl("^t2\\(", sm_names_orig[i])) {
-        current_name <- ln_sm_names_sds[i]
-        j <- i
-        while (j <= length(ln_sm_names_sds) && ln_sm_names_sds[j] == current_name) {
-          j <- j + 1
-        }
-        count <- j - i
-        if (count > 1) {
-          ln_sm_names_sds_indexed[i:(j-1)] <- paste0(gsub("\\)$", "", current_name), ")_", seq_len(count))
-        } else {
-          ln_sm_names_sds_indexed[i] <- current_name
-        }
-        i <- j
-      } else {
-        ln_sm_names_sds_indexed[i] <- ln_sm_names_sds[i]
-        i <- i + 1
-      }
-    }
-    ln_sm_names_sds <- ln_sm_names_sds_indexed
+    # Now index all the names
+    sm_names_bs <- index_sm_names(unlist(xx),
+                                  sm_names_orig,
+                                  is_sd_name = FALSE)
+    sm_names_sds <- index_sm_names(unlist(sm_names_sds_list),
+                                   sm_names_orig,
+                                   is_sd_name = TRUE)
+    ln_sm_names_sds <- index_sm_names(unlist(ln_sm_names_sds_list),
+                                      sm_names_orig,
+                                      is_sd_name = TRUE)
 
     mm_sm <- cbind(bs, bs_se)
 
