@@ -103,7 +103,7 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
 
     sm_names_bs <- sapply(seq_along(sm_names), function(i) {
       if (grepl("^t2\\(", sm_names_orig[i])) {
-        paste0("st2(", gsub(",", "", sm_names[i]), ")")
+        paste0("t2(", sm_names[i], ")")
       } else {
         paste0("s", sm_names[i])
       }
@@ -131,8 +131,8 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
       rep(cls, n_expanded)
     }, sm_classes, lengths(xx), SIMPLIFY = FALSE))
 
-    # For coefficient names (sd_name = FALSE) removes commas and adds indices,
-    #   "st2(X,Y)" to "st2(XY)_1"
+    # For coefficient names (sd_name = FALSE) adds indices,
+    #   "t2(X,Y)" to "t2(X,Y)_1"
     # For SD names (is_sd_name = TRUE) adding indices after parenthesis
     #   "sds(X,Y)" to "sds(X,Y)_1"
     index_sm_names <- function(x, orig_names, is_sd_name = FALSE) {
@@ -148,26 +148,18 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
           count <- j - i
           if (count > 1) {
             if (is_sd_name) {
-              # SD case: remove end ), add index, add ) back
-              names_indexed[i:(j-1)] <- paste0(gsub("\\)$", "", current_name), ")_", seq_len(count))
+              # SD case: add index after closing parenthesis
+              names_indexed[i:(j-1)] <- paste0(current_name, "_", seq_len(count))
             } else {
-              # For coef names just remove commas
-              names_indexed[i:(j-1)] <- paste0(gsub(",", "", current_name), "_", seq_len(count))
+              # For coef names keep commas and add indices
+              names_indexed[i:(j-1)] <- paste0(current_name, "_", seq_len(count))
             }
           } else {
-            if (is_sd_name) {
-              names_indexed[i] <- current_name
-            } else {
-              names_indexed[i] <- gsub(",", "", current_name)
-            }
+            names_indexed[i] <- current_name
           }
           i <- j
         } else {
-          if (is_sd_name) {
-            names_indexed[i] <- x[i]
-          } else {
-            names_indexed[i] <- gsub(",", "", x[i])
-          }
+          names_indexed[i] <- x[i]
           i <- i + 1
         }
       }

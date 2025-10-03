@@ -486,10 +486,9 @@ test_that("print works with t2()", {
 
   # Check that coefficient names are indexed correctly using tidy
   coef_tidy <- tidy(fit, silent = TRUE)
-  expect_true(any(grepl("^st2\\(XY\\)_1$", coef_tidy$term)))
-  expect_true(any(grepl("^st2\\(XY\\)_2$", coef_tidy$term)))
-  expect_true(any(grepl("^st2\\(XY\\)_3$", coef_tidy$term)))
-
+  expect_true(any(grepl("^t2\\(X,Y\\)_1$", coef_tidy$term)))
+  expect_true(any(grepl("^t2\\(X,Y\\)_2$", coef_tidy$term)))
+  expect_true(any(grepl("^t2\\(X,Y\\)_3$", coef_tidy$term)))
   # Check smooth SD names via tidy ran_pars
   ran_pars <- tidy(fit, effects = "ran_pars", silent = TRUE)
   expect_true(any(grepl("^ln_SD_s\\(X,Y\\)_1$", ran_pars$term)))
