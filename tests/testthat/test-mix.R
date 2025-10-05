@@ -21,7 +21,7 @@ test_that("Gamma, NB2, and lognormal mixtures fit and recover mixing proportion"
     family = gamma_mix(),
     spatial = "off"
   )
-  expect_equal(m$model$par[["logit_p_mix"]], stats::qlogis(0.1), tolerance = 0.1)
+  expect_equal(m$model$par[["logit_p_extreme"]], stats::qlogis(0.1), tolerance = 0.1)
   expect_equal(exp(m$model$par[["log_ratio_mix"]]), 3.0, tolerance = 0.01)
 
   p <- predict(m, newdata = m$data)
@@ -33,7 +33,7 @@ test_that("Gamma, NB2, and lognormal mixtures fit and recover mixing proportion"
     family = lognormal_mix(),
     spatial = "off"
   )
-  expect_equal(m$model$par[["logit_p_mix"]], stats::qlogis(0.1), tolerance = 0.1)
+  expect_equal(m$model$par[["logit_p_extreme"]], stats::qlogis(0.1), tolerance = 0.1)
   expect_equal(exp(m$model$par[["log_ratio_mix"]]), 3.0, tolerance = 0.01)
 
   # NB2
@@ -49,7 +49,7 @@ test_that("Gamma, NB2, and lognormal mixtures fit and recover mixing proportion"
     family = nbinom2_mix(),
     spatial = "off"
   )
-  expect_equal(m$model$par[["logit_p_mix"]], stats::qlogis(0.1), tolerance = 0.1)
+  expect_equal(m$model$par[["logit_p_extreme"]], stats::qlogis(0.1), tolerance = 0.1)
   expect_equal(1 + exp(m$model$par[["log_ratio_mix"]]), mix_ratio, tolerance = 0.1)
 
   p <- predict(m, newdata = m$data)
@@ -106,6 +106,67 @@ test_that("Test that delta lognormal mixture fits", {
   p <- predict(m, newdata = m$data, type = "response")
   expect_equal(mean(p$est), mean(d$y), tolerance = 0.01)
   # expect_length(residuals(m, model = 2), nrow(d))
+})
+
+test_that("Test that mixture with fixed p_extreme works", {
+  skip_on_cran()
+
+  set.seed(1)
+  y0 <- rep(0, 500)
+  y1 <- stats::rlnorm(500, 0, 0.5)
+  y2 <- stats::rlnorm(100, 1, 0.5)
+  d <- data.frame(y = c(y0, y1, y2))
+
+  m <- sdmTMB(
+    data = d,
+    formula = y ~ 1,
+    family = delta_lognormal_mix(p_extreme=0.1),
+    spatial = "off"
+  )
+  vals <- m$sd_report$value
+  expect_equal(as.numeric(vals[which(names(vals) == "logit_p_extreme")]),
+               log(0.1/(1-0.1)))
+  expect_equal(round(as.numeric(vals[which(names(vals) == "log_ratio_mix")]),3),
+               0.602)
+
+  m <- sdmTMB(
+    data = d,
+    formula = y ~ 1,
+    family = delta_gamma_mix(p_extreme=0.1),
+    spatial = "off"
+  )
+  vals <- m$sd_report$value
+  expect_equal(as.numeric(vals[which(names(vals) == "logit_p_extreme")]),
+               log(0.1/(1-0.1)))
+  expect_equal(round(as.numeric(vals[which(names(vals) == "log_ratio_mix")]),3),
+               0.675)
+
+  d <- data.frame(y = c(y1, y2))
+
+  m <- sdmTMB(
+    data = d,
+    formula = y ~ 1,
+    family = lognormal_mix(p_extreme=0.1),
+    spatial = "off"
+  )
+  vals <- m$sd_report$value
+  expect_equal(as.numeric(vals[which(names(vals) == "logit_p_extreme")]),
+               log(0.1/(1-0.1)))
+  expect_equal(round(as.numeric(vals[which(names(vals) == "log_ratio_mix")]),3),
+               0.602)
+
+  m <- sdmTMB(
+    data = d,
+    formula = y ~ 1,
+    family = gamma_mix(p_extreme=0.1),
+    spatial = "off"
+  )
+  vals <- m$sd_report$value
+  expect_equal(as.numeric(vals[which(names(vals) == "logit_p_extreme")]),
+               log(0.1/(1-0.1)))
+  expect_equal(round(as.numeric(vals[which(names(vals) == "log_ratio_mix")]),3),
+               0.675)
+
 })
 
 test_that("Test that simulation functions work with mixture models", {
