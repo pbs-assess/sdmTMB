@@ -545,21 +545,18 @@ $$ where $\phi$ represents the Gamma shape, $\mu_{1} / \phi$ represents the scal
 
 The mean is $(1-p) \cdot \mu_{1} + p \cdot \mu_{2}$ and the variance is $(1-p) ^ 2 \cdot \mu_{1} \cdot \phi^2 + (p) ^ 2 \cdot \mu_{2} \cdot \phi^2$.
 
-Here, and for the other mixture distributions, the probability of the larger mean can be obtained from `plogis(fit$model$par[["logit_p_mix"]])` and the ratio of the larger mean to the smaller mean can be obtained from `1 + exp(fit$model$par[["log_ratio_mix"]])`.
+Here, and for the other mixture distributions, the probability of the larger mean can be obtained from `plogis(fit$model$par[["logit_p_extreme"]])` and the ratio of the larger mean to the smaller mean can be obtained from `1 + exp(fit$model$par[["log_ratio_mix"]])`.
 The standard errors are available in the TMB sdreport: `fit$sd_report`.
 
-If you wish to fix the probability of a large (i.e., extreme) mean, which can be hard to estimate, you can use the `map` list. E.g.:
+If you wish to fix the probability of a large (i.e., extreme) mean, which can be hard to estimate, you can fix this value and pass this to the family:
 
 ```r
 sdmTMB(...,
-  control = sdmTMBcontrol(
-    start = list(logit_p_mix = qlogis(0.05)), # 5% probability of 'mu2'
-    map = list(logit_p_mix = factor(NA)) # don't estimate
-  )
+  family = gamma_mix(link = "log", p_extreme = 0.01)
 )
 ```
 
-Example: `family = gamma_mix(link = "log")`. See also `family = delta_gamma_mix()` for an extension incorporating this distribution with delta models.
+See also `family = delta_gamma_mix()` for an extension incorporating this distribution with delta models.
 
 ## Lognormal mixture
 
@@ -573,7 +570,13 @@ Because of the bias correction, $\mathbb{E}[y] = (1-p) \cdot \mu_{1} + p \cdot \
 
 As with the Gamma mixture, $p$ controls the contribution of each component to the mixture (also interpreted as the probability of larger events).
 
-Example: `family = lognormal_mix(link = "log")`. See also `family = delta_lognormal_mix()` for an extension incorporating this distribution with delta models. 
+Example: `family = lognormal_mix(link = "log")`. See also `family = delta_lognormal_mix()` for an extension incorporating this distribution with delta models. Like with the gamma mixture, fixed probabilities of extreme events ($p$ in notation above) can be passed in, e.g.
+
+```r
+sdmTMB(...,
+  family = delta_lognormal_mix(p_extreme = 0.01)
+)
+```
 
 ## Negative binomial 2 mixture
 
