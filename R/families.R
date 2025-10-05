@@ -110,10 +110,11 @@ gengamma <- function(link = "log") {
 #' @details The families ending in `_mix()` are 2-component mixtures where each
 #'   distribution has its own mean but a shared scale parameter.
 #'   (Thorson et al. 2011). See the model-description vignette for details.
-#'   The parameter `plogis(log_p_mix)` is the probability of the extreme (larger)
+#'   The parameter `p_extreme = plogis(logit_p_extreme)` is the probability of the extreme (larger)
 #'   mean and `exp(log_ratio_mix) + 1` is the ratio of the larger extreme
 #'   mean to the "regular" mean. You can see these parameters in
-#'   `model$sd_report`.
+#'   `model$sd_report`. The parameter `p_extreme` can be fixed a priori and passed
+#'   in as a proportion for these families.
 #' @references
 #'
 #' *Families ending in `_mix()`*:
@@ -122,11 +123,13 @@ gengamma <- function(link = "log") {
 #' in single- and multi-species survey data using mixture distribution models.
 #' Can. J. Fish. Aquat. Sci. 68(9): 1681–1693. \doi{10.1139/f2011-086}.
 
+#' @param p_extreme Optional fixed probability for the extreme component. If NULL (default),
+#'   this is estimated. If specified, must be a proportion between 0 and 1.
 #' @export
 #' @rdname families
 #' @examples
 #' gamma_mix(link = "log")
-gamma_mix <- function(link = "log") {
+gamma_mix <- function(link = "log", p_extreme = NULL) {
   linktemp <- substitute(link)
   if (!is.character(linktemp))
     linktemp <- deparse(linktemp)
@@ -135,15 +138,24 @@ gamma_mix <- function(link = "log") {
     stats <- stats::make.link(linktemp)
   else if (is.character(link))
     stats <- stats::make.link(link)
-  x <- c(list(family = "gamma_mix", link = linktemp), stats)
+
+  if (!is.null(p_extreme)) {
+    if (!is.numeric(p_extreme) || p_extreme <= 0 || p_extreme >= 1) {
+      stop("p_extreme must be NULL or a proportion between 0 and 1")
+    }
+  }
+
+  x <- c(list(family = "gamma_mix", link = linktemp, p_extreme = p_extreme), stats)
   add_to_family(x)
 }
 
+#' @param p_extreme Optional fixed probability for the extreme component. If NULL (default),
+#'   this is estimated. If specified, must be a proportion between 0 and 1.
 #' @export
 #' @rdname families
 #' @examples
 #' lognormal_mix(link = "log")
-lognormal_mix <- function(link = "log") {
+lognormal_mix <- function(link = "log", p_extreme = NULL) {
   linktemp <- substitute(link)
   if (!is.character(linktemp))
     linktemp <- deparse(linktemp)
@@ -152,15 +164,23 @@ lognormal_mix <- function(link = "log") {
     stats <- stats::make.link(linktemp)
   else if (is.character(link))
     stats <- stats::make.link(link)
-  x <- c(list(family = "lognormal_mix", link = linktemp), stats)
+
+  if (!is.null(p_extreme)) {
+    if (!is.numeric(p_extreme) || p_extreme <= 0 || p_extreme >= 1) {
+      stop("p_extreme must be NULL or a proportion between 0 and 1")
+    }
+  }
+  x <- c(list(family = "lognormal_mix", link = linktemp, p_extreme = p_extreme), stats)
   add_to_family(x)
 }
 
+#' @param p_extreme Optional fixed probability for the extreme component. If NULL (default),
+#'   this is estimated. If specified, must be a proportion between 0 and 1.
 #' @export
 #' @rdname families
 #' @examples
 #' nbinom2_mix(link = "log")
-nbinom2_mix <- function(link = "log") {
+nbinom2_mix <- function(link = "log", p_extreme = NULL) {
   linktemp <- substitute(link)
   if (!is.character(linktemp))
     linktemp <- deparse(linktemp)
@@ -169,7 +189,13 @@ nbinom2_mix <- function(link = "log") {
     stats <- stats::make.link(linktemp)
   else if (is.character(link))
     stats <- stats::make.link(link)
-  x <- c(list(family = "nbinom2_mix", link = linktemp), stats)
+
+  if (!is.null(p_extreme)) {
+    if (!is.numeric(p_extreme) || p_extreme <= 0 || p_extreme >= 1) {
+      stop("p_extreme must be NULL or a proportion between 0 and 1")
+    }
+  }
+  x <- c(list(family = "nbinom2_mix", link = linktemp, p_extreme = p_extreme), stats)
   add_to_family(x)
 }
 
@@ -372,15 +398,18 @@ delta_gamma <- function(link1,
     clean_name = clean_name), class = "family")
 }
 
+#' @param p_extreme Optional fixed probability for the extreme component. If NULL (default),
+#'   this is estimated. If specified, must be a proportion between 0 and 1.
 #' @export
 #' @examples
 #' delta_gamma_mix()
 #' @rdname families
-delta_gamma_mix <- function(link1 = "logit", link2 = "log") {
+delta_gamma_mix <- function(link1 = "logit", link2 = "log", p_extreme = NULL) {
   f1 <- binomial(link = link1)
   f2 <- gamma_mix(link = link2)
   structure(list(f1, f2, delta = TRUE, link = c("logit", "log"),
        family = c("binomial", "gamma_mix"),
+       p_extreme = p_extreme,
        clean_name = "delta_gamma_mix(link1 = 'logit', link2 = 'log')"), class = "family")
 }
 
@@ -436,11 +465,13 @@ delta_lognormal <- function(link1,
     clean_name = clean_name), class = "family")
 }
 
+#' @param p_extreme Optional fixed probability for the extreme component. If NULL (default),
+#'   this is estimated. If specified, must be a proportion between 0 and 1.
 #' @export
 #' @examples
 #' delta_lognormal_mix()
 #' @rdname families
-delta_lognormal_mix <- function(link1, link2 = "log", type = c("standard", "poisson-link")) {
+delta_lognormal_mix <- function(link1, link2 = "log", type = c("standard", "poisson-link"), p_extreme = NULL) {
   type <- match.arg(type)
   if (missing(link1)) link1 <- if (type == "standard") "logit" else "log"
   l1 <- substitute(link1)
@@ -458,6 +489,7 @@ delta_lognormal_mix <- function(link1, link2 = "log", type = c("standard", "pois
   }
   structure(list(f1, f2, delta = TRUE, link = c(l1, l2),
        family = c("binomial", "lognormal_mix"), type = .type,
+       p_extreme = p_extreme,
        clean_name = clean_name), class = "family")
 }
 

@@ -96,26 +96,26 @@ qres_gamma <- function(object, y, mu, ...) {
 qres_gamma_mix <- function(object, y, mu, ...) {
   cli_abort("Randomized quantile residuals for this family are not implemented yet")
   # theta <- get_pars(object)
-  # p_mix <- plogis(theta[["logit_p_mix"]])
+  # p_extreme <- plogis(theta[["logit_p_extreme"]])
   # phi <- exp(theta[["ln_phi"]])
   # if (is_delta(object)) phi <- phi[2]
   # ratio <- exp(theta[["log_ratio_mix"]])
   # s1 <- phi
   # s2 <- mu / s1
   # s3 <- (ratio * mu) / s1
-  # u <- stats::pgamma(q = y, shape = s1, scale = (1-p_mix)*s2 + p_mix*s3) # this looks wrong
+  # u <- stats::pgamma(q = y, shape = s1, scale = (1-p_extreme)*s2 + p_extreme*s3) # this looks wrong
   # stats::qnorm(u)
 }
 
 qres_nbinom2_mix <- function(object, y, mu, ...) {
   cli_abort("Randomized quantile residuals for this family are not implemented yet")
   theta <- get_pars(object)
-  p_mix <- plogis(theta[["logit_p_mix"]])
+  p_extreme <- plogis(theta[["logit_p_extreme"]])
   phi <- exp(theta[["ln_phi"]])
   if (is_delta(object)) phi <- phi[2]
   ratio <- exp(theta[["log_ratio_mix"]])
-  a <- stats::pnbinom(y - 1, size = phi, mu = (1-p_mix)*mu + p_mix*ratio*mu)
-  b <- stats::pnbinom(y, size = phi, mu = (1-p_mix)*mu + p_mix*ratio*mu)
+  a <- stats::pnbinom(y - 1, size = phi, mu = (1-p_extreme)*mu + p_extreme*ratio*mu)
+  b <- stats::pnbinom(y, size = phi, mu = (1-p_extreme)*mu + p_extreme*ratio*mu)
   u <- stats::runif(n = length(y), min = a, max = b)
   stats::qnorm(u)
 }
@@ -123,11 +123,11 @@ qres_nbinom2_mix <- function(object, y, mu, ...) {
 qres_lognormal_mix <- function(object, y, mu, ...) {
   cli_abort("Randomized quantile residuals for this family are not implemented yet")
   theta <- get_pars(object)
-  p_mix <- plogis(theta[["logit_p_mix"]])
+  p_extreme <- plogis(theta[["logit_p_extreme"]])
   dispersion <- exp(theta[["ln_phi"]])
   if (is_delta(object)) dispersion <- dispersion[2]
   ratio <- exp(theta[["log_ratio_mix"]])
-  u <- stats::plnorm(q = y, meanlog = log((1-p_mix)*mu + p_mix*ratio*mu) - (dispersion^2) / 2, sdlog = dispersion)
+  u <- stats::plnorm(q = y, meanlog = log((1-p_extreme)*mu + p_extreme*ratio*mu) - (dispersion^2) / 2, sdlog = dispersion)
   stats::qnorm(u)
 }
 
