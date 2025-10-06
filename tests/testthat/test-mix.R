@@ -108,7 +108,7 @@ test_that("Test that delta lognormal mixture fits", {
   # expect_length(residuals(m, model = 2), nrow(d))
 })
 
-test_that("Test that mixture with fixed extreme_p works", {
+test_that("Test that mixture with fixed p_extreme works", {
   skip_on_cran()
 
   set.seed(1)
@@ -120,7 +120,7 @@ test_that("Test that mixture with fixed extreme_p works", {
   m <- sdmTMB(
     data = d,
     formula = y ~ 1,
-    family = delta_lognormal_mix(extreme_p=0.1),
+    family = delta_lognormal_mix(p_extreme=0.1),
     spatial = "off"
   )
   vals <- m$sd_report$value
@@ -132,7 +132,7 @@ test_that("Test that mixture with fixed extreme_p works", {
   m <- sdmTMB(
     data = d,
     formula = y ~ 1,
-    family = delta_gamma_mix(extreme_p=0.1),
+    family = delta_gamma_mix(p_extreme=0.1),
     spatial = "off"
   )
   vals <- m$sd_report$value
@@ -146,7 +146,7 @@ test_that("Test that mixture with fixed extreme_p works", {
   m <- sdmTMB(
     data = d,
     formula = y ~ 1,
-    family = lognormal_mix(extreme_p=0.1),
+    family = lognormal_mix(p_extreme=0.1),
     spatial = "off"
   )
   vals <- m$sd_report$value
@@ -158,7 +158,7 @@ test_that("Test that mixture with fixed extreme_p works", {
   m <- sdmTMB(
     data = d,
     formula = y ~ 1,
-    family = gamma_mix(extreme_p=0.1),
+    family = gamma_mix(p_extreme=0.1),
     spatial = "off"
   )
   vals <- m$sd_report$value
