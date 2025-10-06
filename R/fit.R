@@ -1460,12 +1460,12 @@ sdmTMB <- function(
 
   # Handle mixture models
   if (family$family[[1]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
-    fixed_extreme_p <- family$extreme_p
+    fixed_p_extreme <- family$p_extreme
 
-    if (!is.null(fixed_extreme_p)) {
+    if (!is.null(fixed_p_extreme)) {
       # Fix logit_p_extreme at the user-specified value
       tmb_map$logit_p_extreme <- factor(NA)
-      tmb_params$logit_p_extreme <- log(fixed_extreme_p/(1-fixed_extreme_p))
+      tmb_params$logit_p_extreme <- log(fixed_p_extreme/(1-fixed_p_extreme))
       tmb_map$log_ratio_mix <- NULL
     } else {
       tmb_map$log_ratio_mix <- NULL
@@ -1475,13 +1475,13 @@ sdmTMB <- function(
   # delta mixture models
   if (delta) {
     if (family$family[[2]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
-      fixed_extreme_p <- family[[2]]$extreme_p
-      if (is.null(fixed_extreme_p)) fixed_extreme_p <- family$extreme_p
+      fixed_p_extreme <- family[[2]]$p_extreme
+      if (is.null(fixed_p_extreme)) fixed_p_extreme <- family$p_extreme
 
-      if (!is.null(fixed_extreme_p)) {
+      if (!is.null(fixed_p_extreme)) {
         # Fix logit_p_extreme at the user-specified value
         tmb_map$logit_p_extreme <- factor(NA)
-        tmb_params$logit_p_extreme <- log(fixed_extreme_p/(1-fixed_extreme_p))
+        tmb_params$logit_p_extreme <- log(fixed_p_extreme/(1-fixed_p_extreme))
         tmb_map$log_ratio_mix <- NULL
       } else {
         tmb_map$log_ratio_mix <- NULL
