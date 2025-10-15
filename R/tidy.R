@@ -321,7 +321,8 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     p <- print_smooth_effects(x, m = model, silent = TRUE)
     ln_sds <- p$ln_sd_estimates
     # Convert from log-scale to natural scale and update term names
-    term_names <- gsub("^SD_s\\(", "sd__s(", row.names(ln_sds))
+    term_names <- gsub("^ln_SD_s\\(", "sd__s(", row.names(ln_sds))
+    term_names <- gsub("^ln_SD_t2\\(", "sd__t2(", term_names)
     # add on CIs - calculate in log space then transform
     ln_sds_df <- data.frame(term = term_names,
                             estimate = exp(ln_sds[,1]),

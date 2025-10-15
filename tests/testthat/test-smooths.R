@@ -475,3 +475,35 @@ test_that("An fx=TRUE smoother errors out", {
     spatial = "off"
   ))
 })
+
+test_that("print works with t2()", {
+  skip_on_cran()
+  skip_on_ci()
+
+  # Test basic t2() printing
+  fit <- sdmTMB(density ~ t2(X, Y, k = 4),
+    spatial = "off",
+    data = pcod
+  )
+
+  # Check that coefficient names are indexed correctly using tidy
+  coef_tidy <- tidy(fit, silent = TRUE)
+  expect_true(any(grepl("^t2\\(X,Y\\)_1$", coef_tidy$term)))
+  expect_true(any(grepl("^t2\\(X,Y\\)_2$", coef_tidy$term)))
+  expect_true(any(grepl("^t2\\(X,Y\\)_3$", coef_tidy$term)))
+  # Check smooth SD names via tidy ran_pars
+  ran_pars <- tidy(fit, effects = "ran_pars", silent = TRUE)
+  expect_true(any(grepl("^sd__t2\\(X,Y\\)_1$", ran_pars$term)))
+  expect_true(any(grepl("^sd__t2\\(X,Y\\)_2$", ran_pars$term)))
+  expect_true(any(grepl("^sd__t2\\(X,Y\\)_3$", ran_pars$term)))
+
+  # add in an s() too:
+  fit2 <- sdmTMB(density ~ t2(X, Y, k = 4) + s(year, k = 3),
+    spatial = "off",
+    data = pcod
+  )
+  print(fit2)
+  ran_pars <- tidy(fit2, effects = "ran_pars", silent = TRUE)
+  expect_true(any(grepl("^sd__s\\(year\\)$", ran_pars$term)))
+  expect_true(any(grepl("^sd__t2\\(X,Y\\)_1$", ran_pars$term)))
+})

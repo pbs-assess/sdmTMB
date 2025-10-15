@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Improve `t2()` printing and appearance in `tidy.sdmTMB()`. #415 #472
+
 * Add beta-binomial family (`betabinomial()`) for modeling overdispersed binomial
   data. Supports logit and cloglog links, and includes proper residuals support.
 

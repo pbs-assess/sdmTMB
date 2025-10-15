@@ -100,9 +100,23 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
     sm_names <- gsub("s\\(", "", sm_names_orig)
     sm_names <- gsub("t2\\(", "", sm_names)
     sm_names <- gsub("\\)$", "", sm_names)
-    sm_names_bs <- paste0("s", sm_names)
+
+    sm_names_bs <- sapply(seq_along(sm_names), function(i) {
+      if (grepl("^t2\\(", sm_names_orig[i])) {
+        paste0("t2(", sm_names[i], ")")
+      } else {
+        paste0("s", sm_names[i])
+      }
+    })
     sm_classes <- unlist(sm$classes)
-    xx <- lapply(sm_names_bs, function(.x) { # split out 2D + smooths
+
+    xx <- lapply(seq_along(sm_names_bs), function(i) {
+      .x <- sm_names_bs[i]
+      # For t2() smooths, don't expand - just use the base name
+      if (grepl("^t2\\(", sm_names_orig[i])) {
+        return(.x)
+      }
+      # original approach for regular univariate smooths
       n_sm <- grep(",", .x) + 1
       if (length(n_sm)) {
         .x <- paste(.x, seq_len(n_sm), sep = "_")
@@ -111,12 +125,86 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
         .x
       }
     })
-    sm_names_bs <- unlist(xx)
-    sm_names_sds <- paste0("sds(", sm_names, ")")
-    sm_names_sds_tidy <- paste0("SD_s(", sm_names, ifelse(grepl(":", sm_names), "", ")"))
+
+    # Expand sm_classes to match the expanded names
+    sm_classes_expanded <- unlist(mapply(function(cls, n_expanded) {
+      rep(cls, n_expanded)
+    }, sm_classes, lengths(xx), SIMPLIFY = FALSE))
+
+    # For coefficient names (sd_name = FALSE) adds indices,
+    #   "t2(X,Y)" to "t2(X,Y)_1"
+    # For SD names (is_sd_name = TRUE) adding indices after parenthesis
+    #   "sds(X,Y)" to "sds(X,Y)_1"
+    index_sm_names <- function(x, orig_names, is_sd_name = FALSE) {
+      names_indexed <- character(length(x))
+      i <- 1
+      while (i <= length(x)) {
+        if (grepl("^t2\\(", orig_names[i])) { # t2 case
+          current_name <- x[i]
+          j <- i
+          while (j <= length(x) && x[j] == current_name) {
+            j <- j + 1
+          }
+          count <- j - i
+          if (count > 1) {
+            if (is_sd_name) {
+              # SD case: add index after closing parenthesis
+              names_indexed[i:(j-1)] <- paste0(current_name, "_", seq_len(count))
+            } else {
+              # For coef names keep commas and add indices
+              names_indexed[i:(j-1)] <- paste0(current_name, "_", seq_len(count))
+            }
+          } else {
+            names_indexed[i] <- current_name
+          }
+          i <- j
+        } else {
+          names_indexed[i] <- x[i]
+          i <- i + 1
+        }
+      }
+      return(names_indexed)
+    }
+
+    # Helper function for smooth SD names - just returns one name per component
+    # For regular s(): "depth" becomes sds(depth) or ln_SD_s(depth)
+    # For smooths with by: depth):year2003 becomes sds(depth):year2003
+    # For t2 smooths: returns one name per component, e.g., [sdt2(X,Y), sdt2(X,Y), sdt2(X,Y)]
+    # These will be indexed later to become ..._1, ..._2, ..._3
+    expand_smooth_sd_names <- function(prefix, sm_names, sm_names_orig) {
+      lapply(seq_along(sm_names), function(i) {
+        has_colon <- grepl(":", sm_names[i])
+        # Check if original was t2() smoother and modify prefix accordingly
+        if (grepl("^t2\\(", sm_names_orig[i])) {
+          # Replace 's' pattern in prefix with 't2' for t2 smoothers
+          # Handle both "sds(" and "ln_SD_s(" patterns
+          prefix_modified <- gsub("^sds\\(", "sdt2(", prefix)
+          prefix_modified <- gsub("_s\\(", "_t2(", prefix_modified)
+          paste0(prefix_modified, sm_names[i], ifelse(has_colon, "", ")"))
+        } else {
+          paste0(prefix, sm_names[i], ifelse(has_colon, "", ")"))
+        }
+      })
+    }
+
+    # Create the SD name lists
+    sm_names_sds_list <- expand_smooth_sd_names("sds(", sm_names, sm_names_orig)
+    ln_sm_names_sds_list <- expand_smooth_sd_names("ln_SD_s(", sm_names, sm_names_orig)
+
+    # Now index all the names
+    sm_names_bs <- index_sm_names(unlist(xx),
+                                  sm_names_orig,
+                                  is_sd_name = FALSE)
+    sm_names_sds <- index_sm_names(unlist(sm_names_sds_list),
+                                   sm_names_orig,
+                                   is_sd_name = TRUE)
+    ln_sm_names_sds <- index_sm_names(unlist(ln_sm_names_sds_list),
+                                      sm_names_orig,
+                                      is_sd_name = TRUE)
+
     mm_sm <- cbind(bs, bs_se)
 
-    .sm_names_bs <- sm_names_bs[!sm_classes %in% c("cc.smooth.spec", "cs.smooth.spec")]
+    .sm_names_bs <- sm_names_bs[!sm_classes_expanded %in% c("cc.smooth.spec", "cs.smooth.spec")]
     if (length(.sm_names_bs) != nrow(mm_sm)) {
       if (nrow(mm_sm) > 0L) {
         msg <- c(
@@ -138,14 +226,17 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
     smooth_sds <- round(exp(sr_est$ln_smooth_sigma[, m]), 2L)
     re_sm_mat <- matrix(NA_real_, nrow = length(smooth_sds), ncol = 1L)
     re_sm_mat[, 1] <- smooth_sds
-    rownames(re_sm_mat) <- sm_names_sds
+    # Convert sds() and sdt2() to sd__s() and sd__t2() to match tidy() convention
+    print_names <- gsub("^sds\\(", "sd__s(", sm_names_sds)
+    print_names <- gsub("^sdt2\\(", "sd__t2(", print_names)
+    rownames(re_sm_mat) <- print_names
     colnames(re_sm_mat) <- "Std. Dev."
 
     # second matrix for ran_pars
     ln_re_sm_mat <- matrix(NA_real_, nrow = length(smooth_sds), ncol = 2L)
     ln_re_sm_mat[, 1] <- sr_est$ln_smooth_sigma[, m]
     ln_re_sm_mat[, 2] <- sr_se$ln_smooth_sigma[, m]
-    rownames(ln_re_sm_mat) <- sm_names_sds_tidy
+    rownames(ln_re_sm_mat) <- ln_sm_names_sds
     colnames(ln_re_sm_mat) <- c("estimate", "std.error")
 
     if (!is.null(edf)) {
