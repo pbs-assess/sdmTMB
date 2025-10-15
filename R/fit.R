@@ -1240,7 +1240,7 @@ sdmTMB <- function(
     # ln_kappa   = rep(log(sqrt(8) / median(stats::dist(spde$mesh$loc))), 2),
     thetaf = 0,
     gengamma_Q = 0.5, # Not defined at exactly 0
-    logit_p_mix = 0,
+    logit_p_extreme = 0,
     log_ratio_mix = -1, # ratio is 1 + exp(log_ratio_mix) so 0 would start fairly high
     ln_phi = rep(0, n_m),
     ln_tau_V = matrix(0, ncol(X_rw_ik), n_m),
@@ -1458,14 +1458,35 @@ sdmTMB <- function(
     tmb_map$ln_H_input <- factor(c(1, 2, 1, 2)) # share anisotropy as in VAST
   }
 
+  # Handle mixture models
   if (family$family[[1]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
-    tmb_map$log_ratio_mix <- NULL # performs better starting this in 2nd phase
-    tmb_map$logit_p_mix <- NULL # performs better starting this in 2nd phase
+    fixed_p_extreme <- family$p_extreme
+
+    if (!is.null(fixed_p_extreme)) {
+      # Fix logit_p_extreme at the user-specified value
+      tmb_map$logit_p_extreme <- factor(NA)
+      tmb_params$logit_p_extreme <- log(fixed_p_extreme/(1-fixed_p_extreme))
+      tmb_map$log_ratio_mix <- NULL
+    } else {
+      tmb_map$log_ratio_mix <- NULL
+      tmb_map$logit_p_extreme <- NULL
+    }
   }
+  # delta mixture models
   if (delta) {
     if (family$family[[2]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
-      tmb_map$log_ratio_mix <- NULL
-      tmb_map$logit_p_mix <- NULL
+      fixed_p_extreme <- family[[2]]$p_extreme
+      if (is.null(fixed_p_extreme)) fixed_p_extreme <- family$p_extreme
+
+      if (!is.null(fixed_p_extreme)) {
+        # Fix logit_p_extreme at the user-specified value
+        tmb_map$logit_p_extreme <- factor(NA)
+        tmb_params$logit_p_extreme <- log(fixed_p_extreme/(1-fixed_p_extreme))
+        tmb_map$log_ratio_mix <- NULL
+      } else {
+        tmb_map$log_ratio_mix <- NULL
+        tmb_map$logit_p_extreme <- NULL
+      }
     }
   }
 

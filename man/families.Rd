@@ -34,11 +34,11 @@ lognormal(link = "log")
 
 gengamma(link = "log")
 
-gamma_mix(link = "log")
+gamma_mix(link = "log", p_extreme = NULL)
 
-lognormal_mix(link = "log")
+lognormal_mix(link = "log", p_extreme = NULL)
 
-nbinom2_mix(link = "log")
+nbinom2_mix(link = "log", p_extreme = NULL)
 
 nbinom2(link = "log")
 
@@ -56,13 +56,18 @@ censored_poisson(link = "log")
 
 delta_gamma(link1, link2 = "log", type = c("standard", "poisson-link"))
 
-delta_gamma_mix(link1 = "logit", link2 = "log")
+delta_gamma_mix(link1 = "logit", link2 = "log", p_extreme = NULL)
 
 delta_gengamma(link1, link2 = "log", type = c("standard", "poisson-link"))
 
 delta_lognormal(link1, link2 = "log", type = c("standard", "poisson-link"))
 
-delta_lognormal_mix(link1, link2 = "log", type = c("standard", "poisson-link"))
+delta_lognormal_mix(
+  link1,
+  link2 = "log",
+  type = c("standard", "poisson-link"),
+  p_extreme = NULL
+)
 
 delta_truncated_nbinom2(link1 = "logit", link2 = "log")
 
@@ -78,6 +83,9 @@ delta_beta(link1 = "logit", link2 = "logit")
 }
 \arguments{
 \item{link}{Link.}
+
+\item{p_extreme}{Optional fixed probability for the extreme component. If NULL (default),
+this is estimated. If specified, must be a proportion between 0 and 1.}
 
 \item{df}{Student-t degrees of freedom fixed value parameter.}
 
@@ -111,10 +119,11 @@ should be the gamma.
 The families ending in \verb{_mix()} are 2-component mixtures where each
 distribution has its own mean but a shared scale parameter.
 (Thorson et al. 2011). See the model-description vignette for details.
-The parameter \code{plogis(log_p_mix)} is the probability of the extreme (larger)
+The parameter \code{p_extreme = plogis(logit_p_extreme)} is the probability of the extreme (larger)
 mean and \code{exp(log_ratio_mix) + 1} is the ratio of the larger extreme
 mean to the "regular" mean. You can see these parameters in
-\code{model$sd_report}.
+\code{model$sd_report}. The parameter \code{p_extreme} can be fixed a priori and passed
+in as a proportion for these families.
 
 The \code{nbinom2} negative binomial parameterization is the NB2 where the
 variance grows quadratically with the mean (Hilbe 2011).
