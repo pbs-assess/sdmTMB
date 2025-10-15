@@ -43,6 +43,7 @@ reference:
   - set_delta_model
   - make_category_svc
   - coef.sdmTMB
+  - sigma.sdmTMB
   - cAIC
 
 - title: 'Families'
