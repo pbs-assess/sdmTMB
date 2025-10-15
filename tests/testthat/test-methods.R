@@ -8,6 +8,7 @@ test_that("coef and vcov and confint work", {
   x <- coef(fit)
   expect_equal(round(unname(x), 3), c(5.347, -0.010))
   expect_equal(names(x), c("(Intercept)", "depth"))
+  expect_equal(round(sigma(fit), 3), 16.887)
 
   x <- vcov(fit)
   expect_equal(nrow(x), 2L)
@@ -37,6 +38,8 @@ test_that("coef works with delta models and informs as needed", {
   expect_message(x <- coef(fit), regexp = "model")
   expect_message(x <- coef(fit, model = 1), regexp = "model")
   expect_message(x <- coef(fit, model = 2), regexp = "model")
+
+  expect_equal(round(sigma(fit), 3), 1.261)
 })
 
 test_that("various methods work", {
@@ -77,4 +80,29 @@ test_that("various methods work", {
   )
   x <- ranef(fit)
   expect_equal(nrow(x[[1]]$fyear), 4L)
+})
+
+test_that("more sigma methods work", {
+  skip_on_cran()
+
+  fit <- sdmTMB(
+    density ~ 1,
+    data = pcod_2011, spatial = "off",
+    family = tweedie(link = "log")
+  )
+  expect_equal(round(sigma(fit), 3), 17.592)
+
+  fit <- sdmTMB(
+    density ~ 1,
+    data = pcod_2011, spatial = "off",
+    family = delta_lognormal()
+  )
+  expect_equal(round(sigma(fit), 3), 1.414)
+
+  fit <- sdmTMB(
+    density ~ 1,
+    data = pcod_2011, spatial = "off",
+    family = poisson(link = "log")
+  )
+  expect_equal(sigma(fit), 1)
 })

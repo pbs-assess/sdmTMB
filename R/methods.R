@@ -417,3 +417,65 @@ update.sdmTMB <- function(object, formula., ..., evaluate = TRUE) {
     call
   }
 }
+
+#' Extract residual standard deviation or dispersion parameter
+#'
+#' @param object The fitted sdmTMB model object
+#' @param ... Currently ignored
+#' @importFrom stats sigma
+#' @method sigma sdmTMB
+#' @export
+sigma.sdmTMB <- function(object, ...) {
+
+  # Get family
+  fam <- if (is_delta(object)) {
+    # For delta models, use the positive model
+    object$family[[2]]
+  } else {
+    object$family
+  }
+
+  family_name <- fam$family
+
+  # Gaussian/lognormal have dispersion/scale parameter
+  if (family_name %in% c("gaussian", "lognormal")) {
+    # phi = dispersion parameter from TMB report
+    tmb_obj <- object$tmb_obj
+    sdr <- object$sd_report
+
+    phi_idx <- which(names(tmb_obj$env$last.par.best) == "ln_phi")
+    if (length(phi_idx) > 0) {
+      ln_phi <- as.numeric(tmb_obj$env$last.par.best[phi_idx])
+      return(exp(ln_phi))
+    }
+  }
+
+  if (family_name == "Gamma") {
+    # For Gamma, phi is shape, sigma = 1/sqrt(shape)
+    tmb_obj <- object$tmb_obj
+    phi_idx <- which(names(tmb_obj$env$last.par.best) == "ln_phi")
+    if (length(phi_idx) > 0) {
+      ln_phi <- as.numeric(tmb_obj$env$last.par.best[phi_idx])
+      shape <- exp(ln_phi)
+      return(1 / sqrt(shape))
+    }
+  }
+
+  if (family_name %in% c("nbinom1", "nbinom2", "tweedie")) {
+    # For negative binomial, return phi (dispersion parameter)
+    tmb_obj <- object$tmb_obj
+    phi_idx <- which(names(tmb_obj$env$last.par.best) == "ln_phi")
+    if (length(phi_idx) > 0) {
+      ln_phi <- as.numeric(tmb_obj$env$last.par.best[phi_idx])
+      return(exp(ln_phi))
+    }
+  }
+
+  # Poisson, binomial don't have dispersion, return 1 (as in glmmTMB)
+  if (family_name %in% c("poisson", "binomial")) {
+    return(1)
+  }
+
+  cli_warn("sigma() not implemented for family: {family_name}")
+  return(NA_real_)
+}
