@@ -169,12 +169,21 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
     # Helper function for smooth SD names - just returns one name per component
     # For regular s(): "depth" becomes sds(depth) or ln_SD_s(depth)
     # For smooths with by: depth):year2003 becomes sds(depth):year2003
-    # For t2 smooths: returns one name per component, e.g., [sds(X,Y), sds(X,Y), sds(X,Y)]
+    # For t2 smooths: returns one name per component, e.g., [sdt2(X,Y), sdt2(X,Y), sdt2(X,Y)]
     # These will be indexed later to become ..._1, ..._2, ..._3
     expand_smooth_sd_names <- function(prefix, sm_names, sm_names_orig) {
       lapply(seq_along(sm_names), function(i) {
         has_colon <- grepl(":", sm_names[i])
-        paste0(prefix, sm_names[i], ifelse(has_colon, "", ")"))
+        # Check if original was t2() smoother and modify prefix accordingly
+        if (grepl("^t2\\(", sm_names_orig[i])) {
+          # Replace 's' pattern in prefix with 't2' for t2 smoothers
+          # Handle both "sds(" and "ln_SD_s(" patterns
+          prefix_modified <- gsub("^sds\\(", "sdt2(", prefix)
+          prefix_modified <- gsub("_s\\(", "_t2(", prefix_modified)
+          paste0(prefix_modified, sm_names[i], ifelse(has_colon, "", ")"))
+        } else {
+          paste0(prefix, sm_names[i], ifelse(has_colon, "", ")"))
+        }
       })
     }
 
@@ -217,7 +226,10 @@ print_smooth_effects <- function(x, m = 1, edf = NULL, silent = FALSE) {
     smooth_sds <- round(exp(sr_est$ln_smooth_sigma[, m]), 2L)
     re_sm_mat <- matrix(NA_real_, nrow = length(smooth_sds), ncol = 1L)
     re_sm_mat[, 1] <- smooth_sds
-    rownames(re_sm_mat) <- sm_names_sds
+    # Convert sds() and sdt2() to sd__s() and sd__t2() to match tidy() convention
+    print_names <- gsub("^sds\\(", "sd__s(", sm_names_sds)
+    print_names <- gsub("^sdt2\\(", "sd__t2(", print_names)
+    rownames(re_sm_mat) <- print_names
     colnames(re_sm_mat) <- "Std. Dev."
 
     # second matrix for ran_pars
