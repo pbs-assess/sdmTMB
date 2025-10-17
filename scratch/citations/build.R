@@ -55,12 +55,12 @@ x <- gsub("\\}\\}", "", x)
 x <- gsub("\\{\\{", "", x)
 x <- gsub("\\}\\}", "", x)
 
-# Add numbering to citations within each section (counting from bottom/oldest)
+# Add numbering to citations within each section (counting from top)
 # First pass: identify sections and mark citation lines
 section_starts <- which(grepl("^# ", x))
 citation_lines <- which(nchar(x) > 0 & !grepl("^#", x) & !grepl("^\\s*$", x))
 
-# For each section, number citations in reverse (oldest = 1)
+# For each section, number citations from top to bottom (1, 2, 3...)
 for (i in seq_along(section_starts)) {
   section_start <- section_starts[i]
   section_end <- if (i < length(section_starts)) section_starts[i + 1] - 1 else length(x)
@@ -69,12 +69,11 @@ for (i in seq_along(section_starts)) {
   section_citations <- citation_lines[citation_lines > section_start & citation_lines <= section_end]
 
   if (length(section_citations) > 0) {
-    # Number from bottom to top (reverse)
-    total_citations <- length(section_citations)
+    # Number from top to bottom (1, 2, 3...)
     for (j in seq_along(section_citations)) {
       line_idx <- section_citations[j]
-      # Assign number counting backwards (oldest = 1)
-      number <- total_citations - j + 1
+      # Assign number counting from top
+      number <- j
       x[line_idx] <- paste0(number, ". ", x[line_idx])
     }
   }
