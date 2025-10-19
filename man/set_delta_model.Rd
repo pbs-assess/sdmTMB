@@ -10,7 +10,7 @@ set_delta_model(x, model = c(NA, 1, 2))
 \item{x}{An \code{\link[=sdmTMB]{sdmTMB()}} model fit with a delta family such as
 \code{\link[=delta_gamma]{delta_gamma()}}.}
 
-\item{model}{Which delta/hurdle model component to predict/plot with.
+\item{model}{Which delta/hurdle linear predictor to predict/plot with.
 \code{NA} does the combined prediction, \code{1} does the binomial part, and \code{2}
 does the positive part.}
 }
@@ -46,8 +46,8 @@ set_delta_model(fit, model = NA) |>
   ggeffects::ggpredict("depth_scaled [all]")
 }\if{html}{\out{</div>}}
 
-But cannot be run on CRAN until a version of \pkg{ggeffects} > 1.3.2
-is on CRAN. For now, you can install the GitHub version of \pkg{ggeffects}.
+But cannot be run on CRAN until the next version of \pkg{ggeffects} is available
+on CRAN. For now, you can install the GitHub version of \pkg{ggeffects}.
 \url{https://github.com/strengejacke/ggeffects}.
 }
 \examples{

@@ -555,7 +555,7 @@ get_censored_upper <- function(
 #'
 #' @param x An [sdmTMB::sdmTMB()] model fit with a delta family such as
 #'   [sdmTMB::delta_gamma()].
-#' @param model Which delta/hurdle model component to predict/plot with.
+#' @param model Which delta/hurdle linear predictor to predict/plot with.
 #'   `NA` does the combined prediction, `1` does the binomial part, and `2`
 #'   does the positive part.
 #'
@@ -579,8 +579,8 @@ get_censored_upper <- function(
 #'   ggeffects::ggpredict("depth_scaled [all]")
 #' ```
 #'
-#' But cannot be run on CRAN until a version of \pkg{ggeffects} > 1.3.2
-#' is on CRAN. For now, you can install the GitHub version of \pkg{ggeffects}.
+#' But cannot be run on CRAN until the next version of \pkg{ggeffects} is available
+#' on CRAN. For now, you can install the GitHub version of \pkg{ggeffects}.
 #' <https://github.com/strengejacke/ggeffects>.
 #'
 #' @returns
