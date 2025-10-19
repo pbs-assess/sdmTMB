@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9009</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9010</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,6 +60,7 @@
 <li><p><strong>Fix barrier model implementation</strong>. The SPDE input matrices for the barrier model from INLA and INLAspacetime had changed. sdmTMB now appropriately uses these new matrices and unit tests in sdmTMBextra should catch such a change in the future. <a href="https://github.com/pbs-assess/sdmTMB/issues/457" class="external-link">#457</a></p></li>
 <li><p>Add vignette on age (or length) composition standardization. To help with this add a new experimental function <code><a href="../reference/make_category_svc.html">make_category_svc()</a></code>.</p></li>
 <li><p>Fix <code>emmeans</code> support for models with smoothers (<code>s()</code> terms). Previously, <code>emmeans</code> would fail with “Non-conformable elements in reference grid” when smoothers were included in the model formula.</p></li>
+<li><p>Add <code>emmeans</code> support for delta/hurdle models. Use <code>model = 1</code> for the binomial component or <code>model = 2</code> for the positive component when calling <code>emmeans()</code>. Example: <code>emmeans(fit, ~ predictor, model = 2)</code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/247" class="external-link">#247</a> <a href="https://github.com/pbs-assess/sdmTMB/issues/249" class="external-link">#249</a></p></li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.7.4" id="sdmtmb-074">sdmTMB 0.7.4<a class="anchor" aria-label="anchor" href="#sdmtmb-074"></a></h2><p class="text-muted">CRAN release: 2025-07-29</p>
