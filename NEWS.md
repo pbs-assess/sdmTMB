@@ -24,6 +24,10 @@
   `emmeans` would fail with "Non-conformable elements in reference grid" when
   smoothers were included in the model formula.
 
+* Add `emmeans` support for delta/hurdle models. Use `model = 1` for the binomial
+  component or `model = 2` for the positive component when calling `emmeans()`.
+  Example: `emmeans(fit, ~ predictor, model = 2)`. #247 #249
+
 # sdmTMB 0.7.4
 
 ## Minor improvements and fixes

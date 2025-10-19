@@ -68,16 +68,35 @@ coef.sdmTMB <- function(object, complete = FALSE, model = 1, ...) {
 #'
 #' @param object The fitted sdmTMB model object
 #' @param complete Currently ignored
+#' @param model Linear predictor for delta models. Defaults to the first
+#'   linear predictor.
 #' @param ... Currently ignored
 #' @importFrom stats vcov
 #' @export
 #' @noRd
-vcov.sdmTMB <- function(object, complete = FALSE, ...) {
+vcov.sdmTMB <- function(object, complete = FALSE, model = 1, ...) {
+  if (is_delta(object)) {
+    assert_that(length(model) == 1L)
+    model <- as.integer(model)
+    assert_that(model %in% c(1L, 2L))
+  }
+
   sdr <- object$sd_report
   v <- sdr$cov.fixed
-  fe <- tidy(object)$term
+  fe <- tidy(object, model = model, silent = TRUE)$term
   nm <- colnames(v)
-  i <- grepl("^b_j$", nm)
+
+  # For delta models, identify which b_j to use
+  if (is_delta(object)) {
+    if (model == 1L) {
+      i <- grepl("^b_j$", nm)
+    } else {
+      i <- grepl("^b_j2$", nm)
+    }
+  } else {
+    i <- grepl("^b_j$", nm)
+  }
+
   if (sum(i)) {
     if (sum(i) == length(fe)) { # should always be true
       nm[i] <- fe
@@ -165,8 +184,8 @@ family.sdmTMB <- function (object, ...) {
 #' @importFrom nlme fixef
 #' @method fixef sdmTMB
 #' @export
-fixef.sdmTMB <- function(object, ...) {
-  .t <- tidy(object, silent = TRUE)
+fixef.sdmTMB <- function(object, model = 1, ...) {
+  .t <- tidy(object, model = model, silent = TRUE)
   bhat <- .t$estimate
   names(bhat) <- .t$term
   bhat

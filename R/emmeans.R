@@ -5,6 +5,11 @@
 #' \pkg{emmeans} package computes estimated marginal means for the fixed
 #' effects.
 #'
+#' For delta/hurdle models, you can specify which component to analyze using the
+#' `model` argument: `model = 1` for the binomial component (encounter
+#' probability) or `model = 2` for the positive component (e.g., gamma for
+#' `delta_gamma()`). By default, `model = 1`.
+#'
 #' @name emmeans.sdmTMB
 #'
 #' @references
@@ -44,6 +49,17 @@
 #' emmeans::emtrends(fit2, pairwise ~ year, var = "depth_scaled")
 #' emmeans::emmip(fit2, year ~ depth_scaled,
 #'   at = list(depth_scaled = seq(-2.5, 2.5, length.out = 50)), CIs = TRUE)
+#'
+#' # delta/hurdle models:
+#' fit_delta <- sdmTMB(
+#'   density ~ as.factor(year),
+#'   data = pcod_2011, spatial = "off",
+#'   family = delta_gamma()
+#' )
+#' # binomial component (encounter probability):
+#' emmeans::emmeans(fit_delta, ~ year, model = 1)
+#' # positive component (gamma):
+#' emmeans::emmeans(fit_delta, ~ year, model = 2)
 
 NULL # don't document functions below
 
@@ -61,25 +77,51 @@ recover_data.sdmTMB <- function(object, ...) {
 
 # with help from emm_basis.glmmTMB
 emm_basis.sdmTMB <- function(object, trms, xlev, grid, ...) {
-  if (is_delta(object)) cli_abort("Delta models not yet supported. In most cases you could fit the 2 components separately for now.")
-  V <- vcov(object)
+  # Extract model argument if present (defaults to 1)
+  dots <- list(...)
+  model <- if ("model" %in% names(dots)) dots$model else 1L
+
+  # For delta models, we need to work with one component at a time
+  if (is_delta(object)) {
+    model <- as.integer(model)
+    if (!model %in% c(1L, 2L)) {
+      cli_abort("`model` must be 1 (binomial component) or 2 (positive component) for delta models.")
+    }
+    # Get the appropriate formula for the delta component
+    if (!identical(object$formula[[1]], object$formula[[2]])) {
+      trms <- terms(object$formula[[model]])
+    }
+  }
+
+  V <- vcov(object, model = model)
   misc <- list()
-  fam <- family(object)
+
+  # Get the appropriate family for delta models
+  if (is_delta(object)) {
+    fam <- object$family[[model]]
+  } else {
+    fam <- family(object)
+  }
   misc <- emmeans::.std.link.labels(fam, misc)
+
   contrasts <- attr(model.matrix(object), "contrasts")
   contrasts <- contrasts[names(contrasts) %in% all.vars(terms(object))]
   m <- model.frame(trms, grid, na.action = stats::na.pass, xlev = xlev)
   X <- model.matrix(trms, m, contrasts.arg = contrasts)
-  
+
   # Get coefficients using existing fixef method and filter to parametric terms only
   # This fixes the issue with smoothers by only including parametric terms
-  all_bhat <- fixef(object)
-  
+  if (is_delta(object)) {
+    all_bhat <- fixef(object, model = model)
+  } else {
+    all_bhat <- fixef(object)
+  }
+
   # Only keep coefficients that correspond to columns in the design matrix X
   bhat <- all_bhat[names(all_bhat) %in% colnames(X)]
   # Ensure coefficient order matches design matrix column order
   bhat <- bhat[colnames(X)]
-  
+
   if (length(bhat) < ncol(X)) {
     kept <- match(names(bhat), dimnames(X)[[2]])
     full_bhat <- NA * X[1, ]

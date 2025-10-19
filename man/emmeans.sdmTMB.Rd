@@ -7,6 +7,11 @@
 Methods for using the \pkg{emmeans} package with \pkg{sdmTMB}. The
 \pkg{emmeans} package computes estimated marginal means for the fixed
 effects.
+
+For delta/hurdle models, you can specify which component to analyze using the
+\code{model} argument: \code{model = 1} for the binomial component (encounter
+probability) or \code{model = 2} for the positive component (e.g., gamma for
+\code{delta_gamma()}). By default, \code{model = 1}.
 }
 \examples{
 \dontshow{if (require("emmeans", quietly = TRUE)) withAutoprint(\{ # examplesIf}
@@ -43,6 +48,17 @@ emmeans::emtrends(fit2, ~ year, var = "depth_scaled")
 emmeans::emtrends(fit2, pairwise ~ year, var = "depth_scaled")
 emmeans::emmip(fit2, year ~ depth_scaled,
   at = list(depth_scaled = seq(-2.5, 2.5, length.out = 50)), CIs = TRUE)
+
+# delta/hurdle models:
+fit_delta <- sdmTMB(
+  density ~ as.factor(year),
+  data = pcod_2011, spatial = "off",
+  family = delta_gamma()
+)
+# binomial component (encounter probability):
+emmeans::emmeans(fit_delta, ~ year, model = 1)
+# positive component (gamma):
+emmeans::emmeans(fit_delta, ~ year, model = 2)
 \dontshow{\}) # examplesIf}
 }
 \references{

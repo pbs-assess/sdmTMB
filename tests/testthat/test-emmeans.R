@@ -147,22 +147,43 @@ test_that("emmeans results are consistent between parametric and smooth models",
   expect_true(cor(param_est, smooth_est) > 0.8)
 })
 
-test_that("emmeans error handling", {
+test_that("emmeans works with delta models", {
   skip_if_not_installed("emmeans")
   library(emmeans)
-  
-  # Delta model should produce informative error
+
+  # Delta model
   fit_delta <- sdmTMB(
     density ~ as.factor(year),
     data = pcod_2011,
     spatial = "off",
     family = delta_gamma()
   )
-  
-  expect_error(
-    emmeans::emmeans(fit_delta, ~ year),
-    "Delta models not yet supported"
-  )
+
+  # Test binomial component (model = 1)
+  emm1 <- emmeans::emmeans(fit_delta, ~ year, model = 1)
+  expect_s4_class(emm1, "emmGrid")
+
+  # Test positive component (model = 2)
+  emm2 <- emmeans::emmeans(fit_delta, ~ year, model = 2)
+  expect_s4_class(emm2, "emmGrid")
+
+  # Check that results have correct dimensions
+  emm1_summary <- summary(emm1)
+  emm2_summary <- summary(emm2)
+  expect_equal(nrow(emm1_summary), length(unique(pcod_2011$year)))
+  expect_equal(nrow(emm2_summary), length(unique(pcod_2011$year)))
+
+  # Test pairwise comparisons work
+  pairs1 <- pairs(emm1)
+  pairs2 <- pairs(emm2)
+  expect_s4_class(pairs1, "emmGrid")
+  expect_s4_class(pairs2, "emmGrid")
+
+  # Test response scale works
+  emm1_resp <- emmeans::emmeans(fit_delta, ~ year, model = 1, type = "response")
+  emm2_resp <- emmeans::emmeans(fit_delta, ~ year, model = 2, type = "response")
+  expect_s4_class(emm1_resp, "emmGrid")
+  expect_s4_class(emm2_resp, "emmGrid")
 })
 
 test_that("emmeans works with binomial family and smoothers", {
