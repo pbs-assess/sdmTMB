@@ -74,7 +74,8 @@ for (i in seq_along(section_starts)) {
       line_idx <- section_citations[j]
       # Assign number counting from top
       number <- j
-      x[line_idx] <- paste0(number, ". ", x[line_idx])
+      # x[line_idx] <- paste0(number, ". ", x[line_idx])
+      x[line_idx] <- paste0("1", ". ", x[line_idx])
     }
   }
 }

@@ -1,5 +1,5 @@
 ---
-title: "Thesis chapters"
+title: "MSc and PhD Theses"
 bibliography: theses.bib
 nocite: '@*'
 output:
@@ -8,7 +8,7 @@ output:
 csl: apa-cv.csl
 ---
 
-# Thesis chapters
+# MSc and PhD Theses
 
 ::: {#refs}
 :::
