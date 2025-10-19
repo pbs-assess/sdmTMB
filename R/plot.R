@@ -43,35 +43,24 @@
 plot_anisotropy <- function(object, return_data = FALSE) {
   stopifnot(inherits(object, "sdmTMB"))
   if (!check_for_H(object)) return(NULL)
-  report <- object$tmb_obj$report(object$tmb_obj$env$last.par.best)
   delta <- isTRUE(object$family$delta)
 
-  eig <- eigen(report$H)
-  b <- tidy(object, "ran_pars", silent = TRUE)
+  # Calculate anisotropy components for model 1
+  comp1 <- calculate_anisotropy_components(object, m = 1)
+  eig <- comp1$eig
+  maj1_s <- comp1$maj_s
+  min1_s <- comp1$min_s
+  maj1_st <- comp1$maj_st
+  min1_st <- comp1$min_st
 
-  ranges <- b$estimate[b$term == "range"]
-  range_s <- ranges[1]
-  range_st <- if (length(ranges) > 1) ranges[2] else ranges[1]
-
-  # FIXME: do this with much less repetition!
+  # Calculate anisotropy components for model 2 if delta
   if (delta) {
-    eig2 <- eigen(report$H2)
-    b2 <- tidy(object, "ran_pars", model = 2, silent = TRUE)
-    ranges2 <- b2$estimate[b2$term == "range"]
-    range2_s <- ranges2[1]
-    range2_st <- if (length(ranges2) > 1) ranges2[2] else ranges2[1]
-  }
-
-  maj1_s <- eig$vectors[,1, drop = TRUE] * eig$values[1] * range_s
-  min1_s <- eig$vectors[,2 , drop = TRUE] * eig$values[2] * range_s
-  maj1_st <- eig$vectors[,1, drop = TRUE] * eig$values[1] * range_st
-  min1_st <- eig$vectors[,2 , drop = TRUE] * eig$values[2] * range_st
-
-  if (delta) {
-    maj2_s <- eig2$vectors[, 1, drop = TRUE] * eig2$values[1] * range2_s
-    min2_s <- eig2$vectors[, 2, drop = TRUE] * eig2$values[2] * range2_s
-    maj2_st <- eig2$vectors[, 1, drop = TRUE] * eig2$values[1] * range2_st
-    min2_st <- eig2$vectors[, 2, drop = TRUE] * eig2$values[2] * range2_st
+    comp2 <- calculate_anisotropy_components(object, m = 2)
+    eig2 <- comp2$eig
+    maj2_s <- comp2$maj_s
+    min2_s <- comp2$min_s
+    maj2_st <- comp2$maj_st
+    min2_st <- comp2$min_st
   }
 
   rss <- function(V) sqrt(sum(V[1]^2 + V[2]^2))
@@ -328,6 +317,42 @@ plot_smooth <- function(object, select = 1, n = 100, level = 0.95,
     }
     return(g)
   }
+}
+
+# Calculate anisotropic eigenvectors and ranges for a given model
+# Returns list with: eig, range_s, range_st, maj_s, min_s, maj_st, min_st
+calculate_anisotropy_components <- function(x, m = 1L) {
+  # Get report and extract H matrices
+  report <- x$tmb_obj$report(x$tmb_obj$env$last.par.best)
+  delta <- isTRUE(x$family$delta)
+
+  # Extract range values from sd_report
+  est_rep <- as.list(x$sd_report, "Estimate", report = TRUE)
+  range_values <- as.numeric(est_rep$range[, m])
+  range_s <- range_values[1]
+  range_st <- if (length(range_values) > 1) range_values[2] else range_values[1]
+
+  # Get eigenvalues/vectors from H matrix (or H2 for delta model 2)
+  H <- if (delta && m == 2) report$H2 else report$H
+  eig <- eigen(H)
+
+  # Calculate major and minor axis vectors for spatial field
+  maj_s <- eig$vectors[, 1, drop = TRUE] * eig$values[1] * range_s
+  min_s <- eig$vectors[, 2, drop = TRUE] * eig$values[2] * range_s
+
+  # Calculate major and minor axis vectors for spatiotemporal field
+  maj_st <- eig$vectors[, 1, drop = TRUE] * eig$values[1] * range_st
+  min_st <- eig$vectors[, 2, drop = TRUE] * eig$values[2] * range_st
+
+  list(
+    eig = eig,
+    range_s = range_s,
+    range_st = range_st,
+    maj_s = maj_s,
+    min_s = min_s,
+    maj_st = maj_st,
+    min_st = min_st
+  )
 }
 
 check_for_H <- function(obj) {

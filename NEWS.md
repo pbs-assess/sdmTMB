@@ -1,5 +1,11 @@
 # sdmTMB (development version)
 
+* Fix `tidy()` with `effects = "ran_pars"` to report min/max anisotropic ranges
+  (e.g., `range_min`, `range_max`) for models fit with `anisotropy = TRUE`,
+  matching the values shown in `print_anisotropy()`. Standard errors and
+  confidence intervals are set to NA since uncertainty in both the range parameter
+  and H matrix cannot be easily propagated.
+
 * Add new function `cv_to_waywiser()` to convert cross-validation results to sf
   format for use with the waywiser package. This enables multi-scale spatial
   assessment of model predictions. #193

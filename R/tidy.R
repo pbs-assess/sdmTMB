@@ -286,6 +286,21 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   if (identical(est$ln_tau_Z, 0)) out_re <- out_re[out_re$term != "sigma_Z", ]
   if (is.na(x$tmb_map$ar1_phi[model])) out_re <- out_re[out_re$term != "rho", ]
 
+  # Handle anisotropic ranges
+  aniso_ranges <- get_anisotropic_ranges(x, m = model)
+  if (!is.null(aniso_ranges) && "range" %in% out_re$term) {
+    # Remove existing range row(s) and add anisotropic ranges
+    out_re <- out_re[out_re$term != "range", ]
+    aniso_df <- aniso_ranges_to_df(aniso_ranges)
+    if (!is.null(aniso_df)) {
+      # Add columns to match out_re structure
+      aniso_df$std.error <- NA_real_
+      aniso_df$conf.low <- NA_real_
+      aniso_df$conf.high <- NA_real_
+      out_re <- rbind(out_re, aniso_df)
+    }
+  }
+
   if (!conf.int) {
     out_re[["conf.low"]] <- NULL
     out_re[["conf.high"]] <- NULL
@@ -393,6 +408,93 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   } else {
     cli_abort("The specified 'effects' type is not available.")
   }
+}
+
+# Convert anisotropic ranges list to a data frame
+aniso_ranges_to_df <- function(aniso_ranges) {
+  if (is.null(aniso_ranges) || length(aniso_ranges) == 0) {
+    return(NULL)
+  }
+
+  # Build term-estimate pairs
+  terms <- character()
+  estimates <- numeric()
+
+  for (name in names(aniso_ranges)) {
+    suffix <- if (name == "min") "range_min"
+              else if (name == "max") "range_max"
+              else paste0("range_", name)
+    terms <- c(terms, suffix)
+    estimates <- c(estimates, aniso_ranges[[name]])
+  }
+
+  data.frame(
+    term = terms,
+    estimate = estimates,
+    stringsAsFactors = FALSE
+  )
+}
+
+# Internal helper to extract anisotropic range min/max values
+# Returns NULL if not anisotropic, otherwise a list with range info
+get_anisotropic_ranges <- function(x, m = 1L) {
+  # Check if model has anisotropy enabled
+  if (!as.logical(x$tmb_data$anisotropy)) {
+    return(NULL)
+  }
+
+  # Check if H matrix is available
+  H_exists <- any(grepl(
+    pattern = "ln_H_input",
+    x = names(x$sd_report$par.fixed),
+    ignore.case = TRUE
+  ))
+  if (!H_exists) {
+    return(NULL)
+  }
+
+  # Calculate anisotropy components using shared helper
+  comp <- calculate_anisotropy_components(x, m = m)
+
+  # Helper to calculate range from eigenvector
+  rss <- function(V) sqrt(sum(V[1]^2 + V[2]^2))
+
+  # Build output list
+  result <- list()
+
+  # Add spatial field ranges if spatial is on
+  if (x$spatial[m] != "off") {
+    result$spatial_min <- rss(comp$min_s)
+    result$spatial_max <- rss(comp$maj_s)
+  }
+
+  # Add spatiotemporal field ranges if spatiotemporal is on
+  if (x$spatiotemporal[m] != "off") {
+    result$spatiotemporal_min <- rss(comp$min_st)
+    result$spatiotemporal_max <- rss(comp$maj_st)
+  }
+
+  # Determine if we should use simpler names (only one field active, or shared range)
+  only_spatial <- (x$spatial[m] != "off" && x$spatiotemporal[m] == "off")
+  only_spatiotemporal <- (x$spatial[m] == "off" && x$spatiotemporal[m] != "off")
+  shared_range <- (x$tmb_data$share_range[m] == 1L &&
+                   x$spatial[m] == "on" &&
+                   x$spatiotemporal[m] != "off")
+
+  # Use simpler names if only one field is active or ranges are shared
+  if (only_spatial || shared_range) {
+    result <- list(
+      min = result$spatial_min,
+      max = result$spatial_max
+    )
+  } else if (only_spatiotemporal) {
+    result <- list(
+      min = result$spatiotemporal_min,
+      max = result$spatiotemporal_max
+    )
+  }
+
+  result
 }
 
 # Extract and format random effect estimates from sdmTMB model output

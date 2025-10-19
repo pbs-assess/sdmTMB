@@ -214,3 +214,120 @@ test_that("tidy() works with delta model with random intercepts and AR1 time ser
     "(Intercept):2014", "(Intercept):2015", "(Intercept):2016", "(Intercept):2017"
   ))
 })
+
+test_that("tidy() correctly handles anisotropic ranges", {
+  skip_on_cran()
+  skip_on_ci()
+
+  # Test 1: Spatial-only anisotropic model (should have range_min and range_max)
+  fit_sp_only <- sdmTMB(
+    data = pcod_2011,
+    formula = density ~ 1,
+    mesh = pcod_mesh_2011,
+    family = tweedie(),
+    spatial = "on",
+    spatiotemporal = "off",
+    anisotropy = TRUE
+  )
+
+  t1 <- tidy(fit_sp_only, "ran_pars", conf.int = TRUE)
+
+  # Should not have "range" term
+  expect_false("range" %in% t1$term)
+
+  # Should have range_min and range_max
+  expect_true("range_min" %in% t1$term)
+  expect_true("range_max" %in% t1$term)
+
+  # std.error and CIs should be NA for anisotropic ranges
+  expect_true(is.na(t1$std.error[t1$term == "range_min"]))
+  expect_true(is.na(t1$std.error[t1$term == "range_max"]))
+  expect_true(is.na(t1$conf.low[t1$term == "range_min"]))
+  expect_true(is.na(t1$conf.high[t1$term == "range_min"]))
+
+  # Check that values match plot_anisotropy
+  aniso_df <- plot_anisotropy(fit_sp_only, return_data = TRUE)
+  aniso_dat_sp <- aniso_df[aniso_df$random_field == "spatial", ][1, ]
+  expect_equal(t1$estimate[t1$term == "range_min"], aniso_dat_sp$b)
+  expect_equal(t1$estimate[t1$term == "range_max"], aniso_dat_sp$a)
+
+  # Test 2: Model with separate spatial and spatiotemporal ranges
+  test_mesh <- make_mesh(data = pcod, xy_cols = c("X", "Y"), cutoff = 20)
+  fit_separate <- sdmTMB(
+    data = pcod,
+    formula = density ~ 1,
+    mesh = test_mesh,
+    family = tweedie(),
+    share_range = FALSE,
+    time = "year",
+    anisotropy = TRUE,
+    control = sdmTMBcontrol(nlminb_loops = 2, newton_loops = 0)
+  )
+
+  t2 <- tidy(fit_separate, "ran_pars", conf.int = TRUE)
+
+  # Should not have "range" term
+  expect_false("range" %in% t2$term)
+
+  # Should have separate spatial and spatiotemporal ranges
+  expect_true("range_spatial_min" %in% t2$term)
+  expect_true("range_spatial_max" %in% t2$term)
+  expect_true("range_spatiotemporal_min" %in% t2$term)
+  expect_true("range_spatiotemporal_max" %in% t2$term)
+
+  # Check that values match plot_anisotropy
+  aniso_df2 <- plot_anisotropy(fit_separate, return_data = TRUE)
+  aniso_dat2_sp <- aniso_df2[aniso_df2$random_field == "spatial", ][1, ]
+  aniso_dat2_st <- aniso_df2[aniso_df2$random_field == "spatiotemporal", ][1, ]
+  expect_equal(t2$estimate[t2$term == "range_spatial_min"], aniso_dat2_sp$b)
+  expect_equal(t2$estimate[t2$term == "range_spatial_max"], aniso_dat2_sp$a)
+  expect_equal(t2$estimate[t2$term == "range_spatiotemporal_min"], aniso_dat2_st$b)
+  expect_equal(t2$estimate[t2$term == "range_spatiotemporal_max"], aniso_dat2_st$a)
+
+  # Test 3: Delta model with shared range and anisotropy
+  fit_delta_shared <- sdmTMB(
+    data = pcod_2011,
+    formula = density ~ 1,
+    mesh = pcod_mesh_2011,
+    family = delta_gamma(),
+    share_range = TRUE,
+    time = "year",
+    anisotropy = TRUE,
+    control = sdmTMBcontrol(newton_loops = 1L)
+  )
+
+  # Test model 1
+  t3_m1 <- tidy(fit_delta_shared, "ran_pars", conf.int = TRUE, model = 1)
+  expect_false("range" %in% t3_m1$term)
+  expect_true("range_min" %in% t3_m1$term)
+  expect_true("range_max" %in% t3_m1$term)
+
+  aniso_df3_m1 <- plot_anisotropy(fit_delta_shared, return_data = TRUE)
+  aniso_dat3_m1_sp <- aniso_df3_m1[aniso_df3_m1$model_num == 1 & aniso_df3_m1$random_field == "spatial", ][1, ]
+  expect_equal(t3_m1$estimate[t3_m1$term == "range_min"], aniso_dat3_m1_sp$b)
+  expect_equal(t3_m1$estimate[t3_m1$term == "range_max"], aniso_dat3_m1_sp$a)
+
+  # Test model 2
+  t3_m2 <- tidy(fit_delta_shared, "ran_pars", conf.int = TRUE, model = 2)
+  expect_false("range" %in% t3_m2$term)
+  expect_true("range_min" %in% t3_m2$term)
+  expect_true("range_max" %in% t3_m2$term)
+
+  aniso_dat3_m2_sp <- aniso_df3_m1[aniso_df3_m1$model_num == 2 & aniso_df3_m1$random_field == "spatial", ][1, ]
+  expect_equal(t3_m2$estimate[t3_m2$term == "range_min"], aniso_dat3_m2_sp$b)
+  expect_equal(t3_m2$estimate[t3_m2$term == "range_max"], aniso_dat3_m2_sp$a)
+
+  # Test 4: Non-anisotropic model should still have "range" term
+  fit_iso <- sdmTMB(
+    data = pcod_2011,
+    formula = density ~ 1,
+    mesh = pcod_mesh_2011,
+    family = tweedie(),
+    anisotropy = FALSE
+  )
+
+  t4 <- tidy(fit_iso, "ran_pars", conf.int = TRUE)
+  expect_true("range" %in% t4$term)
+  expect_false("range_min" %in% t4$term)
+  expect_false("range_max" %in% t4$term)
+})
