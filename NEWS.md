@@ -1,5 +1,7 @@
 # sdmTMB (development version)
 
+* Fix issue with ggeffects with multiple smoothers + offsets. #450
+
 * Improve `t2()` printing and appearance in `tidy.sdmTMB()`. #415 #472
 
 * Add beta-binomial family (`betabinomial()`) for modeling overdispersed binomial

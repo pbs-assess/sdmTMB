@@ -266,9 +266,37 @@ formula.sdmTMB <- function (x, ...) {
 #' @export
 terms.sdmTMB <- function(x, ...) {
   # DELTA FIXME: hardcoded to model 1!
+  # Get the base terms object (without smoothers)
   class(x) <- "glm" # fake
   out <- stats::terms(x)
-  out[[1]]
+  out <- out[[1]]
+
+  # If model has smoothers, add the underlying variables to term.labels
+  # This ensures ggeffects can properly create prediction grids
+  if (!is.null(x$smoothers) && isTRUE(x$smoothers$has_smooths)) {
+    # Extract variable names from smoother labels
+    # e.g., "s(depth)" -> "depth", "t2(x,y)" -> c("x", "y")
+    smooth_vars <- character(0)
+    for (label in x$smoothers$labels) {
+      # Remove s( or t2( prefix and ) suffix
+      # Handle both single variable smooths like s(x) and multi-variable like t2(x,y)
+      inner <- gsub("^[st]2?\\((.*)\\)$", "\\1", label)
+      # Split by comma for multi-variable smooths
+      vars <- strsplit(inner, ",")[[1]]
+      # Trim whitespace
+      vars <- trimws(vars)
+      smooth_vars <- c(smooth_vars, vars)
+    }
+
+    # Add unique smooth variables to term.labels
+    smooth_vars <- unique(smooth_vars)
+    existing_labels <- attr(out, "term.labels")
+    # Only add variables that aren't already in term.labels
+    new_labels <- setdiff(smooth_vars, existing_labels)
+    attr(out, "term.labels") <- c(existing_labels, new_labels)
+  }
+
+  out
 }
 
 #' Calculate effects
