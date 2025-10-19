@@ -15,7 +15,9 @@ vignette: >
 ```{r setup, include = FALSE, cache=FALSE}
 dplyr_installed <- require("dplyr", quietly = TRUE)
 ggplot_installed <- require("ggplot2", quietly = TRUE)
-pkgs <- dplyr_installed && ggplot_installed
+waywiser_installed <- require("waywiser", quietly = TRUE)
+sf_installed <- require("sf", quietly = TRUE)
+pkgs <- dplyr_installed && ggplot_installed && waywiser_installed && sf_installed
 EVAL <- identical(Sys.getenv("NOT_CRAN"), "true") && pkgs
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -324,5 +326,50 @@ TSS
 ```
 
 In some cases, reporting the true negative or true positive rate might be of interest in addition to TSS.
+
+# Multi-scale spatial assessment with waywiser
+
+The waywiser package [@mahoney_2023] provides tools for assessing spatial models, including methods to evaluate model performance at multiple spatial scales.
+A common pattern with spatial models is that predictions for individual observation units (e.g., points, pixels) may be aggregated to arbitrary scales (e.g., management units, grid cells of varying sizes).
+Because prediction errors can be spatially distributed and may compound or counteract each other when aggregated, it's useful to assess model performance across multiple scales.
+
+The `cv_to_waywiser()` function converts `sdmTMB_cv` objects to sf (simple features) format, which can then be passed to waywiser functions like `ww_multi_scale()`.
+
+```{r waywiser}
+# First run cross-validation
+set.seed(42)
+mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
+m_cv <- sdmTMB_cv(
+  density ~ s(depth_scaled),
+  data = pcod,
+  mesh = mesh,
+  family = tweedie(link = "log"),
+  k_folds = 2
+)
+
+# Convert to sf format for spatial assessment
+cv_sf <- cv_to_waywiser(m_cv, ll_names = c("lon", "lat"))
+print(cv_sf)
+```
+
+This sf object can now be used with waywiser functions. For example, to assess model performance at multiple spatial scales:
+
+```{r waywiser-multi}
+# Assess performance at different grid resolutions
+# n controls the number of grid cells in x and y directions
+multi_scale_results <- waywiser::ww_multi_scale(
+  cv_sf,
+  truth,    # column name (unquoted)
+  estimate, # column name (unquoted)
+  # 10x10, 5x5, and 2x2 grids:
+  n = list(c(10, 10), c(5, 5), c(2, 2))
+)
+
+multi_scale_results
+```
+
+The results show how metrics like RMSE and MAE change as predictions are aggregated to coarser spatial scales, which can reveal whether your model's performance is scale-dependent.
+
+See the waywiser documentation (`?waywiser::ww_multi_scale` and `vignette("multi-scale-assessment", package = "waywiser")`) for more details on interpreting multi-scale assessment results and additional functions for spatial model evaluation.
 
 # References

@@ -1,7 +1,7 @@
 Type: Package
 Package: sdmTMB
 Title: Spatial and Spatiotemporal SPDE-Based GLMMs with 'TMB'
-Version: 0.7.4.9010
+Version: 0.7.4.9011
 Authors@R: c(
     person(c("Sean", "C."), "Anderson", , "sean@seananderson.ca",
            role = c("aut", "cre"),
@@ -99,7 +99,8 @@ Suggests:
     splancs,
     testthat,
     tibble,
-    visreg
+    visreg,
+    waywiser
 LinkingTo:
     RcppEigen,
     TMB

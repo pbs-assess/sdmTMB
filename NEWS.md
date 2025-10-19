@@ -1,5 +1,9 @@
 # sdmTMB (development version)
 
+* Add new function `cv_to_waywiser()` to convert cross-validation results to sf
+  format for use with the waywiser package. This enables multi-scale spatial
+  assessment of model predictions. #193
+
 * Add vignette demonstrating how to fit zero-one-inflated beta (ZOIB) models
   by fitting three separate model components and combining predictions. #440 #441
 

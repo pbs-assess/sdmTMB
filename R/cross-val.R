@@ -494,3 +494,128 @@ print.sdmTMB_cv <- function(x, ...) {
   cat("More positive values imply better out-of-sample prediction.\n")
   cat("Access this value in the `sum_loglik` list element.\n")
 }
+
+#' Convert [sdmTMB_cv()] objects to \pkg{sf} format for spatial assessment with \pkg{waywiser}
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Converts cross-validation results to an [sf::sf()] object for use with
+#' spatial model assessment tools such as those in the \pkg{waywiser} package.
+#' This enables multi-scale spatial assessment of model predictions.
+#'
+#' @param object An object of class `sdmTMB_cv` from [sdmTMB_cv()].
+#' @param ll_names Column names for longitude and latitude in the original data.
+#'   **Note the order: longitude first, then latitude.**
+#' @param ll_crs The coordinate reference system (CRS) for the `ll_names` columns.
+#'   Defaults to `4326` (WGS84 lon/lat).
+#' @param utm_crs The projected coordinate reference system (CRS) for the output
+#'   sf object. By default (if you're feeling lucky!) automatically detected
+#'   using [get_crs()] based on `ll_names`. Can be manually specified as an
+#'   EPSG code (e.g., `32609`) or any format accepted by [sf::st_crs()].
+#'
+#' @return An [sf::sf()] object with POINT geometry containing:
+#' \describe{
+#'   \item{truth}{The observed response values}
+#'   \item{estimate}{The cross-validated predictions}
+#'   \item{geometry}{Spatial point locations}
+#' }
+#'
+#' @details
+#' This function is particularly useful for assessing spatial models at multiple
+#' scales using the \pkg{waywiser} package. After converting to sf format, you
+#' can use functions like [waywiser::ww_multi_scale()] to evaluate how model
+#' performance changes when predictions are aggregated to different spatial
+#' scales.
+#'
+#' For delta/hurdle models, the combined predictions are returned (e.g., the
+#' product of the encounter probability and positive catch rate).
+#'
+#' @seealso [sdmTMB_cv()], [get_crs()], \url{https://pbs-assess.github.io/sdmTMB/articles/cross-validation.html}
+#'
+#' @export
+#' @examplesIf require("sf", quietly = TRUE) && require("waywiser", quietly = TRUE)
+#' mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 12)
+#'
+#' # Run cross-validation
+#' set.seed(123)
+#' m_cv <- sdmTMB_cv(
+#'   density ~ depth_scaled,
+#'   data = pcod_2011,
+#'   mesh = mesh,
+#'   family = tweedie(),
+#'   k_folds = 2
+#' )
+#'
+#' # Convert with default auto-detected CRS based on lon/lat columns:
+#' cv_sf <- cv_to_waywiser(m_cv, ll_names = c("lon", "lat"))
+#'
+#' # Or manually specify the desired UTM CRS:
+#' cv_sf <- cv_to_waywiser(m_cv, ll_names = c("lon", "lat"), utm_crs = 32609)
+#'
+#' # Use with waywiser for multi-scale assessment
+#' waywiser::ww_multi_scale(
+#'   cv_sf,
+#'   truth,    # column name (unquoted)
+#'   estimate, # column name (unquoted)
+#'   n = list(c(5, 5), c(2, 2)) # 5x5 and 2x2 grid blocks
+#' )
+cv_to_waywiser <- function(object,
+                           ll_names = c("longitude", "latitude"),
+                           ll_crs = 4326,
+                           utm_crs = get_crs(object$data, ll_names)) {
+  if (!requireNamespace("sf", quietly = TRUE)) {
+    cli_abort("The sf package must be installed to use this function.")
+  }
+
+  # Get response variable name from the first model's formula
+  formulas <- object$models[[1]]$formula
+  if (is.list(formulas)) {
+    # Delta model - use first formula
+    formula <- formulas[[1]]
+  } else {
+    # Non-delta model
+    formula <- formulas
+  }
+  response <- get_response(formula)
+
+  # Extract data
+  cv_data <- object$data
+
+  # Check that required columns exist
+  if (!response %in% names(cv_data)) {
+    cli_abort(c(
+      "Response variable '{response}' not found in CV data.",
+      "i" = "This may indicate an issue with the sdmTMB_cv object."
+    ))
+  }
+  if (!"cv_predicted" %in% names(cv_data)) {
+    cli_abort(c(
+      "'cv_predicted' column not found in CV data.",
+      "i" = "This may indicate an issue with the sdmTMB_cv object."
+    ))
+  }
+  if (!all(ll_names %in% names(cv_data))) {
+    cli_abort(c(
+      "Longitude/latitude columns '{paste(ll_names, collapse = ', ')}' not found in CV data.",
+      "i" = "Check that `ll_names` matches your data column names."
+    ))
+  }
+
+  # Create data frame with required columns including lon/lat coordinates
+  point_df <- data.frame(
+    truth = cv_data[[response]],
+    estimate = cv_data$cv_predicted
+  )
+  # Add the lon/lat coordinate columns
+  point_df[[ll_names[1]]] <- cv_data[[ll_names[1]]]
+  point_df[[ll_names[2]]] <- cv_data[[ll_names[2]]]
+
+  # Convert to sf object with lon/lat CRS, then transform to UTM
+  points <- sf::st_as_sf(point_df,
+    coords = ll_names,
+    crs = ll_crs
+  )
+  points <- sf::st_transform(points, utm_crs)
+
+  points
+}
