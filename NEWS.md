@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Add vignette demonstrating how to fit zero-one-inflated beta (ZOIB) models
+  by fitting three separate model components and combining predictions. #440 #441
+
 * Fix issue with ggeffects with multiple smoothers + offsets. #450
 
 * Improve `t2()` printing and appearance in `tidy.sdmTMB()`. #415 #472
