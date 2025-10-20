@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9013</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9014</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +51,7 @@
     <li><a class="dropdown-item" href="../articles/poisson-link.html">Poisson-link delta models</a></li>
     <li><a class="dropdown-item" href="../articles/presence-only.html">Spatial Modeling of Presence-Only Data with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/pretty-plots.html">Making pretty maps with sdmTMB output</a></li>
+    <li><a class="dropdown-item" href="../articles/range-edges.html">Calculating range edges</a></li>
     <li><a class="dropdown-item" href="../articles/residual-checking.html">Residual checking with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-trend-models.html">Fitting spatial trend models with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/threshold-models.html">Threshold modeling with sdmTMB</a></li>
@@ -1031,24 +1032,20 @@ and the variance is
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>p</mi><mo stretchy="true" form="postfix">)</mo></mrow><mn>2</mn></msup><mo>⋅</mo><msub><mi>μ</mi><mn>1</mn></msub><mo>⋅</mo><msup><mi>ϕ</mi><mn>2</mn></msup><mo>+</mo><msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>p</mi><mo stretchy="true" form="postfix">)</mo></mrow><mn>2</mn></msup><mo>⋅</mo><msub><mi>μ</mi><mn>2</mn></msub><mo>⋅</mo><msup><mi>ϕ</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">(1-p) ^ 2 \cdot \mu_{1} \cdot \phi^2 + (p) ^ 2 \cdot \mu_{2} \cdot \phi^2</annotation></semantics></math>.</p>
 <p>Here, and for the other mixture distributions, the probability of the
 larger mean can be obtained from
-<code>plogis(fit$model$par[["logit_p_mix"]])</code> and the ratio of the
-larger mean to the smaller mean can be obtained from
+<code>plogis(fit$model$par[["logit_p_extreme"]])</code> and the ratio of
+the larger mean to the smaller mean can be obtained from
 <code>1 + exp(fit$model$par[["log_ratio_mix"]])</code>. The standard
 errors are available in the TMB sdreport:
 <code>fit$sd_report</code>.</p>
 <p>If you wish to fix the probability of a large (i.e., extreme) mean,
-which can be hard to estimate, you can use the <code>map</code> list.
-E.g.:</p>
+which can be hard to estimate, you can fix this value and pass this to
+the family:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sdmTMB.html">sdmTMB</a></span><span class="op">(</span><span class="va">...</span>,</span>
-<span>  control <span class="op">=</span> <span class="fu"><a href="../reference/sdmTMBcontrol.html">sdmTMBcontrol</a></span><span class="op">(</span></span>
-<span>    start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>logit_p_mix <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Logistic.html" class="external-link">qlogis</a></span><span class="op">(</span><span class="fl">0.05</span><span class="op">)</span><span class="op">)</span>, <span class="co"># 5% probability of 'mu2'</span></span>
-<span>    map <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>logit_p_mix <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="cn">NA</span><span class="op">)</span><span class="op">)</span> <span class="co"># don't estimate</span></span>
-<span>  <span class="op">)</span></span>
+<span>  family <span class="op">=</span> <span class="fu"><a href="../reference/families.html">gamma_mix</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span>, p_extreme <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Example: <code>family = gamma_mix(link = "log")</code>. See also
-<code>family = delta_gamma_mix()</code> for an extension incorporating
-this distribution with delta models.</p>
+<p>See also <code>family = delta_gamma_mix()</code> for an extension
+incorporating this distribution with delta models.</p>
 </div>
 <div class="section level3">
 <h3 id="lognormal-mixture">Lognormal mixture<a class="anchor" aria-label="anchor" href="#lognormal-mixture"></a>
@@ -1068,7 +1065,14 @@ controls the contribution of each component to the mixture (also
 interpreted as the probability of larger events).</p>
 <p>Example: <code>family = lognormal_mix(link = "log")</code>. See also
 <code>family = delta_lognormal_mix()</code> for an extension
-incorporating this distribution with delta models.</p>
+incorporating this distribution with delta models. Like with the gamma
+mixture, fixed probabilities of extreme events
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
+in notation above) can be passed in, e.g.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/sdmTMB.html">sdmTMB</a></span><span class="op">(</span><span class="va">...</span>,</span>
+<span>  family <span class="op">=</span> <span class="fu"><a href="../reference/families.html">delta_lognormal_mix</a></span><span class="op">(</span>p_extreme <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="negative-binomial-2-mixture">Negative binomial 2 mixture<a class="anchor" aria-label="anchor" href="#negative-binomial-2-mixture"></a>

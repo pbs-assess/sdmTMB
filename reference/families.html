@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9013</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9014</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,7 @@
     <li><a class="dropdown-item" href="../articles/poisson-link.html">Poisson-link delta models</a></li>
     <li><a class="dropdown-item" href="../articles/presence-only.html">Spatial Modeling of Presence-Only Data with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/pretty-plots.html">Making pretty maps with sdmTMB output</a></li>
+    <li><a class="dropdown-item" href="../articles/range-edges.html">Calculating range edges</a></li>
     <li><a class="dropdown-item" href="../articles/residual-checking.html">Residual checking with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-trend-models.html">Fitting spatial trend models with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/threshold-models.html">Threshold modeling with sdmTMB</a></li>
@@ -65,11 +66,11 @@
 <span></span>
 <span><span class="fu">gengamma</span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">gamma_mix</span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span></span>
+<span><span class="fu">gamma_mix</span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span>, p_extreme <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">lognormal_mix</span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span></span>
+<span><span class="fu">lognormal_mix</span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span>, p_extreme <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">nbinom2_mix</span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span></span>
+<span><span class="fu">nbinom2_mix</span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span>, p_extreme <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">nbinom2</span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span></span>
 <span></span>
@@ -87,13 +88,18 @@
 <span></span>
 <span><span class="fu">delta_gamma</span><span class="op">(</span><span class="va">link1</span>, link2 <span class="op">=</span> <span class="st">"log"</span>, type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"standard"</span>, <span class="st">"poisson-link"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">delta_gamma_mix</span><span class="op">(</span>link1 <span class="op">=</span> <span class="st">"logit"</span>, link2 <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span></span>
+<span><span class="fu">delta_gamma_mix</span><span class="op">(</span>link1 <span class="op">=</span> <span class="st">"logit"</span>, link2 <span class="op">=</span> <span class="st">"log"</span>, p_extreme <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">delta_gengamma</span><span class="op">(</span><span class="va">link1</span>, link2 <span class="op">=</span> <span class="st">"log"</span>, type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"standard"</span>, <span class="st">"poisson-link"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">delta_lognormal</span><span class="op">(</span><span class="va">link1</span>, link2 <span class="op">=</span> <span class="st">"log"</span>, type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"standard"</span>, <span class="st">"poisson-link"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">delta_lognormal_mix</span><span class="op">(</span><span class="va">link1</span>, link2 <span class="op">=</span> <span class="st">"log"</span>, type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"standard"</span>, <span class="st">"poisson-link"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">delta_lognormal_mix</span><span class="op">(</span></span>
+<span>  <span class="va">link1</span>,</span>
+<span>  link2 <span class="op">=</span> <span class="st">"log"</span>,</span>
+<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"standard"</span>, <span class="st">"poisson-link"</span><span class="op">)</span>,</span>
+<span>  p_extreme <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">delta_truncated_nbinom2</span><span class="op">(</span>link1 <span class="op">=</span> <span class="st">"logit"</span>, link2 <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span></span>
 <span></span>
@@ -114,6 +120,11 @@
 
 <dl><dt id="arg-link">link<a class="anchor" aria-label="anchor" href="#arg-link"></a></dt>
 <dd><p>Link.</p></dd>
+
+
+<dt id="arg-p-extreme">p_extreme<a class="anchor" aria-label="anchor" href="#arg-p-extreme"></a></dt>
+<dd><p>Optional fixed probability for the extreme component. If NULL (default),
+this is estimated. If specified, must be a proportion between 0 and 1.</p></dd>
 
 
 <dt id="arg-df">df<a class="anchor" aria-label="anchor" href="#arg-df"></a></dt>
@@ -153,10 +164,11 @@ should be the gamma.</p>
 <p>The families ending in <code>_mix()</code> are 2-component mixtures where each
 distribution has its own mean but a shared scale parameter.
 (Thorson et al. 2011). See the model-description vignette for details.
-The parameter <code>plogis(log_p_mix)</code> is the probability of the extreme (larger)
+The parameter <code>p_extreme = plogis(logit_p_extreme)</code> is the probability of the extreme (larger)
 mean and <code>exp(log_ratio_mix) + 1</code> is the ratio of the larger extreme
 mean to the "regular" mean. You can see these parameters in
-<code>model$sd_report</code>.</p>
+<code>model$sd_report</code>. The parameter <code>p_extreme</code> can be fixed a priori and passed
+in as a proportion for these families.</p>
 <p>The <code>nbinom2</code> negative binomial parameterization is the NB2 where the
 variance grows quadratically with the mean (Hilbe 2011).</p>
 <p>The <code>nbinom1</code> negative binomial parameterization lets the variance grow

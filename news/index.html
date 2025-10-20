@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9013</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9014</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,7 @@
     <li><a class="dropdown-item" href="../articles/poisson-link.html">Poisson-link delta models</a></li>
     <li><a class="dropdown-item" href="../articles/presence-only.html">Spatial Modeling of Presence-Only Data with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/pretty-plots.html">Making pretty maps with sdmTMB output</a></li>
+    <li><a class="dropdown-item" href="../articles/range-edges.html">Calculating range edges</a></li>
     <li><a class="dropdown-item" href="../articles/residual-checking.html">Residual checking with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-trend-models.html">Fitting spatial trend models with sdmTMB</a></li>
     <li><a class="dropdown-item" href="../articles/threshold-models.html">Threshold modeling with sdmTMB</a></li>
@@ -55,11 +56,13 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="sdmtmb-development-version">sdmTMB (development version)<a class="anchor" aria-label="anchor" href="#sdmtmb-development-version"></a></h2>
 <ul><li><p>Extend <code><a href="../reference/sdmTMB_simulate.html">sdmTMB_simulate()</a></code> to support time-varying effects with vector <code>sigma_V</code> inputs and AR1 correlation (<code>rho_time</code>). <a href="https://github.com/pbs-assess/sdmTMB/issues/447" class="external-link">#447</a></p></li>
+<li><p>Add new experimental function <code><a href="../reference/get_range_edge.html">get_range_edge()</a></code> to calculate range edges as density-weighted quantiles along a spatial axis (e.g., latitude, coastal distance). Range edges are calculated as positions where cumulative density equals specified quantiles. Uses linear interpolation for accurate quantile estimation and simulation from the joint precision matrix for uncertainty quantification. Implements a similar approach to VAST range edge calculations following Fredston et al. (2021) <a href="https://doi.org/10.1111/gcb.15614" class="external-link uri">https://doi.org/10.1111/gcb.15614</a>. See the new range edge vignette at <a href="https://pbs-assess.github.io/sdmTMB/articles/" class="uri">https://pbs-assess.github.io/sdmTMB/articles/</a></p></li>
 <li><p>Fix <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> with <code>effects = "ran_pars"</code> to report min/max anisotropic ranges (e.g., <code>range_min</code>, <code>range_max</code>) for models fit with <code>anisotropy = TRUE</code>, matching the values shown in <code>print_anisotropy()</code>. Standard errors and confidence intervals are set to NA since uncertainty in both the range parameter and H matrix cannot be easily propagated.</p></li>
 <li><p>Add new function <code><a href="../reference/cv_to_waywiser.html">cv_to_waywiser()</a></code> to convert cross-validation results to sf format for use with the waywiser package. This enables multi-scale spatial assessment of model predictions. <a href="https://github.com/pbs-assess/sdmTMB/issues/193" class="external-link">#193</a></p></li>
 <li><p>Add vignette demonstrating how to fit zero-one-inflated beta (ZOIB) models by fitting three separate model components and combining predictions. <a href="https://github.com/pbs-assess/sdmTMB/issues/440" class="external-link">#440</a> <a href="https://github.com/pbs-assess/sdmTMB/issues/441" class="external-link">#441</a></p></li>
 <li><p>Fix issue with ggeffects with multiple smoothers + offsets. <a href="https://github.com/pbs-assess/sdmTMB/issues/450" class="external-link">#450</a></p></li>
 <li><p>Improve <code>t2()</code> printing and appearance in <code><a href="../reference/tidy.sdmTMB.html">tidy.sdmTMB()</a></code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/415" class="external-link">#415</a> <a href="https://github.com/pbs-assess/sdmTMB/issues/472" class="external-link">#472</a></p></li>
+<li><p>Add argument to fix probability of extreme events for <code>*_mix()</code> familes. Note that the internal parameter name has also changed from <code>p_mix</code> to <code>p_extreme</code> and from <code>logit_p_mix</code> to <code>logit_p_extreme</code>. <a href="https://github.com/pbs-assess/sdmTMB/issues/318" class="external-link">#318</a> <a href="https://github.com/pbs-assess/sdmTMB/issues/474" class="external-link">#474</a></p></li>
 <li><p>Add beta-binomial family (<code><a href="../reference/families.html">betabinomial()</a></code>) for modeling overdispersed binomial data. Supports logit and cloglog links, and includes proper residuals support.</p></li>
 <li><p>Add new function <code><a href="../reference/get_index.html">get_weighted_average()</a></code> to calculate biomass-weighted averages of user-supplied vectors (e.g., depth, temperature). This function follows the same pattern as <code><a href="../reference/get_index.html">get_cog()</a></code> but allows users to specify any variable for weighted averaging. Supports bias correction and area weighting.</p></li>
 <li><p><strong>Fix barrier model implementation</strong>. The SPDE input matrices for the barrier model from INLA and INLAspacetime had changed. sdmTMB now appropriately uses these new matrices and unit tests in sdmTMBextra should catch such a change in the future. <a href="https://github.com/pbs-assess/sdmTMB/issues/457" class="external-link">#457</a></p></li>
