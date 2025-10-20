@@ -1,5 +1,9 @@
 # sdmTMB (development version)
 
+* Add argument to fix probability of extreme events for `*_mix()` familes.
+  Note that the internal parameter name has also changed from `p_mix` to
+  `p_extreme` and from `logit_p_mix` to `logit_p_extreme`. #318 #474
+
 * Add beta-binomial family (`betabinomial()`) for modeling overdispersed binomial
   data. Supports logit and cloglog links, and includes proper residuals support.
 
