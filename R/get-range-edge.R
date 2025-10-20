@@ -254,7 +254,7 @@ get_range_edge <- function(obj,
           results_list[[idx]] <- data.frame(
             time = yrs[t_idx],
             quantile = quantiles[q_idx],
-            est = median(sims),
+            est = stats::median(sims),
             lwr = stats::quantile(sims, probs = (1 - level) / 2),
             upr = stats::quantile(sims, probs = 1 - (1 - level) / 2),
             se = stats::sd(sims)
