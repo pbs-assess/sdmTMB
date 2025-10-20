@@ -28,6 +28,14 @@
   same pattern as `get_cog()` but allows users to specify any variable for
   weighted averaging. Supports bias correction and area weighting.
 
+* Add new experimental function `get_range_edge()` to calculate range edges as
+  density-weighted quantiles along a spatial axis (e.g., latitude, coastal distance).
+  Range edges are calculated as positions where cumulative density equals specified
+  quantiles (e.g., 0.025 and 0.975). Uses linear interpolation for accurate
+  quantile estimation and simulation from the joint precision matrix for uncertainty
+  quantification. Implements a similar approach to VAST range edge calculations
+  following Fredston et al. (2021) doi:10.1111/gcb.15614.
+
 * **Fix barrier model implementation**. The SPDE input matrices for the barrier
   model from INLA and INLAspacetime had changed. sdmTMB now appropriately
   uses these new matrices and unit tests in sdmTMBextra should catch such a
