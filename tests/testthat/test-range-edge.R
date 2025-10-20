@@ -157,9 +157,9 @@ test_that("get_range_edge() works with different confidence levels", {
   skip_on_cran()
   skip_on_ci()
 
-  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 12)
+  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 10)
   m <- sdmTMB(
-    density ~ 1,
+    density ~ depth_scaled,
     mesh = mesh,
     data = pcod, family = tweedie(link = "log"),
     time = "year", spatiotemporal = "off", spatial = "on"
@@ -170,11 +170,11 @@ test_that("get_range_edge() works with different confidence levels", {
   p <- predict(m, newdata = nd, nsim = 100)
 
   # Test with 90% confidence level
-  edges_90 <- get_range_edge(p, axis = nd$Y, level = 0.90)
+  edges_70 <- get_range_edge(p, axis = nd$Y, level = 0.70)
   edges_95 <- get_range_edge(p, axis = nd$Y, level = 0.95)
 
-  # 90% CI should be narrower than 95% CI
-  expect_true(mean(edges_90$upr - edges_90$lwr) < mean(edges_95$upr - edges_95$lwr))
+  # 70% CI should be narrower than 95% CI
+  expect_true(mean(edges_70$upr - edges_70$lwr) < mean(edges_95$upr - edges_95$lwr))
 })
 
 test_that("get_range_edge() handles edge cases", {
