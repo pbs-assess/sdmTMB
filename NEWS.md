@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Extend `sdmTMB_simulate()` to support time-varying effects with vector `sigma_V`
+  inputs and AR1 correlation (`rho_time`). #447
+
 * Fix `tidy()` with `effects = "ran_pars"` to report min/max anisotropic ranges
   (e.g., `range_min`, `range_max`) for models fit with `anisotropy = TRUE`,
   matching the values shown in `print_anisotropy()`. Standard errors and

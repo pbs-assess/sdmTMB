@@ -23,6 +23,10 @@ sdmTMB_simulate(
   fixed_re = list(omega_s = NULL, epsilon_st = NULL, zeta_s = NULL),
   previous_fit = NULL,
   seed = sample.int(1e+06, 1),
+  time_varying = NULL,
+  time_varying_type = c("rw", "rw0", "ar1"),
+  sigma_V = NULL,
+  rho_time = NULL,
   ...
 )
 }
@@ -78,6 +82,20 @@ An optional previous \code{\link[=sdmTMB]{sdmTMB()}} fit to pull parameter value
 Will be over-ruled by any non-NULL specified parameter arguments.}
 
 \item{seed}{Seed number.}
+
+\item{time_varying}{An optional one-sided formula describing time-varying
+covariates passed through to \code{\link[=sdmTMB]{sdmTMB()}} for building a time-varying random
+effect design matrix.}
+
+\item{time_varying_type}{Type of temporal process applied to \code{time_varying}.
+Must be one of \code{'rw'}, \code{'rw0'}, or \code{'ar1'}.}
+
+\item{sigma_V}{SD(s) of the time-varying process. Provide a single value or a
+vector matching the number of time-varying coefficients.}
+
+\item{rho_time}{Autoregressive correlation(s) for time-varying parameters
+when \code{time_varying_type = "ar1"}. Values must lie between -1 and 1 and may
+be supplied as a single value or a vector the same length as \code{sigma_V}.}
 
 \item{...}{Any other arguments to pass to \code{\link[=sdmTMB]{sdmTMB()}}.}
 }

@@ -117,6 +117,130 @@ test_that("TMB RW simulation works", {
   expect_true(sigma_E_hat_rw < sigma_E_hat_ar1)
 })
 
+test_that("sdmTMB_simulate can generate time-varying RW effects", {
+  skip_on_cran()
+
+  set.seed(99)
+  predictor_dat <- data.frame(
+    X = runif(600), Y = runif(600),
+    year = rep(seq_len(60), each = 10)
+  )
+  mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.3)
+
+  sim_dat <- sdmTMB_simulate(
+    formula = ~1,
+    data = predictor_dat,
+    time = "year",
+    mesh = mesh,
+    family = gaussian(),
+    range = 0.4,
+    sigma_E = 0,
+    phi = 0.1,
+    sigma_O = 0,
+    seed = 101,
+    B = 0,
+    time_varying = ~1,
+    time_varying_type = "rw0",
+    sigma_V = 0.25
+  )
+
+  fit <- sdmTMB(observed ~ 1,
+    data = sim_dat, mesh = mesh, time = "year",
+    spatial = "off", spatiotemporal = "off",
+    time_varying = ~1, time_varying_type = "rw0"
+  )
+  s <- as.list(fit$sd_report, "Estimate")
+  expect_equal(exp(s$ln_tau_V)[1, 1], 0.25, tolerance = 0.1)
+})
+
+test_that("sdmTMB_simulate can generate time-varying AR1 effects", {
+  skip_on_cran()
+
+  set.seed(77)
+  predictor_dat <- data.frame(
+    X = runif(800), Y = runif(800),
+    year = rep(seq_len(80), each = 10)
+  )
+  mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.3)
+
+  rho_true <- 0.6
+  sigma_v_true <- 0.2
+
+  sim_dat <- sdmTMB_simulate(
+    formula = ~1,
+    data = predictor_dat,
+    time = "year",
+    mesh = mesh,
+    family = gaussian(),
+    range = 0.4,
+    sigma_E = 0,
+    phi = 0.1,
+    sigma_O = 0,
+    seed = 202,
+    B = 0,
+    time_varying = ~1,
+    time_varying_type = "ar1",
+    sigma_V = sigma_v_true,
+    rho_time = rho_true
+  )
+
+  fit <- sdmTMB(observed ~ 1,
+    data = sim_dat, mesh = mesh, time = "year",
+    spatial = "off", spatiotemporal = "off",
+    time_varying = ~1, time_varying_type = "ar1"
+  )
+  s <- as.list(fit$sd_report, "Estimate")
+  m121 <- function(x) 2 * plogis(x) - 1
+  expect_equal(exp(s$ln_tau_V)[1, 1], sigma_v_true, tolerance = 0.1)
+  expect_equal(m121(s$rho_time_unscaled)[1, 1], rho_true, tolerance = 0.15)
+})
+
+test_that("sdmTMB_simulate supports multiple AR1 time-varying coefficients", {
+  skip_on_cran()
+
+  set.seed(54)
+  predictor_dat <- data.frame(
+    X = runif(900), Y = runif(900),
+    year = rep(seq_len(90), each = 10),
+    cov1 = rnorm(900),
+    cov2 = rnorm(900)
+  )
+  mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.3)
+
+  sigma_true <- c(0.15, 0.3)
+  rho_true <- c(0.4, -0.5)
+
+  sim_dat <- sdmTMB_simulate(
+    formula = ~1 + cov1 + cov2,
+    data = predictor_dat,
+    time = "year",
+    mesh = mesh,
+    family = gaussian(),
+    range = 0.4,
+    sigma_E = 0,
+    phi = 0.1,
+    sigma_O = 0,
+    seed = 909,
+    B = c(0, 0.5, -0.25),
+    time_varying = ~0 + cov1 + cov2,
+    time_varying_type = "ar1",
+    sigma_V = sigma_true,
+    rho_time = rho_true
+  )
+
+  fit <- sdmTMB(observed ~ cov1 + cov2,
+    data = sim_dat, mesh = mesh, time = "year",
+    spatial = "off", spatiotemporal = "off",
+    time_varying = ~0 + cov1 + cov2,
+    time_varying_type = "ar1"
+  )
+  s <- as.list(fit$sd_report, "Estimate")
+  m121 <- function(x) 2 * plogis(x) - 1
+
+  expect_equal(exp(s$ln_tau_V)[, 1], sigma_true, tolerance = 0.1)
+  expect_equal(m121(s$rho_time_unscaled)[, 1], rho_true, tolerance = 0.2)
+})
+
 test_that("TMB breakpt sims work", {
   skip_on_cran()
 

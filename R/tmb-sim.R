@@ -11,6 +11,11 @@
 #'   the time column if `time` is specified.
 #' @param mesh Output from [make_mesh()].
 #' @param time The time column name.
+#' @param time_varying An optional one-sided formula describing time-varying
+#'   covariates passed through to [sdmTMB()] for building a time-varying random
+#'   effect design matrix.
+#' @param time_varying_type Type of temporal process applied to `time_varying`.
+#'   Must be one of `'rw'`, `'rw0'`, or `'ar1'`.
 #' @param family Family as in [sdmTMB()]. Delta families are not supported.
 #'   Instead, simulate the two component models separately and combine.
 #' @param B A vector of beta values (fixed-effect coefficient values).
@@ -22,6 +27,8 @@
 #' @param sigma_O SD of spatial process (Omega).
 #' @param sigma_E SD of spatiotemporal process (Epsilon).
 #' @param sigma_Z SD of spatially varying coefficient field (Zeta).
+#' @param sigma_V SD(s) of the time-varying process. Provide a single value or a
+#'   vector matching the number of time-varying coefficients.
 #' @param phi Observation error scale parameter (e.g., SD in Gaussian).
 #' @param tweedie_p Tweedie p (power) parameter; between 1 and 2.
 #' @param df Student-t degrees of freedom.
@@ -38,6 +45,9 @@
 #'   An optional previous [sdmTMB()] fit to pull parameter values.
 #'   Will be over-ruled by any non-NULL specified parameter arguments.
 #' @param seed Seed number.
+#' @param rho_time Autoregressive correlation(s) for time-varying parameters
+#'   when `time_varying_type = "ar1"`. Values must lie between -1 and 1 and may
+#'   be supplied as a single value or a vector the same length as `sigma_V`.
 #' @param ... Any other arguments to pass to [sdmTMB()].
 #'
 #' @return A data frame where:
@@ -114,6 +124,10 @@ sdmTMB_simulate <- function(formula,
                             fixed_re = list(omega_s = NULL, epsilon_st = NULL, zeta_s = NULL),
                             previous_fit = NULL,
                             seed = sample.int(1e6, 1),
+                            time_varying = NULL,
+                            time_varying_type = c("rw", "rw0", "ar1"),
+                            sigma_V = NULL,
+                            rho_time = NULL,
                             ...) {
 
   if (!is.null(previous_fit)) stop("`previous_fit` is deprecated. See `simulate.sdmTMB()`", call. = FALSE)
@@ -126,15 +140,35 @@ sdmTMB_simulate <- function(formula,
   #   cli_inform(msg)
   # }
 
-  assert_that(tweedie_p > 1 && tweedie_p < 2 || is.null(tweedie_p))
+  assert_that((tweedie_p > 1 && tweedie_p < 2) || is.null(tweedie_p))
   assert_that(df >= 1 || is.null(df))
   assert_that(all(range > 0) || is.null(range))
   assert_that(length(range) %in% c(1, 2) || is.null(range))
-  assert_that(rho >= -1 && rho <= 1 || is.null(rho))
+  assert_that((rho >= -1 && rho <= 1) || is.null(rho))
   assert_that(phi > 0 || is.null(phi))
   assert_that(sigma_O >= 0 || is.null(sigma_O))
   assert_that(all(sigma_E >= 0) || is.null(sigma_E))
   assert_that(all(sigma_Z >= 0) || is.null(sigma_Z))
+
+  dots <- list(...)
+  dots$time_varying <- NULL
+  dots$time_varying_type <- NULL
+  time_varying_type <- match.arg(time_varying_type)
+
+  if (!is.null(time_varying)) {
+    assert_that(class(time_varying) %in% c("formula", "list"))
+  }
+
+  if (is.null(sigma_V) && "sigma_V" %in% names(dots)) {
+    sigma_V <- dots$sigma_V
+    dots$sigma_V <- NULL
+  }
+  if (is.null(rho_time) && "rho_time" %in% names(dots)) {
+    rho_time <- dots$rho_time
+    dots$rho_time <- NULL
+  }
+  if (!is.null(sigma_V)) sigma_V <- as.numeric(sigma_V)
+  if (!is.null(rho_time)) rho_time <- as.numeric(rho_time)
 
   if (is.null(previous_fit)) {
     assert_that(is(mesh, "sdmTMBmesh"))
@@ -168,13 +202,21 @@ sdmTMB_simulate <- function(formula,
     .sim_re <- as.integer(unlist(.sim_re))
 
     # get tmb_data structure; parsed model matrices etc.:
-    fit <- sdmTMB(
-      formula = formula, data = data, mesh = mesh, time = time,
-      family = family, do_fit = FALSE,
-      share_range = length(range) == 1L,
-      # experimental = list(sim_re = .sim_re),
-      ...
+    fit_args <- c(
+      list(
+        formula = formula,
+        data = data,
+        mesh = mesh,
+        time = time,
+        family = family,
+        do_fit = FALSE,
+        share_range = length(range) == 1L,
+        time_varying = time_varying,
+        time_varying_type = time_varying_type
+      ),
+      dots
     )
+    fit <- do.call(sdmTMB, fit_args)
     params <- fit$tmb_params
   } else {
     fit <- previous_fit
@@ -230,6 +272,56 @@ sdmTMB_simulate <- function(formula,
   if (!is.null(sigma_E) || is.null(previous_fit)) {
     tau_E <- 1 / (sqrt(4 * pi) * kappa[2] * sigma_E)
     params$ln_tau_E <- log(tau_E)
+  }
+
+  n_tv <- if (!is.null(fit$tmb_data$X_rw_ik)) ncol(fit$tmb_data$X_rw_ik) else 0L
+  has_time_varying <- !is.null(time_varying) ||
+    (!is.null(previous_fit) && !is.null(previous_fit$time_varying))
+
+  if (has_time_varying && n_tv == 0L) {
+    cli::cli_abort("Internal error: expected time-varying design matrix.")
+  }
+
+  if (has_time_varying) {
+    if (is.null(sigma_V)) {
+      cli::cli_abort("`sigma_V` must be supplied when `time_varying` is specified.")
+    }
+    assert_that(length(sigma_V) %in% c(1, n_tv),
+      msg = "`sigma_V` must be length 1 or match the number of time-varying coefficients.")
+    sigma_V_vec <- rep_len(sigma_V, n_tv)
+    if (any(!is.finite(sigma_V_vec) | sigma_V_vec <= 0)) {
+      cli::cli_abort("`sigma_V` values must be positive and finite.")
+    }
+    if (nrow(params$ln_tau_V) != n_tv) {
+      cli::cli_abort("Internal `ln_tau_V` dimension mismatch.")
+    }
+    for (j in seq_len(ncol(params$ln_tau_V))) {
+      params$ln_tau_V[, j] <- log(sigma_V_vec)
+    }
+
+    if (identical(time_varying_type, "ar1")) {
+      if (is.null(rho_time)) {
+        cli::cli_abort("`rho_time` must be supplied when `time_varying_type = 'ar1'`.")
+      }
+      assert_that(length(rho_time) %in% c(1, n_tv),
+        msg = "`rho_time` must be length 1 or match the number of time-varying coefficients.")
+      rho_vec <- rep_len(rho_time, n_tv)
+      if (any(!is.finite(rho_vec) | rho_vec <= -1 | rho_vec >= 1)) {
+        cli::cli_abort("`rho_time` values must be strictly between -1 and 1.")
+      }
+      for (j in seq_len(ncol(params$rho_time_unscaled))) {
+        params$rho_time_unscaled[, j] <- stats::qlogis((rho_vec + 1) / 2)
+      }
+    } else if (!is.null(rho_time)) {
+      cli::cli_warn("Ignoring `rho_time` because `time_varying_type` is not 'ar1'.")
+    }
+  } else {
+    if (!is.null(sigma_V)) {
+      cli::cli_abort("`sigma_V` was supplied but no `time_varying` formula was provided.")
+    }
+    if (!is.null(rho_time)) {
+      cli::cli_abort("`rho_time` was supplied but no `time_varying` formula was provided.")
+    }
   }
 
   if (!is.null(B)) params$b_j <- matrix(B, ncol = 1L) # TODO DELTA
