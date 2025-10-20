@@ -113,6 +113,7 @@ reference:
   - get_index
   - get_index_sims
   - get_cog
+  - get_range_edge
 
 - title: 'Miscellaneous parameter extraction'
   desc: |
