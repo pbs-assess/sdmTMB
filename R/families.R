@@ -49,8 +49,10 @@ Beta <- function(link = "logit") {
   okLinks <- c("logit")
   if (linktemp %in% okLinks)
     stats <- stats::make.link(linktemp)
-  else if (is.character(link))
+  else if (is.character(link)) {
     stats <- stats::make.link(link)
+    linktemp <- link
+  }
   x <- c(list(family = "Beta", link = linktemp), stats)
   add_to_family(x)
 }
@@ -66,8 +68,10 @@ lognormal <- function(link = "log") {
   okLinks <- c("identity", "log", "inverse")
   if (linktemp %in% okLinks)
     stats <- stats::make.link(linktemp)
-  else if (is.character(link))
+  else if (is.character(link)) {
     stats <- stats::make.link(link)
+    linktemp <- link
+  }
   x <- c(list(family = "lognormal", link = linktemp), stats)
   add_to_family(x)
 }
@@ -101,8 +105,10 @@ gengamma <- function(link = "log") {
   okLinks <- c("identity", "log", "inverse")
   if (linktemp %in% okLinks)
     stats <- stats::make.link(linktemp)
-  else if (is.character(link))
+  else if (is.character(link)) {
     stats <- stats::make.link(link)
+    linktemp <- link
+  }
   x <- c(list(family = "gengamma", link = linktemp), stats)
   add_to_family(x)
 }
@@ -133,8 +139,10 @@ gamma_mix <- function(link = "log") {
   okLinks <- c("identity", "log", "inverse")
   if (linktemp %in% okLinks)
     stats <- stats::make.link(linktemp)
-  else if (is.character(link))
+  else if (is.character(link)) {
     stats <- stats::make.link(link)
+    linktemp <- link
+  }
   x <- c(list(family = "gamma_mix", link = linktemp), stats)
   add_to_family(x)
 }
@@ -150,8 +158,10 @@ lognormal_mix <- function(link = "log") {
   okLinks <- c("identity", "log", "inverse")
   if (linktemp %in% okLinks)
     stats <- stats::make.link(linktemp)
-  else if (is.character(link))
+  else if (is.character(link)) {
     stats <- stats::make.link(link)
+    linktemp <- link
+  }
   x <- c(list(family = "lognormal_mix", link = linktemp), stats)
   add_to_family(x)
 }
@@ -167,8 +177,10 @@ nbinom2_mix <- function(link = "log") {
   okLinks <- c("identity", "log", "inverse")
   if (linktemp %in% okLinks)
     stats <- stats::make.link(linktemp)
-  else if (is.character(link))
+  else if (is.character(link)) {
     stats <- stats::make.link(link)
+    linktemp <- link
+  }
   x <- c(list(family = "nbinom2_mix", link = linktemp), stats)
   add_to_family(x)
 }
@@ -192,8 +204,10 @@ nbinom2 <- function(link = "log") {
   okLinks <- c("log")
   if (linktemp %in% okLinks)
     stats <- stats::make.link(linktemp)
-  else if (is.character(link))
+  else if (is.character(link)) {
     stats <- stats::make.link(link)
+    linktemp <- link
+  }
 
   v <- function(mu, theta) {
 
@@ -216,8 +230,10 @@ nbinom1 <- function(link = "log") {
   okLinks <- c("log")
   if (linktemp %in% okLinks)
     stats <- stats::make.link(linktemp)
-  else if (is.character(link))
+  else if (is.character(link)) {
     stats <- stats::make.link(link)
+    linktemp <- link
+  }
   x <- c(list(family = "nbinom1", link = linktemp), stats)
   add_to_family(x)
 }
@@ -235,8 +251,10 @@ truncated_nbinom2 <- function(link = "log") {
   okLinks <- c("log")
   if (linktemp %in% okLinks)
     stats <- stats::make.link(linktemp)
-  else if (is.character(link))
+  else if (is.character(link)) {
     stats <- stats::make.link(link)
+    linktemp <- link
+  }
   linkinv <- function(eta, phi = NULL) {
     s1 <- eta
     if (is.null(phi)) phi <- .phi
@@ -263,8 +281,10 @@ truncated_nbinom1 <- function(link = "log") {
   okLinks <- c("log")
   if (linktemp %in% okLinks)
     stats <- stats::make.link(linktemp)
-  else if (is.character(link))
+  else if (is.character(link)) {
     stats <- stats::make.link(link)
+    linktemp <- link
+  }
   linkinv <- function(eta, phi = NULL) {
     mu <- exp(eta)
     if (is.null(phi)) phi <- .phi
@@ -290,8 +310,10 @@ student <- function(link = "identity", df = 3) {
   okLinks <- c("identity", "log", "inverse")
   if (linktemp %in% okLinks)
     stats <- stats::make.link(linktemp)
-  else if (is.character(link))
+  else if (is.character(link)) {
     stats <- stats::make.link(link)
+    linktemp <- link
+  }
 
   x <- c(list(family = "student", link = linktemp, df = df), stats)
   add_to_family(x)
@@ -308,8 +330,10 @@ tweedie <- function(link = "log") {
   okLinks <- c("log", "identity")
   if (linktemp %in% okLinks)
     stats <- stats::make.link(linktemp)
-  else if (is.character(link))
+  else if (is.character(link)) {
     stats <- stats::make.link(link)
+    linktemp <- link
+  }
 
   x <- c(list(family = "tweedie", link = linktemp), stats)
   add_to_family(x)
@@ -326,8 +350,10 @@ censored_poisson <- function(link = "log") {
   okLinks <- c("log")
   if (linktemp %in% okLinks)
     stats <- stats::make.link(linktemp)
-  else if (is.character(link))
+  else if (is.character(link)) {
     stats <- stats::make.link(link)
+    linktemp <- link
+  }
 
   structure(list(family = "censored_poisson", link = linktemp, linkfun = stats$linkfun,
     linkinv = stats$linkinv), class = "family")
@@ -519,6 +545,7 @@ betabinomial <- function(link = "logit") {
   else if (is.character(link)) {
     if (link %in% okLinks) {
       stats <- stats::make.link(link)
+      linktemp <- link
     } else {
       stop(paste("link", link, "not available for betabinomial family; available links are", paste(okLinks, collapse = ", ")))
     }
