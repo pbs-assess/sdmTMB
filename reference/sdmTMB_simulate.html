@@ -11,7 +11,7 @@ and simulates new observations and optionally new random effects."><meta propert
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9012</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9013</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,6 +84,10 @@ and simulates new observations and optionally new random effects.</p>
 <span>  fixed_re <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>omega_s <span class="op">=</span> <span class="cn">NULL</span>, epsilon_st <span class="op">=</span> <span class="cn">NULL</span>, zeta_s <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>,</span>
 <span>  previous_fit <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample.int</a></span><span class="op">(</span><span class="fl">1e+06</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>  time_varying <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  time_varying_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rw"</span>, <span class="st">"rw0"</span>, <span class="st">"ar1"</span><span class="op">)</span>,</span>
+<span>  sigma_V <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  rho_time <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -178,6 +182,28 @@ Will be over-ruled by any non-NULL specified parameter arguments.</p></dd>
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>Seed number.</p></dd>
+
+
+<dt id="arg-time-varying">time_varying<a class="anchor" aria-label="anchor" href="#arg-time-varying"></a></dt>
+<dd><p>An optional one-sided formula describing time-varying
+covariates passed through to <code><a href="sdmTMB.html">sdmTMB()</a></code> for building a time-varying random
+effect design matrix.</p></dd>
+
+
+<dt id="arg-time-varying-type">time_varying_type<a class="anchor" aria-label="anchor" href="#arg-time-varying-type"></a></dt>
+<dd><p>Type of temporal process applied to <code>time_varying</code>.
+Must be one of <code>'rw'</code>, <code>'rw0'</code>, or <code>'ar1'</code>.</p></dd>
+
+
+<dt id="arg-sigma-v">sigma_V<a class="anchor" aria-label="anchor" href="#arg-sigma-v"></a></dt>
+<dd><p>SD(s) of the time-varying process. Provide a single value or a
+vector matching the number of time-varying coefficients.</p></dd>
+
+
+<dt id="arg-rho-time">rho_time<a class="anchor" aria-label="anchor" href="#arg-rho-time"></a></dt>
+<dd><p>Autoregressive correlation(s) for time-varying parameters
+when <code>time_varying_type = "ar1"</code>. Values must lie between -1 and 1 and may
+be supplied as a single value or a vector the same length as <code>sigma_V</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

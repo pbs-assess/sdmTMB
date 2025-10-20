@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9012</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9013</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,8 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="sdmtmb-development-version">sdmTMB (development version)<a class="anchor" aria-label="anchor" href="#sdmtmb-development-version"></a></h2>
-<ul><li><p>Fix <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> with <code>effects = "ran_pars"</code> to report min/max anisotropic ranges (e.g., <code>range_min</code>, <code>range_max</code>) for models fit with <code>anisotropy = TRUE</code>, matching the values shown in <code>print_anisotropy()</code>. Standard errors and confidence intervals are set to NA since uncertainty in both the range parameter and H matrix cannot be easily propagated.</p></li>
+<ul><li><p>Extend <code><a href="../reference/sdmTMB_simulate.html">sdmTMB_simulate()</a></code> to support time-varying effects with vector <code>sigma_V</code> inputs and AR1 correlation (<code>rho_time</code>). <a href="https://github.com/pbs-assess/sdmTMB/issues/447" class="external-link">#447</a></p></li>
+<li><p>Fix <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> with <code>effects = "ran_pars"</code> to report min/max anisotropic ranges (e.g., <code>range_min</code>, <code>range_max</code>) for models fit with <code>anisotropy = TRUE</code>, matching the values shown in <code>print_anisotropy()</code>. Standard errors and confidence intervals are set to NA since uncertainty in both the range parameter and H matrix cannot be easily propagated.</p></li>
 <li><p>Add new function <code><a href="../reference/cv_to_waywiser.html">cv_to_waywiser()</a></code> to convert cross-validation results to sf format for use with the waywiser package. This enables multi-scale spatial assessment of model predictions. <a href="https://github.com/pbs-assess/sdmTMB/issues/193" class="external-link">#193</a></p></li>
 <li><p>Add vignette demonstrating how to fit zero-one-inflated beta (ZOIB) models by fitting three separate model components and combining predictions. <a href="https://github.com/pbs-assess/sdmTMB/issues/440" class="external-link">#440</a> <a href="https://github.com/pbs-assess/sdmTMB/issues/441" class="external-link">#441</a></p></li>
 <li><p>Fix issue with ggeffects with multiple smoothers + offsets. <a href="https://github.com/pbs-assess/sdmTMB/issues/450" class="external-link">#450</a></p></li>
