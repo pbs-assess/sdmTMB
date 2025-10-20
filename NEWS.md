@@ -3,6 +3,15 @@
 * Extend `sdmTMB_simulate()` to support time-varying effects with vector `sigma_V`
   inputs and AR1 correlation (`rho_time`). #447
 
+* Add new experimental function `get_range_edge()` to calculate range edges as
+  density-weighted quantiles along a spatial axis (e.g., latitude, coastal distance).
+  Range edges are calculated as positions where cumulative density equals specified
+  quantiles. Uses linear interpolation for accurate
+  quantile estimation and simulation from the joint precision matrix for uncertainty
+  quantification. Implements a similar approach to VAST range edge calculations
+  following Fredston et al. (2021) <https://doi.org/10.1111/gcb.15614>.
+  See the new range edge vignette at <https://pbs-assess.github.io/sdmTMB/articles/>
+
 * Fix `tidy()` with `effects = "ran_pars"` to report min/max anisotropic ranges
   (e.g., `range_min`, `range_max`) for models fit with `anisotropy = TRUE`,
   matching the values shown in `print_anisotropy()`. Standard errors and
@@ -27,14 +36,6 @@
   of user-supplied vectors (e.g., depth, temperature). This function follows the
   same pattern as `get_cog()` but allows users to specify any variable for
   weighted averaging. Supports bias correction and area weighting.
-
-* Add new experimental function `get_range_edge()` to calculate range edges as
-  density-weighted quantiles along a spatial axis (e.g., latitude, coastal distance).
-  Range edges are calculated as positions where cumulative density equals specified
-  quantiles (e.g., 0.025 and 0.975). Uses linear interpolation for accurate
-  quantile estimation and simulation from the joint precision matrix for uncertainty
-  quantification. Implements a similar approach to VAST range edge calculations
-  following Fredston et al. (2021) doi:10.1111/gcb.15614.
 
 * **Fix barrier model implementation**. The SPDE input matrices for the barrier
   model from INLA and INLAspacetime had changed. sdmTMB now appropriately
