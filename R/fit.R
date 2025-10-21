@@ -1617,7 +1617,7 @@ sdmTMB <- function(
       # for each model (m), look at minimum across time steps (mostly identical)
       est_sigma_E_by_model <- numeric(n_m)
 
-      for(m in 1:n_m) {
+      for (m in seq_len(n_m)) {
         # sigma_E values for each model
         idx_start <- (m - 1) * n_t + 1
         idx_end <- m * n_t
