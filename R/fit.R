@@ -1602,7 +1602,7 @@ sdmTMB <- function(
                           paste(which_sigma, collapse = ", "),
                           ". Refitting with spatial field(s) turned off."))
         # Update spatial
-        for(i in which_sigma) {
+        for (i in which_sigma) {
           spatial_updated[i] <- "off"
         }
         do_refit <- TRUE
