@@ -3,7 +3,7 @@ test_that("collapsing spatial and spatiotemporal fields works", {
 
   predictor_dat <- data.frame(
     X = runif(1000), Y = runif(1000),
-    a1 = rnorm(1000), year = sample(1:5, size=1000, replace=TRUE)
+    a1 = rnorm(1000), year = sample(1:5, size = 1000, replace=TRUE)
   )
   mesh <- make_mesh(predictor_dat, xy_cols = c("X", "Y"), cutoff = 0.1)
 
