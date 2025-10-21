@@ -1582,7 +1582,7 @@ sdmTMB <- function(
   # check if sigma_O or sigma_E are collapsing to 0. There's a lot of complex
   # logic / code about what needs to be mapped off etc -- but letting update()
   # handle most of it.
-  if(collapse_spatial_variance && length(tmb_obj$par) > 0) {
+  if (collapse_spatial_variance && length(tmb_obj$par) > 0) {
     # sigma_thresh is the arbitrary threshold
     sigma_thresh <- 0.01
     sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision)
