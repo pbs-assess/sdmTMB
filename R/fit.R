@@ -1631,7 +1631,7 @@ sdmTMB <- function(
                           paste(which_sigma, collapse = ", "),
                           ". Refitting with spatiotemporal field(s) turned off."))
 
-        for(m in which_sigma) {
+        for (m in which_sigma) {
           spatiotemporal_updated[m] <- "off"
         }
         do_refit <- TRUE
