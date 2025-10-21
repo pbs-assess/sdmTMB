@@ -20,7 +20,6 @@ NULL
 #'   downstream, supply the time argument.
 #' @param family The family and link. Supports [gaussian()], [Gamma()],
 #'   [binomial()], [poisson()], \code{\link[sdmTMB:families]{Beta()}},
-#'   \code{\link[sdmTMB:families]{betabinomial()}},
 #'   \code{\link[sdmTMB:families]{nbinom2()}},
 #'   \code{\link[sdmTMB:families]{truncated_nbinom2()}},
 #'   \code{\link[sdmTMB:families]{nbinom1()}},
@@ -138,6 +137,11 @@ NULL
 #' @param bayesian Logical indicating if the model will be passed to
 #'   \pkg{tmbstan}. If `TRUE`, Jacobian adjustments are applied to account for
 #'   parameter transformations when priors are applied.
+#' @param collapse_spatial_variance Logical indicating whether to turn off the
+#'   spatial and spatiotemporal fields if their respective variances are going to
+#'   0. An arbitrary threshold of 0.01 is used for each; by default this is `TRUE`,
+#'   but if `FALSE` then the full model will be returned. If fields are collapsed,
+#'   a message is given to the user.
 #' @param experimental A named list for esoteric or in-development options. Here
 #'   be dragons.
 #   (Experimental) A column name (as character) of a predictor of a
@@ -169,7 +173,7 @@ NULL
 #' * `gradients`: marginal log likelihood gradients with respect to each fixed effect
 #' * `model`: output from [stats::nlminb()]
 #' * `data`: the fitted data
-#' * `spde`: the object that was supplied to the `mesh` argument
+#' * `mesh`: the object that was supplied to the `mesh` argument
 #' * `family`: the family object, which includes the inverse link function as `family$linkinv()`
 #' * `tmb_params`: The parameters list passed to [TMB::MakeADFun()]
 #' * `tmb_map`: The 'map' list passed to [TMB::MakeADFun()]
@@ -594,6 +598,7 @@ sdmTMB <- function(
     do_index = FALSE,
     predict_args = NULL,
     index_args = NULL,
+    collapse_spatial_variance = TRUE,
     experimental = NULL) {
   data <- droplevels(data) # if data was subset, strips absent factors
 
@@ -688,19 +693,16 @@ sdmTMB <- function(
   quadratic_roots <- control$quadratic_roots
   start <- control$start
   multiphase <- control$multiphase
-  getsd <- control$getsd
   map <- control$map
   lower <- control$lower
   upper <- control$upper
   get_joint_precision <- control$get_joint_precision
   upr <- control$censored_upper
-  suppress_nlminb_warnings <- control$suppress_nlminb_warnings
 
   dot_checks <- c(
-    "lower", "upper", "profile", "parallel", "censored_upper", "getsd",
+    "lower", "upper", "profile", "parallel", "censored_upper",
     "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",
-    "newton_loops", "start", "map", "get_joint_precision", "normalize",
-    "suppress_nlminb_warnings"
+    "newton_loops", "start", "map", "get_joint_precision", "normalize"
   )
   .control <- control
   # FIXME; automate this from sdmTMcontrol args?
@@ -955,13 +957,9 @@ sdmTMB <- function(
   # (yobs, weights) could be (proportions, size)
   # On the C++ side 'yobs' must be the number of successes.
   size <- rep(1, nrow(X_ij[[1]])) # for non-binomial case TODO: change hard coded index
-
-  # Helper function for binomial-type response processing
-  process_binomial_response <- function(mf, weights) {
+  if (identical(family$family[1], "binomial") && !delta) {
     ## call this to catch the factor / matrix cases
     y_i <- model.response(mf[[1]], type = "any")
-    size <- rep(1, length(y_i))
-
     ## allow character
     if (is.character(y_i)) {
       y_i <- model.response(mf[[1]], type = "factor")
@@ -973,7 +971,7 @@ sdmTMB <- function(
       if (nlevels(y_i) > 2) {
         cli_abort("More than 2 levels detected for response")
       }
-      ## following glm, 'success' is interpreted as the factor not
+      ## following glm, ‘success’ is interpreted as the factor not
       ## having the first level (and hence usually of having the
       ## second level).
       y_i <- pmin(as.numeric(y_i) - 1, 1)
@@ -1001,15 +999,6 @@ sdmTMB <- function(
       )
       cli_warn(msg)
     }
-
-    list(y_i = y_i, size = size, weights = weights)
-  }
-
-  if ((identical(family$family[1], "binomial") || identical(family$family[1], "betabinomial")) && !delta) {
-    result <- process_binomial_response(mf, weights)
-    y_i <- result$y_i
-    size <- result$size
-    weights <- result$weights
   }
 
   if (identical(family$link[1], "log") && min(y_i, na.rm = TRUE) < 0 && !delta) {
@@ -1071,10 +1060,8 @@ sdmTMB <- function(
   }
 
   priors_b <- priors$b
-  priors_sigma_V <- priors$sigma_V
   .priors <- priors
   .priors$b <- NULL # removes this in the list, so not passed in as data
-  .priors$sigma_V <- NULL # removes this in the list, so not passed in as data
   if (nrow(priors_b) == 1L && ncol(X_ij[[1]]) > 1L) { # TODO change hard coded index on X_ij
     if (!is.na(priors_b[[1]])) {
       message("Expanding `b` priors to match model matrix.")
@@ -1106,14 +1093,6 @@ sdmTMB <- function(
     priors_b_Sigma <- as.matrix(Sigma[not_na, not_na])
   }
 
-  # expand sigma_V priors if needed
-  if (nrow(priors_sigma_V) == 1L && ncol(X_rw_ik) > 1L) {
-    priors_sigma_V <- t(replicate(ncol(X_rw_ik), priors_sigma_V, simplify = "matrix"))
-  }
-  if (nrow(priors_sigma_V) != ncol(X_rw_ik)) {
-    cli_abort("sigma_V (time-varying SD) priors do not match the fitted model.")
-  }
-
   if (!"A_st" %in% names(spde)) cli_abort("`mesh` was created with an old version of `make_mesh()`.")
   if (delta) y_i <- cbind(ifelse(y_i > 0, 1, 0), ifelse(y_i > 0, y_i, NA_real_))
   if (!delta) y_i <- matrix(y_i, ncol = 1L)
@@ -1142,7 +1121,6 @@ sdmTMB <- function(
     proj_offset_i = 0,
     A_st = spde$A_st,
     sim_re = if ("sim_re" %in% names(experimental)) as.integer(experimental$sim_re) else rep(0L, 6),
-    sim_obs = 1L,
     A_spatial_index = spde$sdm_spatial_id - 1L,
     year_i = time_df$year_i[match(data[[time]], time_df$time_from_data)],
     ar1_fields = ar1_fields,
@@ -1157,7 +1135,6 @@ sdmTMB <- function(
     b_smooth_start = sm$b_smooth_start,
     proj_lon = 0,
     proj_lat = 0,
-    proj_vector = 0,
     do_predict = 0L,
     calc_se = 0L,
     pop_pred = 0L,
@@ -1169,14 +1146,12 @@ sdmTMB <- function(
     calc_index_totals = 0L,
     calc_cog = 0L,
     calc_eao = 0L,
-    calc_weighted_avg = 0L,
     random_walk = random_walk,
     ar1_time = as.integer(!is.null(time_varying) && time_varying_type == "ar1"),
     priors_b_n = length(not_na),
     priors_b_index = not_na - 1L,
     priors_b_mean = priors_b[not_na, 1],
     priors_b_Sigma = priors_b_Sigma,
-    priors_sigma_V = priors_sigma_V,
     priors = as.numeric(unlist(.priors)),
     share_range = as.integer(if (length(share_range) == 1L) rep(share_range, 2L) else share_range),
     include_spatial = as.integer(include_spatial), # changed later
@@ -1240,7 +1215,7 @@ sdmTMB <- function(
     # ln_kappa   = rep(log(sqrt(8) / median(stats::dist(spde$mesh$loc))), 2),
     thetaf = 0,
     gengamma_Q = 0.5, # Not defined at exactly 0
-    logit_p_extreme = 0,
+    logit_p_mix = 0,
     log_ratio_mix = -1, # ratio is 1 + exp(log_ratio_mix) so 0 would start fairly high
     ln_phi = rep(0, n_m),
     ln_tau_V = matrix(0, ncol(X_rw_ik), n_m),
@@ -1458,35 +1433,14 @@ sdmTMB <- function(
     tmb_map$ln_H_input <- factor(c(1, 2, 1, 2)) # share anisotropy as in VAST
   }
 
-  # Handle mixture models
   if (family$family[[1]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
-    fixed_p_extreme <- family$p_extreme
-
-    if (!is.null(fixed_p_extreme)) {
-      # Fix logit_p_extreme at the user-specified value
-      tmb_map$logit_p_extreme <- factor(NA)
-      tmb_params$logit_p_extreme <- log(fixed_p_extreme/(1-fixed_p_extreme))
-      tmb_map$log_ratio_mix <- NULL
-    } else {
-      tmb_map$log_ratio_mix <- NULL
-      tmb_map$logit_p_extreme <- NULL
-    }
+    tmb_map$log_ratio_mix <- NULL # performs better starting this in 2nd phase
+    tmb_map$logit_p_mix <- NULL # performs better starting this in 2nd phase
   }
-  # delta mixture models
   if (delta) {
     if (family$family[[2]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
-      fixed_p_extreme <- family[[2]]$p_extreme
-      if (is.null(fixed_p_extreme)) fixed_p_extreme <- family$p_extreme
-
-      if (!is.null(fixed_p_extreme)) {
-        # Fix logit_p_extreme at the user-specified value
-        tmb_map$logit_p_extreme <- factor(NA)
-        tmb_params$logit_p_extreme <- log(fixed_p_extreme/(1-fixed_p_extreme))
-        tmb_map$log_ratio_mix <- NULL
-      } else {
-        tmb_map$log_ratio_mix <- NULL
-        tmb_map$logit_p_extreme <- NULL
-      }
+      tmb_map$log_ratio_mix <- NULL
+      tmb_map$logit_p_mix <- NULL
     }
   }
 
@@ -1624,20 +1578,104 @@ sdmTMB <- function(
     tmb_opt <- list(par = tmb_obj$par, objective = tmb_obj$fn(tmb_obj$par))
   }
 
-  if (isTRUE(suppress_nlminb_warnings)) {
-    maybe_suppress_warnings <- suppressWarnings
-  } else {
-    maybe_suppress_warnings <- I
+  # check if sigma_O or sigma_E are collapsing to 0. There's a lot of complex
+  # logic / code about what needs to be mapped off etc -- but letting update()
+  # handle most of it.
+  if(collapse_spatial_variance && length(tmb_obj$par) > 0) {
+    # sigma_thresh is the arbitrary thrshold
+    sigma_thresh <- 0.01
+    sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision)
+
+    do_refit <- FALSE
+    spatial_updated <- spatial
+    spatiotemporal_updated <- spatiotemporal
+
+    # Check spatial field (omega_s)
+    if (any(spatial == "on") && !omit_spatial_intercept) {
+      est_sigma_O <- sd_report$value[names(sd_report$value) == "sigma_O"]
+
+      if (any(est_sigma_O < sigma_thresh)) {
+        which_sigma <- which(est_sigma_O < sigma_thresh)
+        cli_inform(paste0("Detected spatial variance(s) below threshold (",
+                          sigma_thresh, ") for model(s): ",
+                          paste(which_sigma, collapse = ", "),
+                          ". Refitting with spatial field(s) turned off."))
+        # Update spatial
+        for(i in which_sigma) {
+          spatial_updated[i] <- "off"
+        }
+        do_refit <- TRUE
+      }
+    }
+
+    # Check spatiotemporal field (epsilon_st)
+    if (!all(spatiotemporal == "off")) {
+      est_sigma_E <- sd_report$value[names(sd_report$value) == "sigma_E"]
+
+      # sigma_E is a vector of length (n_t * n_m)
+      # for each model (m), look at minimum across time steps (mostly identical)
+      est_sigma_E_by_model <- numeric(n_m)
+
+      for(m in 1:n_m) {
+        # sigma_E values for each model
+        idx_start <- (m - 1) * n_t + 1
+        idx_end <- m * n_t
+        est_sigma_E_by_model[m] <- min(est_sigma_E[idx_start:idx_end])
+      }
+
+      if (any(est_sigma_E_by_model < sigma_thresh)) {
+        which_sigma <- which(est_sigma_E_by_model < sigma_thresh)
+        cli_inform(paste0("Detected spatiotemporal variance(s) below threshold (",
+                          sigma_thresh, ") for model(s): ",
+                          paste(which_sigma, collapse = ", "),
+                          ". Refitting with spatiotemporal field(s) turned off."))
+
+        for(m in which_sigma) {
+          spatiotemporal_updated[m] <- "off"
+        }
+        do_refit <- TRUE
+      }
+    }
+
+    # Refit using update() if needed
+    if (do_refit) {
+      if (!silent) cli_inform("Refitting model with collapsed random field(s) using update()...")
+
+      # Prepare spatial argument for update()
+      if (delta) {
+        spatial_arg <- as.list(spatial_updated)
+        spatiotemporal_arg <- as.list(spatiotemporal_updated)
+      } else {
+        spatial_arg <- spatial_updated[1]
+        spatiotemporal_arg <- spatiotemporal_updated[1]
+      }
+      # Use update() to refit with new spatial/spatiotemporal settings
+      # This handles all the tmb_data, tmb_params, tmb_map updates correctly
+      updated_fit <- update(
+        out_structure,
+        spatial = spatial_arg,
+        spatiotemporal = spatiotemporal_arg,
+        do_fit = TRUE,
+        silent = silent
+      )
+
+      # reset the updated components
+      tmb_obj <- updated_fit$tmb_obj
+      tmb_opt <- updated_fit$model
+      sd_report <- updated_fit$sd_report
+
+      out_structure <- updated_fit
+    }
   }
 
   if (nlminb_loops > 1) {
     if (!silent) cli_inform("running extra nlminb optimization\n")
     for (i in seq(2, nlminb_loops, length = max(0, nlminb_loops - 1))) {
       temp <- tmb_opt[c("iterations", "evaluations")]
-      tmb_opt <- maybe_suppress_warnings(stats::nlminb(
+      tmb_opt <- stats::nlminb(
         start = tmb_opt$par, objective = tmb_obj$fn, gradient = tmb_obj$gr,
         control = .control, lower = lim$lower, upper = lim$upper
-      ))
+      )
       tmb_opt[["iterations"]] <- tmb_opt[["iterations"]] + temp[["iterations"]]
       tmb_opt[["evaluations"]] <- tmb_opt[["evaluations"]] + temp[["evaluations"]]
     }
@@ -1647,18 +1685,20 @@ sdmTMB <- function(
       cli_inform("Upper or lower limits were set. `stats::optimHess()` will ignore these limits. Set `control = sdmTMBcontrol(newton_loops = 0)` to avoid the `stats::optimHess()` optimization if desired.")
     }
   }
-
-  tmb_opt <- run_newton_loops(newton_loops = newton_loops, tmb_opt, tmb_obj, silent)
+  if (newton_loops > 0) {
+    if (!silent) cli_inform("attempting to improve convergence with optimHess\n")
+    for (i in seq_len(newton_loops)) {
+      g <- as.numeric(tmb_obj$gr(tmb_opt$par))
+      h <- stats::optimHess(tmb_opt$par, fn = tmb_obj$fn, gr = tmb_obj$gr)
+      tmb_opt$par <- tmb_opt$par - solve(h, g)
+      tmb_opt$objective <- tmb_obj$fn(tmb_opt$par)
+    }
+  }
   check_bounds(tmb_opt$par, lim$lower, lim$upper)
 
-  if (!silent && getsd) cli_inform("running TMB sdreport\n")
-  if (getsd) {
-    sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision)
-    conv <- get_convergence_diagnostics(sd_report)
-  } else {
-    sd_report <- NULL
-    conv <- NULL
-  }
+  if (!silent) cli_inform("running TMB sdreport\n")
+  sd_report <- TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision)
+  conv <- get_convergence_diagnostics(sd_report)
 
   ## save params that families need to grab from environments:
   if (any(family$family %in% c("truncated_nbinom1", "truncated_nbinom2"))) {
