@@ -21,7 +21,7 @@ test_that("collapsing spatial and spatiotemporal fields works", {
     B = c(0.2, -0.4) # B0 = intercept, B1 = a1 slope
   )
   # create some fake 0s
-  sim_dat$observed[sample(1:500, size=50, replace=F)] <- 0
+  sim_dat$observed[sample(1:500, size = 50, replace = FALSE)] <- 0
 
   # test spatial collapse with gaussian family
   fit_nospatial <- sdmTMB(observed ~ a1, data = sim_dat, mesh = mesh, time = "year",
