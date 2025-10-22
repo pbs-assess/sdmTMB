@@ -24,7 +24,7 @@ sdmTMBcontrol(
   get_joint_precision = TRUE,
   parallel = getOption("sdmTMB.cores", 1L),
   suppress_nlminb_warnings = TRUE,
-  collapse_spatial_variance = TRUE,
+  collapse_spatial_variance = FALSE,
   ...
 )
 }
@@ -115,9 +115,9 @@ are then replaced with \code{Inf} and avoided during estimation?}
 
 \item{collapse_spatial_variance}{Logical indicating whether to turn off the
 spatial and spatiotemporal fields if their respective variances are going to
-0. An arbitrary threshold of 0.01 is used for each; by default this is \code{TRUE},
-but if \code{FALSE} then the full model will be returned. If fields are collapsed,
-a message is given to the user.}
+0. An arbitrary threshold of 0.01 is used for each; by default this is \code{FALSE},
+but if \code{TRUE} then the the original model will be compared against a simpler one
+whose fields are collapsed, and a message is given to the user.}
 
 \item{...}{Anything else. See the 'Control parameters' section of
 \code{\link[stats:nlminb]{stats::nlminb()}}.}
