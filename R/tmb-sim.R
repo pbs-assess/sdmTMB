@@ -217,25 +217,6 @@ sdmTMB_simulate <- function(formula,
       dots
     )
 
-    # To force collapse spatial field off, extract control arguments from dots
-    # and merge with collapse_spatial_variance = FALSE
-    is_control <- grepl("^control\\.", names(fit_args))
-
-    if (any(is_control)) {
-      control_args <- fit_args[is_control]
-      names(control_args) <- sub("^control\\.", "", names(control_args))
-      # Remove individual control args from fit_args
-      fit_args <- fit_args[!is_control]
-    } else {
-      control_args <- list()
-    }
-
-    # Always add collapse_spatial_variance = FALSE
-    control_args$collapse_spatial_variance <- FALSE
-
-    # Create control object
-    fit_args$control <- do.call(sdmTMBcontrol, control_args)
-
     fit <- do.call(sdmTMB, fit_args)
     params <- fit$tmb_params
   } else {
