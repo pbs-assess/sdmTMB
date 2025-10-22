@@ -1650,62 +1650,48 @@ sdmTMB <- function(
     }
   }
 
-  tmb_opt <- run_newton_loops(newton_loops = newton_loops, tmb_opt, tmb_obj, silent)
   check_bounds(tmb_opt$par, lim$lower, lim$upper)
 
   # Check if spatial/spatiotemporal variances are collapsing to zero
+  # Do this BEFORE newton loops to avoid Hessian issues with collapsing variances
   if (collapse_spatial_variance && length(tmb_obj$par) > 0) {
-    # Try to compute sd_report to check variances
-    sd_report_check <- tryCatch(
-      TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision),
-      error = function(e) NULL
+    report_vals <- tmb_obj$report()
+
+    collapse_result <- check_and_collapse_random_fields(
+      tmb_obj = tmb_obj,
+      report_vals = report_vals,
+      spatial = spatial,
+      spatiotemporal = spatiotemporal,
+      n_m = n_m,
+      n_t = n_t,
+      omit_spatial_intercept = omit_spatial_intercept,
+      collapse_threshold = collapse_threshold,
+      delta = delta,
+      silent = silent
     )
 
-    if (!is.null(sd_report_check)) {
-      collapse_result <- check_and_collapse_random_fields(
-        tmb_obj = tmb_obj,
-        sd_report_check = sd_report_check,
-        spatial = spatial,
-        spatiotemporal = spatiotemporal,
-        n_m = n_m,
-        n_t = n_t,
-        omit_spatial_intercept = omit_spatial_intercept,
-        collapse_threshold = collapse_threshold,
+    if (collapse_result$do_refit) {
+      if (!silent) {
+        cli_inform(c(
+          "i" = "Refitting model with collapsed random field(s) using update()..."
+        ))
+      }
+
+      # Refit with collapsed fields disabled
+      # The rest of this sdmTMB() function call was just executed with update()
+      updated_fit <- update(
+        out_structure,
+        spatial = collapse_result$spatial_arg,
+        spatiotemporal = collapse_result$spatiotemporal_arg,
+        do_fit = TRUE,
         silent = silent
       )
-
-      if (collapse_result$do_refit) {
-        if (!silent) {
-          cli_inform(c(
-            "i" = "Refitting model with collapsed random field(s) using update()..."
-          ))
-        }
-
-        # Prepare spatial/spatiotemporal arguments for update()
-        if (delta) {
-          spatial_arg <- as.list(collapse_result$spatial_updated)
-          spatiotemporal_arg <- as.list(collapse_result$spatiotemporal_updated)
-        } else {
-          spatial_arg <- collapse_result$spatial_updated[1]
-          spatiotemporal_arg <- collapse_result$spatiotemporal_updated[1]
-        }
-
-        # Refit with collapsed fields disabled
-        updated_fit <- update(
-          out_structure,
-          spatial = spatial_arg,
-          spatiotemporal = spatiotemporal_arg,
-          do_fit = TRUE,
-          silent = silent
-        )
-        return(updated_fit)
-      }
-    } else if (!silent) {
-      cli_inform(c(
-        "i" = "Could not check for collapsing random fields (sdreport failed)"
-      ))
+      return(updated_fit)
     }
   }
+
+  # We only end up here if no collapse detected
+  tmb_opt <- run_newton_loops(newton_loops = newton_loops, tmb_opt, tmb_obj, silent)
 
   if (!silent && getsd) cli_inform("running TMB sdreport\n")
   if (getsd) {
@@ -1767,13 +1753,14 @@ check_bounds <- function(.par, lower, upper) {
 
 check_and_collapse_random_fields <- function(
     tmb_obj,
-    sd_report_check,
+    report_vals,
     spatial,
     spatiotemporal,
     n_m,
     n_t,
     omit_spatial_intercept,
     collapse_threshold,
+    delta,
     silent) {
 
   do_refit <- FALSE
@@ -1782,7 +1769,7 @@ check_and_collapse_random_fields <- function(
 
   # Check spatial field (omega_s)
   if (any(spatial == "on") && !omit_spatial_intercept) {
-    est_sigma_O <- sd_report_check$value[names(sd_report_check$value) == "sigma_O"]
+    est_sigma_O <- report_vals$sigma_O
 
     if (length(est_sigma_O) > 0 && any(est_sigma_O < collapse_threshold)) {
       which_sigma <- which(est_sigma_O < collapse_threshold)
@@ -1804,7 +1791,7 @@ check_and_collapse_random_fields <- function(
 
   # Check spatiotemporal field (epsilon_st)
   if (!all(spatiotemporal == "off")) {
-    est_sigma_E <- sd_report_check$value[names(sd_report_check$value) == "sigma_E"]
+    est_sigma_E <- report_vals$sigma_E
 
     if (length(est_sigma_E) > 0) {
       est_sigma_E_by_model <- numeric(n_m)
@@ -1836,10 +1823,19 @@ check_and_collapse_random_fields <- function(
     }
   }
 
+  # Prepare spatial/spatiotemporal arguments for update()
+  if (delta) {
+    spatial_arg <- as.list(spatial_updated)
+    spatiotemporal_arg <- as.list(spatiotemporal_updated)
+  } else {
+    spatial_arg <- spatial_updated[1]
+    spatiotemporal_arg <- spatiotemporal_updated[1]
+  }
+
   list(
     do_refit = do_refit,
-    spatial_updated = spatial_updated,
-    spatiotemporal_updated = spatiotemporal_updated
+    spatial_arg = spatial_arg,
+    spatiotemporal_arg = spatiotemporal_arg
   )
 }
 
