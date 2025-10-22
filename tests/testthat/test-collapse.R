@@ -27,7 +27,8 @@ test_that("collapsing spatial and spatiotemporal fields works", {
   fit_nospatial <- sdmTMB(observed ~ a1, data = sim_dat, mesh = mesh, time = "year",
                           spatiotemporal = "off", spatial="off")
   fit <- sdmTMB(observed ~ a1, data = sim_dat, mesh = mesh, time = "year",
-                spatiotemporal = "off")
+                spatiotemporal = "off",
+                control = sdmTMBcontrol(collapse_spatial_variance = TRUE))
   expect_equal(tidy(fit_nospatial), tidy(fit))
   expect_equal(tidy(fit_nospatial,"ran_pars"), tidy(fit,"ran_pars"))
   expect_equal(tidy(fit_nospatial,"ran_vals"), tidy(fit,"ran_vals"))
@@ -35,7 +36,8 @@ test_that("collapsing spatial and spatiotemporal fields works", {
   # test spatial / spatiotemporal collapse with spatiotemporal on
   fit_nospatial <- sdmTMB(observed ~ a1, data = sim_dat, mesh = mesh, time = "year",
                           spatiotemporal = "off", spatial="off")
-  fit <- sdmTMB(observed ~ a1, data = sim_dat, mesh = mesh, time = "year")
+  fit <- sdmTMB(observed ~ a1, data = sim_dat, mesh = mesh, time = "year",
+                control = sdmTMBcontrol(collapse_spatial_variance = TRUE))
   expect_equal(tidy(fit_nospatial), tidy(fit))
   expect_equal(tidy(fit_nospatial,"ran_pars"), tidy(fit,"ran_pars"))
   expect_equal(tidy(fit_nospatial,"ran_vals"), tidy(fit,"ran_vals"))
@@ -44,7 +46,8 @@ test_that("collapsing spatial and spatiotemporal fields works", {
   fit_nospatial <- sdmTMB(observed ~ a1, data = sim_dat, mesh = mesh, time = "year",
                           spatiotemporal = "off", spatial="off", family=delta_gamma())
   fit <- sdmTMB(observed ~ a1, data = sim_dat, mesh = mesh, time = "year",
-                spatiotemporal = "off", family=delta_gamma())
+                spatiotemporal = "off", family=delta_gamma(),
+                control = sdmTMBcontrol(collapse_spatial_variance = TRUE))
   expect_equal(tidy(fit_nospatial), tidy(fit))
   expect_equal(tidy(fit_nospatial,"ran_pars"), tidy(fit,"ran_pars"))
   expect_equal(tidy(fit_nospatial,"ran_vals"), tidy(fit,"ran_vals"))
