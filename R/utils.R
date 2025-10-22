@@ -67,6 +67,11 @@
 #' @param suppress_nlminb_warnings Suppress uninformative warnings
 #'   from [stats::nlminb()] arising when a function evaluation is `NA`, which
 #'   are then replaced with `Inf` and avoided during estimation?
+#' @param collapse_spatial_variance Logical indicating whether to turn off the
+#'   spatial and spatiotemporal fields if their respective variances are going to
+#'   0. An arbitrary threshold of 0.01 is used for each; by default this is `TRUE`,
+#'   but if `FALSE` then the full model will be returned. If fields are collapsed,
+#'   a message is given to the user.
 #' @param ... Anything else. See the 'Control parameters' section of
 #'   [stats::nlminb()].
 #'
@@ -100,6 +105,7 @@ sdmTMBcontrol <- function(
   get_joint_precision = TRUE,
   parallel = getOption("sdmTMB.cores", 1L),
   suppress_nlminb_warnings = TRUE,
+  collapse_spatial_variance = TRUE,
   ...) {
 
   if (is_present(mgcv)) {
@@ -140,7 +146,8 @@ sdmTMBcontrol <- function(
     censored_upper,
     multiphase,
     parallel,
-    get_joint_precision
+    get_joint_precision,
+    collapse_spatial_variance
   )
   c(out, list(...))
 }

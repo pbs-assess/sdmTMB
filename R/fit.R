@@ -695,12 +695,13 @@ sdmTMB <- function(
   get_joint_precision <- control$get_joint_precision
   upr <- control$censored_upper
   suppress_nlminb_warnings <- control$suppress_nlminb_warnings
+  collapse_spatial_variance <- control$collapse_spatial_variance
 
   dot_checks <- c(
     "lower", "upper", "profile", "parallel", "censored_upper", "getsd",
     "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",
     "newton_loops", "start", "map", "get_joint_precision", "normalize",
-    "suppress_nlminb_warnings"
+    "suppress_nlminb_warnings", "collapse_spatial_variance"
   )
   .control <- control
   # FIXME; automate this from sdmTMcontrol args?
@@ -1650,6 +1651,97 @@ sdmTMB <- function(
 
   tmb_opt <- run_newton_loops(newton_loops = newton_loops, tmb_opt, tmb_obj, silent)
   check_bounds(tmb_opt$par, lim$lower, lim$upper)
+
+  # check if sigma_O or sigma_E are collapsing to 0. There's a lot of complex
+  # logic / code about what needs to be mapped off etc -- but letting update()
+  # handle most of it
+  if (control$collapse_spatial_variance && length(tmb_obj$par) > 0) {
+    sigma_thresh <- 0.01
+
+    # Try to compute sd_report to check variances
+    sd_report_check <- tryCatch(
+      TMB::sdreport(tmb_obj, getJointPrecision = get_joint_precision),
+      error = function(e) NULL
+    )
+
+    if (!is.null(sd_report_check)) {
+      do_refit <- FALSE
+      spatial_updated <- spatial
+      spatiotemporal_updated <- spatiotemporal
+
+      # check spatial field (omega_s)
+      if (any(spatial == "on") && !omit_spatial_intercept) {
+        est_sigma_O <- sd_report_check$value[names(sd_report_check$value) == "sigma_O"]
+
+        if (length(est_sigma_O) > 0 && any(est_sigma_O < sigma_thresh)) {
+          which_sigma <- which(est_sigma_O < sigma_thresh)
+          cli_inform(paste0("Detected spatial variance(s) below threshold (",
+                            sigma_thresh, ") for model(s): ",
+                            paste(which_sigma, collapse = ", "),
+                            ". Refitting with spatial field(s) turned off."))
+
+          for (i in which_sigma) {
+            spatial_updated[i] <- "off"
+          }
+          do_refit <- TRUE
+        }
+      }
+
+      # check spatiotemporal field (epsilon_st)
+      if (!all(spatiotemporal == "off")) {
+        est_sigma_E <- sd_report_check$value[names(sd_report_check$value) == "sigma_E"]
+
+        if (length(est_sigma_E) > 0) {
+          est_sigma_E_by_model <- numeric(n_m)
+
+          for (m in seq_len(n_m)) {
+            idx_start <- (m - 1) * n_t + 1
+            idx_end <- m * n_t
+            if (idx_end <= length(est_sigma_E)) {
+              est_sigma_E_by_model[m] <- min(est_sigma_E[idx_start:idx_end])
+            }
+          }
+
+          if (any(est_sigma_E_by_model < sigma_thresh, na.rm = TRUE)) {
+            which_sigma <- which(est_sigma_E_by_model < sigma_thresh)
+            cli_inform(paste0("Detected spatiotemporal variance(s) below threshold (",
+                              sigma_thresh, ") for model(s): ",
+                              paste(which_sigma, collapse = ", "),
+                              ". Refitting with spatiotemporal field(s) turned off."))
+
+            for (m in which_sigma) {
+              spatiotemporal_updated[m] <- "off"
+            }
+            do_refit <- TRUE
+          }
+        }
+      }
+
+      # refit using update() if needed
+      if (do_refit) {
+        if (!silent) cli_inform("Refitting model with collapsed random field(s) using update()...")
+
+        # get spatial argument for update()
+        if (delta) {
+          spatial_arg <- as.list(spatial_updated)
+          spatiotemporal_arg <- as.list(spatiotemporal_updated)
+        } else {
+          spatial_arg <- spatial_updated[1]
+          spatiotemporal_arg <- spatiotemporal_updated[1]
+        }
+
+        # update() to refit with new spatial/spatiotemporal settings
+        updated_fit <- update(
+          out_structure,
+          spatial = spatial_arg,
+          spatiotemporal = spatiotemporal_arg,
+          do_fit = TRUE,
+          silent = silent
+        )
+        return(updated_fit)
+      }
+    }
+  }
 
   if (!silent && getsd) cli_inform("running TMB sdreport\n")
   if (getsd) {
