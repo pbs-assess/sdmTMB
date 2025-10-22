@@ -67,11 +67,18 @@
 #' @param suppress_nlminb_warnings Suppress uninformative warnings
 #'   from [stats::nlminb()] arising when a function evaluation is `NA`, which
 #'   are then replaced with `Inf` and avoided during estimation?
-#' @param collapse_spatial_variance Logical indicating whether to turn off the
-#'   spatial and spatiotemporal fields if their respective variances are going to
-#'   0. An arbitrary threshold of 0.01 is used for each; by default this is `FALSE`,
-#'   but if `TRUE` then the the original model will be compared against a simpler one
-#'   whose fields are collapsed, and a message is given to the user.
+#' @param collapse_spatial_variance Logical: should random fields (spatial and/or
+#'   spatiotemporal) be automatically turned off if their estimated variance is below
+#'   `collapse_threshold`? This feature helps avoid overfitting when data lack
+#'   sufficient spatial/spatiotemporal structure. When enabled, the model will be
+#'   automatically refitted using [update.sdmTMB()] with the collapsing field(s)
+#'   disabled. This adds computational cost (one additional [TMB::sdreport()] call
+#'   plus refitting if collapse is detected) but can result in simpler, better
+#'   converged models. Default is `FALSE`.
+#' @param collapse_threshold Numeric: the variance threshold below which random
+#'   fields are considered to be collapsing to zero. Only used when
+#'   `collapse_spatial_variance = TRUE`. Values are on the standard deviation
+#'   scale (i.e., square root of variance). Default is 0.01.
 #' @param ... Anything else. See the 'Control parameters' section of
 #'   [stats::nlminb()].
 #'
@@ -106,6 +113,7 @@ sdmTMBcontrol <- function(
   parallel = getOption("sdmTMB.cores", 1L),
   suppress_nlminb_warnings = TRUE,
   collapse_spatial_variance = FALSE,
+  collapse_threshold = 0.01,
   ...) {
 
   if (is_present(mgcv)) {
@@ -129,6 +137,8 @@ sdmTMBcontrol <- function(
   }
 
   assert_that(is.logical(profile) || is.character(profile))
+  assert_that(is.logical(collapse_spatial_variance))
+  assert_that(is.numeric(collapse_threshold), collapse_threshold > 0)
 
   out <- named_list(
     eval.max,
@@ -147,7 +157,8 @@ sdmTMBcontrol <- function(
     multiphase,
     parallel,
     get_joint_precision,
-    collapse_spatial_variance
+    collapse_spatial_variance,
+    collapse_threshold
   )
   c(out, list(...))
 }
