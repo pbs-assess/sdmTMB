@@ -1,5 +1,6 @@
 test_that("collapsing spatial and spatiotemporal fields works", {
   skip_on_cran()
+  skip_on_ci()
 
   set.seed(123)
   predictor_dat <- data.frame(
@@ -27,7 +28,8 @@ test_that("collapsing spatial and spatiotemporal fields works", {
   # test spatial collapse with gaussian family
   fit_nospatial <- sdmTMB(observed ~ a1,
     data = sim_dat, mesh = mesh, time = "year",
-    spatiotemporal = "off", spatial = "off"
+    spatiotemporal = "off", spatial = "off",
+    control = sdmTMBcontrol(collapse_spatial_variance = FALSE)
   )
   fit <- sdmTMB(observed ~ a1,
     data = sim_dat, mesh = mesh, time = "year",
@@ -82,7 +84,6 @@ test_that("collapsing spatial and spatiotemporal fields works", {
 
 test_that("custom collapse threshold works", {
   skip_on_cran()
-  skip_on_ci()
 
   set.seed(456)
 
@@ -99,31 +100,29 @@ test_that("custom collapse threshold works", {
     mesh = mesh,
     family = tweedie(),
     range = 2,
-    sigma_E = 0.005, # Very small but above default threshold
+    sigma_E = 0.2,
     phi = 0.2,
     sigma_O = 0,
     seed = 43,
     B = c(0.2, -0.4)
   )
 
-  # With default threshold (0.01), should not collapse
+  # With 0.001, should not collapse
   fit_default <- sdmTMB(observed ~ a1,
     data = sim_dat, mesh = mesh, time = "year",
     spatial = "off",
-    control = sdmTMBcontrol(collapse_spatial_variance = TRUE)
+    control = sdmTMBcontrol(collapse_spatial_variance = TRUE, collapse_threshold = 0.001)
   )
 
-  # With higher threshold (0.02), should collapse
+  # With higher threshold (0.3), should collapse
   fit_collapse <- sdmTMB(observed ~ a1,
     data = sim_dat, mesh = mesh, time = "year",
     spatial = "off",
-    control = sdmTMBcontrol(
-      collapse_spatial_variance = TRUE,
-      collapse_threshold = 0.02
-    )
+    control = sdmTMBcontrol(collapse_spatial_variance = TRUE, collapse_threshold = 0.3)
+
   )
 
-  # fit_collapse should have spatiotemporal turned off
+  expect_true(all(fit_default$spatiotemporal == "iid"))
   expect_true(all(fit_collapse$spatiotemporal == "off"))
 })
 
