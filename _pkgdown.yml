@@ -36,6 +36,7 @@ reference:
   - tidy.sdmTMB
   - predict.sdmTMB
   - residuals.sdmTMB
+  - update.sdmTMB
   - dharma_residuals
   - sdmTMBcontrol
   - run_extra_optimization
