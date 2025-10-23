@@ -590,6 +590,40 @@ where $\mu_1$ is the mean of the first (smaller component) of the distribution, 
 
 Example: `family = nbinom2_mix(link = "log")`
 
+## Delta models
+
+`sdmTMB` allows for several different kinds of mixture model families, including delta (hurdle) models. These families are implemented by specifying the family as a delta distribution,  
+
+```r
+sdmTMB(...,
+  family = delta_lognormal()
+)
+```
+
+The list of supported families is included in the documentation on [additional families](https://pbs-assess.github.io/sdmTMB/reference/families.html), [delta models](https://pbs-assess.github.io/sdmTMB/articles/delta-models.html), and the [Poisson-link delta models](https://pbs-assess.github.io/sdmTMB/articles/poisson-link.html). By default, the `delta_` families don't use the Poisson link, but this structure can be specified with `delta_gamma(type = "poisson-link")`. 
+
+The delta model implementation in `sdmTMB` constructs two independent models, with the first model being presence-absence and the second model being the positive component (such as catch rates in fisheries applications). Default links associated with each family can be inspected with `delta_lognormal()` and equivalent functions.
+
+Because the delta model constructs two independent models, each component of an `sdmTMB` model can be specified independently as a 2-element list. For example, the spatial model might be estimated for only the first presence-absence model as 
+
+```r
+sdmTMB(...,
+  family = delta_lognormal(),
+  spatial = list("on","off")
+)
+```
+
+Or for we may want to allow for separate formulas, 
+
+```r
+sdmTMB(...,
+  formula = list(y ~ depth + I(depth^2), y ~ 1),
+  family = delta_lognormal()
+)
+```
+
+Some of these features are still in development, currently if delta models contain smoothers, both components must have the same main-effects formula.
+  
 # Gaussian random fields
 
 ## Matérn parameterization
