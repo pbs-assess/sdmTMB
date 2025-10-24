@@ -136,10 +136,17 @@ test_that("Model with random intercepts fits appropriately.", {
     tolerance = 1e-5
   )
 
-  # predicting with new levels throws error for now:
+  # predicting with new levels generates population level predictions:
   m <- sdmTMB(data = s, formula = observed ~ 1 + (1 | g), spatial = "off")
-  nd <- data.frame(g = factor(c(1, 2, 3, 800)))
-  expect_error(predict(m, newdata = nd), regexp = "Extra levels found")
+  nd <- data.frame(g = factor(c(800)))
+
+  expect_warning(
+    p2 <- predict(m, nd),
+    "Found new levels for"
+  )
+  p2 <- suppressWarnings(predict(m, nd))
+
+  expect_equal(p2$est, as.numeric(coef(m)))
 })
 
 test_that("Random intercepts and cross validation play nicely", {
