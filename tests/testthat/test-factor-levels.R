@@ -65,10 +65,12 @@ test_that("Test that droplevels matches glmmTMB on (1 | factor)", {
   ))
   p1 <- predict(fit_glmmTMB, newdata = nd, re.form = NULL)
 
-  expect_error({
-    p2 <- predict(fit_sdmTMB, newdata = nd)$est
-  }, regexp = "levels")
-  # expect_equal(p1, p2, tolerance = 1e-3)
+  expect_warning(
+    p2 <- predict(fit_sdmTMB, newdata = nd),
+    "Found new levels for"
+  )
+  p2 <- suppressWarnings(predict(fit_sdmTMB, newdata = nd))
+  expect_equal(cor(p1, p2$est), 1)
 
   # drop level on predict
   nd <- d
@@ -79,10 +81,12 @@ test_that("Test that droplevels matches glmmTMB on (1 | factor)", {
   ))
 
   p1 <- predict(fit_glmmTMB, newdata = nd, re.form = NULL)
-  expect_error({
-    p2 <- predict(fit_sdmTMB, newdata = nd)$est
-  }, regexp = "levels")
-  # expect_equal(p1, p2, tolerance = 1e-3)
+  expect_warning(
+    p2 <- predict(fit_sdmTMB, newdata = nd),
+    "Found new levels for"
+  )
+  p2 <- suppressWarnings(predict(fit_sdmTMB, newdata = nd))
+  expect_equal(cor(p1, p2$est), 1)
 })
 
 test_that("re_form_iid is not specified but new levels in newdata doesn't blow up", {
@@ -99,9 +103,12 @@ test_that("re_form_iid is not specified but new levels in newdata doesn't blow u
   d <- pcod
   d$fyear <- as.factor(d$year)
   p <- predict(fit, newdata = d, re_form_iid = NA) # works
-  expect_error({
-    predict(fit, newdata = d) # blows up
-  }, regexp = "levels")
+
+  expect_warning(
+    p1 <- predict(fit, newdata = d),
+    "Found new levels for"
+  )
+  p1 <- suppressWarnings(predict(fit, newdata = d))
 
   # what about just with 1 level?
   fit_glmmTMB <- glmmTMB::glmmTMB(density ~ 1 + (1 | fyear),
