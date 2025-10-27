@@ -138,6 +138,13 @@ NULL
 #' @param bayesian Logical indicating if the model will be passed to
 #'   \pkg{tmbstan}. If `TRUE`, Jacobian adjustments are applied to account for
 #'   parameter transformations when priors are applied.
+#' @param distribution_column An optional character string indicating the column
+#'   name in `data` that specifies the distribution for each observation. When
+#'   provided, `family` must be a named list of family objects, and the values
+#'   in the distribution column must match the names in the family list. This
+#'   enables fitting integrated models with different distributions for different
+#'   observations (e.g., binomial for presence/absence data and Poisson for
+#'   count data in the same model).
 #' @param experimental A named list for esoteric or in-development options. Here
 #'   be dragons.
 #   (Experimental) A column name (as character) of a predictor of a
@@ -594,11 +601,19 @@ sdmTMB <- function(
     do_index = FALSE,
     predict_args = NULL,
     index_args = NULL,
+    distribution_column = NULL,
     experimental = NULL) {
   data <- droplevels(data) # if data was subset, strips absent factors
 
-  delta <- isTRUE(family$delta)
-  n_m <- if (delta) 2L else 1L
+  # Build family arrays for both single and integrated models
+  family_arrays <- build_family_arrays(
+    family = family,
+    distribution_column = distribution_column,
+    data = data,
+    n_obs = nrow(data)
+  )
+  n_m <- family_arrays$n_m_effective
+  delta <- (n_m == 2L)
 
   if (!missing(spatial)) {
     if (length(spatial) > 1 && !is.list(spatial)) {
@@ -772,7 +787,15 @@ sdmTMB <- function(
   }
   # FIXME parallel setup here?
 
-  if (family$family[1] == "censored_poisson") {
+  # Check for censored_poisson in either single family or family list
+  has_censored_poisson <- FALSE
+  if (is.null(distribution_column)) {
+    has_censored_poisson <- (family$family[1] == "censored_poisson")
+  } else {
+    has_censored_poisson <- any(sapply(family_arrays$family_list, function(f) "censored_poisson" %in% f$family))
+  }
+
+  if (has_censored_poisson) {
     if ("lwr" %in% names(experimental) || "upr" %in% names(experimental)) {
       cli_abort("Detected `lwr` or `upr` in `experimental`. `lwr` is no longer needed and `upr` is now specified as `control = sdmTMBcontrol(censored_upper = ...)`.")
     }
@@ -941,11 +964,23 @@ sdmTMB <- function(
     }
   }
 
-  if (family$family[1] %in% c("Gamma", "lognormal") && min(y_i) <= 0 && !delta) {
-    cli_abort("Gamma and lognormal must have response values > 0.")
-  }
-  if (family$family[1] == "censored_poisson") {
-    assert_that(mean(upr - y_i, na.rm = TRUE) >= 0)
+  # Validation checks - handle both single family and family lists
+  if (is.null(distribution_column)) {
+    if (family$family[1] %in% c("Gamma", "lognormal") && min(y_i) <= 0 && !delta) {
+      cli_abort("Gamma and lognormal must have response values > 0.")
+    }
+    if (family$family[1] == "censored_poisson") {
+      assert_that(mean(upr - y_i, na.rm = TRUE) >= 0)
+    }
+  } else {
+    # For integrated models, check relevant families
+    has_gamma_lognormal <- any(sapply(family_arrays$family_list, function(f) any(f$family %in% c("Gamma", "lognormal"))))
+    if (has_gamma_lognormal && min(y_i) <= 0) {
+      cli_warn("Gamma and lognormal families require response values > 0. Some observations may cause issues.")
+    }
+    if (has_censored_poisson) {
+      assert_that(mean(upr - y_i, na.rm = TRUE) >= 0)
+    }
   }
 
   # This is taken from approach in glmmTMB to match how they handle binomial
@@ -1005,15 +1040,34 @@ sdmTMB <- function(
     list(y_i = y_i, size = size, weights = weights)
   }
 
-  if ((identical(family$family[1], "binomial") || identical(family$family[1], "betabinomial")) && !delta) {
-    result <- process_binomial_response(mf, weights)
-    y_i <- result$y_i
-    size <- result$size
-    weights <- result$weights
+  # Process binomial response if needed
+  if (is.null(distribution_column)) {
+    if ((identical(family$family[1], "binomial") || identical(family$family[1], "betabinomial")) && !delta) {
+      result <- process_binomial_response(mf, weights)
+      y_i <- result$y_i
+      size <- result$size
+      weights <- result$weights
+    }
+  } else {
+    # For integrated models with binomial data, user must provide response as 0/1 or cbind(success, failure)
+    # We set size based on whether we detect binomial families
+    has_binomial <- any(sapply(family_arrays$family_list, function(f) any(f$family %in% c("binomial", "betabinomial"))))
+    if (has_binomial) {
+      # Assume binary response for binomial observations (user responsibility)
+      size <- rep(1, length(y_i))
+    }
   }
 
-  if (identical(family$link[1], "log") && min(y_i, na.rm = TRUE) < 0 && !delta) {
-    cli_abort("`link = 'log'` but the reponse data include values < 0.")
+  # Check for log link with negative values
+  if (is.null(distribution_column)) {
+    if (identical(family$link[1], "log") && min(y_i, na.rm = TRUE) < 0 && !delta) {
+      cli_abort("`link = 'log'` but the reponse data include values < 0.")
+    }
+  } else {
+    has_log_link <- any(sapply(family_arrays$family_list, function(f) "log" %in% f$link))
+    if (has_log_link && min(y_i, na.rm = TRUE) < 0) {
+      cli_warn("Some families use `link = 'log'` but response data include values < 0.")
+    }
   }
 
   if (is.null(offset)) offset <- rep(0, length(y_i))
@@ -1037,7 +1091,19 @@ sdmTMB <- function(
     anisotropy <- FALSE
   }
 
-  df <- if (family$family[1] == "student" && "df" %in% names(family)) family$df else 3
+  # Determine df parameter for student family
+  if (is.null(distribution_column)) {
+    df <- if (family$family[1] == "student" && "df" %in% names(family)) family$df else 3
+  } else {
+    # For integrated models, check if any family is student
+    df <- 3 # default
+    for (fam_obj in family_arrays$family_list) {
+      if ("student" %in% fam_obj$family && "df" %in% names(fam_obj)) {
+        df <- fam_obj$df
+        break
+      }
+    }
+  }
 
   est_epsilon_model <- 0L
   epsilon_covariate <- rep(0, length(unique(data[[time]])))
@@ -1115,8 +1181,23 @@ sdmTMB <- function(
   }
 
   if (!"A_st" %in% names(spde)) cli_abort("`mesh` was created with an old version of `make_mesh()`.")
-  if (delta) y_i <- cbind(ifelse(y_i > 0, 1, 0), ifelse(y_i > 0, y_i, NA_real_))
-  if (!delta) y_i <- matrix(y_i, ncol = 1L)
+
+  # Transform response to matrix format based on family components
+  n_obs <- length(y_i)
+  y_i_matrix <- array(NA_real_, dim = c(n_obs, n_m))
+
+  for (i in seq_len(n_obs)) {
+    n_comp_i <- family_arrays$components[family_arrays$e_i[i] + 1] # e_i is 0-indexed
+    if (n_comp_i == 1) {
+      # Non-delta: single component
+      y_i_matrix[i, 1] <- y_i[i]
+    } else {
+      # Delta: two components
+      y_i_matrix[i, 1] <- ifelse(y_i[i] > 0, 1, 0)
+      y_i_matrix[i, 2] <- ifelse(y_i[i] > 0, y_i[i], NA_real_)
+    }
+  }
+  y_i <- y_i_matrix
 
   # TODO: make this cleaner
   X_ij_list <- list()
@@ -1195,10 +1276,13 @@ sdmTMB <- function(
     spde_barrier = make_barrier_spde(spde),
     barrier_scaling = if (barrier) spde$barrier_scaling else c(1, 1),
     anisotropy = as.integer(anisotropy),
-    family = .valid_family[family$family],
+    family = family_arrays$family,
     size = c(size),
-    link = .valid_link[family$link],
+    link = family_arrays$link,
     df = df,
+    e_i = family_arrays$e_i,
+    component_usage = array(as.integer(family_arrays$component_usage),
+                            dim = dim(family_arrays$component_usage)),
     spatial_only = as.integer(spatial_only),
     spatial_covariate = as.integer(!is.null(spatial_varying)),
     calc_quadratic_range = as.integer(quadratic_roots),
@@ -1212,7 +1296,7 @@ sdmTMB <- function(
     has_smooths = as.integer(sm$has_smooths),
     upr = upr,
     lwr = 0L, # in case we want to reintroduce this
-    poisson_link_delta = as.integer(isTRUE(family$type == "poisson_link_delta")),
+    poisson_link_delta = family_arrays$poisson_link_delta,
     stan_flag = as.integer(bayesian),
     no_spatial = no_spatial,
     re_cov_df_map = as.matrix(re_cov_df_map), # dataframe used to map parameters to cov matrices,
@@ -1242,7 +1326,7 @@ sdmTMB <- function(
     gengamma_Q = 0.5, # Not defined at exactly 0
     logit_p_extreme = 0,
     log_ratio_mix = -1, # ratio is 1 + exp(log_ratio_mix) so 0 would start fairly high
-    ln_phi = rep(0, n_m),
+    ln_phi = matrix(0, nrow = family_arrays$n_families, ncol = n_m),
     ln_tau_V = matrix(0, ncol(X_rw_ik), n_m),
     rho_time_unscaled = matrix(0, ncol(X_rw_ik), n_m),
     ar1_phi = rep(0, n_m),
@@ -1259,31 +1343,57 @@ sdmTMB <- function(
     b_smooth = if (sm$has_smooths) matrix(0, sum(sm$sm_dims), n_m) else array(0),
     ln_smooth_sigma = if (sm$has_smooths) matrix(0, length(sm$sm_dims), n_m) else array(0)
   )
-  if (identical(family$link, "inverse") && family$family[1] %in% c("Gamma", "gaussian", "student") && !delta) {
-    fam <- family
-    if (family$family == "student") fam$family <- "gaussian"
-    temp <- mgcv::gam(formula = formula[[1]], data = data, family = fam)
-    tmb_params$b_j <- stats::coef(temp)
+  # Initialize parameters with GAM fit for certain families (single family only)
+  if (is.null(distribution_column)) {
+    if (identical(family$link, "inverse") && family$family[1] %in% c("Gamma", "gaussian", "student") && !delta) {
+      fam <- family
+      if (family$family == "student") fam$family <- "gaussian"
+      temp <- mgcv::gam(formula = formula[[1]], data = data, family = fam)
+      tmb_params$b_j <- stats::coef(temp)
+    }
   }
 
   # Map off parameters not needed
   tmb_map <- map_all_params(tmb_params)
   tmb_map$b_j <- NULL
   if (delta) tmb_map$b_j2 <- NULL
-  if (family$family[[1]] == "tweedie") tmb_map$thetaf <- NULL
-  if ("gengamma" %in% family$family) tmb_map$gengamma_Q <- factor(NA)
-  tmb_map$ln_phi <- rep(1, n_m)
-  if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson")) {
-    tmb_map$ln_phi[1] <- factor(NA)
+  # Check for special families that need parameters mapped
+  # For single family case, check first family; for integrated, check all
+  if (is.null(distribution_column)) {
+    if (family$family[[1]] == "tweedie") tmb_map$thetaf <- NULL
+    if ("gengamma" %in% family$family) tmb_map$gengamma_Q <- factor(NA)
+  } else {
+    # Check across all families in integrated model
+    all_families <- unique(unlist(lapply(family_arrays$family_list, function(x) x$family)))
+    if ("tweedie" %in% all_families) tmb_map$thetaf <- NULL
+    if ("gengamma" %in% all_families) tmb_map$gengamma_Q <- factor(NA)
   }
-  if (delta) {
-    if (family$family[[2]] %in% c("binomial", "poisson", "censored_poisson")) {
-      tmb_map$ln_phi[2] <- factor(NA)
-    } else {
-      tmb_map$ln_phi[2] <- 2
+
+  # Build phi parameter mapping matrix
+  # Each family group gets its own phi parameter(s)
+  n_phi_groups <- family_arrays$n_families
+  phi_map <- matrix(seq_len(n_phi_groups * n_m), nrow = n_phi_groups, ncol = n_m)
+  families_no_phi <- c("binomial", "poisson", "censored_poisson")
+
+  for (group in seq_len(n_phi_groups)) {
+    fam_obj <- family_arrays$family_list[[group]]
+    n_comp_group <- family_arrays$components[group]
+
+    for (m in seq_len(n_m)) {
+      if (m > n_comp_group) {
+        # Component not used by this family
+        phi_map[group, m] <- NA
+      } else {
+        # Check if this family component needs phi
+        fam_name <- fam_obj$family[m]
+        if (fam_name %in% families_no_phi) {
+          phi_map[group, m] <- NA
+        }
+      }
     }
   }
-  tmb_map$ln_phi <- as.factor(tmb_map$ln_phi)
+
+  tmb_map$ln_phi <- as.factor(phi_map)
   if (!is.null(thresh[[1]]$threshold_parameter)) tmb_map$b_threshold <- NULL
 
   if (est_epsilon_re == 1L) {
@@ -1302,7 +1412,16 @@ sdmTMB <- function(
     # tmb_data$spatial_only <- rep(1L, length(tmb_data$spatial_only))
 
     # Poisson on first phase increases stability:
-    if (family$family[[1]] == "censored_poisson") tmb_data$family <- .valid_family["poisson"]
+    if (is.null(distribution_column)) {
+      if (family$family[[1]] == "censored_poisson") tmb_data$family <- .valid_family["poisson"]
+    } else {
+      # For integrated models, check if any family is censored_poisson
+      if (has_censored_poisson) {
+        # Replace censored_poisson with poisson in family array for first phase
+        tmb_data$family <- family_arrays$family
+        tmb_data$family[tmb_data$family == .valid_family["censored_poisson"]] <- .valid_family["poisson"]
+      }
+    }
 
     tmb_obj1 <- TMB::MakeADFun(
       data = tmb_data, parameters = tmb_params,
@@ -1459,22 +1578,23 @@ sdmTMB <- function(
   }
 
   # Handle mixture models
-  if (family$family[[1]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
-    fixed_p_extreme <- family$p_extreme
+  if (is.null(distribution_column)) {
+    if (family$family[[1]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
+      fixed_p_extreme <- family$p_extreme
 
-    if (!is.null(fixed_p_extreme)) {
-      # Fix logit_p_extreme at the user-specified value
-      tmb_map$logit_p_extreme <- factor(NA)
-      tmb_params$logit_p_extreme <- log(fixed_p_extreme/(1-fixed_p_extreme))
-      tmb_map$log_ratio_mix <- NULL
-    } else {
-      tmb_map$log_ratio_mix <- NULL
-      tmb_map$logit_p_extreme <- NULL
+      if (!is.null(fixed_p_extreme)) {
+        # Fix logit_p_extreme at the user-specified value
+        tmb_map$logit_p_extreme <- factor(NA)
+        tmb_params$logit_p_extreme <- log(fixed_p_extreme/(1-fixed_p_extreme))
+        tmb_map$log_ratio_mix <- NULL
+      } else {
+        tmb_map$log_ratio_mix <- NULL
+        tmb_map$logit_p_extreme <- NULL
+      }
     }
-  }
-  # delta mixture models
-  if (delta) {
-    if (family$family[[2]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
+    # delta mixture models
+    if (delta) {
+      if (family$family[[2]] %in% c("gamma_mix", "lognormal_mix", "nbinom2_mix")) {
       fixed_p_extreme <- family[[2]]$p_extreme
       if (is.null(fixed_p_extreme)) fixed_p_extreme <- family$p_extreme
 
@@ -1488,10 +1608,16 @@ sdmTMB <- function(
         tmb_map$logit_p_extreme <- NULL
       }
     }
+    }
   }
 
   if (tmb_data$threshold_func > 0) tmb_map$b_threshold <- NULL
-  if ("gengamma" %in% family$family) tmb_map$gengamma_Q <- NULL
+  if (is.null(distribution_column)) {
+    if ("gengamma" %in% family$family) tmb_map$gengamma_Q <- NULL
+  } else {
+    all_families <- unique(unlist(lapply(family_arrays$family_list, function(x) x$family)))
+    if ("gengamma" %in% all_families) tmb_map$gengamma_Q <- NULL
+  }
 
   for (i in seq_along(map)) { # user supplied
     cli_inform(c(i = paste0("Fixing or mirroring `", names(map)[i], "`")))
@@ -1527,6 +1653,7 @@ sdmTMB <- function(
       time = time,
       time_lu = time_df,
       family = family,
+      distribution_column = distribution_column,
       smoothers = sm,
       response = y_i,
       tmb_data = tmb_data,
@@ -1661,12 +1788,26 @@ sdmTMB <- function(
   }
 
   ## save params that families need to grab from environments:
-  if (any(family$family %in% c("truncated_nbinom1", "truncated_nbinom2"))) {
-    phi <- exp(tmb_obj$par[["ln_phi"]])
-    if (delta) {
-      assign(".phi", phi, environment(out_structure[["family"]][[2]][["linkinv"]]))
-    } else {
-      assign(".phi", phi, environment(out_structure[["family"]][["linkinv"]]))
+  if (is.null(distribution_column)) {
+    if (any(family$family %in% c("truncated_nbinom1", "truncated_nbinom2"))) {
+      phi <- exp(tmb_obj$par[["ln_phi"]])
+      if (delta) {
+        assign(".phi", phi, environment(out_structure[["family"]][[2]][["linkinv"]]))
+      } else {
+        assign(".phi", phi, environment(out_structure[["family"]][["linkinv"]]))
+      }
+    }
+  } else {
+    # For integrated models, check if any family is truncated_nbinom
+    all_families <- unique(unlist(lapply(family_arrays$family_list, function(x) x$family)))
+    if (any(all_families %in% c("truncated_nbinom1", "truncated_nbinom2"))) {
+      phi <- exp(tmb_obj$par[["ln_phi"]])
+      # For integrated models, need to assign phi to each family that needs it
+      for (i in seq_along(family_arrays$family_list)) {
+        if (any(family_arrays$family_list[[i]]$family %in% c("truncated_nbinom1", "truncated_nbinom2"))) {
+          assign(".phi", phi, environment(family_arrays$family_list[[i]][["linkinv"]]))
+        }
+      }
     }
   }
 

@@ -65,7 +65,13 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
 
   reinitialize(x)
 
-  delta <- isTRUE(x$family$delta)
+  # Handle integrated models
+  is_integrated <- !is.null(x$distribution_column)
+  if (is_integrated) {
+    delta <- any(sapply(x$family, function(f) isTRUE(f$delta)))
+  } else {
+    delta <- isTRUE(x$family$delta)
+  }
   assert_that(is.numeric(model))
   assert_that(length(model) == 1L)
   if (delta) assert_that(model %in% c(1, 2), msg = "`model` must be 1 or 2.")
@@ -117,11 +123,15 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   est <- subset_pars(est, model)
   se <- subset_pars(se, model)
 
-  if (x$family$family[[model]] %in% c("binomial", "poisson")) {
-    se$ln_phi <- NULL
-    est$ln_phi <- NULL
-    se$phi <- NULL
-    est$phi <- NULL
+  # For integrated models, phi is per family group, harder to exclude
+  # For single family models, exclude phi for binomial/poisson
+  if (!is_integrated) {
+    if (x$family$family[[model]] %in% c("binomial", "poisson")) {
+      se$ln_phi <- NULL
+      est$ln_phi <- NULL
+      se$phi <- NULL
+      est$phi <- NULL
+    }
   }
 
   ii <- 1
