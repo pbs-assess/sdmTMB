@@ -59,7 +59,6 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh
   )
   check_resids(fit)
-  check_resids(fit)
   check_resids_dharma(fit)
 
   d <- sim_dat(lognormal())
@@ -165,7 +164,7 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh,
     spatial = "off", spatiotemporal = "off"
   )
-  expect_error(residuals(fit, type = "mle-mvn"), regexp = "truncated_nbinom2")
+  check_resids(fit)
   check_resids_dharma(fit)
 
   d <- sim_dat(truncated_nbinom1())
@@ -175,8 +174,7 @@ test_that("randomized quantile residuals work,", {
     data = d, mesh = mesh,
     spatial = "off", spatiotemporal = "off"
   )
-
-  expect_error(residuals(fit, type = "mle-mvn"), regexp = "truncated_nbinom1")
+  check_resids(fit)
   check_resids_dharma(fit)
 
   d <- sim_dat(gengamma())
