@@ -174,25 +174,25 @@ marine species are tracking temperature over decades. Global Change Biology,
 <span class="r-in"><span><span class="co"># Calculate range edges along latitude (Y coordinate)</span></span></span>
 <span class="r-in"><span><span class="va">edges</span> <span class="op">&lt;-</span> <span class="fu">get_range_edge</span><span class="op">(</span><span class="va">p</span>, axis <span class="op">=</span> <span class="va">nd</span><span class="op">$</span><span class="va">Y</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">edges</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    year quantile      est     lwr     upr       se</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  2003    0.025 5640.000 5636.00 5646.00 3.053840</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2  2003    0.975 5834.000 5832.00 5836.00 1.249849</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  2004    0.025 5640.000 5636.00 5647.05 3.092228</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  2004    0.975 5832.000 5826.00 5836.00 2.714172</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  2005    0.025 5644.000 5638.00 5657.05 5.723988</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6  2005    0.975 5834.000 5832.00 5836.00 1.462175</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7  2007    0.025 5640.000 5636.00 5643.05 2.045542</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8  2007    0.975 5834.000 5832.00 5836.00 1.328268</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9  2009    0.025 5638.000 5636.00 5642.00 2.058832</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10 2009    0.975 5832.000 5828.00 5836.00 2.378243</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 11 2011    0.025 5640.000 5636.00 5647.05 3.151000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 12 2011    0.975 5832.932 5830.00 5836.00 1.603341</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 13 2013    0.025 5640.000 5636.00 5654.00 4.218813</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 14 2013    0.975 5834.000 5830.00 5836.00 1.575239</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 15 2015    0.025 5640.000 5636.00 5651.05 4.092417</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 16 2015    0.975 5832.000 5828.95 5836.00 1.873009</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 17 2017    0.025 5641.000 5636.00 5652.10 4.652098</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 18 2017    0.975 5834.000 5832.00 5836.00 1.311238</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    year quantile  est      lwr     upr       se</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  2003    0.025 5640 5636.000 5650.00 3.958474</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  2003    0.975 5834 5832.000 5836.00 1.276991</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  2004    0.025 5640 5636.000 5647.05 3.272875</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  2004    0.975 5832 5826.950 5836.00 2.332764</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  2005    0.025 5644 5636.000 5654.00 4.765363</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  2005    0.975 5834 5830.000 5836.00 1.529419</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7  2007    0.025 5638 5636.000 5642.00 1.959076</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8  2007    0.975 5834 5832.000 5836.00 1.408325</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9  2009    0.025 5638 5636.000 5643.05 2.129068</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 2009    0.975 5832 5826.950 5836.00 2.317513</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11 2011    0.025 5640 5636.000 5648.00 3.537448</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12 2011    0.975 5832 5830.000 5835.05 1.440184</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13 2013    0.025 5640 5636.000 5650.00 3.692989</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14 2013    0.975 5834 5831.546 5836.00 1.520153</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15 2015    0.025 5640 5636.000 5650.00 3.941219</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16 2015    0.975 5832 5828.000 5836.00 1.873072</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17 2017    0.025 5640 5636.000 5650.00 4.098731</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18 2017    0.975 5834 5832.000 5836.00 1.191227</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Plot range edges over time</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="st"><a href="https://ggplot2.tidyverse.org" class="external-link">"ggplot2"</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
