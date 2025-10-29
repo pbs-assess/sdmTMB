@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Add residuals for truncated negative binomial families. #481
+  Thanks to @Joseph-Barss
+
 * Extend `sdmTMB_simulate()` to support time-varying effects with vector `sigma_V`
   inputs and AR1 correlation (`rho_time`). #447
 
