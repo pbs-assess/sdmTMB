@@ -197,13 +197,19 @@ fixef.sdmTMB <- function(object, model = 1, ...) {
 ranef.sdmTMB <- function(object, ...) {
   .t <- tidy(object, "ran_vals", conf.int = FALSE, silent = TRUE)
   model_list <- list()
+
+  # For non-delta models, there is no model column
+  if (!"model" %in% names(.t)) {
+    .t$model <- 1
+  }
+
   for (i in seq_len(max(.t$model))) { # loop through models
-    .t <- .t[which(.t$model == i), ]
-    groups <- unique(.t$group_name) # names of groups for this model
+    .t_sub <- .t[which(.t$model == i), ]
+    groups <- unique(.t_sub$group_name) # names of groups for this model
     group_list <- vector("list", length = length(groups)) # create empty named list
     names(group_list) <- groups
     for (j in 1:length(groups)) {
-      sub <- .t[which(.t$group_name == groups[j]), ]
+      sub <- .t_sub[which(.t_sub$group_name == groups[j]), ]
       level_ids <- unique(sub$level_ids)
       sub <- sub[, c("group_name", "term", "estimate")]
       if (nrow(sub) > 0) {
