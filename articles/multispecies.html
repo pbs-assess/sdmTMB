@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9015</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9016</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,7 +80,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Fitting multispecies models with sdmTMB</h1>
             
-            <h4 data-toc-skip class="date">2025-10-29</h4>
+            <h4 data-toc-skip class="date">2025-10-30</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/vignettes/articles/multispecies.Rmd" class="external-link"><code>vignettes/articles/multispecies.Rmd</code></a></small>
       <div class="d-none name"><code>multispecies.Rmd</code></div>
@@ -248,14 +248,14 @@ here.</p>
 deviation:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"ran_pars"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 6</span></span></span>
-<span><span class="co">#&gt;   model term    estimate std.error conf.low conf.high</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1 range      0.181   0.025<span style="text-decoration: underline;">0</span>     0.139     0.238</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     1 phi        0.189   0.003<span style="text-decoration: underline;">30</span>    0.183     0.195</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     1 sigma_E    0.162   0.012<span style="text-decoration: underline;">9</span>     0.139     0.190</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     1 sigma_Z    0.250   0.026<span style="text-decoration: underline;">8</span>     0.203     0.308</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     1 sigma_Z    0.302   0.030<span style="text-decoration: underline;">3</span>     0.248     0.367</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 5</span></span></span>
+<span><span class="co">#&gt;   term    estimate std.error conf.low conf.high</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> range      0.181   0.025<span style="text-decoration: underline;">0</span>     0.139     0.238</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> phi        0.189   0.003<span style="text-decoration: underline;">30</span>    0.183     0.195</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> sigma_E    0.162   0.012<span style="text-decoration: underline;">9</span>     0.139     0.190</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> sigma_Z    0.250   0.026<span style="text-decoration: underline;">8</span>     0.203     0.308</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> sigma_Z    0.302   0.030<span style="text-decoration: underline;">3</span>     0.248     0.367</span></span></code></pre></div>
 <p>This means that our model is trying to estimate separate
 species-specific variance terms for the species-specific spatial fields
 (say <em>that</em> 10 times fast!). Here, that matches how we simulated

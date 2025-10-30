@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9015</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9016</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,9 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="sdmtmb-development-version">sdmTMB (development version)<a class="anchor" aria-label="anchor" href="#sdmtmb-development-version"></a></h2>
-<ul><li><p>Add residuals for truncated negative binomial families. <a href="https://github.com/pbs-assess/sdmTMB/issues/481" class="external-link">#481</a> Thanks to <a href="https://github.com/Joseph-Barss" class="external-link">@Joseph-Barss</a></p></li>
+<ul><li><p>Fix <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> to only include the <code>model</code> column for delta models. For non-delta models, the <code>model</code> column is no longer included in the output for <code>effects = "ran_pars"</code> and <code>effects = "ran_vals"</code>, making the output cleaner and more consistent.</p></li>
+<li><p>Update package logo.</p></li>
+<li><p>Add residuals for truncated negative binomial families. <a href="https://github.com/pbs-assess/sdmTMB/issues/481" class="external-link">#481</a> Thanks to <a href="https://github.com/Joseph-Barss" class="external-link">@Joseph-Barss</a></p></li>
 <li><p>Extend <code><a href="../reference/sdmTMB_simulate.html">sdmTMB_simulate()</a></code> to support time-varying effects with vector <code>sigma_V</code> inputs and AR1 correlation (<code>rho_time</code>). <a href="https://github.com/pbs-assess/sdmTMB/issues/447" class="external-link">#447</a></p></li>
 <li><p>Add new experimental function <code><a href="../reference/get_range_edge.html">get_range_edge()</a></code> to calculate range edges as density-weighted quantiles along a spatial axis (e.g., latitude, coastal distance). Range edges are calculated as positions where cumulative density equals specified quantiles. Uses linear interpolation for accurate quantile estimation and simulation from the joint precision matrix for uncertainty quantification. Implements a similar approach to VAST range edge calculations following Fredston et al. (2021) <a href="https://doi.org/10.1111/gcb.15614" class="external-link uri">https://doi.org/10.1111/gcb.15614</a>. See the new range edge vignette at <a href="https://pbs-assess.github.io/sdmTMB/articles/" class="uri">https://pbs-assess.github.io/sdmTMB/articles/</a></p></li>
 <li><p>Fix <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> with <code>effects = "ran_pars"</code> to report min/max anisotropic ranges (e.g., <code>range_min</code>, <code>range_max</code>) for models fit with <code>anisotropy = TRUE</code>, matching the values shown in <code>print_anisotropy()</code>. Standard errors and confidence intervals are set to NA since uncertainty in both the range parameter and H matrix cannot be easily propagated.</p></li>

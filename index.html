@@ -28,7 +28,7 @@
 
     <a class="navbar-brand me-2" href="index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9015</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9016</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,7 +87,7 @@
 </blockquote>
 <!-- badges: start -->
 
-<p>sdmTMB is an R package that fits spatial and spatiotemporal GLMMs (Generalized Linear Mixed Effects Models) using Template Model Builder (<a href="https://github.com/kaskr/adcomp" class="external-link">TMB</a>), <a href="https://www.r-inla.org/" class="external-link">R-INLA</a>, and Gaussian Markov random fields. One common application is for species distribution models (SDMs). See the <a href="https://pbs-assess.github.io/sdmTMB/">documentation site</a> and a preprint:</p>
+<p>sdmTMB is an R package that fits spatial and spatiotemporal GLMMs (Generalized Linear Mixed Effects Models) using Template Model Builder (<a href="https://github.com/kaskr/adcomp" class="external-link">TMB</a>), <a href="https://github.com/inlabru-org/fmesher" class="external-link">fmesher</a>, and Gaussian Markov random fields. One common application is for species distribution models (SDMs). See the <a href="https://pbs-assess.github.io/sdmTMB/">documentation site</a> and a preprint:</p>
 <p>Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett, J.T. Thorson. 2024. sdmTMB: an R package for fast, flexible, and user-friendly generalized linear mixed effects models with spatial and spatiotemporal random fields. bioRxiv 2022.03.24.485545; doi: <a href="https://doi.org/10.1101/2022.03.24.485545" class="external-link uri">https://doi.org/10.1101/2022.03.24.485545</a></p>
 <div class="section level2">
 <h2 id="table-of-contents">Table of contents<a class="anchor" aria-label="anchor" href="#table-of-contents"></a>
@@ -215,8 +215,8 @@
 <span><span class="co">#&gt; sdepth          0.62    2.53</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Smooth terms:</span></span>
-<span><span class="co">#&gt;            Std. Dev.</span></span>
-<span><span class="co">#&gt; sds(depth)     13.93</span></span>
+<span><span class="co">#&gt;              Std. Dev.</span></span>
+<span><span class="co">#&gt; sd__s(depth)     13.93</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Dispersion parameter: 12.69</span></span>
 <span><span class="co">#&gt; Tweedie p: 1.58</span></span>
@@ -235,13 +235,14 @@
 <span><span class="co">#&gt; 1 (Intercept)     2.37     0.215     1.95      2.79</span></span>
 <span><span class="co">#&gt; 2 sdepth          0.62     2.53     -4.34      5.58</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit</span>, effects <span class="op">=</span> <span class="st">"ran_pars"</span>, conf.int <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 4 × 5</span></span>
-<span><span class="co">#&gt;   term      estimate std.error conf.low conf.high</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;        &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 range        16.4    4.47        9.60     28.0 </span></span>
-<span><span class="co">#&gt; 2 phi          12.7    0.406      11.9      13.5 </span></span>
-<span><span class="co">#&gt; 3 sigma_O       1.86   0.218       1.48      2.34</span></span>
-<span><span class="co">#&gt; 4 tweedie_p     1.58   0.00998     1.56      1.60</span></span></code></pre></div>
+<span><span class="co">#&gt; # A tibble: 5 × 5</span></span>
+<span><span class="co">#&gt;   term         estimate std.error conf.low conf.high</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;           &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 range           16.4    4.47        9.60     28.0 </span></span>
+<span><span class="co">#&gt; 2 phi             12.7    0.406      11.9      13.5 </span></span>
+<span><span class="co">#&gt; 3 sigma_O          1.86   0.218       1.48      2.34</span></span>
+<span><span class="co">#&gt; 4 tweedie_p        1.58   0.00998     1.56      1.60</span></span>
+<span><span class="co">#&gt; 5 sd__s(depth)    13.9   NA           7.54     25.7</span></span></code></pre></div>
 <p>Run some basic sanity checks on our model:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/sanity.html">sanity</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
@@ -484,7 +485,7 @@
 <code class="sourceCode R"><span><span class="va">samps</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/gather_sims.html">gather_sims</a></span><span class="op">(</span><span class="va">fit</span>, nsim <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">samps</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">.value</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_histogram.html" class="external-link">geom_histogram</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">.variable</span>, scales <span class="op">=</span> <span class="st">"free_x"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</span></span></code></pre></div>
+<span><span class="co">#&gt; `stat_bin()` using `bins = 30`. Pick better value `binwidth`.</span></span></code></pre></div>
 <p><img src="reference/figures/README-plot-mvn-1.png" width="50%"></p>
 <p>See <a href="https://pbs-assess.github.io/sdmTMB/reference/gather_sims.html"><code>?gather_sims</code></a> and <a href="https://pbs-assess.github.io/sdmTMB/reference/get_index_sims.html"><code>?get_index_sims</code></a> for more details.</p>
 </div>

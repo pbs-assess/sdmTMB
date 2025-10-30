@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9015</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9016</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,7 +80,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Introduction to modelling with sdmTMB</h1>
             
-            <h4 data-toc-skip class="date">2025-10-29</h4>
+            <h4 data-toc-skip class="date">2025-10-30</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/vignettes/articles/basic-intro.Rmd" class="external-link"><code>vignettes/articles/basic-intro.Rmd</code></a></small>
       <div class="d-none name"><code>basic-intro.Rmd</code></div>
@@ -336,14 +336,14 @@ the tidy function:</p>
 <p>And similarly for the random effect and variance parameters:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">m3</span>, <span class="st">"ran_pars"</span>, conf.int <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 6</span></span></span>
-<span><span class="co">#&gt;   model term      estimate std.error conf.low conf.high</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1 range        19.8     3.03      14.6      26.7 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     1 phi          11.0     0.377     10.3      11.8 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     1 sigma_O       1.40    0.162      1.12      1.76</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     1 sigma_E       1.55    0.129      1.32      1.83</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     1 tweedie_p     1.50    0.011<span style="text-decoration: underline;">9</span>     1.48      1.52</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 5</span></span></span>
+<span><span class="co">#&gt;   term      estimate std.error conf.low conf.high</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> range        19.8     3.03      14.6      26.7 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> phi          11.0     0.377     10.3      11.8 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> sigma_O       1.40    0.162      1.12      1.76</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> sigma_E       1.55    0.129      1.32      1.83</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> tweedie_p     1.50    0.011<span style="text-decoration: underline;">9</span>     1.48      1.52</span></span></code></pre></div>
 <p>Note that standard errors are not reported when coefficients are in
 log space, but the confidence intervals are reported. These parameters
 are defined as follows:</p>
@@ -401,8 +401,8 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.011463 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 114.63 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.011426 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 114.26 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -427,9 +427,9 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; Chain 1: Iteration: 100 / 101 [ 99%]  (Warmup)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 101 / 101 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 27.745 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                0.208 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                27.953 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 28.012 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                0.206 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                28.218 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
 <span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">m3</span>, <span class="st">"mle-mcmc"</span>, mcmc_samples <span class="op">=</span> <span class="va">samps</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqnorm</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span></span>
