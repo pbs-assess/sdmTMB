@@ -1,5 +1,12 @@
 # sdmTMB (development version)
 
+* Fix `tidy()` to only include the `model` column for delta models. For non-delta
+  models, the `model` column is no longer included in the output for
+  `effects = "ran_pars"` and `effects = "ran_vals"`, making the output cleaner
+  and more consistent.
+
+* Update package logo.
+
 * Add residuals for truncated negative binomial families. #481
   Thanks to @Joseph-Barss
 

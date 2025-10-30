@@ -307,7 +307,7 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   }
 
   if (sum(x$tmb_data$n_re_groups) > 0L) { # we have random intercepts/slopes
-    temp <- get_re_tidy_list(x, crit = crit, model = model)
+    temp <- get_re_tidy_list(x, crit = crit, model = model, delta = delta)
     cov_mat_list <- list(est = temp$cov_matrices)
     if(conf.int) {
       cov_mat_list[["lo"]] <- temp$cov_matrices_lo
@@ -359,15 +359,26 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     time_slices <- x$time_lu$time_from_data
     yrs <- rep(time_slices, times = length(tv_names))
 
-    out_ranef_tv <- data.frame(
-      model = model,
-      term = paste0(rep(tv_names, each = length(time_slices)), ":", yrs),
-      estimate = c(est$b_rw_t),
-      std.error = c(se$b_rw_t),
-      conf.low = c(est$b_rw_t) - crit * c(se$b_rw_t),
-      conf.high = c(est$b_rw_t) + crit * c(se$b_rw_t),
-      stringsAsFactors = FALSE
-    )
+    if (delta) {
+      out_ranef_tv <- data.frame(
+        model = model,
+        term = paste0(rep(tv_names, each = length(time_slices)), ":", yrs),
+        estimate = c(est$b_rw_t),
+        std.error = c(se$b_rw_t),
+        conf.low = c(est$b_rw_t) - crit * c(se$b_rw_t),
+        conf.high = c(est$b_rw_t) + crit * c(se$b_rw_t),
+        stringsAsFactors = FALSE
+      )
+    } else {
+      out_ranef_tv <- data.frame(
+        term = paste0(rep(tv_names, each = length(time_slices)), ":", yrs),
+        estimate = c(est$b_rw_t),
+        std.error = c(se$b_rw_t),
+        conf.low = c(est$b_rw_t) - crit * c(se$b_rw_t),
+        conf.high = c(est$b_rw_t) + crit * c(se$b_rw_t),
+        stringsAsFactors = FALSE
+      )
+    }
 
     if(is.null(out_ranef)) {
       out_ranef <- out_ranef_tv
@@ -379,9 +390,15 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
   }
 
   # re-order names to match those in "ran_vals"
-  out_re$model <- rep(model, nrow(out_re))
+  if (delta) {
+    out_re$model <- rep(model, nrow(out_re))
+  }
   # group_name and term might not exist
-  new_names <- c("model", "group_name", "term", "estimate", "std.error")
+  if (delta) {
+    new_names <- c("model", "group_name", "term", "estimate", "std.error")
+  } else {
+    new_names <- c("group_name", "term", "estimate", "std.error")
+  }
   if(conf.int) new_names <- c(new_names, "conf.low", "conf.high")
   new_names <- new_names[new_names %in% names(out_re)]
   out_re <- out_re[, new_names]
@@ -509,7 +526,7 @@ get_anisotropic_ranges <- function(x, m = 1L) {
 #   crit = stats::qnorm(1 - (1 - conf.level) / 2)
 # @importFrom stats aggregate
 
-get_re_tidy_list <- function(x, crit, model = 1) {
+get_re_tidy_list <- function(x, crit, model = 1, delta = FALSE) {
   re_b_dfs <- add_model_index(x$split_formula, "re_b_df")
   re_b_df <- do.call(rbind, re_b_dfs)
   names(re_b_df)[names(re_b_df) == "group_indices"] <- "group_id"
@@ -558,7 +575,11 @@ get_re_tidy_list <- function(x, crit, model = 1) {
 
   # more sensible re-ordering
   re_b_df$group_id <- NULL
-  re_b_df <- re_b_df[, c("model", "group_name", "term", "level_ids", "estimate", "std.error", "conf.low", "conf.high")]
+  if (delta) {
+    re_b_df <- re_b_df[, c("model", "group_name", "term", "level_ids", "estimate", "std.error", "conf.low", "conf.high")]
+  } else {
+    re_b_df <- re_b_df[, c("group_name", "term", "level_ids", "estimate", "std.error", "conf.low", "conf.high")]
+  }
   # remove ":" in the level_ids
   re_b_df$level_ids <- sapply(strsplit(re_b_df$level_ids, ":"), function(x) x[2])
   out_ranef <- re_b_df
