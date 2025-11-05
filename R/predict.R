@@ -29,6 +29,18 @@
 #'   predictions. `~0` or `NA` for population-level predictions. No other
 #'   options (e.g., some but not all random intercepts) are implemented yet.
 #'   Only affects predictions with `newdata`. This *does* affects [get_index()].
+#' @param re_form_iid `NULL` to specify including all random intercepts in the
+#'   predictions. `~0` or `NA` for population-level predictions. No other
+#'   options (e.g., some but not all random intercepts) are implemented yet.
+#'   Only affects predictions with `newdata`. This *does* affects [get_index()].
+#' @param allow.new.levels Logical or `NULL`. Follows the same behavior as
+#'   glmmTMB's `allow.new.levels` and allows predictions for previously
+#'   unobserved levels in random effect grouping variables. If `NULL` (default),
+#'   new levels are allowed when `re_form_iid = NA` (population-level
+#'   predictions) and a warning is issued otherwise. If `TRUE`, new levels are
+#'   explicitly allowed. If `FALSE`, a warning is issued if new levels are
+#'   found. New levels are always treated as population-level predictions
+#'   (random effects = 0). .
 #' @param nsim If `> 0`, simulate from the joint precision
 #'   matrix with `nsim` draws. Returns a matrix of `nrow(data)` by `nsim`
 #'   representing the estimates of the linear predictor (i.e., in link space).
@@ -250,6 +262,7 @@ predict.sdmTMB <- function(object, newdata = NULL,
   se_fit = FALSE,
   re_form = NULL,
   re_form_iid = NULL,
+  allow.new.levels = NULL,
   nsim = 0,
   sims_var = "est",
   model = c(NA, 1, 2),
@@ -335,6 +348,11 @@ predict.sdmTMB <- function(object, newdata = NULL,
   # from glmmTMB:
   pop_pred <- (!is.null(re_form) && ((re_form == ~0) || identical(re_form, NA)))
   pop_pred_iid <- (!is.null(re_form_iid) && ((re_form_iid == ~0) || identical(re_form_iid, NA)))
+
+  # Set default for allow.new.levels
+  if (is.null(allow.new.levels)) {
+    allow.new.levels <- pop_pred_iid
+  }
 
   exclude_RE <- if (pop_pred_iid) 1L else object$tmb_data$exclude_RE
 
@@ -452,26 +470,74 @@ predict.sdmTMB <- function(object, newdata = NULL,
     if (sum(object$tmb_data$n_re_groups) > 0 && isFALSE(pop_pred_iid)) {
       for (ii in seq_len(length(formula))) {
         xx <- parse_formula(remove_s_and_t2(object$smoothers$formula_no_sm), nd)
-        # factor level checks:
         RE_names <- xx$barnames
+
+        # Track which rows have new levels across all RE variables
+        new_level_rows <- integer(0)
+
+        # Check each random effect grouping variable
         for (i in seq_along(RE_names)) {
           assert_that(is.factor(newdata[[RE_names[i]]]),
-            msg = sprintf("Random effect group column `%s` in newdata is not a factor.", RE_names[i]))
+                      msg = sprintf("Random effect group column `%s` in newdata is not a factor.", RE_names[i]))
+
           levels_fit <- levels(object$data[[RE_names[i]]])
           levels_nd <- levels(newdata[[RE_names[i]]])
-          if (sum(!levels_nd %in% levels_fit)) {
-            msg <- paste0("Extra levels found in random intercept factor levels for `", RE_names[i],
-              "`. Please remove them.")
-            cli_abort(msg)
+
+          # Detect new levels
+          if (any(!levels_nd %in% levels_fit)) {
+            # Find which rows have new levels
+            actual_values <- as.character(newdata[[RE_names[i]]])
+            is_new_level <- !actual_values %in% levels_fit
+            rows_with_new <- which(is_new_level)
+            new_level_rows <- union(new_level_rows, rows_with_new)
+
+            # Warn based on allow.new.levels setting
+            if (isFALSE(allow.new.levels)) {
+              n_new <- sum(is_new_level)
+              cli_warn(c(
+                "Found new levels for `{RE_names[i]}`. ",
+                "These will be treated as population-level predictions (RE = 0). ",
+                "Set `allow.new.levels = TRUE` to suppress this warning."
+              ))
+            }
           }
         }
 
-        # now do with a joint data frame to ensure factor levels match
+        # Build Zt matrix using joint approach to align factor levels
         common_cols <- intersect(colnames(object$data), colnames(nd))
-        joint_df <- rbind(object$data[,common_cols,drop=FALSE], nd[,common_cols,drop=FALSE])
+        nd_aligned <- nd[, common_cols, drop = FALSE]
+
+        # Align factor levels: set to obs levels, NAs for new levels
+        for (col_name in common_cols) {
+          if (is.factor(object$data[[col_name]]) && is.factor(nd_aligned[[col_name]])) {
+            # Re-factor with obs levels (new levels become NA)
+            nd_aligned[[col_name]] <- factor(
+              as.character(nd_aligned[[col_name]]),
+              levels = levels(object$data[[col_name]])
+            )
+            # first level used as placeholder for NAs
+            if (any(is.na(nd_aligned[[col_name]]))) {
+              nd_aligned[[col_name]][is.na(nd_aligned[[col_name]])] <-
+                levels(object$data[[col_name]])[1]
+            }
+          }
+        }
+
+        # Build Zt from combined data
+        joint_df <- rbind(object$data[, common_cols, drop = FALSE], nd_aligned)
         xx <- parse_formula(object$smoothers$formula_no_sm, joint_df)
-        # drop the original data:
-        Zt <- xx$re_cov_terms$Zt[,seq(nrow(object$data) + 1, nrow(object$data) + nrow(nd))]
+
+        # Extract newdata portion only
+        Zt <- xx$re_cov_terms$Zt[,
+                                 seq(nrow(object$data) + 1, nrow(object$data) + nrow(nd)),
+                                 drop = FALSE]
+
+        # Zero out columns for new levels
+        # = population-level predictions (RE = 0) for new levels
+        if (length(new_level_rows) > 0) {
+          Zt[, new_level_rows] <- 0
+        }
+
         Zt_list[[ii]] <- Zt
       }
     }
