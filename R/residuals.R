@@ -72,6 +72,32 @@ qres_nbinom1 <- function(object, y, mu, ...) {
   stats::qnorm(u)
 }
 
+ptruncated_nbinom2 <- function(q, mu, phi){
+  p <- (stats::pnbinom(q, size = phi, mu = mu) - stats::pnbinom(0, size = phi, mu = mu))/(1 - stats::pnbinom(0, size = phi, mu = mu))
+}
+ptruncated_nbinom1 <- function(q, mu, phi){
+  p <- (pnbinom1(q, mu, phi) - pnbinom1(0, mu, phi))/(1 - pnbinom1(0, mu, phi))
+}
+
+qres_truncated_nbinom2 <- function(object, y, mu, ...) {
+  phi <- exp(object$model$par[["ln_phi"]])
+  if (is_delta(object)) phi <- phi[2]
+  a <- ptruncated_nbinom2(y - 1, mu = mu, phi = phi)
+  b <- ptruncated_nbinom2(y, mu = mu, phi = phi)
+  u <- stats::runif(n = length(y), min = a, max = b)
+  stats::qnorm(u)
+}
+
+qres_truncated_nbinom1 <- function(object, y, mu, ...) {
+  theta <- get_pars(object)
+  phi <- exp(theta[["ln_phi"]])
+  if (is_delta(object)) phi <- phi[2]
+  a <- ptruncated_nbinom1(y - 1, mu = mu, phi = phi)
+  b <- ptruncated_nbinom1(y, mu = mu, phi = phi)
+  u <- stats::runif(n = length(y), min = a, max = b)
+  stats::qnorm(u)
+}
+
 qres_pois <- function(object, y, mu, ...) {
   a <- stats::ppois(y - 1, mu)
   b <- stats::ppois(y, mu)
@@ -375,6 +401,9 @@ residuals.sdmTMB <- function(object,
     nd <- object$data
     est_column <- if (model == 1L) "est1" else "est2"
   }
+  if(fam %in% c("truncated_nbinom1", "truncated_nbinom2")){
+    linkinv <- function(eta){exp(eta)}
+  } # for residuals, use untruncated mean
   if (is.null(qres_func)) {
     res_func <- switch(fam,
       gaussian = qres_gaussian,
@@ -385,6 +414,8 @@ residuals.sdmTMB <- function(object,
       Gamma    = qres_gamma,
       nbinom2  = qres_nbinom2,
       nbinom1  = qres_nbinom1,
+      truncated_nbinom2  = qres_truncated_nbinom2,
+      truncated_nbinom1  = qres_truncated_nbinom1,
       poisson  = qres_pois,
       student  = qres_student,
       lognormal  = qres_lognormal,
