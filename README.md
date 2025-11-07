@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# sdmTMB <a href='https://github.com/pbs-assess/sdmTMB'><img src='man/figures/logo.png' align="right" style="height:139px;"/></a>
+# sdmTMB <a href="https://pbs-assess.github.io/sdmTMB/"><img src="man/figures/logo.png" align="right" height="138" alt="sdmTMB website" /></a>
 
 > Spatial and spatiotemporal GLMMs with TMB
 
