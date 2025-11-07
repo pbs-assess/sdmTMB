@@ -1653,10 +1653,9 @@ sdmTMB <- function(
   check_bounds(tmb_opt$par, lim$lower, lim$upper)
 
   # Check if spatial/spatiotemporal variances are collapsing to zero
-  # Do this BEFORE newton loops to avoid Hessian issues with collapsing variances
+  # Do this before Newton steps to avoid Hessian issues if variances have collapsed
   if (collapse_spatial_variance && length(tmb_obj$par) > 0) {
     report_vals <- tmb_obj$report()
-
     collapse_result <- check_and_collapse_random_fields(
       tmb_obj = tmb_obj,
       report_vals = report_vals,
@@ -1669,7 +1668,6 @@ sdmTMB <- function(
       delta = delta,
       silent = silent
     )
-
     if (collapse_result$do_refit) {
       if (!silent) {
         cli_inform(c(
@@ -1677,7 +1675,7 @@ sdmTMB <- function(
         ))
       }
 
-      # Refit with collapsed fields disabled
+      # Now refit with collapsed fields disabled
       # The rest of this sdmTMB() function call was just executed with update()
       updated_fit <- update(
         out_structure,
@@ -1690,7 +1688,7 @@ sdmTMB <- function(
     }
   }
 
-  # We only end up here if no collapse detected
+  # We only end up here if no collapse was detected
   tmb_opt <- run_newton_loops(newton_loops = newton_loops, tmb_opt, tmb_obj, silent)
 
   if (!silent && getsd) cli_inform("running TMB sdreport\n")
@@ -1702,7 +1700,7 @@ sdmTMB <- function(
     conv <- NULL
   }
 
-  ## save params that families need to grab from environments:
+  # save params that families need to grab from environments:
   if (any(family$family %in% c("truncated_nbinom1", "truncated_nbinom2"))) {
     phi <- exp(tmb_obj$par[["ln_phi"]])
     if (delta) {
@@ -1767,7 +1765,7 @@ check_and_collapse_random_fields <- function(
   spatial_updated <- spatial
   spatiotemporal_updated <- spatiotemporal
 
-  # Check spatial field (omega_s)
+  # Check spatial field
   if (any(spatial == "on") && !omit_spatial_intercept) {
     est_sigma_O <- report_vals$sigma_O
 

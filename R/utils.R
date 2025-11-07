@@ -68,16 +68,16 @@
 #'   from [stats::nlminb()] arising when a function evaluation is `NA`, which
 #'   are then replaced with `Inf` and avoided during estimation?
 #' @param collapse_spatial_variance Logical: should spatial and/or spatiotemporal
-#'   random fields be automatically removed if their estimated standard deviation
+#'   random fields be automatically dropped if their estimated standard deviation
 #'   is effectively zero (i.e., below `collapse_threshold`)? This helps prevent
 #'   overfitting and numerical instability when the data provide little evidence
-#'   for spatial or spatiotemporal variation—i.e., when the variance parameter is
+#'   for spatial or spatiotemporal variation. I.e., when the variance parameter is
 #'   estimated on or near the boundary of zero. When enabled, the model will be
 #'   automatically refitted via [update.sdmTMB()] with the corresponding field(s)
-#'   disabled. This adds a small computational cost (a single model refit if
+#'   disabled. This adds a computational cost (a single model refit if
 #'   collapsing occurs) but can yield a simpler, more stable model and more
 #'   reliable inference. Default is `FALSE` for backwards compatibility.
-#' @param collapse_threshold Numeric: the variance threshold below which random
+#' @param collapse_threshold Numeric: the standard deviation threshold below which random
 #'   fields are considered to be collapsing to zero. Only used when
 #'   `collapse_spatial_variance = TRUE`. Values are on the standard deviation
 #'   scale (i.e., square root of variance). Default is 0.01.
