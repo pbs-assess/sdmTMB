@@ -78,7 +78,7 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="../logo.svg" class="logo" alt=""><h1>sdmTMB model description</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>sdmTMB model description</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/pbs-assess/sdmTMB/blob/main/vignettes/model-description.Rmd" class="external-link"><code>vignettes/model-description.Rmd</code></a></small>
@@ -1089,6 +1089,54 @@ is the mean of the larger component, and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
 controls the contribution of each component to the mixture.</p>
 <p>Example: <code>family = nbinom2_mix(link = "log")</code></p>
+</div>
+<div class="section level3">
+<h3 id="delta-models">Delta models<a class="anchor" aria-label="anchor" href="#delta-models"></a>
+</h3>
+<p>sdmTMB allows for several different kinds of delta (also known as
+hurdle) models. These families are implemented by specifying the family
+as a delta distribution. For example:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/sdmTMB.html">sdmTMB</a></span><span class="op">(</span></span>
+<span>  <span class="va">...</span>,</span>
+<span>  family <span class="op">=</span> <span class="fu"><a href="../reference/families.html">delta_gamma</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>The list of supported families is included in the documentation on <a href="https://pbs-assess.github.io/sdmTMB/reference/families.html">additional
+families</a>, <a href="https://pbs-assess.github.io/sdmTMB/articles/delta-models.html">delta
+models</a>, and <a href="https://pbs-assess.github.io/sdmTMB/articles/poisson-link.html">Poisson-link
+delta models</a>. By default, the <code>delta_*</code> families don’t
+use the Poisson link, but this structure can be specified with
+<code>delta_gamma(type = "poisson-link")</code>.</p>
+<p>In the “standard” delta model implementation, sdmTMB constructs two
+internal models (formally, two “linear predictors”), with the first
+model representing presence-absence and the second model represting the
+positive component (such as catch rates in fisheries applications).
+Default links associated with each family can be inspected with
+<code><a href="../reference/families.html">delta_lognormal()</a></code> and equivalent functions. For the
+standard delta models, the default first linear predictor link is logit.
+For the Poisson-link type, the first linear predictor link is log.</p>
+<p>The <code>formula</code>, <code>spatial</code>,
+<code>spatiotemporal</code>, and <code>share_range</code> arguments of
+<code><a href="../reference/sdmTMB.html">sdmTMB()</a></code> can be specified independently as a 2-element
+list. For example, the spatial random field might be estimated for only
+the first linear predictor with:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/sdmTMB.html">sdmTMB</a></span><span class="op">(</span></span>
+<span>  <span class="va">...</span>,</span>
+<span>  family <span class="op">=</span> <span class="fu"><a href="../reference/families.html">delta_gamma</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  spatial <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"on"</span>, <span class="st">"off"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Or for we may want separate main-effects formulas. For example:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/sdmTMB.html">sdmTMB</a></span><span class="op">(</span></span>
+<span>  formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    <span class="va">y</span> <span class="op">~</span> <span class="va">depth</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">depth</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>, </span>
+<span>    <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span><span class="op">)</span>,</span>
+<span>  family <span class="op">=</span> <span class="fu"><a href="../reference/families.html">delta_gamma</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>All other arguments are shared between the linear predictors.</p>
+<p>Currently if delta models contain smoothers, both components must
+have the same main-effects formula.</p>
 </div>
 </div>
 <div class="section level2">
