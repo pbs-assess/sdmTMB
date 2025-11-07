@@ -403,27 +403,28 @@ model.frame.sdmTMB <- function(formula, ...) {
   as.data.frame(formula$data) # no tibbles!
 }
 
-# Update an sdmTMB model
-#
-# This method updates an sdmTMB model with new arguments, automatically
-# handling the mesh object to avoid environment issues when loading
-# models from saved files.
-#
-# @param object An sdmTMB model object
-# @param formula. Optional updated formula
-# @param ... Other arguments to update in the model call
-# @param evaluate If `TRUE` (default), the updated call is evaluated;
-#   if `FALSE`, the call is returned unevaluated
-#
-# @return An updated sdmTMB model object (if `evaluate = TRUE`) or
-#   an unevaluated call (if `evaluate = FALSE`)
-#
-# @examples
-# mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
-# fit <- sdmTMB(density ~ 1, data = pcod_2011, mesh = mesh,
-#   family = tweedie(link = "log"))
-# fit2 <- update(fit, family = delta_gamma())
+#' Update an sdmTMB model
+#'
+#' This method updates an sdmTMB model with new arguments, automatically
+#' handling the mesh object to avoid environment issues when loading
+#' models from saved files.
+#'
+#' @param object An sdmTMB model object
+#' @param formula. Optional updated formula
+#' @param ... Other arguments to update in the model call
+#' @param evaluate If `TRUE` (default), the updated call is evaluated;
+#'   if `FALSE`, the call is returned unevaluated
+#'
+#' @return An updated sdmTMB model object (if `evaluate = TRUE`) or
+#'   an unevaluated call (if `evaluate = FALSE`)
+#'
+#' @examples
+#' mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
+#' fit <- sdmTMB(density ~ 1, data = pcod_2011, mesh = mesh,
+#'   family = tweedie(link = "log"))
+#' fit2 <- update(fit, family = delta_gamma())
 #' @export
+#' @importFrom stats update
 update.sdmTMB <- function(object, formula., ..., evaluate = TRUE) {
   call <- object$call
   new_args <- list(...)

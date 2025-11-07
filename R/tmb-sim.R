@@ -216,6 +216,7 @@ sdmTMB_simulate <- function(formula,
       ),
       dots
     )
+
     fit <- do.call(sdmTMB, fit_args)
     params <- fit$tmb_params
   } else {

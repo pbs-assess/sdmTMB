@@ -695,12 +695,14 @@ sdmTMB <- function(
   get_joint_precision <- control$get_joint_precision
   upr <- control$censored_upper
   suppress_nlminb_warnings <- control$suppress_nlminb_warnings
+  collapse_spatial_variance <- control$collapse_spatial_variance
+  collapse_threshold <- control$collapse_threshold
 
   dot_checks <- c(
     "lower", "upper", "profile", "parallel", "censored_upper", "getsd",
     "nlminb_loops", "newton_steps", "mgcv", "quadratic_roots", "multiphase",
     "newton_loops", "start", "map", "get_joint_precision", "normalize",
-    "suppress_nlminb_warnings"
+    "suppress_nlminb_warnings", "collapse_spatial_variance", "collapse_threshold"
   )
   .control <- control
   # FIXME; automate this from sdmTMcontrol args?
@@ -1648,8 +1650,46 @@ sdmTMB <- function(
     }
   }
 
-  tmb_opt <- run_newton_loops(newton_loops = newton_loops, tmb_opt, tmb_obj, silent)
   check_bounds(tmb_opt$par, lim$lower, lim$upper)
+
+  # Check if spatial/spatiotemporal variances are collapsing to zero
+  # Do this before Newton steps to avoid Hessian issues if variances have collapsed
+  if (collapse_spatial_variance && length(tmb_obj$par) > 0) {
+    report_vals <- tmb_obj$report()
+    collapse_result <- check_and_collapse_random_fields(
+      tmb_obj = tmb_obj,
+      report_vals = report_vals,
+      spatial = spatial,
+      spatiotemporal = spatiotemporal,
+      n_m = n_m,
+      n_t = n_t,
+      omit_spatial_intercept = omit_spatial_intercept,
+      collapse_threshold = collapse_threshold,
+      delta = delta,
+      silent = silent
+    )
+    if (collapse_result$do_refit) {
+      if (!silent) {
+        cli_inform(c(
+          "i" = "Refitting model with collapsed random field(s) using update()..."
+        ))
+      }
+
+      # Now refit with collapsed fields disabled
+      # The rest of this sdmTMB() function call was just executed with update()
+      updated_fit <- update(
+        out_structure,
+        spatial = collapse_result$spatial_arg,
+        spatiotemporal = collapse_result$spatiotemporal_arg,
+        do_fit = TRUE,
+        silent = silent
+      )
+      return(updated_fit)
+    }
+  }
+
+  # We only end up here if no collapse was detected
+  tmb_opt <- run_newton_loops(newton_loops = newton_loops, tmb_opt, tmb_obj, silent)
 
   if (!silent && getsd) cli_inform("running TMB sdreport\n")
   if (getsd) {
@@ -1660,7 +1700,7 @@ sdmTMB <- function(
     conv <- NULL
   }
 
-  ## save params that families need to grab from environments:
+  # save params that families need to grab from environments:
   if (any(family$family %in% c("truncated_nbinom1", "truncated_nbinom2"))) {
     phi <- exp(tmb_obj$par[["ln_phi"]])
     if (delta) {
@@ -1707,6 +1747,94 @@ check_bounds <- function(.par, lower, upper) {
       }
     }
   }
+}
+
+check_and_collapse_random_fields <- function(
+    tmb_obj,
+    report_vals,
+    spatial,
+    spatiotemporal,
+    n_m,
+    n_t,
+    omit_spatial_intercept,
+    collapse_threshold,
+    delta,
+    silent) {
+
+  do_refit <- FALSE
+  spatial_updated <- spatial
+  spatiotemporal_updated <- spatiotemporal
+
+  # Check spatial field
+  if (any(spatial == "on") && !omit_spatial_intercept) {
+    est_sigma_O <- report_vals$sigma_O
+
+    if (length(est_sigma_O) > 0 && any(est_sigma_O < collapse_threshold)) {
+      which_sigma <- which(est_sigma_O < collapse_threshold)
+
+      if (!silent) {
+        cli_inform(c(
+          "!" = "Spatial variance below threshold ({collapse_threshold}) detected",
+          "i" = "Affected model(s): {paste(which_sigma, collapse = ', ')}",
+          ">" = "Refitting with spatial field(s) disabled"
+        ))
+      }
+
+      for (i in which_sigma) {
+        spatial_updated[i] <- "off"
+      }
+      do_refit <- TRUE
+    }
+  }
+
+  # Check spatiotemporal field (epsilon_st)
+  if (!all(spatiotemporal == "off")) {
+    est_sigma_E <- report_vals$sigma_E
+
+    if (length(est_sigma_E) > 0) {
+      est_sigma_E_by_model <- numeric(n_m)
+
+      for (m in seq_len(n_m)) {
+        idx_start <- (m - 1) * n_t + 1
+        idx_end <- m * n_t
+        if (idx_end <= length(est_sigma_E)) {
+          est_sigma_E_by_model[m] <- min(est_sigma_E[idx_start:idx_end])
+        }
+      }
+
+      if (any(est_sigma_E_by_model < collapse_threshold, na.rm = TRUE)) {
+        which_sigma <- which(est_sigma_E_by_model < collapse_threshold)
+
+        if (!silent) {
+          cli_inform(c(
+            "!" = "Spatiotemporal variance below threshold ({collapse_threshold}) detected",
+            "i" = "Affected model(s): {paste(which_sigma, collapse = ', ')}",
+            ">" = "Refitting with spatiotemporal field(s) disabled"
+          ))
+        }
+
+        for (m in which_sigma) {
+          spatiotemporal_updated[m] <- "off"
+        }
+        do_refit <- TRUE
+      }
+    }
+  }
+
+  # Prepare spatial/spatiotemporal arguments for update()
+  if (delta) {
+    spatial_arg <- as.list(spatial_updated)
+    spatiotemporal_arg <- as.list(spatiotemporal_updated)
+  } else {
+    spatial_arg <- spatial_updated[1]
+    spatiotemporal_arg <- spatiotemporal_updated[1]
+  }
+
+  list(
+    do_refit = do_refit,
+    spatial_arg = spatial_arg,
+    spatiotemporal_arg = spatiotemporal_arg
+  )
 }
 
 set_limits <- function(tmb_obj, lower, upper, loc = NULL, silent = TRUE) {
