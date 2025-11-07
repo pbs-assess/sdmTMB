@@ -154,7 +154,7 @@ represent observations and the vertices are the knot locations.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mesh</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_mesh.html">make_mesh</a></span><span class="op">(</span><span class="va">pcod</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="st">"Y"</span><span class="op">)</span>, cutoff <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mesh</span><span class="op">)</span></span></code></pre></div>
-<p><img src="basic-intro_files/figure-html/spde-1.png" width="672"></p>
+<p><img src="basic-intro_files/figure-html/spde-1.png" class="r-plt" width="672"></p>
 <p>We will start with a logistic regression of Pacific cod presence in
 tows as a function of depth and depth squared. We will first use
 <code><a href="../reference/sdmTMB.html">sdmTMB()</a></code> without any spatial random effects
@@ -379,14 +379,14 @@ then:</p>
 <code class="sourceCode R"><span><span class="va">pcod</span><span class="op">$</span><span class="va">resids</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">m3</span><span class="op">)</span> <span class="co"># randomized quantile residuals</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqnorm</a></span><span class="op">(</span><span class="va">pcod</span><span class="op">$</span><span class="va">resids</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqline</a></span><span class="op">(</span><span class="va">pcod</span><span class="op">$</span><span class="va">resids</span><span class="op">)</span></span></code></pre></div>
-<p><img src="basic-intro_files/figure-html/residuals-1.png" width="768"></p>
+<p><img src="basic-intro_files/figure-html/residuals-1.png" class="r-plt" width="768"></p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">pcod</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">Y</span>, col <span class="op">=</span> <span class="va">resids</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_colour_gradient2</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">year</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_fixed.html" class="external-link">coord_fixed</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="basic-intro_files/figure-html/residuals-2.png" width="768"></p>
+<p><img src="basic-intro_files/figure-html/residuals-2.png" class="r-plt" width="768"></p>
 <p>Those were fast to calculate but can look ‘off’ even when the model
 is consistent with the data. MCMC-based residuals are more reliable but
 slow. We can calculate them through some help from the sdmTMBextra
@@ -401,8 +401,8 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.011486 seconds</span></span>
-<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 114.86 seconds.</span></span>
+<span><span class="co">#&gt; Chain 1: Gradient evaluation took 0.011267 seconds</span></span>
+<span><span class="co">#&gt; Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 112.67 seconds.</span></span>
 <span><span class="co">#&gt; Chain 1: Adjust your expectations accordingly!</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
@@ -427,14 +427,14 @@ model here so the vignette builds quickly.</p>
 <span><span class="co">#&gt; Chain 1: Iteration: 100 / 101 [ 99%]  (Warmup)</span></span>
 <span><span class="co">#&gt; Chain 1: Iteration: 101 / 101 [100%]  (Sampling)</span></span>
 <span><span class="co">#&gt; Chain 1: </span></span>
-<span><span class="co">#&gt; Chain 1:  Elapsed Time: 27.398 seconds (Warm-up)</span></span>
-<span><span class="co">#&gt; Chain 1:                0.204 seconds (Sampling)</span></span>
-<span><span class="co">#&gt; Chain 1:                27.602 seconds (Total)</span></span>
+<span><span class="co">#&gt; Chain 1:  Elapsed Time: 27.539 seconds (Warm-up)</span></span>
+<span><span class="co">#&gt; Chain 1:                0.205 seconds (Sampling)</span></span>
+<span><span class="co">#&gt; Chain 1:                27.744 seconds (Total)</span></span>
 <span><span class="co">#&gt; Chain 1:</span></span>
 <span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">m3</span>, <span class="st">"mle-mcmc"</span>, mcmc_samples <span class="op">=</span> <span class="va">samps</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqnorm</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/qqnorm.html" class="external-link">qqline</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span></span></code></pre></div>
-<p><img src="basic-intro_files/figure-html/residuals-mcmc-1.png" width="768"></p>
+<p><img src="basic-intro_files/figure-html/residuals-mcmc-1.png" class="r-plt" width="768"></p>
 <p>See <code>?residuals.sdmTMB()</code>.</p>
 </div>
 <div class="section level2">
@@ -481,14 +481,14 @@ effects and random effects:</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Prediction (fixed effects + all random effects)"</span>,</span>
 <span>    subtitle <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"maximum estimated biomass density ="</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">predictions</span><span class="op">$</span><span class="va">est</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="basic-intro_files/figure-html/plot-all-effects-1.png" width="768"></p>
+<p><img src="basic-intro_files/figure-html/plot-all-effects-1.png" class="r-plt" width="768"></p>
 <p>We can also look at just the fixed effects, here only a quadratic
 effect of depth:</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">plot_map</span><span class="op">(</span><span class="va">predictions</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">est_non_rf</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span>trans <span class="op">=</span> <span class="st">"sqrt"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Prediction (fixed effects only)"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="basic-intro_files/figure-html/plot-fix-defects-1.png" width="576"></p>
+<p><img src="basic-intro_files/figure-html/plot-fix-defects-1.png" class="r-plt" width="576"></p>
 <p>We can look at the spatial random effects that represent consistent
 deviations in space through time that are not accounted for by our fixed
 effects. In other words, these deviations represent consistent biotic
@@ -498,7 +498,7 @@ accounted for in the model.</p>
 <code class="sourceCode R"><span><span class="fu">plot_map</span><span class="op">(</span><span class="va">predictions</span>, <span class="va">omega_s</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient2</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Spatial random effects only"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="basic-intro_files/figure-html/plot-spatial-effects-1.png" width="576"></p>
+<p><img src="basic-intro_files/figure-html/plot-spatial-effects-1.png" class="r-plt" width="576"></p>
 <p>And finally we can look at the spatiotemporal random effects that
 represent deviation from the fixed effect predictions and the spatial
 random effect deviations. These represent biotic and abiotic factors
@@ -509,7 +509,7 @@ model.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient2</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">year</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Spatiotemporal random effects only"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="basic-intro_files/figure-html/plot-spatiotemporal-effects-1.png" width="768"></p>
+<p><img src="basic-intro_files/figure-html/plot-spatiotemporal-effects-1.png" class="r-plt" width="768"></p>
 <p>We can also estimate the uncertainty in our spatiotemporal density
 predictions using simulations from the joint precision matrix by setting
 <code>nsim &gt; 0</code> in the predict function. Here we generate 100
@@ -529,7 +529,7 @@ variation (CV).</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">pred_last</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">Y</span>, fill <span class="op">=</span> <span class="va">cv</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_tile.html" class="external-link">geom_raster</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="basic-intro_files/figure-html/plot-cv-1.png" width="576"></p>
+<p><img src="basic-intro_files/figure-html/plot-cv-1.png" class="r-plt" width="576"></p>
 </div>
 <div class="section level2">
 <h2 id="conditional-effects">Conditional effects<a class="anchor" aria-label="anchor" href="#conditional-effects"></a>
@@ -557,14 +557,14 @@ we want fixed (e.g., at means) and vary parameters we want to visualize
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_x_continuous</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_cartesian.html" class="external-link">coord_cartesian</a></span><span class="op">(</span>expand <span class="op">=</span> <span class="cn">F</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Depth (m)"</span>, y <span class="op">=</span> <span class="st">"Biomass density (kg/km2)"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="basic-intro_files/figure-html/depth-eff-1.png" width="576"></p>
+<p><img src="basic-intro_files/figure-html/depth-eff-1.png" class="r-plt" width="576"></p>
 <p>We could also do this with the visreg package. This version is in
 link space and the residuals are partial randomized quantile residuals.
 See the <code>scale</code> argument in visreg for response scale
 plots.</p>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">visreg</span><span class="fu">::</span><span class="fu"><a href="https://pbreheny.github.io/visreg/reference/visreg.html" class="external-link">visreg</a></span><span class="op">(</span><span class="va">m3</span>, <span class="st">"depth"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="basic-intro_files/figure-html/visreg-1.png" width="672"></p>
+<p><img src="basic-intro_files/figure-html/visreg-1.png" class="r-plt" width="672"></p>
 <p>Or the ggeffects package for a <em>marginal</em> effects plot. This
 will also be faster since it relies on the already estimated
 coefficients and variance-covariance matrix.</p>
@@ -574,7 +574,7 @@ coefficients and variance-covariance matrix.</p>
 <span><span class="co">#&gt; (`geom_line()`).</span></span>
 <span><span class="co">#&gt; Warning: Removed 1 row containing missing values or values outside the scale range</span></span>
 <span><span class="co">#&gt; (`geom_ribbon()`).</span></span></code></pre></div>
-<p><img src="basic-intro_files/figure-html/ggeffects-1.png" width="672"></p>
+<p><img src="basic-intro_files/figure-html/ggeffects-1.png" class="r-plt" width="672"></p>
 <div class="section level3">
 <h3 id="time-varying-effects">Time-varying effects<a class="anchor" aria-label="anchor" href="#time-varying-effects"></a>
 </h3>
@@ -703,7 +703,7 @@ the time-varying covariate and time. This is easily created using
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_x_continuous</a></span><span class="op">(</span>labels <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">x</span> <span class="op">*</span> <span class="va">pcod</span><span class="op">$</span><span class="va">depth_sd</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">+</span> <span class="va">pcod</span><span class="op">$</span><span class="va">depth_mean</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_cartesian.html" class="external-link">coord_cartesian</a></span><span class="op">(</span>expand <span class="op">=</span> <span class="cn">F</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Depth (m)"</span>, y <span class="op">=</span> <span class="st">"Biomass density (kg/km2)"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="basic-intro_files/figure-html/tv-depth-eff-1.png" width="576"></p>
+<p><img src="basic-intro_files/figure-html/tv-depth-eff-1.png" class="r-plt" width="576"></p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -717,7 +717,7 @@ the time-varying covariate and time. This is easily created using
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

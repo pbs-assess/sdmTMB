@@ -125,7 +125,7 @@ even a Poisson or negative binomial.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_grid.html" class="external-link">facet_grid</a></span><span class="op">(</span><span class="va">year</span> <span class="op">~</span> <span class="va">age</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_colour_viridis_c</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="st">"Abundance\nper\narea"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="age-composition_files/figure-html/plot_data-1.png" width="576"></p>
+<p><img src="age-composition_files/figure-html/plot_data-1.png" class="r-plt" width="576"></p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Show data for one year</span></span>
@@ -134,7 +134,7 @@ even a Poisson or negative binomial.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">age</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Simulated data (2021)"</span>, size <span class="op">=</span> <span class="st">"Abundance per area"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="age-composition_files/figure-html/plot_data-2.png" width="576"></p>
+<p><img src="age-composition_files/figure-html/plot_data-2.png" class="r-plt" width="576"></p>
 <p>Now we will set up the spatial and spatiotemporal fields with shared
 SDs across ages. This could alternatively be set up to have different
 spatial SDs by age and/or different spatiotemporal SDs by age.</p>
@@ -215,7 +215,7 @@ spatial SDs by age and/or different spatiotemporal SDs by age.</p>
 <span><span class="co">#&gt;     `factor(year)2020:ageage_6` + `factor(year)2021:ageage_6` + </span></span>
 <span><span class="co">#&gt;     `factor(year)2022:ageage_6` + `factor(year)2023:ageage_6` + </span></span>
 <span><span class="co">#&gt;     `factor(year)2024:ageage_6` + `factor(year)2025:ageage_6`</span></span>
-<span><span class="co">#&gt; &lt;environment: 0x55a13c07d7e0&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; &lt;environment: 0x560aa4091dd8&gt;</span></span></code></pre></div>
 <p>And we have a TMB ‘map’ list, which controls which random field SDs
 are shared vs. estimated separately. Factor levels that are the same get
 shared; those that are different are estimated separately.</p>
@@ -443,7 +443,7 @@ domain.</p>
 <span>    y <span class="op">=</span> <span class="st">"Abundance index"</span>,</span>
 <span>    title <span class="op">=</span> <span class="st">"Age-specific abundance indices"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="age-composition_files/figure-html/plot_indices-1.png" width="576"></p>
+<p><img src="age-composition_files/figure-html/plot_indices-1.png" class="r-plt" width="576"></p>
 </div>
 <div class="section level3">
 <h3 id="convert-to-age-composition-proportions">Convert to age composition (proportions)<a class="anchor" aria-label="anchor" href="#convert-to-age-composition-proportions"></a>
@@ -466,7 +466,7 @@ domain.</p>
 <span>    y <span class="op">=</span> <span class="st">"Proportion"</span>,</span>
 <span>    fill <span class="op">=</span> <span class="st">"Age"</span>,</span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="age-composition_files/figure-html/plot_age_composition-1.png" width="576"></p>
+<p><img src="age-composition_files/figure-html/plot_age_composition-1.png" class="r-plt" width="576"></p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">ind_props</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">year</span>, <span class="va">proportion</span>, colour <span class="op">=</span> <span class="va">age</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -477,7 +477,7 @@ domain.</p>
 <span>    y <span class="op">=</span> <span class="st">"Proportion"</span>,</span>
 <span>    colour <span class="op">=</span> <span class="st">"Age"</span>,</span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="age-composition_files/figure-html/plot_age_composition-2.png" width="576"></p>
+<p><img src="age-composition_files/figure-html/plot_age_composition-2.png" class="r-plt" width="576"></p>
 </div>
 <div class="section level3">
 <h3 id="calculate-effective-sample-sizes">Calculate effective sample sizes<a class="anchor" aria-label="anchor" href="#calculate-effective-sample-sizes"></a>
@@ -567,7 +567,7 @@ and Haltuch (2018).</p>
 <span>    colour <span class="op">=</span> <span class="st">"Age"</span>,</span>
 <span>    title <span class="op">=</span> <span class="st">"Effective sample sizes by age"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="age-composition_files/figure-html/plot_neff-1.png" width="576"></p>
+<p><img src="age-composition_files/figure-html/plot_neff-1.png" class="r-plt" width="576"></p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Plot median effective sample size across ages</span></span>
@@ -583,7 +583,7 @@ and Haltuch (2018).</p>
 <span>    y <span class="op">=</span> <span class="st">"Median effective sample size"</span>,</span>
 <span>    title <span class="op">=</span> <span class="st">"Median effective sample size across ages"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="age-composition_files/figure-html/plot_neff-2.png" width="576"></p>
+<p><img src="age-composition_files/figure-html/plot_neff-2.png" class="r-plt" width="576"></p>
 </div>
 <div class="section level2">
 <h2 id="troubleshooting-and-advanced-options">Troubleshooting and advanced options<a class="anchor" aria-label="anchor" href="#troubleshooting-and-advanced-options"></a>
@@ -843,7 +843,7 @@ habitat and climate assessments. Fisheries Research 210: 143–161. <a href="doi
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

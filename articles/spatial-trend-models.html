@@ -109,7 +109,7 @@ scale the prediction grid.</li>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pcod_spde</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_mesh.html">make_mesh</a></span><span class="op">(</span><span class="va">pcod</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="st">"Y"</span><span class="op">)</span>, cutoff <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">pcod_spde</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spatial-trend-models_files/figure-html/unnamed-chunk-1-1.png" width="672"></p>
+<p><img src="spatial-trend-models_files/figure-html/unnamed-chunk-1-1.png" class="r-plt" width="672"></p>
 <p>We will fit a model that includes an overall intercept, a slope for
 ‘year’, an intercept spatial random field, and another random field for
 spatially varying slopes that represent temporal trends that vary
@@ -215,7 +215,7 @@ These are in link (log) space. These are the spatially varying
 coefficients.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">plot_map_raster</span><span class="op">(</span><span class="va">pred</span>, <span class="va">zeta_s_scaled_year</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spatial-trend-models_files/figure-html/unnamed-chunk-8-1.png" width="672"></p>
+<p><img src="spatial-trend-models_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" width="672"></p>
 <p>If we wanted to get at the actual slope of <code>scaled_year</code>
 in space, we would also have to add on the main overall (fixed effect)
 coefficient.</p>
@@ -233,14 +233,14 @@ trend has been a decline of 6% per decade.</p>
 effect to get the spatially varying trend:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">plot_map_raster</span><span class="op">(</span><span class="va">pred</span>, <span class="va">scaled_year_coef</span> <span class="op">+</span> <span class="va">zeta_s_scaled_year</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spatial-trend-models_files/figure-html/unnamed-chunk-10-1.png" width="672"></p>
+<p><img src="spatial-trend-models_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" width="672"></p>
 <p>We could put those slopes back into natural space:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">plot_map_raster</span><span class="op">(</span><span class="va">pred</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">scaled_year_coef</span> <span class="op">+</span> <span class="va">zeta_s_scaled_year</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient2</a></span><span class="op">(</span>midpoint <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span></code></pre></div>
-<p><img src="spatial-trend-models_files/figure-html/unnamed-chunk-11-1.png" width="672"></p>
+<p><img src="spatial-trend-models_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" width="672"></p>
 <p>Here, 2, for example, means a 2-fold change in density in that
 location per decade.</p>
 <p>We might prefer to log transform the color scale. This gets us back
@@ -251,7 +251,7 @@ represent (multiplicative) values in natural space.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient2</a></span><span class="op">(</span>midpoint <span class="op">=</span> <span class="fl">0</span>, trans <span class="op">=</span> <span class="st">"log10"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Scale for <span style="color: #00BB00;">fill</span> is already present.</span></span>
 <span><span class="co">#&gt; Adding another scale for <span style="color: #00BB00;">fill</span>, which will replace the existing scale.</span></span></code></pre></div>
-<p><img src="spatial-trend-models_files/figure-html/unnamed-chunk-12-1.png" width="672"></p>
+<p><img src="spatial-trend-models_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" width="672"></p>
 <p>The fastest way to get uncertainty on this spatially varying
 coefficient is with draws from the joint precision matrix of the
 parameters:</p>
@@ -261,7 +261,7 @@ parameters:</p>
 <span><span class="va">pred</span><span class="op">$</span><span class="va">se</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">psim</span>, <span class="fl">1</span>, <span class="va">sd</span><span class="op">)</span></span>
 <span><span class="fu">plot_map_raster</span><span class="op">(</span><span class="va">pred</span>, <span class="va">se</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="spatial-trend-models_files/figure-html/unnamed-chunk-13-1.png" width="672"></p>
+<p><img src="spatial-trend-models_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" width="672"></p>
 <p>We can see a visual pattern of the SPDE mesh in this plot. The
 uncertainty standard error is most accurate at the nodes (vertices,
 knots) of the mesh.</p>
@@ -275,7 +275,7 @@ knots) of the mesh.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

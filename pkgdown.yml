@@ -1,5 +1,5 @@
 pandoc: 3.1.11
-pkgdown: 2.1.3
+pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   articles/age-composition: age-composition.html
@@ -21,7 +21,7 @@ articles:
   articles/threshold-models: threshold-models.html
   articles/visreg: visreg.html
   articles/zoib: zoib.html
-last_built: 2025-11-07T19:07Z
+last_built: 2025-11-07T21:52Z
 urls:
   reference: https://pbs-assess.github.io/sdmTMB/reference
   article: https://pbs-assess.github.io/sdmTMB/articles
