@@ -38,9 +38,37 @@ test_that("randomized quantile residuals work,", {
     )
   }
 
-  check_resids <- function(fit) {
+  sim_dat_delta <- function(family, phi = 0.2, sigma_O = 0.2) {
+    set.seed(1)
+    response_1 <- sdmTMB_simulate(
+      formula = ~1,
+      data = predictor_dat,
+      mesh = mesh,
+      family = family[[1]],
+      range = 0.5,
+      sigma_O = sigma_O,
+      seed = 1,
+      B = 0
+    )
+    response_2 <- sdmTMB_simulate(
+      formula = ~1,
+      data = predictor_dat,
+      mesh = mesh,
+      family = family[[2]],
+      range = 0.5,
+      phi = phi,
+      sigma_O = sigma_O,
+      seed = 1,
+      B = 0
+    )
+    responses <- cbind(response_2, present = response_1$observed)
+    responses$observed <- ifelse(responses$present > 0, responses$observed, 0)
+    responses
+  }
+
+  check_resids <- function(fit, model = c(1,2)) {
     set.seed(123)
-    r <- residuals(fit, type = "mle-mvn")
+    r <- residuals(fit, type = "mle-mvn", model = model)
     qqnorm(r)
     abline(0, 1)
     p <- stats::shapiro.test(r)
@@ -175,6 +203,50 @@ test_that("randomized quantile residuals work,", {
     spatial = "off", spatiotemporal = "off"
   )
   check_resids(fit)
+  check_resids_dharma(fit)
+
+  d <- sim_dat_delta(delta_gamma())
+  fit <- sdmTMB(
+    observed ~ 1,
+    family = delta_gamma(),
+    data = d, mesh = mesh,
+    spatial = "off", spatiotemporal = "off"
+  )
+  check_resids(fit, model = 1)
+  check_resids(fit, model = 2)
+  check_resids_dharma(fit)
+
+  d <- sim_dat_delta(delta_lognormal())
+  fit <- sdmTMB(
+    observed ~ 1,
+    family = delta_lognormal(),
+    data = d, mesh = mesh,
+    spatial = "off", spatiotemporal = "off"
+  )
+  check_resids(fit, model = 1)
+  check_resids(fit, model = 2)
+  check_resids_dharma(fit)
+
+  d <- sim_dat_delta(delta_truncated_nbinom2())
+  fit <- sdmTMB(
+    observed ~ 1,
+    family = delta_truncated_nbinom2(),
+    data = d, mesh = mesh,
+    spatial = "off", spatiotemporal = "off"
+  )
+  check_resids(fit, model = 1)
+  check_resids(fit, model = 2)
+  check_resids_dharma(fit)
+
+  d <- sim_dat_delta(delta_truncated_nbinom1())
+  fit <- sdmTMB(
+    observed ~ 1,
+    family = delta_truncated_nbinom1(),
+    data = d, mesh = mesh,
+    spatial = "off", spatiotemporal = "off"
+  )
+  check_resids(fit, model = 1)
+  check_resids(fit, model = 2)
   check_resids_dharma(fit)
 
   d <- sim_dat(gengamma())
