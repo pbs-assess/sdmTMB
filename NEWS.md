@@ -1,5 +1,23 @@
 # sdmTMB (development version)
 
+* Add experimental `collapse_spatial_variance` option to `sdmTMBcontrol()` to
+  automatically detect and turn off spatial and/or spatiotemporal random fields
+  when their SD parameters are estimated to be very small (below a threshold).
+  When enabled, the model will automatically refit with the appropriate fields
+  turned off if SD parameters fall below `collapse_threshold` (default 0.01).
+  This can help avoid boundary issues and improve model stability when random
+  fields are not needed. Set to `FALSE` by default. #263
+
+* Fix `tidy()` to only include the `model` column for delta models. For non-delta
+  models, the `model` column is no longer included in the output for
+  `effects = "ran_pars"` and `effects = "ran_vals"`, making the output cleaner
+  and more consistent.
+
+* Update package logo.
+
+* Add residuals for truncated negative binomial families. #481
+  Thanks to @Joseph-Barss
+
 * Extend `sdmTMB_simulate()` to support time-varying effects with vector `sigma_V`
   inputs and AR1 correlation (`rho_time`). #447
 

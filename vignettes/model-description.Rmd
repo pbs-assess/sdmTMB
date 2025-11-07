@@ -590,6 +590,47 @@ where $\mu_1$ is the mean of the first (smaller component) of the distribution, 
 
 Example: `family = nbinom2_mix(link = "log")`
 
+## Delta models
+
+sdmTMB allows for several different kinds of delta (also known as hurdle) models. These families are implemented by specifying the family as a delta distribution. For example:
+
+```r
+sdmTMB(
+  ...,
+  family = delta_gamma()
+)
+```
+
+The list of supported families is included in the documentation on [additional families](https://pbs-assess.github.io/sdmTMB/reference/families.html), [delta models](https://pbs-assess.github.io/sdmTMB/articles/delta-models.html), and [Poisson-link delta models](https://pbs-assess.github.io/sdmTMB/articles/poisson-link.html). By default, the `delta_*` families don't use the Poisson link, but this structure can be specified with `delta_gamma(type = "poisson-link")`. 
+
+In the "standard" delta model implementation, sdmTMB constructs two internal models (formally, two "linear predictors"), with the first model representing presence-absence and the second model represting the positive component (such as catch rates in fisheries applications). 
+Default links associated with each family can be inspected with `delta_lognormal()` and equivalent functions. For the standard delta models, the default first linear predictor link is logit. For the Poisson-link type, the first linear predictor link is log.
+
+The `formula`, `spatial`, `spatiotemporal`, and `share_range` arguments of `sdmTMB()` can be specified independently as a 2-element list. For example, the spatial random field might be estimated for only the first linear predictor with: 
+
+```r
+sdmTMB(
+  ...,
+  family = delta_gamma(),
+  spatial = list("on", "off")
+)
+```
+
+Or for we may want separate main-effects formulas. For example:
+
+```r
+sdmTMB(
+  formula = list(
+    y ~ depth + I(depth^2), 
+    y ~ 1),
+  family = delta_gamma()
+)
+```
+
+All other arguments are shared between the linear predictors.
+
+Currently if delta models contain smoothers, both components must have the same main-effects formula.
+  
 # Gaussian random fields
 
 ## Matérn parameterization

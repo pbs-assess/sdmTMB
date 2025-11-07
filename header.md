@@ -1,6 +1,6 @@
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# sdmTMB <a href='https://github.com/pbs-assess/sdmTMB'><img src='man/figures/logo.png' align="right" style="height:139px;"/></a>
+# sdmTMB <a href="https://pbs-assess.github.io/sdmTMB/"><img src="man/figures/logo.png" align="right" height="138" alt="sdmTMB website" /></a>
 
 > Spatial and spatiotemporal GLMMs with TMB
 
@@ -12,7 +12,7 @@
 [![downloads](https://cranlogs.r-pkg.org/badges/sdmTMB)](https://cranlogs.r-pkg.org/)
 <!-- badges: end -->
 
-sdmTMB is an R package that fits spatial and spatiotemporal GLMMs (Generalized Linear Mixed Effects Models) using Template Model Builder ([TMB](https://github.com/kaskr/adcomp)), [R-INLA](https://www.r-inla.org/), and Gaussian Markov random fields. One common application is for species distribution models (SDMs). See the [documentation site](https://pbs-assess.github.io/sdmTMB/) and a preprint:
+sdmTMB is an R package that fits spatial and spatiotemporal GLMMs (Generalized Linear Mixed Effects Models) using Template Model Builder ([TMB](https://github.com/kaskr/adcomp)), [fmesher](https://github.com/inlabru-org/fmesher), and Gaussian Markov random fields. One common application is for species distribution models (SDMs). See the [documentation site](https://pbs-assess.github.io/sdmTMB/) and a preprint:
 
 Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett, J.T. Thorson. 2024. sdmTMB: an R package for fast, flexible, and user-friendly generalized linear mixed effects models with spatial and spatiotemporal random fields. bioRxiv 2022.03.24.485545; doi: https://doi.org/10.1101/2022.03.24.485545
 

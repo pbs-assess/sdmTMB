@@ -24,6 +24,8 @@ sdmTMBcontrol(
   get_joint_precision = TRUE,
   parallel = getOption("sdmTMB.cores", 1L),
   suppress_nlminb_warnings = TRUE,
+  collapse_spatial_variance = FALSE,
+  collapse_threshold = 0.01,
   ...
 )
 }
@@ -111,6 +113,22 @@ definitely an upper limit.}
 \item{suppress_nlminb_warnings}{Suppress uninformative warnings
 from \code{\link[stats:nlminb]{stats::nlminb()}} arising when a function evaluation is \code{NA}, which
 are then replaced with \code{Inf} and avoided during estimation?}
+
+\item{collapse_spatial_variance}{Logical: should spatial and/or spatiotemporal
+random fields be automatically dropped if their estimated standard deviation
+is effectively zero (i.e., below \code{collapse_threshold})? This helps prevent
+overfitting and numerical instability when the data provide little evidence
+for spatial or spatiotemporal variation. I.e., when the variance parameter is
+estimated on or near the boundary of zero. When enabled, the model will be
+automatically refitted via \code{\link[=update.sdmTMB]{update.sdmTMB()}} with the corresponding field(s)
+disabled. This adds a computational cost (a single model refit if
+collapsing occurs) but can yield a simpler, more stable model and more
+reliable inference. Default is \code{FALSE} for backwards compatibility.}
+
+\item{collapse_threshold}{Numeric: the standard deviation threshold below which random
+fields are considered to be collapsing to zero. Only used when
+\code{collapse_spatial_variance = TRUE}. Values are on the standard deviation
+scale (i.e., square root of variance). Default is 0.01.}
 
 \item{...}{Anything else. See the 'Control parameters' section of
 \code{\link[stats:nlminb]{stats::nlminb()}}.}

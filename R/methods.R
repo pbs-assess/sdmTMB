@@ -197,13 +197,19 @@ fixef.sdmTMB <- function(object, model = 1, ...) {
 ranef.sdmTMB <- function(object, ...) {
   .t <- tidy(object, "ran_vals", conf.int = FALSE, silent = TRUE)
   model_list <- list()
+
+  # For non-delta models, there is no model column
+  if (!"model" %in% names(.t)) {
+    .t$model <- 1
+  }
+
   for (i in seq_len(max(.t$model))) { # loop through models
-    .t <- .t[which(.t$model == i), ]
-    groups <- unique(.t$group_name) # names of groups for this model
+    .t_sub <- .t[which(.t$model == i), ]
+    groups <- unique(.t_sub$group_name) # names of groups for this model
     group_list <- vector("list", length = length(groups)) # create empty named list
     names(group_list) <- groups
     for (j in 1:length(groups)) {
-      sub <- .t[which(.t$group_name == groups[j]), ]
+      sub <- .t_sub[which(.t_sub$group_name == groups[j]), ]
       level_ids <- unique(sub$level_ids)
       sub <- sub[, c("group_name", "term", "estimate")]
       if (nrow(sub) > 0) {
@@ -397,27 +403,28 @@ model.frame.sdmTMB <- function(formula, ...) {
   as.data.frame(formula$data) # no tibbles!
 }
 
-# Update an sdmTMB model
-#
-# This method updates an sdmTMB model with new arguments, automatically
-# handling the mesh object to avoid environment issues when loading
-# models from saved files.
-#
-# @param object An sdmTMB model object
-# @param formula. Optional updated formula
-# @param ... Other arguments to update in the model call
-# @param evaluate If `TRUE` (default), the updated call is evaluated;
-#   if `FALSE`, the call is returned unevaluated
-#
-# @return An updated sdmTMB model object (if `evaluate = TRUE`) or
-#   an unevaluated call (if `evaluate = FALSE`)
-#
-# @examples
-# mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
-# fit <- sdmTMB(density ~ 1, data = pcod_2011, mesh = mesh,
-#   family = tweedie(link = "log"))
-# fit2 <- update(fit, family = delta_gamma())
+#' Update an sdmTMB model
+#'
+#' This method updates an sdmTMB model with new arguments, automatically
+#' handling the mesh object to avoid environment issues when loading
+#' models from saved files.
+#'
+#' @param object An sdmTMB model object
+#' @param formula. Optional updated formula
+#' @param ... Other arguments to update in the model call
+#' @param evaluate If `TRUE` (default), the updated call is evaluated;
+#'   if `FALSE`, the call is returned unevaluated
+#'
+#' @return An updated sdmTMB model object (if `evaluate = TRUE`) or
+#'   an unevaluated call (if `evaluate = FALSE`)
+#'
+#' @examples
+#' mesh <- make_mesh(pcod_2011, c("X", "Y"), cutoff = 20)
+#' fit <- sdmTMB(density ~ 1, data = pcod_2011, mesh = mesh,
+#'   family = tweedie(link = "log"))
+#' fit2 <- update(fit, family = delta_gamma())
 #' @export
+#' @importFrom stats update
 update.sdmTMB <- function(object, formula., ..., evaluate = TRUE) {
   call <- object$call
   new_args <- list(...)

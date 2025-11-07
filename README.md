@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# sdmTMB <a href='https://github.com/pbs-assess/sdmTMB'><img src='man/figures/logo.png' align="right" style="height:139px;"/></a>
+# sdmTMB <a href="https://pbs-assess.github.io/sdmTMB/"><img src="man/figures/logo.png" align="right" height="138" alt="sdmTMB website" /></a>
 
 > Spatial and spatiotemporal GLMMs with TMB
 
@@ -13,7 +13,7 @@
 [![downloads](https://cranlogs.r-pkg.org/badges/sdmTMB)](https://cranlogs.r-pkg.org/)
 <!-- badges: end -->
 
-sdmTMB is an R package that fits spatial and spatiotemporal GLMMs (Generalized Linear Mixed Effects Models) using Template Model Builder ([TMB](https://github.com/kaskr/adcomp)), [R-INLA](https://www.r-inla.org/), and Gaussian Markov random fields. One common application is for species distribution models (SDMs). See the [documentation site](https://pbs-assess.github.io/sdmTMB/) and a preprint:
+sdmTMB is an R package that fits spatial and spatiotemporal GLMMs (Generalized Linear Mixed Effects Models) using Template Model Builder ([TMB](https://github.com/kaskr/adcomp)), [fmesher](https://github.com/inlabru-org/fmesher), and Gaussian Markov random fields. One common application is for species distribution models (SDMs). See the [documentation site](https://pbs-assess.github.io/sdmTMB/) and a preprint:
 
 Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett, J.T. Thorson. 2024. sdmTMB: an R package for fast, flexible, and user-friendly generalized linear mixed effects models with spatial and spatiotemporal random fields. bioRxiv 2022.03.24.485545; doi: https://doi.org/10.1101/2022.03.24.485545
 
@@ -245,8 +245,8 @@ fit
 #> sdepth          0.62    2.53
 #> 
 #> Smooth terms:
-#>            Std. Dev.
-#> sds(depth)     13.93
+#>              Std. Dev.
+#> sd__s(depth)     13.93
 #> 
 #> Dispersion parameter: 12.69
 #> Tweedie p: 1.58
@@ -276,13 +276,14 @@ tidy(fit, conf.int = TRUE)
 #> 1 (Intercept)     2.37     0.215     1.95      2.79
 #> 2 sdepth          0.62     2.53     -4.34      5.58
 tidy(fit, effects = "ran_pars", conf.int = TRUE)
-#> # A tibble: 4 × 5
-#>   term      estimate std.error conf.low conf.high
-#>   <chr>        <dbl>     <dbl>    <dbl>     <dbl>
-#> 1 range        16.4    4.47        9.60     28.0 
-#> 2 phi          12.7    0.406      11.9      13.5 
-#> 3 sigma_O       1.86   0.218       1.48      2.34
-#> 4 tweedie_p     1.58   0.00998     1.56      1.60
+#> # A tibble: 5 × 5
+#>   term         estimate std.error conf.low conf.high
+#>   <chr>           <dbl>     <dbl>    <dbl>     <dbl>
+#> 1 range           16.4    4.47        9.60     28.0 
+#> 2 phi             12.7    0.406      11.9      13.5 
+#> 3 sigma_O          1.86   0.218       1.48      2.34
+#> 4 tweedie_p        1.58   0.00998     1.56      1.60
+#> 5 sd__s(depth)    13.9   NA           7.54     25.7
 ```
 
 Run some basic sanity checks on our model:
@@ -612,7 +613,7 @@ MVN covariance matrix on the internal parameterization:
 samps <- gather_sims(fit, nsim = 1000)
 ggplot(samps, aes(.value)) + geom_histogram() +
   facet_wrap(~.variable, scales = "free_x")
-#> `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+#> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
 ```
 
 <img src="man/figures/README-plot-mvn-1.png" width="50%" />
