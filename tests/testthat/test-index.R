@@ -310,3 +310,19 @@ test_that("get_weighted_average matches get_cog when using latitude", {
   expect_equal(wa_lat_bc$se, cog_bc$se_y, tolerance = 1e-6)
 })
 
+test_that("get_index() etc. errors if the data have been subset after predicting", {
+  skip_on_cran()
+  skip_on_ci()
+  mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
+  m <- sdmTMB(
+    data = pcod,
+    formula = density ~ 0 + as.factor(year),
+    mesh = mesh,
+    spatiotemporal = "off", spatial = "on",
+    time = "year", family = tweedie(link = "log")
+  )
+  nd <- replicate_df(qcs_grid, "year", unique(pcod$year))
+  p <- predict(m, newdata = nd, return_tmb_object = TRUE)
+  p$data <- p$data[p$data$Y > 5700, , drop=FALSE]
+  expect_error(get_index(p), regexp = "data")
+})

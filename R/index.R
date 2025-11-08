@@ -304,6 +304,13 @@ get_generic <- function(obj, value_name, bias_correct = FALSE, level = 0.95,
         "`predict(..., return_tmb_object = TRUE).`"))
     }
 
+    nr1 <- nrow(obj$data)
+    nr2 <- nrow(obj$pred_tmb_data$proj_X_ij[[1]])
+    if (nr1 != nr2) {
+      cli_abort(c("Predicted data appears to be modified after prediction",
+        "i" ="Please filter `newdata` before predicting."))
+    }
+
     if (!"report" %in% names(obj$obj)) {
       cli_abort(c("It looks like the predict function was run without `newdata` specified.",
         "Re-run the predict function with `newdata` specified.")) #276

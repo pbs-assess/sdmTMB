@@ -1,5 +1,8 @@
 # sdmTMB (development version)
 
+* Add check if newdata has been filtered after prediction and before passing
+  to a `get_*()` function.
+
 * Add experimental `collapse_spatial_variance` option to `sdmTMBcontrol()` to
   automatically detect and turn off spatial and/or spatiotemporal random fields
   when their SD parameters are estimated to be very small (below a threshold).
