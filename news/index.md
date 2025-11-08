@@ -2,6 +2,9 @@
 
 ## sdmTMB (development version)
 
+- Add check if newdata has been filtered after prediction and before
+  passing to a `get_*()` function.
+
 - Add experimental `collapse_spatial_variance` option to
   [`sdmTMBcontrol()`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMBcontrol.md)
   to automatically detect and turn off spatial and/or spatiotemporal

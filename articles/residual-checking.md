@@ -155,8 +155,8 @@ samps <- sdmTMBextra::predict_mle_mcmc(fit_nb2, mcmc_iter = 800, mcmc_warmup = 4
 #> 
 #> SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.001105 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 11.05 seconds.
+#> Chain 1: Gradient evaluation took 0.001079 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 10.79 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -173,9 +173,9 @@ samps <- sdmTMBextra::predict_mle_mcmc(fit_nb2, mcmc_iter = 800, mcmc_warmup = 4
 #> Chain 1: Iteration: 720 / 800 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 800 / 800 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 6.739 seconds (Warm-up)
-#> Chain 1:                4.878 seconds (Sampling)
-#> Chain 1:                11.617 seconds (Total)
+#> Chain 1:  Elapsed Time: 6.773 seconds (Warm-up)
+#> Chain 1:                4.898 seconds (Sampling)
+#> Chain 1:                11.671 seconds (Total)
 #> Chain 1:
 mcmc_res <- residuals(fit_nb2, type = "mle-mcmc", mcmc_samples = samps)
 qqnorm(mcmc_res)
@@ -464,8 +464,8 @@ samp <- sdmTMBextra::predict_mle_mcmc(fit, mcmc_iter = 400, mcmc_warmup = 200)
 #> 
 #> SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.002209 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 22.09 seconds.
+#> Chain 1: Gradient evaluation took 0.002205 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 22.05 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -482,9 +482,9 @@ samp <- sdmTMBextra::predict_mle_mcmc(fit, mcmc_iter = 400, mcmc_warmup = 200)
 #> Chain 1: Iteration: 360 / 400 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 400 / 400 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 33.931 seconds (Warm-up)
-#> Chain 1:                33.475 seconds (Sampling)
-#> Chain 1:                67.406 seconds (Total)
+#> Chain 1:  Elapsed Time: 33.037 seconds (Warm-up)
+#> Chain 1:                32.499 seconds (Sampling)
+#> Chain 1:                65.536 seconds (Total)
 #> Chain 1:
 #> Warning: The largest R-hat is 1.07, indicating chains have not mixed.
 #> Running the chains for more iterations may help. See
@@ -731,9 +731,6 @@ Simulation-based normal(0, 1):
 set.seed(1)
 s <- simulate(fit2, nsim = 1500, type = "mle-mvn") |>
   dharma_residuals(fit2, return_DHARMa = TRUE)
-#> Simulating ■■■■■■■■■■■■■                     41% | ETA:  1s
-#> Simulating ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    96% | ETA:  0s
-#> Simulating ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s
 u <- s$scaledResiduals
 r <- qnorm(u)
 qqnorm(r)
