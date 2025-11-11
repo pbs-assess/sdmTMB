@@ -331,3 +331,109 @@ test_that("Delta model cross validation works", {
   diff_ll <- out_dpg$sum_loglik - out_dg$sum_loglik
   expect_equal(round(diff_ll, 4), round(-4.629497, 4))
 })
+
+test_that("Cross validation with weights works", {
+  skip_on_cran()
+  skip_on_ci()
+
+  # Test with constant mesh
+  set.seed(123)
+  d <- pcod_2011
+
+  # Create some example weights
+  weights_vec <- runif(nrow(d), 0.5, 1.5)
+
+  # CV with weights
+  set.seed(1)
+  x_weighted <- sdmTMB_cv(
+    density ~ depth_scaled,
+    data = d,
+    mesh = pcod_mesh_2011,
+    family = tweedie(),
+    spatial = "off",
+    k_folds = 2,
+    weights = weights_vec
+  )
+
+  # CV without weights (default)
+  set.seed(1)
+  x_unweighted <- sdmTMB_cv(
+    density ~ depth_scaled,
+    data = d,
+    mesh = pcod_mesh_2011,
+    family = tweedie(),
+    spatial = "off",
+    k_folds = 2
+  )
+
+  # Check that CV runs successfully with weights
+  expect_s3_class(x_weighted, "sdmTMB_cv")
+  expect_equal(class(x_weighted$sum_loglik), "numeric")
+  expect_equal(x_weighted$sum_loglik, sum(x_weighted$data$cv_loglik))
+  expect_equal(x_weighted$sum_loglik, sum(x_weighted$fold_loglik))
+  expect_true("data.frame" %in% class(x_weighted$data))
+  expect_equal(class(x_weighted$models[[1]]), "sdmTMB")
+
+  # Weighted and unweighted CV should give different results
+  expect_false(isTRUE(all.equal(x_weighted$sum_loglik, x_unweighted$sum_loglik)))
+
+  # Test that predictions exist
+  expect_true("cv_predicted" %in% names(x_weighted$data))
+  expect_true("cv_loglik" %in% names(x_weighted$data))
+
+  # Test with use_initial_fit = TRUE
+  set.seed(1)
+  x_weighted_init <- sdmTMB_cv(
+    density ~ depth_scaled,
+    data = d,
+    mesh = pcod_mesh_2011,
+    family = tweedie(),
+    spatial = "off",
+    k_folds = 2,
+    weights = weights_vec,
+    use_initial_fit = TRUE
+  )
+  expect_s3_class(x_weighted_init, "sdmTMB_cv")
+  expect_equal(class(x_weighted_init$sum_loglik), "numeric")
+
+  # Test error handling for mismatched weights length
+  expect_error(
+    sdmTMB_cv(
+      density ~ depth_scaled,
+      data = d,
+      mesh = pcod_mesh_2011,
+      family = tweedie(),
+      spatial = "off",
+      k_folds = 2,
+      weights = c(1, 2, 3)  # Wrong length
+    ),
+    "same length as the number of rows"
+  )
+
+  # Test error handling for non-positive weights
+  expect_error(
+    sdmTMB_cv(
+      density ~ depth_scaled,
+      data = d,
+      mesh = pcod_mesh_2011,
+      family = tweedie(),
+      spatial = "off",
+      k_folds = 2,
+      weights = c(rep(1, nrow(d) - 1), 0)  # Zero weight
+    ),
+    "must be positive"
+  )
+
+  expect_error(
+    sdmTMB_cv(
+      density ~ depth_scaled,
+      data = d,
+      mesh = pcod_mesh_2011,
+      family = tweedie(),
+      spatial = "off",
+      k_folds = 2,
+      weights = c(rep(1, nrow(d) - 1), -1)  # Negative weight
+    ),
+    "must be positive"
+  )
+})

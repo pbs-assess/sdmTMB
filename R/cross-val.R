@@ -103,8 +103,9 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'   object. This vector is appended to `TRUE` and passed to the argument
 #'   `future.globals` in [future.apply::future_lapply()]. Useful if global
 #'   objects are used to specify arguments like priors, families, etc.
-#' @param ... All other arguments required to run [sdmTMB()] model with the
-#'   exception of `weights`, which are used to define the folds.
+#' @param ... All other arguments required to run the [sdmTMB()] model. The
+#'   `weights` argument is supported and will be combined with the internal
+#'   fold-assignment mechanism (held-out data are assigned weight 0).
 #'
 #' @export
 #' @return
@@ -283,9 +284,20 @@ sdmTMB_cv <- function(
   }
 
   dot_args <- as.list(substitute(list(...)))[-1L]
+
+  # Extract user-supplied weights if provided
   if ("weights" %in% names(dot_args)) {
-    cli_abort("`weights` cannot be specified within sdmTMB_cv().")
+    user_weights <- eval(dot_args$weights, envir = parent.frame())
+    if (length(user_weights) != nrow(data)) {
+      cli_abort("`weights` must have the same length as the number of rows in `data`.")
+    }
+    if (any(user_weights <= 0)) {
+      cli_abort("`weights` must be positive (> 0).")
+    }
+  } else {
+    user_weights <- rep(1, nrow(data))
   }
+
   if ("offset" %in% names(dot_args)) {
     if (!is.character(dot_args$offset)) {
       cli_abort("Please use a character value for 'offset' (indicating the column name) for cross validation.")
@@ -297,11 +309,14 @@ sdmTMB_cv <- function(
 
   if (k_folds > 1) {
     # data in kth fold get weight of 0:
-    weights <- ifelse(data$cv_fold == 1L, 0, 1)
+    fold_weights <- ifelse(data$cv_fold == 1L, 0, 1)
   } else {
-    weights <- rep(1, nrow(data))
+    fold_weights <- rep(1, nrow(data))
   }
-  if (lfo) weights <- ifelse(data$cv_fold == 1L, 1, 0)
+  if (lfo) fold_weights <- ifelse(data$cv_fold == 1L, 1, 0)
+
+  # Combine user weights with fold weights
+  weights <- user_weights * fold_weights
 
   if (use_initial_fit) {
     # run model on first fold to get starting values:
@@ -321,6 +336,7 @@ sdmTMB_cv <- function(
     }
     dot_args <- list(dot_args)[[1]]
     dot_args$offset <- NULL
+    dot_args$weights <- NULL
     .args <- c(list(
       data = dat_fit, formula = formula, time = time, mesh = mesh,
       weights = weights, offset = .offset
@@ -330,11 +346,13 @@ sdmTMB_cv <- function(
 
   fit_func <- function(k) {
     if (lfo) {
-      weights <- ifelse(data$cv_fold <= k, 1, 0)
+      fold_weights <- ifelse(data$cv_fold <= k, 1, 0)
     } else {
       # data in kth fold get weight of 0:
-      weights <- ifelse(data$cv_fold == k, 0, 1)
+      fold_weights <- ifelse(data$cv_fold == k, 0, 1)
     }
+    # Combine user weights with fold weights
+    weights <- user_weights * fold_weights
 
     if (k == 1L && use_initial_fit) {
       object <- fit1
@@ -354,6 +372,7 @@ sdmTMB_cv <- function(
       dot_args <- as.list(substitute(list(...)))[-1L] # re-evaluate here! issue #54
       dot_args <- list(...)
       dot_args$offset <- NULL
+      dot_args$weights <- NULL
       args <- c(list(
         data = dat_fit, formula = formula, time = time, mesh = mesh, offset = .offset,
         weights = weights, previous_fit = if (use_initial_fit) fit1 else NULL
@@ -383,7 +402,21 @@ sdmTMB_cv <- function(
     # from the TMB report():
     if (!lfo) {
       tmb_data <- object$tmb_data
-      tmb_data$weights_i <- ifelse(tmb_data$weights_i == 1, 0, 1) # reversed
+
+      # Figure out which user weights correspond to the data used in fitting
+      if (!constant_mesh) {
+        if (lfo) {
+          user_weights_subset <- user_weights[data$cv_fold <= k]
+        } else {
+          user_weights_subset <- user_weights[data$cv_fold != k]
+        }
+      } else {
+        user_weights_subset <- user_weights
+      }
+
+      # Reverse weights: training (weight != 0) → 0, held-out (weight == 0) → user_weight
+      tmb_data$weights_i <- ifelse(tmb_data$weights_i == 0, user_weights_subset, 0)
+
       new_tmb_obj <- TMB::MakeADFun(
         data = tmb_data,
         parameters = get_pars(object),
@@ -395,7 +428,8 @@ sdmTMB_cv <- function(
       lp <- object$tmb_obj$env$last.par.best
       r <- new_tmb_obj$report(lp)
       cv_loglik <- -1 * r$jnll_obs
-      cv_data$cv_loglik <- cv_loglik[tmb_data$weights_i == 1]
+      # Extract log-likelihoods for held-out observations (where reversed weights > 0)
+      cv_data$cv_loglik <- cv_loglik[tmb_data$weights_i > 0]
     } else { # old method; doesn't work with delta models!
       cv_data$cv_loglik <- ll_sdmTMB(object, withheld_y, withheld_mu)
     }

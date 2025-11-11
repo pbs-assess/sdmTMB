@@ -1,5 +1,9 @@
 # sdmTMB (development version)
 
+* `sdmTMB_cv()` now supports the `weights` argument. User-supplied weights are
+  combined with the internal fold-assignment mechanism (held-out data are
+  assigned weight 0). Weights must be positive (> 0). #486
+
 * Add check if newdata has been filtered after prediction and before passing
   to a `get_*()` function.
 
