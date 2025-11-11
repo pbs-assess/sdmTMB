@@ -105,10 +105,11 @@ sdmTMB_cv(
 
 - ...:
 
-  All other arguments required to run
+  All other arguments required to run the
   [`sdmTMB()`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB.md)
-  model with the exception of `weights`, which are used to define the
-  folds.
+  model. The `weights` argument is supported and will be combined with
+  the internal fold-assignment mechanism (held-out data are assigned
+  weight 0).
 
 ## Value
 

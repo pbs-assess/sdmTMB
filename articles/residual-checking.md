@@ -155,8 +155,8 @@ samps <- sdmTMBextra::predict_mle_mcmc(fit_nb2, mcmc_iter = 800, mcmc_warmup = 4
 #> 
 #> SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.001053 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 10.53 seconds.
+#> Chain 1: Gradient evaluation took 0.001044 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 10.44 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -173,9 +173,9 @@ samps <- sdmTMBextra::predict_mle_mcmc(fit_nb2, mcmc_iter = 800, mcmc_warmup = 4
 #> Chain 1: Iteration: 720 / 800 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 800 / 800 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 6.701 seconds (Warm-up)
-#> Chain 1:                4.855 seconds (Sampling)
-#> Chain 1:                11.556 seconds (Total)
+#> Chain 1:  Elapsed Time: 6.694 seconds (Warm-up)
+#> Chain 1:                4.853 seconds (Sampling)
+#> Chain 1:                11.547 seconds (Total)
 #> Chain 1:
 mcmc_res <- residuals(fit_nb2, type = "mle-mcmc", mcmc_samples = samps)
 qqnorm(mcmc_res)
@@ -464,8 +464,8 @@ samp <- sdmTMBextra::predict_mle_mcmc(fit, mcmc_iter = 400, mcmc_warmup = 200)
 #> 
 #> SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.002115 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 21.15 seconds.
+#> Chain 1: Gradient evaluation took 0.002141 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 21.41 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -482,9 +482,9 @@ samp <- sdmTMBextra::predict_mle_mcmc(fit, mcmc_iter = 400, mcmc_warmup = 200)
 #> Chain 1: Iteration: 360 / 400 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 400 / 400 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 32.366 seconds (Warm-up)
-#> Chain 1:                31.99 seconds (Sampling)
-#> Chain 1:                64.356 seconds (Total)
+#> Chain 1:  Elapsed Time: 32.299 seconds (Warm-up)
+#> Chain 1:                31.91 seconds (Sampling)
+#> Chain 1:                64.209 seconds (Total)
 #> Chain 1:
 #> Warning: The largest R-hat is 1.07, indicating chains have not mixed.
 #> Running the chains for more iterations may help. See

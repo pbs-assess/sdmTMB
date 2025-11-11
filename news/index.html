@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9018</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9019</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,8 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="sdmtmb-development-version">sdmTMB (development version)<a class="anchor" aria-label="anchor" href="#sdmtmb-development-version"></a></h2>
-<ul><li><p>Add check if newdata has been filtered after prediction and before passing to a <code>get_*()</code> function.</p></li>
+<ul><li><p><code><a href="../reference/sdmTMB_cv.html">sdmTMB_cv()</a></code> now supports the <code>weights</code> argument. User-supplied weights are combined with the internal fold-assignment mechanism (held-out data are assigned weight 0). Weights must be positive (&gt; 0). <a href="https://github.com/pbs-assess/sdmTMB/issues/486" class="external-link">#486</a></p></li>
+<li><p>Add check if newdata has been filtered after prediction and before passing to a <code>get_*()</code> function.</p></li>
 <li><p>Add experimental <code>collapse_spatial_variance</code> option to <code><a href="../reference/sdmTMBcontrol.html">sdmTMBcontrol()</a></code> to automatically detect and turn off spatial and/or spatiotemporal random fields when their SD parameters are estimated to be very small (below a threshold). When enabled, the model will automatically refit with the appropriate fields turned off if SD parameters fall below <code>collapse_threshold</code> (default 0.01). This can help avoid boundary issues and improve model stability when random fields are not needed. Set to <code>FALSE</code> by default. <a href="https://github.com/pbs-assess/sdmTMB/issues/263" class="external-link">#263</a></p></li>
 <li><p>Fix <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> to only include the <code>model</code> column for delta models. For non-delta models, the <code>model</code> column is no longer included in the output for <code>effects = "ran_pars"</code> and <code>effects = "ran_vals"</code>, making the output cleaner and more consistent.</p></li>
 <li><p>Update package logo.</p></li>

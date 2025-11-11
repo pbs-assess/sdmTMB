@@ -15,7 +15,7 @@ randomly but folds can be manually assigned via the fold_ids argument."><meta pr
 
     <a class="navbar-brand me-2" href="../index.html">sdmTMB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9018</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.4.9019</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -163,8 +163,9 @@ objects are used to specify arguments like priors, families, etc.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>All other arguments required to run <code><a href="sdmTMB.html">sdmTMB()</a></code> model with the
-exception of <code>weights</code>, which are used to define the folds.</p></dd>
+<dd><p>All other arguments required to run the <code><a href="sdmTMB.html">sdmTMB()</a></code> model. The
+<code>weights</code> argument is supported and will be combined with the internal
+fold-assignment mechanism (held-out data are assigned weight 0).</p></dd>
 
 </dl></div>
     <div class="section level2">

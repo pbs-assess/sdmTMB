@@ -2,6 +2,12 @@
 
 ## sdmTMB (development version)
 
+- [`sdmTMB_cv()`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB_cv.md)
+  now supports the `weights` argument. User-supplied weights are
+  combined with the internal fold-assignment mechanism (held-out data
+  are assigned weight 0). Weights must be positive (\> 0).
+  [\#486](https://github.com/pbs-assess/sdmTMB/issues/486)
+
 - Add check if newdata has been filtered after prediction and before
   passing to a `get_*()` function.
 
