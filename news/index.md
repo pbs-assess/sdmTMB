@@ -28,6 +28,11 @@
   [\#481](https://github.com/pbs-assess/sdmTMB/issues/481) Thanks to
   [@Joseph-Barss](https://github.com/Joseph-Barss)
 
+- Fix an issue with residuals for delta models by consistently using
+  `get_par()`, and another issue specifically for delta truncated
+  negative binomial models by replacing NaN with NA.
+  [\#484](https://github.com/pbs-assess/sdmTMB/issues/484)
+
 - Extend
   [`sdmTMB_simulate()`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB_simulate.md)
   to support time-varying effects with vector `sigma_V` inputs and AR1
