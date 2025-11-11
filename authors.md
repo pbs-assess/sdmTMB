@@ -20,11 +20,14 @@
 - **Joe Watson**. Contributor.  
   Censored Poisson
 
-- **Julia Indivero**. Contributor.  
+- **Julia Indivero**. Contributor.
+  [](https://orcid.org/0000-0001-5310-9542)  
   Vignette writing
 
 - **Jillian C. Dunic**. Contributor.
   [](https://orcid.org/0000-0002-0729-3083)
+
+- **Joseph Barss**. Contributor.
 
 - **Cole C. Monnahan**. Contributor, copyright holder.
   [](https://orcid.org/0000-0003-0871-6700)  

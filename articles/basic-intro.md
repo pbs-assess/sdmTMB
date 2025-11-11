@@ -353,8 +353,8 @@ samps <- sdmTMBextra::predict_mle_mcmc(m3, mcmc_warmup = 100, mcmc_iter = 101)
 #> 
 #> SAMPLING FOR MODEL 'tmb_generic' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.011366 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 113.66 seconds.
+#> Chain 1: Gradient evaluation took 0.011198 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 111.98 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -379,9 +379,9 @@ samps <- sdmTMBextra::predict_mle_mcmc(m3, mcmc_warmup = 100, mcmc_iter = 101)
 #> Chain 1: Iteration: 100 / 101 [ 99%]  (Warmup)
 #> Chain 1: Iteration: 101 / 101 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 27.838 seconds (Warm-up)
-#> Chain 1:                0.207 seconds (Sampling)
-#> Chain 1:                28.045 seconds (Total)
+#> Chain 1:  Elapsed Time: 27.418 seconds (Warm-up)
+#> Chain 1:                0.204 seconds (Sampling)
+#> Chain 1:                27.622 seconds (Total)
 #> Chain 1:
 r <- residuals(m3, "mle-mcmc", mcmc_samples = samps)
 qqnorm(r)
