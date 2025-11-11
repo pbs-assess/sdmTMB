@@ -1,6 +1,7 @@
 qres_tweedie <- function(object, y, mu, ...) {
-  p <- stats::plogis(object$model$par[["thetaf"]]) + 1
-  dispersion <- exp(object$model$par[["ln_phi"]])
+  theta <- get_pars(object)
+  p <- stats::plogis(theta[["thetaf"]]) + 1
+  dispersion <- exp(theta[["ln_phi"]])
 
   u <- fishMod::pTweedie(q = y, p = p, mu = mu, phi = dispersion)
   if (p > 1 && p < 2) {
@@ -22,7 +23,8 @@ qres_binomial <- function(object, y, mu, .n = NULL) {
 
 qres_betabinomial <- function(object, y, mu, .n = NULL) {
   # Extract dispersion parameter
-  phi <- exp(object$model$par[["ln_phi"]])
+  theta <- get_pars(object)
+  phi <- exp(theta[["ln_phi"]])
   if (is_delta(object)) phi <- phi[2]
 
   # TMB parameterization: alpha = mu * phi, beta = (1 - mu) * phi
@@ -39,7 +41,8 @@ qres_betabinomial <- function(object, y, mu, .n = NULL) {
 }
 
 qres_nbinom2 <- function(object, y, mu, ...) {
-  phi <- exp(object$model$par[["ln_phi"]])
+  theta <- get_pars(object)
+  phi <- exp(theta[["ln_phi"]])
   if (is_delta(object)) phi <- phi[2]
   a <- stats::pnbinom(y - 1, size = phi, mu = mu)
   b <- stats::pnbinom(y, size = phi, mu = mu)
@@ -80,11 +83,15 @@ ptruncated_nbinom1 <- function(q, mu, phi){
 }
 
 qres_truncated_nbinom2 <- function(object, y, mu, ...) {
-  phi <- exp(object$model$par[["ln_phi"]])
+  theta <- get_pars(object)
+  phi <- exp(theta[["ln_phi"]])
   if (is_delta(object)) phi <- phi[2]
   a <- ptruncated_nbinom2(y - 1, mu = mu, phi = phi)
   b <- ptruncated_nbinom2(y, mu = mu, phi = phi)
+  a[is.na(a)] <- -99
+  b[is.na(b)] <- -99
   u <- stats::runif(n = length(y), min = a, max = b)
+  u[u == -99] <- NA
   stats::qnorm(u)
 }
 
@@ -94,7 +101,10 @@ qres_truncated_nbinom1 <- function(object, y, mu, ...) {
   if (is_delta(object)) phi <- phi[2]
   a <- ptruncated_nbinom1(y - 1, mu = mu, phi = phi)
   b <- ptruncated_nbinom1(y, mu = mu, phi = phi)
+  a[is.na(a)] <- -99
+  b[is.na(b)] <- -99
   u <- stats::runif(n = length(y), min = a, max = b)
+  u[u == -99] <- NA
   stats::qnorm(u)
 }
 
