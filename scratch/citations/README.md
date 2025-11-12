@@ -216,9 +216,13 @@
 
 1. Carlsen, A. (2025). *Understanding predators through their prey* PhD thesis. Swedish University of Agricultural Sciences.
 
+1. Díaz, R. R. (2025). *Advancing Ecosystem-Based Fisheries Management on the Grand Banks of Newfoundland* PhD thesis. Memorial University.
+
 1. Fritch, K. (2025). *Understanding the habitat associations of nearshore rockfishes inside and outside of marine protected areas using hook-and-line data*. MSc Thesis. California Polytechnic State University.
 
 1. Indivero, J. L. (2025). *Incorporating spatial and temporal dynamics into evaluations of fish populations and habitat* PhD thesis. University of Washington.
+
+1. Miller, A. M. (2025). *Impacts to stock abundance indices due to offshore wind development-driven changes to fishery-independent survey effort*. MSc Thesis. University of Massachusetts Dartmouth.
 
 1. Hagaman, M. (2024). *Building better homes for pollinators: How native plants benefit pollinator communities in suburban landscapes*. MSc Thesis. University of Central Florida.
 
