@@ -4,7 +4,7 @@
 
 - [Preprints](#preprints)
 - [Journal articles](#journal-articles)
-- [Theses](#thesis-chapters)
+- [Theses](#msc-and-phd-theses)
 - [Reports](#reports)
 
 
