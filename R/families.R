@@ -36,6 +36,9 @@ add_to_family <- function(x) {
 #' elements `delta` (logical) and `type` (standard vs. Poisson-link).
 #'
 #' @details
+#' The default `link1` for delta models of `type = "standard"` is `"logit"`.
+#' The default `link1` for delta models of `type = "poisson-link"` is `"log"`.
+#'
 #' `delta_poisson_link_gamma()` and `delta_poisson_link_lognormal()` have been
 #' deprecated in favour of `delta_gamma(type = "poisson-link")` and
 #' `delta_lognormal(type = "poisson-link")`.

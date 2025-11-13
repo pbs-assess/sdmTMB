@@ -106,6 +106,9 @@ elements \code{delta} (logical) and \code{type} (standard vs. Poisson-link).
 Additional families compatible with \code{\link[=sdmTMB]{sdmTMB()}}.
 }
 \details{
+The default \code{link1} for delta models of \code{type = "standard"} is \code{"logit"}.
+The default \code{link1} for delta models of \code{type = "poisson-link"} is \code{"log"}.
+
 \code{delta_poisson_link_gamma()} and \code{delta_poisson_link_lognormal()} have been
 deprecated in favour of \code{delta_gamma(type = "poisson-link")} and
 \code{delta_lognormal(type = "poisson-link")}.
