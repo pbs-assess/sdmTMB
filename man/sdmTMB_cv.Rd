@@ -72,7 +72,7 @@ fold-assignment mechanism (held-out data are assigned weight 0).}
 A list:
 \itemize{
 \item \code{data}: Original data plus columns for fold ID, CV predicted value,
-and CV log likelihood.
+CV log likelihood, and CV deviance residuals.
 \item \code{models}: A list of models; one per fold.
 \item \code{fold_loglik}: Sum of left-out log likelihoods per fold. More positive
 values are better.

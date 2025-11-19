@@ -111,7 +111,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' @return
 #' A list:
 #' * `data`: Original data plus columns for fold ID, CV predicted value,
-#'           and CV log likelihood.
+#'           CV log likelihood, and CV deviance residuals.
 #' * `models`: A list of models; one per fold.
 #' * `fold_loglik`: Sum of left-out log likelihoods per fold. More positive
 #'   values are better.
@@ -396,6 +396,26 @@ sdmTMB_cv <- function(
     response <- get_response(object$formula[[1]])
     withheld_y <- predicted[[response]]
     withheld_mu <- cv_data$cv_predicted
+
+    # Calculate deviance residuals for held-out data
+    dev_resids <- tryCatch({
+      residuals(object, type = "deviance")
+    }, error = function(e) NULL)
+
+    # Match deviance residuals to held-out data
+    if (!is.null(dev_resids) && !all(dev_resids == 0)) {
+      # Get the row indices from cv_data (held-out data)
+      cv_order <- cv_data[["_sdm_order_"]]
+      # Get the row indices from object$data (fitted data)
+      obj_order <- object$data[["_sdm_order_"]]
+      # Match held-out indices to fitted data indices
+      match_idx <- match(cv_order, obj_order)
+      # Extract corresponding deviance residuals
+      cv_data$cv_deviance_resid <- dev_resids[match_idx]
+    } else {
+      # Deviance residuals not available for this family
+      cv_data$cv_deviance_resid <- NA_real_
+    }
 
     # FIXME: get LFO working with the TMB report() option below!
     # calculate log likelihood for each withheld observation:

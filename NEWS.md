@@ -1,5 +1,10 @@
 # sdmTMB (development version)
 
+* Add deviance residuals for left-out data in the cross validation output.
+  This can be used to calculate deviance explained of left-out data.
+  See `cv_deviance_resid` column in the `data` element of the output of
+  `sdmTMB_cv()`.
+
 * Fix bug in `sdmTMB_cv()` automatic fold generation that could result in
   unbalanced folds with duplicate and missing fold IDs. The bug was most severe
   with large `k_folds` values (e.g., leave-one-out cross-validation with
