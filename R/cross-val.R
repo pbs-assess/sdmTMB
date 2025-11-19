@@ -252,7 +252,7 @@ sdmTMB_cv <- function(
       }
     } else {
       dd <- lapply(split(data, data[[time]]), function(x) {
-        x$cv_fold <- sample(rep(seq(1L, k_folds), nrow(x)), size = nrow(x))
+        x$cv_fold <- sample(rep(seq(1L, k_folds), length.out = nrow(x)), size = nrow(x))
         x
       })
       data <- do.call(rbind, dd)
@@ -388,6 +388,7 @@ sdmTMB_cv <- function(
 
     # FIXME: only use TMB report() below to be faster!
     # predict for withheld data:
+    # cli_inform("Testing on data fold {k}.")
     predicted <- predict(object, newdata = cv_data, type = "response",
       offset = if (!is.null(.offset)) cv_data[[.offset]] else rep(0, nrow(cv_data)))
 

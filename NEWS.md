@@ -1,5 +1,11 @@
 # sdmTMB (development version)
 
+* Fix bug in `sdmTMB_cv()` automatic fold generation that could result in
+  unbalanced folds with duplicate and missing fold IDs. The bug was most severe
+  with large `k_folds` values (e.g., leave-one-out cross-validation with
+  `k_folds = nrow(data)`), which could cause errors when folds had no data.
+  User-supplied `fold_ids` were not affected.
+
 * `sdmTMB_cv()` now supports the `weights` argument. User-supplied weights are
   combined with the internal fold-assignment mechanism (held-out data are
   assigned weight 0). Weights must be positive (> 0). #486
