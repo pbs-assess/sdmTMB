@@ -17,6 +17,7 @@ sdmTMB_cv(
   lfo_validations = 5,
   parallel = TRUE,
   use_initial_fit = FALSE,
+  save_models = TRUE,
   future_globals = NULL,
   ...
 )
@@ -58,6 +59,12 @@ parallel.}
 \item{use_initial_fit}{Fit the first fold and use those parameter values
 as starting values for subsequent folds? Can be faster with many folds.}
 
+\item{save_models}{Logical. If \code{TRUE} (default), the fitted model object for
+each fold is stored in the output. If \code{FALSE}, models are not saved, which
+can substantially reduce memory usage for large datasets or many folds.
+When \code{FALSE}, functions that require access to the fitted models (e.g.,
+\code{\link[=tidy]{tidy()}}, \code{\link[=cv_to_waywiser]{cv_to_waywiser()}}) will not work.}
+
 \item{future_globals}{A character vector of global variables used within
 arguments if an error is returned that \pkg{future.apply} can't find an
 object. This vector is appended to \code{TRUE} and passed to the argument
@@ -73,7 +80,7 @@ A list:
 \itemize{
 \item \code{data}: Original data plus columns for fold ID, CV predicted value,
 CV log likelihood, and CV deviance residuals.
-\item \code{models}: A list of models; one per fold.
+\item \code{models}: A list of models; one per fold. \code{NULL} if \code{save_models = FALSE}.
 \item \code{fold_loglik}: Sum of left-out log likelihoods per fold. More positive
 values are better.
 \item \code{sum_loglik}: Sum of \code{fold_loglik} across all left-out data. More positive

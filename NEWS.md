@@ -15,6 +15,13 @@
   combined with the internal fold-assignment mechanism (held-out data are
   assigned weight 0). Weights must be positive (> 0). #486
 
+* Add `save_models` argument to `sdmTMB_cv()` (defaults to `TRUE`). Setting
+  `save_models = FALSE` prevents storing fitted model objects for each fold,
+  which can substantially reduce memory usage for large datasets or many folds.
+  When `FALSE`, functions requiring model access (`tidy()`, `cv_to_waywiser()`)
+  will error with informative messages. Essential CV metrics (predictions, log
+  likelihoods, deviance residuals, convergence info) remain available.
+
 * Add check if newdata has been filtered after prediction and before passing
   to a `get_*()` function.
 

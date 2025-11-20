@@ -98,6 +98,11 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #'   parallel.
 #' @param use_initial_fit Fit the first fold and use those parameter values
 #'   as starting values for subsequent folds? Can be faster with many folds.
+#' @param save_models Logical. If `TRUE` (default), the fitted model object for
+#'   each fold is stored in the output. If `FALSE`, models are not saved, which
+#'   can substantially reduce memory usage for large datasets or many folds.
+#'   When `FALSE`, functions that require access to the fitted models (e.g.,
+#'   [tidy()], [cv_to_waywiser()]) will not work.
 #' @param future_globals A character vector of global variables used within
 #'   arguments if an error is returned that \pkg{future.apply} can't find an
 #'   object. This vector is appended to `TRUE` and passed to the argument
@@ -112,7 +117,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' A list:
 #' * `data`: Original data plus columns for fold ID, CV predicted value,
 #'           CV log likelihood, and CV deviance residuals.
-#' * `models`: A list of models; one per fold.
+#' * `models`: A list of models; one per fold. `NULL` if `save_models = FALSE`.
 #' * `fold_loglik`: Sum of left-out log likelihoods per fold. More positive
 #'   values are better.
 #' * `sum_loglik`: Sum of `fold_loglik` across all left-out data. More positive
@@ -223,6 +228,7 @@ sdmTMB_cv <- function(
     lfo_validations = 5,
     parallel = TRUE,
     use_initial_fit = FALSE,
+    save_models = TRUE,
     future_globals = NULL,
     ...) {
   if (k_folds < 1) cli_abort("`k_folds` must be >= 1.")
@@ -327,18 +333,20 @@ sdmTMB_cv <- function(
       } else {
         dat_fit <- data[data$cv_fold != 1L, , drop = FALSE]
       }
-
+      # Create mesh on training data, then update with full data
       mesh_args[["data"]] <- dat_fit
+      mesh_train <- do.call(make_mesh, mesh_args)
+      mesh_args[["data"]] <- data
+      mesh_args[["mesh"]] <- mesh_train$mesh
       mesh <- do.call(make_mesh, mesh_args)
     } else {
       mesh <- spde
-      dat_fit <- data
     }
     dot_args <- list(dot_args)[[1]]
     dot_args$offset <- NULL
     dot_args$weights <- NULL
     .args <- c(list(
-      data = dat_fit, formula = formula, time = time, mesh = mesh,
+      data = data, formula = formula, time = time, mesh = mesh,
       weights = weights, offset = .offset
     ), dot_args)
     fit1 <- do.call(sdmTMB, .args)
@@ -363,18 +371,21 @@ sdmTMB_cv <- function(
         } else {
           dat_fit <- data[data$cv_fold != k, , drop = FALSE]
         }
+        # Create mesh on training data, then update with full data
         mesh_args[["data"]] <- dat_fit
+        mesh_train <- do.call(make_mesh, mesh_args)
+        mesh_args[["data"]] <- data
+        mesh_args[["mesh"]] <- mesh_train$mesh
         mesh <- do.call(make_mesh, mesh_args)
       } else {
         mesh <- spde
-        dat_fit <- data
       }
       dot_args <- as.list(substitute(list(...)))[-1L] # re-evaluate here! issue #54
       dot_args <- list(...)
       dot_args$offset <- NULL
       dot_args$weights <- NULL
       args <- c(list(
-        data = dat_fit, formula = formula, time = time, mesh = mesh, offset = .offset,
+        data = data, formula = formula, time = time, mesh = mesh, offset = .offset,
         weights = weights, previous_fit = if (use_initial_fit) fit1 else NULL
       ), dot_args)
       object <- do.call(sdmTMB, args)
@@ -424,19 +435,8 @@ sdmTMB_cv <- function(
     if (!lfo) {
       tmb_data <- object$tmb_data
 
-      # Figure out which user weights correspond to the data used in fitting
-      if (!constant_mesh) {
-        if (lfo) {
-          user_weights_subset <- user_weights[data$cv_fold <= k]
-        } else {
-          user_weights_subset <- user_weights[data$cv_fold != k]
-        }
-      } else {
-        user_weights_subset <- user_weights
-      }
-
       # Reverse weights: training (weight != 0) → 0, held-out (weight == 0) → user_weight
-      tmb_data$weights_i <- ifelse(tmb_data$weights_i == 0, user_weights_subset, 0)
+      tmb_data$weights_i <- ifelse(tmb_data$weights_i == 0, user_weights, 0)
 
       new_tmb_obj <- TMB::MakeADFun(
         data = tmb_data,
@@ -462,7 +462,7 @@ sdmTMB_cv <- function(
 
     list(
       data = cv_data,
-      model = object,
+      model = if (save_models) object else NULL,
       pdHess = object$sd_report$pdHess,
       max_gradient = max(abs(object$gradients)),
       bad_eig = object$bad_eig
@@ -497,7 +497,7 @@ sdmTMB_cv <- function(
     }
   }
 
-  models <- lapply(out, `[[`, "model")
+  models <- if (save_models) lapply(out, `[[`, "model") else NULL
   data <- lapply(out, `[[`, "data")
   fold_cv_ll <- vapply(data, function(.x) sum(.x$cv_loglik), FUN.VALUE = numeric(1L))
   data <- do.call(rbind, data)
@@ -528,18 +528,24 @@ log_sum_exp <- function(x) {
 #' @export
 #' @import methods
 print.sdmTMB_cv <- function(x, ...) {
-  nmods <- length(x$models)
   nconverged <- sum(x$pdHess)
-  cat(paste0("Cross validation of sdmTMB models with ", nmods, " folds.\n"))
+  nfolds <- length(x$pdHess)
+  cat(paste0("Cross validation of sdmTMB models with ", nfolds, " folds.\n"))
   cat("\n")
-  cat("Summary of the first fold model fit:\n")
-  cat("\n")
-  print(x$models[[1]])
-  cat("\n")
-  cat("Access the rest of the models in a list element named `models`.\n")
-  cat("E.g. `object$models[[2]]` for the 2nd fold model fit.\n")
-  cat("\n")
-  cat(paste0(nconverged, " out of ", nmods, " models are consistent with convergence.\n"))
+  if (is.null(x$models)) {
+    cat("Models were not saved (save_models = FALSE).\n")
+    cat("Only prediction and log likelihood results are available.\n")
+    cat("\n")
+  } else {
+    cat("Summary of the first fold model fit:\n")
+    cat("\n")
+    print(x$models[[1]])
+    cat("\n")
+    cat("Access the rest of the models in a list element named `models`.\n")
+    cat("E.g. `object$models[[2]]` for the 2nd fold model fit.\n")
+    cat("\n")
+  }
+  cat(paste0(nconverged, " out of ", nfolds, " models are consistent with convergence.\n"))
   cat("Figure out which folds these are in the `converged` list element.\n")
   cat("\n")
   cat(paste0("Out-of-sample log likelihood for each fold: ", paste(round(x$fold_loglik, 2), collapse = ", "), ".\n"))
@@ -620,6 +626,13 @@ cv_to_waywiser <- function(object,
                            utm_crs = get_crs(object$data, ll_names)) {
   if (!requireNamespace("sf", quietly = TRUE)) {
     cli_abort("The sf package must be installed to use this function.")
+  }
+
+  if (is.null(object$models)) {
+    cli_abort(c(
+      "Models were not saved during cross-validation.",
+      "i" = "Set `save_models = TRUE` in `sdmTMB_cv()` to use `cv_to_waywiser()`."
+    ))
   }
 
   # Get response variable name from the first model's formula

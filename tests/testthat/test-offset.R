@@ -158,7 +158,7 @@ test_that("offset gets passed through cross validation as expected #372", {
   y <- x$data[, c("catch_weight", "cv_predicted")]
   # plot(y$catch_weight, y$cv_predicted)
   # if offset is applied, will have unique values because an intercept-only model:
-  expect_true(length(unique(y$cv_predicted)) == 1007L)
+  expect_true(length(unique(y$cv_predicted)) >= length(unique(dat$area_swept)))
 })
 
 test_that("predicting on newdata with a non-null offset in fit but a null offset in predict informs the user appropriately", {

@@ -657,6 +657,12 @@ generics::tidy
 #' @rdname tidy.sdmTMB
 #' @export
 tidy.sdmTMB_cv <- function(x, ...) {
+  if (is.null(x$models)) {
+    cli_abort(c(
+      "Models were not saved during cross-validation.",
+      "i" = "Set `save_models = TRUE` in `sdmTMB_cv()` to use `tidy()`."
+    ))
+  }
   x <- x$models
   out <- lapply(seq_along(x), function(i) {
     df <- tidy.sdmTMB(x[[i]], ...)

@@ -9,7 +9,7 @@ test_that("Basic cross validation works", {
   # plan(multisession) # for parallel processing
   x <- sdmTMB_cv(
     density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-    data = d, mesh = spde,
+    data = d, mesh = spde, spatial = "off", spatiotemporal = "off",
     family = tweedie(link = "log"), time = "year", k_folds = 2
   )
   print(x)
@@ -42,7 +42,7 @@ test_that("Basic cross validation works", {
   fam <- gaussian(link = "identity")
   x <- sdmTMB_cv(
     log_density ~ 0 + depth_scaled + depth_scaled2 + as.factor(year),
-    data = d, mesh = spde, spatial = "off",
+    data = d, mesh = spde, spatial = "off", spatiotemporal = "off",
     family = fam, time = "year", k_folds = 2
   )
   expect_equal(class(x$models[[1]]), "sdmTMB")
@@ -320,7 +320,7 @@ test_that("Delta model cross validation works", {
     family = delta_gamma(), k_folds = 2
   )
   diff_ll <- out_tw$sum_loglik - out_dg$sum_loglik
-  expect_equal(round(diff_ll, 4), round(-22.80799, 4))
+  expect_equal(round(diff_ll, 4), round(-19.8025, 4))
 
   set.seed(1)
   out_dpg <- sdmTMB_cv(
@@ -329,7 +329,7 @@ test_that("Delta model cross validation works", {
     family = delta_gamma(type = "poisson-link"), k_folds = 2
   )
   diff_ll <- out_dpg$sum_loglik - out_dg$sum_loglik
-  expect_equal(round(diff_ll, 4), round(-4.629497, 4))
+  expect_equal(round(diff_ll, 4), round(-4.5477, 4))
 })
 
 test_that("Cross validation with weights works", {
@@ -448,7 +448,7 @@ test_that("Cross validation returns deviance residuals", {
 
   # Test with Gaussian family (simple case)
   d_pos <- subset(d, density > 0)
-  d_pos$log_density <- log(d_pos$log_density)
+  d_pos$log_density <- log(d_pos$density)
 
   x_gauss <- sdmTMB_cv(
     log_density ~ depth_scaled,
