@@ -26,6 +26,10 @@ knitr::opts_chunk$set(
 )
 ```
 
+# Introduction
+
+This vignette describes the statistical model underlying sdmTMB. Further details are available in the sdmTMB paper [@sdmTMB], which should be referenced and cited when using sdmTMB in a publication.
+
 # Other vignettes available
 
 <style>
@@ -92,30 +96,31 @@ The complete sdmTMB model can be written as
 $$
 \begin{aligned}
 \mathbb{E}[y_{\s,t}] &= \mu_{\s,t},\\
-\mu_{\s,t} &=
-f^{-1} \left( \bX^{\RM{main}}_{\s,t} \bbeta +
+\eta_{\s,t} &=
+\bX^{\RM{main}}_{\s,t} \bbeta +
 O_{\s,t} +
 \bZ_{g} \mathbf{b}_{g} +
 \bX^{\RM{tvc}}_{\s,t} \bgam_{t} +
 \bX^{\RM{svc}}_{\s,t} \zeta_{\s} +
 \omega_{\s} +
-\epsilon_{\s,t} \right),
+\epsilon_{\s,t},\\
+\mu_{\s,t} &= f^{-1} \left( \eta_{\s,t} \right),
 \end{aligned}
 $$
 
 where
 
 -   $y_{\s,t}$ represents the response data at point $\s$ and time $t$;
--   $\mu$ represents the mean;
--   $f$ represents a link function (e.g., log or logit) and $f^{-1}$ represents its inverse;
+-   $\mu$ represents the conditional mean on the response/data scale (after applying the inverse link);
+-   $f$ represents a link function (e.g., log or logit) and $f^{-1}$ represents its inverse, and $\eta$ represents the linear predictor before applying $f^{-1}$;
 -   $\bX^{\RM{main}}$, $\bX^{\RM{tvc}}$, and $\bX^{\RM{svc}}$ represent design matrices (the superscript identifiers 'main' = main effects, 'tvc' = time varying coefficients, and 'svc' = spatially varying coefficients);
 -   $\bbeta$ represents a vector of fixed-effect coefficients;
--   $O_{\s,t}$ represents an offset: a covariate (usually log transformed) with a coefficient fixed at one;
--   $\bZ_{g}$ represents the random-effect design row(s) for group $g$ (a subset of the matrix $\bZ$) corresponding to $\mathbf{b}_{g}$; the scalar special case is a random intercept $\alpha_{g}\sim \RM{N}(0,\sigma_\alpha^2)$, and more generally random slopes and intercepts are vector-valued with full covariance as described below;
+-   $O_{\s,t}$ represents an offset: a covariate (usually log transformed) with a coefficient fixed at one that enters on the linear predictor scale (before the inverse link);
+-   $\bZ_{g}$ represents the random-effect design row(s) for group $g$ (a subset of the matrix $\bZ$) corresponding to $\mathbf{b}_{g}$; these random effects enter on the linear predictor scale; the scalar special case is a random intercept $\alpha_{g}\sim \RM{N}(0,\sigma_\alpha^2)$, and more generally random slopes and intercepts are vector-valued with full covariance as described below;
 -   $\bgam_{t}$ represents a vector of time-varying coefficients, where each coefficient $\gamma_{p,t}$ can follow a random walk or AR(1) process;
 -   $\bzeta_{\s}$ represents a vector of spatially varying coefficients (random fields), where each coefficient $\zeta_{l,\s} \sim \RM{MVN}(\bs{0},\bSigma_{\zeta,l})$;
--   $\omega_{\s}$ represents a spatial component (a random field), $\omega_{\s} \sim \RM{MVN}(\bs{0},\bSigma_\omega)$; and
--   $\epsilon_{\s,t}$ represents a spatiotemporal component (a random field), $\epsilon_{\s,t} \sim \RM{MVN}(\bs{0},\bSigma_{\epsilon})$.
+-   $\omega_{\s}$ represents a spatial component (a random field), $\omega_{\s} \sim \RM{MVN}(\bs{0},\bSigma_\omega)$ with Matérn covariance built from the mesh; and
+-   $\epsilon_{\s,t}$ represents a spatiotemporal component (a random field), $\epsilon_{\s,t} \sim \RM{MVN}(\bs{0},\bSigma_{\epsilon})$ with Matérn covariance over space and temporal evolution as specified.
 
 A single sdmTMB model will rarely, if ever, contain all of the above components.
 Next, we will split the model to describe the various parts in more detail using '$\ldots$' to represent the other optional components.
@@ -231,7 +236,7 @@ where $\rho$ is the correlation between subsequent spatiotemporal random fields.
 The $\rho \bdelta_{t-1} + \sqrt{1 - \rho^2}$ term scales the spatiotemporal variance by the correlation such that it represents the steady-state marginal variance.
 The correlation $\rho$ allows for mean-reverting spatiotemporal fields, and is constrained to be $-1 < \rho < 1$.
 Internally, the parameter is estimated as `ar1_phi`, which is unconstrained.
-The parameter `ar1_phi` is transformed to $\rho$ with $\rho = 2 \left( \mathrm{logit}^{-1}(\texttt{ar1\_phi}) - 1 \right)$.
+The parameter `ar1_phi` is transformed to $\rho$ with $\rho = 2 \left( \mathrm{logit}^{-1}(\texttt{ar1\_phi}) \right) - 1$, mapping `ar1_phi` to the range $(-1, 1)$.
 
 ### Random walk spatiotemporal random fields (RW)
 
@@ -271,7 +276,7 @@ For `time_varying_type = 'rw'`, the first time step is estimated independently:
 
 $$
 \begin{aligned}
-  \gamma_{p,t=1} &\sim \RM{Uniform} \left(-\infty, \infty \right),\\
+  \gamma_{p,t=1} &\sim \RM{Uniform} \left(-\infty, \infty \right) \text{ (treated as an unconstrained parameter)},\\
   \gamma_{p,t>1} &\sim \RM{Normal} \left(\gamma_{p,t-1}, \sigma_{\gamma,p}^2 \right).
 \end{aligned}
 $$
@@ -376,7 +381,7 @@ Following the structure of `stats::glm()`, lme4, and glmmTMB, a binomial family 
 1.  the response may be a factor (and the model classifies the first level versus all others)
 2.  the response may be binomial (0/1)
 3.  the response can be a matrix of form `cbind(success, failure)`, or
-4.  the response may be the observed proportions, and the `weights` argument is used to specify the Binomial size ($N$) parameter (`probabilty ~ ..., weights = N`).
+4.  the response may be the observed proportions, and the `weights` argument is used to specify the Binomial size ($N$) parameter (`probability ~ ..., weights = N`).
 
 Code defined [within TMB](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaee11f805f02bc1febc6d7bf0487671be).
 
@@ -455,6 +460,7 @@ Example: `family = nbinom1(link = "log")`
 ### Negative binomial 2 mixture
 
 This is a 2 component mixture that extends the NB2 distribution,
+following mixture-distribution approaches for shoaling/aggregation in survey data [@thorson2011].
 
 $$
 (1 - p) \cdot \operatorname{NB2} \left( \mu_1, \phi \right) + p \cdot \operatorname{NB2} \left( \mu_2, \phi \right)
@@ -471,7 +477,7 @@ Example: `family = nbinom2_mix(link = "log")`
 $$
 \operatorname{Gamma} \left( \phi, \frac{\mu}{\phi}  \right)
 $$ where $\phi$ represents the Gamma shape and $\mu / \phi$ represents the scale.
-The mean is $\mu$ and variance is $\mu \cdot \phi^2$.
+The mean is $\mu$ and variance is $\mu^2 / \phi$.
 
 Code defined [within TMB](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gab0e2205710a698ad6a0ed39e0652c9a3).
 
@@ -524,13 +530,15 @@ Example: `family = tweedie(link = "log")`
 
 ### Gamma mixture
 
-This is a 2 component mixture that extends the Gamma distribution,
+This is a 2 component mixture that extends the Gamma distribution, motivated by mixture-distribution treatments of aggregation in survey data [@thorson2011],
 
 $$
 (1 - p) \cdot \operatorname{Gamma} \left( \phi, \frac{\mu_{1}}{\phi}  \right) + p \cdot \operatorname{Gamma} \left( \phi, \frac{\mu_{2}}{\phi}  \right),
 $$ where $\phi$ represents the Gamma shape, $\mu_{1} / \phi$ represents the scale for the first (smaller component) of the distribution, $\mu_{2} / \phi$ represents the scale for the second (larger component) of the distribution, and $p$ controls the contribution of each component to the mixture (also interpreted as the probability of larger events).
 
-The mean is $(1-p) \cdot \mu_{1} + p \cdot \mu_{2}$ and the variance is $(1-p) ^ 2 \cdot \mu_{1} \cdot \phi^2 + (p) ^ 2 \cdot \mu_{2} \cdot \phi^2$.
+The mean is $(1-p) \cdot \mu_{1} + p \cdot \mu_{2}$.
+The variance follows the usual mixture formula:
+$(1-p)\left(\mu_1^2 / \phi + \mu_1^2\right) + p\left(\mu_2^2 / \phi + \mu_2^2\right) - \left[(1-p)\mu_1 + p\mu_2\right]^2$.
 
 Here, and for the other mixture distributions, the probability of the larger mean can be obtained from `plogis(fit$model$par[["logit_p_extreme"]])` and the ratio of the larger mean to the smaller mean can be obtained from `1 + exp(fit$model$par[["log_ratio_mix"]])`.
 The standard errors are available in the TMB sdreport: `fit$sd_report`.
@@ -547,13 +555,14 @@ See also `family = delta_gamma_mix()` for an extension incorporating this distri
 
 ### Lognormal mixture
 
-This is a 2 component mixture that extends the lognormal distribution,
+This is a 2 component mixture that extends the lognormal distribution, again in the spirit of mixture approaches for aggregating/ shoaling data [@thorson2011],
 
 $$
 (1 - p) \cdot \operatorname{Lognormal} \left( \log \mu_{1} - \frac{\phi^2}{2}, \phi^2 \right) + p \cdot \operatorname{Lognormal} \left( \log \mu_{2} - \frac{\phi^2}{2}, \phi^2 \right).
 $$ 
 
-Because of the bias correction, $\mathbb{E}[y] = (1-p) \cdot \mu_{1} + p \cdot \mu_{2}$ and $\mathrm{Var}[\log y] = (1-p)^2 \cdot \phi^2 + p^2 \cdot \phi^2$.
+Because of the bias correction, $\mathbb{E}[y] = (1-p) \cdot \mu_{1} + p \cdot \mu_{2}$.
+The log-scale variance of the mixture is not simply $\phi^2$; it can be obtained with the standard mixture-variance formula using component log-means $\log \mu_i - \phi^2/2$ and log-variance $\phi^2$.
 
 As with the Gamma mixture, $p$ controls the contribution of each component to the mixture (also interpreted as the probability of larger events).
 
@@ -608,7 +617,7 @@ sdmTMB(
 
 The list of supported families is included in the documentation on [additional families](https://pbs-assess.github.io/sdmTMB/reference/families.html), [delta models](https://pbs-assess.github.io/sdmTMB/articles/delta-models.html), and [Poisson-link delta models](https://pbs-assess.github.io/sdmTMB/articles/poisson-link.html). By default, the `delta_*` families don't use the Poisson link, but this structure can be specified with `delta_gamma(type = "poisson-link")`, which follows the formulation in @thorson2018poisson.
 
-In the "standard" delta model implementation, sdmTMB constructs two internal models (formally, two "linear predictors"), with the first model representing presence-absence and the second model represting the positive component (such as catch rates in fisheries applications). 
+In the "standard" delta model implementation, sdmTMB constructs two internal models (formally, two "linear predictors"), with the first model representing presence-absence and the second model representing the positive component (such as catch rates in fisheries applications). 
 Default links associated with each family can be inspected with `delta_lognormal()` and equivalent functions. For the standard delta models, the default first linear predictor link is logit. For the Poisson-link type, the first linear predictor link is log.
 
 The `formula`, `spatial`, `spatiotemporal`, and `share_range` arguments of `sdmTMB()` can be specified independently as a 2-element list. For example, the spatial random field might be estimated for only the first linear predictor with: 
@@ -643,12 +652,12 @@ Currently if delta models contain smoothers, both components must have the same 
 The Matérn defines the covariance $\Phi \left( s_j, s_k \right)$ between spatial locations $s_j$ and $s_k$ as
 
 $$
-\Phi\left( s_j,s_k \right) = \tau^2/\Gamma(\nu)2^{\nu - 1} (\kappa d_{jk})^\nu K_\nu \left( \kappa d_{jk} \right),
+\Phi\left( s_j,s_k \right) = \tau^2 \left[ 2^{\nu - 1}\Gamma(\nu) \right]^{-1} (\kappa d_{jk})^\nu K_\nu \left( \kappa d_{jk} \right),
 $$ <!-- TODO: paraphrase this to avoid self plagiarizing the synopsis report! -->
 
-where $\tau^2$ controls the spatial variance, $\nu$ controls the smoothness, $\Gamma$ represents the Gamma function, $d_{jk}$ represents the distance between locations $s_j$ and $s_k$, $K_\nu$ represents the modified Bessel function of the second kind, and $\kappa$ represents the decorrelation rate.
-The parameter $\nu$ is set to 1 to take advantage of the Stochastic Partial Differential Equation (SPDE) approximation to the GRF to greatly increase computational efficiency [@lindgren2011].
-Internally, the parameters $\kappa$ and $\tau$ are converted to range and marginal standard deviation $\sigma$ as $\textrm{range} = \sqrt{8} / \kappa$ and $\sigma = 1 / \sqrt{4 \pi \exp \left(2 \log(\tau) + 2 \log(\kappa) \right) }$.
+where $\tau^2$ is a scale/precision factor (higher $\tau$ means lower marginal variance), $\nu$ controls the smoothness, $\Gamma$ represents the Gamma function, $d_{jk}$ represents the distance between locations $s_j$ and $s_k$, $K_\nu$ represents the modified Bessel function of the second kind, and $\kappa$ represents the decorrelation rate.
+The parameter $\nu$ is set to 1 because the SPDE approach that gives us sparse matrices (and therefore major computational speedups) requires $\alpha = \nu + d/2$ to be an integer when working in 2D (so $\nu = 1$) [@lindgren2011].
+Internally, the parameters $\kappa$ and $\tau$ are converted to range and marginal standard deviation $\sigma$ as $\textrm{range} = \sqrt{8} / \kappa$ and $\sigma = 1 / \sqrt{4 \pi \exp \left(2 \log(\tau) + 2 \log(\kappa) \right) }$, so increasing $\kappa$ or $\tau$ decreases $\sigma$.
 
 In the case of a spatiotemporal model with both spatial and spatiotemporal fields, if `share_range = TRUE` in `sdmTMB()` (the default), then a single $\kappa$ and range are estimated with separate $\sigma_\omega$ and $\sigma_\epsilon$.
 This often makes sense since data are often only weakly informative about $\kappa$.
@@ -684,13 +693,13 @@ If a barrier mesh is used, anisotropy is disabled.
 
 In some cases the spatial domain of interest may be complex and bounded by some barrier such as by land or water (e.g., coastlines, islands, lakes).
 SPDE models allow for physical barriers to be incorporated into the modelling [@bakka2019].
-With `sdmTMB()` models, the mesh construction occurs in two steps: the user (1) constructs a mesh with a call to `sdmTMB::make_mesh()`, and (2) passes the mesh to `sdmTMB::add_barrier_mesh()`.
+With `sdmTMB()` models, the mesh construction occurs in two steps: the user (1) constructs a mesh with a call to `sdmTMBextra::make_mesh()`, and (2) passes the mesh to `sdmTMBextra::add_barrier_mesh()`.
 The barriers must be constructed as `sf` objects [@pebesma2018] with polygons defining the barriers.
-See `?sdmTMB::add_barrier_mesh` for an example.
+See `?sdmTMBextra::add_barrier_mesh` for an example.
 
 The barrier implementation requires the user to select a fraction value (`range_fraction` argument) that defines the fraction of the usual spatial range when crossing the barrier [@bakka2019].
-For example, if the range was estimated at 10 km, `range_fraction = 0.2` would assume that the range was 2 km across the barrier.
-This would let the spatial correlation decay 5 times faster with distance.
+For example, if the range was estimated at 10 km, `range_fraction = 0.2` would assign a 2 km range to the triangles marked as barrier.
+That makes correlation decay much faster through the barrier than around it, which effectively discourages spatial smoothing from “jumping” across landmasses.
 From experimentation, values around 0.1 or 0.2 seem to work well but values much lower than 0.1 can result in convergence issues.
 
 [This website](https://haakonbakkagit.github.io/btopic128.html) by Francesco Serafini and Haakon Bakka provides an illustration with INLA.
@@ -702,17 +711,17 @@ The implementation within TMB was borrowed from code written by Olav Nikolai Bre
 
 The sdmTMB model is fit by maximum marginal likelihood.
 Internally, a TMB [@kristensen2016] model template calculates the marginal log likelihood and its gradient, and the negative log likelihood is minimized via the non-linear optimization routine `stats::nlminb()` in R [@gay1990; @r2021].
-Random effects are estimated at values that maximize the log likelihood conditional on the estimated fixed effects and are integrated over via the Laplace approximation [@kristensen2016].
+Random effects are represented by the values that maximize the log likelihood conditional on the fixed effects (their conditional modes), and the Laplace approximation integrates over them when evaluating the likelihood [@kristensen2016].
 
 Like AD Model Builder [@fournier2012ad], TMB allows for parameters to be fit in phases and we include the `multiphase` argument in `sdmTMB::sdmTMBcontrol()` to allow this.
-For high-dimensional models (many fixed and random effects), phased estimation may be faster and result in more stable convergence.
+For high-dimensional models (many fixed and random effects), phased estimation may be faster, but this is not always the case because it requires an extra call to `TMB::MakeADFun()`.
 In sdmTMB, phased estimation proceeds by first estimating all fixed-effect parameters contributing to the likelihood (holding random effects constant at initial values).
 In the second phase, the random-effect parameters (and their variances) are also estimated.
 Fixed-effect parameters are also estimated in the second phase and are initialized at their estimates from the first phase.
 
 In some cases, a single call to `stats::nlminb()` may not be result in convergence (e.g., the maximum gradient of the marginal likelihood with respect to fixed-effect parameters is not small enough yet), and the algorithm may need to be run multiple times.
 In the `sdmTMB::sdmTMBcontrol()` function, we include an argument `nlminb_loops` that will restart the optimization at the previous best values.
-The number of `nlminb_loops` should generally be small (e.g., 2 or 3 initially), and defaults to 1.
+The number of `nlminb_loops` should generally be small (e.g., 2 or 3), and defaults to 1.
 For some sdmTMB models, the Hessian may also be unstable and need to be re-evaluated.
 We do this optionally with the `stats::optimHess()` routine after the call to `stats::nlminb()`.
 The `stats::optimHess()` function implements a Newton optimization routine to find the Hessian, and we include the argument `newton_loops` in `sdmTMB::sdmTMBcontrol()` to allow for multiple function evaluations (each starting at the previous best value).
@@ -727,8 +736,8 @@ Optimization with `stats::nlminb()` involves specifying the number of iterations
 Warnings of non-positive-definite Hessian matrices (accompanied by parameters with `NA`s for standard errors) often mean models are improperly specified given the data.
 Standard errors can be observed in the output of `print.sdmTMB()` or by checking `fit$sd_report`.
 The maximum gradient of the marginal likelihood with respect to fixed-effect parameters can be checked by inspecting (`fit$gradients`).
-Guidance varies, but the maximum gradient should likely be at least $< 0.001$ before assuming the fitting routine is consistent with convergence.
-If maximum gradients are already relatively small, they can often be reduced further with additional optimization calls beginning at the previous best parameter vector as described above with `sdmTMB::run_extra_optimization()`.
+Guidance varies, but gradients should be very close to zero (e.g., on the order of $10^{-3}$ or smaller after reasonable parameter scaling) before assuming the fitting routine is consistent with convergence.
+If maximum gradients are already relatively small, they can sometimes be reduced further with additional optimization calls beginning at the previous best parameter vector as described above with `sdmTMB::run_extra_optimization()`.
 
 # Notation reference tables
 
@@ -751,6 +760,7 @@ symbols <- tibble::tribble(
    ~Symbol, ~Code, ~Description,
   "$y$", "`y_i`", "Observed response data",
   "$\\mu$", "`mu_i`", "Mean",
+  "$\\eta$", "`eta_i`", "Linear predictor before applying the inverse link ($f^{-1}$)",
   "$\\phi$", "`phi`", "A dispersion parameter for a distribution",
   "$f$", "`fit$family$link`", "Link function",
   "$f^{-1}$", "`fit$family$linkinv`", "Inverse link function",
