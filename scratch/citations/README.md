@@ -256,13 +256,19 @@
 
 1. Hanke, A. R., Akia, S., Lino, P., Coelho, R., Abid, N., & Walter III, J. (2025). *A revised index of bluefin tuna relative abundance based on Portuguese-Moroccan trap data* (Collect. Vol. Sci. Pap. ICCAT Nos. 82(4), SCRS/2025/064; pp. 1–15).
 
+1. Johnson, K. F., Edwards, A. M., Berger, A. M., Grandin, C. J., & Wetzel, C. R. (2025). Status of the Pacific Hake (whiting) Stock in U.S. And Canadian Waters in 2025. *Joint Technical Committee of the U.S. And Canada Pacific Hake/Whiting Agreement*, *2025*, 286 p.
+
 1. Ovando, D., Román, M., Fuller, D., Lennert-Cody, C., & Lopez, J. (2025). *Lifespan dynamics of biodegradable and conventional fish-aggregating devices in the eastern Pacific ocean* (Inter-American Tropical Tuna Commission Nos. FAD-09-02).
 
 1. Yeh, Z.-W., Hsu, J., & Chang, Y.-J. (2025). Spatiotemporal modelling for size-specific CPUE standardization of albacore tuna in the north Pacific Ocean caught by Taiwanese longline fisheries. *ISC Albacore Work. Group Intercess. Workshop*, *ISC/25/ALBWG-01/04*.
 
 1. DFO. (2024). Assessment of the Orange-Footed Sea Cucumber (*Cucumaria* *Frondosa*) Resource on the St. Pierre Bank (NAFO Subdivision 3Ps) in 2022. *DFO Can. Sci. Advis. Sec. Sci. Advis. Rep.*, *2024/018*.
 
+1. Grandin, C. J., Johnson, K. F., Edwards, A. M., & Berger, A. M. (2024). Status of the Pacific Hake (Whiting) Stock in U.S. And Canadian Waters in 2024. *Joint Technical Committee of the U.S. And Canada Pacific Hake/Whiting Agreement*, *2024*, 246 p.
+
 1. Hjelset, A. M., Danielsen, H. E. H., Jenssen, M., Humborstad, O. B., Anders, N., Saltskår, J., Berg, E., & Zimmermann, F. (2024). *Snøkrabbe på norsk sokkel i Barentshavet-Status og rådgivning for 2025*.
+
+1. Monk, M. H., Wetzel, C. R., & Coates, J. (2024). Status of Copper Rockfish (*Sebastes* *Caurinus*) Along the U.S. California Coast North of Point Conception in 2023. *Pac. Fish. Manag. Counc.*, *2024*, 286 p.
 
 1. Perelman, J. N., Tanaka, K. R., Suca, J. J., Oliver, T. A., & Gajdzik, L. (2024). *Modeling tools to help assess the distribution of priority reef fish species for jurisdictional coral reef fishery management plans in Guam*. <https://doi.org/10.25923/v50k-pc85>
 
@@ -280,17 +286,39 @@
 
 1. Bastardie, F., Baudron, A., Berg, C., Berger, A., Binch, L., Bitetto, I., Blanco, C., Bluemel, J. K., Bolser, D., Calderwood, J., Carvalho, N., Celie, L., Chen, C., Chust, G., Couce, E., Damalas, D., Depestele, J., Fallon, N., Fernandes, P., … Zupa, W. (2023). Workshop 2 on Fish Distribution (WKFISHDISH2; outputs from 2022 meeting). In *Workshop 2 on Fish Distribution (WKFISHDISH2; outputs from 2022 meeting)* Report. International Council for the Exploration of the Sea (ICES). <https://doi.org/10.17895/ices.pub.21692246>
 
+1. Cope, J. M., Hillier, L. K., Niles, C. B., Tsou, T., Hinton, K. E., & Caltabellotta, F. P. (2023). Status of Black Rockfish (*Sebastes* *Melanops*) in 2023 in State and Federal Waters Off Washington State. *Pac. Fish. Manag. Counc.*, *2023*, 217 p.
+
+1. Cope, J. M., Whitman, A. D., Berger, A. M., Rasmuson, L. K., & Rosemond, R. C. (2023). Status of Black Rockfish (*Sebastes* *Melanops*) in 2023 in State and Federal Waters Off Oregon. *Pac. Fish. Manag. Counc.*, *2023*, 248 p.
+
 1. Correa, G. moron, Kaplan, D., Grande, M., Uranga, J., Ramos Alonso, M.-L., Pascual Alayón, P., Rojo, V., Merino, G., Santiago, J., Grande, M., Uranga, J., Ramos Alonso, M.-L., Pascual Alayón, P., Rojo, V., Merino, G., & Santiago, J. (2023). Standardized catch per unit effort of yellowfin tuna in the Atlantic Ocean for the European purse seine fleet operating on floating objects. *ICCAT Recl. Doc. Sci. Collect. Vol. Sci. Pap.*, *81*(2), 1–26.
+
+1. Dick, E. J., Barnes, C., Coates, J., Grunloh, N., Monk, M., & Rogers, T. (2023). The Status of Black Rockfish in U.S. Waters Off California in 2023. *Pac. Fish. Manag. Counc.*, *2023*, Available online.
 
 1. Huynh, Q. C., & Carruthers, T. (2023). Development of spatial operating models to test survey design and calibrate a new survey index for Northwest Atlantic Fisheries Organization Subarea 0+1 (offshore) Greenland Halibut (*Reinhardtius* *Hippoglossoides*). *DFO Can. Sci. Advis. Sec. Res. Doc.*, *2023/038*.
 
+1. Johnson, K. F., Wetzel, C. R., & Tolimieri, N. (2023). Status of Sablefish (*Anoplopoma* *Fimbria*) Along the U.S. West Coast in 2023. *Pac. Fish. Manag. Counc.*, *2023*, 145 p.
+
+1. Langseth, B. J., Oken, K. L., Whitman, A. D., Budrick, J. E., & Tsou, T. S. (2023). Status of Canary Rockfish (*Sebastes* *Pinniger*) Along the U.S. West Coast in 2023. *Pac. Fish. Manag. Counc.*, *2023*, 256 p.
+
+1. Min, M., Sellinger, E., Wang, T., Beyer, S. G., Rovellini, A., Véron, M., Wassermann, S. N., Gertseva, V., Oken, K. L., Hamel, O. S., & Haltuch, M. A. (2023). Status of Rex Sole (*Glyptocephalus* *Zachirus*) Along the U.S. West Coast in 2023. *Pac. Fish. Manag. Counc.*, *2023*, 132 p.
+
 1. Shotwell, S. K., Ferriss, B., Hulson, P.-J. F., Laurel, B., Matta, B., & Rogers, L. (2023). Appendix 2.1. Ecosystem and socioeconomic profile of the Pacific Cod stock in the Gulf of Alaska — report card. In P.-J. F. Hulson, S. J. Barbeaux, B. Ferriss, K. Echave, J. Nielsen, S. K. Shotwell, B. Laurel, & I. Spies (Eds.), *Assessment of the Pacific Cod stock in the Gulf of Alaska*.
+
+1. Taylor, I. G., Gertseva, V., & Tolimieri, N. (2023). Status of Petrale Sole (*Eopsetta* *Jordani*) Along the U.S. West Coast in 2023. *Pac. Fish. Manag. Counc.*, *2023*, 174 p.
+
+1. Wetzel, C. R., Monk, M. H., & Coates, J. (2023). Status of Copper Rockfish (*Sebastes* *Caurinus*) Along the U.S. California Coast South of Point Conception in 2023. *Pac. Fish. Manag. Counc.*, *2023*, 323 p.
+
+1. Zahner, J. A., Heller-Shipley, M. A., Oleynik, H. A., Beyer, S. G., Hernvann, P.-Y., Véron, M., Odell, A. N., Sullivan, J. Y., Hayes, A. L., Oken, K. L., Gertseva, V. G., Haltuch, M. A., & Hamel, O. S. (2023). Status of Shortspine Thornyhead (*Sebastolobus* *Alascanus*) Along the U.S. West Coast in 2023. *Pac. Fish. Manag. Counc.*, *2023*, 135 p.
 
 1. ICES. (2022). Benchmark workshop on Pandalus stocks (WKPRAWN). *ICES Sci. Rep.*, *4*(20), 249 pp. <https://doi.org/10.17895/ices.pub.19714204>
 
 1. NAFO. (2022). *Report of the Scientific Council Meeting* (NAFO Scientific Council Studies Nos. Serial No. N7322(22/18)).
 
+1. Rooper, C. N. (2022). *Sablefish Associations with VME Indicator Species in the NE Pacific* (North Pacific Fisheries Commission Nos. NPFC-2022-SSC BFME03-WP19; p. 12).
+
 1. Tanaka, K. R., & Oliver, T. A. (2022). A simulation framework for evaluating multiple fishery-independent survey strategies in the Main Hawaiian Islands. *NOAA Tech. Memo.*, *NMFS-PIFSC-134*. <https://doi.org/10.25923/dqaf-wa04>
+
+1. Tanaka, K. R., Schmidt, A. L., Kindlinger, T. L., Whitney, J. L., & Samson, J. C. (2022). *Spatiotemporal assessment of *Aprion* *Virescens* density in shallow main Hawaiian Islands waters, 2010-2019* (NOAA Technical Memorandum Nos. NMFS-PIFSC-132; p. 34). U.S. Dept. of Commerce.
 
 1. Haggarty, D. R., Huynh, Q. C., Forrest, R. E., Anderson, S. C., Bresch, M. J., & Keppel, E. A. (2020). Evaluation of potential rebuilding strategies for Inside Yelloweye Rockfish (*Sebastes* *Ruberrimus*) in British Columbia. *DFO Can. Sci. Advis. Sec. Res. Doc.*, *2021/008*, vi + 139 p.
 
