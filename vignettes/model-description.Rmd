@@ -212,7 +212,6 @@ Within these smooths, the same syntax commonly used in `mgcv::s()` can be applie
 While mgcv can fit unpenalized (e.g., B-splines) or penalized splines (P-splines), sdmTMB only implements penalized splines.
 The penalized splines are constructed in sdmTMB using the function `mgcv::smooth2random()`, which transforms splines into random effects (and associated design matrices) that are estimable in a mixed-effects modelling framework.
 This is the same approach as is implemented in the R packages gamm4 [@wood2020] and brms [@burkner2017].
-<!-- There are too other options for the brms ref, burkner2018 and burkner2021 -->
 
 ### Linear break-point threshold models
 
@@ -433,8 +432,11 @@ Therefore, if `offset` represents a measure of effort, for example, the predicti
 # Observation model families
 
 Here we describe the main observation families that are available in sdmTMB and comment on their parametrization, statistical properties, utility, and code representation in sdmTMB.
+Families are grouped by outcome type to make it easier to locate an appropriate observation model.
 
-## Binomial
+## Bounded or binary outcomes (0–1, proportions)
+
+### Binomial
 
 $$
 \operatorname{Binomial} \left(N, \mu \right)
@@ -452,7 +454,7 @@ Code defined [within TMB](https://kaskr.github.io/adcomp/group__R__style__distri
 
 Example: `family = binomial(link = "logit")`
 
-## Beta-binomial
+### Beta-binomial
 
 $$
 \operatorname{BetaBinomial} \left(N, \mu, \phi \right)
@@ -469,7 +471,7 @@ Code defined [within sdmTMB](https://github.com/pbs-assess/sdmTMB/blob/18a39eabc
 
 Example: `family = betabinomial(link = "logit")`
 
-## Beta
+### Beta
 
 $$
 \operatorname{Beta} \left(\mu \phi, (1 - \mu) \phi \right)
@@ -481,7 +483,62 @@ Code defined [within TMB](https://kaskr.github.io/adcomp/group__R__style__distri
 
 Example: `family = Beta(link = "logit")`
 
-## Gamma
+## Count data
+
+### Poisson
+
+$$
+\operatorname{Poisson} \left( \mu \right)
+$$ where $\mu$ represents the mean and $\mathrm{Var}[y] = \mu$.
+
+Code defined [within TMB](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa1ed15503e1441a381102a8c4c9baaf1).
+
+Example: `family = poisson(link = "log")`
+
+### Negative Binomial 2 (NB2)
+
+$$
+\operatorname{NB2} \left( \mu, \phi \right)
+$$
+
+where $\mu$ is the mean and $\phi$ is the dispersion parameter.
+The variance scales quadratically with the mean $\mathrm{Var}[y] = \mu + \mu^2 / \phi$ [@hilbe2011].
+The NB2 parametrization is more commonly seen in ecology than the NB1.
+Internally, the distribution is parameterized as the [robust version](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa23e3ede4669d941b0b54314ed42a75c) in TMB.
+
+Code defined [within TMB](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga76266c19046e04b651fce93aa0810351).
+
+Example: `family = nbinom2(link = "log")`
+
+### Negative Binomial 1 (NB1)
+
+$$
+\operatorname{NB1} \left( \mu, \phi \right)
+$$
+
+where $\mu$ is the mean and $\phi$ is the dispersion parameter.
+The variance scales linearly with the mean $\mathrm{Var}[y] = \mu + \mu / \phi$ [@hilbe2011].
+Internally, the distribution is parameterized as the [robust version](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa23e3ede4669d941b0b54314ed42a75c) in TMB.
+
+Code defined [within sdmTMB](https://github.com/pbs-assess/sdmTMB/blob/18a39eabc111e2179fa589f942c8820d87ad10df/src/sdmTMB.cpp#L577-L582) based on NB2 and borrowed from glmmTMB.
+
+Example: `family = nbinom1(link = "log")`
+
+### Negative binomial 2 mixture
+
+This is a 2 component mixture that extends the NB2 distribution,
+
+$$
+(1 - p) \cdot \operatorname{NB2} \left( \mu_1, \phi \right) + p \cdot \operatorname{NB2} \left( \mu_2, \phi \right)
+$$
+
+where $\mu_1$ is the mean of the first (smaller component) of the distribution, $\mu_2$ is the mean of the larger component, and $p$ controls the contribution of each component to the mixture. 
+
+Example: `family = nbinom2_mix(link = "log")`
+
+## Positive continuous outcomes
+
+### Gamma
 
 $$
 \operatorname{Gamma} \left( \phi, \frac{\mu}{\phi}  \right)
@@ -492,7 +549,19 @@ Code defined [within TMB](https://kaskr.github.io/adcomp/group__R__style__distri
 
 Example: `family = Gamma(link = "log")`
 
-## Generalized gamma
+### Lognormal
+
+sdmTMB uses the "bias-corrected" lognormal distribution where $\phi$ represents the standard deviation in log-space:
+
+$$
+\operatorname{Lognormal} \left( \log \mu - \frac{\phi^2}{2}, \phi^2 \right).
+$$ Because of the bias correction, $\mathbb{E}[y] = \mu$ and $\mathrm{Var}[\log y] = \phi^2$.
+
+Code defined [within sdmTMB](https://github.com/pbs-assess/sdmTMB/blob/18a39eabc111e2179fa589f942c8820d87ad10df/src/utils.h#L47-L54) based on the TMB `dnorm()` normal density.
+
+Example: `family = lognormal(link = "log")`
+
+### Generalized gamma
 
 $$
 \operatorname{GenGamma} \left( \mu, \phi, \Qg \right)
@@ -509,84 +578,7 @@ Code defined [within sdmTMB](https://github.com/pbs-assess/sdmTMB/blob/18a39eabc
 
 Example: `family = gengamma(link = "log")`; delta/hurdle: `family = delta_gengamma(link1 = "logit", link2 = "log")`.
 
-## Gaussian
-
-$$
-\operatorname{Normal} \left( \mu, \phi^2 \right)
-$$ where $\mu$ is the mean and $\phi$ is the standard deviation.
-The variance is $\phi^2$.
-
-Example: `family = Gaussian(link = "identity")`
-
-Code defined [within TMB](https://kaskr.github.io/adcomp/dnorm_8hpp.html).
-
-## Lognormal
-
-sdmTMB uses the "bias-corrected" lognormal distribution where $\phi$ represents the standard deviation in log-space:
-
-$$
-\operatorname{Lognormal} \left( \log \mu - \frac{\phi^2}{2}, \phi^2 \right).
-$$ Because of the bias correction, $\mathbb{E}[y] = \mu$ and $\mathrm{Var}[\log y] = \phi^2$.
-
-Code defined [within sdmTMB](https://github.com/pbs-assess/sdmTMB/blob/18a39eabc111e2179fa589f942c8820d87ad10df/src/utils.h#L47-L54) based on the TMB `dnorm()` normal density.
-
-Example: `family = lognormal(link = "log")`
-
-## Negative Binomial 1 (NB1)
-
-$$
-\operatorname{NB1} \left( \mu, \phi \right)
-$$
-
-where $\mu$ is the mean and $\phi$ is the dispersion parameter.
-The variance scales linearly with the mean $\mathrm{Var}[y] = \mu + \mu / \phi$ [@hilbe2011].
-Internally, the distribution is parameterized as the [robust version](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa23e3ede4669d941b0b54314ed42a75c) in TMB.
-
-Code defined [within sdmTMB](https://github.com/pbs-assess/sdmTMB/blob/18a39eabc111e2179fa589f942c8820d87ad10df/src/sdmTMB.cpp#L577-L582) based on NB2 and borrowed from glmmTMB.
-
-Example: `family = nbinom1(link = "log")`
-
-## Negative Binomial 2 (NB2)
-
-$$
-\operatorname{NB2} \left( \mu, \phi \right)
-$$
-
-where $\mu$ is the mean and $\phi$ is the dispersion parameter.
-The variance scales quadratically with the mean $\mathrm{Var}[y] = \mu + \mu^2 / \phi$ [@hilbe2011].
-The NB2 parametrization is more commonly seen in ecology than the NB1.
-Internally, the distribution is parameterized as the [robust version](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa23e3ede4669d941b0b54314ed42a75c) in TMB.
-
-Code defined [within TMB](https://kaskr.github.io/adcomp/group__R__style__distribution.html#ga76266c19046e04b651fce93aa0810351).
-
-Example: `family = nbinom2(link = "log")`
-
-## Poisson
-
-$$
-\operatorname{Poisson} \left( \mu \right)
-$$ where $\mu$ represents the mean and $\mathrm{Var}[y] = \mu$.
-
-Code defined [within TMB](https://kaskr.github.io/adcomp/group__R__style__distribution.html#gaa1ed15503e1441a381102a8c4c9baaf1).
-
-Example: `family = poisson(link = "log")`
-
-## Student-t
-
-$$
-\operatorname{Student-t} \left( \mu, \phi, \nu \right)
-$$
-
-where $\nu$, the degrees of freedom (`df`), is a user-supplied fixed parameter.
-Lower values of $\nu$ result in heavier tails compared to the Gaussian distribution.
-Above approximately `df = 20`, the distribution becomes very similar to the Gaussian.
-The Student-t distribution with a low degrees of freedom (e.g., $\nu \le 7$) can be helpful for modelling data that would otherwise be suitable for Gaussian but needs an approach that is robust to outliers [e.g., @anderson2017c].
-
-Code defined [within sdmTMB](https://github.com/pbs-assess/sdmTMB/blob/18a39eabc111e2179fa589f942c8820d87ad10df/src/utils.h#L37-L45) based on the `dt()` distribution in TMB.
-
-Example: `family = student(link = "log", df = 7)`
-
-## Tweedie
+### Tweedie
 
 $$
 \operatorname{Tweedie} \left(\mu, p, \phi \right), \: 1 < p < 2
@@ -602,7 +594,7 @@ The TMB version is defined [here](https://kaskr.github.io/adcomp/group__R__style
 
 Example: `family = tweedie(link = "log")`
 
-## Gamma mixture
+### Gamma mixture
 
 This is a 2 component mixture that extends the Gamma distribution,
 
@@ -625,7 +617,7 @@ sdmTMB(...,
 
 See also `family = delta_gamma_mix()` for an extension incorporating this distribution with delta models.
 
-## Lognormal mixture
+### Lognormal mixture
 
 This is a 2 component mixture that extends the lognormal distribution,
 
@@ -645,19 +637,37 @@ sdmTMB(...,
 )
 ```
 
-## Negative binomial 2 mixture
+## Continuous real-valued outcomes
 
-This is a 2 component mixture that extends the NB2 distribution,
+### Gaussian
 
 $$
-(1 - p) \cdot \operatorname{NB2} \left( \mu_1, \phi \right) + p \cdot \operatorname{NB2} \left( \mu_2, \phi \right)
+\operatorname{Normal} \left( \mu, \phi^2 \right)
+$$ where $\mu$ is the mean and $\phi$ is the standard deviation.
+The variance is $\phi^2$.
+
+Example: `family = Gaussian(link = "identity")`
+
+Code defined [within TMB](https://kaskr.github.io/adcomp/dnorm_8hpp.html).
+
+### Student-t
+
+$$
+\operatorname{Student-t} \left( \mu, \phi, \nu \right)
 $$
 
-where $\mu_1$ is the mean of the first (smaller component) of the distribution, $\mu_2$ is the mean of the larger component, and $p$ controls the contribution of each component to the mixture. 
+where $\nu$, the degrees of freedom (`df`), is a user-supplied fixed parameter.
+Lower values of $\nu$ result in heavier tails compared to the Gaussian distribution.
+Above approximately `df = 20`, the distribution becomes very similar to the Gaussian.
+The Student-t distribution with a low degrees of freedom (e.g., $\nu \le 7$) can be helpful for modelling data that would otherwise be suitable for Gaussian but needs an approach that is robust to outliers [e.g., @anderson2017c].
 
-Example: `family = nbinom2_mix(link = "log")`
+Code defined [within sdmTMB](https://github.com/pbs-assess/sdmTMB/blob/18a39eabc111e2179fa589f942c8820d87ad10df/src/utils.h#L37-L45) based on the `dt()` distribution in TMB.
 
-## Delta models
+Example: `family = student(link = "log", df = 7)`
+
+## Zero-inflated and hurdle structures
+
+### Delta models
 
 sdmTMB allows for several different kinds of delta (also known as hurdle) models. These families are implemented by specifying the family as a delta distribution. For example:
 
@@ -668,7 +678,7 @@ sdmTMB(
 )
 ```
 
-The list of supported families is included in the documentation on [additional families](https://pbs-assess.github.io/sdmTMB/reference/families.html), [delta models](https://pbs-assess.github.io/sdmTMB/articles/delta-models.html), and [Poisson-link delta models](https://pbs-assess.github.io/sdmTMB/articles/poisson-link.html). By default, the `delta_*` families don't use the Poisson link, but this structure can be specified with `delta_gamma(type = "poisson-link")`. 
+The list of supported families is included in the documentation on [additional families](https://pbs-assess.github.io/sdmTMB/reference/families.html), [delta models](https://pbs-assess.github.io/sdmTMB/articles/delta-models.html), and [Poisson-link delta models](https://pbs-assess.github.io/sdmTMB/articles/poisson-link.html). By default, the `delta_*` families don't use the Poisson link, but this structure can be specified with `delta_gamma(type = "poisson-link")`, which follows the formulation in @thorson2018poisson.
 
 In the "standard" delta model implementation, sdmTMB constructs two internal models (formally, two "linear predictors"), with the first model representing presence-absence and the second model represting the positive component (such as catch rates in fisheries applications). 
 Default links associated with each family can be inspected with `delta_lognormal()` and equivalent functions. For the standard delta models, the default first linear predictor link is logit. For the Poisson-link type, the first linear predictor link is log.
@@ -778,7 +788,8 @@ The number of `nlminb_loops` should generally be small (e.g., 2 or 3 initially),
 For some sdmTMB models, the Hessian may also be unstable and need to be re-evaluated.
 We do this optionally with the `stats::optimHess()` routine after the call to `stats::nlminb()`.
 The `stats::optimHess()` function implements a Newton optimization routine to find the Hessian, and we include the argument `newton_loops` in `sdmTMB::sdmTMBcontrol()` to allow for multiple function evaluations (each starting at the previous best value).
-By default, this is not included and `newton_loops` is set to 0.
+By default, this is set to 1 evaluation.
+The updated parameters are only accepted if they result in a lower negative marginal log likelihood.
 If a model is already fit, the function `sdmTMB::run_extra_optimization()` can run additional optimization loops with either routine to further reduce the maximum gradient.
 
 ## Assessing convergence
