@@ -55,6 +55,83 @@ test_that("Student family fits", {
   expect_length(residuals(m), nrow(s))
 })
 
+test_that("Student-t df parameter (fixed vs estimated)", {
+  skip_on_cran()
+  set.seed(1234)
+  # Simulate data from Student-t with known df
+  x <- stats::runif(300, -1, 1)
+  y <- stats::runif(300, -1, 1)
+  loc <- data.frame(x = x, y = y)
+  spde <- make_mesh(loc, c("x", "y"), n_knots = 50, type = "kmeans")
+
+  # Simulate response with Student-t errors
+  true_df <- 5
+  mu <- 2
+  sigma <- 0.3
+  loc$observed <- mu + sigma * rt(nrow(loc), df = true_df)
+
+  # Test 1: Estimated df (new default)
+  suppressMessages(
+    m_est_default <- sdmTMB(data = loc, formula = observed ~ 1, mesh = spde,
+      family = student(link = "identity"),  # df = NULL by default, will be estimated
+      spatial = "off", spatiotemporal = "off"
+    )
+  )
+  # Check that ln_student_df is not mapped (estimated)
+  expect_null(m_est_default$tmb_map$ln_student_df)
+  # Check tidy output shows estimated df with std.error
+  tidy_est_default <- tidy(m_est_default, "ran_pars")
+  df_row_est_default <- tidy_est_default[tidy_est_default$term == "student_df", ]
+  expect_true(df_row_est_default$estimate > 1)
+  expect_false(is.na(df_row_est_default$std.error))
+
+  # Test 2: Fixed df at 3
+  suppressMessages(
+    m_fixed_3 <- sdmTMB(data = loc, formula = observed ~ 1, mesh = spde,
+      family = student(link = "identity", df = 3),
+      spatial = "off", spatiotemporal = "off"
+    )
+  )
+  expect_true(is.na(m_fixed_3$tmb_map$ln_student_df[1]))
+  tidy_3 <- tidy(m_fixed_3, "ran_pars")
+  df_row_3 <- tidy_3[tidy_3$term == "student_df", ]
+  expect_equal(df_row_3$estimate, 3, tolerance = 1e-6)
+  expect_true(is.na(df_row_3$std.error))
+
+  # Test 3: Fixed df at custom value (5)
+  suppressMessages(
+    m_fixed_5 <- sdmTMB(data = loc, formula = observed ~ 1, mesh = spde,
+      family = student(link = "identity", df = 5),
+      spatial = "off", spatiotemporal = "off"
+    )
+  )
+  expect_true(is.na(m_fixed_5$tmb_map$ln_student_df[1]))
+  tidy_5 <- tidy(m_fixed_5, "ran_pars")
+  df_row_5 <- tidy_5[tidy_5$term == "student_df", ]
+  expect_equal(df_row_5$estimate, 5, tolerance = 1e-6)
+  expect_true(is.na(df_row_5$std.error))
+
+  # Test 4: Explicitly estimated df with df = NULL
+  suppressMessages(
+    m_est_explicit <- sdmTMB(data = loc, formula = observed ~ 1, mesh = spde,
+      family = student(link = "identity", df = NULL),  # explicitly estimate df
+      spatial = "off", spatiotemporal = "off"
+    )
+  )
+  # Check that ln_student_df is not mapped (estimated)
+  expect_null(m_est_explicit$tmb_map$ln_student_df)
+  # Check tidy output shows estimated df with std.error
+  tidy_est_explicit <- tidy(m_est_explicit, "ran_pars")
+  df_row_est_explicit <- tidy_est_explicit[tidy_est_explicit$term == "student_df", ]
+  expect_true(df_row_est_explicit$estimate > 1)  # df should be > 1
+  expect_false(is.na(df_row_est_explicit$std.error))  # should have std.error
+  expect_false(is.na(df_row_est_explicit$conf.low))
+  expect_false(is.na(df_row_est_explicit$conf.high))
+
+  # Check print method includes df
+  expect_output(print(m_est_explicit), "Student-t df")
+})
+
 test_that("Lognormal fits", {
   skip_on_cran()
   range <- 1

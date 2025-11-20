@@ -262,6 +262,27 @@ tidy.sdmTMB <- function(x, effects = c("fixed", "ran_pars", "ran_vals", "ran_vco
     ii <- ii + 1
   }
 
+  if ("student" %in% x$family$family) {
+    # Check if df was fixed (mapped to NA) or estimated
+    df_fixed <- !is.null(x$tmb_map$ln_student_df) && is.na(x$tmb_map$ln_student_df[1])
+    if (df_fixed) {
+      # Fixed df: report the fixed value with NA std.error
+      df_value <- exp(est$ln_student_df) + 1
+      out_re$student_df <- data.frame(
+        term = "student_df", estimate = df_value,
+        std.error = NA_real_, conf.low = NA_real_, conf.high = NA_real_,
+        stringsAsFactors = FALSE)
+    } else {
+      # Estimated df: report with confidence intervals
+      out_re$student_df <- data.frame(
+        term = "student_df", estimate = exp(est$ln_student_df) + 1,
+        std.error = se$student_df, stringsAsFactors = FALSE)
+      out_re$student_df$conf.low <- exp(est$ln_student_df - crit * se$ln_student_df) + 1
+      out_re$student_df$conf.high <- exp(est$ln_student_df + crit * se$ln_student_df) + 1
+    }
+    ii <- ii + 1
+  }
+
   if ("ar1_phi" %in% names(est)) {
     ar_phi <- est$ar1_phi
     ar_phi_se <- se$ar1_phi

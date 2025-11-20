@@ -221,7 +221,6 @@ Type objective_function<Type>::operator()()
   // Distribution
   DATA_IVECTOR(family);
   DATA_IVECTOR(link);
-  DATA_SCALAR(df);  // Student-t DF
   DATA_VECTOR(size); // binomial, via glmmTMB
 
   // SPDE objects from R-INLA
@@ -281,6 +280,7 @@ Type objective_function<Type>::operator()()
   PARAMETER_ARRAY(ln_kappa);    // Matern parameter
 
   PARAMETER(thetaf);           // tweedie only
+  PARAMETER(ln_student_df);    // student-t df (log(df - 1))
   PARAMETER(gengamma_Q);           // gengamma only
   PARAMETER(logit_p_extreme);           // ECE / positive mixture only
   PARAMETER(log_ratio_mix);           // ECE / positive mixture only
@@ -1059,9 +1059,14 @@ Type objective_function<Type>::operator()()
             break;
           }
           case student_family: {
-            if (notNA) tmp_ll = sdmTMB::dstudent(y_i(i,m), mu_i(i,m), exp(ln_phi(m)), df, true);
-            if (notNA) devresid(i,m) = sdmTMB::devresid_nbinom2(y_i(i,m), s1, s1 - ln_phi(m));
-            if (sim_obs) SIMULATE{y_i(i,m) = mu_i(i,m) + phi(m) * rt(df);}
+            Type student_df = exp(ln_student_df) + Type(1.0);
+            if (notNA) tmp_ll = sdmTMB::dstudent(y_i(i,m), mu_i(i,m), phi(m), student_df, true);
+            if (notNA) {
+              Type resid = (y_i(i,m) - mu_i(i,m)) / phi(m);
+              Type dev = (student_df + Type(1.0)) * log(Type(1.0) + resid * resid / student_df);
+              devresid(i,m) = sdmTMB::sign(y_i(i,m) - mu_i(i,m)) * sqrt(dev);
+            }
+            if (sim_obs) SIMULATE{y_i(i,m) = mu_i(i,m) + phi(m) * rt(student_df);}
 
             break;
           }
@@ -1672,6 +1677,10 @@ Type objective_function<Type>::operator()()
   }
 
   if (family(0) == tweedie_family) ADREPORT(tweedie_p); // #302
+  if (family(0) == student_family) {
+    Type student_df = exp(ln_student_df) + Type(1.0);
+    ADREPORT(student_df);
+  }
 
   REPORT(epsilon_st_A_vec);   // spatio-temporal effects; vector
   REPORT(b_rw_t);   // time-varying effects

@@ -1039,7 +1039,13 @@ sdmTMB <- function(
     anisotropy <- FALSE
   }
 
-  df <- if (family$family[1] == "student" && "df" %in% names(family)) family$df else 3
+  # Student-t df: can be NULL (estimate, default) or numeric (fix)
+  student_df_fixed <- if (family$family[1] == "student" && "df" %in% names(family)) {
+    family$df
+  } else {
+    NULL
+  }
+  estimate_student_df <- family$family[1] == "student" && is.null(student_df_fixed)
 
   est_epsilon_model <- 0L
   epsilon_covariate <- rep(0, length(unique(data[[time]])))
@@ -1200,7 +1206,6 @@ sdmTMB <- function(
     family = .valid_family[family$family],
     size = c(size),
     link = .valid_link[family$link],
-    df = df,
     spatial_only = as.integer(spatial_only),
     spatial_covariate = as.integer(!is.null(spatial_varying)),
     calc_quadratic_range = as.integer(quadratic_roots),
@@ -1241,6 +1246,11 @@ sdmTMB <- function(
     ln_kappa = matrix(0, 2L, n_m),
     # ln_kappa   = rep(log(sqrt(8) / median(stats::dist(spde$mesh$loc))), 2),
     thetaf = 0,
+    ln_student_df = if (family$family[1] == "student") {
+      if (estimate_student_df) log(2) else log(student_df_fixed - 1)
+    } else {
+      0  # default for non-student families
+    },
     gengamma_Q = 0.5, # Not defined at exactly 0
     logit_p_extreme = 0,
     log_ratio_mix = -1, # ratio is 1 + exp(log_ratio_mix) so 0 would start fairly high
@@ -1273,6 +1283,15 @@ sdmTMB <- function(
   tmb_map$b_j <- NULL
   if (delta) tmb_map$b_j2 <- NULL
   if (family$family[[1]] == "tweedie") tmb_map$thetaf <- NULL
+  if (family$family[[1]] == "student") {
+    if (estimate_student_df) {
+      tmb_map$ln_student_df <- NULL  # estimate
+    } else {
+      tmb_map$ln_student_df <- factor(NA)  # fix at initial value
+    }
+  } else {
+    tmb_map$ln_student_df <- factor(NA)  # not student family, fix at 0
+  }
   if ("gengamma" %in% family$family) tmb_map$gengamma_Q <- factor(NA)
   tmb_map$ln_phi <- rep(1, n_m)
   if (family$family[[1]] %in% c("binomial", "poisson", "censored_poisson")) {

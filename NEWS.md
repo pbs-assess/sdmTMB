@@ -1,15 +1,18 @@
 # sdmTMB (development version)
 
+## New features
+
+* The Student-t degrees of freedom parameter is now
+  estimated by default in `student()`. Previously it was fixed at 3. To fix it
+  at a specific value, set `df` to a numeric value (e.g., `student(df = 3)`).
+  To estimate it (new default), set `df = NULL` or omit the argument. The
+  parameter is constrained to be > 1. The function now prints an informative
+  message about the df parameter behavior.
+
 * Add deviance residuals for left-out data in the cross validation output.
   This can be used to calculate deviance explained of left-out data.
   See `cv_deviance_resid` column in the `data` element of the output of
   `sdmTMB_cv()`.
-
-* Fix bug in `sdmTMB_cv()` automatic fold generation that could result in
-  unbalanced folds with duplicate and missing fold IDs. The bug was most severe
-  with large `k_folds` values (e.g., leave-one-out cross-validation with
-  `k_folds = nrow(data)`), which could cause errors when folds had no data.
-  User-supplied `fold_ids` were not affected.
 
 * `sdmTMB_cv()` now supports the `weights` argument. User-supplied weights are
   combined with the internal fold-assignment mechanism (held-out data are
@@ -22,9 +25,6 @@
   will error with informative messages. Essential CV metrics (predictions, log
   likelihoods, deviance residuals, convergence info) remain available.
 
-* Add check if newdata has been filtered after prediction and before passing
-  to a `get_*()` function.
-
 * Add experimental `collapse_spatial_variance` option to `sdmTMBcontrol()` to
   automatically detect and turn off spatial and/or spatiotemporal random fields
   when their SD parameters are estimated to be very small (below a threshold).
@@ -32,20 +32,6 @@
   turned off if SD parameters fall below `collapse_threshold` (default 0.01).
   This can help avoid boundary issues and improve model stability when random
   fields are not needed. Set to `FALSE` by default. #263
-
-* Fix `tidy()` to only include the `model` column for delta models. For non-delta
-  models, the `model` column is no longer included in the output for
-  `effects = "ran_pars"` and `effects = "ran_vals"`, making the output cleaner
-  and more consistent.
-
-* Update package logo.
-
-* Add residuals for truncated negative binomial families. #481
-  Thanks to @Joseph-Barss
-  
-* Fix an issue with residuals for delta models by consistently using `get_par()`,
-  and another issue specifically for delta truncated negative binomial models by 
-  replacing NaN with NA. #484
 
 * Extend `sdmTMB_simulate()` to support time-varying effects with vector `sigma_V`
   inputs and AR1 correlation (`rho_time`). #447
@@ -59,22 +45,12 @@
   following Fredston et al. (2021) <https://doi.org/10.1111/gcb.15614>.
   See the new range edge vignette at <https://pbs-assess.github.io/sdmTMB/articles/>
 
-* Fix `tidy()` with `effects = "ran_pars"` to report min/max anisotropic ranges
-  (e.g., `range_min`, `range_max`) for models fit with `anisotropy = TRUE`,
-  matching the values shown in `print_anisotropy()`. Standard errors and
-  confidence intervals are set to NA since uncertainty in both the range parameter
-  and H matrix cannot be easily propagated.
-
 * Add new function `cv_to_waywiser()` to convert cross-validation results to sf
   format for use with the waywiser package. This enables multi-scale spatial
   assessment of model predictions. #193
 
 * Add vignette demonstrating how to fit zero-one-inflated beta (ZOIB) models
   by fitting three separate model components and combining predictions. #440 #441
-
-* Fix issue with ggeffects with multiple smoothers + offsets. #450
-
-* Improve `t2()` printing and appearance in `tidy.sdmTMB()`. #415 #472
 
 * Add argument to fix probability of extreme events for `*_mix()` familes.
   Note that the internal parameter name has also changed from `p_mix` to
@@ -88,21 +64,61 @@
   same pattern as `get_cog()` but allows users to specify any variable for
   weighted averaging. Supports bias correction and area weighting.
 
+* Add vignette on age (or length) composition standardization. To help with this
+  add a new experimental function `make_category_svc()`.
+
+* Add `emmeans` support for delta/hurdle models. Use `model = 1` for the binomial
+  component or `model = 2` for the positive component when calling `emmeans()`.
+  Example: `emmeans(fit, ~ predictor, model = 2)`. #247 #249
+
+## Minor improvements and fixes
+
+* Fix Student-t deviance residuals, which were incorrectly returning `NaN`s.
+
+* Fix `sign()` utility function to avoid `NaN` when `x = 0`. Now returns
+  standard mathematical sign function behavior: `sign(0) = 0`.
+
+* Fix bug in `sdmTMB_cv()` automatic fold generation that could result in
+  unbalanced folds with duplicate and missing fold IDs. The bug was most severe
+  with large `k_folds` values (e.g., leave-one-out cross-validation with
+  `k_folds = nrow(data)`), which could cause errors when folds had no data.
+  User-supplied `fold_ids` were not affected.
+
+* Add check if newdata has been filtered after prediction and before passing
+  to a `get_*()` function.
+
+* Fix `tidy()` to only include the `model` column for delta models. For non-delta
+  models, the `model` column is no longer included in the output for
+  `effects = "ran_pars"` and `effects = "ran_vals"`, making the output cleaner
+  and more consistent.
+
+* Update package logo.
+
+* Add residuals for truncated negative binomial families. #481
+  Thanks to @Joseph-Barss
+
+* Fix an issue with residuals for delta models by consistently using `get_par()`,
+  and another issue specifically for delta truncated negative binomial models by
+  replacing NaN with NA. #484
+
+* Fix `tidy()` with `effects = "ran_pars"` to report min/max anisotropic ranges
+  (e.g., `range_min`, `range_max`) for models fit with `anisotropy = TRUE`,
+  matching the values shown in `print_anisotropy()`. Standard errors and
+  confidence intervals are set to NA since uncertainty in both the range parameter
+  and H matrix cannot be easily propagated.
+
+* Fix issue with ggeffects with multiple smoothers + offsets. #450
+
+* Improve `t2()` printing and appearance in `tidy.sdmTMB()`. #415 #472
+
 * **Fix barrier model implementation**. The SPDE input matrices for the barrier
   model from INLA and INLAspacetime had changed. sdmTMB now appropriately
   uses these new matrices and unit tests in sdmTMBextra should catch such a
   change in the future. #457
 
-* Add vignette on age (or length) composition standardization. To help with this
-  add a new experimental function `make_category_svc()`.
-
 * Fix `emmeans` support for models with smoothers (`s()` terms). Previously,
   `emmeans` would fail with "Non-conformable elements in reference grid" when
   smoothers were included in the model formula.
-
-* Add `emmeans` support for delta/hurdle models. Use `model = 1` for the binomial
-  component or `model = 2` for the positive component when calling `emmeans()`.
-  Example: `emmeans(fit, ~ predictor, model = 2)`. #247 #249
 
 # sdmTMB 0.7.4
 

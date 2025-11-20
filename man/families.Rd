@@ -48,7 +48,7 @@ truncated_nbinom2(link = "log")
 
 truncated_nbinom1(link = "log")
 
-student(link = "identity", df = 3)
+student(link = "identity", df = NULL)
 
 tweedie(link = "log")
 
@@ -87,7 +87,8 @@ delta_beta(link1 = "logit", link2 = "logit")
 \item{p_extreme}{Optional fixed probability for the extreme component. If NULL (default),
 this is estimated. If specified, must be a proportion between 0 and 1.}
 
-\item{df}{Student-t degrees of freedom fixed value parameter.}
+\item{df}{Student-t degrees of freedom parameter. Can be \code{NULL} to estimate (default)
+or a numeric value > 1 to fix at a specific value.}
 
 \item{link1}{Link for first part of delta/hurdle model. Defaults to \code{"logit"}
 for \code{type = "standard"} and \code{"log"} for \code{type = "poisson-link"}.}
@@ -134,7 +135,8 @@ variance grows quadratically with the mean (Hilbe 2011).
 The \code{nbinom1} negative binomial parameterization lets the variance grow
 linearly with the mean (Hilbe 2011).
 
-For \code{student()}, the degrees of freedom parameter is currently not estimated and is fixed at \code{df}.
+For \code{student()}, the degrees of freedom parameter is estimated by default (\code{df = NULL}).
+You can fix it at a specific value by providing a number > 1 (e.g., \code{df = 3}).
 }
 \examples{
 Beta(link = "logit")
@@ -147,7 +149,8 @@ nbinom2(link = "log")
 nbinom1(link = "log")
 truncated_nbinom2(link = "log")
 truncated_nbinom1(link = "log")
-student(link = "identity")
+student(link = "identity") # estimate df
+student(link = "identity", df = 3) # fix df at 3
 tweedie(link = "log")
 censored_poisson(link = "log")
 delta_gamma()

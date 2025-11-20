@@ -325,14 +325,17 @@ truncated_nbinom1 <- function(link = "log") {
     linkinv = linkinv), class = "family")
 }
 
-#' @param df Student-t degrees of freedom fixed value parameter.
+#' @param df Student-t degrees of freedom parameter. Can be `NULL` to estimate (default)
+#'   or a numeric value > 1 to fix at a specific value.
 #' @export
 #' @details
-#' For `student()`, the degrees of freedom parameter is currently not estimated and is fixed at `df`.
+#' For `student()`, the degrees of freedom parameter is estimated by default (`df = NULL`).
+#' You can fix it at a specific value by providing a number > 1 (e.g., `df = 3`).
 #' @rdname families
 #' @examples
-#' student(link = "identity")
-student <- function(link = "identity", df = 3) {
+#' student(link = "identity") # estimate df
+#' student(link = "identity", df = 3) # fix df at 3
+student <- function(link = "identity", df = NULL) {
   linktemp <- substitute(link)
   if (!is.character(linktemp))
     linktemp <- deparse(linktemp)
@@ -342,6 +345,13 @@ student <- function(link = "identity", df = 3) {
   else if (is.character(link)) {
     stats <- stats::make.link(link)
     linktemp <- link
+  }
+
+  # Inform user about df parameter
+  if (is.null(df)) {
+    cli::cli_inform("Student-t degrees of freedom parameter will be estimated. This used to be fixed at 3 by default. To fix it, supply a value to `df` (e.g., `df = 3`).")
+  } else {
+    cli::cli_inform("Student-t degrees of freedom parameter fixed at {df}. To estimate it, set `df = NULL`.")
   }
 
   x <- c(list(family = "student", link = linktemp, df = df), stats)

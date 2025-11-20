@@ -438,6 +438,7 @@ print_other_parameters <- function(x, m = 1L) {
 
   phi <- get_term_text("phi", "Dispersion parameter")
   tweedie_p <- get_term_text("tweedie_p", "Tweedie p")
+  student_df <- get_term_text("student_df", "Student-t df")
   gengamma_par <- if ('gengamma' %in% family(x)[[m]]) {
     get_term_text("gengamma_Q", "Generalized gamma Q")
     } else ""
@@ -461,7 +462,7 @@ print_other_parameters <- function(x, m = 1L) {
     sigma_Z <- ""
   }
 
-  named_list(phi, tweedie_p, sigma_O, sigma_E, sigma_Z, rho, gengamma_par)
+  named_list(phi, tweedie_p, student_df, sigma_O, sigma_E, sigma_Z, rho, gengamma_par)
 }
 
 print_header <- function(x) {
@@ -517,6 +518,7 @@ print_one_model <- function(x, m = 1, edf = FALSE, silent = FALSE) {
 
   cat(other$phi)
   cat(other$tweedie_p)
+  cat(other$student_df)
   cat(other$gengamma_par)
   cat(other$rho)
   cat(range)

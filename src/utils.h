@@ -469,7 +469,8 @@ Type logit_invcloglog(Type x) {
 // get sign of double, only for REPORT use, from tinyVAST
 template<class Type>
 Type sign(Type x){
-  return x / pow(pow(x,2.0),0.5);
+  if (x == Type(0.0)) return Type(0.0);
+  return (x > Type(0.0)) ? Type(1.0) : Type(-1.0);
 }
 
 // Deviance for the Tweedie

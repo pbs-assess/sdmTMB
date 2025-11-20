@@ -188,7 +188,8 @@ pt_ls <- function(q, df, mu, sigma) stats::pt((q - mu) / sigma, df)
 qres_student <- function(object, y, mu, ...) {
   theta <- get_pars(object)
   dispersion <- exp(theta[["ln_phi"]])
-  u <- pt_ls(q = y, df = object$tmb_data$df, mu = mu, sigma = dispersion)
+  df <- exp(theta[["ln_student_df"]]) + 1
+  u <- pt_ls(q = y, df = df, mu = mu, sigma = dispersion)
   stats::qnorm(u)
 }
 
