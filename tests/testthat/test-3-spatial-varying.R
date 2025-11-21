@@ -90,7 +90,7 @@ test_that("SVC are estimated correctly for binomial and delta models", {
 })
 
 test_that("Delta model with spatially varying factor predictor and no spatiotemporal field works #237", {
-  # https://github.com/pbs-assess/sdmTMB/issues/237
+  # https://github.com/sdmTMB/sdmTMB/issues/237
   skip_on_cran()
   pcod_q2 <- pcod_2011
   pcod_q1 <- pcod_2011

@@ -9,7 +9,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-**If the code in this vignette has not been evaluated, a rendered version is available on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html) under 'Articles'.**
+**If the code in this vignette has not been evaluated, a rendered version is available on the [documentation site](https://sdmTMB.github.io/sdmTMB/index.html) under 'Articles'.**
 
 ```{r setup, include = FALSE, cache=FALSE}
 dplyr_installed <- require("dplyr", quietly = TRUE)
@@ -153,7 +153,7 @@ plot(g6)
 
 # `ggpredict()`
 
-`ggeffects::ggpredict()` can be used to make conditional effects plots of sdmTMB models, including models with smoothers (but not currently including delta models [due to a recent change in ggeffects](https://github.com/pbs-assess/sdmTMB/issues/435)).
+`ggeffects::ggpredict()` can be used to make conditional effects plots of sdmTMB models, including models with smoothers (but not currently including delta models [due to a recent change in ggeffects](https://github.com/sdmTMB/sdmTMB/issues/435)).
 
 Here's an example:
 

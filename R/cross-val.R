@@ -129,7 +129,7 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' Prior to \pkg{sdmTMB} version '0.3.0.9002', `elpd` was incorrectly returned as
 #' the log average likelihood, which is another metric you could compare models
 #' with, but not ELPD. For maximum likelihood, [ELPD is equivalent in spirit to
-#' the sum of the log likelihoods](https://github.com/pbs-assess/sdmTMB/issues/235).
+#' the sum of the log likelihoods](https://github.com/sdmTMB/sdmTMB/issues/235).
 #'
 #' @details
 #' **Parallel processing**
@@ -591,7 +591,7 @@ print.sdmTMB_cv <- function(x, ...) {
 #' For delta/hurdle models, the combined predictions are returned (e.g., the
 #' product of the encounter probability and positive catch rate).
 #'
-#' @seealso [sdmTMB_cv()], [get_crs()], \url{https://pbs-assess.github.io/sdmTMB/articles/cross-validation.html}
+#' @seealso [sdmTMB_cv()], [get_crs()], \url{https://sdmTMB.github.io/sdmTMB/articles/cross-validation.html}
 #'
 #' @export
 #' @examplesIf require("sf", quietly = TRUE) && require("waywiser", quietly = TRUE)

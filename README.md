@@ -1,19 +1,19 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# sdmTMB <a href="https://pbs-assess.github.io/sdmTMB/"><img src="man/figures/logo.png" align="right" height="138" alt="sdmTMB website" /></a>
+# sdmTMB <a href="https://sdmTMB.github.io/sdmTMB/"><img src="man/figures/logo.png" align="right" height="138" alt="sdmTMB website" /></a>
 
 > Spatial and spatiotemporal GLMMs with TMB
 
 <!-- badges: start -->
 [![](https://www.r-pkg.org/badges/version/sdmTMB)](https://cran.r-project.org/package=sdmTMB)
-[![Documentation](https://img.shields.io/badge/documentation-sdmTMB-orange.svg?colorB=E91E63)](https://pbs-assess.github.io/sdmTMB/)
-[![R-CMD-check](https://github.com/pbs-assess/sdmTMB/workflows/R-CMD-check/badge.svg)](https://github.com/pbs-assess/sdmTMB/actions)
-[![Codecov test coverage](https://codecov.io/gh/pbs-assess/sdmTMB/branch/main/graph/badge.svg)](https://app.codecov.io/gh/pbs-assess/sdmTMB?branch=main)
+[![Documentation](https://img.shields.io/badge/documentation-sdmTMB-orange.svg?colorB=E91E63)](https://sdmTMB.github.io/sdmTMB/)
+[![R-CMD-check](https://github.com/sdmTMB/sdmTMB/workflows/R-CMD-check/badge.svg)](https://github.com/sdmTMB/sdmTMB/actions)
+[![Codecov test coverage](https://codecov.io/gh/sdmTMB/sdmTMB/branch/main/graph/badge.svg)](https://app.codecov.io/gh/sdmTMB/sdmTMB?branch=main)
 [![downloads](https://cranlogs.r-pkg.org/badges/sdmTMB)](https://cranlogs.r-pkg.org/)
 <!-- badges: end -->
 
-sdmTMB is an R package that fits spatial and spatiotemporal GLMMs (Generalized Linear Mixed Effects Models) using Template Model Builder ([TMB](https://github.com/kaskr/adcomp)), [fmesher](https://github.com/inlabru-org/fmesher), and Gaussian Markov random fields. One common application is for species distribution models (SDMs). See the [documentation site](https://pbs-assess.github.io/sdmTMB/) and a preprint:
+sdmTMB is an R package that fits spatial and spatiotemporal GLMMs (Generalized Linear Mixed Effects Models) using Template Model Builder ([TMB](https://github.com/kaskr/adcomp)), [fmesher](https://github.com/inlabru-org/fmesher), and Gaussian Markov random fields. One common application is for species distribution models (SDMs). See the [documentation site](https://sdmTMB.github.io/sdmTMB/) and a preprint:
 
 Anderson, S.C., E.J. Ward, P.A. English, L.A.K. Barnett, J.T. Thorson. 2024. sdmTMB: an R package for fast, flexible, and user-friendly generalized linear mixed effects models with spatial and spatiotemporal random fields. bioRxiv 2022.03.24.485545; doi: https://doi.org/10.1101/2022.03.24.485545
 
@@ -59,11 +59,11 @@ installed, the development version is recommended and can be installed:
 
 ``` r
 # install.packages("pak")
-pak::pak("pbs-assess/sdmTMB", dependencies = TRUE)
+pak::pak("sdmTMB/sdmTMB", dependencies = TRUE)
 ```
 
 There are some extra utilities in the
-[sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra) package.
+[sdmTMBextra](https://github.com/sdmTMB/sdmTMBextra) package.
 
 For large models, it is recommended to use an optimized BLAS library,
 which will result in major speed improvements for TMB (and other) models
@@ -126,32 +126,29 @@ models to be passed to Stan via
 [tmbstan](https://cran.r-project.org/package=tmbstan), allowing for
 Bayesian model estimation.
 
-See
-[`?sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB.html)
+See [`?sdmTMB`](https://sdmTMB.github.io/sdmTMB/reference/sdmTMB.html)
 and
-[`?predict.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/predict.sdmTMB.html)
+[`?predict.sdmTMB`](https://sdmTMB.github.io/sdmTMB/reference/predict.sdmTMB.html)
 for the most complete examples. Also see the vignettes (‘Articles’) on
-the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html)
-and the [preprint](https://doi.org/10.1101/2022.03.24.485545) listed
-below.
+the [documentation site](https://sdmTMB.github.io/sdmTMB/index.html) and
+the [preprint](https://doi.org/10.1101/2022.03.24.485545) listed below.
 
 ## Getting help
 
 For questions about how to use sdmTMB or interpret the models, please
 post on the [discussion
-board](https://github.com/pbs-assess/sdmTMB/discussions). If you
-[email](https://github.com/pbs-assess/sdmTMB/blob/main/DESCRIPTION) a
+board](https://github.com/sdmTMB/sdmTMB/discussions). If you
+[email](https://github.com/sdmTMB/sdmTMB/blob/main/DESCRIPTION) a
 question, we are likely to respond on the [discussion
-board](https://github.com/pbs-assess/sdmTMB/discussions) with an
-anonymized version of your question (and without data) if we think it
-could be helpful to others. Please let us know if you don’t want us to
-do that.
+board](https://github.com/sdmTMB/sdmTMB/discussions) with an anonymized
+version of your question (and without data) if we think it could be
+helpful to others. Please let us know if you don’t want us to do that.
 
 For bugs or feature requests, please post in the [issue
-tracker](https://github.com/pbs-assess/sdmTMB/issues).
+tracker](https://github.com/sdmTMB/sdmTMB/issues).
 
-There is [material](https://github.com/pbs-assess/sdmTMB-teaching) from
-past workshops on sdmTMB and
+There is [material](https://github.com/sdmTMB/sdmTMB-teaching) from past
+workshops on sdmTMB and
 [recordings](https://www.youtube.com/channel/UCYoFG51RjJVx7m9mZGaj-Ng/videos)
 from some of those workshops.
 
@@ -170,7 +167,7 @@ random fields. In press at Journal of Statistical Software. bioRxiv
 preprint: <https://doi.org/10.1101/2022.03.24.485545>.
 
 A list of known publications that use sdmTMB can be found
-[here](https://github.com/pbs-assess/sdmTMB/tree/main/scratch/citations).
+[here](https://github.com/sdmTMB/sdmTMB/tree/main/scratch/citations).
 Please use the above citation so we can track publications.
 
 ## Basic use
@@ -409,10 +406,9 @@ ggplot(cog, aes(est_x, est_y, colour = year)) +
 <img src="man/figures/README-plot-cog-1.png" width="50%" />
 
 For more on these basic features, see the vignettes [Intro to modelling
-with
-sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/basic-intro.html)
+with sdmTMB](https://sdmTMB.github.io/sdmTMB/articles/basic-intro.html)
 and [Index standardization with
-sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html).
+sdmTMB](https://sdmTMB.github.io/sdmTMB/articles/index-standardization.html).
 
 ## Advanced functionality
 
@@ -447,8 +443,8 @@ fit <- sdmTMB(
 ```
 
 See the vignette [Intro to modelling with
-sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/basic-intro.html)
-for more details.
+sdmTMB](https://sdmTMB.github.io/sdmTMB/articles/basic-intro.html) for
+more details.
 
 ### Spatially varying coefficients (SVC)
 
@@ -482,7 +478,7 @@ ggplot(p, aes(X, Y, fill = zeta_s_year_scaled)) + geom_raster() +
 <img src="man/figures/README-plot-zeta-1.png" width="50%" />
 
 See the vignette on [Fitting spatial trend models with
-sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html)
+sdmTMB](https://sdmTMB.github.io/sdmTMB/articles/spatial-trend-models.html)
 for more details.
 
 ### Random intercepts
@@ -519,7 +515,7 @@ fit <- sdmTMB(
 ```
 
 See the vignette on [Threshold modeling with
-sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html)
+sdmTMB](https://sdmTMB.github.io/sdmTMB/articles/threshold-models.html)
 for more details.
 
 ### Simulating data
@@ -581,7 +577,7 @@ fit <- sdmTMB(
 ```
 
 See
-[`?sdmTMB_simulate`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB_simulate.html)
+[`?sdmTMB_simulate`](https://sdmTMB.github.io/sdmTMB/reference/sdmTMB_simulate.html)
 for more details.
 
 #### Simulating from an existing fit
@@ -598,10 +594,10 @@ s[1:3,1:4]
 ```
 
 See the vignette on [Residual checking with
-sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html),
-[`?simulate.sdmTMB`](https://pbs-assess.github.io/sdmTMB/reference/simulate.sdmTMB.html),
+sdmTMB](https://sdmTMB.github.io/sdmTMB/articles/residual-checking.html),
+[`?simulate.sdmTMB`](https://sdmTMB.github.io/sdmTMB/reference/simulate.sdmTMB.html),
 and
-[`?dharma_residuals`](https://pbs-assess.github.io/sdmTMB/reference/dharma_residuals.html)
+[`?dharma_residuals`](https://sdmTMB.github.io/sdmTMB/reference/dharma_residuals.html)
 for more details.
 
 ### Sampling from the joint precision matrix
@@ -619,9 +615,9 @@ ggplot(samps, aes(.value)) + geom_histogram() +
 <img src="man/figures/README-plot-mvn-1.png" width="50%" />
 
 See
-[`?gather_sims`](https://pbs-assess.github.io/sdmTMB/reference/gather_sims.html)
+[`?gather_sims`](https://sdmTMB.github.io/sdmTMB/reference/gather_sims.html)
 and
-[`?get_index_sims`](https://pbs-assess.github.io/sdmTMB/reference/get_index_sims.html)
+[`?get_index_sims`](https://sdmTMB.github.io/sdmTMB/reference/get_index_sims.html)
 for more details.
 
 ### Calculating uncertainty on spatial predictions
@@ -659,11 +655,11 @@ m_cv <- sdmTMB_cv(
 #> Set a parallel `future::plan()` to use parallel processing.
 # Sum of log likelihoods of left-out data:
 m_cv$sum_loglik
-#> [1] -6756.28
+#> [1] -7219.976
 ```
 
 See
-[`?sdmTMB_cv`](https://pbs-assess.github.io/sdmTMB/reference/sdmTMB_cv.html)
+[`?sdmTMB_cv`](https://sdmTMB.github.io/sdmTMB/reference/sdmTMB_cv.html)
 for more details.
 
 ### Priors
@@ -697,14 +693,14 @@ plot_pc_matern(range_gt = 10, sigma_lt = 5)
 <img src="man/figures/README-plot-pc-matern-1.png" width="50%" />
 
 See
-[`?sdmTMBpriors`](https://pbs-assess.github.io/sdmTMB/reference/priors.html)
+[`?sdmTMBpriors`](https://sdmTMB.github.io/sdmTMB/reference/priors.html)
 for more details.
 
 ### Bayesian MCMC sampling with Stan
 
 The fitted model can be passed to the tmbstan package to sample from the
 posterior with Stan. See the [Bayesian
-vignette](https://pbs-assess.github.io/sdmTMB/articles/bayesian.html).
+vignette](https://sdmTMB.github.io/sdmTMB/articles/bayesian.html).
 
 ### Turning off random fields
 
@@ -767,7 +763,7 @@ fit <- sdmTMB(
 
 A barrier mesh limits correlation across barriers (e.g., land or water).
 See `add_barrier_mesh()` in
-[sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra).
+[sdmTMBextra](https://github.com/sdmTMB/sdmTMBextra).
 
 ## Related software
 

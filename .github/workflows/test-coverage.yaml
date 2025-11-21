@@ -29,7 +29,7 @@ jobs:
       - name: Install extras
         run: |
           install.packages("remotes")
-          remotes::install_github("pbs-assess/sdmTMBextra")
+          remotes::install_github("sdmTMB/sdmTMBextra")
         shell: Rscript {0}
 
       - name: Test coverage

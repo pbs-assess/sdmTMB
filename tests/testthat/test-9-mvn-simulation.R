@@ -231,7 +231,7 @@ test_that("predict link attribute and get_index_sims work with delta", {
 test_that("rmvnorm sim prediction works with various sims_vars", {
   skip_on_cran()
 
-  # https://github.com/pbs-assess/sdmTMB/issues/107
+  # https://github.com/sdmTMB/sdmTMB/issues/107
   d <- subset(pcod, year == 2003)
   pcod_spde <- make_mesh(d, c("X", "Y"), cutoff = 12)
   m1 <- sdmTMB(
@@ -291,7 +291,7 @@ test_that("rmvnorm sim prediction works with various sims_vars", {
 })
 
 test_that("nsim with s() and no other random effects works", {
-  # https://github.com/pbs-assess/sdmTMB/issues/233
+  # https://github.com/sdmTMB/sdmTMB/issues/233
   # non-spatial model with smooth
   fit <- sdmTMB(
     density ~ s(depth),

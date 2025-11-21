@@ -1,5 +1,5 @@
 test_that("extra time, newdata, and offsets work", {
-  # https://github.com/pbs-assess/sdmTMB/issues/270
+  # https://github.com/sdmTMB/sdmTMB/issues/270
   skip_on_cran()
   pcod$os <- rep(log(0.01), nrow(pcod)) # offset
   m <- sdmTMB(

@@ -1,13 +1,13 @@
 #' Extract MCMC samples from a model fit with \pkg{tmbstan}.
 #'
-#' Moved to the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
+#' Moved to the \href{https://github.com/sdmTMB/sdmTMBextra}{sdmTMBextra}
 #' package
 #'
-#' @param object **Deprecated** See the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package. Make sure to load \pkg{sdmTMBextra} *after* \pkg{sdmTMB}.
+#' @param object **Deprecated** See the \href{https://github.com/sdmTMB/sdmTMBextra}{sdmTMBextra} package. Make sure to load \pkg{sdmTMBextra} *after* \pkg{sdmTMB}.
 #'
 #' @return
 #' Deprecated. See the
-#' \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package.
+#' \href{https://github.com/sdmTMB/sdmTMBextra}{sdmTMBextra} package.
 #'
 #' @keywords internal
 #' @export
@@ -16,12 +16,12 @@
 #' extract_mcmc()
 #' }
 extract_mcmc <- function(object = deprecated()) {
-  deprecate_stop("0.2.2", "extract_mcmc()", details = "Load the sdmTMBextra package to use this function: https://github.com/pbs-assess/sdmTMBextra")
+  deprecate_stop("0.2.2", "extract_mcmc()", details = "Load the sdmTMBextra package to use this function: https://github.com/sdmTMB/sdmTMBextra")
 }
 
 #' Transform a mesh object into a mesh with correlation barriers
 #'
-#' Moved to the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
+#' Moved to the \href{https://github.com/sdmTMB/sdmTMBextra}{sdmTMBextra}
 #' package. Make sure to load \pkg{sdmTMBextra} *after* \pkg{sdmTMB}.
 #'
 #' @param spde_obj Output from [make_mesh()].
@@ -40,12 +40,12 @@ extract_mcmc <- function(object = deprecated()) {
 #' @keywords internal
 #' @return
 #' Deprecated. See the
-#' \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package.
+#' \href{https://github.com/sdmTMB/sdmTMBextra}{sdmTMBextra} package.
 #' @examples
 #' \dontrun{
 #' add_barrier_mesh()
 #' }
 add_barrier_mesh <- function(spde_obj = deprecated(), barrier_sf = deprecated(), range_fraction = 0.2,
   proj_scaling = 1, plot = FALSE) {
-  deprecate_stop("0.3.0", "add_barrier_mesh()", details = "Load the sdmTMBextra package to use this function: https://github.com/pbs-assess/sdmTMBextra \n We may move this back to the main package once the functionality joins fmesher. For now, this function requires INLA.")
+  deprecate_stop("0.3.0", "add_barrier_mesh()", details = "Load the sdmTMBextra package to use this function: https://github.com/sdmTMB/sdmTMBextra \n We may move this back to the main package once the functionality joins fmesher. For now, this function requires INLA.")
 }

@@ -79,5 +79,5 @@ waywiser::ww_multi_scale(
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link[=sdmTMB_cv]{sdmTMB_cv()}}, \code{\link[=get_crs]{get_crs()}}, \url{https://pbs-assess.github.io/sdmTMB/articles/cross-validation.html}
+\code{\link[=sdmTMB_cv]{sdmTMB_cv()}}, \code{\link[=get_crs]{get_crs()}}, \url{https://sdmTMB.github.io/sdmTMB/articles/cross-validation.html}
 }

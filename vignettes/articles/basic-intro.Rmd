@@ -8,7 +8,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-**If the code in this vignette has not been evaluated, a rendered version is available on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html) under 'Articles'.**
+**If the code in this vignette has not been evaluated, a rendered version is available on the [documentation site](https://sdmTMB.github.io/sdmTMB/index.html) under 'Articles'.**
 
 ```{r setup, include = FALSE, cache=FALSE}
 dplyr_installed <- require("dplyr", quietly = TRUE)
@@ -32,7 +32,7 @@ library(dplyr)
 library(sdmTMB)
 ```
 
-In this vignette, we describe the basic steps to fitting a spatial or spatiotemporal GLMM with sdmTMB. This type of model can be useful for (dynamic, i.e. changing through time) species distribution models and relative abundance index standardization among many other uses. See the [model description](https://pbs-assess.github.io/sdmTMB/articles/model-description.html) for full model structure and equations.
+In this vignette, we describe the basic steps to fitting a spatial or spatiotemporal GLMM with sdmTMB. This type of model can be useful for (dynamic, i.e. changing through time) species distribution models and relative abundance index standardization among many other uses. See the [model description](https://sdmTMB.github.io/sdmTMB/articles/model-description.html) for full model structure and equations.
 
 We will use built-in package data for Pacific cod from a fisheries independent trawl survey.
 
@@ -183,7 +183,7 @@ ggplot(pcod, aes(X, Y, col = resids)) +
 
 Those were fast to calculate but can look 'off' even when the model is consistent with the data.
 MCMC-based residuals are more reliable but slow.
-We can calculate them through some help from the sdmTMBextra package. <https://github.com/pbs-assess/sdmTMBextra>.
+We can calculate them through some help from the sdmTMBextra package. <https://github.com/sdmTMB/sdmTMBextra>.
 In practice you would like want more `mcmc_iter` and `mcmc_warmup`.
 Total samples is `mcmc_iter - mcmc_warmup`.
 We will also just use the spatial model here so the vignette builds quickly.

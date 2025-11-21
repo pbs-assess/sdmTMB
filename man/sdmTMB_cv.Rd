@@ -92,7 +92,7 @@ values are better.
 
 Prior to \pkg{sdmTMB} version '0.3.0.9002', \code{elpd} was incorrectly returned as
 the log average likelihood, which is another metric you could compare models
-with, but not ELPD. For maximum likelihood, \href{https://github.com/pbs-assess/sdmTMB/issues/235}{ELPD is equivalent in spirit to the sum of the log likelihoods}.
+with, but not ELPD. For maximum likelihood, \href{https://github.com/sdmTMB/sdmTMB/issues/235}{ELPD is equivalent in spirit to the sum of the log likelihoods}.
 }
 \description{
 Facilitates cross validation with sdmTMB models. Returns the log likelihood

@@ -22,7 +22,7 @@
 
 \item{mcmc_samples}{A vector of MCMC samples of the linear predictor in link
 space. See the \code{predict_mle_mcmc()} function in the
-\href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package.}
+\href{https://github.com/sdmTMB/sdmTMBextra}{sdmTMBextra} package.}
 
 \item{qres_func}{A custom quantile residuals function. Function should take
 the arguments \verb{object, y, mu, ...} and return a vector of length
@@ -38,7 +38,7 @@ a randomization seed} and to not go "fishing" for the perfect residuals or
 to present all inspected residuals.
 }
 \description{
-See the residual-checking vignette: \code{browseVignettes("sdmTMB")} or \href{https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html}{on the documentation site}.
+See the residual-checking vignette: \code{browseVignettes("sdmTMB")} or \href{https://sdmTMB.github.io/sdmTMB/articles/residual-checking.html}{on the documentation site}.
 See notes about types of residuals in 'Details' section below.
 }
 \details{
@@ -94,7 +94,7 @@ random effects (compared to the \code{mle-mvn} option) but can be slow to obtain
 See Waagepetersen (2006) and Thygesen et al. (2017). Residuals are converted
 to randomized quantile residuals as described above.
 
-See the \href{https://github.com/pbs-assess/sdmTMBextra}{\pkg{sdmTMBextra}}
+See the \href{https://github.com/sdmTMB/sdmTMBextra}{\pkg{sdmTMBextra}}
 package for the function \code{predict_mle_mcmc()}, which can generate the MCMC
 samples to pass to the \code{mcmc_samples} argument. Ideally MCMC is run until
 convergence and then the last iteration can be used for residuals.

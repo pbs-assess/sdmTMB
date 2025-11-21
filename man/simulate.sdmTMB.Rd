@@ -50,7 +50,7 @@ a single MVN draw from the random effects. If \code{"multiple"}, take an MVN
 draw from the random effects for each of the \code{nsim}.}
 
 \item{mcmc_samples}{An optional matrix of MCMC samples. See \code{extract_mcmc()}
-in the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
+in the \href{https://github.com/sdmTMB/sdmTMBextra}{sdmTMBextra}
 package.}
 
 \item{return_tmb_report}{Return the \pkg{TMB} report from \code{simulate()}? This

@@ -236,7 +236,7 @@ qres_gengamma <- function(object, y, mu, ...) {
 #'
 #' See the residual-checking vignette: `browseVignettes("sdmTMB")` or [on the
 #' documentation
-#' site](https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html).
+#' site](https://sdmTMB.github.io/sdmTMB/articles/residual-checking.html).
 #' See notes about types of residuals in 'Details' section below.
 #'
 #' @param object An [sdmTMB()] model.
@@ -244,7 +244,7 @@ qres_gengamma <- function(object, y, mu, ...) {
 #' @param model Which delta/hurdle model component?
 #' @param mcmc_samples A vector of MCMC samples of the linear predictor in link
 #'   space. See the `predict_mle_mcmc()` function in the
-#'   \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package.
+#'   \href{https://github.com/sdmTMB/sdmTMBextra}{sdmTMBextra} package.
 #' @param qres_func A custom quantile residuals function. Function should take
 #'   the arguments `object, y, mu, ...` and return a vector of length
 #'   `length(y)`.
@@ -304,7 +304,7 @@ qres_gengamma <- function(object, y, mu, ...) {
 #' See Waagepetersen (2006) and Thygesen et al. (2017). Residuals are converted
 #' to randomized quantile residuals as described above.
 #'
-#' See the \href{https://github.com/pbs-assess/sdmTMBextra}{\pkg{sdmTMBextra}}
+#' See the \href{https://github.com/sdmTMB/sdmTMBextra}{\pkg{sdmTMBextra}}
 #' package for the function `predict_mle_mcmc()`, which can generate the MCMC
 #' samples to pass to the `mcmc_samples` argument. Ideally MCMC is run until
 #' convergence and then the last iteration can be used for residuals.
@@ -449,7 +449,7 @@ residuals.sdmTMB <- function(object,
     if (is.null(mcmc_samples)) {
       msg <- c("As of sdmTMB 0.3.0, `mcmc_samples` must be supplied to use `type = 'mle-mcmc'`.",
         "See ?sdmTMBextra::predict_mle_mcmc after installing",
-        "remotes::install_github('pbs-assess/sdmTMBextra')")
+        "remotes::install_github('sdmTMB/sdmTMBextra')")
       cli_abort(msg)
     }
     mcmc_samples <- as.numeric(mcmc_samples)

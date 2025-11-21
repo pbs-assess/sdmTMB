@@ -432,7 +432,7 @@ sdmTMB_simulate <- function(formula,
 #'   `NA` = combined, `1` = first model, `2` = second mdoel.
 #' @param newdata Optional new data frame from which to simulate.
 #' @param mcmc_samples An optional matrix of MCMC samples. See `extract_mcmc()`
-#'   in the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
+#'   in the \href{https://github.com/sdmTMB/sdmTMBextra}{sdmTMBextra}
 #'   package.
 #' @param return_tmb_report Return the \pkg{TMB} report from `simulate()`? This
 #'   lets you parse out whatever elements you want from the simulation.

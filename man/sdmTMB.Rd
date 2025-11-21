@@ -114,7 +114,7 @@ should vary in space as random fields. Note that you likely want to include
 a fixed effect for the same variable to improve interpretability since the
 random field is assumed to have a mean of 0. If a (scaled) time column is
 used, it will represent a local-time-trend model. See
-\doi{10.1111/ecog.05176} and the \href{https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.
+\doi{10.1111/ecog.05176} and the \href{https://sdmTMB.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.
 Note this predictor should usually be centered to have mean zero and have a
 standard deviation of approximately 1.
 \strong{The spatial intercept is controlled by the \code{spatial} argument}; therefore,
@@ -213,7 +213,7 @@ partial differential equation) approximation to Gaussian random fields.
 \details{
 \strong{Model description}
 
-See the \href{https://pbs-assess.github.io/sdmTMB/articles/model-description.html}{model description}
+See the \href{https://sdmTMB.github.io/sdmTMB/articles/model-description.html}{model description}
 vignette or the relevant appendix of the preprint on sdmTMB:
 \doi{10.1101/2022.03.24.485545}
 
@@ -253,7 +253,7 @@ Similarly, a logistic-function threshold model can be included via
 function of the 50\% and 95\% values. This is similar to length- or size-based
 selectivity in fisheries, and is parameterized by the points at which f(x) =
 0.5 or 0.95. See the
-\href{https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html}{threshold vignette}.
+\href{https://sdmTMB.github.io/sdmTMB/articles/threshold-models.html}{threshold vignette}.
 
 Note that only a single threshold covariate can be included and the same covariate
 is included in both components for the delta families.
@@ -286,7 +286,7 @@ penalties and look at the output of \code{print(your_model)} or \code{tidy(your_
 or fit the model with \code{do_fit = FALSE} and inspect
 \code{head(your_model$tmb_data$X_ij[[1]])} if you want to see how the formula is
 translated to the fixed effect model matrix. Also see the
-\href{https://pbs-assess.github.io/sdmTMB/articles/bayesian.html}{Bayesian vignette}.
+\href{https://sdmTMB.github.io/sdmTMB/articles/bayesian.html}{Bayesian vignette}.
 
 \strong{Delta/hurdle models}
 
@@ -313,14 +313,14 @@ of uncertainty on derived quantities such as an index of abundance with
 \code{\link[=get_index]{get_index()}} using the generalized delta method within TMB. Also, selected
 parameters can be shared across the models.
 
-See the \href{https://pbs-assess.github.io/sdmTMB/articles/delta-models.html}{delta-model vignette}.
+See the \href{https://sdmTMB.github.io/sdmTMB/articles/delta-models.html}{delta-model vignette}.
 
 \strong{Index standardization}
 
 For index standardization, you may wish to include \code{0 + as.factor(year)}
 (or whatever the time column is called) in the formula. See a basic
 example of index standardization in the relevant
-\href{https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html}{package vignette}.
+\href{https://sdmTMB.github.io/sdmTMB/articles/index-standardization.html}{package vignette}.
 You will need to specify the \code{time} argument. See \code{\link[=get_index]{get_index()}}.
 }
 \examples{

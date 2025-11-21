@@ -218,7 +218,7 @@ test_that("Predictions on the original data set as `newdata`` return the same pr
 test_that("poly() works on newdata", {
   skip_on_cran()
 
-  # https://github.com/pbs-assess/sdmTMB/issues/77
+  # https://github.com/sdmTMB/sdmTMB/issues/77
   d <- pcod_2011
   mesh <- make_mesh(d, c("X", "Y"), cutoff = 20)
   m <- sdmTMB(

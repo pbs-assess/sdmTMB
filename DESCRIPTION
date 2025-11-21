@@ -58,8 +58,8 @@ Description: Implements spatial and spatiotemporal GLMMs (Generalized Linear
     See Anderson et al. (2024) <doi:10.1101/2022.03.24.485545>.
 License: GPL-3
 Copyright: inst/COPYRIGHTS
-URL: https://pbs-assess.github.io/sdmTMB/, https://github.com/pbs-assess/sdmTMB
-BugReports: https://github.com/pbs-assess/sdmTMB/issues
+URL: https://sdmTMB.github.io/sdmTMB/, https://github.com/sdmTMB/sdmTMB
+BugReports: https://github.com/sdmTMB/sdmTMB/issues
 Depends:
     R (>= 4.1.0)
 Imports:

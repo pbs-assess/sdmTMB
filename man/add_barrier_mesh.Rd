@@ -32,10 +32,10 @@ this scaling factor before applying the projection from \code{barrier_sf}.}
 }
 \value{
 Deprecated. See the
-\href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package.
+\href{https://github.com/sdmTMB/sdmTMBextra}{sdmTMBextra} package.
 }
 \description{
-Moved to the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
+Moved to the \href{https://github.com/sdmTMB/sdmTMBextra}{sdmTMBextra}
 package. Make sure to load \pkg{sdmTMBextra} \emph{after} \pkg{sdmTMB}.
 }
 \examples{

@@ -9,7 +9,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-**If the code in this vignette has not been evaluated, a rendered version is available on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html) under 'Articles'.**
+**If the code in this vignette has not been evaluated, a rendered version is available on the [documentation site](https://sdmTMB.github.io/sdmTMB/index.html) under 'Articles'.**
 
 # Residual checking with worked examples
 
@@ -95,14 +95,14 @@ qqnorm(rq_res);abline(0, 1)
 These use the randomized quantile approach from Dunn and Smyth (1996).
 They are also known as PIT (probability-integral-transform) residuals.
 They apply randomization to integer response values, transform the residuals using the distribution function (e.g., `pnorm()`) to reflect a uniform(0, 1) distribution, and transform those values such that they would be normal(0, 1) if consistent with the model.
-You can see the source code at <https://github.com/pbs-assess/sdmTMB/blob/master/R/residuals.R>
+You can see the source code at <https://github.com/sdmTMB/sdmTMB/blob/master/R/residuals.R>
 
 We can see here that there are likely issues with the Poisson model in the tails.
 
 ## MCMC-based randomized-quantile residuals
 
 The above approach assumes an observation of the random effects can be approximated by a multivariate normal distribution. If we want to relax that assumption, we can sample the random effects with MCMC with the fixed effects held at their MLEs.
-We do this with the `sdmTMBextra::predict_mle_mcmc()` function in the [sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra).
+We do this with the `sdmTMBextra::predict_mle_mcmc()` function in the [sdmTMBextra](https://github.com/sdmTMB/sdmTMBextra).
 
 ```{r}
 set.seed(123)

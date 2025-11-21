@@ -81,7 +81,7 @@ NULL
 #'   random field is assumed to have a mean of 0. If a (scaled) time column is
 #'   used, it will represent a local-time-trend model. See
 #'   \doi{10.1111/ecog.05176} and the [spatial trends
-#'   vignette](https://pbs-assess.github.io/sdmTMB/articles/spatial-trend-models.html).
+#'   vignette](https://sdmTMB.github.io/sdmTMB/articles/spatial-trend-models.html).
 #'   Note this predictor should usually be centered to have mean zero and have a
 #'   standard deviation of approximately 1.
 #'   **The spatial intercept is controlled by the `spatial` argument**; therefore,
@@ -180,7 +180,7 @@ NULL
 #'
 #' **Model description**
 #'
-#' See the [model description](https://pbs-assess.github.io/sdmTMB/articles/model-description.html)
+#' See the [model description](https://sdmTMB.github.io/sdmTMB/articles/model-description.html)
 #' vignette or the relevant appendix of the preprint on sdmTMB:
 #' \doi{10.1101/2022.03.24.485545}
 #'
@@ -220,7 +220,7 @@ NULL
 #' function of the 50% and 95% values. This is similar to length- or size-based
 #' selectivity in fisheries, and is parameterized by the points at which f(x) =
 #' 0.5 or 0.95. See the
-#' [threshold vignette](https://pbs-assess.github.io/sdmTMB/articles/threshold-models.html).
+#' [threshold vignette](https://sdmTMB.github.io/sdmTMB/articles/threshold-models.html).
 #'
 #' Note that only a single threshold covariate can be included and the same covariate
 #' is included in both components for the delta families.
@@ -253,7 +253,7 @@ NULL
 #' or fit the model with `do_fit = FALSE` and inspect
 #' `head(your_model$tmb_data$X_ij[[1]])` if you want to see how the formula is
 #' translated to the fixed effect model matrix. Also see the
-#' [Bayesian vignette](https://pbs-assess.github.io/sdmTMB/articles/bayesian.html).
+#' [Bayesian vignette](https://sdmTMB.github.io/sdmTMB/articles/bayesian.html).
 #'
 #' **Delta/hurdle models**
 #'
@@ -280,14 +280,14 @@ NULL
 #' [get_index()] using the generalized delta method within TMB. Also, selected
 #' parameters can be shared across the models.
 #'
-#' See the [delta-model vignette](https://pbs-assess.github.io/sdmTMB/articles/delta-models.html).
+#' See the [delta-model vignette](https://sdmTMB.github.io/sdmTMB/articles/delta-models.html).
 #'
 #' **Index standardization**
 #'
 #' For index standardization, you may wish to include `0 + as.factor(year)`
 #' (or whatever the time column is called) in the formula. See a basic
 #' example of index standardization in the relevant
-#' [package vignette](https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html).
+#' [package vignette](https://sdmTMB.github.io/sdmTMB/articles/index-standardization.html).
 #' You will need to specify the `time` argument. See [get_index()].
 #'
 #' @references
@@ -742,7 +742,7 @@ sdmTMB <- function(
       x <- unlist(lapply(list(formula), \(x) attr(stats::terms(x), "term.labels")))
       xf <- x[grep("factor\\(", x)]
       if (any(c(grep(time, xf), grep(paste0("^", time, "$"), x)))) {
-        cli::cli_warn("Detected potential formula-time column clash. E.g., assuming 'year' is your time column: `formula = ... + factor(year)` combined with `time = 'year'`, and 'extra_time' specified. This can produce a non-identiable model because extra factor levels for the missing time slices will be created. To avoid this, rename your factor time column used in your formula. E.g. create a new column 'year_factor' in your data and use that in the formula. See issue https://github.com/pbs-assess/sdmTMB/issues/320.")
+        cli::cli_warn("Detected potential formula-time column clash. E.g., assuming 'year' is your time column: `formula = ... + factor(year)` combined with `time = 'year'`, and 'extra_time' specified. This can produce a non-identiable model because extra factor levels for the missing time slices will be created. To avoid this, rename your factor time column used in your formula. E.g. create a new column 'year_factor' in your data and use that in the formula. See issue https://github.com/sdmTMB/sdmTMB/issues/320.")
       }
     }
   }
@@ -994,7 +994,7 @@ sdmTMB <- function(
           weights <- rep(1, length(y_i))
         }
       }
-    } # https://github.com/pbs-assess/sdmTMB/issues/172
+    } # https://github.com/sdmTMB/sdmTMB/issues/172
     if (is.logical(y_i)) {
       msg <- paste0(
         "We recommend against using `TRUE`/`FALSE` ",

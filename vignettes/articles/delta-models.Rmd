@@ -9,7 +9,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-**If the code in this vignette has not been evaluated, a rendered version is available on the [documentation site](https://pbs-assess.github.io/sdmTMB/index.html) under 'Articles'.**
+**If the code in this vignette has not been evaluated, a rendered version is available on the [documentation site](https://sdmTMB.github.io/sdmTMB/index.html) under 'Articles'.**
 
 ```{r setup, include = FALSE, cache=FALSE}
 dplyr_installed <- require("dplyr", quietly = TRUE)
@@ -47,7 +47,7 @@ Here and with other delta models, the `link1` and `link2` can be omitted and lef
 2. Delta-lognormal: `family = delta_lognormal()`.
 This fits a binomial presence-absence model (i.e., `binomial(link = "logit")`) and then a model for the positive catches only with a lognormal observation distribution and a log link (i.e., `lognormal(link = "log")`
 
-3. Poisson-link delta-Gamma or delta-lognormal. See the [Poisson-link delta model vignette](https://pbs-assess.github.io/sdmTMB/articles/poisson-link.html).
+3. Poisson-link delta-Gamma or delta-lognormal. See the [Poisson-link delta model vignette](https://sdmTMB.github.io/sdmTMB/articles/poisson-link.html).
 
 4. Delta-truncated-negative-binomial: `family = delta_truncated_nbinom1()` or `family = delta_truncated_nbinom2()`.
 This fits a binomial presence-absence model (`binomial(link = "logit")`) and a `truncated_nbinom1(link = "log")` or `truncated_nbinom1(link = "log")` distribution for positive catches.
@@ -202,14 +202,14 @@ str(p)
 We can use predictions from the built-in delta model (making sure that `return_tmb_object=TRUE`) to get the index values using the `get_index()` function.
 This can be used with predictions that include both the first and second models (i.e., using the default and specifying no `model` argument) or with predictions generated using `model=NA`.
 The `get_index()` function will automatically combine predictions from the first and second model in calculating the index values.
-For more on modelling for the purposes of creating an index see the vignette on [Index standardization with sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/index-standardization.html).
+For more on modelling for the purposes of creating an index see the vignette on [Index standardization with sdmTMB](https://sdmTMB.github.io/sdmTMB/articles/index-standardization.html).
 
 ```{r, message=FALSE, warning=FALSE, eval=FALSE}
 p2 <- predict(fit_dg, newdata = grid_yrs, return_tmb_object = TRUE)
 ind_dg <- get_index(p2, bias_correct = FALSE)
 ```
 
-We can plot conditional effects of covariates (such as depth in the example model) using the package `visreg` by specifying each model component with `model=1` for the presence-absence model or `model=2` for the positive catch model. Currently, plotting effects of built-in delta models with `ggeffects` is not supported. See the vignette on using [visreg](https://pbs-assess.github.io/sdmTMB/articles/visreg.html) with sdmTMB for more information.
+We can plot conditional effects of covariates (such as depth in the example model) using the package `visreg` by specifying each model component with `model=1` for the presence-absence model or `model=2` for the positive catch model. Currently, plotting effects of built-in delta models with `ggeffects` is not supported. See the vignette on using [visreg](https://sdmTMB.github.io/sdmTMB/articles/visreg.html) with sdmTMB for more information.
 
 ```{r}
 visreg_delta(fit_dg, xvar = "depth", model = 1, gg = TRUE)
@@ -258,7 +258,7 @@ mesh2 <- make_mesh(dat2,
 )
 ```
 
-This delta-gamma model is similar to the Tweedie model in the [Intro to modelling with sdmTMB](https://pbs-assess.github.io/sdmTMB/articles/basic-intro.html) vignette, except that we will use `s()` for the depth effect.
+This delta-gamma model is similar to the Tweedie model in the [Intro to modelling with sdmTMB](https://sdmTMB.github.io/sdmTMB/articles/basic-intro.html) vignette, except that we will use `s()` for the depth effect.
 
 ```{r model1, warning=FALSE}
 m1 <- sdmTMB(

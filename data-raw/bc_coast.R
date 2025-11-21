@@ -13,7 +13,7 @@ sf::st_crs(bc_coast) <- 4326 # 'WGS84'; necessary on some installs
 bc_coast <- sf::st_transform(bc_coast, crs_utm9)
 
 # avoid Latin-1 NOTEs
-# https://github.com/pbs-assess/sdmTMB/issues/158
+# https://github.com/sdmTMB/sdmTMB/issues/158
 bc_coast$name_es <- "Canada"
 bc_coast$name_pt <- "Canada"
 

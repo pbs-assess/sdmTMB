@@ -43,7 +43,7 @@
   quantile estimation and simulation from the joint precision matrix for uncertainty
   quantification. Implements a similar approach to VAST range edge calculations
   following Fredston et al. (2021) <https://doi.org/10.1111/gcb.15614>.
-  See the new range edge vignette at <https://pbs-assess.github.io/sdmTMB/articles/>
+  See the new range edge vignette at <https://sdmTMB.github.io/sdmTMB/articles/>
 
 * Add new function `cv_to_waywiser()` to convert cross-validation results to sf
   format for use with the waywiser package. This enables multi-scale spatial
@@ -238,11 +238,11 @@
 ## New vignettes/articles
 
 * Add forecasting and presence-only article vignettes. See
-  <https://pbs-assess.github.io/sdmTMB/articles/>
+  <https://sdmTMB.github.io/sdmTMB/articles/>
 
 * Add vignette on multispecies models with sdmTMB (or any case where one wants
   additional spatial and or spatiotemporal fields by some group).
-  See <https://pbs-assess.github.io/sdmTMB/articles/>
+  See <https://sdmTMB.github.io/sdmTMB/articles/>
 
 ## Minor improvements and fixes
 
@@ -347,7 +347,7 @@
 # sdmTMB 0.5.0
 
 * Overhaul residuals vignette ('article') 
-  <https://pbs-assess.github.io/sdmTMB/articles/residual-checking.html>
+  <https://sdmTMB.github.io/sdmTMB/articles/residual-checking.html>
   including brief intros to randomized quantile residuals, simulation-based
   residuals, 'one-sample' residuals, and uniform vs. Gaussian residuals.
 
@@ -472,7 +472,7 @@
 # sdmTMB 0.4.0
 
 * Move add_barrier_mesh() to sdmTMBextra to avoid final INLA dependency.
-  https://github.com/pbs-assess/sdmTMBextra
+  https://github.com/sdmTMB/sdmTMBextra
 
 * Switch to using the new fmesher package for all mesh/SPDE calculations. INLA
   is no longer a dependency.
@@ -507,7 +507,7 @@
 
 * Create the sdmTMBextra package to remove rstan/tmbstan helpers, which
   were causing memory sanitizer errors on CRAN.
-  https://github.com/pbs-assess/sdmTMBextra
+  https://github.com/sdmTMB/sdmTMBextra
   
 * The following functions are affected:
 
@@ -520,7 +520,7 @@
     `residuals(..., type = "mle-mcmc")`.
 
 * Move `dharma_residuals()` to 
-  [sdmTMBextra](https://github.com/pbs-assess/sdmTMBextra) to reduce heavy
+  [sdmTMBextra](https://github.com/sdmTMB/sdmTMBextra) to reduce heavy
   dependencies.
   
 * See examples in the Bayesian and residuals vignettes or in the help files for
@@ -623,7 +623,7 @@ is now `plot_anisotropy2()`.
 # sdmTMB 0.1.0
 
 * ADREPORT several parameters in natural space.
-  <https://github.com/pbs-assess/sdmTMB/discussions/113>
+  <https://github.com/sdmTMB/sdmTMB/discussions/113>
 
 * Improve robustness of model `print()` to more esoteric mgcv smoothers.
 

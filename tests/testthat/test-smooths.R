@@ -1,5 +1,5 @@
 
-# https://github.com/pbs-assess/sdmTMB/issues/60
+# https://github.com/sdmTMB/sdmTMB/issues/60
 test_that("smoothers with 'bs = re' error", {
   skip_on_cran()
   expect_error({

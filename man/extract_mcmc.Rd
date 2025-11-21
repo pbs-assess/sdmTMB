@@ -7,14 +7,14 @@
 extract_mcmc(object = deprecated())
 }
 \arguments{
-\item{object}{\strong{Deprecated} See the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package. Make sure to load \pkg{sdmTMBextra} \emph{after} \pkg{sdmTMB}.}
+\item{object}{\strong{Deprecated} See the \href{https://github.com/sdmTMB/sdmTMBextra}{sdmTMBextra} package. Make sure to load \pkg{sdmTMBextra} \emph{after} \pkg{sdmTMB}.}
 }
 \value{
 Deprecated. See the
-\href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra} package.
+\href{https://github.com/sdmTMB/sdmTMBextra}{sdmTMBextra} package.
 }
 \description{
-Moved to the \href{https://github.com/pbs-assess/sdmTMBextra}{sdmTMBextra}
+Moved to the \href{https://github.com/sdmTMB/sdmTMBextra}{sdmTMBextra}
 package
 }
 \examples{

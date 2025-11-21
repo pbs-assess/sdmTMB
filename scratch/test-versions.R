@@ -5,7 +5,7 @@ dir.create("scratch/version-checks/", showWarnings = FALSE)
 rstudioapi::restartSession()
 f <- "scratch/version-checks/fit-0.4.3.9002.rds"
 if (!file.exists(f)) {
-  remotes::install_github("pbs-assess/sdmTMB", ref = "96e5a92c") # before gengamma_Q
+  remotes::install_github("sdmTMB/sdmTMB", ref = "96e5a92c") # before gengamma_Q
   library(sdmTMB)
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
   pcod$os <- rep(log(0.01), nrow(pcod)) # offset
@@ -27,7 +27,7 @@ if (!file.exists(f)) {
 rstudioapi::restartSession()
 f <- "scratch/version-checks/fit-0.4.3.9003.rds"
 if (!file.exists(f)) {
-  remotes::install_github("pbs-assess/sdmTMB", ref = "031116ee")
+  remotes::install_github("sdmTMB/sdmTMB", ref = "031116ee")
   library(sdmTMB)
   mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 15)
   pcod$os <- rep(log(0.01), nrow(pcod)) # offset
