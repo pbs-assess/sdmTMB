@@ -71,17 +71,15 @@ This appendix uses the following notation conventions, which generally follow th
 
 -   Greek symbols for parameters,
 
--   the Latin/Roman alphabet for data (except $\mathbf{Q}$ and $\mathbf{H}$, which are used by convention),
+-   the Latin/Roman alphabet for data except for cases where another symbol is used by convention,
 
--   bold symbols for vectors or matrices (e.g., $\bomega$ is a vector and $\omega_{\s}$ is the value of $\bomega$ at point in space $\s$), with Latin symbols upright (e.g., $\mathbf{X}$, $\mathbf{Q}$),
+-   bold symbols for vectors or matrices (e.g., $\bomega$ is a vector and $\omega_{\s}$ is the value of $\bomega$ at point in space $\s$), with Latin/Roman symbols in non-italics (e.g., $\mathbf{X}$, $\mathbf{Q}$),
 
 -   $\phi$ for all distribution dispersion parameters for consistency with the code,
 
 -   $\mathbb{E}[y]$ to define the expected value (mean) of variable $y$,
 
 -   $\mathrm{Var}[y]$ to define the expected variance of the variable $y$,
-
--   subscripts and superscripts are placed outside bold commands (e.g., $\boldsymbol{\gamma}_{t}$ not $\boldsymbol{\gamma_t}$, and $\sigma_\alpha^2$ not $\sigma^2_\alpha$),
 
 -   a $^*$ superscript represents interpolated or projected values as opposed to values at knot locations (e.g., $\boldsymbol{\omega}$ vs. $\boldsymbol{\omega}^*$), and
 
@@ -95,22 +93,23 @@ The complete sdmTMB model can be written as
 
 $$
 \begin{aligned}
-\mathbb{E}[y_{\s,t}] &= \mu_{\s,t},\\
 \eta_{\s,t} &=
 \bX^{\RM{main}}_{\s,t} \bbeta +
 O_{\s,t} +
 \bZ_{g} \mathbf{b}_{g} +
 \bX^{\RM{tvc}}_{\s,t} \bgam_{t} +
-\bX^{\RM{svc}}_{\s,t} \zeta_{\s} +
+\bX^{\RM{svc}}_{\s,t} \bzeta_{\s} +
 \omega_{\s} +
 \epsilon_{\s,t},\\
 \mu_{\s,t} &= f^{-1} \left( \eta_{\s,t} \right),
+\mathbb{E}[y_{\s,t}] &= \mu_{\s,t},\\
 \end{aligned}
 $$
 
 where
 
 -   $y_{\s,t}$ represents the response data at point $\s$ and time $t$;
+-   $\eta$ represents the linear predictor (i.e., in link space)
 -   $\mu$ represents the conditional mean on the response/data scale (after applying the inverse link);
 -   $f$ represents a link function (e.g., log or logit) and $f^{-1}$ represents its inverse, and $\eta$ represents the linear predictor before applying $f^{-1}$;
 -   $\bX^{\RM{main}}$, $\bX^{\RM{tvc}}$, and $\bX^{\RM{svc}}$ represent design matrices (the superscript identifiers 'main' = main effects, 'tvc' = time varying coefficients, and 'svc' = spatially varying coefficients);
@@ -119,8 +118,8 @@ where
 -   $\bZ_{g}$ represents the random-effect design row(s) for group $g$ (a subset of the matrix $\bZ$) corresponding to $\mathbf{b}_{g}$; these random effects enter on the linear predictor scale; the scalar special case is a random intercept $\alpha_{g}\sim \RM{N}(0,\sigma_\alpha^2)$, and more generally random slopes and intercepts are vector-valued with full covariance as described below;
 -   $\bgam_{t}$ represents a vector of time-varying coefficients, where each coefficient $\gamma_{p,t}$ can follow a random walk or AR(1) process;
 -   $\bzeta_{\s}$ represents a vector of spatially varying coefficients (random fields), where each coefficient $\zeta_{l,\s} \sim \RM{MVN}(\bs{0},\bSigma_{\zeta,l})$;
--   $\omega_{\s}$ represents a spatial component (a random field), $\omega_{\s} \sim \RM{MVN}(\bs{0},\bSigma_\omega)$ with Matérn covariance built from the mesh; and
--   $\epsilon_{\s,t}$ represents a spatiotemporal component (a random field), $\epsilon_{\s,t} \sim \RM{MVN}(\bs{0},\bSigma_{\epsilon})$ with Matérn covariance over space and temporal evolution as specified.
+-   $\omega_{\s}$ represents a spatial component (a Gaussian Markov random field, GMRF), $\omega_{\s} \sim \RM{MVN}(\bs{0},\bSigma_\omega)$ with Matérn covariance built from the mesh; and
+-   $\epsilon_{\s,t}$ represents a spatiotemporal component (a GMRF), $\epsilon_{\s,t} \sim \RM{MVN}(\bs{0},\bSigma_{\epsilon})$ with Matérn covariance over space and temporal evolution as specified.
 
 A single sdmTMB model will rarely, if ever, contain all of the above components.
 Next, we will split the model to describe the various parts in more detail using '$\ldots$' to represent the other optional components.
@@ -129,7 +128,7 @@ Next, we will split the model to describe the various parts in more detail using
 
 $$
 \begin{aligned}
-\mu_{\s,t} &= f^{-1} \left( \bX^{\RM{main}}_{\s,t} \bbeta \ldots \right)
+\mu_{\s,t} &= f^{-1} \left( \bX^{\RM{main}}_{\s,t} \bbeta + \ldots \right)
 \end{aligned}
 $$
 
@@ -226,7 +225,7 @@ They are defined as
 
 $$
 \begin{aligned}
-\mu_{\s,t} &= f^{-1} \left( \ldots + \delta_{\s,t} \ldots \right),\\
+\mu_{\s,t} &= f^{-1} \left( \ldots + \delta_{\s,t} + \ldots \right),\\
 \bdelta_{t=1} &\sim \RM{MVNormal} (\bs{0}, \bSigma_{\epsilon}),\\
 \bdelta_{t>1} &= \rho \bdelta_{t-1} + \sqrt{1 - \rho^2} \beps_{t},  \:
 \beps_{t} \sim \RM{MVNormal} \left(\bs{0}, \bSigma_{\epsilon} \right),
