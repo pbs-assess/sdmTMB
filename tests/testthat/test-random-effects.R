@@ -262,11 +262,6 @@ test_that("Model with random intercepts fits appropriately.", {
     sdmTMB_re$re_b_pars[,1],
     tolerance = 1e-5
   )
-#
-  # predicting with new levels throws error for now:
-  m <- sdmTMB(data = s, formula = observed ~ 1 + (1 | g), spatial = "off")
-  nd <- data.frame(g = factor(c(1, 2, 3, 800)), observed=1)
-  expect_error(predict(m, newdata = nd), regexp = "Extra")
 
   # predicting with missing factors works with the right re_form_iid
   m <- sdmTMB(data = s, formula = observed ~ 1 + (1 | g), spatial = "off")

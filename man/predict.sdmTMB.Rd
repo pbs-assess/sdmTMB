@@ -11,6 +11,7 @@
   se_fit = FALSE,
   re_form = NULL,
   re_form_iid = NULL,
+  allow.new.levels = NULL,
   nsim = 0,
   sims_var = "est",
   model = c(NA, 1, 2),
@@ -50,6 +51,15 @@ Likely to be used in conjunction with \code{se_fit = TRUE}. This does not affect
 predictions. \code{~0} or \code{NA} for population-level predictions. No other
 options (e.g., some but not all random intercepts) are implemented yet.
 Only affects predictions with \code{newdata}. This \emph{does} affects \code{\link[=get_index]{get_index()}}.}
+
+\item{allow.new.levels}{Logical or \code{NULL}. Follows the same behavior as
+glmmTMB's \code{allow.new.levels} and allows predictions for previously
+unobserved levels in random effect grouping variables. If \code{NULL} (default),
+new levels are allowed when \code{re_form_iid = NA} (population-level
+predictions) and a warning is issued otherwise. If \code{TRUE}, new levels are
+explicitly allowed. If \code{FALSE}, a warning is issued if new levels are
+found. New levels are always treated as population-level predictions
+(random effects = 0). .}
 
 \item{nsim}{If \verb{> 0}, simulate from the joint precision
 matrix with \code{nsim} draws. Returns a matrix of \code{nrow(data)} by \code{nsim}
