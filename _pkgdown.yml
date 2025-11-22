@@ -6,36 +6,36 @@ articles:
 - title: Getting Started
   contents:
   - model-description
-  - basic-intro
+  - articles/basic-intro
 
 - title: Model Types and Families
   contents:
-  - delta-models
-  - poisson-link
-  - threshold-models
-  - zoib
-  - multispecies
-  - age-composition
-  - presence-only
+  - articles/delta-models
+  - articles/poisson-link
+  - articles/threshold-models
+  - articles/zoib
+  - articles/multispecies
+  - articles/age-composition
+  - articles/presence-only
 
 - title: Model Estimation and Inference
   contents:
-  - residual-checking
-  - cross-validation
-  - bayesian
+  - articles/residual-checking
+  - articles/cross-validation
+  - articles/bayesian
 
 - title: Predictions and Applications
   contents:
-  - index-standardization
-  - forecasting
-  - spatial-trend-models
-  - range-edges
+  - articles/index-standardization
+  - articles/forecasting
+  - articles/spatial-trend-models
+  - articles/range-edges
 
 - title: Visualization
   contents:
-  - visreg
-  - ggeffects
-  - pretty-plots
+  - articles/visreg
+  - articles/ggeffects
+  - articles/pretty-plots
 
 reference:
 - title: internal
