@@ -196,7 +196,7 @@ Look for straight QQ lines and no large spatial patches of residuals; strong spa
 
 We can also use simulation-based randomized quantile residuals.
 
-```{r residuals, fig.width = 8}
+```{r residuals-dharma, fig.width = 8}
 set.seed(19283)
 s <- simulate(m3, nsim = 300, type = "mle-mvn")
 dharma_residuals(s, m3)
