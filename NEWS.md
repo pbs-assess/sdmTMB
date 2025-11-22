@@ -1,6 +1,27 @@
-# sdmTMB (development version)
+# sdmTMB 0.8.0
 
 ## New features
+
+* `sdmTMB_cv()` now supports the `weights` argument. User-supplied weights are
+  combined with the internal fold-assignment mechanism (held-out data are
+  assigned weight 0). Weights must be positive (> 0). #486
+
+* Add experimental `collapse_spatial_variance` option to `sdmTMBcontrol()` to
+  automatically detect and turn off spatial and/or spatiotemporal random fields
+  when their SD parameters are estimated to be very small (below a threshold).
+  When enabled, the model will automatically refit with the appropriate fields
+  turned off if SD parameters fall below `collapse_threshold` (default 0.01).
+  This can help avoid boundary issues and improve model stability when random
+  fields are not needed. Set to `FALSE` by default. #263
+
+* Add new experimental function `get_range_edge()` to calculate range edges as
+  density-weighted quantiles along a spatial axis (e.g., latitude, coastal distance).
+  Range edges are calculated as positions where cumulative density equals specified
+  quantiles. Uses linear interpolation for accurate
+  quantile estimation and simulation from the joint precision matrix for uncertainty
+  quantification. Implements a similar approach to VAST range edge calculations
+  following Fredston et al. (2021) <https://doi.org/10.1111/gcb.15614>.
+  See the new range edge vignette at <https://sdmTMB.github.io/sdmTMB/articles/>
 
 * The Student-t degrees of freedom parameter is now
   estimated by default in `student()`. Previously it was fixed at 3. To fix it
@@ -14,10 +35,6 @@
   See `cv_deviance_resid` column in the `data` element of the output of
   `sdmTMB_cv()`.
 
-* `sdmTMB_cv()` now supports the `weights` argument. User-supplied weights are
-  combined with the internal fold-assignment mechanism (held-out data are
-  assigned weight 0). Weights must be positive (> 0). #486
-
 * Add `save_models` argument to `sdmTMB_cv()` (defaults to `TRUE`). Setting
   `save_models = FALSE` prevents storing fitted model objects for each fold,
   which can substantially reduce memory usage for large datasets or many folds.
@@ -25,25 +42,8 @@
   will error with informative messages. Essential CV metrics (predictions, log
   likelihoods, deviance residuals, convergence info) remain available.
 
-* Add experimental `collapse_spatial_variance` option to `sdmTMBcontrol()` to
-  automatically detect and turn off spatial and/or spatiotemporal random fields
-  when their SD parameters are estimated to be very small (below a threshold).
-  When enabled, the model will automatically refit with the appropriate fields
-  turned off if SD parameters fall below `collapse_threshold` (default 0.01).
-  This can help avoid boundary issues and improve model stability when random
-  fields are not needed. Set to `FALSE` by default. #263
-
 * Extend `sdmTMB_simulate()` to support time-varying effects with vector `sigma_V`
   inputs and AR1 correlation (`rho_time`). #447
-
-* Add new experimental function `get_range_edge()` to calculate range edges as
-  density-weighted quantiles along a spatial axis (e.g., latitude, coastal distance).
-  Range edges are calculated as positions where cumulative density equals specified
-  quantiles. Uses linear interpolation for accurate
-  quantile estimation and simulation from the joint precision matrix for uncertainty
-  quantification. Implements a similar approach to VAST range edge calculations
-  following Fredston et al. (2021) <https://doi.org/10.1111/gcb.15614>.
-  See the new range edge vignette at <https://sdmTMB.github.io/sdmTMB/articles/>
 
 * Add new function `cv_to_waywiser()` to convert cross-validation results to sf
   format for use with the waywiser package. This enables multi-scale spatial
@@ -72,6 +72,11 @@
   Example: `emmeans(fit, ~ predictor, model = 2)`. #247 #249
 
 ## Minor improvements and fixes
+
+* **Fix barrier model implementation**. The SPDE input matrices for the barrier
+  model from INLA and INLAspacetime had changed. sdmTMB now appropriately
+  uses these new matrices and unit tests in sdmTMBextra should catch such a
+  change in the future. #457
 
 * Fix Student-t deviance residuals, which were incorrectly returning `NaN`s.
 
@@ -110,11 +115,6 @@
 * Fix issue with ggeffects with multiple smoothers + offsets. #450
 
 * Improve `t2()` printing and appearance in `tidy.sdmTMB()`. #415 #472
-
-* **Fix barrier model implementation**. The SPDE input matrices for the barrier
-  model from INLA and INLAspacetime had changed. sdmTMB now appropriately
-  uses these new matrices and unit tests in sdmTMBextra should catch such a
-  change in the future. #457
 
 * Fix `emmeans` support for models with smoothers (`s()` terms). Previously,
   `emmeans` would fail with "Non-conformable elements in reference grid" when
