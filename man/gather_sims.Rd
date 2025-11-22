@@ -5,16 +5,14 @@
 \alias{gather_sims}
 \title{Extract parameter simulations from the joint precision matrix}
 \usage{
-spread_sims(object, nsim = 200, n_sims = deprecated())
+spread_sims(object, nsim = 200)
 
-gather_sims(object, nsim = 200, n_sims = deprecated())
+gather_sims(object, nsim = 200)
 }
 \arguments{
 \item{object}{Output from \code{\link[=sdmTMB]{sdmTMB()}}.}
 
 \item{nsim}{The number of simulation draws.}
-
-\item{n_sims}{Deprecated: please use \code{nsim}.}
 }
 \value{
 A data frame. \code{gather_sims()} returns a long-format data frame:

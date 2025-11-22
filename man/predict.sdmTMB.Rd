@@ -19,9 +19,6 @@
   return_tmb_object = FALSE,
   return_tmb_report = FALSE,
   return_tmb_data = FALSE,
-  tmbstan_model = deprecated(),
-  sims = deprecated(),
-  area = deprecated(),
   ...
 )
 }
@@ -35,15 +32,16 @@ fitted data.}
 
 \item{type}{Should the \code{est} column be in link (default) or response space?}
 
-\item{se_fit}{Should standard errors on predictions at the new locations
-given by \code{newdata} be calculated? Warning: the current implementation can
-be slow for large data sets or high-resolution projections unless
-\code{re_form = NA} (omitting random fields). A faster option to approximate
-point-wise uncertainty is to use the \code{nsim} argument.}
+\item{se_fit}{Should standard errors on predictions be calculated? Warning:
+can be slow for large datasets or high-resolution projections when random
+fields are included. For faster uncertainty estimation, either use
+\code{re_form = NA} to exclude random fields or use the \code{nsim} argument to
+simulate from the joint precision matrix.}
 
-\item{re_form}{\code{NULL} to specify including all spatial/spatiotemporal random
-effects in predictions. \code{~0} or \code{NA} for population-level predictions.
-Likely to be used in conjunction with \code{se_fit = TRUE}. This does not affect
+\item{re_form}{\code{NULL} to include all spatial/spatiotemporal random fields in
+predictions. \code{~0} or \code{NA} for population-level predictions (predictions
+from fixed effects only, marginalizing over random fields). Often used with
+\code{se_fit = TRUE} to visualize marginal effects. Does not affect
 \code{\link[=get_index]{get_index()}} calculations.}
 
 \item{re_form_iid}{\code{NULL} to specify including all random intercepts in the
@@ -51,13 +49,13 @@ predictions. \code{~0} or \code{NA} for population-level predictions. No other
 options (e.g., some but not all random intercepts) are implemented yet.
 Only affects predictions with \code{newdata}. This \emph{does} affects \code{\link[=get_index]{get_index()}}.}
 
-\item{nsim}{If \verb{> 0}, simulate from the joint precision
-matrix with \code{nsim} draws. Returns a matrix of \code{nrow(data)} by \code{nsim}
-representing the estimates of the linear predictor (i.e., in link space).
-Can be useful for deriving uncertainty on predictions
-(e.g., \code{apply(x, 1, sd)}) or propagating uncertainty. This is currently
-the fastest way to characterize uncertainty on predictions in space with
-sdmTMB.}
+\item{nsim}{If \verb{> 0}, simulate from the joint precision matrix with \code{nsim}
+draws. Returns a matrix of \code{nrow(newdata)} by \code{nsim} with each column
+representing one draw of the linear predictor (in link space). Simulating
+from the joint precision matrix accounts for uncertainty in both fixed and
+random effects. Use this to derive uncertainty on predictions (e.g.,
+\code{apply(x, 1, sd)}) or propagate uncertainty to derived quantities. This is
+the fastest way to characterize spatial uncertainty with sdmTMB.}
 
 \item{sims_var}{Experimental: Which TMB reported variable from the model
 should be extracted from the joint precision matrix simulation draws?
@@ -65,12 +63,11 @@ Defaults to link-space predictions. Options include: \code{"omega_s"},
 \code{"zeta_s"}, \code{"epsilon_st"}, and \code{"est_rf"} (as described below).
 Other options will be passed verbatim.}
 
-\item{model}{Type of prediction if a delta/hurdle model \emph{and} \code{nsim > 0} or
-\code{mcmc_samples} is supplied: \code{NA} returns the combined prediction from both
-components on the link scale for the positive component; \code{1} or \code{2} return
-the first or second model component only on the link or response scale
-depending on the argument \code{type}. For regular prediction from delta models,
-both sets of predictions are returned.}
+\item{model}{Which component to predict from delta/hurdle models when \code{nsim > 0} or \code{mcmc_samples} is supplied. \code{NA} (default) returns the combined
+prediction from both components; \code{1} returns the binomial component only; \code{2}
+returns the positive component only. Predictions are on the link or response
+scale depending on \code{type}. For regular predictions (without simulation),
+both components are returned. See the \href{https://sdmTMB.github.io/sdmTMB/articles/delta-models.html}{delta-model vignette}.}
 
 \item{offset}{A numeric vector of optional offset values. If left at default
 \code{NULL}, the offset is implicitly left at 0.}
@@ -96,12 +93,6 @@ contents of each element is the output of the report for that sample.}
 \item{return_tmb_data}{Logical: return formatted data for TMB? Used
 internally.}
 
-\item{tmbstan_model}{Deprecated. See \code{mcmc_samples}.}
-
-\item{sims}{\strong{Deprecated}. Please use \code{nsim} instead.}
-
-\item{area}{\strong{Deprecated}. Please use \code{area} in \code{\link[=get_index]{get_index()}}.}
-
 \item{...}{Not implemented.}
 }
 \value{
@@ -109,13 +100,12 @@ If \code{return_tmb_object = FALSE} (and \code{nsim = 0} and \code{mcmc_samples 
 
 A data frame:
 \itemize{
-\item \code{est}: Estimate in link space (everything is in link space)
-\item \code{est_non_rf}: Estimate from everything that isn't a random field
+\item \code{est}: Estimate in link space (everything included)
+\item \code{est_non_rf}: Estimate from everything except random fields (fixed effects, random intercepts, time-varying effects, etc.)
 \item \code{est_rf}: Estimate from all random fields combined
-\item \code{omega_s}: Spatial (intercept) random field that is constant through time
-\item \code{zeta_s}: Spatial slope random field
-\item \code{epsilon_st}: Spatiotemporal (intercept) random fields, could be
-off (zero), IID, AR1, or random walk
+\item \code{omega_s}: Spatial random field (models consistent spatial patterns)
+\item \code{zeta_s}: Spatially varying coefficient field (models how effects vary across space)
+\item \code{epsilon_st}: Spatiotemporal random field (models spatial patterns that vary over time)
 }
 
 If \code{return_tmb_object = TRUE} (and \code{nsim = 0} and \code{mcmc_samples = NULL}):

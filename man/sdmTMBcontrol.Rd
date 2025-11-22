@@ -11,10 +11,8 @@ sdmTMBcontrol(
   nlminb_loops = 1L,
   newton_loops = 1L,
   getsd = TRUE,
-  mgcv = deprecated(),
   quadratic_roots = FALSE,
   start = NULL,
-  map_rf = deprecated(),
   map = NULL,
   lower = NULL,
   upper = NULL,
@@ -54,8 +52,6 @@ estimates.}
 
 \item{getsd}{Logical indicating whether to call \code{\link[TMB:sdreport]{TMB::sdreport()}}.}
 
-\item{mgcv}{\strong{Deprecated} Parse the formula with \code{\link[mgcv:gam]{mgcv::gam()}}?}
-
 \item{quadratic_roots}{Experimental feature for internal use right now; may
 be moved to a branch. Logical: should quadratic roots be calculated? Note:
 on the sdmTMB side, the first two coefficients are used to generate the
@@ -68,9 +64,6 @@ For example, \code{formula = cpue ~ 0 + depth + depth2 + as.factor(year)}.}
 can see the necessary structure by fitting the model once and inspecting
 \code{your_model$tmb_obj$env$parList()}. Elements of \code{start} that are specified
 will replace the default starting values.}
-
-\item{map_rf}{\strong{Deprecated} use \verb{spatial = 'off', spatiotemporal = 'off'} in
-\code{\link[=sdmTMB]{sdmTMB()}}.}
 
 \item{map}{A named list with factor \code{NA}s specifying parameter values that
 should be fixed at a constant value. See the documentation in

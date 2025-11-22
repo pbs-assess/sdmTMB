@@ -4,8 +4,12 @@ NULL
 #' Fit a spatial or spatiotemporal GLMM with TMB
 #'
 #' Fit a spatial or spatiotemporal generalized linear mixed effects model (GLMM)
-#' with the TMB (Template Model Builder) R package and the SPDE (stochastic
-#' partial differential equation) approximation to Gaussian random fields.
+#' with the TMB (Template Model Builder) R package. Spatial and spatiotemporal
+#' random fields are approximated using the SPDE (stochastic partial differential
+#' equation) approach, which allows for efficient modeling of data that are
+#' correlated in space and/or time. See the [model description
+#' vignette](https://sdmTMB.github.io/sdmTMB/articles/model-description.html) for
+#' details.
 #'
 #' @param formula Model formula. IID random intercepts and slopes are possible using
 #'   \pkg{lme4} syntax, e.g., `+ (1 | g)` or `+ (0 + depth | g)` or `+ (1 + depth | g)` where `g` is a column of class
@@ -31,14 +35,16 @@ NULL
 #'   \code{\link[sdmTMB:families]{student()}},
 #'   \code{\link[sdmTMB:families]{tweedie()}}, and
 #'   \code{\link[sdmTMB:families]{gengamma()}}.
-#'   Supports the delta/hurdle models:
+#'   Delta/hurdle models (for zero-inflated data) include:
 #'   \code{\link[sdmTMB:families]{delta_beta()}},
 #'   \code{\link[sdmTMB:families]{delta_gamma()}},
 #'   \code{\link[sdmTMB:families]{delta_gamma_mix()}},
 #'   \code{\link[sdmTMB:families]{delta_lognormal_mix()}},
 #'   \code{\link[sdmTMB:families]{delta_lognormal()}}, and
-#'   \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}},
-#'   For binomial family options, see 'Binomial families' in the Details
+#'   \code{\link[sdmTMB:families]{delta_truncated_nbinom2()}}.
+#'   See the [delta-model
+#'   vignette](https://sdmTMB.github.io/sdmTMB/articles/delta-models.html) for
+#'   details. For binomial family options, see 'Binomial families' in the Details
 #'   section below.
 #' @param spatial Estimate spatial random fields? Options are `'on'` / `'off'`
 #'   or `TRUE` / `FALSE`. Optionally, a list for delta models, e.g. `list('on',
@@ -47,15 +53,15 @@ NULL
 #'   (independent and identically distributed; default), stationary `'ar1'`
 #'   (first-order autoregressive), a random walk (`'rw'`), or fixed at 0
 #'   `'off'`. Will be set to `'off'` if `time = NULL`. If a delta model, can be
-#'   a list. E.g., `list('off', 'ar1')`. Note that the spatiotemporal standard
-#'   deviation represents the marginal steady-state standard deviation of the
-#'   process in the case of the AR1. I.e., it is scaled according to the
-#'   correlation. See the [TMB
-#'   documentation](https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html).
-#'   If the AR1 correlation coefficient (rho) is estimated close to 1,
-#'   say > 0.99, then you may wish to switch to the random walk `'rw'`.
-#'   Capitalization is ignored. `TRUE` gets converted to `'iid'` and `FALSE`
-#'   gets converted to `'off'`.
+#'   a list. E.g., `list('off', 'ar1')`. Guidance: Use `'iid'` if temporal
+#'   correlation is negligible or already accounted for in fixed effects; `'ar1'`
+#'   if correlation between consecutive time steps decays gradually; `'rw'` if
+#'   changes between time steps are cumulative (each step builds on the last). If
+#'   the AR1 correlation coefficient (rho) is estimated close to 1 (say > 0.99),
+#'   consider switching to `'rw'`. See the [model description
+#'   vignette](https://sdmTMB.github.io/sdmTMB/articles/model-description.html) for
+#'   mathematical details. Capitalization is ignored. `TRUE` gets converted to
+#'   `'iid'` and `FALSE` gets converted to `'off'`.
 #' @param share_range Logical: estimate a shared spatial and spatiotemporal
 #'   range parameter (`TRUE`, default) or independent range parameters
 #'   (`FALSE`). If a delta model, can be a list. E.g., `list(TRUE, FALSE)`.
@@ -65,31 +71,30 @@ NULL
 #'   for warnings about modelling the first time step. Structure shared in
 #'   delta models.
 #' @param time_varying_type Type of time-varying process to apply to
-#'   `time_varying` formula. `'rw'` indicates a random walk with the first
-#'   time step estimated independently (included for legacy reasons), `'rw0'`
-#'   indicates a random walk with the first time step estimated with
-#'   a mean-zero normal prior, `'ar1'` indicates a [stationary first-order
-#'   autoregressive process](https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html)
-#'   with the first time step estimated with a mean-zero prior. In the case of
-#'   `'rw'`, be careful not to include covariates (including the intercept) in
-#'   both the main and time-varying formula since the first time step is
-#'   estimated independently. I.e., in this case, at least one should have `~
-#'   0` or `~ -1`. Structure shared in delta models.
+#'   `time_varying` formula. Options: `'rw'` (random walk, default), `'rw0'`
+#'   (random walk with mean-zero prior on first time step), or `'ar1'`
+#'   (autoregressive, for coefficients that fluctuate around a mean). For `'rw0'`
+#'   and `'ar1'`, the coefficient starts at zero in the first time step. For
+#'   `'rw'` (default), the first time step is estimated separately—in this case,
+#'   avoid including the same covariates in both `formula` and `time_varying` to
+#'   prevent non-identifiability (use `~ 0` or `~ -1` in at least one). Structure
+#'   shared in delta models.
 #' @param spatial_varying An optional one-sided formula of coefficients that
-#'   should vary in space as random fields. Note that you likely want to include
-#'   a fixed effect for the same variable to improve interpretability since the
-#'   random field is assumed to have a mean of 0. If a (scaled) time column is
-#'   used, it will represent a local-time-trend model. See
+#'   should vary in space as random fields. Allows the effect of a covariate to
+#'   differ spatially. You likely want to include the same variable as a fixed
+#'   effect in `formula` to estimate the average effect—the spatial field then
+#'   represents deviations from that average (since it has mean zero). For example,
+#'   use `formula = y ~ depth` and `spatial_varying = ~ 0 + depth` to model an
+#'   average depth effect plus spatially varying deviations. If a (scaled) time
+#'   column is used, this creates a local-time-trend model. See
 #'   \doi{10.1111/ecog.05176} and the [spatial trends
 #'   vignette](https://sdmTMB.github.io/sdmTMB/articles/spatial-trend-models.html).
-#'   Note this predictor should usually be centered to have mean zero and have a
-#'   standard deviation of approximately 1.
-#'   **The spatial intercept is controlled by the `spatial` argument**; therefore,
-#'   include or exclude the spatial intercept by setting `spatial = 'on'` or
-#'   `'off'`. The only time when it matters whether `spatial_varying` excludes
-#'   an intercept is in the case of factor predictors. In this case, if
-#'   `spatial_varying` excludes the intercept (`~ 0` or `~ -1`), you should set
-#'   `spatial = 'off'` to match.  Structure must be shared in delta models.
+#'   Predictors should usually be centered to have mean zero and standard deviation
+#'   approximately 1. **The spatial intercept is controlled by the `spatial`
+#'   argument**; set `spatial = 'on'` or `'off'` to include or exclude it. For
+#'   factor predictors, if `spatial_varying` excludes the intercept (`~ 0` or `~
+#'   -1`), set `spatial = 'off'` to match. Structure must be shared in delta
+#'   models.
 #' @param weights A numeric vector representing optional likelihood weights for
 #'   the conditional model. Implemented as in \pkg{glmmTMB}: weights do not have
 #'   to sum to one and are not internally modified. Can also be used for trials
@@ -103,8 +108,12 @@ NULL
 #'   interpolation or forecasting with the predict function. See the Details
 #'   section below.
 #' @param reml Logical: use REML (restricted maximum likelihood) estimation
-#'   rather than maximum likelihood? Internally, this adds the fixed effects to
-#'   the list of random effects to integrate over.
+#'   rather than maximum likelihood? REML accounts for uncertainty in estimating
+#'   fixed effects and can reduce bias in variance parameter estimates, but
+#'   prevents likelihood-based model comparison (e.g., AIC) between models with
+#'   different fixed effects. Use `TRUE` if your focus is on random effect
+#'   variance parameters; use `FALSE` (default) if comparing models with different
+#'   fixed effects or performing index standardization.
 #' @param silent Silent or include optimization details? Helpful to set to
 #'   `FALSE` for models that take a while to fit.
 #' @param anisotropy Logical: allow for anisotropy (spatial correlation that is
@@ -180,9 +189,13 @@ NULL
 #'
 #' **Model description**
 #'
-#' See the [model description](https://sdmTMB.github.io/sdmTMB/articles/model-description.html)
-#' vignette or the relevant appendix of the preprint on sdmTMB:
-#' \doi{10.1101/2022.03.24.485545}
+#' sdmTMB fits GLMMs with spatial and/or spatiotemporal random fields, which
+#' account for correlation in the data due to spatial proximity, or alternatively,
+#' latent spatial and spatiotemporal effects. Spatial fields represent
+#' consistent spatial patterns, while
+#' spatiotemporal fields represent spatial patterns that vary over time. See the [model
+#' description](https://sdmTMB.github.io/sdmTMB/articles/model-description.html)
+#' vignette for mathematical details and the paper: \doi{10.1101/2022.03.24.485545}
 #'
 #' **Binomial families**
 #'

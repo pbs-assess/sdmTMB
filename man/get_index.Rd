@@ -46,21 +46,22 @@ get_weighted_average(
 get_eao(obj, bias_correct = FALSE, level = 0.95, area = 1, silent = TRUE, ...)
 }
 \arguments{
-\item{obj}{Output from \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} with \code{return_tmb_object = TRUE}.
-Alternatively, if \code{\link[=sdmTMB]{sdmTMB()}} was called with \code{do_index = TRUE} or if using
-the helper function \code{\link[=get_index_split]{get_index_split()}}, an object from \code{\link[=sdmTMB]{sdmTMB()}}.}
+\item{obj}{Output from \code{\link[=predict.sdmTMB]{predict.sdmTMB()}} with \code{return_tmb_object = TRUE}
+(the usual case). Alternatively, if \code{\link[=sdmTMB]{sdmTMB()}} was called with \code{do_index = TRUE}, or if using \code{\link[=get_index_split]{get_index_split()}}, an object from \code{\link[=sdmTMB]{sdmTMB()}}.}
 
-\item{bias_correct}{Should bias correction be implemented \code{\link[TMB:sdreport]{TMB::sdreport()}}?
-This is recommended to be \code{TRUE} for any final analyses, but one may wish
-to set this to \code{FALSE} for slightly faster calculations while experimenting
-with models.}
+\item{bias_correct}{Should bias correction be implemented via
+\code{\link[TMB:sdreport]{TMB::sdreport()}}? Bias correction accounts for the non-linear
+transformation of random effects when calculating the index. Recommended to
+be \code{TRUE} for final analyses, but can be set to \code{FALSE} for faster
+calculation while experimenting with models. See Thorson and Kristensen
+(2016) in the References.}
 
 \item{level}{The confidence level.}
 
-\item{area}{Grid cell area. A vector of length \code{newdata} from
-\code{\link[=predict.sdmTMB]{predict.sdmTMB()}} \emph{or} a value of length 1 which will be repeated
-internally to match \emph{or} a character value representing the column
-used for area weighting.}
+\item{area}{Grid cell area for area weighting the index. Can be: (1) a
+numeric vector of length \code{nrow(newdata)} with area for each grid cell, (2)
+a single numeric value to apply to all grid cells, or (3) a character value
+giving the column name in \code{newdata} containing areas.}
 
 \item{silent}{Silent?}
 
@@ -85,23 +86,25 @@ containing the values to be averaged (e.g., depth, temperature).}
 }
 \value{
 For \code{get_index()}:
-A data frame with a columns for time, estimate, lower and upper
-confidence intervals, log estimate, and standard error of the log estimate.
+A data frame with columns for time, estimate (area-weighted total abundance
+or biomass), lower and upper confidence intervals, log estimate, and standard
+error of the log estimate.
 
 For \code{get_cog()}:
-A data frame with a columns for time, estimate (center of gravity in x and y
-coordinates), lower and upper confidence intervals, and standard error of
-center of gravity coordinates.
+A data frame with columns for time, estimate (center of gravity: the
+abundance-weighted mean x and y coordinates), lower and upper confidence
+intervals, and standard error of center of gravity coordinates.
 
 For \code{get_eao()}:
-A data frame with a columns for time, estimate (effective area occupied; EAO),
-lower and upper confidence intervals,
-log EAO, and standard error of the log EAO estimates.
+A data frame with columns for time, estimate (effective area occupied: the
+area required if the population was spread evenly at the arithmetic mean
+density), lower and upper confidence intervals, log EAO, and standard error
+of the log EAO estimates.
 
 For \code{get_weighted_average()}:
-A data frame with columns for time, estimate (weighted average of the provided
-vector), lower and upper confidence intervals, and standard error of the
-weighted average estimates.
+A data frame with columns for time, estimate (weighted average of the
+provided vector, weighted by predicted density), lower and upper confidence
+intervals, and standard error of the estimates.
 }
 \description{
 Extract a relative biomass/abundance index, center of gravity, effective

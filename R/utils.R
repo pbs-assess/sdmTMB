@@ -15,9 +15,6 @@
 #'   the Hessian at the current MLE with [stats::optimHess()] using a
 #'   finite-difference approach and uses this to update the fixed effect
 #'   estimates.
-#' @param mgcv **Deprecated** Parse the formula with [mgcv::gam()]?
-#' @param map_rf **Deprecated** use `spatial = 'off', spatiotemporal = 'off'` in
-#'   [sdmTMB()].
 #' @param map A named list with factor `NA`s specifying parameter values that
 #'   should be fixed at a constant value. See the documentation in
 #'   [TMB::MakeADFun()]. This should usually be used with `start` to specify the
@@ -101,10 +98,8 @@ sdmTMBcontrol <- function(
   nlminb_loops = 1L,
   newton_loops = 1L,
   getsd = TRUE,
-  mgcv = deprecated(),
   quadratic_roots = FALSE,
   start = NULL,
-  map_rf = deprecated(),
   map = NULL,
   lower = NULL,
   upper = NULL,
@@ -118,14 +113,6 @@ sdmTMBcontrol <- function(
   collapse_threshold = 0.01,
   ...) {
 
-  if (is_present(mgcv)) {
-    deprecate_stop("0.0.20", "sdmTMBcontrol(mgcv)",
-      details = "`mgcv` argument no longer does anything.")
-  }
-
-  if (is_present(map_rf)) {
-    deprecate_stop("0.0.22", "sdmTMBcontrol(map_rf)", "sdmTMB(spatial = 'off', spatiotemporal = 'off')")
-  }
   assert_that(is.numeric(nlminb_loops), is.numeric(newton_loops))
   assert_that(nlminb_loops >= 1L)
   assert_that(newton_loops >= 0L)

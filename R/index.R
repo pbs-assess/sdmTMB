@@ -1,41 +1,45 @@
 #' Extract a relative biomass/abundance index, center of gravity, effective
 #' area occupied, or weighted average
 #'
-#' @param obj Output from [predict.sdmTMB()] with `return_tmb_object = TRUE`.
-#'   Alternatively, if [sdmTMB()] was called with `do_index = TRUE` or if using
-#'   the helper function [get_index_split()], an object from [sdmTMB()].
-#' @param bias_correct Should bias correction be implemented [TMB::sdreport()]?
-#'   This is recommended to be `TRUE` for any final analyses, but one may wish
-#'   to set this to `FALSE` for slightly faster calculations while experimenting
-#'   with models.
+#' @param obj Output from [predict.sdmTMB()] with `return_tmb_object = TRUE`
+#'   (the usual case). Alternatively, if [sdmTMB()] was called with `do_index =
+#'   TRUE`, or if using [get_index_split()], an object from [sdmTMB()].
+#' @param bias_correct Should bias correction be implemented via
+#'   [TMB::sdreport()]? Bias correction accounts for the non-linear
+#'   transformation of random effects when calculating the index. Recommended to
+#'   be `TRUE` for final analyses, but can be set to `FALSE` for faster
+#'   calculation while experimenting with models. See Thorson and Kristensen
+#'   (2016) in the References.
 #' @param level The confidence level.
-#' @param area Grid cell area. A vector of length `newdata` from
-#'   [predict.sdmTMB()] *or* a value of length 1 which will be repeated
-#'   internally to match *or* a character value representing the column
-#'   used for area weighting.
+#' @param area Grid cell area for area weighting the index. Can be: (1) a
+#'   numeric vector of length `nrow(newdata)` with area for each grid cell, (2)
+#'   a single numeric value to apply to all grid cells, or (3) a character value
+#'   giving the column name in `newdata` containing areas.
 #' @param silent Silent?
 #' @param ... Passed to [TMB::sdreport()].
 #'
 #' @seealso [get_index_sims()]
 #' @return
 #' For `get_index()`:
-#' A data frame with a columns for time, estimate, lower and upper
-#' confidence intervals, log estimate, and standard error of the log estimate.
+#' A data frame with columns for time, estimate (area-weighted total abundance
+#' or biomass), lower and upper confidence intervals, log estimate, and standard
+#' error of the log estimate.
 #'
 #' For `get_cog()`:
-#' A data frame with a columns for time, estimate (center of gravity in x and y
-#' coordinates), lower and upper confidence intervals, and standard error of
-#' center of gravity coordinates.
+#' A data frame with columns for time, estimate (center of gravity: the
+#' abundance-weighted mean x and y coordinates), lower and upper confidence
+#' intervals, and standard error of center of gravity coordinates.
 #'
 #' For `get_eao()`:
-#' A data frame with a columns for time, estimate (effective area occupied; EAO),
-#' lower and upper confidence intervals,
-#' log EAO, and standard error of the log EAO estimates.
+#' A data frame with columns for time, estimate (effective area occupied: the
+#' area required if the population was spread evenly at the arithmetic mean
+#' density), lower and upper confidence intervals, log EAO, and standard error
+#' of the log EAO estimates.
 #'
 #' For `get_weighted_average()`:
-#' A data frame with columns for time, estimate (weighted average of the provided
-#' vector), lower and upper confidence intervals, and standard error of the
-#' weighted average estimates.
+#' A data frame with columns for time, estimate (weighted average of the
+#' provided vector, weighted by predicted density), lower and upper confidence
+#' intervals, and standard error of the estimates.
 #'
 #' @references
 #'

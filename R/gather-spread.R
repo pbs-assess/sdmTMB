@@ -6,7 +6,6 @@
 #'
 #' @param object Output from [sdmTMB()].
 #' @param nsim The number of simulation draws.
-#' @param n_sims Deprecated: please use `nsim`.
 #'
 #' @export
 #' @rdname gather_sims
@@ -35,7 +34,7 @@
 #'     facet_wrap(~.variable, scales = "free_x")
 #' }
 
-spread_sims <- function(object, nsim = 200, n_sims = deprecated()) {
+spread_sims <- function(object, nsim = 200) {
   if (!"jointPrecision" %in% names(object$sd_report)) {
     cli_abort("TMB::sdreport() must be run with the joint precision returned.")
   }
@@ -43,11 +42,7 @@ spread_sims <- function(object, nsim = 200, n_sims = deprecated()) {
   if (isTRUE(object$delta)) {
     cli_abort("This function isn't yet set up for delta models.")
   }
-  if (is_present(n_sims)) {
-    deprecate_warn("0.0.21", "spread_sims(n_sims)", "spread_sims(nsim)")
-  } else {
-    n_sims <- nsim
-  }
+  n_sims <- nsim
   tmb_sd <- object$sd_report
   samps <- rmvnorm_prec(object$tmb_obj$env$last.par.best, tmb_sd, n_sims)
   pars <- c(tmb_sd$par.fixed, tmb_sd$par.random)
@@ -100,13 +95,9 @@ spread_sims <- function(object, nsim = 200, n_sims = deprecated()) {
 
 #' @export
 #' @rdname gather_sims
-gather_sims <- function(object, nsim = 200, n_sims = deprecated()) {
+gather_sims <- function(object, nsim = 200) {
 
-  if (is_present(n_sims)) {
-    deprecate_warn("0.0.21", "gather_sims(n_sims)", "gather_sims(nsim)")
-  } else {
-    n_sims <- nsim
-  }
+  n_sims <- nsim
 
   out_wide <- spread_sims(object, n_sims)
   out_wide$.iteration <- NULL

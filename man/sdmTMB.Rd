@@ -63,14 +63,15 @@ downstream, supply the time argument.}
 \code{\link[sdmTMB:families]{student()}},
 \code{\link[sdmTMB:families]{tweedie()}}, and
 \code{\link[sdmTMB:families]{gengamma()}}.
-Supports the delta/hurdle models:
+Delta/hurdle models (for zero-inflated data) include:
 \code{\link[sdmTMB:families]{delta_beta()}},
 \code{\link[sdmTMB:families]{delta_gamma()}},
 \code{\link[sdmTMB:families]{delta_gamma_mix()}},
 \code{\link[sdmTMB:families]{delta_lognormal_mix()}},
 \code{\link[sdmTMB:families]{delta_lognormal()}}, and
-\code{\link[sdmTMB:families]{delta_truncated_nbinom2()}},
-For binomial family options, see 'Binomial families' in the Details
+\code{\link[sdmTMB:families]{delta_truncated_nbinom2()}}.
+See the \href{https://sdmTMB.github.io/sdmTMB/articles/delta-models.html}{delta-model vignette} for
+details. For binomial family options, see 'Binomial families' in the Details
 section below.}
 
 \item{spatial}{Estimate spatial random fields? Options are \code{'on'} / \code{'off'}
@@ -80,14 +81,14 @@ or \code{TRUE} / \code{FALSE}. Optionally, a list for delta models, e.g. \code{l
 (independent and identically distributed; default), stationary \code{'ar1'}
 (first-order autoregressive), a random walk (\code{'rw'}), or fixed at 0
 \code{'off'}. Will be set to \code{'off'} if \code{time = NULL}. If a delta model, can be
-a list. E.g., \code{list('off', 'ar1')}. Note that the spatiotemporal standard
-deviation represents the marginal steady-state standard deviation of the
-process in the case of the AR1. I.e., it is scaled according to the
-correlation. See the \href{https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html}{TMB documentation}.
-If the AR1 correlation coefficient (rho) is estimated close to 1,
-say > 0.99, then you may wish to switch to the random walk \code{'rw'}.
-Capitalization is ignored. \code{TRUE} gets converted to \code{'iid'} and \code{FALSE}
-gets converted to \code{'off'}.}
+a list. E.g., \code{list('off', 'ar1')}. Guidance: Use \code{'iid'} if temporal
+correlation is negligible or already accounted for in fixed effects; \code{'ar1'}
+if correlation between consecutive time steps decays gradually; \code{'rw'} if
+changes between time steps are cumulative (each step builds on the last). If
+the AR1 correlation coefficient (rho) is estimated close to 1 (say > 0.99),
+consider switching to \code{'rw'}. See the \href{https://sdmTMB.github.io/sdmTMB/articles/model-description.html}{model description vignette} for
+mathematical details. Capitalization is ignored. \code{TRUE} gets converted to
+\code{'iid'} and \code{FALSE} gets converted to \code{'off'}.}
 
 \item{share_range}{Logical: estimate a shared spatial and spatiotemporal
 range parameter (\code{TRUE}, default) or independent range parameters
@@ -100,29 +101,29 @@ for warnings about modelling the first time step. Structure shared in
 delta models.}
 
 \item{time_varying_type}{Type of time-varying process to apply to
-\code{time_varying} formula. \code{'rw'} indicates a random walk with the first
-time step estimated independently (included for legacy reasons), \code{'rw0'}
-indicates a random walk with the first time step estimated with
-a mean-zero normal prior, \code{'ar1'} indicates a \href{https://kaskr.github.io/adcomp/classdensity_1_1AR1__t.html}{stationary first-order autoregressive process}
-with the first time step estimated with a mean-zero prior. In the case of
-\code{'rw'}, be careful not to include covariates (including the intercept) in
-both the main and time-varying formula since the first time step is
-estimated independently. I.e., in this case, at least one should have \code{~ 0} or \code{~ -1}. Structure shared in delta models.}
+\code{time_varying} formula. Options: \code{'rw'} (random walk, default), \code{'rw0'}
+(random walk with mean-zero prior on first time step), or \code{'ar1'}
+(autoregressive, for coefficients that fluctuate around a mean). For \code{'rw0'}
+and \code{'ar1'}, the coefficient starts at zero in the first time step. For
+\code{'rw'} (default), the first time step is estimated separately—in this case,
+avoid including the same covariates in both \code{formula} and \code{time_varying} to
+prevent non-identifiability (use \code{~ 0} or \code{~ -1} in at least one). Structure
+shared in delta models.}
 
 \item{spatial_varying}{An optional one-sided formula of coefficients that
-should vary in space as random fields. Note that you likely want to include
-a fixed effect for the same variable to improve interpretability since the
-random field is assumed to have a mean of 0. If a (scaled) time column is
-used, it will represent a local-time-trend model. See
+should vary in space as random fields. Allows the effect of a covariate to
+differ spatially. You likely want to include the same variable as a fixed
+effect in \code{formula} to estimate the average effect—the spatial field then
+represents deviations from that average (since it has mean zero). For example,
+use \code{formula = y ~ depth} and \code{spatial_varying = ~ 0 + depth} to model an
+average depth effect plus spatially varying deviations. If a (scaled) time
+column is used, this creates a local-time-trend model. See
 \doi{10.1111/ecog.05176} and the \href{https://sdmTMB.github.io/sdmTMB/articles/spatial-trend-models.html}{spatial trends vignette}.
-Note this predictor should usually be centered to have mean zero and have a
-standard deviation of approximately 1.
-\strong{The spatial intercept is controlled by the \code{spatial} argument}; therefore,
-include or exclude the spatial intercept by setting \code{spatial = 'on'} or
-\code{'off'}. The only time when it matters whether \code{spatial_varying} excludes
-an intercept is in the case of factor predictors. In this case, if
-\code{spatial_varying} excludes the intercept (\code{~ 0} or \code{~ -1}), you should set
-\code{spatial = 'off'} to match.  Structure must be shared in delta models.}
+Predictors should usually be centered to have mean zero and standard deviation
+approximately 1. \strong{The spatial intercept is controlled by the \code{spatial}
+argument}; set \code{spatial = 'on'} or \code{'off'} to include or exclude it. For
+factor predictors, if \code{spatial_varying} excludes the intercept (\code{~ 0} or \code{~ -1}), set \code{spatial = 'off'} to match. Structure must be shared in delta
+models.}
 
 \item{weights}{A numeric vector representing optional likelihood weights for
 the conditional model. Implemented as in \pkg{glmmTMB}: weights do not have
@@ -140,8 +141,12 @@ interpolation or forecasting with the predict function. See the Details
 section below.}
 
 \item{reml}{Logical: use REML (restricted maximum likelihood) estimation
-rather than maximum likelihood? Internally, this adds the fixed effects to
-the list of random effects to integrate over.}
+rather than maximum likelihood? REML accounts for uncertainty in estimating
+fixed effects and can reduce bias in variance parameter estimates, but
+prevents likelihood-based model comparison (e.g., AIC) between models with
+different fixed effects. Use \code{TRUE} if your focus is on random effect
+variance parameters; use \code{FALSE} (default) if comparing models with different
+fixed effects or performing index standardization.}
 
 \item{silent}{Silent or include optimization details? Helpful to set to
 \code{FALSE} for models that take a while to fit.}
@@ -207,15 +212,21 @@ An object (list) of class \code{sdmTMB}. Useful elements include:
 }
 \description{
 Fit a spatial or spatiotemporal generalized linear mixed effects model (GLMM)
-with the TMB (Template Model Builder) R package and the SPDE (stochastic
-partial differential equation) approximation to Gaussian random fields.
+with the TMB (Template Model Builder) R package. Spatial and spatiotemporal
+random fields are approximated using the SPDE (stochastic partial differential
+equation) approach, which allows for efficient modeling of data that are
+correlated in space and/or time. See the \href{https://sdmTMB.github.io/sdmTMB/articles/model-description.html}{model description vignette} for
+details.
 }
 \details{
 \strong{Model description}
 
-See the \href{https://sdmTMB.github.io/sdmTMB/articles/model-description.html}{model description}
-vignette or the relevant appendix of the preprint on sdmTMB:
-\doi{10.1101/2022.03.24.485545}
+sdmTMB fits GLMMs with spatial and/or spatiotemporal random fields, which
+account for correlation in the data due to spatial proximity, or alternatively,
+latent spatial and spatiotemporal effects. Spatial fields represent
+consistent spatial patterns, while
+spatiotemporal fields represent spatial patterns that vary over time. See the \href{https://sdmTMB.github.io/sdmTMB/articles/model-description.html}{model description}
+vignette for mathematical details and the paper: \doi{10.1101/2022.03.24.485545}
 
 \strong{Binomial families}
 

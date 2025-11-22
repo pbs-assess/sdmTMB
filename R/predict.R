@@ -13,35 +13,35 @@
 #'   column (if this is a spatiotemporal model) with the same name as in the
 #'   fitted data.
 #' @param type Should the `est` column be in link (default) or response space?
-#' @param se_fit Should standard errors on predictions at the new locations
-#'   given by `newdata` be calculated? Warning: the current implementation can
-#'   be slow for large data sets or high-resolution projections unless
-#'   `re_form = NA` (omitting random fields). A faster option to approximate
-#'   point-wise uncertainty is to use the `nsim` argument.
+#' @param se_fit Should standard errors on predictions be calculated? Warning:
+#'   can be slow for large datasets or high-resolution projections when random
+#'   fields are included. For faster uncertainty estimation, either use
+#'   `re_form = NA` to exclude random fields or use the `nsim` argument to
+#'   simulate from the joint precision matrix.
 #' @param return_tmb_object Logical. If `TRUE`, will include the TMB object in a
 #'   list format output. Necessary for the [get_index()] or [get_cog()]
 #'   functions.
-#' @param re_form `NULL` to specify including all spatial/spatiotemporal random
-#'   effects in predictions. `~0` or `NA` for population-level predictions.
-#'   Likely to be used in conjunction with `se_fit = TRUE`. This does not affect
+#' @param re_form `NULL` to include all spatial/spatiotemporal random fields in
+#'   predictions. `~0` or `NA` for population-level predictions (predictions
+#'   from fixed effects only, marginalizing over random fields). Often used with
+#'   `se_fit = TRUE` to visualize marginal effects. Does not affect
 #'   [get_index()] calculations.
 #' @param re_form_iid `NULL` to specify including all random intercepts in the
 #'   predictions. `~0` or `NA` for population-level predictions. No other
 #'   options (e.g., some but not all random intercepts) are implemented yet.
 #'   Only affects predictions with `newdata`. This *does* affects [get_index()].
-#' @param nsim If `> 0`, simulate from the joint precision
-#'   matrix with `nsim` draws. Returns a matrix of `nrow(data)` by `nsim`
-#'   representing the estimates of the linear predictor (i.e., in link space).
-#'   Can be useful for deriving uncertainty on predictions
-#'   (e.g., `apply(x, 1, sd)`) or propagating uncertainty. This is currently
-#'   the fastest way to characterize uncertainty on predictions in space with
-#'   sdmTMB.
+#' @param nsim If `> 0`, simulate from the joint precision matrix with `nsim`
+#'   draws. Returns a matrix of `nrow(newdata)` by `nsim` with each column
+#'   representing one draw of the linear predictor (in link space). Simulating
+#'   from the joint precision matrix accounts for uncertainty in both fixed and
+#'   random effects. Use this to derive uncertainty on predictions (e.g.,
+#'   `apply(x, 1, sd)`) or propagate uncertainty to derived quantities. This is
+#'   the fastest way to characterize spatial uncertainty with sdmTMB.
 #' @param sims_var Experimental: Which TMB reported variable from the model
 #'   should be extracted from the joint precision matrix simulation draws?
 #'   Defaults to link-space predictions. Options include: `"omega_s"`,
 #'   `"zeta_s"`, `"epsilon_st"`, and `"est_rf"` (as described below).
 #'   Other options will be passed verbatim.
-#' @param tmbstan_model Deprecated. See `mcmc_samples`.
 #' @param mcmc_samples See `extract_mcmc()` in the
 #'   \href{https://github.com/sdmTMB/sdmTMBextra}{sdmTMBextra} package for
 #'   more details and the
@@ -49,12 +49,13 @@
 #'   If specified, the predict function will return a matrix of a similar form
 #'   as if `nsim > 0` but representing Bayesian posterior samples from the Stan
 #'   model.
-#' @param model Type of prediction if a delta/hurdle model *and* `nsim > 0` or
-#'   `mcmc_samples` is supplied: `NA` returns the combined prediction from both
-#'   components on the link scale for the positive component; `1` or `2` return
-#'   the first or second model component only on the link or response scale
-#'   depending on the argument `type`. For regular prediction from delta models,
-#'   both sets of predictions are returned.
+#' @param model Which component to predict from delta/hurdle models when `nsim >
+#'   0` or `mcmc_samples` is supplied. `NA` (default) returns the combined
+#'   prediction from both components; `1` returns the binomial component only; `2`
+#'   returns the positive component only. Predictions are on the link or response
+#'   scale depending on `type`. For regular predictions (without simulation),
+#'   both components are returned. See the [delta-model
+#'   vignette](https://sdmTMB.github.io/sdmTMB/articles/delta-models.html).
 #' @param offset A numeric vector of optional offset values. If left at default
 #'   `NULL`, the offset is implicitly left at 0.
 #' @param return_tmb_report Logical: return the output from the TMB
@@ -64,21 +65,18 @@
 #'   contents of each element is the output of the report for that sample.
 #' @param return_tmb_data Logical: return formatted data for TMB? Used
 #'   internally.
-#' @param area **Deprecated**. Please use `area` in [get_index()].
-#' @param sims **Deprecated**. Please use `nsim` instead.
 #' @param ... Not implemented.
 #'
 #' @return
 #' If `return_tmb_object = FALSE` (and `nsim = 0` and `mcmc_samples = NULL`):
 #'
 #' A data frame:
-#' * `est`: Estimate in link space (everything is in link space)
-#' * `est_non_rf`: Estimate from everything that isn't a random field
+#' * `est`: Estimate in link space (everything included)
+#' * `est_non_rf`: Estimate from everything except random fields (fixed effects, random intercepts, time-varying effects, etc.)
 #' * `est_rf`: Estimate from all random fields combined
-#' * `omega_s`: Spatial (intercept) random field that is constant through time
-#' * `zeta_s`: Spatial slope random field
-#' * `epsilon_st`: Spatiotemporal (intercept) random fields, could be
-#'    off (zero), IID, AR1, or random walk
+#' * `omega_s`: Spatial random field (models consistent spatial patterns)
+#' * `zeta_s`: Spatially varying coefficient field (models how effects vary across space)
+#' * `epsilon_st`: Spatiotemporal random field (models spatial patterns that vary over time)
 #'
 #' If `return_tmb_object = TRUE` (and `nsim = 0` and `mcmc_samples = NULL`):
 #'
@@ -258,9 +256,6 @@ predict.sdmTMB <- function(object, newdata = NULL,
   return_tmb_object = FALSE,
   return_tmb_report = FALSE,
   return_tmb_data = FALSE,
-  tmbstan_model = deprecated(),
-  sims = deprecated(),
-  area = deprecated(),
   ...) {
 
   if ("version" %in% names(object)) {
@@ -281,21 +276,8 @@ predict.sdmTMB <- function(object, newdata = NULL,
     cli_abort("This model was fit with an older version of sdmTMB before internal handling of `extra_time` was simplified. Please refit your model before predicting on it (or install version 0.5.0 or 0.5.0.9000).")
   }
 
-  if (is_present(tmbstan_model)) {
-    deprecate_stop("0.2.2", "predict.sdmTMB(tmbstan_model)", "predict.sdmTMB(mcmc_samples)")
-  }
-
-  if (is_present(area)) {
-    deprecate_stop("0.0.22", "predict.sdmTMB(area)", "get_index(area)")
-  } else {
-    area <- 1
-  }
-
-  if (is_present(sims)) {
-    deprecate_warn("0.0.21", "predict.sdmTMB(sims)", "predict.sdmTMB(nsim)")
-  } else {
-    sims <- nsim
-  }
+  area <- 1
+  sims <- nsim
 
   reinitialize(object)
 

@@ -68,16 +68,18 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 
 #' Cross validation with sdmTMB models
 #'
-#' Facilitates cross validation with sdmTMB models. Returns the log likelihood
-#' of left-out data, which is similar in spirit to the ELPD (expected log
-#' pointwise predictive density). The function has an option for
-#' leave-future-out cross validation. By default, the function creates folds
-#' randomly but folds can be manually assigned via the `fold_ids` argument.
+#' Performs k-fold or leave-future-out cross validation with sdmTMB models.
+#' Returns the sum of log likelihoods of held-out data (log predictive density),
+#' which can be used to compare models—higher values indicate better
+#' out-of-sample prediction. By default, creates folds randomly and stratified
+#' by time (set a seed for reproducibility), but folds can be manually assigned
+#' via `fold_ids`. See Ward and Anderson (2025) in the References and the
+#' [cross-validation vignette](https://sdmTMB.github.io/sdmTMB/articles/cross-validation.html).
 #'
 #' @param formula Model formula.
 #' @param data A data frame.
-#' @param mesh Output from [make_mesh()]. If supplied, the mesh will be constant
-#'   across folds.
+#' @param mesh Output from [make_mesh()]. If supplied, the same mesh will be
+#'   used for all folds. This is faster and usually what you want.
 #' @param mesh_args Arguments for [make_mesh()]. If supplied, the mesh will be
 #'   reconstructed for each fold.
 #' @param time The name of the time column. Leave as `NULL` if this is only
@@ -86,14 +88,15 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' @param fold_ids Optional vector containing user fold IDs. Can also be a
 #'   single string, e.g. `"fold_id"` representing the name of the variable in
 #'   `data`. Ignored if `lfo` is TRUE
-#' @param lfo Whether to implement leave-future-out (LFO) cross validation where
-#'   data are used to predict future folds. `time` argument in [sdmTMB()] must
-#'   be specified. See Details section below.
-#' @param lfo_forecast If `lfo = TRUE`, number of time steps to forecast. Time
-#'   steps 1, ..., T are used to predict T + `lfo_forecast` and the last
-#'   forecasted time step is used for validation. See Details section below.
+#' @param lfo Logical. Use leave-future-out (LFO) cross validation? If `TRUE`,
+#'   data from earlier time steps are used to predict future time steps. The
+#'   `time` argument must be specified. See Details section below.
+#' @param lfo_forecast If `lfo = TRUE`, number of time steps ahead to forecast.
+#'   For example, `lfo_forecast = 1` means fitting to time steps 1 to T and
+#'   validating on T + 1. See Details section below.
 #' @param lfo_validations If `lfo = TRUE`, number of times to step through the
-#'   LFOCV process. Defaults to 5. See Details section below.
+#'   LFO process (i.e., number of validation folds). Defaults to 5. See Details
+#'   section below.
 #' @param parallel If `TRUE` and a [future::plan()] is supplied, will be run in
 #'   parallel.
 #' @param use_initial_fit Fit the first fold and use those parameter values
@@ -115,21 +118,18 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' @export
 #' @return
 #' A list:
-#' * `data`: Original data plus columns for fold ID, CV predicted value,
-#'           CV log likelihood, and CV deviance residuals.
-#' * `models`: A list of models; one per fold. `NULL` if `save_models = FALSE`.
-#' * `fold_loglik`: Sum of left-out log likelihoods per fold. More positive
-#'   values are better.
-#' * `sum_loglik`: Sum of `fold_loglik` across all left-out data. More positive
-#'   values are better.
-#' * `pdHess`: Logical vector: Hessian was invertible each fold?
-#' * `converged`: Logical: all `pdHess` `TRUE`?
-#' * `max_gradients`: Max gradient per fold.
-#'
-#' Prior to \pkg{sdmTMB} version '0.3.0.9002', `elpd` was incorrectly returned as
-#' the log average likelihood, which is another metric you could compare models
-#' with, but not ELPD. For maximum likelihood, [ELPD is equivalent in spirit to
-#' the sum of the log likelihoods](https://github.com/sdmTMB/sdmTMB/issues/235).
+#' * `data`: Original data plus columns for fold ID (`cv_fold`), CV predicted
+#'   value (`cv_predicted`), CV log likelihood (`cv_loglik`), and CV deviance
+#'   residuals (`cv_deviance_resid`).
+#' * `models`: A list of fitted models, one per fold. `NULL` if `save_models = FALSE`.
+#' * `fold_loglik`: Sum of log likelihoods of held-out data per fold (log
+#'   predictive density per fold). More positive values indicate better
+#'   out-of-sample prediction.
+#' * `sum_loglik`: Sum of `fold_loglik` across all folds (total log predictive
+#'   density). Use this to compare models—more positive values are better.
+#' * `pdHess`: Logical vector: was the Hessian positive definite for each fold?
+#' * `converged`: Logical: did all folds converge (all `pdHess` `TRUE`)?
+#' * `max_gradients`: Maximum absolute gradient for each fold.
 #'
 #' @details
 #' **Parallel processing**
@@ -165,6 +165,12 @@ ll_sdmTMB <- function(object, withheld_y, withheld_mu) {
 #' steps as presented not two years.
 #'
 #' See example below.
+#'
+#' @references
+#'
+#' Ward, E.J., and S.C. Anderson. 2025. Approximating spatial processes with
+#' too many knots degrades the quality of probabilistic predictions.
+#' bioRxiv 2025.11.14.688354. \doi{10.1101/2025.11.14.688354}.
 #'
 #' @examples
 #' mesh <- make_mesh(pcod, c("X", "Y"), cutoff = 25)
