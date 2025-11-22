@@ -95,9 +95,11 @@ some underlying spatial process) is becoming increasingly common in many
 fields. sdmTMB implements geostatistical spatial and spatiotemporal
 GLMMs using [TMB](https://cran.r-project.org/package=TMB) for model
 fitting and [fmesher](https://CRAN.R-project.org/package=fmesher) to set
-up SPDE (stochastic partial differential equation) matrices. One common
-application is for species distribution models (SDMs), hence the package
-name. The goal of sdmTMB is to provide a fast, flexible, and
+up SPDE matrices (for the [stochastic partial differential equation
+approach](https://doi.org/10.1111/j.1467-9868.2011.00777.x); a
+computationally efficient method for modeling spatial correlation). One
+common application is for species distribution models (SDMs), hence the
+package name. The goal of sdmTMB is to provide a fast, flexible, and
 user-friendly interface—similar to the popular R package glmmTMB—but
 with a focus on spatial and spatiotemporal models with an SPDE approach.
 We extend common generalized linear mixed models (GLMMs) to include the
@@ -118,11 +120,12 @@ following optional features:
 - delta/hurdle models including `delta_gamma()`, `delta_lognormal()`,
   and `delta_truncated_nbinom2()`
 
-Estimation is via maximum marginal likelihood with the objective
-function calculated in [TMB](https://cran.r-project.org/package=TMB) and
-minimized in R via `stats::nlminb()` with the random effects integrated
-over via the Laplace approximation. The sdmTMB package also allows for
-models to be passed to Stan via
+Estimation is via maximum marginal likelihood (with random effects
+integrated out) with the objective function calculated in
+[TMB](https://cran.r-project.org/package=TMB) and minimized in R via
+`stats::nlminb()` with the random effects integrated over via the
+Laplace approximation. The sdmTMB package also allows for models to be
+passed to Stan via
 [tmbstan](https://cran.r-project.org/package=tmbstan), allowing for
 Bayesian model estimation.
 
@@ -147,10 +150,12 @@ helpful to others. Please let us know if you don’t want us to do that.
 For bugs or feature requests, please post in the [issue
 tracker](https://github.com/sdmTMB/sdmTMB/issues).
 
-There is [material](https://github.com/sdmTMB/sdmTMB-teaching) from past
-workshops on sdmTMB and
-[recordings](https://www.youtube.com/channel/UCYoFG51RjJVx7m9mZGaj-Ng/videos)
-from some of those workshops.
+There have been several [past sdmTMB
+workshops](https://github.com/sdmTMB/sdmTMB-teaching). Slides and
+exercises from the latest workshop are available
+[here](https://github.com/sdmTMB/sdmTMB-TESA-2025).
+[Recordings](https://www.youtube.com/channel/UCYoFG51RjJVx7m9mZGaj-Ng/videos)
+from an older workshop are also available.
 
 ## Citation
 
@@ -175,17 +180,17 @@ Please use the above citation so we can track publications.
 An sdmTMB model requires a data frame that contains a response column,
 columns for any predictors, and columns for spatial coordinates. It
 usually makes sense to convert the spatial coordinates to an equidistant
-projection such as UTMs such that distance remains constant throughout
-the study region \[e.g., using `sf::st_transform()`\]. Here, we
-illustrate a spatial model fit to Pacific cod (*Gadus macrocephalus*)
-trawl survey data from Queen Charlotte Sound, BC, Canada. Our model
-contains a main effect of depth as a penalized smoother, a spatial
-random field, and Tweedie observation error. Our data frame `pcod`
-(built into the package) has a column `year` for the year of the survey,
-`density` for density of Pacific cod in a given survey tow, `present`
-for whether `density > 0`, `depth` for depth in meters of that tow, and
-spatial coordinates `X` and `Y`, which are UTM coordinates in
-kilometres.
+projection such as UTMs such that 1 km remains the same distance
+throughout the study region (unlike latitude/longitude) \[e.g., using
+`sf::st_transform()`\]. Here, we illustrate a spatial model fit to
+Pacific cod (*Gadus macrocephalus*) trawl survey data from Queen
+Charlotte Sound, BC, Canada. Our model contains a main effect of depth
+as a penalized smoother, a spatial random field, and Tweedie observation
+error. Our data frame `pcod` (built into the package) has a column
+`year` for the year of the survey, `density` for density of Pacific cod
+in a given survey tow, `present` for whether `density > 0`, `depth` for
+depth in meters of that tow, and spatial coordinates `X` and `Y`, which
+are UTM coordinates in kilometres.
 
 ``` r
 library(dplyr)
@@ -201,18 +206,19 @@ head(pcod)
     #> 2  2003    41.7       1   212  446. 5800.
     #> 3  2003     0         0   220  449. 5802.
 
-We start by creating a mesh object that contains matrices to apply the
-SPDE approach.
+We start by creating a mesh object that contains a triangular network
+used to approximate the spatial field (a “finite element mesh”).
 
 ``` r
 mesh <- make_mesh(pcod, xy_cols = c("X", "Y"), cutoff = 10)
 ```
 
-Here, `cutoff` defines the minimum allowed distance between points in
-the units of `X` and `Y` (km). Alternatively, we could have created a
-mesh via the fmesher or INLA packages and supplied it to `make_mesh()`.
-We can inspect our mesh object with the associated plotting method
-`plot(mesh)`.
+Here, `cutoff` defines the minimum allowed distance between mesh
+vertices in the units of `X` and `Y` (km). Smaller values create finer
+meshes but increase computation time. Alternatively, we could have
+created a mesh via the fmesher or INLA packages and supplied it to
+`make_mesh()`. We can inspect our mesh object with the associated
+plotting method `plot(mesh)`.
 
 Fit a spatial model with a smoother for depth:
 
@@ -254,14 +260,16 @@ fit
 #> See ?tidy.sdmTMB to extract these values as a data frame.
 ```
 
-The output indicates our model was fit by maximum (marginal) likelihood
-(`ML`). We also see the formula, mesh, fitted data, and family. Next we
-see any estimated main effects including the linear component of the
-smoother (`sdepth`), the standard deviation on the smoother weights
-(`sds(depth)`), the Tweedie dispersion and power parameters, the Matérn
-range distance (distance at which points are effectively independent),
-the marginal spatial field standard deviation, and the negative log
-likelihood at convergence.
+The output shows our model was fit by maximum marginal likelihood
+(`ML`), followed by the formula, mesh, data, and family. The main
+effects section includes the linear component of the depth smoother
+(`sdepth`) and the standard deviation on the smoother weights
+(`sds(depth)`). The Tweedie dispersion (`phi`) and power parameters
+control the distribution’s mean-variance relationship. The Matérn range
+is the distance at which spatial correlation becomes negligible (~0.13
+correlation). The marginal spatial field standard deviation (`sigma_O`)
+represents unexplained spatial variation. The log likelihood represents
+the objective function value at convergence.
 
 We can extract parameters as a data frame:
 
@@ -331,6 +339,9 @@ head(p)
     #> 2   458  5636  223.  2.03       1.99 0.0460  0.0460
     #> 3   460  5636  204.  2.89       2.82 0.0747  0.0747
 
+We exponentiate the predictions with `exp()` to transform from log-link
+space back to the density scale:
+
 ``` r
 ggplot(p, aes(X, Y, fill = exp(est))) + geom_raster() +
   scale_fill_viridis_c(trans = "sqrt")
@@ -376,9 +387,11 @@ fit_spatiotemporal <- sdmTMB(
 )
 ```
 
-If we wanted to create an area-weighted standardized population index,
+If we wanted to create an area-weighted standardized population index (a
+time series of abundance accounting for spatial variation in sampling),
 we could predict on a grid covering the entire survey (`qcs_grid`) with
-grid cell area 4 (2 x 2 km) and pass the predictions to `get_index()`:
+grid cell area 4 km² (2 x 2 km) and pass the predictions to
+`get_index()`:
 
 ``` r
 grid_yrs <- replicate_df(qcs_grid, "year", unique(pcod$year))
@@ -393,7 +406,8 @@ ggplot(index, aes(year, est)) +
 
 <img src="man/figures/README-plot-index-1.png" width="50%" />
 
-Or the center of gravity:
+Or the center of gravity (mean location of the population, useful for
+detecting distributional shifts):
 
 ``` r
 cog <- get_cog(p_st, format = "wide")
@@ -413,6 +427,10 @@ sdmTMB](https://sdmTMB.github.io/sdmTMB/articles/index-standardization.html).
 ## Advanced functionality
 
 ### Time-varying coefficients
+
+Time-varying coefficients allow parameters to change over time as random
+walks. This is useful when relationships may shift gradually (e.g., due
+to environmental change).
 
 Time-varying intercept:
 
@@ -448,6 +466,10 @@ more details.
 
 ### Spatially varying coefficients (SVC)
 
+Spatially varying coefficients allow the effect of a predictor to differ
+across space, revealing spatial heterogeneity in relationships (e.g.,
+trends that are positive in some areas and negative in others).
+
 Spatially varying effect of time:
 
 ``` r
@@ -462,9 +484,10 @@ fit <- sdmTMB(
 )
 ```
 
-See `zeta_s` in the output, which represents the coefficient varying in
-space. You’ll want to ensure you set up your model such that it ballpark
-has a mean of 0 (e.g., by including it in `formula` too).
+See `zeta_s` in the output, which represents spatial variation in the
+coefficient. Ensure the SVC covariate is centered (mean ≈ 0) and include
+it in the main formula too so that `zeta_s` represents deviations from
+the average effect.
 
 ``` r
 grid_yrs <- replicate_df(qcs_grid, "year", unique(pcod$year))
