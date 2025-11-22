@@ -2,6 +2,41 @@ url: https://sdmTMB.github.io/sdmTMB/
 template:
   bootstrap: 5
 
+articles:
+- title: Getting Started
+  contents:
+  - model-description
+  - basic-intro
+
+- title: Model Types and Families
+  contents:
+  - delta-models
+  - poisson-link
+  - threshold-models
+  - zoib
+  - multispecies
+  - age-composition
+  - presence-only
+
+- title: Model Estimation and Inference
+  contents:
+  - residual-checking
+  - cross-validation
+  - bayesian
+
+- title: Predictions and Applications
+  contents:
+  - index-standardization
+  - forecasting
+  - spatial-trend-models
+  - range-edges
+
+- title: Visualization
+  contents:
+  - visreg
+  - ggeffects
+  - pretty-plots
+
 reference:
 - title: internal
   contents:
