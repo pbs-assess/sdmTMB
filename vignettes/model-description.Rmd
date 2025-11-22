@@ -101,8 +101,8 @@ O_{\s,t} +
 \bX^{\RM{svc}}_{\s,t} \bzeta_{\s} +
 \omega_{\s} +
 \epsilon_{\s,t},\\
-\mu_{\s,t} &= f^{-1} \left( \eta_{\s,t} \right),
-\mathbb{E}[y_{\s,t}] &= \mu_{\s,t},\\
+\mu_{\s,t} &= f^{-1} \left( \eta_{\s,t} \right),\\
+\mathbb{E}[y_{\s,t}] &= \mu_{\s,t},
 \end{aligned}
 $$
 
@@ -292,7 +292,7 @@ $$
   \gamma_{p,t>1} &\sim \RM{Normal} \left(\gamma_{p,t-1}, \sigma_{\gamma,p}^2 \right).
 \end{aligned}
 $$
-In this case, the time-varying variable (including the intercept) *should* be included in the main effects. We suggest using this formulation, but leave the `'rw'` option so that legacy code works.
+In this case, the time-varying variable (including the intercept) *should* be included in the main effects.
 
 For `time_varying_type = 'ar1'`:
 
