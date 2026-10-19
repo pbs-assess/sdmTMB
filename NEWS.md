@@ -40,6 +40,16 @@
   overlaps such as `formula = y ~ 0 + factor(x)` with `time_varying = ~ 1`.
   The warning suggests `time_varying_type = "rw0"`.
 
+* `predict(..., nsim = n, allow_new_levels = "sample")` draws the random
+  effects of IID grouping levels not seen in fitting from their estimated
+  (multivariate) normal distribution in each draw, so predictions can include
+  variation among levels (e.g., a new site). Fitted levels keep their usual
+  draws. #553
+
+* Predicting with a new level of one IID random effect grouping factor no
+  longer drops the other grouping factors' random effects for those rows
+  (e.g., a new `site` with a fitted `year` in `(1 | site) + (1 | year)`). #558
+
 * Fix the anisotropic ranges reported by `print()`, `tidy()` (`range_min`,
   `range_max`), and `plot_anisotropy()`, and the arrows in
   `plot_anisotropy2()`. These scaled the range by the eigenvalues of `H`
