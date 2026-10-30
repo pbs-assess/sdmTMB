@@ -26,7 +26,9 @@ NULL
 #'   before fitting, as with `na.action = na.omit` in [stats::glm()]. The
 #'   rows used are stored in the returned object as `data`.
 #' @param mesh An object from [make_mesh()] for `spatial_model = "spde"` or
-#'   from [make_areal_domain()] for `"sar"` or `"car"`.
+#'   from [make_areal_domain()] for `"sar"` or `"car"`. Can be omitted for a
+#'   model without spatial or spatiotemporal random fields, in which case
+#'   `spatial` and `spatiotemporal` default to `'off'`.
 #' @param time An optional time column name (as character). Can be left as
 #'   `NULL` for a model with only spatial random fields; however, if the data
 #'   are actually spatiotemporal and you wish to calculate derived quantities
@@ -41,12 +43,14 @@ NULL
 #'   vignette](https://sdmTMB.github.io/sdmTMB/articles/multi-family.html) for
 #'   supported combinations.
 #' @param spatial Estimate spatial random fields? Options are `'on'` / `'off'`
-#'   or equivalently `TRUE` / `FALSE`. Optionally, a list for delta models,
+#'   or equivalently `TRUE` / `FALSE`. Defaults to `'on'` if `mesh` is supplied
+#'   and `'off'` otherwise. Optionally, a list for delta models,
 #'   e.g. `list('on', 'off')`.
 #' @param spatiotemporal Estimate the spatiotemporal random fields as `'iid'`
 #'   (independent and identically distributed; default), stationary `'ar1'`
 #'   (first-order autoregressive), a random walk (`'rw'`), or fixed at 0
-#'   `'off'`. Will be set to `'off'` if `time = NULL`. If a delta model, can be
+#'   `'off'`. Will be set to `'off'` if `time = NULL` or, by default, if `mesh`
+#'   is not supplied. If a delta model, can be
 #'   a list. E.g., `list('off', 'ar1')`. Guidance: Use `'iid'` if spatiotemporal
 #'   correlation is negligible or already accounted for in fixed effects; `'ar1'`
 #'   if correlation between consecutive time steps decays gradually; `'rw'` if
@@ -670,7 +674,7 @@ sdmTMB <- function(
     predict_args = NULL,
     index_args = NULL) {
   nonlocal_data_arg <- nonlocal_data
-  mesh_missing <- missing(mesh)
+  mesh_missing <- missing(mesh) || is.null(mesh)
   spatial_model <- match.arg(tolower(spatial_model[1L]), c("spde", "sar", "car"))
   if (mesh_missing && spatial_model %in% c("sar", "car")) {
     cli_abort("`spatial_model = \"{spatial_model}\"` requires an areal domain supplied to `mesh`.")
@@ -787,7 +791,7 @@ sdmTMB <- function(
       FUN.VALUE = character(1L)
     )
   } else {
-    if (is.null(time)) {
+    if (is.null(time) || mesh_missing) {
       spatiotemporal <- rep("off", n_m)
     } else {
       spatiotemporal <- rep("iid", n_m)
@@ -800,6 +804,7 @@ sdmTMB <- function(
     spatial_only <- ifelse(spatiotemporal == "off", TRUE, FALSE)
   }
 
+  if (missing(spatial) && mesh_missing) spatial <- "off"
   if (is.list(spatial)) {
     spatial <- vapply(spatial, parse_spatial_arg, FUN.VALUE = character(1L))
   } else {
@@ -826,6 +831,12 @@ sdmTMB <- function(
     }
   } else {
     no_spatial <- FALSE
+    if (mesh_missing) {
+      cli_abort(c(
+        "`mesh` must be supplied for spatial, spatiotemporal, or spatially varying fields.",
+        "i" = "Create one with `make_mesh()` or set `spatial = \"off\"` and `spatiotemporal = \"off\"`."
+      ))
+    }
   }
 
   share_range <- unlist(share_range)

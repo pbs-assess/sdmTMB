@@ -227,3 +227,31 @@ test_that("extract_call_name() returns string literals for print()", {
   expect_identical(extract_call_name("year"), "year")
   expect_null(extract_call_name(NULL))
 })
+
+test_that("spatial and spatiotemporal fields default to off without a mesh", {
+  skip_on_cran()
+  d <- pcod_2011
+  m <- sdmTMB(density ~ 1, data = d, family = tweedie(), time = "year")
+  expect_identical(m$spatial, "off")
+  expect_identical(m$spatiotemporal, "off")
+  m_off <- sdmTMB(density ~ 1, data = d, family = tweedie(),
+    spatial = "off", spatiotemporal = "off", time = "year", mesh = NULL)
+  expect_equal(logLik(m), logLik(m_off))
+  m_delta <- sdmTMB(density ~ 1, data = d, family = delta_gamma())
+  expect_identical(m_delta$spatial, c("off", "off"))
+
+  expect_error(
+    sdmTMB(density ~ 1, data = d, family = tweedie(), spatial = "on"),
+    regexp = "mesh"
+  )
+  expect_error(
+    sdmTMB(density ~ 1, data = d, family = tweedie(), time = "year",
+      spatiotemporal = "iid"),
+    regexp = "mesh"
+  )
+  expect_error(
+    sdmTMB(density ~ 1, data = d, family = tweedie(),
+      spatial_varying = ~ depth_scaled),
+    regexp = "mesh"
+  )
+})

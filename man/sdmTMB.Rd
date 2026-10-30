@@ -55,7 +55,9 @@ before fitting, as with \code{na.action = na.omit} in \code{\link[stats:glm]{sta
 rows used are stored in the returned object as \code{data}.}
 
 \item{mesh}{An object from \code{\link[=make_mesh]{make_mesh()}} for \code{spatial_model = "spde"} or
-from \code{\link[=make_areal_domain]{make_areal_domain()}} for \code{"sar"} or \code{"car"}.}
+from \code{\link[=make_areal_domain]{make_areal_domain()}} for \code{"sar"} or \code{"car"}. Can be omitted for a
+model without spatial or spatiotemporal random fields, in which case
+\code{spatial} and \code{spatiotemporal} default to \code{'off'}.}
 
 \item{time}{An optional time column name (as character). Can be left as
 \code{NULL} for a model with only spatial random fields; however, if the data
@@ -72,13 +74,15 @@ the \href{https://sdmTMB.github.io/sdmTMB/articles/multi-family.html}{multi-fami
 supported combinations.}
 
 \item{spatial}{Estimate spatial random fields? Options are \code{'on'} / \code{'off'}
-or equivalently \code{TRUE} / \code{FALSE}. Optionally, a list for delta models,
+or equivalently \code{TRUE} / \code{FALSE}. Defaults to \code{'on'} if \code{mesh} is supplied
+and \code{'off'} otherwise. Optionally, a list for delta models,
 e.g. \code{list('on', 'off')}.}
 
 \item{spatiotemporal}{Estimate the spatiotemporal random fields as \code{'iid'}
 (independent and identically distributed; default), stationary \code{'ar1'}
 (first-order autoregressive), a random walk (\code{'rw'}), or fixed at 0
-\code{'off'}. Will be set to \code{'off'} if \code{time = NULL}. If a delta model, can be
+\code{'off'}. Will be set to \code{'off'} if \code{time = NULL} or, by default, if \code{mesh}
+is not supplied. If a delta model, can be
 a list. E.g., \code{list('off', 'ar1')}. Guidance: Use \code{'iid'} if spatiotemporal
 correlation is negligible or already accounted for in fixed effects; \code{'ar1'}
 if correlation between consecutive time steps decays gradually; \code{'rw'} if

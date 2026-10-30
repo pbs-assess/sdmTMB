@@ -1,5 +1,13 @@
 # sdmTMB (development version)
 
+* `mesh` can now be omitted from `sdmTMB()` (or set to `NULL`), in which case
+  `spatial` and `spatiotemporal` default to `"off"`. Models with only fixed
+  effects, smoothers, random intercepts, or time-varying coefficients no
+  longer need `spatial = "off"` and `spatiotemporal = "off"` or a placeholder
+  mesh. Explicitly requesting spatial, spatiotemporal, or spatially varying
+  fields without a mesh is an error. This also lets `sdmTMB_cv()` run without
+  a mesh.
+
 * Fix a segfault when using `sdmTMB_cv()` fold models (e.g., via
   `print(cv)`) after running in parallel with a `future::plan()` or after
   saving and reloading the cross-validation object. Reloaded models are now
