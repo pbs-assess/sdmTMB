@@ -50,6 +50,11 @@
   longer drops the other grouping factors' random effects for those rows
   (e.g., a new `site` with a fitted `year` in `(1 | site) + (1 | year)`). #558
 
+* `predict()` with `newdata` now uses the fitted random effects when a grouping
+  column was not a factor in fitting (e.g., `(1 | year)` with an integer `year`).
+  These rows previously all got a random effect value of 0 with a warning.
+  Grouping columns in `newdata` must still be factors.
+
 * Fix the anisotropic ranges reported by `print()`, `tidy()` (`range_min`,
   `range_max`), and `plot_anisotropy()`, and the arrows in
   `plot_anisotropy2()`. These scaled the range by the eigenvalues of `H`

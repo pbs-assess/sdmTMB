@@ -41,7 +41,9 @@ print_model_info <- function(x) {
     time <- NULL
   }
 
-  mesh <- paste0("Mesh: ", extract_call_name(x$call$mesh), " (", covariance, " covariance)\n")
+  mesh <- if (!is.null(x$call$mesh)) {
+    paste0("Mesh: ", extract_call_name(x$call$mesh), " (", covariance, " covariance)\n")
+  }
   data <- paste0("Data: ", extract_call_name(x$call$data), "\n")
   nonlocal_formula <- NULL
   if (!is.null(x$nonlocal_formula_parsed) &&

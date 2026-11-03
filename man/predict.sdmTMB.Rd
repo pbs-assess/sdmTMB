@@ -67,14 +67,14 @@ sets them all to zero. Excluding only some of them is not yet supported.}
 value of zero, while other grouping factors keep their random effects for
 those rows. \code{TRUE} allows them silently, \code{FALSE} gives an error (as with
 \code{allow.new.levels} in \pkg{lme4} and \pkg{glmmTMB}), and \code{NULL} (default)
-allows them with a warning. With \code{nsim}, \code{"sample"} instead draws each new level's random
-effects from their estimated (multivariate) normal distribution in every
-draw, as with \code{sample_new_levels = "gaussian"} in \pkg{brms}, so the draws
-include variation among levels. Rows sharing a new level share its draw,
-and fitted levels keep their usual draws. To include this variation for
-all rows, give the grouping factor a level not in the fitted data (see
-Examples). Not relevant if \code{re_form_iid} excludes the random effects.
-Grouping columns in \code{newdata} must be factors.}
+allows them with a warning. With \code{nsim}, \code{"sample"} instead draws each new
+level's random effects from their estimated (multivariate) normal
+distribution in every draw, as with \code{sample_new_levels = "gaussian"} in
+\pkg{brms}, so the draws include variation among levels. Rows sharing a new
+level share its draw, and fitted levels keep their usual draws. To include
+this variation for all rows, give the grouping factor a level not in the
+fitted data (see Examples). Not relevant if \code{re_form_iid} excludes the
+random effects. Grouping columns in \code{newdata} must be factors.}
 
 \item{nsim}{Number of draws. If \verb{> 0}, returns a matrix of draws instead of
 a data frame (see Value). Each draw takes the fixed and random effects

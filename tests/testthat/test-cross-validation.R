@@ -1057,3 +1057,31 @@ test_that("elpd() hands sdmTMB_cv() output to loo", {
   m2$data$cv_loglik[1] <- NA
   expect_error(loo::elpd(m2), regexp = "NA")
 })
+
+test_that("Cross validation works without a mesh", {
+  skip_on_cran()
+  skip_on_ci()
+  d <- pcod_2011
+  mesh <- make_mesh(d, c("X", "Y"), cutoff = 30)
+  fold_ids <- rep(1:2, length.out = nrow(d))
+  cv <- sdmTMB_cv(density ~ depth_scaled, data = d, family = tweedie(),
+    time = "year", fold_ids = fold_ids)
+  expect_identical(cv$models[[1]]$spatial, "off")
+  expect_identical(cv$models[[1]]$spatiotemporal, "off")
+  # same as with a placeholder mesh and the fields turned off:
+  cv_mesh <- sdmTMB_cv(density ~ depth_scaled, data = d, family = tweedie(),
+    time = "year", fold_ids = fold_ids, mesh = mesh,
+    spatial = "off", spatiotemporal = "off")
+  expect_equal(cv$sum_loglik, cv_mesh$sum_loglik, tolerance = 1e-6)
+  expect_equal(cv$data$cv_predicted, cv_mesh$data$cv_predicted, tolerance = 1e-6)
+
+  cv_delta <- sdmTMB_cv(density ~ depth_scaled, data = d,
+    family = delta_gamma(), time = "year", fold_ids = fold_ids)
+  expect_identical(cv_delta$models[[1]]$spatial, c("off", "off"))
+  expect_true(is.finite(cv_delta$sum_loglik))
+  expect_error(
+    sdmTMB_cv(density ~ 1, data = d, family = tweedie(), fold_ids = fold_ids,
+      spatial = "on"),
+    regexp = "mesh"
+  )
+})

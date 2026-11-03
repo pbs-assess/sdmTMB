@@ -240,6 +240,15 @@ test_that("spatial and spatiotemporal fields default to off without a mesh", {
   m_delta <- sdmTMB(density ~ 1, data = d, family = delta_gamma())
   expect_identical(m_delta$spatial, c("off", "off"))
 
+  # print() only reports a mesh if there is one:
+  expect_false(any(grepl("Mesh", capture.output(print(m)))))
+  expect_false(any(grepl("Mesh", capture.output(print(m_off)))))
+  mesh <- make_mesh(d, c("X", "Y"), cutoff = 30)
+  m_mesh <- sdmTMB(density ~ 1, data = d, family = tweedie(), mesh = mesh,
+    spatial = "off")
+  expect_true(any(grepl("Mesh: mesh (isotropic covariance)",
+    capture.output(print(m_mesh)), fixed = TRUE)))
+
   expect_error(
     sdmTMB(density ~ 1, data = d, family = tweedie(), spatial = "on"),
     regexp = "mesh"

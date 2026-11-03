@@ -46,14 +46,14 @@
 #'   value of zero, while other grouping factors keep their random effects for
 #'   those rows. `TRUE` allows them silently, `FALSE` gives an error (as with
 #'   `allow.new.levels` in \pkg{lme4} and \pkg{glmmTMB}), and `NULL` (default)
-#'   allows them with a warning. With `nsim`, `"sample"` instead draws each new level's random
-#'   effects from their estimated (multivariate) normal distribution in every
-#'   draw, as with `sample_new_levels = "gaussian"` in \pkg{brms}, so the draws
-#'   include variation among levels. Rows sharing a new level share its draw,
-#'   and fitted levels keep their usual draws. To include this variation for
-#'   all rows, give the grouping factor a level not in the fitted data (see
-#'   Examples). Not relevant if `re_form_iid` excludes the random effects.
-#'   Grouping columns in `newdata` must be factors.
+#'   allows them with a warning. With `nsim`, `"sample"` instead draws each new
+#'   level's random effects from their estimated (multivariate) normal
+#'   distribution in every draw, as with `sample_new_levels = "gaussian"` in
+#'   \pkg{brms}, so the draws include variation among levels. Rows sharing a new
+#'   level share its draw, and fitted levels keep their usual draws. To include
+#'   this variation for all rows, give the grouping factor a level not in the
+#'   fitted data (see Examples). Not relevant if `re_form_iid` excludes the
+#'   random effects. Grouping columns in `newdata` must be factors.
 #' @param nsim Number of draws. If `> 0`, returns a matrix of draws instead of
 #'   a data frame (see Value). Each draw takes the fixed and random effects
 #'   from their approximate joint (multivariate normal) distribution and

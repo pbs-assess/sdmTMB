@@ -240,9 +240,11 @@ predict_iid_re_matrices <- function(object, req, newdata, n_formula) {
     ))
   }
   sample_new <- identical(req$allow_new_levels, "sample")
-  # levels with an estimated random effect (unused factor levels have none):
-  levels_fit <- lapply(stats::setNames(nm = unique(RE_names)),
-    function(g) levels(droplevels(object$data[[g]])))
+  # grouping columns as coded in fitting, where non-factors become factors and
+  # only levels with an estimated random effect remain (unused levels have none):
+  fit_groups <- lapply(stats::setNames(nm = unique(RE_names)),
+    function(g) droplevels(as.factor(object$data[[g]])))
+  levels_fit <- lapply(fit_groups, levels)
   new_levels <- list()
   for (g in names(levels_fit)) {
     assert_that(is.factor(newdata[[g]]),
@@ -269,24 +271,26 @@ predict_iid_re_matrices <- function(object, req, newdata, n_formula) {
   # now do with a joint data frame to ensure factor levels match;
   # new grouping levels go after the fitted ones
   common_cols <- intersect(colnames(object$data), colnames(newdata))
+  data_aligned <- object$data[, common_cols, drop = FALSE]
+  data_aligned[names(fit_groups)] <- fit_groups
   nd_aligned <- newdata[, common_cols, drop = FALSE]
   for (col_name in common_cols) {
-    if (is.factor(object$data[[col_name]]) && is.factor(nd_aligned[[col_name]])) {
+    if (is.factor(data_aligned[[col_name]]) && is.factor(nd_aligned[[col_name]])) {
       nd_aligned[[col_name]] <- factor(
         as.character(nd_aligned[[col_name]]),
         levels = if (col_name %in% names(levels_fit)) {
           c(levels_fit[[col_name]], new_levels[[col_name]])
         } else {
-          levels(object$data[[col_name]])
+          levels(data_aligned[[col_name]])
         }
       )
       if (anyNA(nd_aligned[[col_name]])) {
         nd_aligned[[col_name]][is.na(nd_aligned[[col_name]])] <-
-          levels(object$data[[col_name]])[1]
+          levels(data_aligned[[col_name]])[1]
       }
     }
   }
-  joint_df <- rbind(object$data[, common_cols, drop = FALSE], nd_aligned)
+  joint_df <- rbind(data_aligned, nd_aligned)
   xx <- parse_formula(re_formula_no_response, joint_df)
   # drop the original data:
   Zt <- xx$re_cov_terms$Zt[, seq(nrow(object$data) + 1, nrow(object$data) + nrow(newdata)), drop = FALSE]
