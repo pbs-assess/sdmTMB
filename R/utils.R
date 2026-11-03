@@ -853,6 +853,7 @@ reinitialize <- function(x) {
     identical(x, new("externalptr"))
   }
   if (is_null_pointer(x)) {
+    if ("version" %in% names(x)) check_sdmTMB_version(x$version)
     x$tmb_obj$env$beSilent()
     # retape before fn(): without a cached `L.created.by.newton` (dropped from
     # saved cross-validation models), TMB's inner newton() evaluates the stale

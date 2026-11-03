@@ -27,7 +27,7 @@ nobs.sdmTMB <- function(object, ...) {
 fitted.sdmTMB <- function(object, ...) {
 
   if (!"offset" %in% names(object))
-    cli_abort("It looks like this was fit with an older version of sdmTMB. Try sdmTMB:::update_version(fit).")
+    cli_abort("It looks like this was fit with an older version of sdmTMB. Please refit the model.")
   predict(object, newdata = object$data, type = "response", offset = object$offset)$est
 }
 

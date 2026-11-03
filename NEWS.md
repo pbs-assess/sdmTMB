@@ -1,5 +1,9 @@
 # sdmTMB (development version)
 
+* Warn about a mismatch between the sdmTMB version a model was fit with and the
+  installed version whenever a saved model is reloaded (e.g., by `print()`,
+  `tidy()`, or `simulate()`), not only in `predict()`. #534
+
 * `mesh` can now be omitted from `sdmTMB()` (or set to `NULL`), in which case
   `spatial` and `spatiotemporal` default to `"off"`. Models with only fixed
   effects, smoothers, random intercepts, or time-varying coefficients no

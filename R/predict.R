@@ -907,7 +907,7 @@ check_sdmTMB_version <- function(version) {
     cli_warn(c(
       "This model was fit with sdmTMB {fitted}, but sdmTMB {installed} is installed.",
       "i" = paste(
-        "The TMB model may differ between versions, so prediction may fail",
+        "The TMB model may differ between versions, so using this model may fail",
         "or give different results. We recommend refitting the model with the installed version."
       )
     ), .frequency = "once", .frequency_id = paste0("sdmTMB_version_", fitted))
