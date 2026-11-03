@@ -42,11 +42,11 @@
 #'   `(1 | g)` in `formula`)? `NULL` (default) includes them. `NA` or `~ 0`
 #'   sets them all to zero. Excluding only some of them is not yet supported.
 #' @param allow_new_levels Allow levels of random effect grouping factors in
-#'   `newdata` that were not seen in fitting? Rows with a new level get a
-#'   random effect value of zero (a population-level prediction). `TRUE`
-#'   allows them silently, `FALSE` gives an error (as with `allow.new.levels`
-#'   in \pkg{lme4} and \pkg{glmmTMB}), and `NULL` (default) allows them with a
-#'   warning. With `nsim`, `"sample"` instead draws each new level's random
+#'   `newdata` that were not seen in fitting? A new level gets a random effect
+#'   value of zero, while other grouping factors keep their random effects for
+#'   those rows. `TRUE` allows them silently, `FALSE` gives an error (as with
+#'   `allow.new.levels` in \pkg{lme4} and \pkg{glmmTMB}), and `NULL` (default)
+#'   allows them with a warning. With `nsim`, `"sample"` instead draws each new level's random
 #'   effects from their estimated (multivariate) normal distribution in every
 #'   draw, as with `sample_new_levels = "gaussian"` in \pkg{brms}, so the draws
 #'   include variation among levels. Rows sharing a new level share its draw,
