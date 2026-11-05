@@ -26,6 +26,14 @@ test_that("profile_breakpt() recovers the cutpoint and fits the final model", {
   expect_equal(e$final_nll, min(p$profile$nll, na.rm = TRUE), tolerance = 1e-4)
   expect_equal(e$aic, 2 * e$nll + 2 * e$k)
   expect_equal(e$k, length(p$fit$model$par) + 1L)
+  # AIC() and BIC() count the cutpoint; AIC() on the final fit doesn't
+  expect_equal(AIC(p), e$aic)
+  expect_equal(AIC(p), AIC(p$fit) + 2, tolerance = 1e-6)
+  expect_equal(BIC(p), -2 * logLik(p)[[1]] + log(nrow(d)) * e$k)
+  # the final fit's call names the caller's objects, so print() and update() work
+  expect_identical(p$fit$call$data, quote(d))
+  expect_null(p$fit$call$final)
+  expect_output(print(p$fit), "Data: d")
 
   # the profile minimum is no worse than fitting the cutpoint directly from the truth
   m <- suppressMessages(suppressWarnings(sdmTMB(y ~ breakpt(x), data = d, spatial = "off",
@@ -74,4 +82,42 @@ test_that("profile_breakpt() checks its inputs", {
   d$y <- ifelse(d$y > 1, d$y, 0)
   expect_error(profile_breakpt(y ~ breakpt(x), data = d, spatial = "off",
     family = delta_gamma()), "Delta")
+})
+
+test_that("sdmTMB() points to profile_breakpt() when estimating a cutpoint directly", {
+  skip_on_cran()
+  d <- sim_breakpt(n = 100)
+  # every fit, not once per session
+  for (i in 1:2) {
+    expect_message(suppressWarnings(sdmTMB(y ~ breakpt(x), data = d, spatial = "off")),
+      "profile_breakpt")
+  }
+  # not when the cutpoint is fixed, as profile_breakpt() does
+  msgs <- character()
+  withCallingHandlers(
+    sdmTMB(y ~ breakpt(x), data = d, spatial = "off",
+      control = sdmTMBcontrol(start = list(b_threshold = matrix(c(1, 0.3), 2L, 1L)),
+        map = list(b_threshold = factor(c(1, NA))))),
+    message = function(cnd) {
+      msgs <<- c(msgs, conditionMessage(cnd))
+      invokeRestart("muffleMessage")
+    }
+  )
+  expect_false(any(grepl("profile_breakpt", msgs)))
+})
+
+test_that("sanity() flags a directly estimated cutpoint but not a profiled one", {
+  skip_on_cran()
+  d <- sim_breakpt()
+  m <- suppressMessages(suppressWarnings(sdmTMB(y ~ breakpt(x), data = d, spatial = "off")))
+  expect_message(s <- sanity(m), "profile_breakpt")
+  expect_false(s$breakpt_ok)
+  expect_false(s$all_ok)
+
+  p <- profile_breakpt(y ~ breakpt(x), data = d, spatial = "off")
+  s <- sanity(p$fit, silent = TRUE)
+  expect_true(s$breakpt_ok)
+
+  m <- sdmTMB(y ~ x, data = d, spatial = "off")
+  expect_true(sanity(m, silent = TRUE)$breakpt_ok)
 })

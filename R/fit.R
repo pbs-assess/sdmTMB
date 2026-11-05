@@ -1818,6 +1818,16 @@ sdmTMB <- function(
   }
   tmb_map <- c(map, tmb_map) # add user-supplied mapping
 
+  # profile_breakpt() maps b_threshold to fix the cutpoint, so it doesn't trigger this
+  if (do_fit && identical(as.integer(tmb_data$threshold_func), 1L) && is.null(map$b_threshold)) {
+    cli_inform(c(
+      i = paste0("The likelihood of a `breakpt()` model isn't smooth in the cutpoint, ",
+        "so the fit can stop at the wrong cutpoint while reporting convergence, ",
+        "and the cutpoint's standard error isn't reliable."),
+      i = "Consider `profile_breakpt()` to estimate the cutpoint by profile likelihood."
+    ))
+  }
+
   if (isTRUE(control$profile)) {
     prof <- c("b_j")
     if (has_two_components) prof <- c(prof, "b_j2")

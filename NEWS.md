@@ -5,7 +5,10 @@
   best cutpoint. Estimating the cutpoint directly with `sdmTMB()` can stop at
   the wrong cutpoint while reporting convergence, and its standard error for
   the cutpoint is not reliable, because the likelihood is not smooth in the
-  cutpoint. `plot()` on the output shows the profile likelihood and interval.
+  cutpoint. `plot()` on the output shows the profile likelihood and interval,
+  and `AIC()` on the output counts the cutpoint as a parameter.
+  `sdmTMB()` now points to `profile_breakpt()` with a message whenever it
+  estimates a `breakpt()` cutpoint directly, and `sanity()` flags such fits.
 
 * Warn about a mismatch between the sdmTMB version a model was fit with and the
   installed version whenever a saved model is reloaded (e.g., by `print()`,

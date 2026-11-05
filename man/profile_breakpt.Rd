@@ -65,9 +65,11 @@ above the cutpoint, and flags for checking the result (see Warnings).
 \code{NULL} if \code{final = FALSE}.
 }
 
-Use \code{estimate$aic}, not \code{AIC(estimate$fit)}: \code{fit} doesn't count the fixed cutpoint
-as a parameter. Standard errors from \code{fit} don't include uncertainty in the
-cutpoint.
+For AIC, use \code{AIC(p)} (or \code{estimate$aic}), where \code{p} is the output, not
+\code{AIC(p$fit)}: \code{fit} doesn't count the fixed cutpoint as a parameter.
+\code{\link[=logLik]{logLik()}}, and so \code{\link[=AIC]{AIC()}} and \code{\link[=BIC]{BIC()}}, work on the output, and \code{AIC(p, m)}
+compares it with another model \code{m}. Standard errors from \code{fit} don't include
+uncertainty in the cutpoint.
 }
 \description{
 Fits a model with a \code{breakpt()} term (see the threshold models section of
@@ -100,9 +102,11 @@ Each profile fit starts from the nearest finished fit and skips the extra
 optimization steps and \code{\link[TMB:sdreport]{TMB::sdreport()}} for speed.
 Only the final fit runs those.
 
-The confidence interval is every cutpoint within \code{qchisq(level, 1) / 2} NLL units of
-the best, with the ends interpolated between grid points. If the profile
-is still inside the cutoff at the end of the grid, that end is \code{NA}.
+The confidence interval runs from the lowest to the highest cutpoint within
+\code{qchisq(level, 1) / 2} NLL units of the best, with the ends interpolated
+between grid points. If the profile rises above the cutoff between them
+(\code{estimate$pieces} > 1), the interval includes those cutpoints too. If the
+profile is still inside the cutoff at the end of the grid, that end is \code{NA}.
 }
 \section{Warnings}{
 

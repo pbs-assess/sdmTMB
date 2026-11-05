@@ -285,9 +285,25 @@ sanity <- function(object, big_sd_log10 = 2, gradient_thresh = 0.001, silent = F
     }
   }
 
+  # a breakpt() cutpoint estimated with the other parameters, rather than fixed
+  # (as profile_breakpt() does) or mapped by the user
+  breakpt_ok <- TRUE
+  if (identical(as.integer(object$tmb_data$threshold_func), 1L) &&
+    is.null(object$control$map$b_threshold)) {
+    if (!silent) {
+      cli::cli_alert_danger("The `breakpt()` cutpoint was estimated directly")
+      cli::cli_alert_info(paste0("The likelihood isn't smooth in the cutpoint, so the fit ",
+        "can stop at the wrong cutpoint while reporting convergence, and the cutpoint's ",
+        "standard error isn't reliable"), wrap = TRUE)
+      cli::cli_alert_info("Use `profile_breakpt()` to estimate the cutpoint by profile likelihood")
+      cat("\n")
+    }
+    breakpt_ok <- FALSE
+  }
+
   ret <- named_list(
     hessian_ok, eigen_values_ok, nlminb_ok, range_ok,
-    gradients_ok, se_magnitude_ok, se_na_ok, sigmas_ok
+    gradients_ok, se_magnitude_ok, se_na_ok, sigmas_ok, breakpt_ok
   )
   all_ok <- all(unlist(ret))
   ret <- c(ret, all_ok = all_ok)

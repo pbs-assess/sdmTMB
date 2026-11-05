@@ -31,10 +31,11 @@ library(dplyr)
 library(sdmTMB)
 ```
 
-We'll repeat the same models used for the index standardization vignette, using the built-in data for Pacific cod. 
+We'll repeat the same models used for the index standardization vignette, using the built-in data for Pacific cod.
 
-As a summary, 
-- We've included columns for depth and depth squared. 
+As a summary,
+
+- We've included columns for depth and depth squared.
 - Depth was centred and scaled by its standard deviation and we've included those in the data frame so that they could be used to similarly scale the prediction grid.
 - The density units should be kg/km^2^.
 - Here, X and Y are coordinates in UTM zone 9.
@@ -43,15 +44,15 @@ As a summary,
 glimpse(pcod)
 ```
 
-As before, the SPDE mesh is created using 75 knots for a balance between speed and accuracy. You will likely want to use more for applied scenarios. You will want to make sure that increasing the number of knots does not change the conclusions.
+We'll start by developing a mesh. You will likely want to use more vertices for applied scenarios. You will want to make sure that increasing the number of vertices does not change the conclusions.
 
 ```{r spde, fig.asp=0.8}
 pcod_spde <- make_mesh(pcod, c("X", "Y"), cutoff = 12)
 ```
 
-We will extend the simple GLMM used in the index standardization vignette to include a threshold effect. For real applications, the threshold effect might be a function of habitat covariates, environmental variables, etc. Because 'depth' is the only external variable in the `pcod` data frame, we'll use that. For any threshold model, you can specify the model as a linear threshold (`breakpt()`) or logistic (`logistic()`) as part of the formula. Note: as before, if we want to use this model for index standardization then we need to include `0 + as.factor(year)` or `-1 + as.factor(year)` so that we have a factor predictor that represents the mean estimate for each time slice.
+We will extend the simple GLMM used in the index standardization vignette to include a threshold effect. For real applications, the threshold effect might be a function of habitat covariates, environmental variables, etc. Because 'depth' is the only external variable in the `pcod` data frame, we'll use that. For any threshold model, you can specify the model as a linear threshold (`breakpt()`) or logistic (`logistic()`) as part of the formula. To keep this vignette fast, we turn off the spatiotemporal random fields and include only a spatial field. Note: as before, if we want to use this model for index standardization then we need to include `0 + as.factor(year)` or `-1 + as.factor(year)` so that we have a factor predictor that represents the mean estimate for each time slice.
 
-This first example uses the 'depth_scaled' covariate (depth, standardized ~ N(0,1)) and the logistic function, similar to selectivity curves used in fisheries models. The form is 
+This first example uses the 'depth_scaled' covariate (depth, standardized ~ N(0,1)) and the logistic function, similar to selectivity curves used in fisheries models. The form is
 
 $$s(x)=\tau + \psi *\quad { \left[ 1+{ \exp }^{ -ln\left( 19 \right) \quad *\quad \left( x-s50 \right) \quad /\quad \left( s95\quad -\quad s50 \right)  } \right]  }^{ -1 }$$
 where $\psi$ is a scaling parameter (controlling the height of the y-axis for the response, and is unconstrained), $\tau$ is an intercept, $s50$ is a parameter controlling the point at which the function reaches 50% of the maximum ($\psi$), and $s95$ is a parameter controlling the point at which the function reaches 95%. The parameter $s50$ is unconstrained, and $s95$ is constrained to be larger than $s50$.
@@ -60,7 +61,7 @@ where $\psi$ is a scaling parameter (controlling the height of the y-axis for th
 m <- sdmTMB(
   data = pcod,
   formula = density ~ 0 + logistic(depth_scaled) + as.factor(year),
-  time = "year", mesh = pcod_spde,
+  time = "year", mesh = pcod_spde, spatiotemporal = "off",
   family = tweedie(link = "log")
 )
 ```
@@ -75,13 +76,13 @@ We can visualize the effect:
 
 ```{r logistic-eff}
 nd <- data.frame(
-  depth_scaled = seq(min(pcod$depth_scaled) + 0.5, 
-    max(pcod$depth_scaled) - 0.2, length.out = 100), 
+  depth_scaled = seq(min(pcod$depth_scaled) + 0.5,
+    max(pcod$depth_scaled) - 0.2, length.out = 100),
   year = 2015L # a chosen year
 )
 p <- predict(m, newdata = nd, se_fit = TRUE, re_form = NA)
-ggplot(p, aes(depth_scaled, exp(est), 
-  ymin = exp(est - 1.96 * est_se), 
+ggplot(p, aes(depth_scaled, exp(est),
+  ymin = exp(est - 1.96 * est_se),
   ymax = exp(est + 1.96 * est_se))) +
   geom_line() + geom_ribbon(alpha = 0.4)
 ```
@@ -92,7 +93,7 @@ Next, we can try to fit the same model but use a linear breakpoint / cutpoint mo
 m <- sdmTMB(
   data = pcod,
   formula = density ~ 0 + breakpt(depth_scaled) + as.factor(year),
-  time = "year", mesh = pcod_spde,
+  time = "year", mesh = pcod_spde, spatiotemporal = "off",
   family = tweedie(link = "log")
 )
 ```
@@ -103,12 +104,44 @@ For this model, the important parameters are the slope, 'depth_scaled-slope', an
 print(m)
 ```
 
-We can visualize the linear breakpoint effect:
+This fit has problems. The Hessian isn't positive definite, the standard errors are huge or `NaN`, and the estimated breakpoint is `r round(m$tmb_obj$env$parList()$b_threshold[2], 2)`, at the very bottom of the range of `depth_scaled`. This is common with `breakpt()`. The likelihood isn't smooth in the breakpoint, so the optimizer can stop at the wrong breakpoint while reporting convergence, and the standard error for the breakpoint isn't reliable even when the fit looks fine.
+
+Instead, we can estimate the breakpoint by profile likelihood with `profile_breakpt()`. This fits the model with the breakpoint fixed at each of a grid of values, refines the grid near the best value, and refits the model at the best breakpoint. It takes the same arguments as `sdmTMB()`:
+
+```{r profile-linear}
+pr <- profile_breakpt(
+  data = pcod,
+  formula = density ~ 0 + breakpt(depth_scaled) + as.factor(year),
+  time = "year", mesh = pcod_spde, spatiotemporal = "off",
+  family = tweedie(link = "log")
+)
+pr
+```
+
+The negative log likelihood at the best breakpoint is `r round(m$model$objective - pr$estimate$nll, 1)` units lower than the direct fit's. We can plot the profile. The shaded band is the 95% confidence interval for the breakpoint: every breakpoint whose negative log likelihood is within the dashed cutoff of the minimum. The tick marks along the bottom show the breakpoints that were tried.
+
+```{r profile-plot}
+plot(pr)
+```
+
+The profile isn't a smooth bowl. It has a small kink wherever the breakpoint passes an observed depth, and here it also has a second, slightly higher dip at a lower breakpoint. Both dips are inside the cutoff, so the data are consistent with a breakpoint anywhere in the shaded band. With kinks and more than one dip, the gradient doesn't reliably point an optimizer toward the best breakpoint, which is part of why the direct fit went wrong. The line joins the fits, which are closest together near the minimum and the ends of the interval, so it looks more angular where the fits are farther apart.
+
+`pr$fit` is the `sdmTMB()` model with the breakpoint fixed at its best value. For model comparison, use `AIC(pr)` rather than `AIC(pr$fit)`, because `pr$fit` doesn't count the breakpoint as a parameter.
+
+```{r profile-fit}
+pr$estimate[, c("cut", "lwr", "upr", "slope")]
+AIC(pr)
+pr$fit
+```
+
+We can visualize the linear breakpoint effect from this fit. The ribbon doesn't include uncertainty in the breakpoint itself, so we also show the breakpoint (dashed) and its confidence interval (dotted):
 
 ```{r brkpt-eff, warning=FALSE}
-p <- predict(m, newdata = nd, se_fit = TRUE, re_form = NA, xy_cols = c("X", "Y"))
-ggplot(p, aes(depth_scaled, exp(est), 
-  ymin = exp(est - 1.96 * est_se), 
+p <- predict(pr$fit, newdata = nd, se_fit = TRUE, re_form = NA)
+ggplot(p, aes(depth_scaled, exp(est),
+  ymin = exp(est - 1.96 * est_se),
   ymax = exp(est + 1.96 * est_se))) +
-  geom_line() + geom_ribbon(alpha = 0.4)
+  geom_line() + geom_ribbon(alpha = 0.4) +
+  geom_vline(xintercept = pr$estimate$cut, linetype = 2) +
+  geom_vline(xintercept = c(pr$estimate$lwr, pr$estimate$upr), linetype = 3)
 ```

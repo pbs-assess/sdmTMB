@@ -29,9 +29,11 @@
 #' optimization steps and [TMB::sdreport()] for speed.
 #' Only the final fit runs those.
 #'
-#' The confidence interval is every cutpoint within `qchisq(level, 1) / 2` NLL units of
-#' the best, with the ends interpolated between grid points. If the profile
-#' is still inside the cutoff at the end of the grid, that end is `NA`.
+#' The confidence interval runs from the lowest to the highest cutpoint within
+#' `qchisq(level, 1) / 2` NLL units of the best, with the ends interpolated
+#' between grid points. If the profile rises above the cutoff between them
+#' (`estimate$pieces` > 1), the interval includes those cutpoints too. If the
+#' profile is still inside the cutoff at the end of the grid, that end is `NA`.
 #'
 #' @param formula,... As in [sdmTMB()]. `formula` must include one `breakpt()`
 #'   term. Pass `data`, `mesh`, `family`, and other [sdmTMB()] arguments in
@@ -69,9 +71,11 @@
 #' * `fit`: the [sdmTMB()] fit with the cutpoint fixed at `estimate$cut`, or
 #'   `NULL` if `final = FALSE`.
 #'
-#' Use `estimate$aic`, not `AIC(estimate$fit)`: `fit` doesn't count the fixed cutpoint
-#' as a parameter. Standard errors from `fit` don't include uncertainty in the
-#' cutpoint.
+#' For AIC, use `AIC(p)` (or `estimate$aic`), where `p` is the output, not
+#' `AIC(p$fit)`: `fit` doesn't count the fixed cutpoint as a parameter.
+#' [logLik()], and so [AIC()] and [BIC()], work on the output, and `AIC(p, m)`
+#' compares it with another model `m`. Standard errors from `fit` don't include
+#' uncertainty in the cutpoint.
 #'
 #' @section Warnings:
 #' The function warns, and sets `estimate$open_interval` or
@@ -300,7 +304,12 @@ profile_breakpt <- function(formula, ..., control = sdmTMBcontrol(), cuts = NULL
     ctl$newton_loops <- max(1L, ctl$newton_loops)
     ctl$start <- utils::modifyList(as.list(ctl$start), obj$env$parList(best$par, best$last))
     ctl$map <- c(ctl$map, list(b_threshold = factor(c(1L, NA))))
-    fit <- suppressMessages(sdmTMB(formula, ..., control = ctl))
+    # rebuild the caller's call so `fit$call` names their objects (for print() and update())
+    cl <- match.call(expand.dots = TRUE)
+    cl[[1L]] <- quote(sdmTMB)
+    cl[c("cuts", "within", "tol", "tol_coarse", "max_fits", "level", "final")] <- NULL
+    cl$control <- ctl
+    fit <- suppressMessages(eval(cl, parent.frame()))
     estimate$final_nll <- fit$model$objective
     estimate$nll <- min(estimate$nll, fit$model$objective)
     estimate$aic <- 2 * estimate$nll + 2 * k
@@ -325,6 +334,13 @@ print.breakpt_profile <- function(x, ...) {
   if (e$max_grad_near > 0.1) cat("Note: a profile fit near the best has a large gradient; see `$profile`.\n")
   if (!e$refine_complete) cat("Note: refinement stopped at `max_fits`.\n")
   invisible(x)
+}
+
+#' @export
+logLik.breakpt_profile <- function(object, ...) {
+  e <- object$estimate
+  n <- e$n_below + e$n_above
+  structure(-e$nll, nobs = n, nall = n, df = e$k, class = "logLik")
 }
 
 #' Plot a break-point profile
