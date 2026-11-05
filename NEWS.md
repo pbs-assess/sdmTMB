@@ -1,5 +1,12 @@
 # sdmTMB (development version)
 
+* Add `profile_breakpt()` to estimate the cutpoint of a `breakpt()` term by
+  profile likelihood, with a confidence interval, and refit the model at the
+  best cutpoint. Estimating the cutpoint directly with `sdmTMB()` can stop at
+  the wrong cutpoint while reporting convergence, and its standard error for
+  the cutpoint is not reliable, because the likelihood is not smooth in the
+  cutpoint. `plot()` on the output shows the profile likelihood and interval.
+
 * Warn about a mismatch between the sdmTMB version a model was fit with and the
   installed version whenever a saved model is reloaded (e.g., by `print()`,
   `tidy()`, or `simulate()`), not only in `predict()`. #534

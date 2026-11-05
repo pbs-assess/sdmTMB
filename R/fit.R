@@ -254,7 +254,11 @@ NULL
 #' A linear break-point relationship for a covariate can be included via
 #' `+ breakpt(variable)` in the formula, where `variable` is a single covariate
 #' corresponding to a column in `data`. In this case, the relationship is linear
-#' up to a point and then constant (hockey-stick shaped).
+#' up to a point and then constant (hockey-stick shaped). The likelihood is not
+#' smooth in the cutpoint, so a fit can stop at the wrong cutpoint while
+#' reporting convergence, and its standard error for the cutpoint is not
+#' reliable. [profile_breakpt()] estimates the cutpoint and a confidence interval
+#' by profile likelihood instead.
 #'
 #' Similarly, a logistic-function threshold model can be included via
 #' `+ logistic(variable)`. This option models the relationship as a logistic

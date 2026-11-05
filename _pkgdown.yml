@@ -82,6 +82,8 @@ reference:
   - dharma_residuals
   - sdmTMBcontrol
   - run_extra_optimization
+  - profile_breakpt
+  - plot.breakpt_profile
   - replicate_df
   - set_delta_model
   - make_category_svc
