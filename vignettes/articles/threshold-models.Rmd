@@ -203,7 +203,7 @@ sim_mix <- function(newdata, n) { # n[i] draws from fits[[i]]
 }
 ```
 
-Each column is one draw of the link-scale predictions at every row of `newdata`. Here are 200 draws, coloured by the breakpoint of the fit they came from, with the red band from the variance averaging above:
+Each column is one draw of the link-scale predictions at every row of `newdata`. Here are about 200 draws, each as a grey line, with the red band from the variance averaging above:
 
 ```{r brkpt-sims-plot}
 set.seed(123)
