@@ -145,3 +145,94 @@ ggplot(p, aes(depth_scaled, exp(est),
   geom_vline(xintercept = pr$estimate$cut, linetype = 2) +
   geom_vline(xintercept = c(pr$estimate$lwr, pr$estimate$upr), linetype = 3)
 ```
+
+To include uncertainty in the breakpoint, we can refit the model at several fixed breakpoints across the likely range and average the predictions. Each fit gets a weight proportional to its likelihood, which treats the profile as an approximate posterior for the breakpoint with a flat prior. We use a sequence of evenly spaced breakpoints where the profile is within 4 units of its minimum. A breakpoint 4 units above the minimum gets exp(-4), or about 2%, of the weight of the best one, so breakpoints farther out add little. This is also the range that `profile_breakpt()` refines (its `within` argument). More breakpoints would be more accurate but slower.
+
+```{r brkpt-refits, message=FALSE}
+near <- pr$profile$cut[pr$profile$dnll < 4]
+cuts <- seq(min(near), max(near), length.out = 10)
+start <- pr$fit$tmb_obj$env$parList() # start from the best fit; a bit faster
+fits <- lapply(cuts, function(cut) {
+  start$b_threshold[2] <- cut
+  update(pr$fit, control = sdmTMBcontrol(
+    start = start,
+    map = list(b_threshold = factor(c(1, NA))), # estimate the slope, fix the breakpoint
+    multiphase = FALSE
+  ))
+})
+nll <- sapply(fits, function(f) f$model$objective)
+w <- exp(min(nll) - nll)
+w <- w / sum(w)
+round(data.frame(cut = cuts, weight = w), 2)
+```
+
+Each fit gives a mean and a standard error on the link scale at each depth. We combine them with the mean and variance of the mixture. The weighted mean is the estimate. The variance is the weighted average of the within-fit variances, plus the spread of the means across breakpoints:
+
+```{r brkpt-mix, warning=FALSE}
+preds <- lapply(fits, predict, newdata = nd, se_fit = TRUE, re_form = NA)
+mu <- sapply(preds, `[[`, "est")
+s <- sapply(preds, `[[`, "est_se")
+p_mix <- nd
+p_mix$est <- drop(mu %*% w)
+within <- s^2 %*% w # average within-fit variance
+between <- (mu - p_mix$est)^2 %*% w # spread of the means across breakpoints
+p_mix$est_se <- sqrt(drop(within + between))
+
+ggplot(p_mix, aes(depth_scaled, exp(est),
+  ymin = exp(est - 1.96 * est_se),
+  ymax = exp(est + 1.96 * est_se))) +
+  # breakpoint fixed at its best value:
+  geom_ribbon(data = p, alpha = 0.3) +
+  geom_line(data = p) +
+  # breakpoint uncertainty included:
+  geom_ribbon(fill = NA, colour = "red", linetype = 2) +
+  geom_line(colour = "red")
+```
+
+The red lines include uncertainty in the breakpoint, and the black line and grey band don't. Averaging over breakpoints rounds off the kink in the curve. The band is wider just below the breakpoint, where the fits disagree most.
+
+Above the breakpoint, the red band is slightly lower and a little narrower. The profile is skewed, with more of its weight on breakpoints below the best one. Those fits have a slightly lower plateau and estimate it more precisely, because more observations fall above their breakpoint. The breakpoint barely changes the plateau, so averaging over fits adds almost no spread there. A mixture is always at least as wide as the average of its fits, but it can be narrower than the single best fit. The mixture can be skewed, so the mean ± 1.96 SE is only an approximation.
+
+We can also use simulation draws instead. They're useful for quantities that combine predictions, such as a ratio between depths, and they don't assume the mixture is normal. We split the draws among the fits in proportion to their weights:
+
+```{r brkpt-sims}
+sim_mix <- function(newdata, n) { # n[i] draws from fits[[i]]
+  do.call(cbind, lapply(which(n > 0), function(i) {
+    predict(fits[[i]], newdata = newdata, nsim = n[i], re_form = NA)
+  }))
+}
+```
+
+Each column is one draw of the link-scale predictions at every row of `newdata`. Here are 200 draws, coloured by the breakpoint of the fit they came from, with the red band from the variance averaging above:
+
+```{r brkpt-sims-plot}
+set.seed(123)
+n <- round(200 * w) # about 200 draws in total
+draws <- sim_mix(nd, n)
+p_draws <- data.frame(
+  depth_scaled = nd$depth_scaled,
+  est = as.vector(draws),
+  draw = rep(seq_len(ncol(draws)), each = nrow(nd))
+)
+ggplot(p_draws, aes(depth_scaled, exp(est))) +
+  geom_line(aes(group = draw), alpha = 0.15) +
+  geom_ribbon(
+    data = p_mix, fill = NA, colour = "red", linetype = 2,
+    aes(ymin = exp(est - 1.96 * est_se), ymax = exp(est + 1.96 * est_se))
+  )
+```
+
+Each draw has its own kink, at its fit's breakpoint. The draws mostly fill the red band, with a few outside it as expected.
+
+For a derived quantity, we draw at just the depths we need. Here's the ratio of the density at depth 1 (on the plateau) to the density at depth -1 (on the slope), with and without uncertainty in the breakpoint:
+
+```{r brkpt-ratio}
+nd2 <- data.frame(depth_scaled = c(-1, 1), year = 2015L)
+draws <- sim_mix(nd2, round(1000 * w))
+ratio <- exp(draws[2, ] - draws[1, ])
+quantile(ratio, c(0.025, 0.5, 0.975))
+draws_best <- predict(pr$fit, newdata = nd2, nsim = 1000, re_form = NA)
+quantile(exp(draws_best[2, ] - draws_best[1, ]), c(0.025, 0.5, 0.975))
+```
+
+The year effect cancels in the ratio, so it depends only on the slope and on how far the breakpoint is from depth -1. That makes it sensitive to the breakpoint, and including the breakpoint's uncertainty widens its interval a lot, mostly toward smaller ratios. Breakpoints below the best one are closer to depth -1, which leaves less of a rise between the two depths.

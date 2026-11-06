@@ -81,8 +81,11 @@
 #' For AIC, use `AIC(p)` (or `estimate$aic`), where `p` is the output, not
 #' `AIC(p$fit)`: `fit` doesn't count the fixed cutpoint as a parameter.
 #' [logLik()], and so [AIC()] and [BIC()], work on the output, and `AIC(p, m)`
-#' compares it with another model `m`. Standard errors from `fit` don't include
-#' uncertainty in the cutpoint.
+#' compares it with another model `m`. Standard errors and predictions from
+#' `fit` don't include uncertainty in the cutpoint. See the
+#' [threshold modeling article](https://sdmTMB.github.io/sdmTMB/articles/threshold-models.html)
+#' for an example of predictions that include uncertainty in both the cutpoint
+#' and the slope.
 #'
 #' @section Warnings:
 #' The function warns, and sets `estimate$open_interval`, `estimate$few_below`,

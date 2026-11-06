@@ -75,8 +75,11 @@ not profiled. Call \code{profile_breakpt()} again instead.
 For AIC, use \code{AIC(p)} (or \code{estimate$aic}), where \code{p} is the output, not
 \code{AIC(p$fit)}: \code{fit} doesn't count the fixed cutpoint as a parameter.
 \code{\link[=logLik]{logLik()}}, and so \code{\link[=AIC]{AIC()}} and \code{\link[=BIC]{BIC()}}, work on the output, and \code{AIC(p, m)}
-compares it with another model \code{m}. Standard errors from \code{fit} don't include
-uncertainty in the cutpoint.
+compares it with another model \code{m}. Standard errors and predictions from
+\code{fit} don't include uncertainty in the cutpoint. See the
+\href{https://sdmTMB.github.io/sdmTMB/articles/threshold-models.html}{threshold modeling article}
+for an example of predictions that include uncertainty in both the cutpoint
+and the slope.
 }
 \description{
 Fits a model with a \code{breakpt()} term (see the threshold models section of
