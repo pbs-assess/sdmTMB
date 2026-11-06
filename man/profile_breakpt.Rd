@@ -25,7 +25,9 @@ term. Pass \code{data}, \code{mesh}, \code{family}, and other \code{\link[=sdmTM
 \item{control}{Optimization control options from \code{\link[=sdmTMBcontrol]{sdmTMBcontrol()}}. Used as
 given for the final fit, except that \code{multiphase} is turned off, at least
 one Newton loop runs, and \code{start} and \code{map} are set to fix the cutpoint.
-Don't map \code{b_threshold} yourself.}
+Don't map \code{b_threshold} yourself. The profile fits use \code{lower}, \code{upper},
+\code{eval.max}, \code{iter.max}, \code{map}, \code{profile}, and \code{start} (for the first fit),
+but not \code{nlminb_loops}, \code{newton_loops}, or \code{multiphase}.}
 
 \item{cuts}{Cutpoints for the first pass, on the scale of the covariate. By
 default, quantiles of the covariate from 1\% to 99\%, with extra points in
@@ -46,7 +48,7 @@ enough to find a second minimum. Defaults to 4 times \code{tol}.}
 \item{max_fits}{Stop refining after this many profile fits. The search in
 step 3 runs regardless.}
 
-\item{level}{Confidence level for the profile interval.}
+\item{level}{Confidence level for the profile interval, between 0 and 1.}
 
 \item{final}{Fit the final model at the best cutpoint? If \code{FALSE}, returns
 the profile only.}
@@ -59,10 +61,15 @@ A list of class \code{breakpt_profile} with:
 (\code{dnll}), the slope, the maximum absolute gradient, the convergence code,
 and the share of observations below the cutpoint.
 \item \code{estimate}: a one-row data frame with the best cutpoint (\code{cut}), slope,
-NLL, interval (\code{lwr}, \code{upr}), AIC, numbers of observations below and
-above the cutpoint, and flags for checking the result (see Warnings).
+NLL, the final fit's NLL (\code{final_nll}, \code{NA} if \code{final = FALSE}), interval
+(\code{lwr}, \code{upr}), AIC, numbers of observations below and above the
+cutpoint, and flags for checking the result (see Warnings). If the final
+fit improves on the profile fit at the same cutpoint, \code{nll}, \code{aic}, and the
+profile use the final fit's NLL.
 \item \code{fit}: the \code{\link[=sdmTMB]{sdmTMB()}} fit with the cutpoint fixed at \code{estimate$cut}, or
-\code{NULL} if \code{final = FALSE}.
+\code{NULL} if \code{final = FALSE}. Its stored call is the call you made, with your
+\code{control}, so \code{\link[=update]{update()}} on it refits with the cutpoint estimated directly,
+not profiled. Call \code{profile_breakpt()} again instead.
 }
 
 For AIC, use \code{AIC(p)} (or \code{estimate$aic}), where \code{p} is the output, not
@@ -110,17 +117,17 @@ profile is still inside the cutoff at the end of the grid, that end is \code{NA}
 }
 \section{Warnings}{
 
-The function warns, and sets \code{estimate$open_interval} or
-\code{estimate$few_below}, when the interval reaches the end of the grid or when
-fewer than 15 observations (or 5\%, if that's more) fall below the best
-cutpoint. Either means the data say little about the cutpoint. Also check
+The function warns, and sets \code{estimate$open_interval}, \code{estimate$few_below},
+or \code{estimate$few_above}, when the interval reaches the end of the grid or when
+fewer than 15 observations (or 5\%, if that's more) fall below or above the
+best cutpoint. Either means the data say little about the cutpoint. Also check
 \code{estimate$pieces} (the interval isn't continuous if greater than 1),
 \code{estimate$near_edge}, \code{estimate$refine_complete}, and
 \code{estimate$max_grad_near} (the largest gradient among fits within \code{within}
 NLL units of the best).
 
-Delta models and models with more than one threshold term aren't
-supported.
+Delta models, models with more than one threshold term, and a
+\code{threshold_breakpt_cut} prior (see \code{\link[=sdmTMBpriors]{sdmTMBpriors()}}) aren't supported.
 }
 
 \examples{

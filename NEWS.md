@@ -9,6 +9,8 @@
   and `AIC()` on the output counts the cutpoint as a parameter.
   `sdmTMB()` now points to `profile_breakpt()` with a message whenever it
   estimates a `breakpt()` cutpoint directly, and `sanity()` flags such fits.
+  `profile_breakpt()` doesn't support delta models, so for them the message
+  and `sanity()` give other advice.
 
 * Warn about a mismatch between the sdmTMB version a model was fit with and the
   installed version whenever a saved model is reloaded (e.g., by `print()`,

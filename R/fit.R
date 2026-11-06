@@ -1657,11 +1657,14 @@ sdmTMB <- function(
     tmb_map$re_b_pars <- as.factor(tmb_map$re_b_pars)
     tmb_map$re_cov_pars <- as.factor(tmb_map$re_cov_pars)
   }
-  if (reml) tmb_random <- c(tmb_random, "b_j")
-  if (reml && has_two_components) tmb_random <- c(tmb_random, "b_j2")
+  # fixed effects that REML integrates out; logLik() still counts them
+  reml_random <- character(0)
+  if (reml) reml_random <- c(reml_random, "b_j")
+  if (reml && has_two_components) reml_random <- c(reml_random, "b_j2")
+  if (reml && sm$has_smooths) reml_random <- c(reml_random, "bs")
+  tmb_random <- c(tmb_random, reml_random)
 
   if (sm$has_smooths) {
-    if (reml) tmb_random <- c(tmb_random, "bs")
     tmb_random <- c(tmb_random, "b_smooth") # smooth random effects
     tmb_map <- unmap(tmb_map, c("b_smooth", "ln_smooth_sigma", "bs"))
   }
@@ -1820,11 +1823,11 @@ sdmTMB <- function(
 
   # profile_breakpt() maps b_threshold to fix the cutpoint, so it doesn't trigger this
   if (do_fit && identical(as.integer(tmb_data$threshold_func), 1L) && is.null(map$b_threshold)) {
-    cli_inform(c(
+    cli_inform(class = "sdmTMB_breakpt_message", c(
       i = paste0("The likelihood of a `breakpt()` model isn't smooth in the cutpoint, ",
         "so the fit can stop at the wrong cutpoint while reporting convergence, ",
         "and the cutpoint's standard error isn't reliable."),
-      i = "Consider `profile_breakpt()` to estimate the cutpoint by profile likelihood."
+      i = breakpt_advice(has_two_components)
     ))
   }
 
@@ -1865,6 +1868,7 @@ sdmTMB <- function(
       tmb_params = tmb_params,
       tmb_map = tmb_map,
       tmb_random = tmb_random,
+      reml_random = reml_random,
       backend = backend,
       spatial_varying = spatial_varying,
       nonlocal_formula = nonlocal_formula,

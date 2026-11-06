@@ -104,7 +104,7 @@ For this model, the important parameters are the slope, 'depth_scaled-slope', an
 print(m)
 ```
 
-This fit has problems. The Hessian isn't positive definite, the standard errors are huge or `NaN`, and the estimated breakpoint is `r round(m$tmb_obj$env$parList()$b_threshold[2], 2)`, at the very bottom of the range of `depth_scaled`. This is common with `breakpt()`. The likelihood isn't smooth in the breakpoint, so the optimizer can stop at the wrong breakpoint while reporting convergence, and the standard error for the breakpoint isn't reliable even when the fit looks fine.
+Check this fit with `sanity()` and look at the standard errors before trusting it. The estimated breakpoint is `r round(m$tmb_obj$env$parList()$b_threshold[2], 2)`, and `depth_scaled` ranges from `r round(min(pcod$depth_scaled), 2)` to `r round(max(pcod$depth_scaled), 2)`. Problems are common with `breakpt()`. The likelihood isn't smooth in the breakpoint, so the optimizer can stop at the wrong breakpoint while reporting convergence, and the standard error for the breakpoint isn't reliable even when the fit looks fine.
 
 Instead, we can estimate the breakpoint by profile likelihood with `profile_breakpt()`. This fits the model with the breakpoint fixed at each of a grid of values, refines the grid near the best value, and refits the model at the best breakpoint. It takes the same arguments as `sdmTMB()`:
 
@@ -118,13 +118,13 @@ pr <- profile_breakpt(
 pr
 ```
 
-The negative log likelihood at the best breakpoint is `r round(m$model$objective - pr$estimate$nll, 1)` units lower than the direct fit's. We can plot the profile. The shaded band is the 95% confidence interval for the breakpoint: every breakpoint whose negative log likelihood is within the dashed cutoff of the minimum. The tick marks along the bottom show the breakpoints that were tried.
+The negative log likelihood at the best breakpoint is `r nll_diff <- m$model$objective - pr$estimate$nll; if (nll_diff > 0.05) paste(round(nll_diff, 1), "units lower than") else "about the same as"` the direct fit's. We can plot the profile. The shaded band is the 95% confidence interval for the breakpoint: every breakpoint whose negative log likelihood is within the dashed cutoff of the minimum. The tick marks along the bottom show the breakpoints that were tried.
 
 ```{r profile-plot}
 plot(pr)
 ```
 
-The profile isn't a smooth bowl. It has a small kink wherever the breakpoint passes an observed depth, and here it also has a second, slightly higher dip at a lower breakpoint. Both dips are inside the cutoff, so the data are consistent with a breakpoint anywhere in the shaded band. With kinks and more than one dip, the gradient doesn't reliably point an optimizer toward the best breakpoint, which is part of why the direct fit went wrong. The line joins the fits, which are closest together near the minimum and the ends of the interval, so it looks more angular where the fits are farther apart.
+The profile isn't a smooth bowl. It has a small kink wherever the breakpoint passes an observed depth, and it can have more than one dip. The data are consistent with any breakpoint in the shaded band. If `pr$estimate$pieces` is greater than 1 (here it's `r pr$estimate$pieces`), the profile rises above the cutoff inside the band. With kinks and more than one dip, the gradient doesn't reliably point an optimizer toward the best breakpoint, which is why the direct fit can go wrong. The line joins the fits, which are closest together near the minimum and the ends of the interval, so it looks more angular where the fits are farther apart.
 
 `pr$fit` is the `sdmTMB()` model with the breakpoint fixed at its best value. For model comparison, use `AIC(pr)` rather than `AIC(pr$fit)`, because `pr$fit` doesn't count the breakpoint as a parameter.
 

@@ -497,7 +497,9 @@ sdmTMB_cv <- function(
         data = data, formula = formula, time = time, mesh = mesh, offset = .offset,
         weights = user_weights, previous_fit = if (use_initial_fit) fit1 else NULL
       ), dot_args)
-      object <- do.call(sdmTMB, args)
+      # point to profile_breakpt() once (from the first fold), not for every fold
+      object <- withCallingHandlers(do.call(sdmTMB, args),
+        sdmTMB_breakpt_message = function(cnd) if (k > 1L) invokeRestart("muffleMessage"))
     }
 
     # rows `sdmTMB()` omitted for missing values are not validated

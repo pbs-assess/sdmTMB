@@ -41,7 +41,9 @@
 #' @param control Optimization control options from [sdmTMBcontrol()]. Used as
 #'   given for the final fit, except that `multiphase` is turned off, at least
 #'   one Newton loop runs, and `start` and `map` are set to fix the cutpoint.
-#'   Don't map `b_threshold` yourself.
+#'   Don't map `b_threshold` yourself. The profile fits use `lower`, `upper`,
+#'   `eval.max`, `iter.max`, `map`, `profile`, and `start` (for the first fit),
+#'   but not `nlminb_loops`, `newton_loops`, or `multiphase`.
 #' @param cuts Cutpoints for the first pass, on the scale of the covariate. By
 #'   default, quantiles of the covariate from 1% to 99%, with extra points in
 #'   the tails, plus 8 evenly spaced points over the same range. The outer 1%
@@ -56,7 +58,7 @@
 #'   enough to find a second minimum. Defaults to 4 times `tol`.
 #' @param max_fits Stop refining after this many profile fits. The search in
 #'   step 3 runs regardless.
-#' @param level Confidence level for the profile interval.
+#' @param level Confidence level for the profile interval, between 0 and 1.
 #' @param final Fit the final model at the best cutpoint? If `FALSE`, returns
 #'   the profile only.
 #'
@@ -66,10 +68,15 @@
 #'   (`dnll`), the slope, the maximum absolute gradient, the convergence code,
 #'   and the share of observations below the cutpoint.
 #' * `estimate`: a one-row data frame with the best cutpoint (`cut`), slope,
-#'   NLL, interval (`lwr`, `upr`), AIC, numbers of observations below and
-#'   above the cutpoint, and flags for checking the result (see Warnings).
+#'   NLL, the final fit's NLL (`final_nll`, `NA` if `final = FALSE`), interval
+#'   (`lwr`, `upr`), AIC, numbers of observations below and above the
+#'   cutpoint, and flags for checking the result (see Warnings). If the final
+#'   fit improves on the profile fit at the same cutpoint, `nll`, `aic`, and the
+#'   profile use the final fit's NLL.
 #' * `fit`: the [sdmTMB()] fit with the cutpoint fixed at `estimate$cut`, or
-#'   `NULL` if `final = FALSE`.
+#'   `NULL` if `final = FALSE`. Its stored call is the call you made, with your
+#'   `control`, so [update()] on it refits with the cutpoint estimated directly,
+#'   not profiled. Call `profile_breakpt()` again instead.
 #'
 #' For AIC, use `AIC(p)` (or `estimate$aic`), where `p` is the output, not
 #' `AIC(p$fit)`: `fit` doesn't count the fixed cutpoint as a parameter.
@@ -78,17 +85,17 @@
 #' uncertainty in the cutpoint.
 #'
 #' @section Warnings:
-#' The function warns, and sets `estimate$open_interval` or
-#' `estimate$few_below`, when the interval reaches the end of the grid or when
-#' fewer than 15 observations (or 5%, if that's more) fall below the best
-#' cutpoint. Either means the data say little about the cutpoint. Also check
+#' The function warns, and sets `estimate$open_interval`, `estimate$few_below`,
+#' or `estimate$few_above`, when the interval reaches the end of the grid or when
+#' fewer than 15 observations (or 5%, if that's more) fall below or above the
+#' best cutpoint. Either means the data say little about the cutpoint. Also check
 #' `estimate$pieces` (the interval isn't continuous if greater than 1),
 #' `estimate$near_edge`, `estimate$refine_complete`, and
 #' `estimate$max_grad_near` (the largest gradient among fits within `within`
 #' NLL units of the best).
 #'
-#' Delta models and models with more than one threshold term aren't
-#' supported.
+#' Delta models, models with more than one threshold term, and a
+#' `threshold_breakpt_cut` prior (see [sdmTMBpriors()]) aren't supported.
 #'
 #' @seealso [plot.breakpt_profile()]
 #' @export
@@ -122,6 +129,9 @@ profile_breakpt <- function(formula, ..., control = sdmTMBcontrol(), cuts = NULL
   if (!is.null(control$map$b_threshold)) {
     cli_abort("Don't map `b_threshold` in `control`; the profile sets it.")
   }
+  if (!(is.numeric(level) && length(level) == 1L && level > 0 && level < 1)) {
+    cli_abort("`level` must be a single number between 0 and 1, e.g., 0.95.")
+  }
   control_build <- control
   control_build$normalize <- FALSE # normalizing only saves time inside the inner problem
   built <- suppressMessages(sdmTMB(formula, ..., control = control_build, do_fit = FALSE))
@@ -131,6 +141,10 @@ profile_breakpt <- function(formula, ..., control = sdmTMBcontrol(), cuts = NULL
   }
   ib <- which(names(obj$par) == "b_threshold")
   if (length(ib) != 2L) cli_abort("Delta models aren't supported.")
+  # a prior on the cutpoint would add its penalty to the profile NLL, and so to logLik() and AIC()
+  if (any(!is.na(built$priors$threshold_breakpt_cut))) {
+    cli_abort("Don't set a `threshold_breakpt_cut` prior; the profile fixes the cutpoint.")
+  }
   i_slope <- ib[1]
   i_cut <- ib[2]
   x <- as.numeric(built$tmb_data$X_threshold)
@@ -149,9 +163,12 @@ profile_breakpt <- function(formula, ..., control = sdmTMBcontrol(), cuts = NULL
   cuts <- sort(unique(cuts))
   if (length(cuts) < 3L) cli_abort("Give at least 3 `cuts`.")
 
+  free <- setdiff(seq_along(obj$par), i_cut)
+  lower <- built$lower[free]
+  upper <- built$upper[free]
+  nlminb_control <- list(eval.max = control$eval.max, iter.max = control$iter.max)
   fit_at <- function(ct, start_par, start_last) {
     start_par[i_cut] <- ct
-    free <- setdiff(seq_along(start_par), i_cut)
     full <- start_par
     obj$env$last.par.best <- start_last
     obj$env$value.best <- Inf
@@ -166,9 +183,10 @@ profile_breakpt <- function(formula, ..., control = sdmTMBcontrol(), cuts = NULL
       g[!is.finite(g)] <- 0
       g
     }
+    # nlminb() refuses a start outside the bounds
     o <- tryCatch(
-      suppressWarnings(stats::nlminb(start_par[free], fn, gr,
-        control = list(eval.max = 2000L, iter.max = 1000L))),
+      suppressWarnings(stats::nlminb(pmin(pmax(start_par[free], lower), upper), fn, gr,
+        lower = lower, upper = upper, control = nlminb_control)),
       error = function(e) NULL
     )
     # 1e10 means nlminb() never reached a finite NLL
@@ -179,10 +197,12 @@ profile_breakpt <- function(formula, ..., control = sdmTMBcontrol(), cuts = NULL
   }
 
   done <- list()
+  done_col <- function(name) vapply(done, `[[`, 0, name)
+  # Start from the nearest fit that worked. A failed fit stays in `done` so it isn't retried.
   add_fit <- function(ct) {
-    if (length(done)) {
-      have <- vapply(done, `[[`, 0, "cut")
-      n <- done[[which.min(abs(have - ct))]]
+    ok <- Filter(function(z) !is.null(z$par), done)
+    if (length(ok)) {
+      n <- ok[[which.min(abs(vapply(ok, `[[`, 0, "cut") - ct))]]
       r <- fit_at(ct, n$par, n$last)
     } else {
       r <- fit_at(ct, obj$par, obj$env$last.par.best)
@@ -194,24 +214,16 @@ profile_breakpt <- function(formula, ..., control = sdmTMBcontrol(), cuts = NULL
     done[[length(done) + 1L]] <<- r
     r
   }
-  # a failed fit stays in `done` so it isn't retried, but can't seed a neighbour
-  add_fit_safe <- function(ct) {
-    keep <- done
-    done <<- Filter(function(z) !is.null(z$par), done)
-    r <- add_fit(ct)
-    done <<- c(keep, list(r))
-    r
-  }
 
   # First pass: out from the median in both directions, so each fit starts from its neighbour
   first <- which.min(abs(cuts - stats::median(x)))
-  add_fit_safe(cuts[first])
+  add_fit(cuts[first])
   if (is.null(done[[1]]$par)) cli_abort("The first profile fit failed. Try other `cuts` or check the model.")
-  for (ct in cuts[seq_along(cuts) > first]) add_fit_safe(ct)
-  for (ct in rev(cuts[seq_along(cuts) < first])) add_fit_safe(ct)
+  for (ct in cuts[seq_along(cuts) > first]) add_fit(ct)
+  for (ct in rev(cuts[seq_along(cuts) < first])) add_fit(ct)
 
   table_now <- function() {
-    d <- data.frame(cut = vapply(done, `[[`, 0, "cut"), nll = vapply(done, `[[`, 0, "nll"))
+    d <- data.frame(cut = done_col("cut"), nll = done_col("nll"))
     d[order(d$cut), ]
   }
   # Refine: bisect gaps near the best until they are at most `tol_coarse`, and the gaps that
@@ -232,7 +244,7 @@ profile_breakpt <- function(formula, ..., control = sdmTMBcontrol(), cuts = NULL
     new <- (d$cut[todo] + d$cut[todo + 1L]) / 2
     # closest to the current best first, so warm starts move outward from it
     new <- new[order(abs(new - d$cut[i_best]))]
-    for (ct in new) if (length(done) < max_fits) add_fit_safe(ct)
+    for (ct in new) if (length(done) < max_fits) add_fit(ct)
   }
   refine_complete <- !length(todo)
 
@@ -244,24 +256,49 @@ profile_breakpt <- function(formula, ..., control = sdmTMBcontrol(), cuts = NULL
   bracket <- d$cut[c(max(1L, i_best - 1L), min(nrow(d), i_best + 1L))]
   if (diff(bracket) > 0) {
     stats::optimize(function(ct) {
-      have <- vapply(done, `[[`, 0, "cut")
-      r <- if (ct %in% have) done[[match(ct, have)]] else add_fit_safe(ct) # optimize() can repeat a point
+      have <- done_col("cut")
+      r <- if (ct %in% have) done[[match(ct, have)]] else add_fit(ct) # optimize() can repeat a point
       if (is.na(r$nll)) 1e10 else r$nll
     }, bracket, tol = tol / 20)
   }
 
-  done <- done[order(vapply(done, `[[`, 0, "cut"))]
+  done <- done[order(done_col("cut"))]
+  best_i <- which.min(done_col("nll"))
+  best <- done[[best_i]]
+
+  fit <- NULL
+  final_nll <- NA_real_
+  if (final) {
+    ctl <- control
+    ctl$multiphase <- FALSE
+    ctl$newton_loops <- max(1L, ctl$newton_loops)
+    ctl$start <- utils::modifyList(as.list(ctl$start), obj$env$parList(best$par, best$last))
+    ctl$map <- c(ctl$map, list(b_threshold = factor(c(1L, NA))))
+    fit <- suppressMessages(sdmTMB(formula, ..., control = ctl))
+    # store the caller's call so `fit$call` names their objects (for print()), with their
+    # `control`, not the starts and map that fix the cutpoint
+    cl <- match.call(expand.dots = TRUE)
+    cl[[1L]] <- quote(sdmTMB)
+    cl[c("cuts", "within", "tol", "tol_coarse", "max_fits", "level", "final")] <- NULL
+    fit$call <- cl
+    final_nll <- fit$model$objective
+    # the final fit's extra optimization can improve on the profile fit at the same cutpoint
+    if (final_nll < best$nll) {
+      best$nll <- final_nll
+      best$par[i_slope] <- fit$tmb_obj$env$parList()$b_threshold[1L, 1L]
+      done[[best_i]] <- best
+    }
+  }
+
   p <- data.frame(
-    cut = vapply(done, `[[`, 0, "cut"),
-    nll = vapply(done, `[[`, 0, "nll"),
+    cut = done_col("cut"),
+    nll = done_col("nll"),
     slope = vapply(done, function(z) if (is.null(z$par)) NA_real_ else z$par[[i_slope]], 0),
-    max_grad = vapply(done, `[[`, 0, "max_grad"),
+    max_grad = done_col("max_grad"),
     convergence = vapply(done, function(z) as.integer(z$convergence), 0L)
   )
   p$dnll <- p$nll - min(p$nll, na.rm = TRUE)
   p$prop_below <- vapply(p$cut, function(ct) mean(x < ct), 0)
-  best_i <- which.min(p$nll)
-  best <- done[[best_i]]
 
   # Interval: outermost crossings of the cutoff, interpolated between grid points
   q <- p[!is.na(p$nll), ]
@@ -274,45 +311,34 @@ profile_breakpt <- function(formula, ..., control = sdmTMBcontrol(), cuts = NULL
   lo <- if (il > 1L) crossing(il, il - 1L) else NA_real_ # NA: still inside at the end of the grid
   hi <- if (iu < nrow(q)) crossing(iu, iu + 1L) else NA_real_
 
-  k <- length(obj$par) # includes the cutpoint
+  # the same count as logLik.sdmTMB(), plus the cutpoint (which `obj` estimates)
+  k <- n_fixed_pars(built)
   n_below <- sum(x < best$cut)
+  n_above <- length(x) - n_below
+  min_n <- max(15, 0.05 * length(x))
+  # position among the fits that worked, so failed fits at the ends of the grid don't count
+  iq <- which.min(q$nll)
   estimate <- data.frame(
-    cut = best$cut, slope = p$slope[best_i], nll = best$nll, lwr = lo, upr = hi,
-    pieces = sum(diff(c(FALSE, inside)) == 1L),
+    cut = best$cut, slope = p$slope[best_i], nll = best$nll, final_nll = final_nll,
+    lwr = lo, upr = hi, pieces = sum(diff(c(FALSE, inside)) == 1L),
     k = k, aic = 2 * best$nll + 2 * k, prop_below = p$prop_below[best_i],
-    n_below = n_below, n_above = length(x) - n_below,
-    near_edge = best_i <= 2L || best_i >= nrow(p) - 1L, refine_complete = refine_complete,
+    n_below = n_below, n_above = n_above,
+    near_edge = iq <= 2L || iq >= nrow(q) - 1L, refine_complete = refine_complete,
     n_fits = nrow(p), n_failed = sum(is.na(p$nll)),
     # large gradients matter only near the best; far away they can't change the result
     max_grad_near = max(p$max_grad[!is.na(p$dnll) & p$dnll < within], na.rm = TRUE),
     open_interval = is.na(lo) || is.na(hi),
-    few_below = n_below < max(15, 0.05 * length(x))
+    few_below = n_below < min_n,
+    few_above = n_above < min_n
   )
   if (estimate$open_interval) {
     cli_warn(paste0("The ", 100 * level, "% interval for the cutpoint reaches the end of ",
       "the grid, so the data don't rule out a cutpoint at the edge of their range."))
   }
-  if (estimate$few_below) {
-    cli_warn(paste0("Only ", n_below, " observations fall below the best cutpoint, so ",
-      "the cutpoint and slope may be poorly identified."))
-  }
-
-  fit <- NULL
-  if (final) {
-    ctl <- control
-    ctl$multiphase <- FALSE
-    ctl$newton_loops <- max(1L, ctl$newton_loops)
-    ctl$start <- utils::modifyList(as.list(ctl$start), obj$env$parList(best$par, best$last))
-    ctl$map <- c(ctl$map, list(b_threshold = factor(c(1L, NA))))
-    # rebuild the caller's call so `fit$call` names their objects (for print() and update())
-    cl <- match.call(expand.dots = TRUE)
-    cl[[1L]] <- quote(sdmTMB)
-    cl[c("cuts", "within", "tol", "tol_coarse", "max_fits", "level", "final")] <- NULL
-    cl$control <- ctl
-    fit <- suppressMessages(eval(cl, parent.frame()))
-    estimate$final_nll <- fit$model$objective
-    estimate$nll <- min(estimate$nll, fit$model$objective)
-    estimate$aic <- 2 * estimate$nll + 2 * k
+  if (estimate$few_below || estimate$few_above) {
+    side <- if (estimate$few_below) "below" else "above"
+    cli_warn(paste0("Only ", min(n_below, n_above), " observations fall ", side,
+      " the best cutpoint, so the cutpoint and slope may be poorly identified."))
   }
   structure(list(profile = p, estimate = estimate, fit = fit, level = level,
     within = within, tol = tol, tol_coarse = tol_coarse), class = "breakpt_profile")
@@ -329,6 +355,7 @@ print.breakpt_profile <- function(x, ...) {
   cat(sprintf("Observations below the cutpoint: %d (%.1f%%)\n", e$n_below, 100 * e$prop_below))
   if (e$open_interval) cat("Note: the interval reaches the end of the grid.\n")
   if (e$few_below) cat("Note: few observations fall below the cutpoint.\n")
+  if (e$few_above) cat("Note: few observations fall above the cutpoint.\n")
   if (e$pieces > 1L) cat("Note: the interval is not continuous; see `$profile`.\n")
   if (e$near_edge) cat("Note: the best cutpoint is at the edge of the grid.\n")
   if (e$max_grad_near > 0.1) cat("Note: a profile fit near the best has a large gradient; see `$profile`.\n")
@@ -400,4 +427,16 @@ plot.breakpt_profile <- function(x, ylim = c(0, 10), ...) {
     ggplot2::labs(x = "Cutpoint", y = "NLL above the minimum") +
     ggplot2::theme_minimal() +
     ggplot2::theme(panel.grid.minor = ggplot2::element_blank())
+}
+
+# What to do about a directly estimated breakpt() cutpoint. profile_breakpt()
+# needs a single linear predictor, so delta models get different advice.
+breakpt_advice <- function(delta = FALSE) {
+  if (delta) {
+    paste0("`profile_breakpt()` doesn't support delta models. To profile the cutpoint, ",
+      "use a family with a single linear predictor, or fix the cutpoint with `map` ",
+      "and `start` in `sdmTMBcontrol()` and compare fits across cutpoints.")
+  } else {
+    "Consider `profile_breakpt()` to estimate the cutpoint by profile likelihood."
+  }
 }

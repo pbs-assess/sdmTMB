@@ -34,6 +34,11 @@ test_that("profile_breakpt() recovers the cutpoint and fits the final model", {
   expect_identical(p$fit$call$data, quote(d))
   expect_null(p$fit$call$final)
   expect_output(print(p$fit), "Data: d")
+  # the stored call keeps the caller's control, not the starts and map that fix the cutpoint
+  expect_null(p$fit$call$control)
+  # the profile, the estimate, and the final fit agree on the minimum
+  expect_equal(e$nll, min(p$profile$nll, na.rm = TRUE))
+  expect_lte(e$nll, e$final_nll)
 
   # the profile minimum is no worse than fitting the cutpoint directly from the truth
   m <- suppressMessages(suppressWarnings(sdmTMB(y ~ breakpt(x), data = d, spatial = "off",
@@ -69,6 +74,50 @@ test_that("profile_breakpt() warns when the cutpoint is poorly identified", {
   expect_equal(band$xmin, p$estimate$lwr)
 })
 
+test_that("profile_breakpt() counts parameters like logLik() with `control$profile`", {
+  skip_on_cran()
+  d <- sim_breakpt(n = 150)
+  # `profile = TRUE` moves b_j into the inner problem, but logLik() still counts it
+  p <- profile_breakpt(y ~ breakpt(x), data = d, spatial = "off",
+    control = sdmTMBcontrol(profile = TRUE))
+  expect_equal(p$estimate$k, attr(logLik(p$fit), "df") + 1L)
+  expect_equal(AIC(p), AIC(p$fit) + 2, tolerance = 1e-6)
+  expect_identical(p$fit$call$control, quote(sdmTMBcontrol(profile = TRUE)))
+  p0 <- profile_breakpt(y ~ breakpt(x), data = d, spatial = "off",
+    control = sdmTMBcontrol(profile = TRUE), final = FALSE)
+  expect_equal(p0$estimate$k, p$estimate$k)
+})
+
+test_that("profile_breakpt() applies `control` bounds to the profile fits", {
+  skip_on_cran()
+  d <- sim_breakpt(n = 150) # true slope 1
+  # a bound on b_threshold bounds only the slope; the cutpoint is fixed in each fit
+  p <- suppressWarnings(profile_breakpt(y ~ breakpt(x), data = d, spatial = "off",
+    control = sdmTMBcontrol(upper = list(b_threshold = 0.5)), final = FALSE))
+  expect_true(all(p$profile$slope <= 0.5 + 1e-8, na.rm = TRUE))
+  expect_equal(p$estimate$slope, 0.5, tolerance = 1e-4)
+})
+
+test_that("profile_breakpt() flags few observations above the cutpoint", {
+  skip_on_cran()
+  set.seed(3)
+  x <- rnorm(300)
+  cut <- quantile(x, 0.975, names = FALSE)
+  d <- data.frame(x = x, y = 1 + 2 * pmin(x, cut) + rnorm(300, sd = 0.2))
+  w <- character()
+  p <- withCallingHandlers(
+    profile_breakpt(y ~ breakpt(x), data = d, spatial = "off", final = FALSE),
+    warning = function(cnd) {
+      w <<- c(w, conditionMessage(cnd))
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_true(p$estimate$few_above)
+  expect_false(p$estimate$few_below)
+  expect_true(any(grepl("fall above", w)))
+  expect_output(print(p), "few observations fall above")
+})
+
 test_that("profile_breakpt() checks its inputs", {
   skip_on_cran()
   d <- sim_breakpt(n = 100)
@@ -79,6 +128,9 @@ test_that("profile_breakpt() checks its inputs", {
   expect_error(profile_breakpt(y ~ breakpt(x), data = d, spatial = "off", tol = 0), "positive")
   expect_error(profile_breakpt(y ~ breakpt(x), data = d, spatial = "off", max_fits = Inf), "finite")
   expect_error(profile_breakpt(y ~ breakpt(x), data = d, spatial = "off", cuts = c(0, 1)), "3")
+  expect_error(profile_breakpt(y ~ breakpt(x), data = d, spatial = "off", level = 95), "level")
+  expect_error(profile_breakpt(y ~ breakpt(x), data = d, spatial = "off",
+    priors = sdmTMBpriors(threshold_breakpt_cut = normal(0, 1))), "prior")
   d$y <- ifelse(d$y > 1, d$y, 0)
   expect_error(profile_breakpt(y ~ breakpt(x), data = d, spatial = "off",
     family = delta_gamma()), "Delta")
@@ -104,6 +156,37 @@ test_that("sdmTMB() points to profile_breakpt() when estimating a cutpoint direc
     }
   )
   expect_false(any(grepl("profile_breakpt", msgs)))
+
+  # delta models still get the warning, but not the advice to use profile_breakpt()
+  d$y <- ifelse(d$y > 1, d$y, 0)
+  msgs <- character()
+  m <- withCallingHandlers(
+    suppressWarnings(sdmTMB(y ~ breakpt(x), data = d, spatial = "off", family = delta_gamma())),
+    message = function(cnd) {
+      msgs <<- c(msgs, conditionMessage(cnd))
+      invokeRestart("muffleMessage")
+    }
+  )
+  msgs <- paste(msgs, collapse = " ")
+  expect_match(msgs, "isn't smooth in the cutpoint")
+  expect_match(msgs, "doesn't support delta models")
+  expect_no_match(msgs, "Consider `profile_breakpt\\(\\)`")
+  expect_false(sanity(m, silent = TRUE)$breakpt_ok)
+  expect_message(sanity(m), "doesn't support delta models")
+})
+
+test_that("sdmTMB_cv() points to profile_breakpt() once, not for every fold", {
+  skip_on_cran()
+  d <- sim_breakpt(n = 100)
+  msgs <- character()
+  withCallingHandlers(
+    suppressWarnings(sdmTMB_cv(y ~ breakpt(x), data = d, spatial = "off", k_folds = 3)),
+    message = function(cnd) {
+      msgs <<- c(msgs, conditionMessage(cnd))
+      invokeRestart("muffleMessage")
+    }
+  )
+  expect_equal(sum(grepl("profile_breakpt", msgs)), 1L)
 })
 
 test_that("sanity() flags a directly estimated cutpoint but not a profiled one", {
@@ -120,4 +203,17 @@ test_that("sanity() flags a directly estimated cutpoint but not a profiled one",
 
   m <- sdmTMB(y ~ x, data = d, spatial = "off")
   expect_true(sanity(m, silent = TRUE)$breakpt_ok)
+})
+
+test_that("profile_breakpt() evaluates its `...` arguments once", {
+  skip_on_cran()
+  d <- sim_breakpt(n = 150)
+  n_eval <- 0
+  get_data <- function() {
+    n_eval <<- n_eval + 1
+    d
+  }
+  p <- profile_breakpt(y ~ breakpt(x), data = get_data(), spatial = "off")
+  expect_s3_class(p$fit, "sdmTMB")
+  expect_equal(n_eval, 1)
 })

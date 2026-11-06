@@ -295,7 +295,7 @@ sanity <- function(object, big_sd_log10 = 2, gradient_thresh = 0.001, silent = F
       cli::cli_alert_info(paste0("The likelihood isn't smooth in the cutpoint, so the fit ",
         "can stop at the wrong cutpoint while reporting convergence, and the cutpoint's ",
         "standard error isn't reliable"), wrap = TRUE)
-      cli::cli_alert_info("Use `profile_breakpt()` to estimate the cutpoint by profile likelihood")
+      cli::cli_alert_info(breakpt_advice(NCOL(object$tmb_params$b_threshold) > 1L), wrap = TRUE)
       cat("\n")
     }
     breakpt_ok <- FALSE

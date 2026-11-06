@@ -119,6 +119,18 @@ confint.sdmTMB <- function(object, parm, level = 0.95, ...) {
   x
 }
 
+# Fixed effects counted by logLik(): every estimated parameter that isn't a
+# random effect. `control$profile` doesn't touch `tmb_random`, but REML adds
+# fixed effects to it, which are still counted.
+n_fixed_pars <- function(object) {
+  reml_random <- object$reml_random
+  if (is.null(reml_random) && isTRUE(object$reml)) {
+    reml_random <- c("b_j", "b_j2", "bs") # fits from before `reml_random` was stored
+  }
+  ran <- setdiff(object$tmb_random, reml_random)
+  sum(!names(object$tmb_obj$env$last.par.best) %in% ran)
+}
+
 #' Extract the log likelihood of a sdmTMB model
 #'
 #' @param object The fitted sdmTMB model object
@@ -128,9 +140,7 @@ confint.sdmTMB <- function(object, parm, level = 0.95, ...) {
 logLik.sdmTMB <- function(object, ...) {
   val <- -object$model$objective
   nobs <- nobs.sdmTMB(object)
-  lpb <- names(object$tmb_obj$env$last.par.best)
-  ran <- c("omega_s", "epsilon_st", "zeta_s", "b_rw_t", "RE", "b_smooth", "re_b_pars")
-  df <- sum(!lpb %in% ran)
+  df <- n_fixed_pars(object)
   structure(val,
     nobs = nobs, nall = nobs, df = df,
     class = "logLik"
