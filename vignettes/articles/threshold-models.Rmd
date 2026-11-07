@@ -166,6 +166,8 @@ w <- w / sum(w)
 round(data.frame(cut = cuts, weight = w), 2)
 ```
 
+The ends of this sequence are the outermost profile fits within 4 units, not where the profile actually crosses 4. Outside that range the profile fits are farther apart, so an end fit can be well below 4, and breakpoints just beyond it with some weight are left out. Here the lowest breakpoint still gets a weight of `r round(w[1], 2)`. If an end weight isn't small, extend that end toward the next profile fit out, for example to where a straight line between the two fits crosses 4.
+
 Each fit gives a mean and a standard error on the link scale at each depth. We combine them with the mean and variance of the mixture. The weighted mean is the estimate. The variance is the weighted average of the within-fit variances, plus the spread of the means across breakpoints:
 
 ```{r brkpt-mix, warning=FALSE}
@@ -174,9 +176,9 @@ mu <- sapply(preds, `[[`, "est")
 s <- sapply(preds, `[[`, "est_se")
 p_mix <- nd
 p_mix$est <- drop(mu %*% w)
-within <- s^2 %*% w # average within-fit variance
-between <- (mu - p_mix$est)^2 %*% w # spread of the means across breakpoints
-p_mix$est_se <- sqrt(drop(within + between))
+v_within <- s^2 %*% w # average within-fit variance
+v_between <- (mu - p_mix$est)^2 %*% w # spread of the means across breakpoints
+p_mix$est_se <- sqrt(drop(v_within + v_between))
 
 ggplot(p_mix, aes(depth_scaled, exp(est),
   ymin = exp(est - 1.96 * est_se),
